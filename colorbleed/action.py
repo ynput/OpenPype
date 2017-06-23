@@ -1,0 +1,151 @@
+# absolute_import is needed to counter the `module has no cmds error` in Maya
+from __future__ import absolute_import
+
+import pyblish.api
+
+from maya import cmds
+
+
+def get_errored_instances_from_context(context):
+
+    instances = list()
+    for result in context.data["results"]:
+        if result["instance"] is None:
+            # When instance is None we are on the "context" result
+            continue
+
+        if result["error"]:
+            instances.append(result["instance"])
+
+    return instances
+
+
+class RepairAction(pyblish.api.Action):
+    """Repairs the action
+
+    To retrieve the invalid nodes this assumes a static `repair(instance)`
+    method is available on the plugin.
+
+    """
+    label = "Repair"
+    on = "failed"  # This action is only available on a failed plug-in
+    icon = "wrench"  # Icon from Awesome Icon
+
+    def process(self, context, plugin):
+
+        if not hasattr(plugin, "repair"):
+            raise RuntimeError("Plug-in does not have repair method.")
+
+        # Get the errored instances
+        self.log.info("Finding failed instances..")
+        errored_instances = get_errored_instances_from_context(context)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+
+        for instance in instances:
+            plugin.repair(instance)
+
+
+class SelectInvalidAction(pyblish.api.Action):
+    """Select invalid nodes in Maya when plug-in failed.
+
+    To retrieve the invalid nodes this assumes a static `get_invalid()`
+    method is available on the plugin.
+
+    """
+    label = "Select invalid"
+    on = "failed"  # This action is only available on a failed plug-in
+    icon = "search"  # Icon from Awesome Icon
+
+    def process(self, context, plugin):
+
+        errored_instances = get_errored_instances_from_context(context)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+
+        # Get the invalid nodes for the plug-ins
+        self.log.info("Finding invalid nodes..")
+        invalid = list()
+        for instance in instances:
+            invalid_nodes = plugin.get_invalid(instance)
+            if invalid_nodes:
+                if isinstance(invalid_nodes, (list, tuple)):
+                    invalid.extend(invalid_nodes)
+                else:
+                    self.log.warning("Plug-in returned to be invalid, "
+                                     "but has no selectable nodes.")
+
+        # Ensure unique (process each node only once)
+        invalid = list(set(invalid))
+
+        if invalid:
+            self.log.info("Selecting invalid nodes: %s" % ", ".join(invalid))
+            cmds.select(invalid, replace=True, noExpand=True)
+        else:
+            self.log.info("No invalid nodes found.")
+            cmds.select(deselect=True)
+
+
+class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
+    """Generate UUIDs on the invalid nodes in the instance.
+
+    Invalid nodes are those returned by the plugin's `get_invalid` method.
+    As such it is the plug-in's responsibility to ensure the nodes that
+    receive new UUIDs are actually invalid.
+
+    Requires:
+        - currentFile on context
+
+    """
+
+    label = "Regenerate UUIDs"
+    on = "failed"  # This action is only available on a failed plug-in
+    icon = "wrench"  # Icon from Awesome Icon
+
+    def process(self, context, plugin):
+        import cbra.lib
+        import cbra.utils.maya.node_uuid as id_utils
+
+        self.log.info("Finding bad nodes..")
+
+        # Get the errored instances
+        errored_instances = []
+        for result in context.data["results"]:
+            if result["error"] is not None and result["instance"] is not None:
+                if result["error"]:
+                    instance = result["instance"]
+                    errored_instances.append(instance)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+
+        # Get the nodes from the all instances that ran through this plug-in
+        invalid = []
+        for instance in instances:
+            invalid_nodes = plugin.get_invalid(instance)
+            if invalid_nodes:
+                invalid.extend(invalid_nodes)
+
+        if not invalid:
+            self.log.info("No invalid nodes found.")
+            return
+
+        # Ensure unique (process each node only once)
+        invalid = list(set(invalid))
+
+        # Parse context from current file
+        self.log.info("Parsing current context..")
+        try:
+            current_file = context.data['currentFile']
+            context = cbra.lib.parse_context(current_file)
+        except RuntimeError, e:
+            self.log.error("Can't generate UUIDs because scene isn't "
+                           "in new-style pipeline: ".format(current_file))
+            raise e
+
+        # Generate and add the ids to the nodes
+        ids = id_utils.generate_ids(context, invalid)
+        id_utils.add_ids(ids)
+        self.log.info("Generated ids on nodes: {0}".format(invalid))

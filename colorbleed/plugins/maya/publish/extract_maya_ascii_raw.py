@@ -1,0 +1,49 @@
+import os
+
+from maya import cmds
+
+import pyblish_maya
+import colorbleed.api
+
+
+class ExtractMayaAsciiRaw(colorbleed.api.Extractor):
+    """Extract as Maya Ascii (raw)
+
+    This will preserve all references, construction history, etc.
+
+    """
+
+    label = "Maya ASCII (Raw)"
+    hosts = ["maya"]
+    families = ["colorbleed.mayaAscii"]
+
+    def process(self, instance):
+
+        # Define extract output file path
+        dir_path = self.staging_dir(instance)
+        filename = "{0}.ma".format(instance.name)
+        path = os.path.join(dir_path, filename)
+
+        # Whether to include all nodes in the instance (including those from
+        # history) or only use the exact set members
+        members_only = instance.data.get("exactSetMembersOnly", False)
+        if members_only:
+            members = instance.data.get("setMembers", list())
+            if not members:
+                raise RuntimeError("Can't export 'exact set members only' "
+                                   "when set is empty.")
+        else:
+            members = instance[:]
+
+        # Perform extraction
+        self.log.info("Performing extraction..")
+        with pyblish_maya.maintained_selection():
+            cmds.select(members, noExpand=True)
+            cmds.file(path,
+                      force=True,
+                      typ="mayaAscii",
+                      exportSelected=True,
+                      preserveReferences=True,
+                      constructionHistory=True)
+
+        self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
