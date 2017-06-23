@@ -7,7 +7,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     Every rig must contain at least two object sets:
         "controls_SET" - Set of all animatable controls
-        "pointcache_SET" - Set of all cachable meshes
+        "out_SET" - Set of all cachable meshes
 
     """
 
@@ -21,7 +21,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
         from maya import cmds
 
-        objsets = ("controls_SET", "pointcache_SET")
+        objsets = ("controls_SET", "out_SET")
 
         missing = list()
         for objset in objsets:
@@ -40,7 +40,15 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
         self.log.info("Evaluating contents of object sets..")
         not_meshes = list()
-        members = cmds.sets("pointcache_SET", query=True) or []
+
+        # Ensure contents in sets
+        members = cmds.sets("out_SET", query=True) or []
+        assert members, "Must have members in rig out_SET"
+
+        controls = cmds.sets("controls_SET", query=True) or []
+        assert controls, "Must have controls in rig control_SET"
+
+        # Validate the contents further
         shapes = cmds.listRelatives(members,
                                     allDescendents=True,
                                     shapes=True,
@@ -59,5 +67,5 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
             % not_transforms)
 
         assert not_meshes == [], (
-            "Only meshes can be part of the pointcache_SET: %s"
+            "Only meshes can be part of the out_SET: %s"
             % not_meshes)
