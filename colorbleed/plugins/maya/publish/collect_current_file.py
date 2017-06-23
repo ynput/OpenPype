@@ -15,4 +15,4 @@ class CollectMayaCurrentFile(pyblish.api.ContextPlugin):
     def process(self, context):
         """Inject the current working file"""
         current_file = cmds.file(query=True, sceneName=True)
-        context.data['currentFile'] = os.path.normpath(current_file)
+        context.data['currentFile'] = current_file
