@@ -8,6 +8,9 @@ class ValidateNamespaceEmpty(pyblish.api.ContextPlugin):
 
     This is a scene wide validation that filters out "UI" and "shared"
     namespaces that exist by default in Maya and are mostly hidden.
+    
+    A namespace that has other namespaces in it is not considered empty. 
+    Only those that have no children namespaces or nodes is considered emtpy.
 
     """
 
@@ -19,7 +22,7 @@ class ValidateNamespaceEmpty(pyblish.api.ContextPlugin):
     label = "No Empty Namespaces"
 
     def process(self, context):
-        """Process the Context"""
+
         all_namespaces = cmds.namespaceInfo(":",
                                             listOnlyNamespaces=True,
                                             recurse=True)
@@ -27,9 +30,6 @@ class ValidateNamespaceEmpty(pyblish.api.ContextPlugin):
                                    if ns not in ["UI", "shared"]]
 
         invalid = []
-        # TODO: Check whether currently a namespace with
-        # another namespace in it (both empty) is
-        # considered empty
         for namespace in non_internal_namespaces:
             namespace_content = cmds.namespaceInfo(namespace,
                                                    listNamespace=True,
