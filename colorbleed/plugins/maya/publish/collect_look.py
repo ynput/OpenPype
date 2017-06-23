@@ -67,7 +67,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     hosts = ["maya"]
 
     # Ignore specifically named sets (check with endswith)
-    IGNORE = ["pointcache_SET", "controls_SET", "_INST"]
+    IGNORE = ["out_SET", "controls_SET", "_INST"]
 
     def collect(self, instance):
 

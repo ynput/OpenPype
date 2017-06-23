@@ -13,5 +13,5 @@ class CreateRig(avalon.maya.Creator):
         instance = super(CreateRig, self).process()
 
         controls = cmds.sets(name="controls_SET", empty=True)
-        pointcache = cmds.sets(name="pointcache_SET", empty=True)
+        pointcache = cmds.sets(name="out_SET", empty=True)
         cmds.sets([controls, pointcache], forceElement=instance)

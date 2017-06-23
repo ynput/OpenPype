@@ -5,9 +5,9 @@ import colorbleed.api
 
 
 class ValidateRigPointcacheNodeIds(pyblish.api.InstancePlugin):
-    """Validate rig pointcache_SET nodes have ids
+    """Validate rig out_SET nodes have ids
 
-    The nodes in a rig's pointcache_SET must all have node IDs
+    The nodes in a rig's out_SET must all have node IDs
     that are all unique.
 
     Geometry in a rig should be using published model's geometry.
@@ -29,9 +29,9 @@ class ValidateRigPointcacheNodeIds(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
         from maya import cmds
 
-        # Get pointcache_SET
+        # Get out_SET
         sets = cmds.ls(instance, type='objectSet')
-        pointcache_sets = [x for x in sets if x == 'pointcache_SET']
+        pointcache_sets = [x for x in sets if x == 'out_SET']
 
         nodes = list()
         for s in pointcache_sets:

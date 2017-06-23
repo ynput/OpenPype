@@ -31,9 +31,9 @@ class ValidateRigPointcacheShapeRenderStats(pyblish.api.Validator):
     @classmethod
     def get_pointcache_nodes(cls, instance):
 
-        # Get pointcache_SET
+        # Get out_SET
         sets = cmds.ls(instance, type='objectSet')
-        pointcache_sets = [x for x in sets if x == 'pointcache_SET']
+        pointcache_sets = [x for x in sets if x == 'out_SET']
 
         nodes = list()
         for s in pointcache_sets:
