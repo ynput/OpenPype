@@ -50,7 +50,7 @@ class RigLoader(api.Loader):
             maya.create(
                 name=maya.unique_name(asset, suffix="_SET"),
                 asset=context["asset"]["name"],
-                family="avalon.animation",
+                family="colorbleed.animation",
                 options={"useSelection": True},
                 data={
                     "dependencies": " ".join(str(d) for d in dependencies)
