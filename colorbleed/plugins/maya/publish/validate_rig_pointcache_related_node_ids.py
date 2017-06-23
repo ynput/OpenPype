@@ -7,7 +7,7 @@ import cbra.utils.maya.node_uuid as id_utils
 
 
 class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
-    """Validate rig pointcache_SET nodes have related ids to current context
+    """Validate rig out_SET nodes have related ids to current context
 
     An ID is 'related' if its built in the current Item.
 
@@ -29,9 +29,9 @@ class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
     @classmethod
     def get_pointcache_nodes(cls, instance):
 
-        # Get pointcache_SET
+        # Get out_SET
         sets = cmds.ls(instance, type='objectSet')
-        pointcache_sets = [x for x in sets if x == 'pointcache_SET']
+        pointcache_sets = [x for x in sets if x == 'out_SET']
 
         nodes = list()
         for s in pointcache_sets:
