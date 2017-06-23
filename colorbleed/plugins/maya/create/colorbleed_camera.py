@@ -1,4 +1,5 @@
 import avalon.maya
+from colorbleed.maya import lib
 
 
 class CreateCamera(avalon.maya.Creator):
@@ -8,5 +9,13 @@ class CreateCamera(avalon.maya.Creator):
     label = "Camera"
     family = "colorbleed.camera"
 
-    # def process(self):
-    #     pass
+    def __init__(self, *args, **kwargs):
+        super(CreateCamera, self).__init__(*args, **kwargs)
+
+        # get basic animation data : start / end / handles / steps
+        data = lib.OrderedDict(**self.data)
+        animation_data = lib.collect_animation_data()
+        for key, value in animation_data.items():
+            data[key] = value
+
+        self.data = data

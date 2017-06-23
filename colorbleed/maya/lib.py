@@ -2,6 +2,8 @@
 
 import re
 import contextlib
+from collections import OrderedDict
+
 from maya import cmds
 
 
@@ -216,7 +218,27 @@ def shape_from_element(element):
         return node
 
 
-def add_attributes(node, data):
+def collect_animation_data():
+    """Get the basic animation data
 
-    for key, value in data.items():
-        cmds.addAttr()
+    Returns:
+        OrderedDict
+
+    """
+
+    # get scene values as defaults
+    start = cmds.playbackOptions(query=True, animationStartTime=True)
+    end = cmds.playbackOptions(query=True, animationEndTime=True)
+
+    # build attributes
+    data = OrderedDict()
+    data["startFrame"] = start
+    data["endFrame"] = end
+    data["handles"] = 1
+    data["step"] = 1.0
+
+    return data
+
+
+def get_current_renderlayer():
+    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)

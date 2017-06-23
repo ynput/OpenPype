@@ -1,5 +1,5 @@
 import avalon.maya
-import colorbleed.api as api
+from colorbleed.maya import lib
 
 
 class CreateYetiFur(avalon.maya.Creator):
@@ -9,10 +9,13 @@ class CreateYetiFur(avalon.maya.Creator):
     label = "Yeti Fur"
     family = "colorbleed.yetifur"
 
-    def process(self):
+    def __init__(self, *args, **kwargs):
+        super(CreateYetiFur, self).__init__(*args, **kwargs)
 
-        time_with_handles = api.OrderedDict(startFrame=True,
-                                            endFrame=True,
-                                            handles=True)
+        # get scene values as defaults
+        data = lib.OrderedDict(**self.data)
+        animation_data = lib.collect_animation_data()
+        for key, value in animation_data.items():
+            data[key] = value
 
-        api.merge()
+        self.data = data

@@ -14,7 +14,12 @@ def validate_name(subset):
 
 
 class ValidateSubsetName(pyblish.api.InstancePlugin):
-    """Validates subset name has only valid characters"""
+    """Adheres to the content of 'model' family
+
+    - Must have one top group named: geo_GRP
+    - Must only contain: transforms, meshes and groups
+
+    """
 
     order = colorbleed.api.ValidateContentsOrder
     families = ["*"]

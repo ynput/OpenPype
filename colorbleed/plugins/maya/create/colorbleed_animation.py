@@ -1,7 +1,5 @@
-from collections import OrderedDict
-
 import avalon.maya
-from maya import cmds
+from colorbleed.maya import lib
 
 
 class CreateAnimation(avalon.maya.Creator):
@@ -14,26 +12,22 @@ class CreateAnimation(avalon.maya.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
 
-        # get scene values as defaults
-        start = cmds.playbackOptions(query=True, animationStartTime=True)
-        end = cmds.playbackOptions(query=True, animationEndTime=True)
+        # create an ordered dict with the existing data first
+        data = lib.OrderedDict(**self.data)
 
-        # build attributes
-        attributes = OrderedDict()
-        attributes["startFrame"] = start
-        attributes["endFrame"] = end
-        attributes["handles"] = 1
-        attributes["step"] = 1.0
+        # get basic animation data : start / end / handles / steps
+        for key, value in lib.collect_animation_data().items():
+            data[key] = value
 
         # Write vertex colors with the geometry.
-        attributes["writeColorSets"] = False
+        data["writeColorSets"] = False
 
         # Include only renderable visible shapes.
         # Skips locators and empty transforms
-        attributes["renderableOnly"] = False
+        data["renderableOnly"] = False
 
         # Include only nodes that are visible at least once during the
         # frame range.
-        attributes["visibleOnly"] = False
+        data["visibleOnly"] = False
 
-        self.data = attributes
+        self.data = data
