@@ -20,6 +20,27 @@ def get_errored_instances_from_context(context):
     return instances
 
 
+def get_errored_plugins_from_data(context):
+    """Get all failed validation plugins
+
+    Args:
+        context (object):
+
+    Returns:
+        list of plugins which failed during validation
+
+    """
+
+    plugins = list()
+    results = context.data.get("results", [])
+    for result in results:
+        if result["success"] == True:
+            continue
+        plugins.append(result["plugin"])
+
+    return plugins
+
+
 class RepairAction(pyblish.api.Action):
     """Repairs the action
 
@@ -45,6 +66,31 @@ class RepairAction(pyblish.api.Action):
 
         for instance in instances:
             plugin.repair(instance)
+
+
+class RepairContextAction(pyblish.api.Action):
+    """Repairs the action
+
+    To retrieve the invalid nodes this assumes a static `repair(instance)`
+    method is available on the plugin.
+
+    """
+    label = "Repair Context"
+    on = "failed"  # This action is only available on a failed plug-in
+
+    def process(self, context, plugin):
+
+        if not hasattr(plugin, "repair"):
+            raise RuntimeError("Plug-in does not have repair method.")
+
+        # Get the errored instances
+        self.log.info("Finding failed instances..")
+        errored_plugins = get_errored_plugins_from_data(context)
+
+        # Apply pyblish.logic to get the instances for the plug-in
+        if plugin in errored_plugins:
+            self.log.info("Attempting fix ...")
+            plugin.repair()
 
 
 class SelectInvalidAction(pyblish.api.Action):
