@@ -1,4 +1,3 @@
-import pprint
 from avalon import api
 
 
@@ -138,13 +137,3 @@ class CurvesLoader(api.Loader):
                 family=family,
                 options={"useSelection": True},
                 data={"dependencies": " ".join(str(d) for d in dependencies)})
-
-
-class HistoryLoader(api.Loader):
-    """Specific loader of Curves for the avalon.animation family"""
-
-    families = ["colorbleed.animation"]
-    representations = ["history"]
-
-    def process(self, name, namespace, context):
-        raise NotImplementedError("Can't load history yet.")
