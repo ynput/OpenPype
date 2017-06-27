@@ -18,10 +18,20 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Process all the nodes in the instance"""
 
+        error = False
+
+        attributes = ["lookSets",
+                      "lookSetRelations",
+                      "lookAttributes"]
+
         if not instance[:]:
             raise RuntimeError("Instance is empty")
 
         # Required look data
-        assert "lookSets" in instance.data
-        assert "lookSetRelations" in instance.data
-        assert "lookAttributes" in instance.data
+        for attr in attributes:
+            if attr not in instance.data:
+                self.log.error("No %s found in data" % attr)
+                error = True
+
+        if error:
+            raise RuntimeError("Invalid look content. See log for details.")
