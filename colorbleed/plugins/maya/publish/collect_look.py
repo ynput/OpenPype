@@ -69,6 +69,14 @@ class CollectLook(pyblish.api.InstancePlugin):
     # Ignore specifically named sets (check with endswith)
     IGNORE = ["out_SET", "controls_SET", "_INST"]
 
+    def process(self, instance):
+        """Collect the Look in the instance with the correct layer settings"""
+
+        layer = instance.data.get("renderlayer", "defaultRenderLayer")
+        with context.renderlayer(layer):
+            self.log.info("Checking out layer: {0}".format(layer))
+            self.collect(instance)
+
     def collect(self, instance):
 
         # Whether to log information verbosely
@@ -123,7 +131,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             node_sets = [s for s in node_sets if s not in view_sets]
 
             if verbose:
-                self.log.debug("After filtering view sets {0}".format(node_sets))
+                self.log.debug("After filtering view sets %s" % node_sets)
 
             self.log.info("Found sets {0} for {1}".format(node_sets, node))
 
@@ -140,29 +148,17 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         self.log.info("Gathering set relations..")
         for objset in sets:
+
             self.log.debug("From %s.." % objset)
             content = cmds.sets(objset, query=True)
+            objset_members = sets[objset]["members"]
             for member in cmds.ls(content, long=True, absoluteName=True):
-
-                node, components = (member.rsplit(".", 1) + [None])[:2]
-
-                # Only include valid members of the instance
-                if node not in instance_lookup:
-                    if verbose:
-                        self.log.info("Skipping member %s" % member)
+                member_data = self.collect_member_data(member,
+                                                       objset_members,
+                                                       instance_lookup,
+                                                       verbose)
+                if not member_data:
                     continue
-
-                if member in [m["name"] for m in sets[objset]["members"]]:
-                    continue
-
-                if verbose:
-                    self.log.debug("Such as %s.." % member)
-
-                member_data = {"name": node, "uuid": id_utils.get_id(node)}
-
-                # Include components information when components are assigned
-                if components:
-                    member_data["components"] = components
 
                 sets[objset]["members"].append(member_data)
 
@@ -212,10 +208,41 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         self.log.info("Collected look for %s" % instance)
 
-    def process(self, instance):
-        """Collect the Look in the instance with the correct layer settings"""
+    def collect_member_data(self, member, objset_members, instance_members,
+                            verbose=False):
+        """Get all information of the node
+        Args:
+            member (str): the name of the node to check
+            objset_members (list): the objectSet members
+            instance_members (set): the collected instance members
+            verbose (bool): get debug information
 
-        layer = instance.data.get("renderlayer", "defaultRenderLayer")
-        with context.renderlayer(layer):
-            self.log.info("Checking out layer: {0}".format(layer))
-            self.collect(instance)
+        Returns:
+            dict
+
+        """
+
+        node, components = (member.rsplit(".", 1) + [None])[:2]
+
+        # Only include valid members of the instance
+        if node not in instance_members:
+            if verbose:
+                self.log.info("Skipping member %s" % member)
+            return
+
+        if member in [m["name"] for m in objset_members]:
+            return
+
+        if verbose:
+            self.log.debug("Such as %s.." % member)
+
+        member_data = {"name": node, "uuid": id_utils.get_id(node)}
+
+        # Include components information when components are assigned
+        if components:
+            member_data["components"] = components
+
+        return member_data
+
+
+
