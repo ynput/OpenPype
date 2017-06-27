@@ -15,7 +15,7 @@ class ModelLoader(api.Loader):
     icon = "code-fork"
     color = "orange"
 
-    def process(self, name, namespace, context):
+    def process(self, name, namespace, context, data):
 
         with maya.maintained_selection():
             nodes = cmds.file(
@@ -44,7 +44,7 @@ class ModelGPUCacheLoader(api.Loader):
     order = -1
     icon = "download"
 
-    def process(self, name, namespace, context):
+    def process(self, name, namespace, context, data):
 
         from maya import cmds
 

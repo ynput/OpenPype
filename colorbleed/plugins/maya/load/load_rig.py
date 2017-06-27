@@ -17,7 +17,7 @@ class RigLoader(api.Loader):
     icon = "code-fork"
     color = "orange"
 
-    def process(self, name, namespace, context):
+    def process(self, name, namespace, context, data):
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           reference=True,
@@ -28,7 +28,10 @@ class RigLoader(api.Loader):
         # Store for post-process
         self[:] = nodes
 
-    def post_process(self, name, namespace, context):
+        if data.get("post_process", True):
+            self._post_process(name, namespace, context, data)
+
+    def _post_process(self, name, namespace, context, data):
         from avalon import maya
 
         # TODO(marcus): We are hardcoding the name "out_SET" here.

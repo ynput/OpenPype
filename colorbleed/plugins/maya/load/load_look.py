@@ -16,7 +16,7 @@ class LookLoader(api.Loader):
     icon = "code-fork"
     color = "orange"
 
-    def process(self, name, namespace, context):
+    def process(self, name, namespace, context, data):
         from avalon import maya
         try:
             existing_reference = cmds.file(self.fname,
