@@ -84,7 +84,8 @@ class CollectLookTextures(pyblish.api.InstancePlugin):
         # Get textures from sets
         sets = instance.data["lookSets"]
         if not sets:
-            raise RuntimeError("No look sets found for the nodes in the instance. {0}".format(sets))
+            raise RuntimeError("No look sets found for the nodes in the "
+                               "instance. %s" % sets)
 
         # Get the file nodes
         history = cmds.listHistory(sets) or []
