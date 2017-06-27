@@ -14,19 +14,9 @@ from .plugin import (
 from .action import (
     SelectInvalidAction,
     GenerateUUIDsOnInvalidAction,
-    RepairAction
+    RepairAction,
+    RepairContextAction
 )
-
-
-def merge(*args):
-    """Helper to merge OrderedDict instances"""
-    data = OrderedDict()
-    for arg in args:
-        for key, value in arg.items():
-            data.pop(key, None)
-            data[key] = value
-    return data
-
 
 all = [
     "Extractor",

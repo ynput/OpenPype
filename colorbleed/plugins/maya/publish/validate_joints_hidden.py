@@ -81,7 +81,8 @@ class ValidateJointsHidden(pyblish.api.InstancePlugin):
     category = 'rig'
     version = (0, 1, 0)
     label = "Joints Hidden"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.api.SelectInvalidAction,
+               colorbleed.api.RepairAction]
 
     @staticmethod
     def get_invalid(instance):
@@ -93,5 +94,9 @@ class ValidateJointsHidden(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Visible joints found: "
-                             "{0}".format(invalid))
+            raise ValueError("Visible joints found: {0}".format(invalid))
+
+    @classmethod
+    def repair(cls, instance):
+        import maya.mel as mel
+        mel.eval("HideJoints")

@@ -1,5 +1,6 @@
-import avalon.maya
 from maya import cmds
+
+import avalon.maya
 
 
 class CreateRig(avalon.maya.Creator):
@@ -11,6 +12,8 @@ class CreateRig(avalon.maya.Creator):
 
     def process(self):
         instance = super(CreateRig, self).process()
+
+        self.log.info("Creating Rig instance set up ...")
 
         controls = cmds.sets(name="controls_SET", empty=True)
         pointcache = cmds.sets(name="out_SET", empty=True)
