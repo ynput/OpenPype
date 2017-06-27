@@ -12,6 +12,11 @@ class RigLoader(api.Loader):
     families = ["colorbleed.rig"]
     representations = ["ma"]
 
+    label = "Reference rig"
+    order = -10
+    icon = "code-fork"
+    color = "orange"
+
     def process(self, name, namespace, context):
         nodes = cmds.file(self.fname,
                           namespace=namespace,

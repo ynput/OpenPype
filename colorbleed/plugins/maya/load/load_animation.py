@@ -7,6 +7,11 @@ class AbcLoader(api.Loader):
     families = ["colorbleed.animation", "colorbleed.camera"]
     representations = ["abc"]
 
+    label = "Reference animation"
+    order = -10
+    icon = "code-fork"
+    color = "orange"
+
     def process(self, name, namespace, context):
         from maya import cmds
 
@@ -30,6 +35,10 @@ class CurvesLoader(api.Loader):
 
     families = ["colorbleed.animation"]
     representations = ["curves"]
+
+    label = "Import curves"
+    order = -1
+    icon = "question"
 
     def process(self, name, namespace, context):
         from maya import cmds

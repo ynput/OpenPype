@@ -8,6 +8,11 @@ class HistoryLookLoader(api.Loader):
     families = ["colorbleed.historyLookdev"]
     representations = ["ma"]
 
+    label = "Reference look history"
+    order = -10
+    icon = "code-fork"
+    color = "orange"
+
     def process(self, name, namespace, context):
         from avalon import maya
         with maya.maintained_selection():
