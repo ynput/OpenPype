@@ -65,12 +65,11 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
 
             vertex = cmds.polyEvaluate(node, vertex=True)
             if uv < vertex:
-
                 # Workaround:
                 # Maya can have instanced UVs in a single mesh, for example
-                # imported from an Alembic. With instanced UVs the UV count from
-                # `maya.cmds.polyEvaluate(uv=True)` will only result in the unique
-                # UV count instead of for all vertices.
+                # imported from an Alembic. With instanced UVs the UV count
+                # from `maya.cmds.polyEvaluate(uv=True)` will only result in
+                # the unique UV count instead of for all vertices.
                 #
                 # Note: Maya can save instanced UVs to `mayaAscii` but cannot
                 #       load this as instanced. So saving, opening and saving
@@ -90,7 +89,6 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         invalid = self.get_invalid(instance)
-
         if invalid:
             raise RuntimeError("Meshes found in instance without "
                                "valid UVs: {0}".format(invalid))

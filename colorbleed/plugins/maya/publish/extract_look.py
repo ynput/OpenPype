@@ -41,11 +41,12 @@ class ExtractLook(colorbleed.api.Extractor):
 
         # Define the texture file node remapping
         resource_remap = dict()
-        required = ["maya", "attribute", "look"]  # required tags to be a look resource
+        # required tags to be a look resource
+        required_tags = ["maya", "attribute", "look"]
         resources = instance.data.get("resources", [])
         for resource in resources:
             resource_tags = resource.get("tags", [])
-            if all(tag in resource_tags for tag in required):
+            if all(tag in resource_tags for tag in required_tags):
                 node = resource['node']
                 destination = resource['destination']
                 resource_remap["{}.fileTextureName".format(node)] = destination

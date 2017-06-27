@@ -60,7 +60,6 @@ class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Process all the transform nodes in the instance """
         invalid = self.get_invalid(instance)
-                
         if invalid:
             raise ValueError("Empty transforms found: {0}".format(invalid))
 
@@ -73,6 +72,5 @@ class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
 
         """
         invalid = cls.get_invalid(instance)
-        
         if invalid:
             cmds.delete(invalid)

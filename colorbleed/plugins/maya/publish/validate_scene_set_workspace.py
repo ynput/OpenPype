@@ -39,7 +39,8 @@ class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin):
 
         scene_name = cmds.file(query=True, sceneName=True)
         if not scene_name:
-            raise RuntimeError("Scene hasn't been saved. Workspace can't be validated.")
+            raise RuntimeError("Scene hasn't been saved. Workspace can't be "
+                               "validated.")
 
         root_dir = cmds.workspace(query=True, rootDirectory=True)
 

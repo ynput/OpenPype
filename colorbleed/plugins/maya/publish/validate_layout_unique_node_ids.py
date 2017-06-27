@@ -62,4 +62,3 @@ class ValidateLayoutUniqueNodeIds(pyblish.api.InstancePlugin):
         if invalid:
             raise RuntimeError("Transforms found with non-unique "
                                "asset IDs: {0}".format(invalid))
-

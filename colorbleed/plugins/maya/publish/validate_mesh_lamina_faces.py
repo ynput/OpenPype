@@ -6,7 +6,7 @@ import colorbleed.api
 
 class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
     """Validate meshes don't have lamina faces.
-    
+
     Lamina faces share all of their edges.
 
     """
@@ -22,7 +22,10 @@ class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
     @staticmethod
     def get_invalid(instance):
         meshes = cmds.ls(instance, type='mesh', long=True)
-        return [mesh for mesh in meshes if cmds.polyInfo(mesh, laminaFaces=True)]
+        invalid = [mesh for mesh in meshes if
+                   cmds.polyInfo(mesh, laminaFaces=True)]
+
+        return invalid
 
     def process(self, instance):
         """Process all the nodes in the instance 'objectSet'"""

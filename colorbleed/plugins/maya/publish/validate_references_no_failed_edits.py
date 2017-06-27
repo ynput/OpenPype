@@ -1,7 +1,7 @@
-import pyblish.api
-import colorbleed.api
 from maya import cmds
 
+import pyblish.api
+import colorbleed.api
 
 
 class RepairFailedEditsAction(pyblish.api.Action):
@@ -10,7 +10,6 @@ class RepairFailedEditsAction(pyblish.api.Action):
     icon = "wrench"  # Icon from Awesome Icon
 
     def process(self, context, plugin):
-        from maya import cmds
         self.log.info("Finding bad nodes..")
 
         # Get the errored instances
@@ -108,7 +107,6 @@ class ValidateReferencesNoFailedEdits(pyblish.api.InstancePlugin):
         """Process all the nodes in the instance"""
 
         invalid = self.get_invalid(instance)
-
         if invalid:
             raise ValueError("Reference nodes found with failed "
                              "reference edits: {0}".format(invalid))

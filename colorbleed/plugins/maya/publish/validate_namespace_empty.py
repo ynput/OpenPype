@@ -1,6 +1,7 @@
+from maya import cmds
+
 import pyblish.api
 import colorbleed.api
-from maya import cmds
 
 
 class ValidateNamespaceEmpty(pyblish.api.ContextPlugin):
@@ -8,7 +9,7 @@ class ValidateNamespaceEmpty(pyblish.api.ContextPlugin):
 
     This is a scene wide validation that filters out "UI" and "shared"
     namespaces that exist by default in Maya and are mostly hidden.
-    
+
     A namespace that has other namespaces in it is *not* considered empty.
     Only those that have no children namespaces or nodes is considered empty.
 
@@ -35,5 +36,4 @@ class ValidateNamespaceEmpty(pyblish.api.ContextPlugin):
             if not namespace_content:
                 invalid.append(namespace)
 
-        assert not invalid, (
-            "Empty namespaces found: {0}".format(invalid))
+        assert not invalid, ("Empty namespaces found: {0}".format(invalid))

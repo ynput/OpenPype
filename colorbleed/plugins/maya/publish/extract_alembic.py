@@ -87,7 +87,8 @@ class ExtractAlembic(colorbleed.api.Extractor):
 
         return {"startFrame": float,
                 "endFrame": float,
-                "frameRange": str,  # "start end"; overrides startFrame & endFrame
+                "frameRange": str,
+                # "start end"; overrides startFrame & endFrame
                 "eulerFilter": bool,
                 "frameRelativeSample": float,
                 "noNormals": bool,
@@ -154,7 +155,7 @@ class ExtractAlembic(colorbleed.api.Extractor):
 
         verbose = instance.data('verbose', False)
         if verbose:
-            self.log.debug('Alembic job string: "%s"'% job_str)
+            self.log.debug('Alembic job string: "%s"' % job_str)
 
         if not os.path.exists(parent_dir):
             os.makedirs(parent_dir)

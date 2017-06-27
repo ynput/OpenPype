@@ -9,22 +9,21 @@ import colorbleed.api
 
 def get_gpu_cache_subnodes(cache):
     """Return the amount of subnodes in the cache
-    
+
     This uses `maya.cmds.gpuCache(showStats=True)` and parses
     the resulting stats for the amount of internal sub nodes.
-    
+
     Args:
         cache (str): gpuCache node name.
-    
+
     Returns:
         int: Amount of subnodes in loaded gpuCache
-        
+
     Raises:
         TypeError: when `cache` is not a gpuCache object type.
         RuntimeError: when `maya.cmds.gpuCache(showStats=True)`
             does not return stats from which we can parse the
             amount of subnodes.
-        
     """
 
     # Ensure gpuCache
@@ -65,10 +64,9 @@ def get_empty_gpu_caches(caches):
 
 class ValidateGPUCacheNotEmpty(pyblish.api.InstancePlugin):
     """Validates that gpuCaches have at least one visible shape in them.
-    
+
     This is tested using the `maya.cmds.gpuCache(cache, showStats=True)` 
     command.
-    
     """
 
     order = colorbleed.api.ValidateContentsOrder
@@ -78,14 +76,12 @@ class ValidateGPUCacheNotEmpty(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-
         caches = cmds.ls(instance, type="gpuCache", long=True)
         invalid = get_empty_gpu_caches(caches)
 
         return invalid
 
     def process(self, instance):
-
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("Invalid nodes found: {0}".format(invalid))

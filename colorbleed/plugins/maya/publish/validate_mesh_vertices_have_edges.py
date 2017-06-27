@@ -39,21 +39,21 @@ def len_flattened(components):
 
 class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
     """Validate meshes have only vertices that are connected by to edges.
-    
+
     Maya can have invalid geometry with vertices that have no edges or
     faces connected to them.
-    
+
     In Maya 2016 EXT 2 and later there's a command to fix this:
         `maya.cmds.polyClean(mesh, cleanVertices=True)
-        
+
     In older versions of Maya it works to select the invalid vertices
     and merge the components. 
-    
+
     To find these invalid vertices select all vertices of the mesh 
     that are visible in the viewport (drag to select), afterwards
     invert your selection (Ctrl + Shift + I). The remaining selection 
     contains the invalid vertices.
-        
+
     """
 
     order = colorbleed.api.ValidateMeshOrder

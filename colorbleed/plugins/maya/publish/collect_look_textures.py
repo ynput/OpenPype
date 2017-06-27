@@ -150,5 +150,3 @@ class CollectLookTextures(pyblish.api.InstancePlugin):
                     }
 
         return resource
-
-

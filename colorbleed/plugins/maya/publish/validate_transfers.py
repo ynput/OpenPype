@@ -33,13 +33,13 @@ class ValidateTransfers(pyblish.api.InstancePlugin):
         for destination, sources in collected.items():
             if len(sources) > 1:
                 if verbose:
-                    self.log.error("Non-unique file transfer for resources: {0} "
-                                   "(sources: {1})".format(destination, sources))
+                    self.log.error("Non-unique file transfer for resources: "
+                                   "{0} (sources: {1})".format(destination,
+                                                               sources))
                 invalid = True
                 invalid_destinations.append(destination)
 
         if invalid:
-
             if not verbose:
                 # If not verbose then still log the resource destination as
                 # opposed to every individual file transfer

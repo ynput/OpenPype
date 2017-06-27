@@ -71,4 +71,3 @@ class ValidateInstancerContent(pyblish.api.InstancePlugin):
             return False
 
         return True
-

@@ -4,6 +4,7 @@ import colorbleed.api
 import pyblish_maya
 
 import cb.utils.maya.dag as dag
+import cbra.utils.maya.layout as layout
 
 
 class ValidateLayoutContent(pyblish.api.InstancePlugin):
@@ -30,14 +31,14 @@ class ValidateLayoutContent(pyblish.api.InstancePlugin):
         placeholder = instance.data.get("placeholder", False)
 
         # Ensure any meshes or gpuCaches in instance
-        if not cmds.ls(instance, type=("mesh", "gpuCache", "nurbsCurve"), long=True):
-            raise RuntimeError("Layout has no mesh, gpuCache or nurbsCurve children: "
-                               "{0}".format(instance))
+        if not cmds.ls(instance, type=("mesh", "gpuCache", "nurbsCurve"),
+                       long=True):
+            raise RuntimeError(
+                "Layout has no mesh, gpuCache or nurbsCurve children: "
+                "{0}".format(instance))
 
         # Ensure at least any extract nodes readily available after filtering
         with pyblish_maya.maintained_selection():
-
-            import cbra.utils.maya.layout as layout
 
             nodes = instance.data['setMembers']
             cmds.select(nodes, r=1, hierarchy=True)
@@ -84,4 +85,3 @@ class ValidateLayoutContent(pyblish.api.InstancePlugin):
                 raise RuntimeError("No extract shape is visible. "
                                    "Layout requires at least one "
                                    "shape to be visible.")
-

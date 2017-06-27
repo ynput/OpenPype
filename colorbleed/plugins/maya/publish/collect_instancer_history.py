@@ -31,14 +31,14 @@ class CollectInstancerHistory(pyblish.api.InstancePlugin):
         export.extend(particles)
         if particles:
             self.log.info("Particles: {0}".format(particles))
-            
+
             particles_history = cmds.listHistory(particles) or []
             self.log.debug("Particle history: {0}".format(particles_history))
-            
+
             nucleus = cmds.ls(particles_history, long=True, type="nucleus")
             self.log.info("Collected nucleus: {0}".format(nucleus))
             export.extend(nucleus)
-            
+
             caches = cmds.ls(particles_history, long=True, type="cacheFile")
             self.log.info("Collected caches: {0}".format(caches))
             export.extend(caches)
