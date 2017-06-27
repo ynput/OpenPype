@@ -1,6 +1,7 @@
 from maya import cmds
 
 from avalon import api
+from avalon import maya
 
 
 class ModelLoader(api.Loader):
@@ -14,7 +15,7 @@ class ModelLoader(api.Loader):
     representations = ["ma"]
 
     def process(self, name, namespace, context):
-        from avalon import maya
+
         with maya.maintained_selection():
             nodes = cmds.file(
                 self.fname,
@@ -22,7 +23,7 @@ class ModelLoader(api.Loader):
                 reference=True,
                 returnNewNodes=True,
                 groupReference=True,
-                groupName=namespace + ":" + name
+                groupName="{}:{}".format(namespace, name)
             )
 
         # Assign default shader to meshes
