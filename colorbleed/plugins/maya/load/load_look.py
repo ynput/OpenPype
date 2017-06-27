@@ -11,6 +11,11 @@ class LookLoader(api.Loader):
     families = ["colorbleed.lookdev"]
     representations = ["ma"]
 
+    label = "Reference look"
+    order = -10
+    icon = "code-fork"
+    color = "orange"
+
     def process(self, name, namespace, context):
         from avalon import maya
         try:
