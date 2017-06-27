@@ -1,3 +1,5 @@
+from maya import cmds
+
 import pyblish.api
 import colorbleed.api
 
@@ -19,17 +21,14 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        from maya import cmds
-
-        objsets = ("controls_SET", "out_SET")
+        objectsets = ("controls_SET", "out_SET")
 
         missing = list()
-        for objset in objsets:
-            if objset not in instance:
-                missing.append(objset)
+        for objectset in objectsets:
+            if objectset not in instance:
+                missing.append(objectset)
 
-        assert not missing, ("%s is missing %s"
-                             % (instance, missing))
+        assert not missing, ("%s is missing %s" % (instance, missing))
 
         # Ensure there are at least some transforms or dag nodes
         # in the rig instance
