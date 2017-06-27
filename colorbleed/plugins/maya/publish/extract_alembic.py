@@ -159,6 +159,11 @@ class ExtractAlembic(colorbleed.api.Extractor):
 
         if not os.path.exists(parent_dir):
             os.makedirs(parent_dir)
+        # import pprint
+        # print("START DEBUG")
+        # print(">>> SET MEMBERS")
+        # pprint.pprint(instance.data["setMembers"])
+        # print("END DEBUG")
 
         with suspension():
             with pyblish_maya.maintained_selection():
@@ -227,7 +232,7 @@ class ExtractAlembic(colorbleed.api.Extractor):
                 for entry in value:
                     job_args.append("-%s %s" % (key, entry))
             elif isinstance(value, bool):
-                job_args.append("%s" % key)
+                job_args.append("-%s" % key)
             else:
                 job_args.append("-%s %s" % (key, value))
 
