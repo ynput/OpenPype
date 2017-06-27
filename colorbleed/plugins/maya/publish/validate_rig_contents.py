@@ -1,3 +1,5 @@
+from maya import cmds
+
 import pyblish.api
 import colorbleed.api
 
@@ -14,58 +16,155 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
     order = colorbleed.api.ValidateContentsOrder
     label = "Rig Contents"
     hosts = ["maya"]
-    families = ["colorbleed.rig", "colorbleed.rigcontrols",
-                "colorbleed.rigpointcache"]
+    families = ["colorbleed.rig"]
+
+    accepted_output = ["mesh", "transform"]
+    accepted_controllers = ["transform"]
+    ignore_nodes = []
+
+    invalid_hierarchy = []
+    invalid_controls = []
+    invalid_geometry = []
 
     def process(self, instance):
 
-        from maya import cmds
+        error = False
 
-        objsets = ("controls_SET", "out_SET")
-
-        missing = list()
-        for objset in objsets:
-            if objset not in instance:
-                missing.append(objset)
-
-        assert not missing, ("%s is missing %s"
-                             % (instance, missing))
+        objectsets = ("controls_SET", "out_SET")
+        missing = [obj for obj in objectsets if obj not in instance]
+        assert not missing, ("%s is missing %s" % (instance, missing))
 
         # Ensure there are at least some transforms or dag nodes
         # in the rig instance
+        set_members = self.check_set_members(instance)
+
+        self.log.info("Evaluating contents of object sets..")
+
+        # Ensure contents in sets and retrieve long path for all objects
+        output_content = cmds.sets("out_SET", query=True) or []
+        assert output_content, "Must have members in rig out_SET"
+
+        controls_content = cmds.set("controls_SET", query=True) or []
+        assert controls_content, "Must have members in rig controls_SET"
+
+        root_node = cmds.ls(set_members, assemblies=True)
+        hierarchy = cmds.listRelatives(root_node, allDescendents=True,
+                                       fullPath=True)
+
+        self.invalid_geometry = self.validate_geometry(output_content,
+                                                       hierarchy)
+        self.invalid_controls = self.validate_controls(controls_content,
+                                                       hierarchy)
+
+        if self.invalid_hierachy:
+            self.log.error("Found nodes which reside outside of root group "
+                           "while they are set up for publishing."
+                           "\n%s" % self.invalid_hierachy)
+            error = True
+
+        if self.not_transforms:
+            self.log.error("Only transforms can be part of the controls_SET."
+                           "\n%s" % self.not_transforms)
+            error = True
+
+        if self.invalid_geometry:
+            self.log.error("Only meshes can be part of the out_SET\n%s"
+                           % self.invalid_geometry)
+            error = True
+
+        if error:
+            raise RuntimeError("Invalid rig content. See log for details.")
+
+    def check_set_members(self, instance):
+        """Check if the instance has any dagNodes
+        Args:
+            instance: the instance which needs to be published
+        Returns:
+            set_members (list): all dagNodes from instance
+        """
+
         set_members = instance.data['setMembers']
         if not cmds.ls(set_members, type="dagNode", long=True):
             raise RuntimeError("No dag nodes in the pointcache instance. "
                                "(Empty instance?)")
+        return set_members
 
-        self.log.info("Evaluating contents of object sets..")
-        not_meshes = list()
+    def validate_hierarchy(self, hierarchy, nodes):
+        """Collect all nodes which are NOT within the hierarchy
+        Args:
+            hierarchy (list): nodes within the root node
+            nodes (list): nodes to check
 
-        # Ensure contents in sets
-        members = cmds.sets("out_SET", query=True) or []
-        assert members, "Must have members in rig out_SET"
+        Returns:
+            errors (list): list of nodes
+        """
+        errors = []
+        for node in nodes:
+            if node not in hierarchy:
+                errors.append(node)
+        return errors
 
-        controls = cmds.sets("controls_SET", query=True) or []
-        assert controls, "Must have controls in rig control_SET"
+    def validate_geometry(self, set_members, hierarchy):
+        """Check if the out set passes the validations
 
+        Checks if all its set members are within the hierarchy of the root
+        Checks if the node types of the set members valid
+
+        Args:
+            set_members: list of nodes of the controls_set
+            hierarchy: list of nodes which reside under the root node
+
+        Returns:
+            errors (list)
+        """
+
+        errors = []
         # Validate the contents further
-        shapes = cmds.listRelatives(members,
+        shapes = cmds.listRelatives(set_members,
                                     allDescendents=True,
                                     shapes=True,
                                     fullPath=True) or []
-        for shape in shapes:
-            if cmds.nodeType(shape) != "mesh":
-                not_meshes.append(shape)
 
-        not_transforms = list()
-        for node in cmds.sets("controls_SET", query=True) or []:
-            if cmds.nodeType(node) != "transform":
-                not_meshes.append(node)
+        # The user can add the shape node to the out_set, this will result
+        # in none when querying allDescendents
+        all_shapes = set_members + shapes
 
-        assert not_transforms == [], (
-            "Only transforms can be part of the controls_SET: %s"
-            % not_transforms)
+        # geometry
+        invalid_shapes = self.validate_hierarchy(hierarchy, all_shapes)
+        self.invalid_hierachy.extend(invalid_shapes)
+        for shape in all_shapes:
+            nodetype = cmds.nodeType(shape)
+            if nodetype in self.ignore_nodes:
+                continue
 
-        assert not_meshes == [], (
-            "Only meshes can be part of the out_SET: %s"
-            % not_meshes)
+            if nodetype not in self.accepted_output:
+                errors.append(shape)
+
+        return errors
+
+    def validate_controls(self, set_members, hierarchy):
+        """Check if the controller set passes the validations
+
+        Checks if all its set members are within the hierarchy of the root
+        Checks if the node types of the set members valid
+
+        Args:
+            set_members: list of nodes of the controls_set
+            hierarchy: list of nodes which reside under the root node
+
+        Returns:
+            errors (list)
+        """
+
+        errors = []
+        invalid_controllers = self.validate_hierarchy(hierarchy, set_members)
+        self.invalid_hierachy.extend(invalid_controllers)
+        for node in set_members:
+            nodetype = cmds.nodeType(node)
+            if nodetype in self.ignore_nodes:
+                continue
+
+            if nodetype not in self.accepted_controllers:
+                errors.append(node)
+
+        return errors

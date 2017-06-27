@@ -1,6 +1,7 @@
-import pyblish.api
 import maya.cmds as cmds
-import cb.utils.maya.dag as dag
+
+import pyblish.api
+import colorbleed.maya.lib as lib
 
 
 class ValidateInstancerContent(pyblish.api.InstancePlugin):
@@ -15,7 +16,7 @@ class ValidateInstancerContent(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        invalid = False
+        error = False
         members = instance.data['setMembers']
         export_members = instance.data['exactExportMembers']
 
@@ -23,42 +24,22 @@ class ValidateInstancerContent(pyblish.api.InstancePlugin):
 
         if not len(members) == len(cmds.ls(members, type="instancer")):
             self.log.error("Instancer can only contain instancers")
-            invalid = True
+            error = True
 
         # TODO: Implement better check for particles are cached
         if not cmds.ls(export_members, type="nucleus"):
             self.log.error("Instancer must have a connected nucleus")
-            invalid = True
+            error = True
 
         if not cmds.ls(export_members, type="cacheFile"):
             self.log.error("Instancer must be cached")
-            invalid = True
+            error = True
 
-        # Ensure all instanced geometry is hidden
-        shapes = cmds.ls(export_members,
-                         dag=True, shapes=True,
-                         noIntermediate=True)
-        meshes = cmds.ls(shapes, type="mesh")
-
-        def invalidate(node):
-            """Whether mesh is in a valid state
-
-            Arguments:
-                node (str): The node to check
-
-            Returns:
-                bool: Whether it is in a valid state.
-
-            """
-            return dag.is_visible(node,
-                                  displayLayer=False,
-                                  intermediateObject=False)
-
-        visible = [node for node in meshes if invalidate(node)]
-        if visible:
+        hidden = self.check_geometry_hidden(export_members)
+        if not hidden:
+            error = True
             self.log.error("Instancer input geometry must be hidden "
-                           "the scene. Invalid: {0}".format(visible))
-            invalid = True
+                           "the scene. Invalid: {0}".format(hidden))
 
         # Ensure all in one group
         parents = cmds.listRelatives(members,
@@ -68,7 +49,26 @@ class ValidateInstancerContent(pyblish.api.InstancePlugin):
         if len(roots) > 1:
             self.log.error("Instancer should all be contained in a single "
                            "group. Current roots: {0}".format(roots))
-            invalid = True
+            error = True
 
-        if invalid:
+        if error:
             raise RuntimeError("Instancer Content is invalid. See log.")
+
+    def check_geometry_hidden(self, export_members):
+
+        # Ensure all instanced geometry is hidden
+        shapes = cmds.ls(export_members,
+                         dag=True,
+                         shapes=True,
+                         noIntermediate=True)
+        meshes = cmds.ls(shapes, type="mesh")
+
+        visible = [node for node in meshes
+                   if lib.is_visible(node,
+                                     displayLayer=False,
+                                     intermediateObject=False)]
+        if visible:
+            return False
+
+        return True
+

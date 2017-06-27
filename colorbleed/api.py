@@ -12,21 +12,13 @@ from .plugin import (
 
 # temporary fix, might
 from .action import (
+
+    get_errored_instances_from_context,
     SelectInvalidAction,
     GenerateUUIDsOnInvalidAction,
-    RepairAction
+    RepairAction,
+    RepairContextAction
 )
-
-
-def merge(*args):
-    """Helper to merge OrderedDict instances"""
-    data = OrderedDict()
-    for arg in args:
-        for key, value in arg.items():
-            data.pop(key, None)
-            data[key] = value
-    return data
-
 
 all = [
     "Extractor",
@@ -34,7 +26,8 @@ all = [
     "ValidateContentsOrder",
     "ValidateSceneOrder",
     "ValidateMeshOrder",
-
+    # action
+    "get_errored_instances_from_context",
     "SelectInvalidAction",
     "GenerateUUIDsOnInvalidAction",
     "RepairAction"

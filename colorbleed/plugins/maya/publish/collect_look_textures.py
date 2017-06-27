@@ -31,26 +31,11 @@ class SelectTextureNodesAction(pyblish.api.Action):
         # Apply pyblish.logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(instances, plugin)
 
-        def is_texture_resource(resource):
-            """Return whether the resource is a texture"""
-
-            tags = resource.get("tags", [])
-            if not TAGS_LOOKUP.issubset(tags):
-                return False
-
-            if resource.get("subfolder", None) != "textures":
-                return False
-
-            if "node" not in resource:
-                return False
-
-            return True
-
         # Get the texture nodes from the instances
         nodes = []
         for instance in instances:
             for resource in instance.data.get("resources", []):
-                if is_texture_resource(resource):
+                if self.is_texture_resource(resource):
                     node = resource['node']
                     nodes.append(node)
 
@@ -63,6 +48,21 @@ class SelectTextureNodesAction(pyblish.api.Action):
         else:
             self.log.info("No texture nodes found.")
             cmds.select(deselect=True)
+
+    def is_texture_resource(self, resource):
+        """Return whether the resource is a texture"""
+
+        tags = resource.get("tags", [])
+        if not TAGS_LOOKUP.issubset(tags):
+            return False
+
+        if resource.get("subfolder", None) != "textures":
+            return False
+
+        if "node" not in resource:
+            return False
+
+        return True
 
 
 class CollectLookTextures(pyblish.api.InstancePlugin):
@@ -84,7 +84,8 @@ class CollectLookTextures(pyblish.api.InstancePlugin):
         # Get textures from sets
         sets = instance.data["lookSets"]
         if not sets:
-            raise RuntimeError("No look sets found for the nodes in the instance. {0}".format(sets))
+            raise RuntimeError("No look sets found for the nodes in the "
+                               "instance. %s" % sets)
 
         # Get the file nodes
         history = cmds.listHistory(sets) or []
@@ -93,43 +94,61 @@ class CollectLookTextures(pyblish.api.InstancePlugin):
 
         resources = instance.data.get("resources", [])
         for node in files:
-
-            attribute = "%s.fileTextureName" % node
-            source = cmds.getAttr(attribute)
-
-            # Get the computed file path (e.g. the one with the <UDIM> pattern
-            # in it) So we can reassign it this computed file path whenever
-            # we need to.
-            computed_attribute = "%s.computedFileTextureNamePattern" % node
-            computed_source = cmds.getAttr(computed_attribute)
-            if source != computed_source:
-                if verbose:
-                    self.log.debug("File node computed pattern differs from "
-                                   "original pattern: {0} "
-                                   "({1} -> {2})".format(node,
-                                                         source,
-                                                         computed_source))
-
-                # We replace backslashes with forward slashes because V-Ray
-                # can't handle the UDIM files with the backslashes in the
-                # paths as the computed patterns
-                source = computed_source.replace("\\", "/")
-
-            files = shader.get_file_node_files(node)
-            if not files:
-                self.log.error("File node does not have a texture set: "
-                               "{0}".format(node))
-
-            # Define the resource
-            resource = {"tags": TAGS[:],
-                        "node": node,
-                        "attribute": attribute,
-                        "source": source,  # required for resources
-                        "files": files,  # required for resources
-                        "subfolder": "textures"  # optional for resources
-                        }
-
+            resource = self.collect_resources(node, verbose)
+            if not resource:
+                continue
             resources.append(resource)
 
         # Store resources
         instance.data['resources'] = resources
+
+    def collect_resources(self, node, verbose=False):
+        """Collect the link to the file(s) used (resource)
+        Args:
+            node (str): name of the node
+            verbose (bool): enable debug information
+
+        Returns:
+            dict
+        """
+
+        attribute = "{}.fileTextureName".format(node)
+        source = cmds.getAttr(attribute)
+
+        # Get the computed file path (e.g. the one with the <UDIM> pattern
+        # in it) So we can reassign it this computed file path whenever
+        # we need to.
+
+        computed_attribute = "{}.computedFileTextureNamePattern".format(node)
+        computed_source = cmds.getAttr(computed_attribute)
+        if source != computed_source:
+            if verbose:
+                self.log.debug("File node computed pattern differs from "
+                               "original pattern: {0} "
+                               "({1} -> {2})".format(node,
+                                                     source,
+                                                     computed_source))
+
+            # We replace backslashes with forward slashes because V-Ray
+            # can't handle the UDIM files with the backslashes in the
+            # paths as the computed patterns
+            source = computed_source.replace("\\", "/")
+
+        files = shader.get_file_node_files(node)
+        if not files:
+            self.log.error("File node does not have a texture set: "
+                           "{0}".format(node))
+            return
+
+        # Define the resource
+        resource = {"tags": TAGS[:],
+                    "node": node,
+                    "attribute": attribute,
+                    "source": source,  # required for resources
+                    "files": files,  # required for resources
+                    "subfolder": "textures"  # optional for resources
+                    }
+
+        return resource
+
+
