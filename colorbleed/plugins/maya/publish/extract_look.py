@@ -3,7 +3,7 @@ import json
 
 from maya import cmds
 
-import pyblish_maya
+import avalon.maya
 import colorbleed.api
 
 import cb.utils.maya.context as context
@@ -56,7 +56,7 @@ class ExtractLook(colorbleed.api.Extractor):
             # TODO: Ensure membership edits don't become renderlayer overrides
             with context.empty_sets(sets):
                 with context.attribute_values(resource_remap):
-                    with pyblish_maya.maintained_selection():
+                    with avalon.maya.maintained_selection():
                         cmds.select(sets, noExpand=True)
                         cmds.file(maya_path,
                                   force=True,

@@ -1,7 +1,7 @@
 import pyblish.api
 import maya.cmds as cmds
 import colorbleed.api
-import pyblish_maya
+import avalon.maya
 
 import cb.utils.maya.dag as dag
 
@@ -35,7 +35,7 @@ class ValidateLayoutContent(pyblish.api.InstancePlugin):
                                "{0}".format(instance))
 
         # Ensure at least any extract nodes readily available after filtering
-        with pyblish_maya.maintained_selection():
+        with avalon.maya.maintained_selection():
 
             import cbra.utils.maya.layout as layout
 

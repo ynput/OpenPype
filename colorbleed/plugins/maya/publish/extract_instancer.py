@@ -3,7 +3,7 @@ import contextlib
 
 import maya.cmds as cmds
 
-import pyblish_maya
+import avalon.maya
 import colorbleed.api
 
 import cb.utils.maya.context as context
@@ -125,7 +125,7 @@ class ExtractInstancerMayaAscii(colorbleed.api.Extractor):
 
         # Perform extraction
         self.log.info("Performing extraction..")
-        with pyblish_maya.maintained_selection():
+        with avalon.maya.maintained_selection():
             with cache_file_paths(cache_remap):
                 with context.attribute_values(attr_remap):
                     cmds.select(export, noExpand=True)

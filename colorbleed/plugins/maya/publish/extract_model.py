@@ -2,7 +2,7 @@ import os
 
 from maya import cmds
 
-import pyblish_maya
+import avalon.maya
 import colorbleed.api
 
 from cb.utils.maya import context
@@ -57,7 +57,7 @@ class ExtractModel(colorbleed.api.Extractor):
                                            polygonObject=1):
                 with context.shader(members,
                                     shadingEngine="initialShadingGroup"):
-                    with pyblish_maya.maintained_selection():
+                    with avalon.maya.maintained_selection():
                         cmds.select(members, noExpand=True)
                         cmds.file(path,
                                   force=True,

@@ -4,7 +4,7 @@ import contextlib
 
 from maya import cmds
 
-import pyblish_maya
+import avalon.maya
 import colorbleed.api
 
 
@@ -160,7 +160,7 @@ class ExtractAlembic(colorbleed.api.Extractor):
             os.makedirs(parent_dir)
 
         with suspension():
-            with pyblish_maya.maintained_selection():
+            with avalon.maya.maintained_selection():
                 self.log.debug(
                     "Preparing %s for export using the following options: %s\n"
                     "and the following string: %s"

@@ -2,7 +2,7 @@ import os
 
 from maya import cmds
 
-import pyblish_maya
+import avalon.maya
 import colorbleed.api
 
 import cb.utils.maya.context as context
@@ -83,7 +83,7 @@ class ExtractCameraBaked(colorbleed.api.Extractor):
         path = os.path.join(dir_path, filename)
 
         self.log.info("Performing extraction..")
-        with pyblish_maya.maintained_selection():
+        with avalon.maya.maintained_selection():
             cmds.select(baked_shapes, noExpand=True)
             cmds.file(path,
                       force=True,
@@ -116,7 +116,7 @@ class ExtractCameraBaked(colorbleed.api.Extractor):
         # we *do not* publish a baked camera we want to keep it enabled. This
         # way what the artist has in the scene visually represents the output.
         with context.timewarp(state=not alembic_as_baked):
-            with pyblish_maya.maintained_selection():
+            with avalon.maya.maintained_selection():
                 cmds.select(abc_shapes, replace=True, noExpand=True)
 
                 # Enforce forward slashes for AbcExport because we're
