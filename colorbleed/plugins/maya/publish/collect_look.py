@@ -243,6 +243,3 @@ class CollectLook(pyblish.api.InstancePlugin):
             member_data["components"] = components
 
         return member_data
-
-
-
