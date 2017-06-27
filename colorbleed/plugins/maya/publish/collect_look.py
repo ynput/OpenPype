@@ -83,63 +83,11 @@ class CollectLook(pyblish.api.InstancePlugin):
         verbose = instance.data.get("verbose", False)
 
         self.log.info("Looking for look associations "
-                      "for {0}..".format(instance.data['label']))
-
-        # Get view sets (so we can ignore those sets later)
-        model_panels = cmds.getPanel(type="modelPanel")
-        view_sets = set()
-
-        for panel in model_panels:
-            view_set = cmds.modelEditor(panel, query=True, viewObjects=True)
-            if view_set:
-                view_sets.add(view_set)
+                      "for %s" % instance.data['label'])
 
         # Discover related object sets
         self.log.info("Gathering sets..")
-        sets = dict()
-        for node in instance:
-
-            node_sets = cmds.listSets(object=node, extendToShape=False) or []
-            if verbose:
-                self.log.info("Found raw sets "
-                              "{0} for {1}".format(node_sets, node))
-
-            if not node_sets:
-                continue
-
-            # Exclude deformer sets
-            deformer_sets = cmds.listSets(object=node,
-                                          extendToShape=False,
-                                          type=2) or []
-            deformer_sets = set(deformer_sets)  # optimize lookup
-            node_sets = [s for s in node_sets if s not in deformer_sets]
-
-            if verbose:
-                self.log.debug("After filtering deformer sets "
-                               "{0}".format(node_sets))
-
-            # Ignore specifically named sets
-            node_sets = [s for s in node_sets if
-                         not any(s.endswith(x) for x in self.IGNORE)]
-
-            if verbose:
-                self.log.debug("After filtering ignored sets "
-                               "{0}".format(node_sets))
-
-            # Ignore viewport filter view sets (from isolate select and
-            # viewports)
-            node_sets = [s for s in node_sets if s not in view_sets]
-
-            if verbose:
-                self.log.debug("After filtering view sets %s" % node_sets)
-
-            self.log.info("Found sets {0} for {1}".format(node_sets, node))
-
-            for objset in node_sets:
-                if objset not in sets:
-                    sets[objset] = {"name": objset,
-                                    "uuid": id_utils.get_id(objset),
-                                    "members": list()}
+        self.gather_sets(instance)
 
         # Lookup with absolute names (from root namespace)
         instance_lookup = set([str(x) for x in cmds.ls(instance,
@@ -147,6 +95,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                                                        absoluteName=True)])
 
         self.log.info("Gathering set relations..")
+        sets = self.gather_sets(instance)
         for objset in sets:
 
             self.log.debug("From %s.." % objset)
@@ -163,40 +112,15 @@ class CollectLook(pyblish.api.InstancePlugin):
                 sets[objset]["members"].append(member_data)
 
         # Remove sets that didn't have any members assigned in the end
-        for objset, data in sets.items():
-            if not data['members']:
-                self.log.debug("Removing redundant set "
-                               "information: {0}".format(objset))
-                sets.pop(objset)
-
+        sets = self.clean_sets(sets)
         # Member attributes (shapes + transforms)
 
         self.log.info("Gathering attribute changes to instance members..")
-        attrs = []
-        for node in instance:
 
-            # Collect changes to "custom" attributes
-            node_attrs = get_look_attrs(node)
-
-            # Only include if there are any properties we care about
-            if not node_attrs:
-                continue
-
-            attributes = {}
-            for attr in node_attrs:
-                attribute = "{}.{}".format(node, attr)
-                attributes[attr] = cmds.getAttr(attribute)
-
-            # attributes = dict((attr, pm.getAttr("{}.{}".format(node, attr))
-            #                    for attr in node_attrs))
-            data = {"name": node,
-                    "uuid": id_utils.get_id(node),
-                    "attributes": attributes}
-
-            attrs.append(data)
+        attributes = self.collect_attributes_changes(instance)
 
         # Store data on the instance
-        instance.data["lookAttributes"] = attrs
+        instance.data["lookAttributes"] = attributes
         instance.data["lookSetRelations"] = sets.values()
         instance.data["lookSets"] = cmds.ls(sets.keys(),
                                             absoluteName=True,
@@ -204,9 +128,68 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Log a warning when no relevant sets were retrieved for the look.
         if not instance.data['lookSets']:
-            self.log.warning("No sets found for the nodes in the instance: {0}".format(instance[:]))
+            self.log.warning("No sets found for the nodes in the instance: "
+                             "%s" % instance[:])
 
         self.log.info("Collected look for %s" % instance)
+
+    def gather_sets(self, instance):
+
+        # Get view sets (so we can ignore those sets later)
+        sets = dict()
+        view_sets = set()
+        model_panels = cmds.getPanel(type="modelPanel")
+        for panel in model_panels:
+            view_set = cmds.modelEditor(panel, query=True, viewObjects=True)
+            if view_set:
+                view_sets.add(view_set)
+
+        for node in instance:
+            node_sets = self.filter_sets(node, view_sets)
+            if not node_sets:
+                continue
+
+            for objset in node_sets:
+                if objset in sets:
+                    continue
+                sets[objset] = {"name": objset,
+                                "uuid": id_utils.get_id(objset),
+                                "members": list()}
+        return sets
+
+    def filter_sets(self, node, view_sets):
+
+        node_sets = cmds.listSets(object=node, extendToShape=False) or []
+        if not node_sets:
+            return
+
+        # Exclude deformer sets
+        deformer_sets = cmds.listSets(object=node,
+                                      extendToShape=False,
+                                      type=2) or []
+        deformer_sets = set(deformer_sets)  # optimize lookup
+        sets = [s for s in node_sets if s not in deformer_sets]
+
+        # Ignore specifically named sets
+        sets = [s for s in sets if not any(s.endswith(x) for x in self.IGNORE)]
+
+        # Ignore viewport filter view sets (from isolate select and
+        # viewports)
+        sets = [s for s in sets if s not in view_sets]
+
+        self.log.info("Found sets {0} for {1}".format(node_sets, node))
+
+        return sets
+
+    def clean_sets(self, sets):
+
+        for objset, data in sets.items():
+            if not data['members']:
+                self.log.debug("Removing redundant set "
+                               "information: %s" % objset)
+                sets.pop(objset)
+
+        return sets
 
     def collect_member_data(self, member, objset_members, instance_members,
                             verbose=False):
@@ -243,3 +226,28 @@ class CollectLook(pyblish.api.InstancePlugin):
             member_data["components"] = components
 
         return member_data
+
+    def collect_attributes_changes(self, instance):
+
+        attributes = []
+        for node in instance:
+
+            # Collect changes to "custom" attributes
+            node_attrs = get_look_attrs(node)
+
+            # Only include if there are any properties we care about
+            if not node_attrs:
+                continue
+
+            node_attributes = {}
+            for attr in node_attrs:
+                attribute = "{}.{}".format(node, attr)
+                node_attributes[attr] = cmds.getAttr(attribute)
+
+            data = {"name": node,
+                    "uuid": id_utils.get_id(node),
+                    "attributes": node_attributes}
+
+            attributes.append(data)
+
+        return attributes
