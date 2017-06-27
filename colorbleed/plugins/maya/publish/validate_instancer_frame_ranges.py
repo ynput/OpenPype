@@ -1,3 +1,5 @@
+import os
+import re
 import pyblish.api
 
 VERBOSE = False
@@ -8,6 +10,27 @@ def is_cache_resource(resource):
     required = set(["maya", "node", "cacheFile"])
     tags = resource.get("tags", [])
     return required.issubset(tags)
+
+
+def valdidate_files(files):
+    for f in files:
+        assert os.path.exists(f)
+        assert f.endswith(".mcx") or f.endswith(".mcc")
+
+    return True
+
+
+def filter_ticks(files):
+    tick_files = set()
+    ticks = set()
+    for path in files:
+        match = re.match(".+Tick([0-9]+).mcx$", os.path.basename(path))
+        if match:
+            tick_files.add(path)
+            num = match.group(1)
+            ticks.add(int(num))
+
+    return tick_files, ticks
 
 
 class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
@@ -26,7 +49,6 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        import os
         import pyseq
 
         start_frame = instance.data.get("startFrame", 0)
@@ -42,7 +64,6 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
 
             node = resource['node']
             all_files = resource['files'][:]
-
             all_lookup = set(all_files)
 
             # The first file is usually the .xml description file.
@@ -54,28 +75,21 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
 
             # Ensure all files exist (including ticks)
             # The remainder file paths should be the .mcx or .mcc files
-            for f in all_files:
-                assert os.path.exists(f)
-                assert f.endswith(".mcx") or f.endswith(".mcc")
+            valdidate_files(all_files)
 
-            # Maya particle caches support substeps by saving out additional files
-            # that end with a Tick60.mcx, Tick120.mcx, etc. suffix. To avoid `pyseq`
-            # getting confused we filter those out and then for each file (except
-            # the last frame) check that at least all ticks exist.
-            tick_files = set()
-            ticks = set()
-            for path in all_files:
-                import re
-                match = re.match(".+Tick([0-9]+).mcx$", os.path.basename(path))
+            # Maya particle caches support substeps by saving out additional
+            # files that end with a Tick60.mcx, Tick120.mcx, etc. suffix.
+            # To avoid `pyseq` getting confused we filter those out and then
+            # for each file (except the last frame) check that at least all
+            # ticks exist.
 
-                if match:
-                    tick_files.add(path)
-                    num = match.group(1)
-                    ticks.add(int(num))
+            tick_files, ticks = filter_ticks(all_files)
+            if tick_files:
+                files = [f for f in all_files if f not in tick_files]
+            else:
+                files = all_files
 
-            files = [f for f in all_files if f not in tick_files] if tick_files else all_files
             sequences = pyseq.get_sequences(files)
-
             if len(sequences) != 1:
                 invalid.append(node)
                 cls.log.warning("More than one sequence found? "
@@ -112,7 +126,8 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
             # for the frames required by the time range.
             if ticks:
                 ticks = list(sorted(ticks))
-                cls.log.info("Found ticks: {0} (substeps: {1})".format(ticks, len(ticks)))
+                cls.log.info("Found ticks: {0} "
+                             "(substeps: {1})".format(ticks, len(ticks)))
 
                 # Check all frames except the last since we don't
                 # require subframes after our time range.
@@ -123,7 +138,8 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
                     frame = item.frame
                     if not frame:
                         invalid.append(node)
-                        cls.log.error("Path is not a frame in sequence: {0}".format(item))
+                        cls.log.error("Path is not a frame in sequence: "
+                                      "{0}".format(item))
                         continue
 
                     # Not required for our time range
@@ -137,7 +153,8 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
                         if tick_file not in all_lookup:
                             invalid.append(node)
                             cls.log.warning("Tick file found that is not "
-                                            "in cache query filenames: {0}".format(tick_file))
+                                            "in cache query filenames: "
+                                            "{0}".format(tick_file))
 
         return invalid
 

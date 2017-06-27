@@ -2,7 +2,6 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
-from colorbleed.api import get_errored_instances_from_context
 
 from cbra.utils.maya.node_uuid import get_id, add_ids
 
@@ -71,10 +70,10 @@ class CopyUUIDsFromHistory(pyblish.api.Action):
 
         # Get the errored instances
         self.log.info("Finding failed instances..")
-        errored_instances = get_errored_instances_from_context(context)
+        errored = colorbleed.api.get_errored_instances_from_context(context)
 
         # Apply pyblish.logic to get the instances for the plug-in
-        instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
+        instances = pyblish.api.instances_by_plugin(errored, plugin)
 
         ids_map = dict()
         for instance in instances:
