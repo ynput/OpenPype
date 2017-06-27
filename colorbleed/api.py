@@ -12,6 +12,8 @@ from .plugin import (
 
 # temporary fix, might
 from .action import (
+
+    get_errored_instances_from_context,
     SelectInvalidAction,
     GenerateUUIDsOnInvalidAction,
     RepairAction,
@@ -24,7 +26,8 @@ all = [
     "ValidateContentsOrder",
     "ValidateSceneOrder",
     "ValidateMeshOrder",
-
+    # action
+    "get_errored_instances_from_context",
     "SelectInvalidAction",
     "GenerateUUIDsOnInvalidAction",
     "RepairAction"
