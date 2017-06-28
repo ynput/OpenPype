@@ -38,7 +38,8 @@ class IntegrateMindbenderAsset(pyblish.api.InstancePlugin):
         "colorbleed.camera",
         "colorbleed.lookdev",
         "colorbleed.historyLookdev",
-        "colorbleed.group"
+        "colorbleed.group",
+        "colorbleed.pointcache"
     ]
 
     def process(self, instance):
