@@ -23,20 +23,20 @@ class CreatePointCache(avalon.maya.Creator):
         end = cmds.playbackOptions(query=True, animationEndTime=True)
 
         # build attributes
-        attributes["startFrame"] = start
-        attributes["endFrame"] = end
-        attributes["handles"] = 1
-        attributes["step"] = 1.0
+        data["startFrame"] = start
+        data["endFrame"] = end
+        data["handles"] = 1
+        data["step"] = 1.0
 
         # Write vertex colors with the geometry.
-        attributes["writeColorSets"] = False
+        data["writeColorSets"] = False
 
         # Include only renderable visible shapes.
         # Skips locators and empty transforms
-        attributes["renderableOnly"] = False
+        data["renderableOnly"] = False
 
         # Include only nodes that are visible at least once during the
         # frame range.
-        attributes["visibleOnly"] = False
+        data["visibleOnly"] = False
 
-        self.data = attributes
+        self.data = data
