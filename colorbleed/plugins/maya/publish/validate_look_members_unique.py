@@ -32,7 +32,7 @@ class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
 
         # Get all members from the sets
         members = []
-        relations = instance.data["lookSetRelations"]
+        relations = instance.data["lookData"]["sets"]
         for sg in relations:
             sg_members = sg['members']
             sg_members = [member['name'] for member in sg_members]
@@ -45,11 +45,11 @@ class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
         # Group members per id
         id_nodes = defaultdict(set)
         for node in members:
-            id = id_utils.get_id(node)
-            if not id:
+            node_id = id_utils.get_id(node)
+            if not node_id:
                 continue
 
-            id_nodes[id].add(node)
+            id_nodes[node_id].add(node)
 
         invalid = list()
         for nodes in id_nodes.itervalues():

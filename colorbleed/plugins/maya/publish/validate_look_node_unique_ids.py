@@ -20,7 +20,7 @@ class ValidateLookNodeUniqueIds(pyblish.api.InstancePlugin):
     @staticmethod
     def get_invalid(instance):
 
-        nodes = instance.data["lookSets"]
+        nodes = instance.data["lookData"]["sets"]
 
         # Ensure all nodes have a cbId
         id_sets = defaultdict(list)

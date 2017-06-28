@@ -82,7 +82,7 @@ class CollectLookTextures(pyblish.api.InstancePlugin):
         verbose = instance.data.get("verbose", False)
 
         # Get textures from sets
-        sets = instance.data["lookSets"]
+        sets = instance.data["lookData"]["sets"]
         if not sets:
             raise RuntimeError("No look sets found for the nodes in the "
                                "instance. %s" % sets)

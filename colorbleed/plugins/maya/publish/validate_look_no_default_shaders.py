@@ -38,7 +38,8 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
         disallowed = set(disallowed)
 
         # Check among the sets
-        sets = instance.data['lookSets']
+        lookdata = instance.data["lookData"]
+        sets = lookdata['sets']
         lookup = set(sets)
         intersect = lookup.intersection(disallowed)
         if intersect:
@@ -67,7 +68,7 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
         # Get members of the shaders
         all = set()
         for shader in shaders:
-            members = cmds.sets(shader, q=True) or []
+            members = cmds.sets(shader, query=True) or []
             members = cmds.ls(members, long=True)
             all.update(members)
 

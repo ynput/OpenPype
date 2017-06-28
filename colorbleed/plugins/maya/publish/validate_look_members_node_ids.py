@@ -27,7 +27,7 @@ class ValidateLookMembersNodeIds(pyblish.api.InstancePlugin):
 
         # Get all members from the sets
         members = []
-        relations = instance.data["lookSetRelations"]
+        relations = instance.data["lookData"]["relationships"]
         for sg in relations:
             sg_members = sg['members']
             sg_members = [member['name'] for member in sg_members]

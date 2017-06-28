@@ -20,16 +20,17 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
         error = False
 
-        attributes = ["lookSets",
-                      "lookSetRelations",
-                      "lookAttributes"]
+        attributes = ["sets",
+                      "relationships",
+                      "attributes"]
 
         if not instance[:]:
             raise RuntimeError("Instance is empty")
 
         # Required look data
+        lookdata = instance.data["lookData"]
         for attr in attributes:
-            if attr not in instance.data:
+            if attr not in lookdata:
                 self.log.error("No %s found in data" % attr)
                 error = True
 

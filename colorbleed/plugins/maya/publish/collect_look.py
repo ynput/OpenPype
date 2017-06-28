@@ -83,7 +83,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         verbose = instance.data.get("verbose", False)
 
         self.log.info("Looking for look associations "
-                      "for %s" % instance.data['label'])
+                      "for %s" % instance.data['name'])
 
         # Discover related object sets
         self.log.info("Gathering sets..")
@@ -118,16 +118,15 @@ class CollectLook(pyblish.api.InstancePlugin):
         self.log.info("Gathering attribute changes to instance members..")
 
         attributes = self.collect_attributes_changes(instance)
+        looksets = cmds.ls(sets.keys(), absoluteName=True, long=True)
 
         # Store data on the instance
-        instance.data["lookAttributes"] = attributes
-        instance.data["lookSetRelations"] = sets.values()
-        instance.data["lookSets"] = cmds.ls(sets.keys(),
-                                            absoluteName=True,
-                                            long=True)
+        instance.data["lookData"] = {"attributes": attributes,
+                                     "relationships": sets.values(),
+                                     "sets": looksets}
 
         # Log a warning when no relevant sets were retrieved for the look.
-        if not instance.data['lookSets']:
+        if not instance.data["lookData"]["sets"]:
             self.log.warning("No sets found for the nodes in the instance: "
                              "%s" % instance[:])
 
