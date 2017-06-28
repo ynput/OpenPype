@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import avalon.maya
 from colorbleed.maya import lib
 
@@ -13,7 +14,7 @@ class CreateYetiFur(avalon.maya.Creator):
         super(CreateYetiFur, self).__init__(*args, **kwargs)
 
         # get scene values as defaults
-        data = lib.OrderedDict(**self.data)
+        data = OrderedDict(**self.data)
         animation_data = lib.collect_animation_data()
         for key, value in animation_data.items():
             data[key] = value

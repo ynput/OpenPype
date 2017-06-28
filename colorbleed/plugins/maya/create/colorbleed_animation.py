@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import avalon.maya
 from colorbleed.maya import lib
 
@@ -13,7 +14,7 @@ class CreateAnimation(avalon.maya.Creator):
         super(CreateAnimation, self).__init__(*args, **kwargs)
 
         # create an ordered dict with the existing data first
-        data = lib.OrderedDict(**self.data)
+        data = OrderedDict(**self.data)
 
         # get basic animation data : start / end / handles / steps
         for key, value in lib.collect_animation_data().items():

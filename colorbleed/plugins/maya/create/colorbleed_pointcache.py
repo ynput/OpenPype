@@ -15,12 +15,14 @@ class CreatePointCache(avalon.maya.Creator):
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)
 
+        # create an ordered dict with the existing data first
+        data = OrderedDict(**self.data)
+
         # get scene values as defaults
         start = cmds.playbackOptions(query=True, animationStartTime=True)
         end = cmds.playbackOptions(query=True, animationEndTime=True)
 
         # build attributes
-        attributes = OrderedDict()
         attributes["startFrame"] = start
         attributes["endFrame"] = end
         attributes["handles"] = 1

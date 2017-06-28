@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import avalon.maya
 from colorbleed.maya import lib
 
@@ -13,7 +14,7 @@ class CreateCamera(avalon.maya.Creator):
         super(CreateCamera, self).__init__(*args, **kwargs)
 
         # get basic animation data : start / end / handles / steps
-        data = lib.OrderedDict(**self.data)
+        data = OrderedDict(**self.data)
         animation_data = lib.collect_animation_data()
         for key, value in animation_data.items():
             data[key] = value
