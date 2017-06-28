@@ -343,9 +343,9 @@ _alembic_options = {
 def extract_alembic(file,
                     startFrame=None,
                     endFrame=None,
-                    selection= True,
-                    uvWrite= True,
-                    eulerFilter= True,
+                    selection=True,
+                    uvWrite=True,
+                    eulerFilter=True,
                     dataFormat="ogawa",
                     verbose=False,
                     **kwargs):
@@ -456,7 +456,7 @@ def extract_alembic(file,
     for key, value in options.items():
         if isinstance(value, (list, tuple)):
             for entry in value:
-                job_args.append("-{0} {1}".format(key=key, value=entry))
+                job_args.append("-{0} {1}".format(key, entry))
         elif isinstance(value, bool):
             job_args.append("-{0}".format(key))
         else:
