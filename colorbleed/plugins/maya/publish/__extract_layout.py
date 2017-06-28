@@ -2,7 +2,7 @@ import json
 
 from maya import cmds
 
-import pyblish_maya
+import avalon.maya
 import colorbleed.api
 
 import cb.utils.maya.context as context
@@ -57,7 +57,7 @@ class ExtractLayout(colorbleed.api.Extractor):
 
         # Perform extraction
         self.log.info("Performing extraction..")
-        with pyblish_maya.maintained_selection():
+        with avalon.maya.maintained_selection():
 
             # Get children hierarchy
             nodes = instance.data['setMembers']

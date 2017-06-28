@@ -12,7 +12,7 @@ class AbcLoader(api.Loader):
     icon = "code-fork"
     color = "orange"
 
-    def process(self, name, namespace, context):
+    def process(self, name, namespace, context, data):
         from maya import cmds
 
         cmds.loadPlugin("AbcImport.mll", quiet=True)
@@ -40,7 +40,7 @@ class CurvesLoader(api.Loader):
     order = -1
     icon = "question"
 
-    def process(self, name, namespace, context):
+    def process(self, name, namespace, context, data):
         from maya import cmds
         from avalon import maya
 
@@ -98,7 +98,10 @@ class CurvesLoader(api.Loader):
 
         self[:] = nodes + cmds.sets(container, query=True) + [container]
 
-    def post_process(self, name, namespace, context):
+        if data.get("post_process", True):
+            self._post_process(name, namespace, context, data)
+
+    def _post_process(self, name, namespace, context, data):
         import os
         from maya import cmds
         from avalon import maya, io

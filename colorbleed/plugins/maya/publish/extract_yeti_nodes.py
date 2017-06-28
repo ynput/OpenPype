@@ -2,7 +2,7 @@ import os
 
 from maya import cmds
 
-import pyblish_maya
+import avalon.maya
 import colorbleed.api
 
 import cb.utils.maya.context as context
@@ -47,7 +47,7 @@ class ExtractFurYeti(colorbleed.api.Extractor):
                 resource_remap[attribute] = destination
 
         # Perform extraction
-        with pyblish_maya.maintained_selection():
+        with avalon.maya.maintained_selection():
             with context.attribute_values(resource_remap):
                 cmds.select(members, r=True, noExpand=True)
                 cmds.file(path,

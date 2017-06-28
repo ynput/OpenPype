@@ -2,7 +2,7 @@ import os
 
 from maya import cmds
 
-import pyblish_maya
+import avalon.maya
 import colorbleed.api
 
 
@@ -26,7 +26,7 @@ class ExtractParticlesMayaAscii(colorbleed.api.Extractor):
 
         # Perform extraction
         self.log.info("Performing extraction..")
-        with pyblish_maya.maintained_selection():
+        with avalon.maya.maintained_selection():
             cmds.select(export, noExpand=True)
             cmds.file(path,
                       force=True,
