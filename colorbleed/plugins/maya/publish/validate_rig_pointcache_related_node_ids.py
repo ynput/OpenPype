@@ -3,6 +3,7 @@ import maya.cmds as cmds
 import pyblish.api
 import colorbleed.api
 
+import cbra.lib
 import cbra.utils.maya.node_uuid as id_utils
 
 
@@ -56,8 +57,6 @@ class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-        import cbra.lib
-
         # Get a full context from the instance context
         context = instance.data['instanceContext']
         item_path = context['itemPath']
@@ -101,8 +100,6 @@ class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
 
         # Ensure all nodes have a cbId
         invalid = self.get_invalid(instance)
-
         if invalid:
             raise RuntimeError("Nodes found with non-related "
                                "asset IDs: {0}".format(invalid))
-

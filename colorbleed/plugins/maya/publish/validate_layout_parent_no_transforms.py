@@ -17,9 +17,8 @@ _ATTRS = ['tx', 'ty', 'tz',
 
 
 def is_identity(node, tolerance=1e-30):
-
     mat = cmds.xform(node, query=True, matrix=True, objectSpace=True)
-    if not all(abs(x-y) < tolerance for x, y in zip(_IDENTITY, mat)):
+    if not all(abs(x - y) < tolerance for x, y in zip(_IDENTITY, mat)):
         return False
     return True
 
@@ -49,11 +48,11 @@ class ValidateLayoutParentNoTransforms(pyblish.api.InstancePlugin):
     @staticmethod
     def get_invalid(instance):
 
+        invalid = []
+
         # Get highest in hierarchy
         nodes = instance.data["setMembers"]
         highest = getHighestInHierarchy(nodes)
-
-        invalid = []
 
         for node in highest:
             for parent in iterParents(node):
@@ -70,4 +69,3 @@ class ValidateLayoutParentNoTransforms(pyblish.api.InstancePlugin):
         if invalid:
             raise RuntimeError("Transforms (non-referenced) found in layout "
                                "without asset IDs: {0}".format(invalid))
-

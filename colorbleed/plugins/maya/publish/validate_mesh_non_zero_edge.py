@@ -29,9 +29,8 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
         """Return the invalid edges.
-        
         Also see: http://help.autodesk.com/view/MAYAUL/2015/ENU/?guid=Mesh__Cleanup
-        
+
         """
 
         meshes = cmds.ls(instance, type='mesh', long=True)
@@ -43,7 +42,7 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
 
         # Filter by constraint on edge length
         invalid = polyConstraint(edges,
-                                 t=0x8000,      # type=edge
+                                 t=0x8000,  # type=edge
                                  length=1,
                                  lengthbound=(0, cls.__tolerance))
 

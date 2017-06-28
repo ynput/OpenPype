@@ -24,12 +24,12 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
 
         invalid = []
         for mesh in meshes:
-            uvSets = cmds.polyUVSet(mesh, 
-                                    query=True, 
+            uvSets = cmds.polyUVSet(mesh,
+                                    query=True,
                                     allUVSets=True) or []
 
             # ensure unique (sometimes maya will list 'map1' twice)
-            uvSets = set(uvSets)    
+            uvSets = set(uvSets)
 
             if len(uvSets) != 1:
                 invalid.append(mesh)
@@ -112,7 +112,8 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
             indices = cmds.getAttr('{0}.uvSet'.format(mesh),
                                    multiIndices=True)
             if not indices:
-                cls.log.warning("No uv set found indices for: {0}".format(mesh))
+                cls.log.warning(
+                    "No uv set found indices for: {0}".format(mesh))
                 return
 
             # Delete from end to avoid shifting indices

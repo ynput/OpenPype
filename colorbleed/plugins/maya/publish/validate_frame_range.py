@@ -43,7 +43,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
             self.log.info("Comparing start (%s) and end (%s)" % (start, end))
             if start > end:
                 raise RuntimeError("The start frame is a higher value "
-                                   "than the end frame: {0}>{1}".format(start, end))
+                                   "than the end frame: "
+                                   "{0}>{1}".format(start, end))
 
         if handles is not None:
             if handles < 0.0:

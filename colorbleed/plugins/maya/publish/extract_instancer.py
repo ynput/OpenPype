@@ -86,7 +86,8 @@ class ExtractInstancerMayaAscii(colorbleed.api.Extractor):
     hosts = ["maya"]
     families = ["colorbleed.instancer"]
 
-    # TODO: Find other solution than expanding vars to fix lack of support of cacheFile
+    # TODO: Find other solution than expanding vars to fix lack of support
+    # TODO: of cacheFile
 
     def process(self, instance):
 
@@ -94,6 +95,35 @@ class ExtractInstancerMayaAscii(colorbleed.api.Extractor):
 
         # Set up cacheFile path remapping.
         resources = instance.data.get("resources", [])
+        attr_remap, cache_remap = self.process_resources(resources)
+
+        # Define extract output file path
+        dir_path = self.staging_dir(instance)
+        filename = "{0}.ma".format(instance.name)
+        path = os.path.join(dir_path, filename)
+
+        # Perform extraction
+        self.log.info("Performing extraction..")
+        with avalon.maya.maintained_selection():
+            with cache_file_paths(cache_remap):
+                with context.attribute_values(attr_remap):
+                    cmds.select(export, noExpand=True)
+                    cmds.file(path,
+                              force=True,
+                              typ="mayaAscii",
+                              exportSelected=True,
+                              preserveReferences=False,
+                              constructionHistory=False,
+                              channels=True,  # allow animation
+                              constraints=False,
+                              shader=False,
+                              expressions=False)
+
+        self.log.info("Extracted instance '{0}' to: {1}".format(
+            instance.name, path))
+
+    def process_resources(self, resources):
+
         attr_remap = dict()
         cache_remap = dict()
         for resource in resources:
@@ -113,32 +143,10 @@ class ExtractInstancerMayaAscii(colorbleed.api.Extractor):
                 folder += "/"
 
             # Set path and name
-            attr_remap["{0}.cacheName".format(node)] = os.path.expandvars(fname)
+            attr_remap["{0}.cacheName".format(node)] = os.path.expandvars(
+                fname)
             cache_remap[node] = os.path.expandvars(folder)
 
             self.log.info("Mapping {0} to {1}".format(node, destination))
 
-        # Define extract output file path
-        dir_path = self.staging_dir(instance)
-        filename = "{0}.ma".format(instance.name)
-        path = os.path.join(dir_path, filename)
-
-        # Perform extraction
-        self.log.info("Performing extraction..")
-        with avalon.maya.maintained_selection():
-            with cache_file_paths(cache_remap):
-                with context.attribute_values(attr_remap):
-                    cmds.select(export, noExpand=True)
-                    cmds.file(path,
-                              force=True,
-                              typ="mayaAscii",
-                              exportSelected=True,
-                              preserveReferences=False,
-                              constructionHistory=False,
-                              channels=True,    # allow animation
-                              constraints=False,
-                              shader=False,
-                              expressions=False)
-
-        self.log.info("Extracted instance '{0}' to: {1}".format(
-            instance.name, path))
+        return attr_remap, cache_remap

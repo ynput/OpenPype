@@ -12,12 +12,12 @@ class ValidateNoVRayMesh(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         shapes = cmds.ls(instance,
-                       shapes=True,
-                       type="mesh")
+                         shapes=True,
+                         type="mesh")
 
         inputs = cmds.listConnections(shapes,
-                                    destination=False,
-                                    source=True) or []
+                                      destination=False,
+                                      source=True) or []
         vray_meshes = cmds.ls(inputs, type='VRayMesh')
         if vray_meshes:
             raise RuntimeError("Meshes that are VRayMeshes shouldn't "

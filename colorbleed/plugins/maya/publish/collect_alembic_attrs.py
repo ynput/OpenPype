@@ -22,4 +22,3 @@ class CollectAlembicCBAttrs(pyblish.api.InstancePlugin):
 
         # Ensure UVs are written
         instance.data['uvWrite'] = True
-

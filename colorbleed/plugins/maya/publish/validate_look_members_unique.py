@@ -66,4 +66,3 @@ class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
         if invalid:
             raise RuntimeError("Members found without "
                                "asset IDs: {0}".format(invalid))
-

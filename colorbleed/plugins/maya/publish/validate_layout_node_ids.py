@@ -42,4 +42,3 @@ class ValidateLayoutNodeIds(pyblish.api.InstancePlugin):
         if invalid:
             raise RuntimeError("Transforms (non-referenced) found in layout "
                                "without asset IDs: {0}".format(invalid))
-

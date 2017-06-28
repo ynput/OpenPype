@@ -1,5 +1,7 @@
-import pyblish.api
 import maya.cmds as cmds
+
+import pyblish.api
+
 
 class CollectInstancerCaches(pyblish.api.InstancePlugin):
     """For an Instancer collect the history.
@@ -31,10 +33,10 @@ class CollectInstancerCaches(pyblish.api.InstancePlugin):
             # correctly.
             if not files:
                 errors = True
-                self.log.error("Cache has no files: {0}".format(cache))
+                self.log.error("Cache has no files: %s" % cache)
                 continue
 
-            source = files[0]   # The first file is the .xml file
+            source = files[0]  # The first file is the .xml file
 
             # TODO: Filter the files to only contain the required frame range.
 

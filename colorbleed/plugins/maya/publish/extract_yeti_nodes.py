@@ -37,11 +37,12 @@ class ExtractFurYeti(colorbleed.api.Extractor):
 
         # Remap cache files names and ensure fileMode is set to load from cache
         resource_remap = dict()
-        required = ["maya", "yeti", "attribute"]  # required tags to be a yeti resource
+        # required tags to be a yeti resource
+        required_tags = ["maya", "yeti", "attribute"]
         resources = instance.data.get("resources", [])
         for resource in resources:
             resource_tags = resource.get("tags", [])
-            if all(tag in resource_tags for tag in required):
+            if all(tag in resource_tags for tag in required_tags):
                 attribute = resource['attribute']
                 destination = resource['destination']
                 resource_remap[attribute] = destination

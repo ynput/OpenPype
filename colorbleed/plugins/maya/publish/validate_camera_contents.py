@@ -61,4 +61,3 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
         if invalid:
             raise RuntimeError("Invalid camera contents: "
                                "{0}".format(invalid))
-
