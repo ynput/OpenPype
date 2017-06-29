@@ -27,10 +27,6 @@ class ModelLoader(api.Loader):
                 groupName="{}:{}".format(namespace, name)
             )
 
-        # Assign default shader to meshes
-        meshes = cmds.ls(nodes, type="mesh")
-        cmds.sets(meshes, forceElement="initialShadingGroup")
-
         self[:] = nodes
 
 
