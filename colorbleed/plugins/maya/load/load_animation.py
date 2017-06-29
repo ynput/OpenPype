@@ -61,7 +61,6 @@ class CurvesLoader(api.Loader):
         except StopIteration:
             raise TypeError("%s is missing controls_SET")
 
-        cmds.select(control_set)
         options = ";".join([
             "",
             "",
