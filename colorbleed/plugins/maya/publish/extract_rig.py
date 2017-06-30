@@ -6,13 +6,12 @@ import avalon.maya
 import colorbleed.api
 
 
-class ExtractMayaAscii(colorbleed.api.Extractor):
-    """Extract as Maya Ascii"""
+class ExtractColorbleedRig(colorbleed.api.Extractor):
+    """Extract rig as Maya Ascii"""
 
-    label = "Maya ASCII"
+    label = "Extract Rig (Maya ASCII)"
     hosts = ["maya"]
     families = ["colorbleed.rig"]
-    optional = True
 
     def process(self, instance):
 
@@ -30,6 +29,9 @@ class ExtractMayaAscii(colorbleed.api.Extractor):
                       typ="mayaAscii",
                       exportSelected=True,
                       preserveReferences=False,
+                      channels=True,
+                      constraints=True,
+                      expressions=True,
                       constructionHistory=True)
 
         self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
