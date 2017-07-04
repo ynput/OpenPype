@@ -37,7 +37,8 @@ class ExtractLook(colorbleed.api.Extractor):
         # Remove all members of the sets so they are not included in the
         # exported file by accident
         self.log.info("Extract sets (Maya ASCII)..")
-        sets = instance.data["lookSets"]
+        lookdata = instance.data["lookData"]
+        sets = lookdata["sets"]
 
         # Define the texture file node remapping
         resource_remap = dict()
@@ -71,8 +72,8 @@ class ExtractLook(colorbleed.api.Extractor):
 
         # Write the JSON data
         self.log.info("Extract json..")
-        data = {"attributes": instance.data["lookAttributes"],
-                "sets": instance.data["lookSetRelations"]}
+        data = {"attributes": lookdata["attributes"],
+                "sets": lookdata["relationships"]}
         with open(json_path, "w") as f:
             json.dump(data, f)
 

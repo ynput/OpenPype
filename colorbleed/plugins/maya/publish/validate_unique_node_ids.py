@@ -1,3 +1,7 @@
+from collections import defaultdict
+
+import maya.cmds as cmds
+
 import pyblish.api
 import colorbleed.api
 
@@ -16,12 +20,9 @@ class ValidateUniqueNodeIds(pyblish.api.InstancePlugin):
     def get_invalid_dict(instance):
         """Return a dictionary mapping of id key to list of member nodes"""
 
-        import maya.cmds as cmds
-
         uuid_attr = "cbId"
 
         # Collect each id with their members
-        from collections import defaultdict
         ids = defaultdict(list)
         for member in instance:
             has_attr = cmds.attributeQuery(uuid_attr, node=member, exists=True)
@@ -60,4 +61,3 @@ class ValidateUniqueNodeIds(pyblish.api.InstancePlugin):
         if invalid:
             raise RuntimeError("Nodes found with non-unique "
                                "asset IDs: {0}".format(invalid))
-

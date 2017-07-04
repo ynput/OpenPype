@@ -5,7 +5,14 @@ from maya import cmds
 import pyblish.api
 import colorbleed.api
 
-import cbra.utils.maya.node_uuid as id_utils
+
+def get_unique_id(node):
+    attr = 'cbId'
+    unique_id = None
+    has_attribute = cmds.attributeQuery(attr, node=node, exists=True)
+    if has_attribute:
+        unique_id = cmds.getAttr("{}.{}".format(node, attr))
+    return unique_id
 
 
 class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
@@ -25,15 +32,16 @@ class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
     families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look Members Unique'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.api.SelectInvalidAction,
+               colorbleed.api.GenerateUUIDsOnInvalidAction]
 
     @staticmethod
     def get_invalid(instance):
 
         # Get all members from the sets
         members = []
-        relations = instance.data["lookData"]["sets"]
-        for sg in relations:
+        relationships = instance.data["lookData"]["relationships"]
+        for sg in relationships:
             sg_members = sg['members']
             sg_members = [member['name'] for member in sg_members]
             members.extend(sg_members)
@@ -45,10 +53,9 @@ class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
         # Group members per id
         id_nodes = defaultdict(set)
         for node in members:
-            node_id = id_utils.get_id(node)
+            node_id = get_unique_id(node)
             if not node_id:
                 continue
-
             id_nodes[node_id].add(node)
 
         invalid = list()
@@ -61,8 +68,9 @@ class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Process all meshes"""
 
-        invalid = self.get_invalid(instance)
+        print self.actions
 
+        invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("Members found without "
                                "asset IDs: {0}".format(invalid))
