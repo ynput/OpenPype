@@ -18,7 +18,7 @@ class ValidateUniqueNodeIds(pyblish.api.InstancePlugin):
 
         import maya.cmds as cmds
 
-        uuid_attr = "mbId"
+        uuid_attr = "cbId"
 
         # Collect each id with their members
         from collections import defaultdict
