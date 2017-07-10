@@ -7,6 +7,7 @@ import colorbleed.api
 class ValidateNamingConvention(pyblish.api.InstancePlugin):
 
     label = ""
+    families = ["colorbleed.model"]
     host = ["maya"]
     actions = [colorbleed.api.SelectInvalidAction]
 
