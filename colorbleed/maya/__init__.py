@@ -1,8 +1,11 @@
 import os
 import site
+import uuid
 
-from avalon import api as avalon
+from avalon import maya, api as avalon
 from pyblish import api as pyblish
+
+from maya import cmds
 
 from . import menu
 
@@ -28,6 +31,11 @@ def install():
 
     menu.install()
 
+    print("Installing callbacks ... ")
+    avalon.on("init", on_init)
+    avalon.on("new", on_new)
+    avalon.on("save", on_save)
+
 
 def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
@@ -35,3 +43,73 @@ def uninstall():
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
 
     menu.uninstall()
+
+
+def _set_uuid(node):
+    """Add cbId to `node`
+    Unless one already exists.
+    """
+
+    asset = os.environ["AVALON_ASSET"]
+    attr = "{0}.cbId".format(node)
+
+    if not cmds.objExists(attr):
+        cmds.addAttr(node, longName="cbId", dataType="string")
+        _, uid = str(uuid.uuid4()).rsplit("-", 1)
+        cb_uid = "{}:{}:{}".format(asset, node, uid)
+
+        cmds.setAttr(attr, cb_uid, type="string")
+
+
+def on_init():
+    avalon.logger.info("Running callback on init..")
+
+    maya.commands.reset_frame_range()
+    maya.commands.reset_resolution()
+
+
+def on_new():
+    avalon.logger.info("Running callback on new..")
+
+    # Load dependencies
+    cmds.loadPlugin("AbcExport.mll", quiet=True)
+    cmds.loadPlugin("AbcImport.mll", quiet=True)
+
+    maya.commands.reset_frame_range()
+    maya.commands.reset_resolution()
+
+
+def on_save():
+    """Automatically add IDs to new nodes
+    Any transform of a mesh, without an existing ID,
+    is given one automatically on file save.
+    """
+
+    avalon.logger.info("Running callback on save..")
+
+    defaults = ["initialShadingGroup", "initialParticleSE"]
+
+    # the default items which always want to have an ID
+    types = ["mesh", "shadingEngine", "file"]
+
+    # the items which need to pass the id to their parent
+    subtypes = ["nurbsCurve"]
+
+    nodes = (set(cmds.ls(type=types, long=True)) -
+             set(cmds.ls(long=True, readOnly=True)) -
+             set(cmds.ls(long=True, lockedNodes=True)))
+
+    transforms = set()
+    for n in cmds.ls(type=subtypes, long=True):
+        for r in cmds.listRelatives(n, parent=True, fullPath=True):
+            transforms.add(r)
+
+    # merge transforms and nodes in one set to make sure every item
+    # is unique
+    nodes |= transforms
+
+    # remove any default nodes
+    for node in nodes:
+        if node in defaults:
+            continue
+        _set_uuid(node)
