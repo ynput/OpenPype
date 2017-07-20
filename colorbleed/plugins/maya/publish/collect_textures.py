@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 
-import cb.utils.maya.shaders as shader
+import cb.utils.maya.shaders as shaders
 
 TAGS = ["maya", "attribute", "look"]
 TAGS_LOOKUP = set(TAGS)
@@ -74,7 +74,7 @@ class CollectLookTextures(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.498
     label = 'Textures'
-    families = ["colorbleed.look"]
+    families = ["colorbleed.texture"]
     actions = [SelectTextureNodesAction]
 
     def process(self, instance):
@@ -134,19 +134,20 @@ class CollectLookTextures(pyblish.api.InstancePlugin):
             # paths as the computed patterns
             source = computed_source.replace("\\", "/")
 
-        files = shader.get_file_node_files(node)
+        files = shaders.get_file_node_files(node)
         if not files:
             self.log.error("File node does not have a texture set: "
                            "{0}".format(node))
             return
 
         # Define the resource
+        # todo:  find a way to generate the destination for the publisher
         resource = {"tags": TAGS[:],
                     "node": node,
                     "attribute": attribute,
                     "source": source,  # required for resources
                     "files": files,  # required for resources
-                    "subfolder": "textures"  # optional for resources
+                    "subfolder": "textures",  # optional for resources
                     }
 
         return resource
