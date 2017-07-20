@@ -30,9 +30,11 @@ def deferred():
     config_path = os.path.join(os.path.dirname(__file__), "menu.json")
     config = menu.load_configuration(config_path)
 
-    # hack?
+    # get Maya menubar
     parent = launchformaya._maya_main_menubar()
-    cb_menu = menu.ScriptsMenu(title=self._menu.title(), parent=parent)
+    cb_menu = menu.ScriptsMenu(objectName=self._menu,
+                               title=self._menu.title(),
+                               parent=parent)
 
     # register modifiers
     modifiers = QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier
