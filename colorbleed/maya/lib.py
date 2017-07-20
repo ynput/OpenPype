@@ -7,9 +7,10 @@ import logging
 import os
 import json
 
-log = logging.getLogger(__name__)
+from maya import cmds, mel
 
-from maya import cmds
+
+log = logging.getLogger(__name__)
 
 
 def maintained_selection(arg=None):
@@ -249,6 +250,78 @@ def get_current_renderlayer():
     return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
 
 
+@contextlib.contextmanager
+def no_undo(flush=False):
+    """Disable the undo queue during the context
+
+    Arguments:
+        flush (bool): When True the undo queue will be emptied when returning
+            from the context losing all undo history. Defaults to False.
+
+    """
+    original = cmds.undoInfo(query=True, state=True)
+    keyword = 'state' if flush else 'stateWithoutFlush'
+
+    try:
+        cmds.undoInfo(**{keyword: False})
+        yield
+    finally:
+        cmds.undoInfo(**{keyword: original})
+
+
+def polyConstraint(components, *args, **kwargs):
+    """Return the list of *components* with the constraints applied.
+
+    A wrapper around Maya's `polySelectConstraint` to retrieve its results as
+    a list without altering selections. For a list of possible constraints
+    see `maya.cmds.polySelectConstraint` documentation.
+
+    Arguments:
+        components (list): List of components of polygon meshes
+
+    Returns:
+        list: The list of components filtered by the given constraints.
+
+    """
+
+    kwargs.pop('mode', None)
+
+    with no_undo(flush=False):
+        print("la")
+        with maintained_selection():
+            print("po")
+            # Apply constraint using mode=2 (current and next) so
+            # it applies to the selection made before it; because just
+            # a `maya.cmds.select()` call will not trigger the constraint.
+            with reset_polySelectConstraint():
+                print("do")
+                cmds.select(components, r=1)
+                cmds.polySelectConstraint(*args, mode=2, **kwargs)
+                result = cmds.ls(selection=True)
+
+    return result
+
+
+@contextlib.contextmanager
+def reset_polySelectConstraint(reset=True):
+    """Context during which the given polyConstraint settings are disabled.
+
+    The original settings are restored after the context.
+
+    """
+
+    original = cmds.polySelectConstraint(query=True, stateString=True)
+
+    try:
+        if reset:
+            # Reset all parameters
+            mel.eval("resetPolySelectConstraint;")
+        cmds.polySelectConstraint(disable=True)
+        yield
+    finally:
+        mel.eval(original)
+
+
 def is_visible(node,
                displayLayer=True,
                intermediateObject=True,
@@ -343,7 +416,7 @@ _alembic_options = {
 def extract_alembic(file,
                     startFrame=None,
                     endFrame=None,
-                    selection= True,
+                    selection=True,
                     uvWrite= True,
                     eulerFilter= True,
                     dataFormat="ogawa",
@@ -482,3 +555,30 @@ def extract_alembic(file,
         log.debug("Extracted Alembic to: %s", file)
 
     return file
+
+
+def maya_temp_folder():
+    scene_dir = os.path.dirname(cmds.file(query=True, sceneName=True))
+    tmp_dir = os.path.abspath(os.path.join(scene_dir, "..", "tmp"))
+    if not os.path.isdir(tmp_dir):
+        os.makedirs(tmp_dir)
+
+    return tmp_dir
+
+
+def remap_resource_nodes(resources, folder=None):
+
+    log.info("Updating resource nodes ...")
+    for resource in resources:
+        source = resource["source"]
+        if folder:
+            fname = os.path.basename(source)
+            fpath = os.path.join(folder, fname)
+        else:
+            fpath = source
+
+        node_attr = resource["attribute"]
+        cmds.setAttr(node_attr, fpath, type="string")
+
+    log.info("Saving file ...")
+    cmds.file(save=True, type="mayaAscii")
