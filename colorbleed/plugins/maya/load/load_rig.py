@@ -1,4 +1,7 @@
+import os
+
 from maya import cmds
+
 from avalon import api
 
 
@@ -18,12 +21,13 @@ class RigLoader(api.Loader):
     color = "orange"
 
     def process(self, name, namespace, context, data):
+        print("debug : {}\n{}\n".format(name, namespace))
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           reference=True,
                           returnNewNodes=True,
                           groupReference=True,
-                          groupName=namespace + ":" + name)
+                          groupName="{}:{}".format(namespace, name))
 
         # Store for post-process
         self[:] = nodes
@@ -38,6 +42,7 @@ class RigLoader(api.Loader):
         #   Better register this keyword, so that it can be used
         #   elsewhere, such as in the Integrator plug-in,
         #   without duplication.
+
         output = next(
             (node for node in self
                 if node.endswith("out_SET")), None)
@@ -48,18 +53,25 @@ class RigLoader(api.Loader):
         assert output, "No out_SET in rig, this is a bug."
         assert controls, "No controls_SET in rig, this is a bug."
 
+        # To ensure the asset under which is published is actually the shot
+        # not the asset to which the rig belongs to.
+        current_task = os.environ["AVALON_TASK"]
+        asset_name = context["asset"]["name"]
+        if current_task == "animate":
+            asset = "{}".format(os.environ["AVALON_ASSET"])
+        else:
+            asset = "{}".format(asset_name)
+
         with maya.maintained_selection():
             cmds.select([output, controls], noExpand=True)
 
-            dependencies = [context["representation"]["_id"]]
-            asset = context["asset"]["name"] + "_"
-
             # TODO(marcus): Hardcoding the family here, better separate this.
-            maya.create(
-                name=maya.unique_name(asset, suffix="_SET"),
-                asset=context["asset"]["name"],
-                family="colorbleed.animation",
-                options={"useSelection": True},
-                data={
-                    "dependencies": " ".join(str(d) for d in dependencies)
-                })
+            dependencies = [context["representation"]["_id"]]
+            dependencies = " ".join(str(d) for d in dependencies)
+            unique_name = maya.unique_name(asset_name, suffix="_SET")
+
+            maya.create(name=unique_name,
+                        asset=asset,
+                        family="colorbleed.animation",
+                        options={"useSelection": True},
+                        data={"dependencies": dependencies})
