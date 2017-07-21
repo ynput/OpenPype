@@ -1,6 +1,8 @@
 import os
 import copy
 
+import maya.cmds as cmds
+
 import avalon.maya
 import colorbleed.api
 from colorbleed.maya.lib import extract_alembic
@@ -26,9 +28,14 @@ class ExtractAlembic(colorbleed.api.Extractor):
         path = os.path.join(parent_dir, filename)
 
         options = copy.deepcopy(instance.data)
-
         options['selection'] = True
+        options["attr"] = ["cbId"]
 
+        # force elect items to ensure all items get exported by Alembic
+        members = instance.data("setMembers")
+        cmds.select(members)
         with avalon.maya.suspended_refresh():
             with avalon.maya.maintained_selection():
                 extract_alembic(file=path, **options)
+
+        cmds.select(clear=True)
