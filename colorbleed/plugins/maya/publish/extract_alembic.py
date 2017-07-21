@@ -33,6 +33,8 @@ class ExtractAlembic(colorbleed.api.Extractor):
 
         # force elect items to ensure all items get exported by Alembic
         members = instance.data("setMembers")
+        print members
+
         cmds.select(members)
         with avalon.maya.suspended_refresh():
             with avalon.maya.maintained_selection():
