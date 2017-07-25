@@ -1,9 +1,9 @@
 from maya import cmds
 
-from cb.utils.maya import context
-import cbra.utils.maya.node_uuid as id_utils
 import pyblish.api
 
+from cb.utils.maya import context, shaders
+import cbra.utils.maya.node_uuid as id_utils
 
 SHAPE_ATTRS = ["castsShadows",
                "receiveShadows",
@@ -37,8 +37,8 @@ def get_look_attrs(node):
         valid = [attr for attr in attrs if attr in SHAPE_ATTRS]
         result.extend(valid)
 
-    if "mbID" in result:
-        result.remove("mbID")
+    if "cbId" in result:
+        result.remove("cbId")
 
     return result
 
@@ -62,7 +62,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.4
-    families = ["colorbleed.look"]
+    families = ["colorbleed.lookdev"]
     label = "Collect Look"
     hosts = ["maya"]
 
@@ -120,6 +120,9 @@ class CollectLook(pyblish.api.InstancePlugin):
         instance.data["lookData"] = {"attributes": attributes,
                                      "relationships": sets.values(),
                                      "sets": looksets}
+        # Collect textures
+        resources = [self.collect_resources(n) for n in cmds.ls(type="file")]
+        instance.data["resources"] = resources
 
         # Log a warning when no relevant sets were retrieved for the look.
         if not instance.data["lookData"]["sets"]:
@@ -157,7 +160,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             for objset in related_sets:
                 if objset in sets:
                     continue
-                unique_id = cmds.getAttr("%s.mbID" % objset)
+
+                unique_id = cmds.getAttr("%s.cbId" % objset)
                 sets[objset] = {"name": objset,
                                 "uuid": unique_id,
                                 "members": list()}
@@ -253,11 +257,24 @@ class CollectLook(pyblish.api.InstancePlugin):
         if member in [m["name"] for m in objset_members]:
             return
 
+        # check node type, if mesh get parent! makes assigning shaders easier
+        if cmds.nodeType(node) == "mesh":
+            parent = cmds.listRelatives(node, parent=True, fullPath=True)
+            # a mesh NEEDS to have a parent in Maya logic, no reason for
+            # assertions or extra checking
+            parent = parent[0]
+            if cmds.attributeQuery("cbId", node=parent, exists=True):
+                node = parent
+            else:
+                self.log.error("Transform group of mesh '{}' has no attribute "
+                               "'cbId', this is manditory")
+                return
+
         if verbose:
             self.log.debug("Such as %s.." % member)
 
         member_data = {"name": node,
-                       "uuid": cmds.getAttr("{}.mbID".format(node, ))}
+                       "uuid": cmds.getAttr("{}.cbId".format(node))}
 
         # Include components information when components are assigned
         if components:
@@ -304,3 +321,46 @@ class CollectLook(pyblish.api.InstancePlugin):
             attributes.append(data)
 
         return attributes
+
+    def collect_resources(self, node, verbose=False):
+        """Collect the link to the file(s) used (resource)
+        Args:
+            node (str): name of the node
+            verbose (bool): enable debug information
+
+        Returns:
+            dict
+        """
+
+        attribute = "{}.fileTextureName".format(node)
+        source = cmds.getAttr(attribute)
+
+        # Get the computed file path (e.g. the one with the <UDIM> pattern
+        # in it) So we can reassign it this computed file path whenever
+        # we need to.
+        computed_attribute = "{}.computedFileTextureNamePattern".format(node)
+        computed_source = cmds.getAttr(computed_attribute)
+        if source != computed_source:
+            if verbose:
+                self.log.debug("File node computed pattern differs from "
+                               "original pattern: {0} "
+                               "({1} -> {2})".format(node,
+                                                     source,
+                                                     computed_source))
+
+            # We replace backslashes with forward slashes because V-Ray
+            # can't handle the UDIM files with the backslashes in the
+            # paths as the computed patterns
+            source = computed_source.replace("\\", "/")
+
+        files = shaders.get_file_node_files(node)
+        if not files:
+            self.log.error("File node does not have a texture set: "
+                           "{0}".format(node))
+            return
+
+        # Define the resource
+        return {"node": node,
+                "attribute": attribute,
+                "source": source,  # required for resources
+                "files": files}  # required for resources
