@@ -665,6 +665,21 @@ def get_representation_file(representation, template=TEMPLATE):
     return template.format(**context)
 
 
+def get_reference_node(path):
+    """
+    Get the reference node when the path is found being used in a reference
+    Args:
+        path (str):
+
+    Returns:
+
+    """
+    node = cmds.file(path, query=True, referenceNode=True)
+    reference_path = cmds.referenceQuery(path, filename=True)
+    if os.path.normpath(path) == os.path.normpath(reference_path):
+        return node
+
+
 def list_looks(asset_id):
     """Return all look subsets for the given asset
 
@@ -706,14 +721,8 @@ def assign_look_by_version(nodes, version_id):
     shader_filepath = get_representation_file(shader_file)
     shader_relation = get_representation_file(shader_relations)
 
-    try:
-        existing_reference = cmds.file(shader_filepath,
-                                       query=True,
-                                       referenceNode=True)
-    except RuntimeError as e:
-        if e.message.rstrip() != "Cannot find the scene file.":
-            raise
-
+    reference_node = get_reference_node(shader_filepath)
+    if reference_node is None:
         log.info("Loading lookdev for the first time..")
 
         # Define namespace
@@ -731,7 +740,7 @@ def assign_look_by_version(nodes, version_id):
                                      returnNewNodes=True)
     else:
         log.info("Reusing existing lookdev..")
-        shader_nodes = cmds.referenceQuery(existing_reference, nodes=True)
+        shader_nodes = cmds.referenceQuery(reference_node, nodes=True)
 
     # Assign relationships
     with open(shader_relation, "r") as f:
