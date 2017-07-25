@@ -2,7 +2,7 @@ import os
 
 from maya import cmds
 
-from avalon import api
+from avalon import api, maya
 
 
 class RigLoader(api.Loader):
@@ -21,7 +21,9 @@ class RigLoader(api.Loader):
     color = "orange"
 
     def process(self, name, namespace, context, data):
-        print("debug : {}\n{}\n".format(name, namespace))
+
+        assetname = "{}_".format(context["asset"]["name"])
+        unique_namespace = maya.unique_namespace(assetname, format="%03d")
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           reference=True,
@@ -31,9 +33,8 @@ class RigLoader(api.Loader):
 
         # Store for post-process
         self[:] = nodes
-
         if data.get("post_process", True):
-            self._post_process(name, namespace, context, data)
+            self._post_process(name, unique_namespace, context, data)
 
     def _post_process(self, name, namespace, context, data):
         from avalon import maya
@@ -43,12 +44,10 @@ class RigLoader(api.Loader):
         #   elsewhere, such as in the Integrator plug-in,
         #   without duplication.
 
-        output = next(
-            (node for node in self
-                if node.endswith("out_SET")), None)
-        controls = next(
-            (node for node in self
-                if node.endswith("controls_SET")), None)
+        output = next((node for node in self if
+                       node.endswith("out_SET")), None)
+        controls = next((node for node in self if
+                         node.endswith("controls_SET")), None)
 
         assert output, "No out_SET in rig, this is a bug."
         assert controls, "No controls_SET in rig, this is a bug."
@@ -68,9 +67,8 @@ class RigLoader(api.Loader):
             # TODO(marcus): Hardcoding the family here, better separate this.
             dependencies = [context["representation"]["_id"]]
             dependencies = " ".join(str(d) for d in dependencies)
-            unique_name = maya.unique_name(asset_name, suffix="_SET")
 
-            maya.create(name=unique_name,
+            maya.create(name=namespace,
                         asset=asset,
                         family="colorbleed.animation",
                         options={"useSelection": True},
