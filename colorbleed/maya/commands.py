@@ -612,10 +612,10 @@ def auto_connect_assets(src, dst):
             break
 
     for input_transform in cmds.sets(in_set, query=True):
-        mbid = cmds.getAttr(input_transform + ".mbID")
+        mbid = cmds.getAttr(input_transform + ".cbId")
         input_shape = cmds.listRelatives(input_transform, shapes=True)[0]
 
-        for output_transform in lib.lsattr("mbID", value=mbid):
+        for output_transform in lib.lsattr("cbId", value=mbid):
 
             ref = cmds.referenceQuery(output_transform, referenceNode=True)
             if ref != src:
