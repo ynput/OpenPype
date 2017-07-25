@@ -30,6 +30,8 @@ class LookLoader(api.Loader):
 
         """
 
+        reference_node = None
+
         # improve readability of the namespace
         assetname = context["asset"]["name"]
         ns_assetname = "{}_".format(assetname)
@@ -37,23 +39,22 @@ class LookLoader(api.Loader):
         namespace = maya.unique_namespace(ns_assetname,
                                           format="%03d",
                                           suffix="_look")
-        try:
-            existing_reference = cmds.file(self.fname,
-                                           query=True,
-                                           referenceNode=True)
-        except RuntimeError as e:
-            if e.message.rstrip() != "Cannot find the scene file.":
-                raise
 
-            self.log.info("Loading lookdev for the first time..")
+        try:
+            reference_node = lib.get_reference_node(self.fname)
+        except:
+            pass
+
+        if reference_node is None:
+            self.log.info("Loading lookdev for the first time ...")
             with maya.maintained_selection():
                 nodes = cmds.file(self.fname,
                                   namespace=namespace,
                                   reference=True,
                                   returnNewNodes=True)
         else:
-            self.log.info("Reusing existing lookdev..")
-            nodes = cmds.referenceQuery(existing_reference, nodes=True)
+            self.log.info("Reusing existing lookdev ...")
+            nodes = cmds.referenceQuery(reference_node, nodes=True)
 
         # Assign shaders
         self.fname = self.fname.rsplit(".", 1)[0] + ".json"
