@@ -16,9 +16,7 @@ class ExtractAlembic(colorbleed.api.Extractor):
 
     """
     label = "Alembic"
-    families = ["colorbleed.model",
-                "colorbleed.pointcache",
-                "colorbleed.proxy"]
+    families = ["colorbleed.model", "colorbleed.pointcache"]
     optional = True
 
     def process(self, instance):
@@ -27,13 +25,27 @@ class ExtractAlembic(colorbleed.api.Extractor):
         filename = "%s.abc" % instance.name
         path = os.path.join(parent_dir, filename)
 
+        attrPrefix = instance.data.get("attrPrefix", [])
+        attrPrefix.append("cb")
+
         options = copy.deepcopy(instance.data)
+        options['attrPrefix'] = attrPrefix
+
+        # Ensure visibility keys are written
+        options['writeVisibility'] = True
+
+        # Write creases
+        options['writeCreases'] = True
+
+        # Ensure UVs are written
+        options['uvWrite'] = True
+
         options['selection'] = True
         options["attr"] = ["cbId"]
 
         # force elect items to ensure all items get exported by Alembic
         members = instance.data("setMembers")
-        print members
+        print "Members : {}".format(members)
 
         cmds.select(members)
         with avalon.maya.suspended_refresh():
