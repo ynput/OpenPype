@@ -41,7 +41,7 @@ class ValidateLookMembersNodeIds(pyblish.api.InstancePlugin):
         # Ensure all nodes have a cbId
         invalid = list()
         for node in members:
-            if not cmds.getAttr("{}.mbID".format(node)):
+            if not cmds.getAttr("{}.cbId".format(node)):
                 invalid.append(node)
 
         return invalid

@@ -44,7 +44,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         output_content = cmds.sets("out_SET", query=True) or []
         assert output_content, "Must have members in rig out_SET"
 
-        controls_content = cmds.set("controls_SET", query=True) or []
+        controls_content = cmds.sets("controls_SET", query=True) or []
         assert controls_content, "Must have members in rig controls_SET"
 
         root_node = cmds.ls(set_members, assemblies=True)
@@ -56,15 +56,15 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         self.invalid_controls = self.validate_controls(controls_content,
                                                        hierarchy)
 
-        if self.invalid_hierachy:
+        if self.invalid_hierarchy:
             self.log.error("Found nodes which reside outside of root group "
                            "while they are set up for publishing."
-                           "\n%s" % self.invalid_hierachy)
+                           "\n%s" % self.invalid_hierarchy)
             error = True
 
-        if self.not_transforms:
+        if self.invalid_controls:
             self.log.error("Only transforms can be part of the controls_SET."
-                           "\n%s" % self.not_transforms)
+                           "\n%s" % self.invalid_controls)
             error = True
 
         if self.invalid_geometry:
@@ -100,6 +100,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         """
         errors = []
         for node in nodes:
+            print node
             if node not in hierarchy:
                 errors.append(node)
         return errors
@@ -128,10 +129,12 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         # The user can add the shape node to the out_set, this will result
         # in none when querying allDescendents
         all_shapes = set_members + shapes
+        all_long_names = [cmds.ls(i, long=True)[0] for i in all_shapes]
 
         # geometry
-        invalid_shapes = self.validate_hierarchy(hierarchy, all_shapes)
-        self.invalid_hierachy.extend(invalid_shapes)
+        invalid_shapes = self.validate_hierarchy(hierarchy,
+                                                 all_long_names)
+        self.invalid_hierarchy.extend(invalid_shapes)
         for shape in all_shapes:
             nodetype = cmds.nodeType(shape)
             if nodetype in self.ignore_nodes:
@@ -157,8 +160,10 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         """
 
         errors = []
-        invalid_controllers = self.validate_hierarchy(hierarchy, set_members)
-        self.invalid_hierachy.extend(invalid_controllers)
+        all_long_names = [cmds.ls(i, long=True)[0] for i in set_members]
+        invalid_controllers = self.validate_hierarchy(hierarchy,
+                                                      all_long_names)
+        self.invalid_hierarchy.extend(invalid_controllers)
         for node in set_members:
             nodetype = cmds.nodeType(node)
             if nodetype in self.ignore_nodes:
