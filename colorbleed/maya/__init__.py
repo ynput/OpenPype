@@ -2,7 +2,7 @@ import os
 import site
 import uuid
 
-from avalon import maya, api as avalon
+from avalon import maya, io, api as avalon
 from pyblish import api as pyblish
 
 from maya import cmds
@@ -45,20 +45,29 @@ def uninstall():
     menu.uninstall()
 
 
-def _set_uuid(node):
+def _set_uuid(asset_id, node):
     """Add cbId to `node`
     Unless one already exists.
     """
 
-    asset = os.environ["AVALON_ASSET"]
     attr = "{0}.cbId".format(node)
-
-    if not cmds.objExists(attr):
+    if not cmds.attributeQuery("cbId", node=node, exists=True):
         cmds.addAttr(node, longName="cbId", dataType="string")
         _, uid = str(uuid.uuid4()).rsplit("-", 1)
-        cb_uid = "{}:{}:{}".format(asset, node, uid)
+        cb_uid = "{}:{}".format(asset_id, uid)
 
         cmds.setAttr(attr, cb_uid, type="string")
+
+
+def _copy_uuid(source, target):
+
+    source_attr = "{0}.cbId".format(source)
+    target_attr = "{0}.cbId".format(target)
+    if not cmds.attributeQuery("cbId", node=target, exists=True):
+        cmds.addAttr(target, longName="cbId", dataType="string")
+
+    attribute_value = cmds.getAttr(source_attr)
+    cmds.setAttr(target_attr, attribute_value, type="string")
 
 
 def on_init():
@@ -90,17 +99,20 @@ def on_save():
     defaults = ["initialShadingGroup", "initialParticleSE"]
 
     # the default items which always want to have an ID
-    types = ["mesh", "shadingEngine", "file"]
+    types = ["mesh", "shadingEngine", "file", "nurbsCurve"]
 
     # the items which need to pass the id to their parent
-    subtypes = ["nurbsCurve"]
-
     nodes = (set(cmds.ls(type=types, long=True)) -
              set(cmds.ls(long=True, readOnly=True)) -
              set(cmds.ls(long=True, lockedNodes=True)))
 
     transforms = set()
-    for n in cmds.ls(type=subtypes, long=True):
+    for n in cmds.ls(type=types, long=True):
+        # pass id to parent of node if in subtypes
+        relatives = cmds.listRelatives(n, parent=True, fullPath=True)
+        if not relatives:
+            continue
+
         for r in cmds.listRelatives(n, parent=True, fullPath=True):
             transforms.add(r)
 
@@ -108,8 +120,11 @@ def on_save():
     # is unique
     nodes |= transforms
 
-    # remove any default nodes
+    # Lead with asset ID from the database
+    asset = os.environ["AVALON_ASSET"]
+    asset_id = io.find_one({"type": "asset", "name": asset})
+
     for node in nodes:
         if node in defaults:
             continue
-        _set_uuid(node)
+        _set_uuid(str(asset_id["_id"]), node)
