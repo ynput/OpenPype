@@ -46,8 +46,6 @@ class ModelGPUCacheLoader(api.Loader):
 
     def process(self, name, namespace, context, data):
 
-        from maya import cmds
-
         # todo: This will likely not be entirely safe with "containerize"
         # also this cannot work in the manager because it only works
         # on references at the moment!
