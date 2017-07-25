@@ -1,15 +1,15 @@
 import os
 import logging
-import shutil
-
-import maya.cmds as cmds
 
 import pyblish.api
+from avalon import api, io
+import colorbleed.filetypes as filetypes
+
 
 log = logging.getLogger(__name__)
 
 
-class PostIntegrateAsset(pyblish.api.InstancePlugin):
+class PreIntegrateAsset(pyblish.api.InstancePlugin):
     """Resolve any dependency issies
 
     This plug-in resolves any paths which, if not updated might break
@@ -20,49 +20,232 @@ class PostIntegrateAsset(pyblish.api.InstancePlugin):
     publish the shading network. Same goes for file dependent assets.
     """
 
-    label = "Post Intergrate Asset"
-    order = pyblish.api.IntegratorOrder + 0.1
-    families = ["colorbleed.lookdev", "colorbleed.texture"]
+    label = "Pre Intergrate Asset"
+    order = pyblish.api.IntegratorOrder
+    families = ["colorbleed.model",
+                "colorbleed.rig",
+                "colorbleed.animation",
+                "colorbleed.camera",
+                "colorbleed.lookdev",
+                "colorbleed.texture",
+                "colorbleed.historyLookdev",
+                "colorbleed.group"]
 
     def process(self, instance):
 
-        # get needed variables
-        version_folder = instance.data["versionFolder"]
-        family = instance.data["family"]
-        resources = instance.data("resources", [])
+        # Required environment variables
+        PROJECT = os.environ["AVALON_PROJECT"]
+        ASSET = instance.data.get("asset") or os.environ["AVALON_ASSET"]
+        SILO = os.environ["AVALON_SILO"]
+        LOCATION = os.getenv("AVALON_LOCATION")
 
-        self.log.info("Running post process for {}".format(instance.name))
+        # todo(marcus): avoid hardcoding labels in the integrator
+        representation_labels = {".ma": "Maya Ascii",
+                                 ".source": "Original source file",
+                                 ".abc": "Alembic"}
 
-        if family == "colorbleed.texture":
-            texture_folder = os.path.join(version_folder, "textures")
-            self.remap_resource_nodes(resources, folder=texture_folder)
+        context = instance.context
+        # Atomicity
+        #
+        # Guarantee atomic publishes - each asset contains
+        # an identical set of members.
+        #     __
+        #    /     o
+        #   /       \
+        #  |    o    |
+        #   \       /
+        #    o   __/
+        #
+        assert all(result["success"] for result in context.data["results"]), (
+            "Atomicity not held, aborting.")
 
-        elif family == "colorbleed.lookdev":
-            self.remap_resource_nodes(resources)
+        # Assemble
+        #
+        #       |
+        #       v
+        #  --->   <----
+        #       ^
+        #       |
+        #
+        stagingdir = instance.data.get("stagingDir")
+        assert stagingdir, ("Incomplete instance \"%s\": "
+                            "Missing reference to staging area." % instance)
 
-        # self.log.info("Removing temporary files and folders ...")
-        # if passed:
-        #     stagingdir = instance.data["stagingDir"]
-        #     shutil.rmtree(stagingdir)
+        # extra check if stagingDir actually exists and is available
 
-    def remap_resource_nodes(self, resources, folder=None):
+        self.log.debug("Establishing staging directory @ %s" % stagingdir)
 
-        self.log.info("Updating resource nodes ...")
-        for resource in resources:
-            source = resource["source"]
-            if folder:
-                fname = os.path.basename(source)
-                fpath = os.path.join(folder, fname)
-            else:
-                fpath = source
+        project = io.find_one({"type": "project"})
+        asset = io.find_one({"name": ASSET})
 
-            node_attr = resource["attribute"]
-            print("UPDATING {} -> {}".format(node_attr, fpath))
-            cmds.setAttr(node_attr, fpath, type="string")
+        assert all([project, asset]), ("Could not find current project or "
+                                       "asset '%s'" % ASSET)
 
-        self.log.info("Saving file ...")
+        subset = self.get_subset(asset, instance)
 
-        cmds.file(save=True, type="mayaAscii")
+        # get next version
+        latest_version = io.find_one({"type": "version",
+                                      "parent": subset["_id"]},
+                                     {"name": True},
+                                     sort=[("name", -1)])
 
-    def remap_yeti_resource_nodes(self, node,):
-        pass
+        next_version = 1
+        if latest_version is not None:
+            next_version += latest_version["name"]
+
+        self.log.debug("Next version: %i" % next_version)
+
+        version_data = self.create_version_data(context, instance)
+        version = self.create_version(subset=subset,
+                                      version_number=next_version,
+                                      locations=[LOCATION],
+                                      data=version_data)
+
+        self.log.debug("Creating version ...")
+        version_id = io.insert_one(version).inserted_id
+
+        # Write to disk
+        #          _
+        #         | |
+        #        _| |_
+        #    ____\   /
+        #   |\    \ / \
+        #   \ \    v   \
+        #    \ \________.
+        #     \|________|
+        #
+        root = api.registered_root()
+        template_data = {"root": root,
+                         "project": PROJECT,
+                         "silo": SILO,
+                         "asset": ASSET,
+                         "subset": subset["name"],
+                         "version": version["name"]}
+
+        template_publish = project["config"]["template"]["publish"]
+
+        representations = []
+        traffic = []
+        staging_content = os.listdir(stagingdir)
+        for v, fname in enumerate(staging_content):
+
+            name, ext = os.path.splitext(fname)
+            template_data["representation"] = ext[1:]
+
+            src = os.path.join(stagingdir, fname)
+            dst = template_publish.format(**template_data)
+            if v == 0:
+                instance.data["versionFolder"] = os.path.dirname(dst)
+
+            # Files to copy as if or to specific folder
+            if ext in filetypes.accepted_images_types:
+                dirname = os.path.dirname(dst)
+                dst = os.path.join(dirname, fname)
+
+            # Backwards compatibility
+            if fname == ".metadata.json":
+                dirname = os.path.dirname(dst)
+                dst = os.path.join(dirname, fname)
+
+            # copy source to destination (library)
+            traffic.append([src, dst])
+
+            representation = {
+                "schema": "avalon-core:representation-2.0",
+                "type": "representation",
+                "parent": version_id,
+                "name": ext[1:],
+                "data": {"label": representation_labels.get(ext)},
+                "dependencies": instance.data.get("dependencies", "").split(),
+
+                # Imprint shortcut to context
+                # for performance reasons.
+                "context": {
+                    "project": PROJECT,
+                    "asset": ASSET,
+                    "silo": SILO,
+                    "subset": subset["name"],
+                    "version": version["name"],
+                    "representation": ext[1:]
+                }
+            }
+            representations.append(representation)
+
+        # store data for database and source / destinations
+        instance.data["representations"] = representations
+        instance.data["traffic"] = traffic
+
+        return representations
+
+    def get_subset(self, asset, instance):
+
+        subset = io.find_one({"type": "subset",
+                              "parent": asset["_id"],
+                              "name": instance.data["subset"]})
+
+        if subset is None:
+            subset_name = instance.data["subset"]
+            self.log.info("Subset '%s' not found, creating.." % subset_name)
+
+            _id = io.insert_one({
+                "schema": "avalon-core:subset-2.0",
+                "type": "subset",
+                "name": subset_name,
+                "data": {},
+                "parent": asset["_id"]
+            }).inserted_id
+
+            subset = io.find_one({"_id": _id})
+
+        return subset
+
+    def create_version(self, subset, version_number, locations, data=None):
+        """ Copy given source to destination
+
+        Arguments:
+            subset (dict): the registered subset of the asset
+            version_number (int): the version number
+            locations (list): the currently registered locations
+        """
+        # Imprint currently registered location
+        version_locations = [location for location in locations if
+                             location is not None]
+
+        return {"schema": "avalon-core:version-2.0",
+                "type": "version",
+                "parent": subset["_id"],
+                "name": version_number,
+                "locations": version_locations,
+                "data": data}
+
+    def create_version_data(self, context, instance):
+        """Create the data collection for th version
+
+        Args:
+            context: the current context
+            instance: the current instance being published
+
+        Returns:
+            dict: the required information with instance.data as key
+        """
+
+        families = []
+        current_families = instance.data.get("families", list())
+        instance_family = instance.data.get("family", None)
+
+        families += current_families
+        if instance_family is not None:
+            families.append(instance_family)
+
+        # create relative source path for DB
+        relative_path = os.path.relpath(context.data["currentFile"],
+                                        api.registered_root())
+        source = os.path.join("{root}", relative_path).replace("\\", "/")
+
+        version_data = {"families": families,
+                        "time": context.data["time"],
+                        "author": context.data["user"],
+                        "source": source,
+                        "comment": context.data.get("comment")}
+
+        return dict(instance.data, **version_data)
