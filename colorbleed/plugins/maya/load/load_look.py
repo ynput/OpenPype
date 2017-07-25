@@ -3,6 +3,7 @@ import json
 
 from maya import cmds
 from avalon import api, maya
+import colorbleed.maya.lib as lib
 
 
 class LookLoader(api.Loader):
@@ -67,74 +68,9 @@ class LookLoader(api.Loader):
         # Get all nodes which belong to a matching name space
         # Currently this is the safest way to get all the nodes
         namespace_nodes = self.get_namespace_nodes(assetname)
-        self.apply_shaders(relationships, nodes, namespace_nodes)
+        lib.apply_shaders(relationships, nodes, namespace_nodes)
 
         self[:] = nodes
-
-    def apply_shaders(self, relationships, nodes, namespace_nodes):
-        """Apply all shaders to the nodes based on the relationship data
-
-        Args:
-            relationships (dict): shader to node relationships
-            nodes (list): shader network nodes
-            namespace_nodes (list): nodes from linked to namespace
-
-        Returns:
-            None
-        """
-
-        # attributes = relationships.get("attributes", [])
-        sets = relationships.get("sets", [])
-
-        shading_engines = cmds.ls(nodes, type="shadingEngine", long=True)
-        assert len(shading_engines) > 0, ("Error in retrieving shading engine "
-                                          "from reference")
-
-        # get all nodes which we need to link
-        for set in sets:
-            # collect all unique IDs of the set members
-            uuid = set["uuid"]
-            member_uuids = [member["uuid"] for member in set["members"]]
-            filtered_nodes = self.get_matching_nodes(namespace_nodes,
-                                                     member_uuids)
-            shading_engine = self.get_matching_nodes(shading_engines,
-                                                     [uuid])
-
-            assert len(shading_engine) == 1, ("Could not find the correct "
-                                              "shading engine with cbId "
-                                              "'{}'".format(uuid))
-
-            cmds.sets(filtered_nodes, forceElement=shading_engine[0])
-
-    def get_matching_nodes(self, nodes, uuids):
-        """Filter all nodes which match the UUIDs
-
-        Args:
-            nodes (list): collection of nodes to check
-            uuids (list): a list of UUIDs which are linked to the shader
-
-        Returns:
-            list: matching nodes
-        """
-
-        filtered_nodes = []
-        for node in nodes:
-            if node is None:
-                continue
-
-            if not cmds.attributeQuery("cbId", node=node, exists=True):
-                continue
-
-            # Deformed shaped
-            attr = "{}.cbId".format(node)
-            attribute_value = cmds.getAttr(attr)
-
-            if attribute_value not in uuids:
-                continue
-
-            filtered_nodes.append(node)
-
-        return filtered_nodes
 
     def get_namespace_nodes(self, assetname):
         """
