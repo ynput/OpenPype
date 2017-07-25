@@ -613,7 +613,7 @@ def _get_id(node):
         attr = "{}.cbId".format(node)
         attribute_value = cmds.getAttr(attr)
     except Exception as e:
-        log.warning(e)
+        log.debug(e)
         return
 
     return attribute_value
