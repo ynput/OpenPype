@@ -1,16 +1,25 @@
 """Standalone helper functions"""
 
 import re
-import contextlib
-from collections import OrderedDict
-import logging
 import os
+import bson
 import json
+import logging
+import contextlib
+from collections import OrderedDict, defaultdict
+
+from avalon import maya, io
 
 from maya import cmds, mel
 
 
 log = logging.getLogger(__name__)
+
+project = io.find_one({"type": "project",
+                       "name": os.environ["AVALON_PROJECT"]},
+                       projection={"config.template.publish": True,
+                                   "_id": False})
+TEMPLATE = project["config"]["template"]["publish"]
 
 
 def maintained_selection(arg=None):
@@ -522,7 +531,7 @@ def extract_alembic(file,
         valid_types = _alembic_options[key]
         if not isinstance(value, valid_types):
             raise TypeError("Alembic option unsupported type: "
-                            "{0} (expected {1}}".format(value, valid_types))
+                            "{0} (expected {1})".format(value, valid_types))
 
     # Format the job string from options
     job_args = list()
@@ -549,6 +558,8 @@ def extract_alembic(file,
         log.debug("Extracting Alembic with job arguments: %s", job_str)
 
     # Perform extraction
+    print("Alembic Job Arguments : {}".format(job_str))
+
     cmds.AbcExport(j=job_str, verbose=verbose)
 
     if verbose:
@@ -582,3 +593,238 @@ def remap_resource_nodes(resources, folder=None):
 
     log.info("Saving file ...")
     cmds.file(save=True, type="mayaAscii")
+
+
+def _get_id(node):
+    """
+    Get the `cbId` attribute of the given node
+    Args:
+        node (str): the name of the node to retrieve the attribute from
+
+    Returns:
+        str
+
+    """
+
+    if node is None:
+        return
+
+    try:
+        attr = "{}.cbId".format(node)
+        attribute_value = cmds.getAttr(attr)
+    except Exception as e:
+        log.warning(e)
+        return
+
+    return attribute_value
+
+
+def filter_by_id(nodes, uuids):
+    """Filter all nodes which match the UUIDs
+
+    Args:
+        nodes (list): collection of nodes to check
+        uuids (list): a list of UUIDs which are linked to the shader
+
+    Returns:
+        list: matching nodes
+    """
+
+    filtered_nodes = []
+    for node in nodes:
+        if node is None:
+            continue
+
+        if not cmds.attributeQuery("cbId", node=node, exists=True):
+            continue
+
+        # Deformed shaped
+        attr = "{}.cbId".format(node)
+        attribute_value = cmds.getAttr(attr)
+        if attribute_value not in uuids:
+            continue
+
+        filtered_nodes.append(node)
+
+    return filtered_nodes
+
+
+def get_representation_file(representation, template=TEMPLATE):
+    """
+    Rebuild the filepath of the representation's context
+    Args:
+        representation (dict): data of the registered in the database
+        template (str): the template to fill
+
+    Returns:
+        str
+
+    """
+    context = representation["context"].copy()
+    context["root"] = os.environ["AVALON_ROOT"]
+    return template.format(**context)
+
+
+def list_looks(asset_id):
+    """Return all look subsets for the given asset
+
+    This assumes all look subsets start with "look*" in their names.
+    """
+
+    # # get all subsets with look leading in
+    # the name associated with the asset
+    subset = io.find({"parent": asset_id,
+                      "type": "subset",
+                      "name": {"$regex": "look*"}})
+
+    return list(subset)
+
+
+def assign_look_by_version(nodes, version_id):
+    """Assign nodes a specific published look version by id.
+
+    This assumes the nodes correspond with the asset.
+
+    Args:
+        nodes(list): nodes to assign look to
+        version_id (bson.ObjectId)
+
+    Returns:
+        None
+    """
+
+    # get representations of shader file and relationships
+    shader_file = io.find_one({"type": "representation",
+                               "parent": version_id,
+                               "name": "ma"})
+
+    shader_relations = io.find_one({"type": "representation",
+                                    "parent": version_id,
+                                    "name": "json"})
+
+    # Load file
+    shader_filepath = get_representation_file(shader_file)
+    shader_relation = get_representation_file(shader_relations)
+
+    try:
+        existing_reference = cmds.file(shader_filepath,
+                                       query=True,
+                                       referenceNode=True)
+    except RuntimeError as e:
+        if e.message.rstrip() != "Cannot find the scene file.":
+            raise
+
+        log.info("Loading lookdev for the first time..")
+
+        # Define namespace
+        assetname = shader_file['context']['asset']
+        ns_assetname = "{}_".format(assetname)
+        namespace = maya.unique_namespace(ns_assetname,
+                                          format="%03d",
+                                          suffix="_look")
+
+        # Reference the look file
+        with maya.maintained_selection():
+            shader_nodes = cmds.file(shader_filepath,
+                                     namespace=namespace,
+                                     reference=True,
+                                     returnNewNodes=True)
+    else:
+        log.info("Reusing existing lookdev..")
+        shader_nodes = cmds.referenceQuery(existing_reference, nodes=True)
+
+    # Assign relationships
+    with open(shader_relation, "r") as f:
+        relationships = json.load(f)
+
+    apply_shaders(relationships, shader_nodes, nodes)
+
+
+def assign_look(nodes, subset="lookDefault"):
+    """Assigns a look to a node.
+
+    Optimizes the nodes by grouping by asset id and finding
+    related subset by name.
+
+    Args:
+        nodes (list): all nodes to assign the look to
+        subset (str): name of the subset to find
+    """
+
+    # Group all nodes per asset id
+    grouped = defaultdict(list)
+    for node in nodes:
+        colorbleed_id = cmds.getAttr("{}.cbId".format(node))
+        asset_id = colorbleed_id.split(":")[0]
+        grouped[asset_id].append(node)
+
+    for asset_id, asset_nodes in grouped.items():
+        # create objectId for database
+        asset_id = bson.ObjectId(asset_id)
+        subset = io.find_one({"type": "subset",
+                              "name": subset,
+                              "parent": asset_id})
+
+        assert subset, "No subset found for {}".format(asset_id)
+
+        # get last version
+        version = io.find_one({"parent": subset['_id'],
+                               "type": "version",
+                               "data.families":
+                                   {"$in":["colorbleed.lookdev"]}
+                               },
+                              sort=[("name", -1)],
+                              projection={"_id": True})
+
+        log.debug("Assigning look '{}' <{}> to nodes: {}".format(subset,
+                                                                 version,
+                                                                 asset_nodes))
+
+        assign_look_by_version(asset_nodes, version['_id'])
+
+
+def apply_shaders(relationships, shader_nodes, nodes):
+    """Apply all shaders to the nodes based on the relationship data
+
+    Args:
+        relationships (dict): shader to node relationships
+        shader_nodes (list): shader network nodes
+        nodes (list): nodes to assign to
+
+    Returns:
+        None
+    """
+
+    shader_sets = relationships.get("sets", [])
+    shading_engines = cmds.ls(shader_nodes, type="shadingEngine", long=True)
+    assert len(shading_engines) > 0, ("Error in retrieving shading engine "
+                                      "from reference")
+
+    # Pre-filter nodes and shader nodes
+    nodes_by_id = defaultdict(list)
+    shader_nodes_by_id = defaultdict(list)
+    for node in nodes:
+        _id = _get_id(node)
+        nodes_by_id[_id].append(node)
+
+    for shader_node in shader_nodes:
+        _id = _get_id(shader_node)
+        shader_nodes_by_id[_id].append(shader_node)
+
+    # get all nodes which we need to link per shader
+    for shader_set in shader_sets:
+        # collect shading engine
+        uuid = shader_set["uuid"]
+        shading_engine = shader_nodes_by_id.get(uuid, [])
+        assert len(shading_engine) == 1, ("Could not find the correct "
+                                          "shading engine with cbId "
+                                          "'{}'".format(uuid))
+
+        # collect members
+        filtered_nodes = list()
+        for member in shader_set["members"]:
+            member_uuid = member["uuid"]
+            members = nodes_by_id.get(member_uuid, [])
+            filtered_nodes.extend(members)
+
+        cmds.sets(filtered_nodes, forceElement=shading_engine[0])
