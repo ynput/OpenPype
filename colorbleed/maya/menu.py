@@ -24,6 +24,9 @@ def deferred():
     from scriptsmenu import launchformaya
     import scriptsmenu.scriptsmenu as menu
 
+    reload(launchformaya)
+    reload(menu)
+
     log.info("Attempting to install ...")
 
     # load configuration of custom menu

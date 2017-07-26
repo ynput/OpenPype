@@ -121,7 +121,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                                      "relationships": sets.values(),
                                      "sets": looksets}
         # Collect textures
-        resources = [self.collect_resources(n) for n in cmds.ls(type="file")]
+        resources = [self.collect_resource(n) for n in cmds.ls(type="file")]
         instance.data["resources"] = resources
 
         # Log a warning when no relevant sets were retrieved for the look.
@@ -322,7 +322,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         return attributes
 
-    def collect_resources(self, node, verbose=False):
+    def collect_resource(self, node, verbose=False):
         """Collect the link to the file(s) used (resource)
         Args:
             node (str): name of the node

@@ -30,7 +30,7 @@ class LookLoader(api.Loader):
 
         """
 
-        reference_node = None
+
 
         # improve readability of the namespace
         assetname = context["asset"]["name"]
@@ -40,6 +40,9 @@ class LookLoader(api.Loader):
                                           format="%03d",
                                           suffix="_look")
 
+        # try / except here is to ensure that the get_reference_node
+        # does not fail when the file doesn't exist yet
+        reference_node = None
         try:
             reference_node = lib.get_reference_node(self.fname)
         except:

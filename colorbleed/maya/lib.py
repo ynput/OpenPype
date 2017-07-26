@@ -669,10 +669,10 @@ def get_reference_node(path):
     """
     Get the reference node when the path is found being used in a reference
     Args:
-        path (str):
+        path (str): the file path to check
 
     Returns:
-
+        node (str): name of the reference node in question
     """
     node = cmds.file(path, query=True, referenceNode=True)
     reference_path = cmds.referenceQuery(path, filename=True)
