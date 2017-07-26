@@ -20,12 +20,6 @@
             "tooltip": "Incremental save with a specific format"
         },
         {
-            "command": "",
-            "sourcetype": "file",
-            "title": "Save scene",
-            "tooltip": "Save the scene based on a specific format"
-        },
-        {
             "title": "separator"
         }
     ],
@@ -84,7 +78,7 @@
                 "uvset",
                 "delete"
             ],
-            "title": "polyDeleteOtherUVSets",
+            "title": "Polygon Delete Other UV Sets",
             "tooltip": ""
         },
         {
@@ -112,10 +106,7 @@
         {
             "command": "$COLORBLEED_SCRIPTS\\modeling\\polyDetachSeparate.py",
             "sourcetype": "file",
-            "tags": [
-                "modeling",
-                "polyDetachSeparate"
-            ],
+            "tags": ["modeling", "poly","detach","separate"],
             "title": "Polygon Detach and Separate",
             "tooltip": ""
         },
@@ -133,10 +124,7 @@
         {
             "command": "$COLORBLEED_SCRIPTS\\modeling\\polySelectEveryNthEdgeUI.py",
             "sourcetype": "file",
-            "tags": [
-                "modeling",
-                "polySelectEveryNthEdgeUI"
-            ],
+            "tags": ["modeling", "select","nth", "edge", "ui"],
             "title": "Select Every Nth Edge"
         },
         {
@@ -144,7 +132,7 @@
             "sourcetype": "file",
             "tags": [
                 "modeling",
-                "djPFXUVs"
+                "djPFX", "UVs"
             ],
             "title": "dj PFX UVs",
             "tooltip": ""
@@ -256,10 +244,7 @@
         {
             "command": "",
             "sourcetype": "file",
-            "tags": [
-                "animation",
-                "optimize"
-            ],
+            "tags": [],
             "title": "Optimize",
             "tooltip": "Optimization scripts",
             "items": [
@@ -297,7 +282,7 @@
                 "zvParentMaster"
             ],
             "title": "ZV Parent Master",
-            "tooltip": "Open ZV Parent Master UI"
+            "tooltip": "Open ZV Parent M UI"
         },
         {
             "command": "$COLORBLEED_SCRIPTS\\animation\\pathAnimation.py",
@@ -343,6 +328,18 @@
             "tooltip": "Simplified version of the Capture GUI"
         },
         {
+            "command": "$COLORBLEED_SCRIPTS\\animation\\capture_ui.py",
+            "sourcetype": "file",
+            "tags": [
+                "animation",
+                "capture",
+                "screenshot",
+                "movie"
+            ],
+            "title": "Capture GUI",
+            "tooltip": "Render current camera to an image or movie"
+        },
+        {
             "command": "$COLORBLEED_SCRIPTS\\animation\\anim_scene_optimizer.py",
             "sourcetype": "file",
             "tags": [
@@ -362,18 +359,6 @@
             ],
             "title": "Pose Library",
             "tooltip": ""
-        },
-        {
-            "command": "$COLORBLEED_SCRIPTS\\animation\\capture_ui.py",
-            "sourcetype": "file",
-            "tags": [
-                "animation",
-                "capture",
-                "screenshot",
-                "movie"
-            ],
-            "title": "Capture GUI",
-            "tooltip": "Render current camera to an image or movie"
         },
         {
             "command": "$COLORBLEED_SCRIPTS\\animation\\key_amplifier_ui.py",
@@ -549,6 +534,66 @@
             "title": "Joints On Curve"
         },
         {
+            "command": "$COLORBLEED_SCRIPTS\\rigging\\resetBindSelectedSkinJoints.py",
+            "sourcetype": "python",
+            "tags": [
+                "rigging",
+                "resetBindSelectedSkinJoints",
+                "python"
+            ],
+            "title": "Reset Bind Selected Skin Joints"
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedComponents.py",
+            "sourcetype": "python",
+            "tags": [
+                "rigging",
+                "selectSkinclusterJointsFromSelectedComponents",
+                "python"
+            ],
+            "title": "Select Skincluster Joints From Selected Components"
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedMesh.py",
+            "sourcetype": "python",
+            "tags": [
+                "rigging",
+                "selectSkinclusterJointsFromSelectedMesh",
+                "python"
+            ],
+            "title": "Select Skincluster Joints From Selected Mesh"
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\rigging\\setJointLabels.py",
+            "sourcetype": "python",
+            "tags": [
+                "rigging",
+                "setJointLabels",
+                "python"
+            ],
+            "title": "Set Joint Labels"
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\rigging\\setJointOrientationFromCurrentRotation.py",
+            "sourcetype": "python",
+            "tags": [
+                "rigging",
+                "setJointOrientationFromCurrentRotation",
+                "python"
+            ],
+            "title": "Set Joint Orientation From Current Rotation"
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\rigging\\setSelectedJointsOrientationZero.py",
+            "sourcetype": "python",
+            "tags": [
+                "rigging",
+                "setSelectedJointsOrientationZero",
+                "python"
+            ],
+            "title": "Set Selected Joints Orientation Zero"
+        },
+        {
             "command": "$COLORBLEED_SCRIPTS\\rigging\\mirrorCurveShape.py",
             "sourcetype": "python",
             "tags": [
@@ -557,6 +602,16 @@
                 "python"
             ],
             "title": "Mirror Curve Shape"
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\rigging\\setRotationOrderUI.py",
+            "sourcetype": "python",
+            "tags": [
+                "rigging",
+                "setRotationOrderUI",
+                "python"
+            ],
+            "title": "Set Rotation Order UI"
         },
         {
             "command": "$COLORBLEED_SCRIPTS\\rigging\\paintItNowUI.py",
@@ -596,7 +651,7 @@
                 "rapidRig",
                 "python"
             ],
-            "title": "rapidRig"
+            "title": "Rapid Rig"
         },
         {
             "command": "$COLORBLEED_SCRIPTS\\rigging\\regenerate_blendshape_targets.py",
@@ -627,76 +682,6 @@
                 "python"
             ],
             "title": "Reset Bind Selected Meshes"
-        },
-        {
-            "command": "$COLORBLEED_SCRIPTS\\rigging\\resetBindSelectedSkinJoints.py",
-            "sourcetype": "python",
-            "tags": [
-                "rigging",
-                "resetBindSelectedSkinJoints",
-                "python"
-            ],
-            "title": "Reset Bind Selected Skin Joints"
-        },
-        {
-            "command": "$COLORBLEED_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedComponents.py",
-            "sourcetype": "python",
-            "tags": [
-                "rigging",
-                "selectSkinclusterJointsFromSelectedComponents",
-                "python"
-            ],
-            "title": "Select Skincluster Joints From Selected Components"
-        },
-        {
-            "command": "$COLORBLEED_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedMesh.py",
-            "sourcetype": "python",
-            "tags": [
-                "rigging",
-                "selectSkinclusterJointsFromSelectedMesh",
-                "python"
-            ],
-            "title": "Select Skincluster Joints From Selected Mesh"
-        },
-        {
-            "command": "$COLORBLEED_SCRIPTS\\rigging\\setJointLabels.py",
-            "sourcetype": "python",
-            "tags": [
-                "rigging",
-                "setJointLabels",
-                "python"
-            ],
-            "title": "setJointLabels"
-        },
-        {
-            "command": "$COLORBLEED_SCRIPTS\\rigging\\setJointOrientationFromCurrentRotation.py",
-            "sourcetype": "python",
-            "tags": [
-                "rigging",
-                "setJointOrientationFromCurrentRotation",
-                "python"
-            ],
-            "title": "Set Joint Orientation From Current Rotation"
-        },
-        {
-            "command": "$COLORBLEED_SCRIPTS\\rigging\\setRotationOrderUI.py",
-            "sourcetype": "python",
-            "tags": [
-                "rigging",
-                "setRotationOrderUI",
-                "python"
-            ],
-            "title": "Set Rotation Order UI"
-        },
-        {
-            "command": "$COLORBLEED_SCRIPTS\\rigging\\setSelectedJointsOrientationZero.py",
-            "sourcetype": "python",
-            "tags": [
-                "rigging",
-                "setSelectedJointsOrientationZero",
-                "python"
-            ],
-            "title": "Set Selected Joints Orientation Zero"
         },
         {
             "command": "$COLORBLEED_SCRIPTS\\rigging\\simpleControllerOnSelection.py",
@@ -770,7 +755,7 @@
         }
     ],
     "Shading": [
-        {
+            {
             "command": "",
             "sourcetype": "file",
             "tags": [
@@ -1098,123 +1083,88 @@
     ],
     "Layout": [
         {
-            "command": "",
+            "command": "$COLORBLEED_SCRIPTS\\layout\\alignDistributeUI.py",
             "sourcetype": "file",
-            "tags": [
-                "layout",
-                "alignDistributeUI"
+            "tags": ["layout", "align", "Distribute", "UI"],
+            "title": "Align Distribute UI",
+            "tooltip": ""
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\layout\\alignSimpleUI.py",
+            "sourcetype": "file",
+            "tags": ["layout", "align", "UI", "Simple"],
+            "title": "Align Simple UI",
+            "tooltip": ""
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\layout\\center_locator.py",
+            "sourcetype": "file",
+            "tags": ["layout", "center", "locator"],
+            "title": "Center Locator",
+            "tooltip": ""
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\layout\\average_locator.py",
+            "sourcetype": "file",
+            "tags": ["layout", "average", "locator"],
+            "title": "Average Locator",
+            "tooltip": ""
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\layout\\selectWithinProximityUI.py",
+            "sourcetype": "file",
+            "tags": ["layout", "select", "proximity", "ui"
             ],
-            "title": "alignDistributeUI",
+            "title": "Select Within Proximity UI",
+            "tooltip": ""
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\layout\\dupCurveUI.py",
+            "sourcetype": "file",
+            "tags": ["layout", "Duplicate", "Curve", "UI"],
+            "title": "Duplicate Curve UI",
+            "tooltip": ""
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\layout\\randomDeselectUI.py",
+            "sourcetype": "file",
+            "tags": ["layout", "random", "Deselect", "UI"],
+            "title": "Random Deselect UI",
+            "tooltip": ""
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\layout\\multiReferencerUI.py",
+            "sourcetype": "file",
+            "tags": ["layout", "multi", "reference"],
+            "title": "Multi Referencer UI",
+            "tooltip": ""
+        },
+        {
+            "command": "$COLORBLEED_SCRIPTS\\layout\\duplicateOffsetUI.py",
+            "sourcetype": "file",
+            "tags": ["layout", "duplicate", "offset", "UI"],
+            "title": "Duplicate Offset UI",
             "tooltip": ""
         },
         {
             "command": "",
             "sourcetype": "file",
-            "tags": [
-                "layout",
-                "alignSimpleUI"
-            ],
-            "title": "alignSimpleUI",
+            "tags": ["layout", "spPaint3d", "paint", "tool"],
+            "title": "SP Paint 3d",
             "tooltip": ""
         },
         {
-            "command": "",
+            "command": "$COLORBLEED_SCRIPTS\\layout\\randomizeUI.py",
             "sourcetype": "file",
-            "tags": [
-                "layout",
-                "center_locator"
-            ],
-            "title": "center_locator",
+            "tags": ["layout", "randomize","UI"],
+            "title": "Randomize UI",
             "tooltip": ""
         },
         {
-            "command": "",
+            "command": "$COLORBLEED_SCRIPTS\\layout\\distributeWithinObjectUI.py",
             "sourcetype": "file",
-            "tags": [
-                "layout",
-                "average_locator"
-            ],
-            "title": "average_locator",
-            "tooltip": ""
-        },
-        {
-            "command": "",
-            "sourcetype": "file",
-            "tags": [
-                "layout",
-                "selectWithinProximityUI"
-            ],
-            "title": "selectWithinProximityUI",
-            "tooltip": ""
-        },
-        {
-            "command": "",
-            "sourcetype": "file",
-            "tags": [
-                "layout",
-                "dupCurveUI"
-            ],
-            "title": "dupCurveUI",
-            "tooltip": ""
-        },
-        {
-            "command": "",
-            "sourcetype": "file",
-            "tags": [
-                "layout",
-                "randomDeselectUI"
-            ],
-            "title": "randomDeselectUI",
-            "tooltip": ""
-        },
-        {
-            "command": "",
-            "sourcetype": "file",
-            "tags": [
-                "layout",
-                "multiReferencerUI"
-            ],
-            "title": "multiReferencerUI",
-            "tooltip": ""
-        },
-        {
-            "command": "",
-            "sourcetype": "file",
-            "tags": [
-                "layout",
-                "duplicateOffsetUI"
-            ],
-            "title": "duplicateOffsetUI",
-            "tooltip": ""
-        },
-        {
-            "command": "",
-            "sourcetype": "file",
-            "tags": [
-                "layout",
-                "spPaint3d"
-            ],
-            "title": "spPaint3d",
-            "tooltip": ""
-        },
-        {
-            "command": "",
-            "sourcetype": "file",
-            "tags": [
-                "layout",
-                "randomizeUI"
-            ],
-            "title": "randomizeUI",
-            "tooltip": ""
-        },
-        {
-            "command": "",
-            "sourcetype": "file",
-            "tags": [
-                "layout",
-                "distributeWithinObjectUI"
-            ],
-            "title": "distributeWithinObjectUI",
+            "tags": ["layout", "distribute", "ObjectUI", "within"],
+            "title": "Distribute Within Object UI",
             "tooltip": ""
         }
     ],
