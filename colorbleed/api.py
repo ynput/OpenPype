@@ -21,7 +21,9 @@ from .action import (
 )
 
 all = [
+    # plugin classes
     "Extractor",
+    # ordering
     "ValidatePipelineOrder",
     "ValidateContentsOrder",
     "ValidateSceneOrder",

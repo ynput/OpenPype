@@ -3,10 +3,11 @@ import json
 
 from maya import cmds
 
+import pyblish.api
 import avalon.maya
 import colorbleed.api
 
-import cb.utils.maya.context as context
+from cb.utils.maya import context
 
 
 class ExtractLook(colorbleed.api.Extractor):
@@ -18,9 +19,10 @@ class ExtractLook(colorbleed.api.Extractor):
 
     """
 
-    label = "Look (Maya ASCII + JSON)"
+    label = "Extract Look (Maya ASCII + JSON)"
     hosts = ["maya"]
-    families = ["colorbleed.look"]
+    families = ["colorbleed.lookdev"]
+    order = pyblish.api.ExtractorOrder + 0.2
 
     def process(self, instance):
 
@@ -29,6 +31,7 @@ class ExtractLook(colorbleed.api.Extractor):
         maya_fname = "{0}.ma".format(instance.name)
         json_fname = "{0}.json".format(instance.name)
 
+        # Make texture dump folder
         maya_path = os.path.join(dir_path, maya_fname)
         json_path = os.path.join(dir_path, json_fname)
 
@@ -37,42 +40,31 @@ class ExtractLook(colorbleed.api.Extractor):
         # Remove all members of the sets so they are not included in the
         # exported file by accident
         self.log.info("Extract sets (Maya ASCII)..")
-        sets = instance.data["lookSets"]
+        lookdata = instance.data["lookData"]
+        sets = lookdata["sets"]
 
-        # Define the texture file node remapping
-        resource_remap = dict()
-        # required tags to be a look resource
-        required_tags = ["maya", "attribute", "look"]
-        resources = instance.data.get("resources", [])
-        for resource in resources:
-            resource_tags = resource.get("tags", [])
-            if all(tag in resource_tags for tag in required_tags):
-                node = resource['node']
-                destination = resource['destination']
-                resource_remap["{}.fileTextureName".format(node)] = destination
-
-        # Extract in corect render layer
+        # Extract in correct render layer
         layer = instance.data.get("renderlayer", "defaultRenderLayer")
         with context.renderlayer(layer):
             # TODO: Ensure membership edits don't become renderlayer overrides
             with context.empty_sets(sets):
-                with context.attribute_values(resource_remap):
-                    with avalon.maya.maintained_selection():
-                        cmds.select(sets, noExpand=True)
-                        cmds.file(maya_path,
-                                  force=True,
-                                  typ="mayaAscii",
-                                  exportSelected=True,
-                                  preserveReferences=False,
-                                  channels=True,
-                                  constraints=True,
-                                  expressions=True,
-                                  constructionHistory=True)
+                with avalon.maya.maintained_selection():
+                    cmds.select(sets, noExpand=True)
+                    cmds.file(maya_path,
+                              force=True,
+                              typ="mayaAscii",
+                              exportSelected=True,
+                              preserveReferences=False,
+                              channels=True,
+                              constraints=True,
+                              expressions=True,
+                              constructionHistory=True)
 
         # Write the JSON data
         self.log.info("Extract json..")
-        data = {"attributes": instance.data["lookAttributes"],
-                "sets": instance.data["lookSetRelations"]}
+        data = {"attributes": lookdata["attributes"],
+                "sets": lookdata["relationships"]}
+
         with open(json_path, "w") as f:
             json.dump(data, f)
 

@@ -1,7 +1,7 @@
+import maya.cmds as cmds
+
 import pyblish.api
 import colorbleed.api
-
-import cbra.utils.maya.node_uuid as id_utils
 
 
 class ValidateLookMembersNodeIds(pyblish.api.InstancePlugin):
@@ -20,7 +20,8 @@ class ValidateLookMembersNodeIds(pyblish.api.InstancePlugin):
     families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look Members Id Attributes'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.api.SelectInvalidAction,
+               colorbleed.api.GenerateUUIDsOnInvalidAction]
 
     @staticmethod
     def get_invalid(instance):
@@ -40,7 +41,7 @@ class ValidateLookMembersNodeIds(pyblish.api.InstancePlugin):
         # Ensure all nodes have a cbId
         invalid = list()
         for node in members:
-            if not id_utils.has_id(node):
+            if not cmds.getAttr("{}.cbId".format(node)):
                 invalid.append(node)
 
         return invalid

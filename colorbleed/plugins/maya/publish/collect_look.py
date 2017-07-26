@@ -1,9 +1,9 @@
 from maya import cmds
 
-from cb.utils.maya import context
-import cbra.utils.maya.node_uuid as id_utils
 import pyblish.api
 
+from cb.utils.maya import context, shaders
+import cbra.utils.maya.node_uuid as id_utils
 
 SHAPE_ATTRS = ["castsShadows",
                "receiveShadows",
@@ -62,7 +62,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.4
-    families = ["colorbleed.look"]
+    families = ["colorbleed.lookdev"]
     label = "Collect Look"
     hosts = ["maya"]
 
@@ -87,7 +87,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Discover related object sets
         self.log.info("Gathering sets..")
-        self.gather_sets(instance)
+        sets = self.gather_sets(instance)
 
         # Lookup with absolute names (from root namespace)
         instance_lookup = set([str(x) for x in cmds.ls(instance,
@@ -95,9 +95,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                                                        absoluteName=True)])
 
         self.log.info("Gathering set relations..")
-        sets = self.gather_sets(instance)
         for objset in sets:
-
             self.log.debug("From %s.." % objset)
             content = cmds.sets(objset, query=True)
             objset_members = sets[objset]["members"]
@@ -108,22 +106,23 @@ class CollectLook(pyblish.api.InstancePlugin):
                                                        verbose)
                 if not member_data:
                     continue
-
                 sets[objset]["members"].append(member_data)
 
         # Remove sets that didn't have any members assigned in the end
-        sets = self.clean_sets(sets)
-        # Member attributes (shapes + transforms)
+        sets = self.remove_sets_without_members(sets)
 
         self.log.info("Gathering attribute changes to instance members..")
 
-        attributes = self.collect_attributes_changes(instance)
+        attributes = self.collect_attributes_changed(instance)
         looksets = cmds.ls(sets.keys(), absoluteName=True, long=True)
 
         # Store data on the instance
         instance.data["lookData"] = {"attributes": attributes,
                                      "relationships": sets.values(),
                                      "sets": looksets}
+        # Collect textures
+        resources = [self.collect_resource(n) for n in cmds.ls(type="file")]
+        instance.data["resources"] = resources
 
         # Log a warning when no relevant sets were retrieved for the look.
         if not instance.data["lookData"]["sets"]:
@@ -133,41 +132,76 @@ class CollectLook(pyblish.api.InstancePlugin):
         self.log.info("Collected look for %s" % instance)
 
     def gather_sets(self, instance):
+        """Gather all objectSets which are of importance for publishing
+
+        It checks if all nodes in the instance are related to any objectSet
+        which need to be
+
+        Args:
+            instance (list): all nodes to be published
+
+        Returns:
+            dict
+        """
 
         # Get view sets (so we can ignore those sets later)
         sets = dict()
         view_sets = set()
-        model_panels = cmds.getPanel(type="modelPanel")
-        for panel in model_panels:
+        for panel in cmds.getPanel(type="modelPanel"):
             view_set = cmds.modelEditor(panel, query=True, viewObjects=True)
             if view_set:
                 view_sets.add(view_set)
 
         for node in instance:
-            node_sets = self.filter_sets(node, view_sets)
-            if not node_sets:
+            related_sets = self.get_related_sets(node, view_sets)
+            if not related_sets:
                 continue
 
-            for objset in node_sets:
+            for objset in related_sets:
                 if objset in sets:
                     continue
+
+                unique_id = cmds.getAttr("%s.cbId" % objset)
                 sets[objset] = {"name": objset,
-                                "uuid": id_utils.get_id(objset),
+                                "uuid": unique_id,
                                 "members": list()}
         return sets
 
-    def filter_sets(self, node, view_sets):
+    def get_related_sets(self, node, view_sets):
+        """Get the sets which do not belong to any specific group
 
-        node_sets = cmds.listSets(object=node, extendToShape=False) or []
-        if not node_sets:
-            return
+        Filters out based on:
+        - id attribute is NOT `pyblish.avalon.container`
+        - shapes and deformer shapes (alembic creates meshShapeDeformed)
+        - set name ends with any from a predefined list
+        - set in not in viewport set (isolate selected for example)
+
+        Args:
+            node (str): name of the current not to check
+        """
+
+        ignored = ["pyblish.avalon.instance", "pyblish.avalon.container"]
+
+        related_sets = cmds.listSets(object=node, extendToShape=False)
+        if not related_sets:
+            return []
+
+        # Ignore `avalon.container`
+        sets = [s for s in related_sets if
+                not cmds.attributeQuery("id", node=s, exists=True) or
+                not cmds.getAttr("%s.id" % s) in ignored]
 
         # Exclude deformer sets
+        # Autodesk documentation on listSets command:
+        # type(uint) : Returns all sets in the scene of the given
+        # >>> type:
+        # >>> 1 - all rendering sets
+        # >>> 2 - all deformer sets
         deformer_sets = cmds.listSets(object=node,
                                       extendToShape=False,
                                       type=2) or []
         deformer_sets = set(deformer_sets)  # optimize lookup
-        sets = [s for s in node_sets if s not in deformer_sets]
+        sets = [s for s in sets if s not in deformer_sets]
 
         # Ignore specifically named sets
         sets = [s for s in sets if not any(s.endswith(x) for x in self.IGNORE)]
@@ -176,16 +210,24 @@ class CollectLook(pyblish.api.InstancePlugin):
         # viewports)
         sets = [s for s in sets if s not in view_sets]
 
-        self.log.info("Found sets {0} for {1}".format(node_sets, node))
+        self.log.info("Found sets %s for %s" % (related_sets, node))
 
         return sets
 
-    def clean_sets(self, sets):
+    def remove_sets_without_members(self, sets):
+        """Remove any set which does not have any members
+
+        Args:
+            sets (dict): collection if sets with data as value
+
+        Returns:
+            dict
+        """
 
         for objset, data in sets.items():
             if not data['members']:
-                self.log.debug("Removing redundant set "
-                               "information: %s" % objset)
+                self.log.debug("Removing redundant set information: "
+                               "%s" % objset)
                 sets.pop(objset)
 
         return sets
@@ -215,10 +257,24 @@ class CollectLook(pyblish.api.InstancePlugin):
         if member in [m["name"] for m in objset_members]:
             return
 
+        # check node type, if mesh get parent! makes assigning shaders easier
+        if cmds.nodeType(node) == "mesh":
+            parent = cmds.listRelatives(node, parent=True, fullPath=True)
+            # a mesh NEEDS to have a parent in Maya logic, no reason for
+            # assertions or extra checking
+            parent = parent[0]
+            if cmds.attributeQuery("cbId", node=parent, exists=True):
+                node = parent
+            else:
+                self.log.error("Transform group of mesh '{}' has no attribute "
+                               "'cbId', this is manditory")
+                return
+
         if verbose:
             self.log.debug("Such as %s.." % member)
 
-        member_data = {"name": node, "uuid": id_utils.get_id(node)}
+        member_data = {"name": node,
+                       "uuid": cmds.getAttr("{}.cbId".format(node))}
 
         # Include components information when components are assigned
         if components:
@@ -226,7 +282,22 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         return member_data
 
-    def collect_attributes_changes(self, instance):
+    def collect_attributes_changed(self, instance):
+        """Collect all userDefined attributes which have changed
+
+        Each node gets checked for user defined attributes which have been
+        altered during development. Each changes gets logged in a dictionary
+
+        [{name: node,
+          uuid: uuid,
+          attributes: {attribute: value}}]
+
+        Args:
+            instance (list): all nodes which will be published
+
+        Returns:
+            list
+        """
 
         attributes = []
         for node in instance:
@@ -250,3 +321,46 @@ class CollectLook(pyblish.api.InstancePlugin):
             attributes.append(data)
 
         return attributes
+
+    def collect_resource(self, node, verbose=False):
+        """Collect the link to the file(s) used (resource)
+        Args:
+            node (str): name of the node
+            verbose (bool): enable debug information
+
+        Returns:
+            dict
+        """
+
+        attribute = "{}.fileTextureName".format(node)
+        source = cmds.getAttr(attribute)
+
+        # Get the computed file path (e.g. the one with the <UDIM> pattern
+        # in it) So we can reassign it this computed file path whenever
+        # we need to.
+        computed_attribute = "{}.computedFileTextureNamePattern".format(node)
+        computed_source = cmds.getAttr(computed_attribute)
+        if source != computed_source:
+            if verbose:
+                self.log.debug("File node computed pattern differs from "
+                               "original pattern: {0} "
+                               "({1} -> {2})".format(node,
+                                                     source,
+                                                     computed_source))
+
+            # We replace backslashes with forward slashes because V-Ray
+            # can't handle the UDIM files with the backslashes in the
+            # paths as the computed patterns
+            source = computed_source.replace("\\", "/")
+
+        files = shaders.get_file_node_files(node)
+        if not files:
+            self.log.error("File node does not have a texture set: "
+                           "{0}".format(node))
+            return
+
+        # Define the resource
+        return {"node": node,
+                "attribute": attribute,
+                "source": source,  # required for resources
+                "files": files}  # required for resources

@@ -1,7 +1,11 @@
+import logging
+
 from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+
+log = logging.getLogger("Rig Controllers")
 
 
 class ValidateRigControllers(pyblish.api.InstancePlugin):
@@ -12,6 +16,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     label = "Rig Controllers"
     hosts = ["maya"]
     families = ["colorbleed.rig"]
+    actions = [colorbleed.api.RepairAction]
 
     def process(self, instance):
 
@@ -21,7 +26,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         is_offset = list()
 
         controls = cmds.sets("controls_SET", query=True)
-        assert controls, "Must have controls in rig control_SET"
+        assert controls, "Must have controls in rig controls_SET"
 
         for control in controls:
             valid_keyed = self.validate_keyed_state(control)
@@ -41,15 +46,18 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         if is_keyed:
             self.log.error("No controls can be keyes. Failed :\n"
                            "%s" % is_keyed)
+            error = True
 
         if is_offset:
             self.log.error("All controls default transformation values. "
                            "Failed :\n%s" % is_offset)
+            error = True
 
         if not_locked:
             self.log.error("All controls must have visibility "
                            "attribute locked. Failed :\n"
                            "%s" % not_locked)
+            error = True
 
         if error:
             raise RuntimeError("Invalid rig controllers. See log for details.")
@@ -78,3 +86,17 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         if animation_curves:
             return False
         return True
+
+    @classmethod
+    def repair(cls, instance):
+
+        # lock all controllers in controls_SET
+        controls = cmds.sets("controls_SET", query=True)
+        for control in controls:
+            attr = "{}.visibility".format(control)
+            locked = cmds.getAttr(attr, lock=True)
+            if not locked:
+                print("Locking visibility for %s" % control)
+                cmds.setAttr(attr, lock=True)
+
+            continue

@@ -23,9 +23,7 @@ class ValidateResources(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         for resource in instance.data.get('resources', []):
-
             # Required data
-            assert "source" in resource
-            assert "destination" in resource
-            assert "files" in resource
+            assert "source" in resource, "No source found"
+            assert "files" in resource, "No files from source"
             assert all(os.path.exists(f) for f in resource['files'])

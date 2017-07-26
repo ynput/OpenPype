@@ -1,4 +1,10 @@
+import os
+
+from maya import cmds
+
+import avalon.maya
 import colorbleed.api
+from colorbleed.maya.lib import extract_alembic
 
 
 class ExtractColorbleedAnimation(colorbleed.api.Extractor):
@@ -14,10 +20,6 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
     families = ["colorbleed.animation"]
 
     def process(self, instance):
-        import os
-        from maya import cmds
-        import avalon.maya
-        from colorbleed.maya.lib import extract_alembic
 
         # Collect the out set nodes
         out_sets = [node for node in instance if node.endswith("out_SET")]
@@ -27,10 +29,12 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
         out_set = out_sets[0]
         nodes = cmds.sets(out_set, query=True)
 
-        # Include all descendents
+        # Include all descendants
         nodes += cmds.listRelatives(nodes,
                                     allDescendents=True,
                                     fullPath=True) or []
+
+        print("Exporting {} as alembic".format(nodes))
 
         # Collect the start and end including handles
         start = instance.data["startFrame"]
@@ -52,13 +56,10 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
         with avalon.maya.suspended_refresh():
             with avalon.maya.maintained_selection():
                 cmds.select(nodes, noExpand=True)
-                extract_alembic(file=path, **{
-                    "selection": True,
-                    "frameRange": (start, end),
-                    "writeVisibility": True,
-                    "writeUV": True,
-                    "step": instance.data.get("step", 1.0),
-                    "attributePrefix": ("mb",)
-                })
+                extract_alembic(file=path,
+                                startFrame=start,
+                                endFrame=end,
+                                **{"step": instance.data.get("step", 1.0),
+                                   "attr": ["cbId"]})
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
