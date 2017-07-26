@@ -1,9 +1,12 @@
 # absolute_import is needed to counter the `module has no cmds error` in Maya
 from __future__ import absolute_import
 
-import pyblish.api
+import os
+import uuid
 
 from maya import cmds
+
+import pyblish.api
 
 
 def get_errored_instances_from_context(context):
@@ -34,7 +37,7 @@ def get_errored_plugins_from_data(context):
     plugins = list()
     results = context.data.get("results", [])
     for result in results:
-        if result["success"] == True:
+        if result["success"] is True:
             continue
         plugins.append(result["plugin"])
 
@@ -150,8 +153,6 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
     icon = "wrench"  # Icon from Awesome Icon
 
     def process(self, context, plugin):
-        import cbra.lib
-        import cbra.utils.maya.node_uuid as id_utils
 
         self.log.info("Finding bad nodes..")
 
@@ -182,15 +183,73 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
 
         # Parse context from current file
         self.log.info("Parsing current context..")
-        try:
-            current_file = context.data['currentFile']
-            context = cbra.lib.parse_context(current_file)
-        except RuntimeError, e:
-            self.log.error("Can't generate UUIDs because scene isn't "
-                           "in new-style pipeline: ".format(current_file))
-            raise e
+        print(">>> DEBUG CONTEXT :", context)
+        print(">>> DEBUG CONTEXT DATA:", context.data)
 
-        # Generate and add the ids to the nodes
-        ids = id_utils.generate_ids(context, invalid)
-        id_utils.add_ids(ids)
+        # # Generate and add the ids to the nodes
+        node_ids = self.generate_ids(context, invalid)
+        self.apply_ids(node_ids)
         self.log.info("Generated ids on nodes: {0}".format(invalid))
+
+    def get_context(self, instance=None):
+
+        PROJECT = os.environ["AVALON_PROJECT"]
+        ASSET = instance.data.get("asset") or os.environ["AVALON_ASSET"]
+        SILO = os.environ["AVALON_SILO"]
+        LOCATION = os.getenv("AVALON_LOCATION")
+
+        return {"project": PROJECT,
+                "asset": ASSET,
+                "silo": SILO,
+                "location": LOCATION}
+
+    def generate_ids(self, context, nodes):
+        """Generate cb UUIDs for nodes.
+
+        The identifiers are formatted like:
+            assets:character/test:bluey:46D221D9-4150-8E49-6B17-43B04BFC26B6
+
+        This is a concatenation of:
+            - entity (shots or assets)
+            - folders (parent hierarchy)
+            - asset (the name of the asset)
+            - uuid (unique id for node in the scene)
+
+        Raises:
+            RuntimeError: When context can't be parsed of the current asset
+
+        Returns:
+            dict: node, uuid dictionary
+
+        """
+
+        # Make a copy of the context
+        data = context.copy()
+
+        # Define folders
+
+        node_ids = dict()
+        for node in nodes:
+            # Generate a unique ID per node
+            data['uuid'] = uuid.uuid4()
+            unique_id = "{asset}:{item}:{uuid}".format(**data)
+            node_ids[node] = unique_id
+
+        return node_ids
+
+    def apply_ids(self, node_ids):
+        """Apply the created unique IDs to the node
+        Args:
+            node_ids (dict): each node with a unique id
+
+        Returns:
+            None
+        """
+
+        attribute = "mbId"
+        for node, id in node_ids.items():
+            # check if node has attribute
+            if not cmds.attributeQuery(attribute, node=node, exists=True):
+                cmds.addAttr(node, longName=attribute, dataType="string")
+
+            cmds.setAttr("{}.{}".format(node, attribute), id)

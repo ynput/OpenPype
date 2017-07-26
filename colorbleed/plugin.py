@@ -1,6 +1,7 @@
 import tempfile
 import pyblish.api
 
+
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
 ValidateContentsOrder = pyblish.api.ValidatorOrder + 0.1
 ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2
@@ -17,7 +18,7 @@ class Extractor(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.ExtractorOrder
+    order = 2.0
 
     def staging_dir(self, instance):
         """Provide a temporary directory in which to store extracted files

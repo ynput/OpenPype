@@ -13,7 +13,3 @@ class DebugPlugin(pyblish.api.InstancePlugin):
         self.log("\n\n----------------------")
         self.log("Instance")
         pprint.pprint(instance)
-
-        self.log("\n\n----------------------")
-        self.log("Instance.data")
-        pprint.pprint(instance.data)

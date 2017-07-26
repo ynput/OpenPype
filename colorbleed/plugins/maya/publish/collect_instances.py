@@ -3,7 +3,7 @@ from maya import cmds
 import pyblish.api
 
 
-class CollectMindbenderInstances(pyblish.api.ContextPlugin):
+class CollectInstances(pyblish.api.ContextPlugin):
     """Gather instances by objectSet and pre-defined attribute
 
     This collector takes into account assets that are associated with
@@ -38,14 +38,24 @@ class CollectMindbenderInstances(pyblish.api.ContextPlugin):
 
     """
 
-    label = "Collect Mindbender Instances"
+    label = "Collect Instances"
     order = pyblish.api.CollectorOrder
     hosts = ["maya"]
+    isntance_order = ["colorbleed.model",
+                      "colorbleed.rig",
+                      "colorbleed.animation",
+                      "colorbleed.camera",
+                      "colorbleed.texture",
+                      "colorbleed.lookdev",
+                      "colorbleed.historyLookdev",
+                      "colorbleed.group"]
 
     def process(self, context):
+
         objectset = cmds.ls("*.id", long=True, type="objectSet",
                             recursive=True, objectsOnly=True)
         for objset in objectset:
+            self.log.info("Creating instance for {}".format(objset))
 
             members = cmds.sets(objset, query=True)
             if members is None:
@@ -61,7 +71,8 @@ class CollectMindbenderInstances(pyblish.api.ContextPlugin):
 
             # The developer is responsible for specifying
             # the family of each instance.
-            has_family = cmds.attributeQuery("family", node=objset,
+            has_family = cmds.attributeQuery("family",
+                                             node=objset,
                                              exists=True)
             assert has_family, "\"%s\" was missing a family" % objset
 
@@ -70,7 +81,7 @@ class CollectMindbenderInstances(pyblish.api.ContextPlugin):
             # Apply each user defined attribute as data
             for attr in cmds.listAttr(objset, userDefined=True) or list():
                 try:
-                    value = cmds.getAttr("{}.{}".format(objset, attr))
+                    value = cmds.getAttr("%s.%s" % (objset, attr))
                 except Exception:
                     # Some attributes cannot be read directly,
                     # such as mesh and color attributes. These
@@ -82,9 +93,10 @@ class CollectMindbenderInstances(pyblish.api.ContextPlugin):
 
             # Collect members
             members = cmds.ls(members, long=True) or []
+
             children = cmds.listRelatives(members,
                                           allDescendents=True,
-                                          fullPath=True)
+                                          fullPath=True) or []
             parents = self.get_all_parents(members)
             members_hierarchy = list(set(members + children + parents))
 
@@ -99,6 +111,10 @@ class CollectMindbenderInstances(pyblish.api.ContextPlugin):
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
 
+        context[:] = sorted(context)
+
+        return context
+
     def get_all_parents(self, nodes):
         """Get all parents by using string operations (optimization)
 
@@ -108,6 +124,7 @@ class CollectMindbenderInstances(pyblish.api.ContextPlugin):
         Returns:
             list
         """
+
         parents = []
         for node in nodes:
             splitted = node.split("|")

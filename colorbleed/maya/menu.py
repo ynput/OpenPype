@@ -1,72 +1,69 @@
 import sys
-from maya import cmds
+import os
+import logging
+import site
+
 from avalon.vendor.Qt import QtWidgets, QtCore
+
+import maya.cmds as cmds
 
 self = sys.modules[__name__]
 self._menu = "colorbleed"
-self._parent = {
-    widget.objectName(): widget
-    for widget in QtWidgets.QApplication.topLevelWidgets()
-}.get("MayaWindow")
+
+# set colorbleed scripts path in environment keys
+os.environ["COLORBLEED_SCRIPTS"] = r"P:\pipeline\dev\git\cbMayaScripts\cbMayaScripts"
+
+log = logging.getLogger(__name__)
 
 
-def install():
-    from . import interactive
+def deferred():
 
-    uninstall()
+    # todo: replace path with server / library path
+    site.addsitedir("C:\Users\User\Documents\development\scriptsmenu\python")
 
-    def deferred():
-        cmds.menu(self._menu,
-                  label="Colorbleed",
-                  tearOff=True,
-                  parent="MayaWindow")
+    from scriptsmenu import launchformaya
+    import scriptsmenu.scriptsmenu as menu
 
-        # Modeling sub-menu
-        cmds.menuItem("Modeling",
-                      label="Modeling",
-                      tearOff=True,
-                      subMenu=True,
-                      parent=self._menu)
+    reload(launchformaya)
+    reload(menu)
 
-        cmds.menuItem("Combine", command=interactive.combine)
+    log.info("Attempting to install ...")
 
-        # Rigging sub-menu
-        cmds.menuItem("Rigging",
-                      label="Rigging",
-                      tearOff=True,
-                      subMenu=True,
-                      parent=self._menu)
+    # load configuration of custom menu
+    config_path = os.path.join(os.path.dirname(__file__), "menu.json")
+    config = menu.load_configuration(config_path)
 
-        cmds.menuItem("Auto Connect", command=interactive.auto_connect)
-        cmds.menuItem("Clone (Local)", command=interactive.clone_localspace)
-        cmds.menuItem("Clone (World)", command=interactive.clone_worldspace)
-        cmds.menuItem("Clone (Special)", command=interactive.clone_special)
-        cmds.menuItem("Create Follicle", command=interactive.follicle)
+    # get Maya menubar
+    parent = launchformaya._maya_main_menubar()
+    cb_menu = menu.ScriptsMenu(objectName=self._menu,
+                               title=self._menu.title(),
+                               parent=parent)
 
-        # Animation sub-menu
-        cmds.menuItem("Animation",
-                      label="Animation",
-                      tearOff=True,
-                      subMenu=True,
-                      parent=self._menu)
+    # register modifiers
+    modifiers = QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier
+    cb_menu.register_callback(modifiers, launchformaya.to_shelf)
 
-        cmds.menuItem("Set Defaults", command=interactive.set_defaults)
-
-        cmds.setParent("..", menu=True)
-
-        cmds.menuItem(divider=True)
-
-        cmds.menuItem("Auto Connect", command=interactive.auto_connect_assets)
-
-    # Allow time for uninstallation to finish.
-    QtCore.QTimer.singleShot(100, deferred)
+    # apply configuration
+    menu.load_from_configuration(cb_menu, config)
 
 
 def uninstall():
+
+    log.info("Attempting to uninstall ..")
     app = QtWidgets.QApplication.instance()
     widgets = dict((w.objectName(), w) for w in app.allWidgets())
     menu = widgets.get(self._menu)
 
     if menu:
-        menu.deleteLater()
-        del(menu)
+        try:
+            menu.deleteLater()
+            del menu
+        except Exception as e:
+            log.error(e)
+
+
+def install():
+
+    uninstall()
+    # Allow time for uninstallation to finish.
+    cmds.evalDeferred(deferred)

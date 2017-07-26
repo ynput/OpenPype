@@ -1,4 +1,8 @@
-from avalon import api
+import os
+
+from maya import cmds
+
+from avalon import api, maya
 
 
 class AbcLoader(api.Loader):
@@ -13,12 +17,17 @@ class AbcLoader(api.Loader):
     color = "orange"
 
     def process(self, name, namespace, context, data):
-        from maya import cmds
 
         cmds.loadPlugin("AbcImport.mll", quiet=True)
         # Prevent identical alembic nodes from being shared
         # Create unique namespace for the cameras
 
+        # Get name from asset being loaded
+        assert "_" in name, "Naming convention not followed"
+        assetname = "{}_".format(name.split("_")[0])
+        namespace = maya.unique_namespace(assetname,
+                                          format="%03d",
+                                          suffix="_abc")
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           sharedReferenceFile=False,
@@ -26,6 +35,8 @@ class AbcLoader(api.Loader):
                           groupName="{}:{}".format(namespace, name),
                           reference=True,
                           returnNewNodes=True)
+
+        # load colorbleed ID attribute
 
         self[:] = nodes
 
@@ -76,24 +87,19 @@ class CurvesLoader(api.Loader):
         ])
 
         with maya.maintained_selection():
-            cmds.select(
-                control_set,
-                replace=True,
+            cmds.select(control_set,
+                        replace=True,
+                        # Support controllers being embedded in
+                        # additional selection sets.
+                        noExpand=False)
 
-                # Support controllers being embedded in
-                # additional selection sets.
-                noExpand=False
-            )
-
-            nodes = cmds.file(
-                self.fname,
-                i=True,
-                type="atomImport",
-                renameAll=True,
-                namespace=namespace,
-                options=options,
-                returnNewNodes=True,
-            )
+            nodes = cmds.file(self.fname,
+                              i=True,
+                              type="atomImport",
+                              renameAll=True,
+                              namespace=namespace,
+                              options=options,
+                              returnNewNodes=True)
 
         self[:] = nodes + cmds.sets(container, query=True) + [container]
 
@@ -101,8 +107,7 @@ class CurvesLoader(api.Loader):
             self._post_process(name, namespace, context, data)
 
     def _post_process(self, name, namespace, context, data):
-        import os
-        from maya import cmds
+
         from avalon import maya, io
 
         # Task-dependent post-process
@@ -136,6 +141,7 @@ class CurvesLoader(api.Loader):
             cmds.select([output, controls], noExpand=True)
 
             dependencies = [context["representation"]["_id"]]
+            dependencies = " ".join(str(d) for d in dependencies)
             name = "anim{}_".format(dependency["name"].title())
 
             # TODO(marcus): Hardcoding the family here, better separate this.
@@ -143,8 +149,7 @@ class CurvesLoader(api.Loader):
             assert len(family) == 1, ("None or multiple animation "
                                       "families found")
             family = family[0]
-            maya.create(
-                name=maya.unique_name(name, suffix="_SET"),
-                family=family,
-                options={"useSelection": True},
-                data={"dependencies": " ".join(str(d) for d in dependencies)})
+            maya.create(name=maya.unique_name(name, suffix="_SET"),
+                        family=family,
+                        options={"useSelection": True},
+                        data={"dependencies": dependencies})

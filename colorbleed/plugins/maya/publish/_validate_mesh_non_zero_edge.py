@@ -2,8 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
-
-from pyblish_cb.tmp_utils import polyConstraint
+import colorbleed.maya.lib as lib
 
 
 class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
@@ -41,17 +40,16 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
         edges = ['{0}.e[*]'.format(node) for node in meshes]
 
         # Filter by constraint on edge length
-        invalid = polyConstraint(edges,
-                                 t=0x8000,  # type=edge
-                                 length=1,
-                                 lengthbound=(0, cls.__tolerance))
+        invalid = lib.polyConstraint(edges,
+                                     t=0x8000,  # type=edge
+                                     length=1,
+                                     lengthbound=(0, cls.__tolerance))
 
         return invalid
 
     def process(self, instance):
         """Process all meshes"""
         invalid = self.get_invalid(instance)
-
         if invalid:
             raise RuntimeError("Meshes found with zero "
                                "edge length: {0}".format(invalid))

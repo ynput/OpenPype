@@ -1,6 +1,8 @@
 import os
+import copy
 
 from maya import cmds
+
 import avalon.maya
 import colorbleed.api
 from colorbleed.maya.lib import extract_alembic
@@ -14,38 +16,42 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
 
     """
     label = "Alembic"
-    families = ["colorbleed.model",
-                "colorbleed.pointcache",
-                "colorbleed.proxy"]
+    families = ["colorbleed.model", "colorbleed.pointcache"]
+    optional = True
 
     def process(self, instance):
 
         parent_dir = self.staging_dir(instance)
         filename = "%s.abc" % instance.name
         path = os.path.join(parent_dir, filename)
-        options = dict()
 
-        # Collect the start and end including handles if any provided
-        # otherwise assume frame 1 as startFrame and the same as endFrame
-        start = instance.data.get("startFrame", 1)
-        end = instance.data.get("endFrame", start)
-        handles = instance.data.get("handles", 0)
-        if handles:
-            start -= handles
-            end += handles
-        options['frameRange'] = (start, end)
+        attrPrefix = instance.data.get("attrPrefix", [])
+        attrPrefix.append("cb")
 
-        # Default verbosity to False
-        options['verbose'] = instance.data.get("verbose", False)
+        options = copy.deepcopy(instance.data)
+        options['attrPrefix'] = attrPrefix
 
-        # Collect instance options if found in `instance.data`
-        # for specific settings (for user customization)
-        for key in ["renderableOnly", "writeColorSets"]:
-            if key in instance.data:
-                options[key] = instance.data[key]
+        # Ensure visibility keys are written
+        options['writeVisibility'] = True
 
+        # Write creases
+        options['writeCreases'] = True
+
+        # Ensure UVs are written
+        options['uvWrite'] = True
+
+        options['selection'] = True
+        options["attr"] = ["cbId"]
+
+        # force elect items to ensure all items get exported by Alembic
+        members = instance.data("setMembers")
+        print "Members : {}".format(members)
+
+        cmds.select(members)
         with avalon.maya.suspended_refresh():
             with avalon.maya.maintained_selection():
                 nodes = instance[:]
                 cmds.select(nodes, replace=True, noExpand=True)
                 extract_alembic(file=path, **options)
+
+        cmds.select(clear=True)
