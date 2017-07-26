@@ -37,12 +37,9 @@ class AbcLoader(api.Loader):
                           returnNewNodes=True)
 
         # load colorbleed ID attribute
-        self.lock_id_attr(nodes)
 
         self[:] = nodes
 
-    def lock_id_attr(self):
-        pass
 
 class CurvesLoader(api.Loader):
     """Specific loader of Curves for the avalon.animation family"""
