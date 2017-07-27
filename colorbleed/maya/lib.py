@@ -5,6 +5,7 @@ import os
 import bson
 import json
 import logging
+import pprint
 import contextlib
 from collections import OrderedDict, defaultdict
 
@@ -635,13 +636,9 @@ def filter_by_id(nodes, uuids):
         if node is None:
             continue
 
-        if not cmds.attributeQuery("cbId", node=node, exists=True):
-            continue
+        attribute_value = _get_id(node)
 
-        # Deformed shaped
-        attr = "{}.cbId".format(node)
-        attribute_value = cmds.getAttr(attr)
-        if attribute_value not in uuids:
+        if attribute_value not in uuids or attribute_value is None:
             continue
 
         filtered_nodes.append(node)
@@ -792,48 +789,45 @@ def assign_look(nodes, subset="lookDefault"):
         assign_look_by_version(asset_nodes, version['_id'])
 
 
-def apply_shaders(relationships, shader_nodes, nodes):
-    """Apply all shaders to the nodes based on the relationship data
+def apply_shaders(relationships, shadernodes, nodes):
+    """Link shadingEngine to the right nodes based on relationship data
+
+    Relationship data is constructed of a collection of `sets` and `attributes`
+    `sets` corresponds with the shaderEngines found in the lookdev.
+    Each set has the keys `name`, `members` and `uuid`, the `members`
+    hold a collection of node information `name` and `uuid`.
 
     Args:
-        relationships (dict): shader to node relationships
-        shader_nodes (list): shader network nodes
-        nodes (list): nodes to assign to
+        relationships (dict): relationship data
+        shadernodes (list): list of nodes of the shading engine
+        nodes (list): list of nodes to apply shader to
 
     Returns:
         None
     """
 
+    # attributes = relationships.get("attributes", [])
     shader_sets = relationships.get("sets", [])
-    shading_engines = cmds.ls(shader_nodes, type="shadingEngine", long=True)
+
+    if isinstance(nodes, set):
+        nodes = list(nodes)
+
+    shading_engines = cmds.ls(shadernodes, type="shadingEngine", long=True)
     assert len(shading_engines) > 0, ("Error in retrieving shading engine "
                                       "from reference")
 
-    # Pre-filter nodes and shader nodes
-    nodes_by_id = defaultdict(list)
-    shader_nodes_by_id = defaultdict(list)
-    for node in nodes:
-        _id = _get_id(node)
-        nodes_by_id[_id].append(node)
-
-    for shader_node in shader_nodes:
-        _id = _get_id(shader_node)
-        shader_nodes_by_id[_id].append(shader_node)
-
-    # get all nodes which we need to link per shader
+    # get all nodes which we need to link
+    ns_nodes = cmds.ls(nodes, long=True)
     for shader_set in shader_sets:
-        # collect shading engine
-        uuid = shader_set["uuid"]
-        shading_engine = shader_nodes_by_id.get(uuid, [])
+        # collect all unique IDs of the set members
+        shader_uuid = shader_set["uuid"]
+        member_uuids = [member["uuid"] for member in shader_set["members"]]
+
+        filtered_nodes = filter_by_id(ns_nodes, member_uuids)
+        shading_engine = filter_by_id(shading_engines, [shader_uuid])
+
         assert len(shading_engine) == 1, ("Could not find the correct "
                                           "shading engine with cbId "
-                                          "'{}'".format(uuid))
-
-        # collect members
-        filtered_nodes = list()
-        for member in shader_set["members"]:
-            member_uuid = member["uuid"]
-            members = nodes_by_id.get(member_uuid, [])
-            filtered_nodes.extend(members)
+                                          "'{}'".format(shader_uuid))
 
         cmds.sets(filtered_nodes, forceElement=shading_engine[0])

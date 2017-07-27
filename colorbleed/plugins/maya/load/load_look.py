@@ -30,8 +30,6 @@ class LookLoader(api.Loader):
 
         """
 
-
-
         # improve readability of the namespace
         assetname = context["asset"]["name"]
         ns_assetname = "{}_".format(assetname)
@@ -88,29 +86,25 @@ class LookLoader(api.Loader):
 
         """
 
-        # types = ["transform", "mesh"]
         list_nodes = []
 
-        namespaces = cmds.namespaceInfo(listOnlyNamespaces=True)
-
         # remove basic namespaces
-        namespaces.remove("UI")
-        namespaces.remove("shared")
+        namespaces = [ns for ns in cmds.namespaceInfo(listOnlyNamespaces=True)
+                      if ns not in ["UI", "shared"] or not ns.endswith("look")]
 
-        for ns in namespaces:
-            if not ns.startswith(assetname):
+        for namespace in namespaces:
+            if not namespace.startswith(assetname):
                 continue
+
+            ns_nodes = cmds.namespaceInfo(namespace,
+                                          listOnlyDependencyNodes=True)
             # get reference nodes
-            ns_nodes = cmds.namespaceInfo(ns, listOnlyDependencyNodes=True)
-            # TODO: might need to extend the types
-            # check if any nodes are connected to something else than lambert1
-            list_nodes = cmds.ls(ns_nodes, long=True)
-            unassigned_nodes = [self.has_default_shader(n) for n in list_nodes]
-            nodes = [n for n in unassigned_nodes if n is not None]
+            list_nodes.extend([self.has_default_shader(n) for n in ns_nodes])
 
-            list_nodes.extend(nodes)
+        # ensure unique nodes and kick out any None types
+        result = [node for node in list_nodes if node is not None]
 
-        return set(list_nodes)
+        return result
 
     def has_default_shader(self, node):
         """Check if the nodes have `initialShadingGroup` shader assigned
@@ -122,12 +116,15 @@ class LookLoader(api.Loader):
             str
         """
 
-        shaders = cmds.listConnections(node, type="shadingEngine") or []
-        if "initialShadingGroup" in shaders:
+        shaders = cmds.listConnections(node, type="shadingEngine")
+        if shaders is None or "initialShadingGroup" in shaders:
             # return transform node
-            transform = cmds.listRelatives(node, parent=True, type="transform",
+            transform = cmds.listRelatives(node,
+                                           parent=True,
+                                           type="transform",
                                            fullPath=True)
+
             if not transform:
-                return []
+                return
 
             return transform[0]
