@@ -39,26 +39,35 @@ class ExtractLook(colorbleed.api.Extractor):
 
         # Remove all members of the sets so they are not included in the
         # exported file by accident
-        self.log.info("Extract sets (Maya ASCII)..")
+        self.log.info("Extract sets (Maya ASCII) ...")
         lookdata = instance.data["lookData"]
         sets = lookdata["sets"]
+
+        resources = instance.data["resources"]
+        remap = {}
+        for resource in resources:
+            attr = resource['attribute']
+            remap[attr] = resource['destination']
+
+        self.log.info("Finished remapping destinations ...")
 
         # Extract in correct render layer
         layer = instance.data.get("renderlayer", "defaultRenderLayer")
         with context.renderlayer(layer):
             # TODO: Ensure membership edits don't become renderlayer overrides
             with context.empty_sets(sets):
-                with avalon.maya.maintained_selection():
-                    cmds.select(sets, noExpand=True)
-                    cmds.file(maya_path,
-                              force=True,
-                              typ="mayaAscii",
-                              exportSelected=True,
-                              preserveReferences=False,
-                              channels=True,
-                              constraints=True,
-                              expressions=True,
-                              constructionHistory=True)
+                with context.attribute_values(remap):
+                    with avalon.maya.maintained_selection():
+                        cmds.select(sets, noExpand=True)
+                        cmds.file(maya_path,
+                                  force=True,
+                                  typ="mayaAscii",
+                                  exportSelected=True,
+                                  preserveReferences=False,
+                                  channels=True,
+                                  constraints=True,
+                                  expressions=True,
+                                  constructionHistory=True)
 
         # Write the JSON data
         self.log.info("Extract json..")
