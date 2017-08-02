@@ -4,11 +4,14 @@ import pyblish.api
 import colorbleed.api
 
 
-class ValidateNamingConvention(pyblish.api.InstancePlugin):
+class ValidateFileNameConvention(pyblish.api.InstancePlugin):
 
     label = ""
-    families = ["colorbleed.model"]
+    families = ["colorbleed.lookdev"]
     host = ["maya"]
+    optional = True
+
+    order = pyblish.api.ValidatorOrder
     actions = [colorbleed.api.SelectInvalidAction]
 
     @staticmethod

@@ -88,7 +88,7 @@ def on_new():
     maya.commands.reset_resolution()
 
 
-def on_save():
+def on_save(nodes=None):
     """Automatically add IDs to new nodes
     Any transform of a mesh, without an existing ID,
     is given one automatically on file save.
@@ -102,28 +102,28 @@ def on_save():
     types = ["mesh", "shadingEngine", "file", "nurbsCurve"]
 
     # the items which need to pass the id to their parent
-    nodes = (set(cmds.ls(type=types, long=True)) -
-             set(cmds.ls(long=True, readOnly=True)) -
-             set(cmds.ls(long=True, lockedNodes=True)))
+    if not nodes:
+        nodes = (set(cmds.ls(type=types, long=True)) -
+                 set(cmds.ls(long=True, readOnly=True)) -
+                 set(cmds.ls(long=True, lockedNodes=True)))
 
-    transforms = set()
-    for n in cmds.ls(type=types, long=True):
-        # pass id to parent of node if in subtypes
-        relatives = cmds.listRelatives(n, parent=True, fullPath=True)
-        if not relatives:
-            continue
+        transforms = set()
+        for n in cmds.ls(type=types, long=True):
+            # pass id to parent of node if in subtypes
+            relatives = cmds.listRelatives(n, parent=True, fullPath=True)
+            if not relatives:
+                continue
 
-        for r in cmds.listRelatives(n, parent=True, fullPath=True):
-            transforms.add(r)
+            for r in cmds.listRelatives(n, parent=True, fullPath=True):
+                transforms.add(r)
 
-    # merge transforms and nodes in one set to make sure every item
-    # is unique
-    nodes |= transforms
+        # merge transforms and nodes in one set to make sure every item
+        # is unique
+        nodes |= transforms
 
     # Lead with asset ID from the database
     asset = os.environ["AVALON_ASSET"]
     asset_id = io.find_one({"type": "asset", "name": asset})
-
     for node in nodes:
         if node in defaults:
             continue

@@ -23,7 +23,6 @@ class AbcLoader(api.Loader):
         # Create unique namespace for the cameras
 
         # Get name from asset being loaded
-        assert "_" in name, "Naming convention not followed"
         assetname = "{}_".format(name.split("_")[0])
         namespace = maya.unique_namespace(assetname,
                                           format="%03d",

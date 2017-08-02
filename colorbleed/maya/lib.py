@@ -5,7 +5,6 @@ import os
 import bson
 import json
 import logging
-import pprint
 import contextlib
 from collections import OrderedDict, defaultdict
 
@@ -671,7 +670,12 @@ def get_reference_node(path):
     Returns:
         node (str): name of the reference node in question
     """
-    node = cmds.file(path, query=True, referenceNode=True)
+    try:
+        node = cmds.file(path, query=True, referenceNode=True)
+    except RuntimeError:
+        log.debug('Received file not loaded : "{}"'.format(path))
+        return
+
     reference_path = cmds.referenceQuery(path, filename=True)
     if os.path.normpath(path) == os.path.normpath(reference_path):
         return node
@@ -760,9 +764,15 @@ def assign_look(nodes, subset="lookDefault"):
     # Group all nodes per asset id
     grouped = defaultdict(list)
     for node in nodes:
-        colorbleed_id = cmds.getAttr("{}.cbId".format(node))
-        asset_id = colorbleed_id.split(":")[0]
-        grouped[asset_id].append(node)
+        colorbleed_id = _get_id(node)
+        if not colorbleed_id:
+            continue
+
+        parts = colorbleed_id.split(":")
+        if len(parts) != 2:
+            continue
+
+        grouped[parts[0]].append(node)
 
     for asset_id, asset_nodes in grouped.items():
         # create objectId for database
