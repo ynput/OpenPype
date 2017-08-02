@@ -1,14 +1,15 @@
 from collections import OrderedDict
-import avalon.maya
+import colorbleed.plugin
 from colorbleed.maya import lib
 
 
-class CreateCamera(avalon.maya.Creator):
+class CreateCamera(colorbleed.plugin.Creator):
     """Single baked camera extraction"""
 
     name = "cameraDefault"
     label = "Camera"
     family = "colorbleed.camera"
+    abbreviation = "cam"
 
     def __init__(self, *args, **kwargs):
         super(CreateCamera, self).__init__(*args, **kwargs)
