@@ -10,14 +10,17 @@ class ValidateUniqueNodeIds(pyblish.api.InstancePlugin):
     """Validate nodes have colorbleed id attributes"""
 
     order = colorbleed.api.ValidatePipelineOrder
-    families = ['colorbleed.model']
-    hosts = ['maya']
     label = 'Unique Id Attributes'
+    hosts = ['maya']
+    families = ['colorbleed.model',
+                'colorbleed.lookdev',
+                'colorbleed.rig']
+
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.GenerateUUIDsOnInvalidAction]
 
-    @staticmethod
-    def get_invalid_dict(instance):
+    @classmethod
+    def get_invalid_dict(cls, instance):
         """Return a dictionary mapping of id key to list of member nodes"""
 
         uuid_attr = "cbId"
@@ -25,18 +28,21 @@ class ValidateUniqueNodeIds(pyblish.api.InstancePlugin):
         # Collect each id with their members
         ids = defaultdict(list)
         for member in instance:
-            has_attr = cmds.attributeQuery(uuid_attr, node=member, exists=True)
-            if not has_attr:
+            try:
+                object_id = cmds.getAttr("{}.{}".format(member, uuid_attr))
+            except Exception as exception:
+                # Object will node have the attribute so skip
+                cls.log.debug(exception)
                 continue
-            mbid = cmds.getAttr("{}.{}".format(member, uuid_attr))
-            ids[mbid].append(member)
+
+            ids[object_id].append(member)
 
         # Skip those without IDs (if everything should have an ID that should
         # be another validation)
         ids.pop(None, None)
 
         # Take only the ids with more than one member
-        invalid = dict((id, members) for id, members in ids.iteritems() if
+        invalid = dict((_id, members) for _id, members in ids.iteritems() if
                        len(members) > 1)
         return invalid
 
@@ -61,3 +67,5 @@ class ValidateUniqueNodeIds(pyblish.api.InstancePlugin):
         if invalid:
             raise RuntimeError("Nodes found with non-unique "
                                "asset IDs: {0}".format(invalid))
+
+
