@@ -9,11 +9,6 @@ ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2
 ValidateMeshOrder = pyblish.api.ValidatorOrder + 0.3
 
 
-class Creator(avalon.maya.Creator):
-
-    abbreviation = ""
-
-
 class Extractor(pyblish.api.InstancePlugin):
     """Extractor base class.
 

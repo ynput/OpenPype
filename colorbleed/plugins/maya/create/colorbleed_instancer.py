@@ -1,10 +1,9 @@
-import colorbleed.plugin
+import avalon.maya
 
 
-class CreateInstance(colorbleed.plugin.Creator):
+class CreateInstance(avalon.maya.Creator):
     """Maya instancer using cached particles"""
 
     name = "instanceDefault"
     label = "Instance"
     family = "colorbleed.instance"
-    abbreviation = "inst"

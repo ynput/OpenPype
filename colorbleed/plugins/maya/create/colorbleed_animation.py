@@ -1,16 +1,15 @@
 from collections import OrderedDict
 
-import colorbleed.plugin
+import avalon.maya
 from colorbleed.maya import lib
 
 
-class CreateAnimation(colorbleed.plugin.Creator):
+class CreateAnimation(avalon.maya.Creator):
     """THe animated objects in the scene"""
 
     name = "animationDefault"
     label = "Animation"
-    family = "colorbleed.animation"
-    abbreviation = "anim"
+    family = "colorbleed.anim"
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
@@ -34,3 +33,4 @@ class CreateAnimation(colorbleed.plugin.Creator):
         data["visibleOnly"] = False
 
         self.data = data
+        self.options["abbreviation"] = self.abbreviation
