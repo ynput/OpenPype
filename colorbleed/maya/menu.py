@@ -11,7 +11,7 @@ self = sys.modules[__name__]
 self._menu = "colorbleed"
 
 # set colorbleed scripts path in environment keys
-os.environ["COLORBLEED_SCRIPTS"] = r"P:\pipeline\dev\git\cbMayaScripts\cbMayaScripts"
+os.environ["COLORBLEED_SCRIPTS"] = "P:\pipeline\dev\git\cbMayaScripts\cbMayaScripts"
 
 log = logging.getLogger(__name__)
 
