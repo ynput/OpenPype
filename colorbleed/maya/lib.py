@@ -740,7 +740,7 @@ def assign_look_by_version(nodes, version_id):
                                      reference=True,
                                      returnNewNodes=True)
     else:
-        log.info("Reusing existing lookdev..")
+        log.info("Reusing existing lookdev '{}'".format(reference_node))
         shader_nodes = cmds.referenceQuery(reference_node, nodes=True)
 
     # Assign relationships
@@ -768,26 +768,29 @@ def assign_look(nodes, subset="lookDefault"):
         if not colorbleed_id:
             continue
 
-        parts = colorbleed_id.split(":")
-        if len(parts) != 2:
-            continue
-
+        parts = colorbleed_id.split(":", 1)
         grouped[parts[0]].append(node)
 
     for asset_id, asset_nodes in grouped.items():
         # create objectId for database
-        asset_id = bson.ObjectId(asset_id)
-        subset = io.find_one({"type": "subset",
-                              "name": subset,
-                              "parent": asset_id})
+        try:
+            asset_id = bson.ObjectId(asset_id)
+        except Exception:
+            log.warning("Asset ID is not compatible with bson")
+            continue
+        subset_data = io.find_one({"type": "subset",
+                                   "name": subset,
+                                   "parent": asset_id})
 
-        assert subset, "No subset found for {}".format(asset_id)
+        if not subset_data:
+            log.warning("No subset '{}' found for {}".format(subset, asset_id))
+            continue
 
         # get last version
-        version = io.find_one({"parent": subset['_id'],
+        version = io.find_one({"parent": subset_data['_id'],
                                "type": "version",
                                "data.families":
-                                   {"$in":["colorbleed.lookdev"]}
+                                   {"$in": ["colorbleed.lookdev"]}
                                },
                               sort=[("name", -1)],
                               projection={"_id": True})
@@ -816,28 +819,37 @@ def apply_shaders(relationships, shadernodes, nodes):
         None
     """
 
-    # attributes = relationships.get("attributes", [])
     shader_sets = relationships.get("sets", [])
 
-    if isinstance(nodes, set):
-        nodes = list(nodes)
-
     shading_engines = cmds.ls(shadernodes, type="shadingEngine", long=True)
-    assert len(shading_engines) > 0, ("Error in retrieving shading engine "
+    assert len(shading_engines) > 0, ("Error in retrieving shading engines "
                                       "from reference")
 
-    # get all nodes which we need to link
-    ns_nodes = cmds.ls(nodes, long=True)
+    # region compute lookup
+    ns_nodes_by_id = defaultdict(list)
+    for node in nodes:
+        ns_nodes_by_id[_get_id(node)].append(node)
+
+    shading_engines_by_id = defaultdict(list)
+    for shad in shading_engines:
+        shading_engines_by_id[_get_id(shad)].append(shad)
+    # endregion
+
+    # region assign
     for shader_set in shader_sets:
         # collect all unique IDs of the set members
         shader_uuid = shader_set["uuid"]
         member_uuids = [member["uuid"] for member in shader_set["members"]]
 
-        filtered_nodes = filter_by_id(ns_nodes, member_uuids)
-        shading_engine = filter_by_id(shading_engines, [shader_uuid])
+        filtered_nodes = list()
+        for uuid in member_uuids:
+            filtered_nodes.extend(ns_nodes_by_id[uuid])
 
+        shading_engine = shading_engines_by_id[shader_uuid]
         assert len(shading_engine) == 1, ("Could not find the correct "
                                           "shading engine with cbId "
                                           "'{}'".format(shader_uuid))
 
         cmds.sets(filtered_nodes, forceElement=shading_engine[0])
+
+    # endregion

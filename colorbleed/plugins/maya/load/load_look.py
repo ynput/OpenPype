@@ -69,62 +69,6 @@ class LookLoader(api.Loader):
 
         # Get all nodes which belong to a matching name space
         # Currently this is the safest way to get all the nodes
-        namespace_nodes = self.get_namespace_nodes(assetname)
-        lib.apply_shaders(relationships, nodes, namespace_nodes)
+        lib.apply_shaders(relationships, nodes)
 
         self[:] = nodes
-
-    def get_namespace_nodes(self, assetname):
-        """
-        Get all nodes of namespace `asset_*` and check if they have a shader
-        assigned, if not add to list
-        Args:
-            context (dict): current context of asset
-
-        Returns:
-            list
-
-        """
-
-        list_nodes = []
-
-        # remove basic namespaces
-        namespaces = [ns for ns in cmds.namespaceInfo(listOnlyNamespaces=True)
-                      if ns not in ["UI", "shared"] or not ns.endswith("look")]
-
-        for namespace in namespaces:
-            if not namespace.startswith(assetname):
-                continue
-
-            ns_nodes = cmds.namespaceInfo(namespace,
-                                          listOnlyDependencyNodes=True)
-            # get reference nodes
-            list_nodes.extend([self.has_default_shader(n) for n in ns_nodes])
-
-        # ensure unique nodes and kick out any None types
-        result = [node for node in list_nodes if node is not None]
-
-        return result
-
-    def has_default_shader(self, node):
-        """Check if the nodes have `initialShadingGroup` shader assigned
-
-        Args:
-            node (str): node to check
-
-        Returns:
-            str
-        """
-
-        shaders = cmds.listConnections(node, type="shadingEngine")
-        if shaders is None or "initialShadingGroup" in shaders:
-            # return transform node
-            transform = cmds.listRelatives(node,
-                                           parent=True,
-                                           type="transform",
-                                           fullPath=True)
-
-            if not transform:
-                return
-
-            return transform[0]

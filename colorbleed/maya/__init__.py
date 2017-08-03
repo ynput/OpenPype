@@ -99,7 +99,8 @@ def on_save(nodes=None):
     defaults = ["initialShadingGroup", "initialParticleSE"]
 
     # the default items which always want to have an ID
-    types = ["mesh", "shadingEngine", "file", "nurbsCurve"]
+    # objectSets include: shading engines, vray object properties
+    types = ["mesh", "objectSet", "file", "nurbsCurve"]
 
     # the items which need to pass the id to their parent
     if not nodes:

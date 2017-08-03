@@ -1,11 +1,6 @@
-import os
-import pprint
-
 from maya import cmds
 
 import pyblish.api
-import avalon.io as io
-
 from cb.utils.maya import context, shaders
 import cbra.utils.maya.node_uuid as id_utils
 
