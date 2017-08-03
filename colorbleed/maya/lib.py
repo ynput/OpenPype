@@ -775,7 +775,7 @@ def assign_look(nodes, subset="lookDefault"):
         # create objectId for database
         try:
             asset_id = bson.ObjectId(asset_id)
-        except Exception:
+        except bson.errors.InvalidId:
             log.warning("Asset ID is not compatible with bson")
             continue
         subset_data = io.find_one({"type": "subset",
