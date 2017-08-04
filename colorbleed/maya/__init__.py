@@ -88,7 +88,7 @@ def on_new():
     maya.commands.reset_resolution()
 
 
-def on_save(nodes=None):
+def on_save():
     """Automatically add IDs to new nodes
     Any transform of a mesh, without an existing ID,
     is given one automatically on file save.
@@ -98,29 +98,33 @@ def on_save(nodes=None):
 
     defaults = ["initialShadingGroup", "initialParticleSE"]
 
-    # the default items which always want to have an ID
-    # objectSets include: shading engines, vray object properties
-    types = ["mesh", "objectSet", "file", "nurbsCurve"]
+    ignore = set(cmds.ls(long=True, readOnly=True))
+    locked = set(cmds.ls(long=True, lockedNodes=True))
+    ignore |= locked
+
+    types = ["shadingEngine", "file"]
+    shape_types = ["mesh", "nurbsCurve"]
 
     # the items which need to pass the id to their parent
-    if not nodes:
-        nodes = (set(cmds.ls(type=types, long=True)) -
-                 set(cmds.ls(long=True, readOnly=True)) -
-                 set(cmds.ls(long=True, lockedNodes=True)))
+    transforms = set()
+    nodes = set(cmds.ls(type=types, long=True))
+    for n in cmds.ls(type=shape_types, long=True):
+        if n in defaults:
+            continue
 
-        transforms = set()
-        for n in cmds.ls(type=types, long=True):
-            # pass id to parent of node if in subtypes
-            relatives = cmds.listRelatives(n, parent=True, fullPath=True)
-            if not relatives:
-                continue
+        # generate id on parent of shape nodes
+        parents = cmds.listRelatives(n, parent=True, fullPath=True)
+        if not parents:
+            raise RuntimeError("Bug! Shape has no parent: {0}".format(n))
 
-            for r in cmds.listRelatives(n, parent=True, fullPath=True):
-                transforms.add(r)
+        for parent in parents:
+            transforms.add(parent)
 
-        # merge transforms and nodes in one set to make sure every item
-        # is unique
-        nodes |= transforms
+    # Add the collected transform to the nodes
+    nodes |= transforms
+
+    # Remove the ignored nodes
+    nodes -= ignore
 
     # Lead with asset ID from the database
     asset = os.environ["AVALON_ASSET"]
@@ -129,3 +133,4 @@ def on_save(nodes=None):
         if node in defaults:
             continue
         _set_uuid(str(asset_id["_id"]), node)
+
