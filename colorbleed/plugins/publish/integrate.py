@@ -109,7 +109,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         if latest_version is not None:
             next_version += latest_version["name"]
 
-        self.log.debug("Next version: %i" % next_version)
+        self.log.info("Verifying version from assumed destination")
+
+        assumed_data = instance.data["assumedTemplateData"]
+        assumed_version = assumed_data["version"]
+        if assumed_version != next_version:
+            raise AttributeError("Assumed version 'v{0:03d}' does not match"
+                                 "next version in database "
+                                 "('v{1:03d}')".format(assumed_version,
+                                                       next_version))
+
+        self.log.debug("Next version: v{0:03d}".format(next_version))
 
         version_data = self.create_version_data(context, instance)
         version = self.create_version(subset=subset,

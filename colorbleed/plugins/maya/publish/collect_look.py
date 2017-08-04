@@ -127,7 +127,6 @@ class CollectLook(pyblish.api.InstancePlugin):
         # Collect textures,
         resources = [self.collect_resource(n) for n in files]
         instance.data["resources"] = resources
-        # pprint.pprint(resources)
 
         # Log a warning when no relevant sets were retrieved for the look.
         if not instance.data["lookData"]["sets"]:
