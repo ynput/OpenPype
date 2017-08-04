@@ -637,32 +637,6 @@ def _get_id(node):
     return attribute_value
 
 
-def filter_by_id(nodes, uuids):
-    """Filter all nodes which match the UUIDs
-
-    Args:
-        nodes (list): collection of nodes to check
-        uuids (list): a list of UUIDs which are linked to the shader
-
-    Returns:
-        list: matching nodes
-    """
-
-    filtered_nodes = []
-    for node in nodes:
-        if node is None:
-            continue
-
-        attribute_value = _get_id(node)
-
-        if attribute_value not in uuids or attribute_value is None:
-            continue
-
-        filtered_nodes.append(node)
-
-    return filtered_nodes
-
-
 def get_representation_file(representation, template=TEMPLATE):
     """
     Rebuild the filepath of the representation's context
