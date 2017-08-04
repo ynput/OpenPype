@@ -21,6 +21,24 @@ project = io.find_one({"type": "project",
                                    "_id": False})
 TEMPLATE = project["config"]["template"]["publish"]
 
+ATTRIBUTE_DICT = {"int": {"attributeType": "long"},
+                  "str": {"dataType": "string"},
+                  "unicode": {"dataType": "string"},
+                  "float": {"attributeType": "double"},
+                  "bool": {"attributeType": "bool"}}
+
+SHAPE_ATTRS = ["castsShadows",
+               "receiveShadows",
+               "motionBlur",
+               "primaryVisibility",
+               "smoothShading",
+               "visibleInReflections",
+               "visibleInRefractions",
+               "doubleSided",
+               "opposite"]
+
+SHAPE_ATTRS = set(SHAPE_ATTRS)
+
 
 def maintained_selection(arg=None):
     if arg is not None:
@@ -681,6 +699,53 @@ def get_reference_node(path):
         return node
 
 
+def process_attribute_change(attribute_data, node):
+    """Adjust attributes based on the value from the attribute data
+
+    Args:
+        attribute_data (dict): attribute as key with value as value
+        node (str): name of the node
+
+    Returns:
+        None
+    """
+
+    for attribute, value in attribute_data.items():
+        value_type = type(value).__name__
+        kwargs = ATTRIBUTE_DICT[value_type]
+        if not cmds.attributeQuery(attribute, node=node, exists=True):
+            log.debug("Creating attribute '{}' on "
+                      "'{}'".format(attribute, node))
+            cmds.addAttr(node, longName=attribute, **kwargs)
+
+        node_attr = "{}.{}".format(node, attribute)
+        if "dataType" in kwargs:
+            attr_type = kwargs["dataType"]
+            cmds.setAttr(node_attr, value, type=attr_type)
+        else:
+            cmds.setAttr(node_attr, value)
+
+
+def apply_attributes(attributes, nodes_by_id):
+    """Alter the attributes to match the state when publishing
+
+    Apply attribute settings from the publish to the node in the scene based
+    on the UUID which is stored in the cbId attribute.
+
+    Args:
+        attributes (list): list of dictionaries
+        nodes_by_id (dict): collection of nodes based on UUID
+                           {uuid: [node, node]}
+
+    """
+
+    for attr_data in attributes:
+        nodes = nodes_by_id[attr_data["uuid"]]
+        attr_value = attr_data["attributes"]
+        for node in nodes:
+            process_attribute_change(attr_value, node)
+
+
 def list_looks(asset_id):
     """Return all look subsets for the given asset
 
@@ -819,6 +884,7 @@ def apply_shaders(relationships, shadernodes, nodes):
         None
     """
 
+    attributes = relationships.get("attributes", [])
     shader_sets = relationships.get("sets", [])
 
     shading_engines = cmds.ls(shadernodes, type="shadingEngine", long=True)
@@ -851,5 +917,6 @@ def apply_shaders(relationships, shadernodes, nodes):
                                           "'{}'".format(shader_uuid))
 
         cmds.sets(filtered_nodes, forceElement=shading_engine[0])
-
     # endregion
+
+    apply_attributes(attributes, ns_nodes_by_id)
