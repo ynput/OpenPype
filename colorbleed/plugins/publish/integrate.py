@@ -21,7 +21,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     publish the shading network. Same goes for file dependent assets.
     """
 
-    label = "Intergrate Asset"
+    label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
     families = ["colorbleed.model",
                 "colorbleed.rig",
@@ -37,7 +37,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.info("Integrating Asset in to the database ...")
 
         self.register(instance)
-        self.intergrate(instance)
+        self.integrate(instance)
 
         self.log.info("Removing temporary files and folders ...")
         stagingdir = instance.data["stagingDir"]
@@ -194,7 +194,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         return representations
 
-    def intergrate(self, instance):
+    def integrate(self, instance):
         """Register the representations and move the files
 
         Through the stored `representations` and `transfers`
