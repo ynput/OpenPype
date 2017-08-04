@@ -28,13 +28,10 @@ class ValidateUniqueNodeIds(pyblish.api.InstancePlugin):
         # Collect each id with their members
         ids = defaultdict(list)
         for member in instance:
-            try:
-                object_id = cmds.getAttr("{}.{}".format(member, uuid_attr))
-            except Exception as exception:
-                # Object will node have the attribute so skip
-                cls.log.debug(exception)
+            if not cmds.attributeQuery(uuid_attr, node=member, exists=True):
                 continue
 
+            object_id = cmds.getAttr("{}.{}".format(member, uuid_attr))
             ids[object_id].append(member)
 
         # Skip those without IDs (if everything should have an ID that should
