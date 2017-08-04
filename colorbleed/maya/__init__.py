@@ -70,14 +70,14 @@ def _copy_uuid(source, target):
     cmds.setAttr(target_attr, attribute_value, type="string")
 
 
-def on_init():
+def on_init(_):
     avalon.logger.info("Running callback on init..")
 
     maya.commands.reset_frame_range()
     maya.commands.reset_resolution()
 
 
-def on_new():
+def on_new(_):
     avalon.logger.info("Running callback on new..")
 
     # Load dependencies
@@ -88,7 +88,7 @@ def on_new():
     maya.commands.reset_resolution()
 
 
-def on_save():
+def on_save(_):
     """Automatically add IDs to new nodes
     Any transform of a mesh, without an existing ID,
     is given one automatically on file save.
@@ -96,32 +96,22 @@ def on_save():
 
     avalon.logger.info("Running callback on save..")
 
-    defaults = ["initialShadingGroup", "initialParticleSE"]
+    # establish set of nodes to ignore
+    ignore = set(["initialShadingGroup", "initialParticleSE"])
+    ignore |= set(cmds.ls(long=True, readOnly=True))
+    ignore |= set(cmds.ls(long=True, lockedNodes=True))
 
-    ignore = set(cmds.ls(long=True, readOnly=True))
-    locked = set(cmds.ls(long=True, lockedNodes=True))
-    ignore |= locked
-
-    types = ["shadingEngine", "file"]
-    shape_types = ["mesh", "nurbsCurve"]
+    types = ["shadingEngine", "file", "mesh", "nurbsCurve"]
 
     # the items which need to pass the id to their parent
-    transforms = set()
     nodes = set(cmds.ls(type=types, long=True))
-    for n in cmds.ls(type=shape_types, long=True):
-        if n in defaults:
-            continue
-
-        # generate id on parent of shape nodes
-        parents = cmds.listRelatives(n, parent=True, fullPath=True)
-        if not parents:
-            raise RuntimeError("Bug! Shape has no parent: {0}".format(n))
-
-        for parent in parents:
-            transforms.add(parent)
 
     # Add the collected transform to the nodes
-    nodes |= transforms
+    transforms = cmds.listRelatives(list(nodes),
+                                    parent=True,
+                                    fullPath=True) or []
+
+    nodes |= set(transforms)
 
     # Remove the ignored nodes
     nodes -= ignore
@@ -129,8 +119,8 @@ def on_save():
     # Lead with asset ID from the database
     asset = os.environ["AVALON_ASSET"]
     asset_id = io.find_one({"type": "asset", "name": asset})
+
+    # generate the ids
     for node in nodes:
-        if node in defaults:
-            continue
         _set_uuid(str(asset_id["_id"]), node)
 
