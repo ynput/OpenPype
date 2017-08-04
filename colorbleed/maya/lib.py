@@ -665,7 +665,7 @@ def get_reference_node(path):
     try:
         node = cmds.file(path, query=True, referenceNode=True)
     except RuntimeError:
-        log.debug('Received file not loaded : "{}"'.format(path))
+        log.debug('File is not referenced : "{}"'.format(path))
         return
 
     reference_path = cmds.referenceQuery(path, filename=True)
