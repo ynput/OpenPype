@@ -22,7 +22,6 @@ class RigLoader(api.Loader):
 
     def process(self, name, namespace, context, data):
 
-        assert "_" in name, "Naming convention not followed"
         assetname = "{}_".format(context["asset"]["name"])
         unique_namespace = maya.unique_namespace(assetname, format="%03d")
         nodes = cmds.file(self.fname,
@@ -62,8 +61,8 @@ class RigLoader(api.Loader):
         else:
             asset = "{}".format(asset_name)
 
+        cmds.select([output, controls], noExpand=True)
         with maya.maintained_selection():
-            cmds.select([output, controls], noExpand=True)
 
             # TODO(marcus): Hardcoding the family here, better separate this.
             dependencies = [context["representation"]["_id"]]

@@ -23,10 +23,7 @@ class AbcLoader(api.Loader):
         # Create unique namespace for the cameras
 
         # Get name from asset being loaded
-        assetname = "{}_".format(name.split("_")[0])
-        namespace = maya.unique_namespace(assetname,
-                                          format="%03d",
-                                          suffix="_abc")
+        namespace = "{name}_abc".format(name=name)
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           sharedReferenceFile=False,
@@ -51,8 +48,6 @@ class CurvesLoader(api.Loader):
     icon = "question"
 
     def process(self, name, namespace, context, data):
-        from maya import cmds
-        from avalon import maya
 
         cmds.loadPlugin("atomImportExport.mll", quiet=True)
 

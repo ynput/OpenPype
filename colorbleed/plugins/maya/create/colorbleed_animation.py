@@ -9,7 +9,7 @@ class CreateAnimation(avalon.maya.Creator):
 
     name = "animationDefault"
     label = "Animation"
-    family = "colorbleed.anim"
+    family = "colorbleed.animation"
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)
@@ -33,4 +33,3 @@ class CreateAnimation(avalon.maya.Creator):
         data["visibleOnly"] = False
 
         self.data = data
-        self.options["abbreviation"] = self.abbreviation
