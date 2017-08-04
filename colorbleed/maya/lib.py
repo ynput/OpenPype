@@ -673,31 +673,34 @@ def get_reference_node(path):
         return node
 
 
-def process_attribute_change(attribute_data, node):
+def set_attribute(attribute, value, node):
     """Adjust attributes based on the value from the attribute data
 
+    If an attribute does not exists on the target it will be added with
+    the dataType being controlled by the value type.
+
     Args:
-        attribute_data (dict): attribute as key with value as value
+        attribute (str): name of the attribute to change
+        value: the value to change to attribute to
         node (str): name of the node
 
     Returns:
         None
     """
 
-    for attribute, value in attribute_data.items():
-        value_type = type(value).__name__
-        kwargs = ATTRIBUTE_DICT[value_type]
-        if not cmds.attributeQuery(attribute, node=node, exists=True):
-            log.debug("Creating attribute '{}' on "
-                      "'{}'".format(attribute, node))
-            cmds.addAttr(node, longName=attribute, **kwargs)
+    value_type = type(value).__name__
+    kwargs = ATTRIBUTE_DICT[value_type]
+    if not cmds.attributeQuery(attribute, node=node, exists=True):
+        log.debug("Creating attribute '{}' on "
+                  "'{}'".format(attribute, node))
+        cmds.addAttr(node, longName=attribute, **kwargs)
 
-        node_attr = "{}.{}".format(node, attribute)
-        if "dataType" in kwargs:
-            attr_type = kwargs["dataType"]
-            cmds.setAttr(node_attr, value, type=attr_type)
-        else:
-            cmds.setAttr(node_attr, value)
+    node_attr = "{}.{}".format(node, attribute)
+    if "dataType" in kwargs:
+        attr_type = kwargs["dataType"]
+        cmds.setAttr(node_attr, value, type=attr_type)
+    else:
+        cmds.setAttr(node_attr, value)
 
 
 def apply_attributes(attributes, nodes_by_id):
@@ -714,10 +717,10 @@ def apply_attributes(attributes, nodes_by_id):
     """
 
     for attr_data in attributes:
-        nodes = nodes_by_id[attr_data["uuid"]]
+        node = nodes_by_id[attr_data["uuid"]]
         attr_value = attr_data["attributes"]
-        for node in nodes:
-            process_attribute_change(attr_value, node)
+        for attr, value in attr_value:
+            set_attribute(attr, value, node)
 
 
 def list_looks(asset_id):
