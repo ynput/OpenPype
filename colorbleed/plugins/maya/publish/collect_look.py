@@ -115,6 +115,8 @@ class CollectLook(pyblish.api.InstancePlugin):
         attributes = self.collect_attributes_changed(instance)
         looksets = cmds.ls(sets.keys(), absoluteName=True, long=True)
 
+        self.log.info("Found the following sets: {}".format(looksets))
+
         # Store data on the instance
         instance.data["lookData"] = {"attributes": attributes,
                                      "relationships": sets.values(),
@@ -124,7 +126,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         history = cmds.listHistory(looksets)
         files = cmds.ls(history, type="file", long=True)
 
-        # Collect textures,
+        # Collect textures
         resources = [self.collect_resource(n) for n in files]
         instance.data["resources"] = resources
 
@@ -318,11 +320,9 @@ class CollectLook(pyblish.api.InstancePlugin):
                 attribute = "{}.{}".format(node, attr)
                 node_attributes[attr] = cmds.getAttr(attribute)
 
-            data = {"name": node,
-                    "uuid": id_utils.get_id(node),
-                    "attributes": node_attributes}
-
-            attributes.append(data)
+            attributes.append({"name": node,
+                               "uuid": id_utils.get_id(node),
+                               "attributes": node_attributes})
 
         return attributes
 

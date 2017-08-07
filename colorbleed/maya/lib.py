@@ -865,7 +865,8 @@ def apply_shaders(relationships, shadernodes, nodes):
 
     Args:
         relationships (dict): relationship data
-        shadernodes (list): list of nodes of the shading engine
+        shadernodes (list): list of nodes of the shading objectSets (includes
+        VRayObjectProperties and shadingEngines)
         nodes (list): list of nodes to apply shader to
 
     Returns:
@@ -875,7 +876,7 @@ def apply_shaders(relationships, shadernodes, nodes):
     attributes = relationships.get("attributes", [])
     shader_sets = relationships.get("sets", [])
 
-    shading_engines = cmds.ls(shadernodes, type="shadingEngine", long=True)
+    shading_engines = cmds.ls(shadernodes, type="objectSet", long=True)
     assert len(shading_engines) > 0, ("Error in retrieving shading engines "
                                       "from reference")
 
@@ -901,7 +902,7 @@ def apply_shaders(relationships, shadernodes, nodes):
 
         shading_engine = shading_engines_by_id[shader_uuid]
         assert len(shading_engine) == 1, ("Could not find the correct "
-                                          "shading engine with cbId "
+                                          "objectSet with cbId "
                                           "'{}'".format(shader_uuid))
 
         cmds.sets(filtered_nodes, forceElement=shading_engine[0])
