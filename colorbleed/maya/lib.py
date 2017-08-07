@@ -8,9 +8,9 @@ import logging
 import contextlib
 from collections import OrderedDict, defaultdict
 
-from avalon import maya, io
-
 from maya import cmds, mel
+
+from avalon import maya, io
 
 
 log = logging.getLogger(__name__)
@@ -717,10 +717,11 @@ def apply_attributes(attributes, nodes_by_id):
     """
 
     for attr_data in attributes:
-        node = nodes_by_id[attr_data["uuid"]]
+        nodes = nodes_by_id[attr_data["uuid"]]
         attr_value = attr_data["attributes"]
-        for attr, value in attr_value.items():
-            set_attribute(attr, value, node)
+        for node in nodes:
+            for attr, value in attr_value.items():
+                set_attribute(attr, value, node)
 
 
 def list_looks(asset_id):
@@ -784,6 +785,16 @@ def assign_look_by_version(nodes, version_id):
     else:
         log.info("Reusing existing lookdev '{}'".format(reference_node))
         shader_nodes = cmds.referenceQuery(reference_node, nodes=True)
+        namespace = cmds.referenceQuery(reference_node, namespace=True)
+
+    # containerise like avalon (for manager)
+    # give re
+    context = {"representation": shader_file}
+    subset_name = shader_file["context"]["subset"]
+    maya.containerise(name=subset_name,
+                      namespace=namespace,
+                      nodes=shader_nodes,
+                      context=context)
 
     # Assign relationships
     with open(shader_relation, "r") as f:
