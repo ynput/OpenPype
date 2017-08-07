@@ -1,4 +1,7 @@
 import re
+import os
+
+import maya.cmds as cmds
 
 import pyblish.api
 import colorbleed.api
@@ -21,9 +24,15 @@ class ValidateFileNameConvention(pyblish.api.InstancePlugin):
         # todo: change pattern to company standard
         pattern = re.compile("[a-zA-Z]+_[A-Z]{3}")
 
-        nodes = list(instance)
+        nodes = cmds.ls(instance, type="file")
         for node in nodes:
-            match = pattern.match(node)
+            # get texture path
+            texture = cmds.getAttr("{}.fileTextureName".format(node))
+            if not texture:
+                self.log.error("")
+                invalid.append(node)
+            filename = os.path.split(os.path.basename(texture))[0]
+            match = pattern.match(filename)
             if not match:
                 invalid.append(node)
 
