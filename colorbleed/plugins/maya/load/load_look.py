@@ -69,6 +69,7 @@ class LookLoader(api.Loader):
 
         # Get all nodes which belong to a matching name space
         # Currently this is the safest way to get all the nodes
-        lib.apply_shaders(relationships, nodes)
+        # Pass empty list as nodes to assign to in order to only load
+        lib.apply_shaders(relationships, nodes, [])
 
         self[:] = nodes
