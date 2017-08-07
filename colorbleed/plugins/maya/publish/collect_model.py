@@ -11,7 +11,7 @@ class CollectModelData(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.499
-    label = 'Model Data'
+    label = 'Collect Model Data'
     families = ["colorbleed.model"]
 
     def process(self, instance):

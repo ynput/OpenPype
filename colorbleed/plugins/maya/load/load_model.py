@@ -1,7 +1,7 @@
-from maya import cmds
+import maya.cmds as cmds
 
 from avalon import api
-from avalon import maya
+import avalon.maya
 
 
 class ModelLoader(api.Loader):
@@ -10,22 +10,26 @@ class ModelLoader(api.Loader):
     families = ["colorbleed.model"]
     representations = ["ma"]
 
-    label = "Reference model"
+    label = "Reference Model"
     order = -10
     icon = "code-fork"
     color = "orange"
 
     def process(self, name, namespace, context, data):
 
-        with maya.maintained_selection():
-            nodes = cmds.file(
-                self.fname,
-                namespace=namespace,
-                reference=True,
-                returnNewNodes=True,
-                groupReference=True,
-                groupName="{}:{}".format(namespace, name)
-            )
+        # Create a readable namespace
+        # Namespace should contain asset name and counter
+        # TEST_001{_descriptor} where `descriptor` can be `_abc` for example
+        assetname = "{}_".format(namespace.split("_")[0])
+        namespace = avalon.maya.unique_namespace(assetname, format="%03d")
+
+        with avalon.maya.maintained_selection():
+            nodes = cmds.file(self.fname,
+                              namespace=namespace,
+                              reference=True,
+                              returnNewNodes=True,
+                              groupReference=True,
+                              groupName="{}:{}".format(namespace, name))
 
         self[:] = nodes
 
@@ -54,15 +58,13 @@ class ModelGPUCacheLoader(api.Loader):
         cmds.loadPlugin("gpuCache", quiet=True)
 
         # Create transform with shape
-        transform = cmds.createNode("transform",
-                                    name=name)
-        cache = cmds.createNode("gpuCache",
-                                parent=transform,
-                                name="{0}Shape".format(name))
+        node_name = "{0}Shape".format(name)
+        transform = cmds.createNode("transform", name=name)
+        cache = cmds.createNode("gpuCache", parent=transform, name=node_name)
 
         # Set the cache filepath
-        cmds.setAttr(cache + '.cacheFileName', path, type="string")
-        cmds.setAttr(cache + '.cacheGeomPath', "|", type="string")    # root
+        cmds.setAttr('{}.cacheFileName'.format(cache), path, type="string")
+        cmds.setAttr('{}.cacheGeomPath'.format(cache), "|", type="string")  # root
 
         # Select the transform
         cmds.select(transform, r=1)

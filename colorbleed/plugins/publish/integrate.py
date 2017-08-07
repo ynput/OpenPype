@@ -1,15 +1,16 @@
 import os
 import logging
+import shutil
 
+import errno
 import pyblish.api
 from avalon import api, io
-import colorbleed.filetypes as filetypes
 
 
 log = logging.getLogger(__name__)
 
 
-class PreIntegrateAsset(pyblish.api.InstancePlugin):
+class IntegrateAsset(pyblish.api.InstancePlugin):
     """Resolve any dependency issies
 
     This plug-in resolves any paths which, if not updated might break
@@ -20,7 +21,7 @@ class PreIntegrateAsset(pyblish.api.InstancePlugin):
     publish the shading network. Same goes for file dependent assets.
     """
 
-    label = "Pre Intergrate Asset"
+    label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
     families = ["colorbleed.model",
                 "colorbleed.rig",
@@ -32,6 +33,17 @@ class PreIntegrateAsset(pyblish.api.InstancePlugin):
                 "colorbleed.group"]
 
     def process(self, instance):
+
+        self.log.info("Integrating Asset in to the database ...")
+
+        self.register(instance)
+        self.integrate(instance)
+
+        self.log.info("Removing temporary files and folders ...")
+        stagingdir = instance.data["stagingDir"]
+        shutil.rmtree(stagingdir)
+
+    def register(self, instance):
 
         # Required environment variables
         PROJECT = os.environ["AVALON_PROJECT"]
@@ -75,8 +87,12 @@ class PreIntegrateAsset(pyblish.api.InstancePlugin):
 
         self.log.debug("Establishing staging directory @ %s" % stagingdir)
 
-        project = io.find_one({"type": "project"})
-        asset = io.find_one({"name": ASSET})
+        project = io.find_one({"type": "project"},
+                              projection={"config.template.publish": True})
+
+        asset = io.find_one({"type": "asset",
+                             "name": ASSET,
+                             "parent": project["_id"]})
 
         assert all([project, asset]), ("Could not find current project or "
                                        "asset '%s'" % ASSET)
@@ -93,7 +109,17 @@ class PreIntegrateAsset(pyblish.api.InstancePlugin):
         if latest_version is not None:
             next_version += latest_version["name"]
 
-        self.log.debug("Next version: %i" % next_version)
+        self.log.info("Verifying version from assumed destination")
+
+        assumed_data = instance.data["assumedTemplateData"]
+        assumed_version = assumed_data["version"]
+        if assumed_version != next_version:
+            raise AttributeError("Assumed version 'v{0:03d}' does not match"
+                                 "next version in database "
+                                 "('v{1:03d}')".format(assumed_version,
+                                                       next_version))
+
+        self.log.debug("Next version: v{0:03d}".format(next_version))
 
         version_data = self.create_version_data(context, instance)
         version = self.create_version(subset=subset,
@@ -125,7 +151,6 @@ class PreIntegrateAsset(pyblish.api.InstancePlugin):
         template_publish = project["config"]["template"]["publish"]
 
         representations = []
-        traffic = []
         staging_content = os.listdir(stagingdir)
         for v, fname in enumerate(staging_content):
 
@@ -134,13 +159,6 @@ class PreIntegrateAsset(pyblish.api.InstancePlugin):
 
             src = os.path.join(stagingdir, fname)
             dst = template_publish.format(**template_data)
-            if v == 0:
-                instance.data["versionFolder"] = os.path.dirname(dst)
-
-            # Files to copy as if or to specific folder
-            if ext in filetypes.accepted_images_types:
-                dirname = os.path.dirname(dst)
-                dst = os.path.join(dirname, fname)
 
             # Backwards compatibility
             if fname == ".metadata.json":
@@ -148,7 +166,7 @@ class PreIntegrateAsset(pyblish.api.InstancePlugin):
                 dst = os.path.join(dirname, fname)
 
             # copy source to destination (library)
-            traffic.append([src, dst])
+            instance.data["transfers"].append([src, dst])
 
             representation = {
                 "schema": "avalon-core:representation-2.0",
@@ -173,9 +191,52 @@ class PreIntegrateAsset(pyblish.api.InstancePlugin):
 
         # store data for database and source / destinations
         instance.data["representations"] = representations
-        instance.data["traffic"] = traffic
 
         return representations
+
+    def integrate(self, instance):
+        """Register the representations and move the files
+
+        Through the stored `representations` and `transfers`
+
+        Args:
+            instance: the instance to integrate
+        """
+
+        # get needed data
+        traffic = instance.data["transfers"]
+        representations = instance.data["representations"]
+
+        self.log.info("Registering {} items".format(len(representations)))
+        io.insert_many(representations)
+
+        # moving files
+        for src, dest in traffic:
+            self.log.info("Copying file .. {} -> {}".format(src, dest))
+            self.copy_file(src, dest)
+
+
+    def copy_file(self, src, dst):
+        """ Copy given source to destination
+
+        Arguments:
+            src (str): the source file which needs to be copied
+            dst (str): the destination of the sourc file
+        Returns:
+            None
+        """
+
+        dirname = os.path.dirname(dst)
+        try:
+            os.makedirs(dirname)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                self.log.critical("An unexpected error occurred.")
+                raise
+
+        shutil.copy(src, dst)
 
     def get_subset(self, asset, instance):
 

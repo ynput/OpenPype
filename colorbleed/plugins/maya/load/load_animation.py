@@ -23,11 +23,16 @@ class AbcLoader(api.Loader):
         # Create unique namespace for the cameras
 
         # Get name from asset being loaded
-        assert "_" in name, "Naming convention not followed"
-        assetname = "{}_".format(name.split("_")[0])
-        namespace = maya.unique_namespace(assetname,
+        # Assuming name is subset name from the animation, we split the number
+        # suffix from the name to ensure the namespace is unique
+        name = name.split("_")[0]
+        namespace = maya.unique_namespace("{}_".format(name),
                                           format="%03d",
                                           suffix="_abc")
+
+        # hero_001 (abc)
+        # asset_counter{optional}
+
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           sharedReferenceFile=False,
@@ -37,7 +42,6 @@ class AbcLoader(api.Loader):
                           returnNewNodes=True)
 
         # load colorbleed ID attribute
-
         self[:] = nodes
 
 
@@ -52,8 +56,6 @@ class CurvesLoader(api.Loader):
     icon = "question"
 
     def process(self, name, namespace, context, data):
-        from maya import cmds
-        from avalon import maya
 
         cmds.loadPlugin("atomImportExport.mll", quiet=True)
 

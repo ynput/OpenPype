@@ -8,9 +8,9 @@ import logging
 import contextlib
 from collections import OrderedDict, defaultdict
 
-from avalon import maya, io
-
 from maya import cmds, mel
+
+from avalon import maya, io
 
 
 log = logging.getLogger(__name__)
@@ -20,6 +20,24 @@ project = io.find_one({"type": "project",
                        projection={"config.template.publish": True,
                                    "_id": False})
 TEMPLATE = project["config"]["template"]["publish"]
+
+ATTRIBUTE_DICT = {"int": {"attributeType": "long"},
+                  "str": {"dataType": "string"},
+                  "unicode": {"dataType": "string"},
+                  "float": {"attributeType": "double"},
+                  "bool": {"attributeType": "bool"}}
+
+SHAPE_ATTRS = ["castsShadows",
+               "receiveShadows",
+               "motionBlur",
+               "primaryVisibility",
+               "smoothShading",
+               "visibleInReflections",
+               "visibleInRefractions",
+               "doubleSided",
+               "opposite"]
+
+SHAPE_ATTRS = set(SHAPE_ATTRS)
 
 
 def maintained_selection(arg=None):
@@ -619,36 +637,6 @@ def _get_id(node):
     return attribute_value
 
 
-def filter_by_id(nodes, uuids):
-    """Filter all nodes which match the UUIDs
-
-    Args:
-        nodes (list): collection of nodes to check
-        uuids (list): a list of UUIDs which are linked to the shader
-
-    Returns:
-        list: matching nodes
-    """
-
-    filtered_nodes = []
-    for node in nodes:
-        if node is None:
-            continue
-
-        if not cmds.attributeQuery("cbId", node=node, exists=True):
-            continue
-
-        # Deformed shaped
-        attr = "{}.cbId".format(node)
-        attribute_value = cmds.getAttr(attr)
-        if attribute_value not in uuids:
-            continue
-
-        filtered_nodes.append(node)
-
-    return filtered_nodes
-
-
 def get_representation_file(representation, template=TEMPLATE):
     """
     Rebuild the filepath of the representation's context
@@ -674,10 +662,66 @@ def get_reference_node(path):
     Returns:
         node (str): name of the reference node in question
     """
-    node = cmds.file(path, query=True, referenceNode=True)
+    try:
+        node = cmds.file(path, query=True, referenceNode=True)
+    except RuntimeError:
+        log.debug('File is not referenced : "{}"'.format(path))
+        return
+
     reference_path = cmds.referenceQuery(path, filename=True)
     if os.path.normpath(path) == os.path.normpath(reference_path):
         return node
+
+
+def set_attribute(attribute, value, node):
+    """Adjust attributes based on the value from the attribute data
+
+    If an attribute does not exists on the target it will be added with
+    the dataType being controlled by the value type.
+
+    Args:
+        attribute (str): name of the attribute to change
+        value: the value to change to attribute to
+        node (str): name of the node
+
+    Returns:
+        None
+    """
+
+    value_type = type(value).__name__
+    kwargs = ATTRIBUTE_DICT[value_type]
+    if not cmds.attributeQuery(attribute, node=node, exists=True):
+        log.debug("Creating attribute '{}' on "
+                  "'{}'".format(attribute, node))
+        cmds.addAttr(node, longName=attribute, **kwargs)
+
+    node_attr = "{}.{}".format(node, attribute)
+    if "dataType" in kwargs:
+        attr_type = kwargs["dataType"]
+        cmds.setAttr(node_attr, value, type=attr_type)
+    else:
+        cmds.setAttr(node_attr, value)
+
+
+def apply_attributes(attributes, nodes_by_id):
+    """Alter the attributes to match the state when publishing
+
+    Apply attribute settings from the publish to the node in the scene based
+    on the UUID which is stored in the cbId attribute.
+
+    Args:
+        attributes (list): list of dictionaries
+        nodes_by_id (dict): collection of nodes based on UUID
+                           {uuid: [node, node]}
+
+    """
+
+    for attr_data in attributes:
+        nodes = nodes_by_id[attr_data["uuid"]]
+        attr_value = attr_data["attributes"]
+        for node in nodes:
+            for attr, value in attr_value.items():
+                set_attribute(attr, value, node)
 
 
 def list_looks(asset_id):
@@ -739,8 +783,18 @@ def assign_look_by_version(nodes, version_id):
                                      reference=True,
                                      returnNewNodes=True)
     else:
-        log.info("Reusing existing lookdev..")
+        log.info("Reusing existing lookdev '{}'".format(reference_node))
         shader_nodes = cmds.referenceQuery(reference_node, nodes=True)
+        namespace = cmds.referenceQuery(reference_node, namespace=True)
+
+    # containerise like avalon (for manager)
+    # give re
+    context = {"representation": shader_file}
+    subset_name = shader_file["context"]["subset"]
+    maya.containerise(name=subset_name,
+                      namespace=namespace,
+                      nodes=shader_nodes,
+                      context=context)
 
     # Assign relationships
     with open(shader_relation, "r") as f:
@@ -763,24 +817,33 @@ def assign_look(nodes, subset="lookDefault"):
     # Group all nodes per asset id
     grouped = defaultdict(list)
     for node in nodes:
-        colorbleed_id = cmds.getAttr("{}.cbId".format(node))
-        asset_id = colorbleed_id.split(":")[0]
-        grouped[asset_id].append(node)
+        colorbleed_id = _get_id(node)
+        if not colorbleed_id:
+            continue
+
+        parts = colorbleed_id.split(":", 1)
+        grouped[parts[0]].append(node)
 
     for asset_id, asset_nodes in grouped.items():
         # create objectId for database
-        asset_id = bson.ObjectId(asset_id)
-        subset = io.find_one({"type": "subset",
-                              "name": subset,
-                              "parent": asset_id})
+        try:
+            asset_id = bson.ObjectId(asset_id)
+        except bson.errors.InvalidId:
+            log.warning("Asset ID is not compatible with bson")
+            continue
+        subset_data = io.find_one({"type": "subset",
+                                   "name": subset,
+                                   "parent": asset_id})
 
-        assert subset, "No subset found for {}".format(asset_id)
+        if not subset_data:
+            log.warning("No subset '{}' found for {}".format(subset, asset_id))
+            continue
 
         # get last version
-        version = io.find_one({"parent": subset['_id'],
+        version = io.find_one({"parent": subset_data['_id'],
                                "type": "version",
                                "data.families":
-                                   {"$in":["colorbleed.lookdev"]}
+                                   {"$in": ["colorbleed.lookdev"]}
                                },
                               sort=[("name", -1)],
                               projection={"_id": True})
@@ -792,48 +855,56 @@ def assign_look(nodes, subset="lookDefault"):
         assign_look_by_version(asset_nodes, version['_id'])
 
 
-def apply_shaders(relationships, shader_nodes, nodes):
-    """Apply all shaders to the nodes based on the relationship data
+def apply_shaders(relationships, shadernodes, nodes):
+    """Link shadingEngine to the right nodes based on relationship data
+
+    Relationship data is constructed of a collection of `sets` and `attributes`
+    `sets` corresponds with the shaderEngines found in the lookdev.
+    Each set has the keys `name`, `members` and `uuid`, the `members`
+    hold a collection of node information `name` and `uuid`.
 
     Args:
-        relationships (dict): shader to node relationships
-        shader_nodes (list): shader network nodes
-        nodes (list): nodes to assign to
+        relationships (dict): relationship data
+        shadernodes (list): list of nodes of the shading engine
+        nodes (list): list of nodes to apply shader to
 
     Returns:
         None
     """
 
+    attributes = relationships.get("attributes", [])
     shader_sets = relationships.get("sets", [])
-    shading_engines = cmds.ls(shader_nodes, type="shadingEngine", long=True)
-    assert len(shading_engines) > 0, ("Error in retrieving shading engine "
+
+    shading_engines = cmds.ls(shadernodes, type="shadingEngine", long=True)
+    assert len(shading_engines) > 0, ("Error in retrieving shading engines "
                                       "from reference")
 
-    # Pre-filter nodes and shader nodes
-    nodes_by_id = defaultdict(list)
-    shader_nodes_by_id = defaultdict(list)
+    # region compute lookup
+    ns_nodes_by_id = defaultdict(list)
     for node in nodes:
-        _id = _get_id(node)
-        nodes_by_id[_id].append(node)
+        ns_nodes_by_id[_get_id(node)].append(node)
 
-    for shader_node in shader_nodes:
-        _id = _get_id(shader_node)
-        shader_nodes_by_id[_id].append(shader_node)
+    shading_engines_by_id = defaultdict(list)
+    for shad in shading_engines:
+        shading_engines_by_id[_get_id(shad)].append(shad)
+    # endregion
 
-    # get all nodes which we need to link per shader
+    # region assign
     for shader_set in shader_sets:
-        # collect shading engine
-        uuid = shader_set["uuid"]
-        shading_engine = shader_nodes_by_id.get(uuid, [])
+        # collect all unique IDs of the set members
+        shader_uuid = shader_set["uuid"]
+        member_uuids = [member["uuid"] for member in shader_set["members"]]
+
+        filtered_nodes = list()
+        for uuid in member_uuids:
+            filtered_nodes.extend(ns_nodes_by_id[uuid])
+
+        shading_engine = shading_engines_by_id[shader_uuid]
         assert len(shading_engine) == 1, ("Could not find the correct "
                                           "shading engine with cbId "
-                                          "'{}'".format(uuid))
-
-        # collect members
-        filtered_nodes = list()
-        for member in shader_set["members"]:
-            member_uuid = member["uuid"]
-            members = nodes_by_id.get(member_uuid, [])
-            filtered_nodes.extend(members)
+                                          "'{}'".format(shader_uuid))
 
         cmds.sets(filtered_nodes, forceElement=shading_engine[0])
+    # endregion
+
+    apply_attributes(attributes, ns_nodes_by_id)

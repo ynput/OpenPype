@@ -61,8 +61,8 @@ class RigLoader(api.Loader):
         else:
             asset = "{}".format(asset_name)
 
+        cmds.select([output, controls], noExpand=True)
         with maya.maintained_selection():
-            cmds.select([output, controls], noExpand=True)
 
             # TODO(marcus): Hardcoding the family here, better separate this.
             dependencies = [context["representation"]["_id"]]

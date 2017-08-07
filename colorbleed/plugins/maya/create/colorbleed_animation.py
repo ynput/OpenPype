@@ -1,4 +1,5 @@
 from collections import OrderedDict
+
 import avalon.maya
 from colorbleed.maya import lib
 

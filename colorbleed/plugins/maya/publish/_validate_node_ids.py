@@ -2,17 +2,17 @@ import pyblish.api
 import colorbleed.api
 
 
-class ValidateLookNodeIds(pyblish.api.InstancePlugin):
+class ValidateNodeIds(pyblish.api.InstancePlugin):
     """Validate nodes have colorbleed id attributes
 
     All look sets should have id attributes.
 
     """
 
-    order = colorbleed.api.ValidatePipelineOrder
-    families = ['colorbleed.look']
+    label = 'Node Id Attributes'
+    families = ['colorbleed.look', 'colorbleed.model']
     hosts = ['maya']
-    label = 'Look Id Attributes'
+    order = colorbleed.api.ValidatePipelineOrder
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.GenerateUUIDsOnInvalidAction]
 
@@ -20,14 +20,19 @@ class ValidateLookNodeIds(pyblish.api.InstancePlugin):
     def get_invalid(instance):
         import maya.cmds as cmds
 
-        nodes = instance.data["lookSets"]
+        nodes = instance.data["setMembers"]
 
         # Ensure all nodes have a cbId
-        invalid = list()
+        data_id = {}
+        invalid = []
         for node in nodes:
-            uuid = cmds.attributeQuery("mbId", node=node, exists=True)
-            if not uuid:
-                invalid.append(node)
+            try:
+                uuid = cmds.getAttr("{}.cbId".format(node))
+                data_id[uuid] = node
+                if uuid in data_id:
+                    invalid.append(node)
+            except RuntimeError:
+                pass
 
         return invalid
 
@@ -37,5 +42,5 @@ class ValidateLookNodeIds(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise RuntimeError("Nodes found without "
+            raise RuntimeError("Nodes found with invalid"
                                "asset IDs: {0}".format(invalid))

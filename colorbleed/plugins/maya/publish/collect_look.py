@@ -1,7 +1,6 @@
 from maya import cmds
 
 import pyblish.api
-
 from cb.utils.maya import context, shaders
 import cbra.utils.maya.node_uuid as id_utils
 
@@ -120,8 +119,13 @@ class CollectLook(pyblish.api.InstancePlugin):
         instance.data["lookData"] = {"attributes": attributes,
                                      "relationships": sets.values(),
                                      "sets": looksets}
-        # Collect textures
-        resources = [self.collect_resource(n) for n in cmds.ls(type="file")]
+
+        # Collect file nodes used by shading engines
+        history = cmds.listHistory(looksets)
+        files = cmds.ls(history, type="file", long=True)
+
+        # Collect textures,
+        resources = [self.collect_resource(n) for n in files]
         instance.data["resources"] = resources
 
         # Log a warning when no relevant sets were retrieved for the look.
