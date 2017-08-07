@@ -719,7 +719,7 @@ def apply_attributes(attributes, nodes_by_id):
     for attr_data in attributes:
         node = nodes_by_id[attr_data["uuid"]]
         attr_value = attr_data["attributes"]
-        for attr, value in attr_value:
+        for attr, value in attr_value.items():
             set_attribute(attr, value, node)
 
 
