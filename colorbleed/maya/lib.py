@@ -877,7 +877,7 @@ def apply_shaders(relationships, shadernodes, nodes):
     shader_sets = relationships.get("sets", [])
 
     shading_engines = cmds.ls(shadernodes, type="objectSet", long=True)
-    assert len(shading_engines) > 0, ("Error in retrieving shading engines "
+    assert len(shading_engines) > 0, ("Error in retrieving objectSets "
                                       "from reference")
 
     # region compute lookup
