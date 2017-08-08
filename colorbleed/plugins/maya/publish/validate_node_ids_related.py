@@ -22,7 +22,7 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
                colorbleed.api.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
-        """Process all nodes in instance (incl. hierarchy)"""
+        """Process all nodes in instance (including hierarchy)"""
         # Ensure all nodes have a cbId
         invalid = self.get_invalid(instance)
         if invalid:
@@ -44,9 +44,11 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
         # We do want to check the referenced nodes as we it might be
         # part of the end product
         for node in instance:
+
             _id = lib.get_id(node)
             if not _id:
                 continue
+
             node_asset_id = _id.split(":", 1)[0]
             if node_asset_id != asset_id:
                 invalid.append(node)
