@@ -1,18 +1,18 @@
-import maya.cmds as cmds
-
 import pyblish.api
 import colorbleed.api
+
+import avalon.io as io
 
 from colorbleed.maya import lib
 
 
-class ValidateNodeIDs(pyblish.api.InstancePlugin):
-    """Validate nodes have a Colorbleed Id
+class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
+    """Validate nodes have a related Colorbleed Id to the instance asset
 
     """
 
     order = colorbleed.api.ValidatePipelineOrder
-    label = 'Node Ids (ID)'
+    label = 'Node Ids Related (ID)'
     hosts = ['maya']
     families = ["colorbleed.model",
                 "colorbleed.lookdev",
@@ -22,27 +22,33 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
                colorbleed.api.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
-        """Process all meshes"""
-
+        """Process all nodes in instance (incl. hierarchy)"""
         # Ensure all nodes have a cbId
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Nodes found without "
-                               "IDs: {0}".format(invalid))
+            raise RuntimeError("Nodes IDs found that are not related to asset "
+                               "'{}' : {}".format(instance.data['asset'],
+                                                  invalid))
 
     @classmethod
     def get_invalid(cls, instance):
         """Return the member nodes that are invalid"""
         invalid = list()
 
-        # TODO: Implement check on only nodes like on_save callback.
-        instance_shape = cmds.ls(instance, type="shape")
+        asset = instance.data['asset']
+        asset_data = io.find_one({"name": asset,
+                                  "type": "asset"},
+                                 projection={"_id": True})
+        asset_id = str(asset_data['_id'])
 
         # We do want to check the referenced nodes as we it might be
         # part of the end product
-        nodes = lib.filter_out_nodes(set(instance_shape), defaults=True)
-        for node in nodes:
-            if not lib.get_id(node):
+        for node in instance:
+            _id = lib.get_id(node)
+            if not _id:
+                continue
+            node_asset_id = _id.split(":", 1)[0]
+            if node_asset_id != asset_id:
                 invalid.append(node)
 
         return invalid
