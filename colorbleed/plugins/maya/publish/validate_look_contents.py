@@ -1,3 +1,5 @@
+import maya.cmds as cmds
+
 import pyblish.api
 import colorbleed.api
 
@@ -34,11 +36,13 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
+        """Get all invalid nodes"""
 
-        invalid_attr = list(cls.validate_lookdata_attributes(instance))
-        invalid_rels = list(cls.validate_relationships(instance))
+        attributes = list(cls.validate_lookdata_attributes(instance))
+        relationships = list(cls.validate_relationships(instance))
+        non_defaults = cls.validate_non_defaults(instance)
 
-        invalid = invalid_attr + invalid_rels
+        invalid = attributes + relationships + non_defaults
 
         return invalid
 
@@ -74,9 +78,35 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
             look_name = relationship["name"]
             for key, value in relationship.items():
                 if value is None:
-                    cls.errors.append("{} has invalid attribite "
+                    cls.errors.append("{} has invalid attribute "
                                       "'{}'".format(look_name, key))
 
                     invalid.add(look_name)
+
+        return invalid
+
+    @classmethod
+    def validate_non_defaults(cls, instance):
+        """Check if instance content items are part of the default nodes"""
+
+        invalid = []
+        cams = cmds.ls(['frontShape', 'perspShape', 'sideShape', 'topShape'],
+                       long=True)
+        defaults = cmds.ls(long=True, defaultNodes=True)
+        defaults.extend(cams)
+
+        for node in cmds.ls(instance[:], long=True):
+            # might be a transform of a default item listed
+            if cmds.nodeType(node) == "transform":
+                node = cmds.listRelatives(node,
+                                          children=True,
+                                          fullPath=True)[0] or None
+
+            print node, node in defaults
+
+            if node in defaults:
+                invalid.append(node)
+                cls.errors.append("'{}' is part of Maya default "
+                                  "nodes".format(node))
 
         return invalid
