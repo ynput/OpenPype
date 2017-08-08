@@ -22,65 +22,51 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.look']
+    order = colorbleed.api.ValidateContentsOrder + 0.01
+    families = ['colorbleed.lookdev']
     hosts = ['maya']
     label = 'Look No Default Shaders'
     actions = [colorbleed.api.SelectInvalidAction]
 
     @classmethod
-    def get_invalid_sets(cls, instance):
+    def get_invalid(cls, instance):
 
+        invalid = []
         disallowed = ["lambert1",
                       "initialShadingGroup",
                       "initialParticleSE",
                       "particleCloud1"]
-        disallowed = set(disallowed)
 
-        # Check among the sets
-        lookdata = instance.data["lookData"]
-        sets = lookdata['sets']
-        lookup = set(sets)
-        intersect = lookup.intersection(disallowed)
-        if intersect:
-            cls.log.error("Default shaders found in the "
-                          "look: {0}".format(list(intersect)))
-            return list(intersect)
+        setmembers = instance.data["setMembers"]
+        members = cmds.listRelatives(setmembers,
+                                     allDescendents=True,
+                                     type="shape")
 
-        # Check among history/inputs of the sets
-        history = cmds.listHistory(sets) or []
-        lookup = set(history)
+        for member in members:
 
-        intersect = lookup.intersection(disallowed)
-        if intersect:
-            cls.log.error("Default shaders found in the history of the "
-                          "look: {0}".format(list(intersect)))
-            return list(intersect)
+            # get connection
+            # listConnections returns a list or None
+            shading_engine = cmds.listConnections(member, type="shadingEngine")
+            if not shading_engine:
+                cls.log.error("Detected shape without shading engine : "
+                              "'{}'".format(member))
+                invalid.append(member)
+                continue
 
-        return list()
-
-    @classmethod
-    def get_invalid(cls, instance):
-
-        shaders = cls.get_invalid_sets(instance)
-        nodes = instance[:]
-
-        # Get members of the shaders
-        all = set()
-        for shader in shaders:
-            members = cmds.sets(shader, query=True) or []
-            members = cmds.ls(members, long=True)
-            all.update(members)
-
-        # Get the instance nodes among the shader members
-        invalid = all.intersection(nodes)
-        invalid = list(invalid)
+            # retrieve the shading engine out of the list
+            shading_engine = shading_engine[0]
+            if shading_engine in disallowed:
+                cls.log.error("Member connected to a disallows objectSet: "
+                              "'{}'".format(member))
+            else:
+                continue
 
         return invalid
 
     def process(self, instance):
         """Process all the nodes in the instance"""
 
-        sets = self.get_invalid_sets(instance)
+        # sets = self.get_invalid_sets(instance)
+        sets = self.get_invalid(instance)
         if sets:
             raise RuntimeError("Invalid shaders found: {0}".format(sets))

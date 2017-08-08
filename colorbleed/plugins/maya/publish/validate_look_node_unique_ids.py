@@ -12,7 +12,7 @@ class ValidateLookNodeUniqueIds(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidatePipelineOrder
-    families = ['colorbleed.look']
+    families = ['colorbleed.lookdev']
     hosts = ['maya']
     label = 'Look Id Unique Attributes'
     actions = [colorbleed.api.SelectInvalidAction,
@@ -28,8 +28,8 @@ class ValidateLookNodeUniqueIds(pyblish.api.InstancePlugin):
         invalid = list()
         for node in nodes:
             unique_id = None
-            if cmds.attributeQuery("mbId", node=node, exists=True):
-                unique_id = cmds.getAttr("{}.mbId".format(node))
+            if cmds.attributeQuery("cbId", node=node, exists=True):
+                unique_id = cmds.getAttr("{}.cbId".format(node))
             if not unique_id:
                 continue
 

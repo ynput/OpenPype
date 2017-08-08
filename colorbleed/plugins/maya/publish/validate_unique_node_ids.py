@@ -1,20 +1,22 @@
 from collections import defaultdict
 
-import maya.cmds as cmds
-
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.lib as lib
 
 
-class ValidateUniqueNodeIds(pyblish.api.InstancePlugin):
-    """Validate nodes have colorbleed id attributes"""
+class ValidateNonDuplicateInstanceMembers(pyblish.api.InstancePlugin):
+    """Validate the nodes in the instance have a unique Colorbleed Id
+
+    Here we ensure that what has been added to the instance is unique
+    """
 
     order = colorbleed.api.ValidatePipelineOrder
-    label = 'Unique Id Attributes'
+    label = 'Non Duplicate Instance Members (ID)'
     hosts = ['maya']
-    families = ['colorbleed.model',
-                'colorbleed.lookdev',
-                'colorbleed.rig']
+    families = ["colorbleed.model",
+                "colorbleed.lookdev",
+                "colorbleed.rig"]
 
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.GenerateUUIDsOnInvalidAction]
@@ -23,15 +25,12 @@ class ValidateUniqueNodeIds(pyblish.api.InstancePlugin):
     def get_invalid_dict(cls, instance):
         """Return a dictionary mapping of id key to list of member nodes"""
 
-        uuid_attr = "cbId"
-
         # Collect each id with their members
         ids = defaultdict(list)
         for member in instance:
-            if not cmds.attributeQuery(uuid_attr, node=member, exists=True):
+            object_id = lib.get_id(member)
+            if not object_id:
                 continue
-
-            object_id = cmds.getAttr("{}.{}".format(member, uuid_attr))
             ids[object_id].append(member)
 
         # Skip those without IDs (if everything should have an ID that should

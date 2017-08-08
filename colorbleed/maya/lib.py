@@ -613,7 +613,43 @@ def remap_resource_nodes(resources, folder=None):
     cmds.file(save=True, type="mayaAscii")
 
 
-def _get_id(node):
+def filter_out_nodes(nodes, defaults=False, referenced_nodes=False):
+    """Filter out any node which are locked (reference) or readOnly
+
+    Args:
+        nodes (set): nodes to filter
+        locked (bool): set True to filter out lockedNodes
+        readonly (bool): set True to filter out readOnly
+    Returns:
+        nodes (list): list of filtered nodes
+    """
+    # establish set of nodes to ignore
+    # `readOnly` flag is obsolete as of Maya 2016 therefor we explicitly remove
+    # default nodes and reference nodes
+
+    ignore = set()
+    if referenced_nodes:
+        ignore |= set(cmds.ls(long=True, referencedNodes=referenced_nodes))
+
+    if defaults:
+        ignore |= set(cmds.ls(long=True, defaultNodes=defaults))
+
+    # The items which need to pass the id to their parent
+    # Add the collected transform to the nodes
+    dag = cmds.ls(list(nodes),
+                  type="dagNode",
+                  long=True)  # query only dag nodes
+    transforms = cmds.listRelatives(dag,
+                                    parent=True,
+                                    fullPath=True) or []
+
+    nodes |= set(transforms)
+    nodes -= ignore  # Remove the ignored nodes
+
+    return nodes
+
+
+def get_id(node):
     """
     Get the `cbId` attribute of the given node
     Args:
@@ -817,7 +853,7 @@ def assign_look(nodes, subset="lookDefault"):
     # Group all nodes per asset id
     grouped = defaultdict(list)
     for node in nodes:
-        colorbleed_id = _get_id(node)
+        colorbleed_id = get_id(node)
         if not colorbleed_id:
             continue
 
@@ -877,17 +913,17 @@ def apply_shaders(relationships, shadernodes, nodes):
     shader_sets = relationships.get("sets", [])
 
     shading_engines = cmds.ls(shadernodes, type="objectSet", long=True)
-    assert len(shading_engines) > 0, ("Error in retrieving shading engines "
+    assert len(shading_engines) > 0, ("Error in retrieving objectSets "
                                       "from reference")
 
     # region compute lookup
     ns_nodes_by_id = defaultdict(list)
     for node in nodes:
-        ns_nodes_by_id[_get_id(node)].append(node)
+        ns_nodes_by_id[get_id(node)].append(node)
 
     shading_engines_by_id = defaultdict(list)
     for shad in shading_engines:
-        shading_engines_by_id[_get_id(shad)].append(shad)
+        shading_engines_by_id[get_id(shad)].append(shad)
     # endregion
 
     # region assign

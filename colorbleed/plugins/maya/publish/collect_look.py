@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
+import colorbleed.maya.lib as lib
 from cb.utils.maya import context, shaders
-import cbra.utils.maya.node_uuid as id_utils
 
 SHAPE_ATTRS = ["castsShadows",
                "receiveShadows",
@@ -13,6 +13,7 @@ SHAPE_ATTRS = ["castsShadows",
                "visibleInRefractions",
                "doubleSided",
                "opposite"]
+
 SHAPE_ATTRS = set(SHAPE_ATTRS)
 
 
@@ -167,10 +168,10 @@ class CollectLook(pyblish.api.InstancePlugin):
                 if objset in sets:
                     continue
 
-                unique_id = cmds.getAttr("%s.cbId" % objset)
                 sets[objset] = {"name": objset,
-                                "uuid": unique_id,
+                                "uuid": lib.get_id(objset),
                                 "members": list()}
+
         return sets
 
     def get_related_sets(self, node, view_sets):
@@ -185,8 +186,12 @@ class CollectLook(pyblish.api.InstancePlugin):
         Args:
             node (str): name of the current not to check
         """
+        defaults = ["initialShadingGroup",
+                    "defaultLightSet",
+                    "defaultObjectSet"]
 
-        ignored = ["pyblish.avalon.instance", "pyblish.avalon.container"]
+        ignored = ["pyblish.avalon.instance",
+                   "pyblish.avalon.container"]
 
         related_sets = cmds.listSets(object=node, extendToShape=False)
         if not related_sets:
@@ -206,6 +211,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         deformer_sets = cmds.listSets(object=node,
                                       extendToShape=False,
                                       type=2) or []
+
         deformer_sets = set(deformer_sets)  # optimize lookup
         sets = [s for s in sets if s not in deformer_sets]
 
@@ -215,8 +221,9 @@ class CollectLook(pyblish.api.InstancePlugin):
         # Ignore viewport filter view sets (from isolate select and
         # viewports)
         sets = [s for s in sets if s not in view_sets]
+        sets = [s for s in sets if s not in defaults]
 
-        self.log.info("Found sets %s for %s" % (related_sets, node))
+        self.log.info("Found sets %s for %s" % (sets, node))
 
         return sets
 
@@ -263,21 +270,14 @@ class CollectLook(pyblish.api.InstancePlugin):
         if member in [m["name"] for m in objset_members]:
             return
 
-        # check node type, if mesh get parent! makes assigning shaders easier
+        # check node type, if mesh get parent!
         if cmds.nodeType(node) == "mesh":
-            parent = cmds.listRelatives(node, parent=True, fullPath=True)
-            # a mesh NEEDS to have a parent in Maya logic, no reason for
-            # assertions or extra checking
-            parent = parent[0]
-            if cmds.attributeQuery("cbId", node=parent, exists=True):
-                node = parent
-            else:
-                self.log.error("Transform group of mesh '{}' has no attribute "
-                               "'cbId', this is manditory")
-                return
+            # A mesh will always have a transform node in Maya logic
+            node = cmds.listRelatives(node, parent=True, fullPath=True)[0]
 
-        if verbose:
-            self.log.debug("Such as %s.." % member)
+        if not cmds.attributeQuery("cbId", node=node, exists=True):
+            self.log.error("Node '{}' has no attribute 'cbId'".format(node))
+            return
 
         member_data = {"name": node,
                        "uuid": cmds.getAttr("{}.cbId".format(node))}
@@ -321,7 +321,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                 node_attributes[attr] = cmds.getAttr(attribute)
 
             attributes.append({"name": node,
-                               "uuid": id_utils.get_id(node),
+                               "uuid": cmds.getAttr("{}.cbId".format(node)),
                                "attributes": node_attributes})
 
         return attributes

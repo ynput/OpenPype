@@ -4,10 +4,10 @@ import os
 import avalon.io as io
 
 
-class CollectResourceDestination(pyblish.api.InstancePlugin):
+class CollectAssumedDestination(pyblish.api.InstancePlugin):
     """This plug-ins displays the comment dialog box per default"""
 
-    label = "Collect Resource Destination"
+    label = "Collect Assumed Destination"
     order = pyblish.api.CollectorOrder + 0.499
 
     def process(self, instance):
@@ -63,15 +63,22 @@ class CollectResourceDestination(pyblish.api.InstancePlugin):
 
         # get all the stuff from the database
         subset_name = instance.data["subset"]
+        asset_name = instance.data["asset"]
         project_name = os.environ["AVALON_PROJECT"]
 
         project = io.find_one({"type": "project",
                                "name": project_name},
                               projection={"config": True})
+
         template = project["config"]["template"]["publish"]
 
+        asset = io.find_one({"type": "asset",
+                             "name": asset_name,
+                             "parent": project["_id"]})
+
         subset = io.find_one({"type": "subset",
-                              "name": subset_name})
+                              "name": subset_name,
+                              "parent": asset["_id"]})
 
         # assume there is no version yet, we start at `1`
         version_number = 1
@@ -85,7 +92,7 @@ class CollectResourceDestination(pyblish.api.InstancePlugin):
         template_data = {"root": os.environ["AVALON_ROOT"],
                          "project": project_name,
                          "silo": os.environ["AVALON_SILO"],
-                         "asset": instance.data["asset"],
+                         "asset": asset_name,
                          "subset": subset_name,
                          "version": version_number,
                          "representation": "TEMP"}
