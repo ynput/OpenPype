@@ -8,6 +8,7 @@ from pyblish import api as pyblish
 from maya import cmds
 
 from . import menu
+from . import lib
 
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)
@@ -96,31 +97,19 @@ def on_save(_):
 
     avalon.logger.info("Running callback on save..")
 
-    # establish set of nodes to ignore
-    ignore = set(["initialShadingGroup", "initialParticleSE"])
-    ignore |= set(cmds.ls(long=True, readOnly=True))
-    ignore |= set(cmds.ls(long=True, lockedNodes=True))
-
-    types = ["shadingEngine", "file", "mesh", "nurbsCurve"]
-
-    # the items which need to pass the id to their parent
-    nodes = set(cmds.ls(type=types, long=True))
-
-    # Add the collected transform to the nodes
-    transforms = cmds.listRelatives(list(nodes),
-                                    parent=True,
-                                    fullPath=True) or []
-
-    nodes |= set(transforms)
-
-    # Remove the ignored nodes
-    nodes -= ignore
+    types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface"]
+    type_nodes = set(cmds.ls(type=types, long=True))
+    nodes = lib.filter_out_nodes(type_nodes,
+                                 defaults=True,
+                                 referenced_nodes=True)
 
     # Lead with asset ID from the database
     asset = os.environ["AVALON_ASSET"]
-    asset_id = io.find_one({"type": "asset", "name": asset})
+    asset_id = io.find_one({"type": "asset", "name": asset},
+                           projection={"_id": True})
 
     # generate the ids
-    for node in nodes:
-        _set_uuid(str(asset_id["_id"]), node)
 
+    for node in nodes:
+        print node
+        _set_uuid(str(asset_id["_id"]), node)

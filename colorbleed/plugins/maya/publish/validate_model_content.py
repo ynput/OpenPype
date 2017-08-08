@@ -24,8 +24,6 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        pprint.pprint(instance.data)
-
         content_instance = instance.data.get("setMembers", None)
         if not content_instance:
             cls.log.error("Instance has no nodes!")

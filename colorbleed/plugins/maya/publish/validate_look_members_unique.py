@@ -15,8 +15,9 @@ def get_unique_id(node):
     return unique_id
 
 
-class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
-    """Validate members of look are unique.
+class ValidateNonDuplicateRelationshipMembers(pyblish.api.InstancePlugin):
+    """Validate the relational nodes of the look data to ensure every node is
+    unique.
 
     This ensures the same id is not present as more than one node in the look.
 
@@ -29,9 +30,10 @@ class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidatePipelineOrder
-    families = ['colorbleed.look']
+    label = 'Non Duplicate Relationship Members (ID)'
     hosts = ['maya']
-    label = 'Look Members Unique'
+    families = ['colorbleed.lookdev']
+
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.GenerateUUIDsOnInvalidAction]
 
@@ -42,8 +44,7 @@ class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
         members = []
         relationships = instance.data["lookData"]["relationships"]
         for sg in relationships:
-            sg_members = sg['members']
-            sg_members = [member['name'] for member in sg_members]
+            sg_members = [member['name'] for member in sg['members']]
             members.extend(sg_members)
 
         # Ensure we don't have components but the objects
@@ -68,9 +69,7 @@ class ValidateLookMembersUnique(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Process all meshes"""
 
-        print self.actions
-
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Members found without "
-                               "asset IDs: {0}".format(invalid))
+            raise RuntimeError("Members found without asset IDs: "
+                               "{0}".format(invalid))

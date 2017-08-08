@@ -4,7 +4,7 @@ import pyblish.api
 class CollectMindbenderComment(pyblish.api.ContextPlugin):
     """This plug-ins displays the comment dialog box per default"""
 
-    label = "Collect Mindbender Time"
+    label = "Collect Comment"
     order = pyblish.api.CollectorOrder
 
     def process(self, context):
