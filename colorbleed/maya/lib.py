@@ -663,14 +663,10 @@ def get_id(node):
     if node is None:
         return
 
-    try:
-        attr = "{}.cbId".format(node)
-        attribute_value = cmds.getAttr(attr)
-    except Exception as e:
-        log.debug(e)
+    if not cmds.attributeQuery("cbId", node=node, exists=True):
         return
 
-    return attribute_value
+    return cmds.getAttr("{}.cbId".format(node))
 
 
 def get_representation_file(representation, template=TEMPLATE):
