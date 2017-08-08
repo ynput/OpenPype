@@ -33,14 +33,12 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
         """Return the member nodes that are invalid"""
+
         invalid = list()
 
-        # TODO: Implement check on only nodes like on_save callback.
-        instance_shape = cmds.ls(instance, type="shape")
-
-        # We do want to check the referenced nodes as we it might be
+        # We do want to check the referenced nodes as it might be
         # part of the end product
-        nodes = lib.filter_out_nodes(set(instance_shape), defaults=True)
+        nodes = lib.filter_out_nodes(set(instance[:]), defaults=True)
         for node in nodes:
             if not lib.get_id(node):
                 invalid.append(node)
