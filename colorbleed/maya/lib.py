@@ -618,8 +618,8 @@ def filter_out_nodes(nodes, defaults=False, referenced_nodes=False):
 
     Args:
         nodes (set): nodes to filter
-        locked (bool): set True to filter out lockedNodes
-        readonly (bool): set True to filter out readOnly
+        defaults (bool): set True to filter out default nodes
+        referenced_nodes (bool): set True to filter out reference nodes
     Returns:
         nodes (list): list of filtered nodes
     """
