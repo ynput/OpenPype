@@ -599,7 +599,6 @@ def get_id_required_nodes(defaults=False, referenced_nodes=False):
     """Filter out any node which are locked (reference) or readOnly
 
     Args:
-        nodes (set): nodes to filter
         defaults (bool): set to False to filter out default nodes
         referenced_nodes (bool): set True to filter out reference nodes
     Returns:
