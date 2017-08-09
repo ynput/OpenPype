@@ -613,27 +613,26 @@ def remap_resource_nodes(resources, folder=None):
     cmds.file(save=True, type="mayaAscii")
 
 
-def get_id_required_nodes(defaults=True, referenced_nodes=True):
+def get_id_required_nodes(defaults=False, referenced_nodes=False):
     """Filter out any node which are locked (reference) or readOnly
 
     Args:
         nodes (set): nodes to filter
-        defaults (bool): set True to filter out default nodes
+        defaults (bool): set to False to filter out default nodes
         referenced_nodes (bool): set True to filter out reference nodes
     Returns:
         nodes (set): list of filtered nodes
     """
-
 
     # `readOnly` flag is obsolete as of Maya 2016 therefor we explicitly remove
     # default nodes and reference nodes
     camera_shapes = ["frontShape", "sideShape", "topShape", "perspShape"]
 
     ignore = set()
-    if referenced_nodes:
+    if not referenced_nodes:
         ignore |= set(cmds.ls(long=True, referencedNodes=referenced_nodes))
 
-    if defaults:
+    if not defaults:
         ignore |= set(cmds.ls(long=True, defaultNodes=defaults))
         ignore |= set(cmds.ls(camera_shapes, long=True))
 

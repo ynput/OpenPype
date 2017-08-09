@@ -97,8 +97,8 @@ def on_save(_):
 
     avalon.logger.info("Running callback on save..")
 
-    nodes = lib.get_id_required_nodes(defaults=True,
-                                      referenced_nodes=True)
+    nodes = lib.get_id_required_nodes(defaults=False,
+                                      referenced_nodes=False)
 
     # Lead with asset ID from the database
     asset = os.environ["AVALON_ASSET"]
