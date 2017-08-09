@@ -36,18 +36,10 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
 
         # We do want to check the referenced nodes as it might be
         # part of the end product
-        nodes = lib.filter_out_nodes(set(instance[:]), defaults=True)
-        invalid = [n for n in nodes if not lib.get_id(n)
-                   and not cls.validate_children(n)]
+        id_nodes = lib.get_id_required_nodes(defaults=True,
+                                             referenced_nodes=False)
+
+        nodes = instance[:]
+        invalid = [n for n in nodes if n in id_nodes and not lib.get_id(n)]
 
         return invalid
-
-    @staticmethod
-    def validate_children(node):
-        """Validate the children of the node if the ID is not present"""
-
-        children = cmds.listRelatives(node, children=True)
-        for child in children:
-            if lib.get_id(child):
-                return True
-        return False

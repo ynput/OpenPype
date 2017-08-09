@@ -37,16 +37,15 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
                       "initialParticleSE",
                       "particleCloud1"]
 
-        setmembers = instance.data["setMembers"]
-        members = cmds.listRelatives(setmembers,
+        members = cmds.listRelatives(instance,
                                      allDescendents=True,
-                                     type="shape")
-
+                                     shapes=True,
+                                     noIntermediate=True) or []
         for member in members:
 
             # get connection
             # listConnections returns a list or None
-            shading_engine = cmds.listConnections(member, type="shadingEngine")
+            shading_engine = cmds.listConnections(member, type="objectSet")
             if not shading_engine:
                 cls.log.error("Detected shape without shading engine : "
                               "'{}'".format(member))
@@ -58,6 +57,7 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
             if shading_engine in disallowed:
                 cls.log.error("Member connected to a disallows objectSet: "
                               "'{}'".format(member))
+                invalid.append(member)
             else:
                 continue
 
@@ -66,7 +66,6 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Process all the nodes in the instance"""
 
-        # sets = self.get_invalid_sets(instance)
-        sets = self.get_invalid(instance)
-        if sets:
-            raise RuntimeError("Invalid shaders found: {0}".format(sets))
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise RuntimeError("Invalid shaders found: {0}".format(invalid))

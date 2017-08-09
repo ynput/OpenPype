@@ -54,7 +54,7 @@ class ValidateSingleShader(pyblish.api.InstancePlugin):
         for shape in shapes:
             shading_engines = cmds.listConnections(shape,
                                                    destination=True,
-                                                   type="shadingEngine")
+                                                   type="shadingEngine") or []
             if len(shading_engines) > 1:
                 invalid.append(shape)
 

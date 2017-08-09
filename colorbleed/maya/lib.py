@@ -613,7 +613,7 @@ def remap_resource_nodes(resources, folder=None):
     cmds.file(save=True, type="mayaAscii")
 
 
-def filter_out_nodes(nodes, defaults=False, referenced_nodes=False):
+def get_id_required_nodes(defaults=True, referenced_nodes=True):
     """Filter out any node which are locked (reference) or readOnly
 
     Args:
@@ -621,11 +621,13 @@ def filter_out_nodes(nodes, defaults=False, referenced_nodes=False):
         defaults (bool): set True to filter out default nodes
         referenced_nodes (bool): set True to filter out reference nodes
     Returns:
-        nodes (list): list of filtered nodes
+        nodes (set): list of filtered nodes
     """
-    # establish set of nodes to ignore
+
+
     # `readOnly` flag is obsolete as of Maya 2016 therefor we explicitly remove
     # default nodes and reference nodes
+    camera_shapes = ["frontShape", "sideShape", "topShape", "perspShape"]
 
     ignore = set()
     if referenced_nodes:
@@ -633,16 +635,26 @@ def filter_out_nodes(nodes, defaults=False, referenced_nodes=False):
 
     if defaults:
         ignore |= set(cmds.ls(long=True, defaultNodes=defaults))
+        ignore |= set(cmds.ls(camera_shapes, long=True))
+
+    # establish set of nodes to ignore
+    types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface"]
+
+    # We *always* ignore intermediate shapes, so we filter them out
+    # directly
+    nodes = cmds.ls(type=types, long=True, noIntermediate=True)
 
     # The items which need to pass the id to their parent
     # Add the collected transform to the nodes
-    dag = cmds.ls(list(nodes),
+    dag = cmds.ls(nodes,
                   type="dagNode",
                   long=True)  # query only dag nodes
+
     transforms = cmds.listRelatives(dag,
                                     parent=True,
                                     fullPath=True) or []
 
+    nodes = set(nodes)
     nodes |= set(transforms)
     nodes -= ignore  # Remove the ignored nodes
 

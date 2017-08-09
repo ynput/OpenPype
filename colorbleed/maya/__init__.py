@@ -97,11 +97,8 @@ def on_save(_):
 
     avalon.logger.info("Running callback on save..")
 
-    types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface"]
-    type_nodes = set(cmds.ls(type=types, long=True))
-    nodes = lib.filter_out_nodes(type_nodes,
-                                 defaults=True,
-                                 referenced_nodes=True)
+    nodes = lib.get_id_required_nodes(defaults=True,
+                                      referenced_nodes=True)
 
     # Lead with asset ID from the database
     asset = os.environ["AVALON_ASSET"]

@@ -123,9 +123,11 @@ class CollectLook(pyblish.api.InstancePlugin):
                                      "relationships": sets.values(),
                                      "sets": looksets}
 
-        # Collect file nodes used by shading engines
-        history = cmds.listHistory(looksets)
-        files = cmds.ls(history, type="file", long=True)
+        # Collect file nodes used by shading engines (if we have any)
+        files = list()
+        if looksets:
+            history = cmds.listHistory(looksets)
+            files = cmds.ls(history, type="file", long=True)
 
         # Collect textures
         resources = [self.collect_resource(n) for n in files]
