@@ -12,7 +12,7 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidatePipelineOrder
-    label = 'Node Ids (ID)'
+    label = 'Instance Nodes Have ID'
     hosts = ['maya']
     families = ["colorbleed.model",
                 "colorbleed.lookdev",
@@ -41,9 +41,22 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
         nodes = lib.filter_out_nodes(set(instance[:]), defaults=True)
         for node in nodes:
             if not lib.get_id(node):
+
+                # check if siblings have IDs
+                valid_hierarchy = cls.validate_children(node)
+                if valid_hierarchy:
+                    continue
+
                 invalid.append(node)
 
         return invalid
 
+    @staticmethod
+    def validate_children(node):
+        """Validate the children of the node if the ID is not present"""
 
-
+        children = cmds.listRelatives(node, children=True)
+        for child in children:
+            if lib.get_id(child):
+                return True
+        return False

@@ -90,19 +90,23 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         """Check if instance content items are part of the default nodes"""
 
         invalid = []
-        cams = cmds.ls(['frontShape', 'perspShape', 'sideShape', 'topShape'],
-                       long=True)
-        defaults = cmds.ls(long=True, defaultNodes=True)
-        defaults.extend(cams)
+        cams = ["perspShape", "topShape", "frontShape", "sideShape"]
+        cameras = cmds.ls(cams, long=True)
+        references = cmds.ls(referencedNodes=True)
+        default_nodes = cmds.ls(defaultNodes=True, long=True)
+
+        defaults = list(set(cameras + references + default_nodes))
 
         for node in cmds.ls(instance[:], long=True):
             # might be a transform of a default item listed
             if cmds.nodeType(node) == "transform":
-                node = cmds.listRelatives(node,
-                                          children=True,
-                                          fullPath=True)[0] or None
-
-            print node, node in defaults
+                children = cmds.listRelatives(node,
+                                              children=True,
+                                              fullPath=True)
+                if children:
+                    node = children
+                else:
+                    continue
 
             if node in defaults:
                 invalid.append(node)
