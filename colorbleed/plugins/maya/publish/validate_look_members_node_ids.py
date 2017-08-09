@@ -40,9 +40,6 @@ class ValidateLookMembersHaveId(pyblish.api.InstancePlugin):
             members.update([member['name'] for member in relation['members']])
 
         # Ensure all nodes have a cbId
-        invalid = list()
-        for node in members:
-            if not lib.get_id(node):
-                invalid.append(node)
+        invalid = [m for m in members if not lib.get_id(m)]
 
         return invalid
