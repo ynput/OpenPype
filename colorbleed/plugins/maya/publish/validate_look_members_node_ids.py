@@ -34,14 +34,10 @@ class ValidateLookMembersHaveId(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         # Get all members from the sets
-        members = []
+        members = set()
         relations = instance.data["lookData"]["relationships"]
         for relation in relations:
-            members = [member['name'] for member in relation['members']]
-            members.extend(members)
-
-        # Get all sets
-        members = list(set(members))
+            members.update([member['name'] for member in relation['members']])
 
         # Ensure all nodes have a cbId
         invalid = list()
