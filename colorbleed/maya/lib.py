@@ -595,24 +595,6 @@ def maya_temp_folder():
     return tmp_dir
 
 
-def remap_resource_nodes(resources, folder=None):
-
-    log.info("Updating resource nodes ...")
-    for resource in resources:
-        source = resource["source"]
-        if folder:
-            fname = os.path.basename(source)
-            fpath = os.path.join(folder, fname)
-        else:
-            fpath = source
-
-        node_attr = resource["attribute"]
-        cmds.setAttr(node_attr, fpath, type="string")
-
-    log.info("Saving file ...")
-    cmds.file(save=True, type="mayaAscii")
-
-
 def get_id_required_nodes(defaults=False, referenced_nodes=False):
     """Filter out any node which are locked (reference) or readOnly
 
