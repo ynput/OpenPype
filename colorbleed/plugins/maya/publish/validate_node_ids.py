@@ -1,5 +1,3 @@
-import maya.cmds as cmds
-
 import pyblish.api
 import colorbleed.api
 
