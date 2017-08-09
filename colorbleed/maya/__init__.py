@@ -111,5 +111,4 @@ def on_save(_):
     # generate the ids
 
     for node in nodes:
-        print node
         _set_uuid(str(asset_id["_id"]), node)
