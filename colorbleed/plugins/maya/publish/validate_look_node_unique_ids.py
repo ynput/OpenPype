@@ -1,9 +1,8 @@
 from collections import defaultdict
 
-import maya.cmds as cmds
-
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.lib as lib
 
 
 class ValidateLookNodeUniqueIds(pyblish.api.InstancePlugin):
@@ -25,19 +24,13 @@ class ValidateLookNodeUniqueIds(pyblish.api.InstancePlugin):
 
         # Ensure all nodes have a cbId
         id_sets = defaultdict(list)
-        invalid = list()
         for node in nodes:
-            unique_id = None
-            if cmds.attributeQuery("cbId", node=node, exists=True):
-                unique_id = cmds.getAttr("{}.cbId".format(node))
+            unique_id = lib.get_id(node)
             if not unique_id:
                 continue
-
             id_sets[unique_id].append(node)
 
-        for unique_id, nodes in id_sets.iteritems():
-            if len(nodes) > 1:
-                invalid.extend(nodes)
+        invalid = [n for n in id_sets.itervalues() if len(n) > 1]
 
         return invalid
 

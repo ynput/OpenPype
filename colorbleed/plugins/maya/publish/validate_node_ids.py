@@ -34,20 +34,11 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
         """Return the member nodes that are invalid"""
 
-        invalid = list()
-
         # We do want to check the referenced nodes as it might be
         # part of the end product
         nodes = lib.filter_out_nodes(set(instance[:]), defaults=True)
-        for node in nodes:
-            if not lib.get_id(node):
-
-                # check if siblings have IDs
-                valid_hierarchy = cls.validate_children(node)
-                if valid_hierarchy:
-                    continue
-
-                invalid.append(node)
+        invalid = [n for n in nodes if not lib.get_id(n)
+                   and not cls.validate_children(n)]
 
         return invalid
 
