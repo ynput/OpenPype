@@ -595,11 +595,10 @@ def maya_temp_folder():
     return tmp_dir
 
 
-def get_id_required_nodes(defaults=False, referenced_nodes=False):
+def get_id_required_nodes(referenced_nodes=False):
     """Filter out any node which are locked (reference) or readOnly
 
     Args:
-        defaults (bool): set to False to filter out default nodes
         referenced_nodes (bool): set True to filter out reference nodes
     Returns:
         nodes (set): list of filtered nodes
@@ -611,11 +610,11 @@ def get_id_required_nodes(defaults=False, referenced_nodes=False):
 
     ignore = set()
     if not referenced_nodes:
-        ignore |= set(cmds.ls(long=True, referencedNodes=referenced_nodes))
+        ignore |= set(cmds.ls(long=True, referencedNodes=True))
 
-    if not defaults:
-        ignore |= set(cmds.ls(long=True, defaultNodes=defaults))
-        ignore |= set(cmds.ls(camera_shapes, long=True))
+    # list all defaultNodes to filter out from the rest
+    ignore |= set(cmds.ls(long=True, defaultNodes=True))
+    ignore |= set(cmds.ls(camera_shapes, long=True))
 
     # establish set of nodes to ignore
     types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface"]
@@ -626,9 +625,7 @@ def get_id_required_nodes(defaults=False, referenced_nodes=False):
 
     # The items which need to pass the id to their parent
     # Add the collected transform to the nodes
-    dag = cmds.ls(nodes,
-                  type="dagNode",
-                  long=True)  # query only dag nodes
+    dag = cmds.ls(nodes, type="dagNode", long=True)  # query only dag nodes
 
     transforms = cmds.listRelatives(dag,
                                     parent=True,
@@ -636,6 +633,7 @@ def get_id_required_nodes(defaults=False, referenced_nodes=False):
 
     nodes = set(nodes)
     nodes |= set(transforms)
+
     nodes -= ignore  # Remove the ignored nodes
 
     return nodes
@@ -898,7 +896,7 @@ def apply_shaders(relationships, shadernodes, nodes):
     """
 
     attributes = relationships.get("attributes", [])
-    shader_sets = relationships.get("sets", [])
+    shader_data = relationships.get("relationships", {})
 
     shading_engines = cmds.ls(shadernodes, type="objectSet", long=True)
     assert len(shading_engines) > 0, ("Error in retrieving objectSets "
@@ -915,10 +913,10 @@ def apply_shaders(relationships, shadernodes, nodes):
     # endregion
 
     # region assign
-    for shader_set in shader_sets:
+    for shader, data in shader_data.items():
         # collect all unique IDs of the set members
-        shader_uuid = shader_set["uuid"]
-        member_uuids = [member["uuid"] for member in shader_set["members"]]
+        shader_uuid = data["uuid"]
+        member_uuids = [member["uuid"] for member in data["members"]]
 
         filtered_nodes = list()
         for uuid in member_uuids:
