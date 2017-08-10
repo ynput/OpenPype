@@ -595,55 +595,45 @@ def maya_temp_folder():
     return tmp_dir
 
 
-def remap_resource_nodes(resources, folder=None):
-
-    log.info("Updating resource nodes ...")
-    for resource in resources:
-        source = resource["source"]
-        if folder:
-            fname = os.path.basename(source)
-            fpath = os.path.join(folder, fname)
-        else:
-            fpath = source
-
-        node_attr = resource["attribute"]
-        cmds.setAttr(node_attr, fpath, type="string")
-
-    log.info("Saving file ...")
-    cmds.file(save=True, type="mayaAscii")
-
-
-def filter_out_nodes(nodes, defaults=False, referenced_nodes=False):
+def get_id_required_nodes(referenced_nodes=False):
     """Filter out any node which are locked (reference) or readOnly
 
     Args:
-        nodes (set): nodes to filter
-        locked (bool): set True to filter out lockedNodes
-        readonly (bool): set True to filter out readOnly
+        referenced_nodes (bool): set True to filter out reference nodes
     Returns:
-        nodes (list): list of filtered nodes
+        nodes (set): list of filtered nodes
     """
-    # establish set of nodes to ignore
+
     # `readOnly` flag is obsolete as of Maya 2016 therefor we explicitly remove
     # default nodes and reference nodes
+    camera_shapes = ["frontShape", "sideShape", "topShape", "perspShape"]
 
     ignore = set()
-    if referenced_nodes:
-        ignore |= set(cmds.ls(long=True, referencedNodes=referenced_nodes))
+    if not referenced_nodes:
+        ignore |= set(cmds.ls(long=True, referencedNodes=True))
 
-    if defaults:
-        ignore |= set(cmds.ls(long=True, defaultNodes=defaults))
+    # list all defaultNodes to filter out from the rest
+    ignore |= set(cmds.ls(long=True, defaultNodes=True))
+    ignore |= set(cmds.ls(camera_shapes, long=True))
+
+    # establish set of nodes to ignore
+    types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface"]
+
+    # We *always* ignore intermediate shapes, so we filter them out
+    # directly
+    nodes = cmds.ls(type=types, long=True, noIntermediate=True)
 
     # The items which need to pass the id to their parent
     # Add the collected transform to the nodes
-    dag = cmds.ls(list(nodes),
-                  type="dagNode",
-                  long=True)  # query only dag nodes
+    dag = cmds.ls(nodes, type="dagNode", long=True)  # query only dag nodes
+
     transforms = cmds.listRelatives(dag,
                                     parent=True,
                                     fullPath=True) or []
 
+    nodes = set(nodes)
     nodes |= set(transforms)
+
     nodes -= ignore  # Remove the ignored nodes
 
     return nodes
@@ -663,14 +653,10 @@ def get_id(node):
     if node is None:
         return
 
-    try:
-        attr = "{}.cbId".format(node)
-        attribute_value = cmds.getAttr(attr)
-    except Exception as e:
-        log.debug(e)
+    if not cmds.attributeQuery("cbId", node=node, exists=True):
         return
 
-    return attribute_value
+    return cmds.getAttr("{}.cbId".format(node))
 
 
 def get_representation_file(representation, template=TEMPLATE):
@@ -910,7 +896,7 @@ def apply_shaders(relationships, shadernodes, nodes):
     """
 
     attributes = relationships.get("attributes", [])
-    shader_sets = relationships.get("sets", [])
+    shader_data = relationships.get("relationships", {})
 
     shading_engines = cmds.ls(shadernodes, type="objectSet", long=True)
     assert len(shading_engines) > 0, ("Error in retrieving objectSets "
@@ -927,10 +913,10 @@ def apply_shaders(relationships, shadernodes, nodes):
     # endregion
 
     # region assign
-    for shader_set in shader_sets:
+    for data in shader_data.values():
         # collect all unique IDs of the set members
-        shader_uuid = shader_set["uuid"]
-        member_uuids = [member["uuid"] for member in shader_set["members"]]
+        shader_uuid = data["uuid"]
+        member_uuids = [member["uuid"] for member in data["members"]]
 
         filtered_nodes = list()
         for uuid in member_uuids:

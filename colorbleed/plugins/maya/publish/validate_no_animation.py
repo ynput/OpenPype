@@ -20,11 +20,16 @@ class ValidateNoAnimation(pyblish.api.Validator):
     optional = True
     actions = [colorbleed.api.SelectInvalidAction]
 
+    def process(self, instance):
+
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise RuntimeError("Keyframes found: {0}".format(invalid))
+
     @staticmethod
     def get_invalid(instance):
 
         nodes = instance[:]
-
         if not nodes:
             return []
 
@@ -33,10 +38,3 @@ class ValidateNoAnimation(pyblish.api.Validator):
             return list(set(cmds.listConnections(curves)))
 
         return []
-
-    def process(self, instance):
-
-        invalid = self.get_invalid(instance)
-
-        if invalid:
-            raise RuntimeError("Keyframes found: {0}".format(invalid))

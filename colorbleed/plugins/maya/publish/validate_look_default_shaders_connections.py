@@ -1,3 +1,5 @@
+from maya import cmds
+
 import pyblish.api
 import colorbleed.api
 
@@ -20,11 +22,10 @@ class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
     label = 'Look Default Shader Connections'
 
     # The default connections to check
-    DEFAULTS = [
-        ("initialShadingGroup.surfaceShader", "lambert1"),
-        ("initialParticleSE.surfaceShader", "lambert1"),
-        ("initialParticleSE.volumeShader", "particleCloud1")
-    ]
+    DEFAULTS = [("initialShadingGroup.surfaceShader", "lambert1"),
+                ("initialParticleSE.surfaceShader", "lambert1"),
+                ("initialParticleSE.volumeShader", "particleCloud1")
+                ]
 
     def process(self, instance):
 
@@ -33,19 +34,15 @@ class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
         # the family is not present in an instance.
         key = "__validate_look_default_shaders_connections_checked"
         context = instance.context
-        is_run = context.data.get(key,
-                                  False)
+        is_run = context.data.get(key, False)
         if is_run:
             return
         else:
             context.data[key] = True
 
         # Process as usual
-        from maya import cmds
-
         invalid = list()
         for plug, input_node in self.DEFAULTS:
-
             inputs = cmds.listConnections(plug,
                                           source=True,
                                           destination=False) or None

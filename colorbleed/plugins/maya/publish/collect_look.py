@@ -67,7 +67,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     hosts = ["maya"]
 
     # Ignore specifically named sets (check with endswith)
-    IGNORE = ["out_SET", "controls_SET", "_INST"]
+    IGNORE = ["out_SET", "controls_SET", "_INST", "_CON"]
 
     def process(self, instance):
         """Collect the Look in the instance with the correct layer settings"""
@@ -120,19 +120,20 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Store data on the instance
         instance.data["lookData"] = {"attributes": attributes,
-                                     "relationships": sets.values(),
-                                     "sets": looksets}
+                                     "relationships": sets}
 
-        # Collect file nodes used by shading engines
-        history = cmds.listHistory(looksets)
-        files = cmds.ls(history, type="file", long=True)
+        # Collect file nodes used by shading engines (if we have any)
+        files = list()
+        if looksets:
+            history = cmds.listHistory(looksets)
+            files = cmds.ls(history, type="file", long=True)
 
         # Collect textures
         resources = [self.collect_resource(n) for n in files]
         instance.data["resources"] = resources
 
         # Log a warning when no relevant sets were retrieved for the look.
-        if not instance.data["lookData"]["sets"]:
+        if not instance.data["lookData"]["relationships"]:
             self.log.warning("No sets found for the nodes in the instance: "
                              "%s" % instance[:])
 
@@ -168,8 +169,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                 if objset in sets:
                     continue
 
-                sets[objset] = {"name": objset,
-                                "uuid": lib.get_id(objset),
+                sets[objset] = {"uuid": lib.get_id(objset),
                                 "members": list()}
 
         return sets

@@ -1,5 +1,8 @@
+import maya.cmds as cmds
+
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.lib as lib
 
 
 class ValidateLookContents(pyblish.api.InstancePlugin):
@@ -13,11 +16,8 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
     order = colorbleed.api.ValidateContentsOrder
     families = ['colorbleed.lookdev']
     hosts = ['maya']
-    label = 'Look Contents'
+    label = 'Look Data Contents'
     actions = [colorbleed.api.SelectInvalidAction]
-
-    invalid = []
-    errors = []
 
     def process(self, instance):
         """Process all the nodes in the instance"""
@@ -25,20 +25,23 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         if not instance[:]:
             raise RuntimeError("Instance is empty")
 
-        self.get_invalid(instance)
-
-        if self.errors:
-            error_string = "\n".join(self.errors)
-            raise RuntimeError("Invalid look content. "
-                               "Errors : {}".format(error_string))
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise RuntimeError("'{}' has invalid look "
+                               "content".format(instance.name))
 
     @classmethod
     def get_invalid(cls, instance):
+        """Get all invalid nodes"""
 
-        invalid_attr = list(cls.validate_lookdata_attributes(instance))
-        invalid_rels = list(cls.validate_relationships(instance))
+        cls.log.info("Validating look content for "
+                     "'{}'".format(instance.name))
 
-        invalid = invalid_attr + invalid_rels
+        instance_items = cls.validate_instance_items(instance)
+        attributes = list(cls.validate_lookdata_attributes(instance))
+        relationships = list(cls.validate_relationship_ids(instance))
+
+        invalid = instance_items + attributes + relationships
 
         return invalid
 
@@ -53,30 +56,50 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
         invalid = set()
 
-        attributes = ["sets", "relationships", "attributes"]
+        attributes = ["relationships", "attributes"]
         lookdata = instance.data["lookData"]
         for attr in attributes:
             if attr not in lookdata:
-                cls.errors.append("Look Data has no attribute "
-                                  "'{}'".format(attr))
+                cls.log.error("Look Data has no attribute "
+                              "'{}'".format(attr))
                 invalid.add(instance.name)
+
+        # Validate at least one single relationship is collected
+        if not lookdata["relationships"]:
+            cls.log.error("Look '{}' has no "
+                          "`relationship`".format(instance.name))
+            invalid.add(instance.name)
 
         return invalid
 
     @classmethod
-    def validate_relationships(cls, instance):
+    def validate_relationship_ids(cls, instance):
         """Validate and update lookData relationships"""
 
         invalid = set()
 
         relationships = instance.data["lookData"]["relationships"]
-        for relationship in relationships:
-            look_name = relationship["name"]
-            for key, value in relationship.items():
-                if value is None:
-                    cls.errors.append("{} has invalid attribite "
-                                      "'{}'".format(look_name, key))
-
-                    invalid.add(look_name)
+        for objectset, members in relationships.items():
+            uuid = members["uuid"]
+            if not uuid:
+                look_name = objectset
+                cls.log.error("{} has invalid ID ".format(look_name))
+                invalid.add(look_name)
 
         return invalid
+
+    @classmethod
+    def validate_instance_items(cls, instance):
+
+        required_nodes = lib.get_id_required_nodes(referenced_nodes=False)
+
+        invalid = [node for node in instance if node in required_nodes
+                   and not lib.get_id(node)]
+        if invalid:
+            nr_of_invalid = len(invalid)
+            cls.log.error("Found {} nodes without ID: {}".format(nr_of_invalid,
+                                                                 invalid))
+        return invalid
+
+
+

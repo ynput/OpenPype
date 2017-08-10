@@ -41,7 +41,7 @@ class ExtractLook(colorbleed.api.Extractor):
         # exported file by accident
         self.log.info("Extract sets (Maya ASCII) ...")
         lookdata = instance.data["lookData"]
-        sets = lookdata["sets"]
+        sets = lookdata["relationships"].keys()
 
         resources = instance.data["resources"]
         remap = {}
@@ -72,7 +72,7 @@ class ExtractLook(colorbleed.api.Extractor):
         # Write the JSON data
         self.log.info("Extract json..")
         data = {"attributes": lookdata["attributes"],
-                "sets": lookdata["relationships"]}
+                "relationships": lookdata["relationships"]}
 
         with open(json_path, "w") as f:
             json.dump(data, f)

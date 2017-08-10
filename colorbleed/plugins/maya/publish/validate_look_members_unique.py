@@ -4,15 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
-
-
-def get_unique_id(node):
-    attr = 'cbId'
-    unique_id = None
-    has_attribute = cmds.attributeQuery(attr, node=node, exists=True)
-    if has_attribute:
-        unique_id = cmds.getAttr("{}.{}".format(node, attr))
-    return unique_id
+import colorbleed.maya.lib as lib
 
 
 class ValidateNonDuplicateRelationshipMembers(pyblish.api.InstancePlugin):
@@ -43,26 +35,22 @@ class ValidateNonDuplicateRelationshipMembers(pyblish.api.InstancePlugin):
         # Get all members from the sets
         members = []
         relationships = instance.data["lookData"]["relationships"]
-        for sg in relationships:
-            sg_members = [member['name'] for member in sg['members']]
-            members.extend(sg_members)
+        for relationship in relationships.values():
+            members.extend([i['name'] for i in relationship['members']])
 
         # Ensure we don't have components but the objects
-        members = cmds.ls(members, objectsOnly=True, long=True)
-        members = list(set(members))
+        members = set(cmds.ls(members, objectsOnly=True, long=True))
+        members = list(members)
 
         # Group members per id
         id_nodes = defaultdict(set)
         for node in members:
-            node_id = get_unique_id(node)
+            node_id = lib.get_id(node)
             if not node_id:
                 continue
             id_nodes[node_id].add(node)
 
-        invalid = list()
-        for nodes in id_nodes.itervalues():
-            if len(nodes) > 1:
-                invalid.extend(nodes)
+        invalid = [n for n in id_nodes.itervalues() if len(n) > 1]
 
         return invalid
 
