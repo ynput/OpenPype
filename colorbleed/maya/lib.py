@@ -913,7 +913,7 @@ def apply_shaders(relationships, shadernodes, nodes):
     # endregion
 
     # region assign
-    for shader, data in shader_data.items():
+    for data in shader_data.values():
         # collect all unique IDs of the set members
         shader_uuid = data["uuid"]
         member_uuids = [member["uuid"] for member in data["members"]]
