@@ -1,5 +1,3 @@
-import maya.cmds as cmds
-
 import pyblish.api
 import colorbleed.api
 import colorbleed.maya.lib as lib
@@ -67,7 +65,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         # Validate at least one single relationship is collected
         if not lookdata["relationships"]:
             cls.log.error("Look '{}' has no "
-                          "`relationship`".format(instance.name))
+                          "`relationships`".format(instance.name))
             invalid.add(instance.name)
 
         return invalid

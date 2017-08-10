@@ -931,3 +931,81 @@ def apply_shaders(relationships, shadernodes, nodes):
     # endregion
 
     apply_attributes(attributes, ns_nodes_by_id)
+
+
+def get_isolate_view_sets():
+    """
+
+
+    """
+
+    view_sets = set()
+    for panel in cmds.getPanel(type="modelPanel"):
+        view_set = cmds.modelEditor(panel, query=True, viewObjects=True)
+        if view_set:
+            view_sets.add(view_set)
+
+    return view_sets
+
+
+def get_related_sets(node):
+    """Return objectSets that are relationships for a look for `node`.
+
+    Filters out based on:
+    - id attribute is NOT `pyblish.avalon.container`
+    - shapes and deformer shapes (alembic creates meshShapeDeformed)
+    - set name ends with any from a predefined list
+    - set in not in viewport set (isolate selected for example)
+
+    Args:
+        node (str): name of the current not to check
+
+    Returns:
+        list: The related sets
+
+    """
+
+    # Ignore specific suffices
+    ignore_suffices = ["out_SET", "controls_SET", "_INST", "_CON"]
+
+    # Default nodes to ignore
+    defaults = ["initialShadingGroup",
+                "defaultLightSet",
+                "defaultObjectSet"]
+
+    # Ids to ignore
+    ignored = ["pyblish.avalon.instance",
+               "pyblish.avalon.container"]
+
+    view_sets = get_isolate_view_sets()
+
+    related_sets = cmds.listSets(object=node, extendToShape=False)
+    if not related_sets:
+        return []
+
+    # Ignore `avalon.container`
+    sets = [s for s in related_sets if
+            not cmds.attributeQuery("id", node=s, exists=True) or
+            not cmds.getAttr("%s.id" % s) in ignored]
+
+    # Exclude deformer sets
+    # Autodesk documentation on listSets command:
+    # type(uint) : Returns all sets in the scene of the given
+    # >>> type:
+    # >>> 1 - all rendering sets
+    # >>> 2 - all deformer sets
+    deformer_sets = cmds.listSets(object=node,
+                                  extendToShape=False,
+                                  type=2) or []
+    deformer_sets = set(deformer_sets)  # optimize lookup
+    sets = [s for s in sets if s not in deformer_sets]
+
+    # Ignore when the set has a specific suffix
+    sets = [s for s in sets if not any(s.endswith(x) for x in ignore_suffices)]
+
+    # Ignore viewport filter view sets (from isolate select and
+    # viewports)
+    sets = [s for s in sets if s not in view_sets]
+    sets = [s for s in sets if s not in defaults]
+
+    return sets

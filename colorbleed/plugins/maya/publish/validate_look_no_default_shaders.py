@@ -31,41 +31,44 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        invalid = []
-        disallowed = ["lambert1",
-                      "initialShadingGroup",
-                      "initialParticleSE",
-                      "particleCloud1"]
+        disallowed = set(["lambert1",
+                          "initialShadingGroup",
+                          "initialParticleSE",
+                          "particleCloud1"])
 
-        members = cmds.listRelatives(instance,
-                                     allDescendents=True,
-                                     shapes=True,
-                                     noIntermediate=True) or []
-        for member in members:
+        invalid = set()
+        for node in instance:
 
             # get connection
             # listConnections returns a list or None
-            shading_engine = cmds.listConnections(member, type="objectSet")
-            if not shading_engine:
-                cls.log.error("Detected shape without shading engine : "
-                              "'{}'".format(member))
-                invalid.append(member)
-                continue
+            object_sets = cmds.listConnections(node, type="objectSet") or []
 
-            # retrieve the shading engine out of the list
-            shading_engine = shading_engine[0]
-            if shading_engine in disallowed:
-                cls.log.error("Member connected to a disallows objectSet: "
-                              "'{}'".format(member))
-                invalid.append(member)
-            else:
-                continue
+            # Ensure the shape in the instances have at least a single shader
+            # connected if it *can* have a shader, like a `surfaceShape` in
+            # Maya.
+            if (cmds.objectType(node, isAType="surfaceShape") and
+                    not cmds.ls(object_sets, type="shadingEngine")):
+                cls.log.error("Detected shape without shading engine: "
+                              "'{}'".format(node))
+                invalid.add(node)
 
-        return invalid
+            # Check for any disallowed connections
+            if any(s in disallowed for s in object_sets):
+
+                # Explicitly log each individual "wrong" connection.
+                for s in object_sets:
+                    if s in disallowed:
+                        cls.log.error("Node has unallowed connection to "
+                                      "'{}': {}".format(s, node))
+
+                invalid.add(node)
+
+        return list(invalid)
 
     def process(self, instance):
         """Process all the nodes in the instance"""
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Invalid shaders found: {0}".format(invalid))
+            raise RuntimeError("Invalid node relationships found: "
+                               "{0}".format(invalid))

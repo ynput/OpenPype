@@ -66,9 +66,6 @@ class CollectLook(pyblish.api.InstancePlugin):
     label = "Collect Look"
     hosts = ["maya"]
 
-    # Ignore specifically named sets (check with endswith)
-    IGNORE = ["out_SET", "controls_SET", "_INST", "_CON"]
-
     def process(self, instance):
         """Collect the Look in the instance with the correct layer settings"""
 
@@ -90,16 +87,14 @@ class CollectLook(pyblish.api.InstancePlugin):
         sets = self.gather_sets(instance)
 
         # Lookup with absolute names (from root namespace)
-        instance_lookup = set([str(x) for x in cmds.ls(instance,
-                                                       long=True,
-                                                       absoluteName=True)])
+        instance_lookup = set([str(x) for x in cmds.ls(instance, long=True)])
 
         self.log.info("Gathering set relations..")
         for objset in sets:
             self.log.debug("From %s.." % objset)
             content = cmds.sets(objset, query=True)
             objset_members = sets[objset]["members"]
-            for member in cmds.ls(content, long=True, absoluteName=True):
+            for member in cmds.ls(content, long=True):
                 member_data = self.collect_member_data(member,
                                                        objset_members,
                                                        instance_lookup,
@@ -114,7 +109,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         self.log.info("Gathering attribute changes to instance members..")
 
         attributes = self.collect_attributes_changed(instance)
-        looksets = cmds.ls(sets.keys(), absoluteName=True, long=True)
+        looksets = cmds.ls(sets.keys(), long=True)
 
         self.log.info("Found the following sets: {}".format(looksets))
 
@@ -152,18 +147,15 @@ class CollectLook(pyblish.api.InstancePlugin):
             dict
         """
 
-        # Get view sets (so we can ignore those sets later)
         sets = dict()
-        view_sets = set()
-        for panel in cmds.getPanel(type="modelPanel"):
-            view_set = cmds.modelEditor(panel, query=True, viewObjects=True)
-            if view_set:
-                view_sets.add(view_set)
 
         for node in instance:
-            related_sets = self.get_related_sets(node, view_sets)
+
+            related_sets = lib.get_related_sets(node)
             if not related_sets:
                 continue
+
+            self.log.info("Found sets %s for %s", related_sets, node)
 
             for objset in related_sets:
                 if objset in sets:
@@ -171,59 +163,6 @@ class CollectLook(pyblish.api.InstancePlugin):
 
                 sets[objset] = {"uuid": lib.get_id(objset),
                                 "members": list()}
-
-        return sets
-
-    def get_related_sets(self, node, view_sets):
-        """Get the sets which do not belong to any specific group
-
-        Filters out based on:
-        - id attribute is NOT `pyblish.avalon.container`
-        - shapes and deformer shapes (alembic creates meshShapeDeformed)
-        - set name ends with any from a predefined list
-        - set in not in viewport set (isolate selected for example)
-
-        Args:
-            node (str): name of the current not to check
-        """
-        defaults = ["initialShadingGroup",
-                    "defaultLightSet",
-                    "defaultObjectSet"]
-
-        ignored = ["pyblish.avalon.instance",
-                   "pyblish.avalon.container"]
-
-        related_sets = cmds.listSets(object=node, extendToShape=False)
-        if not related_sets:
-            return []
-
-        # Ignore `avalon.container`
-        sets = [s for s in related_sets if
-                not cmds.attributeQuery("id", node=s, exists=True) or
-                not cmds.getAttr("%s.id" % s) in ignored]
-
-        # Exclude deformer sets
-        # Autodesk documentation on listSets command:
-        # type(uint) : Returns all sets in the scene of the given
-        # >>> type:
-        # >>> 1 - all rendering sets
-        # >>> 2 - all deformer sets
-        deformer_sets = cmds.listSets(object=node,
-                                      extendToShape=False,
-                                      type=2) or []
-
-        deformer_sets = set(deformer_sets)  # optimize lookup
-        sets = [s for s in sets if s not in deformer_sets]
-
-        # Ignore specifically named sets
-        sets = [s for s in sets if not any(s.endswith(x) for x in self.IGNORE)]
-
-        # Ignore viewport filter view sets (from isolate select and
-        # viewports)
-        sets = [s for s in sets if s not in view_sets]
-        sets = [s for s in sets if s not in defaults]
-
-        self.log.info("Found sets %s for %s" % (sets, node))
 
         return sets
 
@@ -269,11 +208,6 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         if member in [m["name"] for m in objset_members]:
             return
-
-        # check node type, if mesh get parent!
-        if cmds.nodeType(node) == "mesh":
-            # A mesh will always have a transform node in Maya logic
-            node = cmds.listRelatives(node, parent=True, fullPath=True)[0]
 
         if not cmds.attributeQuery("cbId", node=node, exists=True):
             self.log.error("Node '{}' has no attribute 'cbId'".format(node))
