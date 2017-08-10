@@ -27,8 +27,8 @@ class ValidateLookMembers(pyblish.api.InstancePlugin):
 
         invalid_ids = self.get_invalid(instance)
         if invalid_ids:
-            raise RuntimeError("Members found without "
-                               "asset IDs: {0}".format(invalid_ids))
+            raise RuntimeError("Found invalid nodes.\nNo ID : "
+                               "{}".format(invalid_ids))
 
     @classmethod
     def get_invalid(cls, instance):
@@ -39,6 +39,6 @@ class ValidateLookMembers(pyblish.api.InstancePlugin):
             members.update([member['name'] for member in relation['members']])
 
         invalid = [m for m in members if not lib.get_id(m)]
-        if invalid:
-            raise RuntimeError("Found invalid nodes.\nNo ID : "
-                               "{}".format(invalid))
+
+        return invalid
+
