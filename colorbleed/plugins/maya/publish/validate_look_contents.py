@@ -1,5 +1,8 @@
+import maya.cmds as cmds
+
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.lib as lib
 
 
 class ValidateLookContents(pyblish.api.InstancePlugin):
@@ -24,16 +27,21 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Invalid look content")
+            raise RuntimeError("'{}' has invalid look "
+                               "content".format(instance.name))
 
     @classmethod
     def get_invalid(cls, instance):
         """Get all invalid nodes"""
 
+        cls.log.info("Validating look content for "
+                     "'{}'".format(instance.name))
+
+        instance_items = cls.validate_instance_items(instance)
         attributes = list(cls.validate_lookdata_attributes(instance))
         relationships = list(cls.validate_relationship_ids(instance))
 
-        invalid = attributes + relationships
+        invalid = instance_items + attributes + relationships
 
         return invalid
 
@@ -58,8 +66,8 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
         # Validate at least one single relationship is collected
         if not lookdata["relationships"]:
-            cls.log.error("Look '{}' has no `relationship` or "
-                          "`sets`".format(instance.name))
+            cls.log.error("Look '{}' has no "
+                          "`relationship`".format(instance.name))
             invalid.add(instance.name)
 
         return invalid
@@ -74,8 +82,24 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         for objectset, members in relationships.items():
             uuid = members["uuid"]
             if not uuid:
-                look_name = members["name"]
+                look_name = objectset
                 cls.log.error("{} has invalid ID ".format(look_name))
                 invalid.add(look_name)
 
         return invalid
+
+    @classmethod
+    def validate_instance_items(cls, instance):
+
+        required_nodes = lib.get_id_required_nodes(referenced_nodes=False)
+
+        invalid = [node for node in instance if node in required_nodes
+                   and not lib.get_id(node)]
+        if invalid:
+            nr_of_invalid = len(invalid)
+            cls.log.error("Found {} nodes without ID: {}".format(nr_of_invalid,
+                                                                 invalid))
+        return invalid
+
+
+

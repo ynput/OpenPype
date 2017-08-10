@@ -34,10 +34,8 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
 
         # We do want to check the referenced nodes as it might be
         # part of the end product
-        id_nodes = lib.get_id_required_nodes(defaults=False,
-                                             referenced_nodes=True)
-
-        nodes = instance[:]
-        invalid = [n for n in nodes if n in id_nodes and not lib.get_id(n)]
+        id_nodes = lib.get_id_required_nodes(referenced_nodes=True)
+        invalid = [n for n in instance[:] if n in id_nodes
+                   and not lib.get_id(n)]
 
         return invalid

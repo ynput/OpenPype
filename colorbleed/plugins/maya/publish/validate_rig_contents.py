@@ -100,7 +100,6 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         """
         errors = []
         for node in nodes:
-            print node
             if node not in hierarchy:
                 errors.append(node)
         return errors
