@@ -48,7 +48,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
         invalid = set()
 
-        attributes = ["sets", "relationships", "attributes"]
+        attributes = ["relationships", "attributes"]
         lookdata = instance.data["lookData"]
         for attr in attributes:
             if attr not in lookdata:
@@ -56,8 +56,10 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
                               "'{}'".format(attr))
                 invalid.add(instance.name)
 
-        if not lookdata["relationships"] or not lookdata["sets"]:
-            cls.log.error("Look has no `relationship` or `sets`")
+        # Validate at least one single relationship is collected
+        if not lookdata["relationships"]:
+            cls.log.error("Look '{}' has no `relationship` or "
+                          "`sets`".format(instance.name))
             invalid.add(instance.name)
 
         return invalid
@@ -69,11 +71,11 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         invalid = set()
 
         relationships = instance.data["lookData"]["relationships"]
-        for relationship in relationships:
-            look_name = relationship["name"]
-            uuid = relationship["uuid"]
+        for objectset, members in relationships.items():
+            uuid = members["uuid"]
             if not uuid:
-                cls.errors.append("{} has invalid ID ")
+                look_name = members["name"]
+                cls.log.error("{} has invalid ID ".format(look_name))
                 invalid.add(look_name)
 
         return invalid

@@ -120,8 +120,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Store data on the instance
         instance.data["lookData"] = {"attributes": attributes,
-                                     "relationships": sets.values(),
-                                     "sets": looksets}
+                                     "relationships": sets}
 
         # Collect file nodes used by shading engines (if we have any)
         files = list()
@@ -134,7 +133,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         instance.data["resources"] = resources
 
         # Log a warning when no relevant sets were retrieved for the look.
-        if not instance.data["lookData"]["sets"]:
+        if not instance.data["lookData"]["relationships"]:
             self.log.warning("No sets found for the nodes in the instance: "
                              "%s" % instance[:])
 
@@ -170,8 +169,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                 if objset in sets:
                     continue
 
-                sets[objset] = {"name": objset,
-                                "uuid": lib.get_id(objset),
+                sets[objset] = {"uuid": lib.get_id(objset),
                                 "members": list()}
 
         return sets

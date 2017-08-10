@@ -35,7 +35,7 @@ class ValidateNonDuplicateRelationshipMembers(pyblish.api.InstancePlugin):
         # Get all members from the sets
         members = []
         relationships = instance.data["lookData"]["relationships"]
-        for relationship in relationships:
+        for relationship in relationships.values():
             members.extend([i['name'] for i in relationship['members']])
 
         # Ensure we don't have components but the objects

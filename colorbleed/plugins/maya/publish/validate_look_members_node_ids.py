@@ -1,5 +1,3 @@
-import maya.cmds as cmds
-
 import pyblish.api
 import colorbleed.api
 import colorbleed.maya.lib as lib
@@ -37,11 +35,10 @@ class ValidateLookMembers(pyblish.api.InstancePlugin):
 
         members = set()
         relationships = instance.data["lookData"]["relationships"]
-        for relation in relationships:
+        for relation in relationships.values():
             members.update([member['name'] for member in relation['members']])
 
         invalid = [m for m in members if not lib.get_id(m)]
         if invalid:
             raise RuntimeError("Found invalid nodes.\nNo ID : "
                                "{}".format(invalid))
-
