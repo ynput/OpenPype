@@ -22,7 +22,6 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
         if not instance[:]:
             raise RuntimeError("Instance is empty")
-
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("'{}' has invalid look "
@@ -35,11 +34,14 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         cls.log.info("Validating look content for "
                      "'{}'".format(instance.name))
 
+        # check if data has the right attributes and content
+        attributes = cls.validate_lookdata_attributes(instance)
+        # check the looks for ID
+        looks = cls.validate_looks(instance)
+        # check the uuid of the instance nodes
         instance_items = cls.validate_instance_items(instance)
-        attributes = list(cls.validate_lookdata_attributes(instance))
-        relationships = list(cls.validate_relationship_ids(instance))
 
-        invalid = instance_items + attributes + relationships
+        invalid = looks + instance_items + attributes
 
         return invalid
 
@@ -68,21 +70,17 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
                           "`relationships`".format(instance.name))
             invalid.add(instance.name)
 
-        return invalid
+        return list(invalid)
 
     @classmethod
-    def validate_relationship_ids(cls, instance):
-        """Validate and update lookData relationships"""
+    def validate_looks(cls, instance):
 
-        invalid = set()
-
-        relationships = instance.data["lookData"]["relationships"]
-        for objectset, members in relationships.items():
-            uuid = members["uuid"]
-            if not uuid:
-                look_name = objectset
-                cls.log.error("{} has invalid ID ".format(look_name))
-                invalid.add(look_name)
+        looks = instance.data["lookData"]["relationships"]
+        invalid = []
+        for name, data in looks.items():
+            if not data["uuid"]:
+                cls.log.error("Look '{}' has no UUID".format(name))
+                invalid.append(name)
 
         return invalid
 
@@ -90,7 +88,6 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
     def validate_instance_items(cls, instance):
 
         required_nodes = lib.get_id_required_nodes(referenced_nodes=False)
-
         invalid = [node for node in instance if node in required_nodes
                    and not lib.get_id(node)]
         if invalid:
@@ -98,6 +95,5 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
             cls.log.error("Found {} nodes without ID: {}".format(nr_of_invalid,
                                                                  invalid))
         return invalid
-
 
 

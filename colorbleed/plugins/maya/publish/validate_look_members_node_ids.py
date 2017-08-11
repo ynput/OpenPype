@@ -1,24 +1,19 @@
 import pyblish.api
 import colorbleed.api
-import colorbleed.maya.lib as lib
 
 
 class ValidateLookMembers(pyblish.api.InstancePlugin):
     """Validate look members have colorbleed id attributes
 
-    Looks up the contents of the look to see if all its members have
-    Colorbleed Id attributes so they can be connected correctly.
-
-    When invalid it's very likely related to the model not having the id
-    attributes that it should have. These should have been generated in the
-    work files for the model/rig/fur or alike.
+    Loops up all relationship members and check if all the members have the
+    cbId (colorbleed id) and return all the nodes who fail the test.
 
     """
 
     order = colorbleed.api.ValidatePipelineOrder
     families = ['colorbleed.lookdev']
     hosts = ['maya']
-    label = 'Look Members'
+    label = 'Look Members (ID)'
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.GenerateUUIDsOnInvalidAction]
 
@@ -33,12 +28,12 @@ class ValidateLookMembers(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        members = set()
         relationships = instance.data["lookData"]["relationships"]
-        for relation in relationships.values():
-            members.update([member['name'] for member in relation['members']])
+        members = []
+        for relationship in relationships.values():
+            members.extend(relationship["members"])
 
-        invalid = [m for m in members if not lib.get_id(m)]
+        # get the name of the node when there is no UUID
+        invalid = [m["name"] for m in members if not m["uuid"]]
 
         return invalid
-

@@ -21,6 +21,16 @@ class ValidateNonDuplicateInstanceMembers(pyblish.api.InstancePlugin):
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.GenerateUUIDsOnInvalidAction]
 
+    def process(self, instance):
+        """Process all meshes"""
+
+        # Ensure all nodes have a cbId
+        invalid = self.get_invalid_dict(instance)
+        if invalid:
+            raise RuntimeError("Nodes found with non-unique "
+                               "asset IDs: {0}".format(invalid))
+
+
     @classmethod
     def get_invalid_dict(cls, instance):
         """Return a dictionary mapping of id key to list of member nodes"""
@@ -54,14 +64,3 @@ class ValidateNonDuplicateInstanceMembers(pyblish.api.InstancePlugin):
             invalid.extend(members)
 
         return invalid
-
-    def process(self, instance):
-        """Process all meshes"""
-
-        # Ensure all nodes have a cbId
-        invalid = self.get_invalid_dict(instance)
-        if invalid:
-            raise RuntimeError("Nodes found with non-unique "
-                               "asset IDs: {0}".format(invalid))
-
-

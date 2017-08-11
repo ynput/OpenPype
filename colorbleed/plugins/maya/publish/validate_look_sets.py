@@ -34,15 +34,16 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
         cls.log.info("Validating look content for "
                      "'{}'".format(instance.name))
 
-        lookdata = instance.data["lookData"]
-        relationships = lookdata["relationships"]
+        relationships = instance.data["lookData"]["relationships"]
 
         invalid = []
         for node in instance:
+            # get the connected objectSets of the node
             sets = lib.get_related_sets(node)
             if not sets:
                 continue
 
+            # check if any objectSets are not present ion the relationships
             missing_sets = [s for s in sets if s not in relationships]
             if missing_sets:
                 # A set of this node is not coming along, this is wrong!
