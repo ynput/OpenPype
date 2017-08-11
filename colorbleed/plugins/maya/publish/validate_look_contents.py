@@ -1,13 +1,14 @@
 import pyblish.api
 import colorbleed.api
-import colorbleed.maya.lib as lib
 
 
 class ValidateLookContents(pyblish.api.InstancePlugin):
     """Validate look instance contents
 
-    This is invalid when the collection was unable to collect the required
-    data for a look to be published correctly.
+    Rules:
+        * Look data must have `relationships` and `attributes` keys.
+        * At least one relationship must be collection.
+        * All relationship object sets at least have an ID value
 
     """
 
