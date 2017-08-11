@@ -804,19 +804,20 @@ def assign_look_by_version(nodes, version_id):
                                      namespace=namespace,
                                      reference=True,
                                      returnNewNodes=True)
+                                     
+        # containerise like avalon (for manager)
+        # give along a fake "context" with only `representation`
+        # because `maya.containerise` only used that key anyway
+        context = {"representation": shader_file}
+        subset_name = shader_file["context"]["subset"]
+        maya.containerise(name=subset_name,
+                          namespace=namespace,
+                          nodes=shader_nodes,
+                          context=context)
     else:
         log.info("Reusing existing lookdev '{}'".format(reference_node))
         shader_nodes = cmds.referenceQuery(reference_node, nodes=True)
         namespace = cmds.referenceQuery(reference_node, namespace=True)
-
-    # containerise like avalon (for manager)
-    # give re
-    context = {"representation": shader_file}
-    subset_name = shader_file["context"]["subset"]
-    maya.containerise(name=subset_name,
-                      namespace=namespace,
-                      nodes=shader_nodes,
-                      context=context)
 
     # Assign relationships
     with open(shader_relation, "r") as f:
