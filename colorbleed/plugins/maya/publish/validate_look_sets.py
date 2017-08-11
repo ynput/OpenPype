@@ -7,6 +7,16 @@ import colorbleed.api
 class ValidateLookSets(pyblish.api.InstancePlugin):
     """Validate if any sets are missing from the instance and look data
 
+    A node might have a relationship with a shader but has no Colorbleed ID.
+    Because it is missing the ID it has not been collected in the instance.
+    When the relationship needs to be maintained the artist might need to
+    create a different* relationship or ensure the node has the Colorbleed ID.
+
+    * The relationship might be too broad (assigned to top node if hierarchy).
+    This can be countered by creating the relationship on the shape or its
+    transform.
+    In essence, ensure item the shader is assigned to has the Colorbleed ID!
+
     """
 
     order = colorbleed.api.ValidateContentsOrder
@@ -18,10 +28,6 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Process all the nodes in the instance"""
 
-        if not instance[:]:
-            raise RuntimeError("Instance is empty")
-
-        self.log.info("Validation '{}'".format(instance.name))
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("'{}' has invalid look "
@@ -34,15 +40,16 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
         cls.log.info("Validating look content for "
                      "'{}'".format(instance.name))
 
-        lookdata = instance.data["lookData"]
-        relationships = lookdata["relationships"]
+        relationships = instance.data["lookData"]["relationships"]
 
         invalid = []
         for node in instance:
+            # get the connected objectSets of the node
             sets = lib.get_related_sets(node)
             if not sets:
                 continue
 
+            # check if any objectSets are not present ion the relationships
             missing_sets = [s for s in sets if s not in relationships]
             if missing_sets:
                 # A set of this node is not coming along, this is wrong!
