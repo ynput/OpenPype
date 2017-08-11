@@ -1,7 +1,6 @@
 import sys
 import os
 import logging
-import site
 
 from avalon.vendor.Qt import QtWidgets, QtCore
 
@@ -15,13 +14,9 @@ log = logging.getLogger(__name__)
 
 def deferred():
 
-    # todo: replace path with server / library path
 
     from scriptsmenu import launchformaya
     import scriptsmenu.scriptsmenu as menu
-
-    reload(launchformaya)
-    reload(menu)
 
     log.info("Attempting to install ...")
 
