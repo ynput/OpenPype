@@ -18,10 +18,6 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Process all the nodes in the instance"""
 
-        if not instance[:]:
-            raise RuntimeError("Instance is empty")
-
-        self.log.info("Validation '{}'".format(instance.name))
         invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("'{}' has invalid look "
