@@ -38,10 +38,8 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         attributes = cls.validate_lookdata_attributes(instance)
         # check the looks for ID
         looks = cls.validate_looks(instance)
-        # check the uuid of the instance nodes
-        instance_items = cls.validate_instance_items(instance)
 
-        invalid = looks + instance_items + attributes
+        invalid = looks + attributes
 
         return invalid
 
@@ -83,17 +81,3 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
                 invalid.append(name)
 
         return invalid
-
-    @classmethod
-    def validate_instance_items(cls, instance):
-
-        required_nodes = lib.get_id_required_nodes(referenced_nodes=False)
-        invalid = [node for node in instance if node in required_nodes
-                   and not lib.get_id(node)]
-        if invalid:
-            nr_of_invalid = len(invalid)
-            cls.log.error("Found {} nodes without ID: {}".format(nr_of_invalid,
-                                                                 invalid))
-        return invalid
-
-
