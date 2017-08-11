@@ -7,6 +7,16 @@ import colorbleed.api
 class ValidateLookSets(pyblish.api.InstancePlugin):
     """Validate if any sets are missing from the instance and look data
 
+    A node might have a relationship with a shader but has no Colorbleed ID.
+    Because it is missing the ID it has not been collected in the instance.
+    When the relationship needs to be maintained the artist might need to
+    create a different* relationship or ensure the node has the Colorbleed ID.
+
+    * The relationship might be too broad (assigned to top node if hierarchy).
+    This can be countered by creating the relationship on the shape or its
+    transform.
+    In essence, ensure item the shader is assigned to has the Colorbleed ID!
+
     """
 
     order = colorbleed.api.ValidateContentsOrder
