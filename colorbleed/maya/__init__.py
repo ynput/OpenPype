@@ -21,11 +21,6 @@ CREATE_PATH = os.path.join(PLUGINS_DIR, "maya", "create")
 
 def install():
 
-    # add local pipeline library to the paths
-    site.addsitedir(r"P:\pipeline\dev\git\cb")
-    site.addsitedir(r"C:\Users\User\Documents\development\cbra")
-    site.addsitedir(r"C:\Users\User\Documents\development\pyblish-cb")
-
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)

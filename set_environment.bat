@@ -14,8 +14,6 @@ if "%CB_APP_SHARED%" == "" (
 echo setting STORAGE..
 set STORAGE=P:
 
-set LAUNCHER_ROOT=%~dp0/launchers
-
 :: Core
 echo Add cb core..
 set PYTHONPATH=%CB_PIPELINE%\git\cb;%PYTHONPATH%
@@ -24,7 +22,6 @@ set PYTHONPATH=%CB_PIPELINE%\git\cbra;%PYTHONPATH%
 :: Extra
 set PYTHONPATH=%CB_PIPELINE%\git\pyseq;%PYTHONPATH%
 set PYTHONPATH=%CB_PIPELINE%\git\Qt.py;%PYTHONPATH%
-
 
 :: Ftrack-connect
 ::set PYTHONPATH=%CB_PIPELINE%\git\ftrack-connect\source;%PYTHONPATH%

@@ -10,16 +10,12 @@ import maya.cmds as cmds
 self = sys.modules[__name__]
 self._menu = "colorbleed"
 
-# set colorbleed scripts path in environment keys
-os.environ["COLORBLEED_SCRIPTS"] = "P:\pipeline\dev\git\cbMayaScripts\cbMayaScripts"
-
 log = logging.getLogger(__name__)
 
 
 def deferred():
 
     # todo: replace path with server / library path
-    site.addsitedir("C:\Users\User\Documents\development\scriptsmenu\python")
 
     from scriptsmenu import launchformaya
     import scriptsmenu.scriptsmenu as menu
