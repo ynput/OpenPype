@@ -1,3 +1,13 @@
+import os
+import json
+import shutil
+import getpass
+
+from maya import cmds
+
+from avalon import api
+from avalon.vendor import requests
+
 import pyblish.api
 
 
@@ -12,20 +22,12 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
-    families = ["mindbender.renderlayer"]
+    families = ["colorbleed.renderlayer"]
 
     def process(self, instance):
-        import os
-        import json
-        import shutil
-        import getpass
 
-        from maya import cmds
-
-        from avalon import api
-        from avalon.vendor import requests
-
-        assert api.Session["AVALON_DEADLINE"], "Requires AVALON_DEADLINE"
+        deadline = api.Session.get("AVALON_DEADLINE", "http://localhost:8082")
+        assert deadline is not None, "Requires AVALON_DEADLINE"
 
         context = instance.context
         workspace = context.data["workspaceDir"]
@@ -41,7 +43,8 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             pass
 
         # E.g. http://192.168.0.1:8082/api/jobs
-        url = api.Session["AVALON_DEADLINE"] + "/api/jobs"
+        url = "{}/api/jobs".format(deadline)
+        print "Got Deadline URL : {}".format(url)
 
         # Documentation for keys available at:
         # https://docs.thinkboxsoftware.com
@@ -119,22 +122,19 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         })
 
         # Include optional render globals
-        payload["JobInfo"].update(
-            instance.data.get("renderGlobals", {})
-        )
+        payload["JobInfo"].update(instance.data.get("renderGlobals", {}))
 
         self.preflight_check(instance)
 
         self.log.info("Submitting..")
-        self.log.info(json.dumps(
-            payload, indent=4, sort_keys=True)
-        )
+        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         response = requests.post(url, json=payload)
 
         if response.ok:
+            print "Got positive response from {}".format(url)
             # Write metadata for publish
-            fname = os.path.join(dirname, instance.name + ".json")
+            fname = os.path.join(dirname, "{}.json".format(instance.name))
             data = {
                 "submission": payload,
                 "session": api.Session,
@@ -148,6 +148,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 json.dump(data, f, indent=4, sort_keys=True)
 
         else:
+            print "Got negative response from {}".format(url)
             try:
                 shutil.rmtree(dirname)
             except OSError:
@@ -171,14 +172,10 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
 
-        from maya import cmds
-
         # We'll need to take tokens into account
-        fname = cmds.renderSettings(
-            firstImageName=True,
-            fullPath=True,
-            layer=instance.name
-        )[0]
+        fname = cmds.renderSettings(firstImageName=True,
+                                    fullPath=True,
+                                    layer=instance.name)[0]
 
         try:
             # Assume `c:/some/path/filename.0001.exr`
