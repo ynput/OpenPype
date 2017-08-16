@@ -1,4 +1,5 @@
 import pyblish.api
+from avalon import api
 
 
 class CollectMindbenderTime(pyblish.api.ContextPlugin):
@@ -8,5 +9,4 @@ class CollectMindbenderTime(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
 
     def process(self, context):
-        from avalon import api
         context.data["time"] = api.time()
