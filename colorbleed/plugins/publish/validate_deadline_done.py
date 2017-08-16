@@ -25,11 +25,12 @@ class ValidateMindbenderDeadlineDone(pyblish.api.InstancePlugin):
             4: "Failed",
             6: "Pending",
         }
-
-        url = api.Session["AVALON_DEADLINE"] + "/api/jobs?JobID=%s"
+        deadline = api.Session.get("AVALON_DEADLINE", "https://localhost:8082")
+        url = "{}/api/jobs?JobID=%s".format(deadline)
 
         for job in instance.data["metadata"]["jobs"]:
             response = requests.get(url % job["_id"])
+            self.log.info(response)
 
             if response.ok:
                 data = response.json()[0]
