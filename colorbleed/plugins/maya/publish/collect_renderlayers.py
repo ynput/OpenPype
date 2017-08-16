@@ -5,6 +5,7 @@ import pyblish.api
 
 from avalon import maya, api
 
+
 class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
     """Gather instances by active render layers"""
 
@@ -40,7 +41,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
                     "subset": layer,
                     "setMembers": layer,
 
-                    # "time": context.data["time"],
+                    "time": api.time(),
                     "author": context.data["user"],
                     "source": source_file}
 
