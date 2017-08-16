@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import shutil
 import getpass
@@ -9,6 +10,61 @@ from avalon import api
 from avalon.vendor import requests
 
 import pyblish.api
+
+
+def get_padding_length(filename):
+    """
+
+    >>> get_padding_length("sequence.v004.0001.exr", default=None)
+    4
+    >>> get_padding_length("sequence.-001.exr", default=None)
+    4
+    >>> get_padding_length("sequence.v005.exr", default=None)
+    None
+
+    Retrieve the padding length by retrieving the frame number from a file.
+
+    Args:
+        filename (str): the explicit filename, e.g.: sequence.0001.exr
+
+    Returns:
+        int
+    """
+
+    padding_match = re.search(r"\.(-?\d+)", filename)
+    if padding_match:
+        length = len(padding_match.group(2))
+    else:
+        raise AttributeError("Could not find padding length in "
+                             "'{}'".format(filename))
+
+    return length
+
+
+def get_vray_extension():
+    """Retrieve the extension which has been set in the VRay settings
+
+    Will return None if the current renderer is not VRay
+
+    Returns:
+        str
+    """
+
+    ext = None
+    if cmds.getAttr("defaultRenderGlobals.currentRenderer") == "vray":
+        # check for vray settings node
+        settings_node = cmds.ls("vraySettings", type="VRaySettingsNode")
+        if not settings_node:
+            raise AttributeError("Could not find a VRay Settings Node, "
+                                 "to ensure the node exists open the "
+                                 "Render Settings window")
+
+        # get the extension
+        image_format = cmds.getAttr("vraySettings.imageFormatStr")
+        if image_format and image_format != ext:
+            ext = ".{}".format(image_format)
+
+    return ext
 
 
 class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
@@ -44,7 +100,6 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         # E.g. http://192.168.0.1:8082/api/jobs
         url = "{}/api/jobs".format(deadline)
-        print "Got Deadline URL : {}".format(url)
 
         # Documentation for keys available at:
         # https://docs.thinkboxsoftware.com
@@ -132,7 +187,6 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         response = requests.post(url, json=payload)
 
         if response.ok:
-            print "Got positive response from {}".format(url)
             # Write metadata for publish
             fname = os.path.join(dirname, "{}.json".format(instance.name))
             data = {
@@ -148,7 +202,6 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 json.dump(data, f, indent=4, sort_keys=True)
 
         else:
-            print "Got negative response from {}".format(url)
             try:
                 shutil.rmtree(dirname)
             except OSError:
@@ -181,16 +234,26 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             # Assume `c:/some/path/filename.0001.exr`
             # TODO(marcus): Bulletproof this, the user may have
             # chosen a different format for the outputted filename.
-            fname, padding, suffix = fname.rsplit(".", 2)
-            fname = ".".join([fname, "#" * len(padding), suffix])
+            directory = os.path.dirname(fname)
+            basename = os.path.basename(fname)
+            name, padding, ext = basename.rsplit(".", 2)
+
+            # check if the extension is correct for vray
+            ext = get_vray_extension() or ext
+            padding_length = get_padding_length(basename)
+            padding = "#" * padding_length
+            fname = ".".join([name, padding, ext])
             self.log.info("Assuming renders end up @ %s" % fname)
+            file_name = os.path.join(directory, fname)
         except ValueError:
-            fname = ""
+            file_name = ""
             self.log.info("Couldn't figure out where renders go")
 
-        return fname
+        return file_name
 
     def preflight_check(self, instance):
+        """Ensure the startFrame, endFrame and byFrameStep are integers"""
+
         for key in ("startFrame", "endFrame", "byFrameStep"):
             value = instance.data[key]
 
