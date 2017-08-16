@@ -7,7 +7,7 @@ class ValidateMindbenderDeadlineDone(pyblish.api.InstancePlugin):
     label = "Rendered Successfully"
     order = pyblish.api.ValidatorOrder
     hosts = ["shell"]
-    families = ["mindbender.imagesequence"]
+    families = ["colorbleed.imagesequence"]
     optional = True
 
     def process(self, instance):
