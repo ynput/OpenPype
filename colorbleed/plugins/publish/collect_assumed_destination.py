@@ -89,7 +89,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
             # if there is a subset there ought to be version
             version_number += version["name"]
 
-        template_data = {"root": os.environ["AVALON_ROOT"],
+        template_data = {"root": os.environ["AVALON_PROJECTS"],
                          "project": project_name,
                          "silo": os.environ["AVALON_SILO"],
                          "asset": asset_name,
