@@ -33,7 +33,7 @@ def get_padding_length(filename):
 
     padding_match = re.search(r"\.(-?\d+)", filename)
     if padding_match:
-        length = len(padding_match.group(2))
+        length = len(padding_match.group())
     else:
         raise AttributeError("Could not find padding length in "
                              "'{}'".format(filename))
@@ -62,7 +62,7 @@ def get_vray_extension():
         # get the extension
         image_format = cmds.getAttr("vraySettings.imageFormatStr")
         if image_format and image_format != ext:
-            ext = ".{}".format(image_format)
+            ext = "{}".format(image_format)
 
     return ext
 
@@ -127,7 +127,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": self.preview_fname(instance),
+                "OutputFilename0": self.preview_fname(instance, dirname),
             },
             "PluginInfo": {
                 # Input
@@ -210,7 +210,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
             raise Exception(response.text)
 
-    def preview_fname(self, instance):
+    def preview_fname(self, instance, dirname):
         """Return outputted filename with #### for padding
 
         Passing the absolute path to Deadline enables Deadline Monitor
@@ -234,7 +234,6 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             # Assume `c:/some/path/filename.0001.exr`
             # TODO(marcus): Bulletproof this, the user may have
             # chosen a different format for the outputted filename.
-            directory = os.path.dirname(fname)
             basename = os.path.basename(fname)
             name, padding, ext = basename.rsplit(".", 2)
 
@@ -244,7 +243,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             padding = "#" * padding_length
             fname = ".".join([name, padding, ext])
             self.log.info("Assuming renders end up @ %s" % fname)
-            file_name = os.path.join(directory, fname)
+            file_name = os.path.join(dirname, instance.name, fname)
         except ValueError:
             file_name = ""
             self.log.info("Couldn't figure out where renders go")
