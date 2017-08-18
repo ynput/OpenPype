@@ -7,7 +7,7 @@ class ValidateMindbenderDeadlineDone(pyblish.api.InstancePlugin):
     label = "Rendered Successfully"
     order = pyblish.api.ValidatorOrder
     hosts = ["shell"]
-    families = ["colorbleed.imagesequence"]
+    families = ["mindbender.imagesequence"]
     optional = True
 
     def process(self, instance):
@@ -25,17 +25,23 @@ class ValidateMindbenderDeadlineDone(pyblish.api.InstancePlugin):
             4: "Failed",
             6: "Pending",
         }
-        deadline = api.Session.get("AVALON_DEADLINE", "https://localhost:8082")
-        url = "{}/api/jobs?JobID=%s".format(deadline)
+
+        assert "AVALON_DEADLINE" in api.Session, ("Environment variable "
+                                                  "missing from current "
+                                                  "session: AVALON_DEADLINE")
+        avalon_deadline = api.Session["AVALON_DEADLINE"]
+        url = "{}/api/jobs?JobID=%s".format(avalon_deadline)
 
         for job in instance.data["metadata"]["jobs"]:
             response = requests.get(url % job["_id"])
-            self.log.info(response)
 
             if response.ok:
-                data = response.json()[0]
-                state = states.get(data["Stat"])
+                data = response.json()
+                assert data, ValueError("Can't find information about "
+                                        "this Deadline job: "
+                                        "{}".format(job["_id"]))
 
+                state = states.get(data[0]["Stat"])
                 if state in (None, "Unknown"):
                     raise Exception("State of this render is unknown")
 
