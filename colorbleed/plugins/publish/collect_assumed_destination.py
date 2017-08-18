@@ -5,7 +5,7 @@ import avalon.io as io
 
 
 class CollectAssumedDestination(pyblish.api.InstancePlugin):
-    """This plug-ins displays the comment dialog box per default"""
+    """Generate the assumed destination path where the file will be stored"""
 
     label = "Collect Assumed Destination"
     order = pyblish.api.CollectorOrder + 0.499
@@ -81,12 +81,14 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
                               "parent": asset["_id"]})
 
         # assume there is no version yet, we start at `1`
+        version = None
         version_number = 1
         if subset is not None:
             version = io.find_one({"type": "version",
                                    "parent": subset["_id"]},
                                   sort=[("name", -1)])
-            # if there is a subset there ought to be version
+        # if there is a subset there ought to be version
+        if version is not None:
             version_number += version["name"]
 
         template_data = {"root": os.environ["AVALON_PROJECTS"],
