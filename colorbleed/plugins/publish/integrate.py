@@ -223,6 +223,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             representations.append(representation)
 
         self.log.info("Registering {} items".format(len(representations)))
+
         io.insert_many(representations)
 
     def integrate(self, instance):
