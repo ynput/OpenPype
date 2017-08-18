@@ -27,8 +27,7 @@ class ValidateMindbenderDeadlineDone(pyblish.api.InstancePlugin):
         }
 
         assert "AVALON_DEADLINE" in api.Session, ("Environment variable "
-                                                  "missing from current "
-                                                  "session: AVALON_DEADLINE")
+                                                  "missing: 'AVALON_DEADLINE'")
         avalon_deadline = api.Session["AVALON_DEADLINE"]
         url = "{}/api/jobs?JobID=%s".format(avalon_deadline)
 
