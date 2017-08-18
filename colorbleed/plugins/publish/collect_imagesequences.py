@@ -19,7 +19,10 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
         for renderlayer in dirs:
             abspath = os.path.join(base, renderlayer)
             files = os.listdir(abspath)
-            collections, remainder = clique.assemble(files, minimum_items=1)
+            pattern = clique.PATTERNS["frames"]
+            collections, remainder = clique.assemble(files,
+                                                     patterns=[pattern],
+                                                     minimum_items=1)
             assert not remainder, (
                 "There shouldn't have been a remainder for '%s': "
                 "%s" % (renderlayer, remainder))
@@ -30,7 +33,7 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
 
             for fname in (abspath, compatpath):
                 try:
-                    with open(fname + ".json") as f:
+                    with open("{}.json".format(fname)) as f:
                         metadata = json.load(f)
                     break
 
@@ -43,6 +46,7 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
 
             for collection in collections:
                 instance = context.create_instance(str(collection))
+                self.log.info("Collection: %s" % list(collection))
 
                 data = dict(metadata["instance"], **{
                     "name": instance.name,
