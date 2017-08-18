@@ -1,9 +1,7 @@
 import os
 import json
 
-from maya import cmds
-from avalon import api, maya
-import colorbleed.maya.lib as lib
+from avalon import api
 
 
 class LookLoader(api.Loader):
@@ -29,6 +27,10 @@ class LookLoader(api.Loader):
         Returns:
 
         """
+
+        import maya.cmds as cmds
+        from avalon import maya
+        import colorbleed.maya.lib as lib
 
         # improve readability of the namespace
         assetname = context["asset"]["name"]
