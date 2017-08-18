@@ -40,9 +40,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.register(instance)
         self.integrate(instance)
 
-        self.log.info("Removing temporary files and folders ...")
-        stagingdir = instance.data["stagingDir"]
-        shutil.rmtree(stagingdir)
+        # TODO: Decide how to clean up? And when?
+        # self.log.info("Removing temporary files and folders ...")
+        # stagingdir = instance.data["stagingDir"]
+        # shutil.rmtree(stagingdir)
 
     def register(self, instance):
 
@@ -51,11 +52,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         ASSET = instance.data.get("asset") or os.environ["AVALON_ASSET"]
         SILO = os.environ["AVALON_SILO"]
         LOCATION = os.getenv("AVALON_LOCATION")
-
-        # todo(marcus): avoid hardcoding labels in the integrator
-        representation_labels = {".ma": "Maya Ascii",
-                                 ".source": "Original source file",
-                                 ".abc": "Alembic"}
 
         context = instance.context
         # Atomicity
@@ -151,30 +147,66 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         template_publish = project["config"]["template"]["publish"]
 
+        # Find the representations to transfer amongst the files
+        # Each should be a single representation (as such, a single extension)
         representations = []
-        staging_content = os.listdir(stagingdir)
-        for v, fname in enumerate(staging_content):
+        for files in instance.data["files"]:
 
-            name, ext = os.path.splitext(fname)
-            template_data["representation"] = ext[1:]
+            # Collection
+            #   _______
+            #  |______|\
+            # |      |\|
+            # |       ||
+            # |       ||
+            # |       ||
+            # |_______|
+            #
+            if isinstance(files, list):
+                collection = files
 
-            src = os.path.join(stagingdir, fname)
-            dst = template_publish.format(**template_data)
+                # Assert that each member has identical suffix
+                _, ext = os.path.splitext(collection[0])
+                assert all(ext == os.path.splitext(name)[1]
+                           for name in collection), (
+                    "Files had varying suffixes, this is a bug"
+                )
 
-            # Backwards compatibility
-            if fname == ".metadata.json":
-                dirname = os.path.dirname(dst)
-                dst = os.path.join(dirname, fname)
+                template_data["representation"] = ext[1:]
 
-            # copy source to destination (library)
-            instance.data["transfers"].append([src, dst])
+                for fname in collection:
+                    src = os.path.join(stagingdir, fname)
+                    dst = os.path.join(
+                        template_publish.format(**template_data),
+                        fname
+                    )
+
+                    instance.data["transfers"].append([src, dst])
+
+            else:
+                # Single file
+                #  _______
+                # |      |\
+                # |       |
+                # |       |
+                # |       |
+                # |_______|
+                #
+                fname = files
+                _, ext = os.path.splitext(fname)
+
+                template_data["representation"] = ext[1:]
+
+                src = os.path.join(stagingdir, fname)
+                dst = template_publish.format(**template_data)
+
+                instance.data["transfers"].append([src, dst])
 
             representation = {
                 "schema": "avalon-core:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
-                "data": {"label": representation_labels.get(ext)},
+                "data": {},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
@@ -190,32 +222,23 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             }
             representations.append(representation)
 
-        # store data for database and source / destinations
-        instance.data["representations"] = representations
-
-        return representations
+        self.log.info("Registering {} items".format(len(representations)))
+        io.insert_many(representations)
 
     def integrate(self, instance):
-        """Register the representations and move the files
+        """Move the files
 
-        Through the stored `representations` and `transfers`
+        Through `instance.data["transfers"]`
 
         Args:
             instance: the instance to integrate
         """
 
-        # get needed data
-        traffic = instance.data["transfers"]
-        representations = instance.data["representations"]
+        transfers = instance.data["transfers"]
 
-        self.log.info("Registering {} items".format(len(representations)))
-        io.insert_many(representations)
-
-        # moving files
-        for src, dest in traffic:
+        for src, dest in transfers:
             self.log.info("Copying file .. {} -> {}".format(src, dest))
             self.copy_file(src, dest)
-
 
     def copy_file(self, src, dst):
         """ Copy given source to destination
@@ -281,7 +304,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "data": data}
 
     def create_version_data(self, context, instance):
-        """Create the data collection for th version
+        """Create the data collection for the version
 
         Args:
             context: the current context
