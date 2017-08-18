@@ -39,5 +39,10 @@ class ExtractParticlesMayaAscii(colorbleed.api.Extractor):
                       shader=False,
                       expressions=False)
 
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+
+        instance.data["files"].append(filename)
+
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, path))

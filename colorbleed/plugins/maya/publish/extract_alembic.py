@@ -45,7 +45,6 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
 
         # force elect items to ensure all items get exported by Alembic
         members = instance.data("setMembers")
-        print "Members : {}".format(members)
 
         cmds.select(members)
         with avalon.maya.suspended_refresh():
@@ -53,5 +52,10 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
                 nodes = instance[:]
                 cmds.select(nodes, replace=True, noExpand=True)
                 extract_alembic(file=path, **options)
+
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+
+        instance.data["files"].append(filename)
 
         cmds.select(clear=True)

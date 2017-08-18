@@ -43,4 +43,9 @@ class ExtractCameraRaw(colorbleed.api.Extractor):
                       shader=False,
                       expressions=False)
 
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+
+        instance.data["files"].append(filename)
+
         self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))

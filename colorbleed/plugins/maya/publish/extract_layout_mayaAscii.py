@@ -34,5 +34,10 @@ class ExtractLayoutMayaAscii(colorbleed.api.Extractor):
                       expressions=True,
                       constructionHistory=True)
 
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+
+        instance.data["files"].append(filename)
+
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, path))

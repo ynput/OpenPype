@@ -41,17 +41,24 @@ def get_padding_length(filename):
     return length
 
 
-def get_vray_extension():
+def get_renderer_variables():
     """Retrieve the extension which has been set in the VRay settings
 
     Will return None if the current renderer is not VRay
 
     Returns:
-        str
+        dict
     """
 
-    ext = None
-    if cmds.getAttr("defaultRenderGlobals.currentRenderer") == "vray":
+    ext = ""
+    filename_prefix = ""
+    # padding = 4
+
+    renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
+    if renderer == "vray":
+
+        # padding = cmds.getAttr("vraySettings.fileNamePadding")
+
         # check for vray settings node
         settings_node = cmds.ls("vraySettings", type="VRaySettingsNode")
         if not settings_node:
@@ -61,10 +68,30 @@ def get_vray_extension():
 
         # get the extension
         image_format = cmds.getAttr("vraySettings.imageFormatStr")
-        if image_format and image_format != ext:
-            ext = "{}".format(image_format)
+        if image_format:
+            ext = "{}".format(image_format.split(" ")[0])
 
-    return ext
+        prefix = cmds.getAttr("vraySettings.fileNamePrefix")
+        if prefix:
+            filename_prefix = prefix
+
+    # insert other renderer logic here
+
+    # fall back to default
+    if renderer.lower().startswith("maya"):
+        # get the extension, getAttr defaultRenderGlobals.imageFormat
+        # returns index number
+        first_filename = cmds.renderSettings(fullPath=True,
+                                             firstImageName=True)[0]
+        ext = os.path.splitext(os.path.basename(first_filename))[-1].strip(".")
+
+        # get padding and filename prefix
+        # padding = cmds.getAttr("defaultRenderGlobals.extensionPadding")
+        prefix = cmds.getAttr("defaultRenderGlobals.fileNamePrefix")
+        if prefix:
+            filename_prefix = prefix
+
+    return {"ext": ext, "filename_prefix": filename_prefix}
 
 
 class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
@@ -98,6 +125,13 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         except OSError:
             pass
 
+        # get the variables depending on the renderer
+        render_variables = get_renderer_variables()
+        output_file_prefix = render_variables["filename_prefix"]
+        output_filename_0 = self.preview_fname(instance,
+                                               dirname,
+                                               render_variables["ext"])
+
         # E.g. http://192.168.0.1:8082/api/jobs
         url = "{}/api/jobs".format(deadline)
 
@@ -127,7 +161,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": self.preview_fname(instance, dirname),
+                "OutputFilename0": output_filename_0,
             },
             "PluginInfo": {
                 # Input
@@ -135,7 +169,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Output directory and filename
                 "OutputFilePath": dirname,
-                "OutputFilePrefix": "<RenderLayer>/<RenderLayer>",
+                "OutputFilePrefix": output_file_prefix,
 
                 # Mandatory for Deadline
                 "Version": cmds.about(version=True),
@@ -210,7 +244,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
             raise Exception(response.text)
 
-    def preview_fname(self, instance, dirname):
+    def preview_fname(self, instance, dirname, extension):
         """Return outputted filename with #### for padding
 
         Passing the absolute path to Deadline enables Deadline Monitor
@@ -237,11 +271,8 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             basename = os.path.basename(fname)
             name, padding, ext = basename.rsplit(".", 2)
 
-            # check if the extension is correct for vray
-            ext = get_vray_extension() or ext
-            padding_length = get_padding_length(basename)
-            padding = "#" * padding_length
-            fname = ".".join([name, padding, ext])
+            padding_format = "#" * len(padding)
+            fname = ".".join([name, padding_format, extension])
             self.log.info("Assuming renders end up @ %s" % fname)
             file_name = os.path.join(dirname, instance.name, fname)
         except ValueError:

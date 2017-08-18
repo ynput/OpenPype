@@ -77,5 +77,11 @@ class ExtractLook(colorbleed.api.Extractor):
         with open(json_path, "w") as f:
             json.dump(data, f)
 
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+
+        instance.data["files"].append(maya_fname)
+        instance.data["files"].append(json_fname)
+
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
                                                           maya_path))

@@ -50,8 +50,9 @@ class ExtractCameraBaked(colorbleed.api.Extractor):
     families = ["colorbleed.camera"]
 
     def process(self, instance):
-        nodetype = 'camera'
 
+        file_names = []
+        nodetype = 'camera'
         # Define extract output file path
         dir_path = self.staging_dir(instance)
         alembic_as_baked = instance.data("cameraBakedAlembic", True)
@@ -80,6 +81,7 @@ class ExtractCameraBaked(colorbleed.api.Extractor):
 
         # Perform maya ascii extraction
         filename = "{0}.ma".format(instance.name)
+        file_names.append(filename)
         path = os.path.join(dir_path, filename)
 
         self.log.info("Performing extraction..")
@@ -100,6 +102,7 @@ class ExtractCameraBaked(colorbleed.api.Extractor):
 
         # Perform alembic extraction
         filename = "{0}.abc".format(instance.name)
+        file_names.append(filename)
         path = os.path.join(dir_path, filename)
 
         if alembic_as_baked:
@@ -135,6 +138,11 @@ class ExtractCameraBaked(colorbleed.api.Extractor):
 
         # Delete the baked camera (using transform to leave no trace)
         cmds.delete(baked)
+
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+
+        instance.data["files"].extend(file_names)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, path))

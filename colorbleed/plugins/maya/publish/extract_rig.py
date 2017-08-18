@@ -34,4 +34,9 @@ class ExtractColorbleedRig(colorbleed.api.Extractor):
                       expressions=True,
                       constructionHistory=True)
 
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+
+        instance.data["files"].append(filename)
+
         self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
