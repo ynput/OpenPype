@@ -1,8 +1,7 @@
 import os
 
-from maya import cmds
 
-from avalon import api, maya
+from avalon import api
 
 
 class AbcLoader(api.Loader):
@@ -17,6 +16,9 @@ class AbcLoader(api.Loader):
     color = "orange"
 
     def process(self, name, namespace, context, data):
+
+        import maya.cmds as cmds
+        from avalon import maya
 
         cmds.loadPlugin("AbcImport.mll", quiet=True)
         # Prevent identical alembic nodes from being shared

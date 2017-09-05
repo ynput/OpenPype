@@ -1,4 +1,97 @@
+import os
+import re
+import json
+import shutil
+import getpass
+
+from maya import cmds
+
+from avalon import api
+from avalon.vendor import requests
+
 import pyblish.api
+
+
+def get_padding_length(filename):
+    """
+
+    >>> get_padding_length("sequence.v004.0001.exr", default=None)
+    4
+    >>> get_padding_length("sequence.-001.exr", default=None)
+    4
+    >>> get_padding_length("sequence.v005.exr", default=None)
+    None
+
+    Retrieve the padding length by retrieving the frame number from a file.
+
+    Args:
+        filename (str): the explicit filename, e.g.: sequence.0001.exr
+
+    Returns:
+        int
+    """
+
+    padding_match = re.search(r"\.(-?\d+)", filename)
+    if padding_match:
+        length = len(padding_match.group())
+    else:
+        raise AttributeError("Could not find padding length in "
+                             "'{}'".format(filename))
+
+    return length
+
+
+def get_renderer_variables():
+    """Retrieve the extension which has been set in the VRay settings
+
+    Will return None if the current renderer is not VRay
+
+    Returns:
+        dict
+    """
+
+    ext = ""
+    filename_prefix = ""
+    # padding = 4
+
+    renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
+    if renderer == "vray":
+
+        # padding = cmds.getAttr("vraySettings.fileNamePadding")
+
+        # check for vray settings node
+        settings_node = cmds.ls("vraySettings", type="VRaySettingsNode")
+        if not settings_node:
+            raise AttributeError("Could not find a VRay Settings Node, "
+                                 "to ensure the node exists open the "
+                                 "Render Settings window")
+
+        # get the extension
+        image_format = cmds.getAttr("vraySettings.imageFormatStr")
+        if image_format:
+            ext = "{}".format(image_format.split(" ")[0])
+
+        prefix = cmds.getAttr("vraySettings.fileNamePrefix")
+        if prefix:
+            filename_prefix = prefix
+
+    # insert other renderer logic here
+
+    # fall back to default
+    if renderer.lower().startswith("maya"):
+        # get the extension, getAttr defaultRenderGlobals.imageFormat
+        # returns index number
+        first_filename = cmds.renderSettings(fullPath=True,
+                                             firstImageName=True)[0]
+        ext = os.path.splitext(os.path.basename(first_filename))[-1].strip(".")
+
+        # get padding and filename prefix
+        # padding = cmds.getAttr("defaultRenderGlobals.extensionPadding")
+        prefix = cmds.getAttr("defaultRenderGlobals.fileNamePrefix")
+        if prefix:
+            filename_prefix = prefix
+
+    return {"ext": ext, "filename_prefix": filename_prefix}
 
 
 class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
@@ -12,20 +105,13 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
-    families = ["mindbender.renderlayer"]
+    families = ["colorbleed.renderlayer"]
 
     def process(self, instance):
-        import os
-        import json
-        import shutil
-        import getpass
 
-        from maya import cmds
-
-        from avalon import api
-        from avalon.vendor import requests
-
-        assert api.Session["AVALON_DEADLINE"], "Requires AVALON_DEADLINE"
+        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+                                          "http://localhost:8082")
+        assert AVALON_DEADLINE is not None, "Requires AVALON_DEADLINE"
 
         context = instance.context
         workspace = context.data["workspaceDir"]
@@ -40,8 +126,15 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         except OSError:
             pass
 
+        # get the variables depending on the renderer
+        render_variables = get_renderer_variables()
+        output_file_prefix = render_variables["filename_prefix"]
+        output_filename_0 = self.preview_fname(instance,
+                                               dirname,
+                                               render_variables["ext"])
+
         # E.g. http://192.168.0.1:8082/api/jobs
-        url = api.Session["AVALON_DEADLINE"] + "/api/jobs"
+        url = "{}/api/jobs".format(AVALON_DEADLINE)
 
         # Documentation for keys available at:
         # https://docs.thinkboxsoftware.com
@@ -69,7 +162,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": self.preview_fname(instance),
+                "OutputFilename0": output_filename_0,
             },
             "PluginInfo": {
                 # Input
@@ -77,7 +170,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Output directory and filename
                 "OutputFilePath": dirname,
-                "OutputFilePrefix": "<RenderLayer>/<RenderLayer>",
+                "OutputFilePrefix": output_file_prefix,
 
                 # Mandatory for Deadline
                 "Version": cmds.about(version=True),
@@ -119,22 +212,18 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         })
 
         # Include optional render globals
-        payload["JobInfo"].update(
-            instance.data.get("renderGlobals", {})
-        )
+        payload["JobInfo"].update(instance.data.get("renderGlobals", {}))
 
         self.preflight_check(instance)
 
         self.log.info("Submitting..")
-        self.log.info(json.dumps(
-            payload, indent=4, sort_keys=True)
-        )
+        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         response = requests.post(url, json=payload)
 
         if response.ok:
             # Write metadata for publish
-            fname = os.path.join(dirname, instance.name + ".json")
+            fname = os.path.join(dirname, "{}.json".format(instance.name))
             data = {
                 "submission": payload,
                 "session": api.Session,
@@ -156,7 +245,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
             raise Exception(response.text)
 
-    def preview_fname(self, instance):
+    def preview_fname(self, instance, dirname, extension):
         """Return outputted filename with #### for padding
 
         Passing the absolute path to Deadline enables Deadline Monitor
@@ -171,29 +260,31 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
 
-        from maya import cmds
-
         # We'll need to take tokens into account
-        fname = cmds.renderSettings(
-            firstImageName=True,
-            fullPath=True,
-            layer=instance.name
-        )[0]
+        fname = cmds.renderSettings(firstImageName=True,
+                                    fullPath=True,
+                                    layer=instance.name)[0]
 
         try:
             # Assume `c:/some/path/filename.0001.exr`
             # TODO(marcus): Bulletproof this, the user may have
             # chosen a different format for the outputted filename.
-            fname, padding, suffix = fname.rsplit(".", 2)
-            fname = ".".join([fname, "#" * len(padding), suffix])
+            basename = os.path.basename(fname)
+            name, padding, ext = basename.rsplit(".", 2)
+
+            padding_format = "#" * len(padding)
+            fname = ".".join([name, padding_format, extension])
             self.log.info("Assuming renders end up @ %s" % fname)
+            file_name = os.path.join(dirname, instance.name, fname)
         except ValueError:
-            fname = ""
+            file_name = ""
             self.log.info("Couldn't figure out where renders go")
 
-        return fname
+        return file_name
 
     def preflight_check(self, instance):
+        """Ensure the startFrame, endFrame and byFrameStep are integers"""
+
         for key in ("startFrame", "endFrame", "byFrameStep"):
             value = instance.data[key]
 

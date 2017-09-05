@@ -34,8 +34,6 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
                                     allDescendents=True,
                                     fullPath=True) or []
 
-        print("Exporting {} as alembic".format(nodes))
-
         # Collect the start and end including handles
         start = instance.data["startFrame"]
         end = instance.data["endFrame"]
@@ -61,5 +59,10 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
                                 endFrame=end,
                                 **{"step": instance.data.get("step", 1.0),
                                    "attr": ["cbId"]})
+
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+
+        instance.data["files"].append(filename)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))

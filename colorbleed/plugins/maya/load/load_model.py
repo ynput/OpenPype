@@ -1,7 +1,4 @@
-import maya.cmds as cmds
-
 from avalon import api
-import avalon.maya
 
 
 class ModelLoader(api.Loader):
@@ -17,13 +14,16 @@ class ModelLoader(api.Loader):
 
     def process(self, name, namespace, context, data):
 
+        import maya.cmds as cmds
+        from avalon import maya
+
         # Create a readable namespace
         # Namespace should contain asset name and counter
         # TEST_001{_descriptor} where `descriptor` can be `_abc` for example
         assetname = "{}_".format(namespace.split("_")[0])
-        namespace = avalon.maya.unique_namespace(assetname, format="%03d")
+        namespace = maya.unique_namespace(assetname, format="%03d")
 
-        with avalon.maya.maintained_selection():
+        with maya.maintained_selection():
             nodes = cmds.file(self.fname,
                               namespace=namespace,
                               reference=True,

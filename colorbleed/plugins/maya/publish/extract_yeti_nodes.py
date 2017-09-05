@@ -59,5 +59,7 @@ class ExtractFurYeti(colorbleed.api.Extractor):
                           constructionHistory=False,
                           shader=False)
 
+        instance.data["files"] = [filename]
+
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, path))
