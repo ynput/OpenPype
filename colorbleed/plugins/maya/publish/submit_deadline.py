@@ -109,8 +109,9 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        deadline = api.Session.get("AVALON_DEADLINE", "http://localhost:8082")
-        assert deadline is not None, "Requires AVALON_DEADLINE"
+        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+                                          "http://localhost:8082")
+        assert AVALON_DEADLINE is not None, "Requires AVALON_DEADLINE"
 
         context = instance.context
         workspace = context.data["workspaceDir"]
@@ -133,7 +134,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                                                render_variables["ext"])
 
         # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(deadline)
+        url = "{}/api/jobs".format(AVALON_DEADLINE)
 
         # Documentation for keys available at:
         # https://docs.thinkboxsoftware.com
