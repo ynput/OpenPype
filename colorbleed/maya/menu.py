@@ -14,28 +14,25 @@ log = logging.getLogger(__name__)
 
 def deferred():
 
-
-    from scriptsmenu import launchformaya
-    import scriptsmenu.scriptsmenu as menu
+    import scriptsmenu.launchformaya as launchformaya
+    import scriptsmenu.scriptsmenu as scriptsmenu
 
     log.info("Attempting to install ...")
 
     # load configuration of custom menu
     config_path = os.path.join(os.path.dirname(__file__), "menu.json")
-    config = menu.load_configuration(config_path)
+    config = scriptsmenu.load_configuration(config_path)
 
-    # get Maya menubar
-    parent = launchformaya._maya_main_menubar()
-    cb_menu = menu.ScriptsMenu(objectName=self._menu,
-                               title=self._menu.title(),
-                               parent=parent)
+    # run the launcher for Maya menu
+    cb_menu = launchformaya.main(title=self._menu.title(),
+                                 objectName=self._menu)
 
     # register modifiers
     modifiers = QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier
     cb_menu.register_callback(modifiers, launchformaya.to_shelf)
 
     # apply configuration
-    menu.load_from_configuration(cb_menu, config)
+    cb_menu.build_from_configuration(cb_menu, config)
 
 
 def uninstall():
