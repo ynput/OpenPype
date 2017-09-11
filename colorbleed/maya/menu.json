@@ -804,7 +804,7 @@
                     "auto"
                 ],
                 "title": "Assign lookDefault Shader",
-                "tooltip": "Assign the latest 'lookDefault' to assets without any lookdev in the scene"
+                "tooltip": "Assign the latest `lookDefault` to assets without any lookdev in the scene"
             },
             {
                 "type": "action",
@@ -1037,48 +1037,112 @@
                 ]
             },
             {
-                "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\animation\\capture_ui.py",
-                "sourcetype": "file",
+                "command": "$COLORBLEED_SCRITPS\\animation\\bakeSelectedToWorldSpace.py",
                 "tags": [
                     "animation",
-                    "capture", "screen", "playblast"
+                    "bakeSelectedToWorldSpace.py"
                 ],
-                "title": "Capture UI",
-                "tooltip": "Capture the viewport to the required media format"
+                "title": "Bakeselectedtoworldspace.Py",
+                "type": "file"
             },
             {
-                "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\animation\\zvParentMaster.py",
-                "sourcetype": "file",
+                "command": "$COLORBLEED_SCRITPS\\animation\\timeStepper.py",
                 "tags": [
                     "animation",
-                    "zvParentMaster"
+                    "timeStepper.py"
                 ],
-                "title": "ZV Parent Master",
-                "tooltip": "Open ZV Parent M UI"
+                "title": "Timestepper.Py",
+                "type": "file"
             },
             {
-                "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\animation\\pathAnimation.py",
-                "sourcetype": "file",
+                "command": "$COLORBLEED_SCRITPS\\animation\\capture_ui.py",
                 "tags": [
                     "animation",
-                    "path"
+                    "capture_ui.py"
                 ],
-                "title": "Path Animation",
-                "tooltip": ""
+                "title": "Capture_Ui.Py",
+                "type": "file"
             },
             {
-                "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\animation\\timeStepper.py",
-                "sourcetype": "file",
+                "command": "$COLORBLEED_SCRITPS\\animation\\tweenMachineUI.py",
                 "tags": [
                     "animation",
-                    "timeStepper"
+                    "tweenMachineUI.py"
                 ],
-                "title": "TimeStepper",
-                "tooltip": ""
+                "title": "Tweenmachineui.Py",
+                "type": "file"
+            },
+            {
+                "command": "$COLORBLEED_SCRITPS\\animation\\selectAllAnimationCurves.py",
+                "tags": [
+                    "animation",
+                    "selectAllAnimationCurves.py"
+                ],
+                "title": "Selectallanimationcurves.Py",
+                "type": "file"
+            },
+            {
+                "command": "$COLORBLEED_SCRITPS\\animation\\simplePlayblastUI.py",
+                "tags": [
+                    "animation",
+                    "simplePlayblastUI.py"
+                ],
+                "title": "Simpleplayblastui.Py",
+                "type": "file"
+            },
+            {
+                "command": "$COLORBLEED_SCRITPS\\animation\\pathAnimation.py",
+                "tags": [
+                    "animation",
+                    "pathAnimation.py"
+                ],
+                "title": "Pathanimation.Py",
+                "type": "file"
+            },
+            {
+                "command": "$COLORBLEED_SCRITPS\\animation\\offsetSelectedObjectsUI.py",
+                "tags": [
+                    "animation",
+                    "offsetSelectedObjectsUI.py"
+                ],
+                "title": "Offsetselectedobjectsui.Py",
+                "type": "file"
+            },
+            {
+                "command": "$COLORBLEED_SCRITPS\\animation\\key_amplifier_ui.py",
+                "tags": [
+                    "animation",
+                    "key_amplifier_ui.py"
+                ],
+                "title": "Key_Amplifier_Ui.Py",
+                "type": "file"
+            },
+            {
+                "command": "$COLORBLEED_SCRITPS\\animation\\anim_scene_optimizer.py",
+                "tags": [
+                    "animation",
+                    "anim_scene_optimizer.py"
+                ],
+                "title": "Anim_Scene_Optimizer.Py",
+                "type": "file"
+            },
+            {
+                "command": "$COLORBLEED_SCRITPS\\animation\\zvParentMaster.py",
+                "tags": [
+                    "animation",
+                    "zvParentMaster.py"
+                ],
+                "title": "Zvparentmaster.Py",
+                "type": "file"
+            },
+            {
+                "command": "$COLORBLEED_SCRITPS\\animation\\poseLibrary.py",
+                "tags": [
+                    "animation",
+                    "poseLibrary.py"
+                ],
+                "title": "Poselibrary.Py",
+                "type": "file"
             }
         ]
     },
