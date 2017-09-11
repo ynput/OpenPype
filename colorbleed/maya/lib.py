@@ -623,10 +623,12 @@ def get_id_required_nodes(referenced_nodes=False):
     # directly
     nodes = cmds.ls(type=types, long=True, noIntermediate=True)
 
+    # Remove Turtle from the result of `cmds.ls`
+    nodes = [n for n in nodes if n not in cmds.ls(type="ilrBakeLayer")]
+
     # The items which need to pass the id to their parent
     # Add the collected transform to the nodes
     dag = cmds.ls(nodes, type="dagNode", long=True)  # query only dag nodes
-
     transforms = cmds.listRelatives(dag,
                                     parent=True,
                                     fullPath=True) or []
@@ -959,7 +961,7 @@ def get_related_sets(node):
     - set in not in viewport set (isolate selected for example)
 
     Args:
-        node (str): name of the current not to check
+        node (str): name of the current node to check
 
     Returns:
         list: The related sets
@@ -970,13 +972,10 @@ def get_related_sets(node):
     ignore_suffices = ["out_SET", "controls_SET", "_INST", "_CON"]
 
     # Default nodes to ignore
-    defaults = ["initialShadingGroup",
-                "defaultLightSet",
-                "defaultObjectSet"]
+    defaults = ["initialShadingGroup",  "defaultLightSet", "defaultObjectSet"]
 
     # Ids to ignore
-    ignored = ["pyblish.avalon.instance",
-               "pyblish.avalon.container"]
+    ignored = ["pyblish.avalon.instance", "pyblish.avalon.container"]
 
     view_sets = get_isolate_view_sets()
 
