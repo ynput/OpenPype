@@ -1038,17 +1038,17 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\bakeSelectedToWorldSpace.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\bakeSelectedToWorldSpace.py",
                 "tags": [
                     "animation",
-                    "bake","selection", "worldspace"
+                    "bake","selection", "worldspace.py"
                 ],
                 "title": "Bake Selected To Worldspace",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\timeStepper.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\timeStepper.py",
                 "tags": [
                     "animation", "time","stepper"
                 ],
@@ -1057,7 +1057,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\capture_ui.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\capture_ui.py",
                 "tags": [
                     "animation",
                     "capture_ui.py"
@@ -1067,7 +1067,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\simplePlayblastUI.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\simplePlayblastUI.py",
                 "tags": [
                     "animation",
                     "simplePlayblastUI.py"
@@ -1077,7 +1077,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\tweenMachineUI.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\tweenMachineUI.py",
                 "tags": [
                     "animation",
                     "tweenMachineUI.py"
@@ -1087,7 +1087,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\selectAllAnimationCurves.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\selectAllAnimationCurves.py",
                 "tags": [
                     "animation",
                     "selectAllAnimationCurves.py"
@@ -1097,7 +1097,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\pathAnimation.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\pathAnimation.py",
                 "tags": [
                     "animation",
                     "pathAnimation.py"
@@ -1107,7 +1107,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\offsetSelectedObjectsUI.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\offsetSelectedObjectsUI.py",
                 "tags": [
                     "animation",
                     "offsetSelectedObjectsUI.py"
@@ -1117,7 +1117,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\key_amplifier_ui.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\key_amplifier_ui.py",
                 "tags": [
                     "animation",
                     "key", "amplifier"
@@ -1127,7 +1127,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\anim_scene_optimizer.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\anim_scene_optimizer.py",
                 "tags": [
                     "animation",
                     "anim_scene_optimizer.py"
@@ -1137,7 +1137,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\zvParentMaster.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\zvParentMaster.py",
                 "tags": [
                     "animation",
                     "zvParentMaster.py"
@@ -1147,7 +1147,7 @@
             },
             {
                 "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\poseLibrary.py",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\poseLibrary.py",
                 "tags": [
                     "animation",
                     "poseLibrary.py"
