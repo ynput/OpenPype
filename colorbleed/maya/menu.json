@@ -1,7 +1,14 @@
 [
     {
         "type": "action",
-        "command": "$COLORBLEED_SCRIPTS\\others\\_save_scene_incremental.py",
+        "command": "$COLORBLEED_SCRIPTS\\others\\save_scene_incremental.py",
+        "sourcetype": "file",
+        "title": "Version Up",
+        "tooltip": "Incremental save with a specific format"
+    },
+    {
+        "type": "action",
+        "command": "$COLORBLEED_SCRIPTS\\animation\\save_scene_incremental.py",
         "sourcetype": "file",
         "title": "Version Up",
         "tooltip": "Incremental save with a specific format"
@@ -1028,6 +1035,17 @@
                         "tooltip": "Toggle parallel nucleus"
                     }
                 ]
+            },
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\animation\\capture_ui.py",
+                "sourcetype": "file",
+                "tags": [
+                    "animation",
+                    "capture", "screen", "playblast"
+                ],
+                "title": "Capture UI",
+                "tooltip": "Capture the viewport to the required media format"
             },
             {
                 "type": "action",
