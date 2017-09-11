@@ -52,15 +52,7 @@ class RigLoader(api.Loader):
         assert output, "No out_SET in rig, this is a bug."
         assert controls, "No controls_SET in rig, this is a bug."
 
-        # To ensure the asset under which is published is actually the shot
-        # not the asset to which the rig belongs to.
-        current_task = os.environ["AVALON_TASK"]
-        asset_name = context["asset"]["name"]
-        if current_task == "animate":
-            asset = "{}".format(os.environ["AVALON_ASSET"])
-        else:
-            asset = "{}".format(asset_name)
-
+        asset = os.environ["AVALON_ASSET"]
         cmds.select([output, controls], noExpand=True)
         with maya.maintained_selection():
 
