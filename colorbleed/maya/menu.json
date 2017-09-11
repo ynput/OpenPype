@@ -1041,19 +1041,18 @@
                 "command": "COLORBLEED_SCRIPTS\\animation\\bakeSelectedToWorldSpace.py",
                 "tags": [
                     "animation",
-                    "bakeSelectedToWorldSpace.py"
+                    "bake","selection", "worldspace"
                 ],
-                "title": "Bakeselectedtoworldspace",
+                "title": "Bake Selected To Worldspace",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
                 "command": "COLORBLEED_SCRIPTS\\animation\\timeStepper.py",
                 "tags": [
-                    "animation",
-                    "timeStepper.py"
+                    "animation", "time","stepper"
                 ],
-                "title": "Timestepper",
+                "title": "Time Stepper",
                 "type": "action"
             },
             {
@@ -1063,27 +1062,7 @@
                     "animation",
                     "capture_ui.py"
                 ],
-                "title": "Capture_Ui",
-                "type": "action"
-            },
-            {
-                "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\tweenMachineUI.py",
-                "tags": [
-                    "animation",
-                    "tweenMachineUI.py"
-                ],
-                "title": "Tweenmachineui",
-                "type": "action"
-            },
-            {
-                "sourcetype": "file",
-                "command": "COLORBLEED_SCRIPTS\\animation\\selectAllAnimationCurves.py",
-                "tags": [
-                    "animation",
-                    "selectAllAnimationCurves.py"
-                ],
-                "title": "Selectallanimationcurves",
+                "title": "Capture UI",
                 "type": "action"
             },
             {
@@ -1093,7 +1072,27 @@
                     "animation",
                     "simplePlayblastUI.py"
                 ],
-                "title": "Simpleplayblastui",
+                "title": "Simple Playblast UI",
+                "type": "action"
+            },
+            {
+                "sourcetype": "file",
+                "command": "COLORBLEED_SCRIPTS\\animation\\tweenMachineUI.py",
+                "tags": [
+                    "animation",
+                    "tweenMachineUI.py"
+                ],
+                "title": "Tween Machine UI",
+                "type": "action"
+            },
+            {
+                "sourcetype": "file",
+                "command": "COLORBLEED_SCRIPTS\\animation\\selectAllAnimationCurves.py",
+                "tags": [
+                    "animation",
+                    "selectAllAnimationCurves.py"
+                ],
+                "title": "Select All Animation Curves",
                 "type": "action"
             },
             {
@@ -1103,7 +1102,7 @@
                     "animation",
                     "pathAnimation.py"
                 ],
-                "title": "Pathanimation",
+                "title": "Path Animation",
                 "type": "action"
             },
             {
@@ -1113,7 +1112,7 @@
                     "animation",
                     "offsetSelectedObjectsUI.py"
                 ],
-                "title": "Offsetselectedobjectsui",
+                "title": "Offset Selected Objects UI",
                 "type": "action"
             },
             {
@@ -1121,9 +1120,9 @@
                 "command": "COLORBLEED_SCRIPTS\\animation\\key_amplifier_ui.py",
                 "tags": [
                     "animation",
-                    "key_amplifier_ui.py"
+                    "key", "amplifier"
                 ],
-                "title": "Key_Amplifier_Ui",
+                "title": "Key Amplifier UI",
                 "type": "action"
             },
             {
@@ -1143,7 +1142,7 @@
                     "animation",
                     "zvParentMaster.py"
                 ],
-                "title": "Zvparentmaster",
+                "title": "ZV Parent Master",
                 "type": "action"
             },
             {
@@ -1153,7 +1152,7 @@
                     "animation",
                     "poseLibrary.py"
                 ],
-                "title": "Poselibrary",
+                "title": "Pose Library",
                 "type": "action"
             }
         ]
