@@ -58,7 +58,11 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
                                 startFrame=start,
                                 endFrame=end,
                                 **{"step": instance.data.get("step", 1.0),
-                                   "attr": ["cbId"]})
+                                   "attr": ["cbId"],
+                                   "writeVisibility": True,
+                                   "writeCreases": True,
+                                   "uvWrite": True,
+                                   "selection": True})
 
         if "files" not in instance.data:
             instance.data["files"] = list()

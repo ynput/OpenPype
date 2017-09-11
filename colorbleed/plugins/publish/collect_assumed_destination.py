@@ -76,6 +76,9 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
                              "name": asset_name,
                              "parent": project["_id"]})
 
+        assert asset, ("No asset found by the name '{}' "
+                       "in project '{}'".format(asset_name, project_name))
+
         subset = io.find_one({"type": "subset",
                               "name": subset_name,
                               "parent": asset["_id"]})
@@ -87,6 +90,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
             version = io.find_one({"type": "version",
                                    "parent": subset["_id"]},
                                   sort=[("name", -1)])
+
         # if there is a subset there ought to be version
         if version is not None:
             version_number += version["name"]

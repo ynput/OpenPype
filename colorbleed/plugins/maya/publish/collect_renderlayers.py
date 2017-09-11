@@ -12,6 +12,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     hosts = ["maya"]
     label = "Render Layers"
+    optional = True
 
     def process(self, context):
 

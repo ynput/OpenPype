@@ -13,7 +13,7 @@ if "%CB_MAYA_SHARED%" == "" (
 
 
 :: For scripts menu tool
-set PYTHONPATH=%CB_PIPELINE%\git\scriptsmenu\python;%PYTHONPATH%
+set PYTHONPATH=%C:\Users\User\Documents\development\scriptsmenu\python;%PYTHONPATH%
 set CB_SCRIPTS=%CB_PIPELINE%\git\cbMayaScripts\cbMayaScripts
 set COLORBLEED_SCRIPTS=%CB_SCRIPTS%
 

@@ -84,7 +84,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Discover related object sets
         self.log.info("Gathering sets..")
-        sets = self.gather_sets(instance)
+        sets = self.gather_sets(cmds.ls(instance, shapes=True))
 
         # Lookup with absolute names (from root namespace)
         instance_lookup = set([str(x) for x in cmds.ls(instance, long=True)])
@@ -148,21 +148,16 @@ class CollectLook(pyblish.api.InstancePlugin):
         """
 
         sets = dict()
-
         for node in instance:
-
             related_sets = lib.get_related_sets(node)
             if not related_sets:
                 continue
-
-            self.log.info("Found sets %s for %s", related_sets, node)
 
             for objset in related_sets:
                 if objset in sets:
                     continue
 
-                sets[objset] = {"uuid": lib.get_id(objset),
-                                "members": list()}
+                sets[objset] = {"uuid": lib.get_id(objset), "members": list()}
 
         return sets
 
@@ -178,8 +173,8 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         for objset, data in sets.items():
             if not data['members']:
-                self.log.debug("Removing redundant set information: "
-                               "%s" % objset)
+                self.log.info("Removing redundant set information: "
+                              "%s" % objset)
                 sets.pop(objset)
 
         return sets
@@ -213,8 +208,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.log.error("Node '{}' has no attribute 'cbId'".format(node))
             return
 
-        member_data = {"name": node,
-                       "uuid": cmds.getAttr("{}.cbId".format(node))}
+        member_data = {"name": node, "uuid": lib.get_id(node)}
 
         # Include components information when components are assigned
         if components:
@@ -242,6 +236,9 @@ class CollectLook(pyblish.api.InstancePlugin):
         attributes = []
         for node in instance:
 
+            # get history to ignore original shapes
+            cmds.listHistory(node)
+
             # Collect changes to "custom" attributes
             node_attrs = get_look_attrs(node)
 
@@ -251,11 +248,13 @@ class CollectLook(pyblish.api.InstancePlugin):
 
             node_attributes = {}
             for attr in node_attrs:
+                if not cmds.attributeQuery(attr, node=node, exists=True):
+                    continue
                 attribute = "{}.{}".format(node, attr)
                 node_attributes[attr] = cmds.getAttr(attribute)
 
             attributes.append({"name": node,
-                               "uuid": cmds.getAttr("{}.cbId".format(node)),
+                               "uuid": lib.get_id(node),
                                "attributes": node_attributes})
 
         return attributes

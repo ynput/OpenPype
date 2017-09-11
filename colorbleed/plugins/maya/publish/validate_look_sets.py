@@ -3,6 +3,8 @@ from colorbleed.maya import lib
 import pyblish.api
 import colorbleed.api
 
+from cb.utils.maya import context
+
 
 class ValidateLookSets(pyblish.api.InstancePlugin):
     """Validate if any sets are missing from the instance and look data
@@ -41,40 +43,44 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
                      "'{}'".format(instance.name))
 
         relationships = instance.data["lookData"]["relationships"]
-
         invalid = []
-        for node in instance:
-            # get the connected objectSets of the node
-            sets = lib.get_related_sets(node)
-            if not sets:
-                continue
 
-            # check if any objectSets are not present ion the relationships
-            missing_sets = [s for s in sets if s not in relationships]
-            if missing_sets:
-                # A set of this node is not coming along, this is wrong!
-                cls.log.error("Missing sets '{}' for node "
-                              "'{}'".format(missing_sets, node))
-                invalid.append(node)
-                continue
-
-            # Ensure the node is in the sets that are collected
-            for shaderset, data in relationships.items():
-                if shaderset not in sets:
-                    # no need to check for a set if the node
-                    # isn't in it anyway
+        layer = instance.data.get("renderlayer", "defaultRenderLayer")
+        with context.renderlayer(layer):
+            for node in instance:
+                # get the connected objectSets of the node
+                sets = lib.get_related_sets(node)
+                if not sets:
                     continue
 
-                member_nodes = [member['name'] for member in data['members']]
-                if node not in member_nodes:
-                    # The node is not found in the collected set
-                    # relationships
-                    cls.log.error("Missing '{}' in collected set node "
-                                  "'{}'".format(node, shaderset))
+                # check if any objectSets are not present ion the relationships
+                missing_sets = [s for s in sets if s not in relationships]
+                if missing_sets:
+                    # A set of this node is not coming along, this is wrong!
+                    cls.log.error("Missing sets '{}' for node "
+                                  "'{}'".format(missing_sets, node))
                     invalid.append(node)
-
                     continue
+
+                # Ensure the node is in the sets that are collected
+                for shaderset, data in relationships.items():
+                    if shaderset not in sets:
+                        # no need to check for a set if the node
+                        # isn't in it anyway
+                        continue
+
+                    member_nodes = [member['name'] for member in data['members']]
+                    if node not in member_nodes:
+                        # The node is not found in the collected set
+                        # relationships
+                        cls.log.error("Missing '{}' in collected set node "
+                                      "'{}'".format(node, shaderset))
+                        invalid.append(node)
+
+                        continue
 
         return invalid
 
-
+    @classmethod
+    def repair(cls, context, instance):
+        pass

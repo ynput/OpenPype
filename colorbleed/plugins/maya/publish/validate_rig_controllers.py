@@ -16,11 +16,20 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     label = "Rig Controllers"
     hosts = ["maya"]
     families = ["colorbleed.rig"]
-    actions = [colorbleed.api.RepairAction]
+    actions = [colorbleed.api.RepairAction,
+               colorbleed.api.SelectInvalidAction]
 
     def process(self, instance):
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise RuntimeError('{} failed, see log '
+                               'information'.format(self.label))
+
+    @classmethod
+    def get_invalid(cls, instance):
 
         error = False
+        invalid = []
         is_keyed = list()
         not_locked = list()
         is_offset = list()
@@ -29,7 +38,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         assert controls, "Must have controls in rig controls_SET"
 
         for control in controls:
-            valid_keyed = self.validate_keyed_state(control)
+            valid_keyed = cls.validate_keyed_state(control)
             if not valid_keyed:
                 is_keyed.append(control)
 
@@ -39,30 +48,34 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
             if not locked:
                 not_locked.append(control)
 
-            valid_transforms = self.validate_transforms(control)
+            valid_transforms = cls.validate_transforms(control)
             if not valid_transforms:
                 is_offset.append(control)
 
         if is_keyed:
-            self.log.error("No controls can be keyes. Failed :\n"
+            cls.log.error("No controls can be keyes. Failed :\n"
                            "%s" % is_keyed)
             error = True
 
         if is_offset:
-            self.log.error("All controls default transformation values. "
+            cls.log.error("All controls default transformation values. "
                            "Failed :\n%s" % is_offset)
             error = True
 
         if not_locked:
-            self.log.error("All controls must have visibility "
+            cls.log.error("All controls must have visibility "
                            "attribute locked. Failed :\n"
                            "%s" % not_locked)
             error = True
 
         if error:
-            raise RuntimeError("Invalid rig controllers. See log for details.")
+            invalid = is_keyed + not_locked + is_offset
+            cls.log.error("Invalid rig controllers. See log for details.")
 
-    def validate_transforms(self, control):
+        return invalid
+
+    @staticmethod
+    def validate_transforms(control):
         tolerance = 1e-30
         identity = [1.0, 0.0, 0.0, 0.0,
                     0.0, 1.0, 0.0, 0.0,
@@ -71,10 +84,12 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
 
         matrix = cmds.xform(control, query=True, matrix=True, objectSpace=True)
         if not all(abs(x - y) < tolerance for x, y in zip(identity, matrix)):
+            log.error("%s matrix : %s" % (control, matrix))
             return False
         return True
 
-    def validate_keyed_state(self, control):
+    @staticmethod
+    def validate_keyed_state(control):
         """Check if the control has an animation curve attached
         Args:
             control:
@@ -90,13 +105,21 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
 
+        identity = [1.0, 0.0, 0.0, 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 1.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0]
+
         # lock all controllers in controls_SET
         controls = cmds.sets("controls_SET", query=True)
         for control in controls:
+            log.info("Repairing visibility")
             attr = "{}.visibility".format(control)
             locked = cmds.getAttr(attr, lock=True)
             if not locked:
-                print("Locking visibility for %s" % control)
+                log.info("Locking visibility for %s" % control)
                 cmds.setAttr(attr, lock=True)
 
-            continue
+            log.info("Repairing matrix")
+            if not cls.validate_transforms(control):
+                cmds.xform(control, matrix=identity, objectSpace=True)
