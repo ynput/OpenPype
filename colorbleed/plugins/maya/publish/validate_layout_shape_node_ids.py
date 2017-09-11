@@ -2,8 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
-
-import cbra.utils.maya.node_uuid as id_utils
+import colorbleed.maya.lib as lib
 
 
 def get_id_from_history(node):
@@ -22,7 +21,7 @@ def get_id_from_history(node):
     similar = cmds.ls(history, exactType=nodeType, long=True)
 
     for node in similar:
-        id = id_utils.get_id(node)
+        id = lib.get_id(node)
         if id:
             return id
 
@@ -76,7 +75,7 @@ class CopyUUIDsFromHistoryAction(pyblish.api.Action):
             mapping[shape] = id
 
         # Add the ids to the nodes
-        id_utils.add_ids(mapping)
+        # id_utils.add_ids(mapping)
         self.log.info("Generated ids on nodes: {0}".format(mapping.values()))
 
 
@@ -136,7 +135,7 @@ class ValidateLayoutShapeNodeIds(pyblish.api.InstancePlugin):
 
         invalid = []
         for node in non_referenced:
-            if not id_utils.get_id(node):
+            if not lib.get_id(node):
                 invalid.append(node)
 
         return invalid

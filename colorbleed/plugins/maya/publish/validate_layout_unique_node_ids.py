@@ -1,7 +1,6 @@
 import pyblish.api
 import colorbleed.api
-
-import cbra.utils.maya.node_uuid as id_utils
+import colorbleed.maya.lib as lib
 
 
 class ValidateLayoutUniqueNodeIds(pyblish.api.InstancePlugin):
@@ -28,7 +27,7 @@ class ValidateLayoutUniqueNodeIds(pyblish.api.InstancePlugin):
         from collections import defaultdict
         ids = defaultdict(list)
         for member in members:
-            id = id_utils.get_id(member)
+            id = lib.get_id(member)
             ids[id].append(member)
 
         # Skip those without IDs (if everything should have an ID that should

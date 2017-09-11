@@ -1,7 +1,6 @@
 import pyblish.api
 import colorbleed.api
-
-import cbra.utils.maya.node_uuid as id_utils
+import colorbleed.maya.lib as lib
 
 
 class ValidateLayoutNodeIds(pyblish.api.InstancePlugin):
@@ -29,7 +28,7 @@ class ValidateLayoutNodeIds(pyblish.api.InstancePlugin):
 
         invalid = []
         for node in non_referenced:
-            if not id_utils.get_id(node):
+            if not lib.get_id(node):
                 invalid.append(node)
 
         return invalid

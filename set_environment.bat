@@ -28,3 +28,6 @@ set PYTHONPATH=%CB_PIPELINE%\git\Qt.py;%PYTHONPATH%
 
 :: FFMPEG
 set FFMPEG_PATH=%CB_APP_SHARED%\ffmpeg\bin\ffmpeg.exe
+
+:: Latest tools - might be unstable
+set AVALON_EARLY_ADOPTER=1
