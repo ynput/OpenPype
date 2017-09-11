@@ -5,7 +5,11 @@ from colorbleed.maya import lib
 
 
 class ValidateNodeIDs(pyblish.api.InstancePlugin):
-    """Validate nodes have a Colorbleed Id
+    """Validate nodes have a Colorbleed Id.
+    
+    When IDs are missing from nodes *save your scene* and they should be 
+    automatically generated because IDs are created on non-referenced nodes 
+    in Maya upon scene save.
 
     """
 
