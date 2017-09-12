@@ -38,7 +38,7 @@ def massage_ma_file(path):
 class ExtractCameraMayaAscii(colorbleed.api.Extractor):
     """Extract a Camera as Maya Ascii.
 
-    This will create a duplicate of the camera that will be baked *with
+    This will create a duplicate of the camera that will be baked *with*
     substeps and handles for the required frames. This temporary duplicate
     will be published.
 

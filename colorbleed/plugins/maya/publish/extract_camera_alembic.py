@@ -14,9 +14,6 @@ class ExtractCameraAlembic(colorbleed.api.Extractor):
     The cameras gets baked to world space by default. Only when the instance's
     `bakeToWorldSpace` is set to False it will include its full hierarchy.
 
-    The extracted Maya ascii file gets "massaged" removing the uuid values
-    so they are valid for older versions of Fusion (e.g. 6.4)
-
     """
 
     label = "Camera (Alembic)"
