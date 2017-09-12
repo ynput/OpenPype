@@ -7,13 +7,6 @@
         "tooltip": "Incremental save with a specific format"
     },
     {
-        "type": "action",
-        "command": "$COLORBLEED_SCRIPTS\\animation\\save_scene_incremental.py",
-        "sourcetype": "file",
-        "title": "Version Up",
-        "tooltip": "Incremental save with a specific format"
-    },
-    {
         "type": "separator"
     },
     {
@@ -1039,69 +1032,49 @@
             {
                 "sourcetype": "file",
                 "command": "$COLORBLEED_SCRIPTS\\animation\\bakeSelectedToWorldSpace.py",
-                "tags": [
-                    "animation",
-                    "bake","selection", "worldspace.py"
-                ],
+                "tags": ["animation", "bake","selection", "worldspace.py"],
                 "title": "Bake Selected To Worldspace",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
                 "command": "$COLORBLEED_SCRIPTS\\animation\\timeStepper.py",
-                "tags": [
-                    "animation", "time","stepper"
-                ],
+                "tags": ["animation", "time","stepper"],
                 "title": "Time Stepper",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
                 "command": "$COLORBLEED_SCRIPTS\\animation\\capture_ui.py",
-                "tags": [
-                    "animation",
-                    "capture_ui.py"
-                ],
+                "tags": ["animation", "capture", "ui", "screen", "movie", "image"],
                 "title": "Capture UI",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
                 "command": "$COLORBLEED_SCRIPTS\\animation\\simplePlayblastUI.py",
-                "tags": [
-                    "animation",
-                    "simplePlayblastUI.py"
-                ],
+                "tags": ["animation", "simple", "playblast", "ui"],
                 "title": "Simple Playblast UI",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
                 "command": "$COLORBLEED_SCRIPTS\\animation\\tweenMachineUI.py",
-                "tags": [
-                    "animation",
-                    "tweenMachineUI.py"
-                ],
+                "tags": ["animation", "tween", "machine"],
                 "title": "Tween Machine UI",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
                 "command": "$COLORBLEED_SCRIPTS\\animation\\selectAllAnimationCurves.py",
-                "tags": [
-                    "animation",
-                    "selectAllAnimationCurves.py"
-                ],
+                "tags": ["animation", "select", "curves"],
                 "title": "Select All Animation Curves",
                 "type": "action"
             },
             {
                 "sourcetype": "file",
                 "command": "$COLORBLEED_SCRIPTS\\animation\\pathAnimation.py",
-                "tags": [
-                    "animation",
-                    "pathAnimation.py"
-                ],
+                "tags": ["animation", "path", "along"],
                 "title": "Path Animation",
                 "type": "action"
             },
@@ -1643,100 +1616,6 @@
                     "deleteGhostIntermediateObjects"
                 ],
                 "title": "Delete Ghost Intermediate Objects",
-                "tooltip": ""
-            }
-        ]
-    },
-    {
-        "type": "menu",
-        "title": "Projects",
-        "items": [
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "fifa"
-                ],
-                "title": "fifa",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "beakbuds"
-                ],
-                "title": "beakbuds",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "redeemer"
-                ],
-                "title": "redeemer",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "bjorn"
-                ],
-                "title": "bjorn",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "aldi"
-                ],
-                "title": "aldi",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "eneco"
-                ],
-                "title": "eneco",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "duurzame_verpakking"
-                ],
-                "title": "duurzame_verpakking",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "bunch"
-                ],
-                "title": "bunch",
                 "tooltip": ""
             }
         ]
