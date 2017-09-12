@@ -2,7 +2,7 @@ import sys
 import os
 import logging
 
-from avalon.vendor.Qt import QtWidgets, QtCore
+from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
 
 import maya.cmds as cmds
 
@@ -10,6 +10,15 @@ self = sys.modules[__name__]
 self._menu = "colorbleed"
 
 log = logging.getLogger(__name__)
+
+
+def _get_menu():
+    """Return the menu instance if it currently exists in Maya"""
+
+    app = QtWidgets.QApplication.instance()
+    widgets = dict((w.objectName(), w) for w in app.allWidgets())
+    menu = widgets.get(self._menu)
+    return menu
 
 
 def deferred():
@@ -37,12 +46,11 @@ def deferred():
 
 def uninstall():
 
-    log.info("Attempting to uninstall ..")
-    app = QtWidgets.QApplication.instance()
-    widgets = dict((w.objectName(), w) for w in app.allWidgets())
-    menu = widgets.get(self._menu)
+    menu = _get_menu()
 
     if menu:
+        log.info("Attempting to uninstall ..")
+
         try:
             menu.deleteLater()
             del menu
@@ -55,3 +63,12 @@ def install():
     uninstall()
     # Allow time for uninstallation to finish.
     cmds.evalDeferred(deferred)
+
+
+def popup():
+    """Pop-up the existing menu near the mouse cursor"""
+    menu = _get_menu()
+
+    cursor = QtGui.QCursor()
+    point = cursor.pos()
+    menu.exec_(point)
