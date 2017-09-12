@@ -7,13 +7,6 @@
         "tooltip": "Incremental save with a specific format"
     },
     {
-        "type": "action",
-        "command": "$COLORBLEED_SCRIPTS\\animation\\save_scene_incremental.py",
-        "sourcetype": "file",
-        "title": "Version Up",
-        "tooltip": "Incremental save with a specific format"
-    },
-    {
         "type": "separator"
     },
     {
@@ -1039,10 +1032,7 @@
             {
                 "sourcetype": "file",
                 "command": "$COLORBLEED_SCRIPTS\\animation\\bakeSelectedToWorldSpace.py",
-                "tags": [
-                    "animation",
-                    "bake","selection", "worldspace.py"
-                ],
+                "tags": ["animation", "bake","selection", "worldspace.py"],
                 "title": "Bake Selected To Worldspace",
                 "type": "action"
             },
@@ -1643,100 +1633,6 @@
                     "deleteGhostIntermediateObjects"
                 ],
                 "title": "Delete Ghost Intermediate Objects",
-                "tooltip": ""
-            }
-        ]
-    },
-    {
-        "type": "menu",
-        "title": "Projects",
-        "items": [
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "fifa"
-                ],
-                "title": "fifa",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "beakbuds"
-                ],
-                "title": "beakbuds",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "redeemer"
-                ],
-                "title": "redeemer",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "bjorn"
-                ],
-                "title": "bjorn",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "aldi"
-                ],
-                "title": "aldi",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "eneco"
-                ],
-                "title": "eneco",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "duurzame_verpakking"
-                ],
-                "title": "duurzame_verpakking",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "",
-                "sourcetype": "file",
-                "tags": [
-                    "projects",
-                    "bunch"
-                ],
-                "title": "bunch",
                 "tooltip": ""
             }
         ]
