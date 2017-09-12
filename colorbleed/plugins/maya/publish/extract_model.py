@@ -26,7 +26,6 @@ class ExtractModel(colorbleed.api.Extractor):
     label = "Model (Maya ASCII)"
     hosts = ["maya"]
     families = ["colorbleed.model"]
-    optional = True
 
     def process(self, instance):
 
