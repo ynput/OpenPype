@@ -604,6 +604,13 @@ def get_id_required_nodes(referenced_nodes=False):
         nodes (set): list of filtered nodes
     """
 
+    def _node_type_exists(node_type):
+        try:
+            cmds.nodeType(node_type, isTypeName=True)
+            return True
+        except RuntimeError:
+            return False
+
     # `readOnly` flag is obsolete as of Maya 2016 therefor we explicitly remove
     # default nodes and reference nodes
     camera_shapes = ["frontShape", "sideShape", "topShape", "perspShape"]
@@ -616,15 +623,17 @@ def get_id_required_nodes(referenced_nodes=False):
     ignore |= set(cmds.ls(long=True, defaultNodes=True))
     ignore |= set(cmds.ls(camera_shapes, long=True))
 
+    # Remove Turtle from the result of `cmds.ls` if Turtle is loaded
+    # TODO: This should be a less specific check for a single plug-in.
+    if _node_type_exists("ilrBakeLayer"):
+        ignore |= set(cmds.ls(type="ilrBakeLayer", long=True))
+
     # establish set of nodes to ignore
     types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface"]
 
     # We *always* ignore intermediate shapes, so we filter them out
     # directly
     nodes = cmds.ls(type=types, long=True, noIntermediate=True)
-
-    # Remove Turtle from the result of `cmds.ls`
-    nodes = [n for n in nodes if n not in cmds.ls(type="ilrBakeLayer")]
 
     # The items which need to pass the id to their parent
     # Add the collected transform to the nodes
