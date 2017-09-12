@@ -16,8 +16,8 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
 
     """
     label = "Alembic"
-    families = ["colorbleed.model", "colorbleed.pointcache"]
-    optional = True
+    families = ["colorbleed.model",
+                "colorbleed.pointcache"]
 
     def process(self, instance):
 

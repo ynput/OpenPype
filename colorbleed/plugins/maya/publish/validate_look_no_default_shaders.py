@@ -28,13 +28,29 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
     label = 'Look No Default Shaders'
     actions = [colorbleed.api.SelectInvalidAction]
 
+    def process(self, instance):
+        """Process all the nodes in the instance"""
+
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise RuntimeError("Invalid node relationships found: "
+                               "{0}".format(invalid))
+
     @classmethod
     def get_invalid(cls, instance):
+        disallowed = ["lambert1", "initialShadingGroup",
+                      "initialParticleSE", "particleCloud1"]
+        disallowed = set(disallowed)
 
-        disallowed = set(["lambert1",
-                          "initialShadingGroup",
-                          "initialParticleSE",
-                          "particleCloud1"])
+        # Check if there are any skinClusters present
+        # If so ensure nodes which are skinned
+        intermediate = []
+        skinclusters = cmds.ls(type="skinCluster")
+        cls.log.info("Found skinClusters, will skip original shapes")
+        if skinclusters:
+            intermediate += cmds.ls(intermediateObjects=True,
+                                    shapes=True,
+                                    long=True)
 
         invalid = set()
         for node in instance:
@@ -48,6 +64,8 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
             # Maya.
             if (cmds.objectType(node, isAType="surfaceShape") and
                     not cmds.ls(object_sets, type="shadingEngine")):
+                if node in intermediate:
+                    continue
                 cls.log.error("Detected shape without shading engine: "
                               "'{}'".format(node))
                 invalid.add(node)
@@ -64,11 +82,3 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
                 invalid.add(node)
 
         return list(invalid)
-
-    def process(self, instance):
-        """Process all the nodes in the instance"""
-
-        invalid = self.get_invalid(instance)
-        if invalid:
-            raise RuntimeError("Invalid node relationships found: "
-                               "{0}".format(invalid))

@@ -2,9 +2,8 @@ import maya.cmds as cmds
 
 import pyblish.api
 import colorbleed.api
-
-import cbra.lib
-import cbra.utils.maya.node_uuid as id_utils
+import colorbleed.maya.lib as lib
+import avalon.io as io
 
 
 class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
@@ -26,6 +25,17 @@ class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
     optional = True
 
     ignore_types = ("constraint",)
+
+    def process(self, instance):
+        """Process all meshes"""
+
+        print ">>>", instance.data
+
+        # Ensure all nodes have a cbId
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise RuntimeError("Nodes found with non-related "
+                               "asset IDs: {0}".format(invalid))
 
     @classmethod
     def get_pointcache_nodes(cls, instance):
@@ -57,49 +67,23 @@ class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-        # Get a full context from the instance context
-        context = instance.data['instanceContext']
-        item_path = context['itemPath']
-        context = cbra.lib.parse_context(item_path)
+        invalid_items = []
+
+        # get asset id
         nodes = cls.get_pointcache_nodes(instance)
-
-        def to_item(id):
-            """Split the item id part from a node id"""
-            return id.rsplit(":", 1)[0]
-
-        # Generate a fake id in the current context to retrieve the item
-        # id prefix that should match with ids on the nodes
-        fake_node = "__node__"
-        ids = id_utils.generate_ids(context, [fake_node])
-        id = ids[fake_node]
-        item_prefix = to_item(id)
-
-        # Parse the invalid
-        invalid = list()
-        invalid_items = set()
-        for member in nodes:
-            member_id = id_utils.get_id(member)
-
-            # skip nodes without ids
-            if not member_id:
-                continue
-
-            if not member_id.startswith(item_prefix):
-                invalid.append(member)
-                invalid_items.add(to_item(member_id))
+        for node in nodes:
+            node_id = lib.get_id(node)
+            if not node_id:
+                invalid_items.append(node)
 
         # Log invalid item ids
         if invalid_items:
             for item_id in sorted(invalid_items):
                 cls.log.warning("Found invalid item id: {0}".format(item_id))
 
-        return invalid
+        return invalid_items
 
-    def process(self, instance):
-        """Process all meshes"""
-
-        # Ensure all nodes have a cbId
-        invalid = self.get_invalid(instance)
-        if invalid:
-            raise RuntimeError("Nodes found with non-related "
-                               "asset IDs: {0}".format(invalid))
+    @staticmethod
+    def to_item(id):
+        """Split the item id part from a node id"""
+        return id.rsplit(":", 1)[0]

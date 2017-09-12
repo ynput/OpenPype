@@ -2,8 +2,9 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.lib as lib
 
-from cbra.utils.maya.node_uuid import get_id, add_ids
+# from cbra.utils.maya.node_uuid import add_ids
 
 
 def get_deformed_history_id_mapping(shapes):
@@ -33,7 +34,8 @@ def get_deformed_history_id_mapping(shapes):
     deformed_shapes = [x for x in deformed_shapes if not is_referenced(x)]
 
     # Shapes without id
-    deformed_shapes_without_id = [x for x in deformed_shapes if not get_id(x)]
+    deformed_shapes_without_id = [x for x in deformed_shapes
+                                  if not lib.get_id(x)]
 
     mapping = {}
     for shape in deformed_shapes_without_id:
@@ -45,7 +47,7 @@ def get_deformed_history_id_mapping(shapes):
             continue
 
         for history_shape in history_shapes:
-            id = get_id(history_shape)
+            id = lib.get_id(history_shape)
             if not id:
                 continue
 
@@ -81,11 +83,11 @@ class CopyUUIDsFromHistory(pyblish.api.Action):
             mapping = get_deformed_history_id_mapping(invalid)
 
             for destination, source in mapping.items():
-                ids_map[destination] = get_id(source)
+                ids_map[destination] = lib.get_id(source)
 
         if not ids_map:
             return
-        add_ids(ids_map)
+        self.log.info(ids_map)
 
 
 class ValidateLookDeformedShapes(pyblish.api.InstancePlugin):
