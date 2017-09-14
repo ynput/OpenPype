@@ -54,7 +54,7 @@ def _remove_from_paths(paths, keyword, stitch=False):
 def remove_googleapiclient():
     """Remove any paths which contain `googleclientapi`"""
 
-    keyword = "googleclientapi"
+    keyword = "googleapiclient"
     # remove from sys.path
     # _remove_from_paths(sys.path, keyword)
 
