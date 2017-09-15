@@ -942,8 +942,8 @@ def apply_shaders(relationships, shadernodes, nodes):
         if filtered_nodes:
             cmds.sets(filtered_nodes, forceElement=shading_engine[0])
         else:
-            log.debug("No nodes found for shading engine "
-                      "'{0}'".format(shading_engine[0]))
+            log.warning("No nodes found for shading engine "
+                        "'{0}'".format(shading_engine[0]))
     # endregion
 
     apply_attributes(attributes, ns_nodes_by_id)
