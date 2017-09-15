@@ -787,6 +787,22 @@
             },
             {
                 "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\pyblish\\lighting\\set_filename_prefix.py",
+                "sourcetype": "file",
+                "tags": [
+                    "shading",
+                    "lookdev",
+                    "assign",
+                    "shaders",
+                    "prefix",
+                    "filename",
+                    "render"
+                ],
+                "title": "Set filename prefix",
+                "tooltip": "Set the render file name prefix."
+            },
+            {
+                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\shading\\autoLookdevAssignment.py",
                 "sourcetype": "file",
                 "tags": [
