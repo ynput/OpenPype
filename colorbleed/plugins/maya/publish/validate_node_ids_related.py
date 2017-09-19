@@ -7,7 +7,7 @@ from colorbleed.maya import lib
 
 
 class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
-    """Validate nodes have a related Colorbleed Id to the instance asset
+    """Validate nodes have a related Colorbleed Id to the instance.data[asset]
 
     """
 

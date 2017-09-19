@@ -45,8 +45,7 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
         relationships = instance.data["lookData"]["relationships"]
         invalid = []
 
-        layer = instance.data.get("renderlayer", "defaultRenderLayer")
-        with context.renderlayer(layer):
+        with context.renderlayer("defaultRenderLayer"):
             for node in instance:
                 # get the connected objectSets of the node
                 sets = lib.get_related_sets(node)
@@ -69,7 +68,8 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
                         # isn't in it anyway
                         continue
 
-                    member_nodes = [member['name'] for member in data['members']]
+                    member_nodes = [member['name'] for member in
+                                    data['members']]
                     if node not in member_nodes:
                         # The node is not found in the collected set
                         # relationships

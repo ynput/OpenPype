@@ -828,7 +828,6 @@ def assign_look_by_version(nodes, version_id):
     else:
         log.info("Reusing existing lookdev '{}'".format(reference_node))
         shader_nodes = cmds.referenceQuery(reference_node, nodes=True)
-        namespace = cmds.referenceQuery(reference_node, namespace=True)
 
     # Assign relationships
     with open(shader_relation, "r") as f:

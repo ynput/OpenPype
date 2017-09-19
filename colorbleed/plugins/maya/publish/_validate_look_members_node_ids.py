@@ -5,7 +5,7 @@ import colorbleed.api
 class ValidateLookMembers(pyblish.api.InstancePlugin):
     """Validate look members have colorbleed id attributes
 
-    Loops up all relationship members and check if all the members have the
+    Looks up all relationship members and check if all the members have the
     cbId (colorbleed id) and return all the nodes who fail the test.
 
     """
