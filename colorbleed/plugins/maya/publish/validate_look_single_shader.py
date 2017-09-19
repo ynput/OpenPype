@@ -5,14 +5,9 @@ import colorbleed.api
 
 
 class ValidateSingleShader(pyblish.api.InstancePlugin):
-    """Validate default shaders in the scene have their default connections.
+    """Validate all nurbsSurfaces and meshes have exactly one shader assigned.
 
-    For example the lambert1 could potentially be disconnected from the
-    initialShadingGroup. As such it's not lambert1 that will be identified
-    as the default shader which can have unpredictable results.
-
-    To fix the default connections need to be made again. See the logs for
-    more details on which connections are missing.
+    This will error if a shape has no shaders or more than one shader.
 
     """
 
@@ -26,36 +21,32 @@ class ValidateSingleShader(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found shapes which have multiple "
-                               "shadingEngines connected."
+            raise RuntimeError("Found shapes which don't have a single shader "
+                               "assigned: "
                                "\n{}".format(invalid))
 
     @classmethod
     def get_invalid(cls, instance):
-        invalid = []
-        shape_types = ["numrbsCurve", "nurbsSurface", "mesh"]
 
         # Get all shapes from the instance
-        shapes = set()
-        for node in instance[:]:
-
-            nodetype = cmds.nodeType(node)
-            if nodetype in shape_types:
-                shapes.add(node)
-
-            elif nodetype == "transform":
-                shape = cmds.listRelatives(node, children=True,
-                                           type="shape", fullPath=True)
-                if not shape:
-                    continue
-                shapes.add(shape[0])
+        shapes = cmds.ls(instance, type=["nurbsSurface", "mesh"], long=True)
 
         # Check the number of connected shadingEngines per shape
+        no_shaders = []
+        more_than_one_shaders = []
         for shape in shapes:
             shading_engines = cmds.listConnections(shape,
                                                    destination=True,
                                                    type="shadingEngine") or []
-            if len(shading_engines) > 1:
-                invalid.append(shape)
+            if not shading_engines:
+                no_shaders.append(shape)
+            elif len(shading_engines) > 1:
+                more_than_one_shaders.append(shape)
 
-        return invalid
+        if no_shaders:
+            cls.log.error("No shaders found on: {}".format(no_shaders))
+        if more_than_one_shaders:
+            cls.log.error("More than one shader found on: "
+                          "{}".format(more_than_one_shaders))
+
+        return no_shaders + more_than_one_shaders
