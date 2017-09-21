@@ -7,7 +7,9 @@ from avalon import api
 class AbcLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.animation", "colorbleed.camera"]
+    families = ["colorbleed.animation",
+                "colorbleed.camera",
+                "colorbleed.pointcache"]
     representations = ["abc"]
 
     label = "Reference animation"
