@@ -1,5 +1,5 @@
 from maya import cmds
-
+import pprint
 import pyblish.api
 import colorbleed.maya.lib as lib
 from cb.utils.maya import context, shaders
@@ -69,9 +69,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Collect the Look in the instance with the correct layer settings"""
 
-        layer = instance.data.get("renderlayer", "defaultRenderLayer")
-        with context.renderlayer(layer):
-            self.log.info("Checking out layer: {0}".format(layer))
+        with context.renderlayer("defaultRenderLayer"):
             self.collect(instance)
 
     def collect(self, instance):
@@ -84,7 +82,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Discover related object sets
         self.log.info("Gathering sets..")
-        sets = self.gather_sets(cmds.ls(instance, shapes=True))
+        sets = self.gather_sets(instance)
 
         # Lookup with absolute names (from root namespace)
         instance_lookup = set([str(x) for x in cmds.ls(instance, long=True)])
@@ -111,7 +109,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         attributes = self.collect_attributes_changed(instance)
         looksets = cmds.ls(sets.keys(), long=True)
 
-        self.log.info("Found the following sets: {}".format(looksets))
+        self.log.info("Found the following sets:\n{}".format(looksets))
 
         # Store data on the instance
         instance.data["lookData"] = {"attributes": attributes,

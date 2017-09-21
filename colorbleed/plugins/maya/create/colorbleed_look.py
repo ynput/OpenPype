@@ -6,8 +6,8 @@ from colorbleed.maya import lib
 class CreateLook(avalon.maya.Creator):
     """Polygonal geometry for animation"""
 
-    name = "lookDefault"
-    label = "Look Dev"
+    name = "look"
+    label = "Look"
     family = "colorbleed.lookdev"
 
     def __init__(self, *args, **kwargs):
