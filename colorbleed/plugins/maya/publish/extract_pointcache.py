@@ -7,7 +7,7 @@ import colorbleed.api
 from colorbleed.maya.lib import extract_alembic
 
 
-class ExtractColorbleedAnimation(colorbleed.api.Extractor):
+class ExtractColorbleedPointcache(colorbleed.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals are preserved, but nothing more,
@@ -21,7 +21,7 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
 
     def process(self, instance):
 
-        nodes = instance.data['setMembers']
+        nodes = instance[:]
 
         # Collect the start and end including handles
         start = instance.data["startFrame"]

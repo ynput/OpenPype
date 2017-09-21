@@ -26,6 +26,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     families = ["colorbleed.model",
                 "colorbleed.rig",
                 "colorbleed.animation",
+                "colorbleed.pointcache",
                 "colorbleed.camera",
                 "colorbleed.lookdev",
                 "colorbleed.texture",
