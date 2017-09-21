@@ -59,7 +59,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             members = cmds.sets(objset, query=True)
             if members is None:
-                self.log.info("Skipped following Set: \"%s\" " % objset)
+                self.log.info("Skipped empty Set: \"%s\" " % objset)
                 continue
 
             if not cmds.attributeQuery("id", node=objset, exists=True):
