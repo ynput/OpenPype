@@ -551,6 +551,11 @@ def extract_alembic(file,
             raise TypeError("Alembic option unsupported type: "
                             "{0} (expected {1})".format(value, valid_types))
 
+    # The `writeCreases` argument was changed to `autoSubd` in Maya 2018+
+    maya_version = int(cmds.about(version=True))
+    if maya_version >= 2018:
+        options['autoSubd'] = options.pop('writeCreases', False)
+
     # Format the job string from options
     job_args = list()
     for key, value in options.items():
@@ -558,7 +563,9 @@ def extract_alembic(file,
             for entry in value:
                 job_args.append("-{} {}".format(key, entry))
         elif isinstance(value, bool):
-            job_args.append("-{0}".format(key))
+            # Add only when state is set to True
+            if value:
+                job_args.append("-{0}".format(key))
         else:
             job_args.append("-{0} {1}".format(key, value))
 
