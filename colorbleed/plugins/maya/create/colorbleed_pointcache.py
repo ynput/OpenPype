@@ -1,8 +1,7 @@
 from collections import OrderedDict
 
-from maya import cmds
-
 import avalon.maya
+from colorbleed.maya import lib
 
 
 class CreatePointCache(avalon.maya.Creator):
@@ -18,15 +17,9 @@ class CreatePointCache(avalon.maya.Creator):
         # create an ordered dict with the existing data first
         data = OrderedDict(**self.data)
 
-        # get scene values as defaults
-        start = cmds.playbackOptions(query=True, animationStartTime=True)
-        end = cmds.playbackOptions(query=True, animationEndTime=True)
-
-        # build attributes
-        data["startFrame"] = start
-        data["endFrame"] = end
-        data["handles"] = 1
-        data["step"] = 1.0
+        # get basic animation data : start / end / handles / steps
+        for key, value in lib.collect_animation_data().items():
+            data[key] = value
 
         # Write vertex colors with the geometry.
         data["writeColorSets"] = False

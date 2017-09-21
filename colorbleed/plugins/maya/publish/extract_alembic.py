@@ -1,5 +1,4 @@
 import os
-import copy
 
 from maya import cmds
 
@@ -8,54 +7,55 @@ import colorbleed.api
 from colorbleed.maya.lib import extract_alembic
 
 
-class ExtractColorbleedAlembic(colorbleed.api.Extractor):
-    """Extract Alembic Cache
+class ExtractColorbleedAnimation(colorbleed.api.Extractor):
+    """Produce an alembic of just point positions and normals.
 
-    This extracts an Alembic cache using the `-selection` flag to minimize
-    the extracted content to solely what was Collected into the instance.
+    Positions and normals are preserved, but nothing more,
+    for plain and predictable point caches.
 
     """
-    label = "Alembic"
-    families = ["colorbleed.model",
-                "colorbleed.pointcache"]
+
+    label = "Extract Pointcache"
+    hosts = ["maya"]
+    families = ["colorbleed.pointcache"]
 
     def process(self, instance):
 
+        nodes = instance.data['setMembers']
+
+        # Collect the start and end including handles
+        start = instance.data["startFrame"]
+        end = instance.data["endFrame"]
+        handles = instance.data.get("handles", 0)
+        if handles:
+            start -= handles
+            end += handles
+
+        self.log.info("Extracting animation..")
+        dirname = self.staging_dir(instance)
+
+        self.log.info("nodes: %s" % str(nodes))
+
         parent_dir = self.staging_dir(instance)
-        filename = "%s.abc" % instance.name
+        filename = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, filename)
 
-        attrPrefix = instance.data.get("attrPrefix", [])
-        attrPrefix.append("cb")
-
-        options = copy.deepcopy(instance.data)
-        options['attrPrefix'] = attrPrefix
-
-        # Ensure visibility keys are written
-        options['writeVisibility'] = True
-
-        # Write creases
-        options['writeCreases'] = True
-
-        # Ensure UVs are written
-        options['uvWrite'] = True
-
-        options['selection'] = True
-        options["attr"] = ["cbId"]
-
-        # force elect items to ensure all items get exported by Alembic
-        members = instance.data("setMembers")
-
-        cmds.select(members)
         with avalon.maya.suspended_refresh():
             with avalon.maya.maintained_selection():
-                nodes = instance[:]
-                cmds.select(nodes, replace=True, noExpand=True)
-                extract_alembic(file=path, **options)
+                cmds.select(nodes, noExpand=True)
+                extract_alembic(file=path,
+                                startFrame=start,
+                                endFrame=end,
+                                **{"step": instance.data.get("step", 1.0),
+                                   "attr": ["cbId"],
+                                   "writeVisibility": True,
+                                   "writeCreases": True,
+                                   "uvWrite": True,
+                                   "selection": True})
 
         if "files" not in instance.data:
             instance.data["files"] = list()
 
         instance.data["files"].append(filename)
 
-        cmds.select(clear=True)
+        self.log.info("Extracted {} to {}".format(instance, dirname))

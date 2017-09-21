@@ -6,7 +6,7 @@ import colorbleed.maya.lib as lib
 import avalon.io as io
 
 
-class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
+class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
     """Validate rig out_SET nodes have related ids to current context
 
     An ID is 'related' if its built in the current Item.
@@ -18,9 +18,9 @@ class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.rigpointcache', 'colorbleed.pointcache']
+    families = ['colorbleed.animation']
     hosts = ['maya']
-    label = 'Rig Pointcache Related Node Ids'
+    label = 'Animation Out Set Related Node Ids'
     actions = [colorbleed.api.SelectInvalidAction]
     optional = True
 
@@ -28,8 +28,6 @@ class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         """Process all meshes"""
-
-        print ">>>", instance.data
 
         # Ensure all nodes have a cbId
         invalid = self.get_invalid(instance)
@@ -75,6 +73,8 @@ class ValidateRigPointcacheRelatedNodeIds(pyblish.api.InstancePlugin):
             node_id = lib.get_id(node)
             if not node_id:
                 invalid_items.append(node)
+
+        # TODO: Should we check whether the ids are related to the rig's asset?
 
         # Log invalid item ids
         if invalid_items:
