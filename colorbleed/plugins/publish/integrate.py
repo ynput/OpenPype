@@ -31,7 +31,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "colorbleed.texture",
                 "colorbleed.historyLookdev",
                 "colorbleed.group",
-                "colorbleed.imagesequence"]
+                "colorbleed.imagesequence",
+                "colorbleed.mayaAscii"]
 
     def process(self, instance):
 

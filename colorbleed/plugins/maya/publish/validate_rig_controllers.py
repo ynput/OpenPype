@@ -10,7 +10,7 @@ log = logging.getLogger("Rig Controllers")
 
 class ValidateRigControllers(pyblish.api.InstancePlugin):
     """Check if the controllers have the transformation attributes set to
-    default values, locked vibisility attributes and are not keyed
+    default values, locked visibility attributes and are not keyed
     """
     order = colorbleed.api.ValidateContentsOrder + 0.05
     label = "Rig Controllers"
@@ -34,8 +34,9 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         not_locked = list()
         is_offset = list()
 
-        controls = cmds.sets("controls_SET", query=True)
-        assert controls, "Must have controls in rig controls_SET"
+        controllers_sets = [i for i in instance if i == "controls_SET"]
+        controls = cmds.sets(controllers_sets, query=True)
+        assert controls, "Must have 'controls_SET' in rig instance"
 
         for control in controls:
             valid_keyed = cls.validate_keyed_state(control)
@@ -54,7 +55,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
 
         if is_keyed:
             cls.log.error("No controls can be keyes. Failed :\n"
-                           "%s" % is_keyed)
+                          "%s" % is_keyed)
             error = True
 
         if is_offset:
@@ -64,8 +65,8 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
 
         if not_locked:
             cls.log.error("All controls must have visibility "
-                           "attribute locked. Failed :\n"
-                           "%s" % not_locked)
+                          "attribute locked. Failed :\n"
+                          "%s" % not_locked)
             error = True
 
         if error:
