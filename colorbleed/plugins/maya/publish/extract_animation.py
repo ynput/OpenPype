@@ -45,8 +45,6 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
         self.log.info("Extracting animation..")
         dirname = self.staging_dir(instance)
 
-        self.log.info("nodes: %s" % str(nodes))
-
         parent_dir = self.staging_dir(instance)
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, filename)
