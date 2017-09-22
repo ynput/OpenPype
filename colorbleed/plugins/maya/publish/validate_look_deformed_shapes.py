@@ -104,7 +104,7 @@ class ValidateLookDeformedShapes(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.lookdev']
+    families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look deformed shapes'
     actions = [colorbleed.api.SelectInvalidAction, CopyUUIDsFromHistory]

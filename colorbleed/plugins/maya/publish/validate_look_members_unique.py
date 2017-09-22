@@ -22,7 +22,7 @@ class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
     order = colorbleed.api.ValidatePipelineOrder
     label = 'Look members unique'
     hosts = ['maya']
-    families = ['colorbleed.lookdev']
+    families = ['colorbleed.look']
 
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.GenerateUUIDsOnInvalidAction]

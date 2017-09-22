@@ -883,7 +883,7 @@ def assign_look(nodes, subset="lookDefault"):
         version = io.find_one({"parent": subset_data['_id'],
                                "type": "version",
                                "data.families":
-                                   {"$in": ["colorbleed.lookdev"]}
+                                   {"$in": ["colorbleed.look"]}
                                },
                               sort=[("name", -1)],
                               projection={"_id": True})

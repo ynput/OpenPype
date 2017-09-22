@@ -17,7 +17,7 @@ class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.lookdev']
+    families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look Default Shader Connections'
 

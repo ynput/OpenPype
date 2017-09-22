@@ -10,7 +10,7 @@ import colorbleed.api
 class ValidateFileNameConvention(pyblish.api.InstancePlugin):
 
     label = ""
-    families = ["colorbleed.lookdev"]
+    families = ["colorbleed.look"]
     host = ["maya"]
     optional = True
 

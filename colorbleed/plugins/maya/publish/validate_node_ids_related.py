@@ -15,7 +15,7 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
     label = 'Node Ids Related (ID)'
     hosts = ['maya']
     families = ["colorbleed.model",
-                "colorbleed.lookdev",
+                "colorbleed.look",
                 "colorbleed.rig"]
 
     actions = [colorbleed.api.SelectInvalidAction,
