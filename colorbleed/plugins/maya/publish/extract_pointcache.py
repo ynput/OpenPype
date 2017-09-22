@@ -7,7 +7,7 @@ import colorbleed.api
 from colorbleed.maya.lib import extract_alembic
 
 
-class ExtractColorbleedPointcache(colorbleed.api.Extractor):
+class ExtractColorbleedAlembic(colorbleed.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals are preserved, but nothing more,
@@ -17,7 +17,8 @@ class ExtractColorbleedPointcache(colorbleed.api.Extractor):
 
     label = "Extract Pointcache"
     hosts = ["maya"]
-    families = ["colorbleed.pointcache"]
+    families = ["colorbleed.pointcache",
+                "colorbleed.model"]
 
     def process(self, instance):
 
