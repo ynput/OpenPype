@@ -8,7 +8,7 @@ class CreateLook(avalon.maya.Creator):
 
     name = "look"
     label = "Look"
-    family = "colorbleed.lookdev"
+    family = "colorbleed.look"
 
     def __init__(self, *args, **kwargs):
         super(CreateLook, self).__init__(*args, **kwargs)
