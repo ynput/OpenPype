@@ -7,6 +7,13 @@
         "tooltip": "Incremental save with a specific format"
     },
     {
+        "type": "action",
+        "command": "$COLORBLEED_SCRIPTS\\avalon\\launch_manager.py",
+        "sourcetype": "file",
+        "title": "Project Manager",
+        "tooltip": "Add assets to the project"
+    },
+    {
         "type": "separator"
     },
     {
