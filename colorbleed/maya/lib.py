@@ -880,17 +880,17 @@ def assign_look(nodes, subset="lookDefault"):
             continue
 
         # get last version
+        # with backwards compatibility
         version = io.find_one({"parent": subset_data['_id'],
                                "type": "version",
                                "data.families":
                                    {"$in": ["colorbleed.look"]}
                                },
                               sort=[("name", -1)],
-                              projection={"_id": True})
+                              projection={"_id": True, "name": True})
 
-        log.debug("Assigning look '{}' <{}> to nodes: {}".format(subset,
-                                                                 version,
-                                                                 asset_nodes))
+        log.debug("Assigning look '{}' <v{:03d}>".format(subset,
+                                                         version["name"]))
 
         assign_look_by_version(asset_nodes, version['_id'])
 
