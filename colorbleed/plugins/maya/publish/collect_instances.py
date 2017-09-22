@@ -46,7 +46,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                       "colorbleed.animation",
                       "colorbleed.camera",
                       "colorbleed.texture",
-                      "colorbleed.lookdev",
+                      "colorbleed.look",
                       "colorbleed.historyLookdev",
                       "colorbleed.group"]
 

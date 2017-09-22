@@ -17,7 +17,7 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
     label = 'Instance Nodes Have ID'
     hosts = ['maya']
     families = ["colorbleed.model",
-                "colorbleed.lookdev",
+                "colorbleed.look",
                 "colorbleed.rig"]
 
     actions = [colorbleed.api.SelectInvalidAction,

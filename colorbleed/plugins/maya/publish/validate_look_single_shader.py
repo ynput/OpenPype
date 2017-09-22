@@ -12,7 +12,7 @@ class ValidateSingleShader(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.lookdev']
+    families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look Single Shader Per Shape'
 

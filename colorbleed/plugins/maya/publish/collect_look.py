@@ -62,7 +62,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.4
-    families = ["colorbleed.lookdev"]
+    families = ["colorbleed.look"]
     label = "Collect Look"
     hosts = ["maya"]
 
