@@ -15,7 +15,7 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
 
     """
 
-    label = "Extract Pointcache"
+    label = "Extract Pointcache (Alembic)"
     hosts = ["maya"]
     families = ["colorbleed.pointcache",
                 "colorbleed.model"]
