@@ -7,7 +7,7 @@ from avalon import api
 class LookLoader(api.Loader):
     """Specific loader for lookdev"""
 
-    families = ["colorbleed.lookdev"]
+    families = ["colorbleed.look"]
     representations = ["ma"]
 
     label = "Reference look"

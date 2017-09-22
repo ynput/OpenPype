@@ -15,7 +15,7 @@ class ValidateNonDuplicateInstanceMembers(pyblish.api.InstancePlugin):
     label = 'Non Duplicate Instance Members (ID)'
     hosts = ['maya']
     families = ["colorbleed.model",
-                "colorbleed.lookdev",
+                "colorbleed.look",
                 "colorbleed.rig"]
 
     actions = [colorbleed.api.SelectInvalidAction,

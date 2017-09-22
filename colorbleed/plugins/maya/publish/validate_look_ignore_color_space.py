@@ -18,7 +18,7 @@ class ValidateLookIgnoreColorSpace(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.lookdev']
+    families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look RAW Ignore color space'
     actions = [colorbleed.api.SelectInvalidAction]
