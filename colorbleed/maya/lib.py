@@ -2,6 +2,8 @@
 
 import re
 import os
+import uuid
+
 import bson
 import json
 import logging
@@ -675,6 +677,30 @@ def get_id(node):
         return
 
     return cmds.getAttr("{}.cbId".format(node))
+
+
+def set_id(asset_id, node):
+    """Add cbId to `node` unless one already exists.
+
+    Args:
+        asset_id (str): the unique asset code from the database
+        node (str): the node to add the "cbId" on
+
+    Returns:
+        None
+    """
+
+    attr = "{0}.cbId".format(node)
+    if not cmds.attributeQuery("cbId", node=node, exists=True):
+        cmds.addAttr(node, longName="cbId", dataType="string")
+        _, uid = str(uuid.uuid4()).rsplit("-", 1)
+        cb_uid = "{}:{}".format(asset_id, uid)
+        cmds.setAttr(attr, cb_uid, type="string")
+
+
+def remove_id(node):
+    if cmds.attributeQuery("cbId", node=node, exists=True):
+        cmds.deleteAttr("{}.cbId".format(node))
 
 
 def get_representation_file(representation, template=TEMPLATE):
