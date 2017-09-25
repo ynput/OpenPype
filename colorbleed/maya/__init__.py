@@ -75,6 +75,7 @@ def install():
 
     # Add any needed plugins
     for plugin in LOAD_AT_START:
+        print "Loading %s" % plugin
         if cmds.pluginInfo(plugin, query=True, loaded=True):
             continue
         cmds.loadPlugin(plugin, quiet=True)
