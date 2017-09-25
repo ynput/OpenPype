@@ -47,7 +47,6 @@ def deferred():
 def uninstall():
 
     menu = _get_menu()
-
     if menu:
         log.info("Attempting to uninstall ..")
 
@@ -59,6 +58,10 @@ def uninstall():
 
 
 def install():
+
+    if cmds.about(batch=True):
+        print("Skipping colorbleed.menu initialization in batch mode..")
+        return
 
     uninstall()
     # Allow time for uninstallation to finish.
