@@ -1547,6 +1547,14 @@
             },
             {
                 "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\cleanup\\update_asset_id.py",
+                "sourcetype": "file",
+                "tags":["cleanup", "update", "database", "asset", "id"],
+                "title": "Update Asset ID",
+                "tooltip": "Will replace the Colorbleed ID with a new one (asset ID : Unique number)"
+            },
+            {
+                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\cleanup\\removeUnknownNodes.py",
                 "sourcetype": "file",
                 "tags": [
@@ -1744,13 +1752,13 @@
             },
             {
                 "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\cleanup\\",
+                "command": "$COLORBLEED_SCRIPTS\\others\\instanceLeafSmartTransform.py",
                 "sourcetype": "file",
                 "tags": ["others", "instance","leaf", "smart", "transform"],
                 "title": "Instance Leaf Smart Transform",
                 "tooltip": ""
             },
-                        {
+            {
                 "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\others\\instanceSmartTransform.py",
                 "sourcetype": "file",
