@@ -1,4 +1,5 @@
 import os
+import logging
 
 from maya import cmds
 
@@ -9,6 +10,8 @@ from pyblish import api as pyblish
 from . import menu
 from . import lib
 
+log = logging.getLogger("colorbleed.maya")
+
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
@@ -17,7 +20,7 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "maya", "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "maya", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "maya", "create")
 
-LOAD_AT_START = ["AbcImport", "AbcExport"]
+LOAD_AT_START = ["AbcImport", "AbcExport", "mtoa"]
 
 # This is a temporary solution with the http.py clash with six.py
 # Maya has added paths to the PYTHONPATH which are redundant as
@@ -75,11 +78,12 @@ def install():
 
     # Add any needed plugins
     for plugin in LOAD_AT_START:
+        log.info("Loading %s" % plugin)
         if cmds.pluginInfo(plugin, query=True, loaded=True):
             continue
         cmds.loadPlugin(plugin, quiet=True)
 
-    print("Installing callbacks ... ")
+    log.info("Installing callbacks ... ")
     avalon.on("init", on_init)
     avalon.on("new", on_new)
     avalon.on("save", on_save)
