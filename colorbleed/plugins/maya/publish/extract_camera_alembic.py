@@ -56,6 +56,7 @@ class ExtractCameraAlembic(colorbleed.api.Extractor):
             job_str += ' -attrPrefix cb'
             job_str += ' -frameRange {0} {1} '.format(framerange[0] - handles,
                                                       framerange[1] + handles)
+            job_str += ' -step {0} '.format(step)
 
             if bake_to_worldspace:
                 transform = cmds.listRelatives(camera,
@@ -64,7 +65,6 @@ class ExtractCameraAlembic(colorbleed.api.Extractor):
                 job_str += ' -worldSpace -root {0}'.format(transform)
 
             job_str += ' -file "{0}"'.format(path)
-            job_str += ' -step {0} '.format(step)
 
             with context.evaluation("off"):
                 with context.no_refresh():
