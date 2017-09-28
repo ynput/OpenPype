@@ -18,6 +18,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     label = "Validate Frame Range"
     order = colorbleed.api.ValidateContentsOrder
     families = ["colorbleed.animation",
+                "colorbleed.pointcache",
+                "colorbleed.camera",
                 "colorbleed.render"]
 
     def process(self, instance):
