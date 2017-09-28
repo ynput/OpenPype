@@ -25,6 +25,3 @@ class CollectMayaWorkspace(pyblish.api.ContextPlugin):
         normalised = os.path.normpath(workspace)
 
         context.set_data('workspaceDir', value=normalised)
-
-        # For backwards compatibility
-        context.set_data('workspace_dir', value=normalised)
