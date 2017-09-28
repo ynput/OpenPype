@@ -45,8 +45,8 @@ def get_errored_plugins_from_data(context):
 class RepairAction(pyblish.api.Action):
     """Repairs the action
 
-    To retrieve the invalid nodes this assumes a static `repair(instance)`
-    method is available on the plugin.
+    To process the repairing this requires a static `repair(instance)` method 
+    is available on the plugin.
 
     """
     label = "Repair"
@@ -71,8 +71,8 @@ class RepairAction(pyblish.api.Action):
 class RepairContextAction(pyblish.api.Action):
     """Repairs the action
 
-    To retrieve the invalid nodes this assumes a static `repair(instance)`
-    method is available on the plugin.
+    To process the repairing this requires a static `repair(instance)` method 
+    is available on the plugin.
 
     """
     label = "Repair Context"

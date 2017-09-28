@@ -60,7 +60,7 @@ def get_deformed_history_id_mapping(shapes):
 class CopyUUIDsFromHistory(pyblish.api.Action):
     """Repairs the action
 
-    To retrieve the invalid nodes this assumes a static `repair(instance)`
+    To retrieve the invalid nodes this assumes a static `get_invalid(instance)`
     method is available on the plugin.
 
     """
