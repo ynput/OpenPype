@@ -23,7 +23,7 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidateContentsOrder + 0.01
-    families = ['colorbleed.lookdev']
+    families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look No Default Shaders'
     actions = [colorbleed.api.SelectInvalidAction]

@@ -11,7 +11,7 @@ class ValidateLookMembers(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidatePipelineOrder
-    families = ['colorbleed.lookdev']
+    families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look Members (ID)'
     actions = [colorbleed.api.SelectInvalidAction,

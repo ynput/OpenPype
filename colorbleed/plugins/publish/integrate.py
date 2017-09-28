@@ -28,7 +28,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "colorbleed.animation",
                 "colorbleed.pointcache",
                 "colorbleed.camera",
-                "colorbleed.lookdev",
+                "colorbleed.look",
                 "colorbleed.texture",
                 "colorbleed.historyLookdev",
                 "colorbleed.group",

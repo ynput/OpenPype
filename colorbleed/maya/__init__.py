@@ -1,5 +1,5 @@
 import os
-import uuid
+import logging
 
 from maya import cmds
 
@@ -10,6 +10,8 @@ from pyblish import api as pyblish
 from . import menu
 from . import lib
 
+log = logging.getLogger("colorbleed.maya")
+
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
@@ -18,6 +20,7 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "maya", "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "maya", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "maya", "create")
 
+LOAD_AT_START = ["AbcImport", "AbcExport", "mtoa"]
 
 # This is a temporary solution with the http.py clash with six.py
 # Maya has added paths to the PYTHONPATH which are redundant as
@@ -73,7 +76,14 @@ def install():
 
     menu.install()
 
-    print("Installing callbacks ... ")
+    # Add any needed plugins
+    for plugin in LOAD_AT_START:
+        log.info("Loading %s" % plugin)
+        if cmds.pluginInfo(plugin, query=True, loaded=True):
+            continue
+        cmds.loadPlugin(plugin, quiet=True)
+
+    log.info("Installing callbacks ... ")
     avalon.on("init", on_init)
     avalon.on("new", on_new)
     avalon.on("save", on_save)
@@ -88,31 +98,6 @@ def uninstall():
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
 
     menu.uninstall()
-
-
-def _set_uuid(asset_id, node):
-    """Add cbId to `node`
-    Unless one already exists.
-    """
-
-    attr = "{0}.cbId".format(node)
-    if not cmds.attributeQuery("cbId", node=node, exists=True):
-        cmds.addAttr(node, longName="cbId", dataType="string")
-        _, uid = str(uuid.uuid4()).rsplit("-", 1)
-        cb_uid = "{}:{}".format(asset_id, uid)
-
-        cmds.setAttr(attr, cb_uid, type="string")
-
-
-def _copy_uuid(source, target):
-
-    source_attr = "{0}.cbId".format(source)
-    target_attr = "{0}.cbId".format(target)
-    if not cmds.attributeQuery("cbId", node=target, exists=True):
-        cmds.addAttr(target, longName="cbId", dataType="string")
-
-    attribute_value = cmds.getAttr(source_attr)
-    cmds.setAttr(target_attr, attribute_value, type="string")
 
 
 def on_init(_):
@@ -149,6 +134,5 @@ def on_save(_):
                            projection={"_id": True})
 
     # generate the ids
-
     for node in nodes:
-        _set_uuid(str(asset_id["_id"]), node)
+        lib.set_id(str(asset_id["_id"]), node)

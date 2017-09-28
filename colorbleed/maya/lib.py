@@ -2,6 +2,8 @@
 
 import re
 import os
+import uuid
+
 import bson
 import json
 import logging
@@ -677,6 +679,30 @@ def get_id(node):
     return cmds.getAttr("{}.cbId".format(node))
 
 
+def set_id(asset_id, node):
+    """Add cbId to `node` unless one already exists.
+
+    Args:
+        asset_id (str): the unique asset code from the database
+        node (str): the node to add the "cbId" on
+
+    Returns:
+        None
+    """
+
+    attr = "{0}.cbId".format(node)
+    if not cmds.attributeQuery("cbId", node=node, exists=True):
+        cmds.addAttr(node, longName="cbId", dataType="string")
+        _, uid = str(uuid.uuid4()).rsplit("-", 1)
+        cb_uid = "{}:{}".format(asset_id, uid)
+        cmds.setAttr(attr, cb_uid, type="string")
+
+
+def remove_id(node):
+    if cmds.attributeQuery("cbId", node=node, exists=True):
+        cmds.deleteAttr("{}.cbId".format(node))
+
+
 def get_representation_file(representation, template=TEMPLATE):
     """
     Rebuild the filepath of the representation's context
@@ -880,17 +906,17 @@ def assign_look(nodes, subset="lookDefault"):
             continue
 
         # get last version
+        # with backwards compatibility
         version = io.find_one({"parent": subset_data['_id'],
                                "type": "version",
                                "data.families":
-                                   {"$in": ["colorbleed.lookdev"]}
+                                   {"$in": ["colorbleed.look"]}
                                },
                               sort=[("name", -1)],
-                              projection={"_id": True})
+                              projection={"_id": True, "name": True})
 
-        log.debug("Assigning look '{}' <{}> to nodes: {}".format(subset,
-                                                                 version,
-                                                                 asset_nodes))
+        log.debug("Assigning look '{}' <v{:03d}>".format(subset,
+                                                         version["name"]))
 
         assign_look_by_version(asset_nodes, version['_id'])
 
