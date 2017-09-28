@@ -12,7 +12,7 @@ class ValidateSingleAssembly(pyblish.api.InstancePlugin):
 
     order = colorbleed.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.rig', 'colorbleed.layout', 'colorbleed.animation']
+    families = ['colorbleed.rig', 'colorbleed.animation']
     label = 'Single Assembly'
 
     def process(self, instance):
