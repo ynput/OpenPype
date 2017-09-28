@@ -28,46 +28,6 @@ LOAD_AT_START = ["AbcImport", "AbcExport", "mtoa"]
 # "/some/awesome/package/core/" which should be "/some/awesome/package"
 
 
-def _remove_from_paths(paths, keyword, stitch=False):
-    """Remove any paths which contain the given keyword
-
-    >>> paths = ["foo\\foo\\foo.py", "foo\\foobar.py", "\\bar\\bar\\foo"]
-    >>> _remove_from_paths(paths, keyword="bar")
-    ["foo\\foo\\foo.py"]
-
-    >>> paths = ["foo\\bar\\foobar.py", "foo\\foobar.py", "\\banana\\pie\\delicious"]
-    >>> _remove_from_paths(paths, keyword="pie", stitch=True)
-    "foo\\bar\\foobar.py;foo\\foobar.py"
-
-    Args:
-        paths(list) : a list of file paths
-        keyword(str) : the word to check for
-        stitch(bool) : recreate a full string for PYTHONPATH
-
-    Returns:
-        str
-        Only when stitch is set to True does the function return a string
-    """
-
-    paths = [path for path in paths if keyword not in path]
-    if stitch:
-        return os.pathsep.join(paths)
-
-
-def remove_googleapiclient():
-    """Remove any paths which contain `googleclientapi`"""
-
-    keyword = "googleapiclient"
-    # remove from sys.path
-    # _remove_from_paths(sys.path, keyword)
-
-    # reconstruct pythonpaths
-    pythonpaths = os.environ["PYTHONPATH"].split(os.pathsep)
-    result = _remove_from_paths(pythonpaths, keyword,  stitch=True)
-
-    os.environ["PYTHONPATH"] = result
-
-
 def install():
 
     pyblish.register_plugin_path(PUBLISH_PATH)
