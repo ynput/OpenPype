@@ -11,7 +11,6 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
     hosts = ['maya']
     families = ['colorbleed.model']
     category = 'model'
-    optional = False
     version = (0, 1, 0)
     label = 'Shape Default Render Stats'
     actions = [colorbleed.api.SelectInvalidAction,
