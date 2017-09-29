@@ -679,6 +679,18 @@ def get_id(node):
     return cmds.getAttr("{}.cbId".format(node))
 
 
+def generate_ids(nodes):
+    """Assign a new id of the current active context to the nodes"""
+
+    # Get the asset ID from the database for the asset of current context
+    asset = os.environ["AVALON_ASSET"]
+    asset_id = io.find_one({"type": "asset", "name": asset},
+                           projection={"_id": True})
+
+    for node in nodes:
+        set_id(asset_id["_id"], node)
+
+
 def set_id(asset_id, node):
     """Add cbId to `node` unless one already exists.
 

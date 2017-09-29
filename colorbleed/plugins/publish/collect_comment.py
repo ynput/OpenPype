@@ -1,7 +1,7 @@
 import pyblish.api
 
 
-class CollectMindbenderComment(pyblish.api.ContextPlugin):
+class CollectColorbleedComment(pyblish.api.ContextPlugin):
     """This plug-ins displays the comment dialog box per default"""
 
     label = "Collect Comment"

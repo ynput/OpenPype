@@ -9,8 +9,8 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
     A Camera instance may only hold a SINGLE camera's transform, nothing else.
 
-    It may hold a "locator" as shape, but different shapes are in the up-
-    and down
+    It may hold a "locator" as shape, but different shapes are down the 
+    hierarchy.
 
     """
 

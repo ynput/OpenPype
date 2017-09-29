@@ -11,7 +11,9 @@ class ValidateStepSize(pyblish.api.InstancePlugin):
 
     order = colorbleed.api.ValidateContentsOrder
     label = 'Step size'
-    families = ['colorbleed.layout']
+    families = ['colorbleed.camera',
+                'colorbleed.pointcache',
+                'colorbleed.animation']
     actions = [colorbleed.api.SelectInvalidAction]
 
     MIN = 0.01
@@ -20,20 +22,17 @@ class ValidateStepSize(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        objset = instance.data['setMembers']
-
-        invalid = set()
+        objset = instance.data['name']
         step = instance.data.get("step", 1.0)
+
         if step < cls.MIN or step > cls.MAX:
             cls.log.warning("Step size is outside of valid range: {0} "
                             "(valid: {1} to {2})".format(step,
                                                          cls.MIN,
                                                          cls.MAX))
-            invalid.add(objset)
+            return objset
 
-        invalid = list(invalid)
-
-        return invalid
+        return []
 
     def process(self, instance):
 

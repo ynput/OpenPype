@@ -9,10 +9,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
 
     order = colorbleed.api.ValidateSceneOrder
     label = "Maya Units"
-    families = ["colorbleed.rig",
-                "colorbleed.model",
-                "colorbleed.pointcache",
-                "colorbleed.curves"]
+    hosts = ['maya']
     actions = [colorbleed.api.RepairContextAction]
 
     def process(self, context):
