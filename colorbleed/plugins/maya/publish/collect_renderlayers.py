@@ -28,6 +28,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
             if layer.endswith("defaultRenderLayer"):
                 continue
 
+            layername = layer.split("rs_", 1)[-1]
             data = {"family": "Render Layers",
                     "families": ["colorbleed.renderlayer"],
                     "publish": cmds.getAttr("{}.renderable".format(layer)),
@@ -39,7 +40,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
 
                     # instance subset
                     "asset": asset_name,
-                    "subset": layer,
+                    "subset": layername,
                     "setMembers": layer,
 
                     "time": api.time(),
@@ -69,7 +70,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
                 _globals = maya.read(avalon_globals)
                 data["renderGlobals"] = self.get_global_overrides(_globals)
 
-            instance = context.create_instance(layer)
+            instance = context.create_instance(layername)
             instance.data.update(data)
 
     def get_render_attribute(self, attr):
