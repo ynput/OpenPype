@@ -179,7 +179,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "UsingRenderLayers": True,
 
                 # Render only this layer
-                "RenderLayer": instance.name,
+                "RenderLayer": instance.data["setMembers"],
 
                 # Determine which renderer to use from the file itself
                 "Renderer": "file",
