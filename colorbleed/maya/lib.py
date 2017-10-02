@@ -106,6 +106,24 @@ def _maintained_selection_context():
                         noExpand=True)
 
 
+@contextlib.contextmanager
+def renderlayer(layer):
+    """Set the renderlayer during the context"""
+
+    original = cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
+
+    try:
+        cmds.editRenderLayerGlobals(currentRenderLayer=layer)
+        yield
+    finally:
+        cmds.editRenderLayerGlobals(currentRenderLayer=original)
+
+
+def get_renderer(layer):
+    renderlayer(layer)
+    return cmds.getAttr("defaultRenderGlobals.currentRenderer")
+
+
 def unique(name):
     assert isinstance(name, basestring), "`name` must be string"
 

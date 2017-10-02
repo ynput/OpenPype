@@ -1,5 +1,4 @@
 import os
-import re
 import json
 import shutil
 import getpass
@@ -11,34 +10,19 @@ from avalon.vendor import requests
 
 import pyblish.api
 
+import colorbleed.maya.lib as lib
 
-def get_padding_length(filename):
-    """
 
-    >>> get_padding_length("sequence.v004.0001.exr", default=None)
-    4
-    >>> get_padding_length("sequence.-001.exr", default=None)
-    4
-    >>> get_padding_length("sequence.v005.exr", default=None)
-    None
-
-    Retrieve the padding length by retrieving the frame number from a file.
-
-    Args:
-        filename (str): the explicit filename, e.g.: sequence.0001.exr
-
-    Returns:
-        int
-    """
-
-    padding_match = re.search(r"\.(-?\d+)", filename)
-    if padding_match:
-        length = len(padding_match.group())
-    else:
-        raise AttributeError("Could not find padding length in "
-                             "'{}'".format(filename))
-
-    return length
+RENDER_ATTRIBUTES = {"vray":
+                         {"node": "vraySettings",
+                          "prefix": "fileNamePrefix",
+                          "padding": "fileNamePadding",
+                          "ext": "imageFormatStr"},
+                     "arnold":
+                         {"node": "defaultRenderGlobals",
+                          "prefix": "imageFilePrefix",
+                          "padding": "extensionPadding"}
+                     }
 
 
 def get_renderer_variables():
@@ -50,48 +34,32 @@ def get_renderer_variables():
         dict
     """
 
-    ext = ""
-    filename_prefix = ""
-    # padding = 4
+    renderer = lib.get_renderer(lib.get_current_renderlayer())
+    render_attrs = RENDER_ATTRIBUTES[renderer]
 
-    renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
+    filename_padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
+                                                   render_attrs["padding"]))
+
+    filename_0 = cmds.renderSettings(fullPath=True, firstImageName=True)[0]
+
     if renderer == "vray":
+        # Maya's renderSettings function does not resolved V-Ray extension
+        # Getting the extension for VRay settings node
+        extension = cmds.getAttr("{}.{}".format(render_attrs["node"],
+                                                render_attrs["ext"]))
+        filename_prefix = "<Scene>/<Layer>/<Layer>"
+    else:
+        # Get the extension, getAttr defaultRenderGlobals.imageFormat
+        # returns an index number.
+        filename_base = os.path.basename(filename_0)
+        extension = os.path.splitext(filename_base)[-1].strip(".")
+        filename_prefix = cmds.getAttr("{}.{}".format(render_attrs["node"],
+                                                      render_attrs["prefix"]))
 
-        # padding = cmds.getAttr("vraySettings.fileNamePadding")
-
-        # check for vray settings node
-        settings_node = cmds.ls("vraySettings", type="VRaySettingsNode")
-        if not settings_node:
-            raise AttributeError("Could not find a VRay Settings Node, "
-                                 "to ensure the node exists open the "
-                                 "Render Settings window")
-
-        # get the extension
-        image_format = cmds.getAttr("vraySettings.imageFormatStr")
-        if image_format:
-            ext = "{}".format(image_format.split(" ")[0])
-
-        prefix = cmds.getAttr("vraySettings.fileNamePrefix")
-        if prefix:
-            filename_prefix = prefix
-
-    # insert other renderer logic here
-
-    # fall back to default
-    if renderer.lower().startswith("maya"):
-        # get the extension, getAttr defaultRenderGlobals.imageFormat
-        # returns index number
-        first_filename = cmds.renderSettings(fullPath=True,
-                                             firstImageName=True)[0]
-        ext = os.path.splitext(os.path.basename(first_filename))[-1].strip(".")
-
-        # get padding and filename prefix
-        # padding = cmds.getAttr("defaultRenderGlobals.extensionPadding")
-        prefix = cmds.getAttr("defaultRenderGlobals.fileNamePrefix")
-        if prefix:
-            filename_prefix = prefix
-
-    return {"ext": ext, "filename_prefix": filename_prefix}
+    return {"ext": extension,
+            "filename_prefix": filename_prefix,
+            "padding": filename_padding,
+            "filename_0": filename_0}
 
 
 class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
@@ -111,26 +79,29 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
                                           "http://localhost:8082")
+
         assert AVALON_DEADLINE is not None, "Requires AVALON_DEADLINE"
 
         context = instance.context
         workspace = context.data["workspaceDir"]
         fpath = context.data["currentFile"]
         fname = os.path.basename(fpath)
-        name, ext = os.path.splitext(fname)
         comment = context.data.get("comment", "")
-        dirname = os.path.join(workspace, "renders", name)
+        scene = os.path.splitext(fname)[0]
+        dirname = os.path.join(workspace, "renders")
 
         try:
             os.makedirs(dirname)
         except OSError:
             pass
 
-        # get the variables depending on the renderer
+        # Get the variables depending on the renderer
         render_variables = get_renderer_variables()
-        output_file_prefix = render_variables["filename_prefix"]
-        output_filename_0 = self.preview_fname(instance,
+        # following hardcoded "<Scene>/<Layer>/<Layer>"
+        output_filename_0 = self.preview_fname(scene,
+                                               instance.name,
                                                dirname,
+                                               render_variables["padding"],
                                                render_variables["ext"])
 
         # E.g. http://192.168.0.1:8082/api/jobs
@@ -170,7 +141,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Output directory and filename
                 "OutputFilePath": dirname,
-                "OutputFilePrefix": output_file_prefix,
+                "OutputFilePrefix": render_variables["filename_prefix"],
 
                 # Mandatory for Deadline
                 "Version": cmds.about(version=True),
@@ -179,7 +150,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "UsingRenderLayers": True,
 
                 # Render only this layer
-                "RenderLayer": instance.name,
+                "RenderLayer": instance.data["setMembers"],
 
                 # Determine which renderer to use from the file itself
                 "Renderer": "file",
@@ -245,7 +216,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
             raise Exception(response.text)
 
-    def preview_fname(self, instance, dirname, extension):
+    def preview_fname(self, scene, layer, folder, padding, ext):
         """Return outputted filename with #### for padding
 
         Passing the absolute path to Deadline enables Deadline Monitor
@@ -258,29 +229,21 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         To
             /path/to/render.####.png
 
+        Args:
+            layer: name of the current layer to be rendered
+            folder (str): folder to which will be written
+            padding (int): padding length
+            ext(str): file extension
+
+        Returns:
+            str
+
         """
 
-        # We'll need to take tokens into account
-        fname = cmds.renderSettings(firstImageName=True,
-                                    fullPath=True,
-                                    layer=instance.name)[0]
+        padded_basename = "{}.{}.{}".format(layer, "#" * padding, ext)
+        preview_fname = os.path.join(folder, scene, layer, padded_basename)
 
-        try:
-            # Assume `c:/some/path/filename.0001.exr`
-            # TODO(marcus): Bulletproof this, the user may have
-            # chosen a different format for the outputted filename.
-            basename = os.path.basename(fname)
-            name, padding, ext = basename.rsplit(".", 2)
-
-            padding_format = "#" * len(padding)
-            fname = ".".join([name, padding_format, extension])
-            self.log.info("Assuming renders end up @ %s" % fname)
-            file_name = os.path.join(dirname, instance.name, fname)
-        except ValueError:
-            file_name = ""
-            self.log.info("Couldn't figure out where renders go")
-
-        return file_name
+        return preview_fname
 
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
