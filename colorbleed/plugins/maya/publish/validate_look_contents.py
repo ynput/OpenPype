@@ -95,7 +95,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
             files = resource["files"]
             if len(files) == 0:
                 node = resource["node"]
-                cls.log.error("File node '%s' use no or non-existing "
+                cls.log.error("File node '%s' uses no or non-existing "
                               "files" % node)
                 invalid.append(node)
 
