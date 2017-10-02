@@ -119,6 +119,11 @@ def renderlayer(layer):
         cmds.editRenderLayerGlobals(currentRenderLayer=original)
 
 
+def get_renderer(layer):
+    renderlayer(layer)
+    return cmds.getAttr("defaultRenderGlobals.currentRenderer")
+
+
 def unique(name):
     assert isinstance(name, basestring), "`name` must be string"
 
