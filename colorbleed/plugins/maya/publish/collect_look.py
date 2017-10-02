@@ -84,7 +84,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         sets = self.gather_sets(instance)
 
         # Lookup with absolute names (from root namespace)
-        instance_lookup = set([str(x) for x in cmds.ls(instance, long=True)])
+        instance_lookup = set(cmds.ls(instance, long=True))
 
         self.log.info("Gathering set relations..")
         for objset in sets:
@@ -288,7 +288,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         files = shaders.get_file_node_files(node)
         if len(files) == 0:
-            self.log.error("No valid files found".format(node))
+            self.log.error("No valid files found from node `%s`" % node)
 
         # Define the resource
         return {"node": node,
