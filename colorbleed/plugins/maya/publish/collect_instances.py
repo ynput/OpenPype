@@ -96,7 +96,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             children = cmds.listRelatives(members,
                                           allDescendents=True,
-                                          fullPath=True) or []
+                                          fullPath=True,
+                                          noIntermediate=True) or []
             parents = self.get_all_parents(members)
             members_hierarchy = list(set(members + children + parents))
 
