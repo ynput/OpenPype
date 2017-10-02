@@ -4,6 +4,7 @@ from maya import cmds
 import pyblish.api
 
 from avalon import maya, api
+import colorbleed.maya.lib as lib
 
 
 class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
@@ -36,7 +37,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
                     "startFrame": self.get_render_attribute("startFrame"),
                     "endFrame": self.get_render_attribute("endFrame"),
                     "byFrameStep": self.get_render_attribute("byFrameStep"),
-                    "renderer": self.get_render_attribute("currentRenderer"),
+                    "renderer": lib.get_renderer(layer),
 
                     # instance subset
                     "asset": asset_name,
