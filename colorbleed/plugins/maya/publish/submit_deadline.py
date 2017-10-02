@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import getpass
+import pprint
 
 from maya import cmds
 
@@ -16,7 +17,8 @@ import colorbleed.maya.lib as lib
 RENDER_ATTRIBUTES = {"vray":
                          {"node": "vraySettings",
                           "prefix": "fileNamePrefix",
-                          "padding": "fileNamePadding"},
+                          "padding": "fileNamePadding",
+                          "ext": "imageFormatStr"},
                      "arnold":
                          {"node": "defaultRenderGlobals",
                           "prefix": "imageFilePrefix",
@@ -36,9 +38,6 @@ def get_renderer_variables():
     renderer = lib.get_renderer(lib.get_current_renderlayer())
     render_attrs = RENDER_ATTRIBUTES[renderer]
 
-    filename_prefix = cmds.getAttr("{}.{}".format(render_attrs["node"],
-                                                  render_attrs["prefix"]))
-
     filename_padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
                                                    render_attrs["padding"]))
 
@@ -47,7 +46,15 @@ def get_renderer_variables():
     # get the extension, getAttr defaultRenderGlobals.imageFormat
     # returns index number
     filename_base = os.path.basename(filename_0)
-    extension = os.path.splitext(filename_base)[-1].strip(".")
+    if renderer == "vray":
+        # Maya's renderSettings function does not resolved V-Ray extension
+        # in the
+        extension = cmds.getAttr("{}.{}".format(render_attrs["node"],
+                                                render_attrs["ext"]))
+        filename_prefix = "<Scene>/<Layer>/<Layer>"
+    else:
+        extension = os.path.splitext(filename_base)[-1].strip(".")
+        filename_prefix = "<Scene>/<RenderLayer>/<RenderLayer>"
 
     return {"ext": extension,
             "filename_prefix": filename_prefix,
@@ -72,6 +79,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
                                           "http://localhost:8082")
+
         assert AVALON_DEADLINE is not None, "Requires AVALON_DEADLINE"
 
         context = instance.context
@@ -79,7 +87,10 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         fpath = context.data["currentFile"]
         fname = os.path.basename(fpath)
         comment = context.data.get("comment", "")
-        dirname = os.path.join(workspace, "renders", instance.name)
+        # force a folder depth with
+        layer = instance.name
+        scene = os.path.splitext(fname)[0]
+        dirname = os.path.join(workspace, "renders")
 
         try:
             os.makedirs(dirname)
@@ -88,7 +99,9 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         # get the variables depending on the renderer
         render_variables = get_renderer_variables()
-        output_filename_0 = self.preview_fname(instance,
+        # following hardcoded "<Scene>/<Layer>/<Layer>"
+        output_filename_0 = self.preview_fname(scene,
+                                               layer,
                                                dirname,
                                                render_variables["padding"],
                                                render_variables["ext"])
@@ -205,7 +218,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
             raise Exception(response.text)
 
-    def preview_fname(self, instance, folder, padding, ext):
+    def preview_fname(self, scene, layer, folder, padding, ext):
         """Return outputted filename with #### for padding
 
         Passing the absolute path to Deadline enables Deadline Monitor
@@ -219,7 +232,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             /path/to/render.####.png
 
         Args:
-            instance: instance to be published
+            layer: name of the current layer to be rendered
             folder (str): folder to which will be written
             padding (int): padding length
             ext(str): file extension
@@ -229,8 +242,8 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         """
 
-        padded_basename = "{}.{}.{}".format(instance.name, "#" * padding, ext)
-        preview_fname = os.path.join(folder, padded_basename)
+        padded_basename = "{}.{}.{}".format(layer, "#" * padding, ext)
+        preview_fname = os.path.join(folder, scene, layer, padded_basename)
 
         return preview_fname
 
