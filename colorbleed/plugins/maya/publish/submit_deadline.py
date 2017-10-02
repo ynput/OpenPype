@@ -43,18 +43,19 @@ def get_renderer_variables():
 
     filename_0 = cmds.renderSettings(fullPath=True, firstImageName=True)[0]
 
-    # get the extension, getAttr defaultRenderGlobals.imageFormat
-    # returns index number
-    filename_base = os.path.basename(filename_0)
     if renderer == "vray":
         # Maya's renderSettings function does not resolved V-Ray extension
-        # in the
+        # Getting the extension for VRay settings node
         extension = cmds.getAttr("{}.{}".format(render_attrs["node"],
                                                 render_attrs["ext"]))
         filename_prefix = "<Scene>/<Layer>/<Layer>"
     else:
+        # Get the extension, getAttr defaultRenderGlobals.imageFormat
+        # returns an index number.
+        filename_base = os.path.basename(filename_0)
         extension = os.path.splitext(filename_base)[-1].strip(".")
-        filename_prefix = "<Scene>/<RenderLayer>/<RenderLayer>"
+        filename_prefix = cmds.getAttr("{}.{}".format(render_attrs["node"],
+                                                      render_attrs["prefix"]))
 
     return {"ext": extension,
             "filename_prefix": filename_prefix,
