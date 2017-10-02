@@ -55,9 +55,9 @@ def on_init(_):
             log.warning("Can't load plug-in: "
                         "{0} - {1}".format(plugin, e))
 
-    # Set up all plug-ins
-    for plugin in ["AbcImport", "AbcExport", "mtoa"]:
-        force_load_deferred(plugin)
+    cmds.loadPlugin("AbcImport", quiet=True)
+    cmds.loadPlugin("AbcExport", quiet=True)
+    force_load_deferred("mtoa")
 
 
 def on_save(_):
