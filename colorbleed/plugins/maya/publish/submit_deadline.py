@@ -2,7 +2,6 @@ import os
 import json
 import shutil
 import getpass
-import pprint
 
 from maya import cmds
 
@@ -88,8 +87,6 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         fpath = context.data["currentFile"]
         fname = os.path.basename(fpath)
         comment = context.data.get("comment", "")
-        # force a folder depth with
-        layer = instance.name
         scene = os.path.splitext(fname)[0]
         dirname = os.path.join(workspace, "renders")
 
@@ -98,11 +95,11 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         except OSError:
             pass
 
-        # get the variables depending on the renderer
+        # Get the variables depending on the renderer
         render_variables = get_renderer_variables()
         # following hardcoded "<Scene>/<Layer>/<Layer>"
         output_filename_0 = self.preview_fname(scene,
-                                               layer,
+                                               instance.name,
                                                dirname,
                                                render_variables["padding"],
                                                render_variables["ext"])
