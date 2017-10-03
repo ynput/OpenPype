@@ -27,8 +27,8 @@ class ValidateResources(pyblish.api.InstancePlugin):
 
         default_padding = 4
         default_prefix = {
-            "vray": "renders/<Scene>/<Scene>_<Layer>/<Layer>",
-            "arnold": "renders/<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
+            "vray": "<Scene>/<Scene>_<Layer>/<Layer>",
+            "arnold": "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
         }
 
         if renderer == "vray":
