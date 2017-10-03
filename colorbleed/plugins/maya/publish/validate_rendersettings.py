@@ -23,7 +23,7 @@ class ValidateResources(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        renderer = cmds.getAttr("defeaultRenderGlobals.currentRenderer")
+        renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
 
         default_padding = 4
         default_prefix = {
