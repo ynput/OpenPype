@@ -45,16 +45,14 @@ def get_renderer_variables():
     if renderer == "vray":
         # Maya's renderSettings function does not resolved V-Ray extension
         # Getting the extension for VRay settings node
-        extension = cmds.getAttr("{}.{}".format(render_attrs["node"],
-                                                render_attrs["ext"]))
-        filename_prefix = "<Scene>/<Layer>/<Layer>"
+        extension = cmds.getAttr("vraySettings.imageFormatStr")
+        filename_prefix = "<Scene>/<Scene>_<Layer>/<Layer>"
     else:
         # Get the extension, getAttr defaultRenderGlobals.imageFormat
         # returns an index number.
         filename_base = os.path.basename(filename_0)
         extension = os.path.splitext(filename_base)[-1].strip(".")
-        filename_prefix = cmds.getAttr("{}.{}".format(render_attrs["node"],
-                                                      render_attrs["prefix"]))
+        filename_prefix = "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
 
     return {"ext": extension,
             "filename_prefix": filename_prefix,
@@ -97,7 +95,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         # Get the variables depending on the renderer
         render_variables = get_renderer_variables()
-        # following hardcoded "<Scene>/<Layer>/<Layer>"
+        # following hardcoded "renders/<Scene>/<Scene>_<Layer>/<Layer>"
         output_filename_0 = self.preview_fname(scene,
                                                instance.name,
                                                dirname,
@@ -241,7 +239,9 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         """
 
         padded_basename = "{}.{}.{}".format(layer, "#" * padding, ext)
-        preview_fname = os.path.join(folder, scene, layer, padded_basename)
+        scene_layer_folder = "{}_{}".format(scene, layer)
+        preview_fname = os.path.join(folder, scene, scene_layer_folder,
+                                     layer, padded_basename)
 
         return preview_fname
 
