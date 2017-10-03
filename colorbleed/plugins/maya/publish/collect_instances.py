@@ -41,14 +41,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
     label = "Collect Instances"
     order = pyblish.api.CollectorOrder
     hosts = ["maya"]
-    isntance_order = ["colorbleed.model",
-                      "colorbleed.rig",
-                      "colorbleed.animation",
-                      "colorbleed.camera",
-                      "colorbleed.texture",
-                      "colorbleed.look",
-                      "colorbleed.historyLookdev",
-                      "colorbleed.group"]
 
     def process(self, context):
 
@@ -96,7 +88,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             children = cmds.listRelatives(members,
                                           allDescendents=True,
-                                          fullPath=True) or []
+                                          fullPath=True,
+                                          noIntermediate=True) or []
             parents = self.get_all_parents(members)
             members_hierarchy = list(set(members + children + parents))
 

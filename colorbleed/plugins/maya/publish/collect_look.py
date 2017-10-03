@@ -1,5 +1,4 @@
 from maya import cmds
-import pprint
 import pyblish.api
 import colorbleed.maya.lib as lib
 from cb.utils.maya import context, shaders
@@ -85,7 +84,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         sets = self.gather_sets(instance)
 
         # Lookup with absolute names (from root namespace)
-        instance_lookup = set([str(x) for x in cmds.ls(instance, long=True)])
+        instance_lookup = set(cmds.ls(instance, long=True))
 
         self.log.info("Gathering set relations..")
         for objset in sets:
@@ -122,8 +121,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             files = cmds.ls(history, type="file", long=True)
 
         # Collect textures
-        resources = [self.collect_resource(n) for n in files]
-        instance.data["resources"] = resources
+        instance.data["resources"] = [self.collect_resource(n) for n in files]
 
         # Log a warning when no relevant sets were retrieved for the look.
         if not instance.data["lookData"]["relationships"]:
@@ -289,10 +287,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             source = computed_source.replace("\\", "/")
 
         files = shaders.get_file_node_files(node)
-        if not files:
-            self.log.error("File node does not have a texture set: "
-                           "{0}".format(node))
-            return
+        if len(files) == 0:
+            self.log.error("No valid files found from node `%s`" % node)
 
         # Define the resource
         return {"node": node,

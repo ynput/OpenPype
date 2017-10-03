@@ -39,8 +39,10 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         attributes = cls.validate_lookdata_attributes(instance)
         # check the looks for ID
         looks = cls.validate_looks(instance)
+        # check if file nodes have valid files
+        files = cls.validate_files(instance)
 
-        invalid = looks + attributes
+        invalid = looks + attributes + files
 
         return invalid
 
@@ -80,5 +82,21 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
             if not data["uuid"]:
                 cls.log.error("Look '{}' has no UUID".format(name))
                 invalid.append(name)
+
+        return invalid
+
+    @classmethod
+    def validate_files(cls, instance):
+
+        invalid = []
+
+        resources = instance.data.get("resources", [])
+        for resource in resources:
+            files = resource["files"]
+            if len(files) == 0:
+                node = resource["node"]
+                cls.log.error("File node '%s' uses no or non-existing "
+                              "files" % node)
+                invalid.append(node)
 
         return invalid
