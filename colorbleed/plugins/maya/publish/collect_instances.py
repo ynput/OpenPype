@@ -41,14 +41,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
     label = "Collect Instances"
     order = pyblish.api.CollectorOrder
     hosts = ["maya"]
-    isntance_order = ["colorbleed.model",
-                      "colorbleed.rig",
-                      "colorbleed.animation",
-                      "colorbleed.camera",
-                      "colorbleed.texture",
-                      "colorbleed.look",
-                      "colorbleed.historyLookdev",
-                      "colorbleed.group"]
 
     def process(self, context):
 
