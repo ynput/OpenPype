@@ -42,70 +42,6 @@ SHAPE_ATTRS = ["castsShadows",
 SHAPE_ATTRS = set(SHAPE_ATTRS)
 
 
-def maintained_selection(arg=None):
-    if arg is not None:
-        return _maintained_selection_context()
-    else:
-        return _maintained_selection_decorator(arg)
-
-
-def _maintained_selection_decorator(func):
-    """Function decorator to maintain the selection once called
-
-    Example:
-        >>> @_maintained_selection
-        ... def my_function():
-        ...    # Modify selection
-        ...    cmds.select(clear=True)
-        ...
-        >>> # Selection restored
-
-    """
-
-    def wrapper(*args, **kwargs):
-        previous_selection = cmds.ls(selection=True)
-        try:
-            return func(*args, **kwargs)
-        finally:
-            if previous_selection:
-                cmds.select(previous_selection,
-                            replace=True,
-                            noExpand=True)
-            else:
-                cmds.select(deselect=True,
-                            noExpand=True)
-
-    return wrapper
-
-
-@contextlib.contextmanager
-def _maintained_selection_context():
-    """Maintain selection during context
-
-    Example:
-        >>> scene = cmds.file(new=True, force=True)
-        >>> node = cmds.createNode("transform", name="Test")
-        >>> cmds.select("persp")
-        >>> with maintained_selection():
-        ...     cmds.select("Test", replace=True)
-        >>> "Test" in cmds.ls(selection=True)
-        False
-
-    """
-
-    previous_selection = cmds.ls(selection=True)
-    try:
-        yield
-    finally:
-        if previous_selection:
-            cmds.select(previous_selection,
-                        replace=True,
-                        noExpand=True)
-        else:
-            cmds.select(deselect=True,
-                        noExpand=True)
-
-
 def unique(name):
     assert isinstance(name, basestring), "`name` must be string"
 
@@ -316,7 +252,7 @@ def polyConstraint(components, *args, **kwargs):
     kwargs.pop('mode', None)
 
     with no_undo(flush=False):
-        with maintained_selection():
+        with maya.maintained_selection():
             # Apply constraint using mode=2 (current and next) so
             # it applies to the selection made before it; because just
             # a `maya.cmds.select()` call will not trigger the constraint.
