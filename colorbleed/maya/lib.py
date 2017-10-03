@@ -316,14 +316,11 @@ def polyConstraint(components, *args, **kwargs):
     kwargs.pop('mode', None)
 
     with no_undo(flush=False):
-        print("la")
         with maintained_selection():
-            print("po")
             # Apply constraint using mode=2 (current and next) so
             # it applies to the selection made before it; because just
             # a `maya.cmds.select()` call will not trigger the constraint.
             with reset_polySelectConstraint():
-                print("do")
                 cmds.select(components, r=1)
                 cmds.polySelectConstraint(*args, mode=2, **kwargs)
                 result = cmds.ls(selection=True)
