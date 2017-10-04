@@ -2,7 +2,7 @@
 
 workspace -fr "fluidCache" "cache/nCache/fluid";
 workspace -fr "JT_ATF" "data";
-workspace -fr "images" "images";
+workspace -fr "images" "renders";
 workspace -fr "offlineEdit" "scenes/edits";
 workspace -fr "STEP_ATF Export" "data";
 workspace -fr "furShadowMap" "renderData/fur/furShadowMap";
