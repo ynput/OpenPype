@@ -39,9 +39,9 @@ class ValidateResources(pyblish.api.InstancePlugin):
             padding = cmds.getAttr("defaultRenderGlobals.fileNamePadding")
 
         filename_prefix = default_prefix[renderer]
-        assert padding == default_padding, AttributeError(
+        assert padding == default_padding, (
             "Expecting padding of 4 ( 0000 )"
         )
-        assert prefix == filename_prefix, AttributeError(
+        assert prefix == filename_prefix, (
             "Wrong file name prefix, expecting %s" % filename_prefix
         )
