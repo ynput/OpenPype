@@ -5,7 +5,7 @@ import colorbleed.api
 
 
 class ValidateResources(pyblish.api.InstancePlugin):
-    """Validates the globar render settings
+    """Validates the global render settings
 
     * File Name Prefix must be as followed:
         * vray: renders/<Scene>/<Layer>/<Layer>
