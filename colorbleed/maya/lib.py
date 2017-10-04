@@ -229,6 +229,10 @@ def get_renderer(layer):
         return cmds.getAttr("defaultRenderGlobals.currentRenderer")
 
 
+def get_current_renderlayer():
+    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
+
+
 @contextlib.contextmanager
 def no_undo(flush=False):
     """Disable the undo queue during the context
