@@ -211,8 +211,22 @@ def collect_animation_data():
     return data
 
 
-def get_current_renderlayer():
-    return cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
+@contextlib.contextmanager
+def renderlayer(layer):
+    """Set the renderlayer during the context"""
+
+    original = cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
+
+    try:
+        cmds.editRenderLayerGlobals(currentRenderLayer=layer)
+        yield
+    finally:
+        cmds.editRenderLayerGlobals(currentRenderLayer=original)
+
+
+def get_renderer(layer):
+    renderlayer(layer)
+    return cmds.getAttr("defaultRenderGlobals.currentRenderer")
 
 
 @contextlib.contextmanager
