@@ -225,8 +225,8 @@ def renderlayer(layer):
 
 
 def get_renderer(layer):
-    renderlayer(layer)
-    return cmds.getAttr("defaultRenderGlobals.currentRenderer")
+    with renderlayer(layer):
+        return cmds.getAttr("defaultRenderGlobals.currentRenderer")
 
 
 @contextlib.contextmanager
