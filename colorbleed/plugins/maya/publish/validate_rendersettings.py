@@ -2,15 +2,16 @@ import maya.cmds as cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.lib as lib
 
 
-class ValidateResources(pyblish.api.InstancePlugin):
-    """Validates the globar render settings
+class ValidateRenderSettings(pyblish.api.InstancePlugin):
+    """Validates the global render settings
 
     * File Name Prefix must be as followed:
-        * vray: renders/<Scene>/<Layer>/<Layer>
-        * arnold: renders/<Scene>/<RenderLayer>/<RenderLayer>
-        * default: renders/<Scene>/<RenderLayer>/<RenderLayer>
+        * vray: <Scene>/<Layer>/<Layer>
+        * arnold: <Scene>/<RenderLayer>/<RenderLayer>
+        * default: <Scene>/<RenderLayer>/<RenderLayer>
 
     * Frame Padding must be:
         * default: 4
@@ -21,27 +22,29 @@ class ValidateResources(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["colorbleed.renderlayer"]
 
+    DEFAULT_PADDING = 4
+    RENDERER_PREFIX = {"vray": "<Scene>/<Scene>_<Layer>/<Layer>"}
+    DEFAULT_PREFIX = "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
+
     def process(self, instance):
 
-        renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
+        renderer = instance.data['renderer']
+        layer_node = instance.data['setMembers']
 
-        default_padding = 4
-        default_prefix = {
-            "vray": "<Scene>/<Scene>_<Layer>/<Layer>",
-            "arnold": "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
-        }
+        # Collect the filename prefix in the renderlayer
+        with lib.renderlayer(layer_node):
+            if renderer == "vray":
+                prefix = cmds.getAttr("vraySettings.fileNamePrefix")
+                padding = cmds.getAttr("vraySettings.fileNamePadding")
+            else:
+                prefix = cmds.getAttr("defaultRenderGlobals.fileNamePrefix")
+                padding = cmds.getAttr("defaultRenderGlobals.fileNamePadding")
 
-        if renderer == "vray":
-            prefix = cmds.getAttr("vraySettings.fileNamePrefix")
-            padding = cmds.getAttr("vraySettings.fileNamePadding")
-        else:
-            prefix = cmds.getAttr("defaultRenderGlobals.fileNamePrefix")
-            padding = cmds.getAttr("defaultRenderGlobals.fileNamePadding")
-
-        filename_prefix = default_prefix[renderer]
-        assert padding == default_padding, AttributeError(
-            "Expecting padding of 4 ( 0000 )"
+        fname_prefix = self.RENDERER_PREFIX.get(renderer, self.DEFAULT_PREFIX)
+        assert prefix == fname_prefix, (
+            "Wrong file name prefix, expecting %s" % fname_prefix
         )
-        assert prefix == filename_prefix, AttributeError(
-            "Wrong file name prefix, expecting %s" % filename_prefix
+        assert padding == self.DEFAULT_PADDING, (
+            "Expecting padding of {} ( {} )".format(self.DEFAULT_PADDING,
+                                                    "0"*self.DEFAULT_PADDING)
         )

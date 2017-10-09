@@ -68,7 +68,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Collect the Look in the instance with the correct layer settings"""
 
-        with context.renderlayer("defaultRenderLayer"):
+        with context.renderlayer(instance.data["renderlayer"]):
             self.collect(instance)
 
     def collect(self, instance):
@@ -98,6 +98,7 @@ class CollectLook(pyblish.api.InstancePlugin):
                                                        verbose)
                 if not member_data:
                     continue
+
                 sets[objset]["members"].append(member_data)
 
         # Remove sets that didn't have any members assigned in the end
