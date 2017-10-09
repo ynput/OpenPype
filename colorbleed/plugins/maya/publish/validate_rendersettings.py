@@ -23,10 +23,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     families = ["colorbleed.renderlayer"]
 
     DEFAULT_PADDING = 4
-    DEFAULT_PREFIX = {
-            "vray": "<Scene>/<Scene>_<Layer>/<Layer>",
-            "arnold": "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
-    }
+    RENDERER_PREFIX = {"vray": "<Scene>/<Scene>_<Layer>/<Layer>"}
+    DEFAULT_PREFIX = "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
 
     def process(self, instance):
 
@@ -42,9 +40,9 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 prefix = cmds.getAttr("defaultRenderGlobals.fileNamePrefix")
                 padding = cmds.getAttr("defaultRenderGlobals.fileNamePadding")
 
-        filename_prefix = self.DEFAULT_PREFIX[renderer]
-        assert prefix == filename_prefix, (
-            "Wrong file name prefix, expecting %s" % filename_prefix
+        fname_prefix = self.RENDERER_PREFIX.get(renderer, self.DEFAULT_PREFIX)
+        assert prefix == fname_prefix, (
+            "Wrong file name prefix, expecting %s" % fname_prefix
         )
         assert padding == self.DEFAULT_PADDING, (
             "Expecting padding of {} ( {} )".format(self.DEFAULT_PADDING,
