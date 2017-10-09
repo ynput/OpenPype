@@ -1,4 +1,4 @@
-from avalon import api
+from avalon import api, io
 
 
 class SetDressAlembicLoader(api.Loader):
