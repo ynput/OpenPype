@@ -17,6 +17,9 @@ class ModelLoader(api.Loader):
         import maya.cmds as cmds
         from avalon import maya
 
+        # Ensure Alembic is loaded
+        cmds.loadPlugin("AbcImport", quiet=True)
+
         # Create a readable namespace
         # Namespace should contain asset name and counter
         # TEST_001{_descriptor} where `descriptor` can be `_abc` for example
