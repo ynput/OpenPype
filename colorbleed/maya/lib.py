@@ -805,8 +805,7 @@ def assign_look_by_version(nodes, version_id):
         log.info("Loading lookdev for the first time..")
 
         # Define namespace
-        assetname = shader_file['context']['asset']
-        ns_assetname = "{}_".format(assetname)
+        ns_assetname = "{}_".format(shader_file['context']['asset'])
         namespace = maya.unique_namespace(ns_assetname,
                                           format="%03d",
                                           suffix="_look")
@@ -822,8 +821,7 @@ def assign_look_by_version(nodes, version_id):
         # give along a fake "context" with only `representation`
         # because `maya.containerise` only used that key anyway
         context = {"representation": shader_file}
-        subset_name = shader_file["context"]["subset"]
-        maya.containerise(name=subset_name,
+        maya.containerise(name=shader_file["context"]["subset"],
                           namespace=namespace,
                           nodes=shader_nodes,
                           context=context)
@@ -1025,7 +1023,7 @@ def get_related_sets(node):
     return sets
 
 
-def get_container_transfroms(container, members=None, root=False):
+def get_container_transforms(container, members=None, root=False):
     """Retrieve the root node of the container content
 
     When a container is created through a Loader the content
@@ -1037,7 +1035,7 @@ def get_container_transfroms(container, members=None, root=False):
         members (list): optional and convenience argument
 
     Returns:
-        root (str): highest node in hierarchy
+        root (list / str): highest node in hierarchy
     """
 
     if not members:
