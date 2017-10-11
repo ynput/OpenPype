@@ -13,6 +13,7 @@ from collections import OrderedDict, defaultdict
 from maya import cmds, mel
 
 from avalon import maya, io
+from cb.utils.maya import core
 
 
 log = logging.getLogger(__name__)
@@ -40,6 +41,42 @@ SHAPE_ATTRS = ["castsShadows",
                "opposite"]
 
 SHAPE_ATTRS = set(SHAPE_ATTRS)
+
+
+DEFAULT_MATRIX = [1.0, 0.0, 0.0, 0.0,
+                  0.0, 1.0, 0.0, 0.0,
+                  0.0, 0.0, 1.0, 0.0,
+                  0.0, 0.0, 0.0, 1.0]
+
+# The maya alembic export types
+_alembic_options = {
+    "startFrame": float,
+    "endFrame": float,
+    "frameRange": str,  # "start end"; overrides startFrame & endFrame
+    "eulerFilter": bool,
+    "frameRelativeSample": float,
+    "noNormals": bool,
+    "renderableOnly": bool,
+    "step": float,
+    "stripNamespaces": bool,
+    "uvWrite": bool,
+    "wholeFrameGeo": bool,
+    "worldSpace": bool,
+    "writeVisibility": bool,
+    "writeColorSets": bool,
+    "writeFaceSets": bool,
+    "writeCreases": bool,  # Maya 2015 Ext1+
+    "dataFormat": str,
+    "root": (list, tuple),
+    "attr": (list, tuple),
+    "attrPrefix": (list, tuple),
+    "userAttr": (list, tuple),
+    "melPerFrameCallback": str,
+    "melPostJobCallback": str,
+    "pythonPerFrameCallback": str,
+    "pythonPostJobCallback": str,
+    "selection": bool
+}
 
 
 def unique(name):
@@ -360,37 +397,6 @@ def is_visible(node,
                 return False
 
     return True
-
-
-# The maya alembic export types
-_alembic_options = {
-    "startFrame": float,
-    "endFrame": float,
-    "frameRange": str,  # "start end"; overrides startFrame & endFrame
-    "eulerFilter": bool,
-    "frameRelativeSample": float,
-    "noNormals": bool,
-    "renderableOnly": bool,
-    "step": float,
-    "stripNamespaces": bool,
-    "uvWrite": bool,
-    "wholeFrameGeo": bool,
-    "worldSpace": bool,
-    "writeVisibility": bool,
-    "writeColorSets": bool,
-    "writeFaceSets": bool,
-    "writeCreases": bool,  # Maya 2015 Ext1+
-    "dataFormat": str,
-    "root": (list, tuple),
-    "attr": (list, tuple),
-    "attrPrefix": (list, tuple),
-    "userAttr": (list, tuple),
-    "melPerFrameCallback": str,
-    "melPostJobCallback": str,
-    "pythonPerFrameCallback": str,
-    "pythonPostJobCallback": str,
-    "selection": bool
-}
 
 
 def extract_alembic(file,
@@ -1017,3 +1023,28 @@ def get_related_sets(node):
     sets = [s for s in sets if s not in defaults]
 
     return sets
+
+
+def get_container_transfroms(container, members=None, root=False):
+    """Retrieve the root node of the container content
+
+    When a container is created through a Loader the content
+    of the file will be grouped under a transform. The name of the root
+    transform is stored in the container information
+
+    Args:
+        container (dict): the container
+        members (list): optional and convenience argument
+
+    Returns:
+        root (str): highest node in hierarchy
+    """
+
+    if not members:
+        members = cmds.sets(container["objectName"], query=True)
+
+    results = cmds.ls(members, type="transform", long=True)
+    if root:
+        results = core.getHighestInHierarchy(results)[0]
+
+    return results
