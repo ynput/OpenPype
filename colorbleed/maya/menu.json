@@ -810,6 +810,20 @@
             },
             {
                 "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\shading\\assign_look_ui.py",
+                "sourcetype": "file",
+                "tags": [
+                    "shading",
+                    "lookdev",
+                    "assign",
+                    "shaders",
+                    "auto"
+                ],
+                "title": "Assign Look UI",
+                "tooltip": "Open the Assign Look UI for custom look assignment"
+            },
+            {
+                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\shading\\autoLookdevAssignment.py",
                 "sourcetype": "file",
                 "tags": [
