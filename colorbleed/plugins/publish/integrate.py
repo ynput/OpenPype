@@ -319,9 +319,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         current_families = instance.data.get("families", list())
         instance_family = instance.data.get("family", None)
 
-        families += current_families
         if instance_family is not None:
             families.append(instance_family)
+        families += current_families
 
         # create relative source path for DB
         relative_path = os.path.relpath(context.data["currentFile"],
@@ -334,4 +334,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                         "source": source,
                         "comment": context.data.get("comment")}
 
-        return dict(instance.data, **version_data)
+        # Include optional data if present in
+        optionals = ["startFrame", "endFrame", "step", "handles"]
+        for key in optionals:
+            if key in instance.data:
+                version_data[key] = instance.data[key]
+
+        return version_data
