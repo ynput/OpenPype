@@ -4,6 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.lib as lib
 
 log = logging.getLogger("Rig Controllers")
 
@@ -78,13 +79,10 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     @staticmethod
     def validate_transforms(control):
         tolerance = 1e-30
-        identity = [1.0, 0.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0]
 
         matrix = cmds.xform(control, query=True, matrix=True, objectSpace=True)
-        if not all(abs(x - y) < tolerance for x, y in zip(identity, matrix)):
+        if not all(abs(x - y) < tolerance for x, y in zip(lib.DEFAULT_MATRIX,
+                                                          matrix)):
             log.error("%s matrix : %s" % (control, matrix))
             return False
         return True
@@ -106,11 +104,6 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
 
-        identity = [1.0, 0.0, 0.0, 0.0,
-                    0.0, 1.0, 0.0, 0.0,
-                    0.0, 0.0, 1.0, 0.0,
-                    0.0, 0.0, 0.0, 1.0]
-
         # lock all controllers in controls_SET
         controls = cmds.sets("controls_SET", query=True)
         for control in controls:
@@ -123,4 +116,6 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
 
             log.info("Repairing matrix")
             if not cls.validate_transforms(control):
-                cmds.xform(control, matrix=identity, objectSpace=True)
+                cmds.xform(control,
+                           matrix=lib.DEFAULT_MATRIX,
+                           objectSpace=True)
