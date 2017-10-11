@@ -42,7 +42,6 @@ class CollectSetDress(pyblish.api.InstancePlugin):
 
             # retrieve all matrix data
             matrix_data = self.get_matrix_data(sorted(transforms))
-            pprint.pprint(matrix_data)
 
             # Gather info for new data entry
             reference_node = cmds.ls(members, type="reference")[0]
