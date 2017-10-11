@@ -1,7 +1,4 @@
-import pprint
-
-from avalon import api, io, pipeline
-from avalon.tools.cbloader import lib
+from avalon import api
 
 
 class SetDressRebuild(api.Loader):
@@ -17,30 +14,39 @@ class SetDressRebuild(api.Loader):
     def process(self, name, namespace, context, data):
 
         import json
-        # from maya import cmds
-
-        print ">>>", lib.__file__
+        from maya import cmds
+        from avalon.tools.cbloader import lib
+        from colorbleed.maya import lib as clib
 
         # Ensure
         data_file = self.fname.replace(".abc", ".json")
         with open(data_file, "r") as fp:
             build_data = json.load(fp)
 
-        pprint.pprint(build_data)
-        for _id, instances in build_data.items():
-            # Rebuild filename
+        for representation_id, instances in build_data.items():
+
+            # Find the corresponding loader
+            loaders = list(lib.iter_loaders(representation_id))
+
+            # Ensure context can be passed on
             for inst in instances:
-                nodes = self.run_loader(_id)
-                # cmds.xform(nodes, matrix=inst["matrix"])
+                # Get the uses loader
+                Loader = next((x for x in loaders
+                               if x.__name__ == inst['loader']),
+                              None)
 
-    def run_loader(self, _id):
-        # get all registered plugins
-        obj_id = io.ObjectId(_id)
-        loader_inst = lib.iter_loaders(obj_id)
-        if loader_inst is None:
-            raise RuntimeError("Could not find matching loader")
+                if Loader is None:
+                    self.log.warning("Loader is missing: %s. Skipping %s",
+                                     inst['loader'], inst)
+                    continue
 
-        # strip the generator layer from the found loader
-        loader = list(loader_inst)[0]
-        context = lib.get_representation_context(obj_id)
-        loader.process(**context)
+                # Run the loader
+                container = lib.run_loader(Loader, representation_id,
+                                           namespace=inst['namespace'])
+
+                # Apply transformations
+                container_data = {"objectName": container}
+                transforms = clib.get_container_transfroms(container_data,
+                                                           root=True)
+                for transform, matrix in zip(transforms, inst["matrix"]):
+                    cmds.xform(transform, matrix=matrix)
