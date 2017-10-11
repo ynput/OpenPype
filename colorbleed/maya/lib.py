@@ -767,7 +767,7 @@ def list_looks(asset_id):
 
     # # get all subsets with look leading in
     # the name associated with the asset
-    subset = io.find({"parent": asset_id,
+    subset = io.find({"parent": bson.ObjectId(asset_id),
                       "type": "subset",
                       "name": {"$regex": "look*"}})
 
