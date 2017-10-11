@@ -22,22 +22,20 @@ class ExtractSetDress(colorbleed.api.Extractor):
 
     def process(self, instance):
 
-        # Dump json
-        self.log.info("Dumping scene data for debugging ..")
-
-        data = instance.data
-
-        self.log.info("Extracting point cache")
-
         parent_dir = self.staging_dir(instance)
         filename = "{}.abc".format(instance.name)
         path = os.path.join(parent_dir, filename)
         json_filename = "{}.json".format(instance.name)
         json_path = os.path.join(parent_dir, json_filename)
 
-        with open(json_path, "w") as fp:
-            json.dump(data["scenedata"], fp, ensure_ascii=False, indent=4)
+        self.log.info("Dumping scene data for debugging ..")
+        with open(json_path, "w") as filepath:
+            json.dump(instance.data["scenedata"],
+                      filepath,
+                      ensure_ascii=False,
+                      indent=4)
 
+        self.log.info("Extracting point cache ..")
         cmds.select(instance)
 
         # Run basic alembic exporter
@@ -52,3 +50,5 @@ class ExtractSetDress(colorbleed.api.Extractor):
                            "selection": True})
 
         instance.data["files"] = [json_path, path]
+
+        cmds.select(clear=True)
