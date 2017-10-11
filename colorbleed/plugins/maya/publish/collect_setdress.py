@@ -42,6 +42,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
 
             # retrieve all matrix data
             matrix_data = self.get_matrix_data(sorted(transforms))
+            pprint.pprint(matrix_data)
 
             # Gather info for new data entry
             reference_node = cmds.ls(members, type="reference")[0]
@@ -65,7 +66,6 @@ class CollectSetDress(pyblish.api.InstancePlugin):
             matrix = cmds.xform(member, query=True, matrix=True)
             if matrix == lib.DEFAULT_MATRIX:
                 continue
-
-            matrix_data[str(idx)] = matrix
+            matrix_data[idx] = matrix
 
         return matrix_data
