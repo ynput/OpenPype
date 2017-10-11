@@ -30,10 +30,7 @@ class ExtractSetDress(colorbleed.api.Extractor):
 
         self.log.info("Dumping scene data for debugging ..")
         with open(json_path, "w") as filepath:
-            json.dump(instance.data["scenedata"],
-                      filepath,
-                      ensure_ascii=False,
-                      indent=4)
+            json.dump(instance.data["scenedata"], filepath, ensure_ascii=False)
 
         self.log.info("Extracting point cache ..")
         cmds.select(instance)
@@ -50,5 +47,8 @@ class ExtractSetDress(colorbleed.api.Extractor):
                            "selection": True})
 
         instance.data["files"] = [json_path, path]
+
+        # Remove data
+        instance.data.pop("scenedata", None)
 
         cmds.select(clear=True)
