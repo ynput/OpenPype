@@ -7,7 +7,7 @@ class SetDressRebuild(api.Loader):
     representations = ["abc"]
 
     label = "Rebuild Set Dress"
-    order = -9
+    order = -10
     icon = "code-fork"
     color = "orange"
 
@@ -31,8 +31,8 @@ class SetDressRebuild(api.Loader):
             # Ensure context can be passed on
             for inst in instances:
                 # Get the uses loader
-                Loader = next((x for x in loaders
-                               if x.__name__ == inst['loader']),
+                Loader = next((x for x in loaders if
+                               x.__name__ == inst['loader']),
                               None)
 
                 if Loader is None:
@@ -41,12 +41,18 @@ class SetDressRebuild(api.Loader):
                     continue
 
                 # Run the loader
-                container = lib.run_loader(Loader, representation_id,
-                                           namespace=inst['namespace'])
+                namespace = inst['namespace'].strip(":")
+                container = lib.run_loader(Loader,
+                                           representation_id,
+                                           namespace=namespace)
 
                 # Apply transformations
+                if not inst["matrix"]:
+                    continue
+
                 container_data = {"objectName": container}
-                transforms = clib.get_container_transfroms(container_data,
-                                                           root=True)
-                for transform, matrix in zip(transforms, inst["matrix"]):
-                    cmds.xform(transform, matrix=matrix)
+                transforms = clib.get_container_transforms(container_data)
+                # Force sort order, similar to collector
+                transforms = sorted(transforms)
+                for idx, matrix in inst["matrix"].items():
+                    cmds.xform(transforms[int(idx)], matrix=matrix)
