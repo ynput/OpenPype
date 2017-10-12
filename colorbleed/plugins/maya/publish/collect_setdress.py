@@ -5,8 +5,6 @@ from maya import cmds, mel
 from avalon import maya as amaya
 from colorbleed.maya import lib
 
-import pprint
-
 
 class CollectSetDress(pyblish.api.InstancePlugin):
     """Collect all relevant setdress items
@@ -50,7 +48,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
             data[representation_id].append({
                  "loader": container["loader"],
                  "matrix": matrix_data,
-                 "namespace": namespace
+                 "namespace": namespace.strip(":")
             })
 
         instance.data["scenedata"] = dict(data)
