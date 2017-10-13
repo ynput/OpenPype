@@ -33,7 +33,8 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         for container in containers:
             members = cmds.sets(container["objectName"], query=True)
             transforms = lib.get_container_transforms(container, members)
-            root = lib.get_container_transforms(container, transforms,
+            root = lib.get_container_transforms(container,
+                                                transforms,
                                                 root=True)
             if root not in instance_lookup:
                 continue
@@ -57,6 +58,16 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         return mel.eval('workspace -query -fileRuleEntry "{}"'.format(rule))
 
     def get_matrix_data(self, members):
+        """Get the matrix of all members when they are not default
+
+        Each matrix which differs from the default will be stored in a
+        dictionary
+
+        Args:
+            members (list): list of transform nmodes
+        Returns:
+            dict
+        """
 
         matrix_data = {}
         for idx, member in enumerate(members):
