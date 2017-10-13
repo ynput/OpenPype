@@ -45,7 +45,8 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
         relationships = instance.data["lookData"]["relationships"]
         invalid = []
 
-        with context.renderlayer("defaultRenderLayer"):
+        renderlayer = instance.data.get("renderlayer", "defaultRenderLayer")
+        with context.renderlayer(renderlayer):
             for node in instance:
                 # get the connected objectSets of the node
                 sets = lib.get_related_sets(node)
