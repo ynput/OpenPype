@@ -27,7 +27,7 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
         [asset_GRP|geometry_GRP|body_GES,
          asset_GRP|geometry_GRP|L_eye_GES,
          asset_GRP|geometry_GRP|R_eye_GES,
-         asset_GRP|geometry_GRP|wings_GEOShape]
+         asset_GRP|geometry_GRP|wings_GEO]
 
     """
 
