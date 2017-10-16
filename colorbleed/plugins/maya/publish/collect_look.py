@@ -193,7 +193,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         if components:
             member_data["components"] = components
 
-        return member
+        return member_data
 
     def collect_attributes_changed(self, instance):
         """Collect all userDefined attributes which have changed
