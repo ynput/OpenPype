@@ -30,14 +30,16 @@ def get_look_attrs(node):
     result = cmds.listAttr(node, userDefined=True,
                            changedSinceFileOpen=True) or []
 
+    # `cbId` is added when a scene is saved, ignore by default
+    if "cbId" in result:
+        result.remove("cbId")
+
     # For shapes allow render stat changes
     if cmds.objectType(node, isAType="shape"):
         attrs = cmds.listAttr(node, changedSinceFileOpen=True) or []
-        valid = [attr for attr in attrs if attr in SHAPE_ATTRS]
-        result.extend(valid)
-
-    if "cbId" in result:
-        result.remove("cbId")
+        for attr in attrs:
+            if attr in SHAPE_ATTRS:
+                result.append(attr)
 
     return result
 
@@ -80,7 +82,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         self.log.info("Gathering sets..")
         sets = self.collect_sets(instance)
 
-        # Lookup with absolute names (from root namespace)
+        # Lookup set (optimization)
         instance_lookup = set(cmds.ls(instance, long=True))
 
         self.log.info("Gathering set relations..")
@@ -88,12 +90,10 @@ class CollectLook(pyblish.api.InstancePlugin):
         # dict within the loop
         for objset in list(sets):
             self.log.debug("From %s.." % objset)
-            objset_members = sets[objset]["members"]
 
             # Get all nodes of the current objectSet
             for member in cmds.ls(cmds.sets(objset, query=True), long=True):
                 member_data = self.collect_member_data(member,
-                                                       objset_members,
                                                        instance_lookup)
                 if not member_data:
                     continue
@@ -109,7 +109,6 @@ class CollectLook(pyblish.api.InstancePlugin):
                 sets.pop(objset, None)
 
         self.log.info("Gathering attribute changes to instance members..")
-
         attributes = self.collect_attributes_changed(instance)
 
         # Store data on the instance
@@ -163,11 +162,10 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         return sets
 
-    def collect_member_data(self, member, objset_members, instance_members):
+    def collect_member_data(self, member, instance_members):
         """Get all information of the node
         Args:
             member (str): the name of the node to check
-            objset_members (list): the objectSet members
             instance_members (set): the collected instance members
 
         Returns:
@@ -179,17 +177,14 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # Only include valid members of the instance
         if node not in instance_members:
-            # Skip nodes which are not in the instance members
             return
 
-        if member in [m["name"] for m in objset_members]:
-            return
-
-        if not cmds.attributeQuery("cbId", node=node, exists=True):
+        node_id = lib.get_id(node)
+        if not node_id:
             self.log.error("Node '{}' has no attribute 'cbId'".format(node))
             return
 
-        member_data = {"name": node, "uuid": lib.get_id(node)}
+        member_data = {"name": node, "uuid": node_id}
         if components:
             member_data["components"] = components
 
