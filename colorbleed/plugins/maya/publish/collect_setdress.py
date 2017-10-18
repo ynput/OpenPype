@@ -27,10 +27,12 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         containers = amaya.ls()
 
         # Get all content from the instance
+        topnode = cmds.sets(instance.name, query=True)[0]
         instance_lookup = set(cmds.ls(instance, type="transform", long=True))
         data = defaultdict(list)
 
-        for container in containers:
+        hierarchy_nodes = []
+        for i, container in enumerate(containers):
             members = cmds.sets(container["objectName"], query=True)
             transforms = lib.get_container_transforms(container, members)
             root = lib.get_container_transforms(container,
@@ -39,25 +41,35 @@ class CollectSetDress(pyblish.api.InstancePlugin):
             if root not in instance_lookup:
                 continue
 
-            # retrieve all matrix data
-            matrix_data = self.get_matrix_data(sorted(transforms))
+            # Retrieve all matrix data
+            hierarchy = cmds.listRelatives(root, parent=True, fullPath=True)[0]
+            relative_hierarchy = hierarchy.replace(topnode, "*")
+            hierarchy_nodes.append(relative_hierarchy)
 
             # Gather info for new data entry
             reference_node = cmds.ls(members, type="reference")[0]
             namespace = cmds.referenceQuery(reference_node, namespace=True)
             representation_id = container["representation"]
-            data[representation_id].append({
-                 "loader": container["loader"],
-                 "matrix": matrix_data,
-                 "namespace": namespace.strip(":")
-            })
+
+            instance_data = {"loader": container["loader"],
+                             "hierarchy": hierarchy,
+                             "namespace": namespace.strip(":")}
+
+            # Check if matrix differs from default and store changes
+            matrix_data = self.get_matrix_data(root)
+            if matrix_data:
+                instance_data["matrix"] = matrix_data
+
+            data[representation_id].append(instance_data)
 
         instance.data["scenedata"] = dict(data)
+        instance.data["hierarchy"] = list(set(hierarchy_nodes))
+
 
     def get_file_rule(self, rule):
         return mel.eval('workspace -query -fileRuleEntry "{}"'.format(rule))
 
-    def get_matrix_data(self, members):
+    def get_matrix_data(self, node):
         """Get the matrix of all members when they are not default
 
         Each matrix which differs from the default will be stored in a
@@ -69,11 +81,8 @@ class CollectSetDress(pyblish.api.InstancePlugin):
             dict
         """
 
-        matrix_data = {}
-        for idx, member in enumerate(members):
-            matrix = cmds.xform(member, query=True, matrix=True)
-            if matrix == lib.DEFAULT_MATRIX:
-                continue
-            matrix_data[idx] = matrix
+        matrix = cmds.xform(node, query=True, matrix=True)
+        if matrix == lib.DEFAULT_MATRIX:
+            return
 
-        return matrix_data
+        return matrix

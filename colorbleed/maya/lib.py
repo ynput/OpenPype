@@ -1033,9 +1033,10 @@ def get_container_transforms(container, members=None, root=False):
     Args:
         container (dict): the container
         members (list): optional and convenience argument
+        root (bool): return highest node in hierachy if True
 
     Returns:
-        root (list / str): highest node in hierarchy
+        root (list / str):
     """
 
     if not members:
@@ -1043,6 +1044,8 @@ def get_container_transforms(container, members=None, root=False):
 
     results = cmds.ls(members, type="transform", long=True)
     if root:
-        results = core.getHighestInHierarchy(results)[0]
+        root = core.getHighestInHierarchy(results)
+        if root:
+            results = root[0]
 
     return results

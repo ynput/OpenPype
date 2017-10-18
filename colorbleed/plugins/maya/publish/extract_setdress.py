@@ -23,8 +23,8 @@ class ExtractSetDress(colorbleed.api.Extractor):
     def process(self, instance):
 
         parent_dir = self.staging_dir(instance)
-        filename = "{}.abc".format(instance.name)
-        path = os.path.join(parent_dir, filename)
+        hierarchy_filename = "{}.abc".format(instance.name)
+        hierarchy_path = os.path.join(parent_dir, hierarchy_filename)
         json_filename = "{}.json".format(instance.name)
         json_path = os.path.join(parent_dir, json_filename)
 
@@ -33,10 +33,10 @@ class ExtractSetDress(colorbleed.api.Extractor):
             json.dump(instance.data["scenedata"], filepath, ensure_ascii=False)
 
         self.log.info("Extracting point cache ..")
-        cmds.select(instance)
+        cmds.select(cmds.ls(instance.data["hierarchy"], long=True))
 
         # Run basic alembic exporter
-        extract_alembic(file=path,
+        extract_alembic(file=hierarchy_path,
                         startFrame=1.0,
                         endFrame=1.0,
                         **{"step": 1.0,
@@ -46,7 +46,7 @@ class ExtractSetDress(colorbleed.api.Extractor):
                            "uvWrite": True,
                            "selection": True})
 
-        instance.data["files"] = [json_path, path]
+        instance.data["files"] = [json_path, hierarchy_path]
 
         # Remove data
         instance.data.pop("scenedata", None)
