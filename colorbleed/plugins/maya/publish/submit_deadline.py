@@ -131,14 +131,14 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0,
+                "OutputFilename0": output_filename_0.replace("\\", "/"),
             },
             "PluginInfo": {
                 # Input
                 "SceneFile": fpath,
 
                 # Output directory and filename
-                "OutputFilePath": dirname,
+                "OutputFilePath": dirname.replace("\\", "/"),
                 "OutputFilePrefix": render_variables["filename_prefix"],
 
                 # Mandatory for Deadline
@@ -241,7 +241,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         padded_basename = "{}.{}.{}".format(layer, "#" * padding, ext)
         scene_layer_folder = "{}_{}".format(scene, layer)
         preview_fname = os.path.join(folder, scene, scene_layer_folder,
-                                     layer, padded_basename)
+                                     padded_basename)
 
         return preview_fname
 
