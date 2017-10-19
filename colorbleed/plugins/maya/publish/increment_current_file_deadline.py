@@ -24,7 +24,7 @@ class IncrementCurrentFileDeadline(pyblish.api.ContextPlugin):
 
         if any(plugin.__name__ == "MindbenderSubmitDeadline"
                 for plugin in plugins):
-            raise RuntimeError("Skipping incrementing current file because"
+            raise RuntimeError("Skipping incrementing current file because "
                                "submission to deadline failed.")
 
         new_filename = self.version_up(context.data["currentFile"])
