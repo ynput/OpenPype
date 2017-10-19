@@ -19,6 +19,16 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
     transform.
     In essence, ensure item the shader is assigned to has the Colorbleed ID!
 
+    Displacement shaders:
+    Ensure all geometry is added to the displacement objectSet.
+    It is best practice to add the transform group of the shape to the
+    displacement objectSet
+    Example content:
+        [asset_GRP|geometry_GRP|body_GES,
+         asset_GRP|geometry_GRP|L_eye_GES,
+         asset_GRP|geometry_GRP|R_eye_GES,
+         asset_GRP|geometry_GRP|wings_GEO]
+
     """
 
     order = colorbleed.api.ValidateContentsOrder
@@ -45,7 +55,8 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
         relationships = instance.data["lookData"]["relationships"]
         invalid = []
 
-        with context.renderlayer("defaultRenderLayer"):
+        renderlayer = instance.data.get("renderlayer", "defaultRenderLayer")
+        with context.renderlayer(renderlayer):
             for node in instance:
                 # get the connected objectSets of the node
                 sets = lib.get_related_sets(node)

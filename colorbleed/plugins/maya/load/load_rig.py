@@ -50,16 +50,18 @@ class RigLoader(api.Loader):
         assert output, "No out_SET in rig, this is a bug."
         assert controls, "No controls_SET in rig, this is a bug."
 
+        # Find the roots amongst the loaded nodes
+        roots = cmds.ls(self[:], assemblies=True, long=True)
+        assert roots, "No root nodes in rig, this is a bug."
+
         asset = os.environ["AVALON_ASSET"]
-        cmds.select([output, controls], noExpand=True)
+        dependency = str(context["representation"]["_id"])
+
+        # Create the animation instance
         with maya.maintained_selection():
-
-            # TODO(marcus): Hardcoding the family here, better separate this.
-            dependencies = [context["representation"]["_id"]]
-            dependencies = " ".join(str(d) for d in dependencies)
-
+            cmds.select([output, controls] + roots, noExpand=True)
             maya.create(name=namespace,
                         asset=asset,
                         family="colorbleed.animation",
                         options={"useSelection": True},
-                        data={"dependencies": dependencies})
+                        data={"dependencies": dependency})

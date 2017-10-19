@@ -13,29 +13,22 @@ import pyblish.api
 import colorbleed.maya.lib as lib
 
 
-RENDER_ATTRIBUTES = {"vray":
-                         {"node": "vraySettings",
-                          "prefix": "fileNamePrefix",
-                          "padding": "fileNamePadding",
-                          "ext": "imageFormatStr"},
-                     "arnold":
-                         {"node": "defaultRenderGlobals",
-                          "prefix": "imageFilePrefix",
-                          "padding": "extensionPadding"}
-                     }
-
-
-def get_renderer_variables():
+def get_renderer_variables(renderlayer=None):
     """Retrieve the extension which has been set in the VRay settings
 
     Will return None if the current renderer is not VRay
+    For Maya 2016.5 and up the renderSetup creates renderSetupLayer node which
+    start with `rs`. Use the actual node name, do NOT use the `nice name`
+
+    Args:
+        renderlayer (str): the node name of the renderlayer.
 
     Returns:
         dict
     """
 
-    renderer = lib.get_renderer(lib.get_current_renderlayer())
-    render_attrs = RENDER_ATTRIBUTES[renderer]
+    renderer = lib.get_renderer(renderlayer or lib.get_current_renderlayer())
+    render_attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS["default"])
 
     filename_padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
                                                    render_attrs["padding"]))
@@ -87,6 +80,8 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         comment = context.data.get("comment", "")
         scene = os.path.splitext(fname)[0]
         dirname = os.path.join(workspace, "renders")
+        renderlayer = instance.data['setMembers']       # rs_beauty
+        renderlayer_name = instance.name                # beauty
 
         try:
             os.makedirs(dirname)
@@ -94,10 +89,10 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             pass
 
         # Get the variables depending on the renderer
-        render_variables = get_renderer_variables()
+        render_variables = get_renderer_variables(renderlayer)
         # following hardcoded "renders/<Scene>/<Scene>_<Layer>/<Layer>"
         output_filename_0 = self.preview_fname(scene,
-                                               instance.name,
+                                               renderlayer_name,
                                                dirname,
                                                render_variables["padding"],
                                                render_variables["ext"])
@@ -131,14 +126,14 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0,
+                "OutputFilename0": output_filename_0.replace("\\", "/"),
             },
             "PluginInfo": {
                 # Input
                 "SceneFile": fpath,
 
                 # Output directory and filename
-                "OutputFilePath": dirname,
+                "OutputFilePath": dirname.replace("\\", "/"),
                 "OutputFilePrefix": render_variables["filename_prefix"],
 
                 # Mandatory for Deadline
@@ -148,7 +143,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "UsingRenderLayers": True,
 
                 # Render only this layer
-                "RenderLayer": instance.data["setMembers"],
+                "RenderLayer": renderlayer,
 
                 # Determine which renderer to use from the file itself
                 "Renderer": "file",
@@ -241,7 +236,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         padded_basename = "{}.{}.{}".format(layer, "#" * padding, ext)
         scene_layer_folder = "{}_{}".format(scene, layer)
         preview_fname = os.path.join(folder, scene, scene_layer_folder,
-                                     layer, padded_basename)
+                                     padded_basename)
 
         return preview_fname
 

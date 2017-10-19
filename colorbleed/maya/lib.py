@@ -40,6 +40,22 @@ SHAPE_ATTRS = ["castsShadows",
                "doubleSided",
                "opposite"]
 
+RENDER_ATTRS = {"vray":
+                    {
+                        "node": "vraySettings",
+                        "prefix": "fileNamePrefix",
+                        "padding": "fileNamePadding",
+                        "ext": "imageFormatStr"
+                    },
+                "default":
+                    {
+                        "node": "defaultRenderGlobals",
+                        "prefix": "imageFilePrefix",
+                        "padding": "extensionPadding"
+                    }
+                }
+
+
 SHAPE_ATTRS = set(SHAPE_ATTRS)
 
 
