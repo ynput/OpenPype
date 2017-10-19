@@ -9,6 +9,7 @@ class CleanUp(api.InstancePlugin):
     """
 
     order = api.IntegratorOrder + 10
+    label = "Clean Up"
 
     def process(self, instance):
         return
