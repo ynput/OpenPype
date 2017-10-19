@@ -34,9 +34,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         # Collect the filename prefix in the renderlayer
         with lib.renderlayer(layer_node):
 
-            render_attrs = lib.RENDER_ATTRS.get(renderer, "default")
+            render_attrs = lib.RENDER_ATTRS.get(renderer,
+                                                lib.RENDER_ATTRS['default'])
             node = render_attrs["node"]
-            padding_attr = render_attrs["node"]
+            padding_attr = render_attrs["padding"]
             prefix_attr = render_attrs["prefix"]
 
             prefix = cmds.getAttr("{}.{}".format(node, prefix_attr))

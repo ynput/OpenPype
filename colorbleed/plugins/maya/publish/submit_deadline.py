@@ -28,8 +28,7 @@ def get_renderer_variables(renderlayer=None):
     """
 
     renderer = lib.get_renderer(renderlayer or lib.get_current_renderlayer())
-
-    render_attrs = lib.RENDER_ATTRS.get(renderer, "default")
+    render_attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS["default"])
 
     filename_padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
                                                    render_attrs["padding"]))
@@ -81,6 +80,8 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         comment = context.data.get("comment", "")
         scene = os.path.splitext(fname)[0]
         dirname = os.path.join(workspace, "renders")
+        renderlayer = instance.data['setMembers']       # rs_beauty
+        renderlayer_name = instance.name                # beauty
 
         try:
             os.makedirs(dirname)
@@ -91,7 +92,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         render_variables = get_renderer_variables(renderlayer)
         # following hardcoded "renders/<Scene>/<Scene>_<Layer>/<Layer>"
         output_filename_0 = self.preview_fname(scene,
-                                               instance.name,
+                                               renderlayer_name,
                                                dirname,
                                                render_variables["padding"],
                                                render_variables["ext"])
@@ -142,7 +143,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "UsingRenderLayers": True,
 
                 # Render only this layer
-                "RenderLayer": instance.data["setMembers"],
+                "RenderLayer": renderlayer,
 
                 # Determine which renderer to use from the file itself
                 "Renderer": "file",
