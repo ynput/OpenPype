@@ -15,7 +15,7 @@ class SaveCurrentScene(pyblish.api.ContextPlugin):
         import maya.cmds as cmds
 
         current = cmds.file(query=True, sceneName=True)
-        assert context['currentFile'] == current
+        assert context.data['currentFile'] == current
 
         self.log.info("Saving current file..")
         cmds.file(save=True, force=True)

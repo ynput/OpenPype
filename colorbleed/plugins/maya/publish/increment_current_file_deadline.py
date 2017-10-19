@@ -27,7 +27,7 @@ class IncrementCurrentFileDeadline(pyblish.api.ContextPlugin):
             raise RuntimeError("Skipping incrementing current file because"
                                "submission to deadline failed.")
 
-        new_filename = self.version_up(context["currentFile"])
+        new_filename = self.version_up(context.data["currentFile"])
 
         cmds.file(rename=new_filename)
         cmds.file(save=True, force=True, type="mayaAscii")
