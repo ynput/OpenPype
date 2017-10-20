@@ -5,6 +5,8 @@ from maya import cmds, mel
 from avalon import maya as amaya
 from colorbleed.maya import lib
 
+# TODO : Publish of setdress: -unique namespace for all assets, VALIDATOR!
+
 
 class CollectSetDress(pyblish.api.InstancePlugin):
     """Collect all relevant setdress items
@@ -42,8 +44,8 @@ class CollectSetDress(pyblish.api.InstancePlugin):
                 continue
 
             # Retrieve all matrix data
-            hierarchy = cmds.listRelatives(root, parent=True, fullPath=True)[0]
-            relative_hierarchy = hierarchy.replace(topnode, "*")
+            parent = cmds.listRelatives(root, parent=True, fullPath=True)[0]
+            relative_hierarchy = parent.replace(topnode, "*")
             hierarchy_nodes.append(relative_hierarchy)
 
             # Gather info for new data entry
@@ -52,7 +54,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
             representation_id = container["representation"]
 
             instance_data = {"loader": container["loader"],
-                             "hierarchy": hierarchy,
+                             "parent": parent,
                              "namespace": namespace.strip(":")}
 
             # Check if matrix differs from default and store changes
@@ -64,7 +66,6 @@ class CollectSetDress(pyblish.api.InstancePlugin):
 
         instance.data["scenedata"] = dict(data)
         instance.data["hierarchy"] = list(set(hierarchy_nodes))
-
 
     def get_file_rule(self, rule):
         return mel.eval('workspace -query -fileRuleEntry "{}"'.format(rule))
