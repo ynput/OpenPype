@@ -1,7 +1,7 @@
-from avalon import api
+import avalon.maya.pipeline
 
 
-class MayaAsciiLoader(api.Loader):
+class MayaAsciiLoader(avalon.maya.pipeline.ReferenceLoader):
     """Load the model"""
 
     families = ["colorbleed.mayaAscii"]

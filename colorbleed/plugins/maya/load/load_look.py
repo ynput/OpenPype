@@ -1,10 +1,10 @@
 import os
 import json
 
-from avalon import api
+import avalon.maya.pipeline
 
 
-class LookLoader(api.Loader):
+class LookLoader(avalon.maya.pipeline.ReferenceLoader):
     """Specific loader for lookdev"""
 
     families = ["colorbleed.look"]

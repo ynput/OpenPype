@@ -1,7 +1,7 @@
-from avalon import api
+import avalon.maya.pipeline
 
 
-class ModelLoader(api.Loader):
+class ModelLoader(avalon.maya.pipeline.ReferenceLoader):
     """Load the model"""
 
     families = ["colorbleed.model"]
