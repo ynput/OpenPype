@@ -34,7 +34,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         data = defaultdict(list)
 
         hierarchy_nodes = []
-        for i, container in enumerate(containers):
+        for container in containers:
             members = cmds.sets(container["objectName"], query=True)
             transforms = lib.get_container_transforms(container, members)
             root = lib.get_container_transforms(container,
