@@ -12,14 +12,14 @@ from collections import OrderedDict, defaultdict
 
 from maya import cmds, mel
 
-from avalon import maya, io
+from avalon import Session, maya, io
 from cb.utils.maya import core
 
 
 log = logging.getLogger(__name__)
 
 project = io.find_one({"type": "project",
-                       "name": os.environ["AVALON_PROJECT"]},
+                       "name": Session["AVALON_PROJECT"]},
                        projection={"config.template.publish": True,
                                    "_id": False})
 TEMPLATE = project["config"]["template"]["publish"]
@@ -656,8 +656,7 @@ def generate_ids(nodes):
     """Assign a new id of the current active context to the nodes"""
 
     # Get the asset ID from the database for the asset of current context
-    asset = os.environ["AVALON_ASSET"]
-    asset_id = io.find_one({"type": "asset", "name": asset},
+    asset_id = io.find_one({"type": "asset", "name": Session["AVALON_ASSET"]},
                            projection={"_id": True})
 
     for node in nodes:
@@ -700,7 +699,7 @@ def get_representation_file(representation, template=TEMPLATE):
 
     """
     context = representation["context"].copy()
-    context["root"] = os.environ["AVALON_ROOT"]
+    context["root"] = Session["AVALON_ROOT"]
     return template.format(**context)
 
 

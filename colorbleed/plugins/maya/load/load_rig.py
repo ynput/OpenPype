@@ -1,8 +1,6 @@
-import os
-
 from maya import cmds
 
-from avalon import api, maya
+from avalon import api, Session, maya
 
 
 class RigLoader(api.Loader):
@@ -56,7 +54,7 @@ class RigLoader(api.Loader):
         roots = cmds.ls(self[:], assemblies=True, long=True)
         assert roots, "No root nodes in rig, this is a bug."
 
-        asset = os.environ["AVALON_ASSET"]
+        asset = Session["AVALON_ASSET"]
         dependency = str(context["representation"]["_id"])
 
         # Create the animation instance

@@ -1,7 +1,7 @@
 import pyblish.api
 import os
 
-import avalon.io as io
+from avalon import Session, io
 
 
 class CollectAssumedDestination(pyblish.api.InstancePlugin):
@@ -64,7 +64,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
         # get all the stuff from the database
         subset_name = instance.data["subset"]
         asset_name = instance.data["asset"]
-        project_name = os.environ["AVALON_PROJECT"]
+        project_name = Session["AVALON_PROJECT"]
 
         project = io.find_one({"type": "project",
                                "name": project_name},
@@ -95,9 +95,9 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
         if version is not None:
             version_number += version["name"]
 
-        template_data = {"root": os.environ["AVALON_PROJECTS"],
+        template_data = {"root": Session["AVALON_PROJECTS"],
                          "project": project_name,
-                         "silo": os.environ["AVALON_SILO"],
+                         "silo": Session["AVALON_SILO"],
                          "asset": asset_name,
                          "subset": subset_name,
                          "version": version_number,
