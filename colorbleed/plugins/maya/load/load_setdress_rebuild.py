@@ -17,16 +17,18 @@ class SetDressRebuild(api.Loader):
 
     def process(self, name, namespace, context, data):
 
-        from maya import cmds
-        import avalon.maya as amaya
+        # Hack
+        import sys
 
-        context_ns = context["subset"]["name"]
-        with amaya.maintained_selection():
-            file_nodes = cmds.file(self.fname,
-                                   namespace=context_ns,
-                                   reference=True,
-                                   returnNewNodes=True,
-                                   groupReference=True,
-                                   groupName="{}:{}".format(context_ns, name))
+        p = r"C:\Users\User\Documents\development\research\setdress"
+        if p not in sys.path:
+            sys.path.insert(0, p)
 
-        self[:] = file_nodes
+        import loader
+        reload(loader)
+
+        containers = loader.load_package(filepath=self.fname,
+                                         name=name,
+                                         namespace=namespace)
+
+        self[:] = containers
