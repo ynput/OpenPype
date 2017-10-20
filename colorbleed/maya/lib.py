@@ -700,7 +700,7 @@ def get_representation_file(representation, template=TEMPLATE):
 
     """
     context = representation["context"].copy()
-    context["root"] = os.environ["AVALON_ROOT"]
+    context["root"] = os.environ["AVALON_PROJECTS"]
     return template.format(**context)
 
 
