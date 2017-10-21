@@ -59,7 +59,6 @@ class SetDressLoader(api.Loader):
         # Remove all members
         member_containers = setdress_api.get_contained_containers(container)
         for member_container in member_containers:
-            print 'member_container', member_container
             self.log.info("Removing container %s",
                           member_container['objectName'])
             api.remove(member_container)
