@@ -18,12 +18,6 @@ class ModelLoader(avalon.maya.pipeline.ReferenceLoader):
         import maya.cmds as cmds
         from avalon import maya
 
-        # Create a readable namespace
-        # Namespace should contain asset name and counter
-        # TEST_001{_descriptor} where `descriptor` can be `_abc` for example
-        assetname = "{}_".format(namespace.split("_")[0])
-        namespace = maya.unique_namespace(assetname, format="%03d")
-
         with maya.maintained_selection():
             nodes = cmds.file(self.fname,
                               namespace=namespace,
@@ -52,9 +46,6 @@ class GpuCacheLoader(avalon.api.Loader):
         import avalon.maya.lib as lib
 
         asset = context['asset']['name']
-        subset = context['subset']['name']
-
-        name = name or subset
         namespace = namespace or lib.unique_namespace(
             asset + "_",
             prefix="_" if asset[0].isdigit() else "",
