@@ -13,7 +13,7 @@ class SetDressRebuild(api.Loader):
 
     def process(self, name, namespace, context, data):
 
-        import setdress_api
+        from colorbleed import setdress_api
 
         containers = setdress_api.load_package(filepath=self.fname,
                                                name=name,
