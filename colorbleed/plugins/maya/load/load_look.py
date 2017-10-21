@@ -32,14 +32,6 @@ class LookLoader(avalon.maya.pipeline.ReferenceLoader):
         from avalon import maya
         import colorbleed.maya.lib as lib
 
-        # improve readability of the namespace
-        assetname = context["asset"]["name"]
-        ns_assetname = "{}_".format(assetname)
-
-        namespace = maya.unique_namespace(ns_assetname,
-                                          format="%03d",
-                                          suffix="_look")
-
         # try / except here is to ensure that the get_reference_node
         # does not fail when the file doesn't exist yet
         reference_node = None

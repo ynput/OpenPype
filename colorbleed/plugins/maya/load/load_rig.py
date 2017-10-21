@@ -23,8 +23,6 @@ class RigLoader(avalon.maya.pipeline.ReferenceLoader):
 
     def process(self, name, namespace, context, data):
 
-        assetname = "{}_".format(context["asset"]["name"])
-        unique_namespace = maya.unique_namespace(assetname, format="%03d")
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           reference=True,
@@ -35,7 +33,7 @@ class RigLoader(avalon.maya.pipeline.ReferenceLoader):
         # Store for post-process
         self[:] = nodes
         if data.get("post_process", True):
-            self._post_process(name, unique_namespace, context, data)
+            self._post_process(name, namespace, context, data)
 
     def _post_process(self, name, namespace, context, data):
 

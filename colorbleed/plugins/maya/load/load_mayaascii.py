@@ -17,12 +17,6 @@ class MayaAsciiLoader(avalon.maya.pipeline.ReferenceLoader):
         import maya.cmds as cmds
         from avalon import maya
 
-        # Create a readable namespace
-        # Namespace should contain asset name and counter
-        # TEST_001{_descriptor} where `descriptor` can be `_abc` for example
-        assetname = "{}_".format(namespace.split("_")[0])
-        namespace = maya.unique_namespace(assetname, format="%03d")
-
         with maya.maintained_selection():
             nodes = cmds.file(self.fname,
                               namespace=namespace,
