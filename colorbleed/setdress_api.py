@@ -382,14 +382,12 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 
                 new_version = new["context"]["version"]
 
-                host = api.registered_host()
-                host.update(container, version=new_version)
+                api.update(container, version=new_version)
 
         else:
             # Remove this container because it's not in the new data
             log.warning("Removing content: %s", container_ns)
-            host = api.registered_host()
-            host.remove(container)
+            api.remove(container)
 
         processed_namespaces.add(container_ns)
         processed_containers.append(container['objectName'])
@@ -424,7 +422,7 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 def compare_representations(old, new):
     """Check if the old representation given can be updated
 
-    Due to limitations of the `host.update` function we cannot allow
+    Due to limitations of the `api.update` function we cannot allow
     differences in the following data:
 
     * Representation name (extension)
