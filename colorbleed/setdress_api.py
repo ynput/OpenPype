@@ -133,7 +133,7 @@ def _add(instance, representation_id, loaders, name, namespace):
 
     """
 
-    from avalon.tools.cbloader import lib
+    import avalon.api as api
     from colorbleed.maya.lib import get_container_transforms
 
     # Process within the namespace
@@ -149,9 +149,9 @@ def _add(instance, representation_id, loaders, name, namespace):
                         instance['loader'], instance)
             raise RuntimeError("Loader is missing.")
 
-        container = lib.run_loader(Loader,
-                                   representation_id,
-                                   namespace=instance['namespace'])
+        container = api.load(Loader,
+                             representation_id,
+                             namespace=instance['namespace'])
 
         # Get the root from the loaded container
         root = get_container_transforms({"objectName": container},
@@ -200,21 +200,39 @@ def _instances_by_namespace(data):
     return result
 
 
-def update_package(set_container, version):
-    """Update any matrix changes in the scene based on the new data
-
+def get_contained_containers(container):
+    """Get the Avalon containers in this container
+    
     Args:
-        set_container (dict): container data from `ls()`
-        version (int): version number of the subset
-
+        container (dict): The container dict.
+        
+    Returns:
+        list: A list of member container dictionaries.
+        
     """
 
-    import avalon.api
+    import avalon.schema
     from avalon.maya.pipeline import parse_container
+
+    # Get avalon containers in this package setdress container
+    containers = []
+    members = cmds.sets(container['objectName'], query=True)
+    for node in cmds.ls(members, type="objectSet"):
+        try:
+            member_container = parse_container(node)
+            containers.append(member_container)
+        except avalon.schema.ValidationError:
+            pass
+
+    return containers
+
+
+def update_package_version(container, version):
+    """Update package by version number"""
 
     # Versioning (from `core.maya.pipeline`)
     current_representation = io.find_one({
-        "_id": io.ObjectId(set_container["representation"])
+        "_id": io.ObjectId(container["representation"])
     })
 
     assert current_representation is not None, "This is a bug"
@@ -242,34 +260,44 @@ def update_package(set_container, version):
         "name": current_representation["name"]
     })
 
+    update_package(container, new_representation)
+
+
+def update_package(set_container, representation):
+    """Update any matrix changes in the scene based on the new data
+
+    Args:
+        set_container (dict): container data from `ls()`
+        version (int): version number of the subset
+
+    """
+
+    import avalon.api
+
     # Load the original package data
-    current_file = avalon.api.get_representation_path(new_representation)
+    current_representation = io.find_one({
+        "_id": io.ObjectId(set_container['representation']),
+        "type": "representation"
+    })
+
+    current_file = avalon.api.get_representation_path(current_representation)
     assert current_file.endswith(".json")
     with open(current_file, "r") as fp:
         current_data = json.load(fp)
 
     # Load the new package data
-    new_file = avalon.api.get_representation_path(new_representation)
+    new_file = avalon.api.get_representation_path(representation)
     assert new_file.endswith(".json")
     with open(new_file, "r") as fp:
         new_data = json.load(fp)
 
-    # Get avalon containers in the setdress
-    containers = []
-    members = cmds.sets(set_container['objectName'], query=True)
-    for node in cmds.ls(members, type="objectSet"):
-        try:
-            container = parse_container(node)
-            containers.append(container)
-        except avalon.schema.ValidationError:
-            pass
-
     # Update scene content
+    containers = get_contained_containers(set_container)
     update_scene(set_container, containers, current_data, new_data, new_file)
 
     # TODO: This should be handled by the pipeline itself
     cmds.setAttr(set_container['objectName'] + ".representation",
-                 str(new_representation['_id']), type="string")
+                 str(representation['_id']), type="string")
 
 
 def update_scene(set_container, containers, current_data, new_data, new_file):
@@ -318,7 +346,6 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
     new_lookup = _instances_by_namespace(new_data)
     old_lookup = _instances_by_namespace(current_data)
     for container in containers:
-        # container_repr = cmds.getAttr("{}.representation".format(container))
         container_ns = container['namespace']
 
         if container_ns in new_lookup:
