@@ -92,6 +92,9 @@ def load_package(filepath, name, namespace=None):
                           groupName="{}:{}".format(namespace, name),
                           typ="Alembic")
 
+    # Get the top root node (the reference group)
+    root = "{}:{}".format(namespace, name)
+
     containers = []
     for representation_id, instances in data.items():
 
@@ -99,8 +102,11 @@ def load_package(filepath, name, namespace=None):
         loaders = list(lib.iter_loaders(representation_id))
 
         for instance in instances:
-            container = _add(instance, representation_id, loaders, name,
-                             namespace)
+            container = _add(instance=instance,
+                             representation_id=representation_id,
+                             loaders=loaders,
+                             namespace=namespace,
+                             root=root)
             containers.append(container)
 
     # TODO: Do we want to cripple? Or do we want to add a 'parent' parameter?
@@ -119,7 +125,7 @@ def load_package(filepath, name, namespace=None):
     return containers + hierarchy
 
 
-def _add(instance, representation_id, loaders, name, namespace):
+def _add(instance, representation_id, loaders, namespace, root="|"):
     """Add an item from the package
 
     Args:
@@ -154,21 +160,19 @@ def _add(instance, representation_id, loaders, name, namespace):
                              namespace=instance['namespace'])
 
         # Get the root from the loaded container
-        root = get_container_transforms({"objectName": container},
-                                        root=True)
+        loaded_root = get_container_transforms({"objectName": container},
+                                               root=True)
 
         # Apply matrix to root node (if any matrix edits)
         matrix = instance.get("matrix", None)
         if matrix:
-            cmds.xform(root, objectSpace=True, matrix=matrix)
+            cmds.xform(loaded_root, objectSpace=True, matrix=matrix)
 
         # Parent into the setdress hierarchy
         # Namespace is missing from parent node(s), add namespace
         # manually
-        parent_grp = instance["parent"]
-        parent_grp = "{}:{}|".format(namespace, name) + to_namespace(parent_grp, namespace)
-
-        cmds.parent(root, parent_grp, relative=True)
+        parent = root + to_namespace(instance["parent"], namespace)
+        cmds.parent(loaded_root, parent, relative=True)
 
         return container
 
@@ -348,6 +352,11 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
     for container in containers:
         container_ns = container['namespace']
 
+        # Consider it processed here, even it it fails we want to store that
+        # the namespace was already available.
+        processed_namespaces.add(container_ns)
+        processed_containers.append(container['objectName'])
+
         if container_ns in new_lookup:
             root = get_container_transforms(container, root=True)
             if not root:
@@ -388,36 +397,48 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                 root = cmds.parent(root, parent, relative=True)
                 cmds.lockNode(root, lock=True)
 
-            # TODO: Update the representation with the new loader
-            if new_instance['loader'] != old_instance['loader']:
-                log.error("Switching loader between updates is not supported.")
-                continue
-
-            # TODO: Update the representation with the new loader
-            representation_new = new_instance['representation']
+            # Update the representation
+            representation_current = container['representation']
             representation_old = old_instance['representation']
-            if representation_new != representation_old:
+            representation_new = new_instance['representation']
+            has_representation_override = (representation_current !=
+                                           representation_old)
 
-                print "namespace :", container_ns
+            if representation_new != representation_current:
 
+                if has_representation_override:
+                    log.warning("Your scene had local representation "
+                                "overrides within the set. New "
+                                "representations not loaded for %s.",
+                                container_ns)
+                    continue
+
+                # We check it against the current 'loader' in the scene instead
+                # of the original data of the package that was loaded because
+                # an Artist might have made scene local overrides
+                if new_instance['loader'] != container['loader']:
+                    log.error("Switching loader between updates is not "
+                              "supported. Skipping: %s", container_ns)
+                    continue
+
+                # Check whether the conversion can be done by the Loader.
+                # They *must* use the same asset, subset and Loader for
+                # `api.update` to make sense.
+                old = io.find_one({"_id": io.ObjectId(representation_current)})
                 new = io.find_one({"_id": io.ObjectId(representation_new)})
-                old = io.find_one({"_id": io.ObjectId(representation_old)})
-
                 is_valid = compare_representations(old=old, new=new)
                 if not is_valid:
+                    log.error("Skipping: %s. See log for details.",
+                              container_ns)
                     continue
 
                 new_version = new["context"]["version"]
-
                 api.update(container, version=new_version)
 
         else:
             # Remove this container because it's not in the new data
             log.warning("Removing content: %s", container_ns)
             api.remove(container)
-
-        processed_namespaces.add(container_ns)
-        processed_containers.append(container['objectName'])
 
     # Add new assets
     for representation_id, instances in new_data.items():
@@ -431,11 +452,11 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
             if instance['namespace'] in processed_namespaces:
                 continue
 
-            container = _add(instance,
-                             representation_id,
-                             loaders,
-                             set_container['name'],
-                             set_container['namespace'])
+            container = _add(instance=instance,
+                             representation_id=representation_id,
+                             loaders=loaders,
+                             namespace=set_container['namespace'],
+                             root=set_root)
 
             # Add to the setdress container
             cmds.sets(container,
