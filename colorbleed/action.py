@@ -142,7 +142,7 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
     receive new UUIDs are actually invalid.
 
     Requires:
-        - currentFile on context
+        - instance.data["asset"]
 
     """
 
@@ -166,44 +166,38 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
         instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
 
         # Get the nodes from the all instances that ran through this plug-in
-        invalid = []
+        all_invalid = []
         for instance in instances:
-            invalid_nodes = plugin.get_invalid(instance)
-            if invalid_nodes:
-                invalid.extend(invalid_nodes)
+            invalid = plugin.get_invalid(instance)
+            if invalid:
 
-        if not invalid:
+                self.log.info("Fixing instance {}".format(instance.name))
+                self._update_id_attribute(instance, invalid)
+
+                all_invalid.extend(invalid)
+
+        if not all_invalid:
             self.log.info("No invalid nodes found.")
             return
 
-        # Ensure unique ( process each node only once )
-        invalid = list(set(invalid))
+        all_invalid = list(set(all_invalid))
+        self.log.info("Generated ids on nodes: {0}".format(all_invalid))
 
-        # Parse context from current file
-        self.log.info("Updating node IDs ...")
-        # Update the attributes
-        self._update_id_attribute(invalid)
-
-        self.log.info("Generated ids on nodes: {0}".format(invalid))
-
-    def _update_id_attribute(self, nodes):
+    def _update_id_attribute(self, instance, nodes):
         """Delete the id attribute
 
         Args:
-            nodes (list): all nodes to remove the attribute from
+            instance: The instance we're fixing for
+            nodes (list): all nodes to regenerate ids on
         """
 
+        import colorbleed.maya.lib as lib
+        import avalon.io as io
+
+        asset = instance.data['asset']
+        asset_id = io.find_one({"name": asset, "type": "asset"},
+                               projection={"_id": True})['_id']
         for node in nodes:
-
-            # get the database asset id
-            attr = "{}.cbId".format(node)
-            id_attr = cmds.getAttr(attr)
-            asset_id = id_attr.split(":")[0]
-
-            # create a new unique id
-            _, uid = str(uuid.uuid4()).rsplit("-", 1)
-            cb_uid = "{}:{}".format(asset_id, uid)
-
-            # set the new id
-            cmds.setAttr(attr, cb_uid, type="string")
+            lib.remove_id(node)
+            lib.set_id(asset_id, node)
 
