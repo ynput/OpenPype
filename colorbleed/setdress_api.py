@@ -7,7 +7,6 @@ import copy
 
 from maya import cmds
 
-import avalon.schema
 import avalon.io as io
 from avalon.maya.lib import unique_namespace
 
@@ -210,7 +209,7 @@ def update_package(set_container, version):
 
     """
 
-    from colorbleed.maya.lib import get_representation_file
+    import avalon.api
     from avalon.maya.pipeline import parse_container
 
     # Versioning (from `core.maya.pipeline`)
@@ -244,13 +243,13 @@ def update_package(set_container, version):
     })
 
     # Load the original package data
-    current_file = get_representation_file(current_representation)
+    current_file = avalon.api.get_representation_path(new_representation)
     assert current_file.endswith(".json")
     with open(current_file, "r") as fp:
         current_data = json.load(fp)
 
     # Load the new package data
-    new_file = get_representation_file(new_representation)
+    new_file = avalon.api.get_representation_path(new_representation)
     assert new_file.endswith(".json")
     with open(new_file, "r") as fp:
         new_data = json.load(fp)
