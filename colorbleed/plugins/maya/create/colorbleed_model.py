@@ -2,8 +2,9 @@ import avalon.maya
 
 
 class CreateModel(avalon.maya.Creator):
-    """Polygonal geometry for animation"""
+    """Polygonal static geometry"""
 
     name = "modelDefault"
     label = "Model"
     family = "colorbleed.model"
+    icon = "cube"

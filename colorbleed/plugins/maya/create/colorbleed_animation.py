@@ -5,11 +5,12 @@ from colorbleed.maya import lib
 
 
 class CreateAnimation(avalon.maya.Creator):
-    """THe animated objects in the scene"""
+    """Animation output for character rigs"""
 
     name = "animationDefault"
     label = "Animation"
     family = "colorbleed.animation"
+    icon = "male"
 
     def __init__(self, *args, **kwargs):
         super(CreateAnimation, self).__init__(*args, **kwargs)

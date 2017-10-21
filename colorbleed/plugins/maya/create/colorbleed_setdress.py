@@ -2,8 +2,9 @@ import avalon.maya
 
 
 class CreateSetDress(avalon.maya.Creator):
-    """THe animated objects in the scene"""
+    """A grouped package of loaded content"""
 
     name = "setdress"
     label = "Set Dress"
     family = "colorbleed.setdress"
+    icon = "cubes"

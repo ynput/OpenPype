@@ -5,11 +5,12 @@ from colorbleed.maya import lib
 
 
 class CreatePointCache(avalon.maya.Creator):
-    """Alembic extract"""
+    """Alembic pointcache for animated data"""
 
     name = "pointcache"
     label = "Point Cache"
     family = "colorbleed.pointcache"
+    icon = "gears"
 
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)

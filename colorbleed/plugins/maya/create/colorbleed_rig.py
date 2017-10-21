@@ -4,11 +4,12 @@ import avalon.maya
 
 
 class CreateRig(avalon.maya.Creator):
-    """Skeleton and controls for manipulation of the geometry"""
+    """Artist-friendly rig with controls to direct motion"""
 
     name = "rigDefault"
     label = "Rig"
     family = "colorbleed.rig"
+    icon = "wheelchair"
 
     def process(self):
         instance = super(CreateRig, self).process()
