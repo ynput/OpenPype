@@ -797,8 +797,8 @@ def assign_look_by_version(nodes, version_id):
                                     "name": "json"})
 
     # Load file
-    shader_filepath = api.get_representation_path(shader_file["_id"])
-    shader_relation = api.get_representation_path(shader_relations["_id"])
+    shader_filepath = api.get_representation_path(shader_file)
+    shader_relation = api.get_representation_path(shader_relations)
 
     reference_node = get_reference_node(shader_filepath)
     if reference_node is None:
