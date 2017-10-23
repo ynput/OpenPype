@@ -12,7 +12,7 @@ from collections import OrderedDict, defaultdict
 
 from maya import cmds, mel
 
-from avalon import maya, io
+from avalon import api, maya, io
 from cb.utils.maya import core
 
 
@@ -688,22 +688,6 @@ def remove_id(node):
         cmds.deleteAttr("{}.cbId".format(node))
 
 
-def get_representation_file(representation, template=TEMPLATE):
-    """
-    Rebuild the filepath of the representation's context
-    Args:
-        representation (dict): data of the registered in the database
-        template (str): the template to fill
-
-    Returns:
-        str
-
-    """
-    context = representation["context"].copy()
-    context["root"] = os.environ["AVALON_ROOT"]
-    return template.format(**context)
-
-
 def get_reference_node(path):
     """
     Get the reference node when the path is found being used in a reference
@@ -813,8 +797,8 @@ def assign_look_by_version(nodes, version_id):
                                     "name": "json"})
 
     # Load file
-    shader_filepath = get_representation_file(shader_file)
-    shader_relation = get_representation_file(shader_relations)
+    shader_filepath = api.get_representation_path(shader_file)
+    shader_relation = api.get_representation_path(shader_relations)
 
     reference_node = get_reference_node(shader_filepath)
     if reference_node is None:
