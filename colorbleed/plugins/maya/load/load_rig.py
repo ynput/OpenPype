@@ -3,7 +3,7 @@ from maya import cmds
 from avalon import api, Session, maya
 
 
-class RigLoader(api.Loader):
+class RigLoader(maya.pipeline.ReferenceLoader):
     """Specific loader for rigs
 
     This automatically creates an instance for animators upon load.
@@ -20,8 +20,6 @@ class RigLoader(api.Loader):
 
     def process(self, name, namespace, context, data):
 
-        assetname = "{}_".format(context["asset"]["name"])
-        unique_namespace = maya.unique_namespace(assetname, format="%03d")
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           reference=True,
@@ -32,10 +30,9 @@ class RigLoader(api.Loader):
         # Store for post-process
         self[:] = nodes
         if data.get("post_process", True):
-            self._post_process(name, unique_namespace, context, data)
+            self._post_process(name, namespace, context, data)
 
     def _post_process(self, name, namespace, context, data):
-        from avalon import maya
 
         # TODO(marcus): We are hardcoding the name "out_SET" here.
         #   Better register this keyword, so that it can be used
@@ -60,8 +57,8 @@ class RigLoader(api.Loader):
         # Create the animation instance
         with maya.maintained_selection():
             cmds.select([output, controls] + roots, noExpand=True)
-            maya.create(name=namespace,
-                        asset=asset,
-                        family="colorbleed.animation",
-                        options={"useSelection": True},
-                        data={"dependencies": dependency})
+            api.create(name=namespace,
+                       asset=asset,
+                       family="colorbleed.animation",
+                       options={"useSelection": True},
+                       data={"dependencies": dependency})

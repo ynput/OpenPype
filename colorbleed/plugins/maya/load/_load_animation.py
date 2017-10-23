@@ -1,10 +1,7 @@
-import os
+import avalon.maya.pipeline
 
 
-from avalon import api
-
-
-class AbcLoader(api.Loader):
+class AbcLoader(avalon.maya.pipeline.ReferenceLoader):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["colorbleed.animation",

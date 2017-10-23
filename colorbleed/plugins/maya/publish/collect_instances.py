@@ -47,12 +47,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
         objectset = cmds.ls("*.id", long=True, type="objectSet",
                             recursive=True, objectsOnly=True)
         for objset in objectset:
-            self.log.info("Creating instance for {}".format(objset))
-
-            members = cmds.sets(objset, query=True)
-            if members is None:
-                self.log.info("Skipped empty Set: \"%s\" " % objset)
-                continue
 
             if not cmds.attributeQuery("id", node=objset, exists=True):
                 continue
@@ -67,6 +61,13 @@ class CollectInstances(pyblish.api.ContextPlugin):
                                              node=objset,
                                              exists=True)
             assert has_family, "\"%s\" was missing a family" % objset
+
+            members = cmds.sets(objset, query=True)
+            if members is None:
+                self.log.warning("Skipped empty instance: \"%s\" " % objset)
+                continue
+
+            self.log.info("Creating instance for {}".format(objset))
 
             data = dict()
 

@@ -12,14 +12,14 @@ from collections import OrderedDict, defaultdict
 
 from maya import cmds, mel
 
-from avalon import Session, maya, io
+from avalon import api, maya, io
 from cb.utils.maya import core
 
 
 log = logging.getLogger(__name__)
 
 project = io.find_one({"type": "project",
-                       "name": Session["AVALON_PROJECT"]},
+                       "name": os.environ["AVALON_PROJECT"]},
                        projection={"config.template.publish": True,
                                    "_id": False})
 TEMPLATE = project["config"]["template"]["publish"]
@@ -656,7 +656,7 @@ def generate_ids(nodes):
     """Assign a new id of the current active context to the nodes"""
 
     # Get the asset ID from the database for the asset of current context
-    asset_id = io.find_one({"type": "asset", "name": Session["AVALON_ASSET"]},
+    asset_id = io.find_one({"type": "asset", "name": os.environ["AVALON_ASSET"]},
                            projection={"_id": True})
 
     for node in nodes:
@@ -685,22 +685,6 @@ def set_id(asset_id, node):
 def remove_id(node):
     if cmds.attributeQuery("cbId", node=node, exists=True):
         cmds.deleteAttr("{}.cbId".format(node))
-
-
-def get_representation_file(representation, template=TEMPLATE):
-    """
-    Rebuild the filepath of the representation's context
-    Args:
-        representation (dict): data of the registered in the database
-        template (str): the template to fill
-
-    Returns:
-        str
-
-    """
-    context = representation["context"].copy()
-    context["root"] = Session["AVALON_ROOT"]
-    return template.format(**context)
 
 
 def get_reference_node(path):
@@ -812,8 +796,8 @@ def assign_look_by_version(nodes, version_id):
                                     "name": "json"})
 
     # Load file
-    shader_filepath = get_representation_file(shader_file)
-    shader_relation = get_representation_file(shader_relations)
+    shader_filepath = api.get_representation_path(shader_file)
+    shader_relation = api.get_representation_path(shader_relations)
 
     reference_node = get_reference_node(shader_filepath)
     if reference_node is None:

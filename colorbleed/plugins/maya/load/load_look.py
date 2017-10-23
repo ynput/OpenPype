@@ -1,10 +1,10 @@
 import os
 import json
 
-from avalon import api
+import avalon.maya.pipeline
 
 
-class LookLoader(api.Loader):
+class LookLoader(avalon.maya.pipeline.ReferenceLoader):
     """Specific loader for lookdev"""
 
     families = ["colorbleed.look"]
@@ -31,14 +31,6 @@ class LookLoader(api.Loader):
         import maya.cmds as cmds
         from avalon import maya
         import colorbleed.maya.lib as lib
-
-        # improve readability of the namespace
-        assetname = context["asset"]["name"]
-        ns_assetname = "{}_".format(assetname)
-
-        namespace = maya.unique_namespace(ns_assetname,
-                                          format="%03d",
-                                          suffix="_look")
 
         # try / except here is to ensure that the get_reference_node
         # does not fail when the file doesn't exist yet

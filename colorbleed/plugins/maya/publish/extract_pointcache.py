@@ -25,8 +25,8 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
         nodes = instance[:]
 
         # Collect the start and end including handles
-        start = instance.data["startFrame"]
-        end = instance.data["endFrame"]
+        start = instance.data.get("startFrame", 1)
+        end = instance.data.get("endFrame", 1)
         handles = instance.data.get("handles", 0)
         if handles:
             start -= handles

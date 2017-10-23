@@ -18,7 +18,7 @@ class SetFrameRangeLoader(api.Loader):
     icon = "clock-o"
     color = "white"
 
-    def process(self, name, namespace, context, data):
+    def load(self, context, name, namespace, data):
 
         import maya.cmds as cmds
 
@@ -52,7 +52,7 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
     icon = "clock-o"
     color = "white"
 
-    def process(self, name, namespace, context, data):
+    def load(self, context, name, namespace, data):
 
         import maya.cmds as cmds
 

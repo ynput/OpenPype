@@ -30,6 +30,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "colorbleed.mayaAscii",
                 "colorbleed.model",
                 "colorbleed.pointcache",
+                "colorbleed.setdress",
                 "colorbleed.rig"]
 
     def process(self, instance):
@@ -47,10 +48,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     def register(self, instance):
 
         # Required environment variables
-        PROJECT = Session["AVALON_PROJECT"]
+        PROJECT = os.environ["AVALON_PROJECT"]
         ASSET = instance.data.get("asset") or Session["AVALON_ASSET"]
-        SILO = Session["AVALON_SILO"]
-        LOCATION = Session("AVALON_LOCATION")
+        SILO = os.environ["AVALON_SILO"]
+        LOCATION = os.environ("AVALON_LOCATION")
 
         context = instance.context
         # Atomicity
@@ -139,7 +140,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         root = api.registered_root()
         template_data = {"root": root,
                          "project": PROJECT,
-                         "silo": SILO,
+                         "silo": asset['silo'],
                          "asset": ASSET,
                          "subset": subset["name"],
                          "version": version["name"]}
@@ -213,7 +214,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "context": {
                     "project": PROJECT,
                     "asset": ASSET,
-                    "silo": SILO,
+                    "silo": asset['silo'],
                     "subset": subset["name"],
                     "version": version["name"],
                     "representation": ext[1:]
@@ -318,9 +319,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         current_families = instance.data.get("families", list())
         instance_family = instance.data.get("family", None)
 
-        families += current_families
         if instance_family is not None:
             families.append(instance_family)
+        families += current_families
 
         # create relative source path for DB
         relative_path = os.path.relpath(context.data["currentFile"],
@@ -333,4 +334,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                         "source": source,
                         "comment": context.data.get("comment")}
 
-        return dict(instance.data, **version_data)
+        # Include optional data if present in
+        optionals = ["startFrame", "endFrame", "step", "handles"]
+        for key in optionals:
+            if key in instance.data:
+                version_data[key] = instance.data[key]
+
+        return version_data
