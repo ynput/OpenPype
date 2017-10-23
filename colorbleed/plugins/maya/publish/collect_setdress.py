@@ -29,7 +29,6 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         containers = amaya.ls()
 
         # Get all content from the instance
-        topnode = cmds.sets(instance.name, query=True)[0]
         instance_lookup = set(cmds.ls(instance, type="transform", long=True))
         data = defaultdict(list)
 
