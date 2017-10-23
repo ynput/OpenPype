@@ -100,9 +100,9 @@ def matrix_equals(a, b, tolerance=1e-10):
     Compares two matrices with an imperfection tolerance
 
     Args:
-        current_matrix (list, tuple): the matrix to check
-        original_matrix (list, tuple): the matrix to check against
-        tolerance (long): the precision of the differences
+        a (list, tuple): the matrix to check
+        b (list, tuple): the matrix to check against
+        tolerance (float): the precision of the differences
 
     Returns:
         bool : True or False
