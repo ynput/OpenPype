@@ -2,7 +2,7 @@ from collections import defaultdict
 import pyblish.api
 
 from maya import cmds, mel
-from avalon import maya as amaya
+from avalon import maya as avalon
 from colorbleed.maya import lib
 
 # TODO : Publish of setdress: -unique namespace for all assets, VALIDATOR!
@@ -26,7 +26,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         # Find containers
-        containers = amaya.ls()
+        containers = avalon.ls()
 
         # Get all content from the instance
         instance_lookup = set(cmds.ls(instance, type="transform", long=True))
@@ -34,7 +34,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
 
         hierarchy_nodes = []
         for container in containers:
-            members = cmds.sets(container["objectName"], query=True)
+
             root = lib.get_container_transforms(container, root=True)
             if root not in instance_lookup:
                 continue
@@ -44,13 +44,10 @@ class CollectSetDress(pyblish.api.InstancePlugin):
             hierarchy_nodes.append(parent)
 
             # Gather info for new data entry
-            reference_node = cmds.ls(members, type="reference")[0]
-            namespace = cmds.referenceQuery(reference_node, namespace=True)
             representation_id = container["representation"]
-
             instance_data = {"loader": container["loader"],
                              "parent": parent,
-                             "namespace": namespace.strip(":")}
+                             "namespace": container["namespace"]}
 
             # Check if matrix differs from default and store changes
             matrix_data = self.get_matrix_data(root)
