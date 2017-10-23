@@ -10,27 +10,9 @@ from maya import cmds
 from avalon import api
 import avalon.io as io
 from avalon.maya.lib import unique_namespace
+from colorbleed.maya.lib import matrix_equals
 
 log = logging.getLogger("PackageLoader")
-
-
-def matrix_equals(current_matrix, original_matrix, tolerance=1e-10):
-    """
-    Compares two matrices with an imperfection tolerance
-
-    Args:
-        current_matrix (list, tuple): the matrix to check
-        original_matrix (list, tuple): the matrix to check against
-        tolerance (long): the precision of the differences
-
-    Returns:
-        bool : True or False
-
-    """
-    zipped = zip(current_matrix, original_matrix)
-    if not all(abs(x - y) < tolerance for x, y in zipped):
-        return False
-    return True
 
 
 def to_namespace(node, namespace):
