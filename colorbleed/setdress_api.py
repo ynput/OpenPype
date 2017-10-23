@@ -73,6 +73,28 @@ def namespaced(namespace, new=True):
         cmds.namespace(set=original)
 
 
+@contextlib.contextmanager
+def unlocked(nodes):
+
+    # Get node state by Maya's uuid
+    nodes = cmds.ls(nodes, long=True)
+    uuids = cmds.ls(nodes, uuid=True)
+    states = cmds.lockNode(nodes, query=True, lock=True)
+    states = {uuid: state for uuid, state in zip(uuids, states)}
+
+    try:
+        cmds.lockNode(nodes, lock=False)
+        yield
+    finally:
+        # Reapply original states
+        for uuid, state in states.iteritems():
+            nodes_from_id = cmds.ls(uuid, long=True)
+            if not nodes_from_id:
+                log.warning("Node not found: %s", uuid)
+                continue
+            cmds.lockNode(nodes_from_id[0], lock=state)
+
+
 def load_package(filepath, name, namespace=None):
     """Load a package that was gathered elsewhere.
 
@@ -361,9 +383,10 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                                                   referenceNode=True)
     new_alembic = new_file.replace(".json", ".abc")
     assert os.path.exists(new_alembic), "%s does not exist." % new_alembic
-    cmds.file(new_alembic,
-              loadReference=set_hierarchy_reference,
-              type="Alembic")
+    with unlocked(cmds.listRelatives(set_root, ad=True, fullPath=True)):
+        cmds.file(new_alembic,
+                  loadReference=set_hierarchy_reference,
+                  type="Alembic")
 
     identity = DEFAULT_MATRIX[:]
 
