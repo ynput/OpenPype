@@ -7,6 +7,7 @@ import copy
 
 from maya import cmds
 
+from avalon import api
 import avalon.io as io
 from avalon.maya.lib import unique_namespace
 
@@ -139,7 +140,6 @@ def _add(instance, representation_id, loaders, namespace, root="|"):
 
     """
 
-    import avalon.api as api
     from colorbleed.maya.lib import get_container_transforms
 
     # Process within the namespace
@@ -276,21 +276,19 @@ def update_package(set_container, representation):
 
     """
 
-    import avalon.api
-
     # Load the original package data
     current_representation = io.find_one({
         "_id": io.ObjectId(set_container['representation']),
         "type": "representation"
     })
 
-    current_file = avalon.api.get_representation_path(current_representation)
+    current_file = api.get_representation_path(current_representation)
     assert current_file.endswith(".json")
     with open(current_file, "r") as fp:
         current_data = json.load(fp)
 
     # Load the new package data
-    new_file = avalon.api.get_representation_path(representation)
+    new_file = api.get_representation_path(representation)
     assert new_file.endswith(".json")
     with open(new_file, "r") as fp:
         new_data = json.load(fp)
@@ -327,7 +325,6 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 
     from colorbleed.maya.lib import DEFAULT_MATRIX, get_container_transforms
     from avalon.tools.cbloader import lib
-    from avalon import api
 
     set_namespace = set_container['namespace']
 
