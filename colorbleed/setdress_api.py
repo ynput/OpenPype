@@ -14,9 +14,21 @@ from avalon.maya.lib import unique_namespace
 log = logging.getLogger("PackageLoader")
 
 
-def matrix_equals(a, b, tolerance=1e-10):
-    """Compares two matrices with an imperfection tolerance"""
-    if not all(abs(x - y) < tolerance for x, y in zip(a, b)):
+def matrix_equals(current_matrix, original_matrix, tolerance=1e-10):
+    """
+    Compares two matrices with an imperfection tolerance
+
+    Args:
+        current_matrix (list, tuple): the matrix to check
+        original_matrix (list, tuple): the matrix to check against
+        tolerance (long): the precision of the differences
+
+    Returns:
+        bool : True or False
+
+    """
+    zipped = zip(current_matrix, original_matrix)
+    if not all(abs(x - y) < tolerance for x, y in zipped):
         return False
     return True
 
@@ -232,7 +244,17 @@ def get_contained_containers(container):
 
 
 def update_package_version(container, version):
-    """Update package by version number"""
+    """
+    Update package by version number
+
+    Args:
+        container (dict): container data of the container node
+        version (int): the new version number of the package
+
+    Returns:
+        None
+
+    """
 
     # Versioning (from `core.maya.pipeline`)
     current_representation = io.find_one({
@@ -272,7 +294,10 @@ def update_package(set_container, representation):
 
     Args:
         set_container (dict): container data from `ls()`
-        version (int): version number of the subset
+        representation (dict): the representation document from the database
+
+    Returns:
+        None
 
     """
 
@@ -321,6 +346,7 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 
     Returns:
         processed_containers (list): all new and updated containers
+
     """
 
     from colorbleed.maya.lib import DEFAULT_MATRIX, get_container_transforms
