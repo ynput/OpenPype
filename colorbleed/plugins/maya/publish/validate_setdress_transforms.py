@@ -42,7 +42,6 @@ class CollectSetDress(pyblish.api.InstancePlugin):
             if item in setdress_hierarchies:
                 continue
 
-            matri
 
 
         return invalid
