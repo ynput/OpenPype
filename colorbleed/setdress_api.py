@@ -7,7 +7,6 @@ import copy
 
 from maya import cmds
 
-import avalon.schema
 import avalon.io as io
 from avalon.maya.lib import unique_namespace
 
@@ -93,6 +92,9 @@ def load_package(filepath, name, namespace=None):
                           groupName="{}:{}".format(namespace, name),
                           typ="Alembic")
 
+    # Get the top root node (the reference group)
+    root = "{}:{}".format(namespace, name)
+
     containers = []
     for representation_id, instances in data.items():
 
@@ -100,8 +102,11 @@ def load_package(filepath, name, namespace=None):
         loaders = list(lib.iter_loaders(representation_id))
 
         for instance in instances:
-            container = _add(instance, representation_id, loaders, name,
-                             namespace)
+            container = _add(instance=instance,
+                             representation_id=representation_id,
+                             loaders=loaders,
+                             namespace=namespace,
+                             root=root)
             containers.append(container)
 
     # TODO: Do we want to cripple? Or do we want to add a 'parent' parameter?
@@ -120,7 +125,7 @@ def load_package(filepath, name, namespace=None):
     return containers + hierarchy
 
 
-def _add(instance, representation_id, loaders, name, namespace):
+def _add(instance, representation_id, loaders, namespace, root="|"):
     """Add an item from the package
 
     Args:
@@ -134,7 +139,7 @@ def _add(instance, representation_id, loaders, name, namespace):
 
     """
 
-    from avalon.tools.cbloader import lib
+    import avalon.api as api
     from colorbleed.maya.lib import get_container_transforms
 
     # Process within the namespace
@@ -150,26 +155,24 @@ def _add(instance, representation_id, loaders, name, namespace):
                         instance['loader'], instance)
             raise RuntimeError("Loader is missing.")
 
-        container = lib.run_loader(Loader,
-                                   representation_id,
-                                   namespace=instance['namespace'])
+        container = api.load(Loader,
+                             representation_id,
+                             namespace=instance['namespace'])
 
         # Get the root from the loaded container
-        root = get_container_transforms({"objectName": container},
-                                        root=True)
+        loaded_root = get_container_transforms({"objectName": container},
+                                               root=True)
 
         # Apply matrix to root node (if any matrix edits)
         matrix = instance.get("matrix", None)
         if matrix:
-            cmds.xform(root, objectSpace=True, matrix=matrix)
+            cmds.xform(loaded_root, objectSpace=True, matrix=matrix)
 
         # Parent into the setdress hierarchy
         # Namespace is missing from parent node(s), add namespace
         # manually
-        parent_grp = instance["parent"]
-        parent_grp = "{}:{}|".format(namespace, name) + to_namespace(parent_grp, namespace)
-
-        cmds.parent(root, parent_grp, relative=True)
+        parent = root + to_namespace(instance["parent"], namespace)
+        cmds.parent(loaded_root, parent, relative=True)
 
         return container
 
@@ -201,21 +204,39 @@ def _instances_by_namespace(data):
     return result
 
 
-def update_package(set_container, version):
-    """Update any matrix changes in the scene based on the new data
-
+def get_contained_containers(container):
+    """Get the Avalon containers in this container
+    
     Args:
-        set_container (dict): container data from `ls()`
-        version (int): version number of the subset
-
+        container (dict): The container dict.
+        
+    Returns:
+        list: A list of member container dictionaries.
+        
     """
 
-    from colorbleed.maya.lib import get_representation_file
+    import avalon.schema
     from avalon.maya.pipeline import parse_container
+
+    # Get avalon containers in this package setdress container
+    containers = []
+    members = cmds.sets(container['objectName'], query=True)
+    for node in cmds.ls(members, type="objectSet"):
+        try:
+            member_container = parse_container(node)
+            containers.append(member_container)
+        except avalon.schema.ValidationError:
+            pass
+
+    return containers
+
+
+def update_package_version(container, version):
+    """Update package by version number"""
 
     # Versioning (from `core.maya.pipeline`)
     current_representation = io.find_one({
-        "_id": io.ObjectId(set_container["representation"])
+        "_id": io.ObjectId(container["representation"])
     })
 
     assert current_representation is not None, "This is a bug"
@@ -243,34 +264,44 @@ def update_package(set_container, version):
         "name": current_representation["name"]
     })
 
+    update_package(container, new_representation)
+
+
+def update_package(set_container, representation):
+    """Update any matrix changes in the scene based on the new data
+
+    Args:
+        set_container (dict): container data from `ls()`
+        version (int): version number of the subset
+
+    """
+
+    import avalon.api
+
     # Load the original package data
-    current_file = get_representation_file(current_representation)
+    current_representation = io.find_one({
+        "_id": io.ObjectId(set_container['representation']),
+        "type": "representation"
+    })
+
+    current_file = avalon.api.get_representation_path(current_representation)
     assert current_file.endswith(".json")
     with open(current_file, "r") as fp:
         current_data = json.load(fp)
 
     # Load the new package data
-    new_file = get_representation_file(new_representation)
+    new_file = avalon.api.get_representation_path(representation)
     assert new_file.endswith(".json")
     with open(new_file, "r") as fp:
         new_data = json.load(fp)
 
-    # Get avalon containers in the setdress
-    containers = []
-    members = cmds.sets(set_container['objectName'], query=True)
-    for node in cmds.ls(members, type="objectSet"):
-        try:
-            container = parse_container(node)
-            containers.append(container)
-        except avalon.schema.ValidationError:
-            pass
-
     # Update scene content
+    containers = get_contained_containers(set_container)
     update_scene(set_container, containers, current_data, new_data, new_file)
 
     # TODO: This should be handled by the pipeline itself
     cmds.setAttr(set_container['objectName'] + ".representation",
-                 str(new_representation['_id']), type="string")
+                 str(representation['_id']), type="string")
 
 
 def update_scene(set_container, containers, current_data, new_data, new_file):
@@ -319,8 +350,12 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
     new_lookup = _instances_by_namespace(new_data)
     old_lookup = _instances_by_namespace(current_data)
     for container in containers:
-        # container_repr = cmds.getAttr("{}.representation".format(container))
         container_ns = container['namespace']
+
+        # Consider it processed here, even it it fails we want to store that
+        # the namespace was already available.
+        processed_namespaces.add(container_ns)
+        processed_containers.append(container['objectName'])
 
         if container_ns in new_lookup:
             root = get_container_transforms(container, root=True)
@@ -362,38 +397,48 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                 root = cmds.parent(root, parent, relative=True)
                 cmds.lockNode(root, lock=True)
 
-            # TODO: Update the representation with the new loader
-            if new_instance['loader'] != old_instance['loader']:
-                log.error("Switching loader between updates is not supported.")
-                continue
-
-            # TODO: Update the representation with the new loader
-            representation_new = new_instance['representation']
+            # Update the representation
+            representation_current = container['representation']
             representation_old = old_instance['representation']
-            if representation_new != representation_old:
+            representation_new = new_instance['representation']
+            has_representation_override = (representation_current !=
+                                           representation_old)
 
-                print "namespace :", container_ns
+            if representation_new != representation_current:
 
+                if has_representation_override:
+                    log.warning("Your scene had local representation "
+                                "overrides within the set. New "
+                                "representations not loaded for %s.",
+                                container_ns)
+                    continue
+
+                # We check it against the current 'loader' in the scene instead
+                # of the original data of the package that was loaded because
+                # an Artist might have made scene local overrides
+                if new_instance['loader'] != container['loader']:
+                    log.error("Switching loader between updates is not "
+                              "supported. Skipping: %s", container_ns)
+                    continue
+
+                # Check whether the conversion can be done by the Loader.
+                # They *must* use the same asset, subset and Loader for
+                # `api.update` to make sense.
+                old = io.find_one({"_id": io.ObjectId(representation_current)})
                 new = io.find_one({"_id": io.ObjectId(representation_new)})
-                old = io.find_one({"_id": io.ObjectId(representation_old)})
-
                 is_valid = compare_representations(old=old, new=new)
                 if not is_valid:
+                    log.error("Skipping: %s. See log for details.",
+                              container_ns)
                     continue
 
                 new_version = new["context"]["version"]
-
-                host = api.registered_host()
-                host.update(container, version=new_version)
+                api.update(container, version=new_version)
 
         else:
             # Remove this container because it's not in the new data
             log.warning("Removing content: %s", container_ns)
-            host = api.registered_host()
-            host.remove(container)
-
-        processed_namespaces.add(container_ns)
-        processed_containers.append(container['objectName'])
+            api.remove(container)
 
     # Add new assets
     for representation_id, instances in new_data.items():
@@ -407,11 +452,11 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
             if instance['namespace'] in processed_namespaces:
                 continue
 
-            container = _add(instance,
-                             representation_id,
-                             loaders,
-                             set_container['name'],
-                             set_container['namespace'])
+            container = _add(instance=instance,
+                             representation_id=representation_id,
+                             loaders=loaders,
+                             namespace=set_container['namespace'],
+                             root=set_root)
 
             # Add to the setdress container
             cmds.sets(container,
@@ -425,7 +470,7 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 def compare_representations(old, new):
     """Check if the old representation given can be updated
 
-    Due to limitations of the `host.update` function we cannot allow
+    Due to limitations of the `api.update` function we cannot allow
     differences in the following data:
 
     * Representation name (extension)

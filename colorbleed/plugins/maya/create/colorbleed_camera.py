@@ -4,11 +4,12 @@ from colorbleed.maya import lib
 
 
 class CreateCamera(avalon.maya.Creator):
-    """Single baked camera extraction"""
+    """Single baked camera"""
 
     name = "cameraDefault"
     label = "Camera"
     family = "colorbleed.camera"
+    icon = "video-camera"
 
     def __init__(self, *args, **kwargs):
         super(CreateCamera, self).__init__(*args, **kwargs)

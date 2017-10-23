@@ -26,7 +26,7 @@ class OpenImageSequence(api.Loader):
     icon = "play-circle"
     color = "orange"
 
-    def process(self, name, namespace, context, data):
+    def load(self, context, name, namespace, data):
 
         directory = self.fname
         from avalon.vendor import clique
