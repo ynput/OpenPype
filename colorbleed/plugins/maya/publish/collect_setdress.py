@@ -36,17 +36,13 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         hierarchy_nodes = []
         for container in containers:
             members = cmds.sets(container["objectName"], query=True)
-            transforms = lib.get_container_transforms(container, members)
-            root = lib.get_container_transforms(container,
-                                                transforms,
-                                                root=True)
+            root = lib.get_container_transforms(container, root=True)
             if root not in instance_lookup:
                 continue
 
             # Retrieve all matrix data
             parent = cmds.listRelatives(root, parent=True, fullPath=True)[0]
-            relative_hierarchy = parent.replace(topnode, "*")
-            hierarchy_nodes.append(relative_hierarchy)
+            hierarchy_nodes.append(parent)
 
             # Gather info for new data entry
             reference_node = cmds.ls(members, type="reference")[0]
