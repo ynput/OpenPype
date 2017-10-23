@@ -95,6 +95,24 @@ _alembic_options = {
 }
 
 
+def matrix_equals(a, b, tolerance=1e-10):
+    """
+    Compares two matrices with an imperfection tolerance
+
+    Args:
+        a (list, tuple): the matrix to check
+        b (list, tuple): the matrix to check against
+        tolerance (float): the precision of the differences
+
+    Returns:
+        bool : True or False
+
+    """
+    if not all(abs(x - y) < tolerance for x, y in zip(a, b)):
+        return False
+    return True
+
+
 def unique(name):
     assert isinstance(name, basestring), "`name` must be string"
 
@@ -577,6 +595,7 @@ def maya_temp_folder():
     return tmp_dir
 
 
+# region ID
 def get_id_required_nodes(referenced_nodes=False):
     """Filter out any node which are locked (reference) or readOnly
 
@@ -656,8 +675,7 @@ def generate_ids(nodes):
     """Assign a new id of the current active context to the nodes"""
 
     # Get the asset ID from the database for the asset of current context
-    asset = os.environ["AVALON_ASSET"]
-    asset_id = io.find_one({"type": "asset", "name": asset},
+    asset_id = io.find_one({"type": "asset", "name": os.environ["AVALON_ASSET"]},
                            projection={"_id": True})
 
     for node in nodes:
@@ -688,6 +706,7 @@ def remove_id(node):
         cmds.deleteAttr("{}.cbId".format(node))
 
 
+# endregion ID
 def get_reference_node(path):
     """
     Get the reference node when the path is found being used in a reference
@@ -759,6 +778,7 @@ def apply_attributes(attributes, nodes_by_id):
                 set_attribute(attr, value, node)
 
 
+# region LOOKDEV
 def list_looks(asset_id):
     """Return all look subsets for the given asset
 
@@ -948,6 +968,7 @@ def apply_shaders(relationships, shadernodes, nodes):
     apply_attributes(attributes, ns_nodes_by_id)
 
 
+# endregion LOOKDEV
 def get_isolate_view_sets():
     """
 
