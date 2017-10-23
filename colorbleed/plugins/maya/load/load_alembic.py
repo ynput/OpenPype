@@ -2,7 +2,7 @@ from avalon import api
 import avalon.maya.pipeline
 
 
-class AbcLoader(api.Loader):
+class AbcLoader(avalon.maya.pipeline.ReferenceLoader):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["colorbleed.animation",
