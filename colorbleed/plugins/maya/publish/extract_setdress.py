@@ -33,7 +33,7 @@ class ExtractSetDress(colorbleed.api.Extractor):
             json.dump(instance.data["scenedata"], filepath, ensure_ascii=False)
 
         self.log.info("Extracting point cache ..")
-        cmds.select(cmds.ls(instance.data["hierarchy"], long=True))
+        cmds.select(instance.data["hierarchy"])
 
         # Run basic alembic exporter
         extract_alembic(file=hierarchy_path,
