@@ -17,6 +17,10 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         * Compatible loader
         * Matrix per instance
         * Namespace
+
+    Note: GPU caches are currently not supported in the pipeline. There is no
+    logic yet which supports the swapping of GPU cache to renderable objects.
+
     """
 
     order = pyblish.api.CollectorOrder + 0.49
@@ -39,13 +43,19 @@ class CollectSetDress(pyblish.api.InstancePlugin):
             if root not in instance_lookup:
                 continue
 
-            # Retrieve all matrix data
+            # Retrieve the hierarchy
             parent = cmds.listRelatives(root, parent=True, fullPath=True)[0]
             hierarchy_nodes.append(parent)
 
+            # Temporary warning for GPU cache which are not supported yet
+            loader = container["loader"]
+            if loader == "GpuCacheLoader":
+                self.log.warning("GPU Cache Loader is currently not supported"
+                                 "in the pipeline, we will export it tho")
+
             # Gather info for new data entry
             representation_id = container["representation"]
-            instance_data = {"loader": container["loader"],
+            instance_data = {"loader": loader,
                              "parent": parent,
                              "namespace": container["namespace"]}
 
