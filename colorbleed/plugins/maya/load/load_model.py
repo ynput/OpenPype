@@ -110,3 +110,10 @@ class GpuCacheLoader(api.Loader):
         members = cmds.sets(container['objectName'], query=True)
         cmds.lockNode(members, lock=False)
         cmds.delete([container['objectName']] + members)
+
+        # Clean up the namespace
+        try:
+            cmds.namespace(removeNamespace=container['namespace'],
+                           deleteNamespaceContent=True)
+        except RuntimeError:
+            pass
