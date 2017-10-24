@@ -1,12 +1,11 @@
-import os
-
 from maya import cmds
 
-from avalon import api, maya
 import colorbleed.maya.plugin
+from avalon import api, maya
 
 
 class RigLoader(colorbleed.maya.plugin.ReferenceLoader):
+
     """Specific loader for rigs
 
     This automatically creates an instance for animators upon load.
@@ -56,7 +55,7 @@ class RigLoader(colorbleed.maya.plugin.ReferenceLoader):
         roots = cmds.ls(self[:], assemblies=True, long=True)
         assert roots, "No root nodes in rig, this is a bug."
 
-        asset = os.environ["AVALON_ASSET"]
+        asset = api.Session["AVALON_ASSET"]
         dependency = str(context["representation"]["_id"])
 
         # Create the animation instance
