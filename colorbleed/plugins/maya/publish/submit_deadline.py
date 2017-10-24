@@ -82,6 +82,8 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.name                # beauty
+        deadline_user = context.data.get("deadlineUser",
+                                         getpass.getuser())
 
         try:
             os.makedirs(dirname)
@@ -113,7 +115,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "Name": "%s - %s" % (fname, instance.name),
 
                 # Arbitrary username, for visualisation in Monitor
-                "UserName": getpass.getuser(),
+                "UserName": deadline_user,
 
                 "Plugin": "MayaBatch",
                 "Frames": "{start}-{end}x{step}".format(
