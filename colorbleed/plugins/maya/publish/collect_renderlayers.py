@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 
-from avalon import Session, maya, api
+from avalon import maya, api
 import colorbleed.maya.lib as lib
 
 
