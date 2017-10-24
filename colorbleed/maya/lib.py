@@ -18,12 +18,6 @@ from cb.utils.maya import core
 
 log = logging.getLogger(__name__)
 
-project = io.find_one({"type": "project",
-                       "name": os.environ["AVALON_PROJECT"]},
-                       projection={"config.template.publish": True,
-                                   "_id": False})
-TEMPLATE = project["config"]["template"]["publish"]
-
 ATTRIBUTE_DICT = {"int": {"attributeType": "long"},
                   "str": {"dataType": "string"},
                   "unicode": {"dataType": "string"},
