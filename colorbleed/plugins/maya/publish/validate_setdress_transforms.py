@@ -29,15 +29,14 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found %s invalid transforms of setdress items")
+            raise RuntimeError("Found {} invalid transforms of setdress "
+                               "items".format(len(invalid)))
 
     @classmethod
     def get_invalid(cls, instance):
 
         import colorbleed.maya.lib as lib
         from maya import cmds
-
-        invalid = []
 
         # Get all transforms in the loaded containers
         container_roots = cmds.listRelatives(instance.data["hierarchy"],
@@ -55,13 +54,13 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
                                    not in container_roots]
 
         # Ensure all are identity matrix
+        invalid = []
         for transform in transforms_in_container:
             node_matrix = cmds.xform(transform,
                                      query=True,
                                      matrix=True,
                                      objectSpace=True)
             if not lib.matrix_equals(node_matrix, lib.DEFAULT_MATRIX):
-                print transform
                 invalid.append(transform)
 
         return invalid
