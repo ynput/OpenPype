@@ -1,7 +1,7 @@
-import avalon.maya.pipeline
+import colorbleed.maya.plugin
 
 
-class MayaAsciiLoader(avalon.maya.pipeline.ReferenceLoader):
+class MayaAsciiLoader(colorbleed.maya.plugin.ReferenceLoader):
     """Load the model"""
 
     families = ["colorbleed.mayaAscii"]
@@ -12,7 +12,7 @@ class MayaAsciiLoader(avalon.maya.pipeline.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process(self, name, namespace, context, data):
+    def process_reference(self, context, name, namespace, data):
 
         import maya.cmds as cmds
         from avalon import maya
@@ -26,3 +26,5 @@ class MayaAsciiLoader(avalon.maya.pipeline.ReferenceLoader):
                               groupName="{}:{}".format(namespace, name))
 
         self[:] = nodes
+
+        return nodes

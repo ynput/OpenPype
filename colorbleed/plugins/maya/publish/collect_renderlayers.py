@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 
-from avalon import Session, maya, api
+from avalon import maya, api
 import colorbleed.maya.lib as lib
 
 
@@ -17,7 +17,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
     def process(self, context):
 
         registered_root = api.registered_root()
-        asset_name = Session["AVALON_ASSET"]
+        asset_name = api.Session["AVALON_ASSET"]
 
         current_file = context.data["currentFile"]
         relative_file = current_file.replace(registered_root, "{root}")

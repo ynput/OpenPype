@@ -49,8 +49,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # Required environment variables
         PROJECT = os.environ["AVALON_PROJECT"]
-        ASSET = instance.data.get("asset") or Session["AVALON_ASSET"]
-        SILO = os.environ["AVALON_SILO"]
+        ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
         LOCATION = os.environ("AVALON_LOCATION")
 
         context = instance.context
