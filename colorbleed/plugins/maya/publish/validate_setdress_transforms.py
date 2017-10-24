@@ -1,6 +1,8 @@
 import pyblish.api
 import colorbleed.api
 
+from maya import cmds
+
 
 class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     """Verify only root nodes of the loaded asset have transformations.
@@ -24,7 +26,12 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder + 0.49
     label = "Setdress Model Transforms"
     families = ["colorbleed.setdress"]
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.api.SelectInvalidAction,
+               colorbleed.api.RepairAction]
+
+    prompt_message = ("You are about to reset the matrix to the default values."
+                      " This can alter the look of your scene. "
+                      "Are you sure you want to continue?")
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
@@ -36,7 +43,6 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         import colorbleed.maya.lib as lib
-        from maya import cmds
 
         # Get all transforms in the loaded containers
         container_roots = cmds.listRelatives(instance.data["hierarchy"],
@@ -64,3 +70,38 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
                 invalid.append(transform)
 
         return invalid
+
+    @classmethod
+    def repair(cls, instance):
+        """Reset matrix for illegally transformed nodes
+
+        We want to ensure the user knows the reset will alter the look of
+        the current scene because the transformations were done on asset
+        nodes instead of the asset top node.
+
+        Args:
+            instance:
+
+        Returns:
+            None
+
+        """
+
+        import colorbleed.maya.lib as lib
+        from avalon.vendor.Qt import QtWidgets
+
+        # Store namespace in variable, cosmetics thingy
+        messagebox = QtWidgets.QMessageBox
+        mode = messagebox.StandardButton.Ok | messagebox.StandardButton.Cancel
+        choice = messagebox.warning(None,
+                                    "Matrix reset",
+                                    cls.prompt_message,
+                                    mode)
+
+        invalid = cls.get_invalid(instance)
+        if not invalid:
+            cls.log.info("No invalid nodes")
+            return
+
+        if choice:
+            cmds.xform(invalid, matrix=lib.DEFAULT_MATRIX, objectSpace=True)
