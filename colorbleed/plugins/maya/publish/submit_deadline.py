@@ -90,17 +90,11 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.name                # beauty
-        deadline_user = context.data.get("deadlineUser",
-                                         getpass.getuser())
-
-        try:
-            os.makedirs(dirname)
-        except OSError:
-            pass
+        deadline_user = context.data.get("deadlineUser", getpass.getuser())
 
         # Get the variables depending on the renderer
+        # Following hardcoded "renders/<Scene>/<Scene>_<Layer>/<Layer>"
         render_variables = get_renderer_variables(renderlayer)
-        # following hardcoded "renders/<Scene>/<Scene>_<Layer>/<Layer>"
         output_filename_0 = self.preview_fname(scene,
                                                renderlayer_name,
                                                dirname,
@@ -109,6 +103,12 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         # Get parent folder of render output
         render_folder = os.path.dirname(output_filename_0)
+
+        try:
+            # Ensure folders exists
+            os.makedirs(render_folder)
+        except OSError:
+            pass
 
         # Get the folder name, this will be the name of the metadata file
         json_fname = os.path.basename(render_folder)
