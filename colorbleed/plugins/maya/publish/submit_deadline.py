@@ -86,6 +86,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         fname = os.path.basename(fpath)
         comment = context.data.get("comment", "")
         scene = os.path.splitext(fname)[0]
+        # Get image rule from workspace
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.name                # beauty
@@ -105,6 +106,14 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                                                dirname,
                                                render_variables["padding"],
                                                render_variables["ext"])
+
+        # Get parent folder of render output
+        render_folder = os.path.dirname(output_filename_0)
+
+        # Get the folder name, this will be the name of the metadata file
+        json_fname = os.path.basename(render_folder)
+        json_fpath = os.path.join(os.path.dirname(render_folder),
+                                  "{}.json".format(json_fname))
 
         # E.g. http://192.168.0.1:8082/api/jobs
         url = "{}/api/jobs".format(AVALON_DEADLINE)
@@ -193,20 +202,17 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         response = requests.post(url, json=payload)
-
         if response.ok:
+            # TODO: REN-11 Implement auto publish logic here as depending job
             # Write metadata for publish
-            fname = os.path.join(dirname, "{}.json".format(instance.name))
             data = {
                 "submission": payload,
                 "session": api.Session,
                 "instance": instance.data,
-                "jobs": [
-                    response.json()
-                ],
+                "jobs": [response.json()],
             }
 
-            with open(fname, "w") as f:
+            with open(json_fpath, "w") as f:
                 json.dump(data, f, indent=4, sort_keys=True)
 
         else:
