@@ -1,9 +1,10 @@
 from maya import cmds
 
-from avalon import api, Session, maya
+import colorbleed.maya.plugin
+from avalon import api, maya
 
 
-class RigLoader(maya.pipeline.ReferenceLoader):
+class RigLoader(colorbleed.maya.plugin.ReferenceLoader):
     """Specific loader for rigs
 
     This automatically creates an instance for animators upon load.
@@ -18,7 +19,7 @@ class RigLoader(maya.pipeline.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process(self, name, namespace, context, data):
+    def process_reference(self, context, name, namespace, data):
 
         nodes = cmds.file(self.fname,
                           namespace=namespace,
@@ -31,6 +32,8 @@ class RigLoader(maya.pipeline.ReferenceLoader):
         self[:] = nodes
         if data.get("post_process", True):
             self._post_process(name, namespace, context, data)
+
+        return nodes
 
     def _post_process(self, name, namespace, context, data):
 
@@ -51,7 +54,7 @@ class RigLoader(maya.pipeline.ReferenceLoader):
         roots = cmds.ls(self[:], assemblies=True, long=True)
         assert roots, "No root nodes in rig, this is a bug."
 
-        asset = Session["AVALON_ASSET"]
+        asset = api.Session["AVALON_ASSET"]
         dependency = str(context["representation"]["_id"])
 
         # Create the animation instance

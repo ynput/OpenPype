@@ -1,7 +1,7 @@
-import avalon.maya.pipeline
+import colorbleed.maya.plugin
 
 
-class AbcLoader(avalon.maya.pipeline.ReferenceLoader):
+class AbcLoader(colorbleed.maya.plugin.ReferenceLoader):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["colorbleed.animation",
@@ -14,7 +14,7 @@ class AbcLoader(avalon.maya.pipeline.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process(self, name, namespace, context, data):
+    def process_reference(self, context, name, namespace, data):
 
         import maya.cmds as cmds
         from avalon import maya
@@ -44,3 +44,5 @@ class AbcLoader(avalon.maya.pipeline.ReferenceLoader):
 
         # load colorbleed ID attribute
         self[:] = nodes
+
+        return nodes

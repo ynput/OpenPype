@@ -1,8 +1,8 @@
-import avalon.maya.pipeline
-import avalon.api
+from avalon import api
+import colorbleed.maya.plugin
 
 
-class ModelLoader(avalon.maya.pipeline.ReferenceLoader):
+class ModelLoader(colorbleed.maya.plugin.ReferenceLoader):
     """Load the model"""
 
     families = ["colorbleed.model"]
@@ -13,7 +13,7 @@ class ModelLoader(avalon.maya.pipeline.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process(self, name, namespace, context, data):
+    def process_reference(self, context, name, namespace, data):
 
         import maya.cmds as cmds
         from avalon import maya
@@ -28,8 +28,10 @@ class ModelLoader(avalon.maya.pipeline.ReferenceLoader):
 
         self[:] = nodes
 
+        return nodes
 
-class GpuCacheLoader(avalon.api.Loader):
+
+class GpuCacheLoader(api.Loader):
     """Load model Alembic as gpuCache"""
 
     families = ["colorbleed.model"]
@@ -44,6 +46,7 @@ class GpuCacheLoader(avalon.api.Loader):
 
         import maya.cmds as cmds
         import avalon.maya.lib as lib
+        from avalon.maya.pipeline import containerise
 
         asset = context['asset']['name']
         namespace = namespace or lib.unique_namespace(
@@ -76,7 +79,7 @@ class GpuCacheLoader(avalon.api.Loader):
         nodes = [root, transform, cache]
         self[:] = nodes
 
-        return avalon.maya.pipeline.containerise(
+        return containerise(
             name=name,
             namespace=namespace,
             nodes=nodes,
@@ -87,7 +90,7 @@ class GpuCacheLoader(avalon.api.Loader):
 
         import maya.cmds as cmds
 
-        path = avalon.api.get_representation_path(representation)
+        path = api.get_representation_path(representation)
 
         # Update the cache
         members = cmds.sets(container['objectName'], query=True)
@@ -107,3 +110,10 @@ class GpuCacheLoader(avalon.api.Loader):
         members = cmds.sets(container['objectName'], query=True)
         cmds.lockNode(members, lock=False)
         cmds.delete([container['objectName']] + members)
+
+        # Clean up the namespace
+        try:
+            cmds.namespace(removeNamespace=container['namespace'],
+                           deleteNamespaceContent=True)
+        except RuntimeError:
+            pass

@@ -675,7 +675,8 @@ def generate_ids(nodes):
     """Assign a new id of the current active context to the nodes"""
 
     # Get the asset ID from the database for the asset of current context
-    asset_id = io.find_one({"type": "asset", "name": os.environ["AVALON_ASSET"]},
+    asset_id = io.find_one({"type": "asset",
+                            "name": api.Session["AVALON_ASSET"]},
                            projection={"_id": True})
 
     for node in nodes:
