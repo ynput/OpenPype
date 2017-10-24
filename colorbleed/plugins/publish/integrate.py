@@ -4,7 +4,7 @@ import shutil
 
 import errno
 import pyblish.api
-from avalon import Session, api, io
+from avalon import api, io
 
 
 log = logging.getLogger(__name__)
@@ -48,9 +48,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     def register(self, instance):
 
         # Required environment variables
-        PROJECT = os.environ["AVALON_PROJECT"]
+        PROJECT = api.Session["AVALON_PROJECT"]
         ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
-        LOCATION = os.environ("AVALON_LOCATION")
+        LOCATION = api.Session["AVALON_LOCATION"]
 
         context = instance.context
         # Atomicity
