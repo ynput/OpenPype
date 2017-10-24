@@ -1,10 +1,7 @@
-import os
-import json
-
-import avalon.maya.pipeline
+import colorbleed.maya.plugin
 
 
-class LookLoader(avalon.maya.pipeline.ReferenceLoader):
+class LookLoader(colorbleed.maya.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
 
     families = ["colorbleed.look"]
@@ -15,7 +12,7 @@ class LookLoader(avalon.maya.pipeline.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process(self, name, namespace, context, data):
+    def process_reference(self, context, name, namespace, data):
         """
         Load and try to ssign Lookdev to nodes based on relationship data
         Args:
@@ -28,6 +25,8 @@ class LookLoader(avalon.maya.pipeline.ReferenceLoader):
 
         """
 
+        import json
+        import os
         import maya.cmds as cmds
         from avalon import maya
         import colorbleed.maya.lib as lib
