@@ -39,6 +39,13 @@ def get_renderer_variables(renderlayer=None):
         # Maya's renderSettings function does not resolved V-Ray extension
         # Getting the extension for VRay settings node
         extension = cmds.getAttr("vraySettings.imageFormatStr")
+
+        # When V-Ray image format has not been switched once from default .png
+        # the getAttr command above returns None. As such we explicitly set
+        # it to `.png`
+        if extension is None:
+            extension = "png"
+
         filename_prefix = "<Scene>/<Scene>_<Layer>/<Layer>"
     else:
         # Get the extension, getAttr defaultRenderGlobals.imageFormat
