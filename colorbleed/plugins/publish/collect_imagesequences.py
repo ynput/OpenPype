@@ -14,9 +14,18 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
         import json
         from avalon.vendor import clique
 
-        workspace = context.data["workspaceDir"]
+        # Force towards a single json sequence (override searching
+        # the current working directory)
+        USE_JSON = os.environ.get("USE_JSON", "")
+        if USE_JSON:
+            workspace = os.path.dirname(USE_JSON)
+            base = workspace
+            dirs = [os.path.splitext(os.path.basename(USE_JSON))[0]]
+        # Else use the current working directory
+        else:
+            workspace = context.data["workspaceDir"]
+            base, dirs, _ = next(os.walk(workspace))
 
-        base, dirs, _ = next(os.walk(workspace))
         for renderlayer in dirs:
             abspath = os.path.join(base, renderlayer)
             files = os.listdir(abspath)
