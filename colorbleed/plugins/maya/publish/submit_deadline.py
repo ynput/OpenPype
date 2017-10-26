@@ -86,7 +86,6 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         fname = os.path.basename(fpath)
         comment = context.data.get("comment", "")
         scene = os.path.splitext(fname)[0]
-        # Get image rule from workspace
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.name                # beauty
@@ -204,7 +203,6 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         response = requests.post(url, json=payload)
         if response.ok:
-            # TODO: REN-11 Implement auto publish logic here as depending job
             # Write metadata for publish
             render_job = response.json()
             data = {
