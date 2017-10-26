@@ -88,3 +88,8 @@ def __main__():
                                "stored in a .JSON file")
 
         publish_data(filepath)
+
+
+# this is needed to ensure Deadline can run the script
+if __name__ == '__main__':
+    __main__()
