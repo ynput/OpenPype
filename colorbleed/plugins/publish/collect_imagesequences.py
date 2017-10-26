@@ -1,4 +1,5 @@
 import pyblish.api
+import copy
 
 
 class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
@@ -44,11 +45,17 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
                 raise Exception("%s was not published correctly "
                                 "(missing metadata)" % renderlayer)
 
+            metadat_instance = metadata['instance']
+            # For now ensure this data is ignored
             for collection in collections:
                 instance = context.create_instance(str(collection))
                 self.log.info("Collection: %s" % list(collection))
 
-                data = dict(metadata["instance"], **{
+                # Ensure each instance gets its own unique reference to
+                # the source data
+                instance_metadata = copy.deepcopy(metadat_instance)
+
+                data = dict(instance_metadata, **{
                     "name": instance.name,
                     "family": "Image Sequences",
                     "families": ["colorbleed.imagesequence"],
