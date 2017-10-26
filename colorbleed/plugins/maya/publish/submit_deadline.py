@@ -91,6 +91,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.name                # beauty
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
+        jobname = "%s - %s" % (fname, instance.name)
 
         # Get the variables depending on the renderer
         # Following hardcoded "renders/<Scene>/<Scene>_<Layer>/<Layer>"
@@ -128,7 +129,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "BatchName": fname,
 
                 # Job name, as seen in Monitor
-                "Name": "%s - %s" % (fname, instance.name),
+                "Name": jobname,
 
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": deadline_user,
@@ -205,15 +206,25 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         if response.ok:
             # TODO: REN-11 Implement auto publish logic here as depending job
             # Write metadata for publish
+            render_job = response.json()
             data = {
                 "submission": payload,
                 "session": api.Session,
                 "instance": instance.data,
-                "jobs": [response.json()],
+                "jobs": [render_job],
             }
 
             with open(json_fpath, "w") as f:
                 json.dump(data, f, indent=4, sort_keys=True)
+
+            publish_job = self.create_publish_job(fname,
+                                                  deadline_user,
+                                                  comment,
+                                                  jobname,
+                                                  render_job,
+                                                  json_fpath)
+            if not publish_job:
+                self.log.error("Could not submit publish job!")
 
         else:
             try:
@@ -268,3 +279,49 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
+
+    def create_publish_job(self, fname, user, comment, jobname,
+                           job, json_fpath):
+        """
+        Make sure all frames are published
+        Args:
+            job (dict): the render job data
+            json_fpath (str): file path to json file
+
+        Returns:
+
+        """
+
+        url = "{}/api/jobs".format(api.Session["AVALON_DEADLINE"])
+        try:
+            from colorbleed.scripts import publish_imagesequence
+        except Exception as e:
+            raise RuntimeError("Expected module 'publish_imagesequence'"
+                               "to be available")
+
+        payload = {
+            "JobInfo": {
+                "Plugin": "Python",
+                "BatchName": fname,
+                "Name": "{} [publish]".format(jobname),
+                "JobType": "Normal",
+                "JobDependency0": job["_id"],
+                "UserName": user,
+                "Comment": comment,
+            },
+            "PluginInfo": {
+                "Version": "3.6",
+                "ScriptFile": publish_imagesequence.__file__,
+                "Arguments": "--path {}".format(json_fpath),
+                "SingleFrameOnly": "True"
+            },
+
+            # Mandatory for Deadline, may be empty
+            "AuxFiles": []
+        }
+
+        response = requests.post(url, json=payload)
+        if not response.ok:
+            return
+
+        return payload
