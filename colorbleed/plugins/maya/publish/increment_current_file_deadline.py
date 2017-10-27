@@ -13,6 +13,7 @@ class IncrementCurrentFileDeadline(pyblish.api.ContextPlugin):
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["maya"]
     families = ["colorbleed.renderlayer"]
+    optional = True
 
     def process(self, context):
 
