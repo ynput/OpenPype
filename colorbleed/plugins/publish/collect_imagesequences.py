@@ -16,6 +16,7 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
 
         # Force towards a single json sequence (override searching
         # the current working directory)
+        # TODO: This logic should be simplified
         USE_JSON = os.environ.get("USE_JSON", "")
         if USE_JSON:
             workspace = os.path.dirname(USE_JSON)
@@ -54,7 +55,7 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
                 raise Exception("%s was not published correctly "
                                 "(missing metadata)" % renderlayer)
 
-            metadat_instance = metadata['instance']
+            metadata_instance = metadata['instance']
             # For now ensure this data is ignored
             for collection in collections:
                 instance = context.create_instance(str(collection))
@@ -62,7 +63,7 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
 
                 # Ensure each instance gets its own unique reference to
                 # the source data
-                instance_metadata = copy.deepcopy(metadat_instance)
+                instance_metadata = copy.deepcopy(metadata_instance)
 
                 data = dict(instance_metadata, **{
                     "name": instance.name,
