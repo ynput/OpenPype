@@ -809,9 +809,9 @@ def assign_look_by_version(nodes, version_id):
                                        "parent": version_id,
                                        "name": "ma"})
 
-    connection_representions = io.find_one({"type": "representation",
-                                            "parent": version_id,
-                                            "name": "json"})
+    json_representation = io.find_one({"type": "representation",
+                                       "parent": version_id,
+                                       "name": "json"})
 
     # See if representation is already loaded, if so reuse it.
     host = api.registered_host()
@@ -835,11 +835,11 @@ def assign_look_by_version(nodes, version_id):
         with maya.maintained_selection():
             container_node = pipeline.load(Loader, look_representation)
 
-    # Get container nodes
+    # Get container members
     shader_nodes = cmds.sets(container_node, query=True)
 
     # Load relationships
-    shader_relation = api.get_representation_path(connection_representions)
+    shader_relation = api.get_representation_path(json_representation)
     with open(shader_relation, "r") as f:
         relationships = json.load(f)
 
