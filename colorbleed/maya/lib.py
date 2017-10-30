@@ -814,25 +814,23 @@ def assign_look_by_version(nodes, version_id):
                                              "name": "json"})
 
     # Load file
-    shader_filepath = api.get_representation_path(look_representation)
     shader_relation = api.get_representation_path(connection_represenations)
 
-    reference_node = get_reference_node(shader_filepath)
-    if reference_node is None:
-        log.info("Loading lookdev for the first time..")
+    loaders = list(loaderlib.iter_loaders(look_representation["_id"]))
+    Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
+    if Loader is None:
+        raise RuntimeError("Could not find LookLoader, this is a bug")
 
-        loaders = list(loaderlib.iter_loaders(look_representation["_id"]))
-        Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
-        if Loader is None:
-            raise RuntimeError("Could not find LookLoader, this is a bug")
-
-        # Reference the look file
-        with maya.maintained_selection():
-            shader_nodes = pipeline.load(Loader, look_representation)
-
-    else:
-        log.info("Reusing existing lookdev '{}'".format(reference_node))
-        shader_nodes = cmds.referenceQuery(reference_node, nodes=True)
+    # Reference the look file
+    with maya.maintained_selection():
+        container = pipeline.load(Loader, look_representation)
+        if not container:
+            log.info("Reusing loaded Lookdev ..")
+            look_file = api.get_representation_path(look_representation)
+            shader_nodes = cmds.referenceQuery(look_file, nodes=True)
+        else:
+            print(">>", container)
+            shader_nodes = cmds.sets(container, query=True)
 
     # Assign relationships
     with open(shader_relation, "r") as f:
