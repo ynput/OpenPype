@@ -14,6 +14,7 @@ from maya import cmds, mel
 
 from avalon import api, maya, io, pipeline
 from cb.utils.maya import core
+import cb.utils.maya.context
 
 
 log = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ ATTRIBUTE_DICT = {"int": {"attributeType": "long"},
                   "float": {"attributeType": "double"},
                   "bool": {"attributeType": "bool"}}
 
-SHAPE_ATTRS = ["castsShadows",
+SHAPE_ATTRS = {"castsShadows",
                "receiveShadows",
                "motionBlur",
                "primaryVisibility",
@@ -32,7 +33,7 @@ SHAPE_ATTRS = ["castsShadows",
                "visibleInReflections",
                "visibleInRefractions",
                "doubleSided",
-               "opposite"]
+               "opposite"}
 
 RENDER_ATTRS = {"vray":
                     {
@@ -48,9 +49,6 @@ RENDER_ATTRS = {"vray":
                         "padding": "extensionPadding"
                     }
                 }
-
-
-SHAPE_ATTRS = set(SHAPE_ATTRS)
 
 
 DEFAULT_MATRIX = [1.0, 0.0, 0.0, 0.0,
@@ -572,7 +570,11 @@ def extract_alembic(file,
     # Perform extraction
     print("Alembic Job Arguments : {}".format(job_str))
 
-    cmds.AbcExport(j=job_str, verbose=verbose)
+    # Disable the parallel evaluation temporarily to ensure no buggy
+    # exports are made. (PLN-31)
+    # TODO: Make sure this actually fixes the issues
+    with cb.utils.maya.context.evaluation("off"):
+        cmds.AbcExport(j=job_str, verbose=verbose)
 
     if verbose:
         log.debug("Extracted Alembic to: %s", file)
