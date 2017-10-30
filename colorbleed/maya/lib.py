@@ -25,7 +25,7 @@ ATTRIBUTE_DICT = {"int": {"attributeType": "long"},
                   "float": {"attributeType": "double"},
                   "bool": {"attributeType": "bool"}}
 
-SHAPE_ATTRS = ["castsShadows",
+SHAPE_ATTRS = {"castsShadows",
                "receiveShadows",
                "motionBlur",
                "primaryVisibility",
@@ -33,7 +33,7 @@ SHAPE_ATTRS = ["castsShadows",
                "visibleInReflections",
                "visibleInRefractions",
                "doubleSided",
-               "opposite"]
+               "opposite"}
 
 RENDER_ATTRS = {"vray":
                     {
@@ -49,9 +49,6 @@ RENDER_ATTRS = {"vray":
                         "padding": "extensionPadding"
                     }
                 }
-
-
-SHAPE_ATTRS = set(SHAPE_ATTRS)
 
 
 DEFAULT_MATRIX = [1.0, 0.0, 0.0, 0.0,
