@@ -27,26 +27,11 @@ class LookLoader(colorbleed.maya.plugin.ReferenceLoader):
 
         import maya.cmds as cmds
         from avalon import maya
-        import colorbleed.maya.lib as lib
 
-        # try / except here is to ensure that the get_reference_node
-        # does not fail when the file doesn't exist yet
-        reference_node = None
-        try:
-            reference_node = lib.get_reference_node(self.fname)
-        except Exception as e:
-            self.log.error(e)
-            pass
-
-        if reference_node is None:
-            self.log.info("Loading lookdev for the first time ...")
-            with maya.maintained_selection():
-                nodes = cmds.file(self.fname,
-                                  namespace=namespace,
-                                  reference=True,
-                                  returnNewNodes=True)
-        else:
-            self.log.info("Reusing existing lookdev ...")
-            nodes = None
+        with maya.maintained_selection():
+            nodes = cmds.file(self.fname,
+                              namespace=namespace,
+                              reference=True,
+                              returnNewNodes=True)
 
         self[:] = nodes
