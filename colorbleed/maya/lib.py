@@ -809,33 +809,39 @@ def assign_look_by_version(nodes, version_id):
                                        "parent": version_id,
                                        "name": "ma"})
 
-    connection_represenations = io.find_one({"type": "representation",
+    connection_representions = io.find_one({"type": "representation",
                                              "parent": version_id,
                                              "name": "json"})
 
-    # Load file
-    shader_relation = api.get_representation_path(connection_represenations)
+    # See if representation is already loaded, if so reuse it.
+    host = api.registered_host()
+    representation_id = str(look_representation['_id'])
+    for container in host.ls():
+        if (container['loader'] == "LookLoader" and
+                container['representation'] == representation_id):
+            log.info("Reusing loaded look ..")
+            container_node = container['objectName']
+            break
+    else:
+        log.info("Using look for the first time ..")
+        # Load file
 
-    loaders = list(loaderlib.iter_loaders(look_representation["_id"]))
-    Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
-    if Loader is None:
-        raise RuntimeError("Could not find LookLoader, this is a bug")
+        loaders = list(loaderlib.iter_loaders(look_representation["_id"]))
+        Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
+        if Loader is None:
+            raise RuntimeError("Could not find LookLoader, this is a bug")
 
-    # Reference the look file
-    with maya.maintained_selection():
-        container = pipeline.load(Loader, look_representation)
-        if not container:
-            log.info("Reusing loaded Lookdev ..")
-            look_file = api.get_representation_path(look_representation)
-            shader_nodes = cmds.referenceQuery(look_file, nodes=True)
-        else:
-            print(">>", container)
-            shader_nodes = cmds.sets(container, query=True)
+        # Reference the look file
+        with maya.maintained_selection():
+            container_node = pipeline.load(Loader, look_representation)
+    shader_nodes = cmds.sets(container_node, query=True)
 
-    # Assign relationships
+    # Load relationships
+    shader_relation = api.get_representation_path(connection_representions)
     with open(shader_relation, "r") as f:
         relationships = json.load(f)
 
+    # Assign relationships
     apply_shaders(relationships, shader_nodes, nodes)
 
 
