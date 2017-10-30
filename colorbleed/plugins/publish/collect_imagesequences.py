@@ -67,7 +67,7 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
 
                 data = dict(instance_metadata, **{
                     "name": instance.name,
-                    "family": "Image Sequence",
+                    "family": "colorbleed.imagesequence",
                     "families": ["colorbleed.imagesequence"],
                     "subset": collection.head[:-1],
                     "stagingDir": os.path.join(workspace, renderlayer),
