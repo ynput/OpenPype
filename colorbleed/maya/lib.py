@@ -14,6 +14,7 @@ from maya import cmds, mel
 
 from avalon import api, maya, io, pipeline
 from cb.utils.maya import core
+import cb.utils.maya.context
 
 
 log = logging.getLogger(__name__)
@@ -572,7 +573,11 @@ def extract_alembic(file,
     # Perform extraction
     print("Alembic Job Arguments : {}".format(job_str))
 
-    cmds.AbcExport(j=job_str, verbose=verbose)
+    # Disable the parallel evaluation temporarily to ensure no buggy
+    # exports are made. (PLN-31)
+    # TODO: Make sure this actually fixes the issues
+    with cb.utils.maya.context.evaluation("off"):
+        cmds.AbcExport(j=job_str, verbose=verbose)
 
     if verbose:
         log.debug("Extracted Alembic to: %s", file)
