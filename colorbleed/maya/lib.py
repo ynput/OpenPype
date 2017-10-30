@@ -796,7 +796,7 @@ def assign_look_by_version(nodes, version_id):
 
     Args:
         nodes(list): nodes to assign look to
-        version_id (bson.ObjectId)
+        version_id (bson.ObjectId): database id of the version
 
     Returns:
         None
@@ -804,14 +804,14 @@ def assign_look_by_version(nodes, version_id):
     # TODO: make `iter_loader` available in as a more global function
     from avalon.tools.cbloader import lib as loaderlib
 
-    # get representations of shader file and relationships
+    # Get representations of shader file and relationships
     look_representation = io.find_one({"type": "representation",
                                        "parent": version_id,
                                        "name": "ma"})
 
     connection_representions = io.find_one({"type": "representation",
-                                             "parent": version_id,
-                                             "name": "json"})
+                                            "parent": version_id,
+                                            "name": "json"})
 
     # See if representation is already loaded, if so reuse it.
     host = api.registered_host()
@@ -824,8 +824,8 @@ def assign_look_by_version(nodes, version_id):
             break
     else:
         log.info("Using look for the first time ..")
-        # Load file
 
+        # Load file
         loaders = list(loaderlib.iter_loaders(look_representation["_id"]))
         Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
         if Loader is None:
@@ -834,6 +834,8 @@ def assign_look_by_version(nodes, version_id):
         # Reference the look file
         with maya.maintained_selection():
             container_node = pipeline.load(Loader, look_representation)
+
+    # Get container nodes
     shader_nodes = cmds.sets(container_node, query=True)
 
     # Load relationships
