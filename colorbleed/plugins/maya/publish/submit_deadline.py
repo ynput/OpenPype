@@ -297,6 +297,10 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             raise RuntimeError("Expected module 'publish_imagesequence'"
                                "to be available")
 
+        module_path = publish_imagesequence.__file__
+        if module_path.endswith(".pyc"):
+            module_path = module_path[:-len(".pyc")] + ".py"
+
         payload = {
             "JobInfo": {
                 "Plugin": "Python",
@@ -309,7 +313,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             },
             "PluginInfo": {
                 "Version": "3.6",
-                "ScriptFile": publish_imagesequence.__file__,
+                "ScriptFile": module_path,
                 "Arguments": "--path {}".format(json_fpath),
                 "SingleFrameOnly": "True"
             },
