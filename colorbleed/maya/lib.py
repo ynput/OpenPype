@@ -12,7 +12,7 @@ from collections import OrderedDict, defaultdict
 
 from maya import cmds, mel
 
-from avalon import api, maya, io
+from avalon import api, maya, io, pipeline
 from cb.utils.maya import core
 
 
@@ -801,45 +801,35 @@ def assign_look_by_version(nodes, version_id):
     Returns:
         None
     """
+    # TODO: make `iter_loader` available in as a more global function
+    from avalon.tools.cbloader import lib as loaderlib
 
     # get representations of shader file and relationships
-    shader_file = io.find_one({"type": "representation",
-                               "parent": version_id,
-                               "name": "ma"})
+    look_representation = io.find_one({"type": "representation",
+                                       "parent": version_id,
+                                       "name": "ma"})
 
-    shader_relations = io.find_one({"type": "representation",
-                                    "parent": version_id,
-                                    "name": "json"})
+    connection_represenations = io.find_one({"type": "representation",
+                                             "parent": version_id,
+                                             "name": "json"})
 
     # Load file
-    shader_filepath = api.get_representation_path(shader_file)
-    shader_relation = api.get_representation_path(shader_relations)
+    shader_filepath = api.get_representation_path(look_representation)
+    shader_relation = api.get_representation_path(connection_represenations)
 
     reference_node = get_reference_node(shader_filepath)
     if reference_node is None:
         log.info("Loading lookdev for the first time..")
 
-        # Define namespace
-        ns_assetname = "{}_".format(shader_file['context']['asset'])
-        namespace = maya.unique_namespace(ns_assetname,
-                                          format="%03d",
-                                          suffix="_look")
+        loaders = list(loaderlib.iter_loaders(look_representation["_id"]))
+        Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
+        if Loader is None:
+            raise RuntimeError("Could not find LookLoader, this is a bug")
 
         # Reference the look file
         with maya.maintained_selection():
-            shader_nodes = cmds.file(shader_filepath,
-                                     namespace=namespace,
-                                     reference=True,
-                                     returnNewNodes=True)
-                                     
-        # containerise like avalon (for manager)
-        # give along a fake "context" with only `representation`
-        # because `maya.containerise` only used that key anyway
-        context = {"representation": shader_file}
-        maya.containerise(name=shader_file["context"]["subset"],
-                          namespace=namespace,
-                          nodes=shader_nodes,
-                          context=context)
+            shader_nodes = pipeline.load(Loader, look_representation)
+
     else:
         log.info("Reusing existing lookdev '{}'".format(reference_node))
         shader_nodes = cmds.referenceQuery(reference_node, nodes=True)
