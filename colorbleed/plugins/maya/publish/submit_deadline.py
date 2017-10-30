@@ -299,7 +299,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
 
         module_path = publish_imagesequence.__file__
         if module_path.endswith(".pyc"):
-            module_path = publish_imagesequence.__file__.replace(".pyc", ".py")
+            module_path = module_path[:-len(".pyc")] + ".py"
 
         payload = {
             "JobInfo": {
