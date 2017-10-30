@@ -25,8 +25,6 @@ class LookLoader(colorbleed.maya.plugin.ReferenceLoader):
 
         """
 
-        import json
-        import os
         import maya.cmds as cmds
         from avalon import maya
         import colorbleed.maya.lib as lib
@@ -36,7 +34,8 @@ class LookLoader(colorbleed.maya.plugin.ReferenceLoader):
         reference_node = None
         try:
             reference_node = lib.get_reference_node(self.fname)
-        except:
+        except Exception as e:
+            self.log.error(e)
             pass
 
         if reference_node is None:
@@ -48,21 +47,6 @@ class LookLoader(colorbleed.maya.plugin.ReferenceLoader):
                                   returnNewNodes=True)
         else:
             self.log.info("Reusing existing lookdev ...")
-            nodes = cmds.referenceQuery(reference_node, nodes=True)
-
-        # Assign shaders
-        self.fname = self.fname.rsplit(".", 1)[0] + ".json"
-        if not os.path.isfile(self.fname):
-            self.log.warning("Look development asset "
-                             "has no relationship data.")
-            return nodes
-
-        with open(self.fname) as f:
-            relationships = json.load(f)
-
-        # Get all nodes which belong to a matching name space
-        # Currently this is the safest way to get all the nodes
-        # Pass empty list as nodes to assign to in order to only load
-        lib.apply_shaders(relationships, nodes, [])
+            nodes = None
 
         self[:] = nodes
