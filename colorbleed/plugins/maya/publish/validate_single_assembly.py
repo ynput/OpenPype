@@ -3,10 +3,19 @@ import colorbleed.api
 
 
 class ValidateSingleAssembly(pyblish.api.InstancePlugin):
-    """Ensure all nodes are in a single assembly
+    """Ensure the instance is present in the assemblies
 
-    Published assets must be contained within a single transform
-    at the root of your outliner.
+    The instance must have a node which resides within the a group which
+    is visible in the outliner.
+    Example outliner:
+        root_GRP
+          -- asset_001_GRP
+             -- asset_01_:rigDefault
+
+        animation_asset_01
+          -- asset_01_:rigDefault
+
+    The asset_01_:rigDefault is present within the root_GRP
 
     """
 
