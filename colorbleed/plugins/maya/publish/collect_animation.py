@@ -4,20 +4,14 @@ import maya.cmds as cmds
 
 
 class CollectLook(pyblish.api.InstancePlugin):
-    """Collect look data for instance.
+    """Collect out hierarchy data for instance.
 
-    For the shapes/transforms of the referenced object to collect look for
-    retrieve the user-defined attributes (like V-ray attributes) and their
-    values as they were created in the current scene.
+    Collect all hierarchy nodes which reside in the out_SET of the animation
+    instance or poitncache instance. This is to unify the logic of retrieving
+    that specifc data. This eliminates the need to write two separate pieces
+    of logic to fetch all hierarchy nodes.
 
-    For the members of the instance collect the sets (shadingEngines and
-    other sets, e.g. VRayDisplacement) they are in along with the exact
-    membership relations.
-
-    Collects:
-        lookAttribtutes (list): Nodes in instance with their altered attributes
-        lookSetRelations (list): Sets and their memberships
-        lookSets (list): List of set names included in the look
+    Results in a list of nodes from the content of the instances
 
     """
 
@@ -29,7 +23,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     ignore_type = ["constraints"]
 
     def process(self, instance):
-        """Collect the Look in the instance with the correct layer settings"""
+        """Collect the hierarchy nodes"""
 
         family = instance.data["family"]
         if family == "colorbleed.animation":
