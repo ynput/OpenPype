@@ -44,15 +44,15 @@ class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
 
         nodes = list()
         for s in pointcache_sets:
-            members = cmds.sets(s, query=True)
-            members = cmds.ls(members, long=True)  # ensure long names
-            descendents = cmds.listRelatives(members,
+            # Ensure long names
+            members = cmds.ls(cmds.sets(s, query=True), long=True)
+            descendants = cmds.listRelatives(members,
                                              allDescendents=True,
                                              fullPath=True) or []
-            descendents = cmds.ls(descendents,
+            descendants = cmds.ls(descendants,
                                   noIntermediate=True,
                                   long=True)
-            hierarchy = members + descendents
+            hierarchy = members + descendants
             nodes.extend(hierarchy)
 
         # ignore certain node types (e.g. constraints)
@@ -84,6 +84,6 @@ class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
         return invalid_items
 
     @staticmethod
-    def to_item(id):
+    def to_item(_id):
         """Split the item id part from a node id"""
-        return id.rsplit(":", 1)[0]
+        return _id.rsplit(":", 1)[0]
