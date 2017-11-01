@@ -671,20 +671,21 @@ def generate_ids(nodes):
     """Assign a new id of the current active context to the nodes"""
 
     # Get the asset ID from the database for the asset of current context
-    asset_id = io.find_one({"type": "asset",
-                            "name": api.Session["AVALON_ASSET"]},
-                           projection={"_id": True})
-
+    asset_data = io.find_one({"type": "asset",
+                              "name": api.Session["AVALON_ASSET"]},
+                              projection={"_id": True})
+    asset_id = asset_data["_id"]
     for node in nodes:
-        set_id(asset_id["_id"], node)
+        set_id(asset_id, node)
 
 
-def set_id(asset_id, node):
+def set_id(unique_id, node, force=False):
     """Add cbId to `node` unless one already exists.
 
     Args:
-        asset_id (str): the unique asset code from the database
+        unique_id (str): the unique asset code from the database
         node (str): the node to add the "cbId" on
+        force (bool): if True sets the given unique_id as attribute value
 
     Returns:
         None
@@ -692,10 +693,15 @@ def set_id(asset_id, node):
 
     attr = "{0}.cbId".format(node)
     if not cmds.attributeQuery("cbId", node=node, exists=True):
+
+        if not force:
+            _, uid = str(uuid.uuid4()).rsplit("-", 1)
+            unique_id = "{}:{}".format(unique_id, uid)
+        else:
+            unique_id = unique_id
+
         cmds.addAttr(node, longName="cbId", dataType="string")
-        _, uid = str(uuid.uuid4()).rsplit("-", 1)
-        cb_uid = "{}:{}".format(asset_id, uid)
-        cmds.setAttr(attr, cb_uid, type="string")
+        cmds.setAttr(attr, unique_id, type="string")
 
 
 def remove_id(node):
