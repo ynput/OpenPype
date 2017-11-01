@@ -625,7 +625,7 @@ def get_id_required_nodes(referenced_nodes=False):
     if _node_type_exists("ilrBakeLayer"):
         ignore |= set(cmds.ls(type="ilrBakeLayer", long=True))
 
-    # Establish set of nodes to include
+    # Establish set of nodes types to include
     types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface"]
 
     # We *always* ignore intermediate shapes, so we filter them out
