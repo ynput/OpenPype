@@ -47,25 +47,33 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
         """Get all nodes which do not match the criteria"""
+
         invalid = []
 
         # get asset id
         nodes = instance.data.get("out_hierarchy", instance[:])
         for node in nodes:
-            # check if node is a shape as deformers only work on shapes
-            obj_type = cmds.objectType(node, isAType="shape")
-            node_id = lib.get_id(node)
-
-            if obj_type and not node_id:
-                invalid.append(node)
-                continue
-
-            if not node_id:
-                continue
 
             # We only check when the node is *not* referenced
             if cmds.referenceQuery(node, isNodeReferenced=True):
-                return
+                continue
+
+            # Check if node is a shape as deformers only work on shapes
+            obj_type = cmds.objectType(node, isAType="shape")
+            if not obj_type:
+                continue
+
+            # Get the current id of the node
+            node_id = lib.get_id(node)
+            if node_id:
+                invalid.append(node)
+                continue
+
+            # Check if parent transform node has an ID as well, pipeline rules
+            transform = get_parent(node)
+            if not lib.get_id(node):
+                invalid.append(transform)
+                continue
 
             root_id = cls.get_history_root_id(node=node)
             if root_id is not None:
