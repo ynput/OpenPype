@@ -17,7 +17,7 @@ def get_parent(node):
 
 
 class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
-    """Validate if nodes have related IDs to the source (original shapes)
+    """Validate if deformed shapes have related IDs to the original shapes
 
     Any intermediate shapes which are created when creating deformers on
     shapes will need to get the correct ID to ensure the look assignment still
@@ -63,6 +63,10 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
             if not node_id:
                 continue
 
+            # We only check when the node is *not* referenced
+            if cmds.referenceQuery(node, isNodeReferenced=True):
+                return
+
             root_id = cls.get_history_root_id(node=node)
             if root_id is not None:
                 invalid.append(node)
@@ -83,10 +87,6 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
         """
 
         node = cmds.ls(node, long=True)[0]
-
-        # We only check when the node is *not* referenced
-        if cmds.referenceQuery(node, isNodeReferenced=True):
-            return
 
         # Find all similar nodes in history
         history = cmds.listHistory(node)
