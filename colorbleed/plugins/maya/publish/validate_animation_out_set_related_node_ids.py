@@ -19,9 +19,10 @@ def get_parent(node):
 class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     """Validate if deformed shapes have related IDs to the original shapes
 
-    Any intermediate shapes which are created when creating deformers on
-    shapes will need to get the correct ID to ensure the look assignment still
-    works on the new shape.
+    When a deformer is applied in the scene on a referenced mesh that already
+    had deformers then Maya will create a new shape node for the mesh that
+    does not have the original id. This validator checks whether the ids are
+    valid on all the shape nodes in the instance.
 
     """
 
