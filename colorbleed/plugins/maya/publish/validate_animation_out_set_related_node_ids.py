@@ -5,14 +5,23 @@ import colorbleed.api
 import colorbleed.maya.lib as lib
 
 
+def get_parent(node):
+    """Get the parent node of the given node
+    Args:
+        node (str): full path of the node
+
+    Returns:
+        str, full path if parent node
+    """
+    return cmds.listRelatives(node, parent=True, fullPath=True)
+
+
 class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
     """Validate if nodes have related IDs to the source (original shapes)
 
-    An ID is 'related' if its built in the current Item.
-
-    Note that this doesn't ensure it's from the current Task. An ID created
-    from `lookdev` has the same relation to the Item as one coming from others,
-    like `rigging` or `modeling`.
+    Any intermediate shapes which are created when creating deformers on
+    shapes will need to get the correct ID to ensure the look assignment still
+    works on the new shape.
 
     """
 
@@ -41,7 +50,7 @@ class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
         invalid = []
 
         # get asset id
-        nodes = instance.data["pointcache_data"]
+        nodes = instance.data.get("out_hierarchy", instance[:])
         for node in nodes:
             node_type = cmds.nodeType(node)
             node_id = lib.get_id(node)
@@ -64,16 +73,16 @@ class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
     @classmethod
     def get_history_root_id(cls, node):
         """
-
         Get the original node ID when a node has been deformed
+
         Args:
             node (str): node to retrieve the
 
         Returns:
             str: the asset ID as found in the database
+
         """
 
-        asset_id = None
         node = cmds.ls(node, long=True)[0]
 
         # We only check when the node is *not* referenced
@@ -89,44 +98,32 @@ class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
         similar_nodes = [x for x in similar_nodes if x != node]
 
         # The node *must be* under the same parent
-        parent = cls.get_parent(node)
+        parent = get_parent(node)
         similar_nodes = [i for i in similar_nodes if
-                         cls.get_parent(i) == parent]
+                         get_parent(i) == parent]
 
         # Check all of the remaining similar nodes and take the first one
         # with an id and assume it's the original.
         for similar_node in similar_nodes:
-
             _id = lib.get_id(similar_node)
             if not _id:
                 continue
 
-            asset_id = cls.to_item(_id)
-            break
-
-        return asset_id
+            return _id
 
     @classmethod
     def repair(cls, instance):
 
         for node in cls.get_invalid(instance):
-            # Get node ID and the asset ID part
-            node_id = lib.get_id(node)
-            asset_id = cls.to_item(node_id)
-
             # Get root asset ID
             root_id = cls.get_history_root_id(node=node)
+            if not root_id:
+                cls.log.error("Could not find root ID for '%s'", node)
+                continue
 
-            # Replace errored ID with good ID
-            new_id = node_id.replace(asset_id, root_id)
-
-            cmds.setAttr("%s.cbId" % node, new_id, type="string")
+            cmds.setAttr("%s.cbId" % node, root_id, type="string")
 
     @staticmethod
     def to_item(_id):
         """Split the item id part from a node id"""
         return _id.split(":", 1)[0]
-
-    @staticmethod
-    def get_parent(node):
-        return cmds.listRelatives(node, parent=True, fullPath=True)
