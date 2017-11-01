@@ -66,18 +66,12 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
 
             # Get the current id of the node
             node_id = lib.get_id(node)
-            if node_id:
+            if not node_id:
                 invalid.append(node)
                 continue
 
-            # Check if parent transform node has an ID as well, pipeline rules
-            transform = get_parent(node)
-            if not lib.get_id(node):
-                invalid.append(transform)
-                continue
-
             root_id = cls.get_history_root_id(node=node)
-            if root_id is not None:
+            if root_id is not None and node_id != root_id:
                 invalid.append(node)
 
         return invalid
@@ -127,4 +121,5 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
                 cls.log.error("Could not find root ID for '%s'", node)
                 continue
 
-            cmds.setAttr("%s.cbId" % node, root_id, type="string")
+            lib.remove_id(node)  # remove the cbId attr if it exists
+            lib.set_id(root_id, node)  # set root_id as cbId
