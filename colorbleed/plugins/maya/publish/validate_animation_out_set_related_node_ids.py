@@ -16,7 +16,7 @@ def get_parent(node):
     return cmds.listRelatives(node, parent=True, fullPath=True)
 
 
-class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
+class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     """Validate if nodes have related IDs to the source (original shapes)
 
     Any intermediate shapes which are created when creating deformers on
@@ -52,10 +52,11 @@ class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
         # get asset id
         nodes = instance.data.get("out_hierarchy", instance[:])
         for node in nodes:
-            node_type = cmds.nodeType(node)
+            # check if node is a shape as deformers only work on shapes
+            obj_type = cmds.objectType(node, isAType="shape")
             node_id = lib.get_id(node)
 
-            if node_type == "mesh" and not node_id:
+            if obj_type and not node_id:
                 invalid.append(node)
                 continue
 
@@ -64,9 +65,7 @@ class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
 
             root_id = cls.get_history_root_id(node=node)
             if root_id is not None:
-                asset_id = cls.to_item(node_id)
-                if root_id != asset_id:
-                    invalid.append(node)
+                invalid.append(node)
 
         return invalid
 
@@ -106,10 +105,8 @@ class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
         # with an id and assume it's the original.
         for similar_node in similar_nodes:
             _id = lib.get_id(similar_node)
-            if not _id:
-                continue
-
-            return _id
+            if _id:
+                return _id
 
     @classmethod
     def repair(cls, instance):
@@ -122,8 +119,3 @@ class ValidateAnimationOutSetRelatedNodeIds(pyblish.api.InstancePlugin):
                 continue
 
             cmds.setAttr("%s.cbId" % node, root_id, type="string")
-
-    @staticmethod
-    def to_item(_id):
-        """Split the item id part from a node id"""
-        return _id.split(":", 1)[0]
