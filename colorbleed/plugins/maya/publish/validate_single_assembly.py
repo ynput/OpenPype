@@ -5,7 +5,7 @@ import colorbleed.api
 class ValidateSingleAssembly(pyblish.api.InstancePlugin):
     """Ensure the content of the instance is grouped in a single hierarchy
 
-    The instance must have a node which resides within the a group which
+    The instance must have a node which resides within the group which
     is visible in the outliner.
     Example outliner:
         root_GRP
