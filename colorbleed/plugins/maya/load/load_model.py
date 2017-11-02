@@ -45,9 +45,9 @@ class ImportModelLoader(api.Loader):
     representations = ["ma"]
 
     label = "Import Model"
-    order = -10
-    icon = "code-fork"
-    color = "orange"
+    order = 10
+    icon = "arrow-circle-down"
+    color = "white"
 
     def load(self, context, name=None, namespace=None, data=None):
 
@@ -114,11 +114,8 @@ class ImportModelLoader(api.Loader):
 
         container_content = cmds.sets(container_name, query=True)
         nodes = cmds.ls(container_content, long=True)
-        relatives = cmds.listRelatives(nodes,
-                                       ad=True,
-                                       fullPath=True) or []
 
-        nodes += relatives
+        nodes.append(container_name)
 
         try:
             cmds.delete(nodes)
