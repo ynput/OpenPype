@@ -31,7 +31,6 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     hosts = ['maya']
     label = 'Animation Out Set Related Node Ids'
     actions = [colorbleed.api.SelectInvalidAction, colorbleed.api.RepairAction]
-    optional = True
 
     ignore_types = ("constraint",)
 
@@ -122,4 +121,4 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
                 continue
 
             lib.remove_id(node)  # remove the cbId attr if it exists
-            lib.set_id(root_id, node)  # set root_id as cbId
+            lib.set_id(root_id, node, force=True)  # set root_id as cbId
