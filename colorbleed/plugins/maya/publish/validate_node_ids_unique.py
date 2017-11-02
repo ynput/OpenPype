@@ -5,7 +5,7 @@ import colorbleed.api
 import colorbleed.maya.lib as lib
 
 
-class ValidateNonDuplicateInstanceMembers(pyblish.api.InstancePlugin):
+class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
     """Validate the nodes in the instance have a unique Colorbleed Id
 
     Here we ensure that what has been added to the instance is unique
@@ -29,7 +29,6 @@ class ValidateNonDuplicateInstanceMembers(pyblish.api.InstancePlugin):
         if invalid:
             raise RuntimeError("Nodes found with non-unique "
                                "asset IDs: {0}".format(invalid))
-
 
     @classmethod
     def get_invalid_dict(cls, instance):
