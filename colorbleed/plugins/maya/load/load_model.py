@@ -31,6 +31,101 @@ class ModelLoader(colorbleed.maya.plugin.ReferenceLoader):
         return nodes
 
 
+class ImportModelLoader(api.Loader):
+    """An ImportModelLoader for Maya
+
+     This will implement the basic behavior for a loader to inherit from that
+     will containerize content. The loader will not be able to use `update`
+     but only `remove`. When calling the `update` the loader will return a
+     "NotImplementedError".
+
+     """
+
+    families = ["colorbleed.model"]
+    representations = ["ma"]
+
+    label = "Import Model"
+    order = 10
+    icon = "arrow-circle-down"
+    color = "white"
+
+    def load(self, context, name=None, namespace=None, data=None):
+
+        import maya.cmds as cmds
+
+        from avalon import maya
+        from avalon.maya import lib
+        from avalon.maya.pipeline import containerise
+
+        asset = context['asset']
+
+        namespace = namespace or lib.unique_namespace(
+            asset["name"] + "_",
+            prefix="_" if asset["name"][0].isdigit() else "",
+            suffix="_",
+        )
+
+        with maya.maintained_selection():
+            nodes = cmds.file(self.fname,
+                              i=True,
+                              namespace=namespace,
+                              returnNewNodes=True,
+                              groupReference=True,
+                              groupName="{}:{}".format(namespace, name))
+
+        # Only containerize if any nodes were loaded by the Loader
+        if not nodes:
+            return
+
+        self[:] = nodes
+
+        return containerise(
+            name=name,
+            namespace=namespace,
+            nodes=nodes,
+            context=context,
+            loader=self.__class__.__name__)
+
+    def update(self, container, representation):
+        from avalon.vendor.Qt import QtWidgets
+
+        message = ("The content of this asset was imported. "
+                   "We cannot update this because we will need"
+                   " to keep insane amount of things in mind.\n"
+                   "Please remove and reimport the asset."
+                   "\n\nIf you really need to update a lot we "
+                   "recommend referencing.")
+
+        QtWidgets.QMessageBox.critical(None,
+                                       "Can't update",
+                                       message,
+                                       QtWidgets.QMessageBox.Ok)
+
+        return
+
+    def remove(self, container):
+
+        from maya import cmds
+
+        namespace = container["namespace"]
+        container_name = container["objectName"]
+
+        self.log.info("Removing '%s' from Maya.." % container["name"])
+
+        container_content = cmds.sets(container_name, query=True)
+        nodes = cmds.ls(container_content, long=True)
+
+        nodes.append(container_name)
+
+        try:
+            cmds.delete(nodes)
+        except ValueError:
+            # Already implicitly deleted by Maya upon removing reference
+            pass
+
+        cmds.namespace(removeNamespace=namespace, deleteNamespaceContent=True)
+
+
 class GpuCacheLoader(api.Loader):
     """Load model Alembic as gpuCache"""
 
