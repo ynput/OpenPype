@@ -70,8 +70,6 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     label = 'Animation Out Set Related Node Ids'
     actions = [colorbleed.api.SelectInvalidAction, colorbleed.api.RepairAction]
 
-    ignore_types = ("constraint",)
-
     def process(self, instance):
         """Process all meshes"""
 
