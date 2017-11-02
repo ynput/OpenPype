@@ -198,6 +198,5 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
         asset_id = io.find_one({"name": asset, "type": "asset"},
                                projection={"_id": True})['_id']
         for node in nodes:
-            lib.remove_id(node)
-            lib.set_id(asset_id, node)
+            lib.set_id(node, asset_id, overwrite=True)
 

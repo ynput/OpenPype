@@ -120,5 +120,4 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
                 cls.log.error("Could not find root ID for '%s'", node)
                 continue
 
-            lib.remove_id(node)  # remove the cbId attr if it exists
-            lib.set_id(root_id, node, force=True)  # set root_id as cbId
+            lib.set_id(node, root_id, overwrite=True)  # set root_id as cbId

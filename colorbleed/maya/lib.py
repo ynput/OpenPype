@@ -667,46 +667,89 @@ def get_id(node):
     return cmds.getAttr("{}.cbId".format(node))
 
 
-def generate_ids(nodes):
-    """Assign a new id of the current active context to the nodes"""
+def generate_ids(nodes, asset_id=None):
+    """Returns new unique ids for the given nodes.
+    
+    Note: This does not assign the new ids, it only generates the values.
+    
+    To assign new ids using this method:
+    >>> nodes = ["a", "b", "c"]
+    >>> for node, id in generate_ids(nodes):
+    >>>     set_id(node, id)
+    
+    To also override any existing values (and assign regenerated ids):
+    >>> nodes = ["a", "b", "c"]
+    >>> for node, id in generate_ids(nodes):
+    >>>     set_id(node, id, overwrite=True)
+    
+    Args:
+        nodes (list): List of nodes.
+        asset_id (str or bson.ObjectId): The database id for the *asset* to
+            generate for. When None provided the current asset in the 
+            active session is used.
+            
+    Returns:
+        list: A list of (node, id) tuples.
+    
+    """
 
-    # Get the asset ID from the database for the asset of current context
-    asset_data = io.find_one({"type": "asset",
-                              "name": api.Session["AVALON_ASSET"]},
-                              projection={"_id": True})
-    asset_id = asset_data["_id"]
+    if asset_id is None:
+        # Get the asset ID from the database for the asset of current context
+        asset_data = io.find_one({"type": "asset",
+                                  "name": api.Session["AVALON_ASSET"]},
+                                 projection={"_id": True})
+        assert asset_data, "No current asset found in Session"
+        asset_id = asset_data['_id']
+
+    node_ids = []
     for node in nodes:
-        set_id(asset_id, node)
+        _, uid = str(uuid.uuid4()).rsplit("-", 1)
+        unique_id = "{}:{}".format(asset_id, uid)
+        node_ids.append((node, unique_id))
+
+    return node_ids
 
 
-def set_id(unique_id, node, force=False):
+def set_id(node, unique_id, overwrite=False):
     """Add cbId to `node` unless one already exists.
 
     Args:
-        unique_id (str): the unique asset code from the database
         node (str): the node to add the "cbId" on
-        force (bool): if True sets the given unique_id as attribute value
+        unique_id (str): the unique asset code from the database
+        overwrite (bool, optional): When True overrides the current value even 
+            if `node` already has an id. Defaults to False.
 
     Returns:
         None
+        
     """
 
     attr = "{0}.cbId".format(node)
-    if not cmds.attributeQuery("cbId", node=node, exists=True):
+    exists = cmds.attributeQuery("cbId", node=node, exists=True)
 
-        if not force:
-            _, uid = str(uuid.uuid4()).rsplit("-", 1)
-            unique_id = "{}:{}".format(unique_id, uid)
-        else:
-            unique_id = unique_id
-
+    # Add the attribute if it does not exist yet
+    if not exists:
         cmds.addAttr(node, longName="cbId", dataType="string")
+
+    # Set the value
+    if not exists or overwrite:
         cmds.setAttr(attr, unique_id, type="string")
 
 
 def remove_id(node):
+    """Remove the id attribute from the input node.
+    
+    Args:
+        node (str): The node name 
+
+    Returns:
+        bool: Whether an id attribute was deleted
+
+    """
     if cmds.attributeQuery("cbId", node=node, exists=True):
         cmds.deleteAttr("{}.cbId".format(node))
+        return True
+    return False
 
 
 # endregion ID

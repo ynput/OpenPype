@@ -70,4 +70,5 @@ def on_save(_):
 
     # Generate ids of the current context on nodes in the scene
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
-    lib.generate_ids(nodes)
+    for node, new_id in lib.generate_ids(nodes):
+        lib.set_id(node, new_id, overwrite=False)
