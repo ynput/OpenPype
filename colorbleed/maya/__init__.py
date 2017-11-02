@@ -55,9 +55,28 @@ def on_init(_):
             log.warning("Can't load plug-in: "
                         "{0} - {1}".format(plugin, e))
 
+    def safe_deferred(fn):
+        """Execute deferred the function in a try-except"""
+
+        def _fn():
+            """safely call in deferred callback"""
+            try:
+                fn()
+            except Exception as exc:
+                print(exc)
+
+        try:
+            utils.executeDeferred(_fn)
+        except Exception as exc:
+            print(exc)
+
+
     cmds.loadPlugin("AbcImport", quiet=True)
     cmds.loadPlugin("AbcExport", quiet=True)
     force_load_deferred("mtoa")
+
+    from .customize import override_component_mask_commands
+    safe_deferred(override_component_mask_commands)
 
 
 def on_save(_):
