@@ -16,20 +16,21 @@ def override_component_mask_commands():
 
     This implements special behavior for Maya's component
     mask menu items where a ctrl+click will instantly make
-    it a isolated behavior disabling all others.
+    it an isolated behavior disabling all others.
     
-    Tested in Maya 2016 and 2018.1
+    Tested in Maya 2016 and 2018
 
     """
     log.info("Installing override_component_mask_commands..")
 
-    BUTTONS = mc.formLayout("objectMaskIcons",
+    # Get all object mask buttons
+    buttons = mc.formLayout("objectMaskIcons",
                             query=True,
                             childArray=True)
     # Skip the triangle list item
-    BUTTONS = [btn for btn in BUTTONS if btn != "objPickMenuLayout"]
+    buttons = [btn for btn in buttons if btn != "objPickMenuLayout"]
 
-    def _on_changed_callback(original, state):
+    def _on_changed_callback(raw_command, state):
         """New callback"""
 
         # If "control" is held force the toggled one to on and
@@ -39,18 +40,17 @@ def override_component_mask_commands():
         if mc.getModifiers() == 4:  # = CTRL
             state = True
             active = [mc.iconTextCheckBox(btn, query=True, value=True) for btn
-                      in BUTTONS]
+                      in buttons]
             if any(active):
                 mc.selectType(allObjects=False)
             else:
                 mc.selectType(allObjects=True)
 
         # Replace #1 with the current button state
-        cmd = original.replace(" #1", " {}".format(int(state)))
+        cmd = raw_command.replace(" #1", " {}".format(int(state)))
         mel.eval(cmd)
 
-    # Get all component mask buttons
-    for btn in BUTTONS:
+    for btn in buttons:
 
         # Store a reference to the original command so that if
         # we rerun this override command it doesn't recursively
