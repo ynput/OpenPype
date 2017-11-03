@@ -30,7 +30,7 @@ def override_component_mask_commands():
     # Skip the triangle list item
     buttons = [btn for btn in buttons if btn != "objPickMenuLayout"]
 
-    def _on_changed_callback(raw_command, state):
+    def on_changed_callback(raw_command, state):
         """New callback"""
 
         # If "control" is held force the toggled one to on and
@@ -62,5 +62,5 @@ def override_component_mask_commands():
 
         # Assign the special callback
         original = COMPONENT_MASK_ORIGINAL[btn]
-        new_fn = partial(_on_changed_callback, original)
+        new_fn = partial(on_changed_callback, original)
         mc.iconTextCheckBox(btn, edit=True, cc=new_fn)
