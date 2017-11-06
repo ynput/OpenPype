@@ -17,8 +17,7 @@ def is_latest(representation):
                        "type": "representation"})
     version = io.find_one({"_id": rep['parent']})
 
-    # Store the highest available version so the model can know
-    # whether current version is currently up-to-date.
+    # Get highest version under the parent
     highest_version = io.find_one({
         "type": "version",
         "parent": version["parent"]
