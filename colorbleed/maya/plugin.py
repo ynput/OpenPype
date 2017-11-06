@@ -73,19 +73,18 @@ class ReferenceLoader(api.Loader):
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.
-        if cmds.getAttr(container['objectName'] + ".verticesOnlySet"):
-            self.log.info("Setting %s.verticesOnlySet to False",
-                          container['objectName'])
-            cmds.setAttr(container['objectName'] + ".verticesOnlySet", False)
+        if cmds.getAttr(node + ".verticesOnlySet"):
+            self.log.info("Setting %s.verticesOnlySet to False", node)
+            cmds.setAttr(node + ".verticesOnlySet", False)
 
         # TODO: Add all new nodes in the reference to the container
         #   Currently new nodes in an updated reference are not added to the
         #   container whereas actually they should be!
         nodes = cmds.referenceQuery(reference_node, nodes=True, dagPath=True)
-        cmds.sets(nodes, forceElement=container['objectName'])
+        cmds.sets(nodes, forceElement=node)
 
         # Update metadata
-        cmds.setAttr(container["objectName"] + ".representation",
+        cmds.setAttr(node + ".representation",
                      str(representation["_id"]),
                      type="string")
 
