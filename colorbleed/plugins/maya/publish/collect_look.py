@@ -133,6 +133,11 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.log.warning("No sets found for the nodes in the instance: "
                              "%s" % instance[:])
 
+        # Ensure unique shader sets
+        # Add shader sets to the instance for unify ID validation
+        instance.extend(shader for shader in looksets if shader
+                        not in instance_lookup)
+        
         self.log.info("Collected look for %s" % instance)
 
     def collect_sets(self, instance):
@@ -181,7 +186,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         node_id = lib.get_id(node)
         if not node_id:
-            self.log.error("Node '{}' has no attribute 'cbId'".format(node))
+            self.log.error("Member '{}' has no attribute 'cbId'".format(node))
             return
 
         member_data = {"name": node, "uuid": node_id}

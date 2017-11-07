@@ -1,8 +1,6 @@
 # absolute_import is needed to counter the `module has no cmds error` in Maya
 from __future__ import absolute_import
 
-import uuid
-
 from maya import cmds
 import pyblish.api
 
@@ -197,6 +195,5 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
         asset = instance.data['asset']
         asset_id = io.find_one({"name": asset, "type": "asset"},
                                projection={"_id": True})['_id']
-        for node in nodes:
-            lib.set_id(node, asset_id, overwrite=True)
-
+        for node, _id in lib.generate_ids(nodes, asset_id=asset_id):
+            lib.set_id(node, _id, overwrite=True)
