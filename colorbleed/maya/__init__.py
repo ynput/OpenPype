@@ -32,6 +32,7 @@ def install():
     log.info("Installing callbacks ... ")
     avalon.on("init", on_init)
     avalon.on("save", on_save)
+    avalon.on("open", on_open)
 
 
 def uninstall():
@@ -91,3 +92,36 @@ def on_save(_):
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
+
+
+def on_open(_):
+    """On scene open let's assume the containers have changed."""
+
+    from ..lib import any_outdated
+    from avalon.vendor.Qt import QtWidgets
+    from ..widgets import popup
+
+    if any_outdated():
+        log.warning("Scene has outdated content.")
+
+        # Find maya main window
+        top_level_widgets = {w.objectName(): w for w in
+                             QtWidgets.QApplication.topLevelWidgets()}
+        parent = top_level_widgets.get("MayaWindow", None)
+
+        if parent is None:
+            log.info("Skipping outdated content pop-up "
+                     "because Maya window can't be found.")
+        else:
+
+            # Show outdated pop-up
+            def _on_show_inventory():
+                import avalon.tools.cbsceneinventory as tool
+                tool.show(parent=parent)
+
+            dialog = popup.Popup(parent=parent)
+            dialog.setWindowTitle("Maya scene has outdated content")
+            dialog.setMessage("There are outdated containers in "
+                              "your Maya scene.")
+            dialog.on_show.connect(_on_show_inventory)
+            dialog.show()
