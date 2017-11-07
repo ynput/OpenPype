@@ -10,6 +10,10 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
         * At least one relationship must be collection.
         * All relationship object sets at least have an ID value
 
+    Tip:
+        * When no node IDs are found on shadingEngines please save your scene
+        and try again.
+
     """
 
     order = colorbleed.api.ValidateContentsOrder
@@ -57,12 +61,12 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
         invalid = set()
 
-        attributes = ["relationships", "attributes"]
+        keys = ["relationships", "attributes"]
         lookdata = instance.data["lookData"]
-        for attr in attributes:
-            if attr not in lookdata:
-                cls.log.error("Look Data has no attribute "
-                              "'{}'".format(attr))
+        for key in keys:
+            if key not in lookdata:
+                cls.log.error("Look Data has no key "
+                              "'{}'".format(key))
                 invalid.add(instance.name)
 
         # Validate at least one single relationship is collected

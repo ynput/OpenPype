@@ -25,14 +25,14 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
         """Process all meshes"""
 
         # Ensure all nodes have a cbId
-        invalid = self.get_invalid_dict(instance)
+        invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("Nodes found with non-unique "
                                "asset IDs: {0}".format(invalid))
 
     @classmethod
-    def get_invalid_dict(cls, instance):
-        """Return a dictionary mapping of id key to list of member nodes"""
+    def get_invalid(cls, instance):
+        """Return the member nodes that are invalid"""
 
         # Collect each id with their members
         ids = defaultdict(list)
@@ -42,24 +42,11 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
                 continue
             ids[object_id].append(member)
 
-        # Skip those without IDs (if everything should have an ID that should
-        # be another validation)
-        ids.pop(None, None)
-
-        # Take only the ids with more than one member
-        invalid = dict((_id, members) for _id, members in ids.iteritems() if
-                       len(members) > 1)
-        return invalid
-
-    @classmethod
-    def get_invalid(cls, instance):
-        """Return the member nodes that are invalid"""
-
-        invalid_dict = cls.get_invalid_dict(instance)
-
         # Take only the ids with more than one member
         invalid = list()
-        for members in invalid_dict.itervalues():
-            invalid.extend(members)
+        for _ids, members in ids.iteritems():
+            if len(members) > 1:
+                cls.log.error("ID found on multiple nodes: '%s'" % members)
+                invalid.extend(members)
 
         return invalid

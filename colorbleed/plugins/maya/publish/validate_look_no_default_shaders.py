@@ -5,7 +5,7 @@ import colorbleed.api
 
 
 class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
-    """Validate look contains no default shaders.
+    """Validate if any node has a connection to a default shader.
 
     This checks whether the look has any members of:
     - lambert1
@@ -28,6 +28,9 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
     label = 'Look No Default Shaders'
     actions = [colorbleed.api.SelectInvalidAction]
 
+    DEFAULT_SHADERS = {"lambert1", "initialShadingGroup",
+                      "initialParticleSE", "particleCloud1"}
+
     def process(self, instance):
         """Process all the nodes in the instance"""
 
@@ -38,44 +41,18 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-        disallowed = ["lambert1", "initialShadingGroup",
-                      "initialParticleSE", "particleCloud1"]
-        disallowed = set(disallowed)
-
-        # Check if there are any skinClusters present
-        # If so ensure nodes which are skinned
-        intermediate = []
-        skinclusters = cmds.ls(type="skinCluster")
-        cls.log.info("Found skinClusters, will skip original shapes")
-        if skinclusters:
-            intermediate += cmds.ls(intermediateObjects=True,
-                                    shapes=True,
-                                    long=True)
 
         invalid = set()
         for node in instance:
+            # Get shading engine connections
+            shaders = cmds.listConnections(node, type="shadingEngine") or []
 
-            # get connection
-            # listConnections returns a list or None
-            object_sets = cmds.listConnections(node, type="objectSet") or []
-
-            # Ensure the shape in the instances have at least a single shader
-            # connected if it *can* have a shader, like a `surfaceShape` in
-            # Maya.
-            if (cmds.objectType(node, isAType="surfaceShape") and
-                    not cmds.ls(object_sets, type="shadingEngine")):
-                if node in intermediate:
-                    continue
-                cls.log.error("Detected shape without shading engine: "
-                              "'{}'".format(node))
-                invalid.add(node)
-
-            # Check for any disallowed connections
-            if any(s in disallowed for s in object_sets):
+            # Check for any disallowed connections on *all* nodes
+            if any(s in cls.DEFAULT_SHADERS for s in shaders):
 
                 # Explicitly log each individual "wrong" connection.
-                for s in object_sets:
-                    if s in disallowed:
+                for s in shaders:
+                    if s in cls.DEFAULT_SHADERS:
                         cls.log.error("Node has unallowed connection to "
                                       "'{}': {}".format(s, node))
 
