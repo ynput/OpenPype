@@ -87,10 +87,14 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Collect members
             members = cmds.ls(members, long=True) or []
 
+            # `maya.cmds.listRelatives(noIntermediate=True)` only works when
+            # `shapes=True` argument is passed, since we also want to include
+            # transforms we filter afterwards.
             children = cmds.listRelatives(members,
                                           allDescendents=True,
-                                          fullPath=True,
-                                          noIntermediate=True) or []
+                                          fullPath=True) or []
+            children = cmds.ls(children, noIntermediate=True, long=True)
+
             parents = self.get_all_parents(members)
             members_hierarchy = list(set(members + children + parents))
 
