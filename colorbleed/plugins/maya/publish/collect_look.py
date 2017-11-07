@@ -186,7 +186,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         node_id = lib.get_id(node)
         if not node_id:
-            self.log.error("Node '{}' has no attribute 'cbId'".format(node))
+            self.log.error("Member '{}' has no attribute 'cbId'".format(node))
             return
 
         member_data = {"name": node, "uuid": node_id}
