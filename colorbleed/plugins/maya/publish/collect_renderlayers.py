@@ -1,3 +1,5 @@
+import pprint
+
 from maya import cmds
 
 import pyblish.api
@@ -23,12 +25,26 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
         relative_file = current_file.replace(registered_root, "{root}")
         source_file = relative_file.replace("\\", "/")
 
+        # Get renderglobals
+        if cmds.objExists("renderglobalsDefault"):
+            attr = "renderglobalsDefault.includeDefaultRenderLayer"
+            use_defaultlayer = cmds.getAttr(attr)
+        else:
+            use_defaultlayer = False
+
+        # Get render layers
         renderlayers = cmds.ls(type="renderLayer")
+        # Exclude renderlayers if attribute is False
+        if not use_defaultlayer:
+            renderlayers = [i for i in renderlayers if
+                            not i.endswith("defaultRenderLayer")]
+
         for layer in renderlayers:
             if layer.endswith("defaultRenderLayer"):
-                continue
+                layername = "masterLayer"
+            else:
+                layername = layer.split("rs_", 1)[-1]
 
-            layername = layer.split("rs_", 1)[-1]
             data = {"family": "Render Layers",
                     "families": ["colorbleed.renderlayer"],
                     "publish": cmds.getAttr("{}.renderable".format(layer)),
@@ -63,20 +79,26 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
             # Include (optional) global settings
             # TODO(marcus): Take into account layer overrides
             try:
-                avalon_globals = maya.lsattr("id", "avalon.renderglobals")[0]
+                render_globals = cmds.ls("renderglobalsDefault")[0]
             except IndexError:
                 pass
             else:
-                _globals = maya.read(avalon_globals)
-                data["renderGlobals"] = self.get_global_overrides(_globals)
+                _globals = maya.read(render_globals)
+                # Ensure machine list is created correctly
+                overrides = self.translate_overrides(_globals)
+
+                # Check if renders need to published
+                data.update(**overrides)
 
             instance = context.create_instance(layername)
             instance.data.update(data)
 
+            pprint.pprint(instance.data)
+
     def get_render_attribute(self, attr):
         return cmds.getAttr("defaultRenderGlobals.{}".format(attr))
 
-    def get_global_overrides(self, globals):
+    def translate_overrides(self, globals):
         """
         Get all overrides with a value, skip those without
 
@@ -90,15 +112,19 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
         Returns:
             dict: only overrides with values
         """
-        keys = ["pool", "group", "frames", "priority"]
-        read_globals = {}
-        for key in keys:
-            value = globals[key]
-            if not value:
-                continue
-            read_globals[key.capitalize()] = value
+        machine_list = globals["machineList"]
+        translation = {"renderGlobals":
+                           {"Priority": globals["priority"]},
+                       "suspendPublishJob": "Active"
+                       }
 
-        if not read_globals:
-            self.log.info("Submitting without overrides")
+        if globals["whitelist"]:
+            translation["renderGlobals"]["Whitelist"] = machine_list
+        else:
+            translation["renderGlobals"]["Blacklist"] = machine_list
 
-        return read_globals
+        if globals["suspendPublishJob"]:
+            translation["suspendPublishJob"] = "Suspended"
+
+        return translation
+
