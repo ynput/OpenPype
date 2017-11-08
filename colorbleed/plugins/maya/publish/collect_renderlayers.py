@@ -25,19 +25,25 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
         relative_file = current_file.replace(registered_root, "{root}")
         source_file = relative_file.replace("\\", "/")
 
-        # Get renderglobals
-        if cmds.objExists("renderglobalsDefault"):
-            attr = "renderglobalsDefault.includeDefaultRenderLayer"
-            use_defaultlayer = cmds.getAttr(attr)
-        else:
-            use_defaultlayer = False
+        # Get render globals node
+        try:
+            render_globals = cmds.ls("renderglobalsDefault")[0]
+        except IndexError:
+            raise RuntimeError("Can not collect renderlayers without "
+                               "renderGlobals node")
+
+        attr = "{}.includeDefaultRenderLayer".format(render_globals)
+        use_defaultlayer = cmds.getAttr(attr)
 
         # Get render layers
         renderlayers = cmds.ls(type="renderLayer")
-        # Exclude renderlayers if attribute is False
         if not use_defaultlayer:
             renderlayers = [i for i in renderlayers if
                             not i.endswith("defaultRenderLayer")]
+
+        # Get global overrides and translate to Deadline values
+        _globals = maya.read(render_globals)
+        overrides = self.translate_overrides(_globals)
 
         for layer in renderlayers:
             if layer.endswith("defaultRenderLayer"):
@@ -78,17 +84,8 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
 
             # Include (optional) global settings
             # TODO(marcus): Take into account layer overrides
-            try:
-                render_globals = cmds.ls("renderglobalsDefault")[0]
-            except IndexError:
-                pass
-            else:
-                _globals = maya.read(render_globals)
-                # Ensure machine list is created correctly
-                overrides = self.translate_overrides(_globals)
-
-                # Check if renders need to published
-                data.update(**overrides)
+            # Add the global overrides
+            data.update(**overrides)
 
             instance = context.create_instance(layername)
             instance.data.update(data)
