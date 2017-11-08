@@ -1,5 +1,7 @@
 from collections import OrderedDict
 
+import maya.cmds as cmds
+
 import avalon.maya
 
 
@@ -21,19 +23,23 @@ class CreateRenderGlobals(avalon.maya.Creator):
 
         data = OrderedDict(**self.data)
 
+        startframe = cmds.playbackOptions(query=True, animationStartTime=True)
+        endframe = cmds.playbackOptions(query=True, animationEndTime=True)
+
         data["suspendPublishJob"] = False
         data["includeDefaultRenderLayer"] = False
         data["priority"] = 50
         data["whitelist"] = False
         data["machineList"] = ""
+        data["startFrame"] = int(startframe)
+        data["endFrame"] = int(endframe)
 
         self.data = data
         self.options = {"useSelection": False}  # Force no content
 
     def process(self):
-        from maya import cmds
 
-        exists = cmds.ls("renderglobalsDefault")
+        exists = cmds.ls(self.name)
         assert len(exists) <= 1, (
             "More than one renderglobal exists, this is a bug")
 
