@@ -2,6 +2,7 @@ import os
 import json
 import shutil
 import getpass
+import pprint
 
 from maya import cmds
 
@@ -194,7 +195,10 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         })
 
         # Include optional render globals
-        payload["JobInfo"].update(instance.data.get("renderGlobals", {}))
+        render_globals = instance.data.get("renderGlobals", {})
+        payload["JobInfo"].update(render_globals)
+
+        pprint.pprint(payload["JobInfo"])
 
         self.preflight_check(instance)
 
@@ -215,14 +219,19 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             with open(json_fpath, "w") as f:
                 json.dump(data, f, indent=4, sort_keys=True)
 
+            self.log.info("Creating publish job")
+            state = instance.data["suspendPublishJob"]
             publish_job = self.create_publish_job(fname,
                                                   deadline_user,
                                                   comment,
                                                   jobname,
                                                   render_job,
-                                                  json_fpath)
+                                                  json_fpath,
+                                                  state)
             if not publish_job:
                 self.log.error("Could not submit publish job!")
+            else:
+                self.log.info(publish_job)
 
         else:
             try:
@@ -279,15 +288,17 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             )
 
     def create_publish_job(self, fname, user, comment, jobname,
-                           job, json_fpath):
-        """
-        Make sure all frames are published
+                           job, json_fpath, state):
+        """Make sure all frames are published
+
         Args:
             job (dict): the render job data
             json_fpath (str): file path to json file
+            state (str): In which state the job needs to when submitted, e.g.:
+                         "Suspended"
 
         Returns:
-
+            dict
         """
 
         url = "{}/api/jobs".format(api.Session["AVALON_DEADLINE"])
@@ -310,6 +321,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": user,
                 "Comment": comment,
+                "InitialStatus": state
             },
             "PluginInfo": {
                 "Version": "3.6",
