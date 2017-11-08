@@ -14,6 +14,11 @@ class CreateRenderGlobals(avalon.maya.Creator):
 
         # We won't be publishing this one
         self.data["id"] = "avalon.renderglobals"
+
+        # We don't need subset or asset attributes
+        self.data.pop("subset", None)
+        self.data.pop("asset", None)
+
         data = OrderedDict(**self.data)
 
         data["suspendPublishJob"] = False
