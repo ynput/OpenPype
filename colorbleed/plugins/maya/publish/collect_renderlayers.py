@@ -29,7 +29,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
         try:
             render_globals = cmds.ls("renderglobalsDefault")[0]
         except IndexError:
-            raise RuntimeError("Can not collect renderlayers without "
+            raise RuntimeError("Cannot collect renderlayers without "
                                "renderGlobals node")
 
         attr = "{}.includeDefaultRenderLayer".format(render_globals)
@@ -40,10 +40,6 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
         if not use_defaultlayer:
             renderlayers = [i for i in renderlayers if
                             not i.endswith("defaultRenderLayer")]
-
-        # Get global overrides and translate to Deadline values
-        _globals = maya.read(render_globals)
-        overrides = self.translate_overrides(_globals)
 
         for layer in renderlayers:
             if layer.endswith("defaultRenderLayer"):
@@ -84,7 +80,8 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
 
             # Include (optional) global settings
             # TODO(marcus): Take into account layer overrides
-            # Add the global overrides
+            # Get global overrides and translate to Deadline values
+            overrides = self.translate_overrides(render_globals)
             data.update(**overrides)
 
             instance = context.create_instance(layername)
@@ -95,33 +92,39 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
     def get_render_attribute(self, attr):
         return cmds.getAttr("defaultRenderGlobals.{}".format(attr))
 
-    def translate_overrides(self, globals):
-        """
-        Get all overrides with a value, skip those without
+    def translate_overrides(self, render_globals):
+        """Get all overrides with a value, skip those without
 
         Here's the kicker. These globals override defaults in the submission
         integrator, but an empty value means no overriding is made.
         Otherwise, Frames would override the default frames set under globals.
 
         Args:
-            globals (dict) collection of render globals
+            render_globals (str): collection of render globals
 
         Returns:
             dict: only overrides with values
         """
-        machine_list = globals["machineList"]
+
+        _globals = maya.read(render_globals)
+
+        machine_list = _globals["machineList"]
         translation = {"renderGlobals":
-                           {"Priority": globals["priority"]},
+                           {"Priority": _globals["priority"]},
                        "suspendPublishJob": "Active"
                        }
 
-        if globals["whitelist"]:
+        if _globals["whitelist"]:
             translation["renderGlobals"]["Whitelist"] = machine_list
         else:
             translation["renderGlobals"]["Blacklist"] = machine_list
 
-        if globals["suspendPublishJob"]:
+        if _globals["suspendPublishJob"]:
             translation["suspendPublishJob"] = "Suspended"
 
-        return translation
+        if _globals["startFrame"] and _globals["endFrame"]:
+            frame_range = "{}-{}".format(_globals["startFrame"],
+                                         _globals["endFrame"])
+            translation["renderGlobals"]["Frames"] = frame_range
 
+        return translation
