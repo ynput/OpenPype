@@ -81,8 +81,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
                     # are considered non-essential to this
                     # particular publishing pipeline.
                     value = None
-
                 data[attr] = value
+
+            # temporarily translation of `active` to `publish` till issue has
+            # been resolved, https://github.com/pyblish/pyblish-base/issues/307
+            if "active" in data:
+                data["publish"] = data["active"]
 
             # Collect members
             members = cmds.ls(members, long=True) or []
