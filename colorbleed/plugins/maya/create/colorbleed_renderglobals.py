@@ -23,16 +23,11 @@ class CreateRenderGlobals(avalon.maya.Creator):
 
         data = OrderedDict(**self.data)
 
-        startframe = cmds.playbackOptions(query=True, animationStartTime=True)
-        endframe = cmds.playbackOptions(query=True, animationEndTime=True)
-
         data["suspendPublishJob"] = False
         data["includeDefaultRenderLayer"] = False
         data["priority"] = 50
         data["whitelist"] = False
         data["machineList"] = ""
-        data["startFrame"] = int(startframe)
-        data["endFrame"] = int(endframe)
 
         self.data = data
         self.options = {"useSelection": False}  # Force no content
@@ -47,3 +42,5 @@ class CreateRenderGlobals(avalon.maya.Creator):
             return cmds.warning("%s already exists." % exists[0])
 
         super(CreateRenderGlobals, self).process()
+
+        cmds.setAttr("{}.machineList".format(self.name), lock=True)
