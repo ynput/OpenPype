@@ -2,7 +2,6 @@ import os
 import json
 import shutil
 import getpass
-import pprint
 
 from maya import cmds
 
@@ -197,8 +196,6 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         # Include optional render globals
         render_globals = instance.data.get("renderGlobals", {})
         payload["JobInfo"].update(render_globals)
-
-        pprint.pprint(payload["JobInfo"])
 
         self.preflight_check(instance)
 
