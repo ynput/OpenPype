@@ -122,8 +122,4 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
         if _globals["suspendPublishJob"]:
             translation["suspendPublishJob"] = "Suspended"
 
-        frame_range = "{}-{}".format(_globals["startFrame"],
-                                     _globals["endFrame"])
-        translation["renderGlobals"]["Frames"] = frame_range
-
         return translation
