@@ -23,12 +23,28 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
         relative_file = current_file.replace(registered_root, "{root}")
         source_file = relative_file.replace("\\", "/")
 
+        # Get render globals node
+        try:
+            render_globals = cmds.ls("renderglobalsDefault")[0]
+        except IndexError:
+            raise RuntimeError("Cannot collect renderlayers without "
+                               "renderGlobals node")
+
+        attr = "{}.includeDefaultRenderLayer".format(render_globals)
+        use_defaultlayer = cmds.getAttr(attr)
+
+        # Get render layers
         renderlayers = cmds.ls(type="renderLayer")
+        if not use_defaultlayer:
+            renderlayers = [i for i in renderlayers if
+                            not i.endswith("defaultRenderLayer")]
+
         for layer in renderlayers:
             if layer.endswith("defaultRenderLayer"):
-                continue
+                layername = "masterLayer"
+            else:
+                layername = layer.split("rs_", 1)[-1]
 
-            layername = layer.split("rs_", 1)[-1]
             data = {"family": "Render Layers",
                     "families": ["colorbleed.renderlayer"],
                     "publish": cmds.getAttr("{}.renderable".format(layer)),
@@ -62,13 +78,9 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
 
             # Include (optional) global settings
             # TODO(marcus): Take into account layer overrides
-            try:
-                avalon_globals = maya.lsattr("id", "avalon.renderglobals")[0]
-            except IndexError:
-                pass
-            else:
-                _globals = maya.read(avalon_globals)
-                data["renderGlobals"] = self.get_global_overrides(_globals)
+            # Get global overrides and translate to Deadline values
+            overrides = self.parse_options(render_globals)
+            data.update(**overrides)
 
             instance = context.create_instance(layername)
             instance.data.update(data)
@@ -76,29 +88,34 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
     def get_render_attribute(self, attr):
         return cmds.getAttr("defaultRenderGlobals.{}".format(attr))
 
-    def get_global_overrides(self, globals):
-        """
-        Get all overrides with a value, skip those without
+    def parse_options(self, render_globals):
+        """Get all overrides with a value, skip those without
 
         Here's the kicker. These globals override defaults in the submission
         integrator, but an empty value means no overriding is made.
         Otherwise, Frames would override the default frames set under globals.
 
         Args:
-            globals (dict) collection of render globals
+            render_globals (str): collection of render globals
 
         Returns:
             dict: only overrides with values
         """
-        keys = ["pool", "group", "frames", "priority"]
-        read_globals = {}
-        for key in keys:
-            value = globals[key]
-            if not value:
-                continue
-            read_globals[key.capitalize()] = value
 
-        if not read_globals:
-            self.log.info("Submitting without overrides")
+        attributes = maya.read(render_globals)
 
-        return read_globals
+        options = {"renderGlobals": {}}
+
+        options['renderGlobals']['Priority'] = attributes['priority']
+
+        # Machine list
+        machine_list = attributes["machineList"]
+        if machine_list:
+            key = "Whitelist" if attributes["whitelist"] else "Blacklist"
+            options['renderGlobals'][key] = machine_list
+
+        # Suspend publish job
+        state = "Suspended" if attributes["suspendPublishJob"] else "Active"
+        options["suspendPublishJob"] = state
+
+        return options

@@ -927,6 +927,25 @@
     },
     {
         "type": "menu",
+        "title": "Rendering",
+        "items": [
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\pyblish\\open_deadline_submission_settings.py",
+                "sourcetype": "file",
+                "tags": [
+                    "settings",
+                    "deadline",
+                    "globals",
+                    "render"
+                ],
+                "title": "DL Submission Settings UI",
+                "tooltip": "Open the Deadline Submission Settings UI"
+            }
+        ]
+    },
+    {
+        "type": "menu",
         "title": "Animation",
         "items": [
             {
