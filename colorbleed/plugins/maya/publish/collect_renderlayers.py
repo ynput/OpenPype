@@ -27,8 +27,9 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
         try:
             render_globals = cmds.ls("renderglobalsDefault")[0]
         except IndexError:
-            raise RuntimeError("Cannot collect renderlayers without "
-                               "renderGlobals node")
+            self.log.info("Cannot collect renderlayers without "
+                          "renderGlobals node")
+            return
 
         attr = "{}.includeDefaultRenderLayer".format(render_globals)
         use_defaultlayer = cmds.getAttr(attr)
