@@ -79,7 +79,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
             # Include (optional) global settings
             # TODO(marcus): Take into account layer overrides
             # Get global overrides and translate to Deadline values
-            overrides = self.translate_overrides(render_globals)
+            overrides = self.parse_options(render_globals)
             data.update(**overrides)
 
             instance = context.create_instance(layername)
@@ -88,7 +88,7 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
     def get_render_attribute(self, attr):
         return cmds.getAttr("defaultRenderGlobals.{}".format(attr))
 
-    def translate_overrides(self, render_globals):
+    def parse_options(self, render_globals):
         """Get all overrides with a value, skip those without
 
         Here's the kicker. These globals override defaults in the submission
@@ -102,20 +102,20 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
             dict: only overrides with values
         """
 
-        _globals = maya.read(render_globals)
+        attributes = maya.read(render_globals)
 
-        machine_list = _globals["machineList"]
-        translation = {"renderGlobals":
-                           {"Priority": _globals["priority"]},
-                       "suspendPublishJob": "Active"
-                       }
+        options = {"renderGlobals": {}}
 
-        if _globals["whitelist"]:
-            translation["renderGlobals"]["Whitelist"] = machine_list
-        else:
-            translation["renderGlobals"]["Blacklist"] = machine_list
+        options['renderGlobals']['Priority'] = attributes['priority']
 
-        if _globals["suspendPublishJob"]:
-            translation["suspendPublishJob"] = "Suspended"
+        # Machine list
+        machine_list = attributes["machineList"]
+        if machine_list:
+            key = "Whitelist" if attributes["whitelist"] else "Blacklist"
+            options['renderGlobals'][key] = machine_list
 
-        return translation
+        # Suspend publish job
+        state = "Suspended" if attributes["suspendPublishJob"] else "Active"
+        options["suspendPublishJob"] = state
+
+        return options
