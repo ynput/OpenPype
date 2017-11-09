@@ -87,8 +87,6 @@ class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
             instance = context.create_instance(layername)
             instance.data.update(data)
 
-            pprint.pprint(instance.data)
-
     def get_render_attribute(self, attr):
         return cmds.getAttr("defaultRenderGlobals.{}".format(attr))
 
