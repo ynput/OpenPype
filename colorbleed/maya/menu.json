@@ -1481,6 +1481,16 @@
         "items": [
             {
                 "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\cleanup\\repair_faulty_containers.py",
+                "sourcetype": "file",
+                "tags": [
+                    "cleanup",
+                    "repair", "containers"
+                ],
+                "title": "Find and Repair Containers",
+                "tooltip": ""
+            },{
+                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\cleanup\\selectByType.py",
                 "sourcetype": "file",
                 "tags": [
