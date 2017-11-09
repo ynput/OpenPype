@@ -23,7 +23,7 @@ def is_latest(representation):
         "parent": version["parent"]
     }, sort=[("name", -1)])
 
-    if version['name'] != highest_version['name']:
+    if version['name'] == highest_version['name']:
         return True
     else:
         return False
