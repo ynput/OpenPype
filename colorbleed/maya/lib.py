@@ -853,8 +853,6 @@ def assign_look_by_version(nodes, version_id):
     Returns:
         None
     """
-    # TODO: make `iter_loader` available in as a more global function
-    from avalon.tools.cbloader import lib as loaderlib
 
     # Get representations of shader file and relationships
     look_representation = io.find_one({"type": "representation",
@@ -878,7 +876,8 @@ def assign_look_by_version(nodes, version_id):
         log.info("Using look for the first time ..")
 
         # Load file
-        loaders = list(loaderlib.iter_loaders(look_representation["_id"]))
+        loaders = api.loaders_from_representation(api.discover(api.Loader),
+                                                  representation_id)
         Loader = next((i for i in loaders if i.__name__ == "LookLoader"), None)
         if Loader is None:
             raise RuntimeError("Could not find LookLoader, this is a bug")
