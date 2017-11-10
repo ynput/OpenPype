@@ -40,7 +40,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         for container in containers:
 
             root = lib.get_container_transforms(container, root=True)
-            if root not in instance_lookup:
+            if not root or root not in instance_lookup:
                 continue
 
             # Retrieve the hierarchy
