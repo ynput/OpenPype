@@ -85,8 +85,6 @@ def load_package(filepath, name, namespace=None):
 
     """
 
-    from avalon.tools.cbloader import lib
-
     if namespace is None:
         # Define a unique namespace for the package
         namespace = os.path.basename(filepath).split(".")[0]
@@ -113,10 +111,12 @@ def load_package(filepath, name, namespace=None):
     root = "{}:{}".format(namespace, name)
 
     containers = []
+    all_loaders = api.discover(api.Loader)
     for representation_id, instances in data.items():
 
         # Find the compatible loaders
-        loaders = list(lib.iter_loaders(representation_id))
+        loaders = api.loaders_from_representation(all_loaders,
+                                                  representation_id)
 
         for instance in instances:
             container = _add(instance=instance,
@@ -222,13 +222,13 @@ def _instances_by_namespace(data):
 
 def get_contained_containers(container):
     """Get the Avalon containers in this container
-    
+
     Args:
         container (dict): The container dict.
-        
+
     Returns:
         list: A list of member container dictionaries.
-        
+
     """
 
     import avalon.schema
@@ -354,7 +354,6 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
     """
 
     from colorbleed.maya.lib import DEFAULT_MATRIX, get_container_transforms
-    from avalon.tools.cbloader import lib
 
     set_namespace = set_container['namespace']
 
@@ -469,11 +468,12 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
             api.remove(container)
 
     # Add new assets
+    all_loaders = api.discover(api.Loader)
     for representation_id, instances in new_data.items():
 
         # Find the compatible loaders
-        loaders = list(lib.iter_loaders(representation_id))
-
+        loaders = api.loaders_from_representation(all_loaders,
+                                                  representation_id)
         for instance in instances:
 
             # Already processed in update functionality
