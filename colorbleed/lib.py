@@ -53,7 +53,7 @@ def any_outdated():
     return False
 
 
-def update_context_from_path(path):
+def update_task_from_path(path):
     """Update the context using the current scene state.
 
     When no changes to the context it will not trigger an update.
@@ -62,7 +62,7 @@ def update_context_from_path(path):
 
     """
     if not path:
-        log.warning("Can't update the current context. Scene is not saved.")
+        log.warning("Can't update the current task. Scene is not saved.")
         return
 
     # Find the current context from the filename
@@ -74,11 +74,19 @@ def update_context_from_path(path):
     try:
         context = pather.parse(template, path)
     except ParseError:
-        log.error("Can't update the current context. Unable to parse the "
-                  "context for: %s", path)
+        log.error("Can't update the current task. Unable to parse the "
+                  "task for: %s", path)
         return
 
-    if any([avalon.api.Session['AVALON_ASSET'] != context['asset'],
-            avalon.api.Session["AVALON_TASK"] != context['task']]):
-        log.info("Updating context to: %s", context)
-        avalon.api.update_current_context(context)
+    # Find the changes between current Session and the path's context.
+    current = {
+        "asset": avalon.api.Session["AVALON_ASSET"],
+        "task": avalon.api.Session["AVALON_TASK"],
+        "app": avalon.api.Session["AVALON_APP"]
+    }
+    changes = {key: context[key] for key, current_value in current.items()
+               if context[key] != current_value}
+
+    if changes:
+        log.info("Updating work task to: %s", context)
+        avalon.api.update_current_task(**changes)

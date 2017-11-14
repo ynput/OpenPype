@@ -9,7 +9,7 @@ from avalon import api as avalon
 from pyblish import api as pyblish
 
 from ..lib import (
-    update_context_from_path,
+    update_task_from_path,
     any_outdated
 )
 from . import menu
@@ -92,8 +92,8 @@ def on_save(_):
 
     avalon.logger.info("Running callback on save..")
 
-    # Update context for the current scene
-    update_context_from_path(cmds.file(query=True, sceneName=True))
+    # Update current task for the current scene
+    update_task_from_path(cmds.file(query=True, sceneName=True))
 
     # Generate ids of the current context on nodes in the scene
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
@@ -107,8 +107,8 @@ def on_open(_):
     from avalon.vendor.Qt import QtWidgets
     from ..widgets import popup
 
-    # Update context for the current scene
-    update_context_from_path(cmds.file(query=True, sceneName=True))
+    # Update current task for the current scene
+    update_task_from_path(cmds.file(query=True, sceneName=True))
 
     if any_outdated():
         log.warning("Scene has outdated content.")
