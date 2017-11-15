@@ -8,6 +8,10 @@ from maya import cmds
 from avalon import api as avalon
 from pyblish import api as pyblish
 
+from ..lib import (
+    update_task_from_path,
+    any_outdated
+)
 from . import menu
 from . import lib
 
@@ -88,6 +92,9 @@ def on_save(_):
 
     avalon.logger.info("Running callback on save..")
 
+    # Update current task for the current scene
+    update_task_from_path(cmds.file(query=True, sceneName=True))
+
     # Generate ids of the current context on nodes in the scene
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
     for node, new_id in lib.generate_ids(nodes):
@@ -97,9 +104,11 @@ def on_save(_):
 def on_open(_):
     """On scene open let's assume the containers have changed."""
 
-    from ..lib import any_outdated
     from avalon.vendor.Qt import QtWidgets
     from ..widgets import popup
+
+    # Update current task for the current scene
+    update_task_from_path(cmds.file(query=True, sceneName=True))
 
     if any_outdated():
         log.warning("Scene has outdated content.")
