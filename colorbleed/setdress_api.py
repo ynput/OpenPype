@@ -63,6 +63,7 @@ def unlocked(nodes):
     uuids = cmds.ls(nodes, uuid=True)
     states = cmds.lockNode(nodes, query=True, lock=True)
     states = {uuid: state for uuid, state in zip(uuids, states)}
+    originals = {uuid: node for uuid, node in zip(uuids, nodes)}
 
     try:
         cmds.lockNode(nodes, lock=False)
@@ -71,10 +72,15 @@ def unlocked(nodes):
         # Reapply original states
         for uuid, state in states.iteritems():
             nodes_from_id = cmds.ls(uuid, long=True)
-            if not nodes_from_id:
-                log.warning("Node not found: %s", uuid)
-                continue
-            cmds.lockNode(nodes_from_id[0], lock=state)
+            if nodes_from_id:
+                node = nodes_from_id[0]
+            else:
+                log.debug("Falling back to node name: %s", node)
+                node = originals[uuid]
+                if not cmds.objExists(node):
+                    log.warning("Unable to find: %s", node)
+                    continue
+            cmds.lockNode(node, lock=state)
 
 
 def load_package(filepath, name, namespace=None):
@@ -406,7 +412,6 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 
             if has_matrix_override:
                 log.warning("Matrix override preserved on %s", container_ns)
-
             else:
                 new_matrix = new_instance.get("matrix", identity)
                 cmds.xform(root, matrix=new_matrix, objectSpace=True)
@@ -444,8 +449,15 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                 # of the original data of the package that was loaded because
                 # an Artist might have made scene local overrides
                 if new_instance['loader'] != container['loader']:
-                    log.error("Switching loader between updates is not "
-                              "supported. Skipping: %s", container_ns)
+                    log.warning("Loader is switched - local edits will be "
+                                "lost. Removing: %s",
+                                container_ns)
+
+                    # Remove this from the "has been processed" list so it's
+                    # considered as new element and added afterwards.
+                    processed_containers.pop()
+                    processed_namespaces.remove(container_ns)
+                    api.remove(container)
                     continue
 
                 # Check whether the conversion can be done by the Loader.
