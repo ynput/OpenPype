@@ -75,7 +75,7 @@ def update_task_from_path(path):
         context = pather.parse(template, path)
     except ParseError:
         log.error("Can't update the current task. Unable to parse the "
-                  "task for: %s", path)
+                  "task for: %s (pattern: %s)", path, template)
         return
 
     # Find the changes between current Session and the path's context.
