@@ -357,6 +357,11 @@ def reset_polySelectConstraint(reset=True):
 
     try:
         if reset:
+            # Ensure command is available in mel
+            # This can happen when running standalone
+            if not mel.eval("exists resetPolySelectConstraint"):
+                mel.eval("source polygonConstraint")
+
             # Reset all parameters
             mel.eval("resetPolySelectConstraint;")
         cmds.polySelectConstraint(disable=True)
