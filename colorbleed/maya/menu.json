@@ -8,6 +8,13 @@
     },
     {
         "type": "action",
+        "command": "$COLORBLEED_SCRIPTS\\others\\show_current_scene_in_explorer.py",
+        "sourcetype": "file",
+        "title": "Explore current scene..",
+        "tooltip": "Show current scene in Explorer"
+    },
+    {
+        "type": "action",
         "command": "$COLORBLEED_SCRIPTS\\avalon\\launch_manager.py",
         "sourcetype": "file",
         "title": "Project Manager",
