@@ -1030,7 +1030,7 @@ def get_isolate_view_sets():
     """
 
     view_sets = set()
-    for panel in cmds.getPanel(type="modelPanel"):
+    for panel in cmds.getPanel(type="modelPanel") or []:
         view_set = cmds.modelEditor(panel, query=True, viewObjects=True)
         if view_set:
             view_sets.add(view_set)
