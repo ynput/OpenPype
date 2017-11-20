@@ -1541,6 +1541,81 @@
             {"type": "separator"},
             {
                 "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\cleanup\\removeNamespaces.py",
+                "sourcetype": "file",
+                "tags": ["cleanup", "remove", "namespaces"],
+                "title": "Remove Namespaces",
+                "tooltip": "Remove all namespaces"
+            },
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\cleanup\\remove_user_defined_attributes.py",
+                "sourcetype": "file",
+                "tags": [
+                    "cleanup",
+                    "remove_user_defined_attributes"
+                ],
+                "title": "Remove User Defined Attributes",
+                "tooltip": "Remove all user-defined attributs from all nodes"
+            },
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\cleanup\\removeUnknownNodes.py",
+                "sourcetype": "file",
+                "tags": [
+                    "cleanup",
+                    "removeUnknownNodes"
+                ],
+                "title": "Remove Unknown Nodes",
+                "tooltip": "Remove all unknown nodes"
+            },
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\cleanup\\removeUnloadedReferences.py",
+                "sourcetype": "file",
+                "tags": [
+                    "cleanup",
+                    "removeUnloadedReferences"
+                ],
+                "title": "Remove Unloaded References",
+                "tooltip": "Remove all unloaded references"
+            },
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\cleanup\\removeReferencesFailedEdits.py",
+                "sourcetype": "file",
+                "tags": [
+                    "cleanup",
+                    "removeReferencesFailedEdits"
+                ],
+                "title": "Remove References Failed Edits",
+                "tooltip": "Remove failed edits for all references"
+            },
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\cleanup\\remove_unused_looks.py",
+                "sourcetype": "file",
+                "tags": [
+                    "cleanup",
+                    "removeUnusedLooks"
+                ],
+                "title": "Remove Unused Looks",
+                "tooltip": "Remove all loaded yet unused Avalon look containers"
+            },
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\cleanup\\deleteGhostIntermediateObjects.py",
+                "sourcetype": "file",
+                "tags": [
+                    "cleanup",
+                    "deleteGhostIntermediateObjects"
+                ],
+                "title": "Delete Ghost Intermediate Objects",
+                "tooltip": ""
+            },
+            {"type": "separator"},
+            {
+                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\cleanup\\resetViewportCache.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "reset","viewport", "cache"],
@@ -1560,14 +1635,6 @@
             },
             {
                 "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\cleanup\\removeNamespaces.py",
-                "sourcetype": "file",
-                "tags": ["cleanup", "remove", "namespaces"],
-                "title": "Remove Namespaces",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\cleanup\\autoRenameFileNodes.py",
                 "sourcetype": "file",
                 "tags": [
@@ -1575,17 +1642,6 @@
                     "auto", "rename","filenodes"
                 ],
                 "title": "Auto Rename File Nodes",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\cleanup\\remove_user_defined_attributes.py",
-                "sourcetype": "file",
-                "tags": [
-                    "cleanup",
-                    "remove_user_defined_attributes"
-                ],
-                "title": "Remove User Defined Attributes",
                 "tooltip": ""
             },
             {
@@ -1598,33 +1654,11 @@
             },
             {
                 "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\cleanup\\removeUnknownNodes.py",
-                "sourcetype": "file",
-                "tags": [
-                    "cleanup",
-                    "removeUnknownNodes"
-                ],
-                "title": "removeUnknownNodes",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\cleanup\\colorbleedRename.py",
                 "sourcetype": "file",
                 "tags": ["cleanup", "rename", "ui"],
                 "title": "Colorbleed Renamer",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\cleanup\\removeUnloadedReferences.py",
-                "sourcetype": "file",
-                "tags": [
-                    "cleanup",
-                    "removeUnloadedReferences"
-                ],
-                "title": "Remove Unloaded References",
-                "tooltip": ""
+                "tooltip": "Colorbleed Rename UI"
             },
             {
                 "type": "action",
@@ -1650,17 +1684,6 @@
             },
             {
                 "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\cleanup\\removeReferencesFailedEdits.py",
-                "sourcetype": "file",
-                "tags": [
-                    "cleanup",
-                    "removeReferencesFailedEdits"
-                ],
-                "title": "Remove References Failed Edits",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\cleanup\\reorderUI.py",
                 "sourcetype": "file",
                 "tags": [
@@ -1679,17 +1702,6 @@
                     "pastedCleaner"
                 ],
                 "title": "Pasted Cleaner",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\cleanup\\deleteGhostIntermediateObjects.py",
-                "sourcetype": "file",
-                "tags": [
-                    "cleanup",
-                    "deleteGhostIntermediateObjects"
-                ],
-                "title": "Delete Ghost Intermediate Objects",
                 "tooltip": ""
             }
         ]
