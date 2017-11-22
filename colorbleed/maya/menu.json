@@ -831,20 +831,6 @@
             },
             {
                 "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\shading\\autoLookdevAssignment.py",
-                "sourcetype": "file",
-                "tags": [
-                    "shading",
-                    "lookdev",
-                    "assign",
-                    "shaders",
-                    "auto"
-                ],
-                "title": "Assign lookDefault Shader",
-                "tooltip": "Assign the latest `lookDefault` to assets without any lookdev in the scene"
-            },
-            {
-                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\shading\\LightLinkUi.py",
                 "sourcetype": "file",
                 "tags": [
