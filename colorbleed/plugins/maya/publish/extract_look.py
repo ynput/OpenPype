@@ -41,7 +41,8 @@ class ExtractLook(colorbleed.api.Extractor):
         # exported file by accident
         self.log.info("Extract sets (Maya ASCII) ...")
         lookdata = instance.data["lookData"]
-        sets = lookdata["relationships"].keys()
+        relationships = lookdata["relationships"]
+        sets = relationships.keys()
 
         resources = instance.data["resources"]
         remap = {}
@@ -55,7 +56,7 @@ class ExtractLook(colorbleed.api.Extractor):
         layer = instance.data.get("renderlayer", "defaultRenderLayer")
         with context.renderlayer(layer):
             # TODO: Ensure membership edits don't become renderlayer overrides
-            with context.empty_sets(sets):
+            with context.empty_sets(sets, force=True):
                 with context.attribute_values(remap):
                     with avalon.maya.maintained_selection():
                         cmds.select(sets, noExpand=True)
@@ -72,7 +73,7 @@ class ExtractLook(colorbleed.api.Extractor):
         # Write the JSON data
         self.log.info("Extract json..")
         data = {"attributes": lookdata["attributes"],
-                "relationships": lookdata["relationships"]}
+                "relationships": relationships}
 
         with open(json_path, "w") as f:
             json.dump(data, f)
