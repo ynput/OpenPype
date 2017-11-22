@@ -817,17 +817,17 @@
             },
             {
                 "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\shading\\assign_look_ui.py",
+                "command": "$COLORBLEED_SCRIPTS\\shading\\look_manager_ui.py",
                 "sourcetype": "file",
                 "tags": [
                     "shading",
-                    "lookdev",
+                    "look",
                     "assign",
                     "shaders",
                     "auto"
                 ],
-                "title": "Assign Look UI",
-                "tooltip": "Open the Assign Look UI for custom look assignment"
+                "title": "Look Manager",
+                "tooltip": "Open the Look Manager UI for look assignment"
             },
             {
                 "type": "action",
