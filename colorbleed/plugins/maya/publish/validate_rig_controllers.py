@@ -30,12 +30,6 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     actions = [colorbleed.api.RepairAction,
                colorbleed.api.SelectInvalidAction]
 
-    def process(self, instance):
-        invalid = self.get_invalid(instance)
-        if invalid:
-            raise RuntimeError('{} failed, see log '
-                               'information'.format(self.label))
-
     # Default controller values
     CONTROLLER_DEFAULTS = {
         "translateX": 0,
@@ -48,6 +42,12 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         "scaleY": 1,
         "scaleZ": 1
     }
+
+    def process(self, instance):
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise RuntimeError('{} failed, see log '
+                               'information'.format(self.label))
 
     @classmethod
     def get_invalid(cls, instance):
