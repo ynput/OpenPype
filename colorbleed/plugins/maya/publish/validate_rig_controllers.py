@@ -181,15 +181,6 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
                     cls.log.info("Locking visibility for %s" % control)
                     cmds.setAttr(attr, lock=True)
 
-                # Reset non-default values
-                invalid_plugs = cls.get_non_default_attributes(control)
-                if invalid_plugs:
-                    for plug in invalid_plugs:
-                        attr = plug.split(".")[-1]
-                        default = cls.CONTROLLER_DEFAULTS[attr]
-                        cls.log.info("Setting %s to %s" % (plug, default))
-                        cmds.setAttr(plug, default)
-
                 # Remove incoming connections
                 invalid_plugs = cls.get_connected_attributes(control)
                 if invalid_plugs:
@@ -200,3 +191,12 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
                                                       destination=False,
                                                       plugs=True)[0]
                         cmds.disconnectAttr(source, plug)
+
+                # Reset non-default values
+                invalid_plugs = cls.get_non_default_attributes(control)
+                if invalid_plugs:
+                    for plug in invalid_plugs:
+                        attr = plug.split(".")[-1]
+                        default = cls.CONTROLLER_DEFAULTS[attr]
+                        cls.log.info("Setting %s to %s" % (plug, default))
+                        cmds.setAttr(plug, default)
