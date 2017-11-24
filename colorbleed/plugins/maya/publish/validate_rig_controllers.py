@@ -1,17 +1,27 @@
-import logging
-
 from maya import cmds
 
 import pyblish.api
 import colorbleed.api
-import colorbleed.maya.lib as lib
-
-log = logging.getLogger("Rig Controllers")
+from cb.utils.maya.context import undo_chunk
 
 
 class ValidateRigControllers(pyblish.api.InstancePlugin):
-    """Check if the controllers have the transformation attributes set to
-    default values, locked visibility attributes and are not keyed
+    """Validate rig controllers.
+
+    Controls must have the transformation attributes on their default
+    values of translate zero, rotate zero and scale one when they are
+    unlocked attributes.
+
+    Unlocked keyable attributes may not have any incoming connections. If
+    these connections are required for the rig then lock the attributes.
+
+    The visibility attribute must be locked.
+
+    Note that `repair` will:
+        - Lock all visibility attributes
+        - Reset all default values for translate, rotate, scale
+        - Break all incoming connections to keyable attributes
+
     """
     order = colorbleed.api.ValidateContentsOrder + 0.05
     label = "Rig Controllers"
@@ -26,96 +36,166 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
             raise RuntimeError('{} failed, see log '
                                'information'.format(self.label))
 
+    # Default controller values
+    CONTROLLER_DEFAULTS = {
+        "translateX": 0,
+        "translateY": 0,
+        "translateZ": 0,
+        "rotateX": 0,
+        "rotateY": 0,
+        "rotateZ": 0,
+        "scaleX": 1,
+        "scaleY": 1,
+        "scaleZ": 1
+    }
+
     @classmethod
     def get_invalid(cls, instance):
-
-        error = False
-        invalid = []
-        is_keyed = list()
-        not_locked = list()
-        is_offset = list()
 
         controllers_sets = [i for i in instance if i == "controls_SET"]
         controls = cmds.sets(controllers_sets, query=True)
         assert controls, "Must have 'controls_SET' in rig instance"
 
+        # Ensure all controls are within the top group
+        lookup = set(instance[:])
+        assert all(control in lookup for control in cmds.ls(controls,
+                                                            long=True)), (
+            "All controls must be inside the rig's group."
+        )
+
+        # Validate all controls
+        has_connections = list()
+        has_unlocked_visibility = list()
+        has_non_default_values = list()
         for control in controls:
-            valid_keyed = cls.validate_keyed_state(control)
-            if not valid_keyed:
-                is_keyed.append(control)
+            if cls.get_connected_attributes(control):
+                has_connections.append(control)
 
             # check if visibility is locked
             attribute = "{}.visibility".format(control)
             locked = cmds.getAttr(attribute, lock=True)
             if not locked:
-                not_locked.append(control)
+                has_unlocked_visibility.append(control)
 
-            valid_transforms = cls.validate_transforms(control)
-            if not valid_transforms:
-                is_offset.append(control)
+            if cls.get_non_default_attributes(control):
+                has_non_default_values.append(control)
 
-        if is_keyed:
-            cls.log.error("No controls can be keyes. Failed :\n"
-                          "%s" % is_keyed)
-            error = True
+        if has_connections:
+            cls.log.error("Controls have keys: %s" % has_connections)
 
-        if is_offset:
-            cls.log.error("All controls default transformation values. "
-                           "Failed :\n%s" % is_offset)
-            error = True
+        if has_non_default_values:
+            cls.log.error("Controls have invalid attribute "
+                          "values: %s" % has_non_default_values)
 
-        if not_locked:
-            cls.log.error("All controls must have visibility "
-                          "attribute locked. Failed :\n"
-                          "%s" % not_locked)
-            error = True
+        if has_unlocked_visibility:
+            cls.log.error("Controls have unlocked visibility "
+                          "attribute: %s" % has_unlocked_visibility)
 
-        if error:
-            invalid = is_keyed + not_locked + is_offset
+        invalid = []
+        if (has_connections or
+                has_unlocked_visibility or
+                has_non_default_values):
+            invalid = set()
+            invalid.update(has_connections)
+            invalid.update(has_non_default_values)
+            invalid.update(has_unlocked_visibility)
+            invalid = list(invalid)
             cls.log.error("Invalid rig controllers. See log for details.")
 
         return invalid
 
-    @staticmethod
-    def validate_transforms(control):
-        tolerance = 1e-30
+    @classmethod
+    def get_non_default_attributes(cls, control):
+        """Return attribute plugs with non-default values
 
-        matrix = cmds.xform(control, query=True, matrix=True, objectSpace=True)
-        if not all(abs(x - y) < tolerance for x, y in zip(lib.DEFAULT_MATRIX,
-                                                          matrix)):
-            log.error("%s matrix : %s" % (control, matrix))
-            return False
-        return True
-
-    @staticmethod
-    def validate_keyed_state(control):
-        """Check if the control has an animation curve attached
         Args:
-            control:
+            control (str): Name of control node.
 
         Returns:
+            list: The invalid plugs
 
         """
-        animation_curves = cmds.keyframe(control, query=True, name=True)
-        if animation_curves:
-            return False
-        return True
+
+        invalid = []
+        for attr, default in cls.CONTROLLER_DEFAULTS.items():
+            if cmds.attributeQuery(attr, node=control, exists=True):
+                plug = "{}.{}".format(control, attr)
+
+                # Ignore locked attributes
+                locked = cmds.getAttr(plug, lock=True)
+                if locked:
+                    continue
+
+                value = cmds.getAttr(plug)
+                if value != default:
+                    cls.log.warning("Control non-default value: "
+                                    "%s = %s" % (plug, value))
+                    invalid.append(plug)
+
+        return invalid
+
+    @staticmethod
+    def get_connected_attributes(control):
+        """Return attribute plugs with incoming connections.
+
+        This will also ensure no (driven) keys on unlocked keyable attributes.
+
+        Args:
+            control (str): Name of control node.
+
+        Returns:
+            list: The invalid plugs
+
+        """
+        import maya.cmds as mc
+
+        attributes = mc.listAttr(control, keyable=True, scalar=True)
+        invalid = []
+        for attr in attributes:
+            plug = "{}.{}".format(control, attr)
+
+            # Ignore locked attributes
+            locked = cmds.getAttr(plug, lock=True)
+            if locked:
+                continue
+
+            # Check for incoming connections
+            if cmds.listConnections(plug, source=True, destination=False):
+                invalid.append(plug)
+
+        return invalid
 
     @classmethod
     def repair(cls, instance):
 
-        # lock all controllers in controls_SET
-        controls = cmds.sets("controls_SET", query=True)
-        for control in controls:
-            log.info("Repairing visibility")
-            attr = "{}.visibility".format(control)
-            locked = cmds.getAttr(attr, lock=True)
-            if not locked:
-                log.info("Locking visibility for %s" % control)
-                cmds.setAttr(attr, lock=True)
+        # Use a single undo chunk
+        with undo_chunk():
+            controls = cmds.sets("controls_SET", query=True)
+            for control in controls:
 
-            log.info("Repairing matrix")
-            if not cls.validate_transforms(control):
-                cmds.xform(control,
-                           matrix=lib.DEFAULT_MATRIX,
-                           objectSpace=True)
+                # Lock visibility
+                attr = "{}.visibility".format(control)
+                locked = cmds.getAttr(attr, lock=True)
+                if not locked:
+                    cls.log.info("Locking visibility for %s" % control)
+                    cmds.setAttr(attr, lock=True)
+
+                # Reset non-default values
+                invalid_plugs = cls.get_non_default_attributes(control)
+                if invalid_plugs:
+                    for plug in invalid_plugs:
+                        attr = plug.split(".")[-1]
+                        default = cls.CONTROLLER_DEFAULTS[attr]
+                        cls.log.info("Setting %s to %s" % (plug, default))
+                        cmds.setAttr(plug, default)
+
+                # Remove incoming connections
+                invalid_plugs = cls.get_connected_attributes(control)
+                if invalid_plugs:
+                    for plug in invalid_plugs:
+                        cls.log.info("Breaking input connection to %s" % plug)
+                        source = cmds.listConnections(plug,
+                                                      source=True,
+                                                      destination=False,
+                                                      plugs=True)[0]
+                        cmds.disconnectAttr(source, plug)
