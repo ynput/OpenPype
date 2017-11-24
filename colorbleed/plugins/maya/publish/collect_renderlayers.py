@@ -6,7 +6,7 @@ from avalon import maya, api
 import colorbleed.maya.lib as lib
 
 
-class CollectMindbenderMayaRenderlayers(pyblish.api.ContextPlugin):
+class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
     """Gather instances by active render layers"""
 
     order = pyblish.api.CollectorOrder

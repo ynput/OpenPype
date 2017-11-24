@@ -1,5 +1,5 @@
 import pyblish.api
-from collection import defaultdict
+from collections import defaultdict
 
 
 class ValidateSetdressNamespaces(pyblish.api.InstancePlugin):
