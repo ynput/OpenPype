@@ -81,11 +81,12 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
                 has_non_default_values.append(control)
 
         if has_connections:
-            cls.log.error("Controls have keys: %s" % has_connections)
+            cls.log.error("Controls have input connections: "
+                          "%s" % has_connections)
 
         if has_non_default_values:
-            cls.log.error("Controls have invalid attribute "
-                          "values: %s" % has_non_default_values)
+            cls.log.error("Controls have non-default values: "
+                          "%s" % has_non_default_values)
 
         if has_unlocked_visibility:
             cls.log.error("Controls have unlocked visibility "
