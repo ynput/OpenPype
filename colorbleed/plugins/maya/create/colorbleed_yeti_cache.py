@@ -1,4 +1,7 @@
+from collections import OrderedDict
+
 import avalon.maya
+from colorbleed.maya import lib
 
 
 class CreateYetiRig(avalon.maya.Creator):
@@ -12,4 +15,11 @@ class CreateYetiRig(avalon.maya.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateYetiRig, self).__init__(*args, **kwargs)
 
-        self.data["peroll"] = 0
+        data = OrderedDict(self.data)
+        data["peroll"] = 0
+
+        anim_data = lib.collect_animation_data()
+        data.update({"startFrame": anim_data["startFrame"],
+                     "endFrame": anim_data["endFrame"]})
+
+        self.data = data

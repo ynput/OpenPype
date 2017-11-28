@@ -13,6 +13,7 @@ SETTINGS = {"renderDensity",
             "renderWidth",
             "renderLength",
             "increaseRenderBounds",
+            "imageSearchPath",
             "cbId"}
 
 
@@ -29,43 +30,52 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         assert "input_SET" in cmds.sets(instance.name, query=True), (
             "Yeti Rig must have an input_SET")
 
-        # Collect animation data
-        animation_data = lib.collect_animation_data()
-        instance.data.update(animation_data)
-
         # Get the input meshes information
         input_content = cmds.sets("input_SET", query=True)
         input_nodes = cmds.listRelatives(input_content,
                                          allDescendents=True,
-                                         fullPath=True) or []
+                                         fullPath=True) or input_content
 
         # Get all the shapes
-        input_meshes = cmds.ls(input_nodes, type="shape", long=True)
+        input_shapes = cmds.ls(input_nodes, long=True)
+
+        # Store all connections
+        connections = cmds.listConnections(input_shapes,
+                                           source=True,
+                                           destination=False,
+                                           connections=True,
+                                           plugs=True) or []
+
+        # Group per source, destination pair
+        grouped = [(item, connections[i+1]) for i, item in
+                   enumerate(connections) if i % 2 == 0]
 
         inputs = []
-        for mesh in input_meshes:
-            connections = cmds.listConnections(mesh,
-                                               source=True,
-                                               destination=False,
-                                               connections=True,
-                                               plugs=True,
-                                               type="mesh")
-            source = connections[-1].split(".")[0]
-            plugs = [i.split(".")[-1] for i in connections]
-            inputs.append({"connections": plugs,
-                           "inputID": lib.get_id(mesh),
-                           "outputID": lib.get_id(source)})
+        for src, dest in grouped:
+            src_node, src_attr = src.split(".", 1)
+            dest_node, dest_attr = dest.split(".", 1)
+
+            # The plug must go in the socket, remember this for the loader
+            inputs.append({"connections": [src_attr, dest_attr],
+                           "plugID": lib.get_id(dest_node),
+                           "socketID": lib.get_id(src_node)})
 
         # Collect any textures if used
         yeti_resources = []
-        for node in cmds.ls(instance[:], type="pgYetiMaya"):
+        yeti_nodes = cmds.ls(instance[:], type="pgYetiMaya")
+        for node in yeti_nodes:
             # Get Yeti resources (textures)
             # TODO: referenced files in Yeti Graph
             resources = self.get_yeti_resources(node)
             yeti_resources.extend(resources)
 
-        instance.data["inputs"] = inputs
+        instance.data["rigsettings"] = {"inputs": inputs}
+
         instance.data["resources"] = yeti_resources
+
+        # Force frame range for export
+        instance.data["startFrame"] = 1
+        instance.data["endFrame"] = 1
 
     def get_yeti_resources(self, node):
         """Get all texture file paths

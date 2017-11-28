@@ -4,7 +4,6 @@ import json
 from maya import cmds
 
 import colorbleed.api
-# from cb.utils.maya import context
 
 
 class ExtractYetiCache(colorbleed.api.Extractor):
@@ -29,7 +28,7 @@ class ExtractYetiCache(colorbleed.api.Extractor):
         dirname = self.staging_dir(instance)
 
         # Yeti related staging dirs
-        data_file = os.path.join(dirname, "yeti_settings.json")
+        data_file = os.path.join(dirname, "yeti.fursettings")
 
         # Collect information for writing cache
         start_frame = instance.data.get("startFrame")
@@ -41,7 +40,7 @@ class ExtractYetiCache(colorbleed.api.Extractor):
         self.log.info("Writing out cache")
         # Start writing the files for snap shot
         # <NAME> will be replace by the Yeti node name
-        path = os.path.join(dirname, "cache_<NAME>.0001.fur")
+        path = os.path.join(dirname, "<NAME>.%04d.fur")
         cmds.pgYetiCommand(yeti_nodes,
                            writeCache=path,
                            range=(start_frame, end_frame),
@@ -52,7 +51,7 @@ class ExtractYetiCache(colorbleed.api.Extractor):
         cache_files = [x for x in os.listdir(dirname) if x.endswith(".fur")]
 
         self.log.info("Writing metadata file")
-        settings = instance.data.get("settings", None)
+        settings = instance.data.get("fursettings", None)
         if settings is not None:
             with open(data_file, "w") as fp:
                 json.dump(settings, fp, ensure_ascii=False)
@@ -61,9 +60,6 @@ class ExtractYetiCache(colorbleed.api.Extractor):
         if "files" not in instance.data:
             instance.data["files"] = list()
 
-        instance.data["files"].extend([cache_files,
-                                       "yeti_settings.json"])
+        instance.data["files"].extend([cache_files, "yeti.fursettings"])
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
-
-        cmds.select(clear=True)

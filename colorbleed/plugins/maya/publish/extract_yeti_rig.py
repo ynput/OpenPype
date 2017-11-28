@@ -1,10 +1,52 @@
 import os
+import json
+import contextlib
 
 from maya import cmds
 
+import avalon.maya.lib as lib
 import colorbleed.api
 from cb.utils.maya import context
-reload(context)
+
+
+@contextlib.contextmanager
+def disconnected_attributes(settings, members):
+
+    members = cmds.ls(members, long=True)
+    original_connection = []
+    try:
+        for input in settings["inputs"]:
+
+            # get source
+            socket_id = input["socketID"]
+            sources = lib.lsattr("cbId", socket_id)
+            sources = [i for i in sources if
+                       not cmds.referenceQuery(i, isNodeReferenced=True)
+                       and i in members]
+            src = sources[0]
+
+            # get destination
+            plug_id = input["plugID"]
+            plugs = lib.lsattr("cbId", plug_id)
+            destinations = [i for i in plugs if i not in members and
+                            i not in sources]
+            dst = destinations[0]
+
+            # break connection
+            connections = input["connections"]
+            src_attribute = "%s.%s" % (src, connections[0])
+            dst_attribute = "%s.%s" % (dst, connections[1])
+
+            # store connection pair
+            original_connection.append([src_attribute, dst_attribute])
+            cmds.disconnectAttr(dst_attribute, src_attribute)
+        yield
+
+    finally:
+        # restore connections
+        for connection in original_connection:
+            src, dest = connection
+            cmds.connectAttr(dest, src)
 
 
 class ExtractYetiRig(colorbleed.api.Extractor):
@@ -17,7 +59,7 @@ class ExtractYetiRig(colorbleed.api.Extractor):
 
     label = "Extract Yeti Rig"
     hosts = ["maya"]
-    families = ["colorbleed.yetiRig", "colorbleed.yeticache"]
+    families = ["colorbleed.yetiRig"]
 
     def process(self, instance):
 
@@ -27,13 +69,15 @@ class ExtractYetiRig(colorbleed.api.Extractor):
 
         # Define extract output file path
         dirname = self.staging_dir(instance)
+        settings_path = os.path.join(dirname, "yeti.rigsettings")
 
         # Yeti related staging dirs
         maya_path = os.path.join(dirname, "yeti_rig.ma")
 
         self.log.info("Writing metadata file")
+
         image_search_path = ""
-        settings = instance.data.get("settings", None)
+        settings = instance.data.get("rigsettings", None)
         if settings is not None:
 
             # Create assumed destination folder for imageSearchPath
@@ -45,25 +89,34 @@ class ExtractYetiRig(colorbleed.api.Extractor):
             image_search_path = os.path.join(destination_folder, "resources")
             image_search_path = os.path.normpath(image_search_path)
 
+            settings["imageSearchPath"] = image_search_path
+            with open(settings_path, "w") as fp:
+                json.dump(settings, fp, ensure_ascii=False)
+
         attr_value = {"%s.imageSearchPath" % n: image_search_path for
                       n in yeti_nodes}
 
-        with context.attribute_values(attr_value):
-            cmds.select(instance.data["setMembers"], noExpand=True)
-            cmds.file(maya_path,
-                      force=True,
-                      exportSelected=True,
-                      typ="mayaAscii",
-                      preserveReferences=False,
-                      constructionHistory=False,
-                      shader=False)
+        # get input_SET members
+        input_set = [i for i in instance if i == "input_SET"]
+        members = cmds.sets(input_set[0], query=True)
+
+        nodes = instance.data["setMembers"]
+        with disconnected_attributes(settings, members):
+            with context.attribute_values(attr_value):
+                cmds.select(nodes, noExpand=True)
+                cmds.file(maya_path,
+                          force=True,
+                          exportSelected=True,
+                          typ="mayaAscii",
+                          preserveReferences=False,
+                          constructionHistory=True,
+                          shader=False)
 
         # Ensure files can be stored
         if "files" not in instance.data:
             instance.data["files"] = list()
 
-        instance.data["files"].extend(["yeti_rig.ma",
-                                       "yeti_settings.json"])
+        instance.data["files"].extend(["yeti_rig.ma", "yeti.rigsettings"])
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
 

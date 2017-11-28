@@ -33,7 +33,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "colorbleed.pointcache",
                 "colorbleed.setdress",
                 "colorbleed.rig",
-                "colorbleed.yetiRig"]
+                "colorbleed.yetiRig",
+                "colorbleed.yeticache"]
 
     def process(self, instance):
 
