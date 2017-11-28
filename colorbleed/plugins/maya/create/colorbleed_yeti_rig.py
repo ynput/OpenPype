@@ -1,15 +1,20 @@
+from maya import cmds
+
 import avalon.maya
 
 
 class CreateYetiRig(avalon.maya.Creator):
     """Output for procedural plugin nodes ( Yeti / XGen / etc)"""
 
-    name = "yetiDefault"
-    label = "Procedural"
-    family = "colorbleed.yetirig"
+    label = "Yeti Rig"
+    family = "colorbleed.yetiRig"
     icon = "usb"
 
-    def __init__(self, *args, **kwargs):
-        super(CreateYetiRig, self).__init__(*args, **kwargs)
+    def process(self):
 
-        self.data["preroll"] = 0
+        instance = super(CreateYetiRig, self).process()
+
+        self.log.info("Creating Rig instance set up ...")
+
+        input_meshes = cmds.sets(name="input_SET", empty=True)
+        cmds.sets(input_meshes, forceElement=instance)

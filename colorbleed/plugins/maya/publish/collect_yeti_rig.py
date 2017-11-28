@@ -5,52 +5,66 @@ import re
 from maya import cmds
 
 import pyblish.api
-from avalon import api
 
 from colorbleed.maya import lib
 
 
-SETTINGS = {"renderDensity": 10.0,
-            "renderWidth": 1.0,
-            "renderLength": 1.0,
-            "increaseRenderBounds": 0.1}
+SETTINGS = {"renderDensity",
+            "renderWidth",
+            "renderLength",
+            "increaseRenderBounds",
+            "cbId"}
 
 
-class CollectYetiProceduralData(pyblish.api.InstancePlugin):
-    """Collect procedural data"""
+class CollectYetiRig(pyblish.api.InstancePlugin):
+    """Collect all information of the Yeti Rig"""
 
     order = pyblish.api.CollectorOrder + 0.4
-    families = ["colorbleed.yetiprocedural"]
-    label = "Collect Yeti Procedural"
+    label = "Collect Yeti Rig"
+    families = ["colorbleed.yetiRig"]
     hosts = ["maya"]
 
     def process(self, instance):
+
+        assert "input_SET" in cmds.sets(instance.name, query=True), (
+            "Yeti Rig must have an input_SET")
 
         # Collect animation data
         animation_data = lib.collect_animation_data()
         instance.data.update(animation_data)
 
-        # We only want one frame to export if it is not animation
-        if api.Session["AVALON_TASK"] != "animation":
-            instance.data["startFrame"] = 1
-            instance.data["endFrame"] = 1
+        # Get the input meshes information
+        input_content = cmds.sets("input_SET", query=True)
+        input_nodes = cmds.listRelatives(input_content,
+                                         allDescendents=True,
+                                         fullPath=True) or []
 
-        # Get all procedural nodes
-        yeti_nodes = cmds.ls(instance[:], type="pgYetiMaya")
+        # Get all the shapes
+        input_meshes = cmds.ls(input_nodes, type="shape", long=True)
+
+        inputs = []
+        for mesh in input_meshes:
+            connections = cmds.listConnections(mesh,
+                                               source=True,
+                                               destination=False,
+                                               connections=True,
+                                               plugs=True,
+                                               type="mesh")
+            source = connections[-1].split(".")[0]
+            plugs = [i.split(".")[-1] for i in connections]
+            inputs.append({"connections": plugs,
+                           "inputID": lib.get_id(mesh),
+                           "outputID": lib.get_id(source)})
 
         # Collect any textures if used
-        node_attrs = {}
         yeti_resources = []
-        for node in yeti_nodes:
+        for node in cmds.ls(instance[:], type="pgYetiMaya"):
+            # Get Yeti resources (textures)
+            # TODO: referenced files in Yeti Graph
             resources = self.get_yeti_resources(node)
             yeti_resources.extend(resources)
 
-            node_attrs[node] = {}
-            for attr, value in SETTINGS.iteritems():
-                current = cmds.getAttr("%s.%s" % (node, attr))
-                node_attrs[node][attr] = current
-
-        instance.data["settings"] = node_attrs
+        instance.data["inputs"] = inputs
         instance.data["resources"] = yeti_resources
 
     def get_yeti_resources(self, node):
@@ -78,22 +92,23 @@ class CollectYetiProceduralData(pyblish.api.InstancePlugin):
             node_resources = {"files": [], "source": texture, "node": node}
             texture_filepath = os.path.join(image_search_path, texture)
             if len(texture.split(".")) > 2:
+
                 # For UDIM based textures (tiles)
                 if "<UDIM>" in texture:
                     sequences = self.get_sequence(texture_filepath,
                                                   pattern="<UDIM>")
-                    node_resources["node"].extend(sequences)
+                    node_resources["files"].extend(sequences)
 
                 # Based textures (animated masks f.e)
                 elif "%04d" in texture:
                     sequences = self.get_sequence(texture_filepath,
                                                   pattern="%04d")
-                    node_resources["node"].extend(sequences)
+                    node_resources["files"].extend(sequences)
                 # Assuming it is a fixed name
                 else:
-                    node_resources["node"].append(texture_filepath)
+                    node_resources["files"].append(texture_filepath)
             else:
-                node_resources["node"].append(texture_filepath)
+                node_resources["files"].append(texture_filepath)
 
             resources.append(node_resources)
 

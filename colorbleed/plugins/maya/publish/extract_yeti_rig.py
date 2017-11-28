@@ -1,11 +1,13 @@
 import os
-import json
 
 from maya import cmds
+
 import colorbleed.api
+from cb.utils.maya import context
+reload(context)
 
 
-class ExtractYetiProcedural(colorbleed.api.Extractor):
+class ExtractYetiRig(colorbleed.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals are preserved, but nothing more,
@@ -13,12 +15,11 @@ class ExtractYetiProcedural(colorbleed.api.Extractor):
 
     """
 
-    label = "Extract Yeti"
+    label = "Extract Yeti Rig"
     hosts = ["maya"]
-    families = ["colorbleed.yetiprocedural"]
+    families = ["colorbleed.yetiRig", "colorbleed.yeticache"]
 
     def process(self, instance):
-        print instance
 
         yeti_nodes = cmds.ls(instance, type="pgYetiMaya")
         if not yeti_nodes:
@@ -26,37 +27,44 @@ class ExtractYetiProcedural(colorbleed.api.Extractor):
 
         # Define extract output file path
         dirname = self.staging_dir(instance)
-        data_file = os.path.join(dirname, "{}.json".format(instance.name))
 
-        start = instance.data.get("startFrame")
-        end = instance.data.get("endFrame")
-        preroll = instance.data.get("preroll")
-        if preroll > 1:
-            start -= preroll  # caching supports negative frames
-
-        self.log.info("Writing out cache")
-        # Start writing the files
-        # <NAME> will be replace by the yeti node name
-        filename = "{0}_<NAME>.%04d.fur".format(instance.name)
-        path = os.path.join(dirname, filename)
-        cache_files = cmds.pgYetiCommand(yeti_nodes,
-                                         writeCache=path,
-                                         range=(start, end),
-                                         sampleTimes="0.0 1.0",
-                                         updateViewport=False,
-                                         generatePreivew=False)
+        # Yeti related staging dirs
+        maya_path = os.path.join(dirname, "yeti_rig.ma")
 
         self.log.info("Writing metadata file")
+        image_search_path = ""
         settings = instance.data.get("settings", None)
         if settings is not None:
-            with open(data_file, "w") as fp:
-                json.dump(settings, fp, ensure_ascii=False)
+
+            # Create assumed destination folder for imageSearchPath
+            assumed_temp_data = instance.data["assumedTemplateData"]
+            template = instance.data["template"]
+            template_formatted = template.format(**assumed_temp_data)
+
+            destination_folder = os.path.dirname(template_formatted)
+            image_search_path = os.path.join(destination_folder, "resources")
+            image_search_path = os.path.normpath(image_search_path)
+
+        attr_value = {"%s.imageSearchPath" % n: image_search_path for
+                      n in yeti_nodes}
+
+        with context.attribute_values(attr_value):
+            cmds.select(instance.data["setMembers"], noExpand=True)
+            cmds.file(maya_path,
+                      force=True,
+                      exportSelected=True,
+                      typ="mayaAscii",
+                      preserveReferences=False,
+                      constructionHistory=False,
+                      shader=False)
 
         # Ensure files can be stored
         if "files" not in instance.data:
             instance.data["files"] = list()
 
-        instance.data["files"].append(cache_files)
-        instance.data["files"].append(data_file)
+        instance.data["files"].extend(["yeti_rig.ma",
+                                       "yeti_settings.json"])
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
+
+        cmds.select(clear=True)
