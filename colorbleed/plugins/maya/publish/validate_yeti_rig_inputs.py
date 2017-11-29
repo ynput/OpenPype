@@ -4,7 +4,7 @@ import pyblish.api
 import colorbleed.api
 
 
-class ValidateRigInputMeshes(pyblish.api.Validator):
+class ValidateYetiRigInputMeshes(pyblish.api.Validator):
     """Validate if all pgYetiMaya nodes have at least one input shape"""
 
     order = colorbleed.api.ValidateContentsOrder
