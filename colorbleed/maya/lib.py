@@ -357,6 +357,11 @@ def reset_polySelectConstraint(reset=True):
 
     try:
         if reset:
+            # Ensure command is available in mel
+            # This can happen when running standalone
+            if not mel.eval("exists resetPolySelectConstraint"):
+                mel.eval("source polygonConstraint")
+
             # Reset all parameters
             mel.eval("resetPolySelectConstraint;")
         cmds.polySelectConstraint(disable=True)
@@ -1030,7 +1035,7 @@ def get_isolate_view_sets():
     """
 
     view_sets = set()
-    for panel in cmds.getPanel(type="modelPanel"):
+    for panel in cmds.getPanel(type="modelPanel") or []:
         view_set = cmds.modelEditor(panel, query=True, viewObjects=True)
         if view_set:
             view_sets.add(view_set)
@@ -1059,28 +1064,29 @@ def get_related_sets(node):
     ignore_suffices = ["out_SET", "controls_SET", "_INST", "_CON"]
 
     # Default nodes to ignore
-    defaults = ["initialShadingGroup",  "defaultLightSet", "defaultObjectSet"]
+    defaults = {"initialShadingGroup",  "defaultLightSet", "defaultObjectSet"}
 
     # Ids to ignore
-    ignored = ["pyblish.avalon.instance", "pyblish.avalon.container"]
+    ignored = {"pyblish.avalon.instance", "pyblish.avalon.container"}
 
     view_sets = get_isolate_view_sets()
 
-    related_sets = cmds.listSets(object=node, extendToShape=False)
-    if not related_sets:
+    sets = cmds.listSets(object=node, extendToShape=False)
+    if not sets:
         return []
 
+    # Fix 'no object matches name' errors on nodes returned by listSets.
+    # In rare cases it can happen that a node is added to an internal maya
+    # set inaccessible by maya commands, for example check some nodes
+    # returned by `cmds.listSets(allSets=True)`
+    sets = cmds.ls(sets)
+
     # Ignore `avalon.container`
-    sets = [s for s in related_sets if
+    sets = [s for s in sets if
             not cmds.attributeQuery("id", node=s, exists=True) or
             not cmds.getAttr("%s.id" % s) in ignored]
 
-    # Exclude deformer sets
-    # Autodesk documentation on listSets command:
-    # type(uint) : Returns all sets in the scene of the given
-    # >>> type:
-    # >>> 1 - all rendering sets
-    # >>> 2 - all deformer sets
+    # Exclude deformer sets (`type=2` for `maya.cmds.listSets`)
     deformer_sets = cmds.listSets(object=node,
                                   extendToShape=False,
                                   type=2) or []
