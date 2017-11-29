@@ -146,8 +146,6 @@ class YetiCacheLoader(api.Loader):
         it is a snapshot.
         """
 
-        from avalon.vendor import clique
-
         glob_pattern = filename.replace(pattern, "*")
 
         escaped = re.escape(filename)
@@ -156,11 +154,8 @@ class YetiCacheLoader(api.Loader):
         files = glob.glob(glob_pattern)
         files = [str(f) for f in files if re.match(re_pattern, f)]
 
-        pattern = [clique.PATTERNS["frames"]]
-        collection, remainer = clique.assemble(files, patterns=pattern)
-
-        if len(collection) == 1:
-            return collection[0]
+        if len(files) == 1:
+            return files[0]
 
         return filename
 
