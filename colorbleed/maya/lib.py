@@ -633,6 +633,11 @@ def get_id_required_nodes(referenced_nodes=False):
     # Establish set of nodes types to include
     types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface"]
 
+    # Check if plugin nodes are available for Maya by checking if the plugin
+    # is loaded
+    if cmds.pluginInfo("pgYetiMaya",  query=True, loaded=True):
+        types.append("pgYetiMaya")
+
     # We *always* ignore intermediate shapes, so we filter them out
     # directly
     nodes = cmds.ls(type=types, long=True, noIntermediate=True)

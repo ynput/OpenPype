@@ -31,7 +31,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "colorbleed.model",
                 "colorbleed.pointcache",
                 "colorbleed.setdress",
-                "colorbleed.rig"]
+                "colorbleed.rig",
+                "colorbleed.yetiRig",
+                "colorbleed.yeticache"]
 
     def process(self, instance):
 
@@ -149,6 +151,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Find the representations to transfer amongst the files
         # Each should be a single representation (as such, a single extension)
         representations = []
+
         for files in instance.data["files"]:
 
             # Collection
@@ -162,7 +165,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             #
             if isinstance(files, list):
                 collection = files
-
                 # Assert that each member has identical suffix
                 _, ext = os.path.splitext(collection[0])
                 assert all(ext == os.path.splitext(name)[1]
@@ -170,9 +172,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     "Files had varying suffixes, this is a bug"
                 )
 
+                assert not any(os.path.isabs(name) for name in collection)
+
                 template_data["representation"] = ext[1:]
 
                 for fname in collection:
+
                     src = os.path.join(stagingdir, fname)
                     dst = os.path.join(
                         template_publish.format(**template_data),
@@ -191,6 +196,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # |_______|
                 #
                 fname = files
+                assert not os.path.isabs(fname)
                 _, ext = os.path.splitext(fname)
 
                 template_data["representation"] = ext[1:]
@@ -287,10 +293,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     def create_version(self, subset, version_number, locations, data=None):
         """ Copy given source to destination
 
-        Arguments:
+        Args:
             subset (dict): the registered subset of the asset
             version_number (int): the version number
             locations (list): the currently registered locations
+
+        Returns:
+            dict: collection of data to create a version
         """
         # Imprint currently registered location
         version_locations = [location for location in locations if
