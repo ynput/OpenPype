@@ -175,16 +175,24 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         }
 
         # Include critical variables with submission
-        environment = dict({
+        keys = [
             # This will trigger `userSetup.py` on the slave
             # such that proper initialisation happens the same
             # way as it does on a local machine.
             # TODO(marcus): This won't work if the slaves don't
             # have accesss to these paths, such as if slaves are
             # running Linux and the submitter is on Windows.
-            "PYTHONPATH": os.getenv("PYTHONPATH", ""),
+            "PYTHONPATH",
 
-        }, **api.Session)
+            # todo: This is a temporary fix for yeti variables
+            "PEREGRINEL_LICENSE",
+            "VRAY_FOR_MAYA2018_PLUGINS_X64",
+            "VRAY_PLUGINS_X64",
+            "VRAY_USE_THREAD_AFFINITY",
+            "MAYA_MODULE_PATH"
+        ]
+        environment = dict({key: os.environ[key] for key in keys
+                            if key in os.environ}, **api.Session)
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
