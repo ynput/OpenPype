@@ -1,6 +1,5 @@
 import os
 import logging
-import pprint
 import shutil
 
 import errno
@@ -153,8 +152,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Each should be a single representation (as such, a single extension)
         representations = []
 
-        print 'files', instance.data['files']
-
         for files in instance.data["files"]:
 
             # Collection
@@ -181,12 +178,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
                 for fname in collection:
 
-                    if os.path.isabs(fname):
-                        src = fname
-                        fname = os.path.basename(src)
-                    else:
-                        src = os.path.join(stagingdir, fname)
-
+                    src = os.path.join(stagingdir, fname)
                     dst = os.path.join(
                         template_publish.format(**template_data),
                         fname
@@ -234,8 +226,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 }
             }
             representations.append(representation)
-
-        pprint.pprint(instance.data["transfers"])
 
         self.log.info("Registering {} items".format(len(representations)))
 
