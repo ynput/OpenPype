@@ -194,6 +194,10 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
 
+        PATHS = os.environ["PATH"].split(";")
+        environment["PATH"] = ";".join([p for p in PATHS
+                                        if p.startswith("P:")])
+
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
