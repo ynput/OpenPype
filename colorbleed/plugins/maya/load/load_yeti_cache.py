@@ -37,6 +37,14 @@ class YetiCacheLoader(api.Loader):
         with open(settings_fname, "r") as fp:
             fursettings = json.load(fp)
 
+        # Check if resources map exists
+        # TODO: should be stored in fursettings
+        image_search_path = ""
+        version_folder = os.path.dirname(self.fname)
+        resource_folder = os.path.join(version_folder, "resources")
+        if os.path.exists(resource_folder):
+            image_search_path = os.path.normpath(resource_folder)
+
         # Get node name from JSON
         nodes = []
         for node, settings in fursettings.items():
@@ -61,7 +69,7 @@ class YetiCacheLoader(api.Loader):
             node = node.replace(":", "_")
 
             # Create full cache path
-            cache = "{}/{}.%04d.fur".format(self.fname, node)
+            cache = os.path.join(self.fname, "{}.%04d.fur".format(node))
             cache_fname = self.validate_cache(cache)
             cache_path = os.path.join(self.fname, cache_fname)
 
@@ -71,6 +79,9 @@ class YetiCacheLoader(api.Loader):
                          type="string")
 
             cmds.setAttr("%s.fileMode" % yeti_node, 1)
+            cmds.setAttr("%s.imageSearchPath" % yeti_node,
+                         image_search_path,
+                         type="string")
 
             nodes.append(yeti_node)
 
@@ -156,6 +167,8 @@ class YetiCacheLoader(api.Loader):
 
         if len(files) == 1:
             return files[0]
+        elif len(files) == 0:
+            self.log.error("Could not find cache files for '%s'" % filename)
 
         return filename
 
