@@ -54,10 +54,24 @@ class YetiCacheLoader(api.Loader):
             yeti_node = cmds.createNode("pgYetiMaya", name=node_name)
             cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
 
+            # Note: the shape is created, we will need to add a new ID for the
+            # transform node of the new Yeti node
+            shapenode_id = settings["cbId"]
+            asset_id = shapenode_id.split(":", 1)[0]
+
             # Apply colorbleed ID to node
-            lib.set_id(node=yeti_node,
-                       unique_id=settings["cbId"],
-                       overwrite=True)
+            lib.set_id(node=yeti_node, unique_id=shapenode_id, overwrite=True)
+
+            # Though singular the generate_ids function needs list and as
+            # the result is returned as a list we can take advantage of that
+            # Todo: (Wijnand) double check this behavior!
+            transform_nodes = cmds.listRelatives(yeti_node, parent=True) or []
+            if not transform_nodes:
+                raise RuntimeError("Something went wrong during creation of"
+                                   "the pgYetiMaya node")
+
+            lib.generate_ids(nodes=transform_nodes, asset_id=asset_id)
+
             settings.pop("cbId", None)
 
             # Apply settings
@@ -86,6 +100,7 @@ class YetiCacheLoader(api.Loader):
             cmds.setAttr("%s.verbosity" % yeti_node, 2)
 
             nodes.append(yeti_node)
+            nodes.extend(transform_nodes)
 
         group_name = "{}:{}".format(namespace, asset["name"])
         group_node = cmds.group(nodes, name=group_name)
