@@ -83,6 +83,8 @@ class YetiCacheLoader(api.Loader):
                          image_search_path,
                          type="string")
 
+            cmds.setAttr("%s.verbosity" % yeti_node, 2)
+
             nodes.append(yeti_node)
 
         group_name = "{}:{}".format(namespace, asset["name"])
