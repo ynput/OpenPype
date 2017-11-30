@@ -71,9 +71,17 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
         # Validate at least one single relationship is collected
         if not lookdata["relationships"]:
-            cls.log.error("Look '{}' has no "
-                          "`relationships`".format(instance.name))
+            cls.log.error("Look '%s' has no "
+                          "`relationships`" % instance.name)
             invalid.add(instance.name)
+
+        # Check if attributes are on a node with an ID, crucial for rebuild!
+        for attr_changes in lookdata["attributes"]:
+            if not attr_changes["uuid"]:
+                cls.log.error("Node '%s' has no cbId, please set the "
+                              "attributes to its children if it has any"
+                              % attr_changes["name"])
+                invalid.add(instance.name)
 
         return list(invalid)
 
