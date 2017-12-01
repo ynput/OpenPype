@@ -110,7 +110,6 @@ class YetiCacheLoader(api.Loader):
             nodes.append(yeti_node)
             nodes.append(transform_node)
 
-
         group_name = "{}:{}".format(namespace, asset["name"])
         group_node = cmds.group(nodes, name=group_name)
 
