@@ -58,8 +58,10 @@ class YetiCacheLoader(api.Loader):
             lib.set_id(transform_node, transform["cbId"])
 
             # Create pgYetiMaya node
+            original_node = node_settings["name"]
+            node_name = "{}:{}".format(namespace, original_node)
             yeti_node = cmds.createNode("pgYetiMaya",
-                                        name=node_settings["name"],
+                                        name=node_name,
                                         parent=transform_node)
 
             lib.set_id(yeti_node, node_settings["cbId"])
@@ -77,7 +79,7 @@ class YetiCacheLoader(api.Loader):
                 cmds.setAttr(attribute, value, **kwargs)
 
             # Ensure the node has no namespace identifiers
-            node_name = yeti_node.replace(":", "_")
+            node_name = original_node.replace(":", "_")
 
             # Create full cache path
             cache = os.path.join(self.fname, "{}.%04d.fur".format(node_name))
