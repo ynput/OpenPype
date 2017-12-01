@@ -27,8 +27,12 @@ def get_look_attrs(node):
 
     """
 
+    # When referenced get only attributes that are "changed since file open"
+    # which includes any reference edits, otherwise take *all* user defined
+    # attributes
+    is_referenced = cmds.referenceQuery(node, isNodeReferenced=True)
     result = cmds.listAttr(node, userDefined=True,
-                           changedSinceFileOpen=True) or []
+                           changedSinceFileOpen=is_referenced) or []
 
     # `cbId` is added when a scene is saved, ignore by default
     if "cbId" in result:
@@ -91,7 +95,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         for objset in list(sets):
             self.log.debug("From %s.." % objset)
 
-            # Get all nodes of the current objectSet
+            # Get all nodes of the current objectSet (shadingEngine)
             for member in cmds.ls(cmds.sets(objset, query=True), long=True):
                 member_data = self.collect_member_data(member,
                                                        instance_lookup)
