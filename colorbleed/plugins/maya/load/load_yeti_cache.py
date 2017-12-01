@@ -89,18 +89,23 @@ class YetiCacheLoader(api.Loader):
             cache_fname = self.validate_cache(cache)
             cache_path = os.path.join(self.fname, cache_fname)
 
-            # Add filename to `cacheFileName` attribute, set to cache mode
+            # Preset the viewport density]
+            cmds.setAttr("%s.viewportDensity" % yeti_node, 0.1)
+
+            # Add filename to `cacheFileName` attribute
             cmds.setAttr("%s.cacheFileName" % yeti_node,
                          cache_path,
                          type="string")
-            # Set file mode to cache
-            cmds.setAttr("%s.fileMode" % yeti_node, 1)
+
             cmds.setAttr("%s.imageSearchPath" % yeti_node,
                          image_search_path,
                          type="string")
 
             # Set verbosity for debug purposes
             cmds.setAttr("%s.verbosity" % yeti_node, 2)
+
+            # Enable the cache by setting the fil mode
+            cmds.setAttr("%s.fileMode" % yeti_node, 1)
 
             nodes.append(yeti_node)
             nodes.append(transform_node)
