@@ -8,11 +8,23 @@ SETTINGS = {"renderDensity",
             "renderWidth",
             "renderLength",
             "increaseRenderBounds",
+            "imageSearchPath",
             "cbId"}
 
 
 class CollectYetiCache(pyblish.api.InstancePlugin):
-    """Collect all information of the Yeti caches"""
+    """Collect all information of the Yeti caches
+
+    The information contains the following attributes per Yeti node
+
+    - "renderDensity"
+    - "renderWidth"
+    - "renderLength"
+    - "increaseRenderBounds"
+    - "imageSearchPath"
+
+    Other information is the name of the transform and it's Colorbleed ID
+    """
 
     order = pyblish.api.CollectorOrder + 0.45
     label = "Collect Yeti Cache"
@@ -27,22 +39,24 @@ class CollectYetiCache(pyblish.api.InstancePlugin):
 
         # Get yeti nodes and their transforms
         yeti_shapes = cmds.ls(instance, type="pgYetiMaya")
-
         for shape in yeti_shapes:
             shape_data = {"transform": None,
-                          "name": shape}
+                          "name": shape,
+                          "cbId": lib.get_id(shape),
+                          "attrs": None}
 
             # Get specific node attributes
+            attr_data = {}
             for attr in SETTINGS:
                 current = cmds.getAttr("%s.%s" % (shape, attr))
-                shape_data[attr] = current
+                attr_data[attr] = current
 
             # Get transform data
             parent = cmds.listRelatives(shape, parent=True)[0]
-            transform_data = {"name": parent,
-                              "cbId": lib.get_id(parent)}
+            transform_data = {"name": parent, "cbId": lib.get_id(parent)}
 
-            # Store transform data
+            # Store collected data
+            shape_data["attrs"] = attr_data
             shape_data["transform"] = transform_data
 
             settings["nodes"].append(shape_data)
