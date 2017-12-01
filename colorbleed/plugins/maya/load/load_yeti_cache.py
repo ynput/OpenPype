@@ -49,16 +49,31 @@ class YetiCacheLoader(api.Loader):
         nodes = []
         for node, settings in fursettings.items():
 
+            # Create transform
+            transform_name = "{}:{}".format(namespace, node.split("Shape")[0])
+            transform_node = cmds.createNode("transform", name=transform_name)
+
             # Create new pgYetiMaya node
             node_name = "{}:{}".format(namespace, node)
-            yeti_node = cmds.createNode("pgYetiMaya", name=node_name)
+            yeti_node = cmds.createNode("pgYetiMaya",
+                                        name=node_name,
+                                        parent=transform_node)
+
             cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
 
-            # Apply colorbleed ID to node
+            # Apply explicit colorbleed ID to node
+            shape_id = settings["cbId"]
+            asset_id = shape_id.split(":", 1)[0]
+
             lib.set_id(node=yeti_node,
-                       unique_id=settings["cbId"],
+                       unique_id=shape_id,
                        overwrite=True)
             settings.pop("cbId", None)
+
+            # Apply new colorbleed ID to transform node
+            _ids = lib.generate_ids(nodes=[transform_node], asset_id=asset_id)
+            for n, _id in _ids:
+                lib.set_id(n, unique_id=_id)
 
             # Apply settings
             for attr, value in settings.items():
@@ -70,6 +85,7 @@ class YetiCacheLoader(api.Loader):
 
             # Create full cache path
             cache = os.path.join(self.fname, "{}.%04d.fur".format(node))
+            cache = os.path.normpath(cache)
             cache_fname = self.validate_cache(cache)
             cache_path = os.path.join(self.fname, cache_fname)
 
@@ -77,26 +93,28 @@ class YetiCacheLoader(api.Loader):
             cmds.setAttr("%s.cacheFileName" % yeti_node,
                          cache_path,
                          type="string")
-
+            # Set file mode to cache
             cmds.setAttr("%s.fileMode" % yeti_node, 1)
             cmds.setAttr("%s.imageSearchPath" % yeti_node,
                          image_search_path,
                          type="string")
 
+            # Set verbosity for debug purposes
             cmds.setAttr("%s.verbosity" % yeti_node, 2)
 
             nodes.append(yeti_node)
+            nodes.append(transform_node)
 
         group_name = "{}:{}".format(namespace, asset["name"])
         group_node = cmds.group(nodes, name=group_name)
-        all_nodes = cmds.listRelatives(group_node, children=True)
-        all_nodes.append(group_node)
 
-        self[:] = all_nodes
+        nodes.append(group_node)
+
+        self[:] = nodes
 
         return pipeline.containerise(name=name,
                                      namespace=namespace,
-                                     nodes=all_nodes,
+                                     nodes=nodes,
                                      context=context,
                                      loader=self.__class__.__name__)
 
