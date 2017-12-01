@@ -71,6 +71,7 @@ class YetiCacheLoader(api.Loader):
             settings.pop("cbId", None)
 
             # Apply new colorbleed ID to transform node
+            # TODO: get ID from transfrom in data to ensure consistency
             _ids = lib.generate_ids(nodes=[transform_node], asset_id=asset_id)
             for n, _id in _ids:
                 lib.set_id(n, unique_id=_id)
@@ -89,7 +90,7 @@ class YetiCacheLoader(api.Loader):
             cache_fname = self.validate_cache(cache)
             cache_path = os.path.join(self.fname, cache_fname)
 
-            # Preset the viewport density]
+            # Preset the viewport density
             cmds.setAttr("%s.viewportDensity" % yeti_node, 0.1)
 
             # Add filename to `cacheFileName` attribute
@@ -104,7 +105,7 @@ class YetiCacheLoader(api.Loader):
             # Set verbosity for debug purposes
             cmds.setAttr("%s.verbosity" % yeti_node, 2)
 
-            # Enable the cache by setting the fil mode
+            # Enable the cache by setting the file mode
             cmds.setAttr("%s.fileMode" % yeti_node, 1)
 
             nodes.append(yeti_node)
