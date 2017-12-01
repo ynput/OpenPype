@@ -144,8 +144,7 @@ class YetiCacheLoader(api.Loader):
 
         path = api.get_representation_path(representation)
         members = cmds.sets(container['objectName'], query=True)
-        all_members = cmds.listRelatives(members, ad=True)
-        yeti_node = cmds.ls(all_members, type="pgYetiMaya", long=True)
+        yeti_node = cmds.ls(members, type="pgYetiMaya", long=True)
 
         for node in yeti_node:
             node_name = node.split(":")[-1]
