@@ -47,45 +47,40 @@ class YetiCacheLoader(api.Loader):
 
         # Get node name from JSON
         nodes = []
-        for node, settings in fursettings.items():
+        node_data = fursettings["nodes"]
+        for node_settings in node_data:
 
-            # Create transform
-            transform_name = "{}:{}".format(namespace, node.split("Shape")[0])
-            transform_node = cmds.createNode("transform", name=transform_name)
+            # Create transform node
+            transform = node_settings["transform"]
+            transform_node = cmds.createNode("transform",
+                                             name=transform["name"])
 
-            # Create new pgYetiMaya node
-            node_name = "{}:{}".format(namespace, node)
+            lib.set_id(transform_node, transform["cbId"])
+
+            # Create pgYetiMaya node
             yeti_node = cmds.createNode("pgYetiMaya",
-                                        name=node_name,
+                                        name=node_settings["name"],
                                         parent=transform_node)
 
-            cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
+            lib.set_id(yeti_node, node_settings["cbId"])
 
-            # Apply explicit colorbleed ID to node
-            shape_id = settings["cbId"]
-            asset_id = shape_id.split(":", 1)[0]
+            nodes.append(transform_node)
+            nodes.append(yeti_node)
 
-            lib.set_id(node=yeti_node,
-                       unique_id=shape_id,
-                       overwrite=True)
-            settings.pop("cbId", None)
-
-            # Apply new colorbleed ID to transform node
-            # TODO: get ID from transform in data to ensure consistency
-            _ids = lib.generate_ids(nodes=[transform_node], asset_id=asset_id)
-            for n, _id in _ids:
-                lib.set_id(n, unique_id=_id)
-
-            # Apply settings
-            for attr, value in settings.items():
+            # Apply attributes to pgYetiMaya node
+            kwargs = {}
+            for attr, value in node_settings["attrs"].items():
                 attribute = "%s.%s" % (yeti_node, attr)
-                cmds.setAttr(attribute, value)
+                if isinstance(value, (str, unicode)):
+                    cmds.setAttr(attribute, value, type="string")
+                    continue
+                cmds.setAttr(attribute, value, **kwargs)
 
             # Ensure the node has no namespace identifiers
-            node = node.replace(":", "_")
+            node_name = yeti_node.replace(":", "_")
 
             # Create full cache path
-            cache = os.path.join(self.fname, "{}.%04d.fur".format(node))
+            cache = os.path.join(self.fname, "{}.%04d.fur".format(node_name))
             cache = os.path.normpath(cache)
             cache_fname = self.validate_cache(cache)
             cache_path = os.path.join(self.fname, cache_fname)
