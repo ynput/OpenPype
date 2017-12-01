@@ -38,15 +38,21 @@ def disconnected_attributes(settings, members):
             dst_attribute = "%s.%s" % (dst, connections[1])
 
             # store connection pair
-            original_connection.append([src_attribute, dst_attribute])
-            cmds.disconnectAttr(dst_attribute, src_attribute)
-        yield
+            if not cmds.isConnected(dst_attribute, src_attribute):
+                continue
 
+            cmds.disconnectAttr(dst_attribute, src_attribute)
+            original_connection.append([src_attribute, dst_attribute])
+        yield
     finally:
         # restore connections
         for connection in original_connection:
             src, dest = connection
-            cmds.connectAttr(dest, src)
+            try:
+                cmds.connectAttr(dest, src)
+            except Exception as e:
+                print e,
+                continue
 
 
 class ExtractYetiRig(colorbleed.api.Extractor):
@@ -96,9 +102,11 @@ class ExtractYetiRig(colorbleed.api.Extractor):
         attr_value = {"%s.imageSearchPath" % n: image_search_path for
                       n in yeti_nodes}
 
-        # get input_SET members
+        # Get input_SET members
         input_set = [i for i in instance if i == "input_SET"]
         members = cmds.sets(input_set[0], query=True)
+        # Get all items
+        members = cmds.listRelatives(members, ad=True, fullPath=True)
 
         nodes = instance.data["setMembers"]
         with disconnected_attributes(settings, members):
