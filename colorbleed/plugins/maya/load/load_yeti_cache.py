@@ -71,7 +71,7 @@ class YetiCacheLoader(api.Loader):
             settings.pop("cbId", None)
 
             # Apply new colorbleed ID to transform node
-            # TODO: get ID from transfrom in data to ensure consistency
+            # TODO: get ID from transform in data to ensure consistency
             _ids = lib.generate_ids(nodes=[transform_node], asset_id=asset_id)
             for n, _id in _ids:
                 lib.set_id(n, unique_id=_id)
