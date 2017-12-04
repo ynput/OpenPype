@@ -46,13 +46,16 @@ class YetiCacheLoader(api.Loader):
             image_search_path = os.path.normpath(resource_folder)
 
         # Get node name from JSON
-        nodes = []
         if "nodes" in fursettings:
             node_data = fursettings["nodes"]
-            self.create_nodes(namespace, image_search_path, node_data)
+            nodes = self.create_nodes(namespace, image_search_path, node_data)
         else:
             # Backwards compatibilty
-            self.create_nodes_old(namespace, image_search_path, fursettings)
+            self.log.info("Encountered old data, "
+                          "using backwards compatibility")
+            nodes = self.create_nodes_old(namespace,
+                                          image_search_path,
+                                          fursettings)
 
         group_name = "{}:{}".format(namespace, asset["name"])
         group_node = cmds.group(nodes, name=group_name)
@@ -241,13 +244,13 @@ class YetiCacheLoader(api.Loader):
             cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
 
             # Apply explicit colorbleed ID to node
-            shape_id = settings["cbId"]
+            shape_id = node_settings["cbId"]
             asset_id = shape_id.split(":", 1)[0]
 
             lib.set_id(node=yeti_node,
                        unique_id=shape_id,
                        overwrite=True)
-            settings.pop("cbId", None)
+            node_settings.pop("cbId", None)
 
             # Apply new colorbleed ID to transform node
             # TODO: get ID from transform in data to ensure consistency
@@ -256,7 +259,7 @@ class YetiCacheLoader(api.Loader):
                 lib.set_id(n, unique_id=_id)
 
             # Apply settings
-            for attr, value in settings.items():
+            for attr, value in node_settings.items():
                 attribute = "%s.%s" % (yeti_node, attr)
                 cmds.setAttr(attribute, value)
 
