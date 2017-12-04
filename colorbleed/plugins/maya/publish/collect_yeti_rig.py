@@ -37,28 +37,30 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                                          fullPath=True) or input_content
 
         # Get all the shapes
-        input_shapes = cmds.ls(input_nodes, long=True)
+        input_shapes = cmds.ls(input_nodes, long=True, noIntermediate=True)
 
         # Store all connections
+        print "input shape:", input_shapes
         connections = cmds.listConnections(input_shapes,
                                            source=True,
                                            destination=False,
                                            connections=True,
                                            plugs=True) or []
 
-        # Group per source, destination pair
-        grouped = [(item, connections[i+1]) for i, item in
+        # Group per source, destination pair. We need to reverse the connection
+        # list as it comes in with the shape used to query first while that
+        # shape is the destination of the connection
+        grouped = [(connections[i+1], item) for i, item in
                    enumerate(connections) if i % 2 == 0]
 
         inputs = []
         for src, dest in grouped:
-            src_node, src_attr = src.split(".", 1)
+            source_node, source_attr = src.split(".", 1)
             dest_node, dest_attr = dest.split(".", 1)
 
-            # The plug must go in the socket, remember this for the loader
-            inputs.append({"connections": [src_attr, dest_attr],
-                           "destinationID": lib.get_id(dest_node),
-                           "sourceID": lib.get_id(src_node)})
+            inputs.append({"connections": [source_attr, dest_attr],
+                           "sourceID": lib.get_id(source_node),
+                           "destinationID": lib.get_id(dest_node)})
 
         # Collect any textures if used
         yeti_resources = []

@@ -17,31 +17,29 @@ def disconnected_attributes(settings, members):
     try:
         for input in settings["inputs"]:
 
-            # get source
-            socket_id = input["sourceId"]
-            sources = lib.lsattr("cbId", socket_id)
-            sources = [i for i in sources if
+            # Get source shapes
+            source_nodes = lib.lsattr("cbId", input["sourceID"])
+            sources = [i for i in source_nodes if
                        not cmds.referenceQuery(i, isNodeReferenced=True)
                        and i in members]
-            src = sources[0]
+            source = sources[0]
 
-            # get destination
-            plug_id = input["destinationID"]
-            plugs = lib.lsattr("cbId", plug_id)
-            destinations = [i for i in plugs if i not in members and
-                            i not in sources]
-            dst = destinations[0]
+            # Get destination shapes (the shapes used as hook up)
+            destination_nodes = lib.lsattr("cbId", input["destinationID"])
+            destinations = [i for i in destination_nodes if i not in members
+                            and i not in sources]
+            destination = destinations[0]
 
-            # break connection
+            # Break connection
             connections = input["connections"]
-            src_attribute = "%s.%s" % (src, connections[0])
-            dst_attribute = "%s.%s" % (dst, connections[1])
+            src_attribute = "%s.%s" % (source, connections[0])
+            dst_attribute = "%s.%s" % (destination, connections[1])
 
             # store connection pair
-            if not cmds.isConnected(dst_attribute, src_attribute):
+            if not cmds.isConnected(src_attribute, dst_attribute):
                 continue
 
-            cmds.disconnectAttr(dst_attribute, src_attribute)
+            cmds.disconnectAttr(src_attribute, dst_attribute)
             original_connection.append([src_attribute, dst_attribute])
         yield
     finally:
