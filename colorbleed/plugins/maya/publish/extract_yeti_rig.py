@@ -18,7 +18,7 @@ def disconnected_attributes(settings, members):
         for input in settings["inputs"]:
 
             # get source
-            socket_id = input["socketID"]
+            socket_id = input["sourceId"]
             sources = lib.lsattr("cbId", socket_id)
             sources = [i for i in sources if
                        not cmds.referenceQuery(i, isNodeReferenced=True)
@@ -26,7 +26,7 @@ def disconnected_attributes(settings, members):
             src = sources[0]
 
             # get destination
-            plug_id = input["plugID"]
+            plug_id = input["destinationID"]
             plugs = lib.lsattr("cbId", plug_id)
             destinations = [i for i in plugs if i not in members and
                             i not in sources]
