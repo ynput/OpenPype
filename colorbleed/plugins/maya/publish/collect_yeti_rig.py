@@ -57,8 +57,8 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
             # The plug must go in the socket, remember this for the loader
             inputs.append({"connections": [src_attr, dest_attr],
-                           "plugID": lib.get_id(dest_node),
-                           "socketID": lib.get_id(src_node)})
+                           "destinationID": lib.get_id(dest_node),
+                           "sourceID": lib.get_id(src_node)})
 
         # Collect any textures if used
         yeti_resources = []
