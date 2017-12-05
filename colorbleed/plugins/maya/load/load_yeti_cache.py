@@ -38,78 +38,13 @@ class YetiCacheLoader(api.Loader):
             fursettings = json.load(fp)
 
         # Check if resources map exists
-        # TODO: should be stored in fursettings
-        image_search_path = ""
-        version_folder = os.path.dirname(self.fname)
-        resource_folder = os.path.join(version_folder, "resources")
-        if os.path.exists(resource_folder):
-            image_search_path = os.path.normpath(resource_folder)
-
         # Get node name from JSON
-        nodes = []
-        for node, settings in fursettings.items():
+        if "nodes" not in fursettings:
+            raise RuntimeError("Encountered invalid data, expect 'nodes' in "
+                               "fursettings.")
 
-            # Create transform
-            transform_name = "{}:{}".format(namespace, node.split("Shape")[0])
-            transform_node = cmds.createNode("transform", name=transform_name)
-
-            # Create new pgYetiMaya node
-            node_name = "{}:{}".format(namespace, node)
-            yeti_node = cmds.createNode("pgYetiMaya",
-                                        name=node_name,
-                                        parent=transform_node)
-
-            cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
-
-            # Apply explicit colorbleed ID to node
-            shape_id = settings["cbId"]
-            asset_id = shape_id.split(":", 1)[0]
-
-            lib.set_id(node=yeti_node,
-                       unique_id=shape_id,
-                       overwrite=True)
-            settings.pop("cbId", None)
-
-            # Apply new colorbleed ID to transform node
-            # TODO: get ID from transform in data to ensure consistency
-            _ids = lib.generate_ids(nodes=[transform_node], asset_id=asset_id)
-            for n, _id in _ids:
-                lib.set_id(n, unique_id=_id)
-
-            # Apply settings
-            for attr, value in settings.items():
-                attribute = "%s.%s" % (yeti_node, attr)
-                cmds.setAttr(attribute, value)
-
-            # Ensure the node has no namespace identifiers
-            node = node.replace(":", "_")
-
-            # Create full cache path
-            cache = os.path.join(self.fname, "{}.%04d.fur".format(node))
-            cache = os.path.normpath(cache)
-            cache_fname = self.validate_cache(cache)
-            cache_path = os.path.join(self.fname, cache_fname)
-
-            # Preset the viewport density
-            cmds.setAttr("%s.viewportDensity" % yeti_node, 0.1)
-
-            # Add filename to `cacheFileName` attribute
-            cmds.setAttr("%s.cacheFileName" % yeti_node,
-                         cache_path,
-                         type="string")
-
-            cmds.setAttr("%s.imageSearchPath" % yeti_node,
-                         image_search_path,
-                         type="string")
-
-            # Set verbosity for debug purposes
-            cmds.setAttr("%s.verbosity" % yeti_node, 2)
-
-            # Enable the cache by setting the file mode
-            cmds.setAttr("%s.fileMode" % yeti_node, 1)
-
-            nodes.append(yeti_node)
-            nodes.append(transform_node)
+        node_data = fursettings["nodes"]
+        nodes = self.create_nodes(namespace, node_data)
 
         group_name = "{}:{}".format(namespace, asset["name"])
         group_node = cmds.group(nodes, name=group_name)
@@ -202,3 +137,64 @@ class YetiCacheLoader(api.Loader):
 
         return filename
 
+    def create_nodes(self, namespace, settings):
+
+        # Get node name from JSON
+        nodes = []
+        for node_settings in settings:
+
+            # Create transform node
+            transform = node_settings["transform"]
+            transform_name = "{}:{}".format(namespace, transform["name"])
+            transform_node = cmds.createNode("transform", name=transform_name)
+
+            lib.set_id(transform_node, transform["cbId"])
+
+            # Create pgYetiMaya node
+            original_node = node_settings["name"]
+            node_name = "{}:{}".format(namespace, original_node)
+            yeti_node = cmds.createNode("pgYetiMaya",
+                                        name=node_name,
+                                        parent=transform_node)
+
+            lib.set_id(yeti_node, node_settings["cbId"])
+
+            nodes.append(transform_node)
+            nodes.append(yeti_node)
+
+            # Apply attributes to pgYetiMaya node
+            kwargs = {}
+            for attr, value in node_settings["attrs"].items():
+                attribute = "%s.%s" % (yeti_node, attr)
+                if isinstance(value, (str, unicode)):
+                    cmds.setAttr(attribute, value, type="string")
+                    continue
+                cmds.setAttr(attribute, value, **kwargs)
+
+            # Ensure the node has no namespace identifiers
+            node_name = original_node.replace(":", "_")
+
+            # Create full cache path
+            cache = os.path.join(self.fname, "{}.%04d.fur".format(node_name))
+            cache = os.path.normpath(cache)
+            cache_fname = self.validate_cache(cache)
+            cache_path = os.path.join(self.fname, cache_fname)
+
+            # Preset the viewport density
+            cmds.setAttr("%s.viewportDensity" % yeti_node, 0.1)
+
+            # Add filename to `cacheFileName` attribute
+            cmds.setAttr("%s.cacheFileName" % yeti_node,
+                         cache_path,
+                         type="string")
+
+            # Set verbosity for debug purposes
+            cmds.setAttr("%s.verbosity" % yeti_node, 2)
+
+            # Enable the cache by setting the file mode
+            cmds.setAttr("%s.fileMode" % yeti_node, 1)
+
+            nodes.append(yeti_node)
+            nodes.append(transform_node)
+
+        return nodes

@@ -17,36 +17,40 @@ def disconnected_attributes(settings, members):
     try:
         for input in settings["inputs"]:
 
-            # get source
-            socket_id = input["socketID"]
-            sources = lib.lsattr("cbId", socket_id)
-            sources = [i for i in sources if
+            # Get source shapes
+            source_nodes = lib.lsattr("cbId", input["sourceID"])
+            sources = [i for i in source_nodes if
                        not cmds.referenceQuery(i, isNodeReferenced=True)
                        and i in members]
-            src = sources[0]
+            source = sources[0]
 
-            # get destination
-            plug_id = input["plugID"]
-            plugs = lib.lsattr("cbId", plug_id)
-            destinations = [i for i in plugs if i not in members and
-                            i not in sources]
-            dst = destinations[0]
+            # Get destination shapes (the shapes used as hook up)
+            destination_nodes = lib.lsattr("cbId", input["destinationID"])
+            destinations = [i for i in destination_nodes if i not in members
+                            and i not in sources]
+            destination = destinations[0]
 
-            # break connection
+            # Break connection
             connections = input["connections"]
-            src_attribute = "%s.%s" % (src, connections[0])
-            dst_attribute = "%s.%s" % (dst, connections[1])
+            src_attribute = "%s.%s" % (source, connections[0])
+            dst_attribute = "%s.%s" % (destination, connections[1])
 
             # store connection pair
-            original_connection.append([src_attribute, dst_attribute])
-            cmds.disconnectAttr(dst_attribute, src_attribute)
-        yield
+            if not cmds.isConnected(src_attribute, dst_attribute):
+                continue
 
+            cmds.disconnectAttr(src_attribute, dst_attribute)
+            original_connection.append([src_attribute, dst_attribute])
+        yield
     finally:
         # restore connections
         for connection in original_connection:
             src, dest = connection
-            cmds.connectAttr(dest, src)
+            try:
+                cmds.connectAttr(dest, src)
+            except Exception as e:
+                print e,
+                continue
 
 
 class ExtractYetiRig(colorbleed.api.Extractor):
@@ -96,9 +100,11 @@ class ExtractYetiRig(colorbleed.api.Extractor):
         attr_value = {"%s.imageSearchPath" % n: image_search_path for
                       n in yeti_nodes}
 
-        # get input_SET members
+        # Get input_SET members
         input_set = [i for i in instance if i == "input_SET"]
         members = cmds.sets(input_set[0], query=True)
+        # Get all items
+        members = cmds.listRelatives(members, ad=True, fullPath=True)
 
         nodes = instance.data["setMembers"]
         with disconnected_attributes(settings, members):
