@@ -194,6 +194,9 @@ class YetiCacheLoader(api.Loader):
             # Enable the cache by setting the file mode
             cmds.setAttr("%s.fileMode" % yeti_node, 1)
 
+            # Connect to the time node
+            cmds.connectAttr("time1.timeOut", "%s.currentTime" % yeti_node)
+
             nodes.append(yeti_node)
             nodes.append(transform_node)
 
