@@ -1,5 +1,3 @@
-import pprint
-
 from maya import cmds
 
 import pyblish.api
