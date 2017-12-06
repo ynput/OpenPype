@@ -89,6 +89,8 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.name                # beauty
+        renderlayer_globals = instance.data["renderGlobals"]
+        legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (fname, instance.name)
 
@@ -161,7 +163,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "UsingRenderLayers": True,
 
                 # Use legacy Render Layer system
-                "UseLegacyRenderLayers": True,
+                "UseLegacyRenderLayers": legacy_layers,
 
                 # Render only this layer
                 "RenderLayer": renderlayer,
