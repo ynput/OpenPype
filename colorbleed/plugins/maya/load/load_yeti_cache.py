@@ -195,7 +195,7 @@ class YetiCacheLoader(api.Loader):
             cmds.setAttr("%s.fileMode" % yeti_node, 1)
 
             # Connect to the time node
-            cmds.connectAttr("time1.timeOut", "%s.currentTime" % yeti_node)
+            cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
 
             nodes.append(yeti_node)
             nodes.append(transform_node)
