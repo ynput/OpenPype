@@ -84,15 +84,26 @@ class YetiCacheLoader(api.Loader):
     def update(self, container, representation):
 
         path = api.get_representation_path(representation)
+        namespace = "{}:".format(container["namespace"])
         members = cmds.sets(container['objectName'], query=True)
-        yeti_node = cmds.ls(members, type="pgYetiMaya", long=True)
+        yeti_node = cmds.ls(members, type="pgYetiMaya")
+
+        # TODO: Count the amount of nodes cached
+        # To ensure new nodes get created or old nodes get destroyed
 
         for node in yeti_node:
-            node_name = node.split(":")[-1]
+            # Remove local given namespace
+            node_name = node.split(namespace, 1)[-1]
+            node_name = node_name.replace(":", "_")
+
+            # Check if the node has a cache
             tmp_cache = os.path.join(path, "{}.%04d.fur".format(node_name))
             fpath = self.validate_cache(os.path.normpath(tmp_cache))
+
+            # Update the attribute
             cmds.setAttr("{}.cacheFileName".format(node), fpath, type="string")
 
+        # Update the container
         cmds.setAttr("{}.representation".format(container["objectName"]),
                      str(representation["_id"]),
                      type="string")
