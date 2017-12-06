@@ -13,7 +13,7 @@ from cb.utils.maya import context
 def disconnected_attributes(settings, members):
 
     members = cmds.ls(members, long=True)
-    original_connection = []
+    original_connections = []
     try:
         for input in settings["inputs"]:
 
@@ -40,14 +40,13 @@ def disconnected_attributes(settings, members):
                 continue
 
             cmds.disconnectAttr(src_attribute, dst_attribute)
-            original_connection.append([src_attribute, dst_attribute])
+            original_connections.append([src_attribute, dst_attribute])
         yield
     finally:
         # restore connections
-        for connection in original_connection:
-            src, dest = connection
+        for connection in original_connections:
             try:
-                cmds.connectAttr(dest, src)
+                cmds.connectAttr(connection[0], connection[1])
             except Exception as e:
                 print e,
                 continue
@@ -102,9 +101,10 @@ class ExtractYetiRig(colorbleed.api.Extractor):
 
         # Get input_SET members
         input_set = [i for i in instance if i == "input_SET"]
-        members = cmds.sets(input_set[0], query=True)
         # Get all items
-        members = cmds.listRelatives(members, ad=True, fullPath=True)
+        set_members = cmds.sets(input_set[0], query=True)
+        members = cmds.listRelatives(set_members, ad=True, fullPath=True)
+        members += cmds.ls(set_members, long=True)
 
         nodes = instance.data["setMembers"]
         with disconnected_attributes(settings, members):
