@@ -160,6 +160,9 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 # Only render layers are considered renderable in this pipeline
                 "UsingRenderLayers": True,
 
+                # Use legacy Render Layer system
+                "UseLegacyRenderLayers": True,
+
                 # Render only this layer
                 "RenderLayer": renderlayer,
 

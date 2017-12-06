@@ -31,8 +31,8 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                           "renderGlobals node")
             return
 
-        attr = "{}.includeDefaultRenderLayer".format(render_globals)
-        use_defaultlayer = cmds.getAttr(attr)
+        default_layer = "{}.includeDefaultRenderLayer".format(render_globals)
+        use_defaultlayer = cmds.getAttr(default_layer)
 
         # Get render layers
         renderlayers = [i for i in cmds.ls(type="renderLayer") if not
@@ -107,8 +107,9 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         attributes = maya.read(render_globals)
 
         options = {"renderGlobals": {}}
-
-        options['renderGlobals']['Priority'] = attributes['priority']
+        options["renderGlobals"]["Priority"] = attributes["priority"]
+        legacy = attributes["useLegacyRenderLayers"]
+        options["renderGlobals"]["UseLegacyRenderLayers"] = legacy
 
         # Machine list
         machine_list = attributes["machineList"]

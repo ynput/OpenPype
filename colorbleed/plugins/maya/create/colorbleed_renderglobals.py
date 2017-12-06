@@ -26,6 +26,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
 
         data["suspendPublishJob"] = False
         data["includeDefaultRenderLayer"] = False
+        data["useLegacyRenderLayers"] = True
         data["priority"] = 50
         data["whitelist"] = False
         data["machineList"] = ""
