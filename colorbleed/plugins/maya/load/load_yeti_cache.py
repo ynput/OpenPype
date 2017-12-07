@@ -46,7 +46,7 @@ class YetiCacheLoader(api.Loader):
         node_data = fursettings["nodes"]
         nodes = self.create_nodes(namespace, node_data)
 
-        group_name = "{}:{}".format(namespace, asset["name"])
+        group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
 
         nodes.append(group_node)
@@ -94,10 +94,10 @@ class YetiCacheLoader(api.Loader):
         for node in yeti_node:
             # Remove local given namespace
             node_name = node.split(namespace, 1)[-1]
-            node_name = node_name.replace(":", "_")
+            file_name = node_name.replace(":", "_")
 
             # Check if the node has a cache
-            tmp_cache = os.path.join(path, "{}.%04d.fur".format(node_name))
+            tmp_cache = os.path.join(path, "{}.%04d.fur".format(file_name))
             fpath = self.validate_cache(os.path.normpath(tmp_cache))
 
             # Update the attribute
