@@ -169,7 +169,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "RenderLayer": renderlayer,
 
                 # Determine which renderer to use from the file itself
-                "Renderer": "file",
+                "Renderer": instance.data["renderer"],
 
                 # Resolve relative references
                 "ProjectPath": workspace,
