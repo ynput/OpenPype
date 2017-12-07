@@ -103,7 +103,7 @@ class ExtractYetiRig(colorbleed.api.Extractor):
         input_set = [i for i in instance if i == "input_SET"]
         # Get all items
         set_members = cmds.sets(input_set[0], query=True)
-        members = cmds.listRelatives(set_members, ad=True, fullPath=True)
+        members = cmds.listRelatives(set_members, ad=True, fullPath=True) or []
         members += cmds.ls(set_members, long=True)
 
         nodes = instance.data["setMembers"]
