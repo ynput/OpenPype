@@ -46,7 +46,7 @@ class YetiCacheLoader(api.Loader):
         node_data = fursettings["nodes"]
         nodes = self.create_nodes(namespace, node_data)
 
-        group_name = "{}:{}".format(namespace, asset["name"])
+        group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
 
         nodes.append(group_node)
@@ -84,15 +84,26 @@ class YetiCacheLoader(api.Loader):
     def update(self, container, representation):
 
         path = api.get_representation_path(representation)
+        namespace = "{}:".format(container["namespace"])
         members = cmds.sets(container['objectName'], query=True)
-        yeti_node = cmds.ls(members, type="pgYetiMaya", long=True)
+        yeti_node = cmds.ls(members, type="pgYetiMaya")
+
+        # TODO: Count the amount of nodes cached
+        # To ensure new nodes get created or old nodes get destroyed
 
         for node in yeti_node:
-            node_name = node.split(":")[-1]
-            tmp_cache = os.path.join(path, "{}.%04d.fur".format(node_name))
+            # Remove local given namespace
+            node_name = node.split(namespace, 1)[-1]
+            file_name = node_name.replace(":", "_")
+
+            # Check if the node has a cache
+            tmp_cache = os.path.join(path, "{}.%04d.fur".format(file_name))
             fpath = self.validate_cache(os.path.normpath(tmp_cache))
+
+            # Update the attribute
             cmds.setAttr("{}.cacheFileName".format(node), fpath, type="string")
 
+        # Update the container
         cmds.setAttr("{}.representation".format(container["objectName"]),
                      str(representation["_id"]),
                      type="string")
@@ -193,6 +204,9 @@ class YetiCacheLoader(api.Loader):
 
             # Enable the cache by setting the file mode
             cmds.setAttr("%s.fileMode" % yeti_node, 1)
+
+            # Connect to the time node
+            cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
 
             nodes.append(yeti_node)
             nodes.append(transform_node)

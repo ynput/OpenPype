@@ -40,7 +40,6 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         input_shapes = cmds.ls(input_nodes, long=True, noIntermediate=True)
 
         # Store all connections
-        print "input shape:", input_shapes
         connections = cmds.listConnections(input_shapes,
                                            source=True,
                                            destination=False,
