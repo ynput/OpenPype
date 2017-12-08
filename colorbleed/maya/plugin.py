@@ -3,11 +3,11 @@ from avalon import api
 
 class ReferenceLoader(api.Loader):
     """A basic ReferenceLoader for Maya
-    
+
     This will implement the basic behavior for a loader to inherit from that
     will containerize the reference and will implement the `remove` and
     `update` logic.
-    
+
     """
     def load(self,
              context,
@@ -56,9 +56,14 @@ class ReferenceLoader(api.Loader):
 
         path = api.get_representation_path(representation)
 
-        # Assume asset has been referenced
-        reference_node = next((node for node in cmds.sets(node, query=True)
-                               if cmds.nodeType(node) == "reference"), None)
+        # Get reference node from container members
+        members = cmds.sets(node, query=True, nodesOnly=True)
+        references = cmds.ls(members, exactType="reference", objectsOnly=True)
+        assert references, "No reference node found in container"
+        if len(set(references)) > 1:
+            self.log.warning("More than one reference node found in "
+                             "container - using first one: %s", references)
+        reference_node = references[0]
 
         file_type = {
             "ma": "mayaAscii",
@@ -69,7 +74,10 @@ class ReferenceLoader(api.Loader):
         assert file_type, "Unsupported representation: %s" % representation
 
         assert os.path.exists(path), "%s does not exist." % path
-        cmds.file(path, loadReference=reference_node, type=file_type)
+        content = cmds.file(path,
+                            loadReference=reference_node,
+                            type=file_type,
+                            returnNewNodes=True)
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.
@@ -77,11 +85,15 @@ class ReferenceLoader(api.Loader):
             self.log.info("Setting %s.verticesOnlySet to False", node)
             cmds.setAttr(node + ".verticesOnlySet", False)
 
-        # TODO: Add all new nodes in the reference to the container
-        #   Currently new nodes in an updated reference are not added to the
-        #   container whereas actually they should be!
-        nodes = cmds.referenceQuery(reference_node, nodes=True, dagPath=True)
-        cmds.sets(nodes, forceElement=node)
+        # Add new nodes of the reference to the container
+        cmds.sets(content, forceElement=node)
+
+        # Remove any placeHolderList attribute entries from the set that
+        # are remaining from nodes being removed from the referenced file.
+        members = cmds.sets(node, query=True)
+        invalid = [x for x in members if ".placeHolderList" in x]
+        if invalid:
+            cmds.sets(invalid, remove=node)
 
         # Update metadata
         cmds.setAttr(node + ".representation",
