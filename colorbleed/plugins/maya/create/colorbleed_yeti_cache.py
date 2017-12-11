@@ -4,8 +4,8 @@ import avalon.maya
 from colorbleed.maya import lib
 
 
-class CreateYetiRig(avalon.maya.Creator):
-    """Output for procedural plugin nodes ( Yeti / XGen / etc)"""
+class CreateYetiCache(avalon.maya.Creator):
+    """Output for procedural plugin nodes of Yeti """
 
     name = "yetiDefault"
     label = "Yeti Cache"
@@ -13,7 +13,7 @@ class CreateYetiRig(avalon.maya.Creator):
     icon = "pagelines"
 
     def __init__(self, *args, **kwargs):
-        super(CreateYetiRig, self).__init__(*args, **kwargs)
+        super(CreateYetiCache, self).__init__(*args, **kwargs)
 
         data = OrderedDict(self.data)
         data["peroll"] = 0
