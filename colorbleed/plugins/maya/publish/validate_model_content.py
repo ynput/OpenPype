@@ -27,6 +27,15 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
             cls.log.error("Instance has no nodes!")
             return True
 
+        # All children will be included in the extracted export so we also
+        # validate *all* descendents of the set members and we skip any
+        # intermediate shapes
+        descendants = cmds.listRelatives(content_instance,
+                                         allDescendents=True,
+                                         fullPath=True) or []
+        descendants = cmds.ls(descendants, noIntermediate=True, long=True)
+        content_instance = list(set(content_instance + descendants))
+
         # Ensure only valid node types
         allowed = ('mesh', 'transform', 'nurbsCurve')
         nodes = cmds.ls(content_instance, long=True)
@@ -37,6 +46,16 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
             cls.log.error("These nodes are not allowed: %s" % invalid)
             return list(invalid)
 
+        if not valid:
+            cls.log.error("No valid nodes in the instance")
+            return True
+
+        # Ensure it has shapes
+        shapes = cmds.ls(valid, long=True, shapes=True)
+        if not shapes:
+            cls.log.error("No shapes in the model instance")
+            return True
+
         # Top group
         assemblies = cmds.ls(content_instance, assemblies=True, long=True)
         if len(assemblies) != 1:
@@ -45,10 +64,6 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
                 cls.log.warning("No top group found. "
                                 "(Are there objects in the instance?)")
             return assemblies or True
-
-        if not valid:
-            cls.log.error("No valid nodes in the instance")
-            return True
 
         def _is_visible(node):
             """Return whether node is visible"""
@@ -66,7 +81,6 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
                 invalid.add(assembly)
 
         # Ensure at least one shape is visible
-        shapes = cmds.ls(valid, long=True, shapes=True)
         if not any(_is_visible(shape) for shape in shapes):
             cls.log.error("No visible shapes in the model instance")
             invalid.update(shapes)
