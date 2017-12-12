@@ -47,6 +47,40 @@ class ReferenceLoader(api.Loader):
         """To be implemented by subclass"""
         raise NotImplementedError("Must be implemented by subclass")
 
+    def _get_reference_node(self, members):
+        """Get the reference node from the container members
+
+        Returns:
+            str: Reference node name.
+
+        """
+
+        from maya import cmds
+
+        # Collect the references without .placeHolderList[] attributes as
+        # unique entries (objects only) and skipping the sharedReferenceNode.
+        matched = set()
+        references = list()
+        for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
+
+            # Ensure unique entries
+            if ref in matched:
+                continue
+
+            # Ignore `sharedReferenceNode`
+            if ref == "sharedReferenceNode":
+                continue
+
+            references.append(ref)
+            matched.add(ref)
+
+        assert references, "No reference node found in container"
+        if len(set(references)) > 1:
+            self.log.warning("More than one reference node found in "
+                             "container - using first one: %s", references)
+        reference_node = references[0]
+        return reference_node
+
     def update(self, container, representation):
 
         import os
@@ -58,12 +92,7 @@ class ReferenceLoader(api.Loader):
 
         # Get reference node from container members
         members = cmds.sets(node, query=True, nodesOnly=True)
-        references = cmds.ls(members, exactType="reference", objectsOnly=True)
-        assert references, "No reference node found in container"
-        if len(set(references)) > 1:
-            self.log.warning("More than one reference node found in "
-                             "container - using first one: %s", references)
-        reference_node = references[0]
+        reference_node = self._get_reference_node(members)
 
         file_type = {
             "ma": "mayaAscii",
@@ -116,8 +145,8 @@ class ReferenceLoader(api.Loader):
         node = container["objectName"]
 
         # Assume asset has been referenced
-        reference_node = next((node for node in cmds.sets(node, query=True)
-                               if cmds.nodeType(node) == "reference"), None)
+        members = cmds.sets(node, query=True)
+        reference_node = self._get_reference_node(members)
 
         assert reference_node, ("Imported container not supported; "
                                 "container must be referenced.")
