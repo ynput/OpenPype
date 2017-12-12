@@ -338,9 +338,10 @@ def polyConstraint(components, *args, **kwargs):
             # it applies to the selection made before it; because just
             # a `maya.cmds.select()` call will not trigger the constraint.
             with reset_polySelectConstraint():
-                cmds.select(components, r=1)
+                cmds.select(components, r=1, noExpand=True)
                 cmds.polySelectConstraint(*args, mode=2, **kwargs)
                 result = cmds.ls(selection=True)
+                cmds.select(clear=True)
 
     return result
 
