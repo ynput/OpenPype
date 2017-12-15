@@ -34,9 +34,15 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
         """Return the member nodes that are invalid"""
 
+        # Check only non intermediate shapes
+        # todo: must the instance itself ensure to have no intermediates?
+        # todo: how come there are intermediates?
+        from maya import cmds
+        instance_members = cmds.ls(instance, noIntermediate=True, long=True)
+
         # Collect each id with their members
         ids = defaultdict(list)
-        for member in instance:
+        for member in instance_members:
             object_id = lib.get_id(member)
             if not object_id:
                 continue
