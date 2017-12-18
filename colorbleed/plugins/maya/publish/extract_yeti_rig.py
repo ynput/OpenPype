@@ -22,7 +22,11 @@ def disconnected_attributes(settings, members):
             sources = [i for i in source_nodes if
                        not cmds.referenceQuery(i, isNodeReferenced=True)
                        and i in members]
-            source = sources[0]
+            try:
+                source = sources[0]
+            except IndexError:
+                print "source_id:", input["sourceID"]
+                continue
 
             # Get destination shapes (the shapes used as hook up)
             destination_nodes = lib.lsattr("cbId", input["destinationID"])
