@@ -46,7 +46,7 @@ class ExtractSetDress(colorbleed.api.Extractor):
                            "uvWrite": True,
                            "selection": True})
 
-        instance.data["files"] = [json_path, hierarchy_path]
+        instance.data["files"] = [json_filename, hierarchy_filename]
 
         # Remove data
         instance.data.pop("scenedata", None)
