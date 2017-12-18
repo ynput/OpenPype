@@ -3,7 +3,16 @@ import colorbleed.api
 
 
 class ValidateSetdressNamespaces(pyblish.api.InstancePlugin):
-    """Ensure namespaces are not nested"""
+    """Ensure namespaces are not nested
+
+    In the outliner an item in a normal namespace looks as following:
+        props_desk_01_:modelDefault
+
+    Any namespace which diverts from that is illegal, example of an illegal
+    namespace:
+        room_study_01_:props_desk_01_:modelDefault
+
+    """
 
     label = "Validate Setdress Namespaces"
     order = pyblish.api.ValidatorOrder
