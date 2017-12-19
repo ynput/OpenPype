@@ -47,20 +47,21 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
             else:
                 layername = layer.split("rs_", 1)[-1]
 
-            data = {"family": "Render Layers",
-                    "families": ["colorbleed.renderlayer"],
+            # Get layer specific settings, might be overrides
+            with lib.renderlayer(layer):
+                data = {
+                    "subset": layername,
+                    "setMembers": layer,
                     "publish": cmds.getAttr("{}.renderable".format(layer)),
-
                     "startFrame": self.get_render_attribute("startFrame"),
                     "endFrame": self.get_render_attribute("endFrame"),
                     "byFrameStep": self.get_render_attribute("byFrameStep"),
-                    "renderer": lib.get_renderer(layer),
+                    "renderer": self.get_render_attribute("currentRenderer"),
 
                     # instance subset
+                    "family": "Render Layers",
+                    "families": ["colorbleed.renderlayer"],
                     "asset": asset_name,
-                    "subset": layername,
-                    "setMembers": layer,
-
                     "time": api.time(),
                     "author": context.data["user"],
                     "source": source_file}
