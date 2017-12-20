@@ -56,12 +56,6 @@ def get_parent(node):
     return cmds.listRelatives(node, parent=True, fullPath=True)
 
 
-for node in cmds.ls(sl=1, dag=True, leaf=True, noIntermediate=True,
-                    shapes=True):
-    print lib.get_id(node)
-    print get_id_from_history(node)
-
-
 class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     """Validate if deformed shapes have related IDs to the original shapes.
 
