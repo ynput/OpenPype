@@ -13,7 +13,7 @@ def len_flattened(components):
     when requesting with `maya.cmds.ls` without the `flatten`
     flag. Though enabling `flatten` on a large list (e.g. millions)
     will result in a slow result. This command will return the amount
-    of entries in a non-flattened list by parsing the result with 
+    of entries in a non-flattened list by parsing the result with
     regex.
 
     Args:
@@ -38,20 +38,20 @@ def len_flattened(components):
 
 
 class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
-    """Validate meshes have only vertices that are connected by to edges.
+    """Validate meshes have only vertices that are connected to edges.
 
     Maya can have invalid geometry with vertices that have no edges or
     faces connected to them.
 
     In Maya 2016 EXT 2 and later there's a command to fix this:
-        `maya.cmds.polyClean(mesh, cleanVertices=True)
+        `maya.cmds.polyClean(mesh, cleanVertices=True)`
 
     In older versions of Maya it works to select the invalid vertices
-    and merge the components. 
+    and merge the components.
 
-    To find these invalid vertices select all vertices of the mesh 
+    To find these invalid vertices select all vertices of the mesh
     that are visible in the viewport (drag to select), afterwards
-    invert your selection (Ctrl + Shift + I). The remaining selection 
+    invert your selection (Ctrl + Shift + I). The remaining selection
     contains the invalid vertices.
 
     """
@@ -61,7 +61,20 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
     families = ['colorbleed.model']
     category = 'geometry'
     label = 'Mesh Vertices Have Edges'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.api.SelectInvalidAction,
+               colorbleed.api.RepairAction]
+
+    @classmethod
+    def repair(cls, instance):
+
+        # This fix only works in Maya 2016 EXT2 and newer
+        if float(cmds.about(version=True)) <= 2016.0:
+            raise RuntimeError("Repair not supported in Maya version below "
+                               "2016 EXT 2")
+
+        invalid = cls.get_invalid(instance)
+        for node in invalid:
+            cmds.polyClean(node, cleanVertices=True)
 
     @classmethod
     def get_invalid(cls, instance):
