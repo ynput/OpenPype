@@ -35,8 +35,10 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         use_defaultlayer = cmds.getAttr(default_layer)
 
         # Get render layers
-        renderlayers = [i for i in cmds.ls(type="renderLayer") if not
+        renderlayers = [i for i in cmds.ls(type="renderLayer") if
+                        cmds.getAttr("{}.renderable".format(i)) and not
                         cmds.referenceQuery(i, isNodeReferenced=True)]
+
         if not use_defaultlayer:
             renderlayers = [i for i in renderlayers if
                             not i.endswith("defaultRenderLayer")]
@@ -52,7 +54,7 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                 data = {
                     "subset": layername,
                     "setMembers": layer,
-                    "publish": cmds.getAttr("{}.renderable".format(layer)),
+                    "publish": True,
                     "startFrame": self.get_render_attribute("startFrame"),
                     "endFrame": self.get_render_attribute("endFrame"),
                     "byFrameStep": self.get_render_attribute("byFrameStep"),
