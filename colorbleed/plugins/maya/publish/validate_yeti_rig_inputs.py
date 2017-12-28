@@ -4,13 +4,13 @@ import pyblish.api
 import colorbleed.api
 
 
-class ValidateYetiRigInputMeshes(pyblish.api.Validator):
-    """Validate if all pgYetiMaya nodes have at least one input shape"""
+class ValidateYetiRigInputShapesRequired(pyblish.api.Validator):
+    """Validate if all input nodes have at least one incoming connection"""
 
     order = colorbleed.api.ValidateContentsOrder
     hosts = ["maya"]
     families = ["colorbleed.yetiRig"]
-    label = "Yeti Rig Input Shapes"
+    label = "Yeti Rig Input Shapes Required"
     actions = [colorbleed.api.SelectInvalidAction]
 
     def process(self, instance):
@@ -24,17 +24,15 @@ class ValidateYetiRigInputMeshes(pyblish.api.Validator):
 
         invalid = []
 
-        # Get yeti nodes
-        yeti_nodes = cmds.listRelatives(instance,
-                                        type="pgYetiMaya",
-                                        allDescendents=True,
-                                        fullPath=True)
-        # Get input meshes per node
-        for node in yeti_nodes:
-            attribute = "%s.inputGeometry" % node
-            input_meshes = cmds.listConnections(attribute, source=True)
-            if not input_meshes:
-                cls.log.error("'%s' has no input meshes" % node)
+        input_set = [i for i in instance if i == "input_SET"][0]
+        input_nodes = cmds.sets(input_set, query=True)
+        for node in input_nodes:
+            incoming = cmds.listConnections(node,
+                                            source=True,
+                                            destination=False,
+                                            connections=True,
+                                            plugs=True)
+            if not incoming:
                 invalid.append(node)
 
-        return []
+        return invalid
