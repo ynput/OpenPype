@@ -340,7 +340,7 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
             "PluginInfo": {
                 "Version": "3.6",
                 "ScriptFile": module_path,
-                "Arguments": "--path {}".format(json_fpath),
+                "Arguments": '--path "{}"'.format(json_fpath),
                 "SingleFrameOnly": "True"
             },
 
