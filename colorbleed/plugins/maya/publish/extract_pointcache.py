@@ -32,6 +32,9 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
             start -= handles
             end += handles
 
+        # Get extra export arguments
+        writeColorSets = instance.data.get("writeColorSets", False)
+
         self.log.info("Extracting animation..")
         dirname = self.staging_dir(instance)
 
@@ -51,6 +54,7 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
                                    "attr": ["cbId"],
                                    "writeVisibility": True,
                                    "writeCreases": True,
+                                   "writeColorSets": writeColorSets,
                                    "uvWrite": True,
                                    "selection": True})
 
