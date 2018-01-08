@@ -39,10 +39,11 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                         cmds.referenceQuery(i, isNodeReferenced=True)]
 
         # Sort by displayOrder
-        renderlayers = sorted(renderlayers,
-                              key=lambda x: -cmds.getAttr("%s.displayOrder" % x))
+        def sort_by_display_order(layer):
+            return cmds.getAttr("%s.displayOrder" % layer)
 
-        renderlayers = reversed(renderlayers)
+        renderlayers = sorted(renderlayers, key=sort_by_display_order)
+
         if not use_defaultlayer:
             renderlayers = [i for i in renderlayers if
                             not i.endswith("defaultRenderLayer")]
