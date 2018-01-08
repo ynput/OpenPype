@@ -113,7 +113,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
 
-        context[:] = sorted(context)
+        # Sort/grouped by family (preserving local index)
+        grouped = sorted(enumerate(context), key=self.sorter)
+        context[:] = [x[1] for x in grouped]
+        # context[:] = sorted(context, key= lambda x: (x.data['families'],
+        #                                              x.data['name']))
 
         return context
 
@@ -134,3 +138,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
             parents.extend(items)
 
         return list(set(parents))
+
+    def sorter(self, x):
+        """Sort a tuple of index and instance"""
+        index, instance = x
+        family = instance.data.get("families", instance.data.get("family"))
+
+        return family, index
