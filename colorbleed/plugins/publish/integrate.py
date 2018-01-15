@@ -37,9 +37,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        self.log.info("Integrating Asset in to the database ...")
-
         self.register(instance)
+
+        self.log.info("Integrating Asset in to the database ...")
         self.integrate(instance)
 
         # TODO: Decide how to clean up? And when?
