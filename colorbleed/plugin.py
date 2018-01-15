@@ -28,7 +28,7 @@ class Extractor(pyblish.api.InstancePlugin):
         staging_dir = instance.data.get('stagingDir', None)
 
         if not staging_dir:
-            staging_dir = tempfile.mkdtemp()
+            staging_dir = tempfile.mkdtemp(prefix="pyblish_tmp_")
             instance.data['stagingDir'] = staging_dir
 
         return staging_dir

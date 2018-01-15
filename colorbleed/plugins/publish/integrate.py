@@ -37,15 +37,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        self.log.info("Integrating Asset in to the database ...")
-
         self.register(instance)
-        self.integrate(instance)
 
-        # TODO: Decide how to clean up? And when?
-        # self.log.info("Removing temporary files and folders ...")
-        # stagingdir = instance.data["stagingDir"]
-        # shutil.rmtree(stagingdir)
+        self.log.info("Integrating Asset in to the database ...")
+        self.integrate(instance)
 
     def register(self, instance):
 
