@@ -64,13 +64,9 @@ def publish_data(json_file):
     from avalon import api, shell
     api.install(shell)
 
-    # Add environment variable to force collector to use a single folder
-    # based on the given JSON file
-    os.environ['USE_JSON'] = str(json_file)
-
     # Publish items, returns context instances
     import pyblish.util
-    context = pyblish.util.publish()
+    context = pyblish.util.publish(targets=["imagesequence"])
 
     if not context:
         log.warning("Nothing published.")

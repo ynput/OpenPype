@@ -6,6 +6,7 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
     """Gather image sequnences from working directory"""
 
     order = pyblish.api.CollectorOrder
+    targets = ["imagesequence"]
     hosts = ["shell"]
     label = "Image Sequences"
 
