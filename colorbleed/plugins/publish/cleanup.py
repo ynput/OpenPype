@@ -1,4 +1,5 @@
 import os
+import shutil
 import pyblish.api
 
 
@@ -29,4 +30,4 @@ class CleanUp(pyblish.api.InstancePlugin):
             return
 
         self.log.info("Removing temporary folder ...")
-        os.rmdir(staging_dir)
+        shutil.rmtree(staging_dir)
