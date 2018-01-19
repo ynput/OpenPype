@@ -38,8 +38,6 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         # in the rig instance
         set_members = self.check_set_members(instance)
 
-        self.log.info("Evaluating contents of object sets..")
-
         # Ensure contents in sets and retrieve long path for all objects
         output_content = cmds.sets("out_SET", query=True) or []
         assert output_content, "Must have members in rig out_SET"
