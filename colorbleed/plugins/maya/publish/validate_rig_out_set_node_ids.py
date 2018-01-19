@@ -35,8 +35,6 @@ def get_id_from_history(node):
     similar_nodes = [i for i in similar_nodes if
                      get_parent(i) == parent]
 
-    print similar_nodes
-
     # Check all of the remaining similar nodes and take the first one
     # with an id and assume it's the original.
     for similar_node in similar_nodes:
