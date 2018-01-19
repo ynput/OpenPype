@@ -58,10 +58,8 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
                 invalid_hierarchy.append(node)
 
         # Additional validations
-        invalid_geometry = self.validate_geometry(output_content,
-                                                  hierarchy)
-        invalid_controls = self.validate_controls(controls_content,
-                                                  hierarchy)
+        invalid_geometry = self.validate_geometry(output_content)
+        invalid_controls = self.validate_controls(controls_content)
 
         error = False
         if invalid_hierarchy:
@@ -83,7 +81,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
         if error:
             raise RuntimeError("Invalid rig content. See log for details.")
 
-    def validate_geometry(self, set_members, hierarchy):
+    def validate_geometry(self, set_members):
         """Check if the out set passes the validations
 
         Checks if all its set members are within the hierarchy of the root
@@ -110,7 +108,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
         return invalid
 
-    def validate_controls(self, set_members, hierarchy):
+    def validate_controls(self, set_members):
         """Check if the controller set passes the validations
 
         Checks if all its set members are within the hierarchy of the root
