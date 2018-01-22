@@ -1126,8 +1126,56 @@ def get_container_transforms(container, members=None, root=False):
 
     results = cmds.ls(members, type="transform", long=True)
     if root:
-        root = core.getHighestInHierarchy(results)
+        root = get_highest_in_hierarchy(results)
         if root:
             results = root[0]
 
     return results
+
+
+def get_highest_in_hierarchy(nodes):
+    """Return highest nodes in the hierarchy that are in the `nodes` list.
+
+    The "highest in hierarchy" are the nodes closest to world: top-most level.
+
+    Args:
+        nodes (list): The nodes in which find the highest in hierarchies.
+
+    Returns:
+        list: The highest nodes from the input nodes.
+
+    """
+
+    # Ensure we use long names
+    nodes = cmds.ls(nodes, long=True)
+    lookup = set(nodes)
+
+    highest = []
+    for node in nodes:
+        # If no parents are within the nodes input list
+        # then this is a highest node
+        if not any(n in lookup for n in iter_parents(node)):
+            highest.append(node)
+
+    return highest
+
+
+def iter_parents(node):
+    """Iter parents of node from its long name.
+
+    Note: The `node` *must* be the long node name.
+
+    Args:
+        node (str): Node long name.
+
+    Yields:
+        str: All parent node names (long names)
+
+    """
+    while True:
+        split = node.rsplit("|", 1)
+        if len(split) == 1:
+            return
+
+        node = split[0]
+        yield node
