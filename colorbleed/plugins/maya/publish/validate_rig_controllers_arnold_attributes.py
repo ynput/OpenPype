@@ -65,8 +65,6 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
                          noIntermediate=True)
         curves = cmds.ls(shapes, type="nurbsCurve", long=True)
 
-        print curves
-
         invalid = list()
         for node in curves:
 
