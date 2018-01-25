@@ -27,8 +27,15 @@ class CameraLoader(colorbleed.maya.plugin.ReferenceLoader):
                           returnNewNodes=True)
 
         cameras = cmds.ls(nodes, type="camera")
-        for camera in cameras:
-            cmds.camera(camera, edit=True, lockTransform=True)
+
+        # Check the Maya version, lockTransform has been introduced since
+        # Maya 2017
+        if cmds.about(version=True) >= "2018":
+            for camera in cameras:
+                cmds.camera(camera, edit=True, lockTransform=True)
+        else:
+            self.log.warning("This version of Maya does not support locking of"
+                             " transforms of cameras.")
 
         self[:] = nodes
 
