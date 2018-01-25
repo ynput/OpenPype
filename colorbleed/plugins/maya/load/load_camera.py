@@ -30,7 +30,8 @@ class CameraLoader(colorbleed.maya.plugin.ReferenceLoader):
 
         # Check the Maya version, lockTransform has been introduced since
         # Maya 2017
-        if cmds.about(version=True) >= "2018":
+        version = int(cmds.about(version=True))
+        if version >= 2017:
             for camera in cameras:
                 cmds.camera(camera, edit=True, lockTransform=True)
         else:
