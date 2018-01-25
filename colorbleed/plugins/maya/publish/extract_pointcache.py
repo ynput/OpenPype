@@ -52,6 +52,7 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
                                 endFrame=end,
                                 **{"step": instance.data.get("step", 1.0),
                                    "attr": ["cbId"],
+                                   "attrPrefix": ["vray"],
                                    "writeVisibility": True,
                                    "writeCreases": True,
                                    "writeColorSets": writeColorSets,
