@@ -2,10 +2,17 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.lib as lib
 
 
 class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
-    """Ensure no multiple UV sets exist for each polygon mesh"""
+    """Warn on multiple UV sets existing for each polygon mesh.
+
+    On versions prior to Maya 2017 this will force no multiple uv sets because
+    the Alembic exports in Maya prior to 2017 don't support writing multiple
+    UV sets.
+
+    """
 
     order = colorbleed.api.ValidateMeshOrder
     hosts = ['maya']
@@ -42,83 +49,20 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Nodes found with multiple "
-                             "UV sets: {0}".format(invalid))
+
+            message = "Nodes found with multiple UV sets: {0}".format(invalid)
+
+            # Maya 2017 and up allows multiple UV sets in Alembic exports
+            # so we allow it, yet just warn the user to ensure they know about
+            # the other UV sets.
+            allowed = int(cmds.about(version=True)) >= 2017
+
+            if allowed:
+                self.log.warning(message)
+            else:
+                raise ValueError(message)
 
     @classmethod
     def repair(cls, instance):
         for mesh in cls.get_invalid(instance):
-            cls._repair_mesh(mesh)
-
-    @classmethod
-    def _repair_mesh(cls, mesh):
-        """Process a single mesh, deleting other UV sets than the active one.
-
-        Keep only current UV set and ensure it's the default 'map1'
-
-        """
-        from maya import cmds
-
-        uvSets = cmds.polyUVSet(mesh,
-                                query=True,
-                                allUVSets=True)
-        current = cmds.polyUVSet(mesh,
-                                 query=True,
-                                 currentUVSet=True)[0]
-
-        # Copy over to map1
-        if current != 'map1':
-            cmds.polyUVSet(mesh,
-                           uvSet=current,
-                           newUVSet='map1',
-                           copy=True)
-            cmds.polyUVSet(mesh,
-                           currentUVSet=True,
-                           uvSet='map1')
-            current = 'map1'
-
-        # Delete all non-current UV sets
-        deleteUVSets = [uvSet for uvSet in uvSets if uvSet != current]
-        uvSet = None
-
-        # Maya Bug (tested in 2015/2016):
-        # In some cases the API's MFnMesh will report less UV sets
-        # than maya.cmds.polyUVSet.
-        # This seems to happen when the deletion of UV sets has not
-        # triggered a cleanup of the UVSet array
-        # attribute on the mesh node. It will still have extra
-        # entries in the attribute, though it will not
-        # show up in API or UI. Nevertheless it does show up in
-        # maya.cmds.polyUVSet.
-        # To ensure we clean up the array we'll force delete the
-        # extra remaining 'indices' that we don't want.
-
-        # TODO: Implement a better fix
-        # The best way to fix would be to get the UVSet
-        # indices from api with MFnMesh (to ensure we keep
-        # correct ones) and then only force delete the other
-        # entries in the array attribute on the node.
-        # But for now we're deleting all entries except first
-        # one. Note that the first entry could never
-        # be removed (the default 'map1' always exists and is
-        # supposed to be undeletable.)
-        try:
-            for uvSet in deleteUVSets:
-                cmds.polyUVSet(mesh, delete=True, uvSet=uvSet)
-        except RuntimeError, e:
-            cls.log.warning('uvSet: {0} - '
-                            'Error: {1}'.format(uvSet, e))
-
-            indices = cmds.getAttr('{0}.uvSet'.format(mesh),
-                                   multiIndices=True)
-            if not indices:
-                cls.log.warning(
-                    "No uv set found indices for: {0}".format(mesh))
-                return
-
-            # Delete from end to avoid shifting indices
-            # and remove the indices in the attribute
-            indices = reversed(indices[1:])
-            for i in indices:
-                attr = '{0}.uvSet[{1}]'.format(mesh, i)
-                cmds.removeMultiInstance(attr, b=True)
+            lib.remove_other_uv_sets(mesh)
