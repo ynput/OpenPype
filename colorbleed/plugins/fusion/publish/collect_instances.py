@@ -3,6 +3,8 @@ import re
 
 import pyblish.api
 
+from avalon.vendor import clique
+
 
 def get_comp_render_range(comp):
     """Return comp's start and end render range."""
@@ -39,21 +41,18 @@ class CollectInstances(pyblish.api.ContextPlugin):
         start, end = get_comp_render_range(comp)
         for tool in savers:
             path = tool["Clip"][comp.TIME_UNDEFINED]
-
             if not path:
                 self.log.warning("Skipping saver because it "
                                  "has no path set: {}".format(tool.Name))
                 continue
 
             fname = os.path.basename(path)
-            _subset, ext = os.path.splitext(fname)
+            # we don't use the padding
+            basename, ext = os.path.splitext(fname)
+            chars = [char for char in basename if
+                     not char.isdigit() and char != "."]
 
-            # match all digits and character but no points
-            match = re.match("([\d\w]+)", _subset)
-            if not match:
-                self.log.warning("Skipping save because the file name is not"
-                                 "compatible")
-            subset = match.group(0)
+            subset = "".join(chars)
 
             # Include start and end render frame in label
             label = "{subset} ({start}-{end})".format(subset=subset,
@@ -69,8 +68,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "label": label,
                 "families": ["colorbleed.imagesequence"],
                 "family": "colorbleed.imagesequence",
-                "tool": tool    # keep link to the tool
             })
+
+            instance.append(tool)  # For future use, store the tool
 
             self.log.info("Found: \"%s\" " % path)
 
