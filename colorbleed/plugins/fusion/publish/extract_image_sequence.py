@@ -37,7 +37,7 @@ class ExtractImageSequence(pyblish.api.Extractor):
 
             # Get all output paths after render was successful
             # Note the .ID check, this is to ensure we only have savers
-            instances = [i for i in context[:] if i.data["tool"].ID == "Saver"]
+            instances = [i for i in context[:] if i[0].ID == "Saver"]
             for instance in instances:
                 # Ensure each instance has its files for the integrator
                 output_path = instance.data["path"]

@@ -69,8 +69,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "label": label,
                 "families": ["colorbleed.saver"],
                 "family": "colorbleed.saver",
-                "tool": tool    # keep link to the tool
             })
+
+            instance.append(tool)
 
             self.log.info("Found: \"%s\" " % path)
 
