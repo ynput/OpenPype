@@ -48,20 +48,20 @@ class CollectInstances(pyblish.api.ContextPlugin):
         for tool in savers:
             path = tool["Clip"][comp.TIME_UNDEFINED]
 
+            tool_attrs = tool.GetAttrs()
+            active = not tool_attrs["TOOLB_PassThrough"]
+
             if not path:
                 self.log.warning("Skipping saver because it "
                                  "has no path set: {}".format(tool.Name))
                 continue
 
-            fname = os.path.basename(path)
-            _subset, ext = os.path.splitext(fname)
+            from avalon.fusion.lib import get_frame_path
+            filename = os.path.basename(path)
+            head, padding, tail = get_frame_path(filename)
 
-            # match all digits and character but no points
-            match = re.match("([\d\w]+)", _subset)
-            if not match:
-                self.log.warning("Skipping save because the file name is not"
-                                 "compatible")
-            subset = match.group(0)
+            assert tail == os.path.splitext(path)[1], "tail == extension"
+            subset = head   # subset is head of the filename
 
             # Include start and end render frame in label
             label = "{subset} ({start}-{end})".format(subset=subset,
@@ -74,10 +74,12 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "subset": subset,
                 "path": path,
                 "outputDir": os.path.dirname(path),
-                "ext": ext,  # todo: should be redundant
+                "ext": tail,  # todo: should be redundant
                 "label": label,
                 "families": ["colorbleed.saver"],
-                "family": "colorbleed.saver"
+                "family": "colorbleed.saver",
+                "active": active,
+                "publish": active   # backwards compatibility
             })
 
             instance.append(tool)
