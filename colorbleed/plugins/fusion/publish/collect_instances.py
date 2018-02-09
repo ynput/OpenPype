@@ -67,8 +67,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "path": path,
                 "ext": ext,  # todo: should be redundant
                 "label": label,
-                "families": ["colorbleed.imagesequence"],
-                "family": "colorbleed.imagesequence",
+                "families": ["colorbleed.saver"],
+                "family": "colorbleed.saver",
                 "tool": tool    # keep link to the tool
             })
 
