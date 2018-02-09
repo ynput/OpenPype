@@ -1,12 +1,12 @@
 import pyblish.api
 
 
-class ValidateUniqueSubsetName(pyblish.api.InstancePlugin):
+class ValidateUniqueSubsets(pyblish.api.InstancePlugin):
     """Ensure all instances have a unique subset name"""
 
     order = pyblish.api.ValidatorOrder
-    label = "Validate Unique Subset Names"
-    families = ["colorbleed.imagesequence"]
+    label = "Validate Unique Subsets"
+    families = ["colorbleed.saver"]
     hosts = ["fusion"]
 
     @classmethod
