@@ -1,3 +1,5 @@
+import os
+
 import pyblish.api
 
 from avalon import fusion
@@ -19,4 +21,8 @@ class CollectCurrentCompFusion(pyblish.api.ContextPlugin):
 
         # Store path to current file
         attrs = current_comp.GetAttrs()
-        context.data['currentFile'] = attrs.get("COMPS_FileName", "")
+        filepath = attrs.get("COMPS_FileName", "")
+        context.data['currentFile'] = filepath
+
+        # Labelize the context
+        context.data["label"] = os.path.basename(filepath)
