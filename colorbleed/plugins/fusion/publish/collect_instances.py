@@ -21,7 +21,12 @@ def get_comp_render_range(comp):
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
-    """Collect Fusion saver instances"""
+    """Collect Fusion saver instances
+
+    This additionally stores the Comp start and end render range in the
+    current context's data as "startFrame" and "endFrame".
+
+    """
 
     order = pyblish.api.CollectorOrder
     label = "Collect Instances"
@@ -37,6 +42,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
         savers = [tool for tool in tools if tool.ID == "Saver"]
 
         start, end = get_comp_render_range(comp)
+        context.data["startFrame"] = start
+        context.data["endFrame"] = end
+
         for tool in savers:
             path = tool["Clip"][comp.TIME_UNDEFINED]
 
@@ -65,10 +73,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "asset": os.environ["AVALON_ASSET"],  # todo: not a constant
                 "subset": subset,
                 "path": path,
+                "outputDir": os.path.dirname(path),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
                 "families": ["colorbleed.saver"],
-                "family": "colorbleed.saver",
+                "family": "colorbleed.saver"
             })
 
             instance.append(tool)
