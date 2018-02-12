@@ -132,6 +132,16 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             "AuxFiles": []
         }
 
+        # Transfer the environment from the original job to this dependent
+        # job so they use the same environment
+        environment = job["Props"].get("Env", {})
+        payload["JobInfo"].update({
+            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
+                key=key,
+                value=environment[key]
+            ) for index, key in enumerate(environment)
+        })
+
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
