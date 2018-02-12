@@ -1,10 +1,27 @@
 import os
-import glob
-import re
 
 import pyblish.api
 
-_frame_regex = re.compile("[0-9]")
+from avalon.vendor import clique
+
+
+def get_collection_for_instance(subset, collections):
+    """Get the collection which matches the subset name
+
+    Args:
+        subset (str): name of the subset
+        collections (clique.Collection):
+
+    Returns:
+        list
+    """
+    for collection in collections:
+        name = collection.head
+        if name[-1] == ".":
+            name = name[:-1]
+
+        if name == subset:
+            return collection
 
 
 class ExtractImageSequence(pyblish.api.Extractor):
@@ -14,7 +31,7 @@ class ExtractImageSequence(pyblish.api.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder
-    label = "Extract Image Sequence"
+    label = "Extract Image Sequence (Local)"
     families = ["colorbleed.imagesequence"]
     hosts = ["fusion"]
 
@@ -37,44 +54,34 @@ class ExtractImageSequence(pyblish.api.Extractor):
 
             # Get all output paths after render was successful
             # Note the .ID check, this is to ensure we only have savers
+            # Use instance[0] to get the tool
             instances = [i for i in context[:] if i[0].ID == "Saver"]
             for instance in instances:
-                # Ensure each instance has its files for the integrator
-                output_path = instance.data["path"]
-                query = self._create_qeury(output_path)
-                files = glob.glob(query)
 
+                # Ensure each instance has its files for the integrator
+                output_path = os.path.dirname(instance.data["path"])
+                files = os.listdir(output_path)
+                pattern = clique.PATTERNS["frames"]
+                collections, remainder = clique.assemble(files,
+                                                         patterns=[pattern],
+                                                         minimum_items=1)
+
+                assert not remainder, ("There shouldn't have been a remainder "
+                                       "for '%s': %s" %
+                                       (instance.data["subset"],
+                                        remainder))
+
+                # Filter collections to ensure specific files are part of
+                # the instance, store instance's collection
                 if "files" not in instance.data:
                     instance.data["files"] = list()
 
-                print("{} files : {}".format(instance.data["subset"],
-                                             len(files)))
-                instance.data["files"].append(files)
+                subset = instance.data["subset"]
+                collection = get_collection_for_instance(subset, collections)
+                assert collection, "No collection found, this is a bug"
+
+                # Add found collection to the instance
+                instance.data["files"].append(list(collection))
 
                 # Ensure the integrator has stagingDir
-                instance.data["stagingDir"] = os.path.dirname(output_path)
-
-    def _create_qeury(self, instance):
-        """Create a queriable string for glob
-
-        Args:
-            instance: instance of current context (comp)
-
-        Returns:
-            str
-        """
-
-        clipname = instance.data["path"]
-        clip_dir = os.path.dirname(clipname)
-        basename = os.path.basename(clipname)
-        _, ext = os.path.splitext(basename)
-
-        match = re.match("([0-9]{4})", basename)
-        if not match:
-            query_name = "{}.*.{}".format(instance.data["subset"], ext[1:])
-        else:
-            query_name = basename.replace(match.group(0), ".*.")
-
-        query = os.path.join(clip_dir, query_name)
-
-        return query
+                instance.data["stagingDir"] = output_path

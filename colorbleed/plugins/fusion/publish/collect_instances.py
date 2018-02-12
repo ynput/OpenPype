@@ -1,5 +1,4 @@
 import os
-import re
 
 import pyblish.api
 
@@ -35,6 +34,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         """Collect all image sequence tools"""
 
+        from avalon.fusion.lib import get_frame_path
+
         comp = context.data["currentComp"]
 
         # Get all savers in the comp
@@ -56,7 +57,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
                                  "has no path set: {}".format(tool.Name))
                 continue
 
-            from avalon.fusion.lib import get_frame_path
             filename = os.path.basename(path)
             head, padding, tail = get_frame_path(filename)
 
