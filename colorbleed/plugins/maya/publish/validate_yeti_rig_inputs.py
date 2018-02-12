@@ -5,7 +5,11 @@ import colorbleed.api
 
 
 class ValidateYetiRigInputShapesRequired(pyblish.api.Validator):
-    """Validate if all input nodes have at least one incoming connection"""
+    """Validate if all input nodes have at least one outgoing connection.
+
+    The input nodes are the approach to ensure the rig can be hooked up to
+    other meshes, for example: Alembic Mesh.
+    """
 
     order = colorbleed.api.ValidateContentsOrder
     hosts = ["maya"]
@@ -24,15 +28,26 @@ class ValidateYetiRigInputShapesRequired(pyblish.api.Validator):
 
         invalid = []
 
-        input_set = [i for i in instance if i == "input_SET"][0]
-        input_nodes = cmds.sets(input_set, query=True)
-        for node in input_nodes:
-            incoming = cmds.listConnections(node,
-                                            source=True,
-                                            destination=False,
-                                            connections=True,
-                                            plugs=True)
+        input_set = [i for i in instance if i == "input_SET"]
+        assert input_set, "Current %s instance has no `input_SET`" % instance
+
+        # Get all children
+        input_nodes = cmds.ls(cmds.sets(input_set, query=True), long=True)
+        children = [i for i in cmds.listRelatives(input_nodes,
+                                                  allDescendents=True,
+                                                  fullPath=True)]
+        children = cmds.ls(children,
+                           type="shape",
+                           long=True,
+                           noIntermediate=True)
+
+        for shape in children:
+            incoming = cmds.listConnections(shape,
+                                            source=False,
+                                            destination=True,
+                                            connections=True)
             if not incoming:
-                invalid.append(node)
+                cls.log.error("%s has not incoming connections" % shape)
+                invalid.append(shape)
 
         return invalid
