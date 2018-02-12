@@ -61,7 +61,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             head, padding, tail = get_frame_path(filename)
 
             assert tail == os.path.splitext(path)[1], "tail == extension"
-            subset = head   # subset is head of the filename
+            subset = head.rstrip("_. ")   # subset is head of the filename
 
             # Include start and end render frame in label
             label = "{subset} ({start}-{end})".format(subset=subset,
