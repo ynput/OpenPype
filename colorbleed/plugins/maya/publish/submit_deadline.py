@@ -60,7 +60,7 @@ def get_renderer_variables(renderlayer=None):
             "filename_0": filename_0}
 
 
-class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
+class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit available render layers to Deadline
 
     Renders are submitted to a Deadline Web Service as
@@ -300,56 +300,3 @@ class MindbenderSubmitDeadline(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
-
-    def create_publish_job(self, fname, user, comment, jobname,
-                           job, json_fpath, state):
-        """Make sure all frames are published
-
-        Args:
-            job (dict): the render job data
-            json_fpath (str): file path to json file
-            state (str): In which state the job needs to when submitted, e.g.:
-                         "Suspended"
-
-        Returns:
-            dict
-        """
-
-        url = "{}/api/jobs".format(api.Session["AVALON_DEADLINE"])
-        try:
-            from colorbleed.scripts import publish_imagesequence
-        except Exception as e:
-            raise RuntimeError("Expected module 'publish_imagesequence'"
-                               "to be available")
-
-        module_path = publish_imagesequence.__file__
-        if module_path.endswith(".pyc"):
-            module_path = module_path[:-len(".pyc")] + ".py"
-
-        payload = {
-            "JobInfo": {
-                "Plugin": "Python",
-                "BatchName": fname,
-                "Name": "{} [publish]".format(jobname),
-                "JobType": "Normal",
-                "JobDependency0": job["_id"],
-                "UserName": user,
-                "Comment": comment,
-                "InitialStatus": state
-            },
-            "PluginInfo": {
-                "Version": "3.6",
-                "ScriptFile": module_path,
-                "Arguments": '--path "{}"'.format(json_fpath),
-                "SingleFrameOnly": "True"
-            },
-
-            # Mandatory for Deadline, may be empty
-            "AuxFiles": []
-        }
-
-        response = requests.post(url, json=payload)
-        if not response.ok:
-            return
-
-        return payload

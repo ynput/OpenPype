@@ -22,7 +22,7 @@ class IncrementCurrentFileDeadline(pyblish.api.ContextPlugin):
         from colorbleed.action import get_errored_plugins_from_data
 
         errored_plugins = get_errored_plugins_from_data(context)
-        if any(plugin.__name__ == "MindbenderSubmitDeadline"
+        if any(plugin.__name__ == "MayaSubmitDeadline"
                 for plugin in errored_plugins):
             raise RuntimeError("Skipping incrementing current file because "
                                "submission to deadline failed.")
