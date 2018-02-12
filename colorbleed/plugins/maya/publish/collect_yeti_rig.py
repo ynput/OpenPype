@@ -1,5 +1,4 @@
 import os
-import glob
 import re
 
 from maya import cmds
@@ -143,15 +142,15 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
         from avalon.vendor import clique
 
-        glob_pattern = filename.replace(pattern, "*")
-
         escaped = re.escape(filename)
         re_pattern = escaped.replace(pattern, "-?[0-9]+")
 
-        files = glob.glob(glob_pattern)
-        files = [str(f) for f in files if re.match(re_pattern, f)]
+        source_dir = os.path.dirname(filename)
+        files = [f for f in os.listdir(source_dir)
+                 if re.match(re_pattern, f)]
 
         pattern = [clique.PATTERNS["frames"]]
-        collection, remainer = clique.assemble(files, patterns=pattern)
+        collection, remainder = clique.assemble(files,
+                                                patterns=pattern)
 
         return collection
