@@ -31,7 +31,6 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            print(">>>", invalid)
             raise RuntimeError("Found Saver with Create Folder During "
                                "Render checked off")
 
