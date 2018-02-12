@@ -77,8 +77,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
                                           "http://localhost:8082")
-
-        assert AVALON_DEADLINE is not None, "Requires AVALON_DEADLINE"
+        assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
 
         context = instance.context
         workspace = context.data["workspaceDir"]
