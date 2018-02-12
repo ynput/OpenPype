@@ -3,39 +3,38 @@ import pyblish.api
 from colorbleed import action
 
 
-class ValidateBackgroundDepth(pyblish.api.ContextPlugin):
+class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
     """Validate if all Background tool are set to float32 bit"""
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Background Depth 32 bit"
-    actions = [action.RepairContextAction]
+    actions = [action.RepairAction]
     hosts = ["fusion"]
     families = ["*"]
     optional = True
 
-    comp = None
-
     @classmethod
-    def get_invalid(cls, context):
-        cls.comp = context.data.get("currentComp")
-        assert cls.comp, "Must have Comp object"
+    def get_invalid(cls, instance):
 
-        backgrounds = cls.comp.GetToolList(False, "Background").values()
+        context = instance.context
+        comp = context.data.get("currentComp")
+        assert comp, "Must have Comp object"
+
+        backgrounds = comp.GetToolList(False, "Background").values()
         if not backgrounds:
             return []
 
         return [i for i in backgrounds if i.GetInput("Depth") != 4.0]
 
-    def process(self, context):
-        invalid = self.get_invalid(context)
+    def process(self, instance):
+        invalid = self.get_invalid(instance)
         if invalid:
             raise RuntimeError("Found %i nodes which are not set to float32"
                                % len(invalid))
 
     @classmethod
-    def repair(cls):
-        # todo: improve this method, context should be available(?)
-        backgrounds = cls.comp.GetToolList(False, "Background").values()
-        invalid = [i for i in backgrounds if i.GetInput("Depth") != 4.0]
+    def repair(cls, instance):
+        comp = instance.context.data.get("currentComp")
+        invalid = cls.get_invalid(instance)
         for i in invalid:
-            i.SetInput("Depth", 4.0, cls.comp.TIME_UNDEFINED)
+            i.SetInput("Depth", 4.0, comp.TIME_UNDEFINED)

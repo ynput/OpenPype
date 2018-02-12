@@ -26,17 +26,17 @@ class ValidateCreateFolderChecked(pyblish.api.InstancePlugin):
         create_dir = tool.GetInput("CreateDir")
         if create_dir == 0.0:
             cls.log.error("%s has Create Folder turned off" % instance[0].Name)
-            return [instance]
+            return [tool]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found %i Savers with Create Folder During "
+            print(">>>", invalid)
+            raise RuntimeError("Found Saver with Create Folder During "
                                "Render checked off")
 
     @classmethod
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
-        for i in invalid:
-            tool = i[0]
+        for tool in invalid:
             tool.SetInput("CreateDir", 1.0)
