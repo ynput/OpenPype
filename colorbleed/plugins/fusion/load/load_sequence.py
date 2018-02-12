@@ -69,8 +69,6 @@ class FusionLoadSequence(api.Loader):
 
         root = api.get_representation_path(representation)
         path = self._get_first_image(root)
-        print representation
-        print path
 
         tool = container["_tool"]
         assert tool.ID == "Loader", "Must be Loader"
