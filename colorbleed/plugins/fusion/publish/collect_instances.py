@@ -1,9 +1,6 @@
 import os
-import re
 
 import pyblish.api
-
-from avalon.vendor import clique
 
 
 def get_comp_render_range(comp):
@@ -23,7 +20,12 @@ def get_comp_render_range(comp):
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
-    """Collect Fusion saver instances"""
+    """Collect Fusion saver instances
+
+    This additionally stores the Comp start and end render range in the
+    current context's data as "startFrame" and "endFrame".
+
+    """
 
     order = pyblish.api.CollectorOrder
     label = "Collect Instances"
@@ -32,6 +34,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         """Collect all image sequence tools"""
 
+        from avalon.fusion.lib import get_frame_path
+
         comp = context.data["currentComp"]
 
         # Get all savers in the comp
@@ -39,20 +43,25 @@ class CollectInstances(pyblish.api.ContextPlugin):
         savers = [tool for tool in tools if tool.ID == "Saver"]
 
         start, end = get_comp_render_range(comp)
+        context.data["startFrame"] = start
+        context.data["endFrame"] = end
+
         for tool in savers:
             path = tool["Clip"][comp.TIME_UNDEFINED]
+
+            tool_attrs = tool.GetAttrs()
+            active = not tool_attrs["TOOLB_PassThrough"]
+
             if not path:
                 self.log.warning("Skipping saver because it "
                                  "has no path set: {}".format(tool.Name))
                 continue
 
-            fname = os.path.basename(path)
-            # we don't use the padding
-            basename, ext = os.path.splitext(fname)
-            chars = [char for char in basename if
-                     not char.isdigit() and char != "."]
+            filename = os.path.basename(path)
+            head, padding, tail = get_frame_path(filename)
 
-            subset = "".join(chars)
+            assert tail == os.path.splitext(path)[1], "tail == extension"
+            subset = head   # subset is head of the filename
 
             # Include start and end render frame in label
             label = "{subset} ({start}-{end})".format(subset=subset,
@@ -64,13 +73,16 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "asset": os.environ["AVALON_ASSET"],  # todo: not a constant
                 "subset": subset,
                 "path": path,
-                "ext": ext,  # todo: should be redundant
+                "outputDir": os.path.dirname(path),
+                "ext": tail,  # todo: should be redundant
                 "label": label,
-                "families": ["colorbleed.imagesequence"],
-                "family": "colorbleed.imagesequence",
+                "families": ["colorbleed.saver"],
+                "family": "colorbleed.saver",
+                "active": active,
+                "publish": active   # backwards compatibility
             })
 
-            instance.append(tool)  # For future use, store the tool
+            instance.append(tool)
 
             self.log.info("Found: \"%s\" " % path)
 
