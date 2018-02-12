@@ -37,6 +37,7 @@ class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
             return []
 
         # check if input node is part of groomRig instance
-        invalid = [s for s in shapes if s not in instance[:]]
+        instance_lookup = set(instance[:])
+        invalid = [s for s in shapes if s not in instance_lookup]
 
         return invalid
