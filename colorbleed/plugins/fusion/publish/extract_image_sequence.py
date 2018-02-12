@@ -78,6 +78,7 @@ class ExtractImageSequence(pyblish.api.Extractor):
 
                 subset = instance.data["subset"]
                 collection = get_collection_for_instance(subset, collections)
+                assert collection, "No collection found, this is a bug"
 
                 # Add found collection to the instance
                 instance.data["files"].append(list(collection))
