@@ -9,7 +9,7 @@ from avalon.vendor import requests
 import pyblish.api
 
 
-class FusionSubmitCompDeadline(pyblish.api.ContextPlugin):
+class FusionSubmitDeadline(pyblish.api.ContextPlugin):
     """Submit current Comp to Deadline
 
     Renders are submitted to a Deadline Web Service as
