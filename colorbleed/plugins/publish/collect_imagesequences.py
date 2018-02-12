@@ -1,9 +1,86 @@
-import pyblish.api
+import os
+import re
 import copy
+import json
+import pprint
+
+import pyblish.api
+from avalon import api
 
 
-class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
-    """Gather image sequnences from working directory"""
+def collect(root,
+            regex=None,
+            exclude_regex=None,
+            startFrame=None,
+            endFrame=None):
+    """Collect sequence collections in root"""
+
+    from avalon.vendor import clique
+
+    files = list()
+    for filename in os.listdir(root):
+
+        # Must have extension
+        ext = os.path.splitext(filename)[1]
+        if not ext:
+            continue
+
+        # Only files
+        if not os.path.isfile(os.path.join(root, filename)):
+            continue
+
+        # Include and exclude regex
+        if regex and not re.search(regex, filename):
+            continue
+        if exclude_regex and re.search(exclude_regex, filename):
+            continue
+
+        files.append(filename)
+
+    # Match collections
+    collections, remainder = clique.assemble(files,
+                                             minimum_items=1)
+
+    # Ignore any remainders
+    if remainder:
+        print("Skipping remainder {}".format(remainder))
+
+    # Exclude any frames outside start and end frame.
+    for collection in collections:
+        for index in list(collection.indexes):
+            if startFrame is not None and index < startFrame:
+                collection.indexes.discard(index)
+                continue
+            if endFrame is not None and index > endFrame:
+                collection.indexes.discard(index)
+                continue
+
+    # Keep only collections that have at least a single frame
+    collections = [c for c in collections if c.indexes]
+
+    return collections
+
+
+class CollectImageSequences(pyblish.api.ContextPlugin):
+    """Gather image sequences from working directory
+
+    When "IMAGESEQUENCES" environment variable is set these paths (folders or
+    .json files) are parsed for image sequences. Otherwise the current
+    working directory is searched for file sequences.
+
+    The json configuration may have the optional keys:
+        asset (str): The asset to publish to. If not provided fall back to
+            api.Session["AVALON_ASSET"]
+        subset (str): The subset to publish to. If not provided the sequence's
+            head (up to frame number) will be used.
+        startFrame (int): The start frame for the sequence
+        endFrame (int): The end frame for the sequence
+        root (str): The path to collect from (can be relative to the .json)
+        regex (str): A regex for the sequence filename
+        exclude_regex (str): A regex for filename to exclude from collection
+        metadata (dict): Custom metadata for instance.data["metadata"]
+
+    """
 
     order = pyblish.api.CollectorOrder
     targets = ["imagesequence"]
@@ -11,69 +88,87 @@ class CollectMindbenderImageSequences(pyblish.api.ContextPlugin):
     label = "Image Sequences"
 
     def process(self, context):
-        import os
-        import json
-        from avalon.vendor import clique
 
-        # Force towards a single json sequence (override searching
-        # the current working directory)
-        # TODO: This logic should be simplified
-        USE_JSON = os.environ.get("USE_JSON", "")
-        if USE_JSON:
-            workspace = os.path.dirname(USE_JSON)
-            base = workspace
-            dirs = [os.path.splitext(os.path.basename(USE_JSON))[0]]
-        # Else use the current working directory
+        if os.environ.get("IMAGESEQUENCES"):
+            paths = os.environ["IMAGESEQUENCES"].split(os.pathsep)
         else:
-            workspace = context.data["workspaceDir"]
-            base, dirs, _ = next(os.walk(workspace))
+            cwd = context.get("workspaceDir", os.getcwd())
+            paths = [cwd]
 
-        for renderlayer in dirs:
-            abspath = os.path.join(base, renderlayer)
-            files = os.listdir(abspath)
-            pattern = clique.PATTERNS["frames"]
-            collections, remainder = clique.assemble(files,
-                                                     patterns=[pattern],
-                                                     minimum_items=1)
-            assert not remainder, (
-                "There shouldn't have been a remainder for '%s': "
-                "%s" % (renderlayer, remainder))
+        for path in paths:
 
-            # Maya 2017 compatibility, it inexplicably prefixes layers
-            # with "rs_" without warning.
-            compatpath = os.path.join(base, renderlayer.split("rs_", 1)[-1])
+            self.log.info("Loading: {}".format(path))
 
-            for fname in (abspath, compatpath):
-                try:
-                    with open("{}.json".format(fname)) as f:
-                        metadata = json.load(f)
-                    break
+            if path.endswith(".json"):
+                # Search using .json configuration
+                with open(path, "r") as f:
+                    try:
+                        data = json.load(f)
+                    except Exception as exc:
+                        self.log.error("Error loading json: "
+                                       "{} - Exception: {}".format(path, exc))
+                        raise
 
-                except OSError:
-                    continue
+                cwd = os.path.dirname(path)
+                root_override = data.get("root")
+                if root_override:
+                    if os.path.isabs(root_override):
+                        root = root_override
+                    else:
+                        root = os.path.join(cwd, root_override)
+                else:
+                    root = cwd
 
             else:
-                raise Exception("%s was not published correctly "
-                                "(missing metadata)" % renderlayer)
+                # Search in directory
+                data = dict()
+                root = path
 
-            metadata_instance = metadata['instance']
-            # For now ensure this data is ignored
+            self.log.info("Collecting: {}".format(root))
+
+            collections = collect(root=root,
+                                  regex=data.get("regex"),
+                                  exclude_regex=data.get("exclude_regex"),
+                                  startFrame=data.get("startFrame"),
+                                  endFrame=data.get("endFrame"))
+
+            self.log.info("Found collections: {}".format(collections))
+
+            if data.get("subset"):
+                # If subset is provided for this json then it must be a single
+                # collection.
+                if len(collections) > 1:
+                    self.log.error("Forced subset can only work with a single "
+                                   "found sequence")
+                    raise RuntimeError("Invalid sequence")
+
             for collection in collections:
                 instance = context.create_instance(str(collection))
                 self.log.info("Collection: %s" % list(collection))
 
-                # Ensure each instance gets its own unique reference to
-                # the source data
-                instance_metadata = copy.deepcopy(metadata_instance)
+                # Ensure each instance gets a unique reference to the data
+                data = copy.deepcopy(data)
 
-                data = dict(instance_metadata, **{
-                    "name": instance.name,
+                # If no subset provided, get it from collection's head
+                subset = data.get("subset", collection.head.rstrip("_. "))
+
+                # If no start or end frame provided, get it from collection
+                indices = list(collection.indexes)
+                start = data.get("startFrame", indices[0])
+                end = data.get("endFrame", indices[-1])
+
+                instance.data.update({
+                    "name": str(collection),
                     "family": "colorbleed.imagesequence",
                     "families": ["colorbleed.imagesequence"],
-                    "subset": collection.head[:-1],
-                    "stagingDir": os.path.join(workspace, renderlayer),
+                    "subset": subset,
+                    "asset": data.get("asset", api.Session["AVALON_ASSET"]),
+                    "stagingDir": root,
                     "files": [list(collection)],
-                    "metadata": metadata
+                    "startFrame": start,
+                    "endFrame": end,
+                    "metadata": data.get("metadata")
                 })
 
-                instance.data.update(data)
+                self.log.debug("Collected instance:\n"
+                               "{}".format(pprint.pformat(instance.data)))

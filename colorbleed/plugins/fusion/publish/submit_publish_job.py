@@ -1,5 +1,6 @@
 import os
 import json
+import re
 
 from avalon import api
 from avalon.vendor import requests
@@ -31,13 +32,23 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     Renders are submitted to a Deadline Web Service as
     supplied via the environment variable AVALON_DEADLINE
 
-    Requires:
-        - instance.data["deadlineSubmission"]
-        - instance.data["outputDir"]
+    Options in instance.data:
+        - deadlineSubmission (dict, Required): The returned .json
+            data from the job submission to deadline.
 
-    Optional:
-        - instance.data["publishJobState"] (str): "Active" or "Suspended"
-            defaults to "Suspended"
+        - outputDir (str, Required): The output directory where the metadata
+            file should be generated. It's assumed that this will also be
+            final folder containing the output files.
+
+        - ext (str, Optional): The extension (including `.`) that is required
+            in the output filename to be picked up for image sequence
+            publishing.
+
+        - publishJobState (str, Optional): "Active" or "Suspended"
+            This defaults to "Suspended"
+
+    This requires a "startFrame" and "endFrame" to be present in instance.data
+    or in context.data.
 
     """
 
@@ -65,13 +76,33 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         )
         output_dir = instance.data["outputDir"]
 
+        # Add in start/end frame
+        context = instance.context
+        start = instance.data.get("startFrame", context.data["startFrame"])
+        end = instance.data.get("endFrame", context.data["endFrame"])
+
+        # Add in regex for sequence filename
+        # This assumes the output files start with subset name and ends with
+        # a file extension.
+        regex = "^{subset}.*\d+{ext}$".format(
+            subset=re.escape(instance.data["subset"]),
+            ext=re.escape(instance.data.get("ext", "\D"))
+        )
+
         # Write metadata for publish job
         data = instance.data.copy()
         data.pop("deadlineSubmissionJob")
         metadata = {
-            "instance": data,
-            "jobs": [job],
-            "session": api.Session.copy()
+            "regex": regex,
+            "startFrame": start,
+            "endFrame": end,
+
+            # Optional metadata (for debugging)
+            "metadata": {
+                "instance": data,
+                "job": job,
+                "session": api.Session.copy()
+            }
         }
         metadata_filename = "{}_metadata.json".format(instance.data["subset"])
         metadata_path = os.path.join(output_dir, metadata_filename)
