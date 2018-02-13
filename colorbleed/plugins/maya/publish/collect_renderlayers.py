@@ -15,12 +15,8 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        registered_root = api.registered_root()
-        asset_name = api.Session["AVALON_ASSET"]
-
-        current_file = context.data["currentFile"]
-        relative_file = current_file.replace(registered_root, "{root}")
-        source_file = relative_file.replace("\\", "/")
+        asset = api.Session["AVALON_ASSET"]
+        filepath = context.data["currentFile"].replace("\\", "/")
 
         # Get render globals node
         try:
@@ -68,10 +64,14 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                     # instance subset
                     "family": "Render Layers",
                     "families": ["colorbleed.renderlayer"],
-                    "asset": asset_name,
+                    "asset": asset,
                     "time": api.time(),
                     "author": context.data["user"],
-                    "source": source_file}
+
+                    # Add source to allow tracing back to the scene from
+                    # which was submitted originally
+                    "source": filepath
+                }
 
             # Apply each user defined attribute as data
             for attr in cmds.listAttr(layer, userDefined=True) or list():
