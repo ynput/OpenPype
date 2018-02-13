@@ -55,7 +55,8 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     label = "Submit image sequence jobs to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["fusion"]
-    families = ["colorbleed.saver"]
+    families = ["fusion.deadline"]
+    targets = ["deadline"]
 
     def process(self, instance):
 

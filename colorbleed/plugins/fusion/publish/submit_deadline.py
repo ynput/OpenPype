@@ -1,5 +1,4 @@
 import os
-import re
 import json
 import getpass
 
@@ -20,7 +19,8 @@ class FusionSubmitDeadline(pyblish.api.ContextPlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["fusion"]
-    families = ["colorbleed.saver"]
+    families = ["fusion.deadline"]
+    targets = ["deadline"]
 
     def process(self, context):
 
