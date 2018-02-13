@@ -1,6 +1,5 @@
 import os
 import json
-import shutil
 import getpass
 
 from maya import cmds
@@ -30,14 +29,14 @@ def get_renderer_variables(renderlayer=None):
     renderer = lib.get_renderer(renderlayer or lib.get_current_renderlayer())
     render_attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS["default"])
 
-    filename_padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
-                                                   render_attrs["padding"]))
+    padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
+                                          render_attrs["padding"]))
 
     filename_0 = cmds.renderSettings(fullPath=True, firstImageName=True)[0]
 
     if renderer == "vray":
-        # Maya's renderSettings function does not resolved V-Ray extension
-        # Getting the extension for VRay settings node
+        # Maya's renderSettings function does not return V-Ray file extension
+        # so we get the extension from vraySettings
         extension = cmds.getAttr("vraySettings.imageFormatStr")
 
         # When V-Ray image format has not been switched once from default .png
@@ -56,8 +55,37 @@ def get_renderer_variables(renderlayer=None):
 
     return {"ext": extension,
             "filename_prefix": filename_prefix,
-            "padding": filename_padding,
+            "padding": padding,
             "filename_0": filename_0}
+
+
+def preview_fname(folder, scene, layer, padding, ext):
+    """Return output file path with #### for padding.
+
+    Deadline requires the path to be formatted with # in place of numbers.
+    For example `/path/to/render.####.png`
+
+    Args:
+        folder (str): The root output folder (image path)
+        scene (str): The scene name
+        layer (str): The layer name to be rendered
+        padding (int): The padding length
+        ext(str): The output file extension
+
+    Returns:
+        str
+
+    """
+
+    # Following hardcoded "<Scene>/<Scene>_<Layer>/<Layer>"
+    output = "{scene}/{scene}_{layer}/{layer}.{number}.{ext}".format(
+        scene=scene,
+        layer=layer,
+        number="#" * padding,
+        ext=ext
+    )
+
+    return os.path.join(folder, output)
 
 
 class MayaSubmitDeadline(pyblish.api.InstancePlugin):
@@ -81,43 +109,31 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         context = instance.context
         workspace = context.data["workspaceDir"]
-        fpath = context.data["currentFile"]
-        fname = os.path.basename(fpath)
+        filepath = context.data["currentFile"]
+        filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
-        scene = os.path.splitext(fname)[0]
+        scene = os.path.splitext(filename)[0]
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.name                # beauty
         renderlayer_globals = instance.data["renderGlobals"]
         legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
-        jobname = "%s - %s" % (fname, instance.name)
+        jobname = "%s - %s" % (filename, instance.name)
 
         # Get the variables depending on the renderer
-        # Following hardcoded "renders/<Scene>/<Scene>_<Layer>/<Layer>"
         render_variables = get_renderer_variables(renderlayer)
-        output_filename_0 = self.preview_fname(scene,
-                                               renderlayer_name,
-                                               dirname,
-                                               render_variables["padding"],
-                                               render_variables["ext"])
-
-        # Get parent folder of render output
-        render_folder = os.path.dirname(output_filename_0)
+        output_filename_0 = preview_fname(folder=dirname,
+                                          scene=scene,
+                                          layer=renderlayer_name,
+                                          padding=render_variables["padding"],
+                                          ext=render_variables["ext"])
 
         try:
-            # Ensure folders exists
-            os.makedirs(render_folder)
+            # Ensure render folder exists
+            os.makedirs(dirname)
         except OSError:
             pass
-
-        # Get the folder name, this will be the name of the metadata file
-        json_fname = os.path.basename(render_folder)
-        json_fpath = os.path.join(os.path.dirname(render_folder),
-                                  "{}.json".format(json_fname))
-
-        # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(AVALON_DEADLINE)
 
         # Documentation for keys available at:
         # https://docs.thinkboxsoftware.com
@@ -126,7 +142,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload = {
             "JobInfo": {
                 # Top-level group name
-                "BatchName": fname,
+                "BatchName": filename,
 
                 # Job name, as seen in Monitor
                 "Name": jobname,
@@ -149,7 +165,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             },
             "PluginInfo": {
                 # Input
-                "SceneFile": fpath,
+                "SceneFile": filepath,
 
                 # Output directory and filename
                 "OutputFilePath": dirname.replace("\\", "/"),
@@ -178,7 +194,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AuxFiles": []
         }
 
-        # Include critical variables with submission
+        # Include critical environment variables with submission
         keys = [
             # This will trigger `userSetup.py` on the slave
             # such that proper initialisation happens the same
@@ -218,73 +234,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
+        # E.g. http://192.168.0.1:8082/api/jobs
+        url = "{}/api/jobs".format(AVALON_DEADLINE)
         response = requests.post(url, json=payload)
-        if response.ok:
-            # Write metadata for publish
-            render_job = response.json()
-            data = {
-                "submission": payload,
-                "session": api.Session,
-                "instance": instance.data,
-                "jobs": [render_job],
-            }
-
-            with open(json_fpath, "w") as f:
-                json.dump(data, f, indent=4, sort_keys=True)
-
-            self.log.info("Creating publish job")
-            state = instance.data["suspendPublishJob"]
-            publish_job = self.create_publish_job(fname,
-                                                  deadline_user,
-                                                  comment,
-                                                  jobname,
-                                                  render_job,
-                                                  json_fpath,
-                                                  state)
-            if not publish_job:
-                self.log.error("Could not submit publish job!")
-            else:
-                self.log.info(publish_job)
-
-        else:
-            try:
-                shutil.rmtree(dirname)
-            except OSError:
-                # This is nice-to-have, but not critical to the operation
-                pass
-
+        if not response.ok:
             raise Exception(response.text)
-
-    def preview_fname(self, scene, layer, folder, padding, ext):
-        """Return outputted filename with #### for padding
-
-        Passing the absolute path to Deadline enables Deadline Monitor
-        to provide the user with a Job Output menu option.
-
-        Deadline requires the path to be formatted with # in place of numbers.
-
-        From
-            /path/to/render.0000.png
-        To
-            /path/to/render.####.png
-
-        Args:
-            layer: name of the current layer to be rendered
-            folder (str): folder to which will be written
-            padding (int): padding length
-            ext(str): file extension
-
-        Returns:
-            str
-
-        """
-
-        padded_basename = "{}.{}.{}".format(layer, "#" * padding, ext)
-        scene_layer_folder = "{}_{}".format(scene, layer)
-        preview_fname = os.path.join(folder, scene, scene_layer_folder,
-                                     padded_basename)
-
-        return preview_fname
 
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
