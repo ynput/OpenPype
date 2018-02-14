@@ -37,7 +37,6 @@ class PublishImageSequence(pyblish.api.Extractor):
         }
 
         # Write metadata
-        # todo: create temp file or more unique name for json
         path = os.path.join(output_directory,
                             "{}_metadata.json".format(subset))
 
@@ -48,20 +47,25 @@ class PublishImageSequence(pyblish.api.Extractor):
         if module_path.endswith(".pyc"):
             module_path = module_path[:-len(".pyc")] + ".py"
 
-        cmd = '{0} --paths"{1}"'.format(module_path, path)
+        cmd = 'python {0} --paths "{1}"'.format(module_path, path)
         with open(path, "w") as f:
             json.dump(metadata, f)
 
-            env = os.environ.copy()
-            env["IMAGESEQUENCE"] = path
+        process = subprocess.Popen(cmd,
+                                   stdout=subprocess.PIPE,
+                                   stderr=subprocess.STDOUT)
 
-            subprocess.Popen(cmd,
-                             env=env,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.PIPE)
+        output, error = process.communicate()
 
-            # todo: ensure publish went without any issues
-            valid = bool(context)
-            if not valid:
-                raise RuntimeError("Unable to publish image sequences")
+        if output:
+            self.log.info(output)
+
+        if error:
+            self.log.error(error)
+            raise RuntimeError(error)
+
+        # todo: ensure publish went without any issues
+        valid = bool(context)
+        if not valid:
+            raise RuntimeError("Unable to publish image sequences")
 
