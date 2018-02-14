@@ -45,7 +45,6 @@ def publish(paths, gui=False):
 
         import pyblish.util
         context = pyblish.util.publish()
-        # todo: ensure publish went flawless
 
         if not context:
             log.warning("Nothing collected.")
