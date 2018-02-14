@@ -38,7 +38,10 @@ def collect(root,
         files.append(filename)
 
     # Match collections
+    # Support filenames like: projectX_shot01_0010.tiff with this regex
+    pattern = r"(?P<index>(?P<padding>0*)\d+)\.\D+\d?$"
     collections, remainder = clique.assemble(files,
+                                             patterns=[pattern],
                                              minimum_items=1)
 
     # Ignore any remainders
