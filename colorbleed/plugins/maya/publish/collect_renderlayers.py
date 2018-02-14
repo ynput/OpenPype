@@ -26,23 +26,23 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                           "renderGlobals node")
             return
 
-        default_layer = "{}.includeDefaultRenderLayer".format(render_globals)
-        use_defaultlayer = cmds.getAttr(default_layer)
-
         # Get render layers
         renderlayers = [i for i in cmds.ls(type="renderLayer") if
                         cmds.getAttr("{}.renderable".format(i)) and not
                         cmds.referenceQuery(i, isNodeReferenced=True)]
+
+        # Include/exclude default render layer
+        default_layer = "{}.includeDefaultRenderLayer".format(render_globals)
+        use_defaultlayer = cmds.getAttr(default_layer)
+        if not use_defaultlayer:
+            renderlayers = [i for i in renderlayers if
+                            not i.endswith("defaultRenderLayer")]
 
         # Sort by displayOrder
         def sort_by_display_order(layer):
             return cmds.getAttr("%s.displayOrder" % layer)
 
         renderlayers = sorted(renderlayers, key=sort_by_display_order)
-
-        if not use_defaultlayer:
-            renderlayers = [i for i in renderlayers if
-                            not i.endswith("defaultRenderLayer")]
 
         for layer in renderlayers:
             if layer.endswith("defaultRenderLayer"):
