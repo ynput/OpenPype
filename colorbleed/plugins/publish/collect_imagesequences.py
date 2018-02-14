@@ -84,7 +84,6 @@ class CollectImageSequences(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     targets = ["imagesequence"]
-    hosts = ["shell"]
     label = "Image Sequences"
 
     def process(self, context):
