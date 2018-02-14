@@ -13,7 +13,8 @@ def publish(paths, gui=False):
     """Publish rendered image sequences based on the job data
 
     Args:
-        json_file (str): the json file of the data dump of the submitted job
+        paths (list): a list of paths where to publish from
+        gui (bool, Optional): Choose to show Pyblish GUI, default is False
 
     Returns:
         None
@@ -21,7 +22,7 @@ def publish(paths, gui=False):
     """
 
     assert isinstance(paths, (list, tuple)), "Must be list of paths"
-
+    assert any(paths)
     # Set the paths to publish for the collector if any provided
     if paths:
         os.environ["IMAGESEQUENCES"] = os.pathsep.join(paths)
