@@ -10,10 +10,13 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         collection = instance[0]
-        frames = collection.indexes
+
+        frames = list(collection.indexes)
 
         assert frames[0] == instance.data["startFrame"]
         assert frames[-1] == instance.data["endFrame"]
 
-        missing = collection.holes
+        missing = collection.holes().indexes
         assert not missing, "Missing frames: %s" % (missing,)
+
+        raise RuntimeError("STOP")

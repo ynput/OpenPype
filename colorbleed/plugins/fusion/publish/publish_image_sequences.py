@@ -52,6 +52,7 @@ class PublishImageSequence(pyblish.api.Extractor):
             json.dump(metadata, f)
 
         process = subprocess.Popen(cmd,
+                                   bufsize=1,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT)
 
@@ -59,6 +60,7 @@ class PublishImageSequence(pyblish.api.Extractor):
             output = process.stdout.readline()
             # Break when there is no output or a return code has been given
             if output == '' and process.poll() is not None:
+                process.stdout.close()
                 break
             if output:
                 line = output.strip()
@@ -68,6 +70,8 @@ class PublishImageSequence(pyblish.api.Extractor):
                     self.log.info(line)
 
         if process.returncode != 0:
+            # self.log.error("Return code: {}".format(process.returncode))
+            # self.log.error("Process quit with non-zero return code")
             raise RuntimeError("Process quit with non-zero "
                                "return code: {}".format(process.returncode))
 

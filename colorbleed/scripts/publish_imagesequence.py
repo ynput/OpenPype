@@ -8,6 +8,8 @@ handler = logging.basicConfig()
 log = logging.getLogger("Publish Image Sequences")
 log.setLevel(logging.DEBUG)
 
+error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
+
 
 def publish(paths, gui=False):
     """Publish rendered image sequences based on the job data
@@ -51,13 +53,12 @@ def publish(paths, gui=False):
             sys.exit(1)
 
         # Collect errors, {plugin name: error}
-        errors = {str(r["plugin"].__name__): r["error"] for r in
-                  context.data["results"] if r["error"]}
+        error_results = [r for r in context.data["results"] if r["error"]]
 
-        if errors:
+        if error_results:
             log.error(" Errors occurred ...")
-            for plugin, error in errors.items():
-                log.error(" {}".format(error))
+            for result in error_results:
+                log.error(error_format.format(**result))
             sys.exit(2)
 
 
