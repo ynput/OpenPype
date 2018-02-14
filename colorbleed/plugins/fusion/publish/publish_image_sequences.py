@@ -55,14 +55,21 @@ class PublishImageSequence(pyblish.api.Extractor):
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT)
 
-        output, error = process.communicate()
+        while True:
+            output = process.stdout.readline()
+            # Break when there is no output or a return code has been given
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                line = output.strip()
+                if line.startswith("ERROR"):
+                    self.log.error(line)
+                else:
+                    self.log.info(line)
 
-        if output:
-            self.log.info(output)
-
-        if error:
-            self.log.error(error)
-            raise RuntimeError(error)
+        if process.returncode != 0:
+            raise RuntimeError("Process quit with non-zero "
+                               "return code: {}".format(process.returncode))
 
         # todo: ensure publish went without any issues
         valid = bool(context)
