@@ -171,6 +171,7 @@ class CollectImageSequences(pyblish.api.ContextPlugin):
                     "endFrame": end,
                     "metadata": data.get("metadata")
                 })
+                instance.append(collection)
 
                 self.log.debug("Collected instance:\n"
                                "{}".format(pprint.pformat(instance.data)))
