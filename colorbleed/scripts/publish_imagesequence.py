@@ -45,10 +45,21 @@ def publish(paths, gui=False):
 
         import pyblish.util
         context = pyblish.util.publish()
+        # todo: ensure publish went flawless
 
         if not context:
-            log.warning("Nothing published.")
+            log.warning("Nothing collected.")
             sys.exit(1)
+
+        # Collect errors, {plugin name: error}
+        errors = {str(r["plugin"].__name__): r["error"] for r in
+                  context.data["results"] if r["error"]}
+
+        if errors:
+            log.error(" Errors occurred ...")
+            for plugin, error in errors.items():
+                log.error(" {}".format(error))
+            sys.exit(2)
 
 
 def __main__():
