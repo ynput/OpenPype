@@ -43,7 +43,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             family = "fusion.deadline"
         else:
             # Render local
-            family = "colorbleed.imagesequence"
+            family = "fusion.local"
 
         comp = context.data["currentComp"]
 
