@@ -5,7 +5,7 @@ import sys
 import logging
 
 handler = logging.basicConfig()
-log = logging.getLogger()
+log = logging.getLogger("Publish Image Sequences")
 log.setLevel(logging.DEBUG)
 
 
@@ -22,7 +22,8 @@ def publish(paths, gui=False):
     """
 
     assert isinstance(paths, (list, tuple)), "Must be list of paths"
-    assert any(paths)
+    log.info(paths)
+    assert any(paths), "No paths found in the list"
     # Set the paths to publish for the collector if any provided
     if paths:
         os.environ["IMAGESEQUENCES"] = os.pathsep.join(paths)
