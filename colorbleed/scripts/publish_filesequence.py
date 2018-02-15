@@ -28,7 +28,7 @@ def publish(paths, gui=False):
     assert any(paths), "No paths found in the list"
     # Set the paths to publish for the collector if any provided
     if paths:
-        os.environ["IMAGESEQUENCES"] = os.pathsep.join(paths)
+        os.environ["FILESEQUENCE"] = os.pathsep.join(paths)
 
     # Install Avalon with shell as current host
     from avalon import api, shell

@@ -64,10 +64,10 @@ def collect(root,
     return collections
 
 
-class CollectImageSequences(pyblish.api.ContextPlugin):
-    """Gather image sequences from working directory
+class CollectFileSequences(pyblish.api.ContextPlugin):
+    """Gather file sequences from working directory
 
-    When "IMAGESEQUENCES" environment variable is set these paths (folders or
+    When "FILESEQUENCE" environment variable is set these paths (folders or
     .json files) are parsed for image sequences. Otherwise the current
     working directory is searched for file sequences.
 
@@ -87,12 +87,12 @@ class CollectImageSequences(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     targets = ["imagesequence"]
-    label = "Image Sequences"
+    label = "File Sequences"
 
     def process(self, context):
 
-        if os.environ.get("IMAGESEQUENCES"):
-            paths = os.environ["IMAGESEQUENCES"].split(os.pathsep)
+        if os.environ.get("FILESEQUENCE"):
+            paths = os.environ["FILESEQUENCE"].split(os.pathsep)
         else:
             cwd = context.get("workspaceDir", os.getcwd())
             paths = [cwd]
@@ -128,8 +128,14 @@ class CollectImageSequences(pyblish.api.ContextPlugin):
 
             self.log.info("Collecting: {}".format(root))
 
+            regex = data.get("regex")
+            if regex:
+                # ensure regex string is proper, json adds double slashes
+                regex = regex.replace("\\_", "_")
+                self.log.info("Decoded regex to: {}".format(regex))
+
             collections = collect(root=root,
-                                  regex=data.get("regex"),
+                                  regex=regex,
                                   exclude_regex=data.get("exclude_regex"),
                                   startFrame=data.get("startFrame"),
                                   endFrame=data.get("endFrame"))
@@ -143,6 +149,11 @@ class CollectImageSequences(pyblish.api.ContextPlugin):
                     self.log.error("Forced subset can only work with a single "
                                    "found sequence")
                     raise RuntimeError("Invalid sequence")
+
+            # Get family from the data
+            families = data.get("families", ["colorbleed.imagesequence"])
+            assert isinstance(families, (list, tuple)), "Must be iterable"
+            assert families, "Must have at least a single family"
 
             for collection in collections:
                 instance = context.create_instance(str(collection))
@@ -161,15 +172,14 @@ class CollectImageSequences(pyblish.api.ContextPlugin):
 
                 instance.data.update({
                     "name": str(collection),
-                    "family": "colorbleed.imagesequence",
-                    "families": ["colorbleed.imagesequence"],
+                    "family": families[0],  # backwards compatibility / pyblish
+                    "families": list(families),
                     "subset": subset,
                     "asset": data.get("asset", api.Session["AVALON_ASSET"]),
                     "stagingDir": root,
                     "files": [list(collection)],
                     "startFrame": start,
-                    "endFrame": end,
-                    "metadata": data.get("metadata")
+                    "endFrame": end
                 })
                 instance.append(collection)
 
