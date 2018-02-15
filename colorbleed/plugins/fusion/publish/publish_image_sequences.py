@@ -1,9 +1,25 @@
-import re
 import os
-import json
 import subprocess
 
 import pyblish.api
+
+
+def _get_script():
+    """Get path to the image sequence script"""
+
+    # todo: use a more elegant way to get the python script
+
+    try:
+        from colorbleed.scripts import publish_filesequence
+    except Exception as e:
+        raise RuntimeError("Expected module 'publish_imagesequence'"
+                           "to be available")
+
+    module_path = publish_filesequence.__file__
+    if module_path.endswith(".pyc"):
+        module_path = module_path[:-len(".pyc")] + ".py"
+
+    return module_path
 
 
 class PublishImageSequence(pyblish.api.Extractor):
@@ -20,41 +36,26 @@ class PublishImageSequence(pyblish.api.Extractor):
     def process(self, instance):
 
         context = instance.context
-        subset = instance.data["subset"]
-        output_directory = instance.data["outputDir"]
-        ext = instance.data["ext"]
 
-        # Regex to match resulting renders
-        regex = "^{subset}.*[0-9]+.{ext}+$".format(subset=re.escape(subset),
-                                                   ext=re.escape(ext))
+        # Get metadata file, check if path is to an existing file
+        path = instance.data.get("jsonpath", "")
+        assert os.path.isfile(path), ("Stored path is not a file for %s"
+                                      % instance.data["name"])
 
-        metadata = {
-            "regex": regex,
-            "startFrame": context.data["startFrame"],
-            "endFrame": context.data["endFrame"],
-            "asset": instance.data["asset"],
-            "subset": subset
-        }
+        # Get the script to execute
+        script = _get_script()
+        cmd = 'python {0} --paths "{1}"'.format(script, path)
 
-        # Write metadata
-        path = os.path.join(output_directory,
-                            "{}_metadata.json".format(subset))
-
-        # Create subprocess command string
-        from colorbleed.scripts import publish_imagesequence
-
-        module_path = publish_imagesequence.__file__
-        if module_path.endswith(".pyc"):
-            module_path = module_path[:-len(".pyc")] + ".py"
-
-        cmd = 'python {0} --paths "{1}"'.format(module_path, path)
-        with open(path, "w") as f:
-            json.dump(metadata, f)
+        # Suppress any subprocess console
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
 
         process = subprocess.Popen(cmd,
                                    bufsize=1,
                                    stdout=subprocess.PIPE,
-                                   stderr=subprocess.STDOUT)
+                                   stderr=subprocess.STDOUT,
+                                   startupinfo=startupinfo)
 
         while True:
             output = process.stdout.readline()
@@ -70,8 +71,6 @@ class PublishImageSequence(pyblish.api.Extractor):
                     self.log.info(line)
 
         if process.returncode != 0:
-            # self.log.error("Return code: {}".format(process.returncode))
-            # self.log.error("Process quit with non-zero return code")
             raise RuntimeError("Process quit with non-zero "
                                "return code: {}".format(process.returncode))
 
