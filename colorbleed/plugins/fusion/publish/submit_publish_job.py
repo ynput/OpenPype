@@ -11,12 +11,12 @@ import pyblish.api
 def _get_script():
     """Get path to the image sequence script"""
     try:
-        from colorbleed.scripts import publish_imagesequence
+        from colorbleed.scripts import publish_filesequence
     except Exception as e:
         raise RuntimeError("Expected module 'publish_imagesequence'"
                            "to be available")
 
-    module_path = publish_imagesequence.__file__
+    module_path = publish_filesequence.__file__
     if module_path.endswith(".pyc"):
         module_path = module_path[:-len(".pyc")] + ".py"
 
@@ -70,12 +70,12 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             raise RuntimeError("Can't continue without valid deadline "
                                "submission prior to this plug-in.")
 
+        subset = instance.data.get("subset")
         state = instance.data.get("publishJobState", "Suspended")
         job_name = "{batch} - {subset} [publish image sequence]".format(
             batch=job["Props"]["Name"],
-            subset=instance.data["subset"]
+            subset=subset
         )
-        output_dir = instance.data["outputDir"]
 
         # Add in start/end frame
         context = instance.context
@@ -86,7 +86,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         # This assumes the output files start with subset name and ends with
         # a file extension.
         regex = "^{subset}.*\d+{ext}$".format(
-            subset=re.escape(instance.data["subset"]),
+            subset=re.escape(subset),
             ext=re.escape(instance.data.get("ext", "\D"))
         )
 
@@ -97,6 +97,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             "regex": regex,
             "startFrame": start,
             "endFrame": end,
+            "families": ["colorbleed.imagesequence"],
 
             # Optional metadata (for debugging)
             "metadata": {
@@ -105,7 +106,9 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
                 "session": api.Session.copy()
             }
         }
-        metadata_filename = "{}_metadata.json".format(instance.data["subset"])
+
+        output_dir = instance.data["outputDir"]
+        metadata_filename = "{}_metadata.json".format(subset)
         metadata_path = os.path.join(output_dir, metadata_filename)
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4, sort_keys=True)
