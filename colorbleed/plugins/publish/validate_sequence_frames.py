@@ -18,5 +18,3 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
 
         missing = collection.holes().indexes
         assert not missing, "Missing frames: %s" % (missing,)
-
-        raise RuntimeError("STOP")
