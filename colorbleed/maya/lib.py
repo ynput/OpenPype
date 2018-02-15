@@ -598,14 +598,19 @@ def maya_temp_folder():
 
 
 # region ID
-def get_id_required_nodes(referenced_nodes=False):
+def get_id_required_nodes(referenced_nodes=False, nodes=None):
     """Filter out any node which are locked (reference) or readOnly
 
     Args:
         referenced_nodes (bool): set True to filter out reference nodes
+        nodes (list, Optional): nodes to consider
     Returns:
         nodes (set): list of filtered nodes
     """
+
+    if nodes is None:
+        # Consider all nodes
+        nodes = cmds.ls()
 
     def _node_type_exists(node_type):
         try:
@@ -641,7 +646,7 @@ def get_id_required_nodes(referenced_nodes=False):
 
     # We *always* ignore intermediate shapes, so we filter them out
     # directly
-    nodes = cmds.ls(type=types, long=True, noIntermediate=True)
+    nodes = cmds.ls(nodes, type=types, long=True, noIntermediate=True)
 
     # The items which need to pass the id to their parent
     # Add the collected transform to the nodes
@@ -654,6 +659,14 @@ def get_id_required_nodes(referenced_nodes=False):
     nodes |= set(transforms)
 
     nodes -= ignore  # Remove the ignored nodes
+
+    # Avoid locked nodes
+    nodes_list = list(nodes)
+    locked = cmds.lockNode(nodes_list, query=True, lock=True)
+    for node, lock in zip(nodes_list, locked):
+        if lock:
+            log.warning("Skipping locked node: %s" % node)
+            nodes.remove(node)
 
     return nodes
 
