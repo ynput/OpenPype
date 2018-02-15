@@ -33,7 +33,7 @@ class FusionSubmitDeadline(pyblish.api.ContextPlugin):
         # Collect all saver instances in context that are to be rendered
         saver_instances = []
         for instance in context[:]:
-            if instance.data.get("families")[0] != "colorbleed.saver":
+            if instance.data.get("families")[0] != "fusion.deadline":
                 # Allow only saver family instances
                 continue
 
