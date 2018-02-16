@@ -29,26 +29,23 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        # As we check 2 attributes of per node it might be that both attrs
-        # are wrong, therefor we use a set to ensure the user only gets unique
-        # nodes in the reports. It also ensures we only have go over each node
-        # once when repairing ;)
-        invalid = set()
+        invalid = []
 
         yeti_nodes = cmds.ls(instance, type="pgYetiMaya")
         for node in yeti_nodes:
-            # check reading state
+            # Check reading state
             state = cmds.getAttr("%s.fileMode" % node)
             if state == 1:
                 cls.log.error("Node `%s` is set to mode `cache`" % node)
-                invalid.add(node)
+                invalid.append(node)
+                continue
 
+            # Check reading state
             has_cache = cmds.getAttr("%s.cacheFileName" % node)
             if has_cache:
                 cls.log.error("Node `%s` has a ")
-                invalid.add(node)
-
-        invalid = list(invalid)
+                invalid.append(node)
+                continue
 
         return invalid
 
