@@ -39,8 +39,8 @@ class PublishImageSequence(pyblish.api.Extractor):
         ext = instance.data["ext"]
 
         # Regex to match resulting renders
-        regex = "^{subset}.*[0-9]+.{ext}+$".format(subset=re.escape(subset),
-                                                   ext=re.escape(ext))
+        regex = "^{subset}.*[0-9]+{ext}+$".format(subset=re.escape(subset),
+                                                  ext=re.escape(ext))
 
         # The instance has most of the information already stored
         metadata = {
