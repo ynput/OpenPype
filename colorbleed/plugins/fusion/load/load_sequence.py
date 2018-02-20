@@ -171,6 +171,9 @@ class FusionLoadSequence(api.Loader):
             - HoldLastFrame: Fusion resets this to 0
               - We preverse the value.
 
+            - Reverse: Fusion resets to disabled if "Loop" is not enabled.
+              - We preserve the value.
+
             - Depth: Fusion resets to "Format"
               - We preverse the value.
 
@@ -208,6 +211,7 @@ class FusionLoadSequence(api.Loader):
                 with preserve_inputs(tool,
                                      inputs=("HoldFirstFrame",
                                              "HoldLastFrame",
+                                             "Reverse",
                                              "Depth",
                                              "KeyCode",
                                              "TimeCodeOffset")):
