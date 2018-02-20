@@ -70,8 +70,3 @@ class PublishImageSequence(pyblish.api.Extractor):
         if process.returncode != 0:
             raise RuntimeError("Process quit with non-zero "
                                "return code: {}".format(process.returncode))
-
-        # todo: ensure publish went without any issues
-        valid = bool(context)
-        if not valid:
-            raise RuntimeError("Unable to publish image sequences")
