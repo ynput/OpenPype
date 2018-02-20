@@ -240,6 +240,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         if not response.ok:
             raise Exception(response.text)
 
+        # Store output dir for unified publisher (filesequence)
+        instance.data["outputDir"] = os.path.dirname(output_filename_0)
+        instance.data["deadlineSubmissionJob"] = response.json()
+
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
 
