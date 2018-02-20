@@ -106,7 +106,11 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             }
         }
 
+        # Ensure output dir exists
         output_dir = instance.data["outputDir"]
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+
         metadata_filename = "{}_metadata.json".format(subset)
         metadata_path = os.path.join(output_dir, metadata_filename)
         with open(metadata_path, "w") as f:
