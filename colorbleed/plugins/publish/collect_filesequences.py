@@ -129,7 +129,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
             self.log.info("Collecting: {}".format(root))
             regex = data.get("regex")
             if regex:
-                self.log.info("Decoded regex to: {}".format(regex))
+                self.log.info("Using regex: {}".format(regex))
 
             collections = collect(root=root,
                                   regex=regex,
