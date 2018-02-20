@@ -50,11 +50,11 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
         return invalid
 
     @classmethod
-    def repair(self, instance):
+    def repair(cls, instance):
         """Repair all errors"""
 
         # Create set to ensure all nodes only pass once
-        invalid = self.get_invalid(instance)
+        invalid = cls.get_invalid(instance)
         for node in invalid:
             cmds.setAttr("%s.fileMode" % node, 0)
             cmds.setAttr("%s.cacheFileName" % node, "", type="string")
