@@ -16,7 +16,6 @@ class FusionIncrementCurrentFile(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        import os
         from colorbleed.lib import version_up
         from colorbleed.action import get_errored_plugins_from_data
 
