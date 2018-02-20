@@ -127,11 +127,8 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 root = path
 
             self.log.info("Collecting: {}".format(root))
-
             regex = data.get("regex")
             if regex:
-                # ensure regex string is proper, json adds double slashes
-                regex = regex.replace("\\_", "_")
                 self.log.info("Decoded regex to: {}".format(regex))
 
             collections = collect(root=root,
