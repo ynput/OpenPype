@@ -42,16 +42,13 @@ class PublishImageSequence(pyblish.api.Extractor):
         assert os.path.isfile(path), ("Stored path is not a file for %s"
                                       % instance.data["name"])
 
-        # Get the script to execute
-        script = _get_script()
-        cmd = 'python {0} --paths "{1}"'.format(script, path)
-
         # Suppress any subprocess console
         startupinfo = subprocess.STARTUPINFO()
         startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         startupinfo.wShowWindow = subprocess.SW_HIDE
 
-        process = subprocess.Popen(cmd,
+        process = subprocess.Popen(["python", _get_script(),
+                                    "--paths", path],
                                    bufsize=1,
                                    stdout=subprocess.PIPE,
                                    stderr=subprocess.STDOUT,
@@ -78,4 +75,3 @@ class PublishImageSequence(pyblish.api.Extractor):
         valid = bool(context)
         if not valid:
             raise RuntimeError("Unable to publish image sequences")
-
