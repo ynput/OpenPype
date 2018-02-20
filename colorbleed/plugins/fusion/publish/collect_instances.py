@@ -83,7 +83,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "subset": subset,
                 "path": path,
                 "outputDir": os.path.dirname(path),
-                "ext": tail,  # todo: should be redundant
+                "ext": ext,  # todo: should be redundant
                 "label": label,
                 "families": [family],
                 "family": family,
