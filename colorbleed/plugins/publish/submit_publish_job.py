@@ -69,7 +69,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             raise RuntimeError("Can't continue without valid deadline "
                                "submission prior to this plug-in.")
 
-        subset = instance.data.get("subset")
+        subset = instance.data["subset"]
         state = instance.data.get("publishJobState", "Suspended")
         job_name = "{batch} - {subset} [publish image sequence]".format(
             batch=job["Props"]["Name"],
