@@ -2,7 +2,7 @@ import os
 import pyblish.api
 
 
-class CollectCurrentShellFile(pyblish.api.ContextPlugin):
+class CollectContextLabel(pyblish.api.ContextPlugin):
     """Labelize context using the registered host and current file"""
 
     order = pyblish.api.CollectorOrder + 0.25
