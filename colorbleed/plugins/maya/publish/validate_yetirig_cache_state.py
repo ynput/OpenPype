@@ -43,7 +43,7 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
             # Check reading state
             has_cache = cmds.getAttr("%s.cacheFileName" % node)
             if has_cache:
-                cls.log.error("Node `%s` has a ")
+                cls.log.error("Node `%s` has a cache file set" % node)
                 invalid.append(node)
                 continue
 
