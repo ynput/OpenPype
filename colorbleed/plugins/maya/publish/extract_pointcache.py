@@ -64,14 +64,7 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
                 extract_alembic(file=path,
                                 startFrame=start,
                                 endFrame=end,
-                                **{"step": instance.data.get("step", 1.0),
-                                   "attr": ["cbId"],
-                                   "attrPrefix": ["vray"],
-                                   "writeVisibility": True,
-                                   "writeCreases": True,
-                                   "writeColorSets": writeColorSets,
-                                   "uvWrite": True,
-                                   "selection": True})
+                                **options)
 
         if "files" not in instance.data:
             instance.data["files"] = list()
