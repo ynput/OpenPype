@@ -1,7 +1,5 @@
 import pyblish.api
 
-from avalon import fusion
-
 
 class CollectFusionVersion(pyblish.api.ContextPlugin):
     """Collect current comp"""

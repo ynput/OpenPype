@@ -8,7 +8,7 @@ class ValidateFusionCompSaved(pyblish.api.ContextPlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Comp Saved"
-    families = ["colorbleed.saver"]
+    families = ["fusion.deadline", "fusion.local"]
     hosts = ["fusion"]
 
     def process(self, context):

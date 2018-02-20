@@ -5,15 +5,18 @@ import sys
 import logging
 
 handler = logging.basicConfig()
-log = logging.getLogger()
+log = logging.getLogger("Publish Image Sequences")
 log.setLevel(logging.DEBUG)
+
+error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
 
 
 def publish(paths, gui=False):
     """Publish rendered image sequences based on the job data
 
     Args:
-        json_file (str): the json file of the data dump of the submitted job
+        paths (list): a list of paths where to publish from
+        gui (bool, Optional): Choose to show Pyblish GUI, default is False
 
     Returns:
         None
@@ -21,10 +24,11 @@ def publish(paths, gui=False):
     """
 
     assert isinstance(paths, (list, tuple)), "Must be list of paths"
-
+    log.info(paths)
+    assert any(paths), "No paths found in the list"
     # Set the paths to publish for the collector if any provided
     if paths:
-        os.environ["IMAGESEQUENCES"] = os.pathsep.join(paths)
+        os.environ["FILESEQUENCE"] = os.pathsep.join(paths)
 
     # Install Avalon with shell as current host
     from avalon import api, shell
@@ -32,7 +36,7 @@ def publish(paths, gui=False):
 
     # Register target and host
     import pyblish.api
-    pyblish.api.register_target("imagesequence")
+    pyblish.api.register_target("filesequence")
     pyblish.api.register_host("shell")
 
     # Publish items
@@ -45,8 +49,17 @@ def publish(paths, gui=False):
         context = pyblish.util.publish()
 
         if not context:
-            log.warning("Nothing published.")
+            log.warning("Nothing collected.")
             sys.exit(1)
+
+        # Collect errors, {plugin name: error}
+        error_results = [r for r in context.data["results"] if r["error"]]
+
+        if error_results:
+            log.error(" Errors occurred ...")
+            for result in error_results:
+                log.error(error_format.format(**result))
+            sys.exit(2)
 
 
 def __main__():
