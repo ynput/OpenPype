@@ -86,7 +86,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
     """
 
     order = pyblish.api.CollectorOrder
-    targets = ["imagesequence"]
+    targets = ["filesequence"]
     label = "File Sequences"
 
     def process(self, context):

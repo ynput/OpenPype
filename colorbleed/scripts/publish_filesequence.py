@@ -36,7 +36,7 @@ def publish(paths, gui=False):
 
     # Register target and host
     import pyblish.api
-    pyblish.api.register_target("imagesequence")
+    pyblish.api.register_target("filesequence")
     pyblish.api.register_host("shell")
 
     # Publish items
