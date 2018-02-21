@@ -36,15 +36,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         from avalon.fusion.lib import get_frame_path
 
-        # Change family when submitting to Deadline
-        targets = pyblish.api.registered_targets()
-        if "deadline" in targets:
-            # Submit to Deadline
-            family = "fusion.deadline"
-        else:
-            # Render local
-            family = "fusion.local"
-
         comp = context.data["currentComp"]
 
         # Get all savers in the comp
@@ -85,8 +76,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "outputDir": os.path.dirname(path),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
-                "families": [family],
-                "family": family,
+                "families": ["colorbleed.saver"],
+                "family": "colorbleed.saver",
                 "active": active,
                 "publish": active   # backwards compatibility
             })
