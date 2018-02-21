@@ -106,7 +106,7 @@ class FusionLoadSequence(api.Loader):
 
     label = "Load sequence"
     order = -10
-    icon = "play-circle"
+    icon = "code-fork"
     color = "orange"
 
     def load(self, context, name, namespace, data):
