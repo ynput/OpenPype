@@ -42,6 +42,3 @@ class CollectFusionRenderMode(pyblish.api.InstancePlugin):
         # Append family
         family = "colorbleed.saver.{0}".format(rendermode)
         instance.data["families"].append(family)
-
-        self.log.info("Instance families: {0}".format(instance.data["families"]))
-
