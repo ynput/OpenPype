@@ -8,7 +8,7 @@ from avalon.vendor import requests
 import pyblish.api
 
 
-class FusionSubmitDeadline(pyblish.api.ContextPlugin):
+class FusionSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit current Comp to Deadline
 
     Renders are submitted to a Deadline Web Service as
@@ -19,10 +19,17 @@ class FusionSubmitDeadline(pyblish.api.ContextPlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["fusion"]
-    families = ["fusion.deadline"]
-    targets = ["deadline"]
+    families = ["colorbleed.saver.deadline"]
 
-    def process(self, context):
+    def process(self, instance):
+
+        context = instance.context
+
+        key = "__hasRun{}".format(self.__class__.__name__)
+        if context.data.get(key, False):
+            return
+        else:
+            context.data[key] = True
 
         from avalon.fusion.lib import get_frame_path
 
@@ -33,15 +40,19 @@ class FusionSubmitDeadline(pyblish.api.ContextPlugin):
         # Collect all saver instances in context that are to be rendered
         saver_instances = []
         for instance in context[:]:
-            if instance.data.get("families")[0] != "fusion.deadline":
+            if not self.families[0] in instance.data.get("families"):
                 # Allow only saver family instances
                 continue
 
             if not instance.data.get("publish", True):
                 # Skip inactive instances
                 continue
-
+            self.log.debug(instance.data["name"])
             saver_instances.append(instance)
+
+        if not saver_instances:
+            self.log.warning(saver_instances)
+            raise RuntimeError("No instances found for Deadline submittion")
 
         fusion_version = int(context.data["fusionVersion"])
         filepath = context.data["currentFile"]
