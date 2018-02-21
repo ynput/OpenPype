@@ -6,7 +6,7 @@ class ValidateUniqueSubsets(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Unique Subsets"
-    families = ["fusion.deadline", "fusion.local"]
+    families = ["colorbleed.saver"]
     hosts = ["fusion"]
 
     @classmethod

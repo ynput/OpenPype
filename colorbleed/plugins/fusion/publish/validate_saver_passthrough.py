@@ -6,7 +6,7 @@ class ValidateSaverPassthrough(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Saver Active"
-    families = ["fusion.deadline", "fusion.local"]
+    families = ["colorbleed.saver"]
     hosts = ["fusion"]
 
     @classmethod
