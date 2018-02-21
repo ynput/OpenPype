@@ -51,7 +51,6 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
             saver_instances.append(instance)
 
         if not saver_instances:
-            self.log.warning(saver_instances)
             raise RuntimeError("No instances found for Deadline submittion")
 
         fusion_version = int(context.data["fusionVersion"])
