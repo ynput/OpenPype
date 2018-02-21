@@ -24,14 +24,13 @@ def _get_script():
     return module_path
 
 
-class PublishImageSequence(pyblish.api.Extractor):
+class PublishImageSequence(pyblish.api.Integrator):
     """Publish the generated local image sequences."""
 
-    order = pyblish.api.ExtractorOrder + 0.1
+    order = pyblish.api.IntegratorOrder
     label = "Publish Rendered Image Sequence(s)"
     hosts = ["fusion"]
-    targets = ["renderlocal"]
-    families = ["fusion.local"]
+    families = ["colorbleed.saver.renderlocal"]
 
     def process(self, instance):
 
