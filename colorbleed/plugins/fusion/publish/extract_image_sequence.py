@@ -1,5 +1,7 @@
 import pyblish.api
 
+import avalon.fusion as fusion
+
 
 class ExtractImageSequence(pyblish.api.InstancePlugin):
     """Extract result of saver by starting a comp render
@@ -32,6 +34,8 @@ class ExtractImageSequence(pyblish.api.InstancePlugin):
         self.log.info("Start frame: {}".format(start_frame))
         self.log.info("End frame: {}".format(end_frame))
 
-        result = current_comp.Render()
+        with fusion.comp_lock_and_undo_chunk(current_comp):
+            result = current_comp.Render()
+
         if not result:
             raise RuntimeError("Comp render failed")
