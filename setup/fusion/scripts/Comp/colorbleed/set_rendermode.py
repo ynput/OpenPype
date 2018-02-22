@@ -18,7 +18,7 @@ class SetRenderMode(QtWidgets.QWidget):
         self._comp = avalon.get_current_comp()
         self._comp_name = self._get_comp_name()
 
-        self.setWindowTitle("Set Render Mode - {}".format(self._comp_name))
+        self.setWindowTitle("Set Render Mode")
         self.setFixedSize(300, 175)
 
         layout = QtWidgets.QVBoxLayout()
@@ -82,8 +82,6 @@ class SetRenderMode(QtWidgets.QWidget):
 
         self._comp = avalon.get_current_comp()
         self._comp_name = self._get_comp_name()
-
-        self.setWindowTitle("Set Render Mode")
         self.comp_information.setText(self._comp_name)
 
         # Update current comp settings
