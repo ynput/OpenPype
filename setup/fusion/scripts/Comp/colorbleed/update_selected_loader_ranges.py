@@ -1,37 +1,32 @@
+"""Forces Fusion to 'retrigger' the Loader to update.
+
+Warning:
+    This might change settings like 'Reverse', 'Loop', trims and other
+    settings of the Loader. So use this at your own risk.
+
+"""
+
+from avalon.fusion import comp_lock_and_undo_chunk
 
 
-class FusionLockComp(object):
-    def __init__(self, undoQueueName="Script CMD"):
-        # Lock flow
-        comp.Lock()
-        # Start undo event
-        comp.StartUndo(undoQueueName)
+with comp_lock_and_undo_chunk(comp, "Reload clip time ranges"):
+    tools = comp.GetToolList(True, "Loader").values()
+    for tool in tools:
 
-    def __enter__(self):
-        return None
+        # Get tool attributes
+        tool_a = tool.GetAttrs()
+        clipTable = tool_a['TOOLST_Clip_Name']
+        altclipTable = tool_a['TOOLST_AltClip_Name']
+        startTime = tool_a['TOOLNT_Clip_Start']
+        old_global_in = tool.GlobalIn[comp.CurrentTime]
 
-    def __exit__(self, type, value, traceback):
-        comp.EndUndo(True)
-        comp.Unlock()
+        # Reapply
+        for index, _ in clipTable.items():
+            time = startTime[index]
+            tool.Clip[time] = tool.Clip[time]
 
+        for index, _ in altclipTable.items():
+            time = startTime[index]
+            tool.ProxyFilename[time] = tool.ProxyFilename[time]
 
-with FusionLockComp("Reload clip time ranges"):
-    toolsDict = comp.GetToolList(True)
-    if toolsDict:
-        for i, tool in toolsDict.items():
-            if tool.ID != "Loader":
-                continue
-
-            tool_a = tool.GetAttrs()
-            clipTable = tool_a['TOOLST_Clip_Name']
-            altclipTable = tool_a['TOOLST_AltClip_Name']
-            startTime = tool_a['TOOLNT_Clip_Start']
-            oldGlobalIn = tool.GlobalIn[comp.CurrentTime]
-
-            for n, c in clipTable.items():
-                tool.Clip[startTime[n]] = tool.Clip[startTime[n]]
-
-            for n, c in altclipTable.items():
-                tool.ProxyFilename[startTime[n]] = tool.ProxyFilename[startTime[n]]
-
-            tool.GlobalIn[comp.CurrentTime] = oldGlobalIn
+        tool.GlobalIn[comp.CurrentTime] = old_global_in
