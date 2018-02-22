@@ -29,9 +29,9 @@ class CameraLoader(colorbleed.maya.plugin.ReferenceLoader):
         cameras = cmds.ls(nodes, type="camera")
 
         # Check the Maya version, lockTransform has been introduced since
-        # Maya 2017
+        # Maya 2016.5 Ext 2
         version = int(cmds.about(version=True))
-        if version >= 2017:
+        if version >= 2016:
             for camera in cameras:
                 cmds.camera(camera, edit=True, lockTransform=True)
         else:

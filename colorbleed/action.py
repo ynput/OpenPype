@@ -1,7 +1,5 @@
 # absolute_import is needed to counter the `module has no cmds error` in Maya
 from __future__ import absolute_import
-
-from maya import cmds
 import pyblish.api
 
 
@@ -103,6 +101,11 @@ class SelectInvalidAction(pyblish.api.Action):
     icon = "search"  # Icon from Awesome Icon
 
     def process(self, context, plugin):
+
+        try:
+            from maya import cmds
+        except ImportError:
+            raise ImportError("Current host is not Maya")
 
         errored_instances = get_errored_instances_from_context(context)
 
