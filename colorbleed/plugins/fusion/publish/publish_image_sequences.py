@@ -26,7 +26,7 @@ def _get_script():
     return module_path
 
 
-class PublishImageSequence(pyblish.api.Integrator):
+class PublishImageSequence(pyblish.api.InstancePlugin):
     """Publish the generated local image sequences."""
 
     order = pyblish.api.IntegratorOrder
