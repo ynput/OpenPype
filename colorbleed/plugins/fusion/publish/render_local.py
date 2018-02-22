@@ -3,9 +3,10 @@ import pyblish.api
 import avalon.fusion as fusion
 
 
-class ExtractImageSequence(pyblish.api.InstancePlugin):
-    """Extract result of saver by starting a comp render
+class FusionRenderLocal(pyblish.api.InstancePlugin):
+    """Render the current Fusion composition locally.
 
+    Extract the result of savers by starting a comp render
     This will run the local render of Fusion.
 
     """
