@@ -1,28 +1,12 @@
+from avalon.fusion import comp_lock_and_undo_chunk
 
-class FusionLockComp(object):
-    def __init__(self, undoQueueName="Script CMD"):
-        # Lock flow
-        comp.Lock()
-        # Start undo event
-        comp.StartUndo(undoQueueName)
 
-    def __enter__(self):
-        return None
+def main():
+    """Set all selected loaders to 32 bit"""
+    with comp_lock_and_undo_chunk(comp, 'Selected Loaders to 32bit'):
+        tools = comp.GetToolList(True, "Loader").values()
+        for tool in tools:
+            tool.Depth = 5
 
-    def __exit__(self, type, value, traceback):       
-        comp.EndUndo(True)
-        comp.Unlock()
-        
 
-        
-def f1():
-    with FusionLockComp('Selected Loaders to 32bit'):
-        toolsDict = comp.GetToolList(True)
-        if toolsDict:
-            for i, tool in toolsDict.items():
-                if tool.ID == "Loader":
-                    tool.Depth = 5
-
-f1()
-                                
-            
+main()
