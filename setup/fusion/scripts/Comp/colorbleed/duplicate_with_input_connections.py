@@ -1,52 +1,43 @@
+from avalon.fusion import comp_lock_and_undo_chunk
 
-class FusionLockComp(object):
-    def __init__(self, undoQueueName="Script CMD"):
-        # Lock flow
-        comp.Lock()
-        # Start undo event
-        comp.StartUndo(undoQueueName)
 
-    def __enter__(self):
-        return None
+def is_connected(input):
+    """Return whether an input has incoming connection"""
+    return input.GetAttrs()["INPB_Connected"]
 
-    def __exit__(self, type, value, traceback):       
-        comp.EndUndo(True)
-        comp.Unlock()
-        
-        
-def pairs(n):
-    it = iter(n)
-    return zip(it, it)
-    
 
-def duplicateWithInputConnections():
+def duplicate_with_input_connections():
+    """Duplicate selected tools with incoming connections."""
 
-    with FusionLockComp("Duplicate With Input Connections"):
-        originalTools = comp.GetToolList(True)
-        if not originalTools:
-            return # nothing selected
-            
+    original_tools = comp.GetToolList(True).values()
+    if not original_tools:
+        return  # nothing selected
+
+    with comp_lock_and_undo_chunk(comp, "Duplicate With Input Connections"):
+
+        # Generate duplicates
         comp.Copy()
         comp.SetActiveTool()
         comp.Paste()
-        
-        duplicateTools = comp.GetToolList(True)
-        
-        for i, tool in originalTools.iteritems():
-            dupToolInputs = duplicateTools[i].GetInputList()
-            
-            for j, input in tool.GetInputList().iteritems():
-                if input.GetAttrs()['INPB_Connected']:
-                    if j in dupToolInputs:
-                        if dupToolInputs[j].GetAttrs()['INPB_Connected']:
-                            print (" Both connected. ")
-                        else:
-                            dupToolInputs[j].ConnectTo(input.GetConnectedOutput())
-                            if dupToolInputs[j].GetAttrs()['INPB_Connected']:
-                                print (" Connection Successful ")
-            
-        
+        duplicate_tools = comp.GetToolList(True).values()
 
-duplicateWithInputConnections()
-                                
-            
+        # Copy connections
+        for original, new in zip(original_tools, duplicate_tools):
+
+            original_inputs = original.GetInputList().values()
+            new_inputs = new.GetInputList().values()
+            assert len(original_inputs) == len(new_inputs)
+
+            for original_input, new_input in zip(original_inputs, new_inputs):
+
+                if is_connected(original_input):
+
+                    if is_connected(new_input):
+                        # Already connected if it is between the copied tools
+                        continue
+
+                    new_input.ConnectTo(original_input.GetConnectedOutput())
+                    assert is_connected(new_input), "Must be connected now"
+
+
+duplicate_with_input_connections()
