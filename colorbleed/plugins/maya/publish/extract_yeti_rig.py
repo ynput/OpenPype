@@ -100,7 +100,7 @@ class ExtractYetiRig(colorbleed.api.Extractor):
             with open(settings_path, "w") as fp:
                 json.dump(settings, fp, ensure_ascii=False)
 
-        attr_value = {"%s.imageSearchPath" % n: image_search_path for
+        attr_value = {"%s.imageSearchPath" % n: str(image_search_path) for
                       n in yeti_nodes}
 
         # Get input_SET members
