@@ -15,12 +15,8 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        registered_root = api.registered_root()
-        asset_name = api.Session["AVALON_ASSET"]
-
-        current_file = context.data["currentFile"]
-        relative_file = current_file.replace(registered_root, "{root}")
-        source_file = relative_file.replace("\\", "/")
+        asset = api.Session["AVALON_ASSET"]
+        filepath = context.data["currentFile"].replace("\\", "/")
 
         # Get render globals node
         try:
@@ -30,23 +26,29 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                           "renderGlobals node")
             return
 
-        default_layer = "{}.includeDefaultRenderLayer".format(render_globals)
-        use_defaultlayer = cmds.getAttr(default_layer)
+        # Get start and end frame
+        start_frame = self.get_render_attribute("startFrame")
+        end_frame = self.get_render_attribute("endFrame")
+        context.data["startFrame"] = start_frame
+        context.data["endFrame"] = end_frame
 
         # Get render layers
         renderlayers = [i for i in cmds.ls(type="renderLayer") if
                         cmds.getAttr("{}.renderable".format(i)) and not
                         cmds.referenceQuery(i, isNodeReferenced=True)]
 
+        # Include/exclude default render layer
+        default_layer = "{}.includeDefaultRenderLayer".format(render_globals)
+        use_defaultlayer = cmds.getAttr(default_layer)
+        if not use_defaultlayer:
+            renderlayers = [i for i in renderlayers if
+                            not i.endswith("defaultRenderLayer")]
+
         # Sort by displayOrder
         def sort_by_display_order(layer):
             return cmds.getAttr("%s.displayOrder" % layer)
 
         renderlayers = sorted(renderlayers, key=sort_by_display_order)
-
-        if not use_defaultlayer:
-            renderlayers = [i for i in renderlayers if
-                            not i.endswith("defaultRenderLayer")]
 
         for layer in renderlayers:
             if layer.endswith("defaultRenderLayer"):
@@ -68,10 +70,14 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                     # instance subset
                     "family": "Render Layers",
                     "families": ["colorbleed.renderlayer"],
-                    "asset": asset_name,
+                    "asset": asset,
                     "time": api.time(),
                     "author": context.data["user"],
-                    "source": source_file}
+
+                    # Add source to allow tracing back to the scene from
+                    # which was submitted originally
+                    "source": filepath
+                }
 
             # Apply each user defined attribute as data
             for attr in cmds.listAttr(layer, userDefined=True) or list():

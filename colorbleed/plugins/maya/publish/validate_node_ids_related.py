@@ -17,6 +17,7 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
     families = ["colorbleed.model",
                 "colorbleed.look",
                 "colorbleed.rig"]
+    optional = True
 
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.GenerateUUIDsOnInvalidAction]

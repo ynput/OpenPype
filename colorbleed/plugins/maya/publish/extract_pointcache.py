@@ -10,7 +10,7 @@ from colorbleed.maya.lib import extract_alembic
 class ExtractColorbleedAlembic(colorbleed.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
-    Positions and normals are preserved, but nothing more,
+    Positions and normals, uvs, creases are preserved, but nothing more,
     for plain and predictable point caches.
 
     """
@@ -44,20 +44,27 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
         filename = "{name}.abc".format(**instance.data)
         path = os.path.join(parent_dir, filename)
 
+        options = {
+            "step": instance.data.get("step", 1.0),
+            "attr": ["cbId"],
+            "writeVisibility": True,
+            "writeCreases": True,
+            "writeColorSets": writeColorSets,
+            "uvWrite": True,
+            "selection": True
+        }
+
+        if int(cmds.about(version=True)) >= 2017:
+            # Since Maya 2017 alembic supports multiple uv sets - write them.
+            options["writeUVSets"] = True
+
         with avalon.maya.suspended_refresh():
             with avalon.maya.maintained_selection():
                 cmds.select(nodes, noExpand=True)
                 extract_alembic(file=path,
                                 startFrame=start,
                                 endFrame=end,
-                                **{"step": instance.data.get("step", 1.0),
-                                   "attr": ["cbId"],
-                                   "attrPrefix": ["vray"],
-                                   "writeVisibility": True,
-                                   "writeCreases": True,
-                                   "writeColorSets": writeColorSets,
-                                   "uvWrite": True,
-                                   "selection": True})
+                                **options)
 
         if "files" not in instance.data:
             instance.data["files"] = list()
