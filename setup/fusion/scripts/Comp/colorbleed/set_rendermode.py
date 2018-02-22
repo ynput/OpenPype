@@ -1,8 +1,7 @@
-import os
-
 from avalon.vendor.Qt import QtCore, QtWidgets
 from avalon.vendor import qtawesome
 import avalon.fusion as avalon
+from avalon import style
 
 
 _help = {"renderlocal": "Render the comp on your own machine and publish "
@@ -20,15 +19,15 @@ class SetRenderMode(QtWidgets.QWidget):
         self._comp_name = self._get_comp_name()
 
         self.setWindowTitle("Set Render Mode - {}".format(self._comp_name))
-        self.resize(300, 150)
-        self.setFixedSize(300, 150)
+        self.setFixedSize(300, 175)
 
         layout = QtWidgets.QVBoxLayout()
 
         # region comp info
         comp_info_layout = QtWidgets.QHBoxLayout()
 
-        update_btn = QtWidgets.QPushButton(qtawesome.icon("fa.refresh"), "")
+        update_btn = QtWidgets.QPushButton(qtawesome.icon("fa.refresh",
+                                                          color="white"), "")
         update_btn.setFixedWidth(25)
         update_btn.setFixedHeight(25)
 
@@ -44,24 +43,15 @@ class SetRenderMode(QtWidgets.QWidget):
         mode_options.addItems(_help.keys())
 
         mode_information = QtWidgets.QTextEdit()
-        mode_information.setEnabled(False)
+        mode_information.setReadOnly(True)
         # endregion modes
 
-        accept_layout = QtWidgets.QHBoxLayout()
         accept_btn = QtWidgets.QPushButton("Accept")
-        validation_state = QtWidgets.QPushButton()
-        validation_state.setFixedHeight(15)
-        validation_state.setFixedWidth(15)
-        validation_state.setEnabled(False)
-        validation_state.setStyleSheet("background-color: green")
-
-        accept_layout.addWidget(accept_btn)
-        accept_layout.addWidget(validation_state)
 
         layout.addLayout(comp_info_layout)
         layout.addWidget(mode_options)
         layout.addWidget(mode_information)
-        layout.addLayout(accept_layout)
+        layout.addWidget(accept_btn)
 
         self.setLayout(layout)
 
@@ -72,10 +62,12 @@ class SetRenderMode(QtWidgets.QWidget):
         self.mode_information = mode_information
 
         self.accept_btn = accept_btn
-        self.validation = validation_state
 
         self.connections()
         self.update()
+
+        # Force updated render mode help text
+        self._update_rendermode_info()
 
     def connections(self):
         """Build connections between code and buttons"""
@@ -94,33 +86,26 @@ class SetRenderMode(QtWidgets.QWidget):
         self.setWindowTitle("Set Render Mode")
         self.comp_information.setText(self._comp_name)
 
-        self._update_rendermode_info()
+        # Update current comp settings
+        mode = self._get_comp_rendermode()
+        index = self.mode_options.findText(mode)
+        self.mode_options.setCurrentIndex(index)
 
     def _update_rendermode_info(self):
-
-        rendermode = self._get_comp_rendermode()
-        if rendermode is None:
-            rendermode = "renderlocal"
-
+        rendermode = self.mode_options.currentText()
         self.mode_information.setText(_help[rendermode])
 
     def _get_comp_name(self):
-        return os.path.basename(self._comp.GetAttrs("COMPS_FileName"))
+        return self._comp.GetAttrs("COMPS_Name")
 
     def _get_comp_rendermode(self):
-        return self._comp.GetData("colorbleed.rendermode")
+        return self._comp.GetData("colorbleed.rendermode") or "renderlocal"
 
     def _set_comp_rendermode(self):
         rendermode = self.mode_options.currentText()
         self._comp.SetData("colorbleed.rendermode", rendermode)
 
-        # Validate the rendermode has been updated correctly
-        if not self._validation():
-            self.validation.setStyleSheet("background-color: red")
-            raise AssertionError("Rendermode in UI is not render mode in comp: "
-                                 "%s" % self._comp_name)
-
-        print("Updated render mode for %s to %s" % (self._comp_name, rendermode))
+        self._comp.Print("Updated render mode to '%s'\n" % rendermode)
 
     def _validation(self):
         ui_mode = self.mode_options.currentText()
@@ -133,6 +118,7 @@ if __name__ == '__main__':
 
     import sys
     app = QtWidgets.QApplication(sys.argv)
-    w = SetRenderMode()
-    w.show()
+    window = SetRenderMode()
+    window.setStyleSheet(style.load_stylesheet())
+    window.show()
     sys.exit(app.exec_())
