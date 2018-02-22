@@ -5,6 +5,8 @@ import subprocess
 
 import pyblish.api
 
+from colorbleed.action import get_errored_plugins_from_data
+
 
 def _get_script():
     """Get path to the image sequence script"""
@@ -33,6 +35,13 @@ class PublishImageSequence(pyblish.api.Integrator):
     families = ["colorbleed.saver.renderlocal"]
 
     def process(self, instance):
+
+        # Skip this plug-in if the ExtractImageSequence failed
+        errored_plugins = get_errored_plugins_from_data(instance.context)
+        if any(plugin.__name__ == "FusionRenderLocal" for plugin in
+               errored_plugins):
+            raise RuntimeError("Fusion local render failed, "
+                               "publishing images skipped.")
 
         subset = instance.data["subset"]
         ext = instance.data["ext"]
