@@ -206,6 +206,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
             # todo: This is a temporary fix for yeti variables
             "PEREGRINEL_LICENSE",
+            "REDSHIFT_MAYAEXTENSIONSPATH",
             "VRAY_FOR_MAYA2018_PLUGINS_X64",
             "VRAY_PLUGINS_X64",
             "VRAY_USE_THREAD_AFFINITY",
