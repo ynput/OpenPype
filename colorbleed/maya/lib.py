@@ -1247,3 +1247,44 @@ def remove_other_uv_sets(mesh):
         for i in indices:
             attr = '{0}.uvSet[{1}]'.format(mesh, i)
             cmds.removeMultiInstance(attr, b=True)
+
+
+def get_id_from_history(node):
+    """Return first node id in the history chain that matches this node.
+
+    The nodes in history must be of the exact same node type and must be
+    parented under the same parent.
+
+    Args:
+        node (str): node to retrieve the
+
+    Returns:
+        str or None: The id from the node in history or None when no id found
+            on any valid nodes in the history.
+
+    """
+
+    def _get_parent(node):
+        """Return full path name for parent of node"""
+        return cmds.listRelatives(node, parent=True, fullPath=True)
+
+    node = cmds.ls(node, long=True)[0]
+
+    # Find all similar nodes in history
+    history = cmds.listHistory(node)
+    node_type = cmds.nodeType(node)
+    similar_nodes = cmds.ls(history, exactType=node_type, long=True)
+
+    # Exclude itself
+    similar_nodes = [x for x in similar_nodes if x != node]
+
+    # The node *must be* under the same parent
+    parent = _get_parent(node)
+    similar_nodes = [i for i in similar_nodes if _get_parent(i) == parent]
+
+    # Check all of the remaining similar nodes and take the first one
+    # with an id and assume it's the original.
+    for similar_node in similar_nodes:
+        _id = get_id(similar_node)
+        if _id:
+            return _id

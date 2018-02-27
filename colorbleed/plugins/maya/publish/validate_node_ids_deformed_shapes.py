@@ -1,11 +1,11 @@
-import maya.cmds as cmds
+from maya import cmds
 
 import pyblish.api
 import colorbleed.api
 import colorbleed.maya.lib as lib
 
 
-class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
+class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
     """Validate if deformed shapes have related IDs to the original shapes.
 
     When a deformer is applied in the scene on a referenced mesh that already
@@ -16,36 +16,33 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidateContentsOrder
-    families = ["colorbleed.rig"]
+    families = ['colorbleed.look']
     hosts = ['maya']
-    label = 'Rig Out Set Node Ids'
+    label = 'Deformed shape ids'
     actions = [colorbleed.api.SelectInvalidAction, colorbleed.api.RepairAction]
 
     def process(self, instance):
-        """Process all meshes"""
+        """Process all the nodes in the instance"""
 
         # Ensure all nodes have a cbId and a related ID to the original shapes
         # if a deformer has been created on the shape
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Nodes found with non-related "
-                               "asset IDs: {0}".format(invalid))
+            raise RuntimeError("Shapes found that are considered 'Deformed'"
+                               "without object ids: {0}".format(invalid))
 
     @classmethod
     def get_invalid(cls, instance):
         """Get all nodes which do not match the criteria"""
 
-        invalid = []
-
-        out_set = next(x for x in instance if x.endswith("out_SET"))
-        members = cmds.sets(out_set, query=True)
-        shapes = cmds.ls(members,
+        shapes = cmds.ls(instance[:],
                          dag=True,
                          leaf=True,
                          shapes=True,
                          long=True,
                          noIntermediate=True)
 
+        invalid = []
         for shape in shapes:
             history_id = lib.get_id_from_history(shape)
             if history_id:
@@ -66,3 +63,4 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
                 continue
 
             lib.set_id(node, history_id, overwrite=True)
+
