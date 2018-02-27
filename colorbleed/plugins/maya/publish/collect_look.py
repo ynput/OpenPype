@@ -141,7 +141,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         # Add shader sets to the instance for unify ID validation
         instance.extend(shader for shader in looksets if shader
                         not in instance_lookup)
-        
+
         self.log.info("Collected look for %s" % instance)
 
     def collect_sets(self, instance):
@@ -239,11 +239,10 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         return attributes
 
-    def collect_resource(self, node, verbose=False):
+    def collect_resource(self, node):
         """Collect the link to the file(s) used (resource)
         Args:
             node (str): name of the node
-            verbose (bool): enable debug information
 
         Returns:
             dict
@@ -252,23 +251,22 @@ class CollectLook(pyblish.api.InstancePlugin):
         attribute = "{}.fileTextureName".format(node)
         source = cmds.getAttr(attribute)
 
-        # Get the computed file path (e.g. the one with the <UDIM> pattern
-        # in it) So we can reassign it this computed file path whenever
-        # we need to.
+        # Compare with the computed file path, e.g. the one with the <UDIM>
+        # pattern in it, to generate some logging information about this
+        # difference
         computed_attribute = "{}.computedFileTextureNamePattern".format(node)
         computed_source = cmds.getAttr(computed_attribute)
         if source != computed_source:
-            if verbose:
-                self.log.debug("File node computed pattern differs from "
-                               "original pattern: {0} "
-                               "({1} -> {2})".format(node,
-                                                     source,
-                                                     computed_source))
+            self.log.debug("Detected computed file pattern difference "
+                           "from original pattern: {0} "
+                           "({1} -> {2})".format(node,
+                                                 source,
+                                                 computed_source))
 
-            # We replace backslashes with forward slashes because V-Ray
-            # can't handle the UDIM files with the backslashes in the
-            # paths as the computed patterns
-            source = computed_source.replace("\\", "/")
+        # We replace backslashes with forward slashes because V-Ray
+        # can't handle the UDIM files with the backslashes in the
+        # paths as the computed patterns
+        source = source.replace("\\", "/")
 
         files = shaders.get_file_node_files(node)
         if len(files) == 0:
