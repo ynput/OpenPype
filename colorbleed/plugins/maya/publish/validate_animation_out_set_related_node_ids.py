@@ -5,55 +5,6 @@ import colorbleed.api
 import colorbleed.maya.lib as lib
 
 
-def get_id_from_history(node):
-    """Return first node id in the history chain that matches this node.
-
-    The nodes in history must be of the exact same node type and must be 
-    parented under the same parent.
-
-    Args:
-        node (str): node to retrieve the
-
-    Returns:
-        str or None: The id from the node in history or None when no id found
-            on any valid nodes in the history.
-
-    """
-
-    node = cmds.ls(node, long=True)[0]
-
-    # Find all similar nodes in history
-    history = cmds.listHistory(node)
-    node_type = cmds.nodeType(node)
-    similar_nodes = cmds.ls(history, exactType=node_type, long=True)
-
-    # Exclude itself
-    similar_nodes = [x for x in similar_nodes if x != node]
-
-    # The node *must be* under the same parent
-    parent = get_parent(node)
-    similar_nodes = [i for i in similar_nodes if
-                     get_parent(i) == parent]
-
-    # Check all of the remaining similar nodes and take the first one
-    # with an id and assume it's the original.
-    for similar_node in similar_nodes:
-        _id = lib.get_id(similar_node)
-        if _id:
-            return _id
-
-
-def get_parent(node):
-    """Get the parent node of the given node
-    Args:
-        node (str): full path of the node
-
-    Returns:
-        str, full path if parent node
-    """
-    return cmds.listRelatives(node, parent=True, fullPath=True)
-
-
 class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     """Validate if deformed shapes have related IDs to the original shapes
 
@@ -105,7 +56,7 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
                 invalid.append(node)
                 continue
 
-            history_id = get_id_from_history(node)
+            history_id = lib.get_id_from_history(node)
             if history_id is not None and node_id != history_id:
                 invalid.append(node)
 
@@ -116,7 +67,7 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
 
         for node in cls.get_invalid(instance):
             # Get the original id from history
-            history_id = get_id_from_history(node)
+            history_id = lib.get_id_from_history(node)
             if not history_id:
                 cls.log.error("Could not find ID in history for '%s'", node)
                 continue
