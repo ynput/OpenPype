@@ -30,6 +30,9 @@ class ModelLoader(colorbleed.maya.plugin.ReferenceLoader):
 
         return nodes
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
 
 class ImportModelLoader(api.Loader):
     """An ImportModelLoader for Maya
