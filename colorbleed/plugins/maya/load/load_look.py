@@ -35,3 +35,6 @@ class LookLoader(colorbleed.maya.plugin.ReferenceLoader):
                               returnNewNodes=True)
 
         self[:] = nodes
+
+    def switch(self, container, representation):
+        self.update(container, representation)

@@ -203,6 +203,9 @@ class GpuCacheLoader(api.Loader):
                      str(representation["_id"]),
                      type="string")
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
     def remove(self, container):
         import maya.cmds as cmds
         members = cmds.sets(container['objectName'], query=True)
