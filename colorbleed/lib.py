@@ -207,7 +207,10 @@ def switch_item(container,
     representation = io.find_one({"name": representation_name,
                                   "type": "representation",
                                   "parent": version["_id"]})
-    assert representation, ("Could not find subset in the database with the "
-                            "name '%s'" % representation_name)
+
+    assert representation, ("Could not find representation in the database with "
+                            "the name '%s'" % representation_name)
 
     avalon.api.switch(container, representation)
+
+    return representation
