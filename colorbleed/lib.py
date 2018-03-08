@@ -162,7 +162,7 @@ def switch_item(container,
         representation_name (str): name of the representation
 
     Returns:
-        None
+        dict
 
     """
 
