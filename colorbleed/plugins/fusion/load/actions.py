@@ -5,37 +5,6 @@
 from avalon import api
 
 
-def _set_frame_range(start, end, set_render_range=True):
-    """Set Fusion comp's start and end frame range
-
-    Attrs:
-        set_render_range (bool, Optional): When True this will also set the
-            composition's render start and end frame.
-
-    Returns:
-        None
-
-    """
-
-    from avalon.fusion import get_current_comp, comp_lock_and_undo_chunk
-
-    comp = get_current_comp()
-
-    attrs = {
-        "COMPN_GlobalStart": start,
-        "COMPN_GlobalEnd": end
-    }
-
-    if set_render_range:
-        attrs.update({
-            "COMPN_RenderStart": start,
-            "COMPN_RenderEnd": end
-        })
-
-    with comp_lock_and_undo_chunk(comp):
-        comp.SetAttrs(attrs)
-
-
 class FusionSetFrameRangeLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
@@ -53,6 +22,8 @@ class FusionSetFrameRangeLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
+        from colorbleed.fusion import lib
+
         version = context['version']
         version_data = version.get("data", {})
 
@@ -64,7 +35,7 @@ class FusionSetFrameRangeLoader(api.Loader):
                   "end frame data is missing..")
             return
 
-        _set_frame_range(start, end)
+        lib.update_frame_range(start, end)
 
 
 class FusionSetFrameRangeWithHandlesLoader(api.Loader):
@@ -84,6 +55,8 @@ class FusionSetFrameRangeWithHandlesLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
+        from colorbleed.fusion import lib
+
         version = context['version']
         version_data = version.get("data", {})
 
@@ -100,4 +73,4 @@ class FusionSetFrameRangeWithHandlesLoader(api.Loader):
         start -= handles
         end += handles
 
-        _set_frame_range(start, end)
+        lib.update_frame_range(start, end)
