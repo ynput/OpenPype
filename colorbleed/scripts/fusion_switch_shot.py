@@ -116,7 +116,7 @@ def update_frame_range(comp, representations):
     fusion_lib.update_frame_range(start, end, comp=comp)
 
 
-def switch(filepath, asset_name, new=True, fusion=None):
+def switch(filepath, asset_name, new=True):
     """Switch the current containers of the file to the other asset (shot)
 
     Args:
@@ -144,14 +144,12 @@ def switch(filepath, asset_name, new=True, fusion=None):
     assert asset, "Could not find '%s' in the database" % asset_name
 
     # Go to comp
-    if fusion is None:
-        fusion = _get_fusion_instance()
+    fusion = _get_fusion_instance()
 
     current_comp = fusion.LoadComp(filepath)
     assert current_comp is not None, "Fusion could not load '%s'" % filepath
 
     host = api.registered_host()
-    assert host is not None, "No host found! This is a bug"
     containers = list(host.ls())
     assert containers, "Nothing to update"
 
