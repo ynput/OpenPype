@@ -14,7 +14,6 @@ class CameraLoader(colorbleed.maya.plugin.ReferenceLoader):
     def process_reference(self, context, name, namespace, data):
 
         import maya.cmds as cmds
-        # import pprint
         # Get family type from the context
 
         cmds.loadPlugin("AbcImport.mll", quiet=True)
@@ -41,3 +40,6 @@ class CameraLoader(colorbleed.maya.plugin.ReferenceLoader):
         self[:] = nodes
 
         return nodes
+
+    def switch(self, container, representation):
+        self.update(container, representation)
