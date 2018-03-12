@@ -33,7 +33,7 @@ def _format_version_folder(folder):
     if not os.path.isdir(folder):
         return "v001"
 
-    re_version = re.compile("v\d+")
+    re_version = re.compile("v\d+$")
 
     content = sorted(os.listdir(folder))
     versions = [i for i in content if os.path.isdir(i) and re_version.match(i)]
