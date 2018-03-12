@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import logging
 
@@ -14,7 +15,33 @@ log = logging.getLogger("Update Slap Comp")
 
 self = sys.modules[__name__]
 self._project = None
-fusion = None
+
+
+def _format_version_folder(folder):
+    """Format a version folder based on the filepath
+
+    Assumption here is made that, if the path does not exists the folder
+    will be "v001"
+
+    Args:
+        folder: file path to a folder
+
+    Returns:
+        str: new version folder name
+    """
+
+    if not os.path.isdir(folder):
+        return "v001"
+
+    re_version = re.compile("v\d+")
+
+    content = sorted(os.listdir(folder))
+    versions = [i for i in content if re_version.match(i)]
+
+    new_version = int(max(versions)[1:]) + 1  # ensure the "v" is not included
+    version_folder = "v{:03d}".format(new_version)
+
+    return version_folder
 
 
 def _get_work_folder(session):
@@ -70,15 +97,16 @@ def _update_savers(comp, session):
 
     Args:
         comp (object): current comp instance
-        asset (dict): asset document of the asset to update TO
+        session (dict): the current Avalon session
 
     Returns:
          None
     """
 
     new_work = _get_work_folder(session)
-    # TODO
-    renders = os.path.join(new_work, "renders", "?")
+    renders = os.path.join(new_work, "renders")
+    version_folder = _format_version_folder(renders)
+    renders_version = os.path.join(renders, version_folder)
 
     comp.Print("New renders to: %s\n" % renders)
 
@@ -87,7 +115,7 @@ def _update_savers(comp, session):
         for saver in savers:
             filepath = saver.GetAttrs("TOOLST_Clip_Name")[1.0]
             filename = os.path.basename(filepath)
-            new_path = os.path.join(renders, filename)
+            new_path = os.path.join(renders_version, filename)
             saver["Clip"] = new_path
 
 
@@ -123,7 +151,6 @@ def switch(filepath, asset_name, new=True):
         filepath (str): file path of the comp file
         asset_name (str): name of the asset (shot)
         new (bool): Save updated comp under a different name
-        fusion (object, Optional): pass on the fusion instance
 
     Returns:
         comp path (str): new filepath of the updated comp
