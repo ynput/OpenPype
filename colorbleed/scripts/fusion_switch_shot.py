@@ -30,14 +30,15 @@ def _format_version_folder(folder):
         str: new version folder name
     """
 
-    if not os.path.isdir(folder):
-        return "v001"
+    new_version = 1
+    if os.path.isdir(folder):
+        re_version = re.compile("v\d+$")
+        versions = [i for i in os.listdir(folder) if os.path.isdir(i)
+                    and re_version.match(i)]
+        if versions:
+            # ensure the "v" is not included
+            new_version = int(max(versions)[1:]) + 1
 
-    re_version = re.compile("v\d+$")
-    versions = [i for i in os.listdir(folder) if os.path.isdir(i)
-                and re_version.match(i)]
-
-    new_version = int(max(versions)[1:]) + 1  # ensure the "v" is not included
     version_folder = "v{:03d}".format(new_version)
 
     return version_folder
@@ -143,7 +144,7 @@ def update_frame_range(comp, representations):
     fusion_lib.update_frame_range(start, end, comp=comp)
 
 
-def switch(filepath, asset_name, new=True):
+def switch(asset_name, filepath=None, new=True):
     """Switch the current containers of the file to the other asset (shot)
 
     Args:
@@ -170,10 +171,13 @@ def switch(filepath, asset_name, new=True):
     assert asset, "Could not find '%s' in the database" % asset_name
 
     # Go to comp
-    fusion = _get_fusion_instance()
-
-    current_comp = fusion.LoadComp(filepath)
-    assert current_comp is not None, "Fusion could not load '%s'" % filepath
+    if not filepath:
+        current_comp = avalon.fusion.get_current_comp()
+        assert current_comp is not None, "Could not find current comp"
+    else:
+        fusion = _get_fusion_instance()
+        current_comp = fusion.LoadComp(filepath, quiet=True)
+        assert current_comp is not None, "Fusion could not load '%s'" % filepath
 
     host = api.registered_host()
     containers = list(host.ls())
@@ -226,6 +230,7 @@ if __name__ == '__main__':
                         type=str,
                         default=True,
                         help="File path of the comp to use")
+
     parser.add_argument("--asset_name",
                         type=str,
                         default=True,
@@ -234,6 +239,6 @@ if __name__ == '__main__':
     args, unknown = parser.parse_args()
 
     api.install(avalon.fusion)
-    switch(args.file_path, args.asset_name)
+    switch(args.asset_name, args.file_path)
 
     sys.exit(0)
