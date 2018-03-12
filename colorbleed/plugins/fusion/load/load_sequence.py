@@ -143,6 +143,9 @@ class FusionLoadSequence(api.Loader):
                               context=context,
                               loader=self.__class__.__name__)
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
     def update(self, container, representation):
         """Update the Loader's path
 

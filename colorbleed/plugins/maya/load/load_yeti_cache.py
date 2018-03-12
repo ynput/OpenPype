@@ -108,6 +108,9 @@ class YetiCacheLoader(api.Loader):
                      str(representation["_id"]),
                      type="string")
 
+    def switch(self, container, representation):
+        self.update(container, representation)
+
     # helper functions
 
     def create_namespace(self, asset):
