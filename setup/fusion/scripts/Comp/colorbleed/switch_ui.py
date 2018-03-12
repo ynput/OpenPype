@@ -76,19 +76,9 @@ class App(QtWidgets.QWidget):
         options = QtWidgets.QHBoxLayout()
         options.setAlignment(QtCore.Qt.AlignLeft)
 
-        update_label = QtWidgets.QLabel("Update version")
-        update_check = QtWidgets.QCheckBox()
-        update_check.setChecked(False)
-        update_check.setToolTip("If checked it versions up the selected comp "
-                                "file with else it will create a new slapcomp "
-                                "file based on the selected comp file")
-
         current_comp_check = QtWidgets.QCheckBox()
         current_comp_check.setChecked(True)
         current_comp_label = QtWidgets.QLabel("Use current comp")
-
-        options.addWidget(update_label)
-        options.addWidget(update_check)
 
         options.addWidget(current_comp_label)
         options.addWidget(current_comp_check)
@@ -103,7 +93,6 @@ class App(QtWidgets.QWidget):
         self._open_from_dir = open_from_dir
         self._comps = comp_box
         self._assets = asset_box
-        self._update = update_check
         self._use_current = current_comp_check
         self._accept_btn = accept_btn
         self._refresh_btn = refresh_btn
@@ -164,10 +153,9 @@ class App(QtWidgets.QWidget):
             file_name = comp.GetAttrs("COMPS_FileName")
 
         asset = self._assets.currentText()
-        new = not self._update.isChecked()
 
         import colorbleed.scripts.fusion_switch_shot as switch_shot
-        switch_shot.switch(file_name, asset, new)
+        switch_shot.switch(asset_name=asset, filepath=file_name, new=True)
 
     def _get_context_directory(self):
 
