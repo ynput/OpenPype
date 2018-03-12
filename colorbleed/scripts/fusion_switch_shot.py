@@ -36,7 +36,7 @@ def _format_version_folder(folder):
     re_version = re.compile("v\d+")
 
     content = sorted(os.listdir(folder))
-    versions = [i for i in content if re_version.match(i)]
+    versions = [i for i in content if os.path.isdir(i) and re_version.match(i)]
 
     new_version = int(max(versions)[1:]) + 1  # ensure the "v" is not included
     version_folder = "v{:03d}".format(new_version)
