@@ -4,7 +4,7 @@ import pyblish.api
 import colorbleed.api
 
 
-SUFFIX_NAMING_TABLE = {'mesh': ["_GEO", "_GES", "_GEP"],
+SUFFIX_NAMING_TABLE = {'mesh': ["_GEO", "_GES", "_GEP", "_OSD"],
                        'nurbsCurve': ["_CRV"],
                        'nurbsSurface': ["_NRB"],
                        None: ['_GRP']}
@@ -12,11 +12,15 @@ SUFFIX_NAMING_TABLE = {'mesh': ["_GEO", "_GES", "_GEP"],
 ALLOW_IF_NOT_IN_SUFFIX_TABLE = True
 
 
-class ValidateTransformNamingSuffix(pyblish.api.Validator):
+class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     """Validates transform suffix based on the type of its children shapes.
 
     Suffices must be:
-        - mesh: _GEO or _GES or _GEP
+        - mesh:
+            _GEO (regular geometry)
+            _GES (geometry to be smoothed at render)
+            _GEP (proxy geometry; usually not to be rendered)
+            _OSD (open subdiv smooth at rendertime)
         - nurbsCurve: _CRV
         - nurbsSurface: _NRB
         - null/group: _GRP
