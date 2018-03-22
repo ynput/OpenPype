@@ -104,7 +104,7 @@
             },
             {
                 "type": "action",
-                "command": "",
+                "command": "$COLORBLEED_SCRIPTS\\modeling\\separateMeshPerShader.py",
                 "sourcetype": "file",
                 "tags": [
                     "modeling",
@@ -1709,7 +1709,6 @@
             },
             {
                 "type": "menu",
-                "command": "",
                 "title": "Hair",
                 "tooltip": "",
                 "items": [
