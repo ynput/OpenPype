@@ -659,6 +659,8 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
     nodes |= set(transforms)
 
     nodes -= ignore  # Remove the ignored nodes
+    if not nodes:
+        return []
 
     # Avoid locked nodes
     nodes_list = list(nodes)
