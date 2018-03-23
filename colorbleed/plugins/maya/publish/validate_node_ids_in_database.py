@@ -49,7 +49,7 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
             cb_id = lib.get_id(node)
             asset_id = cb_id.split(":", 1)[0]
             if asset_id not in db_asset_ids:
-                cls.log.error("`%s` has unassociated assetfd ID" % node)
+                cls.log.error("`%s` has unassociated asset ID" % node)
                 invalid.append(node)
 
         return invalid
