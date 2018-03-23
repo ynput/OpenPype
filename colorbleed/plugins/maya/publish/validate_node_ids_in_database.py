@@ -27,7 +27,7 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found asset IDs which are not related to"
+            raise RuntimeError("Found asset IDs which are not related to "
                                "current project in instance: "
                                "`%s`" % instance.name)
 
