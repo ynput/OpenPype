@@ -660,7 +660,7 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
 
     nodes -= ignore  # Remove the ignored nodes
     if not nodes:
-        return []
+        return nodes
 
     # Avoid locked nodes
     nodes_list = list(nodes)
