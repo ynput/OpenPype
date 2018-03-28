@@ -14,6 +14,8 @@ class FusionRenderNode(api.Action):
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
+        if "AVALON_PROJECT" in session:
+            return False
         return True
 
     def process(self, session, **kwargs):
