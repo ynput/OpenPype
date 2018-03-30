@@ -1,6 +1,7 @@
 import os
 from pyblish import api as pyblish
-from avalon import api, pipeline
+
+from .config_actions import register_actions
 
 PACKAGE_DIR = os.path.dirname(__file__)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
@@ -19,9 +20,5 @@ def uninstall():
 
 
 def register_launcher_actions():
-    """Register specific actions which should be accessible in the launcher"""
-
-    # Register fusion actions
-    from .fusion import rendernode
-    pipeline.register_plugin(api.Action, rendernode.FusionRenderNode)
-
+    """Convenience function to register the actions"""
+    register_actions()
