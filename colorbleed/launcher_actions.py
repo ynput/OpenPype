@@ -37,7 +37,7 @@ class FusionRenderNode(api.Action):
         return lib.launch(executable=executable, args=[], environment=env)
 
 
-def register_actions():
+def register_launcher_actions():
     """Register specific actions which should be accessible in the launcher"""
 
     # Register fusion actions
