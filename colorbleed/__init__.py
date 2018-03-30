@@ -1,7 +1,7 @@
 import os
 from pyblish import api as pyblish
 
-from .config_actions import register_actions
+from .launcher_actions import register_launcher_actions
 
 PACKAGE_DIR = os.path.dirname(__file__)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
@@ -17,8 +17,3 @@ def install():
 
 def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
-
-
-def register_launcher_actions():
-    """Convenience function to register the actions"""
-    register_actions()
