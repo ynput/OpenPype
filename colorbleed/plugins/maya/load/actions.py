@@ -76,3 +76,46 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
                              maxTime=end,
                              animationStartTime=start,
                              animationEndTime=end)
+
+
+class ImportMayaLoader(api.Loader):
+    """Import action for Maya (unmanaged)
+
+    Warning:
+        The loaded content will be unmanaged and is *not* visible in the
+        scene inventory. It's purely intended to merge content into your scene
+        so you could also use it as a new base.
+
+    """
+    representations = ["ma"]
+    families = ["*"]
+
+    label = "Import"
+    order = 10
+    icon = "arrow-circle-down"
+    color = "#775555"
+
+    def load(self, context, name=None, namespace=None, data=None):
+        import maya.cmds as cmds
+
+        from avalon import maya
+        from avalon.maya import lib
+
+        asset = context['asset']
+
+        namespace = namespace or lib.unique_namespace(
+            asset["name"] + "_",
+            prefix="_" if asset["name"][0].isdigit() else "",
+            suffix="_",
+        )
+
+        with maya.maintained_selection():
+            cmds.file(self.fname,
+                      i=True,
+                      namespace=namespace,
+                      returnNewNodes=True,
+                      groupReference=True,
+                      groupName="{}:{}".format(namespace, name))
+
+        # We do not containerize imported content, it remains unmanaged
+        return
