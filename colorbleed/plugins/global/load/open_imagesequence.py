@@ -15,13 +15,13 @@ def open(filepath):
         subprocess.call(('xdg-open', filepath))
 
 
-class OpenImageSequence(api.Loader):
+class PlayImageSequence(api.Loader):
     """Open Image Sequence with system default"""
 
     families = ["colorbleed.imagesequence"]
     representations = ["*"]
 
-    label = "Open sequence"
+    label = "Play sequence"
     order = -10
     icon = "play-circle"
     color = "orange"
