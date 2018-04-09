@@ -30,7 +30,7 @@ class FusionRenderNode(api.Action):
         env = os.environ.copy()
         env.update(session)
 
-        # Get executable by na.e
+        # Get executable by name
         app = lib.get_application(self.name)
         executable = lib.which(app["executable"])
 
