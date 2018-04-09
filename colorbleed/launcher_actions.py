@@ -32,6 +32,7 @@ class FusionRenderNode(api.Action):
 
         # Get executable by name
         app = lib.get_application(self.name)
+        env.update(app["environment"])
         executable = lib.which(app["executable"])
 
         return lib.launch(executable=executable, args=[], environment=env)
