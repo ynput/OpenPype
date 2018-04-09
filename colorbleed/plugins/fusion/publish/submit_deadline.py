@@ -74,6 +74,9 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
                 # User, as seen in Monitor
                 "UserName": deadline_user,
 
+                # Use a default submission pool for Fusion
+                "Pool": "fusion",
+
                 "Plugin": "Fusion",
                 "Frames": "{start}-{end}".format(
                     start=int(context.data["startFrame"]),
