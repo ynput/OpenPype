@@ -149,7 +149,7 @@ class ReferenceLoader(api.Loader):
             if not content:
                 raise
 
-            self.log.info("Ignoring file read error:\n%s", exc)
+            self.log.warning("Ignoring file read error:\n%s", exc)
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.
