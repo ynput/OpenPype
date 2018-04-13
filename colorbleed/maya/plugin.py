@@ -128,10 +128,25 @@ class ReferenceLoader(api.Loader):
         assert file_type, "Unsupported representation: %s" % representation
 
         assert os.path.exists(path), "%s does not exist." % path
-        content = cmds.file(path,
-                            loadReference=reference_node,
-                            type=file_type,
-                            returnNewNodes=True)
+
+        try:
+            content = cmds.file(path,
+                                loadReference=reference_node,
+                                type=file_type,
+                                returnNewNodes=True)
+        except RuntimeError as exc:
+            # When changing a reference to a file that has load errors the
+            # command will raise an error even if the file is still loaded
+            # correctly (e.g. when raising errors on Arnold attributes)
+            # When the file is loaded and has content, we consider it's fine.
+            if not cmds.referenceQuery(reference_node, isLoaded=True):
+                raise
+
+            content = cmds.referenceQuery(reference_node, nodes=True)
+            if not content:
+                raise
+
+            self.log.info("Ignoring file read error:\n%s", exc)
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.
