@@ -39,8 +39,11 @@ class ReferenceLoader(api.Loader):
              namespace=None,
              data=None):
 
+        import os
         from avalon.maya import lib
         from avalon.maya.pipeline import containerise
+
+        assert os.path.exists(self.fname), "%s does not exist." % self.fname
 
         asset = context['asset']
 
