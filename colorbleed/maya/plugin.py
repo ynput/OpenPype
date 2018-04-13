@@ -145,7 +145,9 @@ class ReferenceLoader(api.Loader):
             if not cmds.referenceQuery(reference_node, isLoaded=True):
                 raise
 
-            content = cmds.referenceQuery(reference_node, nodes=True)
+            content = cmds.referenceQuery(reference_node,
+                                          nodes=True,
+                                          dagPath=True)
             if not content:
                 raise
 
