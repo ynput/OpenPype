@@ -1,6 +1,30 @@
 from avalon import api
 
 
+def get_reference_node_parents(ref):
+    """Return all parent reference nodes of reference node
+
+    Args:
+        ref (str): reference node.
+
+    Returns:
+        list: The upstream parent reference nodes.
+
+    """
+    from maya import cmds
+
+    parent = cmds.referenceQuery(ref,
+                                 referenceNode=True,
+                                 parent=True)
+    parents = []
+    while parent:
+        parents.append(parent)
+        parent = cmds.referenceQuery(parent,
+                                     referenceNode=True,
+                                     parent=True)
+    return parents
+
+
 class ReferenceLoader(api.Loader):
     """A basic ReferenceLoader for Maya
 
@@ -59,27 +83,28 @@ class ReferenceLoader(api.Loader):
 
         # Collect the references without .placeHolderList[] attributes as
         # unique entries (objects only) and skipping the sharedReferenceNode.
-        matched = set()
-        references = list()
+        references = set()
         for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
-
-            # Ensure unique entries
-            if ref in matched:
-                continue
 
             # Ignore `sharedReferenceNode`
             if ref == "sharedReferenceNode":
                 continue
 
-            references.append(ref)
-            matched.add(ref)
+            references.add(ref)
 
         assert references, "No reference node found in container"
-        if len(set(references)) > 1:
+
+        # Get highest reference node (least parents)
+        highest = min(references,
+                      key=lambda x: len(get_reference_node_parents(x)))
+
+        # Warn the user when we're taking the highest reference node
+        if len(references) > 1:
             self.log.warning("More than one reference node found in "
-                             "container - using first one: %s", references)
-        reference_node = references[0]
-        return reference_node
+                             "container, using highest reference node: "
+                             "%s (in: %s)", highest, list(references))
+
+        return highest
 
     def update(self, container, representation):
 
