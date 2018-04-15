@@ -1045,8 +1045,10 @@ def apply_shaders(relationships, shadernodes, nodes):
 
 # endregion LOOKDEV
 def get_isolate_view_sets():
-    """
+    """Return isolate view sets of all modelPanels.
 
+    Returns:
+        list: all sets related to isolate view
 
     """
 
