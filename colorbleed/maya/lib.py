@@ -1045,8 +1045,10 @@ def apply_shaders(relationships, shadernodes, nodes):
 
 # endregion LOOKDEV
 def get_isolate_view_sets():
-    """
+    """Return isolate view sets of all modelPanels.
 
+    Returns:
+        list: all sets related to isolate view
 
     """
 
@@ -1080,7 +1082,7 @@ def get_related_sets(node):
     ignore_suffices = ["out_SET", "controls_SET", "_INST", "_CON"]
 
     # Default nodes to ignore
-    defaults = {"initialShadingGroup",  "defaultLightSet", "defaultObjectSet"}
+    defaults = {"defaultLightSet", "defaultObjectSet"}
 
     # Ids to ignore
     ignored = {"pyblish.avalon.instance", "pyblish.avalon.container"}

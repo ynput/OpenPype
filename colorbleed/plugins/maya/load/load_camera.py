@@ -6,7 +6,7 @@ class CameraLoader(colorbleed.maya.plugin.ReferenceLoader):
 
     families = ["colorbleed.camera"]
     label = "Reference camera"
-    representations = ["abc"]
+    representations = ["abc", "ma"]
     order = -10
     icon = "code-fork"
     color = "orange"

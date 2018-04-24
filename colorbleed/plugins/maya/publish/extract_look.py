@@ -1,5 +1,6 @@
 import os
 import json
+from collections import OrderedDict
 
 from maya import cmds
 
@@ -45,10 +46,17 @@ class ExtractLook(colorbleed.api.Extractor):
         sets = relationships.keys()
 
         resources = instance.data["resources"]
-        remap = {}
+
+        remap = OrderedDict()  # needs to be ordered, see color space values
         for resource in resources:
             attr = resource['attribute']
             remap[attr] = resource['destination']
+
+            # Preserve color space values (force value after filepath change)
+            # This will also trigger in the same order at end of context to
+            # ensure after context it's still the original value.
+            color_space_attr = resource['node'] + ".colorSpace"
+            remap[color_space_attr] = cmds.getAttr(color_space_attr)
 
         self.log.info("Finished remapping destinations ...")
 
