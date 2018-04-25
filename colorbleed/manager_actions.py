@@ -4,7 +4,8 @@ from avalon import api, pipeline
 class FusionSelectContainer(api.ToolAction):
 
     label = "Select Container"
-    icon = "object-group"
+    icon = "mouse-pointer"
+    color = "#d8d8d8"
     hosts = ["fusion"]
     tools = ["manager"]
 
