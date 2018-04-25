@@ -831,21 +831,6 @@
             },
             {
                 "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\shading\\vdviewer_ui.py",
-                "sourcetype": "file",
-                "tags": [
-                    "shading",
-                    "look",
-                    "vray",
-                    "displacement",
-                    "shaders",
-                    "auto"
-                ],
-                "title": "VRay Displ Viewer",
-                "tooltip": "Open the VRay Displacement Viewer, select and control the content of the set"
-            },
-            {
-                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\shading\\LightLinkUi.py",
                 "sourcetype": "file",
                 "tags": [
