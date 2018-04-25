@@ -844,19 +844,6 @@
             },
             {
                 "type": "action",
-                "command": "$COLORBLEED_SCRIPTS\\shading\\setTexturePreviewToCLRImage.py",
-                "sourcetype": "file",
-                "tags": [
-                    "shading",
-                    "CLRImage",
-                    "textures",
-                    "preview"
-                ],
-                "title": "Set Texture Preview To CLRImage",
-                "tooltip": ""
-            },
-            {
-                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\shading\\vdviewer_ui.py",
                 "sourcetype": "file",
                 "tags": [
@@ -869,6 +856,19 @@
                 ],
                 "title": "VRay Displ Viewer",
                 "tooltip": "Open the VRay Displacement Viewer, select and control the content of the set"
+            },
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\shading\\setTexturePreviewToCLRImage.py",
+                "sourcetype": "file",
+                "tags": [
+                    "shading",
+                    "CLRImage",
+                    "textures",
+                    "preview"
+                ],
+                "title": "Set Texture Preview To CLRImage",
+                "tooltip": ""
             },
             {
                 "type": "action",
