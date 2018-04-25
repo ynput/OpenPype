@@ -9,21 +9,22 @@ class FusionSelectContainer(api.ToolAction):
     hosts = ["fusion"]
     tools = ["manager"]
 
-    def process(self, items):
+    def process(self, containers):
 
         import avalon.fusion
 
-        tools = [i["_tool"] for i in items]
+        tools = [i["_tool"] for i in containers]
 
         comp = avalon.fusion.get_current_comp()
         flow = comp.CurrentFrame.FlowView
 
-        # Clear selection
-        flow.Select()
+        with avalon.fusion.comp_lock_and_undo_chunk(comp, self.label):
+            # Clear selection
+            flow.Select()
 
-        # Select tool
-        for tool in tools:
-            flow.Select(tool)
+            # Select tool
+            for tool in tools:
+                flow.Select(tool)
 
 
 def register_manager_actions():
