@@ -1,7 +1,7 @@
 from avalon import api, pipeline
 
 
-class FusionSelectContainer(api.ToolAction):
+class FusionSelectContainer(api.InventoryAction):
 
     label = "Select Container"
     icon = "mouse-pointer"
@@ -28,4 +28,4 @@ class FusionSelectContainer(api.ToolAction):
 
 
 def register_manager_actions():
-    pipeline.register_plugin(api.ToolAction, FusionSelectContainer)
+    pipeline.register_plugin(api.InventoryAction, FusionSelectContainer)
