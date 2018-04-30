@@ -6,7 +6,6 @@ class FusionSelectContainers(api.InventoryAction):
     label = "Select Containers"
     icon = "mouse-pointer"
     color = "#d8d8d8"
-    hosts = ["fusion"]
 
     def process(self, containers):
 
