@@ -3,7 +3,6 @@ import os
 from avalon import api as avalon
 from pyblish import api as pyblish
 
-import colorbleed
 
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)
@@ -12,6 +11,7 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "fusion", "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "fusion", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "fusion", "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "fusion", "inventory")
 
 
 def install():
@@ -19,10 +19,9 @@ def install():
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
+    avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
-
-    colorbleed.register_manager_actions()
 
 
 def uninstall():

@@ -1,9 +1,9 @@
 from avalon import api, pipeline
 
 
-class FusionSelectContainer(api.InventoryAction):
+class FusionSelectContainers(api.InventoryAction):
 
-    label = "Select Container"
+    label = "Select Containers"
     icon = "mouse-pointer"
     color = "#d8d8d8"
     hosts = ["fusion"]
@@ -24,7 +24,3 @@ class FusionSelectContainer(api.InventoryAction):
             # Select tool
             for tool in tools:
                 flow.Select(tool)
-
-
-def register_manager_actions():
-    pipeline.register_plugin(api.InventoryAction, FusionSelectContainer)
