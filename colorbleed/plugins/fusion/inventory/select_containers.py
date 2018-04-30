@@ -1,4 +1,4 @@
-from avalon import api, pipeline
+from avalon import api
 
 
 class FusionSelectContainers(api.InventoryAction):
