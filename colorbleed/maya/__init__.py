@@ -1,11 +1,11 @@
 import os
 import logging
-from functools import partial
+import weakref
 
 from maya import utils
 from maya import cmds
 
-from avalon import api as avalon
+from avalon import api as avalon, pipeline, maya
 from pyblish import api as pyblish
 
 from ..lib import (
@@ -38,6 +38,9 @@ def install():
     avalon.on("save", on_save)
     avalon.on("open", on_open)
 
+    log.info("Overriding existing event 'taskChanged'")
+    override_event("taskChanged", on_task_changed)
+
 
 def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
@@ -45,6 +48,24 @@ def uninstall():
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
 
     menu.uninstall()
+
+
+def override_event(event, callback):
+    """
+    Override existing event callback
+    Args:
+        event (str): name of the event
+        callback (function): callback to be triggered
+
+    Returns:
+        None
+
+    """
+
+    ref = weakref.WeakSet()
+    ref.add(callback)
+
+    pipeline._registered_event_handlers[event] = callback
 
 
 def on_init(_):
@@ -122,3 +143,26 @@ def on_open(_):
                               "your Maya scene.")
             dialog.on_show.connect(_on_show_inventory)
             dialog.show()
+
+
+def on_task_changed():
+    """Wrapped function of app initialize and maya's on task changed"""
+
+    # Inputs (from the switched session and running app)
+    session = avalon.Session.copy()
+    app_name = os.environ["AVALON_APP_NAME"]
+
+    # Find the application definition
+    app_definition = pipeline.lib.get_application(app_name)
+
+    App = type("app_%s" % app_name,
+               (avalon.Application,),
+               {"config": app_definition.copy()})
+
+    # Initialize within the new session's environment
+    app = App()
+    env = app.environ(session)
+    app.initialize(env)
+
+    # Run
+    maya.pipeline._on_task_changed()
