@@ -65,7 +65,7 @@ def override_event(event, callback):
     ref = weakref.WeakSet()
     ref.add(callback)
 
-    pipeline._registered_event_handlers[event] = callback
+    pipeline._registered_event_handlers[event] = ref
 
 
 def on_init(_):
