@@ -1,5 +1,6 @@
 import sys
 
+from avalon.vendor.Qt import QtGui
 import avalon.fusion
 
 
@@ -58,7 +59,6 @@ def get_additional_data(container):
     if tile_color is None:
         return container
 
-    tile_color.pop("__flags", None)
-    rgb = {key: clamp(value) for key, value in tile_color.items()}
-
-    return {"color": "#{R:02x}{G:02x}{B:02x}".format(**rgb)}
+    return {"color": QtGui.QColor(clamp(tile_color["R"]),
+                                  clamp(tile_color["G"]),
+                                  clamp(tile_color["B"]))}
