@@ -57,7 +57,7 @@ def get_additional_data(container):
     tool = container["_tool"]
     tile_color = tool.TileColor
     if tile_color is None:
-        return container
+        return {}
 
     return {"color": QtGui.QColor(clamp(tile_color["R"]),
                                   clamp(tile_color["G"]),
