@@ -38,3 +38,27 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
 
     with avalon.fusion.comp_lock_and_undo_chunk(comp):
         comp.SetAttrs(attrs)
+
+
+def get_additional_data(container):
+    """Get Fusion related data for the container
+
+    Args:
+        container(dict): the container found by the ls() function
+
+    Returns:
+        dict
+    """
+
+    def clamp(value):
+        return int(value * 255)
+
+    tool = container["_tool"]
+    tile_color = tool.TileColor
+    if tile_color is None:
+        return container
+
+    tile_color.pop("__flags", None)
+    rgb = {key: clamp(value) for key, value in tile_color.items()}
+
+    return {"color": "#{R:02x}{G:02x}{B:02x}".format(**rgb)}
