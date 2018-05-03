@@ -15,6 +15,7 @@ class FusionSetToolColor(api.InventoryAction):
     def process(self, containers):
         """Color all selected tools the selected colors"""
 
+        result = []
         comp = avalon.fusion.get_current_comp()
 
         # Launch pick color
@@ -31,12 +32,6 @@ class FusionSetToolColor(api.InventoryAction):
                 tool = container["_tool"]
                 tool.TileColor = rgb_f_table
 
-        self.refresh()
+                result.append(container)
 
-    def refresh(self):
-        """Refresh Scene Inventory window"""
-
-        app = QtWidgets.QApplication.instance()
-        widgets = dict((w.objectName(), w) for w in app.allWidgets())
-        widget = widgets.get("SceneInventory")
-        widget.refresh()
+        return result
