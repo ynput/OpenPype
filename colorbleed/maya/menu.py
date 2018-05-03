@@ -36,10 +36,6 @@ def deferred():
     cb_menu = launchformaya.main(title=self._menu.title(),
                                  objectName=self._menu)
 
-    # register modifiers
-    modifiers = QtCore.Qt.ControlModifier | QtCore.Qt.ShiftModifier
-    cb_menu.register_callback(modifiers, launchformaya.to_shelf)
-
     # apply configuration
     cb_menu.build_from_configuration(cb_menu, config)
 
