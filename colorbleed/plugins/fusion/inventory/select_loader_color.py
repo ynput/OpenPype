@@ -4,12 +4,13 @@ from avalon.vendor.Qt import QtGui, QtWidgets
 import avalon.fusion
 
 
-class FusionSelectLoaderColor(api.InventoryAction):
+class FusionSetToolColor(api.InventoryAction):
     """Update the color of the selected tools"""
 
-    label = "Select Loader Color"
+    label = "Set Tool Color"
     icon = "plus"
     color = "#d8d8d8"
+    _fallback_color = QtGui.QColor(1.0, 1.0, 1.0)
 
     def process(self, containers):
         """Color all selected tools the selected colors"""
@@ -17,7 +18,8 @@ class FusionSelectLoaderColor(api.InventoryAction):
         comp = avalon.fusion.get_current_comp()
 
         # Launch pick color
-        color = QtGui.QColor(1.0, 1.0, 1.0)
+        first = containers[0]
+        color = QtGui.QColor(first.get("color", self._fallback_color))
         picked_color = QtWidgets.QColorDialog().getColor(color)
         with avalon.fusion.comp_lock_and_undo_chunk(comp):
             for container in containers:
