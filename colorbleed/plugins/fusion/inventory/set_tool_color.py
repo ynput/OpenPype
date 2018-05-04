@@ -22,6 +22,9 @@ class FusionSetToolColor(api.InventoryAction):
         first = containers[0]
         color = QtGui.QColor(first.get("color", self._fallback_color))
         picked_color = QtWidgets.QColorDialog().getColor(color)
+        if not picked_color.isValid():
+            return result
+
         with avalon.fusion.comp_lock_and_undo_chunk(comp):
             for container in containers:
                 # Convert color to RGB 0-1 floats
