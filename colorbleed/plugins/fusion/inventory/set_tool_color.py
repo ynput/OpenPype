@@ -1,4 +1,4 @@
-from avalon import api
+from avalon import api, style
 from avalon.vendor.Qt import QtGui, QtWidgets
 
 import avalon.fusion
@@ -50,12 +50,8 @@ class FusionSetToolColor(api.InventoryAction):
 
         """
 
-        app = QtWidgets.QApplication.instance()
-        widgets = dict((w.objectName(), w) for w in app.allWidgets())
-        widget = widgets.get("SceneInventory")
-
         color_dialog = QtWidgets.QColorDialog(color)
-        color_dialog.setStyleSheet(widget.styleSheet())
+        color_dialog.setStyleSheet(style.load_stylesheet())
 
         accepted = color_dialog.exec_()
         picked_color = color_dialog.selectedColor() if accepted else False
