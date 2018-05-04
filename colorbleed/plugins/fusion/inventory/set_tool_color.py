@@ -44,6 +44,10 @@ class FusionSetToolColor(api.InventoryAction):
 
         Args:
             color(QtGui.QColor): Start color to display
+
+        Returns:
+            QtGui.QColor
+
         """
 
         app = QtWidgets.QApplication.instance()
