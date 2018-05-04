@@ -62,6 +62,7 @@ class FusionSetToolColor(api.InventoryAction):
         color_dialog.setStyleSheet(style.load_stylesheet())
 
         accepted = color_dialog.exec_()
-        picked_color = color_dialog.selectedColor() if accepted else False
+        if not accepted:
+            return
 
-        return picked_color
+        return color_dialog.selectedColor()
