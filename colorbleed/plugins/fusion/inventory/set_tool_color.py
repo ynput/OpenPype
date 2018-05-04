@@ -18,10 +18,18 @@ class FusionSetToolColor(api.InventoryAction):
         result = []
         comp = avalon.fusion.get_current_comp()
 
-        # Launch pick color
+        # Get tool color
         first = containers[0]
-        color = QtGui.QColor(first.get("color", self._fallback_color))
-        picked_color = self.get_color_picker(color)
+        tool = first["_tool"]
+        color = tool.TileColor
+
+        if color is not None:
+            qcolor = QtGui.QColor().fromRgbF(color["R"], color["G"], color["B"])
+        else:
+            qcolor = self._fallback_color
+
+        # Launch pick color
+        picked_color = self.get_color_picker(qcolor)
         if not picked_color:
             return
 
