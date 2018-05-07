@@ -38,3 +38,16 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
 
     with avalon.fusion.comp_lock_and_undo_chunk(comp):
         comp.SetAttrs(attrs)
+
+
+def set_family_filter(family_name):
+    """Get state based on what is most related to the host
+
+    Args:
+        family_name (str): name of the family, e.g: "colorbleed.imagesequence"
+
+    Returns:
+        bool
+    """
+
+    return family_name in ["colorbleed.imagesequence"]
