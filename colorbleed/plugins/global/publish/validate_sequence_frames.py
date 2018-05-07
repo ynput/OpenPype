@@ -1,5 +1,5 @@
 import pyblish.api
-from avalon.vendor import six
+from avalon.vendor import clique
 
 
 class ValidateSequenceFrames(pyblish.api.InstancePlugin):
@@ -20,7 +20,7 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
         # Hack: Skip the check for `colorbleed.yeticache` from within Maya
         # When publishing a Yeti cache from Maya the "collection" is a node,
         # which is a string and it will fail when calling `indexes`
-        if isinstance(collection, six.string_types):
+        if not isinstance(collection, clique.Collection):
             return
 
         self.log.warning(collection)
