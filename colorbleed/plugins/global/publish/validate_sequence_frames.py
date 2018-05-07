@@ -1,11 +1,10 @@
 import pyblish.api
-from avalon.vendor import clique
 
 
 class ValidateSequenceFrames(pyblish.api.InstancePlugin):
     """Ensure the sequence of frames is complete
 
-    The files found in the instance are checked against the startFrame and
+    The files found in the folder are checked against the startFrame and
     endFrame of the instance. If the first or last file is not
     corresponding with the first or last frame it is flagged as invalid.
     """
@@ -13,15 +12,11 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = "Validate Sequence Frames"
     families = ["colorbleed.imagesequence", "colorbleed.yeticache"]
+    hosts = ["shell"]
 
     def process(self, instance):
 
         collection = instance[0]
-        # Hack: Skip the check for `colorbleed.yeticache` from within Maya
-        # When publishing a Yeti cache from Maya the "collection" is a node,
-        # which is a string and it will fail when calling `indexes`
-        if not isinstance(collection, clique.Collection):
-            return
 
         self.log.warning(collection)
         frames = list(collection.indexes)
