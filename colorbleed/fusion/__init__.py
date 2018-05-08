@@ -13,6 +13,8 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "fusion", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "fusion", "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "fusion", "inventory")
 
+FAMILY_STATES = {"colorbleed.imagesequenbce": True}
+
 
 def install():
     print("Registering Fusion plug-ins..")
@@ -22,6 +24,8 @@ def install():
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
+
+    avalon.set_data("family_states", FAMILY_STATES)
 
 
 def uninstall():
