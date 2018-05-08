@@ -51,14 +51,11 @@ def get_additional_data(container):
         dict
     """
 
-    def clamp(value):
-        return int(value * 255)
-
     tool = container["_tool"]
     tile_color = tool.TileColor
     if tile_color is None:
         return {}
 
-    return {"color": QtGui.QColor(clamp(tile_color["R"]),
-                                  clamp(tile_color["G"]),
-                                  clamp(tile_color["B"]))}
+    return {"color": QtGui.QColor.fromRgbF(tile_color["R"],
+                                           tile_color["G"],
+                                           tile_color["B"])}
