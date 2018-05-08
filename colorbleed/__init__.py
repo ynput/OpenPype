@@ -4,7 +4,7 @@ from pyblish import api as pyblish
 from avalon import api as avalon
 
 from .launcher_actions import register_launcher_actions
-from lib import collect_container_metadata
+from .lib import collect_container_metadata
 
 PACKAGE_DIR = os.path.dirname(__file__)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
