@@ -1,5 +1,6 @@
 import sys
 
+from avalon.vendor.Qt import QtGui
 import avalon.fusion
 
 
@@ -38,3 +39,23 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
 
     with avalon.fusion.comp_lock_and_undo_chunk(comp):
         comp.SetAttrs(attrs)
+
+
+def get_additional_data(container):
+    """Get Fusion related data for the container
+
+    Args:
+        container(dict): the container found by the ls() function
+
+    Returns:
+        dict
+    """
+
+    tool = container["_tool"]
+    tile_color = tool.TileColor
+    if tile_color is None:
+        return {}
+
+    return {"color": QtGui.QColor.fromRgbF(tile_color["R"],
+                                           tile_color["G"],
+                                           tile_color["B"])}
