@@ -209,8 +209,8 @@ def switch_item(container,
                                   "type": "representation",
                                   "parent": version["_id"]})
 
-    assert representation, ("Could not find representation in the database with "
-                            "the name '%s'" % representation_name)
+    assert representation, ("Could not find representation in the database with"
+                            " the name '%s'" % representation_name)
 
     avalon.api.switch(container, representation)
 
@@ -236,7 +236,7 @@ def collect_container_metadata(container):
     Returns:
         generator
     """
-
+    # TODO: Improve method of getting the host lib module
     host_name = _get_host_name()
 
     # This will cover nested module names like avalon.maya
