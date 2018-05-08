@@ -1,5 +1,6 @@
 import sys
 
+from avalon.vendor.Qt import QtGui
 import avalon.fusion
 
 
@@ -40,14 +41,21 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
         comp.SetAttrs(attrs)
 
 
-def set_family_filter(family_name):
-    """Get state based on what is most related to the host
+def get_additional_data(container):
+    """Get Fusion related data for the container
 
     Args:
-        family_name (str): name of the family, e.g: "colorbleed.imagesequence"
+        container(dict): the container found by the ls() function
 
     Returns:
-        bool
+        dict
     """
 
-    return family_name in ["colorbleed.imagesequence"]
+    tool = container["_tool"]
+    tile_color = tool.TileColor
+    if tile_color is None:
+        return {}
+
+    return {"color": QtGui.QColor.fromRgbF(tile_color["R"],
+                                           tile_color["G"],
+                                           tile_color["B"])}

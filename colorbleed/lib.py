@@ -1,6 +1,7 @@
 import os
 import re
 import logging
+import importlib
 
 from .vendor import pather
 from .vendor.pather.error import ParseError
@@ -208,9 +209,41 @@ def switch_item(container,
                                   "type": "representation",
                                   "parent": version["_id"]})
 
-    assert representation, ("Could not find representation in the database with "
-                            "the name '%s'" % representation_name)
+    assert representation, ("Could not find representation in the database with"
+                            " the name '%s'" % representation_name)
 
     avalon.api.switch(container, representation)
 
     return representation
+
+
+def _get_host_name():
+
+    _host = avalon.api.registered_host()
+    # This covers nested module name like avalon.maya
+    return _host.__name__.rsplit(".", 1)[-1]
+
+
+def collect_container_metadata(container):
+    """Add additional data based on the current host
+
+    If the host application's lib module does not have a function to inject
+    additional data it will return the input container
+
+    Args:
+        container (dict): collection if representation data in host
+
+    Returns:
+        generator
+    """
+    # TODO: Improve method of getting the host lib module
+    host_name = _get_host_name()
+    package_name = "colorbleed.{}.lib".format(host_name)
+    hostlib = importlib.import_module(package_name)
+
+    if not hasattr(hostlib, "get_additional_data"):
+        print("{} has no function called "
+              "get_additional_data".format(package_name))
+        return {}
+
+    return hostlib.get_additional_data(container)

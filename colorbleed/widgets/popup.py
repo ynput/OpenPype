@@ -30,7 +30,6 @@ class Popup(QtWidgets.QDialog):
                            QtWidgets.QSizePolicy.Maximum)
         show.setStyleSheet("""QPushButton { background-color: #BB0000 }""")
 
-
         layout.addWidget(message)
         layout.addWidget(show)
 
