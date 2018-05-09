@@ -1,5 +1,6 @@
 import os
 
+import avalon.io as io
 from avalon import api as avalon
 from pyblish import api as pyblish
 
@@ -13,8 +14,6 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "fusion", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "fusion", "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "fusion", "inventory")
 
-FAMILY_STATES = {"colorbleed.imagesequenbce": True}
-
 
 def install():
     print("Registering Fusion plug-ins..")
@@ -25,7 +24,12 @@ def install():
 
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
-    avalon.set_data("family_states", FAMILY_STATES)
+    # Disable all families except for the ones we explicitly want to see
+    enabled = {"colorbleed.imagesequence",
+               "colorbleed.camera",
+               "colorbleed.pointcache"}
+    families = set(io.distinct("data.families") + io.distinct("data.family"))
+    avalon.data["familyStates"] = {key: key in enabled for key in families}
 
 
 def uninstall():

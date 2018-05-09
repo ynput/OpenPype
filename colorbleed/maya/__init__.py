@@ -41,6 +41,11 @@ def install():
     log.info("Overriding existing event 'taskChanged'")
     override_event("taskChanged", on_task_changed)
 
+    log.info("Setting default family states for loader..")
+    avalon.data["familyStates"] = {
+        "colorbleed.imagesequence": False
+    }
+
 
 def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
