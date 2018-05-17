@@ -42,9 +42,7 @@ def install():
     override_event("taskChanged", on_task_changed)
 
     log.info("Setting default family states for loader..")
-    avalon.data["familyStates"] = {
-        "colorbleed.imagesequence": False
-    }
+    avalon.data["familiesStateToggled"] = ["colorbleed.imagesequence"]
 
 
 def uninstall():
