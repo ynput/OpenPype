@@ -1,6 +1,5 @@
 import os
 
-import avalon.io as io
 from avalon import api as avalon
 from pyblish import api as pyblish
 
@@ -25,11 +24,12 @@ def install():
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
     # Disable all families except for the ones we explicitly want to see
-    enabled = {"colorbleed.imagesequence",
-               "colorbleed.camera",
-               "colorbleed.pointcache"}
-    families = set(io.distinct("data.families") + io.distinct("data.family"))
-    avalon.data["familyStates"] = {key: key in enabled for key in families}
+    family_states = ["colorbleed.imagesequence",
+                     "colorbleed.camera",
+                     "colorbleed.pointcache"]
+
+    avalon.data["familiesStateDefault"] = False
+    avalon.data["familiesStateToggled"] = family_states
 
 
 def uninstall():
