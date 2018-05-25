@@ -23,6 +23,14 @@ def install():
 
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
+    # Disable all families except for the ones we explicitly want to see
+    family_states = ["colorbleed.imagesequence",
+                     "colorbleed.camera",
+                     "colorbleed.pointcache"]
+
+    avalon.data["familiesStateDefault"] = False
+    avalon.data["familiesStateToggled"] = family_states
+
 
 def uninstall():
     print("Deregistering Fusion plug-ins..")
