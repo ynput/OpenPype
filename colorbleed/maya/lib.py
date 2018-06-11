@@ -637,8 +637,7 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
         ignore |= set(cmds.ls(type="ilrBakeLayer", long=True))
 
     # Establish set of nodes types to include
-    types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface",
-             "locator"]
+    types = ["objectSet", "file", "mesh", "nurbsCurve", "nurbsSurface"]
 
     # Check if plugin nodes are available for Maya by checking if the plugin
     # is loaded
