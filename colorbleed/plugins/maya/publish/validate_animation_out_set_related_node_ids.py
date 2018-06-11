@@ -36,6 +36,7 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
         """Get all nodes which do not match the criteria"""
 
         invalid = []
+        types_to_skip = ["locator"]
 
         # get asset id
         nodes = instance.data.get("out_hierarchy", instance[:])
@@ -48,6 +49,10 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
             # Check if node is a shape as deformers only work on shapes
             obj_type = cmds.objectType(node, isAType="shape")
             if not obj_type:
+                continue
+
+            # Skip specific types
+            if cmds.objectType(node) in types_to_skip:
                 continue
 
             # Get the current id of the node
