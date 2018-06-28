@@ -253,7 +253,7 @@ def get_project_fps():
     """Returns project's FPS, if not found will return 25 by default
 
     Returns:
-        int, float
+        float
     """
 
     project_name = io.active_project()
@@ -264,6 +264,6 @@ def get_project_fps():
     config = project.get("config", None)
     assert config, "This is a bug"
 
-    fps = config.get("fps", 25)
+    fps = config.get("fps", 25.0)
 
-    return fps
+    return float(fps)
