@@ -2,6 +2,8 @@ import maya.cmds as cmds
 
 import pyblish.api
 import colorbleed.api
+from colorbleed import lib
+import colorbleed.maya.lib as mayalib
 
 
 class ValidateMayaUnits(pyblish.api.ContextPlugin):
@@ -16,19 +18,21 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
 
         linearunits = context.data('linearUnits')
         angularunits = context.data('angularUnits')
+
         fps = context.data['fps']
+        project_fps = lib.get_project_fps()
 
         self.log.info('Units (linear): {0}'.format(linearunits))
         self.log.info('Units (angular): {0}'.format(angularunits))
         self.log.info('Units (time): {0} FPS'.format(fps))
 
-        # check if units are correct
+        # Check if units are correct
         assert linearunits and linearunits == 'cm', ("Scene linear units must "
                                                      "be centimeters")
 
         assert angularunits and angularunits == 'deg', ("Scene angular units "
                                                         "must be degrees")
-        assert fps and fps == 25.0, "Scene must be 25 FPS"
+        assert fps and fps == project_fps, "Scene must be %s FPS" % project_fps
 
     @classmethod
     def repair(cls):
@@ -44,7 +48,5 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         current_linear = cmds.currentUnit(query=True, linear=True)
         cls.log.debug(current_linear)
 
-        cls.log.info("Setting time unit to 'PAL'")
-        cmds.currentUnit(time="pal")
-        current_time = cmds.currentUnit(query=True, time=True)
-        cls.log.debug(current_time)
+        cls.log.info("Setting time unit to match project")
+        mayalib.set_project_fps()
