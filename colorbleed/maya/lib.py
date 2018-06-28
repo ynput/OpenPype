@@ -1305,8 +1305,10 @@ def set_project_fps():
     if int(fps) == 24:
         cmds.currentUnit(time="film")
         log.info("Updated FPS to 24 (film)")
+
     elif int(fps) == 25:
         cmds.currentUnit(time="pal")
         log.info("Updated FPS to 25 (pal)")
+
     else:
         raise RuntimeError("Cannot translate FPS: `%s`" % fps)
