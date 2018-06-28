@@ -126,15 +126,17 @@ def on_save(_):
                              QtWidgets.QApplication.topLevelWidgets()}
 
         parent = top_level_widgets.get("MayaWindow", None)
+        if parent is None:
+            pass
+        else:
+            dialog = popup.Popup(parent=parent)
+            dialog.setWindowTitle("Maya scene not in line with project")
+            dialog.setMessage("The FPS is out of sync, please fix")
+            # Set new text for button (add optional argument for the popup?)
+            dialog.widgets["show"].setText("Fix")
+            dialog.on_show.connect(lib.set_project_fps)
 
-        dialog = popup.Popup(parent=parent)
-        dialog.setWindowTitle("Maya scene not in line with project")
-        dialog.setMessage("The FPS is out of sync, please fix")
-        # Set new text for button (could be an optional argument for the popup)
-        dialog.widgets["show"].setText("Fix")
-        dialog.on_show.connect(lib.set_project_fps)
-
-        dialog.show()
+            dialog.show()
 
 
 def on_open(_):
