@@ -2,14 +2,15 @@ import os
 import logging
 import weakref
 
-from maya import utils, cmds
+from maya import utils, cmds, mel
 
 from avalon import api as avalon, pipeline, maya
 from pyblish import api as pyblish
 
 from ..lib import (
     update_task_from_path,
-    any_outdated
+    any_outdated,
+    get_project_fps
 )
 from . import menu
 from . import lib
@@ -111,6 +112,29 @@ def on_save(_):
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
+
+    # Valid FPS
+    current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
+    fps = get_project_fps()
+    if fps != current_fps:
+
+        from avalon.vendor.Qt import QtWidgets
+        from ..widgets import popup
+
+        # Find maya main window
+        top_level_widgets = {w.objectName(): w for w in
+                             QtWidgets.QApplication.topLevelWidgets()}
+
+        parent = top_level_widgets.get("MayaWindow", None)
+
+        dialog = popup.Popup(parent=parent)
+        dialog.setWindowTitle("Maya scene not in line with project")
+        dialog.setMessage("The FPS is out of sync, please fix")
+        # Set new text for button (could be an optional argument for the popup)
+        dialog.widgets["show"].setText("Fix")
+        dialog.on_show.connect(lib.set_project_fps)
+
+        dialog.show()
 
 
 def on_open(_):
