@@ -13,7 +13,7 @@ from collections import OrderedDict, defaultdict
 from maya import cmds, mel
 
 from avalon import api, maya, io, pipeline
-from cb.utils.maya import core
+from colorbleed import lib
 import cb.utils.maya.context
 
 
@@ -1292,3 +1292,21 @@ def get_id_from_history(node):
         _id = get_id(similar_node)
         if _id:
             return _id
+
+
+def set_project_fps():
+    """Set FPS from project configuration"""
+
+    fps = lib.get_project_fps()
+    if not isinstance(fps, (int, float)):
+        raise ValueError("Set value for project's FPS is not a number. "
+                         "Only accepts floats and integers")
+
+    if int(fps) == 24:
+        cmds.currentUnit(time="film")
+        log.info("Updated FPS to 24 (film)")
+    elif int(fps) == 25:
+        cmds.currentUnit(time="pal")
+        log.info("Updated FPS to 25 (pal)")
+    else:
+        raise RuntimeError("Cannot translate FPS: `%s`" % fps)

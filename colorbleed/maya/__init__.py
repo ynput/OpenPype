@@ -2,8 +2,7 @@ import os
 import logging
 import weakref
 
-from maya import utils
-from maya import cmds
+from maya import utils, cmds
 
 from avalon import api as avalon, pipeline, maya
 from pyblish import api as pyblish
@@ -94,6 +93,7 @@ def on_init(_):
 
     from .customize import override_component_mask_commands
     safe_deferred(override_component_mask_commands)
+    safe_deferred(lib.set_project_fps)
 
 
 def on_save(_):
@@ -118,6 +118,9 @@ def on_open(_):
 
     from avalon.vendor.Qt import QtWidgets
     from ..widgets import popup
+
+    # Ensure scene's FPS is set to project config
+    lib.set_project_fps()
 
     # Update current task for the current scene
     update_task_from_path(cmds.file(query=True, sceneName=True))
