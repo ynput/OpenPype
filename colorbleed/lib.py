@@ -259,7 +259,7 @@ def get_project_fps():
     project_name = io.active_project()
     project = io.find_one({"name": project_name,
                            "type": "project"},
-                          projection={"config.fps": True})
+                          projection={"config": True})
 
     config = project.get("config", None)
     assert config, "This is a bug"
