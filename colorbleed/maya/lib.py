@@ -14,7 +14,7 @@ from maya import cmds, mel
 
 from avalon import api, maya, io, pipeline
 from colorbleed import lib
-import cb.utils.maya.context
+
 
 
 log = logging.getLogger(__name__)
@@ -285,6 +285,26 @@ def renderlayer(layer):
         yield
     finally:
         cmds.editRenderLayerGlobals(currentRenderLayer=original)
+
+
+@contextlib.contextmanager
+def evaluation(mode="off"):
+    """Set the evaluation manager during context.
+
+    Arguments:
+        mode (str): The mode to apply during context.
+            "off": The standard DG evaluation (stable)
+            "serial": A serial DG evaluation
+            "parallel": The Maya 2016+ parallel evaluation
+
+    """
+
+    original = cmds.evaluationManager(query=True, mode=1)[0]
+    try:
+        cmds.evaluationManager(mode=mode)
+        yield
+    finally:
+        cmds.evaluationManager(mode=original)
 
 
 def get_renderer(layer):
@@ -579,7 +599,7 @@ def extract_alembic(file,
     # Disable the parallel evaluation temporarily to ensure no buggy
     # exports are made. (PLN-31)
     # TODO: Make sure this actually fixes the issues
-    with cb.utils.maya.context.evaluation("off"):
+    with evaluation("off"):
         cmds.AbcExport(j=job_str, verbose=verbose)
 
     if verbose:
@@ -1335,10 +1355,7 @@ def validate_fps():
     """
 
     current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
-
-    #
     fps = lib.get_project_fps()
-
     if fps != current_fps:
 
         from avalon.vendor.Qt import QtWidgets
