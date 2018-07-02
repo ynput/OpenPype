@@ -179,10 +179,14 @@ class YetiCacheLoader(api.Loader):
             # Apply attributes to pgYetiMaya node
             kwargs = {}
             for attr, value in node_settings["attrs"].items():
+                if value is None:
+                    continue
+
                 attribute = "%s.%s" % (yeti_node, attr)
                 if isinstance(value, (str, unicode)):
                     cmds.setAttr(attribute, value, type="string")
                     continue
+
                 cmds.setAttr(attribute, value, **kwargs)
 
             # Ensure the node has no namespace identifiers
