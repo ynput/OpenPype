@@ -10,7 +10,6 @@ from pyblish import api as pyblish
 from ..lib import (
     update_task_from_path,
     any_outdated,
-    get_project_fps
 )
 from . import menu
 from . import lib
@@ -94,13 +93,13 @@ def on_init(_):
 
     from .customize import override_component_mask_commands
     safe_deferred(override_component_mask_commands)
-    safe_deferred(lib.set_project_fps)
 
 
 def on_save(_):
     """Automatically add IDs to new nodes
-    Any transform of a mesh, without an existing ID,
-    is given one automatically on file save.
+
+    Any transform of a mesh, without an existing ID, is given one
+    automatically on file save.
     """
 
     avalon.logger.info("Running callback on save..")
@@ -113,30 +112,7 @@ def on_save(_):
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
 
-    # Valid FPS
-    current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
-    fps = get_project_fps()
-    if fps != current_fps:
-
-        from avalon.vendor.Qt import QtWidgets
-        from ..widgets import popup
-
-        # Find maya main window
-        top_level_widgets = {w.objectName(): w for w in
-                             QtWidgets.QApplication.topLevelWidgets()}
-
-        parent = top_level_widgets.get("MayaWindow", None)
-        if parent is None:
-            pass
-        else:
-            dialog = popup.Popup(parent=parent)
-            dialog.setWindowTitle("Maya scene not in line with project")
-            dialog.setMessage("The FPS is out of sync, please fix")
-            # Set new text for button (add optional argument for the popup?)
-            dialog.widgets["show"].setText("Fix")
-            dialog.on_show.connect(lib.set_project_fps)
-
-            dialog.show()
+    lib.validate_fps()
 
 
 def on_open(_):
@@ -198,3 +174,5 @@ def on_task_changed(*args):
 
     # Run
     maya.pipeline._on_task_changed()
+
+

@@ -1295,20 +1295,68 @@ def get_id_from_history(node):
 
 
 def set_project_fps():
-    """Set FPS from project configuration"""
+    """Set FPS from project configuration
+
+    Returns:
+        None
+
+    """
+
+    int_fps = [15, 24, 5, 30, 48, 50, 60, 44100, 48000]
+    float_fps = [23.976, 29.97, 29.97, 47.952, 59.94]
 
     fps = lib.get_project_fps()
+
     if not isinstance(fps, (int, float)):
         raise ValueError("Set value for project's FPS is not a number. "
                          "Only accepts floats and integers")
 
-    if int(fps) == 24:
-        cmds.currentUnit(time="film")
-        log.info("Updated FPS to 24 (film)")
+    if int(fps) in int_fps:
+        update_str = "{:d}fps".format(int(fps))
 
-    elif int(fps) == 25:
-        cmds.currentUnit(time="pal")
-        log.info("Updated FPS to 25 (pal)")
+    elif fps in float_fps:
+        update_str = "{:f}fps".format(fps)
 
     else:
-        raise RuntimeError("Cannot translate FPS: `%s`" % fps)
+        raise RuntimeError("Unsupported FPS value: `%s`" % fps)
+
+    log.info("Updating FPS to '{}'".format(update_str))
+
+    cmds.currentUnit(time=update_str)
+
+
+# Valid FPS
+def validate_fps():
+    """Validate current scene FPS and show pop-up when it is incorrect
+
+    Returns:
+        None
+
+    """
+
+    current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
+
+    #
+    fps = lib.get_project_fps()
+
+    if fps != current_fps:
+
+        from avalon.vendor.Qt import QtWidgets
+        from ..widgets import popup
+
+        # Find maya main window
+        top_level_widgets = {w.objectName(): w for w in
+                             QtWidgets.QApplication.topLevelWidgets()}
+
+        parent = top_level_widgets.get("MayaWindow", None)
+        if parent is None:
+            pass
+        else:
+            dialog = popup.Popup(parent=parent)
+            dialog.setWindowTitle("Maya scene not in line with project")
+            dialog.setMessage("The FPS is out of sync, please fix")
+            # Set new text for button (add optional argument for the popup?)
+            dialog.widgets["show"].setText("Fix")
+            dialog.on_show.connect(set_project_fps)
+
+            dialog.show()
