@@ -2,7 +2,7 @@ import os
 import logging
 import weakref
 
-from maya import utils, cmds, mel, OpenMaya as om
+from maya import utils, cmds, mel
 
 from avalon import api as avalon, pipeline, maya
 from pyblish import api as pyblish
