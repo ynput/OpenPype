@@ -16,7 +16,6 @@ from avalon import api, maya, io, pipeline
 from colorbleed import lib
 
 
-
 log = logging.getLogger(__name__)
 
 ATTRIBUTE_DICT = {"int": {"attributeType": "long"},
