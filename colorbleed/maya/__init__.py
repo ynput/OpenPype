@@ -122,7 +122,7 @@ def on_open(_):
     from ..widgets import popup
 
     # Ensure scene's FPS is set to project config
-    lib.set_project_fps()
+    lib.validate_fps()
 
     # Update current task for the current scene
     update_task_from_path(cmds.file(query=True, sceneName=True))
@@ -174,5 +174,3 @@ def on_task_changed(*args):
 
     # Run
     maya.pipeline._on_task_changed()
-
-
