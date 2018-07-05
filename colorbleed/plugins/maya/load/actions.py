@@ -101,6 +101,10 @@ class ImportMayaLoader(api.Loader):
         from avalon import maya
         from avalon.maya import lib
 
+        choice = self.display_warning()
+        if choice is False:
+            return
+
         asset = context['asset']
 
         namespace = namespace or lib.unique_namespace(
@@ -119,3 +123,28 @@ class ImportMayaLoader(api.Loader):
 
         # We do not containerize imported content, it remains unmanaged
         return
+
+    def display_warning(self):
+        """Show warning to ensure the user can't import models by accident
+
+        Returns:
+            bool
+
+        """
+
+        from avalon.vendor.Qt import QtWidgets
+
+        accept = QtWidgets.QMessageBox.Ok
+        buttons = accept | QtWidgets.QMessageBox.Cancel
+
+        message = "Are you sure you want import this"
+        state = QtWidgets.QMessageBox.warning(None,
+                                               "Are you sure?",
+                                               message,
+                                               buttons=buttons,
+                                               defaultButton=accept)
+
+        if state != accept:
+            return False
+
+        return True
