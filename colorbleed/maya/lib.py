@@ -1313,8 +1313,11 @@ def get_id_from_history(node):
             return _id
 
 
-def set_project_fps():
+def set_project_fps(update=True):
     """Set FPS from project configuration
+
+    Args:
+        update(bool): toggle update animation, default is True
 
     Returns:
         None
@@ -1336,7 +1339,7 @@ def set_project_fps():
         raise ("Unsupported FPS value: `%s`" % fps)
 
     log.info("Updating FPS to '{}'".format(unit))
-    cmds.currentUnit(time=unit)
+    cmds.currentUnit(time=unit, updateAnimation=update)
 
     # Force file stated to 'modified'
     cmds.file(modified=True)
@@ -1366,14 +1369,15 @@ def validate_fps():
         if parent is None:
             pass
         else:
-            dialog = popup.Popup(parent=parent)
+            dialog = popup.Popup2(parent=parent)
             dialog.setModal(True)
             dialog.setWindowTitle("Maya scene not in line with project")
             dialog.setMessage("The FPS is out of sync, please fix")
 
             # Set new text for button (add optional argument for the popup?)
-            dialog.widgets["show"].setText("Fix")
-            dialog.on_show.connect(set_project_fps)
+            toggle = dialog.widgets["toggle"]
+            update = toggle.isChecked()
+            dialog.on_show.connect(lambda: set_project_fps(update))
 
             dialog.show()
 
