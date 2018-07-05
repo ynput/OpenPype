@@ -17,7 +17,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         * default: 4
 
     NOTE:
-        The repair function of this plugin will does not repair animation
+        The repair function of this plugin does not repair animation
         setting of the render settings due to multiple possibilities.
 
     """
@@ -37,11 +37,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         renderer = instance.data['renderer']
         layer_node = instance.data['setMembers']
 
-        # Main check animation
-        animation = cmds.getAttr("defaultRenderGlobals.animation")
-        assert animation is True, ("Animation needs to be enabled in the "
-                                   "render settings")
-
         # Collect the filename prefix in the renderlayer
         with lib.renderlayer(layer_node):
 
@@ -55,7 +50,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             padding = cmds.getAttr("{}.{}".format(node, padding_attr))
 
             anim_override = cmds.getAttr("defaultRenderGlobals.animation")
-            assert anim_override == animation, (
+            assert anim_override is True, (
                 "Animation neesd to be enabled. Use the same frame for start "
                 "and end to render singel frame")
 
