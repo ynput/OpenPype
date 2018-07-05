@@ -16,7 +16,6 @@ from avalon import api, maya, io, pipeline
 from colorbleed import lib
 
 
-
 log = logging.getLogger(__name__)
 
 ATTRIBUTE_DICT = {"int": {"attributeType": "long"},
@@ -1339,13 +1338,16 @@ def set_project_fps():
     log.info("Updating FPS to '{}'".format(unit))
     cmds.currentUnit(time=unit)
 
+    # Force file stated to 'modified'
+    cmds.file(modified=True)
+
 
 # Valid FPS
 def validate_fps():
     """Validate current scene FPS and show pop-up when it is incorrect
 
     Returns:
-        None
+        bool
 
     """
 
@@ -1365,10 +1367,16 @@ def validate_fps():
             pass
         else:
             dialog = popup.Popup(parent=parent)
+            dialog.setModal(True)
             dialog.setWindowTitle("Maya scene not in line with project")
             dialog.setMessage("The FPS is out of sync, please fix")
+
             # Set new text for button (add optional argument for the popup?)
             dialog.widgets["show"].setText("Fix")
             dialog.on_show.connect(set_project_fps)
 
             dialog.show()
+
+            return False
+
+    return True
