@@ -29,7 +29,7 @@ def is_latest(representation):
     highest_version = io.find_one({
         "type": "version",
         "parent": version["parent"]
-    }, sort=[("name", -1)])
+    }, sort=[("name", -1)], projection={"name": True})
 
     if version['name'] == highest_version['name']:
         return True
