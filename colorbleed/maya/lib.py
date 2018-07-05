@@ -1322,27 +1322,22 @@ def set_project_fps():
 
     """
 
-    int_fps = [15, 24, 5, 30, 48, 50, 60, 44100, 48000]
-    float_fps = [23.976, 29.97, 29.97, 47.952, 59.94]
+    int_fps = {15, 24, 5, 30, 48, 50, 60, 44100, 48000}
+    float_fps = {23.976, 29.97, 29.97, 47.952, 59.94}
 
     fps = lib.get_project_fps()
 
-    if not isinstance(fps, (int, float)):
-        raise ValueError("Set value for project's FPS is not a number. "
-                         "Only accepts floats and integers")
+    if isinstance(fps, float) and fps in float_fps:
+        unit = "{:f}fps".format(int(fps))
 
-    if int(fps) in int_fps:
-        update_str = "{:d}fps".format(int(fps))
-
-    elif fps in float_fps:
-        update_str = "{:f}fps".format(fps)
+    elif int(fps) in int_fps:
+        unit = "{:d}fps".format(int(fps))
 
     else:
-        raise RuntimeError("Unsupported FPS value: `%s`" % fps)
+        raise ("Unsupported FPS value: `%s`" % fps)
 
-    log.info("Updating FPS to '{}'".format(update_str))
-
-    cmds.currentUnit(time=update_str)
+    log.info("Updating FPS to '{}'".format(unit))
+    cmds.currentUnit(time=unit)
 
 
 # Valid FPS
