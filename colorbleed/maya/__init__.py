@@ -2,7 +2,7 @@ import os
 import logging
 import weakref
 
-from maya import utils, cmds, mel
+from maya import utils, cmds, mel, OpenMaya as om
 
 from avalon import api as avalon, pipeline, maya
 from pyblish import api as pyblish
@@ -36,6 +36,8 @@ def install():
     avalon.on("init", on_init)
     avalon.on("save", on_save)
     avalon.on("open", on_open)
+
+    avalon.before("save", before_save_check)
 
     log.info("Overriding existing event 'taskChanged'")
     override_event("taskChanged", on_task_changed)
@@ -95,6 +97,11 @@ def on_init(_):
     safe_deferred(override_component_mask_commands)
 
 
+def before_save_check(return_code, _):
+    """Run validation for scene's FPS prior to saving"""
+    return lib.validate_fps()
+
+
 def on_save(_):
     """Automatically add IDs to new nodes
 
@@ -111,8 +118,6 @@ def on_save(_):
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
     for node, new_id in lib.generate_ids(nodes):
         lib.set_id(node, new_id, overwrite=False)
-
-    lib.validate_fps()
 
 
 def on_open(_):
