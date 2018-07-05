@@ -242,8 +242,6 @@ def collect_container_metadata(container):
     hostlib = importlib.import_module(package_name)
 
     if not hasattr(hostlib, "get_additional_data"):
-        print("{} has no function called "
-              "get_additional_data".format(package_name))
         return {}
 
     return hostlib.get_additional_data(container)
