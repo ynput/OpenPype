@@ -144,7 +144,4 @@ class ImportMayaLoader(api.Loader):
                                                buttons=buttons,
                                                defaultButton=accept)
 
-        if state != accept:
-            return False
-
-        return True
+        return state == accept
