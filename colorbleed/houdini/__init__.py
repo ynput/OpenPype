@@ -33,7 +33,6 @@ def install():
     avalon.data["familiesStateToggled"] = ["colorbleed.imagesequence"]
 
 
-
 def on_init():
     pass
 
@@ -48,22 +47,4 @@ def on_open():
 
 def on_task_changed(*args):
     """Wrapped function of app initialize and maya's on task changed"""
-
-    # Inputs (from the switched session and running app)
-    session = avalon.Session.copy()
-    app_name = os.environ["AVALON_APP_NAME"]
-
-    # Find the application definition
-    app_definition = pipeline.lib.get_application(app_name)
-
-    App = type("app_%s" % app_name,
-               (avalon.Application,),
-               {"config": app_definition.copy()})
-
-    # Initialize within the new session's environment
-    app = App()
-    env = app.environ(session)
-    app.initialize(env)
-
-    # Run
-    houdini.pipeline._on_task_changed()
+    pass
