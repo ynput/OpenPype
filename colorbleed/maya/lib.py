@@ -85,6 +85,9 @@ _alembic_options = {
     "selection": bool
 }
 
+INT_FPS = {15, 24, 5, 30, 48, 50, 60, 44100, 48000}
+FLOAT_FPS = {23.976, 29.97, 29.97, 47.952, 59.94}
+
 
 def matrix_equals(a, b, tolerance=1e-10):
     """
@@ -1313,10 +1316,11 @@ def get_id_from_history(node):
             return _id
 
 
-def set_project_fps(update=True):
+def set_scene_fps(fps, update=True):
     """Set FPS from project configuration
 
     Args:
+        fps (int, float): desired FPS
         update(bool): toggle update animation, default is True
 
     Returns:
@@ -1324,19 +1328,14 @@ def set_project_fps(update=True):
 
     """
 
-    int_fps = {15, 24, 5, 30, 48, 50, 60, 44100, 48000}
-    float_fps = {23.976, 29.97, 29.97, 47.952, 59.94}
+    if isinstance(fps, float) and fps in FLOAT_FPS:
+        unit = "{:f}fps".format(fps)
 
-    fps = lib.get_project_fps()
-
-    if isinstance(fps, float) and fps in float_fps:
-        unit = "{:f}fps".format(int(fps))
-
-    elif int(fps) in int_fps:
-        unit = "{:d}fps".format(int(fps))
+    elif isinstance(fps, int) and fps in INT_FPS:
+        unit = "{:d}fps".format(fps)
 
     else:
-        raise ("Unsupported FPS value: `%s`" % fps)
+        raise ValueError("Unsupported FPS value: `%s`" % fps)
 
     log.info("Updating FPS to '{}'".format(unit))
     cmds.currentUnit(time=unit, updateAnimation=update)
@@ -1354,9 +1353,20 @@ def validate_fps():
 
     """
 
+    fps = lib.get_project_fps()  # can be int or float
     current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
-    fps = lib.get_project_fps()
-    if fps != current_fps:
+
+    # Check if FPS is supported in Maya and compare with current fps
+    if isinstance(fps, int) and fps in INT_FPS:
+        valid = int(current_fps) == fps
+
+    elif isinstance(fps, float) and fps in FLOAT_FPS:
+        valid = current_fps == fps
+
+    else:
+        valid = False
+
+    if not valid:
 
         from avalon.vendor.Qt import QtWidgets
         from ..widgets import popup
@@ -1377,7 +1387,7 @@ def validate_fps():
             # Set new text for button (add optional argument for the popup?)
             toggle = dialog.widgets["toggle"]
             update = toggle.isChecked()
-            dialog.on_show.connect(lambda: set_project_fps(update))
+            dialog.on_show.connect(lambda: set_scene_fps(fps, update))
 
             dialog.show()
 
