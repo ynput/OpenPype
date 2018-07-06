@@ -9,7 +9,7 @@ from pyblish import api as pyblish
 
 from ..lib import (
     update_task_from_path,
-    any_outdated,
+    any_outdated
 )
 from . import menu
 from . import lib
@@ -37,7 +37,7 @@ def install():
     avalon.on("save", on_save)
     avalon.on("open", on_open)
 
-    avalon.before("save", before_save_check)
+    avalon.before("save", on_before_save)
 
     log.info("Overriding existing event 'taskChanged'")
     override_event("taskChanged", on_task_changed)
@@ -97,7 +97,7 @@ def on_init(_):
     safe_deferred(override_component_mask_commands)
 
 
-def before_save_check(return_code, _):
+def on_before_save(return_code, _):
     """Run validation for scene's FPS prior to saving"""
     return lib.validate_fps()
 
