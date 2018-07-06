@@ -1356,17 +1356,7 @@ def validate_fps():
     fps = lib.get_project_fps()  # can be int or float
     current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
 
-    # Check if FPS is supported in Maya and compare with current fps
-    if isinstance(fps, int) and fps in INT_FPS:
-        valid = int(current_fps) == fps
-
-    elif isinstance(fps, float) and fps in FLOAT_FPS:
-        valid = current_fps == fps
-
-    else:
-        valid = False
-
-    if not valid:
+    if current_fps != fps:
 
         from avalon.vendor.Qt import QtWidgets
         from ..widgets import popup
