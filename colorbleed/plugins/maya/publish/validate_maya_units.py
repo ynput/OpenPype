@@ -49,4 +49,5 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         cls.log.debug(current_linear)
 
         cls.log.info("Setting time unit to match project")
-        mayalib.set_project_fps()
+        project_fps = lib.get_project_fps()
+        mayalib.set_scene_fps(project_fps)
