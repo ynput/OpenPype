@@ -104,105 +104,25 @@ class Popup(QtWidgets.QDialog):
         return QtCore.QRect(x, y, width, height)
 
 
-class Popup2(QtWidgets.QDialog):
+class Popup2(Popup):
 
     on_show = QtCore.Signal()
 
     def __init__(self, parent=None, *args, **kwargs):
-        QtWidgets.QDialog.__init__(self, parent=parent, *args, **kwargs)
-        self.setContentsMargins(0, 0, 0, 0)
+        Popup.__init__(self, parent=parent, *args, **kwargs)
 
-        # Layout
-        layout = QtWidgets.QHBoxLayout(self)
-        layout.setContentsMargins(10, 5, 10, 10)
-        message = QtWidgets.QLabel("")
-        message.setStyleSheet("""
-        QLabel {
-            font-size: 12px;
-        }
-        """)
-        show = QtWidgets.QPushButton("Fix")
-        show.setSizePolicy(QtWidgets.QSizePolicy.Maximum,
-                           QtWidgets.QSizePolicy.Maximum)
-        show.setStyleSheet("""QPushButton { background-color: #BB0000 }""")
+        layout = self.layout()
 
-        toggle = QtWidgets.QCheckBox()
-        toggle.setText("Update Keys")
+        # Add toggle
+        toggle = QtWidgets.QCheckBox("Update Keys")
+        layout.insertWidget(1, toggle)
+        self.widgets["toggle"] = toggle
 
-        layout.addWidget(message, 1)  # Ensure stretch
-        layout.addWidget(toggle)
-        layout.addWidget(show)
+        layout.insertStretch(1, 1)
 
-        # Size
-        self.resize(400, 40)
-        geometry = self.calculate_window_geometry()
-        self.setGeometry(geometry)
-
-        self.widgets = {
-            "message": message,
-            "show": show,
-            "toggle": toggle,
-        }
-
-        # Signals
-        show.clicked.connect(self._on_show_clicked)
-
-        # Set default title
-        self.setWindowTitle("Popup")
-
-    def setMessage(self, message):
-        self.widgets['message'].setText(message)
-
-    def _on_show_clicked(self):
-        """Callback for when the 'show' button is clicked.
-
-        Raises the parent (if any)
-
-        """
-
-        parent = self.parent()
-        self.close()
-
-        # Trigger the signal
-        self.on_show.emit()
-
-        if parent:
-            parent.raise_()
-
-    def calculate_window_geometry(self):
-        """Respond to status changes
-
-        On creation, align window with screen bottom right.
-
-        """
-
-        window = self
-
-        width = window.width()
-        width = max(width, window.minimumWidth())
-
-        height = window.height()
-        height = max(height, window.sizeHint().height())
-
-        desktop_geometry = QtWidgets.QDesktopWidget().availableGeometry()
-        screen_geometry = window.geometry()
-
-        screen_width = screen_geometry.width()
-        screen_height = screen_geometry.height()
-
-        # Calculate width and height of system tray
-        systray_width = screen_geometry.width() - desktop_geometry.width()
-        systray_height = screen_geometry.height() - desktop_geometry.height()
-
-        padding = 10
-
-        x = screen_width - width
-        y = screen_height - height
-
-        x -= systray_width + padding
-        y -= systray_height + padding
-
-        return QtCore.QRect(x, y, width, height)
+        # Update button text
+        fix = self.widgets["show"]
+        fix.setText("Fix")
 
 
 @contextlib.contextmanager
