@@ -15,6 +15,8 @@ from maya import cmds, mel
 from avalon import api, maya, io, pipeline
 from avalon.vendor.six import string_types
 
+from colorbleed import lib
+
 
 log = logging.getLogger(__name__)
 
@@ -84,6 +86,9 @@ _alembic_options = {
     "pythonPostJobCallback": str,
     "selection": bool
 }
+
+INT_FPS = {15, 24, 5, 30, 48, 50, 60, 44100, 48000}
+FLOAT_FPS = {23.976, 29.97, 29.97, 47.952, 59.94}
 
 
 def matrix_equals(a, b, tolerance=1e-10):
@@ -1336,3 +1341,73 @@ def get_id_from_history(node):
         _id = get_id(similar_node)
         if _id:
             return _id
+
+
+def set_scene_fps(fps, update=True):
+    """Set FPS from project configuration
+
+    Args:
+        fps (int, float): desired FPS
+        update(bool): toggle update animation, default is True
+
+    Returns:
+        None
+
+    """
+
+    if isinstance(fps, float) and fps in FLOAT_FPS:
+        unit = "{:f}fps".format(fps)
+
+    elif isinstance(fps, int) and fps in INT_FPS:
+        unit = "{:d}fps".format(fps)
+
+    else:
+        raise ValueError("Unsupported FPS value: `%s`" % fps)
+
+    log.info("Updating FPS to '{}'".format(unit))
+    cmds.currentUnit(time=unit, updateAnimation=update)
+
+    # Force file stated to 'modified'
+    cmds.file(modified=True)
+
+
+# Valid FPS
+def validate_fps():
+    """Validate current scene FPS and show pop-up when it is incorrect
+
+    Returns:
+        bool
+
+    """
+
+    fps = lib.get_project_fps()  # can be int or float
+    current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
+
+    if current_fps != fps:
+
+        from avalon.vendor.Qt import QtWidgets
+        from ..widgets import popup
+
+        # Find maya main window
+        top_level_widgets = {w.objectName(): w for w in
+                             QtWidgets.QApplication.topLevelWidgets()}
+
+        parent = top_level_widgets.get("MayaWindow", None)
+        if parent is None:
+            pass
+        else:
+            dialog = popup.Popup2(parent=parent)
+            dialog.setModal(True)
+            dialog.setWindowTitle("Maya scene not in line with project")
+            dialog.setMessage("The FPS is out of sync, please fix")
+
+            # Set new text for button (add optional argument for the popup?)
+            toggle = dialog.widgets["toggle"]
+            update = toggle.isChecked()
+            dialog.on_show.connect(lambda: set_scene_fps(fps, update))
+
+            dialog.show()
+
+            return False
+
+    return True

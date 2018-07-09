@@ -104,6 +104,27 @@ class Popup(QtWidgets.QDialog):
         return QtCore.QRect(x, y, width, height)
 
 
+class Popup2(Popup):
+
+    on_show = QtCore.Signal()
+
+    def __init__(self, parent=None, *args, **kwargs):
+        Popup.__init__(self, parent=parent, *args, **kwargs)
+
+        layout = self.layout()
+
+        # Add toggle
+        toggle = QtWidgets.QCheckBox("Update Keys")
+        layout.insertWidget(1, toggle)
+        self.widgets["toggle"] = toggle
+
+        layout.insertStretch(1, 1)
+
+        # Update button text
+        fix = self.widgets["show"]
+        fix.setText("Fix")
+
+
 @contextlib.contextmanager
 def application():
     app = QtWidgets.QApplication(sys.argv)
