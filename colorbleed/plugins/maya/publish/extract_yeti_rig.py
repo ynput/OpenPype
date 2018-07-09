@@ -6,7 +6,7 @@ from maya import cmds
 
 import avalon.maya.lib as lib
 import colorbleed.api
-from cb.utils.maya import context
+import colorbleed.maya.lib as maya
 
 
 @contextlib.contextmanager
@@ -25,7 +25,7 @@ def disconnected_attributes(settings, members):
             try:
                 source = sources[0]
             except IndexError:
-                print "source_id:", input["sourceID"]
+                print("source_id:", input["sourceID"])
                 continue
 
             # Get destination shapes (the shapes used as hook up)
@@ -52,7 +52,7 @@ def disconnected_attributes(settings, members):
             try:
                 cmds.connectAttr(connection[0], connection[1])
             except Exception as e:
-                print e,
+                print(e)
                 continue
 
 
@@ -112,7 +112,7 @@ class ExtractYetiRig(colorbleed.api.Extractor):
 
         nodes = instance.data["setMembers"]
         with disconnected_attributes(settings, members):
-            with context.attribute_values(attr_value):
+            with maya.attribute_values(attr_value):
                 cmds.select(nodes, noExpand=True)
                 cmds.file(maya_path,
                           force=True,
