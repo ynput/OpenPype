@@ -13,6 +13,8 @@ from collections import OrderedDict, defaultdict
 from maya import cmds, mel
 
 from avalon import api, maya, io, pipeline
+from avalon.vendor.six import string_types
+
 from colorbleed import lib
 
 
@@ -108,7 +110,7 @@ def matrix_equals(a, b, tolerance=1e-10):
 
 
 def unique(name):
-    assert isinstance(name, basestring), "`name` must be string"
+    assert isinstance(name, string_types), "`name` must be string"
 
     while cmds.objExists(name):
         matches = re.findall(r"\d+$", name)
@@ -274,6 +276,31 @@ def collect_animation_data():
     data["step"] = 1.0
 
     return data
+
+
+@contextlib.contextmanager
+def attribute_values(attr_values):
+    """Remaps node attributes to values during context.
+
+    Arguments:
+        attr_values (dict): Dictionary with (attr, value)
+
+    """
+
+    original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
+    try:
+        for attr, value in attr_values.items():
+            if isinstance(value, string_types):
+                cmds.setAttr(attr, value, type="string")
+            else:
+                cmds.setAttr(attr, value)
+        yield
+    finally:
+        for attr, value in original:
+            if isinstance(value, string_types):
+                cmds.setAttr(attr, value, type="string")
+            else:
+                cmds.setAttr(attr, value)
 
 
 @contextlib.contextmanager
