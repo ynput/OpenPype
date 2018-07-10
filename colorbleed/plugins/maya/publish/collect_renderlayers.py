@@ -134,5 +134,6 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         # Suspend publish job
         state = "Suspended" if attributes["suspendPublishJob"] else "Active"
         options["publishJobState"] = state
+        options["extendFrames"] = attributes.get("extendFrames", False)
 
         return options
