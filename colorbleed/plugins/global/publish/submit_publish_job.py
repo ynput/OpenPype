@@ -2,8 +2,8 @@ import os
 import json
 import re
 
-from avalon import api
-from avalon.vendor import requests
+from avalon import api, io
+from avalon.vendor import requests, clique
 
 import pyblish.api
 
@@ -21,6 +21,73 @@ def _get_script():
         module_path = module_path[:-len(".pyc")] + ".py"
 
     return module_path
+
+
+# Logic to retrieve latest files concerning extendFrames
+def get_latest_version(asset_name, subset_name, family):
+    # Get asset
+    asset_name = io.find_one({"type": "asset",
+                              "name": asset_name},
+                             projection={"name": True})
+
+    subset = io.find_one({"type": "subset",
+                          "name": subset_name,
+                          "parent": asset_name["_id"]},
+                         projection={"_id": True, "name": True})
+
+    # Check if subsets actually exists (pre-run check)
+    assert subset, "No subsets found, please publish with `extendFrames` off"
+
+    # Get version
+    version_projection = {"name": True,
+                          "data.startFrame": True,
+                          "data.endFrame": True,
+                          "parent": True}
+
+    version = io.find_one({"type": "version",
+                           "parent": subset["_id"],
+                           "data.families": family},
+                          projection=version_projection,
+                          sort=[("name", -1)])
+
+    assert version, "No version found, this is a bug"
+
+    return version
+
+
+def get_resources(version, extension=None):
+    """
+    Get the files from the specific version
+    """
+    query = {"type": "representation", "parent": version["_id"]}
+    if extension:
+        query["name"] = extension
+
+    representation = io.find_one(query)
+    assert representation, "This is a bug"
+
+    directory = api.get_representation_path(representation)
+    print("Source: ", directory)
+    resources = sorted([os.path.normpath(os.path.join(directory, fname))
+                        for fname in os.listdir(directory)])
+
+    return resources
+
+
+def get_resource_files(resources, frame_range, override=True):
+
+    res_collections, _ = clique.assemble(resources)
+    assert len(res_collections) == 1, "Multiple collections found"
+    res_collection = res_collections[0]
+
+    # Remove any frames
+    if override:
+        for frame in frame_range:
+            if frame not in res_collection.indexes:
+                continue
+            res_collection.indexes.remove(frame)
+
+    return list(res_collection)
 
 
 class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
@@ -69,8 +136,9 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             raise RuntimeError("Can't continue without valid deadline "
                                "submission prior to this plug-in.")
 
-        subset = instance.data["subset"]
-        state = instance.data.get("publishJobState", "Suspended")
+        data = instance.data.copy()
+        subset = data["subset"]
+        state = data.get("publishJobState", "Suspended")
         job_name = "{batch} - {subset} [publish image sequence]".format(
             batch=job["Props"]["Name"],
             subset=subset
@@ -80,6 +148,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         context = instance.context
         start = instance.data.get("startFrame", context.data["startFrame"])
         end = instance.data.get("endFrame", context.data["endFrame"])
+        resources = []
 
         # Add in regex for sequence filename
         # This assumes the output files start with subset name and ends with
@@ -93,8 +162,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
                                               ext=ext)
 
         # Write metadata for publish job
-        data = instance.data.copy()
-        data.pop("deadlineSubmissionJob")
+        render_job = data.pop("deadlineSubmissionJob")
         metadata = {
             "regex": regex,
             "startFrame": start,
@@ -113,6 +181,58 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         output_dir = instance.data["outputDir"]
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
+
+        if data.get("extendFrames", False):
+
+            family = "colorbleed.imagesequence"
+            override = data["overrideFrames"]
+
+            # override = data.get("overrideExistingFrame", False)
+            out_file = render_job.get("OutFile")
+            if not out_file:
+                raise RuntimeError("OutFile not found in render job!")
+
+            extension = os.path.splitext(out_file[0])[1]
+            _ext = extension[1:]
+
+            # Frame comparison
+            prev_start = None
+            prev_end = None
+            resource_range = range(int(start)-1, int(end)+1)
+
+            # Gather all the subset files (one subset per render pass!)
+            subset_names = [data["subset"]]
+            subset_names.extend(data.get("renderPasses", []))
+
+            for subset_name in subset_names:
+                version = get_latest_version(asset_name=data["asset"],
+                                             subset_name=subset_name,
+                                             family=family)
+
+                # Set prev start / end frames for comparison
+                if not prev_start and not prev_end:
+                    prev_start = version["data"]["startFrame"]
+                    prev_end = version["data"]["endFrame"]
+
+                subset_resources = get_resources(version, _ext)
+                get_resource_files(subset_resources, resource_range, override)
+
+                resources.extend(subset_resources)
+
+            updated_start = start if start < prev_start else prev_start
+            updated_end = end if end > prev_end else prev_end
+
+            # Update metadata and instance start / end frame
+            self.log.info("Updating start / end frame : "
+                          "{} - {}".format(updated_start, updated_end))
+
+            # Start frame
+            metadata["startFrame"] = updated_start
+            metadata["metadata"]["instance"]["startFrame"] = updated_start
+
+            # End frame
+            metadata["endFrame"] = updated_end
+            metadata["metadata"]["instance"]["endFrame"] = updated_end
 
         metadata_filename = "{}_metadata.json".format(subset)
         metadata_path = os.path.join(output_dir, metadata_filename)
@@ -159,3 +279,22 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)
+
+        # Copy files from previous render if extendFrame is True
+        self.log.info("Submitting done!")
+
+        # return
+
+        if data.get("extendFrames", False):
+            # TODO: implement subset / render element
+
+            self.log.info("Preparing to copy ..")
+            import shutil
+
+            dest_path = data["outputDir"]
+            for source in resources:
+                src_file = os.path.basename(source)
+                dest = os.path.join(dest_path, src_file)
+                shutil.copy(source, dest)
+
+            self.log.info("Finished copying %i files" % len(resources))
