@@ -185,7 +185,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         if data.get("extendFrames", False):
 
             family = "colorbleed.imagesequence"
-            override = data["overrideFrames"]
+            override = data["overrideExistingFrame"]
 
             # override = data.get("overrideExistingFrame", False)
             out_file = render_job.get("OutFile")
