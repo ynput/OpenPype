@@ -26,6 +26,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
 
         data["suspendPublishJob"] = False
         data["extendFrames"] = False
+        data["overrideExistingFrame"] = True
         data["includeDefaultRenderLayer"] = False
         data["useLegacyRenderLayers"] = True
         data["priority"] = 50
