@@ -2,7 +2,7 @@ import os
 
 import logging
 
-from avalon import api as avalon, pipeline, houdini
+from avalon import api as avalon  # pipeline, houdini
 from pyblish import api as pyblish
 
 
@@ -18,6 +18,7 @@ log = logging.getLogger("colorbleed.houdini")
 
 
 def install():
+
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
