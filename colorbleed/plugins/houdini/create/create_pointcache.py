@@ -1,9 +1,11 @@
 from collections import OrderedDict
 
-import avalon.api
+import hou
+
+from avalon import houdini
 
 
-class CreatePointCache(avalon.api.Creator):
+class CreatePointCache(houdini.Creator):
     """Alembic pointcache for animated data"""
 
     name = "pointcache"
@@ -17,19 +19,9 @@ class CreatePointCache(avalon.api.Creator):
         # create an ordered dict with the existing data first
         data = OrderedDict(**self.data)
 
-        # get basic animation data : start / end / handles / steps
-        for key, value in lib.collect_animation_data().items():
-            data[key] = value
-
-        # Write vertex colors with the geometry.
-        data["writeColorSets"] = False
-
-        # Include only renderable visible shapes.
-        # Skips locators and empty transforms
-        data["renderableOnly"] = False
-
-        # Include only nodes that are visible at least once during the
-        # frame range.
-        data["visibleOnly"] = False
+        # Collect animation data for point cache exporting
+        start, end = hou.playbar.timelineRange()
+        data["startFrame"] = start
+        data["endFrame"] = end
 
         self.data = data
