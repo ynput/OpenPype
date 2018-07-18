@@ -19,6 +19,9 @@ class CreatePointCache(houdini.Creator):
         # create an ordered dict with the existing data first
         data = OrderedDict(**self.data)
 
+        # Set node type to create for output
+        data["node_type"] = "alembic"
+
         # Collect animation data for point cache exporting
         start, end = hou.playbar.timelineRange()
         data["startFrame"] = start
