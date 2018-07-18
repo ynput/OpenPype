@@ -1,5 +1,6 @@
 import os
 import json
+import pprint
 import re
 
 from avalon import api, io
@@ -198,7 +199,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             # Frame comparison
             prev_start = None
             prev_end = None
-            resource_range = range(int(start)-1, int(end)+1)
+            resource_range = range(int(start), int(end)+1)
 
             # Gather all the subset files (one subset per render pass!)
             subset_names = [data["subset"]]
@@ -215,16 +216,36 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
                     prev_end = version["data"]["endFrame"]
 
                 subset_resources = get_resources(version, _ext)
-                get_resource_files(subset_resources, resource_range, override)
+                resource_files = get_resource_files(subset_resources,
+                                                    resource_range,
+                                                    override)
 
-                resources.extend(subset_resources)
+                resources.extend(resource_files)
 
-            updated_start = start if start < prev_start else prev_start
-            updated_end = end if end > prev_end else prev_end
+            updated_start = min(start, prev_start)
+            updated_end = max(end, prev_end)
 
             # Update metadata and instance start / end frame
             self.log.info("Updating start / end frame : "
                           "{} - {}".format(updated_start, updated_end))
+
+            # TODO : Improve logic to get new frame range for the
+            # publish job (publish_filesequence.py)
+            # The current approach is not following Pyblish logic which is based
+            # on Collect / Validate / Extract.
+
+            # ---- Collect Plugins  ---
+            # Collect Extend Frames - Only run if extendFrames is toggled
+            # # # Store in instance:
+            # # # Previous rendered files per subset based on frames
+            # # # --> Add to instance.data[resources]
+            # # # Update publish frame range
+
+            # ---- Validate Plugins ---
+            # Validate Extend Frames
+            # # # Check if instance has the requirements to extend frames
+            # There might have been some things which can be added to the list
+            # Please do so when fixing this.
 
             # Start frame
             metadata["startFrame"] = updated_start
@@ -281,12 +302,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             raise Exception(response.text)
 
         # Copy files from previous render if extendFrame is True
-        self.log.info("Submitting done!")
-
-        # return
-
         if data.get("extendFrames", False):
-            # TODO: implement subset / render element
 
             self.log.info("Preparing to copy ..")
             import shutil
