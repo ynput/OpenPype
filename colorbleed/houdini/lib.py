@@ -1,8 +1,10 @@
 import uuid
 
+from contextlib import contextmanager
+
 import hou
 
-from avalon import io
+from avalon import api, io
 from avalon.houdini import lib
 
 
@@ -81,7 +83,7 @@ def generate_ids(nodes, asset_id=None):
 
 def get_id_required_nodes():
 
-    valid_types = ["geometry"]
+    valid_types = ["geometry", "geometry"]
     nodes = {n for n in hou.node("/out").children() if
              n.type().name() in valid_types}
 
@@ -91,3 +93,21 @@ def get_id_required_nodes():
 def get_additional_data(container):
     """Not implemented yet!"""
     pass
+
+
+@contextmanager
+def attribute_values(node, data):
+
+    previous_attrs = {key: node.parm(key).eval() for key in data.keys()}
+    print("before", previous_attrs)
+    try:
+        node.setParms(data)
+        during_attrs = {key: node.parm(key).eval() for key in data.keys()}
+        print("during", during_attrs)
+        yield
+    except Exception as exc:
+        print(exc)
+        pass
+    finally:
+        print("reset")
+        node.setParms(previous_attrs)
