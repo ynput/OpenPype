@@ -32,6 +32,10 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
+        # Check if Extend Frames is toggled
+        if not instance.data("extendFrames", False):
+            return
+
         # Get renderer
         renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
 
