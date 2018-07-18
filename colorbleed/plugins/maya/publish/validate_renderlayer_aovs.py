@@ -1,6 +1,6 @@
 import pyblish.api
 
-from avalon import io, api
+from avalon import io
 import colorbleed.api
 
 
@@ -15,9 +15,6 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
     This translates to something like this:
 
         CHAR.diffuse
-
-    This check is only used when the Extend Frames in 'renderGlobalsDefault'
-    is toggled on.
 
     This check is needed to ensure the render output is still complete
 
@@ -38,10 +35,9 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
 
         invalid = []
 
-        asset_name = api.Session["AVALON_ASSET"]
+        asset_name = instance.data["asset"]
         render_passses = instance.data.get("renderPasses", [])
         for render_pass in render_passses:
-
             is_valid = self.validate_subset_registered(asset_name, render_pass)
             if not is_valid:
                 invalid.append(render_pass)
