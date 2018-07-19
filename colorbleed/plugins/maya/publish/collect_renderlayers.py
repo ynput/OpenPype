@@ -125,7 +125,7 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
 
         # Check for specific pools
         pool_str = attributes.get("pools", None)
-        if pool_str is not None and not "":
+        if pool_str:
             pools = pool_str.split(";")
             options["renderGlobals"]["Pool"] = pools[0]
             if len(pools) > 1:
