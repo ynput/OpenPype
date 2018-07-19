@@ -122,6 +122,15 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
 
         options = {"renderGlobals": {}}
         options["renderGlobals"]["Priority"] = attributes["priority"]
+
+        # Check for specific pools
+        pool_str = attributes.get("pools", None)
+        if pool_str:
+            pools = pool_str.split(";")
+            options["renderGlobals"]["Pool"] = pools[0]
+            if len(pools) > 1:
+                options["renderGlobals"]["SecondaryPool"] = pools[1]
+
         legacy = attributes["useLegacyRenderLayers"]
         options["renderGlobals"]["UseLegacyRenderLayers"] = legacy
 
