@@ -7,6 +7,7 @@ from maya import cmds
 
 from avalon import api
 from avalon.maya import lib as avalon_lib, pipeline
+from avalon.vendor import six
 from colorbleed.maya import lib
 
 
@@ -176,14 +177,19 @@ class YetiCacheLoader(api.Loader):
             nodes.append(transform_node)
             nodes.append(yeti_node)
 
+            # Update visibility reflaction and refraction in node settings
+            attributes = node_settings["attrs"]
+            attributes.update({"visibleInReflections": True,
+                               "visibleInRefractions": True})
+
             # Apply attributes to pgYetiMaya node
             kwargs = {}
-            for attr, value in node_settings["attrs"].items():
+            for attr, value in attributes.items():
                 if value is None:
                     continue
 
                 attribute = "%s.%s" % (yeti_node, attr)
-                if isinstance(value, (str, unicode)):
+                if isinstance(value, (str, six.string_types)):
                     cmds.setAttr(attribute, value, type="string")
                     continue
 
