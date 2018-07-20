@@ -1,5 +1,6 @@
 import pyblish.api
 import colorbleed.api
+import os
 
 from collections import defaultdict
 
@@ -26,7 +27,12 @@ class ValidateTransfers(pyblish.api.InstancePlugin):
         # Collect all destination with its sources
         collected = defaultdict(set)
         for source, destination in transfers:
-            collected[destination.lower()].add(source.lower())
+
+            # Use normalized paths in comparison and ignore case sensitivity
+            source = os.path.normpath(source).lower()
+            destination = os.path.normpath(destination).lower()
+
+            collected[destination].add(source)
 
         invalid_destinations = list()
         for destination, sources in collected.items():
