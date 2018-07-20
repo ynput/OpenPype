@@ -28,22 +28,21 @@ class ValidateTransfers(pyblish.api.InstancePlugin):
         for source, destination in transfers:
             collected[destination.lower()].add(source.lower())
 
-        invalid = False
         invalid_destinations = list()
         for destination, sources in collected.items():
             if len(sources) > 1:
+                invalid_destinations.append(destination)
+
                 if verbose:
                     self.log.error("Non-unique file transfer for resources: "
                                    "{0} (sources: {1})".format(destination,
                                                                sources))
-                invalid = True
-                invalid_destinations.append(destination)
 
-        if invalid:
+        if invalid_destinations:
             if not verbose:
                 # If not verbose then still log the resource destination as
                 # opposed to every individual file transfer
                 self.log.error("Non-unique file transfers to destinations: "
-                               "%s" % invalid_destinations)
+                               "%s" % "\n".join(invalid_destinations))
 
             raise RuntimeError("Invalid transfers in queue.")
