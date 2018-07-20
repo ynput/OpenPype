@@ -2,8 +2,7 @@ import os
 import logging
 import weakref
 
-from maya import utils
-from maya import cmds
+from maya import utils, cmds, mel
 
 from avalon import api as avalon, pipeline, maya
 from pyblish import api as pyblish
@@ -37,6 +36,8 @@ def install():
     avalon.on("init", on_init)
     avalon.on("save", on_save)
     avalon.on("open", on_open)
+
+    avalon.before("save", on_before_save)
 
     log.info("Overriding existing event 'taskChanged'")
     override_event("taskChanged", on_task_changed)
@@ -96,10 +97,16 @@ def on_init(_):
     safe_deferred(override_component_mask_commands)
 
 
+def on_before_save(return_code, _):
+    """Run validation for scene's FPS prior to saving"""
+    return lib.validate_fps()
+
+
 def on_save(_):
     """Automatically add IDs to new nodes
-    Any transform of a mesh, without an existing ID,
-    is given one automatically on file save.
+
+    Any transform of a mesh, without an existing ID, is given one
+    automatically on file save.
     """
 
     avalon.logger.info("Running callback on save..")
@@ -118,6 +125,9 @@ def on_open(_):
 
     from avalon.vendor.Qt import QtWidgets
     from ..widgets import popup
+
+    # Ensure scene's FPS is set to project config
+    lib.validate_fps()
 
     # Update current task for the current scene
     update_task_from_path(cmds.file(query=True, sceneName=True))

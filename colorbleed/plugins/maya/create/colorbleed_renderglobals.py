@@ -25,11 +25,14 @@ class CreateRenderGlobals(avalon.maya.Creator):
         data = OrderedDict(**self.data)
 
         data["suspendPublishJob"] = False
+        data["extendFrames"] = False
+        data["overrideExistingFrame"] = True
         data["includeDefaultRenderLayer"] = False
         data["useLegacyRenderLayers"] = True
         data["priority"] = 50
         data["whitelist"] = False
         data["machineList"] = ""
+        data["pools"] = ""
 
         self.data = data
         self.options = {"useSelection": False}  # Force no content

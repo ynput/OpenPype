@@ -76,6 +76,8 @@ class ReferenceLoader(api.Loader):
 
     def _get_reference_node(self, members):
         """Get the reference node from the container members
+        Args:
+            members: list of node names
 
         Returns:
             str: Reference node name.
@@ -155,9 +157,9 @@ class ReferenceLoader(api.Loader):
 
         # Fix PLN-40 for older containers created with Avalon that had the
         # `.verticesOnlySet` set to True.
-        if cmds.getAttr(node + ".verticesOnlySet"):
+        if cmds.getAttr("{}.verticesOnlySet".format(node)):
             self.log.info("Setting %s.verticesOnlySet to False", node)
-            cmds.setAttr(node + ".verticesOnlySet", False)
+            cmds.setAttr("{}.verticesOnlySet".format(node), False)
 
         # Add new nodes of the reference to the container
         cmds.sets(content, forceElement=node)
@@ -170,7 +172,7 @@ class ReferenceLoader(api.Loader):
             cmds.sets(invalid, remove=node)
 
         # Update metadata
-        cmds.setAttr(node + ".representation",
+        cmds.setAttr("{}.representation".format(node),
                      str(representation["_id"]),
                      type="string")
 

@@ -250,3 +250,23 @@ def collect_container_metadata(container):
         return {}
 
     return hostlib.get_additional_data(container)
+
+
+def get_project_fps():
+    """Returns project's FPS, if not found will return 25 by default
+
+    Returns:
+        int, float
+    """
+
+    project_name = io.active_project()
+    project = io.find_one({"name": project_name,
+                           "type": "project"},
+                          projection={"config": True})
+
+    config = project.get("config", None)
+    assert config, "This is a bug"
+
+    fps = config.get("fps", 25.0)
+
+    return fps

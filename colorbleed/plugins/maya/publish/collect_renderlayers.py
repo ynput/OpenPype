@@ -22,8 +22,8 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         try:
             render_globals = cmds.ls("renderglobalsDefault")[0]
         except IndexError:
-            self.log.info("Cannot collect renderlayers without "
-                          "renderGlobals node")
+            self.log.error("Cannot collect renderlayers without "
+                           "renderGlobals node")
             return
 
         # Get start and end frame
@@ -122,6 +122,15 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
 
         options = {"renderGlobals": {}}
         options["renderGlobals"]["Priority"] = attributes["priority"]
+
+        # Check for specific pools
+        pool_str = attributes.get("pools", None)
+        if pool_str:
+            pools = pool_str.split(";")
+            options["renderGlobals"]["Pool"] = pools[0]
+            if len(pools) > 1:
+                options["renderGlobals"]["SecondaryPool"] = pools[1]
+
         legacy = attributes["useLegacyRenderLayers"]
         options["renderGlobals"]["UseLegacyRenderLayers"] = legacy
 
@@ -134,5 +143,15 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         # Suspend publish job
         state = "Suspended" if attributes["suspendPublishJob"] else "Active"
         options["publishJobState"] = state
+
+        # Override frames should be False if extendFrames is False. This is
+        # to ensure it doesn't go off doing crazy unpredictable things
+        override_frames = False
+        extend_frames = attributes.get("extendFrames", False)
+        if extend_frames:
+            override_frames = attributes.get("overrideExistingFrame", False)
+
+        options["extendFrames"] = extend_frames
+        options["overrideExistingFrame"] = override_frames
 
         return options
