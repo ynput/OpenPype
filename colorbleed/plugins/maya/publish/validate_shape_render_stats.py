@@ -10,8 +10,6 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
     order = colorbleed.api.ValidateMeshOrder
     hosts = ['maya']
     families = ['colorbleed.model']
-    category = 'model'
-    version = (0, 1, 0)
     label = 'Shape Default Render Stats'
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.RepairAction]
@@ -26,19 +24,17 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
                 'doubleSided': 1,
                 'opposite': 0}
 
-    @staticmethod
-    def get_invalid(instance):
+    @classmethod
+    def get_invalid(cls, instance):
         # It seems the "surfaceShape" and those derived from it have
         # `renderStat` attributes.
         shapes = cmds.ls(instance, long=True, type='surfaceShape')
         invalid = []
         for shape in shapes:
-            for attr, requiredValue in \
-                    ValidateShapeRenderStats.defaults.iteritems():
-
+            for attr, default_value in cls.defaults.iteritems():
                 if cmds.attributeQuery(attr, node=shape, exists=True):
                     value = cmds.getAttr('{}.{}'.format(shape, attr))
-                    if value != requiredValue:
+                    if value != default_value:
                         invalid.append(shape)
 
         return invalid
@@ -48,14 +44,13 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
         invalid = self.get_invalid(instance)
 
         if invalid:
-            raise ValueError("Shapes with non-standard renderStats "
+            raise ValueError("Shapes with non-default renderStats "
                              "found: {0}".format(invalid))
 
-    @staticmethod
-    def repair(instance):
-        shape_render_defaults = ValidateShapeRenderStats.defaults
-        for shape in ValidateShapeRenderStats.get_invalid(instance):
-            for attr, default_value in shape_render_defaults.iteritems():
+    @classmethod
+    def repair(cls, instance):
+        for shape in cls.get_invalid(instance):
+            for attr, default_value in cls.defaults.iteritems():
 
                 if cmds.attributeQuery(attr, node=shape, exists=True):
                     plug = '{0}.{1}'.format(shape, attr)

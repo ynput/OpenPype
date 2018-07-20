@@ -91,8 +91,8 @@ class ReferenceLoader(api.Loader):
         references = set()
         for ref in cmds.ls(members, exactType="reference", objectsOnly=True):
 
-            # Ignore any `sharedReferenceNode`
-            if ref.startswith("sharedReference"):
+            # Ignore any `:sharedReferenceNode`
+            if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
                 continue
 
             references.add(ref)

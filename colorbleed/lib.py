@@ -16,22 +16,20 @@ def is_latest(representation):
     """Return whether the representation is from latest version
 
     Args:
-        representation (str or io.ObjectId): The representation id.
+        representation (dict): The representation document from the database.
 
     Returns:
         bool: Whether the representation is of latest version.
 
     """
 
-    rep = io.find_one({"_id": io.ObjectId(representation),
-                       "type": "representation"})
-    version = io.find_one({"_id": rep['parent']})
+    version = io.find_one({"_id": representation['parent']})
 
     # Get highest version under the parent
     highest_version = io.find_one({
         "type": "version",
         "parent": version["parent"]
-    }, sort=[("name", -1)])
+    }, sort=[("name", -1)], projection={"name": True})
 
     if version['name'] == highest_version['name']:
         return True
@@ -49,8 +47,15 @@ def any_outdated():
         if representation in checked:
             continue
 
-        if not is_latest(container['representation']):
+        representation_doc = io.find_one({"_id": io.ObjectId(representation),
+                                          "type": "representation"},
+                                         projection={"parent": True})
+        if representation_doc and not is_latest(representation_doc):
             return True
+        elif not representation_doc:
+            log.debug("Container '{objectName}' has an invalid "
+                      "representation, it is missing in the "
+                      "database".format(**container))
 
         checked.add(representation)
     return False
