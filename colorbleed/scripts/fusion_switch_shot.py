@@ -158,7 +158,7 @@ def switch(asset_name, filepath=None, new=True):
     """
 
     # Ensure filename is absolute
-    if not os.path.abspath(filepath):
+    if not os.path.isabs(filepath):
         filepath = os.path.abspath(filepath)
 
     # Get current project
