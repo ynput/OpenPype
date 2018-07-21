@@ -928,7 +928,22 @@
                     "shading",
                     "fixRenderLayerOutAdjustmentErrors"
                 ],
-                "title": "Fix RenderLayerOut Adjustment Errors",
+                "title": "Fix RenderLayer Out Adjustment Errors",
+                "tooltip": ""
+            },
+            {
+                "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\shading\\fix_renderlayer_missing_node_override.py",
+                "sourcetype": "file",
+                "tags": [
+                    "shading",
+                    "renderlayer",
+                    "missing",
+                    "reference",
+                    "switch",
+                    "layer"
+                ],
+                "title": "Fix RenderLayer Missing Referenced Nodes Overrides",
                 "tooltip": ""
             }
         ]
