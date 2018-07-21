@@ -82,9 +82,13 @@ def loader_shift(loader, frame, relative=True):
     comp = loader.Comp()
     time = comp.TIME_UNDEFINED
 
-    if not relative:
-        start = loader["GlobalIn"][time]
-        frame -= start
+    old_in = loader["GlobalIn"][time]
+    old_out = loader["GlobalOut"][time]
+
+    if relative:
+        shift = frame
+    else:
+        shift = frame - old_in
 
     # Shifting global in will try to automatically compensate for the change
     # in the "ClipTimeStart" and "HoldFirstFrame" inputs, so we preserve those
@@ -93,9 +97,17 @@ def loader_shift(loader, frame, relative=True):
                                          "ClipTimeEnd",
                                          "HoldFirstFrame",
                                          "HoldLastFrame"]):
-        loader["GlobalIn"][time] = loader["GlobalIn"][time] + frame
 
-    return int(frame)
+        # GlobalIn cannot be set past GlobalOut or vice versa
+        # so we must apply them in the order of the shift.
+        if shift > 0:
+            loader["GlobalOut"][time] = old_out + shift
+            loader["GlobalIn"][time] = old_in + shift
+        else:
+            loader["GlobalIn"][time] = old_in + shift
+            loader["GlobalOut"][time] = old_out + shift
+
+    return int(shift)
 
 
 class FusionLoadSequence(api.Loader):
