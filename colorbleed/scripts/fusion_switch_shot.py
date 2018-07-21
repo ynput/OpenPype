@@ -157,18 +157,21 @@ def switch(asset_name, filepath=None, new=True):
 
     """
 
-    # Ensure filename is absolute
-    if not os.path.abspath(filepath):
-        filepath = os.path.abspath(filepath)
+    # If filepath provided, ensure it is valid absolute path
+    if filepath is not None:
+        if not os.path.isabs(filepath):
+            filepath = os.path.abspath(filepath)
 
-    # Get current project
-    self._project = io.find_one({"type": "project",
-                                 "name": api.Session["AVALON_PROJECT"]})
+        assert os.path.exists(filepath), "%s must exist " % filepath
 
     # Assert asset name exists
     # It is better to do this here then to wait till switch_shot does it
     asset = io.find_one({"type": "asset", "name": asset_name})
     assert asset, "Could not find '%s' in the database" % asset_name
+
+    # Get current project
+    self._project = io.find_one({"type": "project",
+                                 "name": api.Session["AVALON_PROJECT"]})
 
     # Go to comp
     if not filepath:
@@ -189,7 +192,6 @@ def switch(asset_name, filepath=None, new=True):
             representation = colorbleed.switch_item(container,
                                                     asset_name=asset_name)
             representations.append(representation)
-            current_comp.Print(str(representation["_id"]) + "\n")
         except Exception as e:
             current_comp.Print("Error in switching! %s\n" % e.message)
 
