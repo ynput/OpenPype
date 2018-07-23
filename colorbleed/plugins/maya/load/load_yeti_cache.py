@@ -85,10 +85,14 @@ class YetiCacheLoader(api.Loader):
     def update(self, container, representation):
 
         path = api.get_representation_path(representation)
-        print("debug: %s" % path)
         namespace = "{}:".format(container["namespace"])
         members = cmds.sets(container['objectName'], query=True)
-        yeti_nodes = cmds.ls(members, type="pgYetiMaya")
+        yeti_nodes = {n.rsplit(":", 1)[-1]: n for n in
+                      cmds.ls(members, type="pgYetiMaya")}
+
+        # Get shortest path, splitting on | due to dagpath.
+        # Split actual node and its transform; root|transform|pgYetiMaya
+        root = min([n.rsplit("|", 2)[0] for n in yeti_nodes])
 
         # TODO: Count the amount of nodes cached
         # To ensure new nodes get created or old nodes get destroyed
@@ -96,21 +100,32 @@ class YetiCacheLoader(api.Loader):
         # Check the amount of caches
         files = os.listdir(path)
         patterns = [clique.PATTERNS["frames"]]
-        collections, _ = clique.assemble(files, patterns=patterns)
-        if len(collections) != len(yeti_nodes):
-            pass
+        collections, _ = clique.assemble(files, patterns=patterns,
+                                         minimum_items=1)
 
-        for node in yeti_nodes:
-            # Remove local given namespace
-            node_name = node.split(namespace, 1)[-1]
-            file_name = node_name.replace(":", "_")
+        # Build look up
+        current = set(yeti_nodes.keys())
+        collection_lookup = {c.head.strip("."): c for c in collections}
+        to_create = set(
+            [k for k in collection_lookup.keys() if k not in yeti_nodes.keys()])
 
-            # Check if the node has a cache
-            tmp_cache = os.path.join(path, "{}.%04d.fur".format(file_name))
-            fpath = self.validate_cache(os.path.normpath(tmp_cache))
+        to_update = current | to_create
+        to_remove = current - to_create
 
-            # Update the attribute
-            cmds.setAttr("{}.cacheFileName".format(node), fpath, type="string")
+        with avalon_lib.suspended_refresh():
+            if to_remove:
+                to_remove_nodes = [cmds.listRelatives(yeti_nodes[r], p=True)[0]
+                                   for r in to_remove]
+                cmds.delete(to_remove_nodes)
+
+            if to_update:
+                for node in to_update:
+                    n = yeti_nodes[node]
+                    collection = collection_lookup[n]
+                    seq_name = "".join([collection.head,
+                                        "%04d",
+                                        collection.tail])
+                    new_file = os.path.join(path, seq_name)
 
         # Update the container
         cmds.setAttr("{}.representation".format(container["objectName"]),
