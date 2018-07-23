@@ -16,8 +16,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     * Frame Padding must be:
         * default: 4
 
+    * Animation must be toggle on, in Render Settings - Common tab:
+        * vray: Animation on standard of specific
+        * arnold: Frame / Animation ext: Any choice without "(Single Frame)"
+        * redshift: Animation toggled on
+
     NOTE:
-        The repair function of this plugin does not repair animation
+        The repair function of this plugin does not repair the animation
         setting of the render settings due to multiple possibilities.
 
     """
@@ -37,7 +42,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         renderer = instance.data['renderer']
         layer_node = instance.data['setMembers']
 
-        # Collect the filename prefix in the renderlayer
+        # Collect the filename prefix in the render layer
         with lib.renderlayer(layer_node):
 
             render_attrs = lib.RENDER_ATTRS.get(renderer,
