@@ -39,6 +39,16 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
+        invalid = self.get_invalid(instance)
+        if invalid:
+            raise ValueError("Invalid render settings found for '%s'!"
+                             % instance.name)
+
+    @classmethod
+    def get_invalid(cls, instance):
+
+        invalid = False
+
         renderer = instance.data['renderer']
         layer_node = instance.data['setMembers']
 
@@ -55,19 +65,24 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             padding = cmds.getAttr("{}.{}".format(node, padding_attr))
 
             anim_override = cmds.getAttr("defaultRenderGlobals.animation")
-            assert anim_override is True, (
-                "Animation needs to be enabled. Use the same frame for start "
-                "and end to render single frame")
+            if not anim_override:
+                invalid = True
+                cls.log.error("Animation needs to be enabled. Use the same "
+                              "frame for start and end to render single frame")
 
-            fname_prefix = self.RENDERER_PREFIX.get(renderer,
-                                                    self.DEFAULT_PREFIX)
-            assert prefix == fname_prefix, (
-                "Wrong file name prefix, expecting %s" % fname_prefix
-            )
-            assert padding == self.DEFAULT_PADDING, (
-                "Expecting padding of {} ( {} )".format(
-                    self.DEFAULT_PADDING, "0"*self.DEFAULT_PADDING)
-            )
+            fname_prefix = cls.RENDERER_PREFIX.get(renderer,
+                                                   cls.DEFAULT_PREFIX)
+            if prefix != fname_prefix:
+                invalid = True
+                cls.log.error("Wrong file name prefix, expecting %s"
+                              % fname_prefix)
+
+            if padding != cls.DEFAULT_PADDING:
+                invalid = True
+                cls.log.error("Expecting padding of {} ( {} )".format(
+                    cls.DEFAULT_PADDING, "0" * cls.DEFAULT_PADDING))
+
+        return invalid
 
     @classmethod
     def repair(cls, instance):
