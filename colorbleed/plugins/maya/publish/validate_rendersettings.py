@@ -51,8 +51,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
             anim_override = cmds.getAttr("defaultRenderGlobals.animation")
             assert anim_override is True, (
-                "Animation neesd to be enabled. Use the same frame for start "
-                "and end to render singel frame")
+                "Animation needs to be enabled. Use the same frame for start "
+                "and end to render single frame")
 
             fname_prefix = self.RENDERER_PREFIX.get(renderer,
                                                     self.DEFAULT_PREFIX)
