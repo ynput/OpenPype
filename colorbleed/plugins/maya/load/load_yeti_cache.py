@@ -7,7 +7,7 @@ from maya import cmds
 
 from avalon import api
 from avalon.maya import lib as avalon_lib, pipeline
-from avalon.vendor import six
+from avalon.vendor import six, clique
 from colorbleed.maya import lib
 
 
@@ -85,14 +85,22 @@ class YetiCacheLoader(api.Loader):
     def update(self, container, representation):
 
         path = api.get_representation_path(representation)
+        print("debug: %s" % path)
         namespace = "{}:".format(container["namespace"])
         members = cmds.sets(container['objectName'], query=True)
-        yeti_node = cmds.ls(members, type="pgYetiMaya")
+        yeti_nodes = cmds.ls(members, type="pgYetiMaya")
 
         # TODO: Count the amount of nodes cached
         # To ensure new nodes get created or old nodes get destroyed
 
-        for node in yeti_node:
+        # Check the amount of caches
+        files = os.listdir(path)
+        patterns = [clique.PATTERNS["frames"]]
+        collections, _ = clique.assemble(files, patterns=patterns)
+        if len(collections) != len(yeti_nodes):
+            pass
+
+        for node in yeti_nodes:
             # Remove local given namespace
             node_name = node.split(namespace, 1)[-1]
             file_name = node_name.replace(":", "_")
@@ -135,6 +143,14 @@ class YetiCacheLoader(api.Loader):
         All caches with more than 1 frame need to be called with `%04d`
         If the cache has only one frame we return that file name as we assume
         it is a snapshot.
+
+        Args:
+            filename(str)
+            pattern(str)
+
+        Returns:
+            str
+
         """
 
         glob_pattern = filename.replace(pattern, "*")
