@@ -87,7 +87,7 @@ _alembic_options = {
     "selection": bool
 }
 
-INT_FPS = {15, 24, 5, 30, 48, 50, 60, 44100, 48000}
+INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
 FLOAT_FPS = {23.976, 29.97, 29.97, 47.952, 59.94}
 
 
@@ -1355,11 +1355,11 @@ def set_scene_fps(fps, update=True):
 
     """
 
-    if isinstance(fps, float) and fps in FLOAT_FPS:
+    if fps in FLOAT_FPS:
         unit = "{:f}fps".format(fps)
 
-    elif isinstance(fps, int) and fps in INT_FPS:
-        unit = "{:d}fps".format(fps)
+    elif fps in INT_FPS:
+        unit = "{:d}fps".format(int(fps))
 
     else:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
