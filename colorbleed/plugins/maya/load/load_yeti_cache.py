@@ -2,12 +2,12 @@ import os
 import json
 import re
 import glob
+from collections import defaultdict
 
 from maya import cmds
 
 from avalon import api
 from avalon.maya import lib as avalon_lib, pipeline
-from avalon.vendor import six, clique
 from colorbleed.maya import lib
 
 
@@ -84,7 +84,8 @@ class YetiCacheLoader(api.Loader):
 
     def update(self, container, representation):
 
-        namespace = "{}:".format(container["namespace"])
+        namespace = container["namespace"]
+        container_node = container["objectName"]
         path = api.get_representation_path(representation)
 
         # Get all node data
@@ -93,59 +94,78 @@ class YetiCacheLoader(api.Loader):
         with open(settings_fname, "r") as fp:
             settings = json.load(fp)
 
-        if "nodes" not in settings:
-            raise RuntimeError("Encountered invalid data, expect 'nodes' in "
-                               "fursettings.")
+        # Collect scene information of asset
+        set_members = cmds.sets(container["objectName"], query=True)
+        container_root = lib.get_container_transforms(container,
+                                                      members=set_members,
+                                                      root=True)
+        scene_nodes = cmds.ls(set_members, type="pgYetiMaya", long=True)
 
-        node_data = settings["nodes"]
-        nodes = ["{}:{}".format(namespace, data["name"]) for data in node_data]
-        print("node data nodes:", cmds.ls(nodes))
+        # Build lookup with cbId as keys
+        scene_lookup = defaultdict(list)
+        for node in scene_nodes:
+            cb_id = lib.get_id(node)
+            scene_lookup[cb_id].append(node)
 
-        members = cmds.sets(container['objectName'], query=True)
-        yeti_nodes = {n.rsplit(":", 1)[-1]: n for n in
-                      cmds.ls(members, type="pgYetiMaya")}
+        # Re-assemble metadata with cbId as keys
+        meta_data_lookup = {n["cbId"]: n for n in settings["nodes"]}
 
-        # Get shortest path, splitting on | due to dagpath.
-        # Split actual node and its transform; root|transform|pgYetiMaya
-        root = lib.get_container_transforms(container,
-                                            members=members,
-                                            root=True)
+        # Compare look ups and get the nodes which ar not relevant any more
+        to_delete_lookup = {cb_id for cb_id in scene_lookup.keys() if
+                            cb_id not in meta_data_lookup}
+        if to_delete_lookup:
 
-        # Build look up
-        current = set(yeti_nodes.keys())
-        discover = set(nodes) - current
+            # Get nodes and remove entry from lookup
+            to_remove = []
+            for _id in to_delete_lookup:
+                # Get all related nodes
+                shapes = scene_lookup[_id]
+                # Get the parents of all shapes under the ID
+                transforms = cmds.listRelatives(shapes, parent=True,
+                                                fullPath=True) or []
+                to_remove.extend(shapes + transforms)
 
-        to_update = current & discover
-        to_remove = current - discover
+                # Remove id from look uop
+                scene_lookup.pop(_id, None)
 
-        # Create set with every node which actually needs to be created
-        to_create = discover - to_update
+            cmds.delete(to_remove)
 
-        with avalon_lib.suspended_refresh():
-            if to_remove:
-                to_remove_nodes = [cmds.listRelatives(yeti_nodes[r], p=True)[0]
-                                   for r in to_remove]
-                print("to remove:", to_remove_nodes)
-                cmds.delete(to_remove_nodes)
+        for cb_id, data in meta_data_lookup.items():
 
-            if to_update:
-                for node in to_update:
-                    yeti_node = yeti_nodes[node]
-                    seq_name = "{}.%04d.fur".format(node)
-                    new_file = os.path.join(path, seq_name)
+            # Update cache file name
+            file_name = data["name"].replace(":", "_")
+            cache_file_path = "{}.%04d.fur".format(file_name)
+            data["attrs"]["cacheFileName"] = os.path.join(path, cache_file_path)
 
-                    cmds.setAttr("{}.cacheFileName".format(yeti_node),
-                                 new_file,
-                                 type="string")
+            if cb_id not in scene_lookup:
+                new_nodes = self.create_nodes(namespace, [data])
+                cmds.sets(*new_nodes, addElement=container_node)
+                cmds.parent(new_nodes, container_root)
 
-            if to_create:
-                new_nodes = self.create_nodes(namespace, node_data)
-                cmds.parent(new_nodes, root)
+            else:
+                # Update the matching nodes
+                scene_nodes = scene_lookup[cb_id]
+                match_name = meta_data_lookup[cb_id]["name"]
 
-        # Update the container
-        cmds.setAttr("{}.representation".format(container["objectName"]),
+                for scene_node in scene_nodes:
+                    # Remove the namespace root ":namespace:"
+                    compare_name = scene_node.split(namespace)[-1][1:]
+                    if compare_name != match_name:
+                        self.log.info("Renaming %s to %s" %
+                                      (scene_node, match_name))
+
+                        # Get transform node, this makes renaming easier
+                        transform_node = scene_node.rstrip("Shape")
+
+                        new_name = "{}:{}".format(namespace, match_name)
+                        cmds.rename(transform_node, new_name)
+
+                    for attr, value in data["attrs"].items():
+                        lib.set_attribute(attr, value, scene_node)
+
+        cmds.setAttr("{}.representation".format(container_node),
                      str(representation["_id"]),
-                     type="string")
+                     typ="string")
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -199,75 +219,56 @@ class YetiCacheLoader(api.Loader):
         return filename
 
     def create_nodes(self, namespace, settings):
+        """Create nodes with the correct namespace and settings
 
-        # Get node name from JSON
+        Args:
+            namespace(str): namespace
+            settings(list): list of dictionaries
+
+        Returns:
+             list
+
+        """
+
         nodes = []
         for node_settings in settings:
-
-            # Create transform node
-            transform = node_settings["transform"]
-            transform_name = "{}:{}".format(namespace, transform["name"])
-            transform_node = cmds.createNode("transform", name=transform_name)
-
-            lib.set_id(transform_node, transform["cbId"])
 
             # Create pgYetiMaya node
             original_node = node_settings["name"]
             node_name = "{}:{}".format(namespace, original_node)
-            yeti_node = cmds.createNode("pgYetiMaya",
-                                        name=node_name,
-                                        parent=transform_node)
+            yeti_node = cmds.createNode("pgYetiMaya", name=node_name)
 
+            # Create transform node
+            transform_node = node_name.rstrip("Shape")
+
+            lib.set_id(transform_node, node_settings["transform"]["cbId"])
             lib.set_id(yeti_node, node_settings["cbId"])
 
-            nodes.append(transform_node)
-            nodes.append(yeti_node)
+            nodes.extend([transform_node, yeti_node])
 
-            # Update visibility reflaction and refraction in node settings
+            # Ensure the node has no namespace identifiers
             attributes = node_settings["attrs"]
-            attributes.update({"visibleInReflections": True,
+
+            # Check if cache file name is stored
+            if "cacheFileName" not in attributes:
+                file_name = original_node.replace(":", "_")
+                cache = os.path.join(self.fname,
+                                     "{}.%04d.fur".format(file_name))
+                self.validate_cache(cache)
+                attributes["cacheFileName"] = cache
+
+            # Update attributes with requirements
+            attributes.update({"viewportDensity": 0.1,
+                               "verbosity": 2,
+                               "fileMode": 1,
+                               "visibleInReflections": True,
                                "visibleInRefractions": True})
 
             # Apply attributes to pgYetiMaya node
-            kwargs = {}
             for attr, value in attributes.items():
-                if value is None:
-                    continue
-
-                attribute = "%s.%s" % (yeti_node, attr)
-                if isinstance(value, (str, six.string_types)):
-                    cmds.setAttr(attribute, value, type="string")
-                    continue
-
-                cmds.setAttr(attribute, value, **kwargs)
-
-            # Ensure the node has no namespace identifiers
-            node_name = original_node.replace(":", "_")
-
-            # Create full cache path
-            cache = os.path.join(self.fname, "{}.%04d.fur".format(node_name))
-            cache = os.path.normpath(cache)
-            cache_fname = self.validate_cache(cache)
-            cache_path = os.path.join(self.fname, cache_fname)
-
-            # Preset the viewport density
-            cmds.setAttr("%s.viewportDensity" % yeti_node, 0.1)
-
-            # Add filename to `cacheFileName` attribute
-            cmds.setAttr("%s.cacheFileName" % yeti_node,
-                         cache_path,
-                         type="string")
-
-            # Set verbosity for debug purposes
-            cmds.setAttr("%s.verbosity" % yeti_node, 2)
-
-            # Enable the cache by setting the file mode
-            cmds.setAttr("%s.fileMode" % yeti_node, 1)
+                lib.set_attribute(attr, value, yeti_node)
 
             # Connect to the time node
             cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
-
-            nodes.append(yeti_node)
-            nodes.append(transform_node)
 
         return nodes
