@@ -84,48 +84,63 @@ class YetiCacheLoader(api.Loader):
 
     def update(self, container, representation):
 
-        path = api.get_representation_path(representation)
         namespace = "{}:".format(container["namespace"])
+        path = api.get_representation_path(representation)
+
+        # Get all node data
+        fname, ext = os.path.splitext(path)
+        settings_fname = "{}.fursettings".format(fname)
+        with open(settings_fname, "r") as fp:
+            settings = json.load(fp)
+
+        if "nodes" not in settings:
+            raise RuntimeError("Encountered invalid data, expect 'nodes' in "
+                               "fursettings.")
+
+        node_data = settings["nodes"]
+        nodes = ["{}:{}".format(namespace, data["name"]) for data in node_data]
+        print("node data nodes:", cmds.ls(nodes))
+
         members = cmds.sets(container['objectName'], query=True)
         yeti_nodes = {n.rsplit(":", 1)[-1]: n for n in
                       cmds.ls(members, type="pgYetiMaya")}
 
         # Get shortest path, splitting on | due to dagpath.
         # Split actual node and its transform; root|transform|pgYetiMaya
-        root = min([n.rsplit("|", 2)[0] for n in yeti_nodes])
-
-        # TODO: Count the amount of nodes cached
-        # To ensure new nodes get created or old nodes get destroyed
-
-        # Check the amount of caches
-        files = os.listdir(path)
-        patterns = [clique.PATTERNS["frames"]]
-        collections, _ = clique.assemble(files, patterns=patterns,
-                                         minimum_items=1)
+        root = lib.get_container_transforms(container,
+                                            members=members,
+                                            root=True)
 
         # Build look up
         current = set(yeti_nodes.keys())
-        collection_lookup = {c.head.strip("."): c for c in collections}
-        to_create = set(
-            [k for k in collection_lookup.keys() if k not in yeti_nodes.keys()])
+        discover = set(nodes) - current
 
-        to_update = current | to_create
-        to_remove = current - to_create
+        to_update = current & discover
+        to_remove = current - discover
+
+        # Create set with every node which actually needs to be created
+        to_create = discover - to_update
 
         with avalon_lib.suspended_refresh():
             if to_remove:
                 to_remove_nodes = [cmds.listRelatives(yeti_nodes[r], p=True)[0]
                                    for r in to_remove]
+                print("to remove:", to_remove_nodes)
                 cmds.delete(to_remove_nodes)
 
             if to_update:
                 for node in to_update:
-                    n = yeti_nodes[node]
-                    collection = collection_lookup[n]
-                    seq_name = "".join([collection.head,
-                                        "%04d",
-                                        collection.tail])
+                    yeti_node = yeti_nodes[node]
+                    seq_name = "{}.%04d.fur".format(node)
                     new_file = os.path.join(path, seq_name)
+
+                    cmds.setAttr("{}.cacheFileName".format(yeti_node),
+                                 new_file,
+                                 type="string")
+
+            if to_create:
+                new_nodes = self.create_nodes(namespace, node_data)
+                cmds.parent(new_nodes, root)
 
         # Update the container
         cmds.setAttr("{}.representation".format(container["objectName"]),
