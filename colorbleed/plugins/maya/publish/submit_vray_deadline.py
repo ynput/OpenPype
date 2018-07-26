@@ -58,7 +58,6 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
                 "Frames": "1",
 
                 "Comment": context.data.get("comment", ""),
-                "Whitelist": "cb7"
             },
             "PluginInfo": {
 
