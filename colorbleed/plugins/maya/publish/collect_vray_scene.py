@@ -63,6 +63,9 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         resolution = (cmds.getAttr("defaultResolution.width"),
                       cmds.getAttr("defaultResolution.height"))
 
+        # Get format extension
+        extension = cmds.getAttr("vraySettings.imageFormatStr")
+
         # Get render layers
         render_layers = [i for i in cmds.ls(type="renderLayer") if
                          cmds.getAttr("{}.renderable".format(i)) and not
@@ -87,6 +90,7 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
                 "endFrame": end_frame,
                 "renderer": "vray",
                 "resolution": resolution,
+                "ext": extension,
 
                 # instance subset
                 "family": "VRay Scene",

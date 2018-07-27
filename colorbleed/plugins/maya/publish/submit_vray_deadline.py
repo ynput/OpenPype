@@ -77,7 +77,6 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Input
                 "SceneFile": filepath,
-
                 # Output directory and filename
                 "OutputFilePath": vrscene_output.replace("\\", "/"),
 
@@ -93,6 +92,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         }
 
         environment = dict(AVALON_TOOLS="global;python36;maya2018")
+        environment.update(api.Session.copy())
 
         jobinfo_environment = self.build_jobinfo_environment(environment)
 
@@ -116,6 +116,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         start_frame = int(instance.data["startFrame"])
         end_frame = int(instance.data["endFrame"])
+        ext = instance.data.get("ext",  "exr")
 
         # Create output directory for renders
         render_ouput = self.format_output_filename(instance,
@@ -127,6 +128,10 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         # Update output dir
         instance.data["outputDir"] = render_ouput
+
+        # Format output file name
+        sequence_fiename = ".".join([instance.name, "%04d", ext])
+        output_filename = os.path.join(render_ouput, sequence_fiename)
 
         payload_b = {
             "JobInfo": {
@@ -146,7 +151,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
                 "InputFilename": first_file,
                 "Threads": 0,
-                "OutputFilename": render_ouput,
+                "OutputFilename": output_filename,
                 "SeparateFilesPerFrame": True,
                 "VRayEngine": "V-Ray",
 
