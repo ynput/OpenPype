@@ -136,8 +136,10 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         # Get a submission job
         job = instance.data.get("deadlineSubmissionJob")
         if not job:
-            raise RuntimeError("Can't continue without valid deadline "
-                               "submission prior to this plug-in.")
+            self.log.warning("Can't continue without valid deadline "
+                             "submission prior to this plug-in.")
+            self.log.info("Skipping Publish Job")
+            return
 
         data = instance.data.copy()
         subset = data["subset"]
@@ -162,7 +164,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             ext = "\.\D+"
 
         regex = "^{subset}.*\d+{ext}$".format(subset=re.escape(subset),
-                                              ext=ext)
+                                              ext=re.escape(subset))
 
         # Remove deadline submission job, not needed in metadata
         data.pop("deadlineSubmissionJob")
