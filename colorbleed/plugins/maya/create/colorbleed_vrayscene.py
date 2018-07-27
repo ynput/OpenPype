@@ -23,6 +23,10 @@ class CreateVRayScene(avalon.maya.Creator):
         data = OrderedDict(**self.data)
 
         data["camera"] = "persp"
+        data["suspendRenderJob"] = False
+        data["suspendPublishJob"] = False
+        data["includeDefaultRenderLayer"] = False
+        data["extendFrames"] = False
         data["pools"] = ""
 
         self.data = data

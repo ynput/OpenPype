@@ -12,7 +12,15 @@ from maya import cmds
 
 
 class VraySubmitDeadline(pyblish.api.InstancePlugin):
-    """"""
+    """Export the scene to `.vrscene` files per frame per render layer
+
+    vrscene files will be written out based on the following template:
+        <project>/vrayscene/<Scene>/<Scene>_<Layer>/<Layer>
+
+    A dependency job will be added for each layer to render the framer
+    through VRay Standalone
+
+    """
     label = "Submit to Deadline ( vrscene )"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
@@ -26,7 +34,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         context = instance.context
 
-        deadline_url = context.data["deadlineUrl"]
+        deadline_url = "{}/api/jobs".format(AVALON_DEADLINE)
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
 
         filepath = context.data["currentFile"]
@@ -35,10 +43,13 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         batch_name = "VRay Scene Export - {}".format(filename)
 
-        output_filepath = context.data["outputFilePath"].replace("\\", "/")
+        # Get the output template for vrscenes
+        vrscene_output = instance.data["vrsceneOutput"]
 
         # This is also the input file for the render job
-        first_file = self.format_output_filename_zero(instance, filename)
+        first_file = self.format_output_filename(instance,
+                                                 filename,
+                                                 vrscene_output)
 
         # Primary job
         self.log.info("Submitting export job ..")
@@ -68,7 +79,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
                 "SceneFile": filepath,
 
                 # Output directory and filename
-                "OutputFilePath": output_filepath,
+                "OutputFilePath": vrscene_output.replace("\\", "/"),
 
                 "CommandLineOptions": self.build_command(instance),
 
@@ -97,10 +108,25 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         # Store job to create dependency chain
         dependency = response.json()
 
+        if instance.data["suspendRenderJob"]:
+            self.log.info("Skipping render job and publish job")
+            return
+
         self.log.info("Submitting render job ..")
 
         start_frame = int(instance.data["startFrame"])
         end_frame = int(instance.data["endFrame"])
+
+        # Create output directory for renders
+        render_ouput = self.format_output_filename(instance,
+                                                   filename,
+                                                   instance.data["outputDir"],
+                                                   dir=True)
+
+        self.log.info("Render output: %s" % render_ouput)
+
+        # Update output dir
+        instance.data["outputDir"] = render_ouput
 
         payload_b = {
             "JobInfo": {
@@ -120,7 +146,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
                 "InputFilename": first_file,
                 "Threads": 0,
-                "OutputFilename": "",
+                "OutputFilename": render_ouput,
                 "SeparateFilesPerFrame": True,
                 "VRayEngine": "V-Ray",
 
@@ -131,6 +157,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
             "AuxFiles": [],
         }
 
+        # Add vray renderslave to environment
         tools = environment["AVALON_TOOLS"] + ";vrayrenderslave"
         environment_b = deepcopy(environment)
         environment_b["AVALON_TOOLS"] = tools
@@ -140,11 +167,14 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         self.log.info(json.dumps(payload_b))
 
+        # Post job to deadline
         response_b = requests.post(url=deadline_url, json=payload_b)
         if not response_b.ok:
             raise RuntimeError(response_b.text)
 
-        print(response_b.text)
+        # Add job for publish job
+        if not instance.data.get("suspendPublishJob", False):
+            instance.data["deadlineSubmissionJob"] = response_b.json()
 
     def build_command(self, instance):
         """Create command for Render.exe to export vray scene
@@ -173,19 +203,21 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         return {"EnvironmentKeyValue%d" % index: "%s=%s" % (k, env[k])
                 for index, k in enumerate(env)}
 
-    def format_output_filename_zero(self, instance, filename):
+    def format_output_filename(self, instance, filename, template, dir=False):
         """Format the expected output file of the Export job
 
         Example:
-            <Scene>/<Layer>/<Scene>_<Layer>
-            shot010
+            <Scene>/<Scene>_<Layer>/<Layer>
+            "shot010_v006/shot010_v006_CHARS/CHARS"
 
         Args:
             instance:
             filename(str):
+            dir(bool):
 
         Returns:
             str
+
         """
 
         def smart_replace(string, key_values):
@@ -196,12 +228,14 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         # Ensure filename has no extension
         file_name, _ = os.path.splitext(filename)
-        output_filename = instance.context.data["outputFilePath"]
 
         # Reformat without tokens
-        output_path = smart_replace(output_filename,
+        output_path = smart_replace(template,
                                     {"<Scene>": file_name,
                                      "<Layer>": instance.name})
+
+        if dir:
+            return output_path.replace("\\", "/")
 
         start_frame = int(instance.data["startFrame"])
         filename_zero = "{}_{:04d}.vrscene".format(output_path, start_frame)
