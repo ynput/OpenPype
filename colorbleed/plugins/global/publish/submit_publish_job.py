@@ -164,7 +164,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             ext = "\.\D+"
 
         regex = "^{subset}.*\d+{ext}$".format(subset=re.escape(subset),
-                                              ext=re.escape(subset))
+                                              ext=re.escape(ext))
 
         # Remove deadline submission job, not needed in metadata
         data.pop("deadlineSubmissionJob")
