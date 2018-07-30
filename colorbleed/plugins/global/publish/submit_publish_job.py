@@ -159,12 +159,12 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         # This assumes the output files start with subset name and ends with
         # a file extension.
         if "ext" in instance.data:
-            ext = re.escape(instance.data["ext"])
+            ext = instance.data["ext"].strip(".")
         else:
             ext = "\.\D+"
 
-        regex = "^{subset}.*\d+{ext}$".format(subset=re.escape(subset),
-                                              ext=re.escape(ext))
+        regex = "^{subset}.*\d+\.{ext}$".format(subset=re.escape(subset),
+                                                ext=re.escape(ext))
 
         # Remove deadline submission job, not needed in metadata
         data.pop("deadlineSubmissionJob")
