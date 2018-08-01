@@ -6,13 +6,13 @@ class CopyToClipboardLoader(api.Loader):
     representations = ["*"]
     families = ["*"]
 
-    label = "Copy to Clipboard"
+    label = "Copy file path to Clipboard"
     order = 20
     icon = "clipboard"
     color = "#999999"
 
     def load(self, context, name=None, namespace=None, data=None):
-        self.log.info("Added to clipboard: {0}".format(self.fname))
+        self.log.info("Added file path to clipboard: {0}".format(self.fname))
         self.copy_file_to_clipboard(self.fname)
 
     @staticmethod
