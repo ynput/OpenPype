@@ -41,6 +41,7 @@ class VRayProxyLoader(colorbleed.maya.plugin.ReferenceLoader):
             nodes = self.create_vray_proxy(name)
 
         self[:] = nodes
+
         # Make sure to restore the default namespace, or anything imported or
         # refereced after this gets added to this namespace
         cmds.namespace(set=":")
