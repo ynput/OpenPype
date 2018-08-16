@@ -945,6 +945,18 @@
                 ],
                 "title": "Fix RenderLayer Missing Referenced Nodes Overrides",
                 "tooltip": ""
+            },
+            {
+                "type": "action",
+                "title": "Image 2 Tiled EXR",
+                "command": "$COLORBLEED_SCRIPTS\\shading\\open_img2exr.py",
+                "sourcetype": "file",
+                "tooltip": "",
+                "tags": [
+                    "shading",
+                    "vray",
+                    "exr"
+                ]
             }
         ]
     },
