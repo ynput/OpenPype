@@ -1507,6 +1507,18 @@
             {"type": "separator"},
             {
                 "type": "action",
+                "command": "$COLORBLEED_SCRIPTS\\particles\\mayaReplicateHoudiniTool.py",
+                "sourcetype": "file",
+                "tags": [
+                    "particles",
+                    "houdini", "houdiniTool", "houdiniEngine"
+                ],
+                "title": "Replicate Houdini Tool",
+                "tooltip": ""
+            },
+            {"type": "separator"},
+            {
+                "type": "action",
                 "command": "$COLORBLEED_SCRIPTS\\particles\\clearInitialState.py",
                 "sourcetype": "file",
                 "tags": [
