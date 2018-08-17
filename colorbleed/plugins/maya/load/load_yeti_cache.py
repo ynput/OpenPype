@@ -171,6 +171,12 @@ class YetiCacheLoader(api.Loader):
                                         name=node_name,
                                         parent=transform_node)
 
+            # Fix for : YETI-6
+            # Fixes the render stats (this is literally taken from Perigrene's
+            # ../scripts/pgYetiNode.mel script)
+            cmds.setAttr(yeti_node + ".visibleInReflections", 1)
+            cmds.setAttr(yeti_node + ".visibleInRefractions", 1)
+
             lib.set_id(yeti_node, node_settings["cbId"])
 
             nodes.append(transform_node)
