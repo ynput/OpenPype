@@ -75,6 +75,16 @@ class VRayProxyLoader(api.Loader):
             members = cmds.sets(container['objectName'], query=True) or []
             cmds.delete([container['objectName']] + members)
 
+        # Remove the namespace, if empty
+        namespace = container['namespace']
+        if cmds.namespace(exists=namespace):
+            members = cmds.namespaceInfo(namespace, listNamespace=True)
+            if not members:
+                cmds.namespace(removeNamespace=namespace)
+            else:
+                self.log.warning("Namespace not deleted because it "
+                                 "still has members: %s", namespace)
+
     def switch(self, container, representation):
         self.update(container, representation)
 
