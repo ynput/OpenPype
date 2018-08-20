@@ -1,54 +1,84 @@
 from avalon.maya import lib
-import colorbleed.maya.plugin
+from avalon import api
 
 import maya.cmds as cmds
 
 
-class VRayProxyLoader(colorbleed.maya.plugin.ReferenceLoader):
-    """Load vrmesh files"""
+class VRayProxyLoader(api.Loader):
+    """Load VRayMesh proxy"""
 
     families = ["colorbleed.vrayproxy"]
     representations = ["vrmesh"]
 
-    label = "Reference VRay Proxy"
+    label = "Import VRay Proxy"
     order = -10
     icon = "code-fork"
     color = "orange"
 
-    def process_reference(self, context, name, namespace, data):
+    def load(self, context, name, namespace, data):
+
+        from avalon.maya.pipeline import containerise
+        from colorbleed.maya.lib import namespaced
 
         asset_name = context['asset']["name"]
-        print("---", namespace)
-
         namespace = namespace or lib.unique_namespace(
             asset_name + "_",
             prefix="_" if asset_name[0].isdigit() else "",
             suffix="_",
         )
 
-        print(">>>", namespace)
-
-        # Pre-run check
-        if not cmds.objExists("vraySettings"):
-            cmds.createNode("VRaySettingsNode", name="vraySettings")
-
-        # Add namespace
-        cmds.namespace(set=":")
-        cmds.namespace(add=namespace)
-        cmds.namespace(set=namespace)
+        # Ensure V-Ray for Maya is loaded.
+        cmds.loadPlugin("vrayformaya", quiet=True)
 
         with lib.maintained_selection():
-            nodes = self.create_vray_proxy(name)
+            cmds.namespace(addNamespace=namespace)
+            with namespaced(namespace, new=False):
+                nodes = self.create_vray_proxy(name,
+                                               filename=self.fname)
 
         self[:] = nodes
+        if not nodes:
+            return
 
-        # Make sure to restore the default namespace, or anything imported or
-        # refereced after this gets added to this namespace
-        cmds.namespace(set=":")
+        return containerise(
+            name=name,
+            namespace=namespace,
+            nodes=nodes,
+            context=context,
+            loader=self.__class__.__name__)
 
-        return nodes
+    def update(self, container, representation):
 
-    def create_vray_proxy(self, name, attrs=None):
+        node = container['objectName']
+        assert cmds.objExists(node), "Missing container"
+
+        members = cmds.sets(node, query=True) or []
+        vraymeshes = cmds.ls(members, type="VRayMesh")
+        assert vraymeshes, "Cannot find VRayMesh in container"
+
+        filename = api.get_representation_path(representation)
+
+        for vray_mesh in vraymeshes:
+            cmds.setAttr("{}.fileName".format(vray_mesh),
+                         filename,
+                         type="string")
+
+        # Update metadata
+        cmds.setAttr("{}.representation".format(node),
+                     str(representation["_id"]),
+                     type="string")
+
+    def remove(self, container):
+
+        # Delete container and its contents
+        if cmds.objExists(container['objectName']):
+            members = cmds.sets(container['objectName'], query=True) or []
+            cmds.delete([container['objectName']] + members)
+
+    def switch(self, container, representation):
+        self.update(container, representation)
+
+    def create_vray_proxy(self, name, filename):
         """Re-create the structure created by VRay to support vrmeshes
 
         Args:
@@ -66,14 +96,13 @@ class VRayProxyLoader(colorbleed.maya.plugin.ReferenceLoader):
         vray_mat_sg = cmds.createNode("shadingEngine",
                                       name="{}_VRSG".format(name))
 
-        cmds.setAttr("{}.fileName2".format(vray_mesh),
-                     self.fname,
+        cmds.setAttr("{}.fileName".format(vray_mesh),
+                     filename,
                      type="string")
 
-        # Apply attributes from export
-        # cmds.setAttr("{}.animType".format(vray_mesh), 3)
-
         # Create important connections
+        cmds.connectAttr("time1.outTime",
+                         "{0}.currentFrame".format(vray_mesh))
         cmds.connectAttr("{}.fileName2".format(vray_mesh),
                          "{}.fileName".format(vray_mat))
         cmds.connectAttr("{}.instancing".format(vray_mesh),
@@ -96,7 +125,10 @@ class VRayProxyLoader(colorbleed.maya.plugin.ReferenceLoader):
         mesh_transform = cmds.listRelatives(mesh_shape,
                                             parent=True, fullPath=True)
         cmds.parent(mesh_transform, group_node)
-
         nodes = [vray_mesh, mesh_shape, vray_mat, vray_mat_sg, group_node]
+
+        # Fix: Force refresh so the mesh shows correctly after creation
+        cmds.refresh()
+        cmds.setAttr("{}.geomType".format(vray_mesh), 2)
 
         return nodes
