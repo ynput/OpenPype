@@ -139,7 +139,7 @@ class YetiCacheLoader(api.Loader):
 
             if cb_id not in scene_lookup:
                 new_nodes = self.create_nodes(namespace, [data])
-                cmds.sets(*new_nodes, addElement=container_node)
+                cmds.sets(new_nodes, addElement=container_node)
                 cmds.parent(new_nodes, container_root)
 
             else:
@@ -155,8 +155,12 @@ class YetiCacheLoader(api.Loader):
                                       (scene_node, match_name))
 
                         # Get transform node, this makes renaming easier
-                        transform_node = scene_node.rstrip("Shape")
+                        transforms = cmds.listRelatives(scene_node,
+                                                        parent=True,
+                                                        fullPath=True) or []
+                        assert len(transforms) == 1, "This is a bug!"
 
+                        transform_node = transforms[0]
                         new_name = "{}:{}".format(namespace, match_name)
                         cmds.rename(transform_node, new_name)
 
@@ -260,13 +264,17 @@ class YetiCacheLoader(api.Loader):
             # Update attributes with requirements
             attributes.update({"viewportDensity": 0.1,
                                "verbosity": 2,
-                               "fileMode": 1,
-                               "visibleInReflections": True,
-                               "visibleInRefractions": True})
+                               "fileMode": 1})
 
             # Apply attributes to pgYetiMaya node
             for attr, value in attributes.items():
                 lib.set_attribute(attr, value, yeti_node)
+
+            # Fix for : YETI-6
+            # Fixes the render stats
+            # (see Perigrene's ../scripts/pgYetiNode.mel script)
+            cmds.setAttr("{}.visibleInReflections".format(yeti_node), True)
+            cmds.setAttr("{}.visibleInRefractions".format(yeti_node), True)
 
             # Connect to the time node
             cmds.connectAttr("time1.outTime", "%s.currentTime" % yeti_node)
