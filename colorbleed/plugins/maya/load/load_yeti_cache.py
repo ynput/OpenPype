@@ -121,7 +121,8 @@ class YetiCacheLoader(api.Loader):
                 # Get all related nodes
                 shapes = scene_lookup[_id]
                 # Get the parents of all shapes under the ID
-                transforms = cmds.listRelatives(shapes, parent=True,
+                transforms = cmds.listRelatives(shapes,
+                                                parent=True,
                                                 fullPath=True) or []
                 to_remove.extend(shapes + transforms)
 
@@ -138,6 +139,9 @@ class YetiCacheLoader(api.Loader):
             data["attrs"]["cacheFileName"] = os.path.join(path, cache_file_path)
 
             if cb_id not in scene_lookup:
+
+                self.log.info("Creating new nodes ..")
+
                 new_nodes = self.create_nodes(namespace, [data])
                 cmds.sets(new_nodes, addElement=container_node)
                 cmds.parent(new_nodes, container_root)
@@ -145,27 +149,38 @@ class YetiCacheLoader(api.Loader):
             else:
                 # Update the matching nodes
                 scene_nodes = scene_lookup[cb_id]
-                match_name = meta_data_lookup[cb_id]["name"]
+                lookup_result = meta_data_lookup[cb_id]["name"]
+
+                # Remove namespace if any (e.g.: "character_01_:head_YNShape")
+                node_name = lookup_result.rsplit(":", 1)[-1]
 
                 for scene_node in scene_nodes:
-                    # Remove the namespace root ":namespace:"
-                    compare_name = scene_node.split(namespace)[-1][1:]
-                    if compare_name != match_name:
-                        self.log.info("Renaming %s to %s" %
-                                      (scene_node, match_name))
 
-                        # Get transform node, this makes renaming easier
-                        transforms = cmds.listRelatives(scene_node,
-                                                        parent=True,
-                                                        fullPath=True) or []
-                        assert len(transforms) == 1, "This is a bug!"
+                    # Get transform node, this makes renaming easier
+                    transforms = cmds.listRelatives(scene_node,
+                                                    parent=True,
+                                                    fullPath=True) or []
+                    assert len(transforms) == 1, "This is a bug!"
 
-                        transform_node = transforms[0]
-                        new_name = "{}:{}".format(namespace, match_name)
-                        cmds.rename(transform_node, new_name)
+                    # Get scene node's namespace and rename the transform node
+                    lead = scene_node.rsplit(":", 1)[0]
+                    namespace = ":{}".format(lead.rsplit("|")[-1])
+
+                    new_shape_name = "{}:{}".format(namespace, node_name)
+                    new_trans_name = new_shape_name.rsplit("Shape", 1)[0]
+
+                    transform_node = transforms[0]
+                    cmds.rename(transform_node,
+                                new_trans_name,
+                                ignoreShape=False)
+
+                    # Get the newly named shape node
+                    yeti_nodes = cmds.listRelatives(new_trans_name,
+                                                    children=True)
+                    yeti_node = yeti_nodes[0]
 
                     for attr, value in data["attrs"].items():
-                        lib.set_attribute(attr, value, scene_node)
+                        lib.set_attribute(attr, value, yeti_node)
 
         cmds.setAttr("{}.representation".format(container_node),
                      str(representation["_id"]),
@@ -256,8 +271,9 @@ class YetiCacheLoader(api.Loader):
             # Check if cache file name is stored
             if "cacheFileName" not in attributes:
                 file_name = original_node.replace(":", "_")
-                cache = os.path.join(self.fname,
-                                     "{}.%04d.fur".format(file_name))
+                cache_name = "{}.%04d.fur".format(file_name)
+                cache = os.path.join(self.fname, cache_name)
+
                 self.validate_cache(cache)
                 attributes["cacheFileName"] = cache
 
