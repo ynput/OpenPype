@@ -24,10 +24,12 @@ class CopyFile(api.Loader):
         assert app, "Must have running QApplication instance"
 
         # Build mime data for clipboard
-        data = QtCore.QMimeData()
-        url = QtCore.QUrl.fromLocalFile(path)
-        data.setUrls([url])
+        file_path = QtCore.QUrl.fromLocalFile(path)
+        byte_array = QtCore.QByteArray("copy\n").append(file_path)
+
+        mime = QtCore.QMimeData()
+        mime.setData("text/uri-list", byte_array)
 
         # Set to Clipboard
         clipboard = app.clipboard()
-        clipboard.setMimeData(data)
+        clipboard.setMimeData(mime)
