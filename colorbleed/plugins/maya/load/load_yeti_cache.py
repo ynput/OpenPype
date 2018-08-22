@@ -271,8 +271,8 @@ class YetiCacheLoader(api.Loader):
                 lib.set_attribute(attr, value, yeti_node)
 
             # Fix for : YETI-6
-            # Fixes the render stats
-            # (see Perigrene's ../scripts/pgYetiNode.mel script)
+            # Fixes the render stats (this is literally taken from Perigrene's
+            # ../scripts/pgYetiNode.mel script)
             cmds.setAttr("{}.visibleInReflections".format(yeti_node), True)
             cmds.setAttr("{}.visibleInRefractions".format(yeti_node), True)
 
