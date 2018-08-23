@@ -14,6 +14,7 @@ from maya import cmds, mel
 
 from avalon import api, maya, io, pipeline
 from avalon.vendor.six import string_types
+import avalon.maya.lib
 
 from colorbleed import lib
 
@@ -362,6 +363,30 @@ def no_undo(flush=False):
         yield
     finally:
         cmds.undoInfo(**{keyword: original})
+
+
+@contextlib.contextmanager
+def namespaced(namespace, new=True):
+    """Work inside namespace during context
+
+    Args:
+        new (bool): When enabled this will rename the namespace to a unique
+            namespace if the input namespace already exists.
+
+    Yields:
+        str: The namespace that is used during the context
+
+    """
+    original = cmds.namespaceInfo(cur=True)
+    if new:
+        namespace = avalon.maya.lib.unique_namespace(namespace)
+        cmds.namespace(add=namespace)
+
+    try:
+        cmds.namespace(set=namespace)
+        yield namespace
+    finally:
+        cmds.namespace(set=original)
 
 
 def polyConstraint(components, *args, **kwargs):

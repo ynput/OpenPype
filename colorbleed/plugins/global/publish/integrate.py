@@ -32,6 +32,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "colorbleed.pointcache",
                 "colorbleed.setdress",
                 "colorbleed.rig",
+                "colorbleed.vrayproxy",
                 "colorbleed.yetiRig",
                 "colorbleed.yeticache"]
 
@@ -191,7 +192,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # |_______|
                 #
                 fname = files
-                assert not os.path.isabs(fname)
+                assert not os.path.isabs(fname), (
+                    "Given file name is a full path"
+                )
                 _, ext = os.path.splitext(fname)
 
                 template_data["representation"] = ext[1:]
