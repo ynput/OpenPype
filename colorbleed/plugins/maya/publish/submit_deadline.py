@@ -222,7 +222,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
-                value=environment[key].replace("P:", "/mnt/P")
+                value=environment[key]
             ) for index, key in enumerate(environment)
         })
 
