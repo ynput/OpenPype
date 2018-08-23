@@ -154,4 +154,7 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         options["extendFrames"] = extend_frames
         options["overrideExistingFrame"] = override_frames
 
+        maya_render_plugin = "MayaBatch" if attributes.get("useMayaBatch", True) else "MayaCmd"
+        options["mayaRenderPlugin"] = maya_render_plugin
+
         return options

@@ -150,7 +150,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": deadline_user,
 
-                "Plugin": "MayaBatch",
+                "Plugin": instance.data.get("mayaRenderPlugin", "MayaBatch"),
                 "Frames": "{start}-{end}x{step}".format(
                     start=int(instance.data["startFrame"]),
                     end=int(instance.data["endFrame"]),
@@ -222,13 +222,15 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
-                value=environment[key]
+                value=environment[key].replace("P:", "/mnt/P")
             ) for index, key in enumerate(environment)
         })
 
         # Include optional render globals
         render_globals = instance.data.get("renderGlobals", {})
         payload["JobInfo"].update(render_globals)
+
+        self.log.info("using render plugin : {}".format(payload["JobInfo"]["Plugin"]))
 
         self.preflight_check(instance)
 
