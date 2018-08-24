@@ -45,6 +45,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
         data["machineList"] = ""
         data["useMayaBatch"] = True
         data["primaryPool"] = pools
+        # We add a string "-" to allow the user to not set any secondary pools
         data["secondaryPool"] = ["-"] + pools
 
         self.data = data
