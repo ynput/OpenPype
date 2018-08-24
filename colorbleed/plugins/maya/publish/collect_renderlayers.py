@@ -32,7 +32,12 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         context.data["startFrame"] = start_frame
         context.data["endFrame"] = end_frame
 
-        # Get render layers
+        # Get all linked renderlayers
+        rlm_attribute = "renderLayerManager.renderLayerId"
+        connected_layers = cmds.listConnections(rlm_attribute) or []
+        valid_layers = set(connected_layers)
+
+        # Get all renderlayers and check their state
         renderlayers = [i for i in cmds.ls(type="renderLayer") if
                         cmds.getAttr("{}.renderable".format(i)) and not
                         cmds.referenceQuery(i, isNodeReferenced=True)]
@@ -51,6 +56,12 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         renderlayers = sorted(renderlayers, key=sort_by_display_order)
 
         for layer in renderlayers:
+
+            # Check if layer is in valid (linked) layers
+            if layer not in valid_layers:
+                self.log.warning("%s is invalid, skipping" % layer)
+                continue
+
             if layer.endswith("defaultRenderLayer"):
                 layername = "masterLayer"
             else:
