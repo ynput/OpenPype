@@ -45,7 +45,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
         data["machineList"] = ""
         data["useMayaBatch"] = True
         data["primaryPool"] = pools
-        data["secondaryPool"] = pools
+        data["secondaryPool"] = ["-"] + pools
 
         self.data = data
         self.options = {"useSelection": False}  # Force no content
