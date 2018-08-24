@@ -124,12 +124,10 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         options["renderGlobals"]["Priority"] = attributes["priority"]
 
         # Check for specific pools
-        pool_str = attributes.get("pools", None)
-        if pool_str:
-            pool_a, pool_b = pool_str.split(";")
-            options["renderGlobals"].update({"Pool": pool_a})
-            if pool_b:
-                options["renderGlobals"].update({"SecondaryPool": pool_b})
+        pool_a, pool_b = self._discover_pools(attributes)
+        options["renderGlobals"].update({"Pool": pool_a})
+        if pool_b:
+            options["renderGlobals"].update({"SecondaryPool": pool_b})
 
         legacy = attributes["useLegacyRenderLayers"]
         options["renderGlobals"]["UseLegacyRenderLayers"] = legacy
@@ -158,3 +156,26 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         options["mayaRenderPlugin"] = maya_render_plugin
 
         return options
+
+    def _discover_pools(self, attributes):
+
+        pool_a = None
+        pool_b = None
+
+        # Check for specific pools
+        if "primaryPool" in attributes:
+            pool_a = attributes["primaryPool"]
+            pool_b = attributes["secondaryPool"]
+
+        else:
+            # Backwards compatibility
+            pool_str = attributes.get("pools", None)
+            if pool_str:
+                print("XXX", pool_str.split(";"))
+                pool_a, pool_b = pool_str.split(";")
+
+        # Ensure empty entry token is caught
+        if pool_b == "-":
+            pool_b = None
+
+        return pool_a, pool_b
