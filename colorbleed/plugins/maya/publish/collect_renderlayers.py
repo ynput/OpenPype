@@ -9,7 +9,7 @@ import colorbleed.maya.lib as lib
 class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
     """Gather instances by active render layers"""
 
-    order = pyblish.api.CollectorOrder + 0.01
+    order = pyblish.api.CollectorOrder
     hosts = ["maya"]
     label = "Render Layers"
 
@@ -32,7 +32,8 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         context.data["startFrame"] = start_frame
         context.data["endFrame"] = end_frame
 
-        # Get all linked renderlayers
+        # Get all valid renderlayers
+        # This is how Maya populates the renderlayer display
         rlm_attribute = "renderLayerManager.renderLayerId"
         connected_layers = cmds.listConnections(rlm_attribute) or []
         valid_layers = set(connected_layers)
