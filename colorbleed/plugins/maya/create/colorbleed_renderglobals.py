@@ -33,6 +33,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
         data["whitelist"] = False
         data["machineList"] = ""
         data["pools"] = ""
+        data["useMayaBatch"] = True
 
         self.data = data
         self.options = {"useSelection": False}  # Force no content
