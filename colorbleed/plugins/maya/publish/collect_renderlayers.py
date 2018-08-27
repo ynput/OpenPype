@@ -43,13 +43,6 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                         cmds.getAttr("{}.renderable".format(i)) and not
                         cmds.referenceQuery(i, isNodeReferenced=True)]
 
-        # Include/exclude default render layer
-        default_layer = "{}.includeDefaultRenderLayer".format(render_globals)
-        use_defaultlayer = cmds.getAttr(default_layer)
-        if not use_defaultlayer:
-            renderlayers = [i for i in renderlayers if
-                            not i.endswith("defaultRenderLayer")]
-
         # Sort by displayOrder
         def sort_by_display_order(layer):
             return cmds.getAttr("%s.displayOrder" % layer)
@@ -136,12 +129,10 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         options["renderGlobals"]["Priority"] = attributes["priority"]
 
         # Check for specific pools
-        pool_str = attributes.get("pools", None)
-        if pool_str:
-            pool_a, pool_b = pool_str.split(";")
-            options["renderGlobals"].update({"Pool": pool_a})
-            if pool_b:
-                options["renderGlobals"].update({"SecondaryPool": pool_b})
+        pool_a, pool_b = self._discover_pools(attributes)
+        options["renderGlobals"].update({"Pool": pool_a})
+        if pool_b:
+            options["renderGlobals"].update({"SecondaryPool": pool_b})
 
         legacy = attributes["useLegacyRenderLayers"]
         options["renderGlobals"]["UseLegacyRenderLayers"] = legacy
@@ -166,7 +157,32 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         options["extendFrames"] = extend_frames
         options["overrideExistingFrame"] = override_frames
 
-        maya_render_plugin = "MayaBatch" if attributes.get("useMayaBatch", True) else "MayaCmd"
+        maya_render_plugin = "MayaBatch"
+        if not attributes.get("useMayaBatch", True):
+            maya_render_plugin = "MayaCmd"
+
         options["mayaRenderPlugin"] = maya_render_plugin
 
         return options
+
+    def _discover_pools(self, attributes):
+
+        pool_a = None
+        pool_b = None
+
+        # Check for specific pools
+        if "primaryPool" in attributes:
+            pool_a = attributes["primaryPool"]
+            pool_b = attributes["secondaryPool"]
+
+        else:
+            # Backwards compatibility
+            pool_str = attributes.get("pools", None)
+            if pool_str:
+                pool_a, pool_b = pool_str.split(";")
+
+        # Ensure empty entry token is caught
+        if pool_b == "-":
+            pool_b = None
+
+        return pool_a, pool_b

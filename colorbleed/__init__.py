@@ -24,8 +24,3 @@ def uninstall():
     print("Deregistering global plug-ins..")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
-
-
-def register_loader_plugins():
-    """Wrap to install Loader plugins for standalone"""
-    install()
