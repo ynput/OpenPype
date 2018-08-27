@@ -36,4 +36,4 @@ class CreateVRayScene(avalon.maya.Creator):
         from maya import cmds
 
         return [c for c in cmds.ls(type="camera")
-                if cmds.getAttr("%s.renderable" % i)]
+                if cmds.getAttr("%s.renderable" % c)]
