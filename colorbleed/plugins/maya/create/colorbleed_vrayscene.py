@@ -18,7 +18,6 @@ class CreateVRayScene(avalon.maya.Creator):
         # We don't need subset or asset attributes
         self.data.pop("subset", None)
         self.data.pop("asset", None)
-        self.data.pop("active", None)
 
         data = OrderedDict(**self.data)
 
