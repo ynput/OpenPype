@@ -2,9 +2,9 @@ import os
 
 import pyblish.api
 
-from avalon import api, maya
-
 from maya import cmds
+
+from avalon import api
 
 
 class CollectVRayScene(pyblish.api.ContextPlugin):
@@ -21,11 +21,13 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         def sort_by_display_order(layer):
             return cmds.getAttr("%s.displayOrder" % layer)
 
+        host = api.registered_host()
+
         asset = api.Session["AVALON_ASSET"]
         work_dir = context.data["workspaceDir"]
 
         # Get VRay Scene instance
-        vray_scenes = maya.lsattr("family", "colorbleed.vrayscene")
+        vray_scenes = host.lsattr("family", "colorbleed.vrayscene")
         if not vray_scenes:
             self.log.info("No instance found of family: `colorbleed.vrayscene`")
             return
@@ -33,8 +35,7 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         assert len(vray_scenes) == 1, "Multiple vrayscene instances found!"
         vray_scene = vray_scenes[0]
 
-        vrscene_data = {k: cmds.getAttr("%s.%s" % (vray_scene, k)) for
-                        k in cmds.listAttr(vray_scene, userDefined=True)}
+        vrscene_data = host.read(vray_scene)
 
         # Output data
         start_frame = int(cmds.getAttr("defaultRenderGlobals.startFrame"))
@@ -71,11 +72,6 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
                          cmds.getAttr("{}.renderable".format(i)) and not
                          cmds.referenceQuery(i, isNodeReferenced=True)]
 
-        # Check if we need to filter out the default render layer
-        if vrscene_data.get("includeDefaultRenderLayer", True):
-            render_layers = [r for r in render_layers
-                             if r != "defaultRenderLayer"]
-
         render_layers = sorted(render_layers, key=sort_by_display_order)
         for layer in render_layers:
 
@@ -108,4 +104,5 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
 
             instance = context.create_instance(layer)
             self.log.info("Created: %s" % instance.name)
+            self.log.debug("VRay Data: %s" % vrscene_data)
             instance.data.update(data)
