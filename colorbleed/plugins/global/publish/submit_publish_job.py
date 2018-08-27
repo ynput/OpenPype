@@ -123,7 +123,9 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     label = "Submit image sequence jobs to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["fusion", "maya"]
-    families = ["colorbleed.saver.deadline", "colorbleed.renderlayer"]
+    families = ["colorbleed.saver.deadline",
+                "colorbleed.renderlayer",
+                "colorbleed.vrayscene"]
 
     def process(self, instance):
 
@@ -134,8 +136,10 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         # Get a submission job
         job = instance.data.get("deadlineSubmissionJob")
         if not job:
-            raise RuntimeError("Can't continue without valid deadline "
-                               "submission prior to this plug-in.")
+            self.log.warning("Can't continue without valid deadline "
+                             "submission prior to this plug-in.")
+            self.log.info("Skipping Publish Job")
+            return
 
         data = instance.data.copy()
         subset = data["subset"]
@@ -155,15 +159,17 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         # This assumes the output files start with subset name and ends with
         # a file extension.
         if "ext" in instance.data:
-            ext = re.escape(instance.data["ext"])
+            ext = instance.data["ext"].strip(".")
         else:
             ext = "\.\D+"
 
-        regex = "^{subset}.*\d+{ext}$".format(subset=re.escape(subset),
-                                              ext=ext)
+        regex = "^{subset}.*\d+\.{ext}$".format(subset=re.escape(subset),
+                                                ext=re.escape(ext))
+
+        # Remove deadline submission job, not needed in metadata
+        data.pop("deadlineSubmissionJob")
 
         # Write metadata for publish job
-        render_job = data.pop("deadlineSubmissionJob")
         metadata = {
             "regex": regex,
             "startFrame": start,
@@ -189,7 +195,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             override = data["overrideExistingFrame"]
 
             # override = data.get("overrideExistingFrame", False)
-            out_file = render_job.get("OutFile")
+            out_file = job.get("OutFile")
             if not out_file:
                 raise RuntimeError("OutFile not found in render job!")
 
