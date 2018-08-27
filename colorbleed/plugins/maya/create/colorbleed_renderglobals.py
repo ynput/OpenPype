@@ -1,8 +1,10 @@
 from collections import OrderedDict
 
-import maya.cmds as cmds
+from maya import cmds
 
+from avalon.vendor import requests
 import avalon.maya
+from avalon import api
 
 
 class CreateRenderGlobals(avalon.maya.Creator):
@@ -17,6 +19,16 @@ class CreateRenderGlobals(avalon.maya.Creator):
         # We won't be publishing this one
         self.data["id"] = "avalon.renderglobals"
 
+        # get pools
+        AVALON_DEADLINE = api.Session["AVALON_DEADLINE"]
+        argument = "{}/api/pools?NamesOnly=true".format(AVALON_DEADLINE)
+        response = requests.get(argument)
+        if not response.ok:
+            self.log.warning("No pools retrieved")
+            pools = []
+        else:
+            pools = response.json()
+
         # We don't need subset or asset attributes
         self.data.pop("subset", None)
         self.data.pop("asset", None)
@@ -27,13 +39,14 @@ class CreateRenderGlobals(avalon.maya.Creator):
         data["suspendPublishJob"] = False
         data["extendFrames"] = False
         data["overrideExistingFrame"] = True
-        data["includeDefaultRenderLayer"] = False
         data["useLegacyRenderLayers"] = True
         data["priority"] = 50
         data["whitelist"] = False
         data["machineList"] = ""
-        data["pools"] = ""
         data["useMayaBatch"] = True
+        data["primaryPool"] = pools
+        # We add a string "-" to allow the user to not set any secondary pools
+        data["secondaryPool"] = ["-"] + pools
 
         self.data = data
         self.options = {"useSelection": False}  # Force no content
