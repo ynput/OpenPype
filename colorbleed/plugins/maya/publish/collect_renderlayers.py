@@ -174,7 +174,6 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
             # Backwards compatibility
             pool_str = attributes.get("pools", None)
             if pool_str:
-                print("XXX", pool_str.split(";"))
                 pool_a, pool_b = pool_str.split(";")
 
         # Ensure empty entry token is caught
