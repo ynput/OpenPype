@@ -7,7 +7,7 @@ class CreateVRayScene(avalon.maya.Creator):
 
     label = "VRay Scene"
     family = "colorbleed.vrayscene"
-    # icon = "blocks"
+    icon = "cubes"
 
     def __init__(self, *args, **kwargs):
         super(CreateVRayScene, self).__init__(*args, **kwargs)
@@ -21,10 +21,9 @@ class CreateVRayScene(avalon.maya.Creator):
 
         data = OrderedDict(**self.data)
 
-        data["camera"] = self._get_camera()
+        data["camera"] = self._get_cameras()
         data["suspendRenderJob"] = False
         data["suspendPublishJob"] = False
-        data["includeDefaultRenderLayer"] = False
         data["extendFrames"] = False
         data["pools"] = ""
 
@@ -32,7 +31,7 @@ class CreateVRayScene(avalon.maya.Creator):
 
         self.options = {"useSelection": False}  # Force no content
 
-    def _get_camera(self):
+    def _get_cameras(self):
         from maya import cmds
 
         return [c for c in cmds.ls(type="camera")
