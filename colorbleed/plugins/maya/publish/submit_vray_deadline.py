@@ -192,7 +192,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
                '-e {endFrame} -rl {layer} -exportFramesSeparate')
 
         return cmd.format(project=instance.context.data["workspaceDir"],
-                          cam=instance.data.get("cam", "persp"),
+                          cam=instance.data.get("camera", "persp"),
                           startFrame=instance.data["startFrame"],
                           endFrame=instance.data["endFrame"],
                           layer=instance.name)
