@@ -147,6 +147,9 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         state = "Suspended" if attributes["suspendPublishJob"] else "Active"
         options["publishJobState"] = state
 
+        chunksize = attributes.get("framesPerTask", 1)
+        options["renderGlobals"]["ChunkSize"] = chunksize
+
         # Override frames should be False if extendFrames is False. This is
         # to ensure it doesn't go off doing crazy unpredictable things
         override_frames = False
