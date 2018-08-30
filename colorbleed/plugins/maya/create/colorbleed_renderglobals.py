@@ -41,6 +41,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
         data["overrideExistingFrame"] = True
         data["useLegacyRenderLayers"] = True
         data["priority"] = 50
+        data["framesPerTask"] = 1
         data["whitelist"] = False
         data["machineList"] = ""
         data["useMayaBatch"] = True
