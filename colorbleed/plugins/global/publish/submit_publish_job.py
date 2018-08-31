@@ -136,10 +136,8 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         # Get a submission job
         job = instance.data.get("deadlineSubmissionJob")
         if not job:
-            self.log.warning("Can't continue without valid deadline "
-                             "submission prior to this plug-in.")
-            self.log.info("Skipping Publish Job")
-            return
+            raise RuntimeError("Can't continue without valid deadline "
+                               "submission prior to this plug-in.")
 
         data = instance.data.copy()
         subset = data["subset"]
