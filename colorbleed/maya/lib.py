@@ -76,6 +76,7 @@ _alembic_options = {
     "writeColorSets": bool,
     "writeFaceSets": bool,
     "writeCreases": bool,  # Maya 2015 Ext1+
+    "writeUVSets": bool,   # Maya 2017+
     "dataFormat": str,
     "root": (list, tuple),
     "attr": (list, tuple),
