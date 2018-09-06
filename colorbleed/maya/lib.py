@@ -608,6 +608,8 @@ def extract_alembic(file,
 
         # Discard unknown options
         if key not in _alembic_options:
+            log.warning("extract_alembic() does not support option '%s'. "
+                        "Flag will be ignored..", key)
             options.pop(key)
             continue
 
