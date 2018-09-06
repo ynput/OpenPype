@@ -102,9 +102,18 @@ class CollectInstances(pyblish.api.ContextPlugin):
             parents = self.get_all_parents(members)
             members_hierarchy = list(set(members + children + parents))
 
-            # Create the instance
+            # Define nice label
             name = cmds.ls(objset, long=False)[0]   # use short name
-            instance = context.create_instance(data.get("name", name))
+            label = "{0} ({1})".format(name,
+                                       data["asset"])
+
+            # Append start frame and end frame to label if present
+            if "startFrame" and "endFrame" in data:
+                label += "  [{0}-{1}]".format(int(data["startFrame"]),
+                                              int(data["endFrame"]))
+
+            # Create the instance
+            instance = context.create_instance(label)
             instance[:] = members_hierarchy
             instance.data["setMembers"] = members
             instance.data.update(data)
