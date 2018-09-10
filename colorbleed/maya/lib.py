@@ -1433,8 +1433,16 @@ def set_scene_resolution(resolution, renderer):
     return True
 
 
-def set_project_settings():
+def set_context_settings():
     """Apply the project settings from the project definition
+
+    Settings can be overwritten by an asset if the asset.data contains
+    any information regarding those settings.
+
+    Examples of settings:
+        fps
+        resolution
+        renderer
 
     Returns:
         None
@@ -1444,8 +1452,7 @@ def set_project_settings():
 
     # Get project settings
     data = lib.get_project_data()
-    fps = data.get("fps", None)
-
+    fps = lib.get_asset_fps() or data.get("fps", None)
     if fps is None:
         return
 
