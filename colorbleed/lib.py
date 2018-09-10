@@ -257,16 +257,33 @@ def get_project_fps():
 
     Returns:
         int, float
+
+    """
+
+    data = get_project_data()
+    fps = data.get("fps", 25.0)
+
+    return fps
+
+
+def get_project_data():
+    """Get the data of the current project
+
+    The data of the project can contain things like:
+        resolution
+        fps
+        renderer
+
+    Returns:
+        dict:
+
     """
 
     project_name = io.active_project()
     project = io.find_one({"name": project_name,
                            "type": "project"},
-                          projection={"config": True})
+                          projection={"data": True})
 
-    config = project.get("config", None)
-    assert config, "This is a bug"
+    data = project.get("data", {})
 
-    fps = config.get("fps", 25.0)
-
-    return fps
+    return data
