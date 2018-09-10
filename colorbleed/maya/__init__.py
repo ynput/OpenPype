@@ -162,9 +162,9 @@ def on_open(_):
 
 def on_new(_):
     """Set project resolution and fps when create a new file"""
-
+    avalon.logger.info("Running callback on new..")
     with maya.suspended_refresh():
-        lib.set_project_settings()
+        lib.set_context_settings()
 
 
 def on_task_changed(*args):
