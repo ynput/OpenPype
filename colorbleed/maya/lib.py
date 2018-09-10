@@ -1371,6 +1371,7 @@ def get_id_from_history(node):
             return _id
 
 
+# Project settings
 def set_scene_fps(fps, update=True):
     """Set FPS from project configuration
 
@@ -1397,6 +1398,58 @@ def set_scene_fps(fps, update=True):
 
     # Force file stated to 'modified'
     cmds.file(modified=True)
+
+
+def set_scene_resolution(resolution, renderer):
+    """Set the render resolution
+
+    Args:
+        resolution(str): <width>x<heigth>, eg: '1920x1080'
+        renderer(str): name of the curren renderer; vray / redshift / arnold
+
+    Returns:
+        bool: True if successful
+
+    """
+
+    control_node = "defaultResolution"
+    cmds.setAttr("defaultRenderGlobals.currentRenderer",
+                 renderer,
+                 type="string")
+
+    width, height = resolution.split("x")
+
+    # Give VRay a helping hand as it is slightly different from the rest
+    if renderer == "vray":
+        control_node = "vraySettings"
+        if not cmds.objExists(type=control_node):
+            cmds.createNode("VRaySettingsNode", name=control_node)
+
+    cmds.setAttr("%s.width" % control_node, int(width))
+    cmds.setAttr("%s.height" % control_node, int(height))
+
+    log.info("Set project resolution to: %s" % resolution)
+
+    return True
+
+
+def set_project_settings():
+    """Apply the project settings from the project definition
+
+    Returns:
+        None
+    """
+
+    # Todo (Wijnand): apply renderer and resolution of project
+
+    # Get project settings
+    data = lib.get_project_data()
+    fps = data.get("fps", None)
+
+    if fps is None:
+        return
+
+    set_scene_fps(fps)
 
 
 # Valid FPS
