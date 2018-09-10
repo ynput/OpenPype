@@ -20,4 +20,7 @@ class CreateVrayProxy(avalon.maya.Creator):
         data["startFrame"] = 1
         data["endFrame"] = 1
 
+        # Write vertex colors
+        data["vertexColors"] = False
+
         self.data.update(data)

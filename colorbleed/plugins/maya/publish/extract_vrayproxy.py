@@ -37,6 +37,8 @@ class ExtractVRayProxy(colorbleed.api.Extractor):
             start_frame = instance.data["startFrame"]
             end_frame = instance.data["endFrame"]
 
+        vertex_colors = instance.data.get("vertexColors", False)
+
         # Write out vrmesh file
         self.log.info("Writing: '%s'" % file_path)
         with avalon.maya.maintained_selection():
@@ -48,6 +50,7 @@ class ExtractVRayProxy(colorbleed.api.Extractor):
                                  animType=3,
                                  startFrame=start_frame,
                                  endFrame=end_frame,
+                                 vertexColorsOn=vertex_colors,
                                  ignoreHiddenObjects=True,
                                  createProxyNode=False)
 
