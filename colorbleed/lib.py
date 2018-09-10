@@ -287,3 +287,22 @@ def get_project_data():
     data = project.get("data", {})
 
     return data
+
+
+def get_asset_data():
+    
+    asset_name = avalon.api.Session["AVALON_ASSET"]
+    document = io.find_one({"name": asset_name,
+                            "type": "asset"})
+
+    data = document.get("data", {})
+
+    return data
+
+
+def get_asset_fps():
+
+    data = get_asset_data()
+    fps = data.get("fps", None)
+
+    return fps
