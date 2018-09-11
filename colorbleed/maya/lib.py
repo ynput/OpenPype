@@ -1385,11 +1385,10 @@ def set_scene_fps(fps, update=True):
     """
 
     if fps in FLOAT_FPS:
-        # :.2f means <any digits>.<round to 2 digits>
-        unit = "{:.2f}fps".format(fps)
+        unit = "{}fps".format(fps)
 
     elif fps in INT_FPS:
-        unit = "{:d}fps".format(int(fps))
+        unit = "{}fps".format(int(fps))
 
     else:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
