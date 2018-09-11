@@ -1450,9 +1450,7 @@ def set_context_settings():
     asset_data = lib.get_asset_data()
 
     # Set project fps
-    fps = asset_data.get("fps", project_data.get("fps", None))
-    if fps is None:
-        return
+    fps = asset_data.get("fps", project_data.get("fps", 25))
     set_scene_fps(fps)
 
     # Set project resolution
@@ -1474,7 +1472,8 @@ def validate_fps():
 
     """
 
-    fps = lib.get_project_fps()  # can be int or float
+    asset_data = lib.get_asset_data()
+    fps = asset_data.get("fps", lib.get_project_fps())  # can be int or float
     current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
 
     if current_fps != fps:
