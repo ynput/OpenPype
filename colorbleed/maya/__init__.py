@@ -39,6 +39,8 @@ def install():
 
     avalon.before("save", on_before_save)
 
+    avalon.on("new", on_new)
+
     log.info("Overriding existing event 'taskChanged'")
     override_event("taskChanged", on_task_changed)
 
@@ -156,6 +158,13 @@ def on_open(_):
                               "your Maya scene.")
             dialog.on_show.connect(_on_show_inventory)
             dialog.show()
+
+
+def on_new(_):
+    """Set project resolution and fps when create a new file"""
+    avalon.logger.info("Running callback on new..")
+    with maya.suspended_refresh():
+        lib.set_context_settings()
 
 
 def on_task_changed(*args):
