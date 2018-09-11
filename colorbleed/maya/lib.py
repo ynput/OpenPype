@@ -90,7 +90,7 @@ _alembic_options = {
 }
 
 INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
-FLOAT_FPS = {23.976, 29.97, 29.97, 47.952, 59.94}
+FLOAT_FPS = {23.976, 29.97, 47.952, 59.94}
 
 
 def matrix_equals(a, b, tolerance=1e-10):
@@ -1385,7 +1385,8 @@ def set_scene_fps(fps, update=True):
     """
 
     if fps in FLOAT_FPS:
-        unit = "{:f}fps".format(fps)
+        # :.2f means <any digits>.<round to 2 digits>
+        unit = "{:.2f}fps".format(fps)
 
     elif fps in INT_FPS:
         unit = "{:d}fps".format(int(fps))
@@ -1400,39 +1401,33 @@ def set_scene_fps(fps, update=True):
     cmds.file(modified=True)
 
 
-def set_scene_resolution(resolution, renderer):
+def set_scene_resolution(width, height):
     """Set the render resolution
 
     Args:
-        resolution(str): <width>x<heigth>, eg: '1920x1080'
-        renderer(str): name of the curren renderer; vray / redshift / arnold
+        width(int): value of the width
+        height(int): value of the height
 
     Returns:
-        bool: True if successful
+        None
 
     """
 
     control_node = "defaultResolution"
-    cmds.setAttr("defaultRenderGlobals.currentRenderer",
-                 renderer,
-                 type="string")
-
-    width, height = resolution.split("x")
+    current_renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
 
     # Give VRay a helping hand as it is slightly different from the rest
-    if renderer == "vray":
-        control_node = "vraySettings"
-        if not cmds.objExists(type=control_node):
-            log.error("Cannot set resolution because there is no node named:"
-                      "`%s`" % control_node)
-            return
+    if current_renderer == "vray":
+        vray_node = "vraySettings"
+        if cmds.objExists(vray_node):
+            control_node = vray_node
+        else:
+            log.error("Can't set VRay resolution because there is no node "
+                      "named: `%s`" % vray_node)
 
-    cmds.setAttr("%s.width" % control_node, int(width))
-    cmds.setAttr("%s.height" % control_node, int(height))
-
-    log.info("Set project resolution to: %s" % resolution)
-
-    return True
+    log.info("Setting project resolution to: %s x %s" % (width, height))
+    cmds.setAttr("%s.width" % control_node, width)
+    cmds.setAttr("%s.height" % control_node, height)
 
 
 def set_context_settings():
@@ -1452,14 +1447,23 @@ def set_context_settings():
 
     # Todo (Wijnand): apply renderer and resolution of project
 
-    # Get project settings
     project_data = lib.get_project_data()
     asset_data = lib.get_asset_data()
+
+    # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", None))
     if fps is None:
         return
-
     set_scene_fps(fps)
+
+    # Set project resolution
+    width_key = "resolution_width"
+    height_key = "resolution_height"
+
+    width = asset_data.get(width_key, project_data.get(width_key, 1920))
+    height = asset_data.get(height_key, project_data.get(height_key, 1080))
+
+    set_scene_resolution(width, height)
 
 
 # Valid FPS
