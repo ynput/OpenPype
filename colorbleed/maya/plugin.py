@@ -96,7 +96,7 @@ class ReferenceLoader(api.Loader):
                 continue
 
             # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
-            if ref.endswith("_UNKNOWN_REF_NODE_"):
+            if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
                 continue
 
             references.add(ref)
