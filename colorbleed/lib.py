@@ -289,9 +289,17 @@ def get_project_data():
     return data
 
 
-def get_asset_data():
+def get_asset_data(asset=None):
+    """Get the data from the current asset
+
+    Args:
+        asset(str, Optional): name of the asset, eg:
+
+    Returns:
+        dict
+    """
     
-    asset_name = avalon.api.Session["AVALON_ASSET"]
+    asset_name = asset or avalon.api.Session["AVALON_ASSET"]
     document = io.find_one({"name": asset_name,
                             "type": "asset"})
 
@@ -301,6 +309,12 @@ def get_asset_data():
 
 
 def get_asset_fps():
+    """Return the FPS from the asset data if found else None
+
+    Returns:
+        int, float, None
+
+    """
 
     data = get_asset_data()
     fps = data.get("fps", None)

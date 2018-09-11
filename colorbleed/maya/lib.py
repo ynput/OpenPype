@@ -1423,7 +1423,9 @@ def set_scene_resolution(resolution, renderer):
     if renderer == "vray":
         control_node = "vraySettings"
         if not cmds.objExists(type=control_node):
-            cmds.createNode("VRaySettingsNode", name=control_node)
+            log.error("Cannot set resolution because there is no node named:"
+                      "`%s`" % control_node)
+            return
 
     cmds.setAttr("%s.width" % control_node, int(width))
     cmds.setAttr("%s.height" % control_node, int(height))
@@ -1451,8 +1453,9 @@ def set_context_settings():
     # Todo (Wijnand): apply renderer and resolution of project
 
     # Get project settings
-    data = lib.get_project_data()
-    fps = lib.get_asset_fps() or data.get("fps", None)
+    project_data = lib.get_project_data()
+    asset_data = lib.get_asset_data()
+    fps = asset_data.get("fps", project_data.get("fps", None))
     if fps is None:
         return
 
