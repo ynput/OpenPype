@@ -306,17 +306,3 @@ def get_asset_data(asset=None):
     data = document.get("data", {})
 
     return data
-
-
-def get_asset_fps():
-    """Return the FPS from the asset data if found else None
-
-    Returns:
-        int, float, None
-
-    """
-
-    data = get_asset_data()
-    fps = data.get("fps", None)
-
-    return fps
