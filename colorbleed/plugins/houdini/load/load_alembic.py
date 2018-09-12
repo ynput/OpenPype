@@ -1,8 +1,6 @@
 from avalon import api
 
 from avalon.houdini import pipeline, lib
-reload(pipeline)
-reload(lib)
 
 
 class AbcLoader(api.Loader):
