@@ -92,7 +92,7 @@ def get_id_required_nodes():
 
 def get_additional_data(container):
     """Not implemented yet!"""
-    pass
+    return container
 
 
 @contextmanager
