@@ -83,7 +83,7 @@ def generate_ids(nodes, asset_id=None):
 
 def get_id_required_nodes():
 
-    valid_types = ["geometry", "geometry"]
+    valid_types = ["geometry"]
     nodes = {n for n in hou.node("/out").children() if
              n.type().name() in valid_types}
 
@@ -99,15 +99,10 @@ def get_additional_data(container):
 def attribute_values(node, data):
 
     previous_attrs = {key: node.parm(key).eval() for key in data.keys()}
-    print("before", previous_attrs)
     try:
         node.setParms(data)
-        during_attrs = {key: node.parm(key).eval() for key in data.keys()}
-        print("during", during_attrs)
         yield
     except Exception as exc:
-        print(exc)
         pass
     finally:
-        print("reset")
         node.setParms(previous_attrs)
