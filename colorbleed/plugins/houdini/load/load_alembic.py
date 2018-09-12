@@ -7,7 +7,7 @@ class AbcLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["colorbleed.animation", "colorbleed.pointcache"]
-    label = "Reference animation"
+    label = "Load Animation"
     representations = ["abc"]
     order = -10
     icon = "code-fork"
