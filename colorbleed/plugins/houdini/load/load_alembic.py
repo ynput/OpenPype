@@ -1,11 +1,11 @@
-import avalon.api
+from avalon import api
 
 from avalon.houdini import pipeline, lib
 reload(pipeline)
 reload(lib)
 
 
-class AbcLoader(avalon.api.Loader):
+class AbcLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["colorbleed.animation", "colorbleed.pointcache"]
@@ -43,8 +43,7 @@ class AbcLoader(avalon.api.Loader):
 
         # Remove the file node, it only loads static meshes
         node_path = "/obj/{}/file1".format(node_name)
-        file_node = hou.node(node_path)
-        file_node.destroy()
+        hou.node(node_path)
 
         # Create an alembic node (supports animation)
         alembic = container.createNode("alembic", node_name=node_name)
@@ -77,7 +76,25 @@ class AbcLoader(avalon.api.Loader):
                                      self.__class__.__name__)
 
     def update(self, container, representation):
-        pass
+
+        node = container["node"]
+        try:
+            alembic_node = next(n for n in node.children() if
+                                n.type().name() == "alembic")
+        except StopIteration:
+            self.log.error("Could not find node of type `alembic`")
+            return
+
+        # Update the file path
+        file_path = api.get_representation_path(representation)
+        file_path = file_path.replace("\\", "/")
+
+        alembic_node.setParms({"fileName": file_path})
+
+        # Update attribute
+        node.setParms({"representation": str(representation["_id"])})
 
     def remove(self, container):
-        print(">>>", container["objectName"])
+
+        node = container["node"]
+        node.destroy()
