@@ -31,7 +31,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
     def process(self, context):
 
         instances = []
-        keys = ["active", "id",  "family", "asset", "subset"]
 
         nodes = hou.node("/out").children()
         for node in nodes:
