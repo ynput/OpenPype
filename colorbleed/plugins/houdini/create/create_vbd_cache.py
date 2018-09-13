@@ -21,3 +21,12 @@ class CreateVDBCache(houdini.Creator):
         data["node_type"] = "geometry"
 
         self.data = data
+
+    def process(self):
+        instance = super(CreateVDBCache, self).process()
+
+        parms = {}
+        if self.nodes:
+            parms.update({"soppath": self.nodes[0].path()})
+
+        instance.setParms()

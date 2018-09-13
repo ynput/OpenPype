@@ -24,5 +24,14 @@ class CreatePointCache(houdini.Creator):
 
     def process(self):
         instance = super(CreatePointCache, self).process()
-        instance.setParms({"build_from_path": 1,
-                           "path_attrib": "path"})
+
+        parms = {"build_from_path": 1,
+                 "path_attrib": "path",
+                 "use_sop_path": True,
+                 "filename": "$HIP/%s.abc" % self.name}
+
+        if self.nodes:
+            node = self.nodes[0]
+            parms.update({"sop_path": "%s/OUT" % node.path()})
+
+        instance.setParms(parms)
