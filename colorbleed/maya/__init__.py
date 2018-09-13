@@ -128,11 +128,12 @@ def on_open(_):
     from avalon.vendor.Qt import QtWidgets
     from ..widgets import popup
 
-    # Ensure scene's FPS is set to project config
-    lib.validate_fps()
-
     # Update current task for the current scene
     update_task_from_path(cmds.file(query=True, sceneName=True))
+
+    # Validate FPS after update_task_from_path to
+    # ensure it is using correct FPS for the asset
+    lib.validate_fps()
 
     if any_outdated():
         log.warning("Scene has outdated content.")
