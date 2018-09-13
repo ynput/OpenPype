@@ -19,15 +19,14 @@ class ExtractAlembic(colorbleed.api.Extractor):
         file_name = "{}.abc".format(instance.data["subset"])
         tmp_filepath = os.path.join(staging_dir, file_name)
 
-        start_frame = float(instance.data["startFrame"])
-        end_frame = float(instance.data["endFrame"])
-
         ropnode = instance[0]
-        attributes = {"filename": tmp_filepath,
-                      "trange": 2}
 
+        # Set file name to staging dir + file name
+        attributes = {"filename": tmp_filepath}
+
+        # We run the render with the input settings set by the user
         with lib.attribute_values(ropnode, attributes):
-            ropnode.render(frame_range=(start_frame, end_frame, 1))
+            ropnode.render()
 
         if "files" not in instance.data:
             instance.data["files"] = []
