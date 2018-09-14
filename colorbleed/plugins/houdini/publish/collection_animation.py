@@ -11,8 +11,10 @@ class CollectAnimation(pyblish.api.InstancePlugin):
 
     """
 
-    label = "Collect Animation"
+    order = pyblish.api.CollectorOrder
     families = ["colorbleed.pointcache"]
+    hosts = ["houdini"]
+    label = "Collect Animation"
 
     def process(self, instance):
 
@@ -23,8 +25,7 @@ class CollectAnimation(pyblish.api.InstancePlugin):
                       "f2": "endFrame",
                       "f3": "steps"}
 
-        data = {}
-        for par, translation in parameters.items():
-            data[translation] = node.parm(par).eval()
+        data = {name: node.parm(par).eval() for par, name in
+                parameters.items()}
 
         instance.data.update(data)
