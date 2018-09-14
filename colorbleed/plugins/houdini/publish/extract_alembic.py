@@ -2,7 +2,6 @@ import os
 
 import pyblish.api
 import colorbleed.api
-from colorbleed.houdini import lib
 
 
 class ExtractAlembic(colorbleed.api.Extractor):
@@ -14,19 +13,14 @@ class ExtractAlembic(colorbleed.api.Extractor):
 
     def process(self, instance):
 
-        staging_dir = self.staging_dir(instance)
-
-        file_name = "{}.abc".format(instance.data["subset"])
-        tmp_filepath = os.path.join(staging_dir, file_name)
-
         ropnode = instance[0]
 
-        # Set file name to staging dir + file name
-        attributes = {"filename": tmp_filepath}
+        # Get the filename from the filename parameter
+        # `.eval()` will make sure all tokens are resolved
+        file_name = os.path.basename(ropnode.parm("filename").eval())
 
-        # We run the render with the input settings set by the user
-        with lib.attribute_values(ropnode, attributes):
-            ropnode.render()
+        # We run the render
+        ropnode.render()
 
         if "files" not in instance.data:
             instance.data["files"] = []
