@@ -41,9 +41,9 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
 
         self.log.info("Renderer found: {}".format(renderer))
 
-        rp_node_types = {"vray": ("VRayRenderElement", "VRayRenderElementSet"),
-                         "arnold": "aiAOV",
-                         "redshift": "RedshiftAOV"}
+        rp_node_types = {"vray": ["VRayRenderElement", "VRayRenderElementSet"],
+                         "arnold": ["aiAOV"],
+                         "redshift": ["RedshiftAOV"]}
 
         if renderer not in rp_node_types.keys():
             self.log.error("Unsupported renderer found: '{}'".format(renderer))
