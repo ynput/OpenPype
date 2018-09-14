@@ -115,7 +115,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         scene = os.path.splitext(filename)[0]
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
-        renderlayer_name = instance.name                # beauty
+        renderlayer_name = instance.data['subset']      # beauty
         renderlayer_globals = instance.data["renderGlobals"]
         legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         deadline_user = context.data.get("deadlineUser", getpass.getuser())

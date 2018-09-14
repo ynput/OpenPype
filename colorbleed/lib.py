@@ -252,7 +252,7 @@ def collect_container_metadata(container):
     return hostlib.get_additional_data(container)
 
 
-def get_project_fps():
+def get_asset_fps():
     """Returns project's FPS, if not found will return 25 by default
 
     Returns:
@@ -260,10 +260,20 @@ def get_project_fps():
 
     """
 
-    data = get_project_data()
-    fps = data.get("fps", 25.0)
+    key = "fps"
 
-    return fps
+    # FPS from asset data (if set)
+    asset_data = get_asset_data()
+    if key in asset_data:
+        return asset_data[key]
+
+    # FPS from project data (if set)
+    project_data = get_project_data()
+    if key in project_data:
+        return project_data[key]
+
+    # Fallback to 25 FPS
+    return 25.0
 
 
 def get_project_data():
@@ -298,7 +308,7 @@ def get_asset_data(asset=None):
     Returns:
         dict
     """
-    
+
     asset_name = asset or avalon.api.Session["AVALON_ASSET"]
     document = io.find_one({"name": asset_name,
                             "type": "asset"})
