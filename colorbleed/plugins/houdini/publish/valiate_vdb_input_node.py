@@ -41,7 +41,6 @@ class ValidateVDBInputNode(pyblish.api.InstancePlugin):
             return [instance]
 
         for prim in prims:
-            # print(">>", prim.name())
             if prim.numVertices() != 1:
                 cls.log.error("Found primitive with more than 1 vertex!")
                 return [instance]
