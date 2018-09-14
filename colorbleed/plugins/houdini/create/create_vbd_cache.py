@@ -25,8 +25,8 @@ class CreateVDBCache(houdini.Creator):
     def process(self):
         instance = super(CreateVDBCache, self).process()
 
-        parms = {}
+        parms = {"sopoutput": "$HIP/geo/%s.$F.vdb" % self.name}
         if self.nodes:
             parms.update({"soppath": self.nodes[0].path()})
 
-        instance.setParms()
+        instance.setParms(parms)
