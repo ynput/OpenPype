@@ -8,7 +8,7 @@ class CreateVDBCache(houdini.Creator):
 
     name = "vbdcache"
     label = "VDB Cache"
-    family = "colorbleed.vbdcache"
+    family = "colorbleed.vdbcache"
     icon = "cloud"
 
     def __init__(self, *args, **kwargs):
@@ -25,7 +25,7 @@ class CreateVDBCache(houdini.Creator):
     def process(self):
         instance = super(CreateVDBCache, self).process()
 
-        parms = {"sopoutput": "$HIP/geo/%s.$F.vdb" % self.name}
+        parms = {"sopoutput": "$HIP/geo/%s.$F4.vdb" % self.name}
         if self.nodes:
             parms.update({"soppath": self.nodes[0].path()})
 
