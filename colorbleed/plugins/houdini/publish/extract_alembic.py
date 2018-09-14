@@ -17,9 +17,14 @@ class ExtractAlembic(colorbleed.api.Extractor):
 
         # Get the filename from the filename parameter
         # `.eval()` will make sure all tokens are resolved
-        file_name = os.path.basename(ropnode.parm("filename").eval())
+        output = ropnode.parm("filename").eval()
+        staging_dir = os.path.dirname(output)
+        instance.data["stagingDir"] = staging_dir
+
+        file_name = os.path.basename(output)
 
         # We run the render
+        self.log.info("Writing alembic '%s' to '%s'" % (file_name, staging_dir))
         ropnode.render()
 
         if "files" not in instance.data:
