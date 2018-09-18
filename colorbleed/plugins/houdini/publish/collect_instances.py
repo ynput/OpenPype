@@ -24,8 +24,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     """
 
+    order = pyblish.api.CollectorOrder - 0.01
     label = "Collect Instances"
-    order = pyblish.api.CollectorOrder
     hosts = ["houdini"]
 
     def process(self, context):
@@ -51,7 +51,17 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if "active" in data:
                 data["publish"] = data["active"]
 
-            instance = context.create_instance(data.get("name", node.name()))
+            data.update(self.get_frame_data(node))
+
+            # Create nice name
+            # All nodes in the Outputs graph have the 'Valid Frame Range'
+            # attribute, we check here if any frames are set
+            label = data.get("name", node.name())
+            if "startFrame" in data:
+                frames = "[{startFrame} - {endFrame}]".format(**data)
+                label = "{} {}".format(label, frames)
+
+            instance = context.create_instance(label)
 
             instance[:] = [node]
             instance.data.update(data)
@@ -66,3 +76,27 @@ class CollectInstances(pyblish.api.ContextPlugin):
         context[:] = sorted(context, key=sort_by_family)
 
         return context
+
+    def get_frame_data(self, node):
+        """Get the frame data: start frame, end frame and steps
+        Args:
+            node(hou.Node)
+
+        Returns:
+            dict
+
+        """
+
+        data = {}
+
+        if node.parm("trange") is None:
+            return data
+
+        if node.evalParm("trange") == 0:
+            return data
+
+        data["startFrame"] = node.evalParm("f1")
+        data["endFrame"] = node.evalParm("f2")
+        data["steps"] = node.evalParm("f3")
+
+        return data

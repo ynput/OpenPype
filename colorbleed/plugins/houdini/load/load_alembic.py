@@ -6,8 +6,10 @@ from avalon.houdini import pipeline, lib
 class AbcLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.animation", "colorbleed.pointcache"]
-    label = "Load Animation"
+    families = ["colorbleed.model",
+                "colorbleed.animation",
+                "colorbleed.pointcache"]
+    label = "Load Alembic"
     representations = ["abc"]
     order = -10
     icon = "code-fork"
