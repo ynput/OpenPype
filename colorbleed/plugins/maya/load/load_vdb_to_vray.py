@@ -1,5 +1,4 @@
 from avalon import api
-# import colorbleed.maya.plugin
 
 
 class LoadVDBtoVRay(api.Loader):
@@ -13,7 +12,6 @@ class LoadVDBtoVRay(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        # import pprint
         from maya import cmds
         import avalon.maya.lib as lib
         from avalon.maya.pipeline import containerise
