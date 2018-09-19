@@ -87,8 +87,3 @@ def on_open():
                               "your Maya scene.")
             dialog.on_show.connect(_on_show_inventory)
             dialog.show()
-
-
-def on_task_changed(*args):
-    """Wrapped function of app initialize and maya's on task changed"""
-    pass
