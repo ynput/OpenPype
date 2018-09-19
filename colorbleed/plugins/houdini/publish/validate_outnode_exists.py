@@ -42,7 +42,8 @@ class ValidatOutputNodeExists(pyblish.api.InstancePlugin):
             cls.log.error("Node at '%s' does not exist" % sop_path)
             result.add(node.path())
 
-        if output_node.type().name() != "output":
+        # Added cam as this is a legit output type (cameras can't
+        if output_node.type().name() not in ["output", "cam"]:
             cls.log.error("SOP Path does not end path at output node")
             result.add(node.path())
 
