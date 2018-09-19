@@ -6,7 +6,7 @@ class LoadVDBtoVRay(api.Loader):
     families = ["colorbleed.vdbcache"]
     representations = ["vdb"]
 
-    name = "Load VDB to VRay"
+    label = "Load VDB to VRay"
     icon = "cloud"
     color = "orange"
 
