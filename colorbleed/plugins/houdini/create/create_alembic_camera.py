@@ -3,16 +3,15 @@ from collections import OrderedDict
 from avalon import houdini
 
 
-class CreatePointCache(houdini.Creator):
-    """Alembic pointcache for animated data"""
+class CreateAlembicCamera(houdini.Creator):
 
-    name = "pointcache"
-    label = "Point Cache"
-    family = "colorbleed.pointcache"
-    icon = "gears"
+    name = "camera"
+    label = "Camera (Abc)"
+    family = "colorbleed.camera"
+    icon = "camera"
 
     def __init__(self, *args, **kwargs):
-        super(CreatePointCache, self).__init__(*args, **kwargs)
+        super(CreateAlembicCamera, self).__init__(*args, **kwargs)
 
         # create an ordered dict with the existing data first
         data = OrderedDict(**self.data)
@@ -23,7 +22,7 @@ class CreatePointCache(houdini.Creator):
         self.data = data
 
     def process(self):
-        instance = super(CreatePointCache, self).process()
+        instance = super(CreateAlembicCamera, self).process()
 
         parms = {"use_sop_path": True,
                  "build_from_path": True,
@@ -32,6 +31,6 @@ class CreatePointCache(houdini.Creator):
 
         if self.nodes:
             node = self.nodes[0]
-            parms.update({"sop_path": "%s/OUT" % node.path()})
+            parms.update({"sop_path": node.path()})
 
         instance.setParms(parms)

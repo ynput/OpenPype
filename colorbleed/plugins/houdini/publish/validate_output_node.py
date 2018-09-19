@@ -31,13 +31,15 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
             return node.path()
 
         # Check if type is correct
-        if output_node.type().name() != "output":
-            cls.log.error("Output node `%s` is not if type `output`" %
+        type_name = output_node.type().name()
+        if type_name not in ["output", "cam"]:
+            cls.log.error("Output node `%s` is an accepted type `output` "
+                          "or `camera`" %
                           output_node.path())
-            return output_node.path()
+            return [output_node.path()]
 
-        # Check if node has incoming connections
-        if not output_node.inputConnections():
+        # Check if output node has incoming connections
+        if type_name == "output" and not output_node.inputConnections():
             cls.log.error("Output node `%s` has no incoming connections"
                           % output_node.path())
-            return output_node.path()
+            return [output_node.path()]

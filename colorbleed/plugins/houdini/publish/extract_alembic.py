@@ -7,17 +7,16 @@ import colorbleed.api
 class ExtractAlembic(colorbleed.api.Extractor):
 
     order = pyblish.api.ExtractorOrder
-    label = "Extract Pointcache (Alembic)"
+    label = "Extract Alembic"
     hosts = ["houdini"]
-    families = ["colorbleed.pointcache"]
+    families = ["colorbleed.pointcache", "colorbleed.camera"]
 
     def process(self, instance):
 
         ropnode = instance[0]
 
         # Get the filename from the filename parameter
-        # `.eval()` will make sure all tokens are resolved
-        output = ropnode.parm("filename").eval()
+        output = ropnode.evalParm("filename")
         staging_dir = os.path.dirname(output)
         instance.data["stagingDir"] = staging_dir
 
