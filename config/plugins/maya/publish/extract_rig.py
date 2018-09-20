@@ -3,15 +3,15 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
+import config.api
 
 
-class ExtractColorbleedRig(colorbleed.api.Extractor):
+class ExtractColorbleedRig(config.api.Extractor):
     """Extract rig as Maya Ascii"""
 
     label = "Extract Rig (Maya ASCII)"
     hosts = ["maya"]
-    families = ["colorbleed.rig"]
+    families = ["studio.rig"]
 
     def process(self, instance):
 

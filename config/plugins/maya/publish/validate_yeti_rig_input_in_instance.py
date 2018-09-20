@@ -1,17 +1,17 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
     """Validate if all input nodes are part of the instance's hierarchy"""
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["colorbleed.yetiRig"]
+    families = ["studio.yetiRig"]
     label = "Yeti Rig Input Shapes In Instance"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
 
     def process(self, instance):
 

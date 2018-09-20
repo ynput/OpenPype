@@ -3,12 +3,12 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
+import config.api
 
 from cb.utils.maya import context
 
 
-class ExtractModel(colorbleed.api.Extractor):
+class ExtractModel(config.api.Extractor):
     """Extract as Model (Maya Ascii)
 
     Only extracts contents based on the original "setMembers" data to ensure
@@ -25,7 +25,7 @@ class ExtractModel(colorbleed.api.Extractor):
 
     label = "Model (Maya ASCII)"
     hosts = ["maya"]
-    families = ["colorbleed.model"]
+    families = ["studio.model"]
 
     def process(self, instance):
 

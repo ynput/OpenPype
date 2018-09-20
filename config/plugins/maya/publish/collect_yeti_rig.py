@@ -21,7 +21,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.4
     label = "Collect Yeti Rig"
-    families = ["colorbleed.yetiRig"]
+    families = ["studio.yetiRig"]
     hosts = ["maya"]
 
     def process(self, instance):

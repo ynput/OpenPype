@@ -1,7 +1,7 @@
 from collections import defaultdict
 
 import pyblish.api
-import colorbleed.api
+import config.api
 import config.apps.maya.lib as lib
 
 
@@ -11,15 +11,15 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
     Here we ensure that what has been added to the instance is unique
     """
 
-    order = colorbleed.api.ValidatePipelineOrder
+    order = config.api.ValidatePipelineOrder
     label = 'Non Duplicate Instance Members (ID)'
     hosts = ['maya']
-    families = ["colorbleed.model",
-                "colorbleed.look",
-                "colorbleed.rig"]
+    families = ["studio.model",
+                "studio.look",
+                "studio.rig"]
 
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.GenerateUUIDsOnInvalidAction]
+    actions = [config.api.SelectInvalidAction,
+               config.api.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

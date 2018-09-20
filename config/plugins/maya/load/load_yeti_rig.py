@@ -3,7 +3,7 @@ import config.apps.maya.plugin
 
 class YetiRigLoader(config.apps.maya.plugin.ReferenceLoader):
 
-    families = ["colorbleed.yetiRig"]
+    families = ["studio.yetiRig"]
     representations = ["ma"]
 
     label = "Load Yeti Rig"

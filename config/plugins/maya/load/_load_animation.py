@@ -4,9 +4,9 @@ import config.apps.maya.plugin
 class AbcLoader(config.apps.maya.plugin.ReferenceLoader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.animation",
-                "colorbleed.camera",
-                "colorbleed.pointcache"]
+    families = ["studio.animation",
+                "studio.camera",
+                "studio.pointcache"]
     representations = ["abc"]
 
     label = "Reference animation"
@@ -42,7 +42,7 @@ class AbcLoader(config.apps.maya.plugin.ReferenceLoader):
                           reference=True,
                           returnNewNodes=True)
 
-        # load colorbleed ID attribute
+        # load studio ID attribute
         self[:] = nodes
 
         return nodes

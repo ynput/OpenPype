@@ -11,15 +11,15 @@ class IncrementCurrentFileDeadline(pyblish.api.ContextPlugin):
     label = "Increment current file"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["maya"]
-    families = ["colorbleed.renderlayer"]
+    families = ["studio.renderlayer"]
     optional = True
 
     def process(self, context):
 
         import os
         from maya import cmds
-        from colorbleed.lib import version_up
-        from colorbleed.action import get_errored_plugins_from_data
+        from config.lib import version_up
+        from config.action import get_errored_plugins_from_data
 
         errored_plugins = get_errored_plugins_from_data(context)
         if any(plugin.__name__ == "MayaSubmitDeadline"

@@ -11,7 +11,7 @@ class RigLoader(config.apps.maya.plugin.ReferenceLoader):
 
     """
 
-    families = ["colorbleed.rig"]
+    families = ["studio.rig"]
     representations = ["ma"]
 
     label = "Reference rig"
@@ -62,7 +62,7 @@ class RigLoader(config.apps.maya.plugin.ReferenceLoader):
             cmds.select([output, controls] + roots, noExpand=True)
             api.create(name=namespace,
                        asset=asset,
-                       family="colorbleed.animation",
+                       family="studio.animation",
                        options={"useSelection": True},
                        data={"dependencies": dependency})
 

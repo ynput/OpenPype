@@ -3,10 +3,10 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
+import config.api
 
 
-class ExtractMayaAsciiRaw(colorbleed.api.Extractor):
+class ExtractMayaAsciiRaw(config.api.Extractor):
     """Extract as Maya Ascii (raw)
 
     This will preserve all references, construction history, etc.

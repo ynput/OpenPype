@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 import config.apps.maya.lib as lib
 
 
@@ -16,14 +16,14 @@ class ValidateJointsHidden(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.rig']
+    families = ['studio.rig']
     category = 'rig'
     version = (0, 1, 0)
     label = "Joints Hidden"
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    actions = [config.api.SelectInvalidAction,
+               config.api.RepairAction]
 
     @staticmethod
     def get_invalid(instance):

@@ -1,7 +1,7 @@
 from config.apps.maya import lib
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 from cb.utils.maya import context
 
@@ -31,11 +31,11 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.look']
+    order = config.api.ValidateContentsOrder
+    families = ['studio.look']
     hosts = ['maya']
     label = 'Look Sets'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""

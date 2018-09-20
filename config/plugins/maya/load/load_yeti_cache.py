@@ -13,7 +13,7 @@ from config.apps.maya import lib
 
 class YetiCacheLoader(api.Loader):
 
-    families = ["colorbleed.yeticache", "colorbleed.yetiRig"]
+    families = ["studio.yeticache", "studio.yetiRig"]
     representations = ["fur"]
 
     label = "Load Yeti Cache"

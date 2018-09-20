@@ -5,7 +5,7 @@ import contextlib
 from maya import cmds
 
 import avalon.maya.lib as lib
-import colorbleed.api
+import config.api
 import config.apps.maya.lib as maya
 
 
@@ -56,7 +56,7 @@ def disconnected_attributes(settings, members):
                 continue
 
 
-class ExtractYetiRig(colorbleed.api.Extractor):
+class ExtractYetiRig(config.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals are preserved, but nothing more,
@@ -66,7 +66,7 @@ class ExtractYetiRig(colorbleed.api.Extractor):
 
     label = "Extract Yeti Rig"
     hosts = ["maya"]
-    families = ["colorbleed.yetiRig"]
+    families = ["studio.yetiRig"]
 
     def process(self, instance):
 

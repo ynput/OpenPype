@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 import config.apps.maya.lib as lib
 
 
@@ -15,13 +15,13 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateMeshOrder
-    families = ['colorbleed.model']
+    order = config.api.ValidateMeshOrder
+    families = ['studio.model']
     hosts = ['maya']
     category = 'geometry'
     version = (0, 1, 0)
     label = 'Mesh Edge Length Non Zero'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
 
     __tolerance = 1e-5
 

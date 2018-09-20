@@ -16,7 +16,7 @@ from avalon import api, maya, io, pipeline
 from avalon.vendor.six import string_types
 import avalon.maya.lib
 
-from colorbleed import lib
+from config import lib
 
 
 log = logging.getLogger(__name__)
@@ -1012,11 +1012,11 @@ def assign_look(nodes, subset="lookDefault"):
     # Group all nodes per asset id
     grouped = defaultdict(list)
     for node in nodes:
-        colorbleed_id = get_id(node)
-        if not colorbleed_id:
+        studio_id = get_id(node)
+        if not studio_id:
             continue
 
-        parts = colorbleed_id.split(":", 1)
+        parts = studio_id.split(":", 1)
         grouped[parts[0]].append(node)
 
     for asset_id, asset_nodes in grouped.items():
@@ -1039,7 +1039,7 @@ def assign_look(nodes, subset="lookDefault"):
         version = io.find_one({"parent": subset_data['_id'],
                                "type": "version",
                                "data.families":
-                                   {"$in": ["colorbleed.look"]}
+                                   {"$in": ["studio.look"]}
                                },
                               sort=[("name", -1)],
                               projection={"_id": True, "name": True})

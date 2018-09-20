@@ -3,7 +3,7 @@ import os
 import maya.cmds as cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 def is_subdir(path, root_dir):
@@ -28,9 +28,9 @@ def is_subdir(path, root_dir):
 class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin):
     """Validate the scene is inside the currently set Maya workspace"""
 
-    order = colorbleed.api.ValidatePipelineOrder
+    order = config.api.ValidatePipelineOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['studio.model']
     category = 'scene'
     version = (0, 1, 0)
     label = 'Maya Workspace Set'

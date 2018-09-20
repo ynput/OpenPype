@@ -2,7 +2,7 @@ import pymel.core as pm
 import maya.cmds as cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 def get_namespace(node_name):
@@ -15,14 +15,14 @@ def get_namespace(node_name):
 class ValidateNoNamespace(pyblish.api.InstancePlugin):
     """Ensure the nodes don't have a namespace"""
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['studio.model']
     category = 'cleanup'
     version = (0, 1, 0)
     label = 'No Namespaces'
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    actions = [config.api.SelectInvalidAction,
+               config.api.RepairAction]
 
     @staticmethod
     def get_invalid(instance):

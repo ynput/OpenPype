@@ -97,11 +97,11 @@ class SetRenderMode(QtWidgets.QWidget):
         return self._comp.GetAttrs("COMPS_Name")
 
     def _get_comp_rendermode(self):
-        return self._comp.GetData("colorbleed.rendermode") or "renderlocal"
+        return self._comp.GetData("studio.rendermode") or "renderlocal"
 
     def _set_comp_rendermode(self):
         rendermode = self.mode_options.currentText()
-        self._comp.SetData("colorbleed.rendermode", rendermode)
+        self._comp.SetData("studio.rendermode", rendermode)
 
         self._comp.Print("Updated render mode to '%s'\n" % rendermode)
 

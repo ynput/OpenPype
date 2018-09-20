@@ -5,7 +5,7 @@ import config.apps.maya.plugin
 class ModelLoader(config.apps.maya.plugin.ReferenceLoader):
     """Load the model"""
 
-    families = ["colorbleed.model"]
+    families = ["studio.model"]
     representations = ["ma"]
 
     label = "Reference Model"
@@ -37,7 +37,7 @@ class ModelLoader(config.apps.maya.plugin.ReferenceLoader):
 class GpuCacheLoader(api.Loader):
     """Load model Alembic as gpuCache"""
 
-    families = ["colorbleed.model"]
+    families = ["studio.model"]
     representations = ["abc"]
 
     label = "Import Gpu Cache"

@@ -74,7 +74,7 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
 
                     # instance subset
                     "family": "Render Layers",
-                    "families": ["colorbleed.renderlayer"],
+                    "families": ["studio.renderlayer"],
                     "asset": asset,
                     "time": api.time(),
                     "author": context.data["user"],

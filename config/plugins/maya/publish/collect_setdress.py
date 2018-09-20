@@ -25,7 +25,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.49
     label = "Set Dress"
-    families = ["colorbleed.setdress"]
+    families = ["studio.setdress"]
 
     def process(self, instance):
 

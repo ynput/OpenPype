@@ -8,7 +8,7 @@ class CreateCamera(avalon.maya.Creator):
 
     name = "cameraDefault"
     label = "Camera"
-    family = "colorbleed.camera"
+    family = "studio.camera"
     icon = "video-camera"
 
     def __init__(self, *args, **kwargs):

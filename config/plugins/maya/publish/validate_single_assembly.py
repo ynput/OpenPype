@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 class ValidateSingleAssembly(pyblish.api.InstancePlugin):
@@ -17,9 +17,9 @@ class ValidateSingleAssembly(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.rig', 'colorbleed.animation']
+    families = ['studio.rig', 'studio.animation']
     label = 'Single Assembly'
 
     def process(self, instance):

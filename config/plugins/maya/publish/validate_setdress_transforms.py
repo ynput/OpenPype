@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import config.api
 
 from maya import cmds
 
@@ -25,9 +25,9 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder + 0.49
     label = "Setdress Model Transforms"
-    families = ["colorbleed.setdress"]
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    families = ["studio.setdress"]
+    actions = [config.api.SelectInvalidAction,
+               config.api.RepairAction]
 
     prompt_message = ("You are about to reset the matrix to the default values."
                       " This can alter the look of your scene. "
