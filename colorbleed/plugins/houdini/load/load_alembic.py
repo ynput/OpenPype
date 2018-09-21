@@ -42,8 +42,8 @@ class AbcLoader(api.Loader):
         container = obj.createNode("geo", node_name=node_name)
 
         # Remove the file node, it only loads static meshes
-        node_path = "/obj/{}/file1".format(node_name)
-        hou.node(node_path)
+        file_node = hou.node("/obj/{}/file1".format(node_name))
+        file_node.destroy()
 
         # Create an alembic node (supports animation)
         alembic = container.createNode("alembic", node_name=node_name)
@@ -54,18 +54,23 @@ class AbcLoader(api.Loader):
         unpack.setInput(0, alembic)
         unpack.setParms({"transfer_attributes": "path"})
 
-        # Set new position for unpack node else it gets cluttered
-        unpack.setPosition([0, -1])
-
         # set unpack as display node
         unpack.setDisplayFlag(True)
 
-        null_node = container.createNode("null",
-                                         node_name="OUT_{}".format(name))
-        null_node.setPosition([0, -2])
-        null_node.setInput(0, unpack)
+        # Add normal to points
+        # normal types order ['point', 'vertex', 'prim', 'detail']
+        normal_node = container.createNode("normal")
+        normal_node.setParms({"type": 0})
 
-        nodes = [container, alembic, unpack, null_node]
+        normal_node.setInput(0, unpack)
+
+        null = container.createNode("null", node_name="OUT_{}".format(name))
+        null.setInput(0, normal_node)
+
+        # Set new position for unpack node else it gets cluttered
+        nodes = [container, alembic, unpack, normal_node, null]
+        for nr, node in enumerate(nodes):
+            node.setPosition([0, (0 - nr)])
 
         self[:] = nodes
 
