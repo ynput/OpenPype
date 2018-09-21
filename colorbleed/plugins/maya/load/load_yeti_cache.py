@@ -284,6 +284,8 @@ class YetiCacheLoader(api.Loader):
 
             # Apply attributes to pgYetiMaya node
             for attr, value in attributes.items():
+                if value is None:
+                    continue
                 lib.set_attribute(attr, value, yeti_node)
 
             # Fix for : YETI-6
