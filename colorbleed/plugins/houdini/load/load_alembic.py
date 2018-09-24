@@ -50,22 +50,24 @@ class AbcLoader(api.Loader):
         alembic.setParms({"fileName": file_path})
 
         # Add unpack node
-        unpack = container.createNode("unpack")
+        unpack_name = "unpack_{}".format(name)
+        unpack = container.createNode("unpack", node_name=unpack_name)
         unpack.setInput(0, alembic)
         unpack.setParms({"transfer_attributes": "path"})
 
-        # set unpack as display node
-        unpack.setDisplayFlag(True)
-
         # Add normal to points
-        # normal types order ['point', 'vertex', 'prim', 'detail']
-        normal_node = container.createNode("normal")
+        # Order of menu ['point', 'vertex', 'prim', 'detail']
+        normal_name = "normal_{}".format(name)
+        normal_node = container.createNode("normal", node_name=normal_name)
         normal_node.setParms({"type": 0})
 
         normal_node.setInput(0, unpack)
 
-        null = container.createNode("null", node_name="OUT_{}".format(name))
+        null = container.createNode("null", node_name="OUT".format(name))
         null.setInput(0, normal_node)
+
+        # Set display on last node
+        null.setDisplayFlag(True)
 
         # Set new position for unpack node else it gets cluttered
         nodes = [container, alembic, unpack, normal_node, null]
