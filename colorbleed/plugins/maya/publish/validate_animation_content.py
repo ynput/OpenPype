@@ -23,8 +23,10 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
         out_set = next((i for i in instance.data["setMembers"] if
                         i.endswith("out_SET")), None)
 
-        assert out_set, ("Instance '%s' has no objectSet named: `OUT_set`" %
-                         instance.name)
+        assert out_set, ("Instance '%s' has no objectSet named: `OUT_set`."
+                         "If this instance is an unloaded reference, "
+                         "please deactivate by toggling the 'Active' attribute"
+                         % instance.name)
 
         # All nodes in the `out_hierarchy` must be among the nodes that are
         # in the instance. The nodes in the instance are found from the top
