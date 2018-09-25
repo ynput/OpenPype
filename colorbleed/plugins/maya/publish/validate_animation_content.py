@@ -18,7 +18,6 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-        assert 'out_hierarchy' in instance.data, "Missing `out_hierarchy` data"
 
         out_set = next((i for i in instance.data["setMembers"] if
                         i.endswith("out_SET")), None)
@@ -27,6 +26,8 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
                          "If this instance is an unloaded reference, "
                          "please deactivate by toggling the 'Active' attribute"
                          % instance.name)
+
+        assert 'out_hierarchy' in instance.data, "Missing `out_hierarchy` data"
 
         # All nodes in the `out_hierarchy` must be among the nodes that are
         # in the instance. The nodes in the instance are found from the top
