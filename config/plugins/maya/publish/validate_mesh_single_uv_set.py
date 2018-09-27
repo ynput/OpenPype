@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import config.apps.maya.lib as lib
+import config.api
+import config.maya.lib as lib
 
 
 class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
@@ -14,15 +14,15 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateMeshOrder
+    order = config.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['colorbleed.model', 'colorbleed.pointcache']
+    families = ['studio.model', 'studio.pointcache']
     category = 'uv'
     optional = True
     version = (0, 1, 0)
     label = "Mesh Single UV Set"
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    actions = [config.api.SelectInvalidAction,
+               config.api.RepairAction]
 
     @staticmethod
     def get_invalid(instance):

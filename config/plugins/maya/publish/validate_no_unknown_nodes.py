@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 class ValidateNoUnknownNodes(pyblish.api.InstancePlugin):
@@ -15,12 +15,12 @@ class ValidateNoUnknownNodes(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.model', 'colorbleed.rig']
+    families = ['studio.model', 'studio.rig']
     optional = True
     label = "Unknown Nodes"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

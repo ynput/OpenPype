@@ -3,7 +3,7 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
+import config.api
 
 import cb.utils.maya.context as context
 from cb.utils.maya.animation import bakeToWorldSpace
@@ -35,7 +35,7 @@ def massage_ma_file(path):
     f.close()
 
 
-class ExtractCameraMayaAscii(colorbleed.api.Extractor):
+class ExtractCameraMayaAscii(config.api.Extractor):
     """Extract a Camera as Maya Ascii.
 
     This will create a duplicate of the camera that will be baked *with*
@@ -53,7 +53,7 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
 
     label = "Camera (Maya Ascii)"
     hosts = ["maya"]
-    families = ["colorbleed.camera"]
+    families = ["studio.camera"]
 
     def process(self, instance):
 

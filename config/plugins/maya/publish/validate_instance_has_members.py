@@ -1,14 +1,14 @@
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
     """Validates instance objectSet has *any* members."""
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     hosts = ["maya"]
     label = 'Instance has members'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

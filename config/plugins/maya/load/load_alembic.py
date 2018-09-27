@@ -1,11 +1,11 @@
-import config.apps.maya.plugin
+import config.maya.plugin
 
 
-class AbcLoader(config.apps.maya.plugin.ReferenceLoader):
+class AbcLoader(config.maya.plugin.ReferenceLoader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.animation",
-                "colorbleed.pointcache"]
+    families = ["studio.animation",
+                "studio.pointcache"]
     label = "Reference animation"
     representations = ["abc"]
     order = -10

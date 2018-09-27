@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 class ValidateLookContents(pyblish.api.InstancePlugin):
@@ -16,11 +16,11 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.look']
+    order = config.api.ValidateContentsOrder
+    families = ['studio.look']
     hosts = ['maya']
     label = 'Look Data Contents'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""

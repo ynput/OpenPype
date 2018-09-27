@@ -1,12 +1,12 @@
 import os
 
 import avalon.maya
-import colorbleed.api
+import config.api
 
 from maya import cmds
 
 
-class ExtractVRayProxy(colorbleed.api.Extractor):
+class ExtractVRayProxy(config.api.Extractor):
     """Extract the content of the instance to a vrmesh file
 
     Things to pay attention to:
@@ -16,7 +16,7 @@ class ExtractVRayProxy(colorbleed.api.Extractor):
 
     label = "VRay Proxy (.vrmesh)"
     hosts = ["maya"]
-    families = ["colorbleed.vrayproxy"]
+    families = ["studio.vrayproxy"]
 
     def process(self, instance):
 

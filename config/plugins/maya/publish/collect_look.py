@@ -1,6 +1,6 @@
 from maya import cmds
 import pyblish.api
-import config.apps.maya.lib as lib
+import config.maya.lib as lib
 from cb.utils.maya import context, shaders
 
 SHAPE_ATTRS = ["castsShadows",
@@ -67,7 +67,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.4
-    families = ["colorbleed.look"]
+    families = ["studio.look"]
     label = "Collect Look"
     hosts = ["maya"]
 

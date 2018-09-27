@@ -6,13 +6,13 @@ from maya import cmds
 
 import pyblish.api
 import avalon.maya
-import colorbleed.api
-import config.apps.maya.lib as maya
+import config.api
+import config.maya.lib as maya
 
 from cb.utils.maya import context
 
 
-class ExtractLook(colorbleed.api.Extractor):
+class ExtractLook(config.api.Extractor):
     """Extract Look (Maya Ascii + JSON)
 
     Only extracts the sets (shadingEngines and alike) alongside a .json file
@@ -23,7 +23,7 @@ class ExtractLook(colorbleed.api.Extractor):
 
     label = "Extract Look (Maya ASCII + JSON)"
     hosts = ["maya"]
-    families = ["colorbleed.look"]
+    families = ["studio.look"]
     order = pyblish.api.ExtractorOrder + 0.2
 
     def process(self, instance):

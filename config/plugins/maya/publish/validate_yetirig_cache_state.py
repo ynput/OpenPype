@@ -1,6 +1,6 @@
 import pyblish.api
 
-import colorbleed.action
+import config.action
 
 import maya.cmds as cmds
 
@@ -17,9 +17,9 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = "Yeti Rig Cache State"
     hosts = ["maya"]
-    families = ["colorbleed.yetiRig"]
-    actions = [colorbleed.action.RepairAction,
-               colorbleed.action.SelectInvalidAction]
+    families = ["studio.yetiRig"]
+    actions = [config.action.RepairAction,
+               config.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
@@ -58,4 +58,3 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
         for node in invalid:
             cmds.setAttr("%s.fileMode" % node, 0)
             cmds.setAttr("%s.cacheFileName" % node, "", type="string")
-

@@ -8,11 +8,11 @@ from avalon import api
 class FusionSetFrameRangeLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.animation",
-                "colorbleed.camera",
-                "colorbleed.imagesequence",
-                "colorbleed.yeticache",
-                "colorbleed.pointcache"]
+    families = ["studio.animation",
+                "studio.camera",
+                "studio.imagesequence",
+                "studio.yeticache",
+                "studio.pointcache"]
     representations = ["*"]
 
     label = "Set frame range"
@@ -22,7 +22,7 @@ class FusionSetFrameRangeLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from config.apps.fusion import lib
+        from config.fusion import lib
 
         version = context['version']
         version_data = version.get("data", {})
@@ -41,11 +41,11 @@ class FusionSetFrameRangeLoader(api.Loader):
 class FusionSetFrameRangeWithHandlesLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.animation",
-                "colorbleed.camera",
-                "colorbleed.imagesequence",
-                "colorbleed.yeticache",
-                "colorbleed.pointcache"]
+    families = ["studio.animation",
+                "studio.camera",
+                "studio.imagesequence",
+                "studio.yeticache",
+                "studio.pointcache"]
     representations = ["*"]
 
     label = "Set frame range (with handles)"
@@ -55,7 +55,7 @@ class FusionSetFrameRangeWithHandlesLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from config.apps.fusion import lib
+        from config.fusion import lib
 
         version = context['version']
         version_data = version.get("data", {})

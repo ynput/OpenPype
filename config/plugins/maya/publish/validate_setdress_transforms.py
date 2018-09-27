@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import config.api
 
 from maya import cmds
 
@@ -25,9 +25,9 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder + 0.49
     label = "Setdress Model Transforms"
-    families = ["colorbleed.setdress"]
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    families = ["studio.setdress"]
+    actions = [config.api.SelectInvalidAction,
+               config.api.RepairAction]
 
     prompt_message = ("You are about to reset the matrix to the default values."
                       " This can alter the look of your scene. "
@@ -42,7 +42,7 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        import config.apps.maya.lib as lib
+        import config.maya.lib as lib
 
         # Get all transforms in the loaded containers
         container_roots = cmds.listRelatives(instance.data["hierarchy"],
@@ -87,7 +87,7 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
 
         """
 
-        import config.apps.maya.lib as lib
+        import config.maya.lib as lib
         from avalon.vendor.Qt import QtWidgets
 
         # Store namespace in variable, cosmetics thingy

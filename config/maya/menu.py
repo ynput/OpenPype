@@ -7,7 +7,7 @@ from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
-self._menu = "colorbleed"
+self._menu = "pype_setup"
 
 log = logging.getLogger(__name__)
 
@@ -56,7 +56,7 @@ def uninstall():
 def install():
 
     if cmds.about(batch=True):
-        print("Skipping colorbleed.menu initialization in batch mode..")
+        print("Skipping studio.menu initialization in batch mode..")
         return
 
     uninstall()

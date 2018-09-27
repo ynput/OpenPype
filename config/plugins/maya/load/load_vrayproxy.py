@@ -7,7 +7,7 @@ import maya.cmds as cmds
 class VRayProxyLoader(api.Loader):
     """Load VRayMesh proxy"""
 
-    families = ["colorbleed.vrayproxy"]
+    families = ["studio.vrayproxy"]
     representations = ["vrmesh"]
 
     label = "Import VRay Proxy"
@@ -18,7 +18,7 @@ class VRayProxyLoader(api.Loader):
     def load(self, context, name, namespace, data):
 
         from avalon.maya.pipeline import containerise
-        from config.apps.maya.lib import namespaced
+        from config.maya.lib import namespaced
 
         asset_name = context['asset']["name"]
         namespace = namespace or lib.unique_namespace(

@@ -1,7 +1,7 @@
 import pyblish.api
-import colorbleed.api
+import config.api
 
-from config.apps.maya import lib
+from config.maya import lib
 
 
 class ValidateNodeIDs(pyblish.api.InstancePlugin):
@@ -13,18 +13,18 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidatePipelineOrder
+    order = config.api.ValidatePipelineOrder
     label = 'Instance Nodes Have ID'
     hosts = ['maya']
-    families = ["colorbleed.model",
-                "colorbleed.look",
-                "colorbleed.rig",
-                "colorbleed.pointcache",
-                "colorbleed.animation",
-                "colorbleed.setdress"]
+    families = ["studio.model",
+                "studio.look",
+                "studio.rig",
+                "studio.pointcache",
+                "studio.animation",
+                "studio.setdress"]
 
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.GenerateUUIDsOnInvalidAction]
+    actions = [config.api.SelectInvalidAction,
+               config.api.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

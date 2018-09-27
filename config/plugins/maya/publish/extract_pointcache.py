@@ -3,11 +3,11 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
-from config.apps.maya.lib import extract_alembic
+import config.api
+from config.maya.lib import extract_alembic
 
 
-class ExtractColorbleedAlembic(colorbleed.api.Extractor):
+class ExtractColorbleedAlembic(config.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals, uvs, creases are preserved, but nothing more,
@@ -17,8 +17,8 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
 
     label = "Extract Pointcache (Alembic)"
     hosts = ["maya"]
-    families = ["colorbleed.pointcache",
-                "colorbleed.model"]
+    families = ["studio.pointcache",
+                "studio.model"]
 
     def process(self, instance):
 

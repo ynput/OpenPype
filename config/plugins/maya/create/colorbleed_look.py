@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import avalon.maya
-from config.apps.maya import lib
+from config.maya import lib
 
 
 class CreateLook(avalon.maya.Creator):
@@ -8,7 +8,7 @@ class CreateLook(avalon.maya.Creator):
 
     name = "look"
     label = "Look"
-    family = "colorbleed.look"
+    family = "studio.look"
     icon = "paint-brush"
 
     def __init__(self, *args, **kwargs):

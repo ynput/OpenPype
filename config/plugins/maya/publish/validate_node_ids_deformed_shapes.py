@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import config.apps.maya.lib as lib
+import config.api
+import config.maya.lib as lib
 
 
 class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
@@ -15,11 +15,11 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.look']
+    order = config.api.ValidateContentsOrder
+    families = ['studio.look']
     hosts = ['maya']
     label = 'Deformed shape ids'
-    actions = [colorbleed.api.SelectInvalidAction, colorbleed.api.RepairAction]
+    actions = [config.api.SelectInvalidAction, config.api.RepairAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""
@@ -63,4 +63,3 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
                 continue
 
             lib.set_id(node, history_id, overwrite=True)
-

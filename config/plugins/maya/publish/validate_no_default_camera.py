@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 class ValidateNoDefaultCameras(pyblish.api.InstancePlugin):
@@ -12,12 +12,12 @@ class ValidateNoDefaultCameras(pyblish.api.InstancePlugin):
     settings when being loaded and sometimes being skipped.
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.camera']
+    families = ['studio.camera']
     version = (0, 1, 0)
     label = "No Default Cameras"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

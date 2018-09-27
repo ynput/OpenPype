@@ -1,7 +1,7 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 def has_shape_children(node):
@@ -36,13 +36,13 @@ class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['studio.model']
     category = 'cleanup'
     version = (0, 1, 0)
     label = 'No Empty/Null Transforms'
-    actions = [colorbleed.api.RepairAction, colorbleed.api.SelectInvalidAction]
+    actions = [config.api.RepairAction, config.api.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

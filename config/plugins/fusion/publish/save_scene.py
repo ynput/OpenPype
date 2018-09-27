@@ -7,7 +7,7 @@ class FusionSaveComp(pyblish.api.ContextPlugin):
     label = "Save current file"
     order = pyblish.api.ExtractorOrder - 0.49
     hosts = ["fusion"]
-    families = ["colorbleed.saver"]
+    families = ["studio.saver"]
 
     def process(self, context):
 

@@ -1,10 +1,10 @@
-import config.apps.maya.plugin
+import config.maya.plugin
 
 
-class LookLoader(config.apps.maya.plugin.ReferenceLoader):
+class LookLoader(config.maya.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
 
-    families = ["colorbleed.look"]
+    families = ["studio.look"]
     representations = ["ma"]
 
     label = "Reference look"

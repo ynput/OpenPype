@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 class ValidateSetdressNamespaces(pyblish.api.InstancePlugin):
@@ -16,8 +16,8 @@ class ValidateSetdressNamespaces(pyblish.api.InstancePlugin):
 
     label = "Validate Setdress Namespaces"
     order = pyblish.api.ValidatorOrder
-    families = ["colorbleed.setdress"]
-    actions = [colorbleed.api.SelectInvalidAction]
+    families = ["studio.setdress"]
+    actions = [config.api.SelectInvalidAction]
 
     def process(self, instance):
 

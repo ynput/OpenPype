@@ -192,7 +192,7 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
             nodes (list): all nodes to regenerate ids on
         """
 
-        import config.apps.maya.lib as lib
+        import config.maya.lib as lib
         import avalon.io as io
 
         asset = instance.data['asset']

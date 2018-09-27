@@ -1,7 +1,7 @@
 import pyblish.api
 
 from avalon import io
-import colorbleed.api
+import config.api
 
 
 class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
@@ -23,8 +23,8 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder + 0.1
     label = "Render Passes / AOVs Are Registered"
     hosts = ["maya"]
-    families = ["colorbleed.renderlayer"]
-    actions = [colorbleed.api.SelectInvalidAction]
+    families = ["studio.renderlayer"]
+    actions = [config.api.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

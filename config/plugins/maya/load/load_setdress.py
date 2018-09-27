@@ -3,7 +3,7 @@ from avalon import api
 
 class SetDressLoader(api.Loader):
 
-    families = ["colorbleed.setdress"]
+    families = ["studio.setdress"]
     representations = ["json"]
 
     label = "Load Set Dress"
@@ -23,7 +23,7 @@ class SetDressLoader(api.Loader):
             suffix="_",
         )
 
-        from colorbleed import setdress_api
+        from config import setdress_api
 
         containers = setdress_api.load_package(filepath=self.fname,
                                                name=name,
@@ -45,7 +45,7 @@ class SetDressLoader(api.Loader):
 
     def update(self, container, representation):
 
-        from colorbleed import setdress_api
+        from config import setdress_api
         return setdress_api.update_package(container,
                                            representation)
 
@@ -53,7 +53,7 @@ class SetDressLoader(api.Loader):
         """Remove all sub containers"""
 
         from avalon import api
-        from colorbleed import setdress_api
+        from config import setdress_api
         import maya.cmds as cmds
 
         # Remove all members

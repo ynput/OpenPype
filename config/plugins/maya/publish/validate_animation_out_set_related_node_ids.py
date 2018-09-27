@@ -1,8 +1,8 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import colorbleed.api
-import config.apps.maya.lib as lib
+import config.api
+import config.maya.lib as lib
 
 
 class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
@@ -15,11 +15,11 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.animation', "colorbleed.pointcache"]
+    order = config.api.ValidateContentsOrder
+    families = ['studio.animation', "studio.pointcache"]
     hosts = ['maya']
     label = 'Animation Out Set Related Node Ids'
-    actions = [colorbleed.api.SelectInvalidAction, colorbleed.api.RepairAction]
+    actions = [config.api.SelectInvalidAction, config.api.RepairAction]
 
     def process(self, instance):
         """Process all meshes"""

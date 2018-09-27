@@ -1,6 +1,6 @@
 from collections import OrderedDict
 import avalon.maya
-from config.apps.maya import lib
+from config.maya import lib
 
 
 class CreateCamera(avalon.maya.Creator):
@@ -8,7 +8,7 @@ class CreateCamera(avalon.maya.Creator):
 
     name = "cameraDefault"
     label = "Camera"
-    family = "colorbleed.camera"
+    family = "studio.camera"
     icon = "video-camera"
 
     def __init__(self, *args, **kwargs):

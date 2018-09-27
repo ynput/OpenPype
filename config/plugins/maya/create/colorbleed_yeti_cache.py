@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 import avalon.maya
-from config.apps.maya import lib
+from config.maya import lib
 
 
 class CreateYetiCache(avalon.maya.Creator):
@@ -9,7 +9,7 @@ class CreateYetiCache(avalon.maya.Creator):
 
     name = "yetiDefault"
     label = "Yeti Cache"
-    family = "colorbleed.yeticache"
+    family = "studio.yeticache"
     icon = "pagelines"
 
     def __init__(self, *args, **kwargs):

@@ -1,9 +1,9 @@
-import config.apps.maya.plugin
+import config.maya.plugin
 
 
-class YetiRigLoader(config.apps.maya.plugin.ReferenceLoader):
+class YetiRigLoader(config.maya.plugin.ReferenceLoader):
 
-    families = ["colorbleed.yetiRig"]
+    families = ["studio.yetiRig"]
     representations = ["ma"]
 
     label = "Load Yeti Rig"

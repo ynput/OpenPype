@@ -6,5 +6,5 @@ class CreateModel(avalon.maya.Creator):
 
     name = "modelDefault"
     label = "Model"
-    family = "colorbleed.model"
+    family = "studio.model"
     icon = "cube"

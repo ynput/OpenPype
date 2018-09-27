@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 from cb.utils.maya.context import undo_chunk
 
 
@@ -23,12 +23,12 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         - Break all incoming connections to keyable attributes
 
     """
-    order = colorbleed.api.ValidateContentsOrder + 0.05
+    order = config.api.ValidateContentsOrder + 0.05
     label = "Rig Controllers"
     hosts = ["maya"]
-    families = ["colorbleed.rig"]
-    actions = [colorbleed.api.RepairAction,
-               colorbleed.api.SelectInvalidAction]
+    families = ["studio.rig"]
+    actions = [config.api.RepairAction,
+               config.api.SelectInvalidAction]
 
     # Default controller values
     CONTROLLER_DEFAULTS = {

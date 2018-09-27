@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 class ValidateCameraContents(pyblish.api.InstancePlugin):
@@ -14,11 +14,11 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.camera']
+    order = config.api.ValidateContentsOrder
+    families = ['studio.camera']
     hosts = ['maya']
     label = 'Camera Contents'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

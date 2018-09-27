@@ -9,7 +9,7 @@ from avalon.vendor import requests
 
 import pyblish.api
 
-import config.apps.maya.lib as lib
+import config.maya.lib as lib
 
 
 def get_renderer_variables(renderlayer=None):
@@ -99,7 +99,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
-    families = ["colorbleed.renderlayer"]
+    families = ["studio.renderlayer"]
 
     def process(self, instance):
 

@@ -1,7 +1,7 @@
 import maya.mel as mel
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 def get_file_rule(rule):
@@ -14,10 +14,10 @@ class ValidateRenderImageRule(pyblish.api.ContextPlugin):
     
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     label = "Images File Rule (Workspace)"
     hosts = ["maya"]
-    families = ["colorbleed.renderlayer"]
+    families = ["studio.renderlayer"]
 
     def process(self, context):
 

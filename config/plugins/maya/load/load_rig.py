@@ -1,17 +1,17 @@
 from maya import cmds
 
-import config.apps.maya.plugin
+import config.maya.plugin
 from avalon import api, maya
 
 
-class RigLoader(config.apps.maya.plugin.ReferenceLoader):
+class RigLoader(config.maya.plugin.ReferenceLoader):
     """Specific loader for rigs
 
     This automatically creates an instance for animators upon load.
 
     """
 
-    families = ["colorbleed.rig"]
+    families = ["studio.rig"]
     representations = ["ma"]
 
     label = "Reference rig"
@@ -62,7 +62,7 @@ class RigLoader(config.apps.maya.plugin.ReferenceLoader):
             cmds.select([output, controls] + roots, noExpand=True)
             api.create(name=namespace,
                        asset=asset,
-                       family="colorbleed.animation",
+                       family="studio.animation",
                        options={"useSelection": True},
                        data={"dependencies": dependency})
 

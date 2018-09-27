@@ -1,8 +1,8 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import colorbleed.api
-import config.apps.maya.lib as lib
+import config.api
+import config.maya.lib as lib
 
 
 class ValidateRenderSettings(pyblish.api.InstancePlugin):
@@ -27,11 +27,11 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     label = "Render Settings"
     hosts = ["maya"]
-    families = ["colorbleed.renderlayer"]
-    actions = [colorbleed.api.RepairAction]
+    families = ["studio.renderlayer"]
+    actions = [config.api.RepairAction]
 
     DEFAULT_PADDING = 4
     RENDERER_PREFIX = {"vray": "<Scene>/<Scene>_<Layer>/<Layer>"}

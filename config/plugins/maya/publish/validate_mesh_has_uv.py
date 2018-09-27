@@ -3,7 +3,7 @@ import re
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 def len_flattened(components):
@@ -44,12 +44,12 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
     UVs for every face.
     """
 
-    order = colorbleed.api.ValidateMeshOrder
+    order = config.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['studio.model']
     category = 'geometry'
     label = 'Mesh Has UVs'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
     optional = True
 
     @classmethod

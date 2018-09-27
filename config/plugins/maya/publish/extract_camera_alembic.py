@@ -3,12 +3,12 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
+import config.api
 
 import cb.utils.maya.context as context
 
 
-class ExtractCameraAlembic(colorbleed.api.Extractor):
+class ExtractCameraAlembic(config.api.Extractor):
     """Extract a Camera as Alembic.
 
     The cameras gets baked to world space by default. Only when the instance's
@@ -18,7 +18,7 @@ class ExtractCameraAlembic(colorbleed.api.Extractor):
 
     label = "Camera (Alembic)"
     hosts = ["maya"]
-    families = ["colorbleed.camera"]
+    families = ["studio.camera"]
 
     def process(self, instance):
 

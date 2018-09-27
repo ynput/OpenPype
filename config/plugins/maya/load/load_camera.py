@@ -1,10 +1,10 @@
-import config.apps.maya.plugin
+import config.maya.plugin
 
 
-class CameraLoader(config.apps.maya.plugin.ReferenceLoader):
+class CameraLoader(config.maya.plugin.ReferenceLoader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.camera"]
+    families = ["studio.camera"]
     label = "Reference camera"
     representations = ["abc", "ma"]
     order = -10

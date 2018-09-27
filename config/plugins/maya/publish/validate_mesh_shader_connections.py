@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 def pairs(iterable):
@@ -72,12 +72,12 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateMeshOrder
+    order = config.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['studio.model']
     label = "Mesh Shader Connections"
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    actions = [config.api.SelectInvalidAction,
+               config.api.RepairAction]
 
     def process(self, instance):
         """Process all the nodes in the instance 'objectSet'"""

@@ -17,7 +17,7 @@ class CollectMayaHistory(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.1
     hosts = ["maya"]
     label = "Maya History"
-    families = ["colorbleed.rig"]
+    families = ["studio.rig"]
     verbose = False
 
     def process(self, instance):

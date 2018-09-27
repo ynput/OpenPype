@@ -1,7 +1,7 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import config.apps.maya.lib as lib
+import config.maya.lib as lib
 
 
 class ValidateInstancerContent(pyblish.api.InstancePlugin):
@@ -12,7 +12,7 @@ class ValidateInstancerContent(pyblish.api.InstancePlugin):
     """
     order = pyblish.api.ValidatorOrder
     label = 'Instancer Content'
-    families = ['colorbleed.instancer']
+    families = ['studio.instancer']
 
     def process(self, instance):
 

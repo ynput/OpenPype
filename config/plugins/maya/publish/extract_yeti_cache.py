@@ -3,10 +3,10 @@ import json
 
 from maya import cmds
 
-import colorbleed.api
+import config.api
 
 
-class ExtractYetiCache(colorbleed.api.Extractor):
+class ExtractYetiCache(config.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals are preserved, but nothing more,
@@ -16,7 +16,7 @@ class ExtractYetiCache(colorbleed.api.Extractor):
 
     label = "Extract Yeti Cache"
     hosts = ["maya"]
-    families = ["colorbleed.yetiRig", "colorbleed.yeticache"]
+    families = ["studio.yetiRig", "studio.yeticache"]
 
     def process(self, instance):
 

@@ -6,7 +6,7 @@ class ValidateVrayProxy(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = 'VRay Proxy Settings'
     hosts = ['maya']
-    families = ['colorbleed.vrayproxy']
+    families = ['studio.vrayproxy']
 
     def process(self, instance):
 

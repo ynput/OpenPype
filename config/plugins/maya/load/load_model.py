@@ -1,11 +1,11 @@
 from avalon import api
-import config.apps.maya.plugin
+import config.maya.plugin
 
 
-class ModelLoader(config.apps.maya.plugin.ReferenceLoader):
+class ModelLoader(config.maya.plugin.ReferenceLoader):
     """Load the model"""
 
-    families = ["colorbleed.model"]
+    families = ["studio.model"]
     representations = ["ma"]
 
     label = "Reference Model"
@@ -37,7 +37,7 @@ class ModelLoader(config.apps.maya.plugin.ReferenceLoader):
 class GpuCacheLoader(api.Loader):
     """Load model Alembic as gpuCache"""
 
-    families = ["colorbleed.model"]
+    families = ["studio.model"]
     representations = ["abc"]
 
     label = "Import Gpu Cache"

@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import config.api
 
 
 SUFFIX_NAMING_TABLE = {'mesh': ["_GEO", "_GES", "_GEP", "_OSD"],
@@ -31,14 +31,14 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = config.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['studio.model']
     category = 'cleanup'
     optional = True
     version = (0, 1, 0)
     label = 'Suffix Naming Conventions'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [config.api.SelectInvalidAction]
 
     @staticmethod
     def is_valid_name(node_name, shape_type):
