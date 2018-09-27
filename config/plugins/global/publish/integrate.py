@@ -27,7 +27,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "studio.camera",
                 "studio.imagesequence",
                 "studio.look",
-                "config.apps.mayaAscii",
+                "config.mayaAscii",
                 "studio.model",
                 "studio.pointcache",
                 "studio.setdress",

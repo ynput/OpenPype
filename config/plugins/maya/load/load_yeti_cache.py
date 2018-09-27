@@ -8,7 +8,7 @@ from maya import cmds
 
 from avalon import api
 from avalon.maya import lib as avalon_lib, pipeline
-from config.apps.maya import lib
+from config.maya import lib
 
 
 class YetiCacheLoader(api.Loader):

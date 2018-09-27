@@ -1,6 +1,6 @@
 from maya import cmds
 import pyblish.api
-import config.apps.maya.lib as lib
+import config.maya.lib as lib
 from cb.utils.maya import context, shaders
 
 SHAPE_ATTRS = ["castsShadows",

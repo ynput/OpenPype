@@ -3,7 +3,7 @@ from maya import cmds
 import pyblish.api
 
 from avalon import maya, api
-import config.apps.maya.lib as lib
+import config.maya.lib as lib
 
 
 class CollectMayaRenderlayers(pyblish.api.ContextPlugin):

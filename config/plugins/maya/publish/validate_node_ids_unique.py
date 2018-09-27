@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import pyblish.api
 import config.api
-import config.apps.maya.lib as lib
+import config.maya.lib as lib
 
 
 class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):

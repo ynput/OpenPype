@@ -1,7 +1,7 @@
 from collections import OrderedDict
 
 import avalon.maya
-from config.apps.maya import lib
+from config.maya import lib
 
 
 class CreatePointCache(avalon.maya.Creator):

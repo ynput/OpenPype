@@ -3,7 +3,7 @@ import maya.cmds as cmds
 import pyblish.api
 import config.api
 from config import lib
-import config.apps.maya.lib as mayalib
+import config.maya.lib as mayalib
 
 
 class ValidateMayaUnits(pyblish.api.ContextPlugin):

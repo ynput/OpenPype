@@ -42,7 +42,7 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        import config.apps.maya.lib as lib
+        import config.maya.lib as lib
 
         # Get all transforms in the loaded containers
         container_roots = cmds.listRelatives(instance.data["hierarchy"],
@@ -87,7 +87,7 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
 
         """
 
-        import config.apps.maya.lib as lib
+        import config.maya.lib as lib
         from avalon.vendor.Qt import QtWidgets
 
         # Store namespace in variable, cosmetics thingy

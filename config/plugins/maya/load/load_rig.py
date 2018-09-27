@@ -1,10 +1,10 @@
 from maya import cmds
 
-import config.apps.maya.plugin
+import config.maya.plugin
 from avalon import api, maya
 
 
-class RigLoader(config.apps.maya.plugin.ReferenceLoader):
+class RigLoader(config.maya.plugin.ReferenceLoader):
     """Specific loader for rigs
 
     This automatically creates an instance for animators upon load.

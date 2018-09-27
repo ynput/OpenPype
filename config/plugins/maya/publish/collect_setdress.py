@@ -3,7 +3,7 @@ import pyblish.api
 
 from maya import cmds, mel
 from avalon import maya as avalon
-from config.apps.maya import lib
+from config.maya import lib
 
 # TODO : Publish of setdress: -unique namespace for all assets, VALIDATOR!
 

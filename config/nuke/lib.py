@@ -1,14 +1,14 @@
 import sys
 
 from avalon.vendor.Qt import QtGui
-import avalon.fusion
+import avalon.nuke
 
 
 self = sys.modules[__name__]
 self._project = None
 
 
-def update_frame_range(start, end, comp=None, set_render_range=True):
+def update_frame_range(start, end, root=None, set_render_range=True):
     """Set Fusion comp's start and end frame range
 
     Args:
@@ -23,21 +23,21 @@ def update_frame_range(start, end, comp=None, set_render_range=True):
 
     """
 
-    if not comp:
-        comp = avalon.fusion.get_current_comp()
+    if not root:
+        root, nodes = avalon.nuke.get_current_comp()
 
-    attrs = {
+    knobs = {
         "COMPN_GlobalStart": start,
         "COMPN_GlobalEnd": end
     }
 
     if set_render_range:
-        attrs.update({
+        knobs.update({
             "COMPN_RenderStart": start,
             "COMPN_RenderEnd": end
         })
 
-    with avalon.fusion.comp_lock_and_undo_chunk(comp):
+    with avalon.nuke.comp_lock_and_undo_chunk():
         comp.SetAttrs(attrs)
 
 

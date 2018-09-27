@@ -3,7 +3,7 @@ import json
 import os
 
 import config.api
-from config.apps.maya.lib import extract_alembic
+from config.maya.lib import extract_alembic
 
 from maya import cmds
 

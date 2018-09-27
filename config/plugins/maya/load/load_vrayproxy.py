@@ -18,7 +18,7 @@ class VRayProxyLoader(api.Loader):
     def load(self, context, name, namespace, data):
 
         from avalon.maya.pipeline import containerise
-        from config.apps.maya.lib import namespaced
+        from config.maya.lib import namespaced
 
         asset_name = context['asset']["name"]
         namespace = namespace or lib.unique_namespace(

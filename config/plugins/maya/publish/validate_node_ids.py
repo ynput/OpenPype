@@ -1,7 +1,7 @@
 import pyblish.api
 import config.api
 
-from config.apps.maya import lib
+from config.maya import lib
 
 
 class ValidateNodeIDs(pyblish.api.InstancePlugin):

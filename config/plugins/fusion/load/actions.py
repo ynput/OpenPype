@@ -22,7 +22,7 @@ class FusionSetFrameRangeLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from config.apps.fusion import lib
+        from config.fusion import lib
 
         version = context['version']
         version_data = version.get("data", {})
@@ -55,7 +55,7 @@ class FusionSetFrameRangeWithHandlesLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from config.apps.fusion import lib
+        from config.fusion import lib
 
         version = context['version']
         version_data = version.get("data", {})

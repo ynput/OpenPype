@@ -15,7 +15,7 @@ class ExtractMayaAsciiRaw(config.api.Extractor):
 
     label = "Maya ASCII (Raw)"
     hosts = ["maya"]
-    families = ["config.apps.mayaAscii"]
+    families = ["config.mayaAscii"]
 
     def process(self, instance):
 

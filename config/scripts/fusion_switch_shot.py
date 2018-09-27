@@ -9,7 +9,7 @@ import avalon.fusion
 
 # Config imports
 import config.lib as lib
-import config.apps.fusion.lib as fusion_lib
+import config.fusion.lib as fusion_lib
 
 log = logging.getLogger("Update Slap Comp")
 

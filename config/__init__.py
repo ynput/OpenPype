@@ -1,4 +1,7 @@
 import os
+import sys
+
+import imp
 
 from pyblish import api as pyblish
 from avalon import api as avalon

@@ -1,10 +1,10 @@
-import config.apps.maya.plugin
+import config.maya.plugin
 
 
-class MayaAsciiLoader(config.apps.maya.plugin.ReferenceLoader):
+class MayaAsciiLoader(config.maya.plugin.ReferenceLoader):
     """Load the model"""
 
-    families = ["config.apps.mayaAscii"]
+    families = ["config.mayaAscii"]
     representations = ["ma"]
 
     label = "Reference Maya Ascii"

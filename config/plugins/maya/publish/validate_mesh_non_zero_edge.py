@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import config.api
-import config.apps.maya.lib as lib
+import config.maya.lib as lib
 
 
 class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):

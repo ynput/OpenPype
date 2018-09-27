@@ -4,7 +4,7 @@ from maya import cmds
 
 import avalon.maya
 import config.api
-from config.apps.maya.lib import extract_alembic
+from config.maya.lib import extract_alembic
 
 
 class ExtractColorbleedAnimation(config.api.Extractor):

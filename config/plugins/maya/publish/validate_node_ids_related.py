@@ -3,7 +3,7 @@ import config.api
 
 import avalon.io as io
 
-from config.apps.maya import lib
+from config.maya import lib
 
 
 class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):

@@ -3,7 +3,7 @@ import pyblish.api
 import avalon.io as io
 
 import config.api
-from config.apps.maya import lib
+from config.maya import lib
 
 
 class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):

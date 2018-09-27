@@ -5,7 +5,7 @@ from maya import cmds
 
 import pyblish.api
 
-from config.apps.maya import lib
+from config.maya import lib
 
 
 SETTINGS = {"renderDensity",

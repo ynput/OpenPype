@@ -9,7 +9,7 @@ from avalon.vendor import requests
 
 import pyblish.api
 
-import config.apps.maya.lib as lib
+import config.maya.lib as lib
 
 
 def get_renderer_variables(renderlayer=None):

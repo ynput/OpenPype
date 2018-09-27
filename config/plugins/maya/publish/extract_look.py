@@ -7,7 +7,7 @@ from maya import cmds
 import pyblish.api
 import avalon.maya
 import config.api
-import config.apps.maya.lib as maya
+import config.maya.lib as maya
 
 from cb.utils.maya import context
 

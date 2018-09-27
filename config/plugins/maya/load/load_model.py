@@ -1,8 +1,8 @@
 from avalon import api
-import config.apps.maya.plugin
+import config.maya.plugin
 
 
-class ModelLoader(config.apps.maya.plugin.ReferenceLoader):
+class ModelLoader(config.maya.plugin.ReferenceLoader):
     """Load the model"""
 
     families = ["studio.model"]

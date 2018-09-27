@@ -6,7 +6,7 @@ from maya import cmds
 
 import avalon.maya.lib as lib
 import config.api
-import config.apps.maya.lib as maya
+import config.maya.lib as maya
 
 
 @contextlib.contextmanager

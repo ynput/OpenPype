@@ -14,7 +14,7 @@ from ..lib import (
 from . import menu
 from . import lib
 
-log = logging.getLogger("config.apps.maya")
+log = logging.getLogger("config.maya")
 
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)

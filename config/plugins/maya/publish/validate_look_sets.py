@@ -1,4 +1,4 @@
-from config.apps.maya import lib
+from config.maya import lib
 
 import pyblish.api
 import config.api
