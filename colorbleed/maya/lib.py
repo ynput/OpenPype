@@ -11,6 +11,7 @@ import contextlib
 from collections import OrderedDict, defaultdict
 
 from maya import cmds, mel
+import maya.api.OpenMaya as om
 
 from avalon import api, maya, io, pipeline
 from avalon.vendor.six import string_types
@@ -764,10 +765,20 @@ def get_id(node):
     if node is None:
         return
 
-    if not cmds.attributeQuery("cbId", node=node, exists=True):
+    sel = om.MSelectionList()
+    sel.add(node)
+
+    api_node = sel.getDependNode(0)
+    fn = om.MFnDependencyNode(api_node)
+
+    if not fn.hasAttribute("cbId"):
         return
 
-    return cmds.getAttr("{}.cbId".format(node))
+    try:
+        return fn.findPlug("cbId", False).asString()
+    except RuntimeError:
+        log.warning("Failed to retrieve cbId on %s", node)
+        return
 
 
 def generate_ids(nodes, asset_id=None):
@@ -828,7 +839,6 @@ def set_id(node, unique_id, overwrite=False):
 
     """
 
-    attr = "{0}.cbId".format(node)
     exists = cmds.attributeQuery("cbId", node=node, exists=True)
 
     # Add the attribute if it does not exist yet
@@ -837,6 +847,7 @@ def set_id(node, unique_id, overwrite=False):
 
     # Set the value
     if not exists or overwrite:
+        attr = "{0}.cbId".format(node)
         cmds.setAttr(attr, unique_id, type="string")
 
 
