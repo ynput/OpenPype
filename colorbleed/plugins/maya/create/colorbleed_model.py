@@ -18,6 +18,6 @@ class CreateModel(avalon.maya.Creator):
         data = OrderedDict(**self.data)
 
         # Write vertex colors with the geometry.
-        data["writeColorSets"] = False
+        data["writeColorSets"] = True
 
         self.data = data
