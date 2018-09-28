@@ -27,7 +27,7 @@ class CreateAlembicCamera(houdini.Creator):
         parms = {"use_sop_path": True,
                  "build_from_path": True,
                  "path_attrib": "path",
-                 "filename": "$HIP/%s.abc" % self.name}
+                 "filename": "$HIP/pyblish/%s.abc" % self.name}
 
         if self.nodes:
             node = self.nodes[0]
