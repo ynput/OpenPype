@@ -25,7 +25,7 @@ class CollectAnimation(pyblish.api.InstancePlugin):
                       "f2": "endFrame",
                       "f3": "steps"}
 
-        data = {name: node.parm(par).eval() for par, name in
+        data = {name: node.evalParm(parm) for parm, name in
                 parameters.items()}
 
         instance.data.update(data)
