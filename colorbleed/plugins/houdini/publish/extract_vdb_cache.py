@@ -31,9 +31,9 @@ class ExtractVDBCache(colorbleed.api.Extractor):
             file_name.replace(frame_nr, "%04d")
 
         # We run the render
-        self.log.info(
-            "Starting render: {startFrame} - {endFrame}".format(**instance.data)
-        )
+        #self.log.info(
+        #    "Starting render: {startFrame} - {endFrame}".format(**instance.data)
+        #)
         ropnode.render()
 
         if "files" not in instance.data:
