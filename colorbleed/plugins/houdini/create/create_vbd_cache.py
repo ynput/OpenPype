@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from avalon import houdini
 
 
@@ -14,13 +12,10 @@ class CreateVDBCache(houdini.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateVDBCache, self).__init__(*args, **kwargs)
 
-        # create an ordered dict with the existing data first
-        data = OrderedDict(**self.data)
-
-        # Set node type to create for output
-        data["node_type"] = "geometry"
-
-        self.data = data
+        self.data.update({
+            "node_type": "geometry",  # Set node type to create for output
+            "executeBackground": True  # Render node in background
+        })
 
     def process(self):
         instance = super(CreateVDBCache, self).process()

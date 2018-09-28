@@ -4,6 +4,8 @@ import re
 import pyblish.api
 import colorbleed.api
 
+import hou
+
 
 class ExtractVDBCache(colorbleed.api.Extractor):
 
@@ -17,9 +19,9 @@ class ExtractVDBCache(colorbleed.api.Extractor):
         ropnode = instance[0]
 
         # Get the filename from the filename parameter
-        # `.eval()` will make sure all tokens are resolved
-        output = ropnode.parm("sopoutput").eval()
-        staging_dir = os.path.dirname(output)
+        # `.evalParm(parameter)` will make sure all tokens are resolved
+        output = ropnode.evalParm("sopoutput")
+        staging_dir = os.path.normpath(os.path.dirname(output))
         instance.data["stagingDir"] = staging_dir
 
         # Replace the 4 digits to match file sequence token '%04d' if we have
@@ -31,10 +33,25 @@ class ExtractVDBCache(colorbleed.api.Extractor):
             file_name.replace(frame_nr, "%04d")
 
         # We run the render
-        #self.log.info(
-        #    "Starting render: {startFrame} - {endFrame}".format(**instance.data)
-        #)
-        ropnode.render()
+        start_frame = instance.data.get("startFrame", None)
+        end_frame = instance.data.get("endFrame", None)
+        if all(f for f in [start_frame, end_frame]):
+            self.log.info(
+                "Starting render: {} - {}".format(start_frame, end_frame)
+            )
+
+        # Ensure output folder exists
+        if not os.path.isdir(staging_dir):
+            os.makedirs(staging_dir)
+
+            assert os.path.exists(staging_dir)
+
+        if instance.data.get("executeBackground", True):
+            self.log.info("Creating background task..")
+            ropnode.parm("executebackground").pressButton()
+            self.log.info("Finished")
+        else:
+            ropnode.render()
 
         if "files" not in instance.data:
             instance.data["files"] = []
