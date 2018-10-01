@@ -46,7 +46,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             data = lib.read(node)
             # Check bypass state and reverse
-            data.update({"active": not node.isBypassed})
+            data.update({"active": not node.isBypassed()})
 
             # temporarily translation of `active` to `publish` till issue has
             # been resolved, https://github.com/pyblish/pyblish-base/issues/307
