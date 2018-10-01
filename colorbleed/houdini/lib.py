@@ -95,6 +95,59 @@ def get_additional_data(container):
     return container
 
 
+def set_parameter_callback(node, parameter, language, callback):
+    """Link a callback to a parameter of a node
+
+    Args:
+        node(hou.Node): instance of the nodee
+        parameter(str): name of the parameter
+        language(str): name of the language, e.g.: python
+        callback(str): command which needs to be triggered
+
+    Returns:
+        None
+
+    """
+
+    template_grp = node.parmTemplateGroup()
+    template = template_grp.find(parameter)
+    if not template:
+        return
+
+    script_language = (hou.scriptLanguage.Python if language == "python" else
+                       hou.scriptLanguage.Hscript)
+
+    template.setScriptCallbackLanguage(script_language)
+    template.setScriptCallback(callback)
+
+    template.setTags({"script_callback": callback,
+                      "script_callback_language": language.lower()})
+
+    # Replace the existing template with the adjusted one
+    template_grp.replace(parameter, template)
+
+    node.setParmTemplateGroup(template_grp)
+
+
+def set_parameter_callbacks(node, parameter_callbacks):
+    """Set callbacks for multiple parameters of a node
+
+    Args:
+        node(hou.Node): instance of a hou.Node
+        parameter_callbacks(dict): collection of parameter and callback data
+            example:  {"active" :
+                        {"language": "python",
+                         "callback": "print('hello world)'"}
+                     }
+    Returns:
+        None
+    """
+    for parameter, data in parameter_callbacks.items():
+        language = data["language"]
+        callback = data["callback"]
+
+        set_parameter_callback(node, parameter, language, callback)
+
 @contextmanager
 def attribute_values(node, data):
 
