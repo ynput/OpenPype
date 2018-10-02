@@ -2,6 +2,7 @@ import os
 
 from avalon import api as avalon
 from pyblish import api as pyblish
+from avalon.tools import workfiles
 
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)
@@ -32,6 +33,11 @@ def install():
 
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
+
+    # work files start at app start
+    workfiles.show(
+        os.environ["AVALON_WORKDIR"]
+    )
 
 
 def uninstall():
