@@ -23,7 +23,9 @@ class CreateVDBCache(houdini.Creator):
     def process(self):
         instance = super(CreateVDBCache, self).process()
 
-        parms = {"sopoutput": "$HIP/pyblish/%s.$F4.vdb" % self.name}
+        parms = {"sopoutput": "$HIP/pyblish/%s.$F4.vdb" % self.name,
+                 "initsim": True}
+
         if self.nodes:
             parms.update({"soppath": self.nodes[0].path()})
 
