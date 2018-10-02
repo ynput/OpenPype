@@ -148,6 +148,35 @@ def set_parameter_callbacks(node, parameter_callbacks):
 
         set_parameter_callback(node, parameter, language, callback)
 
+
+def get_output_parameter(node):
+    """Return the render output parameter name of the given node
+
+    Example:
+        root = hou.node("/obj")
+        my_alembic_node = root.createNode("alembic")
+        get_output_parameter(my_alembic_node)
+        # Result: "output"
+
+    Args:
+        node(hou.Node): node instance
+
+    Returns:
+        hou.Parm
+
+    """
+
+    node_type = node.type().name()
+    if node_type == "geometry":
+        return node.parm("sopoutput")
+
+    elif node_type == "alembic":
+        return node.parm("filename")
+
+    else:
+        raise TypeError("Node type '%s' not supported" % node_type)
+
+
 @contextmanager
 def attribute_values(node, data):
 
