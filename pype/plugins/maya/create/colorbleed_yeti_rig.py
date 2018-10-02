@@ -7,7 +7,7 @@ class CreateYetiRig(avalon.maya.Creator):
     """Output for procedural plugin nodes ( Yeti / XGen / etc)"""
 
     label = "Yeti Rig"
-    family = "studio.yetiRig"
+    family = "yetiRig"
     icon = "usb"
 
     def process(self):

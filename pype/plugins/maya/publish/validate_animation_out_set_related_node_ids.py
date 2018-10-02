@@ -16,7 +16,7 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ['studio.animation', "studio.pointcache"]
+    families = ['studio.animation', "pointcache"]
     hosts = ['maya']
     label = 'Animation Out Set Related Node Ids'
     actions = [pype.api.SelectInvalidAction, pype.api.RepairAction]

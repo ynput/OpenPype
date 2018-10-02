@@ -18,7 +18,7 @@ class ExtractCameraAlembic(pype.api.Extractor):
 
     label = "Camera (Alembic)"
     hosts = ["maya"]
-    families = ["studio.camera"]
+    families = ["camera"]
 
     def process(self, instance):
 

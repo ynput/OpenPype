@@ -99,7 +99,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
-    families = ["studio.renderlayer"]
+    families = ["renderlayer"]
 
     def process(self, instance):
 

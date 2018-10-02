@@ -8,7 +8,7 @@ class CreateVrayProxy(avalon.maya.Creator):
 
     name = "vrayproxy"
     label = "VRay Proxy"
-    family = "studio.vrayproxy"
+    family = "vrayproxy"
     icon = "gears"
 
     def __init__(self, *args, **kwargs):

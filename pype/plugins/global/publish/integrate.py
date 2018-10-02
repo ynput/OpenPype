@@ -23,18 +23,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
-    families = ["studio.animation",
-                "studio.camera",
-                "studio.imagesequence",
-                "studio.look",
+    families = ["animation",
+                "camera",
+                "imagesequence",
+                "look",
                 "pype.mayaAscii",
-                "studio.model",
-                "studio.pointcache",
-                "studio.setdress",
-                "studio.rig",
-                "studio.vrayproxy",
-                "studio.yetiRig",
-                "studio.yeticache"]
+                "model",
+                "pointcache",
+                "setdress",
+                "rig",
+                "vrayproxy",
+                "yetiRig",
+                "yeticache"]
 
     def process(self, instance):
 

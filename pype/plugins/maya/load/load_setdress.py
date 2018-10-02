@@ -3,7 +3,7 @@ from avalon import api
 
 class SetDressLoader(api.Loader):
 
-    families = ["studio.setdress"]
+    families = ["setdress"]
     representations = ["json"]
 
     label = "Load Set Dress"

@@ -148,7 +148,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     raise RuntimeError("Invalid sequence")
 
             # Get family from the data
-            families = data.get("families", ["studio.imagesequence"])
+            families = data.get("families", ["imagesequence"])
             assert isinstance(families, (list, tuple)), "Must be iterable"
             assert families, "Must have at least a single family"
 

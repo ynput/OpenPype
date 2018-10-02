@@ -27,7 +27,7 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder + 0.05
     label = "Rig Controllers (Arnold Attributes)"
     hosts = ["maya"]
-    families = ["studio.rig"]
+    families = ["rig"]
     actions = [pype.api.RepairAction,
                pype.api.SelectInvalidAction]
 

@@ -243,7 +243,7 @@ def collect_container_metadata(container):
     """
     # TODO: Improve method of getting the host lib module
     host_name = _get_host_name()
-    package_name = "studio.{}.lib".format(host_name)
+    package_name = "pype.{}.lib".format(host_name)
     hostlib = importlib.import_module(package_name)
 
     if not hasattr(hostlib, "get_additional_data"):

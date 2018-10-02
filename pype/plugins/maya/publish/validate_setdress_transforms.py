@@ -25,7 +25,7 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder + 0.49
     label = "Setdress Model Transforms"
-    families = ["studio.setdress"]
+    families = ["setdress"]
     actions = [pype.api.SelectInvalidAction,
                pype.api.RepairAction]
 

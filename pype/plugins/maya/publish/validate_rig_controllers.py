@@ -26,7 +26,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder + 0.05
     label = "Rig Controllers"
     hosts = ["maya"]
-    families = ["studio.rig"]
+    families = ["rig"]
     actions = [pype.api.RepairAction,
                pype.api.SelectInvalidAction]
 

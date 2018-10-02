@@ -4,7 +4,7 @@ import pype.maya.plugin
 class LookLoader(pype.maya.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
 
-    families = ["studio.look"]
+    families = ["look"]
     representations = ["ma"]
 
     label = "Reference look"

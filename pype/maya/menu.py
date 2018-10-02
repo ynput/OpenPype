@@ -7,7 +7,7 @@ from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
-self._menu = "pype_setup"
+self._menu = "pype"
 
 log = logging.getLogger(__name__)
 

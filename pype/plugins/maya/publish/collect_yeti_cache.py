@@ -28,7 +28,7 @@ class CollectYetiCache(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.45
     label = "Collect Yeti Cache"
-    families = ["studio.yetiRig", "studio.yeticache"]
+    families = ["yetiRig", "yeticache"]
     hosts = ["maya"]
     tasks = ["animation", "fx"]
 

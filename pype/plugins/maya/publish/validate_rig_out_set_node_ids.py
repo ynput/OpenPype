@@ -16,7 +16,7 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["studio.rig"]
+    families = ["rig"]
     hosts = ['maya']
     label = 'Rig Out Set Node Ids'
     actions = [pype.api.SelectInvalidAction, pype.api.RepairAction]

@@ -4,9 +4,9 @@ import pype.maya.plugin
 class AbcLoader(pype.maya.plugin.ReferenceLoader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["studio.animation",
-                "studio.camera",
-                "studio.pointcache"]
+    families = ["animation",
+                "camera",
+                "pointcache"]
     representations = ["abc"]
 
     label = "Reference animation"

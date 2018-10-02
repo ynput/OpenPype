@@ -16,7 +16,7 @@ class ExtractYetiCache(pype.api.Extractor):
 
     label = "Extract Yeti Cache"
     hosts = ["maya"]
-    families = ["studio.yetiRig", "studio.yeticache"]
+    families = ["yetiRig", "yeticache"]
 
     def process(self, instance):
 

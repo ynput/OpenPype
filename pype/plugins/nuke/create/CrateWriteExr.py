@@ -8,7 +8,7 @@ class CrateWriteExr(avalon.api.Creator):
     name = "Write_exr"
     label = "Create Write: exr"
     hosts = ["nuke"]
-    family = "studio.write"
+    family = "write"
     icon = "sign-out"
 
     # def __init__(self, *args, **kwargs):

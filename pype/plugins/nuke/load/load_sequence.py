@@ -113,7 +113,7 @@
 # class FusionLoadSequence(api.Loader):
 #     """Load image sequence into Fusion"""
 #
-#     families = ["studio.imagesequence"]
+#     families = ["imagesequence"]
 #     representations = ["*"]
 #
 #     label = "Load sequence"

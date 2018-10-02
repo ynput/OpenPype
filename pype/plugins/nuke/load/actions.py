@@ -8,11 +8,11 @@
 # class FusionSetFrameRangeLoader(api.Loader):
 #     """Specific loader of Alembic for the avalon.animation family"""
 #
-#     families = ["studio.animation",
-#                 "studio.camera",
-#                 "studio.imagesequence",
-#                 "studio.yeticache",
-#                 "studio.pointcache"]
+#     families = ["animation",
+#                 "camera",
+#                 "imagesequence",
+#                 "yeticache",
+#                 "pointcache"]
 #     representations = ["*"]
 #
 #     label = "Set frame range"
@@ -41,11 +41,11 @@
 # class FusionSetFrameRangeWithHandlesLoader(api.Loader):
 #     """Specific loader of Alembic for the avalon.animation family"""
 #
-#     families = ["studio.animation",
-#                 "studio.camera",
-#                 "studio.imagesequence",
-#                 "studio.yeticache",
-#                 "studio.pointcache"]
+#     families = ["animation",
+#                 "camera",
+#                 "imagesequence",
+#                 "yeticache",
+#                 "pointcache"]
 #     representations = ["*"]
 #
 #     label = "Set frame range (with handles)"

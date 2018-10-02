@@ -16,7 +16,7 @@ class ValidateSetdressNamespaces(pyblish.api.InstancePlugin):
 
     label = "Validate Setdress Namespaces"
     order = pyblish.api.ValidatorOrder
-    families = ["studio.setdress"]
+    families = ["setdress"]
     actions = [pype.api.SelectInvalidAction]
 
     def process(self, instance):

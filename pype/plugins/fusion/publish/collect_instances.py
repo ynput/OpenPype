@@ -76,8 +76,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 "outputDir": os.path.dirname(path),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
-                "families": ["studio.saver"],
-                "family": "studio.saver",
+                "families": ["saver"],
+                "family": "saver",
                 "active": active,
                 "publish": active   # backwards compatibility
             })

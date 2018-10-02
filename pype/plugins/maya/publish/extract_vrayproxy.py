@@ -16,7 +16,7 @@ class ExtractVRayProxy(pype.api.Extractor):
 
     label = "VRay Proxy (.vrmesh)"
     hosts = ["maya"]
-    families = ["studio.vrayproxy"]
+    families = ["vrayproxy"]
 
     def process(self, instance):
 

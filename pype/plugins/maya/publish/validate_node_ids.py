@@ -16,12 +16,12 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
     order = pype.api.ValidatePipelineOrder
     label = 'Instance Nodes Have ID'
     hosts = ['maya']
-    families = ["studio.model",
-                "studio.look",
-                "studio.rig",
-                "studio.pointcache",
-                "studio.animation",
-                "studio.setdress"]
+    families = ["model",
+                "look",
+                "rig",
+                "pointcache",
+                "animation",
+                "setdress"]
 
     actions = [pype.api.SelectInvalidAction,
                pype.api.GenerateUUIDsOnInvalidAction]

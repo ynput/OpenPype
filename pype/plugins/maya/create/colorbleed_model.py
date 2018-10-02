@@ -6,5 +6,5 @@ class CreateModel(avalon.maya.Creator):
 
     name = "modelDefault"
     label = "Model"
-    family = "studio.model"
+    family = "model"
     icon = "cube"

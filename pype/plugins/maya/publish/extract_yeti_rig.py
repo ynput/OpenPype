@@ -66,7 +66,7 @@ class ExtractYetiRig(pype.api.Extractor):
 
     label = "Extract Yeti Rig"
     hosts = ["maya"]
-    families = ["studio.yetiRig"]
+    families = ["yetiRig"]
 
     def process(self, instance):
 

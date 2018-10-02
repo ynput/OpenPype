@@ -53,7 +53,7 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
 
     label = "Camera (Maya Ascii)"
     hosts = ["maya"]
-    families = ["studio.camera"]
+    families = ["camera"]
 
     def process(self, instance):
 

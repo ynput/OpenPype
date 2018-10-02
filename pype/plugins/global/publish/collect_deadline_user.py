@@ -35,7 +35,7 @@ class CollectDeadlineUser(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.499
     label = "Deadline User"
     hosts = ['maya', 'fusion']
-    families = ["studio.renderlayer", "studio.saver.deadline"]
+    families = ["renderlayer", "saver.deadline"]
 
     def process(self, context):
         """Inject the current working file"""

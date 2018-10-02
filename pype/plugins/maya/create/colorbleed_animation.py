@@ -9,7 +9,7 @@ class CreateAnimation(avalon.maya.Creator):
 
     name = "animationDefault"
     label = "Animation"
-    family = "studio.animation"
+    family = "animation"
     icon = "male"
 
     def __init__(self, *args, **kwargs):
