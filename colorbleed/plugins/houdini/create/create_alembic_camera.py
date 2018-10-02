@@ -13,13 +13,11 @@ class CreateAlembicCamera(houdini.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateAlembicCamera, self).__init__(*args, **kwargs)
 
-        # create an ordered dict with the existing data first
-        data = OrderedDict(**self.data)
+        # Remove the active, we are checking the bypass flag of the nodes
+        self.data.pop("active", None)
 
         # Set node type to create for output
-        data["node_type"] = "alembic"
-
-        self.data = data
+        self.data.update({"node_type": "alembic"})
 
     def process(self):
         instance = super(CreateAlembicCamera, self).process()
@@ -27,7 +25,7 @@ class CreateAlembicCamera(houdini.Creator):
         parms = {"use_sop_path": True,
                  "build_from_path": True,
                  "path_attrib": "path",
-                 "filename": "$HIP/%s.abc" % self.name}
+                 "filename": "$HIP/pyblish/%s.abc" % self.name}
 
         if self.nodes:
             node = self.nodes[0]

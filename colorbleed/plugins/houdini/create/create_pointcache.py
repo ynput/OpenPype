@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from avalon import houdini
 
 
@@ -14,21 +12,19 @@ class CreatePointCache(houdini.Creator):
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)
 
-        # create an ordered dict with the existing data first
-        data = OrderedDict(**self.data)
+        # Remove the active, we are checking the bypass flag of the nodes
+        self.data.pop("active", None)
 
-        # Set node type to create for output
-        data["node_type"] = "alembic"
-
-        self.data = data
+        self.data.update({"node_type": "alembic"})
 
     def process(self):
         instance = super(CreatePointCache, self).process()
 
-        parms = {"use_sop_path": True,
-                 "build_from_path": True,
-                 "path_attrib": "path",
-                 "filename": "$HIP/%s.abc" % self.name}
+        parms = {"use_sop_path": True,  # Export single node from SOP Path
+                 "build_from_path": True,  # Direct path of primitive in output
+                 "path_attrib": "path",  # Pass path attribute for output
+                 "format": 2,  # Set format to Ogawa
+                 "filename": "$HIP/pyblish/%s.abc" % self.name}
 
         if self.nodes:
             node = self.nodes[0]

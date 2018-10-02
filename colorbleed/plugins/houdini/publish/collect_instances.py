@@ -38,13 +38,15 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if not node.parm("id"):
                 continue
 
-            if node.parm("id").eval() != "pyblish.avalon.instance":
+            if node.evalParm("id") != "pyblish.avalon.instance":
                 continue
 
-            has_family = node.parm("family").eval()
+            has_family = node.evalParm("family")
             assert has_family, "'%s' is missing 'family'" % node.name()
 
             data = lib.read(node)
+            # Check bypass state and reverse
+            data.update({"active": not node.isBypassed()})
 
             # temporarily translation of `active` to `publish` till issue has
             # been resolved, https://github.com/pyblish/pyblish-base/issues/307

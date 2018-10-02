@@ -42,7 +42,7 @@ class AbcLoader(api.Loader):
         container = obj.createNode("geo", node_name=node_name)
 
         # Remove the file node, it only loads static meshes
-        file_node = hou.node("/obj/{}/file1".format(node_name))
+        file_node = container.node("file1".format(node_name))
         file_node.destroy()
 
         # Create an alembic node (supports animation)
