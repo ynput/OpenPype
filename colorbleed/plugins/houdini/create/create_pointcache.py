@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from avalon import houdini
 
 
@@ -22,9 +20,10 @@ class CreatePointCache(houdini.Creator):
     def process(self):
         instance = super(CreatePointCache, self).process()
 
-        parms = {"use_sop_path": True,
-                 "build_from_path": True,
-                 "path_attrib": "path",
+        parms = {"use_sop_path": True,  # Export single node from SOP Path
+                 "build_from_path": True,  # Direct path of primitive in output
+                 "path_attrib": "path",  # Pass path attribute for output
+                 "format": 2,  # Set format to Ogawa
                  "filename": "$HIP/pyblish/%s.abc" % self.name}
 
         if self.nodes:
