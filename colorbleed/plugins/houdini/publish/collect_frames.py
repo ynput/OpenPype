@@ -2,6 +2,7 @@ import os
 import re
 
 import pyblish.api
+from colorbleed.houdini import lib
 
 
 class CollectFrames(pyblish.api.InstancePlugin):
@@ -15,15 +16,8 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
         ropnode = instance[0]
 
-        node_type = ropnode.type().name()
-        if node_type == "geometry":
-            output_parm = "sopoutput"
-        elif node_type == "alembic":
-            output_parm = "filename"
-        else:
-            raise TypeError("Node type '%s' not supported" % node_type)
-
-        output = ropnode.evalParm(output_parm)
+        output_parm = lib.get_output_parameter(ropnode)
+        output = output_parm.eval()
 
         file_name = os.path.basename(output)
         match = re.match("(\w+)\.(\d+)\.vdb", file_name)
