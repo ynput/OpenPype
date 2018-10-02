@@ -33,7 +33,7 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
         # Check if type is correct
         type_name = output_node.type().name()
         if type_name not in ["output", "cam"]:
-            cls.log.error("Output node `%s` is an accepted type `output` "
+            cls.log.error("Output node `%s` is not an accepted type `output` "
                           "or `camera`" %
                           output_node.path())
             return [output_node.path()]
