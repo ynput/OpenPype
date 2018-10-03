@@ -14,7 +14,7 @@ def _get_script():
     # todo: use a more elegant way to get the python script
 
     try:
-        from pype.scripts import publish_filesequence
+        from pype.fusion.scripts import publish_filesequence
     except Exception:
         raise RuntimeError("Expected module 'publish_imagesequence'"
                            "to be available")
