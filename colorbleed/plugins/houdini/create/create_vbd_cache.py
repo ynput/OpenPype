@@ -27,6 +27,7 @@ class CreateVDBCache(houdini.Creator):
                  "initsim": True}
 
         if self.nodes:
-            parms.update({"soppath": self.nodes[0].path()})
+            node = self.nodes[0]
+            parms.update({"sop_path": node.path()})
 
         instance.setParms(parms)
