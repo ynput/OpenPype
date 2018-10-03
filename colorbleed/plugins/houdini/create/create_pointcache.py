@@ -28,6 +28,6 @@ class CreatePointCache(houdini.Creator):
 
         if self.nodes:
             node = self.nodes[0]
-            parms.update({"sop_path": "%s/OUT" % node.path()})
+            parms.update({"sop_path": node.path()})
 
         instance.setParms(parms)
