@@ -26,7 +26,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        assert "input_SET" in cmds.sets(instance.name, query=True), (
+        assert "input_SET" in instance.data["setMembers"], (
             "Yeti Rig must have an input_SET")
 
         # Get the input meshes information
