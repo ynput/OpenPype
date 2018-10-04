@@ -1407,6 +1407,11 @@ def set_scene_fps(fps, update=True):
     # Get time slider current state
     start_frame = cmds.playbackOptions(query=True, minTime=True)
     end_frame = cmds.playbackOptions(query=True, maxTime=True)
+
+    # Get animation data
+    animation_start = cmds.playbackOptions(query=True, animationStartTime=True)
+    animation_end = cmds.playbackOptions(query=True, animationEndTime=True)
+
     current_frame = cmds.currentTime(query=True)
 
     log.info("Updating FPS to '{}'".format(unit))
@@ -1415,6 +1420,11 @@ def set_scene_fps(fps, update=True):
     # Set time slider data back to previous state
     cmds.playbackOptions(edit=True, minTime=start_frame)
     cmds.playbackOptions(edit=True, maxTime=end_frame)
+
+    # Set animation data
+    cmds.playbackOptions(edit=True, animationStartTime=animation_start)
+    cmds.playbackOptions(edit=True, animationEndTime=animation_end)
+
     cmds.currentTime(current_frame, edit=True, update=True)
 
     # Force file stated to 'modified'
