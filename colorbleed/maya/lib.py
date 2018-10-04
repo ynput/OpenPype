@@ -1404,8 +1404,18 @@ def set_scene_fps(fps, update=True):
     else:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
 
+    # Get time slider current state
+    start_frame = cmds.playbackOptions(query=True, minTime=True)
+    end_frame = cmds.playbackOptions(query=True, maxTime=True)
+    current_frame = cmds.currentTime(query=True)
+
     log.info("Updating FPS to '{}'".format(unit))
     cmds.currentUnit(time=unit, updateAnimation=update)
+
+    # Set time slider data back to previous state
+    cmds.playbackOptions(edit=True, minTime=start_frame)
+    cmds.playbackOptions(edit=True, maxTime=end_frame)
+    cmds.currentTime(current_frame, edit=True, update=True)
 
     # Force file stated to 'modified'
     cmds.file(modified=True)
