@@ -53,6 +53,41 @@ def disconnect_plugs(settings, members):
                 continue
 
 
+@contextlib.contextmanager
+def yetigraph_attribute_values(assumed_destination, resources):
+
+    try:
+        for resource in resources:
+            if "graphnode" not in resource:
+                continue
+
+            fname = os.path.basename(resource["source"])
+            new_fpath = os.path.join(assumed_destination, fname)
+            new_fpath = new_fpath.replace("\\", "/")
+
+            try:
+                cmds.pgYetiGraph(resource["node"],
+                                 node=resource["graphnode"],
+                                 param=resource["param"],
+                                 setParamValueString=new_fpath)
+            except Exception as exc:
+                print(">>> Exception:", exc)
+        yield
+
+    finally:
+        for resource in resources:
+            if "graphnode" not in resources:
+                continue
+
+            try:
+                cmds.pgYetiGraph(resource["node"],
+                                 node=resource["graphnode"],
+                                 param=resource["param"],
+                                 setParamValue=resource["source"])
+            except RuntimeError:
+                pass
+
+
 class ExtractYetiRig(colorbleed.api.Extractor):
     """Extract the Yeti rig to a MayaAscii and write the Yeti rig data"""
 
@@ -75,19 +110,18 @@ class ExtractYetiRig(colorbleed.api.Extractor):
 
         self.log.info("Writing metadata file")
 
-        image_search_path = ""
+        # Create assumed destination folder for imageSearchPath
+        assumed_temp_data = instance.data["assumedTemplateData"]
+        template = instance.data["template"]
+        template_formatted = template.format(**assumed_temp_data)
+
+        destination_folder = os.path.dirname(template_formatted)
+
+        image_search_path = os.path.join(destination_folder, "resources")
+        image_search_path = os.path.normpath(image_search_path)
+
         settings = instance.data.get("rigsettings", None)
         if settings:
-
-            # Create assumed destination folder for imageSearchPath
-            assumed_temp_data = instance.data["assumedTemplateData"]
-            template = instance.data["template"]
-            template_formatted = template.format(**assumed_temp_data)
-
-            destination_folder = os.path.dirname(template_formatted)
-            image_search_path = os.path.join(destination_folder, "resources")
-            image_search_path = os.path.normpath(image_search_path)
-
             settings["imageSearchPath"] = image_search_path
             with open(settings_path, "w") as fp:
                 json.dump(settings, fp, ensure_ascii=False)
@@ -104,19 +138,21 @@ class ExtractYetiRig(colorbleed.api.Extractor):
         set_members += cmds.listRelatives(set_members,
                                           allDescendents=True,
                                           fullPath=True) or []
-        members = cmds.ls(set_members, long=True, objects=True)
+        members = cmds.ls(set_members, long=True)
 
         nodes = instance.data["setMembers"]
+        resources = instance.data.get("resources", {})
         with disconnect_plugs(settings, members):
-            with maya.attribute_values(attr_value):
-                cmds.select(nodes, noExpand=True)
-                cmds.file(maya_path,
-                          force=True,
-                          exportSelected=True,
-                          typ="mayaAscii",
-                          preserveReferences=False,
-                          constructionHistory=True,
-                          shader=False)
+            with yetigraph_attribute_values(destination_folder, resources):
+                with maya.attribute_values(attr_value):
+                    cmds.select(nodes, noExpand=True)
+                    cmds.file(maya_path,
+                              force=True,
+                              exportSelected=True,
+                              typ="mayaAscii",
+                              preserveReferences=False,
+                              constructionHistory=True,
+                              shader=False)
 
         # Ensure files can be stored
         if "files" not in instance.data:
