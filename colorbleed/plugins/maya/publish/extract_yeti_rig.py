@@ -10,7 +10,7 @@ import colorbleed.maya.lib as maya
 
 
 @contextlib.contextmanager
-def disconnected_attributes(settings, members):
+def disconnect_plugs(settings, members):
 
     members = cmds.ls(members, long=True)
     original_connections = []
@@ -19,35 +19,32 @@ def disconnected_attributes(settings, members):
 
             # Get source shapes
             source_nodes = lib.lsattr("cbId", input["sourceID"])
-            sources = [i for i in source_nodes if
-                       not cmds.referenceQuery(i, isNodeReferenced=True)
-                       and i in members]
-            try:
-                source = sources[0]
-            except IndexError:
-                print("source_id:", input["sourceID"])
+            if not source_nodes:
                 continue
+
+            source = next(s for s in source_nodes if s not in members)
 
             # Get destination shapes (the shapes used as hook up)
             destination_nodes = lib.lsattr("cbId", input["destinationID"])
-            destinations = [i for i in destination_nodes if i not in members
-                            and i not in sources]
-            destination = destinations[0]
+            destination = next(i for i in destination_nodes if i in members)
 
-            # Break connection
+            # Create full connection
             connections = input["connections"]
             src_attribute = "%s.%s" % (source, connections[0])
             dst_attribute = "%s.%s" % (destination, connections[1])
 
-            # store connection pair
+            # Check if there is an actual connection
             if not cmds.isConnected(src_attribute, dst_attribute):
+                print("No connection between %s and %s" % (
+                    src_attribute, dst_attribute))
                 continue
 
+            # Break and store connection
             cmds.disconnectAttr(src_attribute, dst_attribute)
             original_connections.append([src_attribute, dst_attribute])
         yield
     finally:
-        # restore connections
+        # Restore previous connections
         for connection in original_connections:
             try:
                 cmds.connectAttr(connection[0], connection[1])
@@ -57,12 +54,7 @@ def disconnected_attributes(settings, members):
 
 
 class ExtractYetiRig(colorbleed.api.Extractor):
-    """Produce an alembic of just point positions and normals.
-
-    Positions and normals are preserved, but nothing more,
-    for plain and predictable point caches.
-
-    """
+    """Extract the Yeti rig to a MayaAscii and write the Yeti rig data"""
 
     label = "Extract Yeti Rig"
     hosts = ["maya"]
@@ -85,7 +77,7 @@ class ExtractYetiRig(colorbleed.api.Extractor):
 
         image_search_path = ""
         settings = instance.data.get("rigsettings", None)
-        if settings is not None:
+        if settings:
 
             # Create assumed destination folder for imageSearchPath
             assumed_temp_data = instance.data["assumedTemplateData"]
@@ -100,18 +92,22 @@ class ExtractYetiRig(colorbleed.api.Extractor):
             with open(settings_path, "w") as fp:
                 json.dump(settings, fp, ensure_ascii=False)
 
+        # Ensure the imageSearchPath is being remapped to the publish folder
         attr_value = {"%s.imageSearchPath" % n: str(image_search_path) for
                       n in yeti_nodes}
 
         # Get input_SET members
-        input_set = [i for i in instance if i == "input_SET"]
+        input_set = next(i for i in instance if i == "input_SET")
+
         # Get all items
-        set_members = cmds.sets(input_set[0], query=True)
-        members = cmds.listRelatives(set_members, ad=True, fullPath=True) or []
-        members += cmds.ls(set_members, long=True)
+        set_members = cmds.sets(input_set, query=True)
+        set_members += cmds.listRelatives(set_members,
+                                          allDescendents=True,
+                                          fullPath=True) or []
+        members = cmds.ls(set_members, long=True, objects=True)
 
         nodes = instance.data["setMembers"]
-        with disconnected_attributes(settings, members):
+        with disconnect_plugs(settings, members):
             with maya.attribute_values(attr_value):
                 cmds.select(nodes, noExpand=True)
                 cmds.file(maya_path,
