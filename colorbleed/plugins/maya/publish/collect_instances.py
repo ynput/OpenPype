@@ -115,7 +115,13 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Create the instance
             instance = context.create_instance(label)
             instance[:] = members_hierarchy
+
+            # Store a reference to the object set of this instance
+            instance.data["objectSet"] = objset
+
+            # Store the exact members of the object set
             instance.data["setMembers"] = members
+
             instance.data.update(data)
 
             # Produce diagnostic message for any graphical
