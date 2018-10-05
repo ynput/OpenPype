@@ -16,7 +16,8 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ["colorbleed.model",
                 "colorbleed.look",
-                "colorbleed.rig"]
+                "colorbleed.rig",
+                "colorbleed.yetiRig"]
 
     actions = [colorbleed.api.SelectInvalidAction,
                colorbleed.api.GenerateUUIDsOnInvalidAction]

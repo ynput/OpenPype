@@ -30,16 +30,18 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             "Yeti Rig must have an input_SET")
 
         # Get the input meshes information
-        input_content = cmds.sets("input_SET", query=True)
-        input_nodes = cmds.listRelatives(input_content,
-                                         allDescendents=True,
-                                         fullPath=True) or input_content
+        input_content = cmds.ls(cmds.sets("input_SET", query=True), long=True)
 
-        # Get all the shapes
-        input_shapes = cmds.ls(input_nodes, long=True, noIntermediate=True)
+        # Include children
+        input_content += cmds.listRelatives(input_content,
+                                            allDescendents=True,
+                                            fullPath=True) or []
+
+        # Ignore intermediate objects
+        input_content = cmds.ls(input_content, long=True, noIntermediate=True)
 
         # Store all connections
-        connections = cmds.listConnections(input_shapes,
+        connections = cmds.listConnections(input_content,
                                            source=True,
                                            destination=False,
                                            connections=True,
@@ -150,7 +152,6 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                  if re.match(re_pattern, f)]
 
         pattern = [clique.PATTERNS["frames"]]
-        collection, remainder = clique.assemble(files,
-                                                patterns=pattern)
+        collection, remainder = clique.assemble(files, patterns=pattern)
 
         return collection
