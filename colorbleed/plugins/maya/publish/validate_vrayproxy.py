@@ -21,7 +21,3 @@ class ValidateVrayProxy(pyblish.api.InstancePlugin):
 
         if not data["setMembers"]:
             cls.log.error("'%s' is empty! This is a bug" % instance.name)
-
-        if data["animation"]:
-            if data["endFrame"] < data["startFrame"]:
-                cls.log.error("End frame is smaller than start frame")
