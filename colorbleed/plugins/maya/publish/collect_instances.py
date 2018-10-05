@@ -102,6 +102,13 @@ class CollectInstances(pyblish.api.ContextPlugin):
             parents = self.get_all_parents(members)
             members_hierarchy = list(set(members + children + parents))
 
+            # Create the instance
+            instance = context.create_instance(objset)
+            instance[:] = members_hierarchy
+
+            # Store the exact members of the object set
+            instance.data["setMembers"] = members
+
             # Define nice label
             name = cmds.ls(objset, long=False)[0]   # use short name
             label = "{0} ({1})".format(name,
@@ -112,15 +119,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 label += "  [{0}-{1}]".format(int(data["startFrame"]),
                                               int(data["endFrame"]))
 
-            # Create the instance
-            instance = context.create_instance(label)
-            instance[:] = members_hierarchy
-
-            # Store a reference to the object set of this instance
-            instance.data["objectSet"] = objset
-
-            # Store the exact members of the object set
-            instance.data["setMembers"] = members
+            instance.data["label"] = label
 
             instance.data.update(data)
 
