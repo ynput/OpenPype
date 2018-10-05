@@ -108,7 +108,8 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
             label += "  [{0}-{1}]".format(int(data["startFrame"]),
                                           int(data["endFrame"]))
 
-            instance = context.create_instance(label)
+            instance = context.create_instance(layername)
+            instance.data["label"] = label
             instance.data.update(data)
 
     def get_render_attribute(self, attr):

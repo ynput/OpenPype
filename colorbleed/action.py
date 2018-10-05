@@ -41,7 +41,7 @@ def get_errored_plugins_from_data(context):
 class RepairAction(pyblish.api.Action):
     """Repairs the action
 
-    To process the repairing this requires a static `repair(instance)` method 
+    To process the repairing this requires a static `repair(instance)` method
     is available on the plugin.
 
     """
@@ -67,7 +67,7 @@ class RepairAction(pyblish.api.Action):
 class RepairContextAction(pyblish.api.Action):
     """Repairs the action
 
-    To process the repairing this requires a static `repair(instance)` method 
+    To process the repairing this requires a static `repair(instance)` method
     is available on the plugin.
 
     """
@@ -153,6 +153,8 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
 
     def process(self, context, plugin):
 
+        from maya import cmds
+
         self.log.info("Finding bad nodes..")
 
         # Get the errored instances
@@ -170,6 +172,18 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
         all_invalid = []
         for instance in instances:
             invalid = plugin.get_invalid(instance)
+
+            # Don't allow referenced nodes to get their ids regenerated to
+            # avoid loaded content getting messed up with reference edits
+            if invalid:
+                referenced = {node for node in invalid if
+                              cmds.referenceQuery(node, isNodeReferenced=True)}
+                if referenced:
+                    self.log.warning("Skipping UUID generation on referenced "
+                                     "nodes: {}".format(list(referenced)))
+                    invalid = [node for node in invalid
+                               if node not in referenced]
+
             if invalid:
 
                 self.log.info("Fixing instance {}".format(instance.name))
