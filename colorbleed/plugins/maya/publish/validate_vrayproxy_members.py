@@ -33,5 +33,5 @@ class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
             cls.log.error("'%s' contains no shapes." % instance.name)
 
             # Return the instance itself
-            return [instance.data["objectSet"]]
+            return [instance.name]
 
