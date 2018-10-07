@@ -3,6 +3,8 @@ import sys
 
 import imp
 
+from app.lib import templ
+
 from pyblish import api as pyblish
 from avalon import api as avalon
 
@@ -15,6 +17,10 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 # Global plugin paths
 PUBLISH_PATH = os.path.join(PLUGINS_DIR, "global", "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "global", "load")
+
+__all__ = [
+    "templ",
+]
 
 
 def install():

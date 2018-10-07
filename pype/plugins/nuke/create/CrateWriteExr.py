@@ -19,7 +19,6 @@ class CrateWriteExr(avalon.api.Creator):
         # nuke = getattr(sys.modules["__main__"], "nuke", None)
         data = {}
         ext = "exr"
-        root, nodes = avalon.nuke.get_current_script()
 
         # todo: improve method of getting current environment
         # todo: pref avalon.Session over os.environ

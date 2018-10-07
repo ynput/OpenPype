@@ -27,7 +27,7 @@ class ValidateSettingsNuke(pyblish.api.Validator):
         except KeyError:
             print(
                 "No resolution information found for \"{0}\".".format(
-                    project["name"]
+                    asset["name"]
                 )
             )
             return
