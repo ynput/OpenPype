@@ -1,14 +1,15 @@
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 from colorbleed.maya import lib
 
 
 class ValidateNodeIDs(pyblish.api.InstancePlugin):
     """Validate nodes have a Colorbleed Id.
-    
-    When IDs are missing from nodes *save your scene* and they should be 
-    automatically generated because IDs are created on non-referenced nodes 
+
+    When IDs are missing from nodes *save your scene* and they should be
+    automatically generated because IDs are created on non-referenced nodes
     in Maya upon scene save.
 
     """
@@ -23,8 +24,8 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
                 "colorbleed.animation",
                 "colorbleed.setdress"]
 
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.GenerateUUIDsOnInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction,
+               colorbleed.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

@@ -3,6 +3,8 @@ import colorbleed.api
 
 from maya import cmds
 
+import colorbleed.maya.action
+
 
 class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     """Verify only root nodes of the loaded asset have transformations.
@@ -26,7 +28,7 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder + 0.49
     label = "Setdress Model Transforms"
     families = ["colorbleed.setdress"]
-    actions = [colorbleed.api.SelectInvalidAction,
+    actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.api.RepairAction]
 
     prompt_message = ("You are about to reset the matrix to the default values."

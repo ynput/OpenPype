@@ -4,6 +4,8 @@ import pyblish.api
 import colorbleed.api
 from cb.utils.maya.context import undo_chunk
 
+import colorbleed.maya.action
+
 
 class ValidateRigControllers(pyblish.api.InstancePlugin):
     """Validate rig controllers.
@@ -28,7 +30,7 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["colorbleed.rig"]
     actions = [colorbleed.api.RepairAction,
-               colorbleed.api.SelectInvalidAction]
+               colorbleed.maya.action.SelectInvalidAction]
 
     # Default controller values
     CONTROLLER_DEFAULTS = {

@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateNoAnimation(pyblish.api.Validator):
@@ -18,7 +19,7 @@ class ValidateNoAnimation(pyblish.api.Validator):
     hosts = ["maya"]
     families = ["colorbleed.model"]
     optional = True
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     def process(self, instance):
 

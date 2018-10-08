@@ -3,6 +3,8 @@ import colorbleed.api
 
 from maya import cmds
 
+import colorbleed.maya.action
+
 
 class ValidateShapeRenderStats(pyblish.api.Validator):
     """Ensure all render stats are set to the default values."""
@@ -11,7 +13,7 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
     hosts = ['maya']
     families = ['colorbleed.model']
     label = 'Shape Default Render Stats'
-    actions = [colorbleed.api.SelectInvalidAction,
+    actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.api.RepairAction]
 
     defaults = {'castsShadows': 1,

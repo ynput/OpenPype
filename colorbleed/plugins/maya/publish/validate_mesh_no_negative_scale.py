@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateMeshNoNegativeScale(pyblish.api.Validator):
@@ -20,7 +21,7 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator):
     hosts = ['maya']
     families = ['colorbleed.model']
     label = 'Mesh No Negative Scale'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

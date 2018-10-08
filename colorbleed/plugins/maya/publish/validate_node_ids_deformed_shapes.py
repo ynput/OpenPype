@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 import colorbleed.maya.lib as lib
 
 
@@ -19,7 +20,7 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
     families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Deformed shape ids'
-    actions = [colorbleed.api.SelectInvalidAction, colorbleed.api.RepairAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction, colorbleed.api.RepairAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""

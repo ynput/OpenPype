@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 import colorbleed.maya.lib as lib
 
 
@@ -20,7 +21,7 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ['colorbleed.renderlayer']
     label = "Render Single Camera"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

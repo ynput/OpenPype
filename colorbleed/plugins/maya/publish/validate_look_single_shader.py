@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateSingleShader(pyblish.api.InstancePlugin):
@@ -15,7 +16,7 @@ class ValidateSingleShader(pyblish.api.InstancePlugin):
     families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look Single Shader Per Shape'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     # The default connections to check
     def process(self, instance):
