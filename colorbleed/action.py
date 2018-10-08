@@ -157,13 +157,7 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
 
         self.log.info("Finding bad nodes..")
 
-        # Get the errored instances
-        errored_instances = []
-        for result in context.data["results"]:
-            if result["error"] is not None and result["instance"] is not None:
-                if result["error"]:
-                    instance = result["instance"]
-                    errored_instances.append(instance)
+        errored_instances = get_errored_instances_from_context(context)
 
         # Apply pyblish logic to get the instances for the plug-in
         instances = pyblish.api.instances_by_plugin(errored_instances, plugin)
