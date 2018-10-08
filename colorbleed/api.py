@@ -17,7 +17,7 @@ from .action import (
     RepairContextAction
 )
 
-all = [
+__all__ = [
     # plugin classes
     "Extractor",
     # ordering
