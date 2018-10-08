@@ -1,4 +1,5 @@
 import os
+from itertools import izip_longest
 
 from maya import cmds
 
@@ -33,6 +34,49 @@ def massage_ma_file(path):
 
     f.truncate()  # remove remainder
     f.close()
+
+
+def grouper(iterable, n, fillvalue=None):
+    """Collect data into fixed-length chunks or blocks
+
+    Examples:
+        grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
+
+    """
+
+    args = [iter(iterable)] * n
+    return izip_longest(fillvalue=fillvalue, *args)
+
+
+def unlock(plug):
+    """Unlocks attribute and disconnects inputs for a plug.
+
+    This will also recursively unlock the attribute
+    upwards to any parent attributes for compound
+    attributes, to ensure it's fully unlocked and free
+    to change the value.
+
+    """
+    node, attr = plug.rsplit(".", 1)
+
+    # Unlock attribute
+    cmds.setAttr(plug, lock=False)
+
+    # Also unlock any parent attribute (if compound)
+    parents = cmds.attributeQuery(attr, node=node, listParent=True)
+    if parents:
+        for parent in parents:
+            unlock("{0}.{1}".format(node, parent))
+
+    # Break incoming connections
+    connections = cmds.listConnections(plug,
+                                       source=True,
+                                       destination=False,
+                                       plugs=True,
+                                       connections=True)
+    if connections:
+        for destination, source in grouper(connections, 2):
+            cmds.disconnectAttr(source, destination)
 
 
 class ExtractCameraMayaAscii(colorbleed.api.Extractor):
@@ -106,6 +150,17 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
                                            dag=True,
                                            shapes=True,
                                            long=True)
+
+                    # Fix PLN-178: Don't allow background color to be non-black
+                    for cam in baked_shapes:
+                        attrs = {"backgroundColorR": 0.0,
+                                 "backgroundColorG": 0.0,
+                                 "backgroundColorB": 0.0,
+                                 "overscan": 1.0}
+                        for attr, value in attrs.items():
+                            plug = "{0}.{1}".format(cam, attr)
+                            unlock(plug)
+                            cmds.setAttr(plug, value)
 
                     self.log.info("Performing extraction..")
                     cmds.select(baked_shapes, noExpand=True)
