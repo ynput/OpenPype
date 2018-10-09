@@ -130,7 +130,7 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
                 with lib.no_refresh():
                     baked = lib.bake_to_world_space(
                         transform,
-                        frameRange=range_with_handles,
+                        frame_range=range_with_handles,
                         step=step
                     )
                     baked_shapes = cmds.ls(baked,
