@@ -12,7 +12,7 @@ class ExtractCameraAlembic(colorbleed.api.Extractor):
     """Extract a Camera as Alembic.
 
     The cameras gets baked to world space by default. Only when the instance's
-    `bake_to_world_space` is set to False it will include its full hierarchy.
+    `bakeToWorldSpace` is set to False it will include its full hierarchy.
 
     """
 
@@ -27,7 +27,7 @@ class ExtractCameraAlembic(colorbleed.api.Extractor):
                       instance.data.get("endFrame", 1)]
         handles = instance.data.get("handles", 0)
         step = instance.data.get("step", 1.0)
-        bake_to_worldspace = instance.data("bake_to_world_space", True)
+        bake_to_worldspace = instance.data("bakeToWorldSpace", True)
 
         # get cameras
         members = instance.data['setMembers']

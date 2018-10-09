@@ -73,7 +73,7 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
     will be published.
 
     The cameras gets baked to world space by default. Only when the instance's
-    `bake_to_world_space` is set to False it will include its full hierarchy.
+    `bakeToWorldSpace` is set to False it will include its full hierarchy.
 
     Note:
         The extracted Maya ascii file gets "massaged" removing the uuid values
@@ -92,12 +92,12 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
                       instance.data.get("endFrame", 1)]
         handles = instance.data.get("handles", 0)
         step = instance.data.get("step", 1.0)
-        bake_to_worldspace = instance.data("bake_to_world_space", True)
+        bake_to_worldspace = instance.data("bakeToWorldSpace", True)
 
         # TODO: Implement a bake to non-world space
         # Currently it will always bake the resulting camera to world-space
         # and it does not allow to include the parent hierarchy, even though
-        # with `bake_to_world_space` set to False it should include its
+        # with `bakeToWorldSpace` set to False it should include its
         # hierarchy to be correct with the family implementation.
         if not bake_to_worldspace:
             self.log.warning("Camera (Maya Ascii) export only supports world"
