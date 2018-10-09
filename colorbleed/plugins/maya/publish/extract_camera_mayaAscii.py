@@ -1,13 +1,11 @@
 import os
-from itertools import izip_longest
 
 from maya import cmds
 
 import avalon.maya
 import colorbleed.api
-
-import cb.utils.maya.context as context
-from cb.utils.maya.animation import bakeToWorldSpace
+from colorbleed.lib import grouper
+from colorbleed.maya import lib
 
 
 def massage_ma_file(path):
@@ -34,18 +32,6 @@ def massage_ma_file(path):
 
     f.truncate()  # remove remainder
     f.close()
-
-
-def grouper(iterable, n, fillvalue=None):
-    """Collect data into fixed-length chunks or blocks
-
-    Examples:
-        grouper('ABCDEFG', 3, 'x') --> ABC DEF Gxx
-
-    """
-
-    args = [iter(iterable)] * n
-    return izip_longest(fillvalue=fillvalue, *args)
 
 
 def unlock(plug):
@@ -111,8 +97,8 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
         # TODO: Implement a bake to non-world space
         # Currently it will always bake the resulting camera to world-space
         # and it does not allow to include the parent hierarchy, even though
-        # with `bakeToWorldSpace` set to False it should include its hierarchy
-        # to be correct with the family implementation.
+        # with `bakeToWorldSpace` set to False it should include its
+        # hierarchy to be correct with the family implementation.
         if not bake_to_worldspace:
             self.log.warning("Camera (Maya Ascii) export only supports world"
                              "space baked camera extractions. The disabled "
@@ -140,11 +126,13 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
         # Perform extraction
         self.log.info("Performing camera bakes for: {0}".format(transform))
         with avalon.maya.maintained_selection():
-            with context.evaluation("off"):
-                with context.no_refresh():
-                    baked = bakeToWorldSpace(transform,
-                                             frameRange=range_with_handles,
-                                             step=step)
+            with lib.evaluation("off"):
+                with lib.no_refresh():
+                    baked = lib.bake_to_world_space(
+                        transform,
+                        frame_range=range_with_handles,
+                        step=step
+                    )
                     baked_shapes = cmds.ls(baked,
                                            type="camera",
                                            dag=True,

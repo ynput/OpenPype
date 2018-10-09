@@ -5,7 +5,7 @@ from maya import cmds
 import avalon.maya
 import colorbleed.api
 
-import cb.utils.maya.context as context
+import colorbleed.maya.lib as lib
 
 
 class ExtractCameraAlembic(colorbleed.api.Extractor):
@@ -66,8 +66,8 @@ class ExtractCameraAlembic(colorbleed.api.Extractor):
 
             job_str += ' -file "{0}"'.format(path)
 
-            with context.evaluation("off"):
-                with context.no_refresh():
+            with lib.evaluation("off"):
+                with lib.no_refresh():
                     cmds.AbcExport(j=job_str, verbose=False)
 
         if "files" not in instance.data:

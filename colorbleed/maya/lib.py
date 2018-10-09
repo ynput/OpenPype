@@ -94,6 +94,11 @@ INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
 FLOAT_FPS = {23.976, 29.97, 47.952, 59.94}
 
 
+def _get_mel_global(name):
+    """Return the value of a mel global variable"""
+    return mel.eval("$%s = $%s;" % (name, name))
+
+
 def matrix_equals(a, b, tolerance=1e-10):
     """
     Compares two matrices with an imperfection tolerance
@@ -307,6 +312,33 @@ def attribute_values(attr_values):
 
 
 @contextlib.contextmanager
+def keytangent_default(in_tangent_type='auto',
+                       out_tangent_type='auto'):
+    """Set the default keyTangent for new keys during this context"""
+
+    original_itt = cmds.keyTangent(query=True, g=True, itt=True)[0]
+    original_ott = cmds.keyTangent(query=True, g=True, ott=True)[0]
+    cmds.keyTangent(g=True, itt=in_tangent_type)
+    cmds.keyTangent(g=True, ott=out_tangent_type)
+    try:
+        yield
+    finally:
+        cmds.keyTangent(g=True, itt=original_itt)
+        cmds.keyTangent(g=True, ott=original_ott)
+
+
+@contextlib.contextmanager
+def undo_chunk():
+    """Open a undo chunk during context."""
+
+    try:
+        cmds.undoInfo(openChunk=True)
+        yield
+    finally:
+        cmds.undoInfo(closeChunk=True)
+
+
+@contextlib.contextmanager
 def renderlayer(layer):
     """Set the renderlayer during the context"""
 
@@ -339,6 +371,126 @@ def evaluation(mode="off"):
         cmds.evaluationManager(mode=original)
 
 
+@contextlib.contextmanager
+def no_refresh():
+    """Temporarily disables Maya's UI updates
+
+    Note:
+        This only disabled the main pane and will sometimes still
+        trigger updates in torn off panels.
+
+    """
+
+    pane = _get_mel_global('gMainPane')
+    state = cmds.paneLayout(pane, query=True, manage=True)
+    cmds.paneLayout(pane, edit=True, manage=False)
+
+    try:
+        yield
+    finally:
+        cmds.paneLayout(pane, edit=True, manage=state)
+
+
+@contextlib.contextmanager
+def empty_sets(sets, force=False):
+    """Remove all members of the sets during the context"""
+
+    assert isinstance(sets, (list, tuple))
+
+    original = dict()
+    original_connections = []
+
+    # Store original state
+    for obj_set in sets:
+        members = cmds.sets(obj_set, query=True)
+        original[obj_set] = members
+
+    try:
+        for obj_set in sets:
+            cmds.sets(clear=obj_set)
+            if force:
+                # Break all connections if force is enabled, this way we
+                # prevent Maya from exporting any reference nodes which are
+                # connected with placeHolder[x] attributes
+                plug = "%s.dagSetMembers" % obj_set
+                connections = cmds.listConnections(plug,
+                                                   source=True,
+                                                   destination=False,
+                                                   plugs=True,
+                                                   connections=True) or []
+                original_connections.extend(connections)
+                for dest, src in lib.pairwise(connections):
+                    cmds.disconnectAttr(src, dest)
+        yield
+    finally:
+
+        for dest, src in lib.pairwise(original_connections):
+            cmds.connectAttr(src, dest)
+
+        # Restore original members
+        for origin_set, members in original.iteritems():
+            cmds.sets(members, forceElement=origin_set)
+
+
+@contextlib.contextmanager
+def renderlayer(layer):
+    """Set the renderlayer during the context
+
+    Arguments:
+        layer (str): Name of layer to switch to.
+
+    """
+
+    original = cmds.editRenderLayerGlobals(query=True,
+                                           currentRenderLayer=True)
+
+    try:
+        cmds.editRenderLayerGlobals(currentRenderLayer=layer)
+        yield
+    finally:
+        cmds.editRenderLayerGlobals(currentRenderLayer=original)
+
+
+class delete_after(object):
+    """Context Manager that will delete collected nodes after exit.
+
+    This allows to ensure the nodes added to the context are deleted
+    afterwards. This is useful if you want to ensure nodes are deleted
+    even if an error is raised.
+
+    Examples:
+        with delete_after() as delete_bin:
+            cube = maya.cmds.polyCube()
+            delete_bin.extend(cube)
+            # cube exists
+        # cube deleted
+
+    """
+
+    def __init__(self, nodes=None):
+
+        self._nodes = list()
+
+        if nodes:
+            self.extend(nodes)
+
+    def append(self, node):
+        self._nodes.append(node)
+
+    def extend(self, nodes):
+        self._nodes.extend(nodes)
+
+    def __iter__(self):
+        return iter(self._nodes)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        if self._nodes:
+            cmds.delete(self._nodes)
+
+
 def get_renderer(layer):
     with renderlayer(layer):
         return cmds.getAttr("defaultRenderGlobals.currentRenderer")
@@ -365,6 +517,161 @@ def no_undo(flush=False):
         yield
     finally:
         cmds.undoInfo(**{keyword: original})
+
+
+def get_shader_assignments_from_shapes(shapes):
+    """Return the shape assignment per related shading engines.
+
+    Returns a dictionary where the keys are shadingGroups and the values are
+    lists of assigned shapes or shape-components.
+
+    For the 'shapes' this will return a dictionary like:
+        {
+            "shadingEngineX": ["nodeX", "nodeY"],
+            "shadingEngineY": ["nodeA", "nodeB"]
+        }
+
+    Args:
+        shapes (list): The shapes to collect the assignments for.
+
+    Returns:
+        dict: The {shadingEngine: shapes} relationships
+
+    """
+
+    shapes = cmds.ls(shapes,
+                     long=True,
+                     selection=True,
+                     shapes=True,
+                     objectsOnly=True)
+    if not shapes:
+        return {}
+
+    # Collect shading engines and their shapes
+    assignments = defaultdict(list)
+    for shape in shapes:
+
+        # Get unique shading groups for the shape
+        shading_groups = cmds.listConnections(shape,
+                                              source=False,
+                                              destination=True,
+                                              plugs=False,
+                                              connections=False,
+                                              type="shadingEngine") or []
+        shading_groups = list(set(shading_groups))
+        for shading_group in shading_groups:
+            assignments[shading_group].add(shape)
+
+    return dict(assignments)
+
+
+@contextlib.contextmanager
+def shader(nodes, shadingEngine="initialShadingGroup"):
+    """Assign a shader to nodes during the context"""
+
+    shapes = cmds.ls(nodes, dag=1, o=1, shapes=1, long=1)
+    original = get_shader_assignments_from_shapes(shapes)
+
+    try:
+        # Assign override shader
+        if shapes:
+            cmds.sets(shapes, edit=True, forceElement=shadingEngine)
+        yield
+    finally:
+
+        # Assign original shaders
+        for sg, members in original.items():
+            if members:
+                cmds.sets(shapes, edit=True, forceElement=shadingEngine)
+
+
+@contextlib.contextmanager
+def displaySmoothness(nodes,
+                      divisionsU=0,
+                      divisionsV=0,
+                      pointsWire=4,
+                      pointsShaded=1,
+                      polygonObject=1):
+    """Set the displaySmoothness during the context"""
+
+    # Ensure only non-intermediate shapes
+    nodes = cmds.ls(nodes,
+                    dag=1,
+                    shapes=1,
+                    long=1,
+                    noIntermediate=True)
+
+    def parse(node):
+        """Parse the current state of a node"""
+        state = {}
+        for key in ["divisionsU",
+                    "divisionsV",
+                    "pointsWire",
+                    "pointsShaded",
+                    "polygonObject"]:
+            value = cmds.displaySmoothness(node, query=1, **{key: True})
+            if value is not None:
+                state[key] = value[0]
+        return state
+
+    originals = dict((node, parse(node)) for node in nodes)
+
+    try:
+        # Apply current state
+        cmds.displaySmoothness(nodes,
+                               divisionsU=divisionsU,
+                               divisionsV=divisionsV,
+                               pointsWire=pointsWire,
+                               pointsShaded=pointsShaded,
+                               polygonObject=polygonObject)
+        yield
+    finally:
+        # Revert state
+        for node, state in originals.iteritems():
+            if state:
+                cmds.displaySmoothness(node, **state)
+
+
+@contextlib.contextmanager
+def no_display_layers(nodes):
+    """Ensure nodes are not in a displayLayer during context.
+
+    Arguments:
+        nodes (list): The nodes to remove from any display layer.
+
+    """
+
+    # Ensure long names
+    nodes = cmds.ls(nodes, long=True)
+
+    # Get the original state
+    lookup = set(nodes)
+    original = {}
+    for layer in cmds.ls(type='displayLayer'):
+
+        # Skip default layer
+        if layer == "defaultLayer":
+            continue
+
+        members = cmds.editDisplayLayerMembers(layer,
+                                               query=True,
+                                               fullNames=True)
+        if not members:
+            continue
+        members = set(members)
+
+        included = lookup.intersection(members)
+        if included:
+            original[layer] = list(included)
+
+    try:
+        # Add all nodes to default layer
+        cmds.editDisplayLayerMembers("defaultLayer", nodes, noRecurse=True)
+        yield
+    finally:
+        # Restore original members
+        for layer, members in original.iteritems():
+            cmds.editDisplayLayerMembers(layer, members, noRecurse=True)
 
 
 @contextlib.contextmanager
@@ -1534,3 +1841,194 @@ def validate_fps():
             return False
 
     return True
+
+
+def bake(nodes,
+         frame_range=None,
+         step=1.0,
+         simulation=True,
+         preserve_outside_keys=False,
+         disable_implicit_control=True,
+         shape=True):
+    """Bake the given nodes over the time range.
+
+    This will bake all attributes of the node, including custom attributes.
+
+    Args:
+        nodes (list): Names of transform nodes, eg. camera, light.
+        frame_range (list): frame range with start and end frame.
+            or if None then takes timeSliderRange
+        simulation (bool): Whether to perform a full simulation of the
+            attributes over time.
+        preserve_outside_keys (bool): Keep keys that are outside of the baked
+            range.
+        disable_implicit_control (bool): When True will disable any
+            constraints to the object.
+        shape (bool): When True also bake attributes on the children shapes.
+        step (float): The step size to sample by.
+
+    Returns:
+        None
+
+    """
+
+    # Parse inputs
+    if not nodes:
+        return
+
+    assert isinstance(nodes, (list, tuple)), "Nodes must be a list or tuple"
+
+    # If frame range is None fall back to time slider playback time range
+    if frame_range is None:
+        frame_range = [cmds.playbackOptions(query=True, minTime=True),
+                       cmds.playbackOptions(query=True, maxTime=True)]
+
+    # If frame range is single frame bake one frame more,
+    # otherwise maya.cmds.bakeResults gets confused
+    if frame_range[1] == frame_range[0]:
+        frame_range[1] += 1
+
+    # Bake it
+    with keytangent_default(in_tangent_type='auto',
+                            out_tangent_type='auto'):
+        cmds.bakeResults(nodes,
+                         simulation=simulation,
+                         preserveOutsideKeys=preserve_outside_keys,
+                         disableImplicitControl=disable_implicit_control,
+                         shape=shape,
+                         sampleBy=step,
+                         time=(frame_range[0], frame_range[1]))
+
+
+def bake_to_world_space(nodes,
+                        frame_range=None,
+                        simulation=True,
+                        preserve_outside_keys=False,
+                        disable_implicit_control=True,
+                        shape=True,
+                        step=1.0):
+    """Bake the nodes to world space transformation (incl. other attributes)
+
+    Bakes the transforms to world space (while maintaining all its animated
+    attributes and settings) by duplicating the node. Then parents it to world
+    and constrains to the original.
+
+    Other attributes are also baked by connecting all attributes directly.
+    Baking is then done using Maya's bakeResults command.
+
+    See `bake` for the argument documentation.
+
+    Returns:
+         list: The newly created and baked node names.
+
+    """
+
+    def _get_attrs(node):
+        """Workaround for buggy shape attribute listing with listAttr"""
+        attrs = cmds.listAttr(node,
+                              write=True,
+                              scalar=True,
+                              settable=True,
+                              connectable=True,
+                              keyable=True,
+                              shortNames=True) or []
+        valid_attrs = []
+        for attr in attrs:
+            node_attr = '{0}.{1}'.format(node, attr)
+
+            # Sometimes Maya returns 'non-existent' attributes for shapes
+            # so we filter those out
+            if not cmds.attributeQuery(attr, node=node, exists=True):
+                continue
+
+            # We only need those that have a connection, just to be safe
+            # that it's actually keyable/connectable anyway.
+            if cmds.connectionInfo(node_attr,
+                                   isDestination=True):
+                valid_attrs.append(attr)
+
+        return valid_attrs
+
+    transform_attrs = set(["t", "r", "s",
+                           "tx", "ty", "tz",
+                           "rx", "ry", "rz",
+                           "sx", "sy", "sz"])
+
+    world_space_nodes = []
+    with delete_after() as delete_bin:
+
+        # Create the duplicate nodes that are in world-space connected to
+        # the originals
+        for node in nodes:
+
+            # Duplicate the node
+            short_name = node.rsplit("|", 1)[-1]
+            new_name = "{0}_baked".format(short_name)
+            new_node = cmds.duplicate(node,
+                                      name=new_name,
+                                      renameChildren=True)[0]
+
+            # Connect all attributes on the node except for transform
+            # attributes
+            attrs = _get_attrs(node)
+            attrs = set(attrs) - transform_attrs if attrs else []
+
+            for attr in attrs:
+                orig_node_attr = '{0}.{1}'.format(node, attr)
+                new_node_attr = '{0}.{1}'.format(new_node, attr)
+
+                # unlock to avoid connection errors
+                cmds.setAttr(new_node_attr, lock=False)
+
+                cmds.connectAttr(orig_node_attr,
+                                 new_node_attr,
+                                 force=True)
+
+            # If shapes are also baked then connect those keyable attributes
+            if shape:
+                children_shapes = cmds.listRelatives(new_node,
+                                                     children=True,
+                                                     fullPath=True,
+                                                     shapes=True)
+                if children_shapes:
+                    orig_children_shapes = cmds.listRelatives(node,
+                                                              children=True,
+                                                              fullPath=True,
+                                                              shapes=True)
+                    for orig_shape, new_shape in zip(orig_children_shapes,
+                                                     children_shapes):
+                        attrs = _get_attrs(orig_shape)
+                        for attr in attrs:
+                            orig_node_attr = '{0}.{1}'.format(orig_shape, attr)
+                            new_node_attr = '{0}.{1}'.format(new_shape, attr)
+
+                            # unlock to avoid connection errors
+                            cmds.setAttr(new_node_attr, lock=False)
+
+                            cmds.connectAttr(orig_node_attr,
+                                             new_node_attr,
+                                             force=True)
+
+            # Parent to world
+            if cmds.listRelatives(new_node, parent=True):
+                new_node = cmds.parent(new_node, world=True)[0]
+
+            # Unlock transform attributes so constraint can be created
+            for attr in transform_attrs:
+                cmds.setAttr('{0}.{1}'.format(new_node, attr), lock=False)
+
+            # Constraints
+            delete_bin.extend(cmds.parentConstraint(node, new_node, mo=False))
+            delete_bin.extend(cmds.scaleConstraint(node, new_node, mo=False))
+
+            world_space_nodes.append(new_node)
+
+        bake(world_space_nodes,
+             frame_range=frame_range,
+             step=step,
+             simulation=simulation,
+             preserve_outside_keys=preserve_outside_keys,
+             disable_implicit_control=disable_implicit_control,
+             shape=shape)
+
+    return world_space_nodes
