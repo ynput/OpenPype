@@ -419,12 +419,12 @@ def empty_sets(sets, force=False):
                                                    plugs=True,
                                                    connections=True) or []
                 original_connections.extend(connections)
-                for dest, src in pairwise(connections):
+                for dest, src in lib.pairwise(connections):
                     cmds.disconnectAttr(src, dest)
         yield
     finally:
 
-        for dest, src in pairwise(original_connections):
+        for dest, src in lib.pairwise(original_connections):
             cmds.connectAttr(src, dest)
 
         # Restore original members
