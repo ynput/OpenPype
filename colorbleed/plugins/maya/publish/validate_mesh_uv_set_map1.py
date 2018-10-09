@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateMeshUVSetMap1(pyblish.api.InstancePlugin):
@@ -19,7 +20,7 @@ class ValidateMeshUVSetMap1(pyblish.api.InstancePlugin):
     families = ['colorbleed.model']
     optional = True
     label = "Mesh has map1 UV Set"
-    actions = [colorbleed.api.SelectInvalidAction,
+    actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.api.RepairAction]
 
     @staticmethod

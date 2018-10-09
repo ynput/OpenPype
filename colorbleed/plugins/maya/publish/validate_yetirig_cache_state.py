@@ -4,6 +4,8 @@ import colorbleed.action
 
 import maya.cmds as cmds
 
+import colorbleed.maya.action
+
 
 class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     """Validate the I/O attributes of the node
@@ -19,7 +21,7 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["colorbleed.yetiRig"]
     actions = [colorbleed.action.RepairAction,
-               colorbleed.action.SelectInvalidAction]
+               colorbleed.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

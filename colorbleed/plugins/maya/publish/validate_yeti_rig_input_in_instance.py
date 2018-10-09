@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
@@ -11,7 +12,7 @@ class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
     hosts = ["maya"]
     families = ["colorbleed.yetiRig"]
     label = "Yeti Rig Input Shapes In Instance"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     def process(self, instance):
 

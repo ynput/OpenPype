@@ -3,6 +3,8 @@ import colorbleed.api
 
 from maya import cmds
 
+import colorbleed.maya.action
+
 
 class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
     """Validate whether the V-Ray Proxy instance has shape members"""
@@ -11,7 +13,7 @@ class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
     label = 'VRay Proxy Members'
     hosts = ['maya']
     families = ['colorbleed.vrayproxy']
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     def process(self, instance):
 

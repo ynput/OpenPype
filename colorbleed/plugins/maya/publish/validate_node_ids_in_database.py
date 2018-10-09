@@ -3,6 +3,7 @@ import pyblish.api
 import avalon.io as io
 
 import colorbleed.api
+import colorbleed.maya.action
 from colorbleed.maya import lib
 
 
@@ -22,7 +23,7 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ["*"]
 
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

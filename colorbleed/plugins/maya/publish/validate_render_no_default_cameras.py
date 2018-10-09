@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 import colorbleed.maya.lib as lib
 
 
@@ -12,7 +13,7 @@ class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ['colorbleed.renderlayer']
     label = "No Default Cameras Renderable"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

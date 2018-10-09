@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 import colorbleed.maya.lib as lib
 
 
@@ -18,8 +19,8 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
                 "colorbleed.look",
                 "colorbleed.rig"]
 
-    actions = [colorbleed.api.SelectInvalidAction,
-               colorbleed.api.GenerateUUIDsOnInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction,
+               colorbleed.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

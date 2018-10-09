@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
@@ -26,7 +27,7 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
     families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look No Default Shaders'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     DEFAULT_SHADERS = {"lambert1", "initialShadingGroup",
                       "initialParticleSE", "particleCloud1"}

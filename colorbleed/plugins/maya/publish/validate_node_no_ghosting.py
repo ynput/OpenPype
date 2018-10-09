@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateNodeNoGhosting(pyblish.api.InstancePlugin):
@@ -20,7 +21,7 @@ class ValidateNodeNoGhosting(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ['colorbleed.model', 'colorbleed.rig']
     label = "No Ghosting"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     _attributes = {'ghosting': 0}
 

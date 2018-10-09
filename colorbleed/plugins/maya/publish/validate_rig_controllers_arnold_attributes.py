@@ -4,6 +4,8 @@ import pyblish.api
 import colorbleed.api
 from cb.utils.maya.context import undo_chunk
 
+import colorbleed.maya.action
+
 
 class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     """Validate rig control curves have no keyable arnold attributes.
@@ -29,7 +31,7 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["colorbleed.rig"]
     actions = [colorbleed.api.RepairAction,
-               colorbleed.api.SelectInvalidAction]
+               colorbleed.maya.action.SelectInvalidAction]
 
     attributes = [
         "rcurve",

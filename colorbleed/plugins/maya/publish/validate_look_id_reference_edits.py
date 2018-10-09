@@ -3,6 +3,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
@@ -19,7 +20,7 @@ class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
     families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look Id Reference Edits'
-    actions = [colorbleed.api.SelectInvalidAction,
+    actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.api.RepairAction]
 
     def process(self, instance):
