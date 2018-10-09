@@ -97,8 +97,8 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
         # TODO: Implement a bake to non-world space
         # Currently it will always bake the resulting camera to world-space
         # and it does not allow to include the parent hierarchy, even though
-        # with `bake_to_world_space` set to False it should include its hierarchy
-        # to be correct with the family implementation.
+        # with `bake_to_world_space` set to False it should include its
+        # hierarchy to be correct with the family implementation.
         if not bake_to_worldspace:
             self.log.warning("Camera (Maya Ascii) export only supports world"
                              "space baked camera extractions. The disabled "
@@ -128,7 +128,7 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
         with avalon.maya.maintained_selection():
             with lib.evaluation("off"):
                 with lib.no_refresh():
-                    baked = lib.bake_to_worldspace(
+                    baked = lib.bake_to_world_space(
                         transform,
                         frameRange=range_with_handles,
                         step=step

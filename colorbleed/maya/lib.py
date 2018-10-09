@@ -1856,7 +1856,7 @@ def bake(nodes,
 
     Args:
         nodes (list): Names of transform nodes, eg. camera, light.
-        frame_range (tuple): frame range with start and end frame.
+        frame_range (list): frame range with start and end frame.
             or if None then takes timeSliderRange
         simulation (bool): Whether to perform a full simulation of the
             attributes over time.
@@ -1878,9 +1878,10 @@ def bake(nodes,
 
     assert isinstance(nodes, (list, tuple)), "Nodes must be a list or tuple"
 
-    # If frame range is None fall back to time slider range
+    # If frame range is None fall back to time slider playback time range
     if frame_range is None:
-        frame_range = getTimeSliderRange()
+        frame_range = [cmds.playbackOptions(query=True, minTime=True),
+                       cmds.playbackOptions(query=True, maxTime=True)]
 
     # If frame range is single frame bake one frame more,
     # otherwise maya.cmds.bakeResults gets confused
