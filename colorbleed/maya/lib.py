@@ -1901,10 +1901,10 @@ def bake(nodes,
 
 
 def bake_to_world_space(nodes,
-                        frameRange=None,
+                        frame_range=None,
                         simulation=True,
-                        preserveOutsideKeys=False,
-                        disableImplicitControl=True,
+                        preserve_outside_keys=False,
+                        disable_implicit_control=True,
                         shape=True,
                         step=1.0):
     """Bake the nodes to world space transformation (incl. other attributes)
@@ -2024,11 +2024,11 @@ def bake_to_world_space(nodes,
             world_space_nodes.append(new_node)
 
         bake(world_space_nodes,
-             frame_range=frameRange,
+             frame_range=frame_range,
              step=step,
              simulation=simulation,
-             preserve_outside_keys=preserveOutsideKeys,
-             disable_implicit_control=disableImplicitControl,
+             preserve_outside_keys=preserve_outside_keys,
+             disable_implicit_control=disable_implicit_control,
              shape=shape)
 
     return world_space_nodes
