@@ -553,6 +553,10 @@ def get_shader_assignments_from_shapes(shapes):
 
         # Get unique shading groups for the shape
         shading_groups = cmds.listConnections(shape,
+                                              source=False,
+                                              destination=True,
+                                              plugs=False,
+                                              connections=False,
                                               type="shadingEngine") or []
         shading_groups = list(set(shading_groups))
         for shading_group in shading_groups:
