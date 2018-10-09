@@ -4,8 +4,7 @@ from maya import cmds
 
 import avalon.maya
 import colorbleed.api
-
-from cb.utils.maya import context
+import colorbleed.maya.lib as lib
 
 
 class ExtractModel(colorbleed.api.Extractor):
@@ -47,15 +46,15 @@ class ExtractModel(colorbleed.api.Extractor):
                           noIntermediate=True,
                           long=True)
 
-        with context.no_display_layers(instance):
-            with context.displaySmoothness(members,
-                                           divisionsU=0,
-                                           divisionsV=0,
-                                           pointsWire=4,
-                                           pointsShaded=1,
-                                           polygonObject=1):
-                with context.shader(members,
-                                    shadingEngine="initialShadingGroup"):
+        with lib.no_display_layers(instance):
+            with lib.displaySmoothness(members,
+                                       divisionsU=0,
+                                       divisionsV=0,
+                                       pointsWire=4,
+                                       pointsShaded=1,
+                                       polygonObject=1):
+                with lib.shader(members,
+                                shadingEngine="initialShadingGroup"):
                     with avalon.maya.maintained_selection():
                         cmds.select(members, noExpand=True)
                         cmds.file(path,

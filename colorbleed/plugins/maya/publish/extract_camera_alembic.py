@@ -5,14 +5,14 @@ from maya import cmds
 import avalon.maya
 import colorbleed.api
 
-import cb.utils.maya.context as context
+import colorbleed.maya.lib as lib
 
 
 class ExtractCameraAlembic(colorbleed.api.Extractor):
     """Extract a Camera as Alembic.
 
     The cameras gets baked to world space by default. Only when the instance's
-    `bakeToWorldSpace` is set to False it will include its full hierarchy.
+    `bake_to_world_space` is set to False it will include its full hierarchy.
 
     """
 
@@ -27,7 +27,7 @@ class ExtractCameraAlembic(colorbleed.api.Extractor):
                       instance.data.get("endFrame", 1)]
         handles = instance.data.get("handles", 0)
         step = instance.data.get("step", 1.0)
-        bake_to_worldspace = instance.data("bakeToWorldSpace", True)
+        bake_to_worldspace = instance.data("bake_to_world_space", True)
 
         # get cameras
         members = instance.data['setMembers']
@@ -66,8 +66,8 @@ class ExtractCameraAlembic(colorbleed.api.Extractor):
 
             job_str += ' -file "{0}"'.format(path)
 
-            with context.evaluation("off"):
-                with context.no_refresh():
+            with lib.evaluation("off"):
+                with lib.no_refresh():
                     cmds.AbcExport(j=job_str, verbose=False)
 
         if "files" not in instance.data:

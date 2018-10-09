@@ -4,8 +4,6 @@ from colorbleed.maya import lib
 import pyblish.api
 import colorbleed.api
 
-from cb.utils.maya import context
-
 
 class ValidateLookSets(pyblish.api.InstancePlugin):
     """Validate if any sets are missing from the instance and look data
@@ -57,7 +55,7 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
         invalid = []
 
         renderlayer = instance.data.get("renderlayer", "defaultRenderLayer")
-        with context.renderlayer(renderlayer):
+        with lib.renderlayer(renderlayer):
             for node in instance:
                 # get the connected objectSets of the node
                 sets = lib.get_related_sets(node)

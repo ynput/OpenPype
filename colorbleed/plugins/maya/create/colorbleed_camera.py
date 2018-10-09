@@ -22,6 +22,6 @@ class CreateCamera(avalon.maya.Creator):
 
         # Bake to world space by default, when this is False it will also
         # include the parent hierarchy in the baked results
-        data['bakeToWorldSpace'] = True
+        data['bake_to_world_space'] = True
 
         self.data = data

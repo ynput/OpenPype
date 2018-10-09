@@ -1,10 +1,10 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-from cb.utils.maya.context import undo_chunk
 
+import colorbleed.api
 import colorbleed.maya.action
+from colorbleed.maya.lib import undo_chunk
 
 
 class ValidateRigControllers(pyblish.api.InstancePlugin):
