@@ -5,6 +5,7 @@ import weakref
 from maya import utils, cmds, mel
 
 from avalon import api as avalon, pipeline, maya
+from avalon.maya.pipeline import IS_HEADLESS
 from pyblish import api as pyblish
 
 from ..lib import (
@@ -34,12 +35,18 @@ def install():
 
     log.info("Installing callbacks ... ")
     avalon.on("init", on_init)
+
+    # Callbacks below are not required for headless mode, the `init` however
+    # is important to load referenced Alembics correctly at rendertime.
+    if IS_HEADLESS:
+        log.info("Running in headless mode, skipping Colorbleed Maya "
+                 "save/open/new callback installation..")
+        return
+
     avalon.on("save", on_save)
     avalon.on("open", on_open)
-
-    avalon.before("save", on_before_save)
-
     avalon.on("new", on_new)
+    avalon.before("save", on_before_save)
 
     log.info("Overriding existing event 'taskChanged'")
     override_event("taskChanged", on_task_changed)
