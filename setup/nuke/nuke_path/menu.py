@@ -19,9 +19,9 @@ else:
 nuke.knobDefault('onScriptLoad', ffmpeg_cmd)
 
 
-# run avalon's tool Workfiles
-workfiles = '''from avalon.tools import workfiles
-if nuke.Root().name() == 'Root':
-    nuke.scriptClose()
-workfiles.show(os.environ["AVALON_WORKDIR"])'''
-nuke.knobDefault('onCreate', workfiles)
+# # run avalon's tool Workfiles
+# workfiles = '''from avalon.tools import workfiles
+# if nuke.Root().name() == 'Root':
+#     nuke.scriptClose()
+# workfiles.show(os.environ["AVALON_WORKDIR"])'''
+# nuke.knobDefault('onCreate', workfiles)
