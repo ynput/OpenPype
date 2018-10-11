@@ -231,7 +231,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         render_globals = instance.data.get("renderGlobals", {})
         payload["JobInfo"].update(render_globals)
 
-        self.log.info("using render plugin : {}".format(payload["JobInfo"]["Plugin"]))
+        plugin = payload["JobInfo"]["Plugin"]
+        self.log.info("using render plugin : {}".format(plugin))
 
         self.preflight_check(instance)
 
