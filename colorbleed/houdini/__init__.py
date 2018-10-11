@@ -44,11 +44,11 @@ def install():
     avalon.data["familiesStateToggled"] = ["colorbleed.imagesequence"]
 
 
-def on_init(_):
+def on_init(*args):
     houdini.on_houdini_initialize()
 
 
-def on_save():
+def on_save(*args):
 
     avalon.logger.info("Running callback on save..")
 
@@ -59,7 +59,9 @@ def on_save():
         lib.set_id(node, new_id, overwrite=False)
 
 
-def on_open():
+def on_open(*args):
+
+    avalon.logger.info("Running callback on open..")
 
     update_task_from_path(hou.hipFile.path())
 
