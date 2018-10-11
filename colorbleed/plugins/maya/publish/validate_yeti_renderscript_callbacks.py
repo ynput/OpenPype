@@ -4,7 +4,7 @@ import pyblish.api
 import colorbleed.api
 
 
-class ValidateRenderScriptCallbacks(pyblish.api.InstancePlugin):
+class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
     """Check if the render script callbacks will be used during the rendering
 
     In order to ensure the render tasks are executed properly we need to check
@@ -21,7 +21,7 @@ class ValidateRenderScriptCallbacks(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidateContentsOrder
-    label = "Render Script Callbacks"
+    label = "Yeti Render Script Callbacks"
     hosts = ["maya"]
     families = ["colorbleed.renderlayer"]
 
