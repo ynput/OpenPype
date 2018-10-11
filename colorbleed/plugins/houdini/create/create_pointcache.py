@@ -32,3 +32,9 @@ class CreatePointCache(houdini.Creator):
             parms.update({"sop_path": node.path()})
 
         instance.setParms(parms)
+
+        # Lock any parameters in this list
+        to_lock = ["prim_to_detail_pattern"]
+        for name in to_lock:
+            parm = instance.parm(name)
+            parm.lock(True)
