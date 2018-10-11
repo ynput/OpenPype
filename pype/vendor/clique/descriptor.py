@@ -41,3 +41,4 @@ class Unsettable(object):
     def __set__(self, instance, value):
         '''Set *value* for *instance* property.'''
         raise AttributeError('Cannot set attribute defined as unsettable.')
+

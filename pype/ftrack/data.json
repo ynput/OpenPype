@@ -1,0 +1,19 @@
+{
+  "project":{
+    "mongodb":"col name(project)",
+    "ftrack":"col name(project)",
+    "shotgun":"col name(project)"
+  },
+
+  "shot":{
+    "mongodb":"col name(shot)",
+    "ftrack":"col name(shot)",
+    "shotgun":"col name(shot)"
+  },
+
+  "task":{
+    "mongodb":"col name(task)",
+    "ftrack":"col name(task)",
+    "shotgun":"col name(task)"
+  }
+}

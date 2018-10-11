@@ -4,15 +4,15 @@
 
 import re
 
-import descriptor
-import error
-import sorted_set
+import clique.descriptor
+import clique.error
+import clique.sorted_set
 
 
 class Collection(object):
     '''Represent group of items that differ only by numerical component.'''
 
-    indexes = descriptor.Unsettable('indexes')
+    indexes = clique.descriptor.Unsettable('indexes')
 
     def __init__(self, head, tail, padding, indexes=None):
         '''Initialise collection.
@@ -43,7 +43,7 @@ class Collection(object):
 
         '''
         super(Collection, self).__init__()
-        self.__dict__['indexes'] = sorted_set.SortedSet()
+        self.__dict__['indexes'] = clique.sorted_set.SortedSet()
         self._head = head
         self._tail = tail
         self.padding = padding
@@ -195,13 +195,13 @@ class Collection(object):
     def add(self, item):
         '''Add *item* to collection.
 
-        raise :py:class:`~error.CollectionError` if *item* cannot be
+        raise :py:class:`~clique.error.CollectionError` if *item* cannot be
         added to the collection.
 
         '''
         match = self.match(item)
         if match is None:
-            raise error.CollectionError(
+            raise clique.error.CollectionError(
                 'Item does not match collection expression.'
             )
 
@@ -210,13 +210,13 @@ class Collection(object):
     def remove(self, item):
         '''Remove *item* from collection.
 
-        raise :py:class:`~error.CollectionError` if *item* cannot be
+        raise :py:class:`~clique.error.CollectionError` if *item* cannot be
         removed from the collection.
 
         '''
         match = self.match(item)
         if match is None:
-            raise error.CollectionError(
+            raise clique.error.CollectionError(
                 'Item not present in collection.'
             )
 
@@ -224,7 +224,7 @@ class Collection(object):
         try:
             self.indexes.remove(index)
         except KeyError:
-            raise error.CollectionError(
+            raise clique.error.CollectionError(
                 'Item not present in collection.'
             )
 
@@ -300,7 +300,7 @@ class Collection(object):
     def holes(self):
         '''Return holes in collection.
 
-        Return :py:class:`~collection.Collection` of missing indexes.
+        Return :py:class:`~clique.collection.Collection` of missing indexes.
 
         '''
         missing = set([])
@@ -337,20 +337,20 @@ class Collection(object):
         If the *collection* is compatible with this collection then update
         indexes with all indexes in *collection*.
 
-        raise :py:class:`~error.CollectionError` if *collection* is not
+        raise :py:class:`~clique.error.CollectionError` if *collection* is not
         compatible with this collection.
 
         '''
         if not self.is_compatible(collection):
-            raise error.CollectionError('Collection is not compatible '
-                                        'with this collection.')
+            raise clique.error.CollectionError('Collection is not compatible '
+                                               'with this collection.')
 
         self.indexes.update(collection.indexes)
 
     def separate(self):
         '''Return contiguous parts of collection as separate collections.
 
-        Return as list of :py:class:`~collection.Collection` instances.
+        Return as list of :py:class:`~clique.collection.Collection` instances.
 
         '''
         collections = []
