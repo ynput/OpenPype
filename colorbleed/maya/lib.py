@@ -1721,7 +1721,7 @@ def set_scene_fps(fps, update=True):
 
     current_frame = cmds.currentTime(query=True)
 
-    log.info("Updating FPS to '{}'".format(unit))
+    log.info("Setting scene FPS to: '{}'".format(unit))
     cmds.currentUnit(time=unit, updateAnimation=update)
 
     # Set time slider data back to previous state
@@ -1762,7 +1762,7 @@ def set_scene_resolution(width, height):
             log.error("Can't set VRay resolution because there is no node "
                       "named: `%s`" % vray_node)
 
-    log.info("Setting project resolution to: %s x %s" % (width, height))
+    log.info("Setting scene resolution to: %s x %s" % (width, height))
     cmds.setAttr("%s.width" % control_node, width)
     cmds.setAttr("%s.height" % control_node, height)
 
