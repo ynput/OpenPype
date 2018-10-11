@@ -61,25 +61,25 @@ class ValidateRenderScriptCallbacks(pyblish.api.InstancePlugin):
         pre_render_callback = cmds.getAttr("defaultRenderGlobals.preMel")
         post_render_callback = cmds.getAttr("defaultRenderGlobals.postMel")
 
+        pre_callbacks = pre_render_callback.split(";")
+        post_callbacks = post_render_callback.split(";")
+
         pre_script = callback_lookup.get("pre", "")
         post_script = callback_lookup.get("post", "")
 
         # If not loaded
         if not yeti_loaded:
-            if pre_script and pre_script in pre_render_callback:
-                cls.log.error(
-                    "Found pre render callback which is not uses!"
-                )
+            if pre_script and pre_script in pre_callbacks:
+                cls.log.error("Found pre render callback '%s' which is not "
+                              "uses!" % pre_script)
                 invalid = True
 
-            if post_script and post_script in post_render_callback:
-                cls.log.error(
-                    "Found post render callback which is not used!"
-                )
+            if post_script and post_script in post_callbacks:
+                cls.log.error("Found post render callback '%s which is "
+                              "not used!" % post_script)
                 invalid = True
         else:
             if pre_script:
-                pre_callbacks = pre_render_callback.split(";")
                 if pre_script not in pre_callbacks:
                     cls.log.error(
                         "Could not find required pre render callback "
@@ -87,7 +87,6 @@ class ValidateRenderScriptCallbacks(pyblish.api.InstancePlugin):
                     invalid = True
 
             if post_script:
-                post_callbacks = post_render_callback.split(";")
                 if post_script not in post_callbacks:
                     cls.log.error("Could not find required post render callback"
                                   " `%s`" % post_script)
