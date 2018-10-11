@@ -35,8 +35,6 @@ class ValidateRenderScriptCallbacks(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        invalid = False
-
         # lookup per render
         render_scripts = {"vray":
                               {"pre":  "catch(`pgYetiVRayPreRender`)",
@@ -54,9 +52,9 @@ class ValidateRenderScriptCallbacks(pyblish.api.InstancePlugin):
 
         callback_lookup = render_scripts.get(renderer, {})
         if not callback_lookup:
-            cls.log.error(
-                "Renderer '%s' is not supported in this plugin"  % renderer
-            )
+            cls.log.warning("Renderer '%s' is not supported in this plugin"
+                            % renderer)
+            return False
 
         pre_render_callback = cmds.getAttr("defaultRenderGlobals.preMel")
         post_render_callback = cmds.getAttr("defaultRenderGlobals.postMel")
@@ -68,6 +66,7 @@ class ValidateRenderScriptCallbacks(pyblish.api.InstancePlugin):
         post_script = callback_lookup.get("post", "")
 
         # If not loaded
+        invalid = False
         if not yeti_loaded:
             if pre_script and pre_script in pre_callbacks:
                 cls.log.error("Found pre render callback '%s' which is not "
