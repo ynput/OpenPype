@@ -22,7 +22,8 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
                 "colorbleed.rig",
                 "colorbleed.pointcache",
                 "colorbleed.animation",
-                "colorbleed.setdress"]
+                "colorbleed.setdress",
+                "colorbleed.yetiRig"]
 
     actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.maya.action.GenerateUUIDsOnInvalidAction]
