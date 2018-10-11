@@ -22,7 +22,8 @@ class CreatePointCache(houdini.Creator):
 
         parms = {"use_sop_path": True,  # Export single node from SOP Path
                  "build_from_path": True,  # Direct path of primitive in output
-                 "path_attrib": "path",  # Pass path attribute for output
+                 "path_attrib": "path",  # Pass path attribute for output\
+                 "prim_to_detail_pattern": "cbId",
                  "format": 2,  # Set format to Ogawa
                  "filename": "$HIP/pyblish/%s.abc" % self.name}
 
@@ -31,3 +32,9 @@ class CreatePointCache(houdini.Creator):
             parms.update({"sop_path": node.path()})
 
         instance.setParms(parms)
+
+        # Lock any parameters in this list
+        to_lock = ["prim_to_detail_pattern"]
+        for name in to_lock:
+            parm = instance.parm(name)
+            parm.lock(True)
