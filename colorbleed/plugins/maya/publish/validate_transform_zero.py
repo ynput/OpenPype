@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateTransformZero(pyblish.api.Validator):
@@ -19,7 +20,7 @@ class ValidateTransformZero(pyblish.api.Validator):
     category = "geometry"
     version = (0, 1, 0)
     label = "Transform Zero (Freeze)"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     _identity = [1.0, 0.0, 0.0, 0.0,
                  0.0, 1.0, 0.0, 0.0,

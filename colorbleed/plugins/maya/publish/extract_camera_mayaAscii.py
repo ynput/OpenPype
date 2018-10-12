@@ -4,9 +4,8 @@ from maya import cmds
 
 import avalon.maya
 import colorbleed.api
-
-import cb.utils.maya.context as context
-from cb.utils.maya.animation import bakeToWorldSpace
+from colorbleed.lib import grouper
+from colorbleed.maya import lib
 
 
 def massage_ma_file(path):
@@ -33,6 +32,37 @@ def massage_ma_file(path):
 
     f.truncate()  # remove remainder
     f.close()
+
+
+def unlock(plug):
+    """Unlocks attribute and disconnects inputs for a plug.
+
+    This will also recursively unlock the attribute
+    upwards to any parent attributes for compound
+    attributes, to ensure it's fully unlocked and free
+    to change the value.
+
+    """
+    node, attr = plug.rsplit(".", 1)
+
+    # Unlock attribute
+    cmds.setAttr(plug, lock=False)
+
+    # Also unlock any parent attribute (if compound)
+    parents = cmds.attributeQuery(attr, node=node, listParent=True)
+    if parents:
+        for parent in parents:
+            unlock("{0}.{1}".format(node, parent))
+
+    # Break incoming connections
+    connections = cmds.listConnections(plug,
+                                       source=True,
+                                       destination=False,
+                                       plugs=True,
+                                       connections=True)
+    if connections:
+        for destination, source in grouper(connections, 2):
+            cmds.disconnectAttr(source, destination)
 
 
 class ExtractCameraMayaAscii(colorbleed.api.Extractor):
@@ -67,8 +97,8 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
         # TODO: Implement a bake to non-world space
         # Currently it will always bake the resulting camera to world-space
         # and it does not allow to include the parent hierarchy, even though
-        # with `bakeToWorldSpace` set to False it should include its hierarchy
-        # to be correct with the family implementation.
+        # with `bakeToWorldSpace` set to False it should include its
+        # hierarchy to be correct with the family implementation.
         if not bake_to_worldspace:
             self.log.warning("Camera (Maya Ascii) export only supports world"
                              "space baked camera extractions. The disabled "
@@ -96,16 +126,29 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
         # Perform extraction
         self.log.info("Performing camera bakes for: {0}".format(transform))
         with avalon.maya.maintained_selection():
-            with context.evaluation("off"):
-                with context.no_refresh():
-                    baked = bakeToWorldSpace(transform,
-                                             frameRange=range_with_handles,
-                                             step=step)
+            with lib.evaluation("off"):
+                with lib.no_refresh():
+                    baked = lib.bake_to_world_space(
+                        transform,
+                        frame_range=range_with_handles,
+                        step=step
+                    )
                     baked_shapes = cmds.ls(baked,
                                            type="camera",
                                            dag=True,
                                            shapes=True,
                                            long=True)
+
+                    # Fix PLN-178: Don't allow background color to be non-black
+                    for cam in baked_shapes:
+                        attrs = {"backgroundColorR": 0.0,
+                                 "backgroundColorG": 0.0,
+                                 "backgroundColorB": 0.0,
+                                 "overscan": 1.0}
+                        for attr, value in attrs.items():
+                            plug = "{0}.{1}".format(cam, attr)
+                            unlock(plug)
+                            cmds.setAttr(plug, value)
 
                     self.log.info("Performing extraction..")
                     cmds.select(baked_shapes, noExpand=True)

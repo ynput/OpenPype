@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
@@ -18,7 +19,7 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
     category = 'geometry'
     version = (0, 1, 0)
     label = 'Mesh Normals Unlocked'
-    actions = [colorbleed.api.SelectInvalidAction,
+    actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.api.RepairAction]
     optional = True
 

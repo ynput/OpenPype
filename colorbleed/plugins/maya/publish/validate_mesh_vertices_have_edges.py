@@ -4,6 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 def len_flattened(components):
@@ -61,7 +62,7 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
     families = ['colorbleed.model']
     category = 'geometry'
     label = 'Mesh Vertices Have Edges'
-    actions = [colorbleed.api.SelectInvalidAction,
+    actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.api.RepairAction]
 
     @classmethod

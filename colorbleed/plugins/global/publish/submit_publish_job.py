@@ -293,6 +293,10 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             ) for index, key in enumerate(environment)
         })
 
+        # Avoid copied pools and remove secondary pool
+        payload["JobInfo"]["Pool"] = "none"
+        payload["JobInfo"].pop("SecondaryPool", None)
+
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 

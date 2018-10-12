@@ -3,7 +3,7 @@ import hou
 import pyblish.api
 
 
-class CollectMayaCurrentFile(pyblish.api.ContextPlugin):
+class CollectHoudiniCurrentFile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
     order = pyblish.api.CollectorOrder - 0.5

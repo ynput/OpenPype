@@ -1,5 +1,6 @@
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateLookContents(pyblish.api.InstancePlugin):
@@ -20,7 +21,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
     families = ['colorbleed.look']
     hosts = ['maya']
     label = 'Look Data Contents'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""

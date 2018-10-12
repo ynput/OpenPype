@@ -3,6 +3,7 @@ import maya.cmds as cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 def get_namespace(node_name):
@@ -21,7 +22,7 @@ class ValidateNoNamespace(pyblish.api.InstancePlugin):
     category = 'cleanup'
     version = (0, 1, 0)
     label = 'No Namespaces'
-    actions = [colorbleed.api.SelectInvalidAction,
+    actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.api.RepairAction]
 
     @staticmethod

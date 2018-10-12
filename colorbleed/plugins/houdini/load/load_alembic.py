@@ -6,8 +6,10 @@ from avalon.houdini import pipeline, lib
 class AbcLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.animation", "colorbleed.pointcache"]
-    label = "Load Animation"
+    families = ["colorbleed.model",
+                "colorbleed.animation",
+                "colorbleed.pointcache"]
+    label = "Load Alembic"
     representations = ["abc"]
     order = -10
     icon = "code-fork"
@@ -40,30 +42,37 @@ class AbcLoader(api.Loader):
         container = obj.createNode("geo", node_name=node_name)
 
         # Remove the file node, it only loads static meshes
-        node_path = "/obj/{}/file1".format(node_name)
-        hou.node(node_path)
+        file_node = container.node("file1".format(node_name))
+        file_node.destroy()
 
         # Create an alembic node (supports animation)
         alembic = container.createNode("alembic", node_name=node_name)
         alembic.setParms({"fileName": file_path})
 
         # Add unpack node
-        unpack = container.createNode("unpack")
+        unpack_name = "unpack_{}".format(name)
+        unpack = container.createNode("unpack", node_name=unpack_name)
         unpack.setInput(0, alembic)
         unpack.setParms({"transfer_attributes": "path"})
 
+        # Add normal to points
+        # Order of menu ['point', 'vertex', 'prim', 'detail']
+        normal_name = "normal_{}".format(name)
+        normal_node = container.createNode("normal", node_name=normal_name)
+        normal_node.setParms({"type": 0})
+
+        normal_node.setInput(0, unpack)
+
+        null = container.createNode("null", node_name="OUT".format(name))
+        null.setInput(0, normal_node)
+
+        # Set display on last node
+        null.setDisplayFlag(True)
+
         # Set new position for unpack node else it gets cluttered
-        unpack.setPosition([0, -1])
-
-        # set unpack as display node
-        unpack.setDisplayFlag(True)
-
-        null_node = container.createNode("null",
-                                         node_name="OUT_{}".format(name))
-        null_node.setPosition([0, -2])
-        null_node.setInput(0, unpack)
-
-        nodes = [container, alembic, unpack, null_node]
+        nodes = [container, alembic, unpack, normal_node, null]
+        for nr, node in enumerate(nodes):
+            node.setPosition([0, (0 - nr)])
 
         self[:] = nodes
 

@@ -4,6 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 def short_name(node):
@@ -37,7 +38,7 @@ class ValidateShapeDefaultNames(pyblish.api.InstancePlugin):
     optional = True
     version = (0, 1, 0)
     label = "Shape Default Naming"
-    actions = [colorbleed.api.SelectInvalidAction,
+    actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.api.RepairAction]
 
     @staticmethod

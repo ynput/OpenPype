@@ -6,10 +6,9 @@ from maya import cmds
 
 import pyblish.api
 import avalon.maya
-import colorbleed.api
-import colorbleed.maya.lib as maya
 
-from cb.utils.maya import context
+import colorbleed.api
+import colorbleed.maya.lib as lib
 
 
 class ExtractLook(colorbleed.api.Extractor):
@@ -63,10 +62,10 @@ class ExtractLook(colorbleed.api.Extractor):
 
         # Extract in correct render layer
         layer = instance.data.get("renderlayer", "defaultRenderLayer")
-        with context.renderlayer(layer):
+        with lib.renderlayer(layer):
             # TODO: Ensure membership edits don't become renderlayer overrides
-            with context.empty_sets(sets, force=True):
-                with maya.attribute_values(remap):
+            with lib.empty_sets(sets, force=True):
+                with lib.attribute_values(remap):
                     with avalon.maya.maintained_selection():
                         cmds.select(sets, noExpand=True)
                         cmds.file(maya_path,

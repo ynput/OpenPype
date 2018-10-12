@@ -2,6 +2,7 @@ import maya.cmds as cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 import colorbleed.maya.lib as lib
 
 
@@ -19,7 +20,7 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     families = ["colorbleed.rig"]
     hosts = ['maya']
     label = 'Rig Out Set Node Ids'
-    actions = [colorbleed.api.SelectInvalidAction, colorbleed.api.RepairAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction, colorbleed.api.RepairAction]
 
     def process(self, instance):
         """Process all meshes"""

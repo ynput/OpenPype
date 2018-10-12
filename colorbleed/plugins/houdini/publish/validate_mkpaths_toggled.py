@@ -2,7 +2,7 @@ import pyblish.api
 import colorbleed.api
 
 
-class ValidatIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
+class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
     """Validate if node attribute Create intermediate Directories is turned on
 
     Rules:

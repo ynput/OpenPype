@@ -4,6 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 def len_flattened(components):
@@ -13,7 +14,7 @@ def len_flattened(components):
     when requesting with `maya.cmds.ls` without the `flatten`
     flag. Though enabling `flatten` on a large list (e.g. millions)
     will result in a slow result. This command will return the amount
-    of entries in a non-flattened list by parsing the result with 
+    of entries in a non-flattened list by parsing the result with
     regex.
 
     Args:
@@ -49,7 +50,7 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
     families = ['colorbleed.model']
     category = 'geometry'
     label = 'Mesh Has UVs'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
     optional = True
 
     @classmethod

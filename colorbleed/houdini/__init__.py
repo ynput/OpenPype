@@ -29,8 +29,6 @@ log = logging.getLogger("colorbleed.houdini")
 
 def install():
 
-    # Set
-
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
@@ -46,11 +44,11 @@ def install():
     avalon.data["familiesStateToggled"] = ["colorbleed.imagesequence"]
 
 
-def on_init(_):
+def on_init(*args):
     houdini.on_houdini_initialize()
 
 
-def on_save(_):
+def on_save(*args):
 
     avalon.logger.info("Running callback on save..")
 
@@ -61,20 +59,19 @@ def on_save(_):
         lib.set_id(node, new_id, overwrite=False)
 
 
-def on_open():
+def on_open(*args):
+
+    avalon.logger.info("Running callback on open..")
 
     update_task_from_path(hou.hipFile.path())
 
     if any_outdated():
-        from avalon.vendor.Qt import QtWidgets
         from ..widgets import popup
 
         log.warning("Scene has outdated content.")
 
-        # Find maya main window
-        top_level_widgets = {w.objectName(): w for w in
-                             QtWidgets.QApplication.topLevelWidgets()}
-        parent = top_level_widgets.get("MayaWindow", None)
+        # Get main window
+        parent = hou.ui.mainQtWindow()
 
         if parent is None:
             log.info("Skipping outdated content pop-up "
@@ -92,8 +89,3 @@ def on_open():
                               "your Maya scene.")
             dialog.on_show.connect(_on_show_inventory)
             dialog.show()
-
-
-def on_task_changed(*args):
-    """Wrapped function of app initialize and maya's on task changed"""
-    pass

@@ -29,13 +29,22 @@ class ValidatOutputNodeExists(pyblish.api.InstancePlugin):
         result = set()
 
         node = instance[0]
-        sop_path = node.parm("sop_path").eval()
-        if not sop_path.endswith("OUT"):
-            cls.log.error("SOP Path does not end path at output node")
+        if node.type().name() == "alembic":
+            soppath_parm = "sop_path"
+        else:
+            # Fall back to geometry node
+            soppath_parm = "soppath"
+
+        sop_path = node.parm(soppath_parm).eval()
+        output_node = hou.node(sop_path)
+
+        if output_node is None:
+            cls.log.error("Node at '%s' does not exist" % sop_path)
             result.add(node.path())
 
-        if hou.node(sop_path) is None:
-            cls.log.error("Node at '%s' does not exist" % sop_path)
+        # Added cam as this is a legit output type (cameras can't
+        if output_node.type().name() not in ["output", "cam"]:
+            cls.log.error("SOP Path does not end path at output node")
             result.add(node.path())
 
         return result

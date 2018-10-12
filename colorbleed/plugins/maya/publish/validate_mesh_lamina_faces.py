@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
@@ -17,7 +18,7 @@ class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
     category = 'geometry'
     version = (0, 1, 0)
     label = 'Mesh Lamina Faces'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

@@ -1,7 +1,3 @@
-from collections import OrderedDict
-
-import hou
-
 from avalon import houdini
 
 
@@ -16,15 +12,29 @@ class CreatePointCache(houdini.Creator):
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)
 
-        # create an ordered dict with the existing data first
-        data = OrderedDict(**self.data)
+        # Remove the active, we are checking the bypass flag of the nodes
+        self.data.pop("active", None)
 
-        # Set node type to create for output
-        data["node_type"] = "alembic"
+        self.data.update({"node_type": "alembic"})
 
-        # Collect animation data for point cache exporting
-        start, end = hou.playbar.timelineRange()
-        data["startFrame"] = start
-        data["endFrame"] = end
+    def process(self):
+        instance = super(CreatePointCache, self).process()
 
-        self.data = data
+        parms = {"use_sop_path": True,  # Export single node from SOP Path
+                 "build_from_path": True,  # Direct path of primitive in output
+                 "path_attrib": "path",  # Pass path attribute for output\
+                 "prim_to_detail_pattern": "cbId",
+                 "format": 2,  # Set format to Ogawa
+                 "filename": "$HIP/pyblish/%s.abc" % self.name}
+
+        if self.nodes:
+            node = self.nodes[0]
+            parms.update({"sop_path": node.path()})
+
+        instance.setParms(parms)
+
+        # Lock any parameters in this list
+        to_lock = ["prim_to_detail_pattern"]
+        for name in to_lock:
+            parm = instance.parm(name)
+            parm.lock(True)
