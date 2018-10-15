@@ -22,6 +22,5 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
         # Check response
         response = requests.get(AVALON_DEADLINE)
         assert response.ok, "Response must be ok"
-        assert response.text.startswith("Deadline Web Service "), (
+        assert response.text.startswith("Deadline Web Service "), \
             "Web service did not respond with 'Deadline Web Service'"
-        )
