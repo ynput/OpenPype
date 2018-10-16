@@ -33,8 +33,7 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
             end += handles
 
         attrs = instance.data.get("attr", "").split(";")
-        if not attrs:
-            attrs = ["cbId"]
+        attrs += ["cbId"]
 
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
 
