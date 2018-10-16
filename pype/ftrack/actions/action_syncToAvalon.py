@@ -1,23 +1,27 @@
 # :coding: utf-8
 # :copyright: Copyright (c) 2017 ftrack
-
 import sys
 import argparse
 import logging
+import collections
+import os
 
+import json
 import ftrack_api
-
 from ftrack_action_handler.action import BaseAction
+
+from avalon import io, inventory, schema
+from avalon.vendor import toml
 
 
 class SyncToAvalon(BaseAction):
     '''Edit meta data action.'''
 
     #: Action identifier.
-    identifier = 'update.anim.bid'
+    identifier = 'sync.to.avalon'
 
     #: Action label.
-    label = 'Sync to Avalon'
+    label = 'SyncToAvalon'
 
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
@@ -45,33 +49,134 @@ class SyncToAvalon(BaseAction):
         self.logger.info('Got selection: {0}'.format(entities))
         return self.validate_selection(session, entities)
 
+    def importToAvalon(self, session, entity):
+        eLinks = []
+        # TODO read from file, which data are in scope???
+        """ get needed info of entity and all parents """
+        for e in entity['link']:
+            tmp = session.get(e['type'], e['id'])
+            if e['name'].find(" ") == -1:
+                name = e['name']
+            else:
+                name = e['name'].replace(" ", "-")
+                print("Name of "+tmp.entity_type+" was changed from "+e['name']+" to "+name)
+
+            eLinks.append({"type": tmp.entity_type, "name": name, "ftrackId": tmp['id']})
+
+        entityProj = session.get(eLinks[0]['type'], eLinks[0]['ftrackId'])
+
+        """ set AVALON_PROJECT env """
+        os.environ["AVALON_PROJECT"] = entityProj["full_name"]
+
+        # get schema of project TODO read different schemas based on project type
+        template = {"schema": "avalon-core:inventory-1.0"}
+        schema = entityProj['project_schema']['name']
+        fname = os.path.join(os.path.dirname(
+            os.path.realpath(__file__)),
+            (schema + '.toml'))
+        try:
+            with open(fname) as f:
+                config = toml.load(f)
+        except IOError:
+            raise
+
+        # Create project in Avalon
+        io.install()
+        # Check if project not exists -> Create project (create_project raises error if already exist)
+        if (io.find_one(
+                {"type": "project", "name": entityProj["full_name"]}) is None):
+            inventory.save(entityProj["full_name"], config, template)
+
+        # Store project Id
+        projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
+
+        # If Shot/Asset add to Project
+        if (eLinks[-1]['type'] in ['Shot', 'AssetBuild']):
+            silo = eLinks[1]
+
+            # Create Assets
+            assets = []
+            for i in range(2, len(eLinks)):
+                assets.append(eLinks[i])
+
+            folderStruct = []
+            folderStruct.append(silo['name'])
+            parentId = None
+            data = {'ftrackId': None, 'visualParent': parentId, 'parents': folderStruct,
+                    'entityType': None}
+
+            for asset in assets:
+                data = {'ftrackId': asset['ftrackId'], 'visualParent': data['visualParent'],
+                        'parents': data['parents'], 'entityType': asset['type']}
+                if (io.find_one({'type': 'asset', 'name': asset['name']}) == None):
+                    inventory.create_asset(asset['name'], silo['name'], data, projectId)
+                    print("Asset "+asset['name']+" created")
+
+                else:
+                    # TODO check if is asset in same folder!!! ???? FEATURE FOR FUTURE
+                    # tmp = io.find_one({'type': 'asset', 'name': asset['name']})
+                    print("Asset "+asset["name"]+" already exist")
+
+                parentId = io.find_one({'type': 'asset', 'name': asset['name']})['_id']
+                data = {'visualParent': parentId, 'parents': folderStruct, }
+                folderStruct.append(asset['name'])
+
+        io.uninstall()
+
     def launch(self, session, entities, event):
-        '''Launch edit meta data action.'''
 
+        data = {
+            'status' : 'running',
+            'data' : json.dumps(dict(description='Synch Ftrack to Avalon'))
+            }
+        """ NEED TO SET JOB """
+        # job = ftrack_api.entity.job.Job(session, data)
+
+        importable = []
+
+        def getShotAsset(entity):
+            if not (entity.entity_type in ['AssetBuild', 'Shot']):
+                if entity['children']:
+                    childrens = entity['children']
+                    for child in childrens:
+                        getShotAsset(child)
+            else:
+                if not (entity in importable):
+                    importable.append(entity)
+
+        """ Get all Shots and AssetBuild from entities """
         for entity in entities:
-
             entity_type, entity_id = entity
-            entity = session.get(entity_type, entity_id)
+            act_ent = session.get(entity_type, entity_id)
+            getShotAsset(act_ent)
 
-            # copy_attrs = ['difficulty', 'fend', 'fstart', 'handles', 'chars']
+        # _handle_result -> by to mel resit
+        # """ TODO Check if name of entities match REGEX"""
+        # for entity in importable:
+        #     for e in entity['link']:
+        #         item = {
+        #             "silo": "silo",
+        #             "parent": "parent",
+        #             "type": "asset",
+        #             "schema": "avalon-core:asset-2.0",
+        #             "name": e['name'],
+        #             "data": dict(),
+        #         }
+        #         try:
+        #             schema.validate(item)
+        #         except Exception as e:
+        #             print(e)
+        # print(e['name'])
+        # ftrack.EVENT_HUB.publishReply(
+        #     event,
+        #     data={
+        #         'success': False,
+        #         'message': 'Entity name contains invalid character!'
+        #     }
+        # )
 
-            # collect all parents from the task
-            # parent = session.get(entity['link'][-2]['type'], entity['link'][-2]['id'])
-            # project = session.get(entity['link'][0]['type'], entity['link'][0]['id'])
-
-            # attrs = parent['custom_attributes']
-            #fend = int(attrs['fend'])
-            #fstart = int(attrs['fstart'])
-            print(entity['link'])
-            # entity['custom_attributes']['anim_cost'] = au * anim_rate
-
-        # try:
-        #     session.commit()
-        # except:
-        #     # Commit failed, rollback session and re-raise.
-        #     session.rollback()
-        #     raise
-
+        for e in importable:
+            self.importToAvalon(session, e)
         return True
 
 

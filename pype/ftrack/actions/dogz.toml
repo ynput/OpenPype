@@ -1,0 +1,30 @@
+schema = "avalon-core:config-1.0"
+[[tasks]]
+name = "model"
+
+[[tasks]]
+name = "render"
+
+[[tasks]]
+name = "animate"
+
+[[tasks]]
+name = "rig"
+
+[[tasks]]
+name = "lookdev"
+
+[[tasks]]
+name = "layout"
+
+[[apps]]
+name = "maya2018"
+label = "Autodesk Maya 2018"
+
+[[apps]]
+name = "nuke11"
+label = "The Foundry Nuke 11.0"
+
+[template]
+work = "{root}/{project}/{asset}/work/{task}/{app}"
+publish = "{root}/{project}/{asset}/publish/{subset}/v{version:0>3}/{subset}.{representation}"
