@@ -42,8 +42,10 @@ class AbcLoader(api.Loader):
         container = obj.createNode("geo", node_name=node_name)
 
         # Remove the file node, it only loads static meshes
-        file_node = container.node("file1".format(node_name))
-        file_node.destroy()
+        # Houdini 17 has removed the file node from the geo node
+        file_node = container.node("file1")
+        if file_node:
+            file_node.destroy()
 
         # Create an alembic node (supports animation)
         alembic = container.createNode("alembic", node_name=node_name)
