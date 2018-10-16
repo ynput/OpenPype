@@ -240,7 +240,6 @@ class Session(object):
             self._api_key,
         )
 
-
         if auto_connect_event_hub in (None, True):
             # Connect to event hub in background thread so as not to block main
             # session usage waiting for event hub connection.
@@ -730,7 +729,6 @@ class Session(object):
         entity = None
         try:
             entity = self._get(entity_type, entity_key)
-
 
         except KeyError:
 
@@ -2325,7 +2323,7 @@ class Session(object):
         for user in users:
             operations.append(
                 {
-                    'action':'send_user_invite',
+                    'action': 'send_user_invite',
                     'user_id': user['id']
                 }
             )

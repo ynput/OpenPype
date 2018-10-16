@@ -2,7 +2,6 @@ import os
 
 from avalon import api as avalon
 from pyblish import api as pyblish
-from ..vendor import ftrack_api
 
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)
