@@ -28,7 +28,7 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.01
     label = "Render Elements / AOVs"
     hosts = ["maya"]
-    families = ["renderlayer"]
+    families = ["studio.renderlayer"]
 
     def process(self, instance):
 
@@ -41,9 +41,9 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
 
         self.log.info("Renderer found: {}".format(renderer))
 
-        rp_node_types = {"vray": "VRayRenderElement",
-                         "arnold": "aiAOV",
-                         "redshift": "RedshiftAOV"}
+        rp_node_types = {"vray": ["VRayRenderElement", "VRayRenderElementSet"],
+                         "arnold": ["aiAOV"],
+                         "redshift": ["RedshiftAOV"]}
 
         if renderer not in rp_node_types.keys():
             self.log.error("Unsupported renderer found: '{}'".format(renderer))
@@ -52,7 +52,8 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
         result = []
 
         # Collect all AOVs / Render Elements
-        with lib.renderlayer(instance.name):
+        layer = instance.data["setMembers"]
+        with lib.renderlayer(layer):
 
             node_type = rp_node_types[renderer]
             render_elements = cmds.ls(type=node_type)
@@ -64,32 +65,36 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
                     continue
 
                 pass_name = self.get_pass_name(renderer, element)
-                render_pass = "%s.%s" % (instance.name, pass_name)
+                render_pass = "%s.%s" % (instance.data["subset"], pass_name)
 
                 result.append(render_pass)
 
         self.log.info("Found {} render elements / AOVs for "
-                      "'{}'".format(len(result), instance.name))
+                      "'{}'".format(len(result), instance.data["subset"]))
 
         instance.data["renderPasses"] = result
 
     def get_pass_name(self, renderer, node):
 
         if renderer == "vray":
+
+            # Get render element pass type
             vray_node_attr = next(attr for attr in cmds.listAttr(node)
                                   if attr.startswith("vray_name"))
-
             pass_type = vray_node_attr.rsplit("_", 1)[-1]
+
+            # Support V-Ray extratex explicit name (if set by user)
             if pass_type == "extratex":
-                vray_node_attr = "vray_explicit_name_extratex"
+                explicit_attr = "{}.vray_explicit_name_extratex".format(node)
+                explicit_name = cmds.getAttr(explicit_attr)
+                if explicit_name:
+                    return explicit_name
 
             # Node type is in the attribute name but we need to check if value
             # of the attribute as it can be changed
-            pass_name = cmds.getAttr("{}.{}".format(node, vray_node_attr))
+            return cmds.getAttr("{}.{}".format(node, vray_node_attr))
 
         elif renderer in ["arnold", "redshift"]:
-            pass_name = cmds.getAttr("{}.name".format(node))
+            return cmds.getAttr("{}.name".format(node))
         else:
             raise RuntimeError("Unsupported renderer: '{}'".format(renderer))
-
-        return pass_name

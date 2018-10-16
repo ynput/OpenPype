@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 class ValidateSingleShader(pyblish.api.InstancePlugin):
@@ -12,10 +13,10 @@ class ValidateSingleShader(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ['studio.look']
+    families = ["studio.look']
     hosts = ['maya']
     label = 'Look Single Shader Per Shape'
-    actions = [pype.api.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     # The default connections to check
     def process(self, instance):

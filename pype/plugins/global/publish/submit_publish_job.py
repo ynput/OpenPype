@@ -1,6 +1,5 @@
 import os
 import json
-import pprint
 import re
 
 from avalon import api, io
@@ -12,7 +11,7 @@ import pyblish.api
 def _get_script():
     """Get path to the image sequence script"""
     try:
-        from pype.scripts import publish_filesequence
+        from pype.fusion.scripts import publish_filesequence
     except Exception as e:
         raise RuntimeError("Expected module 'publish_imagesequence'"
                            "to be available")
@@ -122,8 +121,14 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
     label = "Submit image sequence jobs to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
-    hosts = ["fusion", "maya"]
-    families = ["saver.deadline", "renderlayer"]
+
+    hosts = ["fusion", "maya", "nuke"]
+
+    families = [
+        "studio.saver.deadline",
+        "studio.renderlayer",
+        "studio.imagesequence"
+    ]
 
     def process(self, instance):
 
@@ -168,7 +173,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             "regex": regex,
             "startFrame": start,
             "endFrame": end,
-            "families": ["imagesequence"],
+            "families": ["studio.imagesequence"],
 
             # Optional metadata (for debugging)
             "metadata": {
@@ -185,7 +190,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
         if data.get("extendFrames", False):
 
-            family = "imagesequence"
+            family = "studio.imagesequence"
             override = data["overrideExistingFrame"]
 
             # override = data.get("overrideExistingFrame", False)
@@ -292,6 +297,10 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
                 value=environment[key]
             ) for index, key in enumerate(environment)
         })
+
+        # Avoid copied pools and remove secondary pool
+        payload["JobInfo"]["Pool"] = "none"
+        payload["JobInfo"].pop("SecondaryPool", None)
 
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))

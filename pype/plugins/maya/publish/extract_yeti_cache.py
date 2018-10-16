@@ -16,7 +16,7 @@ class ExtractYetiCache(pype.api.Extractor):
 
     label = "Extract Yeti Cache"
     hosts = ["maya"]
-    families = ["yetiRig", "yeticache"]
+    families = ["studio.yetiRig", "studio.yeticache"]
 
     def process(self, instance):
 
@@ -37,6 +37,13 @@ class ExtractYetiCache(pype.api.Extractor):
         if preroll > 0:
             start_frame -= preroll
 
+        kwargs = {}
+        samples = instance.data.get("samples", 0)
+        if samples == 0:
+            kwargs.update({"sampleTimes": "0.0 1.0"})
+        else:
+            kwargs.update({"samples": samples})
+
         self.log.info("Writing out cache")
         # Start writing the files for snap shot
         # <NAME> will be replace by the Yeti node name
@@ -44,9 +51,9 @@ class ExtractYetiCache(pype.api.Extractor):
         cmds.pgYetiCommand(yeti_nodes,
                            writeCache=path,
                            range=(start_frame, end_frame),
-                           sampleTimes="0.0 1.0",
                            updateViewport=False,
-                           generatePreview=False)
+                           generatePreview=False,
+                           **kwargs)
 
         cache_files = [x for x in os.listdir(dirname) if x.endswith(".fur")]
 

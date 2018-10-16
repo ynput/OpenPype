@@ -3,6 +3,7 @@ import maya.cmds as cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 def get_namespace(node_name):
@@ -17,11 +18,11 @@ class ValidateNoNamespace(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['studio.model']
+    families = ["studio.model']
     category = 'cleanup'
     version = (0, 1, 0)
     label = 'No Namespaces'
-    actions = [pype.api.SelectInvalidAction,
+    actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     @staticmethod

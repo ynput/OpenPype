@@ -7,7 +7,7 @@ class ValidateNoVRayMesh(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = 'No V-Ray Proxies (VRayMesh)'
-    families = ["pointcache"]
+    families = ["studio.pointcache"]
 
     def process(self, instance):
 

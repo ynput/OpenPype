@@ -4,6 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 def short_name(node):
@@ -32,12 +33,12 @@ class ValidateShapeDefaultNames(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['studio.model']
+    families = ["studio.model']
     category = 'cleanup'
     optional = True
     version = (0, 1, 0)
     label = "Shape Default Naming"
-    actions = [pype.api.SelectInvalidAction,
+    actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     @staticmethod

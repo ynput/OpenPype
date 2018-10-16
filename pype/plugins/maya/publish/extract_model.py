@@ -4,8 +4,7 @@ from maya import cmds
 
 import avalon.maya
 import pype.api
-
-from cb.utils.maya import context
+import pype.maya.lib as lib
 
 
 class ExtractModel(pype.api.Extractor):
@@ -25,7 +24,7 @@ class ExtractModel(pype.api.Extractor):
 
     label = "Model (Maya ASCII)"
     hosts = ["maya"]
-    families = ["model"]
+    families = ["studio.model"]
 
     def process(self, instance):
 
@@ -47,15 +46,15 @@ class ExtractModel(pype.api.Extractor):
                           noIntermediate=True,
                           long=True)
 
-        with context.no_display_layers(instance):
-            with context.displaySmoothness(members,
-                                           divisionsU=0,
-                                           divisionsV=0,
-                                           pointsWire=4,
-                                           pointsShaded=1,
-                                           polygonObject=1):
-                with context.shader(members,
-                                    shadingEngine="initialShadingGroup"):
+        with lib.no_display_layers(instance):
+            with lib.displaySmoothness(members,
+                                       divisionsU=0,
+                                       divisionsV=0,
+                                       pointsWire=4,
+                                       pointsShaded=1,
+                                       polygonObject=1):
+                with lib.shader(members,
+                                shadingEngine="initialShadingGroup"):
                     with avalon.maya.maintained_selection():
                         cmds.select(members, noExpand=True)
                         cmds.file(path,

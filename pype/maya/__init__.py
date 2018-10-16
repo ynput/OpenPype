@@ -5,6 +5,7 @@ import weakref
 from maya import utils, cmds, mel
 
 from avalon import api as avalon, pipeline, maya
+from avalon.maya.pipeline import IS_HEADLESS
 from pyblish import api as pyblish
 
 from ..lib import (
@@ -34,16 +35,24 @@ def install():
 
     log.info("Installing callbacks ... ")
     avalon.on("init", on_init)
+
+    # Callbacks below are not required for headless mode, the `init` however
+    # is important to load referenced Alembics correctly at rendertime.
+    if IS_HEADLESS:
+        log.info("Running in headless mode, skipping Colorbleed Maya "
+                 "save/open/new callback installation..")
+        return
+
     avalon.on("save", on_save)
     avalon.on("open", on_open)
-
+    avalon.on("new", on_new)
     avalon.before("save", on_before_save)
 
     log.info("Overriding existing event 'taskChanged'")
     override_event("taskChanged", on_task_changed)
 
     log.info("Setting default family states for loader..")
-    avalon.data["familiesStateToggled"] = ["imagesequence"]
+    avalon.data["familiesStateToggled"] = ["studio.imagesequence"]
 
 
 def uninstall():
@@ -126,11 +135,12 @@ def on_open(_):
     from avalon.vendor.Qt import QtWidgets
     from ..widgets import popup
 
-    # Ensure scene's FPS is set to project config
-    lib.validate_fps()
-
     # Update current task for the current scene
     update_task_from_path(cmds.file(query=True, sceneName=True))
+
+    # Validate FPS after update_task_from_path to
+    # ensure it is using correct FPS for the asset
+    lib.validate_fps()
 
     if any_outdated():
         log.warning("Scene has outdated content.")
@@ -156,6 +166,13 @@ def on_open(_):
                               "your Maya scene.")
             dialog.on_show.connect(_on_show_inventory)
             dialog.show()
+
+
+def on_new(_):
+    """Set project resolution and fps when create a new file"""
+    avalon.logger.info("Running callback on new..")
+    with maya.suspended_refresh():
+        lib.set_context_settings()
 
 
 def on_task_changed(*args):

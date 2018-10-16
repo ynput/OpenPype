@@ -4,6 +4,8 @@ import pype.action
 
 import maya.cmds as cmds
 
+import pype.maya.action
+
 
 class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     """Validate the I/O attributes of the node
@@ -17,9 +19,9 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = "Yeti Rig Cache State"
     hosts = ["maya"]
-    families = ["yetiRig"]
+    families = ["studio.yetiRig"]
     actions = [pype.action.RepairAction,
-               pype.action.SelectInvalidAction]
+               pype.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)
@@ -58,3 +60,4 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
         for node in invalid:
             cmds.setAttr("%s.fileMode" % node, 0)
             cmds.setAttr("%s.cacheFileName" % node, "", type="string")
+

@@ -1,14 +1,15 @@
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 from pype.maya import lib
 
 
 class ValidateNodeIDs(pyblish.api.InstancePlugin):
     """Validate nodes have a Colorbleed Id.
-    
-    When IDs are missing from nodes *save your scene* and they should be 
-    automatically generated because IDs are created on non-referenced nodes 
+
+    When IDs are missing from nodes *save your scene* and they should be
+    automatically generated because IDs are created on non-referenced nodes
     in Maya upon scene save.
 
     """
@@ -16,15 +17,16 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
     order = pype.api.ValidatePipelineOrder
     label = 'Instance Nodes Have ID'
     hosts = ['maya']
-    families = ["model",
-                "look",
-                "rig",
-                "pointcache",
-                "animation",
-                "setdress"]
+    families = ["studio.model",
+                "studio.look",
+                "studio.rig",
+                "studio.pointcache",
+                "studio.animation",
+                "studio.setdress",
+                "studio.yetiRig"]
 
-    actions = [pype.api.SelectInvalidAction,
-               pype.api.GenerateUUIDsOnInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

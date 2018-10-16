@@ -19,7 +19,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["fusion"]
-    families = ["saver.deadline"]
+    families = ["studio.saver.deadline"]
 
     def process(self, instance):
 

@@ -12,7 +12,7 @@ class ValidateInstancerContent(pyblish.api.InstancePlugin):
     """
     order = pyblish.api.ValidatorOrder
     label = 'Instancer Content'
-    families = ['studio.instancer']
+    families = ["studio.instancer']
 
     def process(self, instance):
 

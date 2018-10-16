@@ -11,7 +11,7 @@ class RigLoader(pype.maya.plugin.ReferenceLoader):
 
     """
 
-    families = ["rig"]
+    families = ["studio.rig"]
     representations = ["ma"]
 
     label = "Reference rig"
@@ -62,7 +62,7 @@ class RigLoader(pype.maya.plugin.ReferenceLoader):
             cmds.select([output, controls] + roots, noExpand=True)
             api.create(name=namespace,
                        asset=asset,
-                       family="animation",
+                       family="studio.animation",
                        options={"useSelection": True},
                        data={"dependencies": dependency})
 

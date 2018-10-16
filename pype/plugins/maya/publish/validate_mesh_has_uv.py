@@ -4,6 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 def len_flattened(components):
@@ -13,7 +14,7 @@ def len_flattened(components):
     when requesting with `maya.cmds.ls` without the `flatten`
     flag. Though enabling `flatten` on a large list (e.g. millions)
     will result in a slow result. This command will return the amount
-    of entries in a non-flattened list by parsing the result with 
+    of entries in a non-flattened list by parsing the result with
     regex.
 
     Args:
@@ -46,10 +47,10 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['studio.model']
+    families = ["studio.model']
     category = 'geometry'
     label = 'Mesh Has UVs'
-    actions = [pype.api.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
     optional = True
 
     @classmethod

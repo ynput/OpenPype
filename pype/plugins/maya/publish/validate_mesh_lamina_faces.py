@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
@@ -13,11 +14,11 @@ class ValidateMeshLaminaFaces(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['studio.model']
+    families = ["studio.model']
     category = 'geometry'
     version = (0, 1, 0)
     label = 'Mesh Lamina Faces'
-    actions = [pype.api.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

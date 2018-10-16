@@ -30,7 +30,7 @@ class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin):
 
     order = pype.api.ValidatePipelineOrder
     hosts = ['maya']
-    families = ['studio.model']
+    families = ["studio.model']
     category = 'scene'
     version = (0, 1, 0)
     label = 'Maya Workspace Set'

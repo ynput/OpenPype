@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
@@ -22,10 +23,10 @@ class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
     order = pype.api.ValidatePipelineOrder
     label = 'Look members unique'
     hosts = ['maya']
-    families = ['studio.look']
+    families = ["studio.look']
 
-    actions = [pype.api.SelectInvalidAction,
-               pype.api.GenerateUUIDsOnInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

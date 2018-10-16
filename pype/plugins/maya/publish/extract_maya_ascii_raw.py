@@ -15,7 +15,7 @@ class ExtractMayaAsciiRaw(pype.api.Extractor):
 
     label = "Maya ASCII (Raw)"
     hosts = ["maya"]
-    families = ["pype.mayaAscii"]
+    families = ["studio.mayaAscii"]
 
     def process(self, instance):
 
@@ -44,7 +44,10 @@ class ExtractMayaAsciiRaw(pype.api.Extractor):
                       typ="mayaAscii",
                       exportSelected=True,
                       preserveReferences=True,
-                      constructionHistory=True)
+                      constructionHistory=True,
+                      shader=True,
+                      constraints=True,
+                      expressions=True)
 
         if "files" not in instance.data:
             instance.data["files"] = list()

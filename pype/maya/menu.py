@@ -23,10 +23,15 @@ def _get_menu():
 
 def deferred():
 
-    import scriptsmenu.launchformaya as launchformaya
-    import scriptsmenu.scriptsmenu as scriptsmenu
+    log.info("Attempting to install scripts menu..")
 
-    log.info("Attempting to install ...")
+    try:
+        import scriptsmenu.launchformaya as launchformaya
+        import scriptsmenu.scriptsmenu as scriptsmenu
+    except ImportError:
+        log.warning("Skipping pype.menu install, because "
+                    "'scriptsmenu' module seems unavailable.")
+        return
 
     # load configuration of custom menu
     config_path = os.path.join(os.path.dirname(__file__), "menu.json")
@@ -44,7 +49,7 @@ def uninstall():
 
     menu = _get_menu()
     if menu:
-        log.info("Attempting to uninstall ..")
+        log.info("Attempting to uninstall..")
 
         try:
             menu.deleteLater()
@@ -56,7 +61,7 @@ def uninstall():
 def install():
 
     if cmds.about(batch=True):
-        print("Skipping studio.menu initialization in batch mode..")
+        print("Skipping pype.menu initialization in batch mode..")
         return
 
     uninstall()

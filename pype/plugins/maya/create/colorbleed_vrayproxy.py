@@ -8,7 +8,7 @@ class CreateVrayProxy(avalon.maya.Creator):
 
     name = "vrayproxy"
     label = "VRay Proxy"
-    family = "vrayproxy"
+    family = "studio.vrayproxy"
     icon = "gears"
 
     def __init__(self, *args, **kwargs):
@@ -19,5 +19,8 @@ class CreateVrayProxy(avalon.maya.Creator):
         data["animation"] = False
         data["startFrame"] = 1
         data["endFrame"] = 1
+
+        # Write vertex colors
+        data["vertexColors"] = False
 
         self.data.update(data)

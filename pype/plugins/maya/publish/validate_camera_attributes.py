@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 class ValidateCameraAttributes(pyblish.api.InstancePlugin):
@@ -14,10 +15,10 @@ class ValidateCameraAttributes(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ['studio.camera']
+    families = ["studio.camera']
     hosts = ['maya']
     label = 'Camera Attributes'
-    actions = [pype.api.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     DEFAULTS = [
         ("filmFitOffset", 0.0),

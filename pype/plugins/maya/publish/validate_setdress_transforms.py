@@ -3,6 +3,8 @@ import pype.api
 
 from maya import cmds
 
+import pype.maya.action
+
 
 class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     """Verify only root nodes of the loaded asset have transformations.
@@ -25,8 +27,8 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder + 0.49
     label = "Setdress Model Transforms"
-    families = ["setdress"]
-    actions = [pype.api.SelectInvalidAction,
+    families = ["studio.setdress"]
+    actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     prompt_message = ("You are about to reset the matrix to the default values."

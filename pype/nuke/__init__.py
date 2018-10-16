@@ -30,6 +30,11 @@ def install():
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
 
+    # # work files start at app start
+    # workfiles.show(
+    #     os.environ["AVALON_WORKDIR"]
+    # )
+
 
 def uninstall():
     print("Deregistering Nuke plug-ins..")

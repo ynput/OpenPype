@@ -10,7 +10,7 @@ from avalon import api
 class CreateRenderGlobals(avalon.maya.Creator):
 
     label = "Render Globals"
-    family = "renderglobals"
+    family = "studio.renderglobals"
     icon = "gears"
 
     def __init__(self, *args, **kwargs):

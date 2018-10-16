@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 class ValidateCameraContents(pyblish.api.InstancePlugin):
@@ -9,16 +10,16 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
     A Camera instance may only hold a SINGLE camera's transform, nothing else.
 
-    It may hold a "locator" as shape, but different shapes are down the 
+    It may hold a "locator" as shape, but different shapes are down the
     hierarchy.
 
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ['studio.camera']
+    families = ["studio.camera']
     hosts = ['maya']
     label = 'Camera Contents'
-    actions = [pype.api.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

@@ -1,41 +1,46 @@
+import pype.maya.action
 from pype.maya import lib
 
 import pyblish.api
 import pype.api
 
-from cb.utils.maya import context
-
 
 class ValidateLookSets(pyblish.api.InstancePlugin):
     """Validate if any sets are missing from the instance and look data
 
-    A node might have a relationship with a shader but has no Colorbleed ID.
+    A shader can be assigned to a node that is missing a Colorbleed ID.
     Because it is missing the ID it has not been collected in the instance.
+    This validator ensures no relationships and thus considers it invalid
+    if a relationship was not collected.
+
     When the relationship needs to be maintained the artist might need to
     create a different* relationship or ensure the node has the Colorbleed ID.
 
-    * The relationship might be too broad (assigned to top node if hierarchy).
+    *The relationship might be too broad (assigned to top node of hierarchy).
     This can be countered by creating the relationship on the shape or its
-    transform.
-    In essence, ensure item the shader is assigned to has the Colorbleed ID!
+    transform. In essence, ensure item the shader is assigned to has the
+    Colorbleed ID!
 
-    Displacement shaders:
-    Ensure all geometry is added to the displacement objectSet.
-    It is best practice to add the transform group of the shape to the
-    displacement objectSet
-    Example content:
-        [asset_GRP|geometry_GRP|body_GES,
-         asset_GRP|geometry_GRP|L_eye_GES,
-         asset_GRP|geometry_GRP|R_eye_GES,
-         asset_GRP|geometry_GRP|wings_GEO]
+    Examples:
+
+    - Displacement objectSets (like V-Ray):
+
+        It is best practice to add the transform group of the shape to the
+        displacement objectSet.
+
+        Example content:
+            [asset_GRP|geometry_GRP|body_GES,
+             asset_GRP|geometry_GRP|L_eye_GES,
+             asset_GRP|geometry_GRP|R_eye_GES,
+             asset_GRP|geometry_GRP|wings_GEO]
 
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ['studio.look']
+    families = ["studio.look']
     hosts = ['maya']
     label = 'Look Sets'
-    actions = [pype.api.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""
@@ -56,7 +61,7 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
         invalid = []
 
         renderlayer = instance.data.get("renderlayer", "defaultRenderLayer")
-        with context.renderlayer(renderlayer):
+        with lib.renderlayer(renderlayer):
             for node in instance:
                 # get the connected objectSets of the node
                 sets = lib.get_related_sets(node)
@@ -91,7 +96,3 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
                         continue
 
         return invalid
-
-    @classmethod
-    def repair(cls, context, instance):
-        pass

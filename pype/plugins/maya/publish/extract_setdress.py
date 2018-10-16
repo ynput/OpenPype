@@ -18,7 +18,7 @@ class ExtractSetDress(pype.api.Extractor):
 
     label = "Extract Set Dress"
     hosts = ["maya"]
-    families = ["setdress"]
+    families = ["studio.setdress"]
 
     def process(self, instance):
 

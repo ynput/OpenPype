@@ -3,7 +3,7 @@ import pype.maya.plugin
 
 class YetiRigLoader(pype.maya.plugin.ReferenceLoader):
 
-    families = ["yetiRig"]
+    families = ["studio.yetiRig"]
     representations = ["ma"]
 
     label = "Load Yeti Rig"

@@ -3,15 +3,17 @@ import pype.api
 
 from maya import cmds
 
+import pype.maya.action
+
 
 class ValidateShapeRenderStats(pyblish.api.Validator):
     """Ensure all render stats are set to the default values."""
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['studio.model']
+    families = ["studio.model']
     label = 'Shape Default Render Stats'
-    actions = [pype.api.SelectInvalidAction,
+    actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     defaults = {'castsShadows': 1,

@@ -17,7 +17,7 @@ class ValidateRenderImageRule(pyblish.api.ContextPlugin):
     order = pype.api.ValidateContentsOrder
     label = "Images File Rule (Workspace)"
     hosts = ["maya"]
-    families = ["renderlayer"]
+    families = ["studio.renderlayer"]
 
     def process(self, context):
 

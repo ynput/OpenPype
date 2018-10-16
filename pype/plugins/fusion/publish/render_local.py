@@ -14,7 +14,7 @@ class FusionRenderLocal(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder
     label = "Render Local"
     hosts = ["fusion"]
-    families = ["saver.renderlocal"]
+    families = ["studio.saver.renderlocal"]
 
     def process(self, instance):
 

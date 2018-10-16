@@ -8,11 +8,11 @@ from avalon import api
 class FusionSetFrameRangeLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["animation",
-                "camera",
-                "imagesequence",
-                "yeticache",
-                "pointcache"]
+    families = ["studio.animation",
+                "studio.camera",
+                "studio.imagesequence",
+                "studio.yeticache",
+                "studio.pointcache"]
     representations = ["*"]
 
     label = "Set frame range"
@@ -41,11 +41,11 @@ class FusionSetFrameRangeLoader(api.Loader):
 class FusionSetFrameRangeWithHandlesLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["animation",
-                "camera",
-                "imagesequence",
-                "yeticache",
-                "pointcache"]
+    families = ["studio.animation",
+                "studio.camera",
+                "studio.imagesequence",
+                "studio.yeticache",
+                "studio.pointcache"]
     representations = ["*"]
 
     label = "Set frame range (with handles)"

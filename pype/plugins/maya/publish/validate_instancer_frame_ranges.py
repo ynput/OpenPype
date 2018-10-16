@@ -44,7 +44,7 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
     """
     order = pyblish.api.ValidatorOrder
     label = 'Instancer Cache Frame Ranges'
-    families = ['studio.instancer']
+    families = ["studio.instancer']
 
     @classmethod
     def get_invalid(cls, instance):

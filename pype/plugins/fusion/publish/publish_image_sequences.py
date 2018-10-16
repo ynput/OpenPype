@@ -14,7 +14,7 @@ def _get_script():
     # todo: use a more elegant way to get the python script
 
     try:
-        from pype.scripts import publish_filesequence
+        from pype.fusion.scripts import publish_filesequence
     except Exception:
         raise RuntimeError("Expected module 'publish_imagesequence'"
                            "to be available")
@@ -32,7 +32,7 @@ class PublishImageSequence(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     label = "Publish Rendered Image Sequence(s)"
     hosts = ["fusion"]
-    families = ["saver.renderlocal"]
+    families = ["studio.saver.renderlocal"]
 
     def process(self, instance):
 
@@ -55,7 +55,7 @@ class PublishImageSequence(pyblish.api.InstancePlugin):
             "regex": regex,
             "startFrame": instance.context.data["startFrame"],
             "endFrame": instance.context.data["endFrame"],
-            "families": ["imagesequence"],
+            "families": ["studio.imagesequence"],
         }
 
         # Write metadata and store the path in the instance

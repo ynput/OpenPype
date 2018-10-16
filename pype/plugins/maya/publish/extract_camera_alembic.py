@@ -5,7 +5,7 @@ from maya import cmds
 import avalon.maya
 import pype.api
 
-import cb.utils.maya.context as context
+import pype.maya.lib as lib
 
 
 class ExtractCameraAlembic(pype.api.Extractor):
@@ -18,7 +18,7 @@ class ExtractCameraAlembic(pype.api.Extractor):
 
     label = "Camera (Alembic)"
     hosts = ["maya"]
-    families = ["camera"]
+    families = ["studio.camera"]
 
     def process(self, instance):
 
@@ -66,8 +66,8 @@ class ExtractCameraAlembic(pype.api.Extractor):
 
             job_str += ' -file "{0}"'.format(path)
 
-            with context.evaluation("off"):
-                with context.no_refresh():
+            with lib.evaluation("off"):
+                with lib.no_refresh():
                     cmds.AbcExport(j=job_str, verbose=False)
 
         if "files" not in instance.data:

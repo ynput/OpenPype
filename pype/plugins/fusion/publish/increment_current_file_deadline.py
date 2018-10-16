@@ -11,7 +11,7 @@ class FusionIncrementCurrentFile(pyblish.api.ContextPlugin):
     label = "Increment current file"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["fusion"]
-    families = ["saver.deadline"]
+    families = ["studio.saver.deadline"]
     optional = True
 
     def process(self, context):

@@ -88,6 +88,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     targets = ["filesequence"]
     label = "File Sequences"
+    hosts = ['maya']
 
     def process(self, context):
 
@@ -148,7 +149,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     raise RuntimeError("Invalid sequence")
 
             # Get family from the data
-            families = data.get("families", ["imagesequence"])
+            families = data.get("families", ["studio.imagesequence"])
             assert isinstance(families, (list, tuple)), "Must be iterable"
             assert families, "Must have at least a single family"
 

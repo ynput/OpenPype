@@ -2,6 +2,7 @@ import maya.cmds as cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 import pype.maya.lib as lib
 
 
@@ -16,10 +17,10 @@ class ValidateRigOutSetNodeIds(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["rig"]
+    families = ["studio.rig"]
     hosts = ['maya']
     label = 'Rig Out Set Node Ids'
-    actions = [pype.api.SelectInvalidAction, pype.api.RepairAction]
+    actions = [pype.maya.action.SelectInvalidAction, pype.api.RepairAction]
 
     def process(self, instance):
         """Process all meshes"""
