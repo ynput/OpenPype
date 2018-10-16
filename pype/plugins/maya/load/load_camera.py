@@ -2,9 +2,9 @@ import pype.maya.plugin
 
 
 class CameraLoader(pype.maya.plugin.ReferenceLoader):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Specific loader of Alembic for the studio.camera family"""
 
-    families = ["camera"]
+    families = ["studio.camera"]
     label = "Reference camera"
     representations = ["abc", "ma"]
     order = -10

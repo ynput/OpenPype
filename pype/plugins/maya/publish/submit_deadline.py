@@ -99,7 +99,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
-    families = ["renderlayer"]
+    families = ["studio.renderlayer"]
 
     def process(self, instance):
 
@@ -115,7 +115,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         scene = os.path.splitext(filename)[0]
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
-        renderlayer_name = instance.name                # beauty
+        renderlayer_name = instance.data['subset']      # beauty
         renderlayer_globals = instance.data["renderGlobals"]
         legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
@@ -207,6 +207,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             # todo: This is a temporary fix for yeti variables
             "PEREGRINEL_LICENSE",
             "REDSHIFT_MAYAEXTENSIONSPATH",
+            "REDSHIFT_DISABLEOUTPUTLOCKFILES"
             "VRAY_FOR_MAYA2018_PLUGINS_X64",
             "VRAY_PLUGINS_X64",
             "VRAY_USE_THREAD_AFFINITY",
@@ -230,7 +231,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         render_globals = instance.data.get("renderGlobals", {})
         payload["JobInfo"].update(render_globals)
 
-        self.log.info("using render plugin : {}".format(payload["JobInfo"]["Plugin"]))
+        plugin = payload["JobInfo"]["Plugin"]
+        self.log.info("using render plugin : {}".format(plugin))
 
         self.preflight_check(instance)
 

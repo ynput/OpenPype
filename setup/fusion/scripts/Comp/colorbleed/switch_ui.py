@@ -154,7 +154,7 @@ class App(QtWidgets.QWidget):
 
         asset = self._assets.currentText()
 
-        import config.scripts.fusion_switch_shot as switch_shot
+        import colorbleed.scripts.fusion_switch_shot as switch_shot
         switch_shot.switch(asset_name=asset, filepath=file_name, new=True)
 
     def _get_context_directory(self):

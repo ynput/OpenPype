@@ -4,6 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 def len_flattened(components):
@@ -58,10 +59,10 @@ class ValidateMeshVerticesHaveEdges(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['studio.model']
+    families = ["studio.model']
     category = 'geometry'
     label = 'Mesh Vertices Have Edges'
-    actions = [pype.api.SelectInvalidAction,
+    actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     @classmethod

@@ -6,10 +6,9 @@ from maya import cmds
 
 import pyblish.api
 import avalon.maya
-import pype.api
-import pype.maya.lib as maya
 
-from cb.utils.maya import context
+import pype.api
+import pype.maya.lib as lib
 
 
 class ExtractLook(pype.api.Extractor):
@@ -23,7 +22,7 @@ class ExtractLook(pype.api.Extractor):
 
     label = "Extract Look (Maya ASCII + JSON)"
     hosts = ["maya"]
-    families = ["look"]
+    families = ["studio.look"]
     order = pyblish.api.ExtractorOrder + 0.2
 
     def process(self, instance):
@@ -63,10 +62,10 @@ class ExtractLook(pype.api.Extractor):
 
         # Extract in correct render layer
         layer = instance.data.get("renderlayer", "defaultRenderLayer")
-        with context.renderlayer(layer):
+        with lib.renderlayer(layer):
             # TODO: Ensure membership edits don't become renderlayer overrides
-            with context.empty_sets(sets, force=True):
-                with maya.attribute_values(remap):
+            with lib.empty_sets(sets, force=True):
+                with lib.attribute_values(remap):
                     with avalon.maya.maintained_selection():
                         cmds.select(sets, noExpand=True)
                         cmds.file(maya_path,

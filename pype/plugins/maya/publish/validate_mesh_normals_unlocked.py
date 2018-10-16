@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
@@ -14,11 +15,11 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['studio.model']
+    families = ["studio.model']
     category = 'geometry'
     version = (0, 1, 0)
     label = 'Mesh Normals Unlocked'
-    actions = [pype.api.SelectInvalidAction,
+    actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
     optional = True
 

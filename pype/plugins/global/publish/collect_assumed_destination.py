@@ -35,6 +35,12 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
             # Add destination to the resource
             source_filename = os.path.basename(resource["source"])
             destination = os.path.join(mock_destination, source_filename)
+
+            # Force forward slashes to fix issue with software unable
+            # to work correctly with backslashes in specific scenarios
+            # (e.g. escape characters in PLN-151 V-Ray UDIM)
+            destination = destination.replace("\\", "/")
+
             resource['destination'] = destination
 
             # Collect transfers for the individual files of the resource

@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 class ValidateNoUnknownNodes(pyblish.api.InstancePlugin):
@@ -17,10 +18,10 @@ class ValidateNoUnknownNodes(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['studio.model', 'studio.rig']
+    families = ["studio.model', 'studio.rig']
     optional = True
     label = "Unknown Nodes"
-    actions = [pype.api.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

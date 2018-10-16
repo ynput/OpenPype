@@ -18,7 +18,7 @@ def open(filepath):
 class PlayImageSequence(api.Loader):
     """Open Image Sequence with system default"""
 
-    families = ["imagesequence"]
+    families = ["studio.imagesequence"]
     representations = ["*"]
 
     label = "Play sequence"

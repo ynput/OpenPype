@@ -13,7 +13,7 @@ from pype.maya import lib
 
 class YetiCacheLoader(api.Loader):
 
-    families = ["yeticache", "yetiRig"]
+    families = ["studio.yeticache", "studio.yetiRig"]
     representations = ["fur"]
 
     label = "Load Yeti Cache"
@@ -284,6 +284,8 @@ class YetiCacheLoader(api.Loader):
 
             # Apply attributes to pgYetiMaya node
             for attr, value in attributes.items():
+                if value is None:
+                    continue
                 lib.set_attribute(attr, value, yeti_node)
 
             # Fix for : YETI-6

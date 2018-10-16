@@ -30,7 +30,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder
     label = "Render Settings"
     hosts = ["maya"]
-    families = ["renderlayer"]
+    families = ["studio.renderlayer"]
     actions = [pype.api.RepairAction]
 
     DEFAULT_PADDING = 4

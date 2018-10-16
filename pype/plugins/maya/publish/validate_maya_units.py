@@ -2,7 +2,7 @@ import maya.cmds as cmds
 
 import pyblish.api
 import pype.api
-from config import lib
+from pype import lib
 import pype.maya.lib as mayalib
 
 
@@ -16,11 +16,12 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
+        # Collected units
         linearunits = context.data('linearUnits')
         angularunits = context.data('angularUnits')
-
         fps = context.data['fps']
-        project_fps = lib.get_project_fps()
+
+        asset_fps = lib.get_asset_fps()
 
         self.log.info('Units (linear): {0}'.format(linearunits))
         self.log.info('Units (angular): {0}'.format(angularunits))
@@ -32,7 +33,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
 
         assert angularunits and angularunits == 'deg', ("Scene angular units "
                                                         "must be degrees")
-        assert fps and fps == project_fps, "Scene must be %s FPS" % project_fps
+        assert fps and fps == asset_fps, "Scene must be %s FPS" % asset_fps
 
     @classmethod
     def repair(cls):
@@ -49,5 +50,5 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         cls.log.debug(current_linear)
 
         cls.log.info("Setting time unit to match project")
-        project_fps = lib.get_project_fps()
-        mayalib.set_scene_fps(project_fps)
+        asset_fps = lib.get_asset_fps()
+        mayalib.set_scene_fps(asset_fps)

@@ -11,7 +11,7 @@ class ExtractColorbleedRig(pype.api.Extractor):
 
     label = "Extract Rig (Maya ASCII)"
     hosts = ["maya"]
-    families = ["rig"]
+    families = ["studio.rig"]
 
     def process(self, instance):
 

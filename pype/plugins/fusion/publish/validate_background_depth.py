@@ -1,6 +1,6 @@
 import pyblish.api
 
-from config import action
+from pype import action
 
 
 class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
@@ -10,7 +10,7 @@ class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
     label = "Validate Background Depth 32 bit"
     actions = [action.RepairAction]
     hosts = ["fusion"]
-    families = ["saver"]
+    families = ["studio.saver"]
     optional = True
 
     @classmethod

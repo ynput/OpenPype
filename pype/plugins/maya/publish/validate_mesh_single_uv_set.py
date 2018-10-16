@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 import pype.maya.lib as lib
 
 
@@ -16,12 +17,12 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['studio.model', 'studio.pointcache']
+    families = ["studio.model', 'studio.pointcache']
     category = 'uv'
     optional = True
     version = (0, 1, 0)
     label = "Mesh Single UV Set"
-    actions = [pype.api.SelectInvalidAction,
+    actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     @staticmethod

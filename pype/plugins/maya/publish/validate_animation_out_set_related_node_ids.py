@@ -2,6 +2,7 @@ import maya.cmds as cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 import pype.maya.lib as lib
 
 
@@ -16,10 +17,10 @@ class ValidateOutRelatedNodeIds(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ['studio.animation', "pointcache"]
+    families = ["studio.animation', "studio.pointcache"]
     hosts = ['maya']
     label = 'Animation Out Set Related Node Ids'
-    actions = [pype.api.SelectInvalidAction, pype.api.RepairAction]
+    actions = [pype.maya.action.SelectInvalidAction, pype.api.RepairAction]
 
     def process(self, instance):
         """Process all meshes"""

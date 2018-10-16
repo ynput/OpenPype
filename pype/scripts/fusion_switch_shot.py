@@ -8,7 +8,7 @@ from avalon import api, io, pipeline
 import avalon.fusion
 
 # Config imports
-import pype.lib as lib
+import pype.lib pype
 import pype.fusion.lib as fusion_lib
 
 log = logging.getLogger("Update Slap Comp")
@@ -87,7 +87,7 @@ def _format_filepath(session):
 
     # Create new unqiue filepath
     if os.path.exists(new_filepath):
-        new_filepath = lib.version_up(new_filepath)
+        new_filepath = studio.version_up(new_filepath)
 
     return new_filepath
 
@@ -189,8 +189,8 @@ def switch(asset_name, filepath=None, new=True):
     representations = []
     for container in containers:
         try:
-            representation = lib.switch_item(container,
-                                             asset_name=asset_name)
+            representation = pype.switch_item(container,
+                                                    asset_name=asset_name)
             representations.append(representation)
         except Exception as e:
             current_comp.Print("Error in switching! %s\n" % e.message)
@@ -209,7 +209,7 @@ def switch(asset_name, filepath=None, new=True):
         # Update savers output based on new session
         _update_savers(current_comp, switch_to_session)
     else:
-        comp_path = lib.version_up(filepath)
+        comp_path = pype.version_up(filepath)
 
     current_comp.Print(comp_path)
 

@@ -24,9 +24,9 @@ def install():
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
     # Disable all families except for the ones we explicitly want to see
-    family_states = ["imagesequence",
-                     "camera",
-                     "pointcache"]
+    family_states = ["studio.imagesequence",
+                     "studio.camera",
+                     "studio.pointcache"]
 
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states

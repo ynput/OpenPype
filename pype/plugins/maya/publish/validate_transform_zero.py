@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 
 
 class ValidateTransformZero(pyblish.api.Validator):
@@ -15,11 +16,11 @@ class ValidateTransformZero(pyblish.api.Validator):
 
     order = pype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["model"]
+    families = ["studio.model"]
     category = "geometry"
     version = (0, 1, 0)
     label = "Transform Zero (Freeze)"
-    actions = [pype.api.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     _identity = [1.0, 0.0, 0.0, 0.0,
                  0.0, 1.0, 0.0, 0.0,

@@ -23,18 +23,19 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
-    families = ["animation",
-                "camera",
-                "imagesequence",
-                "look",
-                "pype.mayaAscii",
-                "model",
-                "pointcache",
-                "setdress",
-                "rig",
-                "vrayproxy",
-                "yetiRig",
-                "yeticache"]
+    families = ["studio.animation",
+                "studio.camera",
+                "studio.imagesequence",
+                "studio.look",
+                "studio.mayaAscii",
+                "studio.model",
+                "studio.pointcache",
+                "studio.vdbcache",
+                "studio.setdress",
+                "studio.rig",
+                "studio.vrayproxy",
+                "studio.yetiRig",
+                "studio.yeticache"]
 
     def process(self, instance):
 
@@ -82,7 +83,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.debug("Establishing staging directory @ %s" % stagingdir)
 
         project = io.find_one({"type": "project"},
-                              projection={"pype.template.publish": True})
+                              projection={"config.template.publish": True})
 
         asset = io.find_one({"type": "asset",
                              "name": ASSET,

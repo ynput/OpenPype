@@ -16,7 +16,7 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.4
-    families = ["animation"]
+    families = ["studio.animation"]
     label = "Collect Animation Output Geometry"
     hosts = ["maya"]
 
@@ -29,8 +29,11 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
         out_set = next((i for i in instance.data["setMembers"] if
                         i.endswith("out_SET")), None)
 
-        assert out_set, ("Expecting out_SET for instance of family"
-                         " '%s'" % family)
+        if out_set is None:
+            warning = "Expecting out_SET for instance of family '%s'" % family
+            self.log.warning(warning)
+            return
+
         members = cmds.ls(cmds.sets(out_set, query=True), long=True)
 
         # Get all the relatives of the members

@@ -2,7 +2,9 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-from cb.utils.maya.context import undo_chunk
+
+import pype.maya.lib as lib
+import pype.maya.action
 
 
 class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
@@ -27,9 +29,9 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder + 0.05
     label = "Rig Controllers (Arnold Attributes)"
     hosts = ["maya"]
-    families = ["rig"]
+    families = ["studio.rig"]
     actions = [pype.api.RepairAction,
-               pype.api.SelectInvalidAction]
+               pype.maya.action.SelectInvalidAction]
 
     attributes = [
         "rcurve",
@@ -81,7 +83,7 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     def repair(cls, instance):
 
         invalid = cls.get_invalid(instance)
-        with undo_chunk():
+        with lib.undo_chunk():
             for node in invalid:
                 for attribute in cls.attributes:
                     if cmds.attributeQuery(attribute, node=node, exists=True):

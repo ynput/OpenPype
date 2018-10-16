@@ -1,8 +1,10 @@
 from maya import cmds
 
 import pyblish.api
+
 import pype.api
-from cb.utils.maya.context import undo_chunk
+import pype.maya.action
+from pype.maya.lib import undo_chunk
 
 
 class ValidateRigControllers(pyblish.api.InstancePlugin):
@@ -26,9 +28,9 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder + 0.05
     label = "Rig Controllers"
     hosts = ["maya"]
-    families = ["rig"]
+    families = ["studio.rig"]
     actions = [pype.api.RepairAction,
-               pype.api.SelectInvalidAction]
+               pype.maya.action.SelectInvalidAction]
 
     # Default controller values
     CONTROLLER_DEFAULTS = {

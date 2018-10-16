@@ -17,10 +17,11 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
     label = "Validate Frame Range"
     order = pype.api.ValidateContentsOrder
-    families = ["animation",
-                "pointcache",
-                "camera",
-                "renderlayer"]
+    families = ["studio.animation",
+                "studio.pointcache",
+                "studio.camera",
+                "studio.renderlayer",
+                "oolorbleed.vrayproxy"]
 
     def process(self, instance):
 

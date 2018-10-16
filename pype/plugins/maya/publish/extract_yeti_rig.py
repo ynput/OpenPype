@@ -10,7 +10,7 @@ import pype.maya.lib as maya
 
 
 @contextlib.contextmanager
-def disconnected_attributes(settings, members):
+def disconnect_plugs(settings, members):
 
     members = cmds.ls(members, long=True)
     original_connections = []
@@ -19,35 +19,32 @@ def disconnected_attributes(settings, members):
 
             # Get source shapes
             source_nodes = lib.lsattr("cbId", input["sourceID"])
-            sources = [i for i in source_nodes if
-                       not cmds.referenceQuery(i, isNodeReferenced=True)
-                       and i in members]
-            try:
-                source = sources[0]
-            except IndexError:
-                print("source_id:", input["sourceID"])
+            if not source_nodes:
                 continue
+
+            source = next(s for s in source_nodes if s not in members)
 
             # Get destination shapes (the shapes used as hook up)
             destination_nodes = lib.lsattr("cbId", input["destinationID"])
-            destinations = [i for i in destination_nodes if i not in members
-                            and i not in sources]
-            destination = destinations[0]
+            destination = next(i for i in destination_nodes if i in members)
 
-            # Break connection
+            # Create full connection
             connections = input["connections"]
             src_attribute = "%s.%s" % (source, connections[0])
             dst_attribute = "%s.%s" % (destination, connections[1])
 
-            # store connection pair
+            # Check if there is an actual connection
             if not cmds.isConnected(src_attribute, dst_attribute):
+                print("No connection between %s and %s" % (
+                    src_attribute, dst_attribute))
                 continue
 
+            # Break and store connection
             cmds.disconnectAttr(src_attribute, dst_attribute)
             original_connections.append([src_attribute, dst_attribute])
         yield
     finally:
-        # restore connections
+        # Restore previous connections
         for connection in original_connections:
             try:
                 cmds.connectAttr(connection[0], connection[1])
@@ -56,17 +53,47 @@ def disconnected_attributes(settings, members):
                 continue
 
 
+@contextlib.contextmanager
+def yetigraph_attribute_values(assumed_destination, resources):
+
+    try:
+        for resource in resources:
+            if "graphnode" not in resource:
+                continue
+
+            fname = os.path.basename(resource["source"])
+            new_fpath = os.path.join(assumed_destination, fname)
+            new_fpath = new_fpath.replace("\\", "/")
+
+            try:
+                cmds.pgYetiGraph(resource["node"],
+                                 node=resource["graphnode"],
+                                 param=resource["param"],
+                                 setParamValueString=new_fpath)
+            except Exception as exc:
+                print(">>> Exception:", exc)
+        yield
+
+    finally:
+        for resource in resources:
+            if "graphnode" not in resources:
+                continue
+
+            try:
+                cmds.pgYetiGraph(resource["node"],
+                                 node=resource["graphnode"],
+                                 param=resource["param"],
+                                 setParamValue=resource["source"])
+            except RuntimeError:
+                pass
+
+
 class ExtractYetiRig(pype.api.Extractor):
-    """Produce an alembic of just point positions and normals.
-
-    Positions and normals are preserved, but nothing more,
-    for plain and predictable point caches.
-
-    """
+    """Extract the Yeti rig to a MayaAscii and write the Yeti rig data"""
 
     label = "Extract Yeti Rig"
     hosts = ["maya"]
-    families = ["yetiRig"]
+    families = ["studio.yetiRig"]
 
     def process(self, instance):
 
@@ -83,44 +110,49 @@ class ExtractYetiRig(pype.api.Extractor):
 
         self.log.info("Writing metadata file")
 
-        image_search_path = ""
+        # Create assumed destination folder for imageSearchPath
+        assumed_temp_data = instance.data["assumedTemplateData"]
+        template = instance.data["template"]
+        template_formatted = template.format(**assumed_temp_data)
+
+        destination_folder = os.path.dirname(template_formatted)
+
+        image_search_path = os.path.join(destination_folder, "resources")
+        image_search_path = os.path.normpath(image_search_path)
+
         settings = instance.data.get("rigsettings", None)
-        if settings is not None:
-
-            # Create assumed destination folder for imageSearchPath
-            assumed_temp_data = instance.data["assumedTemplateData"]
-            template = instance.data["template"]
-            template_formatted = template.format(**assumed_temp_data)
-
-            destination_folder = os.path.dirname(template_formatted)
-            image_search_path = os.path.join(destination_folder, "resources")
-            image_search_path = os.path.normpath(image_search_path)
-
+        if settings:
             settings["imageSearchPath"] = image_search_path
             with open(settings_path, "w") as fp:
                 json.dump(settings, fp, ensure_ascii=False)
 
+        # Ensure the imageSearchPath is being remapped to the publish folder
         attr_value = {"%s.imageSearchPath" % n: str(image_search_path) for
                       n in yeti_nodes}
 
         # Get input_SET members
-        input_set = [i for i in instance if i == "input_SET"]
+        input_set = next(i for i in instance if i == "input_SET")
+
         # Get all items
-        set_members = cmds.sets(input_set[0], query=True)
-        members = cmds.listRelatives(set_members, ad=True, fullPath=True) or []
-        members += cmds.ls(set_members, long=True)
+        set_members = cmds.sets(input_set, query=True)
+        set_members += cmds.listRelatives(set_members,
+                                          allDescendents=True,
+                                          fullPath=True) or []
+        members = cmds.ls(set_members, long=True)
 
         nodes = instance.data["setMembers"]
-        with disconnected_attributes(settings, members):
-            with maya.attribute_values(attr_value):
-                cmds.select(nodes, noExpand=True)
-                cmds.file(maya_path,
-                          force=True,
-                          exportSelected=True,
-                          typ="mayaAscii",
-                          preserveReferences=False,
-                          constructionHistory=True,
-                          shader=False)
+        resources = instance.data.get("resources", {})
+        with disconnect_plugs(settings, members):
+            with yetigraph_attribute_values(destination_folder, resources):
+                with maya.attribute_values(attr_value):
+                    cmds.select(nodes, noExpand=True)
+                    cmds.file(maya_path,
+                              force=True,
+                              exportSelected=True,
+                              typ="mayaAscii",
+                              preserveReferences=False,
+                              constructionHistory=True,
+                              shader=False)
 
         # Ensure files can be stored
         if "files" not in instance.data:

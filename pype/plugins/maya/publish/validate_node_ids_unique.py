@@ -2,6 +2,7 @@ from collections import defaultdict
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 import pype.maya.lib as lib
 
 
@@ -14,12 +15,13 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
     order = pype.api.ValidatePipelineOrder
     label = 'Non Duplicate Instance Members (ID)'
     hosts = ['maya']
-    families = ["model",
-                "look",
-                "rig"]
+    families = ["studio.model",
+                "studio.look",
+                "studio.rig",
+                "studio.yetiRig"]
 
-    actions = [pype.api.SelectInvalidAction,
-               pype.api.GenerateUUIDsOnInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
+import pype.maya.action
 import pype.maya.lib as lib
 
 
@@ -15,9 +16,9 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["model"]
+    families = ["studio.model"]
     label = "Model Content"
-    actions = [pype.api.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

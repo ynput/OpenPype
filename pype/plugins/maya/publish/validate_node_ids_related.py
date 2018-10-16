@@ -2,6 +2,7 @@ import pyblish.api
 import pype.api
 
 import avalon.io as io
+import pype.maya.action
 
 from pype.maya import lib
 
@@ -14,13 +15,13 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
     order = pype.api.ValidatePipelineOrder
     label = 'Node Ids Related (ID)'
     hosts = ['maya']
-    families = ["model",
-                "look",
-                "rig"]
+    families = ["studio.model",
+                "studio.look",
+                "studio.rig"]
     optional = True
 
-    actions = [pype.api.SelectInvalidAction,
-               pype.api.GenerateUUIDsOnInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all nodes in instance (including hierarchy)"""

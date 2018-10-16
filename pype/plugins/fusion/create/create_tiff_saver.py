@@ -9,7 +9,7 @@ class CreateTiffSaver(avalon.api.Creator):
     name = "tiffDefault"
     label = "Create Tiff Saver"
     hosts = ["fusion"]
-    family = "saver"
+    family = "studio.saver"
 
     def process(self):
 

@@ -2,10 +2,10 @@ import pype.maya.plugin
 
 
 class AbcLoader(pype.maya.plugin.ReferenceLoader):
-    """Specific loader of Alembic for the avalon.animation family"""
+    """Specific loader of Alembic for the studio.animation family"""
 
-    families = ["animation",
-                "pointcache"]
+    families = ["studio.animation",
+                "studio.pointcache"]
     label = "Reference animation"
     representations = ["abc"]
     order = -10
