@@ -16,7 +16,7 @@ class CreatePointCache(avalon.maya.Creator):
         data = {"writeColorSets": False,  # Vertex colors with the geometry.
                 "renderableOnly": False,  # Only renderable visible shapes
                 "visibleOnly": False,  # only nodes that are visible
-                "attr": "cbId",  # Add options for custom attributes
+                "attr": "",  # Add options for custom attributes
                 "attrPrefix": ""}
 
         # get basic animation data : start / end / handles / steps
