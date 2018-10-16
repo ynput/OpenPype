@@ -3,46 +3,40 @@ import sys
 from avalon.vendor.Qt import QtGui
 import avalon.nuke
 
+import nuke
 
 self = sys.modules[__name__]
 self._project = None
 
 
-def update_frame_range(start, end, root=None, set_render_range=True):
-    """Set Fusion comp's start and end frame range
+def update_frame_range(start, end, root=None):
+    """Set Nuke script start and end frame range
 
     Args:
         start (float, int): start frame
         end (float, int): end frame
-        comp (object, Optional): comp object from fusion
-        set_render_range (bool, Optional): When True this will also set the
-            composition's render start and end frame.
+        root (object, Optional): root object from nuke's script
 
     Returns:
         None
 
     """
 
-    if not root:
-        root, nodes = avalon.nuke.get_current_comp()
-
     knobs = {
-        "COMPN_GlobalStart": start,
-        "COMPN_GlobalEnd": end
+        "first_frame": start,
+        "last_frame": end
     }
 
-    if set_render_range:
-        knobs.update({
-            "COMPN_RenderStart": start,
-            "COMPN_RenderEnd": end
-        })
-
-    with avalon.nuke.comp_lock_and_undo_chunk():
-        comp.SetAttrs(attrs)
+    with avalon.nuke.viewer_update_and_undo_stop():
+        for key, value in knobs.items():
+            if root:
+                root[key].setValue(value)
+            else:
+                nuke.root()[key].setValue(value)
 
 
 def get_additional_data(container):
-    """Get Fusion related data for the container
+    """Get Nuke's related data for the container
 
     Args:
         container(dict): the container found by the ls() function
@@ -51,11 +45,16 @@ def get_additional_data(container):
         dict
     """
 
-    tool = container["_tool"]
-    tile_color = tool.TileColor
+    node = container["_tool"]
+    tile_color = node['tile_color'].value()
     if tile_color is None:
         return {}
 
-    return {"color": QtGui.QColor.fromRgbF(tile_color["R"],
-                                           tile_color["G"],
-                                           tile_color["B"])}
+    hex = '%08x' % tile_color
+    rgba = [
+        float(int(hex[0:2], 16)) / 255.0,
+        float(int(hex[2:4], 16)) / 255.0,
+        float(int(hex[4:6], 16)) / 255.0
+    ]
+
+    return {"color": QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}

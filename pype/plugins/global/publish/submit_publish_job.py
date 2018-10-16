@@ -1,6 +1,5 @@
 import os
 import json
-import pprint
 import re
 
 from avalon import api, io
@@ -12,7 +11,7 @@ import pyblish.api
 def _get_script():
     """Get path to the image sequence script"""
     try:
-        from pype.scripts import publish_filesequence
+        from pype.fusion.scripts import publish_filesequence
     except Exception as e:
         raise RuntimeError("Expected module 'publish_imagesequence'"
                            "to be available")
@@ -122,8 +121,14 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
     label = "Submit image sequence jobs to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
-    hosts = ["fusion", "maya"]
-    families = ["studio.saver.deadline", "studio.renderlayer"]
+
+    hosts = ["fusion", "maya", "nuke"]
+
+    families = [
+        "studio.saver.deadline",
+        "studio.renderlayer",
+        "studio.imagesequence"
+    ]
 
     def process(self, instance):
 

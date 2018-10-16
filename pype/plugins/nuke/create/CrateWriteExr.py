@@ -1,7 +1,7 @@
 import os
-import sys
 import avalon.api
 import avalon.nuke
+import nuke
 
 
 class CrateWriteExr(avalon.api.Creator):
@@ -16,10 +16,9 @@ class CrateWriteExr(avalon.api.Creator):
     #     self.data.setdefault("subset", "this")
 
     def process(self):
-        nuke = getattr(sys.modules["__main__"], "nuke", None)
+        # nuke = getattr(sys.modules["__main__"], "nuke", None)
         data = {}
         ext = "exr"
-        root, nodes = avalon.nuke.get_current_script(nuke=nuke)
 
         # todo: improve method of getting current environment
         # todo: pref avalon.Session over os.environ
@@ -34,7 +33,7 @@ class CrateWriteExr(avalon.api.Creator):
             filename
         ).replace("\\", "/")
 
-        with avalon.nuke.viewer_update_and_undo_stop(nuke):
+        with avalon.nuke.viewer_update_and_undo_stop():
             w = nuke.createNode(
                 "Write",
                 "name {}".format(self.name))
