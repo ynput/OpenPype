@@ -34,22 +34,22 @@ class CollectDeadlineUser(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder + 0.499
     label = "Deadline User"
-<<<<<<< HEAD
-    hosts = ['maya', 'fusion']
-    families = ["studio.renderlayer", "studio.saver.deadline"]
-=======
+
     hosts = ['maya', 'fusion', 'nuke']
     families = [
-        "renderlayer",
-        "saver.deadline",
-        "imagesequence"
+        "studio.renderlayer",
+        "studio.saver.deadline",
+        "studio.imagesequence"
     ]
->>>>>>> origin/ftrack-all-jakub
+
 
     def process(self, context):
         """Inject the current working file"""
-
-        user = deadline_command("GetCurrentUserName").strip()
+        user = None
+        try:
+            user = deadline_command("GetCurrentUserName").strip()
+        except:
+            self.log.warning("Deadline command seems not to be working")
 
         if not user:
             self.log.warning("No Deadline user found. "
