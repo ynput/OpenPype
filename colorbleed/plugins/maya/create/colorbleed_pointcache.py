@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import avalon.maya
 from colorbleed.maya import lib
 
@@ -15,22 +13,14 @@ class CreatePointCache(avalon.maya.Creator):
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)
 
-        # create an ordered dict with the existing data first
-        data = OrderedDict(**self.data)
+        data = {"writeColorSets": False,  # Vertex colors with the geometry.
+                "renderableOnly": False,  # Only renderable visible shapes
+                "visibleOnly": False,  # only nodes that are visible
+                "attr": "cbId",  # Add options for custom attributes
+                "attrPrefix": ""}
 
         # get basic animation data : start / end / handles / steps
         for key, value in lib.collect_animation_data().items():
             data[key] = value
 
-        # Write vertex colors with the geometry.
-        data["writeColorSets"] = False
-
-        # Include only renderable visible shapes.
-        # Skips locators and empty transforms
-        data["renderableOnly"] = False
-
-        # Include only nodes that are visible at least once during the
-        # frame range.
-        data["visibleOnly"] = False
-
-        self.data = data
+        self.data.update(data)
