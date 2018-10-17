@@ -4,7 +4,7 @@ import colorbleed.api
 from maya import cmds
 
 
-class ValidateTranslatorEnabled(pyblish.api.ContextPlugin):
+class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
     order = colorbleed.api.ValidateContentsOrder
     label = "VRay Translator Settings"
