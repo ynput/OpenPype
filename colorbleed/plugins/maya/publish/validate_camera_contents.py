@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateCameraContents(pyblish.api.InstancePlugin):
@@ -9,7 +10,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
 
     A Camera instance may only hold a SINGLE camera's transform, nothing else.
 
-    It may hold a "locator" as shape, but different shapes are down the 
+    It may hold a "locator" as shape, but different shapes are down the
     hierarchy.
 
     """
@@ -18,7 +19,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
     families = ['colorbleed.camera']
     hosts = ['maya']
     label = 'Camera Contents'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

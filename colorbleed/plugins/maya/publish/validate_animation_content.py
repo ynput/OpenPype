@@ -1,5 +1,6 @@
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateAnimationContent(pyblish.api.InstancePlugin):
@@ -14,10 +15,19 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["colorbleed.animation"]
     label = "Animation Content"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):
+
+        out_set = next((i for i in instance.data["setMembers"] if
+                        i.endswith("out_SET")), None)
+
+        assert out_set, ("Instance '%s' has no objectSet named: `OUT_set`. "
+                         "If this instance is an unloaded reference, "
+                         "please deactivate by toggling the 'Active' attribute"
+                         % instance.name)
+
         assert 'out_hierarchy' in instance.data, "Missing `out_hierarchy` data"
 
         # All nodes in the `out_hierarchy` must be among the nodes that are

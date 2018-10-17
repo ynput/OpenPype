@@ -95,6 +95,10 @@ class ReferenceLoader(api.Loader):
             if ref.rsplit(":", 1)[-1].startswith("sharedReferenceNode"):
                 continue
 
+            # Ignore _UNKNOWN_REF_NODE_ (PLN-160)
+            if ref.rsplit(":", 1)[-1].startswith("_UNKNOWN_REF_NODE_"):
+                continue
+
             references.add(ref)
 
         assert references, "No reference node found in container"

@@ -30,6 +30,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "colorbleed.mayaAscii",
                 "colorbleed.model",
                 "colorbleed.pointcache",
+                "colorbleed.vdbcache",
                 "colorbleed.setdress",
                 "colorbleed.rig",
                 "colorbleed.vrayproxy",

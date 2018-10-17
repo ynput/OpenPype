@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 import colorbleed.maya.lib as lib
 
 
@@ -22,7 +23,7 @@ class ValidateJointsHidden(pyblish.api.InstancePlugin):
     category = 'rig'
     version = (0, 1, 0)
     label = "Joints Hidden"
-    actions = [colorbleed.api.SelectInvalidAction,
+    actions = [colorbleed.maya.action.SelectInvalidAction,
                colorbleed.api.RepairAction]
 
     @staticmethod

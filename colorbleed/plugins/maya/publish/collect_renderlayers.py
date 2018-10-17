@@ -103,7 +103,13 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
             overrides = self.parse_options(render_globals)
             data.update(**overrides)
 
+            # Define nice label
+            label = "{0} ({1})".format(layername, data["asset"])
+            label += "  [{0}-{1}]".format(int(data["startFrame"]),
+                                          int(data["endFrame"]))
+
             instance = context.create_instance(layername)
+            instance.data["label"] = label
             instance.data.update(data)
 
     def get_render_attribute(self, attr):
@@ -146,6 +152,9 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         # Suspend publish job
         state = "Suspended" if attributes["suspendPublishJob"] else "Active"
         options["publishJobState"] = state
+
+        chunksize = attributes.get("framesPerTask", 1)
+        options["renderGlobals"]["ChunkSize"] = chunksize
 
         # Override frames should be False if extendFrames is False. This is
         # to ensure it doesn't go off doing crazy unpredictable things

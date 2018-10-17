@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 
 
 class ValidateCameraAttributes(pyblish.api.InstancePlugin):
@@ -17,7 +18,7 @@ class ValidateCameraAttributes(pyblish.api.InstancePlugin):
     families = ['colorbleed.camera']
     hosts = ['maya']
     label = 'Camera Attributes'
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     DEFAULTS = [
         ("filmFitOffset", 0.0),

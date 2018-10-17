@@ -44,7 +44,10 @@ class ExtractMayaAsciiRaw(colorbleed.api.Extractor):
                       typ="mayaAscii",
                       exportSelected=True,
                       preserveReferences=True,
-                      constructionHistory=True)
+                      constructionHistory=True,
+                      shader=True,
+                      constraints=True,
+                      expressions=True)
 
         if "files" not in instance.data:
             instance.data["files"] = list()

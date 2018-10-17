@@ -2,6 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
+import colorbleed.maya.action
 import colorbleed.maya.lib as lib
 
 
@@ -17,7 +18,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["colorbleed.model"]
     label = "Model Content"
-    actions = [colorbleed.api.SelectInvalidAction]
+    actions = [colorbleed.maya.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

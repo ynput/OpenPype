@@ -101,10 +101,12 @@ class VRayProxyLoader(api.Loader):
         # Create nodes
         vray_mesh = cmds.createNode('VRayMesh', name="{}_VRMS".format(name))
         mesh_shape = cmds.createNode("mesh", name="{}_GEOShape".format(name))
-        vray_mat = cmds.createNode("VRayMeshMaterial",
+        vray_mat = cmds.shadingNode("VRayMeshMaterial", asShader=True, 
                                    name="{}_VRMM".format(name))
-        vray_mat_sg = cmds.createNode("shadingEngine",
-                                      name="{}_VRSG".format(name))
+        vray_mat_sg = cmds.sets(name="{}_VRSG".format(name),
+                                empty=True,
+                                renderable=True,
+                                noSurfaceShader=True)
 
         cmds.setAttr("{}.fileName".format(vray_mesh),
                      filename,

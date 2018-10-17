@@ -2,7 +2,9 @@ from maya import cmds
 
 import pyblish.api
 import colorbleed.api
-from cb.utils.maya.context import undo_chunk
+
+import colorbleed.maya.lib as lib
+import colorbleed.maya.action
 
 
 class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
@@ -29,7 +31,7 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["colorbleed.rig"]
     actions = [colorbleed.api.RepairAction,
-               colorbleed.api.SelectInvalidAction]
+               colorbleed.maya.action.SelectInvalidAction]
 
     attributes = [
         "rcurve",
@@ -81,7 +83,7 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     def repair(cls, instance):
 
         invalid = cls.get_invalid(instance)
-        with undo_chunk():
+        with lib.undo_chunk():
             for node in invalid:
                 for attribute in cls.attributes:
                     if cmds.attributeQuery(attribute, node=node, exists=True):
