@@ -82,7 +82,7 @@ class SyncToAvalon(BaseAction):
 
         # Create project in Avalon
         io.install()
-        # Check if project not exists -> Create project (create_project raises error if already exist)
+        # Check if project exists -> Create project
         if (io.find_one(
                 {"type": "project", "name": entityProj["full_name"]}) is None):
             inventory.save(entityProj["full_name"], config, template)
@@ -90,8 +90,8 @@ class SyncToAvalon(BaseAction):
         # Store project Id
         projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
 
-        # If Shot/Asset add to Project
-        if (eLinks[-1]['type'] in ['Shot', 'AssetBuild']):
+        # If entity is Project or is Silo kill action
+        if (len(eLinks) > 2) and not (eLinks[-1]['type'] in ['Project']):
             silo = eLinks[1]
 
             # Create Assets
@@ -124,59 +124,70 @@ class SyncToAvalon(BaseAction):
         io.uninstall()
 
     def launch(self, session, entities, event):
+        """ JOB SETTING """
+        userId = event['source']['user']['id']
+        user = session.query('User where id is ' + userId).one()
 
-        data = {
-            'status' : 'running',
-            'data' : json.dumps(dict(description='Synch Ftrack to Avalon'))
-            }
-        """ NEED TO SET JOB """
-        # job = ftrack_api.entity.job.Job(session, data)
+        job = session.create('Job', {
+            'user': user,
+            'status': 'running',
+            'data': json.dumps({
+                'description': 'Synch Ftrack to Avalon.'
+            })
 
-        importable = []
+        })
 
-        def getShotAsset(entity):
-            if not (entity.entity_type in ['AssetBuild', 'Shot']):
-                if entity['children']:
-                    childrens = entity['children']
-                    for child in childrens:
-                        getShotAsset(child)
-            else:
-                if not (entity in importable):
-                    importable.append(entity)
+        try:
+            importable = []
 
-        """ Get all Shots and AssetBuild from entities """
-        for entity in entities:
-            entity_type, entity_id = entity
-            act_ent = session.get(entity_type, entity_id)
-            getShotAsset(act_ent)
+            def getShotAsset(entity):
+                if not (entity.entity_type in ['Task']):
+                    if not (entity in importable):
+                        importable.append(entity)
 
-        # _handle_result -> by to mel resit
-        # """ TODO Check if name of entities match REGEX"""
-        # for entity in importable:
-        #     for e in entity['link']:
-        #         item = {
-        #             "silo": "silo",
-        #             "parent": "parent",
-        #             "type": "asset",
-        #             "schema": "avalon-core:asset-2.0",
-        #             "name": e['name'],
-        #             "data": dict(),
-        #         }
-        #         try:
-        #             schema.validate(item)
-        #         except Exception as e:
-        #             print(e)
-        # print(e['name'])
-        # ftrack.EVENT_HUB.publishReply(
-        #     event,
-        #     data={
-        #         'success': False,
-        #         'message': 'Entity name contains invalid character!'
-        #     }
-        # )
+                    if entity['children']:
+                        childrens = entity['children']
+                        for child in childrens:
+                            getShotAsset(child)
 
-        for e in importable:
-            self.importToAvalon(session, e)
+            """ Get all Shots and AssetBuild from entities """
+            for entity in entities:
+                entity_type, entity_id = entity
+                act_ent = session.get(entity_type, entity_id)
+                getShotAsset(act_ent)
+
+            # _handle_result -> by to mel resit
+            # """ TODO Check if name of entities match REGEX"""
+            # for entity in importable:
+            #     for e in entity['link']:
+            #         item = {
+            #             "silo": "silo",
+            #             "parent": "parent",
+            #             "type": "asset",
+            #             "schema": "avalon-core:asset-2.0",
+            #             "name": e['name'],
+            #             "data": dict(),
+            #         }
+            #         try:
+            #             schema.validate(item)
+            #         except Exception as e:
+            #             print(e)
+            # print(e['name'])
+            # ftrack.EVENT_HUB.publishReply(
+            #     event,
+            #     data={
+            #         'success': False,
+            #         'message': 'Entity name contains invalid character!'
+            #     }
+            # )
+
+            for e in importable:
+                self.importToAvalon(session, e)
+
+            job['status'] = 'done'
+            session.commit()
+        except:
+            job['status'] = 'failed'
         return True
 
 
