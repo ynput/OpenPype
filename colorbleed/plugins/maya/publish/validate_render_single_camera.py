@@ -19,7 +19,8 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
 
     order = colorbleed.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.renderlayer']
+    families = ['colorbleed.renderlayer',
+                "colorbleed.vrayscene"]
     label = "Render Single Camera"
     actions = [colorbleed.maya.action.SelectInvalidAction]
 
