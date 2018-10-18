@@ -14,10 +14,8 @@ class CreateModel(avalon.maya.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateModel, self).__init__(*args, **kwargs)
 
-        # create an ordered dict with the existing data first
-        data = OrderedDict(**self.data)
+        data = {"writeColorSets": False,  # Vertex colors with the geometry.
+                "attr": "",  # Add options for custom attributes
+                "attrPrefix": ""}
 
-        # Write vertex colors with the geometry.
-        data["writeColorSets"] = True
-
-        self.data = data
+        self.data.update(data)
