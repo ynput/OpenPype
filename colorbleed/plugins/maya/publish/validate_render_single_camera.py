@@ -1,9 +1,6 @@
-from maya import cmds
-
 import pyblish.api
 import colorbleed.api
 import colorbleed.maya.action
-import colorbleed.maya.lib as lib
 
 
 class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
@@ -18,33 +15,19 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
     """
 
     order = colorbleed.api.ValidateContentsOrder
+    label = "Render Single Camera"
     hosts = ['maya']
     families = ['colorbleed.renderlayer',
                 "colorbleed.vrayscene"]
-    label = "Render Single Camera"
-    actions = [colorbleed.maya.action.SelectInvalidAction]
-
-    @staticmethod
-    def get_invalid(instance):
-
-        layer = instance.data["setMembers"]
-
-        cameras = cmds.ls(type='camera', long=True)
-
-        with lib.renderlayer(layer):
-            renderable = [cam for cam in cameras if
-                          cmds.getAttr(cam + ".renderable")]
-
-            if len(renderable) == 0:
-                raise RuntimeError("No renderable cameras found.")
-            elif len(renderable) > 1:
-                return renderable
-            else:
-                return []
 
     def process(self, instance):
         """Process all the cameras in the instance"""
-        invalid = self.get_invalid(instance)
-        if invalid:
-            raise RuntimeError("Multiple renderable cameras"
-                               "found: {0}".format(invalid))
+
+    @classmethod
+    def get_invalid(cls, instance):
+        cameras = instance.data.get("cameras", [])
+        if len(cameras) != 1:
+            cls.log.error("Multiple renderable cameras" "found: %s " %
+                          instance.data["setMembers"])
+
+            return [instance.data["setMembers"]]

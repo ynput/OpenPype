@@ -56,8 +56,11 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
                             % renderer)
             return False
 
-        pre_render_callback = cmds.getAttr("defaultRenderGlobals.preMel")
-        post_render_callback = cmds.getAttr("defaultRenderGlobals.postMel")
+        pre_mel_attr = "defaultRenderGlobals.preMel"
+        post_mel_attr = "defaultRenderGlobals.postMel"
+
+        pre_render_callback = cmds.getAttr(pre_mel_attr) or ""
+        post_render_callback = cmds.getAttr(post_mel_attr) or ""
 
         pre_callbacks = pre_render_callback.split(";")
         post_callbacks = post_render_callback.split(";")

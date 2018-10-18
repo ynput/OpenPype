@@ -130,7 +130,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["outputDir"] = render_ouput
 
         # Format output file name
-        sequence_filename = ".".join([instance.name, "%04d", ext])
+        sequence_filename = ".".join([instance.name, ext])
         output_filename = os.path.join(render_ouput, sequence_filename)
 
         payload_b = {
@@ -183,6 +183,9 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
     def build_command(self, instance):
         """Create command for Render.exe to export vray scene
 
+        Args:
+            instance
+
         Returns:
             str
 
@@ -191,14 +194,20 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         cmd = ('-r vray -proj {project} -cam {cam} -noRender -s {startFrame} '
                '-e {endFrame} -rl {layer} -exportFramesSeparate')
 
+        # Get the camera
+        cammera = instance.data["cameras"][0]
+
         return cmd.format(project=instance.context.data["workspaceDir"],
-                          cam=instance.data.get("camera", "persp"),
+                          cam=cammera,
                           startFrame=instance.data["startFrame"],
                           endFrame=instance.data["endFrame"],
                           layer=instance.name)
 
     def build_jobinfo_environment(self, env):
         """Format environment keys and values to match Deadline rquirements
+
+        Args:
+            env(dict): environment dictionary
 
         Returns:
             dict
