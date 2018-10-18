@@ -46,6 +46,7 @@ class ExtractFBX(colorbleed.api.Extractor):
         """
 
         return {
+            "cameras": bool,
             "smoothingGroups": bool,
             "hardEdges": bool,
             "tangents": bool,
@@ -87,6 +88,7 @@ class ExtractFBX(colorbleed.api.Extractor):
                                              animationEndTime=True))
 
         return {
+            "cameras": False,
             "smoothingGroups": False,
             "hardEdges": False,
             "tangents": False,
