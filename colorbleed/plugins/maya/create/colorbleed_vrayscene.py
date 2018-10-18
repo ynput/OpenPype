@@ -13,6 +13,7 @@ class CreateVRayScene(avalon.maya.Creator):
         # We don't need subset or asset attributes
         self.data.pop("subset", None)
         self.data.pop("asset", None)
+        self.data.pop("active", None)
 
         self.data.update({
             "id": "avalon.vrayscene",  # We won't be publishing this one
