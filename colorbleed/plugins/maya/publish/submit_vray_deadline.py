@@ -130,7 +130,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         instance.data["outputDir"] = render_ouput
 
         # Format output file name
-        sequence_filename = ".".join([instance.name, "%04d", ext])
+        sequence_filename = ".".join([instance.name, ext])
         output_filename = os.path.join(render_ouput, sequence_filename)
 
         payload_b = {
