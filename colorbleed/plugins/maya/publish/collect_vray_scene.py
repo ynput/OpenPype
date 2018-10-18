@@ -104,5 +104,4 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
 
             instance = context.create_instance(layer)
             self.log.info("Created: %s" % instance.name)
-            self.log.debug("VRay Data: %s" % vrscene_data)
             instance.data.update(data)
