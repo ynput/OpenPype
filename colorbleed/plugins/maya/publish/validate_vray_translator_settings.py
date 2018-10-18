@@ -14,6 +14,8 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
     def process(self, context):
 
         # Check if there are any vray scene instances
+        # The reason to not use host.lsattr() as used in collect_vray_scene
+        # is because that information is already available in the context
         vrayscene_instances = []
         for inst in context[:]:
             if inst.data["family"] in self.families:
