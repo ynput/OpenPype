@@ -15,7 +15,7 @@ class CreateYetiCache(avalon.maya.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateYetiCache, self).__init__(*args, **kwargs)
 
-        self.data["peroll"] = 0
+        self.data["preroll"] = 0
 
         # Add animation data without step and handles
         anim_data = lib.collect_animation_data()
