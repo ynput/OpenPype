@@ -183,6 +183,9 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
     def build_command(self, instance):
         """Create command for Render.exe to export vray scene
 
+        Args:
+            instance
+
         Returns:
             str
 
@@ -202,6 +205,9 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
     def build_jobinfo_environment(self, env):
         """Format environment keys and values to match Deadline rquirements
+
+        Args:
+            env(dict): environment dictionary
 
         Returns:
             dict
