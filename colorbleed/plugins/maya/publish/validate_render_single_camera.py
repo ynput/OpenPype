@@ -20,10 +20,14 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
     families = ['colorbleed.renderlayer',
                 "colorbleed.vrayscene"]
 
-    actions = [colorbleed.maya.action.SelectInvalidAction]
-
     def process(self, instance):
         """Process all the cameras in the instance"""
-        cameras = instance.data.get("camera", [])
-        assert len(cameras) == 1, ("Multiple renderable cameras" "found: %s " %
-                                   instance.data["setMembers"])
+
+    @classmethod
+    def get_invalid(cls, instance):
+        cameras = instance.data.get("cameras", [])
+        if len(cameras) != 1:
+            cls.log.error("Multiple renderable cameras" "found: %s " %
+                          instance.data["setMembers"])
+
+            return [instance.data["setMembers"]]
