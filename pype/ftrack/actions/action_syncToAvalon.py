@@ -51,8 +51,9 @@ class SyncToAvalon(BaseAction):
 
     def importToAvalon(self, session, entity):
         eLinks = []
+        custAttrName = 'avalon_mongo_id'
         # TODO read from file, which data are in scope???
-        """ get needed info of entity and all parents """
+        # get needed info of entity and all parents
         for e in entity['link']:
             tmp = session.get(e['type'], e['id'])
             if e['name'].find(" ") == -1:
@@ -65,7 +66,7 @@ class SyncToAvalon(BaseAction):
 
         entityProj = session.get(eLinks[0]['type'], eLinks[0]['ftrackId'])
 
-        """ set AVALON_PROJECT env """
+        # set AVALON_PROJECT env
         os.environ["AVALON_PROJECT"] = entityProj["full_name"]
 
         # get schema of project TODO read different schemas based on project type
@@ -89,8 +90,10 @@ class SyncToAvalon(BaseAction):
 
         # Store project Id
         projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
+        if custAttrName in entityProj['custom_attributes'] and entityProj['custom_attributes'][custAttrName] is '':
+            entityProj['custom_attributes'][custAttrName] = str(projectId)
 
-        # If entity is Project or is Silo kill action
+        # If entity is Project or Silo kill action
         if (len(eLinks) > 2) and not (eLinks[-1]['type'] in ['Project']):
             silo = eLinks[1]
 
@@ -102,13 +105,12 @@ class SyncToAvalon(BaseAction):
             folderStruct = []
             folderStruct.append(silo['name'])
             parentId = None
-            data = {'ftrackId': None, 'visualParent': parentId, 'parents': folderStruct,
-                    'entityType': None}
+            data = {'visualParent': parentId, 'parents': folderStruct,
+                    'ftrackId': None, 'entityType': None}
 
             for asset in assets:
-                data = {'ftrackId': asset['ftrackId'], 'visualParent': data['visualParent'],
-                        'parents': data['parents'], 'entityType': asset['type']}
-                if (io.find_one({'type': 'asset', 'name': asset['name']}) == None):
+                data.update({'ftrackId': asset['ftrackId'], 'entityType': asset['type']})
+                if (io.find_one({'type': 'asset', 'name': asset['name']}) is None):
                     inventory.create_asset(asset['name'], silo['name'], data, projectId)
                     print("Asset "+asset['name']+" created")
 
@@ -118,13 +120,18 @@ class SyncToAvalon(BaseAction):
                     print("Asset "+asset["name"]+" already exist")
 
                 parentId = io.find_one({'type': 'asset', 'name': asset['name']})['_id']
-                data = {'visualParent': parentId, 'parents': folderStruct, }
+
+                data.update({'visualParent': parentId, 'parents': folderStruct})
                 folderStruct.append(asset['name'])
+
+            # Set custom attribute to avalon/mongo id of entity (parentID is last)
+            if custAttrName in entity['custom_attributes'] and entity['custom_attributes'][custAttrName] is '':
+                entity['custom_attributes'][custAttrName] = str(parentId)
 
         io.uninstall()
 
     def launch(self, session, entities, event):
-        """ JOB SETTING """
+        # JOB SETTINGS
         userId = event['source']['user']['id']
         user = session.query('User where id is ' + userId).one()
 
@@ -134,7 +141,6 @@ class SyncToAvalon(BaseAction):
             'data': json.dumps({
                 'description': 'Synch Ftrack to Avalon.'
             })
-
         })
 
         try:
@@ -142,7 +148,7 @@ class SyncToAvalon(BaseAction):
 
             def getShotAsset(entity):
                 if not (entity.entity_type in ['Task']):
-                    if not (entity in importable):
+                    if entity not in importable:
                         importable.append(entity)
 
                     if entity['children']:
@@ -150,36 +156,11 @@ class SyncToAvalon(BaseAction):
                         for child in childrens:
                             getShotAsset(child)
 
-            """ Get all Shots and AssetBuild from entities """
+            # get all entities separately
             for entity in entities:
                 entity_type, entity_id = entity
                 act_ent = session.get(entity_type, entity_id)
                 getShotAsset(act_ent)
-
-            # _handle_result -> by to mel resit
-            # """ TODO Check if name of entities match REGEX"""
-            # for entity in importable:
-            #     for e in entity['link']:
-            #         item = {
-            #             "silo": "silo",
-            #             "parent": "parent",
-            #             "type": "asset",
-            #             "schema": "avalon-core:asset-2.0",
-            #             "name": e['name'],
-            #             "data": dict(),
-            #         }
-            #         try:
-            #             schema.validate(item)
-            #         except Exception as e:
-            #             print(e)
-            # print(e['name'])
-            # ftrack.EVENT_HUB.publishReply(
-            #     event,
-            #     data={
-            #         'success': False,
-            #         'message': 'Entity name contains invalid character!'
-            #     }
-            # )
 
             for e in importable:
                 self.importToAvalon(session, e)
