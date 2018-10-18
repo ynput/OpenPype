@@ -37,7 +37,7 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["studio.look']
+    families = ["look']
     hosts = ['maya']
     label = 'Look Sets'
     actions = [pype.maya.action.SelectInvalidAction]

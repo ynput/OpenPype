@@ -15,7 +15,7 @@ class ExtractMayaAsciiRaw(pype.api.Extractor):
 
     label = "Maya ASCII (Raw)"
     hosts = ["maya"]
-    families = ["studio.mayaAscii"]
+    families = ["mayaAscii"]
 
     def process(self, instance):
 

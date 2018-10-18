@@ -75,7 +75,7 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ["studio.model']
+    families = ["model']
     label = "Mesh Shader Connections"
     actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]

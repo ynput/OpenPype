@@ -17,7 +17,7 @@ class ExtractColorbleedAnimation(pype.api.Extractor):
 
     label = "Extract Animation"
     hosts = ["maya"]
-    families = ["studio.animation"]
+    families = ["animation"]
 
     def process(self, instance):
 

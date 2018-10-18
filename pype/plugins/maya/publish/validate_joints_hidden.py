@@ -19,7 +19,7 @@ class ValidateJointsHidden(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["studio.rig']
+    families = ["rig']
     category = 'rig'
     version = (0, 1, 0)
     label = "Joints Hidden"

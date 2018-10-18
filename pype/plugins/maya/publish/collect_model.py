@@ -17,7 +17,7 @@ class CollectModelData(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.499
     label = 'Collect Model Data'
-    families = ["studio.model"]
+    families = ["model"]
 
     def process(self, instance):
         # Extract only current frame (override)

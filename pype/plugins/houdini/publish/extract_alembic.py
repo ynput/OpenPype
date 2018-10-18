@@ -9,7 +9,7 @@ class ExtractAlembic(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Extract Alembic"
     hosts = ["houdini"]
-    families = ["studio.pointcache", "studio.camera"]
+    families = ["pointcache", "camera"]
 
     def process(self, instance):
 

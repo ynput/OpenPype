@@ -24,7 +24,7 @@ class ExtractModel(pype.api.Extractor):
 
     label = "Model (Maya ASCII)"
     hosts = ["maya"]
-    families = ["studio.model"]
+    families = ["model"]
 
     def process(self, instance):
 

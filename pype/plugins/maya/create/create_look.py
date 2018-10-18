@@ -8,7 +8,7 @@ class CreateLook(avalon.maya.Creator):
 
     name = "look"
     label = "Look"
-    family = "studio.look"
+    family = "look"
     icon = "paint-brush"
 
     def __init__(self, *args, **kwargs):

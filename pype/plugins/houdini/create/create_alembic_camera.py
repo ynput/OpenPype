@@ -7,7 +7,7 @@ class CreateAlembicCamera(houdini.Creator):
 
     name = "camera"
     label = "Camera (Abc)"
-    family = "studio.camera"
+    family = "camera"
     icon = "camera"
 
     def __init__(self, *args, **kwargs):

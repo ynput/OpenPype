@@ -12,7 +12,7 @@ class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["studio.pointcache']
+    families = ["pointcache']
     hosts = ['houdini']
     label = 'Create Intermediate Directories Checked'
 

@@ -37,9 +37,9 @@ class CollectDeadlineUser(pyblish.api.ContextPlugin):
 
     hosts = ['maya', 'fusion', 'nuke']
     families = [
-        "studio.renderlayer",
-        "studio.saver.deadline",
-        "studio.imagesequence"
+        "renderlayer",
+        "saver.deadline",
+        "imagesequence"
     ]
 
 

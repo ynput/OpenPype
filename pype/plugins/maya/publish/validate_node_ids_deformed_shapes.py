@@ -17,7 +17,7 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["studio.look']
+    families = ["look']
     hosts = ['maya']
     label = 'Deformed shape ids'
     actions = [pype.maya.action.SelectInvalidAction, pype.api.RepairAction]

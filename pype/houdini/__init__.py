@@ -41,7 +41,7 @@ def install():
     log.info("Overriding existing event 'taskChanged'")
 
     log.info("Setting default family states for loader..")
-    avalon.data["familiesStateToggled"] = ["studio.imagesequence"]
+    avalon.data["familiesStateToggled"] = ["imagesequence"]
 
 
 def on_init(*args):

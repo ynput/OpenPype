@@ -13,7 +13,7 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["studio.animation"]
+    families = ["animation"]
     label = "Animation Content"
     actions = [pype.maya.action.SelectInvalidAction]
 

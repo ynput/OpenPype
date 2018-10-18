@@ -15,10 +15,10 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
     order = pype.api.ValidatePipelineOrder
     label = 'Non Duplicate Instance Members (ID)'
     hosts = ['maya']
-    families = ["studio.model",
-                "studio.look",
-                "studio.rig",
-                "studio.yetiRig"]
+    families = ["model",
+                "look",
+                "rig",
+                "yetiRig"]
 
     actions = [pype.maya.action.SelectInvalidAction,
                pype.maya.action.GenerateUUIDsOnInvalidAction]

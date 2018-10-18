@@ -137,7 +137,7 @@ def load_package(filepath, name, namespace=None):
     # manager
     # for container in containers:
     #     cmds.setAttr("%s.id" % container,
-    #                  "studio.setdress.container",
+    #                  "setdress.container",
     #                  type="string")
 
     # TODO: Lock all loaded nodes

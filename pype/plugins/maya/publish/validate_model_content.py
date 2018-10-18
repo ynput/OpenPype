@@ -16,7 +16,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["studio.model"]
+    families = ["model"]
     label = "Model Content"
     actions = [pype.maya.action.SelectInvalidAction]
 

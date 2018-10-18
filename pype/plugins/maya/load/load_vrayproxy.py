@@ -7,7 +7,7 @@ import maya.cmds as cmds
 class VRayProxyLoader(api.Loader):
     """Load VRayMesh proxy"""
 
-    families = ["studio.vrayproxy"]
+    families = ["vrayproxy"]
     representations = ["vrmesh"]
 
     label = "Import VRay Proxy"

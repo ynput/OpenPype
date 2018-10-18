@@ -8,7 +8,7 @@ class CreateRig(avalon.maya.Creator):
 
     name = "rigDefault"
     label = "Rig"
-    family = "studio.rig"
+    family = "rig"
     icon = "wheelchair"
 
     def process(self):

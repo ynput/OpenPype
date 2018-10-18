@@ -17,8 +17,8 @@ class ExtractColorbleedAlembic(pype.api.Extractor):
 
     label = "Extract Pointcache (Alembic)"
     hosts = ["maya"]
-    families = ["studio.pointcache",
-                "studio.model"]
+    families = ["pointcache",
+                "model"]
 
     def process(self, instance):
 

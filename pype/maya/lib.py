@@ -1360,7 +1360,7 @@ def assign_look(nodes, subset="lookDefault"):
         version = io.find_one({"parent": subset_data['_id'],
                                "type": "version",
                                "data.families":
-                                   {"$in": ["studio.look"]}
+                                   {"$in": ["look"]}
                                },
                               sort=[("name", -1)],
                               projection={"_id": True, "name": True})

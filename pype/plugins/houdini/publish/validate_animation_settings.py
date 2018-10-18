@@ -23,7 +23,7 @@ class ValidateAnimationSettings(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Frame Settings"
-    families = ["studio.vdbcache"]
+    families = ["vdbcache"]
 
     def process(self, instance):
 

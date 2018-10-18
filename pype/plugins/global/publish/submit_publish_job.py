@@ -125,9 +125,9 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     hosts = ["fusion", "maya", "nuke"]
 
     families = [
-        "studio.saver.deadline",
-        "studio.renderlayer",
-        "studio.imagesequence"
+        "saver.deadline",
+        "renderlayer",
+        "imagesequence"
     ]
 
     def process(self, instance):
@@ -173,7 +173,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             "regex": regex,
             "startFrame": start,
             "endFrame": end,
-            "families": ["studio.imagesequence"],
+            "families": ["imagesequence"],
 
             # Optional metadata (for debugging)
             "metadata": {
@@ -190,7 +190,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
         if data.get("extendFrames", False):
 
-            family = "studio.imagesequence"
+            family = "imagesequence"
             override = data["overrideExistingFrame"]
 
             # override = data.get("overrideExistingFrame", False)

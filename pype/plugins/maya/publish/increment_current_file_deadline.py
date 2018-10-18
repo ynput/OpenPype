@@ -11,7 +11,7 @@ class IncrementCurrentFileDeadline(pyblish.api.ContextPlugin):
     label = "Increment current file"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["maya"]
-    families = ["studio.renderlayer"]
+    families = ["renderlayer"]
     optional = True
 
     def process(self, context):

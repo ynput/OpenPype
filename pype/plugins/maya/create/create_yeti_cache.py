@@ -9,7 +9,7 @@ class CreateYetiCache(avalon.maya.Creator):
 
     name = "yetiDefault"
     label = "Yeti Cache"
-    family = "studio.yeticache"
+    family = "yeticache"
     icon = "pagelines"
 
     def __init__(self, *args, **kwargs):

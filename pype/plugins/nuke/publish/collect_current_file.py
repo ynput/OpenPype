@@ -7,7 +7,7 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.1
     label = "Collect Current File"
     hosts = ["nuke"]
-    families = ["studio.workfile"]
+    families = ["workfile"]
 
     def process(self, context):
         import os

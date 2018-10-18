@@ -10,7 +10,7 @@ class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
     label = "Validate Background Depth 32 bit"
     actions = [action.RepairAction]
     hosts = ["fusion"]
-    families = ["studio.saver"]
+    families = ["saver"]
     optional = True
 
     @classmethod

@@ -23,7 +23,7 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder
     label = "Yeti Render Script Callbacks"
     hosts = ["maya"]
-    families = ["studio.renderlayer"]
+    families = ["renderlayer"]
 
     def process(self, instance):
 
