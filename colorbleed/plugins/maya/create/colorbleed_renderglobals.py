@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from maya import cmds
 
 from avalon.vendor import requests
@@ -34,8 +32,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
         self.data.pop("asset", None)
         self.data.pop("active", None)
 
-        data = OrderedDict(**self.data)
-
+        data = self.data
         data["suspendPublishJob"] = False
         data["extendFrames"] = False
         data["overrideExistingFrame"] = True
@@ -49,7 +46,6 @@ class CreateRenderGlobals(avalon.maya.Creator):
         # We add a string "-" to allow the user to not set any secondary pools
         data["secondaryPool"] = ["-"] + pools
 
-        self.data = data
         self.options = {"useSelection": False}  # Force no content
 
     def process(self):
