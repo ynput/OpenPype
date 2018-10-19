@@ -120,12 +120,12 @@ class ExtractFBX(colorbleed.api.Extractor):
 
         """
 
-        for key in instance.data():
+        for key in instance.data:
             if key not in self.options:
                 continue
 
             # Ensure the data is of correct type
-            value = instance.data(key)
+            value = instance.data[key]
             if not isinstance(value, self.options[key]):
                 self.log.warning(
                     "Overridden attribute {key} was of "
@@ -156,7 +156,7 @@ class ExtractFBX(colorbleed.api.Extractor):
 
         self.log.info("Extracting FBX to: {0}".format(path))
 
-        members = instance.data("setMembers")
+        members = instance.data["setMembers"]
         self.log.info("Members: {0}".format(members))
         self.log.info("Instance: {0}".format(instance[:]))
 
@@ -165,14 +165,16 @@ class ExtractFBX(colorbleed.api.Extractor):
         options = self.parse_overrides(instance, options)
         self.log.info("Export options: {0}".format(options))
 
-        # TODO: Move this out of this plug-in? (Colorbleed)
-        # Fallback to regular instance start and end frame data names
-        start = instance.data.get("startFrame", None)
-        if start is not None:
-            options['bakeComplexStart'] = start
-        end = instance.data.get("endFrame", None)
-        if end is not None:
-            options['bakeComplexEnd'] = end
+        # Collect the start and end including handles
+        start = instance.data["startFrame"]
+        end = instance.data["endFrame"]
+        handles = instance.data.get("handles", 0)
+        if handles:
+            start -= handles
+            end += handles
+
+        options['bakeComplexStart'] = start
+        options['bakeComplexEnd'] = end
 
         # First apply the default export settings to be fully consistent
         # each time for successive publishes
