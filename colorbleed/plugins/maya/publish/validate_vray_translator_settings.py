@@ -39,17 +39,22 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
         node = vray_settings[0]
 
         if not cmds.getAttr("{}.vrscene_on".format(node)):
-            self.info.error("Export vrscene not enabled")
+            cls.log.error("Export vrscene not enabled")
+            invalid = True
 
         if not cmds.getAttr("{}.misc_eachFrameInFile".format(node)):
-            self.info.error("Each Frame in File not enabled")
+            cls.log.error("Each Frame in File not enabled")
+            invalid = True
 
         vrscene_filename = cmds.getAttr("{}.vrscene_filename".format(node))
         if vrscene_filename != "vrayscene/<Scene>/<Scene>_<Layer>/<Layer>":
-            self.info.error("Template for file name is wrong")
+            cls.log.error("Template for file name is wrong")
+            invalid = True
 
-    @classmethod
-    def repair(cls, context):
+        return invalid
+
+    @staticmethod
+    def repair():
 
         vray_settings = cmds.ls(type="VRaySettingsNode")
         if not vray_settings:
