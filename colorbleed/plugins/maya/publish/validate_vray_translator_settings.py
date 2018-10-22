@@ -53,8 +53,8 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
         return invalid
 
-    @staticmethod
-    def repair():
+    @classmethod
+    def repair(cls, context):
 
         vray_settings = cmds.ls(type="VRaySettingsNode")
         if not vray_settings:
