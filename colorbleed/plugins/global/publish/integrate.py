@@ -25,6 +25,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     families = ["colorbleed.animation",
                 "colorbleed.camera",
+                "colorbleed.fbx",
                 "colorbleed.imagesequence",
                 "colorbleed.look",
                 "colorbleed.mayaAscii",
