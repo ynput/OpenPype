@@ -36,7 +36,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         assert fps and fps == asset_fps, "Scene must be %s FPS" % asset_fps
 
     @classmethod
-    def repair(cls):
+    def repair(cls, context):
         """Fix the current FPS setting of the scene, set to PAL(25.0 fps)"""
 
         cls.log.info("Setting angular unit to 'degrees'")

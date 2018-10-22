@@ -13,20 +13,23 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
+        invalid = self.get_invalid(context)
+        if invalid:
+            raise RuntimeError("Found invalid VRay Translator settings!")
+
+    @classmethod
+    def get_invalid(cls, context):
+
+        invalid = False
+
         # Check if there are any vray scene instances
         # The reason to not use host.lsattr() as used in collect_vray_scene
         # is because that information is already available in the context
-        vrayscene_instances = []
-        for inst in context[:]:
-            if inst.data["family"] in self.families:
-                # Skip if instances is inactive
-                if not inst.data["active"]:
-                    continue
-
-                vrayscene_instances.append(inst)
+        vrayscene_instances = [i for i in context[:] if i.data["family"]
+                               in cls.families]
 
         if not vrayscene_instances:
-            self.log.info("No VRay Scene instances found, skipping..")
+            cls.log.info("No VRay Scene instances found, skipping..")
             return
 
         # Get vraySettings node
@@ -36,14 +39,19 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
         node = vray_settings[0]
 
         if not cmds.getAttr("{}.vrscene_on".format(node)):
-            self.info.error("Export vrscene not enabled")
+            cls.log.error("Export vrscene not enabled")
+            invalid = True
 
         if not cmds.getAttr("{}.misc_eachFrameInFile".format(node)):
-            self.info.error("Each Frame in File not enabled")
+            cls.log.error("Each Frame in File not enabled")
+            invalid = True
 
         vrscene_filename = cmds.getAttr("{}.vrscene_filename".format(node))
         if vrscene_filename != "vrayscene/<Scene>/<Scene>_<Layer>/<Layer>":
-            self.info.error("Template for file name is wrong")
+            cls.log.error("Template for file name is wrong")
+            invalid = True
+
+        return invalid
 
     @classmethod
     def repair(cls, context):
