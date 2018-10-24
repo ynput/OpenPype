@@ -51,6 +51,9 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
                                                  filename,
                                                  vrscene_output)
 
+        start_frame = int(instance.data["startFrame"])
+        end_frame = int(instance.data["endFrame"])
+
         # Primary job
         self.log.info("Submitting export job ..")
 
@@ -60,31 +63,35 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
                 "BatchName": batch_name,
 
                 # Job name, as seen in Monitor
-                "Name": task_name,
+                "Name": "{} [{}-{}]".format(task_name, start_frame, end_frame),
 
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": deadline_user,
 
-                "Plugin": "MayaCmd",
-                "Frames": "1",
+                "Plugin": "MayaBatch",
+                "Frames": "{}-{}".format(start_frame, end_frame),
+                "FramesPerTask": instance.data.get("framesPerTask", 1),
 
                 "Comment": context.data.get("comment", ""),
+
+                "OutputFilename0": os.path.dirname(first_file),
             },
             "PluginInfo": {
+
+                # Renderer
+                "Renderer": "vray",
 
                 # Mandatory for Deadline
                 "Version": cmds.about(version=True),
 
                 # Input
                 "SceneFile": filepath,
-                # Output directory and filename
-                "OutputFilePath": vrscene_output.replace("\\", "/"),
-
-                "CommandLineOptions": self.build_command(instance),
-
-                "UseOnlyCommandLineOptions": True,
 
                 "SkipExistingFrames": True,
+
+                "UsingRenderLayers": True,
+
+                "UseLegacyRenderLayers": True
             },
 
             # Mandatory for Deadline, may be empty
@@ -133,19 +140,26 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         sequence_filename = ".".join([instance.name, ext])
         output_filename = os.path.join(render_ouput, sequence_filename)
 
+        # Ensure folder exists:
+        if not os.path.exists(render_ouput):
+            os.makedirs(render_ouput)
+
         payload_b = {
             "JobInfo": {
 
                 "JobDependency0": dependency["_id"],
                 "BatchName": batch_name,
-                "Name": "Render {}".format(task_name),
+                "Name": "Render {} [{}-{}]".format(task_name,
+                                                   start_frame,
+                                                   end_frame),
                 "UserName": deadline_user,
 
                 "Frames": "{}-{}".format(start_frame, end_frame),
 
                 "Plugin": "Vray",
                 "OverrideTaskExtraInfoNames": False,
-                "Whitelist": "cb7"
+
+                "OutputFilename0": render_ouput,
             },
             "PluginInfo": {
 
