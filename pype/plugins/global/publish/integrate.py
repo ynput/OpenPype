@@ -136,14 +136,24 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
+        # template_data = {"root": root,
+        #                  "project": PROJECT,
+        #                  "silo": asset['silo'],
+        #                  "asset": ASSET,
+        #                  "subset": subset["name"],
+        #                  "version": version["name"]}
         template_data = {"root": root,
-                         "project": PROJECT,
+                         "project": {"name": PROJECT,
+                                     "code": "prjX"},
                          "silo": asset['silo'],
                          "asset": ASSET,
+                         "family": instance.data['family'],
                          "subset": subset["name"],
-                         "version": version["name"]}
+                         "VERSION": version["name"],
+                         "hierarchy": "ep101"}
 
         template_publish = project["config"]["template"]["publish"]
+        anatomy = instance.context.data['anatomy']
 
         # Find the representations to transfer amongst the files
         # Each should be a single representation (as such, a single extension)
@@ -176,10 +186,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 for fname in collection:
 
                     src = os.path.join(stagingdir, fname)
-                    dst = os.path.join(
-                        template_publish.format(**template_data),
-                        fname
-                    )
+                    anatomy_filled = anatomy.format(template_data)
+                    dst = anatomy_filled.publish.path
 
                     instance.data["transfers"].append([src, dst])
 
@@ -201,7 +209,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 template_data["representation"] = ext[1:]
 
                 src = os.path.join(stagingdir, fname)
-                dst = template_publish.format(**template_data)
+                anatomy_filled = anatomy.format(template_data)
+                self.log.info(anatomy_filled)
+                dst = anatomy_filled.publish.path
+                self.log.info(dst)
 
                 instance.data["transfers"].append([src, dst])
 
