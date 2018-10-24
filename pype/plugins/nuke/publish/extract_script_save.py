@@ -8,7 +8,7 @@ class ExtractScriptSave(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder - 0.49
     label = "Script Save"
     hosts = ["nuke"]
-    families = ["studio.saver"]
+    families = ["saver"]
 
     def process(self, instance):
 

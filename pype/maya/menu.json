@@ -1,20 +1,20 @@
 [{
 	"type": "action",
-	"command": "$COLORBLEED_SCRIPTS\\others\\save_scene_incremental.py",
+	"command": "$PYPE_SCRIPTS\\others\\save_scene_incremental.py",
 	"sourcetype": "file",
 	"title": "Version Up",
 	"tooltip": "Incremental save with a specific format"
 },
 {
 	"type": "action",
-	"command": "$COLORBLEED_SCRIPTS\\others\\show_current_scene_in_explorer.py",
+	"command": "$PYPE_SCRIPTS\\others\\show_current_scene_in_explorer.py",
 	"sourcetype": "file",
 	"title": "Explore current scene..",
 	"tooltip": "Show current scene in Explorer"
 },
 {
 	"type": "action",
-	"command": "$COLORBLEED_SCRIPTS\\avalon\\launch_manager.py",
+	"command": "$PYPE_SCRIPTS\\avalon\\launch_manager.py",
 	"sourcetype": "file",
 	"title": "Project Manager",
 	"tooltip": "Add assets to the project"
@@ -27,7 +27,7 @@
 	"title": "Modeling",
 	"items": [{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\duplicate_normalized.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\duplicate_normalized.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"duplicate",
@@ -37,7 +37,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\transferUVs.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\transferUVs.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"transfer",
@@ -47,7 +47,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\mirrorSymmetry.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\mirrorSymmetry.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"mirror",
@@ -57,7 +57,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\selectOutlineUI.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\selectOutlineUI.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"select",
@@ -68,7 +68,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\polyDeleteOtherUVSets.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\polyDeleteOtherUVSets.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"polygon",
@@ -79,7 +79,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\polyCombineQuick.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\polyCombineQuick.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"combine",
@@ -90,7 +90,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\separateMeshPerShader.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\separateMeshPerShader.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"separateMeshPerShader"],
@@ -99,7 +99,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\polyDetachSeparate.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\polyDetachSeparate.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"poly",
@@ -110,7 +110,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\polyRelaxVerts.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\polyRelaxVerts.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"relax",
@@ -120,7 +120,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\polySelectEveryNthEdgeUI.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\polySelectEveryNthEdgeUI.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"select",
@@ -131,7 +131,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\modeling\\djPFXUVs.py",
+		"command": "$PYPE_SCRIPTS\\modeling\\djPFXUVs.py",
 		"sourcetype": "file",
 		"tags": ["modeling",
 		"djPFX",
@@ -145,7 +145,7 @@
 	"title": "Rigging",
 	"items": [{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\addCurveBetween.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\addCurveBetween.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"addCurveBetween",
@@ -154,7 +154,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\averageSkinWeights.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\averageSkinWeights.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"average",
@@ -164,7 +164,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\cbSmoothSkinWeightUI.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\cbSmoothSkinWeightUI.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"cbSmoothSkinWeightUI",
@@ -173,7 +173,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\channelBoxManagerUI.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\channelBoxManagerUI.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"channelBoxManagerUI",
@@ -182,7 +182,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\characterAutorigger.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\characterAutorigger.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"characterAutorigger",
@@ -191,7 +191,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\connectUI.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\connectUI.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"connectUI",
@@ -200,7 +200,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\copySkinWeightsLocal.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\copySkinWeightsLocal.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"copySkinWeightsLocal",
@@ -209,7 +209,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\createCenterLocator.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\createCenterLocator.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"createCenterLocator",
@@ -218,7 +218,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\freezeTransformToGroup.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\freezeTransformToGroup.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"freezeTransformToGroup",
@@ -227,7 +227,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\groupSelected.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\groupSelected.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"groupSelected",
@@ -236,7 +236,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\ikHandlePoleVectorLocator.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\ikHandlePoleVectorLocator.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"ikHandlePoleVectorLocator",
@@ -245,7 +245,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\jointOrientUI.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\jointOrientUI.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"jointOrientUI",
@@ -254,7 +254,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\jointsOnCurve.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\jointsOnCurve.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"jointsOnCurve",
@@ -263,7 +263,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\resetBindSelectedSkinJoints.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\resetBindSelectedSkinJoints.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"resetBindSelectedSkinJoints",
@@ -272,7 +272,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedComponents.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedComponents.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"selectSkinclusterJointsFromSelectedComponents",
@@ -281,7 +281,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedMesh.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedMesh.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"selectSkinclusterJointsFromSelectedMesh",
@@ -290,7 +290,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\setJointLabels.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\setJointLabels.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"setJointLabels",
@@ -299,7 +299,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\setJointOrientationFromCurrentRotation.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\setJointOrientationFromCurrentRotation.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"setJointOrientationFromCurrentRotation",
@@ -308,7 +308,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\setSelectedJointsOrientationZero.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\setSelectedJointsOrientationZero.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"setSelectedJointsOrientationZero",
@@ -317,7 +317,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\mirrorCurveShape.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\mirrorCurveShape.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"mirrorCurveShape",
@@ -326,7 +326,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\setRotationOrderUI.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\setRotationOrderUI.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"setRotationOrderUI",
@@ -335,7 +335,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\paintItNowUI.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\paintItNowUI.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"paintItNowUI",
@@ -344,7 +344,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\parentScaleConstraint.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\parentScaleConstraint.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"parentScaleConstraint",
@@ -353,7 +353,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\quickSetWeightsUI.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\quickSetWeightsUI.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"quickSetWeightsUI",
@@ -362,7 +362,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\rapidRig.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\rapidRig.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"rapidRig",
@@ -371,7 +371,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\regenerate_blendshape_targets.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\regenerate_blendshape_targets.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"regenerate_blendshape_targets",
@@ -380,7 +380,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\removeRotationAxis.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\removeRotationAxis.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"removeRotationAxis",
@@ -389,7 +389,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\resetBindSelectedMeshes.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\resetBindSelectedMeshes.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"resetBindSelectedMeshes",
@@ -398,7 +398,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\simpleControllerOnSelection.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\simpleControllerOnSelection.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"simpleControllerOnSelection",
@@ -407,7 +407,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\simpleControllerOnSelectionHierarchy.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\simpleControllerOnSelectionHierarchy.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"simpleControllerOnSelectionHierarchy",
@@ -416,7 +416,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\superRelativeCluster.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\superRelativeCluster.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"superRelativeCluster",
@@ -425,7 +425,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\tfSmoothSkinWeight.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\tfSmoothSkinWeight.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"tfSmoothSkinWeight",
@@ -434,7 +434,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\toggleIntermediates.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\toggleIntermediates.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"toggleIntermediates",
@@ -443,7 +443,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\toggleSegmentScaleCompensate.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\toggleSegmentScaleCompensate.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"toggleSegmentScaleCompensate",
@@ -452,7 +452,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\rigging\\toggleSkinclusterDeformNormals.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\toggleSkinclusterDeformNormals.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
 		"toggleSkinclusterDeformNormals",
@@ -469,7 +469,7 @@
 		"items": [{
 			"type": "action",
 			"title": "Import Proxies",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\vrayImportProxies.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\vrayImportProxies.py",
 			"sourcetype": "file",
 			"tags": ["shading",
 			"vray",
@@ -483,7 +483,7 @@
 		{
 			"type": "action",
 			"title": "Select All GES",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\selectAllGES.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\selectAllGES.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -493,7 +493,7 @@
 		{
 			"type": "action",
 			"title": "Select All GES Under Selection",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\selectAllGESUnderSelection.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\selectAllGESUnderSelection.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -508,7 +508,7 @@
 		{
 			"type": "action",
 			"title": "Selection To VRay Mesh",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\selectionToVrayMesh.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\selectionToVrayMesh.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -519,7 +519,7 @@
 		{
 			"type": "action",
 			"title": "Add VRay Round Edges Attribute",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\addVrayRoundEdgesAttribute.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\addVrayRoundEdgesAttribute.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -530,7 +530,7 @@
 		{
 			"type": "action",
 			"title": "Add Gamma",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\vrayAddGamma.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\vrayAddGamma.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -542,7 +542,7 @@
 		},
 		{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\select_vraymesh_materials_with_unconnected_shader_slots.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\select_vraymesh_materials_with_unconnected_shader_slots.py",
 			"sourcetype": "file",
 			"title": "Select Unconnected Shader Materials",
 			"tags": ["shading",
@@ -555,7 +555,7 @@
 		},
 		{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\vrayMergeSimilarVRayMeshMaterials.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\vrayMergeSimilarVRayMeshMaterials.py",
 			"sourcetype": "file",
 			"title": "Merge Similar VRay Mesh Materials",
 			"tags": ["shading",
@@ -568,7 +568,7 @@
 		{
 			"type": "action",
 			"title": "Create Two Sided Material",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\vrayCreate2SidedMtlForSelectedMtlRenamed.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\vrayCreate2SidedMtlForSelectedMtlRenamed.py",
 			"sourcetype": "file",
 			"tooltip": "Creates two sided material for selected material and renames it",
 			"tags": ["shading",
@@ -579,7 +579,7 @@
 		{
 			"type": "action",
 			"title": "Create Two Sided Material For Selected",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\vrayCreate2SidedMtlForSelectedMtl.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\vrayCreate2SidedMtlForSelectedMtl.py",
 			"sourcetype": "file",
 			"tooltip": "Select material to create a two sided version from it",
 			"tags": ["shading",
@@ -592,7 +592,7 @@
 		{
 			"type": "action",
 			"title": "Add OpenSubdiv Attribute",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\addVrayOpenSubdivAttribute.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\addVrayOpenSubdivAttribute.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -604,7 +604,7 @@
 		{
 			"type": "action",
 			"title": "Remove OpenSubdiv Attribute",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\removeVrayOpenSubdivAttribute.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\removeVrayOpenSubdivAttribute.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -619,7 +619,7 @@
 		{
 			"type": "action",
 			"title": "Add Subdivision Attribute",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\addVraySubdivisionAttribute.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\addVraySubdivisionAttribute.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -629,7 +629,7 @@
 		{
 			"type": "action",
 			"title": "Remove Subdivision Attribute.py",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\removeVraySubdivisionAttribute.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\removeVraySubdivisionAttribute.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -644,7 +644,7 @@
 		{
 			"type": "action",
 			"title": "Add Vray Object Ids",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\addVrayObjectIds.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\addVrayObjectIds.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -655,7 +655,7 @@
 		{
 			"type": "action",
 			"title": "Add Vray Material Ids",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\addVrayMaterialIds.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\addVrayMaterialIds.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -668,7 +668,7 @@
 		{
 			"type": "action",
 			"title": "Set Physical DOF Depth",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\vrayPhysicalDOFSetDepth.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\vrayPhysicalDOFSetDepth.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -680,7 +680,7 @@
 		{
 			"type": "action",
 			"title": "Magic Vray Proxy UI",
-			"command": "$COLORBLEED_SCRIPTS\\shading\\vray\\magicVrayProxyUI.py",
+			"command": "$PYPE_SCRIPTS\\shading\\vray\\magicVrayProxyUI.py",
 			"sourcetype": "file",
 			"tooltip": "",
 			"tags": ["shading",
@@ -690,7 +690,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\pyblish\\lighting\\set_filename_prefix.py",
+		"command": "$PYPE_SCRIPTS\\pyblish\\lighting\\set_filename_prefix.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"lookdev",
@@ -704,7 +704,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\look_manager_ui.py",
+		"command": "$PYPE_SCRIPTS\\shading\\look_manager_ui.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"look",
@@ -716,7 +716,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\LightLinkUi.py",
+		"command": "$PYPE_SCRIPTS\\shading\\LightLinkUi.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"light",
@@ -727,7 +727,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\vdviewer_ui.py",
+		"command": "$PYPE_SCRIPTS\\shading\\vdviewer_ui.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"look",
@@ -740,7 +740,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\setTexturePreviewToCLRImage.py",
+		"command": "$PYPE_SCRIPTS\\shading\\setTexturePreviewToCLRImage.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"CLRImage",
@@ -751,7 +751,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\fixDefaultShaderSetBehavior.py",
+		"command": "$PYPE_SCRIPTS\\shading\\fixDefaultShaderSetBehavior.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"fix",
@@ -762,7 +762,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\fixSelectedShapesReferenceAssignments.py",
+		"command": "$PYPE_SCRIPTS\\shading\\fixSelectedShapesReferenceAssignments.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"fix",
@@ -775,7 +775,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\selectLambert1Members.py",
+		"command": "$PYPE_SCRIPTS\\shading\\selectLambert1Members.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"selectLambert1Members"],
@@ -784,7 +784,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\selectShapesWithoutShader.py",
+		"command": "$PYPE_SCRIPTS\\shading\\selectShapesWithoutShader.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"selectShapesWithoutShader"],
@@ -793,7 +793,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\fixRenderLayerOutAdjustmentErrors.py",
+		"command": "$PYPE_SCRIPTS\\shading\\fixRenderLayerOutAdjustmentErrors.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"fixRenderLayerOutAdjustmentErrors"],
@@ -802,7 +802,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\fix_renderlayer_missing_node_override.py",
+		"command": "$PYPE_SCRIPTS\\shading\\fix_renderlayer_missing_node_override.py",
 		"sourcetype": "file",
 		"tags": ["shading",
 		"renderlayer",
@@ -816,7 +816,7 @@
 	{
 		"type": "action",
 		"title": "Image 2 Tiled EXR",
-		"command": "$COLORBLEED_SCRIPTS\\shading\\open_img2exr.py",
+		"command": "$PYPE_SCRIPTS\\shading\\open_img2exr.py",
 		"sourcetype": "file",
 		"tooltip": "",
 		"tags": ["shading",
@@ -829,7 +829,7 @@
 	"title": "Rendering",
 	"items": [{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\pyblish\\open_deadline_submission_settings.py",
+		"command": "$PYPE_SCRIPTS\\pyblish\\open_deadline_submission_settings.py",
 		"sourcetype": "file",
 		"tags": ["settings",
 		"deadline",
@@ -848,7 +848,7 @@
 		"tooltip": "",
 		"items": [{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\animation\\attributes\\copyValues.py",
+			"command": "$PYPE_SCRIPTS\\animation\\attributes\\copyValues.py",
 			"sourcetype": "file",
 			"tags": ["animation",
 			"copy",
@@ -858,7 +858,7 @@
 		},
 		{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\animation\\attributes\\copyInConnections.py",
+			"command": "$PYPE_SCRIPTS\\animation\\attributes\\copyInConnections.py",
 			"sourcetype": "file",
 			"tags": ["animation",
 			"copy",
@@ -870,7 +870,7 @@
 		},
 		{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\animation\\attributes\\copyOutConnections.py",
+			"command": "$PYPE_SCRIPTS\\animation\\attributes\\copyOutConnections.py",
 			"sourcetype": "file",
 			"tags": ["animation",
 			"copy",
@@ -882,7 +882,7 @@
 		},
 		{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\animation\\attributes\\copyTransformLocal.py",
+			"command": "$PYPE_SCRIPTS\\animation\\attributes\\copyTransformLocal.py",
 			"sourcetype": "file",
 			"tags": ["animation",
 			"copy",
@@ -894,7 +894,7 @@
 		},
 		{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\animation\\attributes\\copyTransformMatrix.py",
+			"command": "$PYPE_SCRIPTS\\animation\\attributes\\copyTransformMatrix.py",
 			"sourcetype": "file",
 			"tags": ["animation",
 			"copy",
@@ -906,7 +906,7 @@
 		},
 		{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\animation\\attributes\\copyTransformUI.py",
+			"command": "$PYPE_SCRIPTS\\animation\\attributes\\copyTransformUI.py",
 			"sourcetype": "file",
 			"tags": ["animation",
 			"copy",
@@ -918,7 +918,7 @@
 		},
 		{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\animation\\attributes\\simpleCopyUI.py",
+			"command": "$PYPE_SCRIPTS\\animation\\attributes\\simpleCopyUI.py",
 			"sourcetype": "file",
 			"tags": ["animation",
 			"copy",
@@ -936,7 +936,7 @@
 		"tooltip": "Optimization scripts",
 		"items": [{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\animation\\optimize\\toggleFreezeHierarchy.py",
+			"command": "$PYPE_SCRIPTS\\animation\\optimize\\toggleFreezeHierarchy.py",
 			"sourcetype": "file",
 			"tags": ["animation",
 			"hierarchy",
@@ -947,7 +947,7 @@
 		},
 		{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\animation\\optimize\\toggleParallelNucleus.py",
+			"command": "$PYPE_SCRIPTS\\animation\\optimize\\toggleParallelNucleus.py",
 			"sourcetype": "file",
 			"tags": ["animation",
 			"nucleus",
@@ -959,7 +959,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\bakeSelectedToWorldSpace.py",
+		"command": "$PYPE_SCRIPTS\\animation\\bakeSelectedToWorldSpace.py",
 		"tags": ["animation",
 		"bake",
 		"selection",
@@ -969,7 +969,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\timeStepper.py",
+		"command": "$PYPE_SCRIPTS\\animation\\timeStepper.py",
 		"tags": ["animation",
 		"time",
 		"stepper"],
@@ -978,7 +978,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\capture_ui.py",
+		"command": "$PYPE_SCRIPTS\\animation\\capture_ui.py",
 		"tags": ["animation",
 		"capture",
 		"ui",
@@ -990,7 +990,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\simplePlayblastUI.py",
+		"command": "$PYPE_SCRIPTS\\animation\\simplePlayblastUI.py",
 		"tags": ["animation",
 		"simple",
 		"playblast",
@@ -1000,7 +1000,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\tweenMachineUI.py",
+		"command": "$PYPE_SCRIPTS\\animation\\tweenMachineUI.py",
 		"tags": ["animation",
 		"tween",
 		"machine"],
@@ -1009,7 +1009,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\selectAllAnimationCurves.py",
+		"command": "$PYPE_SCRIPTS\\animation\\selectAllAnimationCurves.py",
 		"tags": ["animation",
 		"select",
 		"curves"],
@@ -1018,7 +1018,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\pathAnimation.py",
+		"command": "$PYPE_SCRIPTS\\animation\\pathAnimation.py",
 		"tags": ["animation",
 		"path",
 		"along"],
@@ -1027,7 +1027,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\offsetSelectedObjectsUI.py",
+		"command": "$PYPE_SCRIPTS\\animation\\offsetSelectedObjectsUI.py",
 		"tags": ["animation",
 		"offsetSelectedObjectsUI.py"],
 		"title": "Offset Selected Objects UI",
@@ -1035,7 +1035,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\key_amplifier_ui.py",
+		"command": "$PYPE_SCRIPTS\\animation\\key_amplifier_ui.py",
 		"tags": ["animation",
 		"key",
 		"amplifier"],
@@ -1044,7 +1044,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\anim_scene_optimizer.py",
+		"command": "$PYPE_SCRIPTS\\animation\\anim_scene_optimizer.py",
 		"tags": ["animation",
 		"anim_scene_optimizer.py"],
 		"title": "Anim_Scene_Optimizer",
@@ -1052,7 +1052,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\zvParentMaster.py",
+		"command": "$PYPE_SCRIPTS\\animation\\zvParentMaster.py",
 		"tags": ["animation",
 		"zvParentMaster.py"],
 		"title": "ZV Parent Master",
@@ -1060,7 +1060,7 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$COLORBLEED_SCRIPTS\\animation\\poseLibrary.py",
+		"command": "$PYPE_SCRIPTS\\animation\\poseLibrary.py",
 		"tags": ["animation",
 		"poseLibrary.py"],
 		"title": "Pose Library",
@@ -1072,7 +1072,7 @@
 	"title": "Layout",
 	"items": [{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\alignDistributeUI.py",
+		"command": "$PYPE_SCRIPTS\\layout\\alignDistributeUI.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"align",
@@ -1083,7 +1083,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\alignSimpleUI.py",
+		"command": "$PYPE_SCRIPTS\\layout\\alignSimpleUI.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"align",
@@ -1094,7 +1094,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\center_locator.py",
+		"command": "$PYPE_SCRIPTS\\layout\\center_locator.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"center",
@@ -1104,7 +1104,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\average_locator.py",
+		"command": "$PYPE_SCRIPTS\\layout\\average_locator.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"average",
@@ -1114,7 +1114,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\selectWithinProximityUI.py",
+		"command": "$PYPE_SCRIPTS\\layout\\selectWithinProximityUI.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"select",
@@ -1125,7 +1125,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\dupCurveUI.py",
+		"command": "$PYPE_SCRIPTS\\layout\\dupCurveUI.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"Duplicate",
@@ -1136,7 +1136,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\randomDeselectUI.py",
+		"command": "$PYPE_SCRIPTS\\layout\\randomDeselectUI.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"random",
@@ -1147,7 +1147,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\multiReferencerUI.py",
+		"command": "$PYPE_SCRIPTS\\layout\\multiReferencerUI.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"multi",
@@ -1157,7 +1157,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\duplicateOffsetUI.py",
+		"command": "$PYPE_SCRIPTS\\layout\\duplicateOffsetUI.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"duplicate",
@@ -1168,7 +1168,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\spPaint3d.py",
+		"command": "$PYPE_SCRIPTS\\layout\\spPaint3d.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"spPaint3d",
@@ -1179,7 +1179,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\randomizeUI.py",
+		"command": "$PYPE_SCRIPTS\\layout\\randomizeUI.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"randomize",
@@ -1189,7 +1189,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\layout\\distributeWithinObjectUI.py",
+		"command": "$PYPE_SCRIPTS\\layout\\distributeWithinObjectUI.py",
 		"sourcetype": "file",
 		"tags": ["layout",
 		"distribute",
@@ -1204,7 +1204,7 @@
 	"title": "Particles",
 	"items": [{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\instancerToObjects.py",
+		"command": "$PYPE_SCRIPTS\\particles\\instancerToObjects.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"instancerToObjects"],
@@ -1213,7 +1213,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\instancerToObjectsInstances.py",
+		"command": "$PYPE_SCRIPTS\\particles\\instancerToObjectsInstances.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"instancerToObjectsInstances"],
@@ -1222,7 +1222,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\objectsToParticlesAndInstancerCleanSource.py",
+		"command": "$PYPE_SCRIPTS\\particles\\objectsToParticlesAndInstancerCleanSource.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"objects",
@@ -1235,7 +1235,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\particleComponentsToLocators.py",
+		"command": "$PYPE_SCRIPTS\\particles\\particleComponentsToLocators.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"components",
@@ -1245,7 +1245,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\objectsToParticlesAndInstancer.py",
+		"command": "$PYPE_SCRIPTS\\particles\\objectsToParticlesAndInstancer.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"objects",
@@ -1256,7 +1256,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\spawnParticlesOnMesh.py",
+		"command": "$PYPE_SCRIPTS\\particles\\spawnParticlesOnMesh.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"spawn",
@@ -1267,7 +1267,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\instancerToObjectsInstancesWithAnimation.py",
+		"command": "$PYPE_SCRIPTS\\particles\\instancerToObjectsInstancesWithAnimation.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"instancerToObjectsInstancesWithAnimation"],
@@ -1276,7 +1276,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\objectsToParticles.py",
+		"command": "$PYPE_SCRIPTS\\particles\\objectsToParticles.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"objectsToParticles"],
@@ -1285,7 +1285,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\add_particle_cacheFile_attrs.py",
+		"command": "$PYPE_SCRIPTS\\particles\\add_particle_cacheFile_attrs.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"add_particle_cacheFile_attrs"],
@@ -1294,7 +1294,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\mergeParticleSystems.py",
+		"command": "$PYPE_SCRIPTS\\particles\\mergeParticleSystems.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"mergeParticleSystems"],
@@ -1303,7 +1303,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\particlesToLocators.py",
+		"command": "$PYPE_SCRIPTS\\particles\\particlesToLocators.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"particlesToLocators"],
@@ -1312,7 +1312,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\instancerToObjectsWithAnimation.py",
+		"command": "$PYPE_SCRIPTS\\particles\\instancerToObjectsWithAnimation.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"instancerToObjectsWithAnimation"],
@@ -1324,7 +1324,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\mayaReplicateHoudiniTool.py",
+		"command": "$PYPE_SCRIPTS\\particles\\mayaReplicateHoudiniTool.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"houdini",
@@ -1338,7 +1338,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\clearInitialState.py",
+		"command": "$PYPE_SCRIPTS\\particles\\clearInitialState.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"clearInitialState"],
@@ -1347,7 +1347,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\particles\\killSelectedParticles.py",
+		"command": "$PYPE_SCRIPTS\\particles\\killSelectedParticles.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"killSelectedParticles"],
@@ -1360,7 +1360,7 @@
 	"title": "Yeti",
 	"items": [{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\yeti\\yeti_rig_manager.py",
+		"command": "$PYPE_SCRIPTS\\yeti\\yeti_rig_manager.py",
 		"sourcetype": "file",
 		"tags": ["yeti",
 		"rig",
@@ -1375,7 +1375,7 @@
 	"title": "Cleanup",
 	"items": [{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\repair_faulty_containers.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\repair_faulty_containers.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"repair",
@@ -1385,7 +1385,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\selectByType.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\selectByType.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"selectByType"],
@@ -1394,7 +1394,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\selectIntermediateObjects.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\selectIntermediateObjects.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"selectIntermediateObjects"],
@@ -1403,7 +1403,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\selectNonUniqueNames.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\selectNonUniqueNames.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"select",
@@ -1417,7 +1417,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\removeNamespaces.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\removeNamespaces.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"remove",
@@ -1427,7 +1427,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\remove_user_defined_attributes.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\remove_user_defined_attributes.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"remove_user_defined_attributes"],
@@ -1436,7 +1436,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\removeUnknownNodes.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\removeUnknownNodes.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"removeUnknownNodes"],
@@ -1445,7 +1445,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\removeUnloadedReferences.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\removeUnloadedReferences.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"removeUnloadedReferences"],
@@ -1454,7 +1454,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\removeReferencesFailedEdits.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\removeReferencesFailedEdits.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"removeReferencesFailedEdits"],
@@ -1463,7 +1463,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\remove_unused_looks.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\remove_unused_looks.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"removeUnusedLooks"],
@@ -1472,7 +1472,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\deleteGhostIntermediateObjects.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\deleteGhostIntermediateObjects.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"deleteGhostIntermediateObjects"],
@@ -1484,7 +1484,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\resetViewportCache.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\resetViewportCache.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"reset",
@@ -1495,7 +1495,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\uniqifyNodeNames.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\uniqifyNodeNames.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"uniqifyNodeNames"],
@@ -1504,7 +1504,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\autoRenameFileNodes.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\autoRenameFileNodes.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"auto",
@@ -1515,7 +1515,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\update_asset_id.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\update_asset_id.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"update",
@@ -1527,7 +1527,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\colorbleedRename.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\colorbleedRename.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"rename",
@@ -1537,7 +1537,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\renameShapesToTransform.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\renameShapesToTransform.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"renameShapesToTransform"],
@@ -1546,7 +1546,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\reorderUI.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\reorderUI.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"reorderUI"],
@@ -1555,7 +1555,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\pastedCleaner.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\pastedCleaner.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"pastedCleaner"],
@@ -1572,7 +1572,7 @@
 		"title": "Yeti",
 		"items": [{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\others\\yeti\\cache_selected_yeti_nodes.py",
+			"command": "$PYPE_SCRIPTS\\others\\yeti\\cache_selected_yeti_nodes.py",
 			"sourcetype": "file",
 			"tags": ["others",
 			"yeti",
@@ -1588,7 +1588,7 @@
 		"tooltip": "",
 		"items": [{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\others\\hair\\recolorHairCurrentCurve",
+			"command": "$PYPE_SCRIPTS\\others\\hair\\recolorHairCurrentCurve",
 			"sourcetype": "file",
 			"tags": ["others",
 			"selectSoftSelection"],
@@ -1598,14 +1598,14 @@
 	},
 	{
 		"type": "menu",
-		"command": "$COLORBLEED_SCRIPTS\\others\\display",
+		"command": "$PYPE_SCRIPTS\\others\\display",
 		"sourcetype": "file",
 		"tags": ["others",
 		"display"],
 		"title": "Display",
 		"items": [{
 			"type": "action",
-			"command": "$COLORBLEED_SCRIPTS\\others\\display\\wireframeSelectedObjects.py",
+			"command": "$PYPE_SCRIPTS\\others\\display\\wireframeSelectedObjects.py",
 			"sourcetype": "file",
 			"tags": ["others",
 			"wireframe",
@@ -1617,7 +1617,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\archiveSceneUI.py",
+		"command": "$PYPE_SCRIPTS\\others\\archiveSceneUI.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"archiveSceneUI"],
@@ -1626,7 +1626,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\getSimilarMeshes.py",
+		"command": "$PYPE_SCRIPTS\\others\\getSimilarMeshes.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"getSimilarMeshes"],
@@ -1635,7 +1635,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\createBoundingBoxEachSelected.py",
+		"command": "$PYPE_SCRIPTS\\others\\createBoundingBoxEachSelected.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"createBoundingBoxEachSelected"],
@@ -1644,7 +1644,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\curveFromPositionEveryFrame.py",
+		"command": "$PYPE_SCRIPTS\\others\\curveFromPositionEveryFrame.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"curveFromPositionEveryFrame"],
@@ -1653,7 +1653,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\instanceLeafSmartTransform.py",
+		"command": "$PYPE_SCRIPTS\\others\\instanceLeafSmartTransform.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"instance",
@@ -1665,7 +1665,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\instanceSmartTransform.py",
+		"command": "$PYPE_SCRIPTS\\others\\instanceSmartTransform.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"instance",
@@ -1676,7 +1676,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\randomizeUVShellsSelectedObjects.py",
+		"command": "$PYPE_SCRIPTS\\others\\randomizeUVShellsSelectedObjects.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"randomizeUVShellsSelectedObjects"],
@@ -1685,7 +1685,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\centerPivotGroup.py",
+		"command": "$PYPE_SCRIPTS\\others\\centerPivotGroup.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"centerPivotGroup"],
@@ -1697,7 +1697,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\locatorsOnSelectedFaces.py",
+		"command": "$PYPE_SCRIPTS\\others\\locatorsOnSelectedFaces.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"locatorsOnSelectedFaces"],
@@ -1706,7 +1706,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\locatorsOnEdgeSelectionPrompt.py",
+		"command": "$PYPE_SCRIPTS\\others\\locatorsOnEdgeSelectionPrompt.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"locatorsOnEdgeSelectionPrompt"],
@@ -1718,7 +1718,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\copyDeformers.py",
+		"command": "$PYPE_SCRIPTS\\others\\copyDeformers.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"copyDeformers"],
@@ -1727,7 +1727,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\selectInReferenceEditor.py",
+		"command": "$PYPE_SCRIPTS\\others\\selectInReferenceEditor.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"selectInReferenceEditor"],
@@ -1736,7 +1736,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\selectConstrainingObject.py",
+		"command": "$PYPE_SCRIPTS\\others\\selectConstrainingObject.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"selectConstrainingObject"],
@@ -1745,7 +1745,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\deformerSetRelationsUI.py",
+		"command": "$PYPE_SCRIPTS\\others\\deformerSetRelationsUI.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"deformerSetRelationsUI"],
@@ -1754,7 +1754,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\others\\recreateBaseNodesForAllLatticeNodes.py",
+		"command": "$PYPE_SCRIPTS\\others\\recreateBaseNodesForAllLatticeNodes.py",
 		"sourcetype": "file",
 		"tags": ["others",
 		"recreate",

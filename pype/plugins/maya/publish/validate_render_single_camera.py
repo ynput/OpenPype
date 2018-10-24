@@ -19,7 +19,7 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["studio.renderlayer']
+    families = ["renderlayer']
     label = "Render Single Camera"
     actions = [pype.maya.action.SelectInvalidAction]
 

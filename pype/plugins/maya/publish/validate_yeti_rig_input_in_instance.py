@@ -10,7 +10,7 @@ class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
 
     order = pype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["studio.yetiRig"]
+    families = ["yetiRig"]
     label = "Yeti Rig Input Shapes In Instance"
     actions = [pype.maya.action.SelectInvalidAction]
 

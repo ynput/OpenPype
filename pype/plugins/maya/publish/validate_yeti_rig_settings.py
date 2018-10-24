@@ -4,7 +4,7 @@ import pyblish.api
 class ValidateYetiRigSettings(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = "Validate Yeti Rig Settings"
-    families = ["studio.yetiRig"]
+    families = ["yetiRig"]
 
     def process(self, instance):
 

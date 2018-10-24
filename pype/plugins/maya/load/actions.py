@@ -8,9 +8,9 @@ from avalon import api
 class SetFrameRangeLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["studio.animation",
-                "studio.camera",
-                "studio.pointcache"]
+    families = ["animation",
+                "camera",
+                "pointcache"]
     representations = ["abc"]
 
     label = "Set frame range"
@@ -42,9 +42,9 @@ class SetFrameRangeLoader(api.Loader):
 class SetFrameRangeWithHandlesLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["studio.animation",
-                "studio.camera",
-                "studio.pointcache"]
+    families = ["animation",
+                "camera",
+                "pointcache"]
     representations = ["abc"]
 
     label = "Set frame range (with handles)"

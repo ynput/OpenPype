@@ -33,7 +33,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["studio.model']
+    families = ["model']
     category = 'cleanup'
     optional = True
     version = (0, 1, 0)

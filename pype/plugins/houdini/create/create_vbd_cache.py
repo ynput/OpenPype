@@ -6,7 +6,7 @@ class CreateVDBCache(houdini.Creator):
 
     name = "vbdcache"
     label = "VDB Cache"
-    family = "studio.vdbcache"
+    family = "vdbcache"
     icon = "cloud"
 
     def __init__(self, *args, **kwargs):

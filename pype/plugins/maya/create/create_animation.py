@@ -4,16 +4,16 @@ import avalon.maya
 from pype.maya import lib
 
 
-class CreatePointCache(avalon.maya.Creator):
-    """Alembic pointcache for animated data"""
+class CreateAnimation(avalon.maya.Creator):
+    """Animation output for character rigs"""
 
-    name = "pointcache"
-    label = "Point Cache"
-    family = "studio.pointcache"
-    icon = "gears"
+    name = "animationDefault"
+    label = "Animation"
+    family = "animation"
+    icon = "male"
 
     def __init__(self, *args, **kwargs):
-        super(CreatePointCache, self).__init__(*args, **kwargs)
+        super(CreateAnimation, self).__init__(*args, **kwargs)
 
         # create an ordered dict with the existing data first
         data = OrderedDict(**self.data)

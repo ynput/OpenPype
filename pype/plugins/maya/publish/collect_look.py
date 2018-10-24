@@ -203,7 +203,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.4
-    families = ["studio.look"]
+    families = ["look"]
     label = "Collect Look"
     hosts = ["maya"]
 

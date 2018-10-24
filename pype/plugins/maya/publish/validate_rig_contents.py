@@ -16,7 +16,7 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder
     label = "Rig Contents"
     hosts = ["maya"]
-    families = ["studio.rig"]
+    families = ["rig"]
 
     accepted_output = ["mesh", "transform"]
     accepted_controllers = ["transform"]

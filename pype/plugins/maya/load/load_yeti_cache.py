@@ -13,7 +13,7 @@ from pype.maya import lib
 
 class YetiCacheLoader(api.Loader):
 
-    families = ["studio.yeticache", "studio.yetiRig"]
+    families = ["yeticache", "yetiRig"]
     representations = ["fur"]
 
     label = "Load Yeti Cache"

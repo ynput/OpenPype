@@ -28,7 +28,7 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.01
     label = "Render Elements / AOVs"
     hosts = ["maya"]
-    families = ["studio.renderlayer"]
+    families = ["renderlayer"]
 
     def process(self, instance):
 

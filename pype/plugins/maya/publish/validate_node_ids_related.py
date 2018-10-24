@@ -15,9 +15,9 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
     order = pype.api.ValidatePipelineOrder
     label = 'Node Ids Related (ID)'
     hosts = ['maya']
-    families = ["studio.model",
-                "studio.look",
-                "studio.rig"]
+    families = ["model",
+                "look",
+                "rig"]
     optional = True
 
     actions = [pype.maya.action.SelectInvalidAction,

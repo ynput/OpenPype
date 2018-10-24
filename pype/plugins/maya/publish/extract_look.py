@@ -22,7 +22,7 @@ class ExtractLook(pype.api.Extractor):
 
     label = "Extract Look (Maya ASCII + JSON)"
     hosts = ["maya"]
-    families = ["studio.look"]
+    families = ["look"]
     order = pyblish.api.ExtractorOrder + 0.2
 
     def process(self, instance):

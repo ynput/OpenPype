@@ -8,7 +8,7 @@ class ExtractVDBCache(pype.api.Extractor):
 
     order = pyblish.api.ExtractorOrder + 0.1
     label = "Extract VDB Cache"
-    families = ["studio.vdbcache"]
+    families = ["vdbcache"]
     hosts = ["houdini"]
 
     def process(self, instance):

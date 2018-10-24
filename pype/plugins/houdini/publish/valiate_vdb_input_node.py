@@ -17,7 +17,7 @@ class ValidateVDBInputNode(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder + 0.1
-    families = ["studio.vdbcache"]
+    families = ["vdbcache"]
     hosts = ["houdini"]
     label = "Validate Input Node (VDB)"
 

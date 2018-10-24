@@ -6,9 +6,9 @@ from avalon.houdini import pipeline, lib
 class AbcLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["studio.model",
-                "studio.animation",
-                "studio.pointcache"]
+    families = ["model",
+                "animation",
+                "pointcache"]
     label = "Load Alembic"
     representations = ["abc"]
     order = -10

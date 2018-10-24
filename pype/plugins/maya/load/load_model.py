@@ -5,7 +5,7 @@ import pype.maya.plugin
 class ModelLoader(pype.maya.plugin.ReferenceLoader):
     """Load the model"""
 
-    families = ["studio.model"]
+    families = ["model"]
     representations = ["ma"]
 
     label = "Reference Model"
@@ -37,7 +37,7 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
 class GpuCacheLoader(api.Loader):
     """Load model Alembic as gpuCache"""
 
-    families = ["studio.model"]
+    families = ["model"]
     representations = ["abc"]
 
     label = "Import Gpu Cache"

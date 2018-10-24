@@ -6,7 +6,7 @@ class CreatePointCache(houdini.Creator):
 
     name = "pointcache"
     label = "Point Cache"
-    family = "studio.pointcache"
+    family = "pointcache"
     icon = "gears"
 
     def __init__(self, *args, **kwargs):

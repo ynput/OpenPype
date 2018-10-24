@@ -18,7 +18,7 @@ class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin):
     label = "Current Render Layer Has Renderable Camera"
     order = pyblish.api.ValidatorOrder
     hosts = ["maya"]
-    families = ["studio.renderlayer"]
+    families = ["renderlayer"]
 
     def process(self, instance):
         layer = cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)

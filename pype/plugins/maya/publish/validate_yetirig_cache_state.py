@@ -19,7 +19,7 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = "Yeti Rig Cache State"
     hosts = ["maya"]
-    families = ["studio.yetiRig"]
+    families = ["yetiRig"]
     actions = [pype.action.RepairAction,
                pype.maya.action.SelectInvalidAction]
 

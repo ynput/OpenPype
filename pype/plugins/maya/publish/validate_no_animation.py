@@ -17,7 +17,7 @@ class ValidateNoAnimation(pyblish.api.Validator):
     order = pype.api.ValidateContentsOrder
     label = "No Animation"
     hosts = ["maya"]
-    families = ["studio.model"]
+    families = ["model"]
     optional = True
     actions = [pype.maya.action.SelectInvalidAction]
 
