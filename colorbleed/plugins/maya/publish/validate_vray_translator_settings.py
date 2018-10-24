@@ -38,6 +38,10 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
         node = vray_settings[0]
 
+        if cmds.setAttr("{}.vrscene_render_on".format(node)):
+            cls.log.error("Render is enabled, this should be disabled")
+            invalid = True
+
         if not cmds.getAttr("{}.vrscene_on".format(node)):
             cls.log.error("Export vrscene not enabled")
             invalid = True
@@ -62,6 +66,7 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
         else:
             node = vray_settings[0]
 
+        cmds.setAttr("{}.vrscene_render_on".format(node), False)
         cmds.setAttr("{}.vrscene_on".format(node), True)
         cmds.setAttr("{}.misc_eachFrameInFile".format(node), True)
         cmds.setAttr("{}.vrscene_filename".format(node),
