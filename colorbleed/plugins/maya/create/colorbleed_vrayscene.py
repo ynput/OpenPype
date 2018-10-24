@@ -20,7 +20,8 @@ class CreateVRayScene(avalon.maya.Creator):
             "suspendRenderJob": False,
             "suspendPublishJob": False,
             "extendFrames": False,
-            "pools": ""
+            "pools": "",
+            "framesPerTask": 1
         })
 
         self.options = {"useSelection": False}  # Force no content

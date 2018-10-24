@@ -86,7 +86,7 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
                 "endFrame": end_frame,
                 "renderer": "vray",
                 "resolution": resolution,
-                "ext": extension,
+                "ext": ".{}".format(extension),
 
                 # instance subset
                 "family": "VRay Scene",
