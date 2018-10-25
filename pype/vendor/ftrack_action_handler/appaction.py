@@ -1,10 +1,10 @@
 # :coding: utf-8
 # :copyright: Copyright (c) 2017 ftrack
-
+import os
 import logging
 import getpass
 import ftrack_api
-
+from avalon import io
 
 class AppAction(object):
     '''Custom Action base class
@@ -16,13 +16,8 @@ class AppAction(object):
     <description>   - a verbose descriptive text for you action
     <icon>  - icon in ftrack
      '''
-    label = None
-    variant = None
-    identifier = None
-    description = None
-    icon = None
 
-    def __init__(self, session, project, label, name, variant=None, description=None, icon=None):
+    def __init__(self, session, label, name, icon=None, variant=None, description=None):
         '''Expects a ftrack_api.Session instance'''
 
         self.logger = logging.getLogger(
@@ -33,13 +28,13 @@ class AppAction(object):
             raise ValueError('Action missing label.')
         elif name is None:
             raise ValueError('Action missing identifier.')
-        elif project is None:
-            raise ValueError('Action missing project name.')
 
         self._session = session
-        self.project = project
         self.label = label
         self.identifier = name
+        self.icon = None
+        self.variant = None
+        self.description = None
 
 
     @property
@@ -100,8 +95,37 @@ class AppAction(object):
         *event* the unmodified original event
 
         '''
+        if len(entities) > 1:
+            return False
 
-        return False
+        entity_type, entity_id = entities[0]
+        entity = session.get(entity_type, entity_id)
+
+        ''' Should return False if not TASK ?!!! '''
+        # if entity.entity_type != 'Task':
+        #     return False
+
+        ft_project = entity['project']
+        project = None
+
+        ''' GET ONLY PROJECT INSTEAD OF ALL (io.find_one()) '''
+        os.environ['AVALON_PROJECTS'] = 'tmp'
+        io.install()
+        projects = sorted(io.projects(), key=lambda x: x['name'])
+        io.uninstall()
+        for p in projects:
+            if p['name'] == ft_project['full_name']:
+                project = p
+                break
+                
+        os.environ['AVALON_PROJECT'] = project['name']
+        apps = []
+        for app in project['config']['apps']:
+            apps.append(app['name'])
+        if self.identifier not in apps:
+            return False
+
+        return True
 
     def _translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''

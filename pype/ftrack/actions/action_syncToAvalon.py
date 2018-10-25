@@ -8,21 +8,20 @@ import json
 import ftrack_api
 from ftrack_action_handler.action import BaseAction
 
-from avalon import io, inventory, schema
+from avalon import io, inventory, lib
 from avalon.vendor import toml
-
 
 class SyncToAvalon(BaseAction):
     '''Edit meta data action.'''
 
     #: Action identifier.
     identifier = 'sync.to.avalon'
-
     #: Action label.
     label = 'SyncToAvalon'
-
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
+    #: Action icon.
+    icon = 'https://cdn1.iconfinder.com/data/icons/hawcons/32/699650-icon-92-inbox-download-512.png'
 
     def validate_selection(self, session, entities):
         '''Return if *entities* is a valid selection.'''
@@ -67,24 +66,37 @@ class SyncToAvalon(BaseAction):
         # set AVALON_PROJECT env
         os.environ["AVALON_PROJECT"] = entityProj["full_name"]
 
-        # get schema of project TODO read different schemas based on project type
+        # Get apps from Ftrack / TODO Exceptions?!!!
+        apps = []
+        for app in entityProj['custom_attributes']['applications']:
+            try:
+                label = toml.load(lib.which_app(app))['label']
+                apps.append({'name':app, 'label':label})
+            except Exception as e:
+                print('Error with application {0} - {1}'.format(app, e))
+
+        # Set project Config
+        config = {
+            'schema': 'avalon-core:config-1.0',
+            'tasks': [{'name': ''}],
+            'apps': apps,
+            'template': {'work': '','publish':''}
+        }
+
+        # Set project template
         template = {"schema": "avalon-core:inventory-1.0"}
-        schema = entityProj['project_schema']['name']
-        fname = os.path.join(os.path.dirname(
-            os.path.realpath(__file__)),
-            (schema + '.toml'))
-        try:
-            with open(fname) as f:
-                config = toml.load(f)
-        except IOError:
-            raise
 
         # --- Create project and assets in Avalon ---
+        os.environ['AVALON_ASSET'] = entityProj['full_name']
+
         io.install()
-        # Check if project exists -> Create project
+        # If project don't exists -> <Create project> ELSE <Update Config>
         if (io.find_one(
-                {"type": "project", "name": entityProj["full_name"]}) is None):
-            inventory.save(entityProj["full_name"], config, template)
+                {'type': 'project', 'name': entityProj['full_name']}) is None):
+            inventory.save(entityProj['full_name'], config, template)
+        else:
+            io.update_many({'type': 'project','name': entityProj['full_name']},
+                {'$set':{'config':config}})
 
         # Store project Id
         projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
@@ -105,24 +117,33 @@ class SyncToAvalon(BaseAction):
             folderStruct = []
             parentId = None
             data = {'visualParent': parentId, 'parents': folderStruct,
-                    'ftrackId': None, 'entityType': None}
+                    'tasks':None, 'ftrackId': None, 'entityType': None}
 
             for asset in assets:
-
                 os.environ['AVALON_ASSET'] = asset['name']
                 data.update({'ftrackId': asset['ftrackId'], 'entityType': asset['type']})
-                if (io.find_one({'type': 'asset', 'name': asset['name']}) is None):
-                    inventory.create_asset(asset['name'], silo, data, projectId)
-                    print("Asset "+asset['name']+" created")
+                # Get tasks of each asset
+                assetEnt = session.get('TypedContext', asset['ftrackId'])
+                tasks = []
+                for child in assetEnt['children']:
+                    if child.entity_type in ['Task']:
+                        tasks.append(child['name'])
+                data.update({'tasks': tasks})
 
+                if (io.find_one({'type': 'asset', 'name': asset['name']}) is None):
+                    # Create asset in DB
+                    inventory.create_asset(asset['name'], silo, data, projectId)
+                    print("Asset "+asset['name']+" - created")
                 else:
+                    io.update_many({'type': 'asset','name': asset['name']},
+                        {'$set':{'data':data}})
                     # TODO check if is asset in same folder!!! ???? FEATURE FOR FUTURE
-                    print("Asset "+asset["name"]+" already exist")
+                    print("Asset "+asset["name"]+" - already exist")
 
                 parentId = io.find_one({'type': 'asset', 'name': asset['name']})['_id']
-
                 data.update({'visualParent': parentId, 'parents': folderStruct})
                 folderStruct.append(asset['name'])
+
 
             # Set custom attribute to avalon/mongo id of entity (parentID is last)
             if custAttrName in entity['custom_attributes'] and entity['custom_attributes'][custAttrName] is '':
@@ -144,6 +165,7 @@ class SyncToAvalon(BaseAction):
         })
 
         try:
+            print("action <" + self.__class__.__name__ + "> is running")
             #TODO It's better to have these env set, are they used anywhere?
             os.environ['AVALON_PROJECTS'] = "tmp"
             os.environ['AVALON_ASSET'] = "tmp"
@@ -173,7 +195,7 @@ class SyncToAvalon(BaseAction):
             session.commit()
 
             print('Synchronization to Avalon was successfull!')
-        except(e):
+        except Exception as e:
             job['status'] = 'failed'
             print('During synchronization to Avalon went something wrong!')
             print(e)
@@ -192,6 +214,7 @@ def register(session, **kw):
 
     action_handler = SyncToAvalon(session)
     action_handler.register()
+    print("----- action - <" + action_handler.__class__.__name__ + "> - Has been registered -----")
 
 
 def main(arguments=None):

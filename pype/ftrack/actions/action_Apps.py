@@ -5,7 +5,7 @@ from ftrack_action_handler.appaction import AppAction
 from avalon import io
 
 
-os.environ['AVALON_PROJECTS']='tmp'
+os.environ['AVALON_PROJECTS'] = 'tmp'
 io.install()
 projects = sorted(io.projects(), key=lambda x: x['name'])
 io.uninstall()
@@ -18,14 +18,17 @@ s = ftrack_api.Session(
 )
 
 def register(session):
+    apps=[]
     actions = []
     for project in projects:
-        os.environ['AVALON_PROJECTS'] = project['name']
+        os.environ['AVALON_PROJECT'] = project['name']
         for app in project['config']['apps']:
-            actions.append(AppAction(session, project['name'], app['label'], app['name']))
-    for action in actions:
-        action.register()
-    print(actions)
+            if app not in apps:
+                apps.append(app)
+
+    for app in apps:
+        AppAction(session, app['label'], app['name']).register()
+
 
     session.event_hub.wait()
 
