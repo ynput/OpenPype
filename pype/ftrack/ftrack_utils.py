@@ -31,7 +31,7 @@ def deleteAssetsFromShotByName(shotId, assNm=None):
         if nm == assNm:
             a.delete()
 
-
+# Created as action
 def killRunningTasks(tm=None):
     import datetime
     import ftrack_api
@@ -57,47 +57,6 @@ def killRunningTasks(tm=None):
     session.commit()
 
     print('Complete')
-
-
-def createCustomAttr():
-
-    import ftrack_api
-
-    session = ftrack_api.Session()
-    objTypes = set()  # for custom attribute creation
-
-    # TODO get all entity types ---- NOT TASK
-    # objTypes.add(session.query('ObjectType where name is ' + entity.entity_type).one())
-
-    # Name & Label for export Avalon-mongo ID to Ftrack
-    allCustAttr = session.query('CustomAttributeConfiguration').all()
-    curCustAttr = []
-    for ca in allCustAttr:
-        curCustAttr.append(ca['key'])
-
-    custAttrName = 'avalon_mongo_id'
-    custAttrLabel = 'Avalon/Mongo Id'
-    custAttrType = session.query('CustomAttributeType where name is "text"').one()
-    # TODO WHICH SECURITY ROLE IS RIGHT
-    custAttrSecuRole = session.query('SecurityRole').all()
-
-    for custAttrObjType in objTypes:
-        # custAttrObjType = session.query('ObjectType where name is ' + entity.entity_type).one()
-        # Create Custom attribute if not exists
-        if custAttrName not in curCustAttr:
-            session.create('CustomAttributeConfiguration', {
-                'entity_type': 'task',
-                'object_type_id': custAttrObjType['id'],
-                'type': custAttrType,
-                'label': custAttrLabel,
-                'key': custAttrName,
-                'default': '',
-                'write_security_roles': custAttrSecuRole,
-                'read_security_roles': custAttrSecuRole,
-                'config': json.dumps({'markdown': False}),
-            })
-    session.commit()
-
 
 def checkRegex():
     # _handle_result -> would be solution?

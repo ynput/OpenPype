@@ -2,22 +2,19 @@
 # :copyright: Copyright (c) 2017 ftrack
 
 import logging
-
+import getpass
 import ftrack_api
 
 
-class BaseAction(object):
+class AppAction(object):
     '''Custom Action base class
 
-    `label` a descriptive string identifing your action.
-
-    `varaint` To group actions together, give them the same
-    label and specify a unique variant per action.
-
-    `identifier` a unique identifier for your action.
-
-    `description` a verbose descriptive text for you action
-
+    <label> - a descriptive string identifing your action.
+    <varaint>   - To group actions together, give them the same
+                  label and specify a unique variant per action.
+    <identifier>  - a unique identifier for app.
+    <description>   - a verbose descriptive text for you action
+    <icon>  - icon in ftrack
      '''
     label = None
     variant = None
@@ -25,24 +22,25 @@ class BaseAction(object):
     description = None
     icon = None
 
-    def __init__(self, session):
+    def __init__(self, session, project, label, name, variant=None, description=None, icon=None):
         '''Expects a ftrack_api.Session instance'''
 
         self.logger = logging.getLogger(
             '{0}.{1}'.format(__name__, self.__class__.__name__)
         )
 
-        if self.label is None:
-            raise ValueError(
-                'Action missing label.'
-            )
-
-        elif self.identifier is None:
-            raise ValueError(
-                'Action missing identifier.'
-            )
+        if label is None:
+            raise ValueError('Action missing label.')
+        elif name is None:
+            raise ValueError('Action missing identifier.')
+        elif project is None:
+            raise ValueError('Action missing project name.')
 
         self._session = session
+        self.project = project
+        self.label = label
+        self.identifier = name
+
 
     @property
     def session(self):
@@ -54,6 +52,11 @@ class BaseAction(object):
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover', self._discover
         )
+        # self.session.event_hub.subscribe(
+        #     'topic=ftrack.action.discover and source.user.username={0}'.format(
+        #         getpass.getuser()
+        #         ), self._discover
+        # )
 
         self.session.event_hub.subscribe(
             'topic=ftrack.action.launch and data.actionIdentifier={0}'.format(
@@ -180,7 +183,10 @@ class BaseAction(object):
         *event* the unmodified original event
 
         '''
-        raise NotImplementedError()
+        # TODO Delete this line
+        print("PRETEND APP IS RUNNING")
+
+        return True
 
     def _interface(self, *args):
         interface = self.interface(*args)

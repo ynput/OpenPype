@@ -3,27 +3,31 @@
 import sys
 import argparse
 import logging
+import collections
+import os
+import json
 
-import datetime
 import ftrack_api
 from ftrack_action_handler.action import BaseAction
+from avalon import io, inventory, schema
+from avalon.vendor import toml
 
 
-class JobKiller(BaseAction):
+class TestAction(BaseAction):
     '''Edit meta data action.'''
 
     #: Action identifier.
-    identifier = 'job.kill'
-    #: Action label.
-    label = 'Job Killer'
-    #: Action description.
-    description = 'Killing all running jobs younger than day'
+    identifier = 'test.action'
 
+    #: Action label.
+    label = 'Test action'
+
+    #: Action description.
+    description = 'Test action'
 
     def validate_selection(self, session, entities):
         '''Return if *entities* is a valid selection.'''
         pass
-
         return True
 
     def discover(self, session, entities, event):
@@ -33,40 +37,17 @@ class JobKiller(BaseAction):
         return self.validate_selection(session, entities)
 
     def launch(self, session, entities, event):
-        """ JOB SETTING """
-
-        yesterday = datetime.date.today() - datetime.timedelta(days=1)
-
-        jobs = session.query(
-            'select id, status from Job '
-            'where status in ("queued", "running") and created_at > {0}'.format(yesterday)
-        )
-
-        # Update all the queried jobs, setting the status to failed.
-        for job in jobs:
-            print(job['created_at'])
-            print('Changing Job ({}) status: {} -> failed'.format(job['id'], job['status']))
-            job['status'] = 'failed'
-
-        session.commit()
-
-        print('All running jobs were killed Successfully!')
-        return {
-            'success': True,
-            'message': 'All running jobs were killed Successfully!'
-        }
+        
+        return True
 
 
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''
 
-    # Validate that session is an instance of ftrack_api.Session. If not,
-    # assume that register is being called from an old or incompatible API and
-    # return without doing anything.
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = JobKiller(session)
+    action_handler = TestAction(session)
     action_handler.register()
 
 
