@@ -3,6 +3,7 @@
 import os
 import logging
 import getpass
+import platform
 import ftrack_api
 from avalon import io
 
@@ -101,24 +102,17 @@ class AppAction(object):
         entity_type, entity_id = entities[0]
         entity = session.get(entity_type, entity_id)
 
-        ''' Should return False if not TASK ?!!! '''
+        # TODO Should return False if not TASK ?!!!
         # if entity.entity_type != 'Task':
         #     return False
 
         ft_project = entity['project']
-        project = None
 
-        ''' GET ONLY PROJECT INSTEAD OF ALL (io.find_one()) '''
-        os.environ['AVALON_PROJECTS'] = 'tmp'
+        os.environ['AVALON_PROJECT'] = ft_project['full_name']
         io.install()
-        projects = sorted(io.projects(), key=lambda x: x['name'])
+        project = io.find_one({"type": "project", "name": ft_project['full_name']})
         io.uninstall()
-        for p in projects:
-            if p['name'] == ft_project['full_name']:
-                project = p
-                break
-                
-        os.environ['AVALON_PROJECT'] = project['name']
+
         apps = []
         for app in project['config']['apps']:
             apps.append(app['name'])
@@ -208,7 +202,26 @@ class AppAction(object):
 
         '''
         # TODO Delete this line
-        print("PRETEND APP IS RUNNING")
+        print("Action < {0} ({1}) > just started".format(self.label, self.identifier))
+
+        # Get path to execute
+        st_temp_path = os.environ['PYPE_STUDIO_TEMPLATES']
+        os_plat = platform.system().lower()
+
+        # Path to folder with .bat
+        path = os.path.join(st_temp_path, 'bin', os_plat)
+        file = self.identifier
+
+        ''' NEED TO ADD FILE NAMES FOR OTHER SYSTEMS '''
+        if os_plat == 'windows':
+            file += ".bat"
+
+        abspath = os.path.join(path.strip('"'), file)
+
+        if os.path.isfile(abspath) and os.access(abspath, os.X_OK):
+            os.startfile(abspath)
+        else:
+            return False
 
         return True
 
