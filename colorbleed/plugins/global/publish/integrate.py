@@ -340,7 +340,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                         "time": context.data["time"],
                         "author": context.data["user"],
                         "source": source,
-                        "comment": context.data.get("comment")}
+                        "comment": context.data.get("comment"),
+                        "machine": context.data.get("machine")}
 
         # Include optional data if present in
         optionals = ["startFrame", "endFrame", "step", "handles"]
