@@ -65,6 +65,7 @@ class SyncToAvalon(BaseAction):
 
         # set AVALON_PROJECT env
         os.environ["AVALON_PROJECT"] = entityProj["full_name"]
+        os.environ["AVALON_ASSET"] = entityProj['full_name']
 
         # Get apps from Ftrack / TODO Exceptions?!!!
         apps = []
@@ -87,8 +88,6 @@ class SyncToAvalon(BaseAction):
         template = {"schema": "avalon-core:inventory-1.0"}
 
         # --- Create project and assets in Avalon ---
-        os.environ['AVALON_ASSET'] = entityProj['full_name']
-
         io.install()
         # If project don't exists -> <Create project> ELSE <Update Config>
         if (io.find_one(
@@ -97,6 +96,10 @@ class SyncToAvalon(BaseAction):
         else:
             io.update_many({'type': 'project','name': entityProj['full_name']},
                 {'$set':{'config':config}})
+
+        # Store info about project (FtrackId)
+        io.update_many({'type': 'project','name': entityProj['full_name']},
+            {'$set':{'data':{'ftrackId':entityProj['id'],'entityType':entityProj.entity_type}}})
 
         # Store project Id
         projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]

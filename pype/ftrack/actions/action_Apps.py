@@ -1,8 +1,9 @@
 import os
 import logging
+import toml
 import ftrack_api
 from ftrack_action_handler.appaction import AppAction
-from avalon import io
+from avalon import io, lib
 
 
 os.environ['AVALON_PROJECTS'] = 'tmp'
@@ -20,6 +21,8 @@ s = ftrack_api.Session(
 def register(session):
     apps=[]
     actions = []
+    icon = None
+
     for project in projects:
         os.environ['AVALON_PROJECT'] = project['name']
         for app in project['config']['apps']:
@@ -27,8 +30,14 @@ def register(session):
                 apps.append(app)
 
     for app in apps:
-        AppAction(session, app['label'], app['name']).register()
+        if 'nuke' in app['name']:
+            icon = "https://mbtskoudsalg.com/images/nuke-icon-png-2.png"
+        elif 'maya' in app['name']:
+            icon = "http://icons.iconarchive.com/icons/froyoshark/enkel/256/Maya-icon.png"
+        else:
+            icon = None
 
+        AppAction(session, app['label'], app['name'], icon).register()
 
     session.event_hub.wait()
 

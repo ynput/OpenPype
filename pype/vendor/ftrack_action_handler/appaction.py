@@ -33,9 +33,9 @@ class AppAction(object):
         self._session = session
         self.label = label
         self.identifier = name
-        self.icon = None
-        self.variant = None
-        self.description = None
+        self.icon = icon
+        self.variant = variant
+        self.description = description
 
 
     @property
@@ -46,13 +46,10 @@ class AppAction(object):
     def register(self):
         '''Registers the action, subscribing the the discover and launch topics.'''
         self.session.event_hub.subscribe(
-            'topic=ftrack.action.discover', self._discover
+            'topic=ftrack.action.discover and source.user.username={0}'.format(
+                self.session.api_user
+                ), self._discover
         )
-        # self.session.event_hub.subscribe(
-        #     'topic=ftrack.action.discover and source.user.username={0}'.format(
-        #         getpass.getuser()
-        #         ), self._discover
-        # )
 
         self.session.event_hub.subscribe(
             'topic=ftrack.action.launch and data.actionIdentifier={0}'.format(
@@ -96,8 +93,6 @@ class AppAction(object):
         *event* the unmodified original event
 
         '''
-        if len(entities) > 1:
-            return False
 
         entity_type, entity_id = entities[0]
         entity = session.get(entity_type, entity_id)
@@ -106,18 +101,27 @@ class AppAction(object):
         # if entity.entity_type != 'Task':
         #     return False
 
-        ft_project = entity['project']
+        # TODO Should return False if more than one entity is selected ?!!!
+        # if len(entities) > 1:
+        #     return False
+
+
+        ft_project = entity['project'] if (entity.entity_type != 'Project') else entity
 
         os.environ['AVALON_PROJECT'] = ft_project['full_name']
         io.install()
         project = io.find_one({"type": "project", "name": ft_project['full_name']})
         io.uninstall()
 
-        apps = []
-        for app in project['config']['apps']:
-            apps.append(app['name'])
-        if self.identifier not in apps:
+        if project is None:
             return False
+        else:
+            apps = []
+            for app in project['config']['apps']:
+                apps.append(app['name'])
+
+            if self.identifier not in apps:
+                return False
 
         return True
 
@@ -202,28 +206,35 @@ class AppAction(object):
 
         '''
         # TODO Delete this line
-        print("Action < {0} ({1}) > just started".format(self.label, self.identifier))
+        print("Action - {0} ({1}) - just started".format(self.label, self.identifier))
 
         # Get path to execute
         st_temp_path = os.environ['PYPE_STUDIO_TEMPLATES']
         os_plat = platform.system().lower()
 
-        # Path to folder with .bat
+        # Path to folder with launchers
         path = os.path.join(st_temp_path, 'bin', os_plat)
-        file = self.identifier
+        # Full path to executable launcher
+        execfile = None
 
-        ''' NEED TO ADD FILE NAMES FOR OTHER SYSTEMS '''
-        if os_plat == 'windows':
-            file += ".bat"
+        for ext in os.environ["PATHEXT"].split(os.pathsep):
+            fpath = os.path.join(path.strip('"'), self.identifier + ext)
+            if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
+                execfile = fpath
+                break
 
-        abspath = os.path.join(path.strip('"'), file)
-
-        if os.path.isfile(abspath) and os.access(abspath, os.X_OK):
-            os.startfile(abspath)
+        if execfile is not None:
+            os.startfile(execfile)
         else:
-            return False
+            return {
+                'success': False,
+                'message': "We didn't found launcher for {0}".format(self.label)
+            }
 
-        return True
+        return {
+            'success': True,
+            'message': "Launching {0}".format(self.label)
+        }
 
     def _interface(self, *args):
         interface = self.interface(*args)
