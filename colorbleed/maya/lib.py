@@ -993,9 +993,14 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
         nodes (set): list of filtered nodes
     """
 
+    lookup = None
     if nodes is None:
         # Consider all nodes
         nodes = cmds.ls()
+    else:
+        # Build a lookup for the only allowed nodes in output based
+        # on `nodes` input of the function (+ ensure long names)
+        lookup = set(cmds.ls(nodes, long=True))
 
     def _node_type_exists(node_type):
         try:
@@ -1004,8 +1009,8 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
         except RuntimeError:
             return False
 
-    # `readOnly` flag is obsolete as of Maya 2016 therefor we explicitly remove
-    # default nodes and reference nodes
+    # `readOnly` flag is obsolete as of Maya 2016 therefore we explicitly
+    # remove default nodes and reference nodes
     camera_shapes = ["frontShape", "sideShape", "topShape", "perspShape"]
 
     ignore = set()
@@ -1029,8 +1034,7 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
     if cmds.pluginInfo("pgYetiMaya",  query=True, loaded=True):
         types.append("pgYetiMaya")
 
-    # We *always* ignore intermediate shapes, so we filter them out
-    # directly
+    # We *always* ignore intermediate shapes, so we filter them out directly
     nodes = cmds.ls(nodes, type=types, long=True, noIntermediate=True)
 
     # The items which need to pass the id to their parent
@@ -1046,6 +1050,12 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
     nodes -= ignore  # Remove the ignored nodes
     if not nodes:
         return nodes
+
+    # Ensure only nodes from the input `nodes` are returned when a
+    # filter was applied on function call because we also iterated
+    # to parents and alike
+    if lookup is not None:
+        nodes &= lookup
 
     # Avoid locked nodes
     nodes_list = list(nodes)
