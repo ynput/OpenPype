@@ -23,6 +23,7 @@ import hashlib
 import tempfile
 import threading
 import atexit
+import warnings
 
 import requests
 import requests.auth
@@ -240,6 +241,7 @@ class Session(object):
             self._api_key,
         )
 
+        self._auto_connect_event_hub_thread = None
         if auto_connect_event_hub in (None, True):
             # Connect to event hub in background thread so as not to block main
             # session usage waiting for event hub connection.
@@ -411,7 +413,8 @@ class Session(object):
 
         try:
             self.event_hub.disconnect()
-            self._auto_connect_event_hub_thread.join()
+            if self._auto_connect_event_hub_thread:
+                self._auto_connect_event_hub_thread.join()
         except ftrack_api.exception.EventHubConnectionError:
             pass
 
@@ -1694,12 +1697,12 @@ class Session(object):
             if "entity_data" in data:
                 for key, value in list(data["entity_data"].items()):
                     if isinstance(value, ftrack_api.entity.base.Entity):
-                        data["entity_data"][key] = self._entity_reference(value)
+                        data["entity_data"][key] = self.entity_reference(value)
 
             return data
 
         if isinstance(item, ftrack_api.entity.base.Entity):
-            data = self._entity_reference(item)
+            data = self.entity_reference(item)
 
             with self.auto_populating(True):
 
@@ -1727,7 +1730,7 @@ class Session(object):
                             attribute, ftrack_api.attribute.ReferenceAttribute
                         ):
                             if isinstance(value, ftrack_api.entity.base.Entity):
-                                value = self._entity_reference(value)
+                                value = self.entity_reference(value)
 
                         data[attribute.name] = value
 
@@ -1742,14 +1745,14 @@ class Session(object):
         if isinstance(item, ftrack_api.collection.Collection):
             data = []
             for entity in item:
-                data.append(self._entity_reference(entity))
+                data.append(self.entity_reference(entity))
 
             return data
 
         raise TypeError('{0!r} is not JSON serializable'.format(item))
 
-    def _entity_reference(self, entity):
-        '''Return reference to *entity*.
+    def entity_reference(self, entity):
+        '''Return entity reference that uniquely identifies *entity*.
 
         Return a mapping containing the __entity_type__ of the entity along with
         the key, value pairs that make up it's primary key.
@@ -1762,6 +1765,29 @@ class Session(object):
             reference.update(ftrack_api.inspection.primary_key(entity))
 
         return reference
+
+    def _entity_reference(self, entity):
+        '''Return entity reference that uniquely identifies *entity*.
+
+        Return a mapping containing the __entity_type__ of the entity along with
+        the key, value pairs that make up it's primary key.
+
+        .. note::
+
+            This private method is now available as public method
+            :meth:`entity_reference`. This alias remains for backwards
+            compatibility, but will be removed in version 2.0.
+
+        '''
+        warnings.warn(
+            (
+                "Session._entity_reference is now available as public method "
+                "Session.entity_reference. The private method will be removed "
+                "in version 2.0."
+            ),
+            PendingDeprecationWarning
+        )
+        return self.entity_reference(entity)
 
     def decode(self, string):
         '''Return decoded JSON *string* as Python object.'''
