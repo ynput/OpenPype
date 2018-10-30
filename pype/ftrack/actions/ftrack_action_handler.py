@@ -343,7 +343,9 @@ class BaseAction(object):
     def register(self):
         '''Registers the action, subscribing the the discover and launch topics.'''
         self.session.event_hub.subscribe(
-            'topic=ftrack.action.discover', self._discover
+            'topic=ftrack.action.discover and source.user.username={0}'.format(
+                self.session.api_user
+                ), self._discover
         )
 
         self.session.event_hub.subscribe(
