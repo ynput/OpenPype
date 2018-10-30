@@ -6,7 +6,7 @@ import logging
 
 import datetime
 import ftrack_api
-from ftrack_action_handler.action import BaseAction
+from ftrack_action_handler import BaseAction
 
 
 class JobKiller(BaseAction):
@@ -96,7 +96,7 @@ def main(arguments=None):
     logging.basicConfig(level=loggingLevels[namespace.verbosity])
 
     session = ftrack_api.Session()
-    
+
     register(session)
 
     # Wait for events

@@ -2,7 +2,7 @@ import os
 import logging
 import toml
 import ftrack_api
-from ftrack_action_handler.appaction import AppAction
+from ftrack_action_handler import AppAction
 from avalon import io, lib
 
 

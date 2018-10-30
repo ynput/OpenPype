@@ -6,7 +6,7 @@ import logging
 import os
 import json
 import ftrack_api
-from ftrack_action_handler.action import BaseAction
+from ftrack_action_handler import BaseAction
 
 from avalon import io, inventory, lib
 from avalon.vendor import toml
