@@ -18,7 +18,7 @@ class AppAction(object):
     <icon>  - icon in ftrack
      '''
 
-    def __init__(self, session, label, name, icon=None, variant=None, description=None):
+    def __init__(self, session, label, name, executable, variant=None, icon=None, description=None):
         '''Expects a ftrack_api.Session instance'''
 
         self.logger = logging.getLogger(
@@ -29,12 +29,15 @@ class AppAction(object):
             raise ValueError('Action missing label.')
         elif name is None:
             raise ValueError('Action missing identifier.')
+        elif executable is None:
+            raise ValueError('Action missing executable.')
 
         self._session = session
         self.label = label
         self.identifier = name
-        self.icon = icon
+        self.executable = executable
         self.variant = variant
+        self.icon = icon
         self.description = description
 
 
@@ -118,7 +121,7 @@ class AppAction(object):
         else:
             apps = []
             for app in project['config']['apps']:
-                apps.append(app['name'])
+                apps.append(app['name'].split("_")[0])
 
             if self.identifier not in apps:
                 return False
@@ -208,6 +211,10 @@ class AppAction(object):
         # TODO Delete this line
         print("Action - {0} ({1}) - just started".format(self.label, self.identifier))
 
+        # lib.launch(executable=self.executable,
+        #   args=["-u", "-m", "avalon.tools.projectmanager",
+        #         session['AVALON_PROJECT']])
+
         # Get path to execute
         st_temp_path = os.environ['PYPE_STUDIO_TEMPLATES']
         os_plat = platform.system().lower()
@@ -218,10 +225,12 @@ class AppAction(object):
         execfile = None
 
         for ext in os.environ["PATHEXT"].split(os.pathsep):
-            fpath = os.path.join(path.strip('"'), self.identifier + ext)
+            fpath = os.path.join(path.strip('"'), self.executable + ext)
             if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
                 execfile = fpath
                 break
+
+
 
         if execfile is not None:
             os.startfile(execfile)

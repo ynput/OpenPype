@@ -37,7 +37,7 @@ class TestAction(BaseAction):
         return self.validate_selection(session, entities)
 
     def launch(self, session, entities, event):
-        
+
         return True
 
 
@@ -76,11 +76,7 @@ def main(arguments=None):
     # Set up basic logging
     logging.basicConfig(level=loggingLevels[namespace.verbosity])
 
-    session = ftrack_api.Session(
-        server_url="https://pype.ftrackapp.com",
-        api_key="4e01eda0-24b3-4451-8e01-70edc03286be",
-        api_user="jakub.trllo"
-    )
+    session = ftrack_api.Session()
     register(session)
 
     # Wait for events

@@ -11,17 +11,15 @@ from ftrack_action_handler.action import BaseAction
 from avalon import io, inventory, lib
 from avalon.vendor import toml
 
-class SyncToAvalon(BaseAction):
+class AvalonIdAttribute(BaseAction):
     '''Edit meta data action.'''
 
     #: Action identifier.
-    identifier = 'sync.to.avalon'
+    identifier = 'avalon.id.attribute'
     #: Action label.
-    label = 'SyncToAvalon'
+    label = 'Create Avalon Attribute'
     #: Action description.
-    description = 'Send data from Ftrack to Avalon'
-    #: Action icon.
-    icon = 'https://cdn1.iconfinder.com/data/icons/hawcons/32/699650-icon-92-inbox-download-512.png'
+    description = 'Creates Avalon/Mongo ID for double check'
 
     def validate_selection(self, session, entities):
         '''Return if *entities* is a valid selection.'''
@@ -90,8 +88,8 @@ class SyncToAvalon(BaseAction):
         # --- Create project and assets in Avalon ---
         io.install()
         # If project don't exists -> <Create project> ELSE <Update Config>
-        if (io.find_one({'type': 'project',
-                'name': entityProj['full_name']}) is None):
+        if (io.find_one(
+                {'type': 'project', 'name': entityProj['full_name']}) is None):
             inventory.save(entityProj['full_name'], config, template)
         else:
             io.update_many({'type': 'project','name': entityProj['full_name']},
@@ -215,7 +213,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = SyncToAvalon(session)
+    action_handler = AvalonIdAttribute(session)
     action_handler.register()
     print("----- action - <" + action_handler.__class__.__name__ + "> - Has been registered -----")
 
