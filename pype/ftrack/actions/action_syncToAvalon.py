@@ -81,7 +81,6 @@ class SyncToAvalon(BaseAction):
             'schema': 'avalon-core:config-1.0',
             'tasks': [{'name': ''}],
             'apps': apps,
-            # TODO redo work!!!
             'template': {'work': '','publish':''}
         }
 
@@ -90,6 +89,7 @@ class SyncToAvalon(BaseAction):
 
         # --- Create project and assets in Avalon ---
         io.install()
+        ## ----- PROJECT ------
         # If project don't exists -> <Create project> ELSE <Update Config>
         if (io.find_one({'type': 'project',
                 'name': entityProj['full_name']}) is None):
@@ -110,10 +110,12 @@ class SyncToAvalon(BaseAction):
         # If entity is Project or have only 1 entity kill action
         if (len(eLinks) > 1) and not (eLinks[-1]['type'] in ['Project']):
 
+            ## ----- ASSETS ------
+            # Presets:
             # TODO how to check if entity is Asset Library or AssetBuild?
             silo = 'Assets' if eLinks[-1]['type'] in ['AssetBuild', 'Library'] else 'Film'
             os.environ['AVALON_SILO'] = silo
-            # Create Assets
+            # Get list of assets without project
             assets = []
             for i in range(1, len(eLinks)):
                 assets.append(eLinks[i])
@@ -134,21 +136,30 @@ class SyncToAvalon(BaseAction):
                         tasks.append(child['name'])
                 data.update({'tasks': tasks})
 
-                if (io.find_one({'type': 'asset', 'name': asset['name']}) is None):
-                    # Create asset in DB
+                # Try to find asset in current database
+                avalon_asset = io.find_one({'type': 'asset', 'name': asset['name']})
+                # Create if don't exists
+                if avalon_asset is None:
                     inventory.create_asset(asset['name'], silo, data, projectId)
                     print("Asset "+asset['name']+" - created")
+                # Raise error if it seems to be different ent. with same name
+                elif (avalon_asset['data']['ftrackId'] != data['ftrackId'] or
+                    avalon_asset['data']['visualParent'] != data['visualParent'] or
+                    avalon_asset['data']['parents'] != data['parents']):
+                        raise ValueError('Possibility of entity name duplication: {}'.format(asset['name']))
+                # Else update info
                 else:
                     io.update_many({'type': 'asset','name': asset['name']},
-                        {'$set':{'data':data}})
+                        {'$set':{'data':data, 'silo': silo}})
                     # TODO check if is asset in same folder!!! ???? FEATURE FOR FUTURE
-                    print("Asset "+asset["name"]+" - already exist")
+                    print("Asset "+asset["name"]+" - updated")
 
+                # Get parent ID and store it to data
                 parentId = io.find_one({'type': 'asset', 'name': asset['name']})['_id']
                 data.update({'visualParent': parentId, 'parents': folderStruct})
                 folderStruct.append(asset['name'])
 
-
+            ## FTRACK FEATURE - FTRACK MUST HAVE avalon_mongo_id FOR EACH ENTITY TYPE EXCEPT TASK
             # Set custom attribute to avalon/mongo id of entity (parentID is last)
             if custAttrName in entity['custom_attributes'] and entity['custom_attributes'][custAttrName] is '':
                 entity['custom_attributes'][custAttrName] = str(parentId)
@@ -156,6 +167,8 @@ class SyncToAvalon(BaseAction):
         io.uninstall()
 
     def launch(self, session, entities, event):
+        message = ""
+
         # JOB SETTINGS
         userId = event['source']['user']['id']
         user = session.query('User where id is ' + userId).one()
@@ -170,10 +183,7 @@ class SyncToAvalon(BaseAction):
 
         try:
             print("action <" + self.__class__.__name__ + "> is running")
-            #TODO It's better to have these env set, are they used anywhere?
-            os.environ['AVALON_PROJECTS'] = "tmp"
-            os.environ['AVALON_ASSET'] = "tmp"
-            os.environ['AVALON_SILO'] = "tmp"
+            #TODO AVALON_PROJECTS, AVALON_ASSET, AVALON_SILO should be set up otherwise console log shows avalon debug
             importable = []
 
             def getShotAsset(entity):
@@ -186,7 +196,7 @@ class SyncToAvalon(BaseAction):
                         for child in childrens:
                             getShotAsset(child)
 
-            # get all entities separately
+            # get all entities separately/unique
             for entity in entities:
                 entity_type, entity_id = entity
                 act_ent = session.get(entity_type, entity_id)
@@ -203,8 +213,18 @@ class SyncToAvalon(BaseAction):
             job['status'] = 'failed'
             print('During synchronization to Avalon went something wrong!')
             print(e)
+            message = str(e)
 
-        return True
+        if len(message) > 0:
+            return {
+                'success': False,
+                'message': message
+            }
+
+        return {
+            'success': True,
+            'message': "Synchronization was successfull"
+        }
 
 
 def register(session, **kw):
