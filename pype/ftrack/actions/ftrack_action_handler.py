@@ -5,7 +5,17 @@ import logging
 import getpass
 import platform
 import ftrack_api
-from avalon import io
+import toml
+from avalon import io, lib, pipeline
+from avalon import session as sess
+
+from app.api import (
+    Templates
+)
+
+t = Templates()
+
+
 
 class AppAction(object):
     '''Custom Action base class
@@ -55,8 +65,9 @@ class AppAction(object):
         )
 
         self.session.event_hub.subscribe(
-            'topic=ftrack.action.launch and data.actionIdentifier={0}'.format(
-                self.identifier
+            'topic=ftrack.action.launch and data.actionIdentifier={0} and source.user.username={1}'.format(
+                self.identifier,
+                self.session.api_user
             ),
             self._launch
         )
@@ -101,13 +112,12 @@ class AppAction(object):
         entity = session.get(entity_type, entity_id)
 
         # TODO Should return False if not TASK ?!!!
-        # if entity.entity_type != 'Task':
-        #     return False
+        if entity.entity_type != 'Task':
+            return False
 
         # TODO Should return False if more than one entity is selected ?!!!
-        # if len(entities) > 1:
-        #     return False
-
+        if len(entities) > 1:
+            return False
 
         ft_project = entity['project'] if (entity.entity_type != 'Project') else entity
 
@@ -183,7 +193,7 @@ class AppAction(object):
 
         response = self.launch(
             self.session, *args
-        )
+            )
 
         return self._handle_result(
             self.session, response, *args
@@ -211,10 +221,50 @@ class AppAction(object):
         # TODO Delete this line
         print("Action - {0} ({1}) - just started".format(self.label, self.identifier))
 
-        # lib.launch(executable=self.executable,
-        #   args=["-u", "-m", "avalon.tools.projectmanager",
-        #         session['AVALON_PROJECT']])
+        entity, id = entities[0]
+        entity = session.get(entity, id)
 
+        silo = "Film"
+        if entity.entity_type=="AssetBuild":
+            silo= "Asset"
+
+        # set environments for Avalon
+        os.environ["AVALON_PROJECT"] = entity['project']['full_name']
+        os.environ["AVALON_SILO"] = silo
+        os.environ["AVALON_ASSET"] = entity['parent']['name']
+        os.environ["AVALON_TASK"] = entity['name']
+        os.environ["AVALON_APP"] = self.identifier
+        os.environ["AVALON_APP_NAME"] = self.identifier + "_" + self.variant
+
+
+        anatomy = t.anatomy
+        io.install()
+        hierarchy = io.find_one({"type":'asset', "name":entity['parent']['name']})['data']['parents']
+        io.uninstall()
+        if hierarchy:
+            # hierarchy = os.path.sep.join(hierarchy)
+            hierarchy = os.path.join(*hierarchy)
+
+        data = { "project": {"name": entity['project']['full_name'],
+                            "code": entity['project']['name']},
+                 "task": entity['name'],
+                 "asset": entity['parent']['name'],
+                 "hierarchy": hierarchy}
+
+        anatomy = anatomy.format(data)
+
+
+        os.environ["AVALON_WORKDIR"] = os.path.join(anatomy.work.root, anatomy.work.folder)
+
+        # TODO Add paths to avalon setup from tomls
+        if self.identifier == 'maya':
+            os.environ['PYTHONPATH'] += os.pathsep + os.path.join(os.getenv("AVALON_CORE"), 'setup', 'maya')
+        elif self.identifier == 'nuke':
+            os.environ['NUKE_PATH'] = os.pathsep + os.path.join(os.getenv("AVALON_CORE"), 'setup', 'nuke')
+        # config = toml.load(lib.which_app(self.identifier + "_" + self.variant))
+
+
+        env = os.environ
         # Get path to execute
         st_temp_path = os.environ['PYPE_STUDIO_TEMPLATES']
         os_plat = platform.system().lower()
@@ -230,10 +280,9 @@ class AppAction(object):
                 execfile = fpath
                 break
 
-
-
+        # Run SW if was found executable
         if execfile is not None:
-            os.startfile(execfile)
+            lib.launch(executable=execfile, args=[], environment=env)
         else:
             return {
                 'success': False,
@@ -349,8 +398,9 @@ class BaseAction(object):
         )
 
         self.session.event_hub.subscribe(
-            'topic=ftrack.action.launch and data.actionIdentifier={0}'.format(
-                self.identifier
+            'topic=ftrack.action.launch and data.actionIdentifier={0} and source.user.username={1}'.format(
+                self.identifier,
+                self.session.api_user
             ),
             self._launch
         )

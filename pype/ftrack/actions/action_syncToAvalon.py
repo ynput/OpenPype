@@ -81,6 +81,7 @@ class SyncToAvalon(BaseAction):
             'schema': 'avalon-core:config-1.0',
             'tasks': [{'name': ''}],
             'apps': apps,
+            # TODO redo work!!!
             'template': {'work': '','publish':''}
         }
 
