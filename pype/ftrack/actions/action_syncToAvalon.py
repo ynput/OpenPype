@@ -82,7 +82,7 @@ class SyncToAvalon(BaseAction):
             'tasks': [{'name': ''}],
             'apps': apps,
             # TODO redo work!!!
-            'template': {'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}/{app}','publish':''}
+            'template': {'work': '','publish':''}
         }
 
         # Set project template
