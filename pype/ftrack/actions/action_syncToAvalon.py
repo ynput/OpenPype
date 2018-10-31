@@ -81,7 +81,8 @@ class SyncToAvalon(BaseAction):
             'schema': 'avalon-core:config-1.0',
             'tasks': [{'name': ''}],
             'apps': apps,
-            'template': {'work': '','publish':''}
+            # TODO redo work!!!
+            'template': {'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}/{app}','publish':''}
         }
 
         # Set project template

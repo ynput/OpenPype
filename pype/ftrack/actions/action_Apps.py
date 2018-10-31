@@ -8,7 +8,13 @@ from avalon import io, lib
 
 def register(session):
 
-    os.environ['AVALON_PROJECTS'] = 'tmp'
+    try:    os.environ['AVALON_PROJECT']
+    except: os.environ['AVALON_PROJECT'] = 'tmp'
+    try:    os.environ['AVALON_ASSET']
+    except: os.environ['AVALON_ASSET'] = 'tmp'
+    try:    os.environ['AVALON_SILO']
+    except: os.environ['AVALON_SILO'] = 'tmp'
+
     io.install()
     projects = sorted(io.projects(), key=lambda x: x['name'])
     io.uninstall()
