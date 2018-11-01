@@ -45,6 +45,9 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                                            source=True,
                                            destination=False,
                                            connections=True,
+                                           # Only allow inputs from dagNodes
+                                           # (avoid display layers, etc.)
+                                           type="dagNode",
                                            plugs=True) or []
 
         # Group per source, destination pair. We need to reverse the connection
