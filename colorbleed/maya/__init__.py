@@ -98,9 +98,14 @@ def on_init(_):
             utils.executeDeferred(_fn)
         except Exception as exc:
             print(exc)
-
+    
+    # Force load Alembic so referenced alembics
+    # work correctly on scene open
     cmds.loadPlugin("AbcImport", quiet=True)
     cmds.loadPlugin("AbcExport", quiet=True)
+    
+    # Force load objExport plug-in (requested by artists)
+    cmds.loadPlugin("objExport", quiet=True)
 
     from .customize import override_component_mask_commands
     safe_deferred(override_component_mask_commands)
