@@ -541,7 +541,6 @@ def get_shader_assignments_from_shapes(shapes):
 
     shapes = cmds.ls(shapes,
                      long=True,
-                     selection=True,
                      shapes=True,
                      objectsOnly=True)
     if not shapes:
@@ -560,7 +559,7 @@ def get_shader_assignments_from_shapes(shapes):
                                               type="shadingEngine") or []
         shading_groups = list(set(shading_groups))
         for shading_group in shading_groups:
-            assignments[shading_group].add(shape)
+            assignments[shading_group].append(shape)
 
     return dict(assignments)
 
@@ -569,7 +568,7 @@ def get_shader_assignments_from_shapes(shapes):
 def shader(nodes, shadingEngine="initialShadingGroup"):
     """Assign a shader to nodes during the context"""
 
-    shapes = cmds.ls(nodes, dag=1, o=1, shapes=1, long=1)
+    shapes = cmds.ls(nodes, dag=1, objectsOnly=1, shapes=1, long=1)
     original = get_shader_assignments_from_shapes(shapes)
 
     try:
@@ -582,7 +581,7 @@ def shader(nodes, shadingEngine="initialShadingGroup"):
         # Assign original shaders
         for sg, members in original.items():
             if members:
-                cmds.sets(shapes, edit=True, forceElement=shadingEngine)
+                cmds.sets(members, edit=True, forceElement=sg)
 
 
 @contextlib.contextmanager
