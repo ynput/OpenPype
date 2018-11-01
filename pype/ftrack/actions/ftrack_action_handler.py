@@ -72,6 +72,7 @@ class AppAction(object):
             self._launch
         )
 
+
     def _discover(self, event):
         args = self._translate_event(
             self.session, event
@@ -218,6 +219,7 @@ class AppAction(object):
         *event* the unmodified original event
 
         '''
+
         # TODO Delete this line
         print("Action - {0} ({1}) - just started".format(self.label, self.identifier))
 
@@ -288,6 +290,13 @@ class AppAction(object):
                 'success': False,
                 'message': "We didn't found launcher for {0}".format(self.label)
             }
+
+        # RUN TIMER IN FTRACK
+        username = event['source']['user']['username']
+        user = session.query('User where username is "{}"'.format(username)).one()
+        task = session.query('Task where id is {}'.format(entity['id'])).one()
+        print('Starting timer for task: ' + task['name'])
+        user.start_timer(task, force=True)
 
         return {
             'success': True,
@@ -404,6 +413,7 @@ class BaseAction(object):
             ),
             self._launch
         )
+        print("----- action - <" + self.__class__.__name__ + "> - Has been registered -----")
 
     def _discover(self, event):
         args = self._translate_event(

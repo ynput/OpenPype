@@ -27,7 +27,7 @@ class TestAction(BaseAction):
 
     def validate_selection(self, session, entities):
         '''Return if *entities* is a valid selection.'''
-        pass
+
         return True
 
     def discover(self, session, entities, event):
@@ -37,6 +37,13 @@ class TestAction(BaseAction):
         return self.validate_selection(session, entities)
 
     def launch(self, session, entities, event):
+
+        for entity in entities:
+            entity_type, entity_id = entity
+            entity = session.get(entity_type, entity_id)
+
+            import ft_utils
+            print(ft_utils.getNewContext(entity))
 
         return True
 

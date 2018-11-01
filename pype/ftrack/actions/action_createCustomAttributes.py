@@ -215,7 +215,6 @@ def register(session, **kw):
 
     action_handler = AvalonIdAttribute(session)
     action_handler.register()
-    print("----- action - <" + action_handler.__class__.__name__ + "> - Has been registered -----")
 
 
 def main(arguments=None):
