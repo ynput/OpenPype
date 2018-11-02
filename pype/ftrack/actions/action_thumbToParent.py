@@ -20,23 +20,13 @@ class ThumbToParent(BaseAction):
     icon = "https://cdn3.iconfinder.com/data/icons/transfers/100/239419-upload_transfer-512.png"
 
 
-    def validateSelection(self, selection):
-        '''Return true if the selection is valid.
-
-        Legacy plugins can only be started from a single Task.
-
-        '''
-        if len(selection) > 0:
-            if selection[0]['entityType'] in ['assetversion', 'task']:
-                return True
-
-        return False
-
     def discover(self, session, entities, event):
         '''Return action config if triggered on asset versions.'''
-        selection = event['data']['selection']
-        # validate selection, and only return action if it is valid.
-        return self.validateSelection(selection)
+
+        if len(entities) <= 0 or entities[0].entity_type in ['Project']:
+            return False
+
+        return True
 
 
     def launch(self, session, entities, event):
@@ -55,9 +45,6 @@ class ThumbToParent(BaseAction):
 
         try:
             for entity in entities:
-                entity_type, entity_id = entity
-                entity = session.get(entity_type, entity_id)
-
                 if entity.entity_type.lower() == 'assetversion':
                     try:
                         parent = entity['task']
@@ -76,6 +63,7 @@ class ThumbToParent(BaseAction):
             # inform the user that the job is done
             job['status'] = 'done'
             session.commit()
+
         except:
             # fail the job if something goes wrong
             job['status'] = 'failed'

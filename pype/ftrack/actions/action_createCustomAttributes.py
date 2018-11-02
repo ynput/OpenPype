@@ -21,27 +21,16 @@ class AvalonIdAttribute(BaseAction):
     #: Action description.
     description = 'Creates Avalon/Mongo ID for double check'
 
-    def validate_selection(self, session, entities):
-        '''Return if *entities* is a valid selection.'''
-        # if (len(entities) != 1):
-        #     # If entities contains more than one item return early since
-        #     # metadata cannot be edited for several entites at the same time.
-        #     return False
-        # entity_type, entity_id = entities[0]
-        # if (
-        #     entity_type not in session.types
-        # ):
-        #     # Return False if the target entity does not have a metadata
-        #     # attribute.
-        #     return False
-        pass
-        return True
 
     def discover(self, session, entities, event):
-        '''Return True if action is valid.'''
+        ''' Validation '''
 
-        self.logger.info('Got selection: {0}'.format(entities))
-        return self.validate_selection(session, entities)
+        # userId = event['source']['user']['id']
+        # user = session.query('User where id is ' + userId).one()
+        # if user['user_security_roles'][0]['security_role']['name'] != 'Administrator':
+        #     return False
+
+        return True
 
 
     def importToAvalon(self, session, entity):

@@ -1,78 +1,90 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2015 Milan Kolar
-
 import sys
 import argparse
 import logging
 import getpass
-import json
-
 import ftrack_api
 from ftrack_action_handler import BaseAction
 
-class ThumbToChildren(BaseAction):
+
+class SetVersion(BaseAction):
     '''Custom action.'''
 
-    # Action identifier
-    identifier = 'thumb.to.children'
-    # Action label
-    label = 'Thumbnail to Children'
-    # Action icon
-    icon = "https://cdn3.iconfinder.com/data/icons/transfers/100/239322-download_transfer-128.png"
+    #: Action identifier.
+    identifier = 'version.set'
+
+    #: Action label.
+    label = 'Version Set'
 
 
     def discover(self, session, entities, event):
         ''' Validation '''
 
-        if (len(entities) <= 0 or entities[0].entity_type in ['Project']):
+        # Only 1 AssetVersion is allowed
+        if len(entities) != 1 or entities[0].entity_type != 'AssetVersion':
             return False
 
         return True
 
+    def interface(self, session, entities, event):
+
+        if not event['data'].get('values', {}):
+            entity = entities[0]
+
+            # Get actual version of asset
+            act_ver = entity['version']
+            # Set form
+            items = [{
+                'label': 'Version number',
+                'type': 'number',
+                'name': 'version_number',
+                'value': act_ver
+            }]
+
+            return items
 
     def launch(self, session, entities, event):
-        '''Callback method for action.'''
 
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
+        entity = entities[0]
 
-        job = session.create('Job', {
-            'user': user,
-            'status': 'running',
-            'data': json.dumps({
-                'description': 'Push thumbnails to Childrens'
-            })
-        })
+        # Do something with the values or return a new form.
+        values = event['data'].get('values', {})
+        # Default is action True
+        scs = True
+        msg = 'Version was changed to v{0}'.format(values['version_number'])
+
+        if not values['version_number']:
+            scs = False,
+            msg = "You didn't enter any version."
+        elif int(values['version_number']) <= 0:
+            scs = False
+            msg = 'Negative or zero version is not valid.'
+        else:
+            entity['version'] = values['version_number']
 
         try:
-            for entity in entities:
-                thumbid = entity['thumbnail_id']
-                if thumbid:
-                    for child in entity['children']:
-                        child['thumbnail_id'] = thumbid
-
-            # inform the user that the job is done
-            job['status'] = 'done'
             session.commit()
         except:
-            # fail the job if something goes wrong
-            job['status'] = 'failed'
+            session.rollback()
             raise
 
         return {
-            'success': True,
-            'message': 'Created job for updating thumbnails!'
+            'success': scs,
+            'message': msg
         }
-
 
 
 def register(session, **kw):
     '''Register action. Called when used as an event plugin.'''
+
+    # Validate that session is an instance of ftrack_api.Session. If not,
+    # assume that register is being called from an old or incompatible API and
+    # return without doing anything.
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = ThumbToChildren(session)
+    action_handler = SetVersion(session)
     action_handler.register()
+
 
 def main(arguments=None):
     '''Set up logging and register action.'''

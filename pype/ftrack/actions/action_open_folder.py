@@ -18,21 +18,16 @@ class openFolder(BaseAction):
     label = 'Open Folders'
     #: Action Icon.
     icon = "https://cdn3.iconfinder.com/data/icons/stroke/53/Open-Folder-256.png"
+    raise ValueError('Not working version of action')
 
+    def discover(self, session, entities, event):
+        ''' Validation '''
 
-    def validateSelection(self, selection):
-        '''Return true if the selection is valid. '''
-
-        if len(selection) == 0 or selection[0]['entityType'] in ['assetversion', 'Component']:
+        if len(entities) == 0 or entities[0].entity_type in ['assetversion', 'Component']:
             return False
 
         return True
 
-    def discover(self, session, entities, event):
-        selection = event['data']['selection']
-
-        # validate selection, and only return action if it is valid.
-        return self.validateSelection(selection)
 
     def get_paths(self, entity):
         '''Prepare all the paths for the entity.
@@ -72,8 +67,6 @@ class openFolder(BaseAction):
         hits = set([])
 
         for entity in entities:
-            entity_type, entity_id = entity
-            entity = session.get(entity_type, entity_id)
 
             # Get paths base on the entity.
             # This function needs to be chagned to fit your path logic

@@ -83,6 +83,7 @@ class AppAction(object):
         )
 
         if accepts:
+            self.logger.info('Selection is valid')
             return {
                 'items': [{
                     'label': self.label,
@@ -92,6 +93,8 @@ class AppAction(object):
                     'icon': self.icon,
                 }]
             }
+        else:
+            self.logger.info('Selection is _not_ valid')
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
@@ -425,6 +428,7 @@ class BaseAction(object):
         )
 
         if accepts:
+            self.logger.info(u'Discovering action with selection: {0}'.format(args[1]['data'].get('selection', [])))
             return {
                 'items': [{
                     'label': self.label,
@@ -462,7 +466,8 @@ class BaseAction(object):
         for entity in _selection:
             _entities.append(
                 (
-                    self._get_entity_type(entity), entity.get('entityId')
+                    session.get(self._get_entity_type(entity), entity.get('entityId'))
+                    # self._get_entity_type(entity), entity.get('entityId')
                 )
             )
 

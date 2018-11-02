@@ -5,74 +5,80 @@ import sys
 import argparse
 import logging
 import getpass
-import json
-
+import subprocess
+import os
 import ftrack_api
 from ftrack_action_handler import BaseAction
 
-class ThumbToChildren(BaseAction):
+
+class ComponentOpen(BaseAction):
     '''Custom action.'''
 
     # Action identifier
-    identifier = 'thumb.to.children'
+    identifier = 'component.open'
     # Action label
-    label = 'Thumbnail to Children'
+    label = 'Open File'
     # Action icon
-    icon = "https://cdn3.iconfinder.com/data/icons/transfers/100/239322-download_transfer-128.png"
+    icon = 'https://cdn4.iconfinder.com/data/icons/rcons-application/32/application_go_run-256.png',
 
 
     def discover(self, session, entities, event):
         ''' Validation '''
 
-        if (len(entities) <= 0 or entities[0].entity_type in ['Project']):
+        if len(entities) != 1 or entities[0].entity_type != 'Component':
             return False
 
         return True
 
 
     def launch(self, session, entities, event):
-        '''Callback method for action.'''
 
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
+        entity = entities[0]
 
-        job = session.create('Job', {
-            'user': user,
-            'status': 'running',
-            'data': json.dumps({
-                'description': 'Push thumbnails to Childrens'
-            })
-        })
+        # Return error if component is on ftrack server
+        if entity['component_locations'][0]['location']['name'] == 'ftrack.server':
+            return {
+                'success': False,
+                'message': "This component is stored on ftrack server!"
+            }
 
-        try:
-            for entity in entities:
-                thumbid = entity['thumbnail_id']
-                if thumbid:
-                    for child in entity['children']:
-                        child['thumbnail_id'] = thumbid
+        # Get component filepath
+        fpath = entity['component_locations'][0]['resource_identifier']
 
-            # inform the user that the job is done
-            job['status'] = 'done'
-            session.commit()
-        except:
-            # fail the job if something goes wrong
-            job['status'] = 'failed'
-            raise
+        if os.path.isfile(fpath):
+            if sys.platform == 'win': # windows
+                subprocess.Popen('explorer "%s"' % fpath)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.Popen(['open', fpath])
+            else:  # linux
+                try:
+                    subprocess.Popen(['xdg-open', fpath])
+                except OSError:
+                    raise OSError('unsupported xdg-open call??')
+        else:
+            return {
+                'success': False,
+                'message': "Didn't found file: " + fpath
+            }
 
         return {
             'success': True,
-            'message': 'Created job for updating thumbnails!'
+            'message': 'Component Opened'
         }
-
 
 
 def register(session, **kw):
     '''Register action. Called when used as an event plugin.'''
+
+    # Validate that session is an instance of ftrack_api.Session. If not,
+    # assume that register is being called from an old or incompatible API and
+    # return without doing anything.
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = ThumbToChildren(session)
+    action_handler = ComponentOpen(session)
     action_handler.register()
+
 
 def main(arguments=None):
     '''Set up logging and register action.'''

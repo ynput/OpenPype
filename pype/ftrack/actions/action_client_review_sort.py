@@ -19,22 +19,10 @@ class ClientReviewSort(BaseAction):
     label = 'Sort Review'
 
 
-    def validateSelection(self, entities):
-        '''Return true if the selection is valid. '''
-
-        if len(entities) == 0:
-            return False
-
-        return True
-
-
     def discover(self, session, entities, event):
-        '''Return action config if triggered on a single selection.'''
+        ''' Validation '''
 
-        selection = event['data']['selection']
-        # this action will only handle a single version.
-        if (not self.validateSelection(entities) or
-            selection[0]['entityType'] != 'reviewsession'):
+        if (len(entities) == 0 or entities[0].entity_type != 'ReviewSession'):
             return False
 
         return True
@@ -42,8 +30,7 @@ class ClientReviewSort(BaseAction):
 
     def launch(self, session, entities, event):
 
-        entity_type, entity_id = entities[0]
-        entity = session.get(entity_type, entity_id)
+        entity = entities[0]
 
         # Get all objects from Review Session and all 'sort order' possibilities
         obj_list = []
@@ -53,8 +40,8 @@ class ClientReviewSort(BaseAction):
             sort_order_list.append(obj['sort_order'])
 
         # Sort criteria
-        obj_list = sorted(obj_list, key=lambda k: k['asset_version']['task']['name'])
         obj_list = sorted(obj_list, key=lambda k: k['version'])
+        obj_list = sorted(obj_list, key=lambda k: k['asset_version']['task']['name'])
         obj_list = sorted(obj_list, key=lambda k: k['name'])
 
         # Set 'sort order' to sorted list, so they are sorted in Ftrack also
