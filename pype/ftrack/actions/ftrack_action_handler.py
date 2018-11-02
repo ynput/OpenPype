@@ -8,6 +8,7 @@ import ftrack_api
 import toml
 from avalon import io, lib, pipeline
 from avalon import session as sess
+import acre
 
 from app.api import (
     Templates
@@ -263,8 +264,26 @@ class AppAction(object):
             os.environ['NUKE_PATH'] = os.pathsep + os.path.join(os.getenv("AVALON_CORE"), 'setup', 'nuke')
         # config = toml.load(lib.which_app(self.identifier + "_" + self.variant))
 
-
         env = os.environ
+
+        # collect all parents from the task
+        parents = []
+        for item in entity['link']:
+            parents.append(session.get(item['type'], item['id']))
+
+        # collect all the 'environment' attributes from parents
+        tools_attr = None
+        for parent in parents:
+            # check if the attribute is empty, if not use it
+            if parent['custom_attributes']['avalon_tools_env']:
+                tools_attr = parent['custom_attributes']['avalon_tools_env']
+
+        print(tools_attr)
+
+        tools_env = acre.get_tools(tools_attr)
+        env = acre.compute(tools_env)
+        env = acre.merge(env, current_env=dict(os.environ))
+
         # Get path to execute
         st_temp_path = os.environ['PYPE_STUDIO_TEMPLATES']
         os_plat = platform.system().lower()
