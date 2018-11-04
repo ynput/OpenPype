@@ -1,5 +1,7 @@
 from maya import cmds
 
+import colorbleed.maya.lib as lib
+
 from avalon.vendor import requests
 import avalon.maya
 from avalon import api
@@ -57,6 +59,6 @@ class CreateRenderGlobals(avalon.maya.Creator):
         if exists:
             return cmds.warning("%s already exists." % exists[0])
 
-        super(CreateRenderGlobals, self).process()
-
-        cmds.setAttr("{}.machineList".format(self.name), lock=True)
+        with lib.undo_chunk():
+            super(CreateRenderGlobals, self).process()
+            cmds.setAttr("{}.machineList".format(self.name), lock=True)
