@@ -272,13 +272,12 @@ class AppAction(object):
             parents.append(session.get(item['type'], item['id']))
 
         # collect all the 'environment' attributes from parents
-        tools_attr = None
-        for parent in parents:
+        tools_attr = [os.environ["AVALON_APP_NAME"]]
+        for parent in reversed(parents):
             # check if the attribute is empty, if not use it
             if parent['custom_attributes']['avalon_tools_env']:
-                tools_attr = parent['custom_attributes']['avalon_tools_env']
-
-        print(tools_attr)
+                tools_attr.extend(parent['custom_attributes']['avalon_tools_env'])
+                break
 
         tools_env = acre.get_tools(tools_attr)
         env = acre.compute(tools_env)
