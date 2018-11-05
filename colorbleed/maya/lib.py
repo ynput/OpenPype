@@ -927,6 +927,18 @@ def extract_alembic(file,
             raise TypeError("Alembic option unsupported type: "
                             "{0} (expected {1})".format(value, valid_types))
 
+        # Ignore empty values, like an empty string, since they mess up how
+        # job arguments are built
+        if isinstance(value, (list, tuple)):
+            value = [x for x in value if x.strip()]
+
+            # Ignore option completely if no values remaining
+            if not value:
+                options.pop(key)
+                continue
+
+            options[key] = value
+
     # The `writeCreases` argument was changed to `autoSubd` in Maya 2018+
     maya_version = int(cmds.about(version=True))
     if maya_version >= 2018:
