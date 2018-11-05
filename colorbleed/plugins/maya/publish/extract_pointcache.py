@@ -33,9 +33,11 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
             end += handles
 
         attrs = instance.data.get("attr", "").split(";")
+        attrs = [value for value in attrs if value.strip()]
         attrs += ["cbId"]
 
         attr_prefixes = instance.data.get("attrPrefix", "").split(";")
+        attr_prefixes = [value for value in attr_prefixes if value.strip()]
 
         # Get extra export arguments
         writeColorSets = instance.data.get("writeColorSets", False)
