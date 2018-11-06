@@ -585,11 +585,11 @@ def get_shader_assignments_from_shapes(shapes, components=True):
 
                 # Component
                 if "." in member:
-                    component = member.split(".", 1)[1]
 
                     # Fix transform to shape as shaders are assigned to shapes
                     if node in transforms:
                         shape = transforms[node]
+                        component = member.split(".", 1)[1]
                         member = "{0}.{1}".format(shape, component)
 
                 component_assignments[shading_group].append(member)
