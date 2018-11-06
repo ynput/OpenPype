@@ -519,11 +519,14 @@ def no_undo(flush=False):
         cmds.undoInfo(**{keyword: original})
 
 
-def get_shader_assignments_from_shapes(shapes):
+def get_shader_assignments_from_shapes(shapes, components=True):
     """Return the shape assignment per related shading engines.
 
     Returns a dictionary where the keys are shadingGroups and the values are
     lists of assigned shapes or shape-components.
+
+    Since `maya.cmds.sets` returns shader members on the shapes as components
+    on the transform we correct that in this method too.
 
     For the 'shapes' this will return a dictionary like:
         {
@@ -533,6 +536,7 @@ def get_shader_assignments_from_shapes(shapes):
 
     Args:
         shapes (list): The shapes to collect the assignments for.
+        components (bool): Whether to include the component assignments.
 
     Returns:
         dict: The {shadingEngine: shapes} relationships
@@ -560,6 +564,36 @@ def get_shader_assignments_from_shapes(shapes):
         shading_groups = list(set(shading_groups))
         for shading_group in shading_groups:
             assignments[shading_group].append(shape)
+
+    if components:
+        # Note: Components returned from maya.cmds.sets are "listed" as if
+        # being assigned to the transform like: pCube1.f[0] as opposed
+        # to pCubeShape1.f[0] so we correct that here too.
+
+        # Build a mapping from parent to shapes to include in lookup.
+        transforms = {shape.rsplit("|", 1)[0]: shape for shape in shapes}
+        lookup = set(shapes + transforms.keys())
+
+        component_assignments = defaultdict(list)
+        for shading_group in assignments.keys():
+            members = cmds.ls(cmds.sets(shading_group, query=True), long=True)
+            for member in members:
+
+                node = member.split(".", 1)[0]
+                if node not in lookup:
+                    continue
+
+                # Component
+                if "." in member:
+
+                    # Fix transform to shape as shaders are assigned to shapes
+                    if node in transforms:
+                        shape = transforms[node]
+                        component = member.split(".", 1)[1]
+                        member = "{0}.{1}".format(shape, component)
+
+                component_assignments[shading_group].append(member)
+        assignments = component_assignments
 
     return dict(assignments)
 
