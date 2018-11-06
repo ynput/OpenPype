@@ -24,8 +24,7 @@ class ComponentOpen(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
-
-        if len(entities) != 1 or entities[0].entity_type != 'Component':
+        if len(entities) != 1 or entities[0].entity_type != 'FileComponent':
             return False
 
         return True
@@ -43,10 +42,14 @@ class ComponentOpen(BaseAction):
             }
 
         # Get component filepath
+        # TODO with locations it will be different???
         fpath = entity['component_locations'][0]['resource_identifier']
+        items = fpath.split(os.sep)
+        items.pop(-1)
+        fpath = os.sep.join(items)
 
-        if os.path.isfile(fpath):
-            if sys.platform == 'win': # windows
+        if os.path.isdir(fpath):
+            if 'win' in sys.platform: # windows
                 subprocess.Popen('explorer "%s"' % fpath)
             elif sys.platform == 'darwin':  # macOS
                 subprocess.Popen(['open', fpath])
@@ -63,7 +66,7 @@ class ComponentOpen(BaseAction):
 
         return {
             'success': True,
-            'message': 'Component Opened'
+            'message': 'Component folder Opened'
         }
 
 

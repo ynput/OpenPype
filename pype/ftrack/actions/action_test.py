@@ -33,7 +33,22 @@ class TestAction(BaseAction):
     def launch(self, session, entities, event):
 
         for entity in entities:
-            print("TEST")
+            index = 0
+            name = entity['components'][index]['name']
+            filetype = entity['components'][index]['file_type']
+            path = entity['components'][index]['component_locations'][0]['resource_identifier']
+
+            # entity['components'][index]['component_locations'][0]['resource_identifier'] = r"C:\Users\jakub.trllo\Desktop\test\exr\int_c022_lighting_v001_main_AO.%04d.exr"
+            location = entity['components'][0]['component_locations'][0]['location']
+            component = entity['components'][0]
+
+
+            # print(location.get_filesystem_path(component))
+
+            # for k in p:
+            #     print(100*"-")
+            #     print(k)
+            #     print(p[k])
 
         return True
 
