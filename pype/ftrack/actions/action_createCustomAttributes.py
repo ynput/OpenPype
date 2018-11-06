@@ -11,6 +11,7 @@ from ftrack_action_handler import BaseAction
 from avalon import io, inventory, lib
 from avalon.vendor import toml
 
+
 class AvalonIdAttribute(BaseAction):
     '''Edit meta data action.'''
 

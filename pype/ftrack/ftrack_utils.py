@@ -1,9 +1,13 @@
 # fttrack help functions
 
-
-# import ftrack
+import ftrack_api
 import os
 from pprint import *
+
+
+def checkLogin():
+    # check Environments FTRACK_API_USER, FTRACK_API_KEY
+    pass
 
 
 def checkRegex():

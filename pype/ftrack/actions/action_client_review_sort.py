@@ -8,7 +8,6 @@ import ftrack_api
 from ftrack_action_handler import BaseAction
 
 
-
 class ClientReviewSort(BaseAction):
     '''Custom action.'''
 

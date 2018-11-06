@@ -1,9 +1,7 @@
 import logging
 import subprocess
 import sys
-import pprint
 import os
-import getpass
 import re
 from operator import itemgetter
 import ftrack_api
@@ -72,7 +70,7 @@ class DJVViewAction(object):
         }
 
     def register(self):
-        '''Registers the action, subscribing the the discover and launch topics.'''
+        '''Registers the action, subscribing the discover and launch topics.'''
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover and source.user.username={0}'.format(
                 self.session.api_user
@@ -91,19 +89,19 @@ class DJVViewAction(object):
     def get_applications(self):
         applications = []
 
-        label="DJVView {version}"
-        versionExpression=re.compile(r"(?P<version>\d+.\d+.\d+)")
-        applicationIdentifier="djvview"
-        description="DJV View Launcher"
-        icon="http://a.fsdn.com/allura/p/djv/icon"
+        label = "DJVView {version}"
+        versionExpression = re.compile(r"(?P<version>\d+.\d+.\d+)")
+        applicationIdentifier = "djvview"
+        description = "DJV View Launcher"
+        icon = "http://a.fsdn.com/allura/p/djv/icon"
         expression = []
         if sys.platform == "win32":
             expression = ["C:\\", "Program Files", "djv-\d.+",
-                        "bin", "djv_view.exe"]
+                          "bin", "djv_view.exe"]
 
         elif sys.platform == "darwin":
             expression = ["Application", "DJV.app", "Contents", "MacOS", "DJV"]
-         ## Linuxs
+        # Linuxs
         else:
             expression = ["usr", "local", "djv", "djv_view"]
 
@@ -218,38 +216,37 @@ class DJVViewAction(object):
             end = 379
             fps = 24
             # TODO issequence is probably already built-in validation in ftrack
-            isseq = re.findall( '%[0-9]*d', filename )
+            isseq = re.findall('%[0-9]*d', filename)
             if len(isseq) > 0:
-                padding = re.findall( '%[0-9]*d', filename ).pop()
-                range = ( padding % start ) + '-' + ( padding % end )
-                filename = re.sub( '%[0-9]*d', range, filename )
-
+                padding = re.findall('%[0-9]*d', filename).pop()
+                range = (padding % start) + '-' + (padding % end)
+                filename = re.sub('%[0-9]*d', range, filename)
 
             cmd = []
             # DJV path
-            cmd.append( os.path.normpath( self.djv_path ) )
-            ### DJV Options Start ################################################
-            # cmd.append( '-file_layer (value)' ) #layer name
-            cmd.append( '-file_proxy 1/2' ) #Proxy scale: 1/2, 1/4, 1/8
-            cmd.append( '-file_cache True' ) # Cache: True, False.
-            # cmd.append( '-window_fullscreen' ) #Start in full screen
+            cmd.append(os.path.normpath(self.djv_path))
+            # DJV Options Start ##############################################
+            # cmd.append('-file_layer (value)') #layer name
+            cmd.append('-file_proxy 1/2')  # Proxy scale: 1/2, 1/4, 1/8
+            cmd.append('-file_cache True')  # Cache: True, False.
+            # cmd.append('-window_fullscreen') #Start in full screen
             # cmd.append("-window_toolbar False") # Toolbar controls: False, True.
             # cmd.append("-window_playbar False") # Window controls: False, True.
             # cmd.append("-view_grid None") # Grid overlay: None, 1x1, 10x10, 100x100.
             # cmd.append("-view_hud True") # Heads up display: True, False.
-            cmd.append("-playback Forward") # Playback: Stop, Forward, Reverse.
+            cmd.append("-playback Forward")  # Playback: Stop, Forward, Reverse.
             # cmd.append("-playback_frame (value)") # Frame.
             cmd.append("-playback_speed " + str(fps))
             # cmd.append("-playback_timer (value)") # Timer: Sleep, Timeout. Value: Sleep.
             # cmd.append("-playback_timer_resolution (value)") # Timer resolution (seconds): 0.001.
-            cmd.append("-time_units Frames") # Time units: Timecode, Frames.
-            ### DJV Options End ##################################################
+            cmd.append("-time_units Frames")  # Time units: Timecode, Frames.
+            # DJV Options End ################################################
 
             # PATH TO COMPONENT
-            cmd.append( os.path.normpath( filename ) )
+            cmd.append(os.path.normpath(filename))
 
             # Run DJV with these commands
-            subprocess.Popen( ' '.join( cmd ) )
+            subprocess.Popen(' '.join(cmd))
 
             return {
                 'success': True,
@@ -297,7 +294,7 @@ class DJVViewAction(object):
 
                         try:
                             # TODO This is proper way to get filepath!!!
-                            # NOT WORKING RIGHT NOW
+                            # THIS WON'T WORK RIGHT NOW
                             location = component['component_locations'][0]['location']
                             file_path = location.get_filesystem_path(component)
                             # if component.isSequence():
@@ -305,7 +302,7 @@ class DJVViewAction(object):
                             #         frame = int(component.getMembers()[0].getName())
                             #         file_path = file_path % frame
                         except:
-                            # This is NOT proper way
+                            # This works but is NOT proper way
                             file_path = component['component_locations'][0]['resource_identifier']
 
                         event["data"]["items"].append(
@@ -334,8 +331,6 @@ class DJVViewAction(object):
         }
 
 
-
-
 def register(session, **kw):
     """Register hooks."""
     if not isinstance(session, ftrack_api.session.Session):
@@ -343,6 +338,7 @@ def register(session, **kw):
 
     action = DJVViewAction(session)
     action.register()
+
 
 def main(arguments=None):
     '''Set up logging and register action.'''
