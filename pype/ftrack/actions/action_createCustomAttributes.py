@@ -34,116 +34,9 @@ class AvalonIdAttribute(BaseAction):
         return True
 
 
-    def importToAvalon(self, session, entity):
-        eLinks = []
-        custAttrName = 'avalon_mongo_id'
-        # TODO read from file, which data are in scope???
-        # get needed info of entity and all parents
-        for e in entity['link']:
-            tmp = session.get(e['type'], e['id'])
-            if e['name'].find(" ") == -1:
-                name = e['name']
-            else:
-                name = e['name'].replace(" ", "-")
-                print("Name of "+tmp.entity_type+" - "+e['name']+" was changed to "+name)
-
-            eLinks.append({"type": tmp.entity_type, "name": name, "ftrackId": tmp['id']})
-
-        entityProj = session.get(eLinks[0]['type'], eLinks[0]['ftrackId'])
-
-        # set AVALON_PROJECT env
-        os.environ["AVALON_PROJECT"] = entityProj["full_name"]
-        os.environ["AVALON_ASSET"] = entityProj['full_name']
-
-        # Get apps from Ftrack / TODO Exceptions?!!!
-        apps = []
-        for app in entityProj['custom_attributes']['applications']:
-            try:
-                label = toml.load(lib.which_app(app))['label']
-                apps.append({'name':app, 'label':label})
-            except Exception as e:
-                print('Error with application {0} - {1}'.format(app, e))
-
-        # Set project Config
-        config = {
-            'schema': 'avalon-core:config-1.0',
-            'tasks': [{'name': ''}],
-            'apps': apps,
-            'template': {'work': '','publish':''}
-        }
-
-        # Set project template
-        template = {"schema": "avalon-core:inventory-1.0"}
-
-        # --- Create project and assets in Avalon ---
-        io.install()
-        # If project don't exists -> <Create project> ELSE <Update Config>
-        if (io.find_one(
-                {'type': 'project', 'name': entityProj['full_name']}) is None):
-            inventory.save(entityProj['full_name'], config, template)
-        else:
-            io.update_many({'type': 'project','name': entityProj['full_name']},
-                {'$set':{'config':config}})
-
-        # Store info about project (FtrackId)
-        io.update_many({'type': 'project','name': entityProj['full_name']},
-            {'$set':{'data':{'ftrackId':entityProj['id'],'entityType':entityProj.entity_type}}})
-
-        # Store project Id
-        projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
-        if custAttrName in entityProj['custom_attributes'] and entityProj['custom_attributes'][custAttrName] is '':
-            entityProj['custom_attributes'][custAttrName] = str(projectId)
-
-        # If entity is Project or have only 1 entity kill action
-        if (len(eLinks) > 1) and not (eLinks[-1]['type'] in ['Project']):
-
-            # TODO how to check if entity is Asset Library or AssetBuild?
-            silo = 'Assets' if eLinks[-1]['type'] in ['AssetBuild', 'Library'] else 'Film'
-            os.environ['AVALON_SILO'] = silo
-            # Create Assets
-            assets = []
-            for i in range(1, len(eLinks)):
-                assets.append(eLinks[i])
-
-            folderStruct = []
-            parentId = None
-            data = {'visualParent': parentId, 'parents': folderStruct,
-                    'tasks':None, 'ftrackId': None, 'entityType': None}
-
-            for asset in assets:
-                os.environ['AVALON_ASSET'] = asset['name']
-                data.update({'ftrackId': asset['ftrackId'], 'entityType': asset['type']})
-                # Get tasks of each asset
-                assetEnt = session.get('TypedContext', asset['ftrackId'])
-                tasks = []
-                for child in assetEnt['children']:
-                    if child.entity_type in ['Task']:
-                        tasks.append(child['name'])
-                data.update({'tasks': tasks})
-
-                if (io.find_one({'type': 'asset', 'name': asset['name']}) is None):
-                    # Create asset in DB
-                    inventory.create_asset(asset['name'], silo, data, projectId)
-                    print("Asset "+asset['name']+" - created")
-                else:
-                    io.update_many({'type': 'asset','name': asset['name']},
-                        {'$set':{'data':data}})
-                    # TODO check if is asset in same folder!!! ???? FEATURE FOR FUTURE
-                    print("Asset "+asset["name"]+" - already exist")
-
-                parentId = io.find_one({'type': 'asset', 'name': asset['name']})['_id']
-                data.update({'visualParent': parentId, 'parents': folderStruct})
-                folderStruct.append(asset['name'])
-
-
-            # Set custom attribute to avalon/mongo id of entity (parentID is last)
-            if custAttrName in entity['custom_attributes'] and entity['custom_attributes'][custAttrName] is '':
-                entity['custom_attributes'][custAttrName] = str(parentId)
-
-        io.uninstall()
-
     def launch(self, session, entities, event):
         # JOB SETTINGS
+
         userId = event['source']['user']['id']
         user = session.query('User where id is ' + userId).one()
 
@@ -151,44 +44,90 @@ class AvalonIdAttribute(BaseAction):
             'user': user,
             'status': 'running',
             'data': json.dumps({
-                'description': 'Synch Ftrack to Avalon.'
+                'description': 'Custom Attribute creation.'
             })
         })
-
+        session.commit()
         try:
-            print("action <" + self.__class__.__name__ + "> is running")
-            #TODO It's better to have these env set, are they used anywhere?
-            os.environ['AVALON_PROJECTS'] = "tmp"
-            os.environ['AVALON_ASSET'] = "tmp"
-            os.environ['AVALON_SILO'] = "tmp"
-            importable = []
+            # Attribute Name and Label
+            custAttrName = 'avalon_mongo_id'
+            custAttrLabel = 'Avalon/Mongo Id'
+            # Types that don't need object_type_id
+            base = {'show','asset','assetversion'}
+            # Don't create custom attribute on these entity types:
+            exceptions = ['task','milestone','library']
+            exceptions.extend(base)
+            # Get all possible object types
+            all_obj_types = session.query('ObjectType').all()
+            count_types = len(all_obj_types)
+            # Filter object types by exceptions
+            for index in range(count_types):
+                i = count_types - 1 - index
+                name = all_obj_types[i]['name'].lower()
 
-            def getShotAsset(entity):
-                if not (entity.entity_type in ['Task']):
-                    if entity not in importable:
-                        importable.append(entity)
+                if " " in name:
+                    name = name.replace(" ","")
 
-                    if entity['children']:
-                        childrens = entity['children']
-                        for child in childrens:
-                            getShotAsset(child)
+                if name in exceptions:
+                    all_obj_types.pop(i)
 
-            # get all entities separately
-            for entity in entities:
-                entity_type, entity_id = entity
-                act_ent = session.get(entity_type, entity_id)
-                getShotAsset(act_ent)
+            # Get IDs of filtered object types
+            all_obj_types_id = set()
+            for obj in all_obj_types:
+                all_obj_types_id.add(obj['id'])
 
-            for e in importable:
-                self.importToAvalon(session, e)
+            # Get all custom attributes
+            current_cust_attr = session.query('CustomAttributeConfiguration').all()
+            # Filter already existing AvalonMongoID attr.
+            for attr in current_cust_attr:
+                if attr['key'] == custAttrName:
+                    if attr['entity_type'] in base:
+                        base.remove(attr['entity_type'])
+                    if attr['object_type_id'] in all_obj_types_id:
+                        all_obj_types_id.remove(attr['object_type_id'])
+
+            # Set session back to begin("session.query" raises error on commit)
+            session.rollback()
+            # Set security roles for attribute
+            custAttrSecuRole = session.query('SecurityRole').all()
+            # Set Text type of Attribute
+            custom_attribute_type = session.query(
+                'CustomAttributeType where name is "text"'
+            ).one()
+
+            for entity_type in base:
+                # Create a custom attribute configuration.
+                session.create('CustomAttributeConfiguration', {
+                    'entity_type': entity_type,
+                    'type': custom_attribute_type,
+                    'label': custAttrLabel,
+                    'key': custAttrName,
+                    'default': '',
+                    'write_security_roles': custAttrSecuRole,
+                    'read_security_roles': custAttrSecuRole,
+                    'config': json.dumps({'markdown': False})
+                })
+
+            for type in all_obj_types_id:
+                # Create a custom attribute configuration.
+                session.create('CustomAttributeConfiguration', {
+                    'entity_type': 'task',
+                    'object_type_id': type,
+                    'type': custom_attribute_type,
+                    'label': custAttrLabel,
+                    'key': custAttrName,
+                    'default': '',
+                    'write_security_roles': custAttrSecuRole,
+                    'read_security_roles': custAttrSecuRole,
+                    'config': json.dumps({'markdown': False})
+                })
 
             job['status'] = 'done'
             session.commit()
 
-            print('Synchronization to Avalon was successfull!')
         except Exception as e:
             job['status'] = 'failed'
-            print('During synchronization to Avalon went something wrong!')
+            print("Creating custom attributes failed")
             print(e)
 
         return True
