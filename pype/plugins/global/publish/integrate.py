@@ -142,6 +142,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #                  "asset": ASSET,
         #                  "subset": subset["name"],
         #                  "version": version["name"]}
+        hierarchy = io.find_one({"type":'asset', "name":ASSET})['data']['parents']
+        if hierarchy:
+            # hierarchy = os.path.sep.join(hierarchy)
+            hierarchy = os.path.join(*hierarchy)
+
         template_data = {"root": root,
                          "project": {"name": PROJECT,
                                      "code": "prjX"},
@@ -150,10 +155,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                          "family": instance.data['family'],
                          "subset": subset["name"],
                          "VERSION": version["name"],
-                         "hierarchy": "ep101"}
+                         "hierarchy": hierarchy}
 
         template_publish = project["config"]["template"]["publish"]
         anatomy = instance.context.data['anatomy']
+        self.log.debug(anatomy)
 
         # Find the representations to transfer amongst the files
         # Each should be a single representation (as such, a single extension)
@@ -186,7 +192,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 for fname in collection:
 
                     src = os.path.join(stagingdir, fname)
+                    self.log.debug("test: " + src)
                     anatomy_filled = anatomy.format(template_data)
+                    self.log.debug(anatomy_filled)
                     dst = anatomy_filled.publish.path
 
                     instance.data["transfers"].append([src, dst])
@@ -209,6 +217,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 template_data["representation"] = ext[1:]
 
                 src = os.path.join(stagingdir, fname)
+                self.log.info("test: " + str(template_data))
                 anatomy_filled = anatomy.format(template_data)
                 self.log.info(anatomy_filled)
                 dst = anatomy_filled.publish.path
@@ -221,18 +230,22 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
-                "data": {},
+                "data": {'path': dst},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                    "project": PROJECT,
-                    "asset": ASSET,
-                    "silo": asset['silo'],
-                    "subset": subset["name"],
-                    "version": version["name"],
-                    "representation": ext[1:]
+                     "root": root,
+                     "project": PROJECT,
+                     "projectcode": "prjX",
+                     "silo": asset['silo'],
+                     "asset": ASSET,
+                     "family": instance.data['family'],
+                     "subset": subset["name"],
+                     "version": version["name"],
+                     "hierarchy": hierarchy,
+                     "representation": ext[1:]
                 }
             }
             representations.append(representation)

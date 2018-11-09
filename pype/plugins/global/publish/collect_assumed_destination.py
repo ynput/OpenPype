@@ -102,12 +102,20 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
         if version is not None:
             version_number += version["name"]
 
+        hierarchy = asset['data']['parents']
+        if hierarchy:
+            # hierarchy = os.path.sep.join(hierarchy)
+            hierarchy = os.path.join(*hierarchy)
+
         template_data = {"root": api.Session["AVALON_PROJECTS"],
                          "project": project_name,
+                         "projectcode": "prjX",
                          "silo": silo,
+                         "family": instance.data['family'],
                          "asset": asset_name,
                          "subset": subset_name,
                          "version": version_number,
+                         "hierarchy": hierarchy,
                          "representation": "TEMP"}
 
         instance.data["assumedTemplateData"] = template_data
