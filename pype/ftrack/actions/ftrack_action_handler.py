@@ -14,7 +14,9 @@ from app.api import (
     Templates
 )
 
-t = Templates()
+t = Templates(
+    type=["anatomy"]
+)
 
 
 
