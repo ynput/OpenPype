@@ -26,6 +26,7 @@ class LoginServerHandler(BaseHTTPRequestHandler):
 
         api_user = None
         api_key = None
+        login_credentials = None
         if 'api_user' and 'api_key' in query:
             login_credentials = parse.parse_qs(query)
             api_user = login_credentials['api_user'][0]
@@ -67,6 +68,7 @@ class LoginServerHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(message.encode())
 
+        
         if login_credentials:
             self.login_callback(
                 api_user,
@@ -78,8 +80,8 @@ class LoginServerThread(QtCore.QThread):
     '''Login server thread.'''
 
     # Login signal.
-    # loginSignal = QtCore.Signal(object, object, object)
     loginSignal = QtCore.pyqtSignal(object, object, object)
+
 
     def start(self, url):
         '''Start thread.'''
