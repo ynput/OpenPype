@@ -208,19 +208,43 @@ class DJVViewAction(object):
 
         # Launching application
         if "values" in event["data"]:
-
             filename = event['data']['values']['path']
+            file_type = filename.split(".")[-1]
 
-            # TODO These should be obtained in another way
-            start = 375
-            end = 379
-            fps = 24
+            # TODO Is this proper way?
+            try:
+                fps = int(entities[0]['custom_attributes']['fps'])
+            except:
+                fps = 24
+
             # TODO issequence is probably already built-in validation in ftrack
             isseq = re.findall('%[0-9]*d', filename)
             if len(isseq) > 0:
-                padding = re.findall('%[0-9]*d', filename).pop()
-                range = (padding % start) + '-' + (padding % end)
-                filename = re.sub('%[0-9]*d', range, filename)
+                if len(isseq) == 1:
+                    frames = []
+                    padding = re.findall('%[0-9]*d', filename).pop()
+                    index = filename.find(padding)
+
+                    full_file = filename[0:index-1]
+                    file = full_file.split(os.sep)[-1]
+                    folder = os.path.dirname(full_file)
+
+                    for fname in os.listdir(path=folder):
+                        if fname.endswith(file_type) and file in fname:
+                            frames.append(int(fname.split(".")[-2]))
+
+                    if len(frames) > 0:
+                        start = min(frames)
+                        end = max(frames)
+
+                        range = (padding % start) + '-' + (padding % end)
+                        filename = re.sub('%[0-9]*d', range, filename)
+                else:
+                    print("")
+                    return {
+                        'success': False,
+                        'message': 'DJV View - Filename has more than one seqence identifier.'
+                    }
 
             cmd = []
             # DJV path
