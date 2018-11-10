@@ -37,6 +37,11 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
 
         vrscene_data = host.read(vray_scene)
 
+        assert cmds.ls("vraySettings", type="VRaySettingsNode"), (
+            "VRay Settings node does not exists. "
+            "Please ensure V-Ray is the current renderer."
+        )
+
         # Output data
         start_frame = int(cmds.getAttr("defaultRenderGlobals.startFrame"))
         end_frame = int(cmds.getAttr("defaultRenderGlobals.endFrame"))
