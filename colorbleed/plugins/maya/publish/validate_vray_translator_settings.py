@@ -32,6 +32,11 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
             cls.log.info("No VRay Scene instances found, skipping..")
             return
 
+        # Ignore if no VRayScenes are enabled for publishing
+        if not any(i.data.get("publish", True) for i in vrayscene_instances):
+            cls.log.info("VRay Scene instances are disabled, skipping..")
+            return
+
         # Get vraySettings node
         vray_settings = cmds.ls(type="VRaySettingsNode")
         assert vray_settings, "Please ensure a VRay Settings Node is present"
