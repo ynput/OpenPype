@@ -75,11 +75,12 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         render_layers = sorted(render_layers, key=sort_by_display_order)
         for layer in render_layers:
 
-            if layer.endswith("defaultRenderLayer"):
-                layer = "masterLayer"
+            subset = layer
+            if subset == "defaultRenderLayer":
+                subset = "masterLayer"
 
             data = {
-                "subset": layer,
+                "subset": subset,
                 "setMembers": layer,
 
                 "startFrame": start_frame,
@@ -102,6 +103,6 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
 
             data.update(vrscene_data)
 
-            instance = context.create_instance(layer)
+            instance = context.create_instance(subset)
             self.log.info("Created: %s" % instance.name)
             instance.data.update(data)
