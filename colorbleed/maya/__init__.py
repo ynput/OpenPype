@@ -98,17 +98,23 @@ def on_init(_):
             utils.executeDeferred(_fn)
         except Exception as exc:
             print(exc)
-    
+
     # Force load Alembic so referenced alembics
     # work correctly on scene open
     cmds.loadPlugin("AbcImport", quiet=True)
     cmds.loadPlugin("AbcExport", quiet=True)
-    
+
     # Force load objExport plug-in (requested by artists)
     cmds.loadPlugin("objExport", quiet=True)
 
-    from .customize import override_component_mask_commands
+    from .customize import (
+        override_component_mask_commands,
+        override_toolbox_ui
+    )
     safe_deferred(override_component_mask_commands)
+
+    if not IS_HEADLESS:
+        safe_deferred(override_toolbox_ui)
 
 
 def on_before_save(return_code, _):
