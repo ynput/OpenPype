@@ -120,8 +120,8 @@ def on_save(_):
 
     avalon.logger.info("Running callback on save..")
 
-    # Update current task for the current scene
-    update_task_from_path(cmds.file(query=True, sceneName=True))
+    # # Update current task for the current scene
+    # update_task_from_path(cmds.file(query=True, sceneName=True))
 
     # Generate ids of the current context on nodes in the scene
     nodes = lib.get_id_required_nodes(referenced_nodes=False)

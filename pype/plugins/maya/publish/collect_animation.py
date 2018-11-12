@@ -43,7 +43,11 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
         descendants = cmds.ls(descendants, noIntermediate=True, long=True)
 
         # Add members and descendants together for a complete overview
-        hierarchy = members + descendants
+        # hierarchy = members + descendants
+        hierarchy = members
+
+        self.log.info(members)
+        self.log.info(hierarchy)
 
         # Ignore certain node types (e.g. constraints)
         ignore = cmds.ls(hierarchy, type=self.ignore_type, long=True)
@@ -53,4 +57,3 @@ class CollectAnimationOutputGeometry(pyblish.api.InstancePlugin):
 
         # Store data in the instance for the validator
         instance.data["out_hierarchy"] = hierarchy
-

@@ -74,7 +74,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
 
         project = io.find_one({"type": "project",
                                "name": project_name},
-                              projection={"config": True})
+                              projection={"config": True, "data": True})
 
         template = project["config"]["template"]["publish"]
 
@@ -109,7 +109,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
 
         template_data = {"root": api.Session["AVALON_PROJECTS"],
                          "project": project_name,
-                         "projectcode": "prjX",
+                         "projectcode": project['data']['code'],
                          "silo": silo,
                          "family": instance.data['family'],
                          "asset": asset_name,

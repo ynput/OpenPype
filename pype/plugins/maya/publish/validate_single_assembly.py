@@ -5,9 +5,9 @@ import pype.api
 class ValidateSingleAssembly(pyblish.api.InstancePlugin):
     """Ensure the content of the instance is grouped in a single hierarchy
 
-    The instance must have a single root node containing all the content. 
+    The instance must have a single root node containing all the content.
     This root node *must* be a top group in the outliner.
-    
+
     Example outliner:
         root_GRP
             -- geometry_GRP
@@ -19,7 +19,7 @@ class ValidateSingleAssembly(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["rig', 'studio.animation']
+    families = ['rig', 'studio.animation']
     label = 'Single Assembly'
 
     def process(self, instance):

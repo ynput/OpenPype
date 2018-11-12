@@ -159,7 +159,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         template_publish = project["config"]["template"]["publish"]
         anatomy = instance.context.data['anatomy']
-        self.log.debug(anatomy)
 
         # Find the representations to transfer amongst the files
         # Each should be a single representation (as such, a single extension)
@@ -192,9 +191,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 for fname in collection:
 
                     src = os.path.join(stagingdir, fname)
-                    self.log.debug("test: " + src)
                     anatomy_filled = anatomy.format(template_data)
-                    self.log.debug(anatomy_filled)
                     dst = anatomy_filled.publish.path
 
                     instance.data["transfers"].append([src, dst])
@@ -217,16 +214,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 template_data["representation"] = ext[1:]
 
                 src = os.path.join(stagingdir, fname)
-                self.log.info("test: " + str(template_data))
                 anatomy_filled = anatomy.format(template_data)
-                self.log.info(anatomy_filled)
                 dst = anatomy_filled.publish.path
-                self.log.info(dst)
 
                 instance.data["transfers"].append([src, dst])
 
             representation = {
-                "schema": "avalon-core:representation-2.0",
+                "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
@@ -302,7 +296,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             self.log.info("Subset '%s' not found, creating.." % subset_name)
 
             _id = io.insert_one({
-                "schema": "avalon-core:subset-2.0",
+                "schema": "pype:subset-2.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": {},
@@ -328,7 +322,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         version_locations = [location for location in locations if
                              location is not None]
 
-        return {"schema": "avalon-core:version-2.0",
+        return {"schema": "pype:version-2.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,

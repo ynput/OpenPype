@@ -9,9 +9,9 @@ def get_file_rule(rule):
     return mel.eval('workspace -query -fileRuleEntry "{}"'.format(rule))
 
 
-class ValidateRenderImageRule(pyblish.api.ContextPlugin):
+class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     """Validates "images" file rule is set to "renders/"
-    
+
     """
 
     order = pype.api.ValidateContentsOrder
@@ -19,7 +19,7 @@ class ValidateRenderImageRule(pyblish.api.ContextPlugin):
     hosts = ["maya"]
     families = ["renderlayer"]
 
-    def process(self, context):
+    def process(self, instance):
 
         assert get_file_rule("images") == "renders", (
             "Workspace's `images` file rule must be set to: renders"

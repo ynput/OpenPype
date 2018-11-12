@@ -82,7 +82,9 @@ class SyncToAvalon(BaseAction):
             'tasks': [{'name': ''}],
             'apps': apps,
             # TODO redo work!!!
-            'template': {'work': '','publish':''}
+            'template': {
+                'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}',
+                'publish':'{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'}
         }
 
         # Set project template
@@ -100,7 +102,7 @@ class SyncToAvalon(BaseAction):
 
         # Store info about project (FtrackId)
         io.update_many({'type': 'project','name': entityProj['full_name']},
-            {'$set':{'data':{'ftrackId':entityProj['id'],'entityType':entityProj.entity_type}}})
+            {'$set':{'data':{'code':entityProj['name'],'ftrackId':entityProj['id'],'entityType':entityProj.entity_type}}})
 
         # Store project Id
         projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
@@ -121,7 +123,8 @@ class SyncToAvalon(BaseAction):
             folderStruct = []
             parentId = None
             data = {'visualParent': parentId, 'parents': folderStruct,
-                    'tasks':None, 'ftrackId': None, 'entityType': None}
+                    'tasks':None, 'ftrackId': None, 'entityType': None,
+                    'hierarchy': ''}
 
             for asset in assets:
                 os.environ['AVALON_ASSET'] = asset['name']
@@ -145,7 +148,9 @@ class SyncToAvalon(BaseAction):
                     print("Asset "+asset["name"]+" - already exist")
 
                 parentId = io.find_one({'type': 'asset', 'name': asset['name']})['_id']
-                data.update({'visualParent': parentId, 'parents': folderStruct})
+                hierarchy = os.path.sep.join(folderStruct)
+                data.update({'visualParent': parentId, 'parents': folderStruct,
+                            'hierarchy': hierarchy})
                 folderStruct.append(asset['name'])
 
 
@@ -171,7 +176,7 @@ class SyncToAvalon(BaseAction):
         try:
             print("action <" + self.__class__.__name__ + "> is running")
             #TODO It's better to have these env set, are they used anywhere?
-            os.environ['AVALON_PROJECTS'] = "tmp"
+            # os.environ['AVALON_PROJECTS'] = "tmp"
             os.environ['AVALON_ASSET'] = "tmp"
             os.environ['AVALON_SILO'] = "tmp"
             importable = []

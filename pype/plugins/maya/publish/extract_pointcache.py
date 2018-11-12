@@ -7,7 +7,7 @@ import pype.api
 from pype.maya.lib import extract_alembic
 
 
-class ExtractColorbleedAlembic(pype.api.Extractor):
+class ExtractAlembic(pype.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals, uvs, creases are preserved, but nothing more,

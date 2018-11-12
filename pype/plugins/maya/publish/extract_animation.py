@@ -7,7 +7,7 @@ import pype.api
 from pype.maya.lib import extract_alembic
 
 
-class ExtractColorbleedAnimation(pype.api.Extractor):
+class ExtractAnimation(pype.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals, uvs, creases are preserved, but nothing more,
@@ -29,10 +29,12 @@ class ExtractColorbleedAnimation(pype.api.Extractor):
         out_set = out_sets[0]
         nodes = cmds.sets(out_set, query=True)
 
+        self.log.info('nodes to export: {}'.format(str(nodes)))
+
         # Include all descendants
-        nodes += cmds.listRelatives(nodes,
-                                    allDescendents=True,
-                                    fullPath=True) or []
+        # nodes += cmds.listRelatives(nodes,
+        #                             allDescendents=True,
+        #                             fullPath=True) or []
 
         # Collect the start and end including handles
         start = instance.data["startFrame"]
@@ -55,7 +57,8 @@ class ExtractColorbleedAnimation(pype.api.Extractor):
             "writeVisibility": True,
             "writeCreases": True,
             "uvWrite": True,
-            "selection": True
+            "selection": False,
+            "root": nodes
         }
 
         if int(cmds.about(version=True)) >= 2017:
@@ -63,12 +66,12 @@ class ExtractColorbleedAnimation(pype.api.Extractor):
             options["writeUVSets"] = True
 
         with avalon.maya.suspended_refresh():
-            with avalon.maya.maintained_selection():
-                cmds.select(nodes, noExpand=True)
-                extract_alembic(file=path,
-                                startFrame=start,
-                                endFrame=end,
-                                **options)
+            # with avalon.maya.maintained_selection():
+            cmds.select(nodes, noExpand=True)
+            extract_alembic(file=path,
+                            startFrame=start,
+                            endFrame=end,
+                            **options)
 
         if "files" not in instance.data:
             instance.data["files"] = list()
