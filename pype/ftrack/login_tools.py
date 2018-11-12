@@ -1,13 +1,7 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2016 ftrack
-
 from http.server import BaseHTTPRequestHandler, HTTPServer
-# import BaseHTTPServer
 from urllib import parse
-# import urlparse
 import webbrowser
 import functools
-# from QtExt import QtCore
 from PyQt5 import QtCore
 
 # class LoginServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -68,7 +62,7 @@ class LoginServerHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(message.encode())
 
-        
+
         if login_credentials:
             self.login_callback(
                 api_user,

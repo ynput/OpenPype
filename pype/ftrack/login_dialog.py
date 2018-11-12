@@ -1,17 +1,10 @@
-# -*- coding: utf-8 -*-
-
-# Form implementation generated from reading ui file '..\CODE\github\pypeclub\pype-setup\temp\pype_project_settins_ui\login_dialogue.ui'
-#
-# Created by: PyQt5 UI code generator 5.7.1
-#
-# WARNING! All changes made in this file will be lost!
-
 import sys
+import requests
 from PyQt5 import QtCore, QtGui, QtWidgets
 from app import style
-import credentials
-import login_tools
-import requests
+from . import credentials, login_tools
+
+
 class Login_Dialog_ui(QtWidgets.QWidget):
 
     SIZE_W = 300

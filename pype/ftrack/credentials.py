@@ -1,10 +1,11 @@
 import os
 import toml
+
 import ftrack_api
-import appdirs 
+import appdirs
 
 config_path = os.path.normpath(appdirs.user_data_dir('pype-app','pype'))
-config_name = 'credentials.toml'
+config_name = 'ftrack_cred.toml'
 fpath = os.path.join(config_path, config_name)
 
 def _get_credentials():
