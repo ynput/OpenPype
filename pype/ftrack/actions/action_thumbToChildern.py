@@ -24,7 +24,7 @@ class ThumbToChildren(BaseAction):
     def discover(self, session, entities, event):
         ''' Validation '''
 
-        if (len(entities) <= 0 or entities[0].entity_type in ['Project']):
+        if (len(entities) != 1 or entities[0].entity_type in ['Project']):
             return False
 
         return True
@@ -53,11 +53,12 @@ class ThumbToChildren(BaseAction):
 
             # inform the user that the job is done
             job['status'] = 'done'
-            session.commit()
         except:
             # fail the job if something goes wrong
             job['status'] = 'failed'
             raise
+        finally:
+            session.commit()
 
         return {
             'success': True,
