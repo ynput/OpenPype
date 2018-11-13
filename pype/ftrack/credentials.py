@@ -7,6 +7,10 @@ import appdirs
 config_path = os.path.normpath(appdirs.user_data_dir('pype-app','pype'))
 config_name = 'ftrack_cred.toml'
 fpath = os.path.join(config_path, config_name)
+folder = os.path.dirname(fpath)
+
+if not os.path.isdir(folder):
+    os.makedirs(folder)
 
 def _get_credentials():
 
@@ -53,9 +57,9 @@ def _check_credentials(username=None, apiKey=None):
 
     try:
         session = ftrack_api.Session()
+        session.close()
     except Exception as e:
         print(e)
         return False
 
-    session.close()
     return True
