@@ -144,7 +144,6 @@ class Login_Dialog_ui(QtWidgets.QWidget):
 
         except Exception as e:
             self.setError("FTRACK_SERVER is not set in templates")
-            self.setError(str(e))
             self.btnEnter.setEnabled(False)
             self.btnFtrack.setEnabled(False)
             for input in self.inputs:
@@ -199,7 +198,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         url = url.strip('/ ')
 
         if not url:
-            self.setError()
+            self.setError("There is no URL set in Templates")
             return
 
         if not 'http' in url:
