@@ -1,61 +1,80 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
 import sys
 import argparse
 import logging
-
-import datetime
+import getpass
 import ftrack_api
 from ftrack_action_handler import BaseAction
 
 
-class JobKiller(BaseAction):
-    '''Edit meta data action.'''
+class SetVersion(BaseAction):
+    '''Custom action.'''
 
     #: Action identifier.
-    identifier = 'job.kill'
+    identifier = 'version.set'
+
     #: Action label.
-    label = 'Job Killer'
-    #: Action description.
-    description = 'Killing all running jobs younger than day'
+    label = 'Version Set'
 
 
     def discover(self, session, entities, event):
         ''' Validation '''
 
+        # Only 1 AssetVersion is allowed
+        if len(entities) != 1 or entities[0].entity_type != 'AssetVersion':
+            return False
+
         return True
 
+    def interface(self, session, entities, event):
+
+        if not event['data'].get('values', {}):
+            entity = entities[0]
+
+            # Get actual version of asset
+            act_ver = entity['version']
+            # Set form
+            items = [{
+                'label': 'Version number',
+                'type': 'number',
+                'name': 'version_number',
+                'value': act_ver
+            }]
+
+            return items
 
     def launch(self, session, entities, event):
-        """ GET JOB """
 
-        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        entity = entities[0]
 
-        jobs = session.query(
-            'select id, status from Job '
-            'where status in ("queued", "running") and created_at > {0}'.format(yesterday)
-        )
+        # Do something with the values or return a new form.
+        values = event['data'].get('values', {})
+        # Default is action True
+        scs = True
+        msg = 'Version was changed to v{0}'.format(values['version_number'])
 
-        # Update all the queried jobs, setting the status to failed.
-        for job in jobs:
-            print(job['created_at'])
-            print('Changing Job ({}) status: {} -> failed'.format(job['id'], job['status']))
-            job['status'] = 'failed'
+        if not values['version_number']:
+            scs = False,
+            msg = "You didn't enter any version."
+        elif int(values['version_number']) <= 0:
+            scs = False
+            msg = 'Negative or zero version is not valid.'
+        else:
+            entity['version'] = values['version_number']
 
         try:
             session.commit()
         except:
             session.rollback()
+            raise
 
-        print('All running jobs were killed Successfully!')
         return {
-            'success': True,
-            'message': 'All running jobs were killed Successfully!'
+            'success': scs,
+            'message': msg
         }
 
 
 def register(session, **kw):
-    '''Register plugin. Called when used as an plugin.'''
+    '''Register action. Called when used as an event plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
     # assume that register is being called from an old or incompatible API and
@@ -63,7 +82,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = JobKiller(session)
+    action_handler = SetVersion(session)
     action_handler.register()
 
 
@@ -93,7 +112,6 @@ def main(arguments=None):
     logging.basicConfig(level=loggingLevels[namespace.verbosity])
 
     session = ftrack_api.Session()
-
     register(session)
 
     # Wait for events

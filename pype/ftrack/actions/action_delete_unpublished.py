@@ -1,65 +1,59 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
 import sys
 import argparse
 import logging
-import collections
-import os
-import json
-
+import getpass
 import ftrack_api
 from ftrack_action_handler import BaseAction
-from avalon import io, inventory, schema
-from avalon.vendor import toml
 
 
-class TestAction(BaseAction):
-    '''Edit meta data action.'''
+class VersionsCleanup(BaseAction):
+    '''Custom action.'''
 
-    #: Action identifier.
-    identifier = 'test.action'
-    #: Action label.
-    label = 'Test action'
-    #: Action description.
-    description = 'Test action'
+    # Action identifier
+    identifier = 'versions.cleanup'
+    # Action label
+    label = 'Versions cleanup'
 
 
     def discover(self, session, entities, event):
         ''' Validation '''
 
-        return True
+        # Only 1 AssetVersion is allowed
+        if len(entities) != 1 or entities[0].entity_type != 'AssetVersion':
+            return False
 
+        return True
 
     def launch(self, session, entities, event):
 
-        for entity in entities:
-            index = 0
-            name = entity['components'][index]['name']
-            filetype = entity['components'][index]['file_type']
-            path = entity['components'][index]['component_locations'][0]['resource_identifier']
+        entity = entities[0]
 
-            # entity['components'][index]['component_locations'][0]['resource_identifier'] = r"C:\Users\jakub.trllo\Desktop\test\exr\int_c022_lighting_v001_main_AO.%04d.exr"
-            location = entity['components'][0]['component_locations'][0]['location']
-            component = entity['components'][0]
+        # Go through all versions in asset
+        for version in entity['asset']['versions']:
+            if not version['is_published']:
+                session.delete(version)
+        try:
+            session.commit()
+        except:
+            session.rollback()
+            raise
 
-
-            # print(location.get_filesystem_path(component))
-
-            # for k in p:
-            #     print(100*"-")
-            #     print(k)
-            #     print(p[k])
-
-        return True
+        return {
+            'success': True,
+            'message': 'removed hidden versions'
+        }
 
 
 def register(session, **kw):
-    '''Register plugin. Called when used as an plugin.'''
+    '''Register action. Called when used as an event plugin.'''
 
+    # Validate that session is an instance of ftrack_api.Session. If not,
+    # assume that register is being called from an old or incompatible API and
+    # return without doing anything.
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = TestAction(session)
+    action_handler = VersionsCleanup(session)
     action_handler.register()
 
 

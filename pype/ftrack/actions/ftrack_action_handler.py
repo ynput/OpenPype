@@ -19,7 +19,6 @@ t = Templates(
 )
 
 
-
 class AppAction(object):
     '''Custom Action base class
 
@@ -53,14 +52,13 @@ class AppAction(object):
         self.icon = icon
         self.description = description
 
-
     @property
     def session(self):
         '''Return current session.'''
         return self._session
 
     def register(self):
-        '''Registers the action, subscribing the the discover and launch topics.'''
+        '''Registers the action, subscribing the discover and launch topics.'''
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover and source.user.username={0}'.format(
                 self.session.api_user
@@ -85,6 +83,7 @@ class AppAction(object):
         )
 
         if accepts:
+            self.logger.info('Selection is valid')
             return {
                 'items': [{
                     'label': self.label,
@@ -94,17 +93,18 @@ class AppAction(object):
                     'icon': self.icon,
                 }]
             }
+        else:
+            self.logger.info('Selection is _not_ valid')
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
 
         *session* is a `ftrack_api.Session` instance
 
-
-        *entities* is a list of tuples each containing the entity type and the entity id.
-        If the entity is a hierarchical you will always get the entity
-        type TypedContext, once retrieved through a get operation you
-        will have the "real" entity type ie. example Shot, Sequence
+        *entities* is a list of tuples each containing the entity type and
+        the entity id. If the entity is a hierarchical you will always get
+        the entity type TypedContext, once retrieved through a get operation
+        you will have the "real" entity type ie. example Shot, Sequence
         or Asset Build.
 
         *event* the unmodified original event
@@ -221,6 +221,7 @@ class AppAction(object):
         *event* the unmodified original event
 
         '''
+
         # TODO Delete this line
         print("Action - {0} ({1}) - just started".format(self.label, self.identifier))
 
@@ -228,8 +229,8 @@ class AppAction(object):
         entity = session.get(entity, id)
 
         silo = "Film"
-        if entity.entity_type=="AssetBuild":
-            silo= "Asset"
+        if entity.entity_type == "AssetBuild":
+            silo = "Asset"
 
         # set environments for Avalon
         os.environ["AVALON_PROJECT"] = entity['project']['full_name']
@@ -239,23 +240,21 @@ class AppAction(object):
         os.environ["AVALON_APP"] = self.identifier
         os.environ["AVALON_APP_NAME"] = self.identifier + "_" + self.variant
 
-
         anatomy = t.anatomy
         io.install()
-        hierarchy = io.find_one({"type":'asset', "name":entity['parent']['name']})['data']['parents']
+        hierarchy = io.find_one({"type": 'asset', "name": entity['parent']['name']})['data']['parents']
         io.uninstall()
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
 
-        data = { "project": {"name": entity['project']['full_name'],
+        data = {"project": {"name": entity['project']['full_name'],
                             "code": entity['project']['name']},
-                 "task": entity['name'],
-                 "asset": entity['parent']['name'],
-                 "hierarchy": hierarchy}
+                "task": entity['name'],
+                "asset": entity['parent']['name'],
+                "hierarchy": hierarchy}
 
         anatomy = anatomy.format(data)
-
 
         os.environ["AVALON_WORKDIR"] = os.path.join(anatomy.work.root, anatomy.work.folder)
 
@@ -308,6 +307,13 @@ class AppAction(object):
                 'success': False,
                 'message': "We didn't found launcher for {0}".format(self.label)
             }
+
+        # RUN TIMER IN FTRACK
+        username = event['source']['user']['username']
+        user = session.query('User where username is "{}"'.format(username)).one()
+        task = session.query('Task where id is {}'.format(entity['id'])).one()
+        print('Starting timer for task: ' + task['name'])
+        user.start_timer(task, force=True)
 
         return {
             'success': True,
@@ -424,6 +430,7 @@ class BaseAction(object):
             ),
             self._launch
         )
+        print("----- action - <" + self.__class__.__name__ + "> - Has been registered -----")
 
     def _discover(self, event):
         args = self._translate_event(
@@ -435,6 +442,7 @@ class BaseAction(object):
         )
 
         if accepts:
+            self.logger.info(u'Discovering action with selection: {0}'.format(args[1]['data'].get('selection', [])))
             return {
                 'items': [{
                     'label': self.label,
@@ -472,7 +480,8 @@ class BaseAction(object):
         for entity in _selection:
             _entities.append(
                 (
-                    self._get_entity_type(entity), entity.get('entityId')
+                    session.get(self._get_entity_type(entity), entity.get('entityId'))
+                    # self._get_entity_type(entity), entity.get('entityId')
                 )
             )
 

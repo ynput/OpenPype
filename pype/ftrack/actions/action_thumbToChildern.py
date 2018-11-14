@@ -1,71 +1,79 @@
 # :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
+# :copyright: Copyright (c) 2015 Milan Kolar
+
 import sys
 import argparse
 import logging
+import getpass
+import json
 
-import datetime
 import ftrack_api
 from ftrack_action_handler import BaseAction
 
+class ThumbToChildren(BaseAction):
+    '''Custom action.'''
 
-class JobKiller(BaseAction):
-    '''Edit meta data action.'''
-
-    #: Action identifier.
-    identifier = 'job.kill'
-    #: Action label.
-    label = 'Job Killer'
-    #: Action description.
-    description = 'Killing all running jobs younger than day'
+    # Action identifier
+    identifier = 'thumb.to.children'
+    # Action label
+    label = 'Thumbnail to Children'
+    # Action icon
+    icon = "https://cdn3.iconfinder.com/data/icons/transfers/100/239322-download_transfer-128.png"
 
 
     def discover(self, session, entities, event):
         ''' Validation '''
 
+        if (len(entities) != 1 or entities[0].entity_type in ['Project']):
+            return False
+
         return True
 
 
     def launch(self, session, entities, event):
-        """ GET JOB """
+        '''Callback method for action.'''
 
-        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        userId = event['source']['user']['id']
+        user = session.query('User where id is ' + userId).one()
 
-        jobs = session.query(
-            'select id, status from Job '
-            'where status in ("queued", "running") and created_at > {0}'.format(yesterday)
-        )
-
-        # Update all the queried jobs, setting the status to failed.
-        for job in jobs:
-            print(job['created_at'])
-            print('Changing Job ({}) status: {} -> failed'.format(job['id'], job['status']))
-            job['status'] = 'failed'
+        job = session.create('Job', {
+            'user': user,
+            'status': 'running',
+            'data': json.dumps({
+                'description': 'Push thumbnails to Childrens'
+            })
+        })
 
         try:
-            session.commit()
-        except:
-            session.rollback()
+            for entity in entities:
+                thumbid = entity['thumbnail_id']
+                if thumbid:
+                    for child in entity['children']:
+                        child['thumbnail_id'] = thumbid
 
-        print('All running jobs were killed Successfully!')
+            # inform the user that the job is done
+            job['status'] = 'done'
+        except:
+            # fail the job if something goes wrong
+            job['status'] = 'failed'
+            raise
+        finally:
+            session.commit()
+
         return {
             'success': True,
-            'message': 'All running jobs were killed Successfully!'
+            'message': 'Created job for updating thumbnails!'
         }
 
 
-def register(session, **kw):
-    '''Register plugin. Called when used as an plugin.'''
 
-    # Validate that session is an instance of ftrack_api.Session. If not,
-    # assume that register is being called from an old or incompatible API and
-    # return without doing anything.
+def register(session, **kw):
+    '''Register action. Called when used as an event plugin.'''
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = JobKiller(session)
+    action_handler = ThumbToChildren(session)
     action_handler.register()
-
 
 def main(arguments=None):
     '''Set up logging and register action.'''
@@ -93,7 +101,6 @@ def main(arguments=None):
     logging.basicConfig(level=loggingLevels[namespace.verbosity])
 
     session = ftrack_api.Session()
-
     register(session)
 
     # Wait for events
