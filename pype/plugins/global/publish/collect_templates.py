@@ -1,4 +1,4 @@
-from maya import cmds
+
 from app.api import (
     Templates
 )
