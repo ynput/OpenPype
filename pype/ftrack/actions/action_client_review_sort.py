@@ -1,65 +1,66 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
 import sys
 import argparse
 import logging
-import collections
 import os
-import json
+import getpass
 
 import ftrack_api
 from ftrack_action_handler import BaseAction
-from avalon import io, inventory, schema
-from avalon.vendor import toml
 
 
-class TestAction(BaseAction):
-    '''Edit meta data action.'''
+class ClientReviewSort(BaseAction):
+    '''Custom action.'''
 
     #: Action identifier.
-    identifier = 'test.action'
+    identifier = 'client.review.sort'
+
     #: Action label.
-    label = 'Test action'
-    #: Action description.
-    description = 'Test action'
+    label = 'Sort Review'
 
 
     def discover(self, session, entities, event):
         ''' Validation '''
+
+        if (len(entities) == 0 or entities[0].entity_type != 'ReviewSession'):
+            return False
 
         return True
 
 
     def launch(self, session, entities, event):
 
-        for entity in entities:
-            index = 0
-            name = entity['components'][index]['name']
-            filetype = entity['components'][index]['file_type']
-            path = entity['components'][index]['component_locations'][0]['resource_identifier']
+        entity = entities[0]
 
-            # entity['components'][index]['component_locations'][0]['resource_identifier'] = r"C:\Users\jakub.trllo\Desktop\test\exr\int_c022_lighting_v001_main_AO.%04d.exr"
-            location = entity['components'][0]['component_locations'][0]['location']
-            component = entity['components'][0]
+        # Get all objects from Review Session and all 'sort order' possibilities
+        obj_list = []
+        sort_order_list = []
+        for obj in entity['review_session_objects']:
+            obj_list.append(obj)
+            sort_order_list.append(obj['sort_order'])
 
+        # Sort criteria
+        obj_list = sorted(obj_list, key=lambda k: k['version'])
+        obj_list = sorted(obj_list, key=lambda k: k['asset_version']['task']['name'])
+        obj_list = sorted(obj_list, key=lambda k: k['name'])
 
-            # print(location.get_filesystem_path(component))
+        # Set 'sort order' to sorted list, so they are sorted in Ftrack also
+        for i in range(len(obj_list)):
+            obj_list[i]['sort_order'] = sort_order_list[i]
 
-            # for k in p:
-            #     print(100*"-")
-            #     print(k)
-            #     print(p[k])
+        session.commit()
 
-        return True
+        return {
+            'success': True,
+            'message': 'Client Review sorted!'
+        }
 
 
 def register(session, **kw):
-    '''Register plugin. Called when used as an plugin.'''
-
+    '''Register action. Called when used as an event plugin.'''
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = TestAction(session)
+    action_handler = ClientReviewSort(session)
     action_handler.register()
 
 

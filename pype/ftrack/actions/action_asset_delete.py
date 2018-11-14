@@ -1,61 +1,86 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
 import sys
 import argparse
 import logging
-
-import datetime
+import getpass
 import ftrack_api
 from ftrack_action_handler import BaseAction
 
 
-class JobKiller(BaseAction):
-    '''Edit meta data action.'''
+class AssetDelete(BaseAction):
+    '''Custom action.'''
 
     #: Action identifier.
-    identifier = 'job.kill'
+    identifier = 'asset.delete'
     #: Action label.
-    label = 'Job Killer'
-    #: Action description.
-    description = 'Killing all running jobs younger than day'
+    label = 'Asset Delete'
 
 
     def discover(self, session, entities, event):
         ''' Validation '''
+        
+        if (len(entities) != 1 or entities[0].entity_type
+        not in ['Shot', 'Asset Build']):
+            return False
 
         return True
 
 
+    def interface(self, session, entities, event):
+
+        if not event['data'].get('values', {}):
+            entity = entities[0]
+
+            items = []
+            for asset in entity['assets']:
+                # get asset name for label
+                label = 'None'
+                if asset['name']:
+                    label = asset['name']
+
+                items.append({
+                    'label':label,
+                    'name':label,
+                    'value':False,
+                    'type':'boolean'
+                })
+
+            if len(items) < 1:
+                return {
+                    'success': False,
+                    'message': 'There are no assets to delete'
+                }
+
+            return items
+
     def launch(self, session, entities, event):
-        """ GET JOB """
 
-        yesterday = datetime.date.today() - datetime.timedelta(days=1)
-
-        jobs = session.query(
-            'select id, status from Job '
-            'where status in ("queued", "running") and created_at > {0}'.format(yesterday)
-        )
-
-        # Update all the queried jobs, setting the status to failed.
-        for job in jobs:
-            print(job['created_at'])
-            print('Changing Job ({}) status: {} -> failed'.format(job['id'], job['status']))
-            job['status'] = 'failed'
-
+        entity = entities[0]
+        # if values were set remove those items
+        if 'values' in event['data']:
+            values = event['data']['values']
+            # get list of assets to delete from form
+            to_delete = []
+            for key in values:
+                if values[key]:
+                    to_delete.append(key)
+            # delete them by name
+            for asset in entity['assets']:
+                if asset['name'] in to_delete:
+                    session.delete(asset)
         try:
             session.commit()
         except:
             session.rollback()
+            raise
 
-        print('All running jobs were killed Successfully!')
         return {
             'success': True,
-            'message': 'All running jobs were killed Successfully!'
+            'message': 'Asset deleted.'
         }
 
 
 def register(session, **kw):
-    '''Register plugin. Called when used as an plugin.'''
+    '''Register action. Called when used as an event plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
     # assume that register is being called from an old or incompatible API and
@@ -63,7 +88,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = JobKiller(session)
+    action_handler = AssetDelete(session)
     action_handler.register()
 
 
@@ -93,7 +118,6 @@ def main(arguments=None):
     logging.basicConfig(level=loggingLevels[namespace.verbosity])
 
     session = ftrack_api.Session()
-
     register(session)
 
     # Wait for events
