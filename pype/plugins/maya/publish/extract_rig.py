@@ -6,7 +6,7 @@ import avalon.maya
 import pype.api
 
 
-class ExtractColorbleedRig(pype.api.Extractor):
+class ExtractRig(pype.api.Extractor):
     """Extract rig as Maya Ascii"""
 
     label = "Extract Rig (Maya ASCII)"

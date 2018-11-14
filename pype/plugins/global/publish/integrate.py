@@ -142,6 +142,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #                  "asset": ASSET,
         #                  "subset": subset["name"],
         #                  "version": version["name"]}
+        hierarchy = io.find_one({"type":'asset', "name":ASSET})['data']['parents']
+        if hierarchy:
+            # hierarchy = os.path.sep.join(hierarchy)
+            hierarchy = os.path.join(*hierarchy)
+
         template_data = {"root": root,
                          "project": {"name": PROJECT,
                                      "code": "prjX"},
@@ -150,7 +155,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                          "family": instance.data['family'],
                          "subset": subset["name"],
                          "VERSION": version["name"],
-                         "hierarchy": "ep101"}
+                         "hierarchy": hierarchy}
 
         template_publish = project["config"]["template"]["publish"]
         anatomy = instance.context.data['anatomy']
@@ -210,29 +215,31 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
-                self.log.info(anatomy_filled)
                 dst = anatomy_filled.publish.path
-                self.log.info(dst)
 
                 instance.data["transfers"].append([src, dst])
 
             representation = {
-                "schema": "avalon-core:representation-2.0",
+                "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
-                "data": {},
+                "data": {'path': dst},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                    "project": PROJECT,
-                    "asset": ASSET,
-                    "silo": asset['silo'],
-                    "subset": subset["name"],
-                    "version": version["name"],
-                    "representation": ext[1:]
+                     "root": root,
+                     "project": PROJECT,
+                     "projectcode": "prjX",
+                     "silo": asset['silo'],
+                     "asset": ASSET,
+                     "family": instance.data['family'],
+                     "subset": subset["name"],
+                     "version": version["name"],
+                     "hierarchy": hierarchy,
+                     "representation": ext[1:]
                 }
             }
             representations.append(representation)
@@ -289,7 +296,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             self.log.info("Subset '%s' not found, creating.." % subset_name)
 
             _id = io.insert_one({
-                "schema": "avalon-core:subset-2.0",
+                "schema": "pype:subset-2.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": {},
@@ -315,7 +322,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         version_locations = [location for location in locations if
                              location is not None]
 
-        return {"schema": "avalon-core:version-2.0",
+        return {"schema": "pype:version-2.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,

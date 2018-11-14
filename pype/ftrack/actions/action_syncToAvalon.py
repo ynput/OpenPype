@@ -66,7 +66,10 @@ class SyncToAvalon(BaseAction):
             'schema': 'avalon-core:config-1.0',
             'tasks': [{'name': ''}],
             'apps': apps,
-            'template': {'work': '','publish':''}
+            # TODO redo work!!!
+            'template': {
+                'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}',
+                'publish':'{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'}
         }
 
         # Set project template
@@ -85,7 +88,7 @@ class SyncToAvalon(BaseAction):
 
         # Store info about project (FtrackId)
         io.update_many({'type': 'project','name': entityProj['full_name']},
-            {'$set':{'data':{'ftrackId':entityProj['id'],'entityType':entityProj.entity_type}}})
+            {'$set':{'data':{'code':entityProj['name'],'ftrackId':entityProj['id'],'entityType':entityProj.entity_type}}})
 
         # Store project Id
         projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
@@ -108,7 +111,8 @@ class SyncToAvalon(BaseAction):
             folderStruct = []
             parentId = None
             data = {'visualParent': parentId, 'parents': folderStruct,
-                    'tasks':None, 'ftrackId': None, 'entityType': None}
+                    'tasks':None, 'ftrackId': None, 'entityType': None,
+                    'hierarchy': ''}
 
             for asset in assets:
                 os.environ['AVALON_ASSET'] = asset['name']
@@ -141,7 +145,9 @@ class SyncToAvalon(BaseAction):
 
                 # Get parent ID and store it to data
                 parentId = io.find_one({'type': 'asset', 'name': asset['name']})['_id']
-                data.update({'visualParent': parentId, 'parents': folderStruct})
+                hierarchy = os.path.sep.join(folderStruct)
+                data.update({'visualParent': parentId, 'parents': folderStruct,
+                            'hierarchy': hierarchy})
                 folderStruct.append(asset['name'])
 
             ## FTRACK FEATURE - FTRACK MUST HAVE avalon_mongo_id FOR EACH ENTITY TYPE EXCEPT TASK
@@ -168,6 +174,7 @@ class SyncToAvalon(BaseAction):
 
         try:
             print("action <" + self.__class__.__name__ + "> is running")
+
             #TODO AVALON_PROJECTS, AVALON_ASSET, AVALON_SILO should be set up otherwise console log shows avalon debug
             importable = []
 

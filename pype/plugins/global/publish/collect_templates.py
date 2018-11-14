@@ -14,7 +14,9 @@ class CollectTemplates(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Inject the current working file"""
-        templates = Templates()
+        templates = Templates(
+            type=["anatomy"]
+        )
         context.data['anatomy'] = templates.anatomy
         for key in templates.anatomy:
             self.log.info(str(key) + ": " + str(templates.anatomy[key]))
