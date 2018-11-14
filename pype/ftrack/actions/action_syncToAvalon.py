@@ -5,6 +5,7 @@ import argparse
 import logging
 import os
 import ftrack_api
+import json
 from ftrack_action_handler import BaseAction
 
 from avalon import io, inventory, lib
@@ -160,7 +161,9 @@ class SyncToAvalon(BaseAction):
         job = session.create('Job', {
             'user': user,
             'status': 'running',
-            'data': {'description': 'Synch Ftrack to Avalon.'}
+            'data': json.dumps({
+                'description': 'Synch Ftrack to Avalon.'
+            })
         })
 
         try:

@@ -45,29 +45,37 @@ class ThumbToParent(BaseAction):
 
         try:
             for entity in entities:
+                parent = None
+                thumbid = None
                 if entity.entity_type.lower() == 'assetversion':
                     try:
                         parent = entity['task']
                     except:
                         par_ent = entity['link'][-2]
                         parent = session.get(par_ent['type'], par_ent['id'])
-
-                elif entity.entity_type.lower() == 'task':
-                    parent = entity['parent']
-
+                else:
+                    try:
+                        parent = entity['parent']
+                    except:
+                        print("Durin Action 'Thumb to Parent' went something wrong")
                 thumbid = entity['thumbnail_id']
 
                 if parent and thumbid:
                     parent['thumbnail_id'] = thumbid
+                    status = 'done'
+                else:
+                    status = 'failed'
 
             # inform the user that the job is done
-            job['status'] = 'done'
-            session.commit()
+            job['status'] = status or 'done'
 
         except:
             # fail the job if something goes wrong
             job['status'] = 'failed'
             raise
+
+        finally:
+            session.commit()
 
         return {
             'success': True,
