@@ -188,7 +188,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         else:
             self._invalid_input(self.user_input)
             self._invalid_input(self.api_input)
-            self.setError("We're unable to connect to Ftrack with these credentials")
+            self.setError("We're unable to sign in to Ftrack with these credentials")
 
     def open_ftrack(self):
         url = self.ftsite_input.text()

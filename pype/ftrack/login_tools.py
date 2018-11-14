@@ -28,31 +28,39 @@ class LoginServerHandler(BaseHTTPRequestHandler):
             message = """
                 <html>
                     <style type="text/css">
+
                         body {{
-                            max-width: 400px;
-                            margin: 30px auto;
-                            font-family: 'Open Sans', 'Droid Sans', Arial, Helvetica, sans-serif;
+                            background-color: #333;
                             text-align: center;
+                            color: #ccc;
+                            margin-top: 200px;
                         }}
 
                         h1 {{
-                            font-size: 20px;
-                            font-weight: normal;
+                            font-family: "DejaVu Sans";
+                            font-size: 36px;
                             margin: 20px 0;
                         }}
 
-                        p {{
-                            color: #999;
+                        h3 {{
+                            font-weight: normal;
+                            font-family: "DejaVu Sans";
                             margin: 30px 10px;
                         }}
+
+                        em {{
+                            color: #fff;
+                        }}
                     </style>
-                <body>
-                    <h1>Sign in to ftrack connect was successful</h1>
-                    <p>
-                        You signed in with username <em>{0}</em> and can now
-                        close this window.
-                    </p>
-                </body>
+                    <body>
+                        <h1>Sign in to Ftrack was successful</h1>
+                        <h3>
+                            You signed in with username <em>{0}</em>.
+                        </h3>
+                        <h3>
+                            You can close this window now.
+                        </h3>
+                    </body>
                 </html>
             """.format(api_user)
         else:
