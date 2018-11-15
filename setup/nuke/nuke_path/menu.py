@@ -8,6 +8,7 @@ for each in nuke.allNodes():
         each['file'].setValue(re.sub('[vV]\d+', rootVersion, each['file'].value()))
 '''
 nuke.knobDefault('onScriptSave', cmd)
+
 print '\n>>> menu.py: Function for automatic check of version in write nodes is added\n'
 
 ffmpeg_cmd = '''if nuke.env['LINUX']:
@@ -19,9 +20,9 @@ else:
 nuke.knobDefault('onScriptLoad', ffmpeg_cmd)
 
 
-# # run avalon's tool Workfiles
-# workfiles = '''from avalon.tools import workfiles
-# if nuke.Root().name() == 'Root':
-#     nuke.scriptClose()
-# workfiles.show(os.environ["AVALON_WORKDIR"])'''
-# nuke.knobDefault('onCreate', workfiles)
+# run avalon's tool Workfiles
+workfiles = '''from avalon.tools import workfiles
+if nuke.Root().name() == 'Root':
+    nuke.scriptClose()
+workfiles.show(os.environ["AVALON_WORKDIR"])'''
+nuke.knobDefault('onCreate', workfiles)
