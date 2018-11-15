@@ -1,3 +1,5 @@
+
+from avalon.tools import workfiles
 import nuke
 # auto fix version paths in write nodes following root name of script
 cmd = '''
@@ -20,9 +22,11 @@ else:
 nuke.knobDefault('onScriptLoad', ffmpeg_cmd)
 
 
-# run avalon's tool Workfiles
-workfiles = '''from avalon.tools import workfiles
-if nuke.Root().name() == 'Root':
-    nuke.scriptClose()
-workfiles.show(os.environ["AVALON_WORKDIR"])'''
-nuke.knobDefault('onCreate', workfiles)
+# # run avalon's tool Workfiles
+# workfiles = '''from avalon.tools import workfiles
+# if nuke.Root().name() == 'Root':
+#     nuke.scriptClear()
+# workfiles.show(os.environ["AVALON_WORKDIR"])'''
+# nuke.knobDefault('onCreate', workfiles)
+
+# workfiles.show(os.environ["AVALON_WORKDIR"])
