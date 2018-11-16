@@ -3,14 +3,9 @@ import os
 import nuke
 import pyblish.api
 import clique
-import ft_utils
-reload(ft_utils)
-
-global pre_name
-pre_name = ft_utils.get_paths_from_template(['shot.vfx.prerender'],
-                                            False)[0].split('_')[0]
 
 
+@pyblish.api.log
 class CollectNukeWrites(pyblish.api.ContextPlugin):
     """Collect all write nodes."""
 
@@ -35,7 +30,6 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
 
             # Create instance
             instance = pyblish.api.Instance(node.name())
-            instance.data["family"] = output_type
             instance.add(node)
             instance.data["label"] = node.name()
 
@@ -47,27 +41,28 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             if node["use_limit"].getValue():
                 start_frame = int(node["first"].getValue())
                 end_frame = int(node["last"].getValue())
-            print "writeNode collected: {}".format(node.name())
+
+            self.log.info("writeNode collected: {}".format(node.name()))
+
             # Add collection
             collection = None
-            try:
-                path = ""
-                if pre_name in node.name():
-                    path = ft_utils.convert_hashes_in_file_name(
-                        node['prerender_path'].getText())
-                else:
-                    path = nuke.filename(node)
-                path += " [{0}-{1}]".format(start_frame, end_frame)
-                collection = clique.parse(path)
-                ###################################################
-                '''possible place to start create mov publish write collection'''
-                ###################################################
-            except ValueError:
-                # Ignore the exception when the path does not match the
-                # collection.
-                pass
+            path = nuke.filename(node)
+            path += " [{0}-{1}]".format(start_frame, end_frame)
+            collection = clique.parse(path)
 
-            instance.data["collection"] = collection
+            instance.data.update({
+                "asset": os.environ["AVALON_ASSET"],  # todo: not a constant
+                "subset": subset,
+                "path": nuke.filename(node),
+                "outputDir": os.path.dirname(nuke.filename(node)),
+                "ext": output_type,  # todo: should be redundant
+                "label": node.name(),
+                "family": "write",
+                "publish": False,
+                "collection": collection,
+                "start_frame": start_frame,
+                "end_frame": end_frame
+            })
 
             instances.append(instance)
 
@@ -93,23 +88,19 @@ class CollectNukeWritesProcess(pyblish.api.ContextPlugin):
             for key, value in item.data.iteritems():
                 instance.data[key] = value
 
-            if pre_name not in item.data["name"]:
-                instance.data["label"] += " - write - local"
-                instance.data["families"] = ["write", "local"]
-            else:
-                instance.data["label"] += " - prerender - local"
-                instance.data["families"] = ["prerender", "local"]
+            instance.data["label"] += " - render - local"
+            instance.data["families"] = ["render", "local"]
 
             for node in item:
                 instance.add(node)
 
             # Adding/Checking publish attribute
-            if "process_local" not in node.knobs():
-                knob = nuke.Boolean_Knob("process_local", "Process Local")
+            if "render_local" not in node.knobs():
+                knob = nuke.Boolean_Knob("render_local", "Local rendering")
                 knob.setValue(False)
                 node.addKnob(knob)
 
-            value = bool(node["process_local"].getValue())
+            value = bool(node["render_local"].getValue())
 
             # Compare against selection
             selection = instance.context.data.get("selection", [])
@@ -122,7 +113,7 @@ class CollectNukeWritesProcess(pyblish.api.ContextPlugin):
             instance.data["publish"] = value
 
             def instanceToggled(instance, value):
-                instance[0]["process_local"].setValue(value)
+                instance[0]["render_local"].setValue(value)
 
             instance.data["instanceToggled"] = instanceToggled
 
