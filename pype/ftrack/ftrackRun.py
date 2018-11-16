@@ -32,6 +32,8 @@ parser.add_argument("--eventserver", action="store_true",
                     help="launch action server for ftrack")
 parser.add_argument("--logout", action="store_true",
                     help="launch action server for ftrack")
+parser.add_argument("--systray", action="store_true",
+                    help="launch action server for ftrack")
 
 kwargs, args = parser.parse_known_args()
 
@@ -43,6 +45,15 @@ else:
 
 if kwargs.eventserver:
     fname = os.path.join(os.environ["FTRACK_ACTION_SERVER"], "eventServer.py")
+    returncode = forward([
+        sys.executable, "-u", fname
+    ])
+
+elif kwargs.systray:
+    stud_config = os.getenv('PYPE_STUDIO_CONFIG')
+    items = [stud_config, "pype", "ftrack", "tray.py"]
+    fname = os.path.sep.join(items)
+
     returncode = forward([
         sys.executable, "-u", fname
     ])
