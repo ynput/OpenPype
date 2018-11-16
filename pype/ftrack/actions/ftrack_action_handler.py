@@ -240,6 +240,8 @@ class AppAction(object):
         os.environ["AVALON_APP"] = self.identifier
         os.environ["AVALON_APP_NAME"] = self.identifier + "_" + self.variant
 
+        os.environ["FTRACK_TASKID"] = id
+
         anatomy = t.anatomy
         io.install()
         hierarchy = io.find_one({"type": 'asset', "name": entity['parent']['name']})['data']['parents']
