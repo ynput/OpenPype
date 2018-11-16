@@ -6,6 +6,7 @@ import logging
 import os
 import ftrack_api
 import json
+import re
 from ftrack_action_handler import BaseAction
 
 from avalon import io, inventory, lib
@@ -54,6 +55,7 @@ class SyncToAvalon(BaseAction):
             print("action <" + self.__class__.__name__ + "> is running")
 
             #TODO AVALON_PROJECTS, AVALON_ASSET, AVALON_SILO should be set up otherwise console log shows avalon debug
+            self.setAvalonAttributes(session)
             self.importable = []
 
             # get from top entity in hierarchy all parent entities
@@ -105,6 +107,12 @@ class SyncToAvalon(BaseAction):
             'success': True,
             'message': "Synchronization was successfull"
         }
+    def setAvalonAttributes(self, session):
+        self.custom_attributes = []
+        all_avalon_attr = session.query('CustomAttributeGroup where name is "avalon"').one()
+        for cust_attr in all_avalon_attr['custom_attribute_configurations']:
+            if 'avalon_' not in cust_attr['key']:
+                self.custom_attributes.append(cust_attr)
 
     def getShotAsset(self, entity):
         if not (entity.entity_type in ['Task']):
@@ -150,7 +158,6 @@ class SyncToAvalon(BaseAction):
         eLinks = []
 
         ca_mongoid = 'avalon_mongo_id'
-        ca_tools = 'avalon_tools_env'
 
         # get needed info of entity and all parents
         for e in entity['link']:
@@ -171,8 +178,28 @@ class SyncToAvalon(BaseAction):
         ## ----- PROJECT ------
         # If project don't exists -> <Create project> ELSE <Update Config>
         avalon_project = io.find_one({"type": "project", "name": entityProj["full_name"]})
+        entity_type = entity.entity_type
 
-        tools = entity['custom_attributes'][ca_tools]
+        data = {}
+        data['ftrackId'] = entity['id']
+        data['entityType'] = entity_type
+
+        for cust_attr in self.custom_attributes:
+            if cust_attr['entity_type'].lower() in ['asset']:
+                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+
+            elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
+                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+
+            elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
+                # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
+                entity_type = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
+                # Get object id of entity type
+                ent_obj_type_id = session.query('ObjectType where name is "{}"'.format(entity_type)).one()['id']
+
+                if cust_attr['object_type_id'] == ent_obj_type_id:
+                    data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+
 
         if entity.entity_type.lower() in ['project']:
             # Set project Config
@@ -184,17 +211,13 @@ class SyncToAvalon(BaseAction):
                 io.update_many({'type': 'project','name': entityProj['full_name']},
                     {'$set':{'config':config}})
 
+            data['code'] = entity['name']
+
             # Store info about project (FtrackId)
             io.update_many({
                 'type': 'project',
-                'name': entity['full_name']
-                }, {
-                '$set':{'data':{
-                    'code':entity['name'],
-                    'ftrackId':entity['id'],
-                    'entityType':entity.entity_type,
-                    'tools':tools
-                }}})
+                'name': entity['full_name']},
+                {'$set':{'data':data}})
 
             projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
             if ca_mongoid in entity['custom_attributes']:
@@ -206,7 +229,7 @@ class SyncToAvalon(BaseAction):
 
         # Store project Id
         projectId = avalon_project["_id"]
-        
+
         ## ----- ASSETS ------
         # Presets:
         # TODO how to check if entity is Asset Library or AssetBuild?
@@ -241,15 +264,11 @@ class SyncToAvalon(BaseAction):
 
         hierarchy = os.path.sep.join(folderStruct)
 
-        data = {
-            'visualParent': parentId,
-            'parents': folderStruct,
-            'tasks': tasks,
-            'hierarchy': hierarchy,
-            'tools': tools,
-            'ftrackId': entity['id'],
-            'entityType': entity.entity_type
-        }
+        data['visualParent'] = parentId
+        data['parents'] = folderStruct
+        data['tasks'] = tasks
+        data['hierarchy'] = hierarchy
+
 
         name = self.checkName(entity['name'])
         os.environ['AVALON_ASSET'] = name
