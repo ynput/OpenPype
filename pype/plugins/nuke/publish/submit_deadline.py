@@ -20,7 +20,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder
     hosts = ["nuke"]
-    families = ["write.deadline"]
+    families = ["write", "render.deadline"]
 
     def process(self, instance):
 

@@ -6,7 +6,7 @@ class CollectNukeRenderMode(pyblish.api.InstancePlugin):
     """Collect current comp's render Mode
 
     Options:
-        renderlocal
+        local
         deadline
 
     Note that this value is set for each comp separately. When you save the
@@ -24,7 +24,7 @@ class CollectNukeRenderMode(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.4
     label = "Collect Render Mode"
     hosts = ["nuke"]
-    families = ["write"]
+    families = ["write", "render"]
 
     def process(self, instance):
         """Collect all image sequence tools"""
@@ -39,8 +39,9 @@ class CollectNukeRenderMode(pyblish.api.InstancePlugin):
 
         assert rendermode in options, "Must be supported render mode"
 
-        self.log.info("Render mode: {0}".format(rendermode))
-
         # Append family
-        family = "write.{0}".format(rendermode)
+        instance.data["families"].remove("render")
+        family = "render.{0}".format(rendermode)
         instance.data["families"].append(family)
+
+        self.log.info("Render mode: {0}".format(rendermode))

@@ -15,7 +15,7 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder
     label = "Render Local"
     hosts = ["nuke"]
-    families = ["write.local"]
+    families = ["write", "render.local"]
 
     def process(self, instance):
 
