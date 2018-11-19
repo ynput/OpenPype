@@ -6,6 +6,7 @@ import logging
 import collections
 import os
 import json
+import re
 
 import ftrack_api
 from ftrack_action_handler import BaseAction
@@ -31,24 +32,33 @@ class TestAction(BaseAction):
 
 
     def launch(self, session, entities, event):
-
-        for entity in entities:
-            index = 0
-            name = entity['components'][index]['name']
-            filetype = entity['components'][index]['file_type']
-            path = entity['components'][index]['component_locations'][0]['resource_identifier']
-
-            # entity['components'][index]['component_locations'][0]['resource_identifier'] = r"C:\Users\jakub.trllo\Desktop\test\exr\int_c022_lighting_v001_main_AO.%04d.exr"
-            location = entity['components'][0]['component_locations'][0]['location']
-            component = entity['components'][0]
+        entity = entities[0]
 
 
-            # print(location.get_filesystem_path(component))
+        entity_type = entity.entity_type
+        data = {}
+        """
+        custom_attributes = []
 
-            # for k in p:
-            #     print(100*"-")
-            #     print(k)
-            #     print(p[k])
+        all_avalon_attr = session.query('CustomAttributeGroup where name is "avalon"').one()
+        for cust_attr in all_avalon_attr['custom_attribute_configurations']:
+            if 'avalon_' not in cust_attr['key']:
+                custom_attributes.append(cust_attr)
+        """
+        for cust_attr in custom_attributes:
+            if cust_attr['entity_type'].lower() in ['asset']:
+                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+
+            elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
+                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+
+            elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
+                # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
+                entity_type = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
+                # Get object id of entity type
+                ent_obj_type_id = session.query('ObjectType where name is "{}"'.format(entity_type)).one()['id']
+                if cust_attr['type_id'] == ent_obj_type_id:
+                    data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
 
         return True
 
