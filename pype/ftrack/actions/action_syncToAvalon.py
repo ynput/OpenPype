@@ -6,6 +6,7 @@ import logging
 import os
 import ftrack_api
 import json
+import re
 from ftrack_action_handler import BaseAction
 
 from avalon import io, inventory, lib
@@ -26,136 +27,14 @@ class SyncToAvalon(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
+        discover = False
+        for entity in entities:
+            if entity.entity_type.lower() not in ['task', 'assetversion']:
+                discover = True
+                break
 
-        return True
+        return discover
 
-
-    def importToAvalon(self, session, entity):
-        eLinks = []
-        custAttrName = 'avalon_mongo_id'
-        # TODO read from file, which data are in scope???
-        # get needed info of entity and all parents
-
-        for e in entity['link']:
-            tmp = session.get(e['type'], e['id'])
-            if e['name'].find(" ") == -1:
-                name = e['name']
-            else:
-                name = e['name'].replace(" ", "-")
-                print("Name of "+tmp.entity_type+" - "+e['name']+" was changed to "+name)
-
-            eLinks.append({"type": tmp.entity_type, "name": name, "ftrackId": tmp['id']})
-
-        entityProj = session.get(eLinks[0]['type'], eLinks[0]['ftrackId'])
-
-        # set AVALON_PROJECT env
-        os.environ["AVALON_PROJECT"] = entityProj["full_name"]
-        os.environ["AVALON_ASSET"] = entityProj['full_name']
-
-        # Get apps from Ftrack / TODO Exceptions?!!!
-        apps = []
-        for app in entityProj['custom_attributes']['applications']:
-            try:
-                label = toml.load(lib.which_app(app))['label']
-                apps.append({'name':app, 'label':label})
-            except Exception as e:
-                print('Error with application {0} - {1}'.format(app, e))
-
-        # Set project Config
-        config = {
-            'schema': 'avalon-core:config-1.0',
-            'tasks': [{'name': ''}],
-            'apps': apps,
-            # TODO redo work!!!
-            'template': {
-                'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}',
-                'publish':'{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'}
-        }
-
-        # Set project template
-        template = {"schema": "avalon-core:inventory-1.0"}
-
-        # --- Create project and assets in Avalon ---
-        io.install()
-        ## ----- PROJECT ------
-        # If project don't exists -> <Create project> ELSE <Update Config>
-        if (io.find_one({'type': 'project',
-                'name': entityProj['full_name']}) is None):
-            inventory.save(entityProj['full_name'], config, template)
-        else:
-            io.update_many({'type': 'project','name': entityProj['full_name']},
-                {'$set':{'config':config}})
-
-        # Store info about project (FtrackId)
-        io.update_many({'type': 'project','name': entityProj['full_name']},
-            {'$set':{'data':{'code':entityProj['name'],'ftrackId':entityProj['id'],'entityType':entityProj.entity_type}}})
-
-        # Store project Id
-        projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
-        if custAttrName in entityProj['custom_attributes'] and entityProj['custom_attributes'][custAttrName] is '':
-            entityProj['custom_attributes'][custAttrName] = str(projectId)
-
-        # If entity is Project or have only 1 entity kill action
-        if (len(eLinks) > 1) and not (eLinks[-1]['type'] in ['Project']):
-
-            ## ----- ASSETS ------
-            # Presets:
-            # TODO how to check if entity is Asset Library or AssetBuild?
-            silo = 'Assets' if eLinks[-1]['type'] in ['AssetBuild', 'Library'] else 'Film'
-            os.environ['AVALON_SILO'] = silo
-            # Get list of assets without project
-            assets = []
-            for i in range(1, len(eLinks)):
-                assets.append(eLinks[i])
-
-            folderStruct = []
-            parentId = None
-            data = {'visualParent': parentId, 'parents': folderStruct,
-                    'tasks':None, 'ftrackId': None, 'entityType': None,
-                    'hierarchy': ''}
-
-            for asset in assets:
-                os.environ['AVALON_ASSET'] = asset['name']
-                data.update({'ftrackId': asset['ftrackId'], 'entityType': asset['type']})
-                # Get tasks of each asset
-                assetEnt = session.get('TypedContext', asset['ftrackId'])
-                tasks = []
-                for child in assetEnt['children']:
-                    if child.entity_type in ['Task']:
-                        tasks.append(child['name'])
-                data.update({'tasks': tasks})
-
-                # Try to find asset in current database
-                avalon_asset = io.find_one({'type': 'asset', 'name': asset['name']})
-                # Create if don't exists
-                if avalon_asset is None:
-                    inventory.create_asset(asset['name'], silo, data, projectId)
-                    print("Asset "+asset['name']+" - created")
-                # Raise error if it seems to be different ent. with same name
-                elif (avalon_asset['data']['ftrackId'] != data['ftrackId'] or
-                    avalon_asset['data']['visualParent'] != data['visualParent'] or
-                    avalon_asset['data']['parents'] != data['parents']):
-                        raise ValueError('Possibility of entity name duplication: {}'.format(asset['name']))
-                # Else update info
-                else:
-                    io.update_many({'type': 'asset','name': asset['name']},
-                        {'$set':{'data':data, 'silo': silo}})
-                    # TODO check if is asset in same folder!!! ???? FEATURE FOR FUTURE
-                    print("Asset "+asset["name"]+" - updated")
-
-                # Get parent ID and store it to data
-                parentId = io.find_one({'type': 'asset', 'name': asset['name']})['_id']
-                hierarchy = os.path.sep.join(folderStruct)
-                data.update({'visualParent': parentId, 'parents': folderStruct,
-                            'hierarchy': hierarchy})
-                folderStruct.append(asset['name'])
-
-            ## FTRACK FEATURE - FTRACK MUST HAVE avalon_mongo_id FOR EACH ENTITY TYPE EXCEPT TASK
-            # Set custom attribute to avalon/mongo id of entity (parentID is last)
-            if custAttrName in entity['custom_attributes'] and entity['custom_attributes'][custAttrName] is '':
-                entity['custom_attributes'][custAttrName] = str(parentId)
-
-        io.uninstall()
 
     def launch(self, session, entities, event):
         message = ""
@@ -176,23 +55,36 @@ class SyncToAvalon(BaseAction):
             print("action <" + self.__class__.__name__ + "> is running")
 
             #TODO AVALON_PROJECTS, AVALON_ASSET, AVALON_SILO should be set up otherwise console log shows avalon debug
-            importable = []
+            self.setAvalonAttributes(session)
+            self.importable = []
 
-            def getShotAsset(entity):
-                if not (entity.entity_type in ['Task']):
-                    if entity not in importable:
-                        importable.append(entity)
+            # get from top entity in hierarchy all parent entities
+            top_entity = entities[0]['link']
+            if len(top_entity) > 1:
+                for e in top_entity:
+                    parent_entity = session.get(e['type'], e['id'])
+                    self.importable.append(parent_entity)
 
-                    if entity['children']:
-                        childrens = entity['children']
-                        for child in childrens:
-                            getShotAsset(child)
-
-            # get all entities separately/unique
+            # get all child entities separately/unique
             for entity in entities:
-                getShotAsset(entity)
+                self.getShotAsset(entity)
 
-            for e in importable:
+            # Check duplicate name - raise error if found
+            all_names = {}
+            duplicates = []
+
+            for e in self.importable:
+                name = self.checkName(e['name'])
+                if name in all_names:
+                    duplicates.append("'{}'-'{}'".format(all_names[name], e['name']))
+                else:
+                    all_names[name] = e['name']
+
+            if len(duplicates) > 0:
+                raise ValueError("Unable to sync: Entity name duplication: {}".format(", ".join(duplicates)))
+
+            # Import all entities to Avalon DB
+            for e in self.importable:
                 self.importToAvalon(session, e)
 
             job['status'] = 'done'
@@ -215,6 +107,200 @@ class SyncToAvalon(BaseAction):
             'success': True,
             'message': "Synchronization was successfull"
         }
+    def setAvalonAttributes(self, session):
+        self.custom_attributes = []
+        all_avalon_attr = session.query('CustomAttributeGroup where name is "avalon"').one()
+        for cust_attr in all_avalon_attr['custom_attribute_configurations']:
+            if 'avalon_' not in cust_attr['key']:
+                self.custom_attributes.append(cust_attr)
+
+    def getShotAsset(self, entity):
+        if not (entity.entity_type in ['Task']):
+            if entity not in self.importable:
+                self.importable.append(entity)
+
+            if entity['children']:
+                childrens = entity['children']
+                for child in childrens:
+                    self.getShotAsset(child)
+
+    def checkName(self, input_name):
+        if input_name.find(" ") == -1:
+            name = input_name
+        else:
+            name = input_name.replace(" ", "-")
+            print("Name of {} was changed to {}".format(input_name, name))
+        return name
+
+    def getConfig(self, entity):
+        apps = []
+        for app in entity['custom_attributes']['applications']:
+            try:
+                label = toml.load(lib.which_app(app))['label']
+                apps.append({'name':app, 'label':label})
+            except Exception as e:
+                print('Error with application {0} - {1}'.format(app, e))
+
+        config = {
+            'schema': 'avalon-core:config-1.0',
+            'tasks': [{'name': ''}],
+            'apps': apps,
+            # TODO redo work!!!
+            'template': {
+                'workfile': '{asset[name]}_{task[name]}_{version:0>3}<_{comment}>',
+                'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}',
+                'publish':'{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'}
+        }
+        return config
+
+
+    def importToAvalon(self, session, entity):
+        eLinks = []
+
+        ca_mongoid = 'avalon_mongo_id'
+
+        # get needed info of entity and all parents
+        for e in entity['link']:
+            tmp = session.get(e['type'], e['id'])
+            eLinks.append(tmp)
+
+        entityProj = eLinks[0]
+
+        # set AVALON_PROJECT env
+        os.environ["AVALON_PROJECT"] = entityProj["full_name"]
+        os.environ["AVALON_ASSET"] = entityProj['full_name']
+
+        # Set project template
+        template = {"schema": "avalon-core:inventory-1.0"}
+
+        # --- Begin: PUSH TO Avalon ---
+        io.install()
+        ## ----- PROJECT ------
+        # If project don't exists -> <Create project> ELSE <Update Config>
+        avalon_project = io.find_one({"type": "project", "name": entityProj["full_name"]})
+        entity_type = entity.entity_type
+
+        data = {}
+        data['ftrackId'] = entity['id']
+        data['entityType'] = entity_type
+
+        for cust_attr in self.custom_attributes:
+            if cust_attr['entity_type'].lower() in ['asset']:
+                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+
+            elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
+                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+
+            elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
+                # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
+                entity_type = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
+                # Get object id of entity type
+                ent_obj_type_id = session.query('ObjectType where name is "{}"'.format(entity_type)).one()['id']
+
+                if cust_attr['object_type_id'] == ent_obj_type_id:
+                    data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+
+
+        if entity.entity_type.lower() in ['project']:
+            # Set project Config
+            config = self.getConfig(entity)
+
+            if avalon_project is None:
+                inventory.save(entityProj['full_name'], config, template)
+            else:
+                io.update_many({'type': 'project','name': entityProj['full_name']},
+                    {'$set':{'config':config}})
+
+            data['code'] = entity['name']
+
+            # Store info about project (FtrackId)
+            io.update_many({
+                'type': 'project',
+                'name': entity['full_name']},
+                {'$set':{'data':data}})
+
+            projectId = io.find_one({"type": "project", "name": entityProj["full_name"]})["_id"]
+            if ca_mongoid in entity['custom_attributes']:
+                entity['custom_attributes'][ca_mongoid] = str(projectId)
+            else:
+                print("Custom attribute for <{}> is not created.".format(entity['name']))
+            io.uninstall()
+            return
+
+        # Store project Id
+        projectId = avalon_project["_id"]
+
+        ## ----- ASSETS ------
+        # Presets:
+        # TODO how to check if entity is Asset Library or AssetBuild?
+        if entity.entity_type in ['AssetBuild', 'Library']:
+            silo = 'Assets'
+        else:
+            silo = 'Film'
+
+        os.environ['AVALON_SILO'] = silo
+
+        # Get list of parents without project
+        parents = []
+        for i in range(1, len(eLinks)-1):
+            parents.append(eLinks[i])
+
+        # Get info for 'Data' in Avalon DB
+        tasks = []
+        for child in entity['children']:
+            if child.entity_type in ['Task']:
+                tasks.append(child['name'])
+
+        folderStruct = []
+        parentId = None
+
+        for parent in parents:
+            name = self.checkName(parent['name'])
+            folderStruct.append(name)
+            parentId = io.find_one({'type': 'asset', 'name': name})['_id']
+            if parent['parent'].entity_type != 'project' and parentId is None:
+                self.importToAvalon(parent)
+                parentId = io.find_one({'type': 'asset', 'name': name})['_id']
+
+        hierarchy = os.path.sep.join(folderStruct)
+
+        data['visualParent'] = parentId
+        data['parents'] = folderStruct
+        data['tasks'] = tasks
+        data['hierarchy'] = hierarchy
+
+
+        name = self.checkName(entity['name'])
+        os.environ['AVALON_ASSET'] = name
+
+        # Try to find asset in current database
+        avalon_asset = io.find_one({'type': 'asset', 'name': name})
+        # Create if don't exists
+        if avalon_asset is None:
+            inventory.create_asset(name, silo, data, projectId)
+            print("Asset {} - created".format(name))
+        # Raise error if it seems to be different ent. with same name
+
+        elif (avalon_asset['data']['ftrackId'] != data['ftrackId'] or
+            avalon_asset['data']['visualParent'] != data['visualParent'] or
+            avalon_asset['data']['parents'] != data['parents']):
+                raise ValueError('Entity <{}> is not same'.format(name))
+        # Else update info
+        else:
+            io.update_many({'type': 'asset','name': name},
+                {'$set':{'data':data, 'silo': silo}})
+            # TODO check if is asset in same folder!!! ???? FEATURE FOR FUTURE
+            print("Asset {} - updated".format(name))
+
+        ## FTRACK FEATURE - FTRACK MUST HAVE avalon_mongo_id FOR EACH ENTITY TYPE EXCEPT TASK
+        # Set custom attribute to avalon/mongo id of entity (parentID is last)
+        if ca_mongoid in entity['custom_attributes']:
+            entity['custom_attributes'][ca_mongoid] = str(parentId)
+        else:
+            print("Custom attribute for <{}> is not created.".format(entity['name']))
+
+        io.uninstall()
+        session.commit()
 
 
 def register(session, **kw):

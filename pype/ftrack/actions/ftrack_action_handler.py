@@ -11,7 +11,8 @@ from avalon import session as sess
 import acre
 
 from app.api import (
-    Templates
+    Templates,
+    Logger
 )
 
 t = Templates(
@@ -36,6 +37,8 @@ class AppAction(object):
         self.logger = logging.getLogger(
             '{0}.{1}'.format(__name__, self.__class__.__name__)
         )
+
+        # self.logger = Logger.getLogger(__name__)
 
         if label is None:
             raise ValueError('Action missing label.')
@@ -418,6 +421,9 @@ class BaseAction(object):
         '''Return current session.'''
         return self._session
 
+    def reset_session(self):
+        self.session.reset()
+
     def register(self):
         '''Registers the action, subscribing the the discover and launch topics.'''
         self.session.event_hub.subscribe(
@@ -518,6 +524,7 @@ class BaseAction(object):
         )
 
     def _launch(self, event):
+        self.reset_session()
         args = self._translate_event(
             self.session, event
         )
