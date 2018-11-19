@@ -53,7 +53,7 @@ class AvalonIdAttribute(BaseAction):
             custAttrName = 'avalon_mongo_id'
             custAttrLabel = 'Avalon/Mongo Id'
             # Types that don't need object_type_id
-            base = {'show','asset','assetversion'}
+            base = {'show'}
             # Don't create custom attribute on these entity types:
             exceptions = ['task','milestone','library']
             exceptions.extend(base)
