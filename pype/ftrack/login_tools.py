@@ -2,7 +2,7 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse
 import webbrowser
 import functools
-from PyQt5 import QtCore
+from app.vendor.Qt import QtCore
 
 # class LoginServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 class LoginServerHandler(BaseHTTPRequestHandler):
@@ -82,7 +82,7 @@ class LoginServerThread(QtCore.QThread):
     '''Login server thread.'''
 
     # Login signal.
-    loginSignal = QtCore.pyqtSignal(object, object, object)
+    loginSignal = QtCore.Signal(object, object, object)
 
 
     def start(self, url):

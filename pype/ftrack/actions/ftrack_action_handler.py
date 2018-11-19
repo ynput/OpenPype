@@ -11,7 +11,8 @@ from avalon import session as sess
 import acre
 
 from app.api import (
-    Templates
+    Templates,
+    Logger
 )
 
 t = Templates(
@@ -36,6 +37,8 @@ class AppAction(object):
         self.logger = logging.getLogger(
             '{0}.{1}'.format(__name__, self.__class__.__name__)
         )
+
+        # self.logger = Logger.getLogger(__name__)
 
         if label is None:
             raise ValueError('Action missing label.')
@@ -62,7 +65,7 @@ class AppAction(object):
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover and source.user.username={0}'.format(
                 self.session.api_user
-                ), self._discover
+            ), self._discover
         )
 
         self.session.event_hub.subscribe(
@@ -196,7 +199,7 @@ class AppAction(object):
 
         response = self.launch(
             self.session, *args
-            )
+        )
 
         return self._handle_result(
             self.session, response, *args
@@ -244,7 +247,8 @@ class AppAction(object):
 
         anatomy = t.anatomy
         io.install()
-        hierarchy = io.find_one({"type": 'asset', "name": entity['parent']['name']})['data']['parents']
+        hierarchy = io.find_one({"type": 'asset', "name": entity['parent']['name']})[
+            'data']['parents']
         io.uninstall()
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
@@ -262,9 +266,11 @@ class AppAction(object):
 
         # TODO Add paths to avalon setup from tomls
         if self.identifier == 'maya':
-            os.environ['PYTHONPATH'] += os.pathsep + os.path.join(os.getenv("AVALON_CORE"), 'setup', 'maya')
+            os.environ['PYTHONPATH'] += os.pathsep + \
+                os.path.join(os.getenv("AVALON_CORE"), 'setup', 'maya')
         elif self.identifier == 'nuke':
-            os.environ['NUKE_PATH'] = os.pathsep + os.path.join(os.getenv("AVALON_CORE"), 'setup', 'nuke')
+            os.environ['NUKE_PATH'] = os.pathsep + \
+                os.path.join(os.getenv("AVALON_CORE"), 'setup', 'nuke')
         # config = toml.load(lib.which_app(self.identifier + "_" + self.variant))
 
         env = os.environ
@@ -278,8 +284,8 @@ class AppAction(object):
         tools_attr = [os.environ["AVALON_APP_NAME"]]
         for parent in reversed(parents):
             # check if the attribute is empty, if not use it
-            if parent['custom_attributes']['avalon_tools_env']:
-                tools_attr.extend(parent['custom_attributes']['avalon_tools_env'])
+            if parent['custom_attributes']['tools_env']:
+                tools_attr.extend(parent['custom_attributes']['tools_env'])
                 break
 
         tools_env = acre.get_tools(tools_attr)
@@ -417,12 +423,15 @@ class BaseAction(object):
         '''Return current session.'''
         return self._session
 
+    def reset_session(self):
+        self.session.reset()
+
     def register(self):
         '''Registers the action, subscribing the the discover and launch topics.'''
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover and source.user.username={0}'.format(
                 self.session.api_user
-                ), self._discover
+            ), self._discover
         )
 
         self.session.event_hub.subscribe(
@@ -444,7 +453,8 @@ class BaseAction(object):
         )
 
         if accepts:
-            self.logger.info(u'Discovering action with selection: {0}'.format(args[1]['data'].get('selection', [])))
+            self.logger.info(u'Discovering action with selection: {0}'.format(
+                args[1]['data'].get('selection', [])))
             return {
                 'items': [{
                     'label': self.label,
@@ -516,6 +526,7 @@ class BaseAction(object):
         )
 
     def _launch(self, event):
+        self.reset_session()
         args = self._translate_event(
             self.session, event
         )

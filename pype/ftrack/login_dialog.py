@@ -1,7 +1,7 @@
 import sys
 import os
 import requests
-from PyQt5 import QtCore, QtGui, QtWidgets
+from app.vendor.Qt import QtCore, QtGui, QtWidgets
 from app import style
 from . import credentials, login_tools
 
@@ -11,7 +11,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
     SIZE_W = 300
     SIZE_H = 230
 
-    loginSignal = QtCore.pyqtSignal(object, object, object)
+    loginSignal = QtCore.Signal(object, object, object)
     _login_server_thread = None
     inputs = []
     buttons = []
