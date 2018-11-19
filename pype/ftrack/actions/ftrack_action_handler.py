@@ -65,7 +65,7 @@ class AppAction(object):
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover and source.user.username={0}'.format(
                 self.session.api_user
-            ), self._discover
+                ), self._discover
         )
 
         self.session.event_hub.subscribe(
@@ -199,7 +199,7 @@ class AppAction(object):
 
         response = self.launch(
             self.session, *args
-        )
+            )
 
         return self._handle_result(
             self.session, response, *args
@@ -245,8 +245,7 @@ class AppAction(object):
 
         anatomy = t.anatomy
         io.install()
-        hierarchy = io.find_one({"type": 'asset', "name": entity['parent']['name']})[
-            'data']['parents']
+        hierarchy = io.find_one({"type": 'asset', "name": entity['parent']['name']})['data']['parents']
         io.uninstall()
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
@@ -264,11 +263,9 @@ class AppAction(object):
 
         # TODO Add paths to avalon setup from tomls
         if self.identifier == 'maya':
-            os.environ['PYTHONPATH'] += os.pathsep + \
-                os.path.join(os.getenv("AVALON_CORE"), 'setup', 'maya')
+            os.environ['PYTHONPATH'] += os.pathsep + os.path.join(os.getenv("AVALON_CORE"), 'setup', 'maya')
         elif self.identifier == 'nuke':
-            os.environ['NUKE_PATH'] = os.pathsep + \
-                os.path.join(os.getenv("AVALON_CORE"), 'setup', 'nuke')
+            os.environ['NUKE_PATH'] = os.pathsep + os.path.join(os.getenv("AVALON_CORE"), 'setup', 'nuke')
         # config = toml.load(lib.which_app(self.identifier + "_" + self.variant))
 
         env = os.environ
@@ -429,7 +426,7 @@ class BaseAction(object):
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover and source.user.username={0}'.format(
                 self.session.api_user
-            ), self._discover
+                ), self._discover
         )
 
         self.session.event_hub.subscribe(
@@ -451,8 +448,7 @@ class BaseAction(object):
         )
 
         if accepts:
-            self.logger.info(u'Discovering action with selection: {0}'.format(
-                args[1]['data'].get('selection', [])))
+            self.logger.info(u'Discovering action with selection: {0}'.format(args[1]['data'].get('selection', [])))
             return {
                 'items': [{
                     'label': self.label,
