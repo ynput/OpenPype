@@ -63,8 +63,6 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 knob.setValue(False)
                 node.addKnob(knob)
 
-            value = bool(node["render_local"].getValue())
-
             # Compare against selection
             selection = instance.context.data.get("selection", [])
             if selection:
@@ -73,11 +71,8 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 else:
                     value = False
 
-            def instanceToggled(instance, value):
-                instance[0]["render_local"].setValue(value)
 
             instance.data.update({
-                "instanceToggled": instanceToggled,
                 "asset": os.environ["AVALON_ASSET"],  # todo: not a constant
                 "path": nuke.filename(node),
                 "subset": subset,

@@ -24,7 +24,7 @@ class CollectNukeRenderMode(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.4
     label = "Collect Render Mode"
     hosts = ["nuke"]
-    families = ["write", "render"]
+    families = ["write", "render.local"]
 
     def process(self, instance):
         """Collect all image sequence tools"""
