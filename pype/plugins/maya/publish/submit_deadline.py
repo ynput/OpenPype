@@ -92,7 +92,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit available render layers to Deadline
 
     Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable AVALON_DEADLINE
+    supplied via the environment variable DEADLINE_REST_URL
 
     """
 
@@ -103,9 +103,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
-                                          "http://localhost:8082")
-        assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        try:
+            deadline_url = os.environ["DEADLINE_REST_URL"]
+        except KeyError:
+            self.log.error("Deadline REST API url not found.")
+
+        # AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+        #                                  "http://localhost:8082")
+        # assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
 
         context = instance.context
         workspace = context.data["workspaceDir"]
@@ -240,7 +245,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(AVALON_DEADLINE)
+        url = "{}/api/jobs".format(deadline_url)
         response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)
