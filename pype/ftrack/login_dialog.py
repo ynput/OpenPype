@@ -287,16 +287,8 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         self.close()
 
 
-class Login_Dialog(Login_Dialog_ui):
-    def __init__(self):
-        super(Login_Dialog, self).__init__()
-
-
-def getApp():
-    return QtWidgets.QApplication(sys.argv)
-
 def run_login():
-    app = getApp()
-    ui = Login_Dialog()
+    app = QtWidgets.QApplication(sys.argv)
+    ui = Login_Dialog_ui()
     ui.show()
     app.exec_()
