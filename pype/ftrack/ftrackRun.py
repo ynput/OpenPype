@@ -10,22 +10,27 @@ from pype.ftrack import credentials, login_dialog as login_dialog
 
 # Validation if alredy logged into Ftrack
 class FtrackRunner:
-    def __init__(self):
-        # self.app = QtWidgets.QApplication(sys.argv)
-        # self.loginWidget = login_dialog()
-        # self.app.exec_()
+    def __init__(self, parent=None):
+        self.parent = parent
+        self.parent.loginWidget = login_dialog.Login_Dialog_ui()
+
         # try:
         #     self.validate()
         # except Exception as e:
         #     print(e)
-        self.setServer()
-        self.run_login()
+
+        # self.setServer()
         self.validate()
 
-    def run_login(self):
-        thread = threading.Thread(target=self.runServer, args=())
-        thread.daemon = True
-        thread.start()
+    def showLoginWidget(self):
+        # self.parent.loginWidget.exec_()
+
+        # self.parent.loginWidget.show()
+        # self.parent.loginWidget.showMe()
+        test = login_dialog.Login_Dialog_ui()
+        test.show()
+        del(test)
+
 
     def validate(self):
         validation = False
@@ -37,9 +42,11 @@ class FtrackRunner:
                     cred['apiKey']
                 )
                 if validation is False:
-                    login_dialog.run_login()
+                    self.showLoginWidget()
+                    # login_dialog.run_login()
             else:
-                login_dialog.run_login()
+                self.showLoginWidget()
+                # login_dialog.run_login()
 
         except Exception as e:
             print(e)
@@ -54,7 +61,6 @@ class FtrackRunner:
         print("Logged out of Ftrack")
 
     def trayMenu(self, parent):
-
         # Menu for Tray App
         menu = QtWidgets.QMenu('Ftrack', parent)
         menu.setProperty('submenu', 'on')

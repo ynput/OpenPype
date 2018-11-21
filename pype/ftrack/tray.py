@@ -1,7 +1,7 @@
 import os
 import sys
 import textwrap
-from pype.ftrack.ftrackRun import FtrackRunner
+from pype.ftrack.ftrackRun import FtrackRunner, login_dialog
 from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
 
@@ -9,16 +9,17 @@ from app.vendor.Qt import QtCore, QtGui, QtWidgets
 class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
     def __init__(self, icon, parent=None):
         QtWidgets.QSystemTrayIcon.__init__(self, icon, parent)
-
+        
         self.parent = parent
         self.tray = QtWidgets.QSystemTrayIcon(icon, parent)
         self.tray.setToolTip("Avalon Launcher")
+
 
         self.menu = QtWidgets.QMenu(self.parent)
         self.menu.setStyleSheet(style.load_stylesheet())
 
         # TODO - Recognize that ftrack is used:
-        self.ftrack = FtrackRunner()
+        self.ftrack = FtrackRunner(self)
         self.menu.addMenu(self.ftrack.trayMenu(self.menu))
 
         aExit = QtWidgets.QAction("Exit", self)
@@ -26,6 +27,9 @@ class SystemTrayIcon(QtWidgets.QSystemTrayIcon):
         self.menu.addAction(aExit)
 
         self.setContextMenu(self.menu)
+
+        # self.loginWidget = login_dialog.Login_Dialog_ui()
+        # self.loginWidget.show()
 
     def eventFilter(self, object, event):
         print(self, object, event)

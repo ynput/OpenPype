@@ -17,7 +17,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
     buttons = []
     labels = []
 
-    def __init__(self):
+    def __init__(self, parent=None):
 
         super().__init__()
         self.loginSignal.connect(self.loginWithCredentials)
@@ -37,6 +37,9 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         self.setLayout(self._main())
         self.setWindowTitle('FTrack Login')
 
+        # self.showMe()
+
+    def showMe(self):
         self.show()
 
     def _main(self):
@@ -284,7 +287,8 @@ class Login_Dialog_ui(QtWidgets.QWidget):
 
 
     def _close_widget(self):
-        self.close()
+        # self.close()
+        self.hide()
 
 
 def run_login():
