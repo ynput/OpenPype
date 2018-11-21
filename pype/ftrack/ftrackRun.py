@@ -10,27 +10,19 @@ from pype.ftrack import credentials, login_dialog as login_dialog
 
 # Validation if alredy logged into Ftrack
 class FtrackRunner:
-    def __init__(self, parent=None):
+    def __init__(self, main_parent=None, parent=None):
+
         self.parent = parent
-        self.parent.loginWidget = login_dialog.Login_Dialog_ui()
+        self.loginWidget = login_dialog.Login_Dialog_ui()
 
-        # try:
-        #     self.validate()
-        # except Exception as e:
-        #     print(e)
-
-        # self.setServer()
-        self.validate()
+        self.setServer()
+        try:
+            self.validate()
+        except Exception as e:
+            print(e)
 
     def showLoginWidget(self):
-        # self.parent.loginWidget.exec_()
-
-        # self.parent.loginWidget.show()
-        # self.parent.loginWidget.showMe()
-        test = login_dialog.Login_Dialog_ui()
-        test.show()
-        del(test)
-
+        self.loginWidget.show()
 
     def validate(self):
         validation = False
@@ -43,18 +35,18 @@ class FtrackRunner:
                 )
                 if validation is False:
                     self.showLoginWidget()
-                    # login_dialog.run_login()
             else:
                 self.showLoginWidget()
-                # login_dialog.run_login()
 
         except Exception as e:
+            print("We are unable to connect to Ftrack")
             print(e)
 
         validation = credentials._check_credentials()
-        if not validation:
-            print("We are unable to connect to Ftrack")
-            sys.exit()
+        if validation is True:
+            print("You are connected to Ftrack")
+        else:
+            print("Please sign in")
 
     def logout(self):
         credentials._clear_credentials()

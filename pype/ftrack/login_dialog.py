@@ -19,7 +19,8 @@ class Login_Dialog_ui(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
 
-        super().__init__()
+        super(Login_Dialog_ui, self).__init__(parent)
+
         self.loginSignal.connect(self.loginWithCredentials)
         self._translate = QtCore.QCoreApplication.translate
 
@@ -36,11 +37,6 @@ class Login_Dialog_ui(QtWidgets.QWidget):
 
         self.setLayout(self._main())
         self.setWindowTitle('FTrack Login')
-
-        # self.showMe()
-
-    def showMe(self):
-        self.show()
 
     def _main(self):
         self.main = QtWidgets.QVBoxLayout()
@@ -166,15 +162,15 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         entity.setStyleSheet("border: 1px solid red;")
 
     def enter_credentials(self):
-        user = self.user_input.text().strip()
-        api = self.api_input.text().strip()
+        username = self.user_input.text().strip()
+        apiKey = self.api_input.text().strip()
         msg = "You didn't enter "
         missing = []
-        if user == "":
+        if username == "":
             missing.append("Username")
             self._invalid_input(self.user_input)
 
-        if api == "":
+        if apiKey == "":
             missing.append("API Key")
             self._invalid_input(self.api_input)
 
@@ -182,7 +178,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
             self.setError("{0} {1}".format(msg, " and ".join(missing)))
             return
 
-        verification = credentials._check_credentials(user, api)
+        verification = credentials._check_credentials(username, apiKey)
 
         if verification:
             credentials._save_credentials(username, apiKey)
@@ -285,14 +281,9 @@ class Login_Dialog_ui(QtWidgets.QWidget):
             credentials._set_env(username, apiKey)
             self._close_widget()
 
+    def closeEvent(self, event):
+        event.ignore()
+        self._close_widget()
 
     def _close_widget(self):
-        # self.close()
         self.hide()
-
-
-def run_login():
-    app = QtWidgets.QApplication(sys.argv)
-    ui = Login_Dialog_ui()
-    ui.show()
-    app.exec_()
