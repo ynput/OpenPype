@@ -19,8 +19,13 @@ class Login_Dialog_ui(QtWidgets.QWidget):
 
     def __init__(self, parent=None):
 
-        super(Login_Dialog_ui, self).__init__(parent)
+        super(Login_Dialog_ui, self).__init__()
 
+        self.parent = parent
+
+        self.setWindowIcon(self.parent.parent.icon)
+        self.setWindowFlags(QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowMinimizeButtonHint)
+        
         self.loginSignal.connect(self.loginWithCredentials)
         self._translate = QtCore.QCoreApplication.translate
 
@@ -33,10 +38,11 @@ class Login_Dialog_ui(QtWidgets.QWidget):
 
         self.resize(self.SIZE_W, self.SIZE_H)
         self.setMinimumSize(QtCore.QSize(self.SIZE_W, self.SIZE_H))
+        self.setMaximumSize(QtCore.QSize(self.SIZE_W+100, self.SIZE_H+100))
         self.setStyleSheet(style.load_stylesheet())
 
         self.setLayout(self._main())
-        self.setWindowTitle('FTrack Login')
+        self.setWindowTitle('Pype - Ftrack Login')
 
     def _main(self):
         self.main = QtWidgets.QVBoxLayout()
@@ -279,6 +285,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         if verification is True:
             credentials._save_credentials(username, apiKey)
             credentials._set_env(username, apiKey)
+            self.parent.loginChange()
             self._close_widget()
 
     def closeEvent(self, event):
