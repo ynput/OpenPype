@@ -12,7 +12,7 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
     hosts = ["maya"]
     families = ["colorbleed.renderlayer"]
 
-    def process(self, instance):
+    def process(self, context):
 
         AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
                                           "http://localhost:8082")
