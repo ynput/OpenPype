@@ -2,6 +2,7 @@ import pyblish.api
 
 import avalon.api as api
 from avalon.vendor import requests
+from colorbleed.plugin import contextplugin_should_run
 
 
 class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
@@ -13,6 +14,10 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
     families = ["colorbleed.renderlayer"]
 
     def process(self, context):
+
+        # Workaround bug pyblish-base#250
+        if not contextplugin_should_run(self, context):
+            return
 
         AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
                                           "http://localhost:8082")
