@@ -22,8 +22,8 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         try:
             render_globals = cmds.ls("renderglobalsDefault")[0]
         except IndexError:
-            self.log.error("Cannot collect renderlayers without "
-                           "renderGlobals node")
+            self.log.info("Skipping renderlayer collection, no "
+                          "renderGlobalsDefault found..")
             return
 
         # Get all valid renderlayers

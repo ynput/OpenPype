@@ -29,7 +29,8 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         # Get VRay Scene instance
         vray_scenes = host.lsattr("family", "colorbleed.vrayscene")
         if not vray_scenes:
-            self.log.info("No instance found of family: `colorbleed.vrayscene`")
+            self.log.info("Skipping vrayScene collection, no "
+                          "colorbleed.vrayscene instance found..")
             return
 
         assert len(vray_scenes) == 1, "Multiple vrayscene instances found!"
