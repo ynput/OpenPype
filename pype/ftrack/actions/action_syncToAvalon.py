@@ -292,10 +292,11 @@ class SyncToAvalon(BaseAction):
             # TODO check if is asset in same folder!!! ???? FEATURE FOR FUTURE
             print("Asset {} - updated".format(name))
 
+        entityId = io.find_one({'type': 'asset', 'name': name})['_id']
         ## FTRACK FEATURE - FTRACK MUST HAVE avalon_mongo_id FOR EACH ENTITY TYPE EXCEPT TASK
         # Set custom attribute to avalon/mongo id of entity (parentID is last)
         if ca_mongoid in entity['custom_attributes']:
-            entity['custom_attributes'][ca_mongoid] = str(parentId)
+            entity['custom_attributes'][ca_mongoid] = str(entityId)
         else:
             print("Custom attribute for <{}> is not created.".format(entity['name']))
 
