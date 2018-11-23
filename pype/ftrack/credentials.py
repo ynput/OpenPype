@@ -49,6 +49,7 @@ def _clear_credentials():
 def _set_env(username, apiKey):
     os.environ['FTRACK_API_USER'] = username
     os.environ['FTRACK_API_KEY'] = apiKey
+    os.environ['FTRACK_APIKEY'] = apiKey
 
 def _check_credentials(username=None, apiKey=None):
 

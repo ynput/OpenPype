@@ -123,6 +123,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             instance.data.update(data)
 
+
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
