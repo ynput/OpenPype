@@ -8,7 +8,7 @@ from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
 from pype.ftrack import credentials, login_dialog as login_dialog
 from app.api import Logger
-import actionServer, eventServer
+from FtrackServer import FtrackServer
 
 log = Logger.getLogger(__name__)
 # Validation if alredy logged into Ftrack
@@ -18,9 +18,9 @@ class FtrackRunner:
         self.parent = parent
         self.loginWidget = login_dialog.Login_Dialog_ui(self)
         self.actionThread = None
-        self.actionServer = actionServer.FtrackActionServer()
+        self.actionServer = FtrackServer('action')
         self.eventThread = None
-        self.eventServer = eventServer.FtrackEventServer()
+        self.eventServer = FtrackServer('event')
 
         self.boolLogged = False
         self.boolActionServer = False
@@ -84,7 +84,7 @@ class FtrackRunner:
         self.setMenuVisibility()
 
     def setActionServer(self):
-        self.actionServer.run_action_server()
+        self.actionServer.run_server()
 
     def resetActionServer(self):
         self.stopActionServer()
@@ -92,7 +92,7 @@ class FtrackRunner:
 
     def stopActionServer(self):
         try:
-            self.actionServer.stop_action_session()
+            self.actionServer.stop_session()
             if self.actionThread is not None:
                 self.actionThread.join()
                 self.actionThread = None
@@ -115,7 +115,7 @@ class FtrackRunner:
         self.setMenuVisibility()
 
     def setEventServer(self):
-        self.eventServer.run_event_server()
+        self.eventServer.run_server()
 
     def resetEventServer(self):
         self.stopEventServer()
@@ -123,7 +123,7 @@ class FtrackRunner:
 
     def stopEventServer(self):
         try:
-            self.eventServer.stop_event_session()
+            self.eventServer.stop_session()
             if self.eventThread is not None:
                 self.eventThread.join()
                 self.eventThread = None
