@@ -26,10 +26,9 @@ class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
                     cmds.camera(cam, query=True, startupCamera=True)]
 
         invalid = []
-        with lib.renderlayer(layer):
-            for cam in defaults:
-                if cmds.getAttr(cam + ".renderable"):
-                    invalid.append(cam)
+        for cam in defaults:
+            if lib.get_attr_in_layer(cam + ".renderable", layer=layer):
+                invalid.append(cam)
 
         return invalid
 

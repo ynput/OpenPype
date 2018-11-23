@@ -53,30 +53,34 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
             if layer.endswith("defaultRenderLayer"):
                 layername = "masterLayer"
             else:
+                # Remove Maya render setup prefix `rs_`
                 layername = layer.split("rs_", 1)[-1]
 
             # Get layer specific settings, might be overrides
-            with lib.renderlayer(layer):
-                data = {
-                    "subset": layername,
-                    "setMembers": layer,
-                    "publish": True,
-                    "startFrame": self.get_render_attribute("startFrame"),
-                    "endFrame": self.get_render_attribute("endFrame"),
-                    "byFrameStep": self.get_render_attribute("byFrameStep"),
-                    "renderer": self.get_render_attribute("currentRenderer"),
+            data = {
+                "subset": layername,
+                "setMembers": layer,
+                "publish": True,
+                "startFrame": self.get_render_attribute("startFrame",
+                                                        layer=layer),
+                "endFrame": self.get_render_attribute("endFrame",
+                                                      layer=layer),
+                "byFrameStep": self.get_render_attribute("byFrameStep",
+                                                         layer=layer),
+                "renderer": self.get_render_attribute("currentRenderer",
+                                                      layer=layer),
 
-                    # instance subset
-                    "family": "Render Layers",
-                    "families": ["colorbleed.renderlayer"],
-                    "asset": asset,
-                    "time": api.time(),
-                    "author": context.data["user"],
+                # instance subset
+                "family": "Render Layers",
+                "families": ["colorbleed.renderlayer"],
+                "asset": asset,
+                "time": api.time(),
+                "author": context.data["user"],
 
-                    # Add source to allow tracing back to the scene from
-                    # which was submitted originally
-                    "source": filepath
-                }
+                # Add source to allow tracing back to the scene from
+                # which was submitted originally
+                "source": filepath
+            }
 
             # Apply each user defined attribute as data
             for attr in cmds.listAttr(layer, userDefined=True) or list():
@@ -106,8 +110,9 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
             instance.data["label"] = label
             instance.data.update(data)
 
-    def get_render_attribute(self, attr):
-        return cmds.getAttr("defaultRenderGlobals.{}".format(attr))
+    def get_render_attribute(self, attr, layer):
+        return lib.get_attr_in_layer("defaultRenderGlobals.{}".format(attr),
+                                     layer=layer)
 
     def parse_options(self, render_globals):
         """Get all overrides with a value, skip those without
