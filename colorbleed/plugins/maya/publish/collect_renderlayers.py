@@ -26,12 +26,6 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                            "renderGlobals node")
             return
 
-        # Get start and end frame
-        start_frame = self.get_render_attribute("startFrame")
-        end_frame = self.get_render_attribute("endFrame")
-        context.data["startFrame"] = start_frame
-        context.data["endFrame"] = end_frame
-
         # Get all valid renderlayers
         # This is how Maya populates the renderlayer display
         rlm_attribute = "renderLayerManager.renderLayerId"
