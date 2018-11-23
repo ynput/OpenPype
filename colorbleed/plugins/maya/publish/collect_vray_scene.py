@@ -52,13 +52,6 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         vrscene = ("vrayscene", "<Scene>", "<Scene>_<Layer>", "<Layer>")
         vrscene_output = os.path.join(work_dir, *vrscene)
 
-        vrscene_data["startFrame"] = start_frame
-        vrscene_data["endFrame"] = end_frame
-        vrscene_data["vrsceneOutput"] = vrscene_output
-
-        context.data["startFrame"] = start_frame
-        context.data["endFrame"] = end_frame
-
         # Check and create render output template for render job
         # outputDir is required for submit_publish_job
         if not vrscene_data.get("suspendRenderJob", False):
@@ -104,7 +97,10 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
 
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
-                "source": file_name
+                "source": file_name,
+
+                # Store VRay Scene additional data
+                "vrsceneOutput": vrscene_output
             }
 
             data.update(vrscene_data)
