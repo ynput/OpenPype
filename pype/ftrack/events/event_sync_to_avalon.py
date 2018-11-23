@@ -5,6 +5,7 @@ from ftrack_event_handler import BaseEvent
 from avalon import io, inventory, lib
 from avalon.vendor import toml
 import re
+from bson.objectid import ObjectId
 
 class Sync_to_Avalon(BaseEvent):
 
@@ -28,7 +29,7 @@ class Sync_to_Avalon(BaseEvent):
         proj_id = self.proj['custom_attributes'][self.ca_mongoid]
 
         io.install()
-        self.avalon_project = io.find({"_id": proj_id})
+        self.avalon_project = io.find({"_id": ObjectId(proj_id)})
         self.projectId = proj_id
         if self.avalon_project is None:
             self.avalon_project = io.find_one({"type": "project", "name": self.proj["full_name"]})
@@ -73,8 +74,6 @@ class Sync_to_Avalon(BaseEvent):
 
         type = 'asset'
         name = entity['name']
-        print(1000*"*")
-        print(name)
         silo = 'Film'
         if entity.entity_type == 'Project':
             type = 'project'
@@ -108,9 +107,7 @@ class Sync_to_Avalon(BaseEvent):
                     data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
 
         mongo_id = entity['custom_attributes'][self.ca_mongoid]
-        avalon_asset = io.find({'_id': mongo_id})
-        if avalon_asset is None:
-            avalon_asset = io.find_one({'type': type, 'name': name})
+
 
         if entity_type in ['project']:
             config = self.getConfig()
@@ -119,14 +116,14 @@ class Sync_to_Avalon(BaseEvent):
             if self.avalon_project is None:
                 mongo_id = inventory.save(self.proj['full_name'], config, template)
 
-                self.avalon_project = io.find({"_id": mongo_id})
+                self.avalon_project = io.find({"_id": ObjectId(mongo_id)})
                 self.projectId = mongo_id
                 if self.avalon_project is None:
                     self.avalon_project = io.find_one({"type": "project", "name": self.proj["full_name"]})
                     self.projectId = self.avalon_project['_id']
 
             io.update_many(
-                {"_id": mongo_id},
+                {"_id": ObjectId(mongo_id)},
                 {'$set':{
                     'name':name,
                     'config':config,
@@ -150,12 +147,12 @@ class Sync_to_Avalon(BaseEvent):
             parents.append(eLinks[i])
 
         for parent in parents:
-            name = self.checkName(parent['name'])
-            folderStruct.append(name)
-            parentId = io.find_one({'type': 'asset', 'name': name})['_id']
+            parname = self.checkName(parent['name'])
+            folderStruct.append(parname)
+            parentId = io.find_one({'type': 'asset', 'name': parname})['_id']
             if parent['parent'].entity_type != 'project' and parentId is None:
                 self.importToAvalon(parent)
-                parentId = io.find_one({'type': 'asset', 'name': name})['_id']
+                parentId = io.find_one({'type': 'asset', 'name': parname})['_id']
 
         hierarchy = os.path.sep.join(folderStruct)
 
@@ -167,16 +164,20 @@ class Sync_to_Avalon(BaseEvent):
         if self.avalon_project is None:
             self.importToAvalon(self.proj)
 
+        avalon_asset = io.find_one({'_id': ObjectId(mongo_id)})
+        if avalon_asset is None:
+            avalon_asset = io.find_one({'type': type, 'name': name})
         if avalon_asset is None:
             mongo_id = inventory.create_asset(name, silo, data, self.projectId)
 
         io.update_many(
-            {"_id": mongo_id},
+            {"_id": ObjectId(mongo_id)},
             {'$set':{
                 'name':name,
                 'silo':silo,
                 'data':data,
                 'Parent': self.projectId}})
+
 
     def checkName(self, input_name):
         if input_name.find(" ") == -1:

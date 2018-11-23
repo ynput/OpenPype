@@ -50,8 +50,6 @@ class BaseEvent(object):
 
     def _translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''
-        print(100*"-")
-        print(event)
         _selection = event['data'].get('entities',[])
 
         _entities = list()
