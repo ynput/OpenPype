@@ -30,7 +30,6 @@ class ValidateSceneSetWorkspace(pyblish.api.ContextPlugin):
 
     order = colorbleed.api.ValidatePipelineOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
     category = 'scene'
     version = (0, 1, 0)
     label = 'Maya Workspace Set'
