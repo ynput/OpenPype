@@ -15,6 +15,8 @@ from .action import (
     RepairContextAction
 )
 
+from app.api import Logger
+
 __all__ = [
     # plugin classes
     "Extractor",
@@ -25,5 +27,7 @@ __all__ = [
     "ValidateMeshOrder",
     # action
     "get_errored_instances_from_context",
-    "RepairAction"
+    "RepairAction",
+
+    "Logger"
 ]
