@@ -17,6 +17,7 @@ from .action import (
 
 from app.api import Logger
 
+
 __all__ = [
     # plugin classes
     "Extractor",
@@ -29,5 +30,6 @@ __all__ = [
     "get_errored_instances_from_context",
     "RepairAction",
 
-    "Logger"
+    "Logger",
+
 ]
