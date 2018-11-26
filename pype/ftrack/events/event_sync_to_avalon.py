@@ -1,18 +1,20 @@
 import os
 import sys
+import re
 import ftrack_api
 from ftrack_event_handler import BaseEvent
-from avalon import io, inventory, lib
+from pype import lib
+from avalon import io, inventory
 from avalon.vendor import toml
-import re
 from bson.objectid import ObjectId
+from pype.ftrack import ftrack_utils
 
 class Sync_to_Avalon(BaseEvent):
 
     def launch(self, session, entities, event):
         self.ca_mongoid = 'avalon_mongo_id'
-
         self.proj = None
+
         for entity in entities:
             try:
                 base_proj = entity['link'][0]
@@ -37,12 +39,9 @@ class Sync_to_Avalon(BaseEvent):
         io.uninstall()
 
         self.importEntities = []
-        exceptions = ['assetversion', 'job', 'user']
 
         for entity in entities:
-            if entity.entity_type.lower() in exceptions:
-                continue
-            elif entity.entity_type.lower() in ['task']:
+            if entity.entity_type.lower() in ['task']:
                 entity = entity['parent']
             try:
                 mongo_id = entity['custom_attributes'][self.ca_mongoid]
@@ -72,46 +71,48 @@ class Sync_to_Avalon(BaseEvent):
     def importToAvalon(self, entity):
         data = {}
 
+        entity_type = entity.entity_type
+
         type = 'asset'
         name = entity['name']
         silo = 'Film'
-        if entity.entity_type == 'Project':
+        if entity_type in ['Project']:
             type = 'project'
             name = entity['full_name']
             data['code'] = entity['name']
-        elif entity.entity_type in ['AssetBuild', 'Library']:
+        elif entity_type in ['AssetBuild', 'Library']:
             silo = 'Assets'
 
         os.environ["AVALON_ASSET"] = name
         os.environ["AVALON_SILO"] = silo
 
-        entity_type = entity.entity_type
-
         data['ftrackId'] = entity['id']
         data['entityType'] = entity_type
 
         for cust_attr in self.custom_attributes:
+            key = cust_attr['key']
             if cust_attr['entity_type'].lower() in ['asset']:
-                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+                data[key] = entity['custom_attributes'][key]
 
             elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
-                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+                data[key] = entity['custom_attributes'][key]
 
             elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
                 # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
-                entity_type = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
+                entity_type_full = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
                 # Get object id of entity type
-                ent_obj_type_id = self.session.query('ObjectType where name is "{}"'.format(entity_type)).one()['id']
+                ent_obj_type_id = self.session.query('ObjectType where name is "{}"'.format(entity_type_full)).one()['id']
 
                 if cust_attr['object_type_id'] == ent_obj_type_id:
-                    data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+                    data[key] = entity['custom_attributes'][key]
 
         mongo_id = entity['custom_attributes'][self.ca_mongoid]
 
 
-        if entity_type in ['project']:
-            config = self.getConfig()
-            template = {"schema": "avalon-core:inventory-1.0"}
+        if entity_type.lower() in ['project']:
+
+            config = ftrack_utils.get_config(entity)
+            template = lib.get_avalon_project_template_schema()
 
             if self.avalon_project is None:
                 mongo_id = inventory.save(self.proj['full_name'], config, template)
@@ -130,6 +131,10 @@ class Sync_to_Avalon(BaseEvent):
                     'data':data,
                     }})
             return
+
+
+        if self.avalon_project is None:
+            self.importToAvalon(self.proj)
 
         eLinks = []
         for e in entity['link']:
@@ -161,13 +166,12 @@ class Sync_to_Avalon(BaseEvent):
         data['visualParent'] = parentId
         data['hierarchy'] = hierarchy
 
-        if self.avalon_project is None:
-            self.importToAvalon(self.proj)
-
         avalon_asset = io.find_one({'_id': ObjectId(mongo_id)})
         if avalon_asset is None:
             avalon_asset = io.find_one({'type': type, 'name': name})
-        if avalon_asset is None:
+            if avalon_asset is None:
+                mongo_id = inventory.create_asset(name, silo, data, self.projectId)
+        elif avalon_asset['name'] != name:
             mongo_id = inventory.create_asset(name, silo, data, self.projectId)
 
         io.update_many(
@@ -176,7 +180,7 @@ class Sync_to_Avalon(BaseEvent):
                 'name':name,
                 'silo':silo,
                 'data':data,
-                'Parent': self.projectId}})
+                'parent': self.projectId}})
 
 
     def checkName(self, input_name):
@@ -187,33 +191,28 @@ class Sync_to_Avalon(BaseEvent):
             print("Name of {} was changed to {}".format(input_name, name))
         return name
 
-    def getConfig(self, entity):
-        apps = []
-        for app in entity['custom_attributes']['applications']:
-            try:
-                label = toml.load(lib.which_app(app))['label']
-                apps.append({'name':app, 'label':label})
-            except Exception as e:
-                print('Error with application {0} - {1}'.format(app, e))
-
-        config = {
-            'schema': 'avalon-core:config-1.0',
-            'tasks': [{'name': ''}],
-            'apps': apps,
-            # TODO redo work!!!
-            'template': {
-                'workfile': '{asset[name]}_{task[name]}_{version:0>3}<_{comment}>',
-                'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}',
-                'publish':'{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'}
-        }
-        return config
-
     def setAvalonAttributes(self):
         self.custom_attributes = []
         all_avalon_attr = self.session.query('CustomAttributeGroup where name is "avalon"').one()
         for cust_attr in all_avalon_attr['custom_attribute_configurations']:
             if 'avalon_' not in cust_attr['key']:
                 self.custom_attributes.append(cust_attr)
+
+    def _translate_event(self, session, event):
+        exceptions = ['assetversion', 'job', 'user', 'reviewsessionobject', 'timer', 'socialfeed', 'timelog']
+        _selection = event['data'].get('entities',[])
+
+        _entities = list()
+        for entity in _selection:
+            if entity['entityType'] in exceptions:
+                continue
+            _entities.append(
+                (
+                    session.get(self._get_entity_type(entity), entity.get('entityId'))
+                )
+            )
+
+        return [_entities, event]
 
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''

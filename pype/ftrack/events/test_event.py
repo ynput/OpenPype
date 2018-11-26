@@ -1,26 +1,26 @@
-# import ftrack_api as local session
+import os
+import sys
 import ftrack_api
-#
-session = ftrack_api.Session()
-
-# ----------------------------------
+from ftrack_event_handler import BaseEvent
 
 
-def test_event(event):
-    '''just a testing event'''
+class Test_Event(BaseEvent):
 
-    # start of event procedure ----------------------------------
-    for entity in event['data'].get('entities', []):
-        if entity['entityType'] == 'task' and entity['action'] == 'update':
+    def launch(self, session, entities, event):
+        '''just a testing event'''
+        exceptions = ['assetversion', 'job', 'user', 'reviewsessionobject', 'timer', 'socialfeed', 'timelog']
+        selection = event['data'].get('entities',[])
+        for entity in selection:
+            if entity['entityType'] in exceptions:
+                print(100*"*")
+                print(entity)
 
-            print("\n\nevent script: {}".format(__file__))
 
-            # for k in task.keys():
-            #     print k, task[k]
-            # print '\n'
-            # print task['assignments']
+def register(session, **kw):
+    '''Register plugin. Called when used as an plugin.'''
 
-            for e in entity.keys():
-                print('{0}: {1}'.format(e, entity[e]))
+    if not isinstance(session, ftrack_api.session.Session):
+        return
 
-    # end of event procedure ----------------------------------
+    event = Test_Event(session)
+    event.register()

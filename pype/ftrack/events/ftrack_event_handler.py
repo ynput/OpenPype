@@ -59,7 +59,6 @@ class BaseEvent(object):
             _entities.append(
                 (
                     session.get(self._get_entity_type(entity), entity.get('entityId'))
-                    # self._get_entity_type(entity), entity.get('entityId')
                 )
             )
 

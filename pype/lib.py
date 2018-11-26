@@ -335,3 +335,29 @@ def get_asset_data(asset=None):
     data = document.get("data", {})
 
     return data
+
+def get_avalon_project_config_schema():
+    schema = 'avalon-core:config-1.0'
+    return schema
+
+def get_avalon_project_template_schema():
+    schema = {"schema": "avalon-core:inventory-1.0"}
+    return schema
+
+def get_avalon_project_template():
+    from app.api import Templates
+
+    """Get avalon template
+
+    Returns:
+        dictionary with templates
+    """
+    template = Templates(type=["anatomy"])
+    proj_template = {}
+    # proj_template['workfile'] = '{asset[name]}_{task[name]}_{version:0>3}<_{comment}>'
+    # proj_template['work'] = '{root}/{project}/{hierarchy}/{asset}/work/{task}'
+    # proj_template['publish'] = '{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'
+    proj_template['workfile'] = template.anatomy.avalon.workfile
+    proj_template['work'] = template.anatomy.avalon.work
+    proj_template['publish'] = template.anatomy.avalon.publish
+    return proj_template

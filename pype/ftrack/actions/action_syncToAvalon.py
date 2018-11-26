@@ -7,10 +7,11 @@ import os
 import ftrack_api
 import json
 import re
+from pype import lib
 from ftrack_action_handler import BaseAction
-
-from avalon import io, inventory, lib
+from avalon import io, inventory
 from avalon.vendor import toml
+from pype.ftrack import ftrack_utils
 
 class SyncToAvalon(BaseAction):
     '''Edit meta data action.'''
@@ -27,6 +28,7 @@ class SyncToAvalon(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
+
         discover = False
         for entity in entities:
             if entity.entity_type.lower() not in ['task', 'assetversion']:
@@ -55,7 +57,7 @@ class SyncToAvalon(BaseAction):
             print("action <" + self.__class__.__name__ + "> is running")
 
             #TODO AVALON_PROJECTS, AVALON_ASSET, AVALON_SILO should be set up otherwise console log shows avalon debug
-            self.setAvalonAttributes(session)
+            self.setAvalonAttributes()
             self.importable = []
 
             # get from top entity in hierarchy all parent entities
@@ -107,9 +109,10 @@ class SyncToAvalon(BaseAction):
             'success': True,
             'message': "Synchronization was successfull"
         }
-    def setAvalonAttributes(self, session):
+
+    def setAvalonAttributes(self):
         self.custom_attributes = []
-        all_avalon_attr = session.query('CustomAttributeGroup where name is "avalon"').one()
+        all_avalon_attr = self.session.query('CustomAttributeGroup where name is "avalon"').one()
         for cust_attr in all_avalon_attr['custom_attribute_configurations']:
             if 'avalon_' not in cust_attr['key']:
                 self.custom_attributes.append(cust_attr)
@@ -132,28 +135,6 @@ class SyncToAvalon(BaseAction):
             print("Name of {} was changed to {}".format(input_name, name))
         return name
 
-    def getConfig(self, entity):
-        apps = []
-        for app in entity['custom_attributes']['applications']:
-            try:
-                label = toml.load(lib.which_app(app))['label']
-                apps.append({'name':app, 'label':label})
-            except Exception as e:
-                print('Error with application {0} - {1}'.format(app, e))
-
-        config = {
-            'schema': 'avalon-core:config-1.0',
-            'tasks': [{'name': ''}],
-            'apps': apps,
-            # TODO redo work!!!
-            'template': {
-                'workfile': '{asset[name]}_{task[name]}_{version:0>3}<_{comment}>',
-                'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}',
-                'publish':'{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'}
-        }
-        return config
-
-
     def importToAvalon(self, session, entity):
         eLinks = []
 
@@ -170,9 +151,6 @@ class SyncToAvalon(BaseAction):
         os.environ["AVALON_PROJECT"] = entityProj["full_name"]
         os.environ["AVALON_ASSET"] = entityProj['full_name']
 
-        # Set project template
-        template = {"schema": "avalon-core:inventory-1.0"}
-
         # --- Begin: PUSH TO Avalon ---
         io.install()
         ## ----- PROJECT ------
@@ -185,25 +163,28 @@ class SyncToAvalon(BaseAction):
         data['entityType'] = entity_type
 
         for cust_attr in self.custom_attributes:
+            key = cust_attr['key']
             if cust_attr['entity_type'].lower() in ['asset']:
-                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+                data[key] = entity['custom_attributes'][key]
 
             elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
-                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+                data[key] = entity['custom_attributes'][key]
 
             elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
                 # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
-                entity_type = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
+                entity_type_full = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
                 # Get object id of entity type
-                ent_obj_type_id = session.query('ObjectType where name is "{}"'.format(entity_type)).one()['id']
+                ent_obj_type_id = session.query('ObjectType where name is "{}"'.format(entity_type_full)).one()['id']
 
                 if cust_attr['object_type_id'] == ent_obj_type_id:
-                    data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+                    data[key] = entity['custom_attributes'][key]
 
 
-        if entity.entity_type.lower() in ['project']:
+        if entity_type.lower() in ['project']:
             # Set project Config
-            config = self.getConfig(entity)
+            config = ftrack_utils.get_config(entity)
+            # Set project template
+            template = lib.get_avalon_project_template_schema()
 
             if avalon_project is None:
                 inventory.save(entityProj['full_name'], config, template)
@@ -233,7 +214,7 @@ class SyncToAvalon(BaseAction):
         ## ----- ASSETS ------
         # Presets:
         # TODO how to check if entity is Asset Library or AssetBuild?
-        if entity.entity_type in ['AssetBuild', 'Library']:
+        if entity_type in ['AssetBuild', 'Library']:
             silo = 'Assets'
         else:
             silo = 'Film'

@@ -2,13 +2,36 @@
 
 import ftrack_api
 import os
+import traceback
 from pprint import *
+from pype import lib
 
+def get_apps(entity):
+    """ Get apps from project
+    Requirements:
+        'Entity' MUST be object of ftrack entity with entity_type 'Project'
+    Checking if app from ftrack is available in Templates/bin/{app_name}.toml
 
-def checkLogin():
-    # check Environments FTRACK_API_USER, FTRACK_API_KEY
-    pass
+    Returns:
+        Array with dictionaries with app Name and Label
+    """
+    apps = []
+    for app in entity['custom_attributes']['applications']:
+        try:
+            label = toml.load(lib.which_app(app))['label']
+            apps.append({'name':app, 'label':label})
+        except Exception as e:
+            print('Error with application {0} - {1}'.format(app, e))
+    return apps
 
+def get_config(self, entity):
+    config = {}
+    config['schema'] = lib.get_avalon_project_config_schema()
+    config['tasks'] = [{'name': ''}]
+    config['apps'] = get_apps(entity)
+    config['template'] = lib.get_avalon_project_template()
+
+    return config
 
 def checkRegex():
     # _handle_result -> would be solution?
