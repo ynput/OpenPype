@@ -20,8 +20,12 @@ class CreateRenderGlobals(avalon.maya.Creator):
         self.data["id"] = "avalon.renderglobals"
 
         # get pools
-        AVALON_DEADLINE = api.Session["AVALON_DEADLINE"]
-        argument = "{}/api/pools?NamesOnly=true".format(AVALON_DEADLINE)
+        try:
+            deadline_url = os.environ["DEADLINE_REST_URL"]
+        except KeyError:
+            self.log.error("Deadline REST API url not found.")
+
+        argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
         response = requests.get(argument)
         if not response.ok:
             self.log.warning("No pools retrieved")
