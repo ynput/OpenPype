@@ -122,12 +122,9 @@ def set_writes_colorspace(write_dict):
 
 
 def set_colorspace():
-    from app.api import Templates
+    from pype import api as pype
 
-    t = Templates(type=["colorspace"])
-    colorspace = t.colorspace
-
-    nuke_colorspace = getattr(colorspace, "nuke", None)
+    nuke_colorspace = getattr(pype.Colorspace, "nuke", None)
 
     try:
         set_root_colorspace(nuke_colorspace.root)

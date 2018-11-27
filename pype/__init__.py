@@ -6,8 +6,14 @@ from avalon import api as avalon
 from .launcher_actions import register_launcher_actions
 from .lib import collect_container_metadata
 
-from pype.api import Logger
-log = Logger.getLogger(__name__)
+import logging
+log = logging.getLogger(__name__)
+
+# do not delete these are mandatory
+Anatomy = None
+Dataflow = None
+Metadata = None
+Colorspace = None
 
 PACKAGE_DIR = os.path.dirname(__file__)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")

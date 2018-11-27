@@ -17,6 +17,16 @@ from .action import (
 
 from app.api import Logger
 
+from . import (
+    Anatomy,
+    Colorspace,
+    Metadata,
+    Dataflow
+)
+from .templates import (
+    load_data_from_templates,
+    reset_data_from_templates
+)
 
 __all__ = [
     # plugin classes
@@ -31,5 +41,14 @@ __all__ = [
     "RepairAction",
 
     "Logger",
+
+    # contectual templates
+    "load_data_from_templates",
+    "reset_data_from_templates",
+
+    "Anatomy",
+    "Colorspace",
+    "Metadata",
+    "Dataflow"
 
 ]
