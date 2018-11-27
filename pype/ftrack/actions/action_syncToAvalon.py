@@ -54,7 +54,7 @@ class SyncToAvalon(BaseAction):
         })
 
         try:
-            print("action <" + self.__class__.__name__ + "> is running")
+            self.log.info("action <" + self.__class__.__name__ + "> is running")
 
             #TODO AVALON_PROJECTS, AVALON_ASSET, AVALON_SILO should be set up otherwise console log shows avalon debug
             self.setAvalonAttributes()
@@ -91,13 +91,12 @@ class SyncToAvalon(BaseAction):
 
             job['status'] = 'done'
             session.commit()
-            print('Synchronization to Avalon was successfull!')
+            self.log.info('Synchronization to Avalon was successfull!')
 
         except Exception as e:
             job['status'] = 'failed'
-            print('During synchronization to Avalon went something wrong!')
-            print(e)
             message = str(e)
+            self.log.error('During synchronization to Avalon went something wrong! ({})'.format(message))
 
         if len(message) > 0:
             return {
@@ -132,9 +131,34 @@ class SyncToAvalon(BaseAction):
             name = input_name
         else:
             name = input_name.replace(" ", "-")
-            print("Name of {} was changed to {}".format(input_name, name))
+            self.log.info("Name of {} was changed to {}".format(input_name, name))
         return name
 
+<<<<<<< HEAD
+=======
+    def getConfig(self, entity):
+        apps = []
+        for app in entity['custom_attributes']['applications']:
+            try:
+                label = toml.load(lib.which_app(app))['label']
+                apps.append({'name':app, 'label':label})
+            except Exception as e:
+                self.log.error('Error with application {0} - {1}'.format(app, e))
+
+        config = {
+            'schema': 'avalon-core:config-1.0',
+            'tasks': [{'name': ''}],
+            'apps': apps,
+            # TODO redo work!!!
+            'template': {
+                'workfile': '{asset[name]}_{task[name]}_{version:0>3}<_{comment}>',
+                'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}',
+                'publish':'{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'}
+        }
+        return config
+
+
+>>>>>>> develop
     def importToAvalon(self, session, entity):
         eLinks = []
 
@@ -204,7 +228,7 @@ class SyncToAvalon(BaseAction):
             if ca_mongoid in entity['custom_attributes']:
                 entity['custom_attributes'][ca_mongoid] = str(projectId)
             else:
-                print("Custom attribute for <{}> is not created.".format(entity['name']))
+                self.log.error("Custom attribute for <{}> is not created.".format(entity['name']))
             io.uninstall()
             return
 
@@ -259,7 +283,7 @@ class SyncToAvalon(BaseAction):
         # Create if don't exists
         if avalon_asset is None:
             inventory.create_asset(name, silo, data, projectId)
-            print("Asset {} - created".format(name))
+            self.log.debug("Asset {} - created".format(name))
         # Raise error if it seems to be different ent. with same name
 
         elif (avalon_asset['data']['ftrackId'] != data['ftrackId'] or
@@ -271,7 +295,7 @@ class SyncToAvalon(BaseAction):
             io.update_many({'type': 'asset','name': name},
                 {'$set':{'data':data, 'silo': silo}})
             # TODO check if is asset in same folder!!! ???? FEATURE FOR FUTURE
-            print("Asset {} - updated".format(name))
+            self.log.debug("Asset {} - updated".format(name))
 
         entityId = io.find_one({'type': 'asset', 'name': name})['_id']
         ## FTRACK FEATURE - FTRACK MUST HAVE avalon_mongo_id FOR EACH ENTITY TYPE EXCEPT TASK
@@ -279,7 +303,7 @@ class SyncToAvalon(BaseAction):
         if ca_mongoid in entity['custom_attributes']:
             entity['custom_attributes'][ca_mongoid] = str(entityId)
         else:
-            print("Custom attribute for <{}> is not created.".format(entity['name']))
+            self.log.error("Custom attribute for <{}> is not created.".format(entity['name']))
 
         io.uninstall()
         session.commit()

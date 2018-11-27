@@ -38,8 +38,8 @@ class JobKiller(BaseAction):
 
         # Update all the queried jobs, setting the status to failed.
         for job in jobs:
-            print(job['created_at'])
-            print('Changing Job ({}) status: {} -> failed'.format(job['id'], job['status']))
+            self.log.debug(job['created_at'])
+            self.log.debug('Changing Job ({}) status: {} -> failed'.format(job['id'], job['status']))
             job['status'] = 'failed'
 
         try:
@@ -47,7 +47,7 @@ class JobKiller(BaseAction):
         except:
             session.rollback()
 
-        print('All running jobs were killed Successfully!')
+        self.log.info('All running jobs were killed Successfully!')
         return {
             'success': True,
             'message': 'All running jobs were killed Successfully!'

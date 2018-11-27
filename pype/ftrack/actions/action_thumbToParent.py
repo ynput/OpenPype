@@ -57,7 +57,7 @@ class ThumbToParent(BaseAction):
                     try:
                         parent = entity['parent']
                     except:
-                        print("Durin Action 'Thumb to Parent' went something wrong")
+                        self.log.error("Durin Action 'Thumb to Parent' went something wrong")
                 thumbid = entity['thumbnail_id']
 
                 if parent and thumbid:

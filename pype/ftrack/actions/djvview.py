@@ -5,6 +5,7 @@ import os
 import re
 from operator import itemgetter
 import ftrack_api
+from app.api import Logger
 
 
 class DJVViewAction(object):
@@ -16,9 +17,7 @@ class DJVViewAction(object):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
 
-        self.logger = logging.getLogger(
-            '{0}.{1}'.format(__name__, self.__class__.__name__)
-        )
+        self.log = Logger.getLogger(self.__class__.__name__)
 
         if self.identifier is None:
             raise ValueError(
@@ -84,7 +83,7 @@ class DJVViewAction(object):
             ),
             self.launch
         )
-        print("----- action - <" + self.__class__.__name__ + "> - Has been registered -----")
+        self.log.info("----- action - <" + self.__class__.__name__ + "> - Has been registered -----")
 
     def get_applications(self):
         applications = []
@@ -240,7 +239,6 @@ class DJVViewAction(object):
                         range = (padding % start) + '-' + (padding % end)
                         filename = re.sub('%[0-9]*d', range, filename)
                 else:
-                    print("")
                     return {
                         'success': False,
                         'message': 'DJV View - Filename has more than one seqence identifier.'
