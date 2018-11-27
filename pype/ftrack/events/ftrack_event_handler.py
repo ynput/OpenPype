@@ -3,7 +3,7 @@
 import os
 import logging
 import getpass
-import platform
+# import platform
 import ftrack_api
 import toml
 from avalon import io, lib, pipeline
@@ -33,7 +33,7 @@ class BaseEvent(object):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
 
-        self.logger = logging.getLogger(
+        self.logger = Logger.getLogger(
             '{0}.{1}'.format(__name__, self.__class__.__name__)
         )
 
@@ -61,7 +61,10 @@ class BaseEvent(object):
                     session.get(self._get_entity_type(entity), entity.get('entityId'))
                 )
             )
-
+        try:
+            if _entities[0]['project'].entity_type in ['project']:
+                _entities = None
+                _entities = list()
         return [
             _entities,
             event
