@@ -63,7 +63,10 @@ def get_additional_data(container):
     return {"color": QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
 
 
-def check_viewers(viewer):
+def set_viewers_colorspace(viewer):
+    assert isinstance(viewer, dict), log.error(
+        "set_viewers_colorspace(): argument should be dictionary")
+
     filter_knobs = [
         "viewerProcess",
         "wipe_position"
@@ -103,6 +106,21 @@ def check_viewers(viewer):
             "It had wrong color profile".format(erased_viewers))
 
 
+def set_root_colorspace(root_dict):
+    assert isinstance(root_dict, dict), log.error(
+        "set_root_colorspace(): argument should be dictionary")
+    for knob, value in root_dict.items():
+        if nuke.root()[knob].value() not in value:
+            nuke.root()[knob].setValue(str(value))
+            log.info("nuke.root()['{}'] changed to: {}".format(knob, value))
+
+
+def set_writes_colorspace(write_dict):
+    assert isinstance(write_dict, dict), log.error(
+        "set_root_colorspace(): argument should be dictionary")
+    log.info("set_writes_colorspace(): {}".format(write_dict))
+
+
 def set_colorspace():
     from app.api import Templates
 
@@ -110,7 +128,23 @@ def set_colorspace():
     colorspace = t.colorspace
 
     nuke_colorspace = getattr(colorspace, "nuke", None)
-    check_viewers(nuke_colorspace.viewer)
+
+    try:
+        set_root_colorspace(nuke_colorspace.root)
+    except AttributeError:
+        log.error(
+            "set_colorspace(): missing `root` settings in template")
+    try:
+        set_viewers_colorspace(nuke_colorspace.viewer)
+    except AttributeError:
+        log.error(
+            "set_colorspace(): missing `viewer` settings in template")
+    try:
+        set_writes_colorspace(nuke_colorspace.write)
+    except AttributeError:
+        log.error(
+            "set_colorspace(): missing `write` settings in template")
+
     try:
         for key in nuke_colorspace:
             log.info("{}".format(key))
