@@ -33,9 +33,7 @@ class BaseEvent(object):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
 
-        self.logger = Logger.getLogger(
-            '{0}.{1}'.format(__name__, self.__class__.__name__)
-        )
+        self.log = Logger.getLogger(self.__class__.__name__)
 
         self._session = session
 
@@ -61,10 +59,7 @@ class BaseEvent(object):
                     session.get(self._get_entity_type(entity), entity.get('entityId'))
                 )
             )
-        try:
-            if _entities[0]['project'].entity_type in ['project']:
-                _entities = None
-                _entities = list()
+
         return [
             _entities,
             event
@@ -97,6 +92,14 @@ class BaseEvent(object):
         args = self._translate_event(
             self.session, event
         )
+
+        # TODO REMOVE THIS - ONLY FOR TEST PROJECT
+        for a in args[0]:
+            try:
+                if (a['project']['name'] != 'eventproj'):
+                    return True
+            except:
+                continue
 
         response = self.launch(
             self.session, *args
@@ -150,7 +153,7 @@ class BaseEvent(object):
                 )
 
         else:
-            self.logger.error(
+            self.log.error(
                 'Invalid result type must be bool or dictionary!'
             )
 

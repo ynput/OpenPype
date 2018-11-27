@@ -134,31 +134,7 @@ class SyncToAvalon(BaseAction):
             self.log.info("Name of {} was changed to {}".format(input_name, name))
         return name
 
-<<<<<<< HEAD
-=======
-    def getConfig(self, entity):
-        apps = []
-        for app in entity['custom_attributes']['applications']:
-            try:
-                label = toml.load(lib.which_app(app))['label']
-                apps.append({'name':app, 'label':label})
-            except Exception as e:
-                self.log.error('Error with application {0} - {1}'.format(app, e))
 
-        config = {
-            'schema': 'avalon-core:config-1.0',
-            'tasks': [{'name': ''}],
-            'apps': apps,
-            # TODO redo work!!!
-            'template': {
-                'workfile': '{asset[name]}_{task[name]}_{version:0>3}<_{comment}>',
-                'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}',
-                'publish':'{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'}
-        }
-        return config
-
-
->>>>>>> develop
     def importToAvalon(self, session, entity):
         eLinks = []
 

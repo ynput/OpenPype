@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 import ftrack_api
 from ftrack_event_handler import BaseEvent
 from app import api
@@ -7,13 +8,12 @@ from app import api
 class Test_Event(BaseEvent):
 
     def launch(self, session, entities, event):
+
         '''just a testing event'''
         exceptions = ['assetversion', 'job', 'user', 'reviewsessionobject', 'timer', 'socialfeed', 'timelog']
-        selection = event['data'].get('entities',[])
-        for entity in selection:
-            if entity['entityType'] in exceptions:
-                print(100*"*")
-                print(entity)
+
+
+        return True
 
 
 def register(session, **kw):

@@ -24,7 +24,7 @@ def get_apps(entity):
             print('Error with application {0} - {1}'.format(app, e))
     return apps
 
-def get_config(self, entity):
+def get_config(entity):
     config = {}
     config['schema'] = lib.get_avalon_project_config_schema()
     config['tasks'] = [{'name': ''}]

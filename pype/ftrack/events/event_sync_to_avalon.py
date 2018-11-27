@@ -13,7 +13,12 @@ class Sync_to_Avalon(BaseEvent):
 
     def launch(self, session, entities, event):
         self.ca_mongoid = 'avalon_mongo_id'
+        for ent in event['data']['entities']:
+            if self.ca_mongoid in ent['keys']:
+                return False
         self.proj = None
+        self.nameShotAsset = []
+        self.nameChanged = []
 
         for entity in entities:
             try:
@@ -24,21 +29,27 @@ class Sync_to_Avalon(BaseEvent):
             break
 
         if self.proj is None:
-            return
+            return False
 
         os.environ["AVALON_PROJECT"] = self.proj['full_name']
 
-        proj_id = self.proj['custom_attributes'][self.ca_mongoid]
+        self.projectId = self.proj['custom_attributes'][self.ca_mongoid]
 
         io.install()
-        self.avalon_project = io.find({"_id": ObjectId(proj_id)})
-        self.projectId = proj_id
+        try:
+            self.avalon_project = io.find_one({"_id": ObjectId(self.projectId)})
+        except:
+            self.avalon_project = None
+
+        importEntities = []
+
         if self.avalon_project is None:
             self.avalon_project = io.find_one({"type": "project", "name": self.proj["full_name"]})
-            self.projectId = self.avalon_project['_id']
+            if self.avalon_project is None:
+                importEntities.append(self.proj)
+            else:
+                self.projectId = self.avalon_project['_id']
         io.uninstall()
-
-        self.importEntities = []
 
         for entity in entities:
             if entity.entity_type.lower() in ['task']:
@@ -51,20 +62,35 @@ class Sync_to_Avalon(BaseEvent):
                     'message': "Please run 'Create Attributes' action or create custom attribute 'avalon_mongo_id' manually for {}".format(entity.entity_type)
                 }
 
-            if entity not in self.importEntities:
-                self.importEntities.append(entity)
+            if entity not in importEntities:
+                importEntities.append(entity)
 
-        if len(self.importEntities) < 1:
-            return
+        if len(importEntities) < 1:
+            return False
 
         self.setAvalonAttributes()
 
         io.install()
-
-        for entity in self.importEntities:
+        for entity in importEntities:
             self.importToAvalon(entity)
 
         io.uninstall()
+
+        message = ""
+        if len(self.nameChanged) > 0:
+            names = ", ".join(self.nameChanged)
+            message += "These entities name can't be changed in avalon, please reset DB or use restore action: {} \n".format(names)
+        if len(self.nameShotAsset) > 0:
+            names = ", ".join(self.nameChanged)
+            message += "These entities are already used in avalon, duplicates with new name were created: {}".format(names)
+
+        session.commit()
+
+        if message != "":
+            return {
+                'success': False,
+                'message': message
+            }
 
         return True
 
@@ -108,28 +134,28 @@ class Sync_to_Avalon(BaseEvent):
 
         mongo_id = entity['custom_attributes'][self.ca_mongoid]
 
-
-        if entity_type.lower() in ['project']:
-
+        if entity_type in ['Project']:
             config = ftrack_utils.get_config(entity)
             template = lib.get_avalon_project_template_schema()
 
             if self.avalon_project is None:
-                mongo_id = inventory.save(self.proj['full_name'], config, template)
+                inventory.save(name, config, template)
+                self.avalon_project = io.find_one({'type': 'project', 'name': name})
 
-                self.avalon_project = io.find({"_id": ObjectId(mongo_id)})
-                self.projectId = mongo_id
-                if self.avalon_project is None:
-                    self.avalon_project = io.find_one({"type": "project", "name": self.proj["full_name"]})
-                    self.projectId = self.avalon_project['_id']
+            self.projectId = self.avalon_project['_id']
+            data['code'] = entity['name']
 
             io.update_many(
-                {"_id": ObjectId(mongo_id)},
+                {"_id": ObjectId(self.projectId)},
                 {'$set':{
                     'name':name,
                     'config':config,
                     'data':data,
                     }})
+            try:
+                entity['custom_attributes'][self.ca_mongoid] = str(self.projectId)
+            except Exception as e:
+                self.log.error(e)
             return
 
 
@@ -148,31 +174,45 @@ class Sync_to_Avalon(BaseEvent):
 
         folderStruct = []
         parents = []
+        parentId = None
+
         for i in range(1, len(eLinks)-1):
             parents.append(eLinks[i])
 
         for parent in parents:
             parname = self.checkName(parent['name'])
             folderStruct.append(parname)
-            parentId = io.find_one({'type': 'asset', 'name': parname})['_id']
-            if parent['parent'].entity_type != 'project' and parentId is None:
+            avalonAarent = io.find_one({'type': 'asset', 'name': parname})
+            if parent['parent'].entity_type != 'project' and avalonAarent is None:
                 self.importToAvalon(parent)
-                parentId = io.find_one({'type': 'asset', 'name': parname})['_id']
+            parentId = io.find_one({'type': 'asset', 'name': parname})['_id']
 
         hierarchy = os.path.sep.join(folderStruct)
 
         data['tasks'] = tasks
-        data['parents'] = folderStruct
-        data['visualParent'] = parentId
-        data['hierarchy'] = hierarchy
+        if parentId is not None:
+            data['parents'] = folderStruct
+            data['visualParent'] = parentId
+            data['hierarchy'] = hierarchy
 
-        avalon_asset = io.find_one({'_id': ObjectId(mongo_id)})
+        avalon_asset = None
+
+        if mongo_id is not "":
+            avalon_asset = io.find_one({'_id': ObjectId(mongo_id)})
+
         if avalon_asset is None:
-            avalon_asset = io.find_one({'type': type, 'name': name})
+            avalon_asset = io.find_one({'type': 'asset', 'name': name})
             if avalon_asset is None:
-                mongo_id = inventory.create_asset(name, silo, data, self.projectId)
-        elif avalon_asset['name'] != name:
-            mongo_id = inventory.create_asset(name, silo, data, self.projectId)
+                mongo_id = inventory.create_asset(name, silo, data, ObjectId(self.projectId))
+        else:
+            if name != avalon_asset['name']:
+                string = "'{}->{}'".format(name, avalon_asset['name'])
+                if entity_type in ['Shot','AssetBuild']:
+                    self.nameShotAsset.append(string)
+                    mongo_id = inventory.create_asset(name, silo, data, ObjectId(self.projectId))
+                else:
+                    self.nameChanged.append(string)
+                return
 
         io.update_many(
             {"_id": ObjectId(mongo_id)},
@@ -181,6 +221,11 @@ class Sync_to_Avalon(BaseEvent):
                 'silo':silo,
                 'data':data,
                 'parent': self.projectId}})
+
+        try:
+            entity['custom_attributes'][self.ca_mongoid] = str(mongo_id)
+        except Exception as e:
+            self.log.error(e)
 
 
     def checkName(self, input_name):
