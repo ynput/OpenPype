@@ -34,9 +34,7 @@ class AppAction(object):
     def __init__(self, session, label, name, executable, variant=None, icon=None, description=None):
         '''Expects a ftrack_api.Session instance'''
 
-        self.logger = logging.getLogger(
-            '{0}.{1}'.format(__name__, self.__class__.__name__)
-        )
+        self.log = Logger.getLogger(self.__class__.__name__)
 
         # self.logger = Logger.getLogger(__name__)
 
@@ -86,7 +84,7 @@ class AppAction(object):
         )
 
         if accepts:
-            self.logger.info('Selection is valid')
+            self.log.info('Selection is valid')
             return {
                 'items': [{
                     'label': self.label,
@@ -97,7 +95,7 @@ class AppAction(object):
                 }]
             }
         else:
-            self.logger.info('Selection is _not_ valid')
+            self.log.info('Selection is _not_ valid')
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
@@ -226,7 +224,7 @@ class AppAction(object):
         '''
 
         # TODO Delete this line
-        print("Action - {0} ({1}) - just started".format(self.label, self.identifier))
+        self.log.info("Action - {0} ({1}) - just started".format(self.label, self.identifier))
 
         entity, id = entities[0]
         entity = session.get(entity, id)
@@ -320,7 +318,7 @@ class AppAction(object):
         username = event['source']['user']['username']
         user = session.query('User where username is "{}"'.format(username)).one()
         task = session.query('Task where id is {}'.format(entity['id'])).one()
-        print('Starting timer for task: ' + task['name'])
+        self.log.info('Starting timer for task: ' + task['name'])
         user.start_timer(task, force=True)
 
         return {
@@ -373,7 +371,7 @@ class AppAction(object):
                 )
 
         else:
-            self.logger.error(
+            self.log.error(
                 'Invalid result type must be bool or dictionary!'
             )
 
@@ -402,9 +400,7 @@ class BaseAction(object):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
 
-        self.logger = logging.getLogger(
-            '{0}.{1}'.format(__name__, self.__class__.__name__)
-        )
+        self.log = Logger.getLogger(self.__class__.__name__)
 
         if self.label is None:
             raise ValueError(
@@ -441,7 +437,7 @@ class BaseAction(object):
             ),
             self._launch
         )
-        print("----- action - <" + self.__class__.__name__ + "> - Has been registered -----")
+        self.log.info("----- action - <" + self.__class__.__name__ + "> - Has been registered -----")
 
     def _discover(self, event):
         args = self._translate_event(
@@ -453,7 +449,7 @@ class BaseAction(object):
         )
 
         if accepts:
-            self.logger.info(u'Discovering action with selection: {0}'.format(
+            self.log.info(u'Discovering action with selection: {0}'.format(
                 args[1]['data'].get('selection', [])))
             return {
                 'items': [{
@@ -612,7 +608,7 @@ class BaseAction(object):
                 )
 
         else:
-            self.logger.error(
+            self.log.error(
                 'Invalid result type must be bool or dictionary!'
             )
 

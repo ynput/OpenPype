@@ -127,8 +127,7 @@ class AvalonIdAttribute(BaseAction):
 
         except Exception as e:
             job['status'] = 'failed'
-            print("Creating custom attributes failed")
-            print(e)
+            self.log.error("Creating custom attributes failed ({})".format(e))
 
         return True
 
