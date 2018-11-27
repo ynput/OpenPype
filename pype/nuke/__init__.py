@@ -2,19 +2,21 @@ import os
 import sys
 from avalon import api as avalon
 from pyblish import api as pyblish
-from pype.api import Logger
-# import logging
+from ..api import Logger
+from pype.nuke import menu
+
 import nuke
 
 # removing logger handler created in avalon_core
-loggers = [handler
-           for handler in Logger.logging.root.handlers[:]]
-
-if len(loggers) > 2:
-    Logger.logging.root.removeHandler(loggers[0])
+for name, handler in [(handler.get_name(), handler)
+                      for handler in Logger.logging.root.handlers[:]]:
+    if "pype" not in str(name).lower():
+        Logger.logging.root.removeHandler(handler)
 
 
 log = Logger.getLogger(__name__, "nuke")
+
+AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)
@@ -38,35 +40,57 @@ class NukeHandler(Logger.logging.Handler):
 
     def __init__(self):
         Logger.logging.Handler.__init__(self)
+        self.set_name("Pype_Nuke_Handler")
 
     def emit(self, record):
         # Formated message:
         msg = self.format(record)
 
-        # if record.levelname.lower() is "warning":
-        #     nuke.warning(msg)
-
-        elif record.levelname.lower() in ["critical", "fatal", "error"]:
-            nuke.message(record.message)
-
-        # elif record.levelname.lower() is "info":
-        #     log.info(msg)
-        #
-        # elif record.levelname.lower() is "debug":
-        #     log.debug(msg)
-
-        # else:
-        #     sys.stdout.write(msg)
+        if record.levelname.lower() in [
+            "warning",
+            "critical",
+            "fatal",
+            "error"
+        ]:
+            nuke.message(msg)
 
 
+'''Adding Nuke Logging Handler'''
 nuke_handler = NukeHandler()
-log.addHandler(nuke_handler)
+if nuke_handler.get_name() \
+    not in [handler.get_name()
+            for handler in Logger.logging.root.handlers[:]]:
+    Logger.logging.getLogger().addHandler(nuke_handler)
+
 if not self.nLogger:
-    self.nLogger = log
+    self.nLogger = Logger
+
+
+def reload_config():
+    """Attempt to reload pipeline at run-time.
+
+    CAUTION: This is primarily for development and debugging purposes.
+
+    """
+
+    import importlib
+
+    for module in (
+        "{}".format(AVALON_CONFIG),
+        "{}.nuke".format(AVALON_CONFIG),
+        "{}.nuke.lib".format(AVALON_CONFIG),
+        "{}.nuke.menu".format(AVALON_CONFIG)
+    ):
+        log.info("Reloading module: {}...".format(module))
+        module = importlib.import_module(module)
+        try:
+            reload(module)
+        except Exception:
+            importlib.reload(module)
 
 
 def install():
-
+    reload_config()
     log.info("Registering Nuke plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
@@ -85,6 +109,8 @@ def install():
 
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
+
+    menu.install()
 
 
 def uninstall():

@@ -1,10 +1,13 @@
 import sys
-
+from pprint import pprint
 from avalon.vendor.Qt import QtGui
 import avalon.nuke
 
+from app.api import Logger
+
 import nuke
 
+log = Logger.getLogger(__name__, "nuke")
 self = sys.modules[__name__]
 self._project = None
 
@@ -58,3 +61,59 @@ def get_additional_data(container):
     ]
 
     return {"color": QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
+
+
+def check_viewers(viewer):
+    filter_knobs = [
+        "viewerProcess",
+        "wipe_position"
+    ]
+    viewers = [n for n in nuke.allNodes() if n.Class() == 'Viewer']
+    erased_viewers = []
+
+    for v in viewers:
+        v['viewerProcess'].setValue(str(viewer.viewerProcess))
+        if str(viewer.viewerProcess) not in v['viewerProcess'].value():
+            copy_inputs = v.dependencies()
+            copy_knobs = {k: v[k].value() for k in v.knobs()
+                          if k not in filter_knobs}
+            pprint(copy_knobs)
+            # delete viewer with wrong settings
+            erased_viewers.append(v['name'].value())
+            nuke.delete(v)
+
+            # create new viewer
+            nv = nuke.createNode("Viewer")
+
+            # connect to original inputs
+            for i, n in enumerate(copy_inputs):
+                nv.setInput(i, n)
+
+            # set coppied knobs
+            for k, v in copy_knobs.items():
+                print(k, v)
+                nv[k].setValue(v)
+
+            # set viewerProcess
+            nv['viewerProcess'].setValue(str(viewer.viewerProcess))
+
+    if erased_viewers:
+        log.warning(
+            "Attention! Viewer nodes {} were erased."
+            "It had wrong color profile".format(erased_viewers))
+
+
+def set_colorspace():
+    from app.api import Templates
+
+    t = Templates(type=["colorspace"])
+    colorspace = t.colorspace
+
+    nuke_colorspace = getattr(colorspace, "nuke", None)
+    check_viewers(nuke_colorspace.viewer)
+    try:
+        for key in nuke_colorspace:
+            log.info("{}".format(key))
+    except TypeError:
+        log.error("Nuke is not in templates! \n\n\n"
+                  "contact your supervisor!")

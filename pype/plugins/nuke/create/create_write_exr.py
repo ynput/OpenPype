@@ -1,7 +1,9 @@
 import os
+from pprint import pprint
 import avalon.api
 import avalon.nuke
 import nuke
+from app import api
 
 
 class CrateWriteExr(avalon.api.Creator):
@@ -12,12 +14,15 @@ class CrateWriteExr(avalon.api.Creator):
     icon = "sign-out"
     # TODO: create container of metadata into user knob
     # TODO: if write node selected it will add metadata
-    
+
     # def __init__(self, *args, **kwargs):
     #     super(CrateWriteExr, self).__init__(*args, **kwargs)
     #     self.data.setdefault("subset", "this")
 
     def process(self):
+        templates = api.Templates(type=["dataflow", "metadata", "colorspace"])
+        templates = templates.format()
+        pprint(templates)
         # nuke = getattr(sys.modules["__main__"], "nuke", None)
         data = {}
         ext = "exr"
