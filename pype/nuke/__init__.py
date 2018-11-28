@@ -7,6 +7,8 @@ from .. import api as pype
 
 from pype.nuke import menu
 
+from .lib import create_write_node
+
 import nuke
 
 # removing logger handler created in avalon_core
@@ -81,6 +83,7 @@ def reload_config():
         "{}.templates".format(AVALON_CONFIG),
         "{}.nuke".format(AVALON_CONFIG),
         "{}.nuke.lib".format(AVALON_CONFIG),
+        "{}.nuke.templates".format(AVALON_CONFIG),
         "{}.nuke.menu".format(AVALON_CONFIG)
     ):
         log.info("Reloading module: {}...".format(module))
@@ -105,6 +108,10 @@ def install():
 
     # Disable all families except for the ones we explicitly want to see
     family_states = [
+        "render",
+        "still"
+        "lifeGroup",
+        "backdrop",
         "imagesequence",
         "mov"
         "camera",

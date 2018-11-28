@@ -1,4 +1,5 @@
 import sys
+from collections import OrderedDict
 from pprint import pprint
 from avalon.vendor.Qt import QtGui
 import avalon.nuke
@@ -10,6 +11,39 @@ import nuke
 log = Logger.getLogger(__name__, "nuke")
 self = sys.modules[__name__]
 self._project = None
+
+
+def create_write_node(name, avalon_data, data_templates):
+    from .templates import (
+        get_dataflow,
+        get_colorspace
+    )
+    nuke_dataflow_writes = get_dataflow(**data_templates)
+    nuke_colorspace_writes = get_colorspace(**data_templates)
+
+    data = OrderedDict({
+        "file": "pathToFile/file.exr"
+    })
+
+    # adding dataflow template
+    {data.update({k: v})
+     for k, v in nuke_dataflow_writes.items()
+     if k not in ["id", "previous"]}
+
+    # adding dataflow template
+    {data.update({k: v})
+     for k, v in nuke_colorspace_writes.items()}
+
+    data = avalon.nuke.lib.fix_data_for_node_create(data)
+
+    log.info(data)
+
+    instance = avalon.nuke.lib.add_write_node(
+        name,
+        **data
+    )
+    instance = avalon.nuke.lib.imprint(instance, avalon_data)
+    return instance
 
 
 def update_frame_range(start, end, root=None):
