@@ -140,16 +140,20 @@ class BaseEvent(object):
             message = str(input_message)
         except:
             return
-        source = {}
-        source['id'] = event['source']['applicationId']
-        source['user'] = event['source']['user']
-        self.session.event_hub.publish_reply(event, event['data'], source)
-        # event = ftrack_api.event.base.Event(
-        #     topic='show_message_topic',
-        #     data={'success':result, 'message': message}
-        # )
-        #
-        # self.session.event_hub.publish(event)
+
+        user_id = event['source']['user']['id']
+        self.session.event_hub.publish(
+            ftrack_api.event.base.Event(
+                topic='ftrack.action.trigger-user-interface',
+                data=dict(
+                    type='message',
+                    success=False,
+                    message=message
+                ),
+                target='applicationId=ftrack.client.web and user.id="{0}"'.format(user_id)
+            ),
+            on_error='ignore'
+        )
 
     def _handle_result(self, session, result, entities, event):
         '''Validate the returned result from the action callback'''

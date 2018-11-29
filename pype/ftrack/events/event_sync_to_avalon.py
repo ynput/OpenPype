@@ -17,8 +17,6 @@ class Sync_to_Avalon(BaseEvent):
             if self.ca_mongoid in ent['keys']:
                 return False
         self.proj = None
-        self.nameShotAsset = []
-        self.nameChanged = []
 
         for entity in entities:
             try:
@@ -54,43 +52,33 @@ class Sync_to_Avalon(BaseEvent):
         for entity in entities:
             if entity.entity_type.lower() in ['task']:
                 entity = entity['parent']
+
             try:
                 mongo_id = entity['custom_attributes'][self.ca_mongoid]
             except:
-                return {
-                    'success': False,
-                    'message': "Please run 'Create Attributes' action or create custom attribute 'avalon_mongo_id' manually for {}".format(entity.entity_type)
-                }
+                message = "Please run 'Create Attributes' action or create custom attribute 'avalon_mongo_id' manually for {}".format(entity.entity_type)
+                self.show_message(event, message, False)
+                return
 
             if entity not in importEntities:
                 importEntities.append(entity)
 
         if len(importEntities) < 1:
-            return False
+            return
 
         self.setAvalonAttributes()
 
         io.install()
+
         for entity in importEntities:
             self.importToAvalon(entity)
 
         io.uninstall()
 
-        message = ""
-        if len(self.nameChanged) > 0:
-            names = ", ".join(self.nameChanged)
-            message += "These entities name can't be changed in avalon, please reset DB or use restore action: {} \n".format(names)
-        if len(self.nameShotAsset) > 0:
-            names = ", ".join(self.nameChanged)
-            message += "These entities are already used in avalon, duplicates with new name were created: {}".format(names)
-
         session.commit()
 
         if message != "":
-            return {
-                'success': False,
-                'message': message
-            }
+            self.show_message(event, message, False)
 
         return True
 
@@ -162,22 +150,20 @@ class Sync_to_Avalon(BaseEvent):
         if self.avalon_project is None:
             self.importToAvalon(self.proj)
 
-        eLinks = []
-        for e in entity['link']:
-            tmp = self.session.get(e['type'], e['id'])
-            eLinks.append(tmp)
-
         tasks = []
         for child in entity['children']:
             if child.entity_type in ['Task']:
                 tasks.append(child['name'])
 
         folderStruct = []
-        parents = []
         parentId = None
 
-        for i in range(1, len(eLinks)-1):
-            parents.append(eLinks[i])
+        parents = []
+        for i in range(1, len(entity['link'])-1):
+            tmp_type = entity['link'][i]['type']
+            tmp_id = entity['link'][i]['id']
+            tmp = self.session.get(tmp_type, tmp_id)
+            parents.append(tmp)
 
         for parent in parents:
             parname = self.checkName(parent['name'])
