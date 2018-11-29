@@ -1,6 +1,7 @@
 import pyblish.api
 import os
 
+
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
     """Collect ftrack component data
 
@@ -21,12 +22,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'pointcache': 'cache',
                       'review': 'mov'}
 
-
     def process(self, instance):
 
         self.log.debug('instance {}'.format(instance))
 
-        asset_name = instance.data["subset"]
         assumed_data = instance.data["assumedTemplateData"]
         assumed_version = assumed_data["version"]
         version_number = int(assumed_version)
@@ -40,7 +39,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         transfers = instance.data["transfers"]
 
         ft_session = instance.context.data["ftrackSession"]
-        location = ft_session.query('Location where name is "ftrack.unmanaged"').one()
+        location = ft_session.query(
+            'Location where name is "ftrack.unmanaged"').one()
         self.log.debug('location {}'.format(location))
 
         for src, dest in transfers:
@@ -49,19 +49,19 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             self.log.debug('source ext: ' + ext)
 
             componentList.append({"assettype_data": {
-                                      "short": asset_type,
-                                      },
-                                      "assetversion_data": {
-                                        "version": version_number,
-                                      },
-                                      "component_data": {
-                                        "name": ext[1:],  # Default component name is "main".
-                                      },
-                                        "component_path": dest,
-                                        'component_location': location,
-                                        "component_overwrite": False,
-                                      }
-                                      )
+                "short": asset_type,
+            },
+                "assetversion_data": {
+                "version": version_number,
+            },
+                "component_data": {
+                "name": ext[1:],  # Default component name is "main".
+            },
+                "component_path": dest,
+                'component_location': location,
+                "component_overwrite": False,
+            }
+            )
 
         self.log.debug('componentsList: {}'.format(str(componentList)))
         instance.data["ftrackComponentsList"] = componentList
