@@ -9,6 +9,7 @@ from .vendor.pather.error import ParseError
 
 import avalon.io as io
 import avalon.api
+import avalon
 
 log = logging.getLogger(__name__)
 
@@ -335,3 +336,64 @@ def get_asset_data(asset=None):
     data = document.get("data", {})
 
     return data
+
+def get_avalon_project_config_schema():
+    schema = 'avalon-core:config-1.0'
+    return schema
+
+def get_avalon_project_template_schema():
+    schema = {"schema": "avalon-core:inventory-1.0"}
+    return schema
+
+def get_avalon_project_template():
+    from app.api import Templates
+
+    """Get avalon template
+
+    Returns:
+        dictionary with templates
+    """
+    template = Templates(type=["anatomy"])
+    proj_template = {}
+    proj_template['workfile'] = '{asset[name]}_{task[name]}_{version:0>3}<_{comment}>'
+    proj_template['work'] = '{root}/{project}/{hierarchy}/{asset}/work/{task}'
+    proj_template['publish'] = '{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'
+    # TODO this down should work but it can't be in default.toml:
+    #  - Raises error when App (e.g. Nuke) is started
+    # proj_template['workfile'] = template.anatomy.avalon.workfile
+    # proj_template['work'] = template.anatomy.avalon.work
+    # proj_template['publish'] = template.anatomy.avalon.publish
+    return proj_template
+
+def avalon_check_name(self, entity, inSchema = None):
+    alright = True
+    name = entity['name']
+    if " " in name:
+        alright = False
+
+    data = {}
+    data['data'] = {}
+    data['type'] = 'asset'
+    schema = "avalon-core:asset-2.0"
+    # TODO have project any REGEX check?
+    if entity.entity_type in ['Project']:
+        # data['type'] = 'project'
+        name = entity['full_name']
+        # schema = get_avalon_project_template_schema()['schema']
+    # elif entity.entity_type in ['AssetBuild','Library']:
+        # data['silo'] = 'Assets'
+    # else:
+    #     data['silo'] = 'Film'
+    data['silo'] = 'Film'
+
+    if inSchema is not None:
+        schema = inSchema
+    data['schema'] = schema
+    data['name'] = name
+    try:
+        avalon.schema.validate(data)
+    except ValidationError:
+        alright = False
+
+    if alright is False:
+        raise ValueError("{} includes unsupported symbols like 'dash' or 'space'".format(name))
