@@ -24,16 +24,12 @@ def registerApp(app, session):
 
     apptoml = toml.load(abspath)
     executable = apptoml['executable']
-
     label = app['label']
-    icon = None
-    # TODO get right icons
-    if 'nuke' in app['name']:
-        icon = "https://mbtskoudsalg.com/images/nuke-icon-png-2.png"
-        label = "Nuke"
-    elif 'maya' in app['name']:
-        icon = "http://icons.iconarchive.com/icons/froyoshark/enkel/256/Maya-icon.png"
-        label = "Autodesk Maya"
+    if 'ftrack_label' in apptoml:
+        label = app['ftrack_label']
+
+    if 'icon' in apptoml:
+        icon = apptoml['icon']
 
     # register action
     AppAction(session, label, name, executable, variant, icon).register()
