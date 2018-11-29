@@ -11,7 +11,7 @@ from pype import lib
 from ftrack_action_handler import BaseAction
 from bson.objectid import ObjectId
 from avalon import io, inventory
-from avalon.vendor import toml
+
 from pype.ftrack import ftrack_utils
 
 class SyncToAvalon(BaseAction):

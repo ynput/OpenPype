@@ -4,10 +4,10 @@ from pprint import *
 
 import ftrack_api
 from pype import lib
-
 import avalon.io as io
 import avalon.api
 import avalon
+from avalon.vendor import toml
 from app.api import Logger
 
 log = Logger.getLogger(__name__)
@@ -59,10 +59,17 @@ def get_apps(entity):
     apps = []
     for app in entity['custom_attributes']['applications']:
         try:
-            label = toml.load(lib.which_app(app))['label']
-            apps.append({'name':app, 'label':label})
+            app_config = {}
+            app_file = toml.load(avalon.lib.which_app(app))
+            app_config['name'] = app
+            app_config['label'] = app_file['label']
+            if 'ftrack_label' in app_file:
+                app_config['ftrack_label'] = app_file['ftrack_label']
+
+            apps.append(app_config)
+
         except Exception as e:
-            print('Error with application {0} - {1}'.format(app, e))
+            log.warning('Error with application {0} - {1}'.format(app, e))
     return apps
 
 def get_config(entity):
