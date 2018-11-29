@@ -13,7 +13,8 @@ def load_data_from_templates():
         api.Dataflow,
         api.Anatomy,
         api.Colorspace,
-        api.Metadata]
+        api.Metadata
+    ]
     ):
         # base = Templates()
         t = Templates(type=["anatomy", "metadata", "dataflow", "colorspace"])
