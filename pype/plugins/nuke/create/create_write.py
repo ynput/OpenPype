@@ -24,6 +24,7 @@ class CrateWriteRender(avalon.nuke.Creator):
                 "family": self.family
             }
             create_write_node(self.name, self.data, data_templates)
+
         return
 
 
