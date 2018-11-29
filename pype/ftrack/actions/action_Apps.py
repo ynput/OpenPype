@@ -14,7 +14,7 @@ def registerApp(app, session):
     try:
         variant = app['name'].split("_")[1]
     except Exception as e:
-        log.warning("'{0}' - App 'name' and 'variant' is not separated by '_' (variant is set to '')".format(app['name']))
+        log.warning("'{0}' - App 'name' and 'variant' is not separated by '_' (variant is not set)".format(app['name']))
         return
 
     abspath = lib.which_app(app['name'])
@@ -23,11 +23,14 @@ def registerApp(app, session):
         return
 
     apptoml = toml.load(abspath)
+
     executable = apptoml['executable']
+
     label = app['label']
     if 'ftrack_label' in apptoml:
-        label = app['ftrack_label']
+        label = apptoml['ftrack_label']
 
+    icon = None
     if 'icon' in apptoml:
         icon = apptoml['icon']
 
