@@ -11,8 +11,8 @@ class Test_Event(BaseEvent):
 
         '''just a testing event'''
         exceptions = ['assetversion', 'job', 'user', 'reviewsessionobject', 'timer', 'socialfeed', 'timelog']
-
-
+        self.show_message(event,"Test",True)
+        self.log.info(event['source'])
         return True
 
 

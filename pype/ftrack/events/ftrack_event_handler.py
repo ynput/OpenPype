@@ -46,6 +46,8 @@ class BaseEvent(object):
         '''Registers the event, subscribing the the discover and launch topics.'''
         self.session.event_hub.subscribe('topic=ftrack.update', self._launch)
 
+        self.log.info("----- event - <" + self.__class__.__name__ + "> - Has been registered -----")
+
     def _translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''
         _selection = event['data'].get('entities',[])
@@ -130,6 +132,24 @@ class BaseEvent(object):
         '''
         raise NotImplementedError()
 
+    def show_message(self, event, input_message, result = False):
+        if not isinstance(result, bool):
+            result = False
+
+        try:
+            message = str(input_message)
+        except:
+            return
+        source = {}
+        source['id'] = event['source']['applicationId']
+        source['user'] = event['source']['user']
+        self.session.event_hub.publish_reply(event, event['data'], source)
+        # event = ftrack_api.event.base.Event(
+        #     topic='show_message_topic',
+        #     data={'success':result, 'message': message}
+        # )
+        #
+        # self.session.event_hub.publish(event)
 
     def _handle_result(self, session, result, entities, event):
         '''Validate the returned result from the action callback'''
