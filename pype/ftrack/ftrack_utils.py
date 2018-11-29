@@ -60,11 +60,8 @@ def get_apps(entity):
     for app in entity['custom_attributes']['applications']:
         try:
             app_config = {}
-            app_file = toml.load(avalon.lib.which_app(app))
             app_config['name'] = app
-            app_config['label'] = app_file['label']
-            if 'ftrack_label' in app_file:
-                app_config['ftrack_label'] = app_file['ftrack_label']
+            app_config['label'] = toml.load(avalon.lib.which_app(app))['label']
 
             apps.append(app_config)
 
