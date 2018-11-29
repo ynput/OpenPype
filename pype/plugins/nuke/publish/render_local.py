@@ -1,6 +1,5 @@
 import pyblish.api
-
-import avalon.fusion as fusion
+import nuke
 
 
 class NukeRenderLocal(pyblish.api.InstancePlugin):
@@ -28,17 +27,19 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
         else:
             context.data[key] = True
 
-        current_comp = context.data["currentFile"]
-        start_frame = instance.data["startFrame"]
-        end_frame = instance.data["end_frame"]
+        self.log.debug("instance collected: {}".format(instance.data))
+
+        first_frame = instance.data.get("first_frame", None)
+        last_frame = instance.data.get("last_frame", None)
+        node_subset_name = instance.data.get("subset", None)
 
         self.log.info("Starting render")
-        self.log.info("Start frame: {}".format(start_frame))
-        self.log.info("End frame: {}".format(end_frame))
+        self.log.info("Start frame: {}".format(first_frame))
+        self.log.info("End frame: {}".format(last_frame))
 
         # Render frames
         result = nuke.execute(
-            node.name(),
+            node_subset_name,
             int(first_frame),
             int(last_frame)
         )

@@ -34,24 +34,24 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 output_type = "mov"
 
             # Get frame range
-            start_frame = int(nuke.root()["first_frame"].getValue())
-            end_frame = int(nuke.root()["last_frame"].getValue())
+            first_frame = int(nuke.root()["first_frame"].getValue())
+            last_frame = int(nuke.root()["last_frame"].getValue())
 
             if node["use_limit"].getValue():
-                start_frame = int(node["first"].getValue())
-                end_frame = int(node["last"].getValue())
+                first_frame = int(node["first"].getValue())
+                last_frame = int(node["last"].getValue())
 
             # Add collection
             collection = None
             path = nuke.filename(node)
-            path += " [{0}-{1}]".format(start_frame, end_frame)
+            path += " [{0}-{1}]".format(first_frame, last_frame)
             collection = clique.parse(path)
 
             subset = node.name()
             # Include start and end render frame in label
             label = "{subset} ({start}-{end})".format(subset=subset,
-                                                      start=int(start_frame),
-                                                      end=int(end_frame))
+                                                      start=int(first_frame),
+                                                      end=int(last_frame))
 
             # Create instance
             instance = context.create_instance(subset)
@@ -71,7 +71,6 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 else:
                     value = False
 
-
             instance.data.update({
                 "asset": os.environ["AVALON_ASSET"],  # todo: not a constant
                 "path": nuke.filename(node),
@@ -83,12 +82,11 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "family": "write",
                 "publish": value,
                 "collection": collection,
-                "start_frame": start_frame,
-                "end_frame": end_frame,
+                "first_frame": first_frame,
+                "last_frame": last_frame,
                 "output_type": output_type
             })
             instances.append(instance)
-
             self.log.info("writeNode collected: {}".format(subset))
 
         context.data["write_instances"] = instances
