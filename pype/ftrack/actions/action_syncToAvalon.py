@@ -77,7 +77,7 @@ class SyncToAvalon(BaseAction):
             duplicates = []
 
             for e in self.importable:
-                lib.avalon_check_name(e)
+                ftrack_utils.avalon_check_name(e)
                 if e['name'] in all_names:
                     duplicates.append("'{}'".format(e['name']))
                 else:

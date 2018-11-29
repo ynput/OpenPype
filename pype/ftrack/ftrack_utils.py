@@ -4,10 +4,38 @@ import ftrack_api
 import os
 from pprint import *
 
+def avalon_check_name(self, entity, inSchema = None):
+    alright = True
+    name = entity['name']
+    if " " in name:
+        alright = False
 
-def checkLogin():
-    # check Environments FTRACK_API_USER, FTRACK_API_KEY
-    pass
+    data = {}
+    data['data'] = {}
+    data['type'] = 'asset'
+    schema = "avalon-core:asset-2.0"
+    # TODO have project any REGEX check?
+    if entity.entity_type in ['Project']:
+        # data['type'] = 'project'
+        name = entity['full_name']
+        # schema = get_avalon_project_template_schema()['schema']
+    # elif entity.entity_type in ['AssetBuild','Library']:
+        # data['silo'] = 'Assets'
+    # else:
+    #     data['silo'] = 'Film'
+    data['silo'] = 'Film'
+
+    if inSchema is not None:
+        schema = inSchema
+    data['schema'] = schema
+    data['name'] = name
+    try:
+        avalon.schema.validate(data)
+    except ValidationError:
+        alright = False
+
+    if alright is False:
+        raise ValueError("{} includes unsupported symbols like 'dash' or 'space'".format(name))
 
 
 def checkRegex():

@@ -74,6 +74,8 @@ class AppAction(object):
             self._launch
         )
 
+        self.log.info("Application '{}' - Registered successfully".format(self.label))
+
     def _discover(self, event):
         args = self._translate_event(
             self.session, event
@@ -435,7 +437,8 @@ class BaseAction(object):
             ),
             self._launch
         )
-        self.log.info("----- action - <" + self.__class__.__name__ + "> - Has been registered -----")
+        
+        self.log.info("Action '{}' - Registered successfully".format(self.__class__.__name__))
 
     def _discover(self, event):
         args = self._translate_event(
