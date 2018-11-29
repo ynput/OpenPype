@@ -25,7 +25,14 @@ from . import (
 )
 from .templates import (
     load_data_from_templates,
-    reset_data_from_templates
+    reset_data_from_templates,
+    get_project_name,
+    get_project_code,
+    get_hiearchy,
+    get_asset,
+    get_task,
+    fill_avalon_workdir,
+    get_version_from_workfile
 )
 
 __all__ = [
@@ -43,9 +50,20 @@ __all__ = [
     "Logger",
 
     # contectual templates
+    # get data to preloaded templates
     "load_data_from_templates",
     "reset_data_from_templates",
 
+    # get contextual data
+    "get_project_name",
+    "get_project_code",
+    "get_hiearchy",
+    "get_asset",
+    "get_task",
+    "fill_avalon_workdir",
+    "get_version_from_workfile",
+
+    # preloaded templates
     "Anatomy",
     "Colorspace",
     "Metadata",

@@ -1,16 +1,38 @@
 import sys
+import os
 from collections import OrderedDict
 from pprint import pprint
 from avalon.vendor.Qt import QtGui
 import avalon.nuke
-
-from app.api import Logger
-
+import pype.api as pype
 import nuke
 
-log = Logger.getLogger(__name__, "nuke")
+log = pype.Logger.getLogger(__name__, "nuke")
 self = sys.modules[__name__]
 self._project = None
+
+
+def format_anatomy(data):
+    from .templates import (
+        get_anatomy
+    )
+    file = script_name()
+
+    anatomy = get_anatomy()
+    padding = anatomy.render.padding
+
+    data.update({
+        "hierarchy": pype.get_hiearchy(),
+        "frame": "#"*padding,
+        "VERSION": pype.get_version_from_workfile(file)
+    })
+
+    log.info("format_anatomy:anatomy: {}".format(anatomy))
+    return anatomy.format(data)
+
+
+def script_name():
+    return nuke.root().knob('name').value()
 
 
 def create_write_node(name, avalon_data, data_templates):
@@ -20,9 +42,23 @@ def create_write_node(name, avalon_data, data_templates):
     )
     nuke_dataflow_writes = get_dataflow(**data_templates)
     nuke_colorspace_writes = get_colorspace(**data_templates)
+    try:
+        anatomy_filled = format_anatomy({
+            "subset": avalon_data["subset"],
+            "asset": avalon_data["asset"],
+            "task": pype.get_task(),
+            "family": avalon_data["family"],
+            "project": {"name": pype.get_project_name(),
+                        "code": pype.get_project_code()},
+            "representation": nuke_dataflow_writes.file_type,
+        })
+    except Exception as e:
+        log.error("problem with resolving anatomy tepmlate: {}".format(e))
+
+    log.debug("anatomy_filled.render: {}".format(anatomy_filled.render))
 
     data = OrderedDict({
-        "file": "pathToFile/file.exr"
+        "file": str(anatomy_filled.render.path).replace("\\", "/")
     })
 
     # adding dataflow template
@@ -36,7 +72,7 @@ def create_write_node(name, avalon_data, data_templates):
 
     data = avalon.nuke.lib.fix_data_for_node_create(data)
 
-    log.info(data)
+    log.debug(data)
 
     instance = avalon.nuke.lib.add_write_node(
         name,

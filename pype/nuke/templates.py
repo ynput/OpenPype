@@ -3,6 +3,10 @@ from pype import api as pype
 log = pype.Logger.getLogger(__name__, "nuke")
 
 
+def get_anatomy(**kwarg):
+    return pype.Anatomy
+
+
 def get_dataflow(**kwarg):
     host = kwarg.get("host", "nuke")
     cls = kwarg.get("cls", None)

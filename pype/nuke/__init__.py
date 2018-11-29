@@ -7,7 +7,9 @@ from .. import api as pype
 
 from pype.nuke import menu
 
-from .lib import create_write_node
+from .lib import (
+    create_write_node
+)
 
 import nuke
 
@@ -80,6 +82,9 @@ def reload_config():
     import importlib
 
     for module in (
+        "app",
+        "app.api",
+        "{}.api".format(AVALON_CONFIG),
         "{}.templates".format(AVALON_CONFIG),
         "{}.nuke".format(AVALON_CONFIG),
         "{}.nuke.lib".format(AVALON_CONFIG),
@@ -95,7 +100,7 @@ def reload_config():
 
 
 def install():
-
+    pype.fill_avalon_workdir()
     reload_config()
 
     log.info("Registering Nuke plug-ins..")
