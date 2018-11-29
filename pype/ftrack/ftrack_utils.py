@@ -1,10 +1,18 @@
-# fttrack help functions
-
-import ftrack_api
 import os
+import sys
 from pprint import *
 
-def avalon_check_name(self, entity, inSchema = None):
+import ftrack_api
+from pype import lib
+
+import avalon.io as io
+import avalon.api
+import avalon
+from app.api import Logger
+
+log = Logger.getLogger(__name__)
+
+def avalon_check_name(entity, inSchema = None):
     alright = True
     name = entity['name']
     if " " in name:
@@ -37,6 +45,34 @@ def avalon_check_name(self, entity, inSchema = None):
     if alright is False:
         raise ValueError("{} includes unsupported symbols like 'dash' or 'space'".format(name))
 
+
+
+def get_apps(entity):
+    """ Get apps from project
+    Requirements:
+        'Entity' MUST be object of ftrack entity with entity_type 'Project'
+    Checking if app from ftrack is available in Templates/bin/{app_name}.toml
+
+    Returns:
+        Array with dictionaries with app Name and Label
+    """
+    apps = []
+    for app in entity['custom_attributes']['applications']:
+        try:
+            label = toml.load(lib.which_app(app))['label']
+            apps.append({'name':app, 'label':label})
+        except Exception as e:
+            print('Error with application {0} - {1}'.format(app, e))
+    return apps
+
+def get_config(entity):
+    config = {}
+    config['schema'] = lib.get_avalon_project_config_schema()
+    config['tasks'] = [{'name': ''}]
+    config['apps'] = get_apps(entity)
+    config['template'] = lib.get_avalon_project_template()
+
+    return config
 
 def checkRegex():
     # _handle_result -> would be solution?
