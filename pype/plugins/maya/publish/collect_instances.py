@@ -109,9 +109,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Store the exact members of the object set
             instance.data["setMembers"] = members
 
-            # make ftrack publishable
-            instance.data["families"] = ['ftrack']
-
             # Define nice label
             name = cmds.ls(objset, long=False)[0]   # use short name
             label = "{0} ({1})".format(name,
@@ -125,7 +122,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             instance.data["label"] = label
 
             instance.data.update(data)
-
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
