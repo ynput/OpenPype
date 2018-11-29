@@ -7,7 +7,7 @@ class CollectModelData(pyblish.api.InstancePlugin):
     """Collect model data
 
     Ensures always only a single frame is extracted (current frame).
-    
+
     Note:
         This is a workaround so that the `studio.model` family can use the
         same pointcache extractor implementation as animation and pointcaches.
@@ -24,3 +24,6 @@ class CollectModelData(pyblish.api.InstancePlugin):
         frame = cmds.currentTime(query=True)
         instance.data['startFrame'] = frame
         instance.data['endFrame'] = frame
+
+        # make ftrack publishable
+        instance.data["families"] = ['ftrack']

@@ -107,6 +107,7 @@ def seq_to_glob(path):
         "<f>": "<f>"
     }
 
+
     lower = path.lower()
     has_pattern = False
     for pattern, regex_pattern in patterns.items():
@@ -212,6 +213,9 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         with lib.renderlayer(instance.data["renderlayer"]):
             self.collect(instance)
+
+        # make ftrack publishable
+        instance.data["families"] = ['ftrack']
 
     def collect(self, instance):
 
