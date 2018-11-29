@@ -161,21 +161,21 @@ class Session(object):
 
         if api_key is None:
             api_key = os.environ.get(
-                'ftrack_api_old_KEY',
+                'FTRACK_API_KEY',
                 # Backwards compatibility
-                os.environ.get('ftrack_api_oldKEY')
+                os.environ.get('FTRACK_APIKEY')
             )
 
         if not api_key:
             raise TypeError(
                 'Required "api_key" not specified. Pass as argument or set in '
-                'environment variable ftrack_api_old_KEY.'
+                'environment variable FTRACK_API_KEY.'
             )
 
         self._api_key = api_key
 
         if api_user is None:
-            api_user = os.environ.get('ftrack_api_old_USER')
+            api_user = os.environ.get('FTRACK_API_USER')
             if not api_user:
                 try:
                     api_user = getpass.getuser()
@@ -185,7 +185,7 @@ class Session(object):
         if not api_user:
             raise TypeError(
                 'Required "api_user" not specified. Pass as argument, set in '
-                'environment variable ftrack_api_old_USER or one of the standard '
+                'environment variable FTRACK_API_USER or one of the standard '
                 'environment variables used by Python\'s getpass module.'
             )
 

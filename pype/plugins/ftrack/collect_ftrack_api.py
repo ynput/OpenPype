@@ -2,7 +2,8 @@ import os
 import json
 import base64
 
-import ftrack_api
+import ftrack_api_old as ftrack_api
+reload(ftrack_api)
 import pyblish.api
 
 
