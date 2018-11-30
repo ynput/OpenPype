@@ -1,5 +1,4 @@
 import sys
-import os
 from collections import OrderedDict
 from pprint import pprint
 from avalon.vendor.Qt import QtGui
@@ -27,7 +26,7 @@ def format_anatomy(data):
         "VERSION": pype.get_version_from_workfile(file)
     })
 
-    log.info("format_anatomy:anatomy: {}".format(anatomy))
+    # log.info("format_anatomy:anatomy: {}".format(anatomy))
     return anatomy.format(data)
 
 
@@ -35,19 +34,19 @@ def script_name():
     return nuke.root().knob('name').value()
 
 
-def create_write_node(name, avalon_data, data_templates):
+def create_write_node(name, data):
     from .templates import (
         get_dataflow,
         get_colorspace
     )
-    nuke_dataflow_writes = get_dataflow(**data_templates)
-    nuke_colorspace_writes = get_colorspace(**data_templates)
+    nuke_dataflow_writes = get_dataflow(**data)
+    nuke_colorspace_writes = get_colorspace(**data)
     try:
         anatomy_filled = format_anatomy({
-            "subset": avalon_data["subset"],
-            "asset": avalon_data["asset"],
+            "subset": data["avalon"]["subset"],
+            "asset": data["avalon"]["asset"],
             "task": pype.get_task(),
-            "family": avalon_data["family"],
+            "family": data["avalon"]["family"],
             "project": {"name": pype.get_project_name(),
                         "code": pype.get_project_code()},
             "representation": nuke_dataflow_writes.file_type,
@@ -57,28 +56,28 @@ def create_write_node(name, avalon_data, data_templates):
 
     log.debug("anatomy_filled.render: {}".format(anatomy_filled.render))
 
-    data = OrderedDict({
+    _data = OrderedDict({
         "file": str(anatomy_filled.render.path).replace("\\", "/")
     })
 
     # adding dataflow template
-    {data.update({k: v})
+    {_data.update({k: v})
      for k, v in nuke_dataflow_writes.items()
      if k not in ["id", "previous"]}
 
     # adding dataflow template
-    {data.update({k: v})
+    {_data.update({k: v})
      for k, v in nuke_colorspace_writes.items()}
 
-    data = avalon.nuke.lib.fix_data_for_node_create(data)
+    _data = avalon.nuke.lib.fix_data_for_node_create(_data)
 
-    log.debug(data)
+    log.debug(_data)
 
     instance = avalon.nuke.lib.add_write_node(
         name,
-        **data
+        **_data
     )
-    instance = avalon.nuke.lib.imprint(instance, avalon_data)
+    instance = avalon.nuke.lib.imprint(instance, data["avalon"])
     return instance
 
 
