@@ -14,7 +14,7 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder
     label = "Render Local"
     hosts = ["nuke"]
-    families = ["write", "render.local"]
+    families = ["render.local"]
 
     def process(self, instance):
 
@@ -38,11 +38,9 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
         self.log.info("End frame: {}".format(last_frame))
 
         # Render frames
-        result = nuke.execute(
+        nuke.execute(
             node_subset_name,
             int(first_frame),
             int(last_frame)
         )
-
-        if not result:
-            raise RuntimeError("Comp render failed")
+        self.log.info('Finished render')

@@ -125,7 +125,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     hosts = ["fusion", "maya", "nuke"]
 
     families = [
-        "render",
+        "render.deadline",
         "renderlayer",
         "imagesequence"
     ]

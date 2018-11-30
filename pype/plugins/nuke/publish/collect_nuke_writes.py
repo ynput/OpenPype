@@ -78,7 +78,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "outputDir": os.path.dirname(nuke.filename(node)),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
-                "families": ["render"],
+                "families": ["render.local"],
                 "family": "write",
                 "publish": value,
                 "collection": collection,
