@@ -13,8 +13,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
     label = "Collect Instances"
     hosts = ["nuke", "nukeassist"]
 
-    # targets = ["default", "process"]
-
     def process(self, context):
 
         # creating instances per write node
@@ -43,10 +41,12 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             # Add collection
             collection = None
             path = nuke.filename(node)
-            path += " [{0}-{1}]".format(str(first_frame), str(last_frame))
+            path += " [{0}-{1}]".format(
+                str(first_frame),
+                str(last_frame)
+            )
             collection = clique.parse(path)
 
-            subset = node.name()
             # Include start and end render frame in label
             label = "{subset} ({start}-{end})".format(subset=subset,
                                                       start=int(first_frame),
@@ -62,22 +62,23 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 knob.setValue(False)
                 node.addKnob(knob)
 
-
             instance.data.update({
-                "asset": os.environ["AVALON_ASSET"],  # todo: not a constant
+                "asset": os.environ["AVALON_ASSET"],
                 "path": nuke.filename(node),
-                "subset": subset,
                 "outputDir": os.path.dirname(nuke.filename(node)),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
                 "families": ["render.local"],
-                "family": "write",
-                "publish": node.knob("publish"),
                 "collection": collection,
                 "first_frame": first_frame,
                 "last_frame": last_frame,
                 "output_type": output_type
             })
+
+            def instanceToggled(instance, value):
+                instance[0]["publish"].setValue(value)
+
+            instance.data["instanceToggled"] = instanceToggled
 
         # Sort/grouped by family (preserving local index)
         context[:] = sorted(context, key=self.sort_by_family)
