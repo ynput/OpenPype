@@ -73,6 +73,8 @@ def create_write_node(name, data):
 
     log.debug(_data)
 
+    _data["frame_range"] = data.get("frame_range", None)
+
     instance = avalon.nuke.lib.add_write_node(
         name,
         **_data

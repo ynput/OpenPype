@@ -47,14 +47,13 @@ class CrateWriteRender(avalon.nuke.Creator):
         instance = super(CrateWriteRender, self).process()
 
         if not instance:
-            data_templates = {
+            write_data = {
                 "class": self.families,
-                # only one is required
                 "preset": self.family,
                 "avalon": self.data
             }
 
-            create_write_node(self.name, data_templates)
+            create_write_node(self.name, write_data)
 
         return
 
@@ -90,14 +89,13 @@ class CrateWritePrerender(avalon.nuke.Creator):
         instance = super(CrateWritePrerender, self).process()
 
         if not instance:
-            data_templates = {
+            write_data = {
                 "class": self.families,
-                # only one is required
                 "preset": self.family,
                 "avalon": self.data
             }
 
-            create_write_node(self.name, data_templates)
+            create_write_node(self.name, write_data)
 
         return
 
@@ -130,16 +128,18 @@ class CrateWriteStill(avalon.nuke.Creator):
         self.data = data
 
     def process(self):
+        import nuke
         instance = super(CrateWriteStill, self).process()
 
         if not instance:
-            data_templates = {
+            write_data = {
                 "class": self.families,
-                # only one is required
                 "preset": self.family,
-                "avalon": self.data
+                "avalon": self.data,
+                "frame_range": [nuke.frame(), nuke.frame()]
             }
 
-            create_write_node(self.name, data_templates)
+            nuke.createNode("FrameHold", "first_frame {}".format(nuke.frame()))
+            create_write_node(self.name, write_data)
 
         return
