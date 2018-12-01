@@ -233,6 +233,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                      "root": root,
                      "project": PROJECT,
                      "projectcode": "prjX",
+                     'task': api.Session["AVALON_TASK"],
                      "silo": asset['silo'],
                      "asset": ASSET,
                      "family": instance.data['family'],
