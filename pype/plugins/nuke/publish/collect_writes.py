@@ -62,7 +62,6 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                         instance.data["files"] = list()
 
                     instance.data["files"] = collected_frames
-                    instance.data['stagingDir'] = output_dir
                     instance.data['transfer'] = False
                 except Exception:
                     node["render"].setValue(True)
@@ -83,7 +82,9 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "families": [families],
                 "firstFrame": first_frame,
                 "lastFrame": last_frame,
-                "outputType": output_type
+                "outputType": output_type,
+                "stagingDir": output_dir,
+
             })
 
             self.log.debug("instance.data: {}".format(instance.data))

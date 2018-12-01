@@ -30,8 +30,8 @@ class ValidateCollection(pyblish.api.InstancePlugin):
     actions = [RepairCollectionAction]
 
     def process(self, instance):
-
-        collections, remainder = clique.assemble(*instance.data['files'])
+        self.log.debug('instance.data["files"]: {}'.format(instance.data['files']))
+        collections, remainder = clique.assemble(instance.data['files'])
         self.log.info('collections: {}'.format(collections))
 
         frame_length = instance.data["lastFrame"] \
