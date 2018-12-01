@@ -146,7 +146,7 @@ class SyncToAvalon(BaseAction):
             'apps': apps,
             # TODO redo work!!!
             'template': {
-                'workfile': '{asset[name]}_{task[name]}_{version:0>3}<_{comment}>',
+                'workfile': '{asset[name]}_{task[name]}_v{version:0>3}<_{comment}>',
                 'work': '{root}/{project}/{hierarchy}/{asset}/work/{task}',
                 'publish':'{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'}
         }
