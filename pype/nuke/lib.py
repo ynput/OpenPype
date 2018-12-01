@@ -80,7 +80,21 @@ def create_write_node(name, data):
         **_data
     )
     instance = avalon.nuke.lib.imprint(instance, data["avalon"])
+    add_rendering_knobs(instance)
     return instance
+
+
+def add_rendering_knobs(node):
+    if "render" not in node.knobs():
+        knob = nuke.Boolean_Knob("render", "Render")
+        knob.setFlag(0x1000)
+        knob.setValue(False)
+        node.addKnob(knob)
+    if "render_farm" not in node.knobs():
+        knob = nuke.Boolean_Knob("render_farm", "Render on Farm")
+        knob.setValue(False)
+        node.addKnob(knob)
+    return node
 
 
 def update_frame_range(start, end, root=None):
