@@ -10,7 +10,7 @@ from avalon import api, io
 log = logging.getLogger(__name__)
 
 
-class IntegrateAsset(pyblish.api.InstancePlugin):
+class IntegrateFrames(pyblish.api.InstancePlugin):
     """Resolve any dependency issies
 
     This plug-in resolves any paths which, if not updated might break
@@ -21,28 +21,16 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     publish the shading network. Same goes for file dependent assets.
     """
 
-    label = "Integrate Asset"
+    label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    families = ["animation",
-                "camera",
-                "imagesequence",
-                "look",
-                "mayaAscii",
-                "model",
-                "pointcache",
-                "vdbcache",
-                "setdress",
-                "rig",
-                "vrayproxy",
-                "yetiRig",
-                "yeticache"]
+    families = ["prerendered.frames"]
 
     def process(self, instance):
 
         self.register(instance)
 
         self.log.info("Integrating Asset in to the database ...")
-        self.integrate(instance)
+        # self.integrate(instance)
 
     def register(self, instance):
 
@@ -194,7 +182,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     anatomy_filled = anatomy.format(template_data)
                     dst = anatomy_filled.publish.path
 
-                    instance.data["transfers"].append([src, dst])
+                    # if instance.data.get('transfer', True):
+                    # instance.data["transfers"].append([src, dst])
 
             else:
                 # Single file
@@ -217,14 +206,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 anatomy_filled = anatomy.format(template_data)
                 dst = anatomy_filled.publish.path
 
-                instance.data["transfers"].append([src, dst])
+
+                # if instance.data.get('transfer', True):
+                #     dst = src
+                # instance.data["transfers"].append([src, dst])
 
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
-                "data": {'path': dst},
+                "data": {'path': src},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
