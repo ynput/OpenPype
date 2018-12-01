@@ -18,6 +18,8 @@ def format_anatomy(data):
     file = script_name()
 
     anatomy = get_anatomy()
+
+    # TODO: perhaps should be in try!
     padding = anatomy.render.padding
 
     data.update({
