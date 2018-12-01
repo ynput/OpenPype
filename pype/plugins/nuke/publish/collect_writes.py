@@ -2,7 +2,6 @@ import os
 
 import nuke
 import pyblish.api
-import clique
 import logging
 log = logging.getLogger(__name__)
 
@@ -42,6 +41,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             # get path
             path = nuke.filename(node)
             output_dir = os.path.dirname(path)
+            self.log.debug(output_dir)
             # Include start and end render frame in label
             name = node.name()
 
@@ -51,28 +51,36 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 int(last_frame)
             )
 
-            self.log.debug("checking for error: {}".format(label))
-
-            files = []
             # preredered frames
             if not node["render"].value():
+                try:
+                    families = "prerendered.frames"
+                    collected_frames = os.listdir(output_dir)
+                    if not collected_frames:
+                        node["render"].setValue(True)
+                    if "files" not in instance.data:
+                        instance.data["files"] = list()
+
+                    instance.data["files"] = collected_frames
+                    instance.data['stagingDir'] = output_dir
+                    instance.data['transfer'] = False
+                except Exception:
+                    node["render"].setValue(True)
+
+            if node["render"].value():
                 # dealing with local/farm rendering
                 if node["render_farm"].value():
                     families = "{}.farm".format(instance.data["families"][0])
                 else:
                     families = "{}.local".format(instance.data["families"][0])
-            else:
-                families = 'prerendered.frames'
-                files = [f for f in os.listdir(output_dir)]
 
             self.log.debug("checking for error: {}".format(label))
             instance.data.update({
                 "path": path,
                 "outputDir": output_dir,
-                "ext": ext,  # todo: should be redundant
+                "ext": ext,
                 "label": label,
                 "families": [families],
-                "files": files,
                 "firstFrame": first_frame,
                 "lastFrame": last_frame,
                 "outputType": output_type
