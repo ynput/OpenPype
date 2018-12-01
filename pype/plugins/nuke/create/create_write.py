@@ -17,11 +17,14 @@ def subset_to_families(subset, family, families):
 
 
 class CrateWriteRender(avalon.nuke.Creator):
+    # change this to template preset
+    preset = "render"
+
     name = "WriteRender"
     label = "Create Write Render"
     hosts = ["nuke"]
-    family = "render"  # change this to template
-    families = "write"  # do not change!
+    family = "{}.write".format(preset)
+    families = preset
     icon = "sign-out"
 
     def __init__(self, *args, **kwargs):
@@ -29,41 +32,43 @@ class CrateWriteRender(avalon.nuke.Creator):
 
         data = OrderedDict()
 
-        # creating pype subset
-        data["subset"] = subset_to_families(
-            self.data["subset"],
-            self.family,
-            self.families
-        )
-        # swaping family with families
-        data["family"] = self.families
-        data["families"] = self.family
+        data["family"] = self.family.split(".")[1]
+        data["families"] = self.families
 
         {data.update({k: v}) for k, v in self.data.items()
          if k not in data.keys()}
         self.data = data
 
     def process(self):
+        self.data["subset"] = "{}.{}".format(self.families, self.data["subset"])
+        self.name = self.data["subset"]
+
         instance = super(CrateWriteRender, self).process()
+
+        family = self.family.split(".")[0]
+        node = self.family.split(".")[1]
 
         if not instance:
             write_data = {
-                "class": self.families,
-                "preset": self.family,
+                "class": node,
+                "preset": family,
                 "avalon": self.data
             }
 
-            create_write_node(self.name, write_data)
+            create_write_node(self.data["subset"], write_data)
 
         return
 
 
 class CrateWritePrerender(avalon.nuke.Creator):
+    # change this to template preset
+    preset = "prerender"
+
     name = "WritePrerender"
     label = "Create Write Prerender"
     hosts = ["nuke"]
-    family = "prerender"
-    families = "write"
+    family = "{}.write".format(preset)
+    families = preset
     icon = "sign-out"
 
     def __init__(self, *args, **kwargs):
@@ -71,41 +76,43 @@ class CrateWritePrerender(avalon.nuke.Creator):
 
         data = OrderedDict()
 
-        # creating pype subset
-        data["subset"] = subset_to_families(
-            self.data["subset"],
-            self.family,
-            self.families
-        )
-        # swaping family with families
-        data["family"] = self.families
-        data["families"] = self.family
+        data["family"] = self.family.split(".")[1]
+        data["families"] = self.families
 
         {data.update({k: v}) for k, v in self.data.items()
          if k not in data.keys()}
         self.data = data
 
     def process(self):
+        self.data["subset"] = "{}.{}".format(self.families, self.data["subset"])
+        self.name = self.data["subset"]
+
         instance = super(CrateWritePrerender, self).process()
+
+        family = self.family.split(".")[0]
+        node = self.family.split(".")[1]
 
         if not instance:
             write_data = {
-                "class": self.families,
-                "preset": self.family,
+                "class": node,
+                "preset": family,
                 "avalon": self.data
             }
 
-            create_write_node(self.name, write_data)
+            create_write_node(self.data["subset"], write_data)
 
         return
 
 
 class CrateWriteStill(avalon.nuke.Creator):
+    # change this to template preset
+    preset = "still"
+
     name = "WriteStill"
     label = "Create Write Still"
     hosts = ["nuke"]
-    family = "still"
-    families = "write"
+    family = "{}.write".format(preset)
+    families = preset
     icon = "image"
 
     def __init__(self, *args, **kwargs):
@@ -113,15 +120,8 @@ class CrateWriteStill(avalon.nuke.Creator):
 
         data = OrderedDict()
 
-        # creating pype subset
-        data["subset"] = subset_to_families(
-            self.data["subset"],
-            self.family,
-            self.families
-        )
-        # swaping family with families
-        data["family"] = self.families
-        data["families"] = self.family
+        data["family"] = self.family.split(".")[1]
+        data["families"] = self.families
 
         {data.update({k: v}) for k, v in self.data.items()
          if k not in data.keys()}
@@ -129,17 +129,23 @@ class CrateWriteStill(avalon.nuke.Creator):
 
     def process(self):
         import nuke
+        self.data["subset"] = "{}.{}".format(self.families, self.data["subset"])
+        self.name = self.data["subset"]
+
         instance = super(CrateWriteStill, self).process()
+
+        family = self.family.split(".")[0]
+        node = self.family.split(".")[1]
 
         if not instance:
             write_data = {
-                "class": self.families,
-                "preset": self.family,
-                "avalon": self.data,
-                "frame_range": [nuke.frame(), nuke.frame()]
+                "frame_range": [nuke.frame(), nuke.frame()],
+                "class": node,
+                "preset": family,
+                "avalon": self.data
             }
 
             nuke.createNode("FrameHold", "first_frame {}".format(nuke.frame()))
-            create_write_node(self.name, write_data)
+            create_write_node(self.data["subset"], write_data)
 
         return
