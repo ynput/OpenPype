@@ -34,8 +34,8 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
         node_subset_name = instance.data.get("subset", None)
 
         self.log.info("Starting render")
-        self.log.info("Start frame: {}".format(first_frame))
-        self.log.info("End frame: {}".format(last_frame))
+        self.log.info("Start frame: {}".format(startFrame))
+        self.log.info("End frame: {}".format(endFrame))
 
         # Render frames
         nuke.execute(

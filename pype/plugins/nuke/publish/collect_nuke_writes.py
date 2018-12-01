@@ -4,7 +4,6 @@ import nuke
 import pyblish.api
 import clique
 
-
 @pyblish.api.log
 class CollectNukeInstances(pyblish.api.ContextPlugin):
     """Collect all write nodes."""
@@ -57,11 +56,16 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             instance.add(node)
 
             # Adding/Checking publish and render target attribute
-            if "render_local" not in node.knobs():
-                knob = nuke.Boolean_Knob("render_local", "Local rendering")
+            if "farm" not in node.knobs():
+                knob = nuke.Boolean_Knob("farm", "Farm Rendering")
                 knob.setValue(False)
                 node.addKnob(knob)
 
+            # Adding/Checking publish and render target attribute
+            if "render" not in node.knobs():
+                knob = nuke.Boolean_Knob("render", "Render")
+                knob.setValue(False)
+                node.addKnob(knob)
 
             instance.data.update({
                 "asset": os.environ["AVALON_ASSET"],  # todo: not a constant
@@ -70,14 +74,20 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "outputDir": os.path.dirname(nuke.filename(node)),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
-                "families": ["render.local"],
-                "family": "write",
-                "publish": node.knob("publish"),
+                "family": "render",
+                "publish": node.knob("publish").value(),
                 "collection": collection,
-                "first_frame": first_frame,
-                "last_frame": last_frame,
+                "startFrame": first_frame,
+                "endFrame": last_frame,
                 "output_type": output_type
             })
+
+            if node.knob('render').value():
+                instance.data["families"] = ["render.local"]
+                if node.knob('farm').value():
+                    instance.data["families"] = ["render.farm"]
+            else:
+                instance.data["families"] = ["prerendered.frames"]
 
         # Sort/grouped by family (preserving local index)
         context[:] = sorted(context, key=self.sort_by_family)
