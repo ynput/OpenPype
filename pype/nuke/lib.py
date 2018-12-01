@@ -73,12 +73,79 @@ def create_write_node(name, data):
 
     log.debug(_data)
 
+    _data["frame_range"] = data.get("frame_range", None)
+
     instance = avalon.nuke.lib.add_write_node(
         name,
         **_data
     )
     instance = avalon.nuke.lib.imprint(instance, data["avalon"])
+    add_rendering_knobs(instance)
     return instance
+
+
+def add_rendering_knobs(node):
+    if "render" not in node.knobs():
+        knob = nuke.Boolean_Knob("render", "Render")
+        knob.setFlag(0x1000)
+        knob.setValue(False)
+        node.addKnob(knob)
+    if "render_farm" not in node.knobs():
+        knob = nuke.Boolean_Knob("render_farm", "Render on Farm")
+        knob.setValue(False)
+        node.addKnob(knob)
+    return node
+
+
+def update_frame_range(start, end, root=None):
+    """Set Nuke script start and end frame range
+
+    Args:
+        start (float, int): start frame
+        end (float, int): end frame
+        root (object, Optional): root object from nuke's script
+
+    Returns:
+        None
+
+    """
+
+    knobs = {
+        "first_frame": start,
+        "last_frame": end
+    }
+
+    with avalon.nuke.viewer_update_and_undo_stop():
+        for key, value in knobs.items():
+            if root:
+                root[key].setValue(value)
+            else:
+                nuke.root()[key].setValue(value)
+
+
+def get_additional_data(container):
+    """Get Nuke's related data for the container
+
+    Args:
+        container(dict): the container found by the ls() function
+
+    Returns:
+        dict
+    """
+
+    node = container["_tool"]
+    tile_color = node['tile_color'].value()
+    if tile_color is None:
+        return {}
+
+    hex = '%08x' % tile_color
+    rgba = [
+        float(int(hex[0:2], 16)) / 255.0,
+        float(int(hex[2:4], 16)) / 255.0,
+        float(int(hex[4:6], 16)) / 255.0
+    ]
+
+    return {"color": QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
 
 
 def set_viewers_colorspace(viewer):
