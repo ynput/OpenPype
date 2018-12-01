@@ -6,6 +6,8 @@ from pype.nuke import (
 )
 from pype import api as pype
 
+import nuke
+
 
 log = pype.Logger.getLogger(__name__, "nuke")
 
@@ -23,7 +25,7 @@ class CrateWriteRender(avalon.nuke.Creator):
     name = "WriteRender"
     label = "Create Write Render"
     hosts = ["nuke"]
-    family = "{}.write".format(preset)
+    family = "{}_write".format(preset)
     families = preset
     icon = "sign-out"
 
@@ -32,7 +34,7 @@ class CrateWriteRender(avalon.nuke.Creator):
 
         data = OrderedDict()
 
-        data["family"] = self.family.split(".")[1]
+        data["family"] = self.family.split("_")[1]
         data["families"] = self.families
 
         {data.update({k: v}) for k, v in self.data.items()
@@ -40,13 +42,12 @@ class CrateWriteRender(avalon.nuke.Creator):
         self.data = data
 
     def process(self):
-        self.data["subset"] = "{}.{}".format(self.families, self.data["subset"])
         self.name = self.data["subset"]
 
-        instance = super(CrateWriteRender, self).process()
+        family = self.family.split("_")[0]
+        node = self.family.split("_")[1]
 
-        family = self.family.split(".")[0]
-        node = self.family.split(".")[1]
+        instance = nuke.toNode(self.data["subset"])
 
         if not instance:
             write_data = {
@@ -67,7 +68,7 @@ class CrateWritePrerender(avalon.nuke.Creator):
     name = "WritePrerender"
     label = "Create Write Prerender"
     hosts = ["nuke"]
-    family = "{}.write".format(preset)
+    family = "{}_write".format(preset)
     families = preset
     icon = "sign-out"
 
@@ -76,7 +77,7 @@ class CrateWritePrerender(avalon.nuke.Creator):
 
         data = OrderedDict()
 
-        data["family"] = self.family.split(".")[1]
+        data["family"] = self.family.split("_")[1]
         data["families"] = self.families
 
         {data.update({k: v}) for k, v in self.data.items()
@@ -84,13 +85,12 @@ class CrateWritePrerender(avalon.nuke.Creator):
         self.data = data
 
     def process(self):
-        self.data["subset"] = "{}.{}".format(self.families, self.data["subset"])
         self.name = self.data["subset"]
 
-        instance = super(CrateWritePrerender, self).process()
+        instance = nuke.toNode(self.data["subset"])
 
-        family = self.family.split(".")[0]
-        node = self.family.split(".")[1]
+        family = self.family.split("_")[0]
+        node = self.family.split("_")[1]
 
         if not instance:
             write_data = {
@@ -111,7 +111,7 @@ class CrateWriteStill(avalon.nuke.Creator):
     name = "WriteStill"
     label = "Create Write Still"
     hosts = ["nuke"]
-    family = "{}.write".format(preset)
+    family = "{}_write".format(preset)
     families = preset
     icon = "image"
 
@@ -120,7 +120,7 @@ class CrateWriteStill(avalon.nuke.Creator):
 
         data = OrderedDict()
 
-        data["family"] = self.family.split(".")[1]
+        data["family"] = self.family.split("_")[1]
         data["families"] = self.families
 
         {data.update({k: v}) for k, v in self.data.items()
@@ -128,14 +128,12 @@ class CrateWriteStill(avalon.nuke.Creator):
         self.data = data
 
     def process(self):
-        import nuke
-        self.data["subset"] = "{}.{}".format(self.families, self.data["subset"])
         self.name = self.data["subset"]
 
-        instance = super(CrateWriteStill, self).process()
+        instance = nuke.toNode(self.data["subset"])
 
-        family = self.family.split(".")[0]
-        node = self.family.split(".")[1]
+        family = self.family.split("_")[0]
+        node = self.family.split("_")[1]
 
         if not instance:
             write_data = {
