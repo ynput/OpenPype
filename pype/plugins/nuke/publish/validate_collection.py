@@ -1,5 +1,6 @@
 import os
 import pyblish.api
+import nuke
 
 
 @pyblish.api.log
@@ -8,8 +9,9 @@ class RepairCollectionAction(pyblish.api.Action):
     on = "failed"
     icon = "wrench"
 
-    def process(self, instance, plugin):
-        self.log.info("this is going to be repaired")
+    def process(self, context, plugin):
+        context[0][0]["render"].setValue(True)
+        self.log.info("Rendering toggled ON")
 
 
 class ValidateCollection(pyblish.api.InstancePlugin):
@@ -23,6 +25,8 @@ class ValidateCollection(pyblish.api.InstancePlugin):
     actions = [RepairCollectionAction]
 
     def process(self, instance):
+        if not instance.data["collection"]:
+            return
 
         missing_files = []
         for f in instance.data["collection"]:

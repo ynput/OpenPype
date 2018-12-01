@@ -54,12 +54,14 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             )
             self.log.info("collection: {}".format(path))
 
-            try:
-                collection = clique.parse(path)
+            collection = None
+            if not node["render"].value():
+                try:
+                    collection = clique.parse(path)
 
-            except Exception as e:
-                self.log.warning(e)
-                collection = None
+                except Exception as e:
+                    self.log.warning(e)
+                    collection = None
 
             # Include start and end render frame in label
             name = node.name()
@@ -71,18 +73,20 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             )
 
             self.log.debug("checking for error: {}".format(label))
-            # # Adding/Checking publish and render target attribute
-            # if "render_local" not in node.knobs():
-            #     knob = nuke.Boolean_Knob("render_local", "Local rendering")
-            #     knob.setValue(False)
-            #     node.addKnob(knob)
+
+            # dealing with local/farm rendering
+            if node["render_farm"].value():
+                families = "{}.farm".format(instance.data["families"][0])
+            else:
+                families = "{}.local".format(instance.data["families"][0])
+
             self.log.debug("checking for error: {}".format(label))
             instance.data.update({
                 "path": nuke.filename(node),
                 "outputDir": os.path.dirname(nuke.filename(node)),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
-                "families": ["{}.local".format(instance.data["families"][0])],
+                "families": [families],
                 "collection": collection,
                 "first_frame": first_frame,
                 "last_frame": last_frame,
