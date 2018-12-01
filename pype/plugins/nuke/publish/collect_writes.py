@@ -3,23 +3,24 @@ import os
 import nuke
 import pyblish.api
 import clique
+import logging
+log = logging.getLogger(__name__)
 
 
 @pyblish.api.log
-class CollectNukeInstances(pyblish.api.ContextPlugin):
+class CollectNukeWrites(pyblish.api.ContextPlugin):
     """Collect all write nodes."""
 
-    order = pyblish.api.CollectorOrder
-    label = "Collect Instances"
+    order = pyblish.api.CollectorOrder + 0.1
+    label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
+        for instance in context.data["instances"]:
+            self.log.debug("checking instance: {}".format(instance))
+            node = instance[0]
 
-        # creating instances per write node
-        for node in nuke.allNodes():
             if node.Class() != "Write":
-                continue
-            if node["disable"].value():
                 continue
 
             # Determine defined file type
@@ -41,49 +42,56 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             # Add collection
             collection = None
             path = nuke.filename(node)
+
+            if "#" in path:
+                path_split = path.split("#")
+                length = len(path_split)-1
+                path = "{}%0{}d{}".format(path_split[0], length, path_split[-1])
+
             path += " [{0}-{1}]".format(
                 str(first_frame),
                 str(last_frame)
             )
-            collection = clique.parse(path)
+            self.log.info("collection: {}".format(path))
+
+            try:
+                collection = clique.parse(path)
+
+            except Exception as e:
+                self.log.warning(e)
+                collection = None
 
             # Include start and end render frame in label
-            label = "{subset} ({start}-{end})".format(subset=subset,
-                                                      start=int(first_frame),
-                                                      end=int(last_frame))
+            name = node.name()
 
-            # Create instance
-            instance = context.create_instance(subset)
-            instance.add(node)
+            label = "{0} ({1}-{2})".format(
+                name,
+                int(first_frame),
+                int(last_frame)
+            )
 
-            # Adding/Checking publish and render target attribute
-            if "render_local" not in node.knobs():
-                knob = nuke.Boolean_Knob("render_local", "Local rendering")
-                knob.setValue(False)
-                node.addKnob(knob)
-
+            self.log.debug("checking for error: {}".format(label))
+            # # Adding/Checking publish and render target attribute
+            # if "render_local" not in node.knobs():
+            #     knob = nuke.Boolean_Knob("render_local", "Local rendering")
+            #     knob.setValue(False)
+            #     node.addKnob(knob)
+            self.log.debug("checking for error: {}".format(label))
             instance.data.update({
-                "asset": os.environ["AVALON_ASSET"],
                 "path": nuke.filename(node),
                 "outputDir": os.path.dirname(nuke.filename(node)),
                 "ext": ext,  # todo: should be redundant
                 "label": label,
-                "families": ["render.local"],
+                "families": ["{}.local".format(instance.data["families"][0])],
                 "collection": collection,
                 "first_frame": first_frame,
                 "last_frame": last_frame,
                 "output_type": output_type
             })
 
-            def instanceToggled(instance, value):
-                instance[0]["publish"].setValue(value)
+            self.log.debug("instance.data: {}".format(instance.data))
 
-            instance.data["instanceToggled"] = instanceToggled
-
-        # Sort/grouped by family (preserving local index)
-        context[:] = sorted(context, key=self.sort_by_family)
-
-        return context
+        self.log.debug("context: {}".format(context))
 
     def sort_by_family(self, instance):
         """Sort by family"""

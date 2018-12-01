@@ -7,18 +7,21 @@ from pype.nuke.lib import get_avalon_knob_data
 
 @pyblish.api.log
 class CollectNukeInstances(pyblish.api.ContextPlugin):
-    """Collect all write nodes."""
+    """Collect all nodes with Avalon knob."""
 
     order = pyblish.api.CollectorOrder
     label = "Collect Instances"
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
-
+        instances = []
         # creating instances per write node
         for node in nuke.allNodes():
 
-            if node["disable"].value():
+            try:
+                if node["disable"].value():
+                    continue
+            except Exception:
                 continue
 
             # get data from avalon knob
@@ -41,12 +44,14 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "publish": node.knob("publish").value()
             })
             self.log.info("collected instance: {}".format(instance.data))
+            instances.append(instance)
+
+        context.data["instances"] = instances
+
         # Sort/grouped by family (preserving local index)
         context[:] = sorted(context, key=self.sort_by_family)
 
-        self.log.info("context: {}".format(context))
-
-        return context
+        self.log.debug("context: {}".format(context))
 
     def sort_by_family(self, instance):
         """Sort by family"""

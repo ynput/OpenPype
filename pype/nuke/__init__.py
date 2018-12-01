@@ -144,29 +144,24 @@ def uninstall():
     pype.reset_data_from_templates()
 
 
-def on_pyblish_instance_toggled(instance, new_value, old_value):
-    """Toggle saver tool passthrough states on instance toggles."""
+def on_pyblish_instance_toggled(instance, old_value, new_value):
+    """Toggle node passthrough states on instance toggles."""
+    self.log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
+        instance, old_value, new_value))
 
     from avalon.nuke import (
         viewer_update_and_undo_stop,
         add_publish_knob
     )
 
-    writes = [n for n in instance if
-              n.Class() is "Write"]
-    if not writes:
-        return
-
     # Whether instances should be passthrough based on new value
-    passthrough = not new_value
-    with viewer_update_and_undo_stop():
-        for n in writes:
-            try:
-                n["publish"].value()
-            except ValueError:
-                n = add_publish_knob(n)
-                log.info(" `Publish` knob was added to write node..")
 
-            current = n["publish"].value()
-            if current != passthrough:
-                n["publish"].setValue(passthrough)
+    with viewer_update_and_undo_stop():
+        n = instance[0]
+        try:
+            n["publish"].value()
+        except ValueError:
+            n = add_publish_knob(n)
+            log.info(" `Publish` knob was added to write node..")
+
+        n["publish"].setValue(new_value)
