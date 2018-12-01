@@ -1,6 +1,6 @@
 import os
 import pyblish.api
-import nuke
+import clique
 
 
 @pyblish.api.log
@@ -10,6 +10,7 @@ class RepairCollectionAction(pyblish.api.Action):
     icon = "wrench"
 
     def process(self, context, plugin):
+        [os.remove(f) for f in context[0].data["files"]]
         context[0][0]["render"].setValue(True)
         self.log.info("Rendering toggled ON")
 
@@ -18,26 +19,23 @@ class ValidateCollection(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder
-    optional = True
-    families = ["write"]
-    label = "Check Full Img Sequence"
+    # optional = True
+    families = ['prerendered.frames']
+    label = "Check prerendered frames"
     hosts = ["nuke"]
     actions = [RepairCollectionAction]
 
     def process(self, instance):
-        if not instance.data["collection"]:
-            return
 
-        missing_files = []
-        for f in instance.data["collection"]:
-            # print f
-            if not os.path.exists(f):
-                missing_files.append(f)
+        collections, remainder = clique.assemble(*instance.data['files'])
+        self.log.info('collections: {}'.format(collections))
 
-        for f in missing_files:
-            instance.data["collection"].remove(f)
+        frame_length = instance.data["lastFrame"] \
+            - instance.data["firstFrame"]
 
-        frame_length = instance.data["last_frame"] - instance.data["first_frame"]
+        assert len(collections) == 1, self.log.info("There are multiple collections in the folder")
 
-        assert len(list(instance.data["collection"])) is frame_length, self.log.info(
+        assert collections[0].is_contiguous(), self.log.info("Some frames appear to be missing")
+
+        assert len(list(instance.data["files"])) is frame_length, self.log.info(
             "{} missing frames. Use repair to render all frames".format(__name__))
