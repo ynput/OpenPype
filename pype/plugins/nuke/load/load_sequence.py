@@ -118,7 +118,7 @@ def loader_shift(node, frame, relative=True):
     return int(shift)
 
 
-class NukeLoadSequence(api.Loader):
+class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
     families = ["imagesequence"]

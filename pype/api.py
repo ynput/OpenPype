@@ -15,6 +15,26 @@ from .action import (
     RepairContextAction
 )
 
+from app.api import Logger
+
+from . import (
+    Anatomy,
+    Colorspace,
+    Metadata,
+    Dataflow
+)
+from .templates import (
+    load_data_from_templates,
+    reset_data_from_templates,
+    get_project_name,
+    get_project_code,
+    get_hiearchy,
+    get_asset,
+    get_task,
+    fill_avalon_workdir,
+    get_version_from_workfile
+)
+
 __all__ = [
     # plugin classes
     "Extractor",
@@ -25,5 +45,28 @@ __all__ = [
     "ValidateMeshOrder",
     # action
     "get_errored_instances_from_context",
-    "RepairAction"
+    "RepairAction",
+
+    "Logger",
+
+    # contectual templates
+    # get data to preloaded templates
+    "load_data_from_templates",
+    "reset_data_from_templates",
+
+    # get contextual data
+    "get_project_name",
+    "get_project_code",
+    "get_hiearchy",
+    "get_asset",
+    "get_task",
+    "fill_avalon_workdir",
+    "get_version_from_workfile",
+
+    # preloaded templates
+    "Anatomy",
+    "Colorspace",
+    "Metadata",
+    "Dataflow"
+
 ]
