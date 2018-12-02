@@ -2,6 +2,7 @@ import sys
 from collections import OrderedDict
 from pprint import pprint
 from avalon.vendor.Qt import QtGui
+from avalon import api, io
 import avalon.nuke
 import pype.api as pype
 import nuke
@@ -99,57 +100,6 @@ def add_rendering_knobs(node):
     return node
 
 
-def update_frame_range(start, end, root=None):
-    """Set Nuke script start and end frame range
-
-    Args:
-        start (float, int): start frame
-        end (float, int): end frame
-        root (object, Optional): root object from nuke's script
-
-    Returns:
-        None
-
-    """
-
-    knobs = {
-        "first_frame": start,
-        "last_frame": end
-    }
-
-    with avalon.nuke.viewer_update_and_undo_stop():
-        for key, value in knobs.items():
-            if root:
-                root[key].setValue(value)
-            else:
-                nuke.root()[key].setValue(value)
-
-
-def get_additional_data(container):
-    """Get Nuke's related data for the container
-
-    Args:
-        container(dict): the container found by the ls() function
-
-    Returns:
-        dict
-    """
-
-    node = container["_tool"]
-    tile_color = node['tile_color'].value()
-    if tile_color is None:
-        return {}
-
-    hex = '%08x' % tile_color
-    rgba = [
-        float(int(hex[0:2], 16)) / 255.0,
-        float(int(hex[2:4], 16)) / 255.0,
-        float(int(hex[4:6], 16)) / 255.0
-    ]
-
-    return {"color": QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
-
-
 def set_viewers_colorspace(viewer):
     assert isinstance(viewer, dict), log.error(
         "set_viewers_colorspace(): argument should be dictionary")
@@ -244,6 +194,85 @@ def get_avalon_knob_data(node):
     except:
         return None
     return data
+
+
+def reset_resolution():
+    """Set resolution to project resolution."""
+    log.info("Reseting resolution")
+    project = io.find_one({"type": "project"})
+    asset = api.Session["AVALON_ASSET"]
+    asset = io.find_one({"name": asset, "type": "asset"})
+
+    try:
+        width = asset["data"].get("resolution_width", 1920)
+        height = asset["data"].get("resolution_height", 1080)
+        pixel_aspect = asset["data"].get("pixel_aspect", 1)
+
+        bbox = asset["data"].get("crop", "0.0.1920.1080")
+
+        try:
+            x, y, r, t = bbox.split(".")
+        except Exception as e:
+            x = 0
+            y = 0
+            r = width
+            t = height
+            log.error("{}: {} \nFormat:Crop need to be set with dots, example: "
+                      "0.0.1920.1080, /nSetting to default".format(__name__, e))
+
+    except KeyError:
+        log.warning(
+            "No resolution information found for \"{0}\".".format(
+                project["name"]
+            )
+        )
+        return
+
+    used_formats = list()
+    for f in nuke.formats():
+        if project["name"] in str(f.name()):
+            used_formats.append(f.name())
+        else:
+            format_name = project["name"] + "_1"
+
+    if used_formats:
+        format_name = "{}_{}".format(
+            project["name"],
+            int(used_formats[-1][-1])+1
+        )
+        log.info("Format exists: {}. "
+                 "Will create new: {}...".format(
+                     used_formats[-1],
+                     format_name)
+                 )
+
+    make_format(
+        width=int(width),
+        height=int(height),
+        x=int(x),
+        y=int(y),
+        r=int(r),
+        t=int(t),
+        pixel_aspect=float(pixel_aspect),
+        project_name=format_name
+    )
+    log.info("Format is set")
+
+
+def make_format(**args):
+    log.info("Format does't exist, will create: \n{}".format(args))
+    nuke.addFormat(
+        "{width} "
+        "{height} "
+        "{x} "
+        "{y} "
+        "{r} "
+        "{t} "
+        "{pixel_aspect} "
+        "{project_name}".format(**args)
+    )
+    nuke.root()["format"].setValue("{project_name}".format(**args))
+
 
 # TODO: bellow functions are wip and needs to be check where they are used
 # ------------------------------------
