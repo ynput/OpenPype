@@ -41,7 +41,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             # get path
             path = nuke.filename(node)
             output_dir = os.path.dirname(path)
-            self.log.debug(output_dir)
+            self.log.debug('output dir: {}'.format(output_dir))
             # Include start and end render frame in label
             name = node.name()
 
@@ -53,20 +53,14 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
 
             # preredered frames
             if not node["render"].value():
-                try:
-                    families = "prerendered.frames"
-                    collected_frames = os.listdir(output_dir)
-                    if not collected_frames:
-                        node["render"].setValue(True)
-                    if "files" not in instance.data:
-                        instance.data["files"] = list()
-
-                    instance.data["files"] = collected_frames
-                    instance.data['transfer'] = False
-                except Exception:
-                    node["render"].setValue(True)
-
-            if node["render"].value():
+                families = "prerendered.frames"
+                collected_frames = os.listdir(output_dir)
+                self.log.debug("collected_frames: {}".format(label))
+                if "files" not in instance.data:
+                    instance.data["files"] = list()
+                instance.data["files"].append(collected_frames)
+                instance.data['transfer'] = False
+            else:
                 # dealing with local/farm rendering
                 if node["render_farm"].value():
                     families = "{}.farm".format(instance.data["families"][0])
