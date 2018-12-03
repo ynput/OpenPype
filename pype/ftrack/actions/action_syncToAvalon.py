@@ -15,7 +15,12 @@ from avalon import io, inventory
 from pype.ftrack import ftrack_utils
 
 class SyncToAvalon(BaseAction):
-    '''Edit meta data action.'''
+    '''
+    Synchronizing data action - from Ftrack to Avalon DB
+
+
+
+    '''
 
     #: Action identifier.
     identifier = 'sync.to.avalon'
