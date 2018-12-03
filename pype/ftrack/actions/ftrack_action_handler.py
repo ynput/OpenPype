@@ -1,6 +1,7 @@
 # :coding: utf-8
 # :copyright: Copyright (c) 2017 ftrack
 import os
+import sys
 import logging
 import getpass
 import platform
@@ -298,20 +299,71 @@ class AppAction(object):
         # Full path to executable launcher
         execfile = None
 
-        for ext in os.environ["PATHEXT"].split(os.pathsep):
-            fpath = os.path.join(path.strip('"'), self.executable + ext)
-            if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
-                execfile = fpath
-                break
+        if sys.platform == "win32":
 
-        # Run SW if was found executable
-        if execfile is not None:
-            lib.launch(executable=execfile, args=[], environment=env)
-        else:
-            return {
-                'success': False,
-                'message': "We didn't found launcher for {0}".format(self.label)
-            }
+            for ext in os.environ["PATHEXT"].split(os.pathsep):
+                fpath = os.path.join(path.strip('"'), self.executable + ext)
+                if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
+                    execfile = fpath
+                    break
+                pass
+
+            # Run SW if was found executable
+            if execfile is not None:
+                lib.launch(executable=execfile, args=[], environment=env)
+            else:
+                return {
+                    'success': False,
+                    'message': "We didn't found launcher for {0}"
+                    .format(self.label)
+                    }
+                pass
+
+        if sys.platform.startswith('linux'):
+            execfile = os.path.join(path.strip('"'), self.executable)
+            if os.path.isfile(execfile):
+                try:
+                    fp = open(execfile)
+                except PermissionError as p:
+                    log.error('Access denied on {0} - {1}'.
+                              format(execfile, p))
+                    return {
+                        'success': False,
+                        'message': "Access denied on launcher - {}".
+                        format(execfile)
+                    }
+                fp.close()
+                # check executable permission
+                if not os.access(execfile, os.X_OK):
+                    log.error('No executable permission on {}'.
+                              format(execfile))
+                    return {
+                        'success': False,
+                        'message': "No executable permission - {}"
+                        .format(execfile)
+                        }
+                    pass
+            else:
+                log.error('Launcher doesn\'t exist - {}'.
+                          format(execfile))
+                return {
+                    'success': False,
+                    'message': "Launcher doesn't exist - {}"
+                    .format(execfile)
+                }
+                pass
+            # Run SW if was found executable
+            if execfile is not None:
+                lib.launch('/usr/bin/env', args=['bash', execfile], environment=env)
+            else:
+                return {
+                    'success': False,
+                    'message': "We didn't found launcher for {0}"
+                    .format(self.label)
+                    }
+                pass
+
+
 
         # RUN TIMER IN FTRACK
         username = event['source']['user']['username']
