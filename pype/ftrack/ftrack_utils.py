@@ -1,5 +1,6 @@
 import os
 import sys
+import re
 from pprint import *
 
 import ftrack_api
@@ -11,6 +12,71 @@ from avalon.vendor import toml
 from app.api import Logger
 
 log = Logger.getLogger(__name__)
+
+def get_data(parent, entity, session, custom_attributes):
+    entity_type = entity.entity_type
+
+    data = {}
+    data['ftrackId'] = entity['id']
+    data['entityType'] = entity_type
+
+    for cust_attr in custom_attributes:
+        key = cust_attr['key']
+        if cust_attr['entity_type'].lower() in ['asset']:
+            data[key] = entity['custom_attributes'][key]
+
+        elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
+            data[key] = entity['custom_attributes'][key]
+
+        elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
+            # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
+            entity_type_full = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
+            # Get object id of entity type
+            ent_obj_type_id = session.query('ObjectType where name is "{}"'.format(entity_type_full)).one()['id']
+
+            if cust_attr['object_type_id'] == ent_obj_type_id:
+                data[key] = entity['custom_attributes'][key]
+
+    if entity_type in ['Project']:
+        data['code'] = entity['name']
+        return data
+
+    # Get info for 'Data' in Avalon DB
+    tasks = []
+    for child in entity['children']:
+        if child.entity_type in ['Task']:
+            tasks.append(child['name'])
+
+    # Get list of parents without project
+    parents = []
+    for i in range(1, len(entity['link'])-1):
+        tmp = session.get(entity['link'][i]['type'], entity['link'][i]['id'])
+        parents.append(tmp)
+
+    silo = entity['name']
+    if len(parents) > 0:
+        silo = parents[0]['name']
+
+    folderStruct = []
+    parentId = None
+
+    for parent in parents:
+        parName = parent['name']
+        folderStruct.append(parName)
+        parentId = io.find_one({'type': 'asset', 'name': parName})['_id']
+        if parent['parent'].entity_type != 'project' and parentId is None:
+            parent.importToAvalon(parent)
+            parentId = io.find_one({'type': 'asset', 'name': parName})['_id']
+
+    hierarchy = os.path.sep.join(folderStruct)
+
+    data['silo'] = silo
+    data['visualParent'] = parentId
+    data['parents'] = folderStruct
+    data['tasks'] = tasks
+    data['hierarchy'] = hierarchy
+
+    return data
 
 def avalon_check_name(entity, inSchema = None):
     alright = True
