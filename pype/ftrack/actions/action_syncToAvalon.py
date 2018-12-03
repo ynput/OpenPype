@@ -18,7 +18,28 @@ class SyncToAvalon(BaseAction):
     '''
     Synchronizing data action - from Ftrack to Avalon DB
 
+    Stores all information about entity.
+    - Name(string) - Most important information
+    - Parent(ObjectId) - Avalon Project Id, if entity is not project itself
+    - Silo(string) - Last parent except project
+    - Data(dictionary):
+        - VisualParent(ObjectId) - Avalon Id of parent asset
+        - Parents(array of string) - All parent names except project
+        - Tasks(array of string) - Tasks on asset
+        - FtrackId(string)
+        - entityType(string) - entity's type on Ftrack
+        * All Custom attributes in group 'Avalon' which name don't start with 'avalon_'
 
+    These information are stored also for all parents and children entities.
+
+    Avalon ID of asset is stored to Ftrack -> Custom attribute 'avalon_mongo_id'.
+    - action IS NOT creating this Custom attribute if doesn't exist
+        - run 'Create Custom Attributes' action or do it manually (Must be in 'avalon' group)
+
+    If Ftrack entity already has Custom Attribute 'avalon_mongo_id' that stores ID:
+    - names are checked -> shows error if names are not exact the same!!!
+        - after sync is not allowed to change names!
+        - only way is to create new entity in ftrack with new name
 
     '''
 
@@ -206,7 +227,10 @@ class SyncToAvalon(BaseAction):
         # Presets:
 
         data = ftrack_utils.get_data(self, entity, session, self.custom_attributes)
-        silo = data.pop('silo')
+        silo = entity['name']
+        if len(data['parents']) > 0:
+            silo = data['parents'][0]
+
         os.environ['AVALON_SILO'] = silo
 
         name = entity['name']

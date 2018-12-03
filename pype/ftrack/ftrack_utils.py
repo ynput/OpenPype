@@ -53,10 +53,6 @@ def get_data(parent, entity, session, custom_attributes):
         tmp = session.get(entity['link'][i]['type'], entity['link'][i]['id'])
         parents.append(tmp)
 
-    silo = entity['name']
-    if len(parents) > 0:
-        silo = parents[0]['name']
-
     folderStruct = []
     parentId = None
 
@@ -70,7 +66,6 @@ def get_data(parent, entity, session, custom_attributes):
 
     hierarchy = os.path.sep.join(folderStruct)
 
-    data['silo'] = silo
     data['visualParent'] = parentId
     data['parents'] = folderStruct
     data['tasks'] = tasks
