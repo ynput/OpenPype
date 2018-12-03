@@ -3,6 +3,9 @@
 """
 
 from avalon import api
+from pype.api import Logger
+
+log = Logger.getLogger(__name__, "nuke")
 
 
 class SetFrameRangeLoader(api.Loader):
@@ -10,7 +13,7 @@ class SetFrameRangeLoader(api.Loader):
 
     families = ["animation",
                 "camera",
-                "imagesequence",
+                "write",
                 "yeticache",
                 "pointcache"]
     representations = ["*"]
@@ -30,9 +33,10 @@ class SetFrameRangeLoader(api.Loader):
         start = version_data.get("startFrame", None)
         end = version_data.get("endFrame", None)
 
+        log.info("start: {}, end: {}".format(start, end))
         if start is None or end is None:
-            print("Skipping setting frame range because start or "
-                  "end frame data is missing..")
+            log.info("Skipping setting frame range because start or "
+                     "end frame data is missing..")
             return
 
         lib.update_frame_range(start, end)
@@ -43,7 +47,7 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
 
     families = ["animation",
                 "camera",
-                "imagesequence",
+                "write",
                 "yeticache",
                 "pointcache"]
     representations = ["*"]
