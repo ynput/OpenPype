@@ -8,7 +8,7 @@ from pype import lib
 import avalon.io as io
 import avalon.api
 import avalon
-from avalon.vendor import toml
+from avalon.vendor import toml, jsonschema
 from app.api import Logger
 
 log = Logger.getLogger(__name__)
@@ -74,6 +74,7 @@ def get_data(parent, entity, session, custom_attributes):
     return data
 
 def avalon_check_name(entity, inSchema = None):
+    ValidationError = jsonschema.ValidationError
     alright = True
     name = entity['name']
     if " " in name:

@@ -151,7 +151,7 @@ class SyncToAvalon(BaseAction):
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             log_message = "{}/{}/Line: {}".format(exc_type, fname, exc_tb.tb_lineno)
             self.log.error('Error during syncToAvalon: {}'.format(log_message))
-            message = 'Unexpected Error!!! (Please check Log for more information)'
+            message = 'Unexpected Error - Please check Log for more information'
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)
