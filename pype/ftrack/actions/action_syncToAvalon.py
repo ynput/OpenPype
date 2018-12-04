@@ -17,7 +17,7 @@ class SyncToAvalon(BaseAction):
     Synchronizing data action - from Ftrack to Avalon DB
 
     Stores all information about entity.
-    - Name(string) - Most important information
+    - Name(string) - Most important information = identifier of entity
     - Parent(ObjectId) - Avalon Project Id, if entity is not project itself
     - Silo(string) - Last parent except project
     - Data(dictionary):
@@ -28,16 +28,23 @@ class SyncToAvalon(BaseAction):
         - entityType(string) - entity's type on Ftrack
         * All Custom attributes in group 'Avalon' which name don't start with 'avalon_'
 
-    These information are stored also for all parents and children entities.
+    * These information are stored also for all parents and children entities.
 
     Avalon ID of asset is stored to Ftrack -> Custom attribute 'avalon_mongo_id'.
     - action IS NOT creating this Custom attribute if doesn't exist
-        - run 'Create Custom Attributes' action or do it manually (Must be in 'avalon' group)
+        - run 'Create Custom Attributes' action or do it manually (Not recommended)
 
     If Ftrack entity already has Custom Attribute 'avalon_mongo_id' that stores ID:
-    - names are checked -> shows error if names are not exact the same!!!
+    - names are checked -> shows error if names are not exact the same
         - after sync is not allowed to change names!
         - only way is to create new entity in ftrack with new name
+
+    If ID in 'avalon_mongo_id' is empty string or is not found in DB:
+    - tries to find entity by name
+        - found:
+            - raise error if ftrackId/visual parent/parents are not same
+        - not found:
+            - Creates asset/project
 
     '''
 
@@ -79,7 +86,7 @@ class SyncToAvalon(BaseAction):
         })
 
         try:
-            self.log.info("action <" + self.__class__.__name__ + "> is running")
+            self.log.info("Action <" + self.__class__.__name__ + "> is running")
             self.ca_mongoid = 'avalon_mongo_id'
             #TODO AVALON_PROJECTS, AVALON_ASSET, AVALON_SILO should be set up otherwise console log shows avalon debug
             self.setAvalonAttributes()
@@ -96,7 +103,7 @@ class SyncToAvalon(BaseAction):
             for entity in entities:
                 self.getShotAsset(entity)
 
-            # Check duplicate name - raise error if found
+            # Check names: REGEX in schema/duplicates - raise error if found
             all_names = []
             duplicates = []
 
@@ -186,8 +193,11 @@ class SyncToAvalon(BaseAction):
             # Set project template
             template = lib.get_avalon_project_template_schema()
             if self.ca_mongoid in entity['custom_attributes']:
-                projectId = ObjectId(self.entityProj['custom_attributes'][self.ca_mongoid])
-                self.avalon_project = io.find_one({"_id": projectId})
+                try:
+                    projectId = ObjectId(self.entityProj['custom_attributes'][self.ca_mongoid])
+                    self.avalon_project = io.find_one({"_id": projectId})
+                except:
+                    self.log.debug("Entity {} don't have stored entity id in ftrack".format(entity['name']))
 
             if self.avalon_project is None:
                 self.avalon_project = io.find_one({
@@ -255,15 +265,14 @@ class SyncToAvalon(BaseAction):
             else:
                 update = False
                 aD = avalon_asset['data']
-                attr = ['ftrackId', 'visualParent', 'parents']
-                for a in attr:
-                    if a not in aD: update = True
+                check_attr = ['ftrackId', 'visualParent', 'parents']
+                for attr in check_attr:
+                    if attr not in aD: update = True
 
                 if update is False:
-                    if (avalon_asset['data']['ftrackId'] != data['ftrackId'] or
-                    avalon_asset['data']['visualParent'] != data['visualParent'] or
-                    avalon_asset['data']['parents'] != data['parents']):
-                        raise ValueError('Entity <{}> is not same like in Avalon DB'.format(name))
+                    for attr in check_attr:
+                        if (avalon_asset['data'][attr] != data[attr]):
+                            raise ValueError('In Avalon DB already exists entity with name <{}>!'.format(name))
 
         elif avalon_asset['name'] != entity['name']:
             raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly - please create new asset'.format(avalon_asset['name'], name))
