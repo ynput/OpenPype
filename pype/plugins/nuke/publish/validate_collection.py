@@ -35,8 +35,8 @@ class ValidateCollection(pyblish.api.InstancePlugin):
         collections, remainder = clique.assemble(*instance.data['files'])
         self.log.info('collections: {}'.format(str(collections)))
 
-        frame_length = instance.data["lastFrame"] \
-            - instance.data["firstFrame"] + 1
+        frame_length = instance.data["endFrame"] \
+            - instance.data["startFrame"] + 1
 
         if frame_length is not 1:
             assert len(collections) == 1, self.log.info(

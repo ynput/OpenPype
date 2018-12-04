@@ -24,24 +24,29 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             except Exception:
                 continue
 
+            try:
+                publish = node.knob("publish").value()
+            except Exception:
+                continue
+
             # get data from avalon knob
             avalon_knob_data = get_avalon_knob_data(node)
             if not avalon_knob_data:
                 continue
-            subset = avalon_knob_data["subset"]
+
+            subset = avalon_knob_data.get("subset", None) or node["name"].value()
 
             # Create instance
             instance = context.create_instance(subset)
             instance.add(node)
 
             instance.data.update({
+                "subset": subset,
                 "asset": os.environ["AVALON_ASSET"],
                 "label": node.name(),
                 "name": node.name(),
-                "subset": subset,
-                "families": [avalon_knob_data["families"]],
-                "family": avalon_knob_data["family"],
-                "publish": node.knob("publish").value()
+                "avalonKnob": avalon_knob_data,
+                "publish": publish
             })
             self.log.info("collected instance: {}".format(instance.data))
             instances.append(instance)

@@ -1,6 +1,7 @@
 import os
 import logging
 import shutil
+import clique
 
 import errno
 import pyblish.api
@@ -110,9 +111,11 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                                       locations=[LOCATION],
                                       data=version_data)
 
+        self.log.debug("version: {}".format(version))
         self.log.debug("Creating version ...")
-        version_id = io.insert_one(version).inserted_id
 
+        version_id = io.insert_one(version).inserted_id
+        self.log.debug("version_id: {}".format(version_id))
         # Write to disk
         #          _
         #         | |
@@ -130,11 +133,11 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         #                  "asset": ASSET,
         #                  "subset": subset["name"],
         #                  "version": version["name"]}
-        hierarchy = io.find_one({"type":'asset', "name":ASSET})['data']['parents']
+        hierarchy = io.find_one({"type": 'asset', "name": ASSET})['data']['parents']
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
-
+        self.log.debug("hierarchy: {}".format(hierarchy))
         template_data = {"root": root,
                          "project": {"name": PROJECT,
                                      "code": "prjX"},
@@ -145,7 +148,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                          "VERSION": version["name"],
                          "hierarchy": hierarchy}
 
-        template_publish = project["config"]["template"]["publish"]
+        # template_publish = project["config"]["template"]["publish"]
         anatomy = instance.context.data['anatomy']
 
         # Find the representations to transfer amongst the files
@@ -153,7 +156,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         representations = []
 
         for files in instance.data["files"]:
-
             # Collection
             #   _______
             #  |______|\
@@ -206,7 +208,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 anatomy_filled = anatomy.format(template_data)
                 dst = anatomy_filled.publish.path
 
-
                 # if instance.data.get('transfer', True):
                 #     dst = src
                 # instance.data["transfers"].append([src, dst])
@@ -222,17 +223,17 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                     "root": root,
-                     "project": PROJECT,
-                     "projectcode": "prjX",
-                     'task': api.Session["AVALON_TASK"],
-                     "silo": asset['silo'],
-                     "asset": ASSET,
-                     "family": instance.data['family'],
-                     "subset": subset["name"],
-                     "version": version["name"],
-                     "hierarchy": hierarchy,
-                     "representation": ext[1:]
+                    "root": root,
+                    "project": PROJECT,
+                    "projectcode": "prjX",
+                    'task': api.Session["AVALON_TASK"],
+                    "silo": asset['silo'],
+                    "asset": ASSET,
+                    "family": instance.data['family'],
+                    "subset": subset["name"],
+                    "version": version["name"],
+                    "hierarchy": hierarchy,
+                    "representation": ext[1:]
                 }
             }
             representations.append(representation)
@@ -353,9 +354,11 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                         "comment": context.data.get("comment")}
 
         # Include optional data if present in
-        optionals = ["startFrame", "endFrame", "step", "handles"]
+        optionals = ["startFrame", "endFrame", "step",
+                     "handles", "colorspace", "fps", "outputDir"]
+
         for key in optionals:
             if key in instance.data:
-                version_data[key] = instance.data[key]
+                version_data[key] = instance.data.get(key, None)
 
         return version_data

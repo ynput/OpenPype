@@ -241,7 +241,7 @@ def get_avalon_knob_data(node):
     import toml
     try:
         data = toml.loads(node['avalon'].value())
-    except:
+    except Exception:
         return None
     return data
 

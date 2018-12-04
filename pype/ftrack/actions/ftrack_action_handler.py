@@ -71,6 +71,7 @@ class AppAction(object):
             ),
             self._launch
         )
+        self.log.info("Application '{}' - Registered successfully".format(self.label))
 
     def _discover(self, event):
         args = self._translate_event(
