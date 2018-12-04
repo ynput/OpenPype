@@ -355,7 +355,7 @@ def get_avalon_project_template():
     """
     template = Templates(type=["anatomy"])
     proj_template = {}
-    proj_template['workfile'] = '{asset[name]}_{task[name]}_{version:0>3}<_{comment}>'
+    proj_template['workfile'] = '{asset[name]}_{task[name]}_v{version:0>3}<_{comment}>'
     proj_template['work'] = '{root}/{project}/{hierarchy}/{asset}/work/{task}'
     proj_template['publish'] = '{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'
     # TODO this down should work but it can't be in default.toml:
