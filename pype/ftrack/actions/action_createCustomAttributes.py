@@ -89,11 +89,25 @@ class AvalonIdAttribute(BaseAction):
             # Set session back to begin("session.query" raises error on commit)
             session.rollback()
             # Set security roles for attribute
-            custAttrSecuRole = session.query('SecurityRole').all()
+            role_api = session.query('SecurityRole where name is "API"').all()
             # Set Text type of Attribute
             custom_attribute_type = session.query(
                 'CustomAttributeType where name is "text"'
             ).one()
+            # Get/Set 'avalon' group
+            groups = session.query('CustomAttributeGroup where name is "avalon"').all()
+            if len(groups) > 1:
+                msg = "There are more Custom attribute groups with name 'avalon'"
+                self.log.warning(msg)
+                return { 'success': False, 'message':msg }
+
+            elif len(groups) < 1:
+                group = session.create('CustomAttributeGroup', {
+                    'name': 'avalon',
+                })
+                session.commit()
+            else:
+                group = groups[0]
 
             for entity_type in base:
                 # Create a custom attribute configuration.
@@ -103,8 +117,9 @@ class AvalonIdAttribute(BaseAction):
                     'label': custAttrLabel,
                     'key': custAttrName,
                     'default': '',
-                    'write_security_roles': custAttrSecuRole,
-                    'read_security_roles': custAttrSecuRole,
+                    'write_security_roles': role_api,
+                    'read_security_roles': role_api,
+                    'group':group,
                     'config': json.dumps({'markdown': False})
                 })
 
@@ -117,8 +132,9 @@ class AvalonIdAttribute(BaseAction):
                     'label': custAttrLabel,
                     'key': custAttrName,
                     'default': '',
-                    'write_security_roles': custAttrSecuRole,
-                    'read_security_roles': custAttrSecuRole,
+                    'write_security_roles': role_api,
+                    'read_security_roles': role_api,
+                    'group':group,
                     'config': json.dumps({'markdown': False})
                 })
 
