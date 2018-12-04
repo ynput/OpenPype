@@ -1,7 +1,7 @@
 from avalon import api
 
 
-class NukeSelectContainers(api.InventoryAction):
+class SelectContainers(api.InventoryAction):
 
     label = "Select Containers"
     icon = "mouse-pointer"

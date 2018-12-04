@@ -14,7 +14,7 @@ def registerApp(app, session):
     try:
         variant = app['name'].split("_")[1]
     except Exception as e:
-        log.warning("'{0}' - App 'name' and 'variant' is not separated by '_' (variant is set to '')".format(app['name']))
+        log.warning("'{0}' - App 'name' and 'variant' is not separated by '_' (variant is not set)".format(app['name']))
         return
 
     abspath = lib.which_app(app['name'])
@@ -23,17 +23,16 @@ def registerApp(app, session):
         return
 
     apptoml = toml.load(abspath)
+
     executable = apptoml['executable']
 
     label = app['label']
+    if 'ftrack_label' in apptoml:
+        label = apptoml['ftrack_label']
+
     icon = None
-    # TODO get right icons
-    if 'nuke' in app['name']:
-        icon = "https://mbtskoudsalg.com/images/nuke-icon-png-2.png"
-        label = "Nuke"
-    elif 'maya' in app['name']:
-        icon = "http://icons.iconarchive.com/icons/froyoshark/enkel/256/Maya-icon.png"
-        label = "Autodesk Maya"
+    if 'icon' in apptoml:
+        icon = apptoml['icon']
 
     # register action
     AppAction(session, label, name, executable, variant, icon).register()

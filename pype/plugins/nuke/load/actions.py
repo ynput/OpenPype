@@ -5,7 +5,7 @@
 from avalon import api
 
 
-class NukeSetFrameRangeLoader(api.Loader):
+class SetFrameRangeLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["animation",
@@ -38,7 +38,7 @@ class NukeSetFrameRangeLoader(api.Loader):
         lib.update_frame_range(start, end)
 
 
-class NukeSetFrameRangeWithHandlesLoader(api.Loader):
+class SetFrameRangeWithHandlesLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
     families = ["animation",

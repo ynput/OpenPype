@@ -1,6 +1,7 @@
 # :coding: utf-8
 # :copyright: Copyright (c) 2017 ftrack
 import os
+import sys
 import logging
 import getpass
 import platform
@@ -10,14 +11,12 @@ from avalon import io, lib, pipeline
 from avalon import session as sess
 import acre
 
-from app.api import (
-    Templates,
-    Logger
-)
 
-t = Templates(
-    type=["anatomy"]
-)
+from pype import api as pype
+
+log = pype.Logger.getLogger(__name__, "ftrack")
+
+log.debug("pype.Anatomy: {}".format(pype.Anatomy))
 
 
 class AppAction(object):
@@ -34,7 +33,7 @@ class AppAction(object):
     def __init__(self, session, label, name, executable, variant=None, icon=None, description=None):
         '''Expects a ftrack_api.Session instance'''
 
-        self.log = Logger.getLogger(self.__class__.__name__)
+        self.log = pype.Logger.getLogger(self.__class__.__name__)
 
         # self.logger = Logger.getLogger(__name__)
 
@@ -73,6 +72,8 @@ class AppAction(object):
             ),
             self._launch
         )
+
+        self.log.info("Application '{}' - Registered successfully".format(self.label))
 
     def _discover(self, event):
         args = self._translate_event(
@@ -241,7 +242,9 @@ class AppAction(object):
         os.environ["AVALON_APP"] = self.identifier
         os.environ["AVALON_APP_NAME"] = self.identifier + "_" + self.variant
 
-        anatomy = t.anatomy
+        os.environ["FTRACK_TASKID"] = id
+
+        anatomy = pype.Anatomy
         io.install()
         hierarchy = io.find_one({"type": 'asset', "name": entity['parent']['name']})[
             'data']['parents']
@@ -255,9 +258,10 @@ class AppAction(object):
                 "task": entity['name'],
                 "asset": entity['parent']['name'],
                 "hierarchy": hierarchy}
-
-        anatomy = anatomy.format(data)
-
+        try:
+            anatomy = anatomy.format(data)
+        except Exception as e:
+            log.error("{0} Error in anatomy.format: {1}".format(__name__, e))
         os.environ["AVALON_WORKDIR"] = os.path.join(anatomy.work.root, anatomy.work.folder)
 
         # TODO Add paths to avalon setup from tomls
@@ -297,20 +301,71 @@ class AppAction(object):
         # Full path to executable launcher
         execfile = None
 
-        for ext in os.environ["PATHEXT"].split(os.pathsep):
-            fpath = os.path.join(path.strip('"'), self.executable + ext)
-            if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
-                execfile = fpath
-                break
+        if sys.platform == "win32":
 
-        # Run SW if was found executable
-        if execfile is not None:
-            lib.launch(executable=execfile, args=[], environment=env)
-        else:
-            return {
-                'success': False,
-                'message': "We didn't found launcher for {0}".format(self.label)
-            }
+            for ext in os.environ["PATHEXT"].split(os.pathsep):
+                fpath = os.path.join(path.strip('"'), self.executable + ext)
+                if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
+                    execfile = fpath
+                    break
+                pass
+
+            # Run SW if was found executable
+            if execfile is not None:
+                lib.launch(executable=execfile, args=[], environment=env)
+            else:
+                return {
+                    'success': False,
+                    'message': "We didn't found launcher for {0}"
+                    .format(self.label)
+                    }
+                pass
+
+        if sys.platform.startswith('linux'):
+            execfile = os.path.join(path.strip('"'), self.executable)
+            if os.path.isfile(execfile):
+                try:
+                    fp = open(execfile)
+                except PermissionError as p:
+                    log.error('Access denied on {0} - {1}'.
+                              format(execfile, p))
+                    return {
+                        'success': False,
+                        'message': "Access denied on launcher - {}".
+                        format(execfile)
+                    }
+                fp.close()
+                # check executable permission
+                if not os.access(execfile, os.X_OK):
+                    log.error('No executable permission on {}'.
+                              format(execfile))
+                    return {
+                        'success': False,
+                        'message': "No executable permission - {}"
+                        .format(execfile)
+                        }
+                    pass
+            else:
+                log.error('Launcher doesn\'t exist - {}'.
+                          format(execfile))
+                return {
+                    'success': False,
+                    'message': "Launcher doesn't exist - {}"
+                    .format(execfile)
+                }
+                pass
+            # Run SW if was found executable
+            if execfile is not None:
+                lib.launch('/usr/bin/env', args=['bash', execfile], environment=env)
+            else:
+                return {
+                    'success': False,
+                    'message': "We didn't found launcher for {0}"
+                    .format(self.label)
+                    }
+                pass
+
+
 
         # RUN TIMER IN FTRACK
         username = event['source']['user']['username']
@@ -398,7 +453,7 @@ class BaseAction(object):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
 
-        self.log = Logger.getLogger(self.__class__.__name__)
+        self.log = pype.Logger.getLogger(self.__class__.__name__)
 
         if self.label is None:
             raise ValueError(
@@ -435,7 +490,8 @@ class BaseAction(object):
             ),
             self._launch
         )
-        self.log.info("----- action - <" + self.__class__.__name__ + "> - Has been registered -----")
+
+        self.log.info("Action '{}' - Registered successfully".format(self.__class__.__name__))
 
     def _discover(self, event):
         args = self._translate_event(

@@ -1,10 +1,114 @@
-# fttrack help functions
+import os
+import sys
+import re
+from pprint import *
 
 import ftrack_api
-import os
-import traceback
-from pprint import *
 from pype import lib
+import avalon.io as io
+import avalon.api
+import avalon
+from avalon.vendor import toml, jsonschema
+from app.api import Logger
+
+log = Logger.getLogger(__name__)
+
+def get_data(parent, entity, session, custom_attributes):
+    entity_type = entity.entity_type
+
+    data = {}
+    data['ftrackId'] = entity['id']
+    data['entityType'] = entity_type
+
+    for cust_attr in custom_attributes:
+        key = cust_attr['key']
+        if cust_attr['entity_type'].lower() in ['asset']:
+            data[key] = entity['custom_attributes'][key]
+
+        elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
+            data[key] = entity['custom_attributes'][key]
+
+        elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
+            # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
+            entity_type_full = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
+            # Get object id of entity type
+            ent_obj_type_id = session.query('ObjectType where name is "{}"'.format(entity_type_full)).one()['id']
+
+            if cust_attr['object_type_id'] == ent_obj_type_id:
+                data[key] = entity['custom_attributes'][key]
+
+    if entity_type in ['Project']:
+        data['code'] = entity['name']
+        return data
+
+    # Get info for 'Data' in Avalon DB
+    tasks = []
+    for child in entity['children']:
+        if child.entity_type in ['Task']:
+            tasks.append(child['name'])
+
+    # Get list of parents without project
+    parents = []
+    folderStruct = []
+    for i in range(1, len(entity['link'])-1):
+        parEnt = session.get(entity['link'][i]['type'], entity['link'][i]['id'])
+        parName = parEnt['name']
+        folderStruct.append(parName)
+        if i > 1:
+            parents.append(parEnt)
+
+    parentId = None
+
+    for parent in parents:
+        parentId = io.find_one({'type': 'asset', 'name': parName})['_id']
+        if parent['parent'].entity_type != 'project' and parentId is None:
+            parent.importToAvalon(parent)
+            parentId = io.find_one({'type': 'asset', 'name': parName})['_id']
+
+    hierarchy = os.path.sep.join(folderStruct)
+
+    data['visualParent'] = parentId
+    data['parents'] = folderStruct
+    data['tasks'] = tasks
+    data['hierarchy'] = hierarchy
+
+    return data
+
+def avalon_check_name(entity, inSchema = None):
+    ValidationError = jsonschema.ValidationError
+    alright = True
+    name = entity['name']
+    if " " in name:
+        alright = False
+
+    data = {}
+    data['data'] = {}
+    data['type'] = 'asset'
+    schema = "avalon-core:asset-2.0"
+    # TODO have project any REGEX check?
+    if entity.entity_type in ['Project']:
+        # data['type'] = 'project'
+        name = entity['full_name']
+        # schema = get_avalon_project_template_schema()['schema']
+    # elif entity.entity_type in ['AssetBuild','Library']:
+        # data['silo'] = 'Assets'
+    # else:
+    #     data['silo'] = 'Film'
+    data['silo'] = 'Film'
+
+    if inSchema is not None:
+        schema = inSchema
+    data['schema'] = schema
+    data['name'] = name
+    try:
+        avalon.schema.validate(data)
+    except ValidationError:
+        alright = False
+
+    if alright is False:
+        raise ValueError("{} includes unsupported symbols like 'dash' or 'space'".format(name))
+
+
 
 def get_apps(entity):
     """ Get apps from project
@@ -18,10 +122,14 @@ def get_apps(entity):
     apps = []
     for app in entity['custom_attributes']['applications']:
         try:
-            label = toml.load(lib.which_app(app))['label']
-            apps.append({'name':app, 'label':label})
+            app_config = {}
+            app_config['name'] = app
+            app_config['label'] = toml.load(avalon.lib.which_app(app))['label']
+
+            apps.append(app_config)
+
         except Exception as e:
-            print('Error with application {0} - {1}'.format(app, e))
+            log.warning('Error with application {0} - {1}'.format(app, e))
     return apps
 
 def get_config(entity):
