@@ -49,16 +49,17 @@ def get_data(parent, entity, session, custom_attributes):
 
     # Get list of parents without project
     parents = []
-    for i in range(1, len(entity['link'])-1):
-        tmp = session.get(entity['link'][i]['type'], entity['link'][i]['id'])
-        parents.append(tmp)
-
     folderStruct = []
+    for i in range(1, len(entity['link'])-1):
+        parEnt = session.get(entity['link'][i]['type'], entity['link'][i]['id'])
+        parName = parEnt['name']
+        folderStruct.append(parName)
+        if i > 1:
+            parents.append(parEnt)
+
     parentId = None
 
     for parent in parents:
-        parName = parent['name']
-        folderStruct.append(parName)
         parentId = io.find_one({'type': 'asset', 'name': parName})['_id']
         if parent['parent'].entity_type != 'project' and parentId is None:
             parent.importToAvalon(parent)

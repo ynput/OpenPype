@@ -233,10 +233,12 @@ class SyncToAvalon(BaseAction):
 
         ## ----- ASSETS ------
         # Presets:
-
         data = ftrack_utils.get_data(self, entity, session, self.custom_attributes)
-        silo = entity['name']
-        if len(data['parents']) > 0:
+
+        # return if entity is silo
+        if len(data['parents']) == 0:
+            return
+        else:
             silo = data['parents'][0]
 
         os.environ['AVALON_SILO'] = silo
@@ -263,16 +265,11 @@ class SyncToAvalon(BaseAction):
 
             # Raise error if it seems to be different ent. with same name
             else:
-                update = False
                 aD = avalon_asset['data']
-                check_attr = ['ftrackId', 'visualParent', 'parents']
-                for attr in check_attr:
-                    if attr not in aD: update = True
-
-                if update is False:
-                    for attr in check_attr:
-                        if (avalon_asset['data'][attr] != data[attr]):
-                            raise ValueError('In Avalon DB already exists entity with name <{}>!'.format(name))
+                # check_attr = ['parents', 'ftrackId', 'visualParent']
+                if (avalon_asset['data']['parents'] != data['parents'] or
+                    avalon_asset['silo'] != silo):
+                    raise ValueError('In Avalon DB already exists entity with name "{0}"'.format(name))
 
         elif avalon_asset['name'] != entity['name']:
             raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly - please create new asset'.format(avalon_asset['name'], name))
