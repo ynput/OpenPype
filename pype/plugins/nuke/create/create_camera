@@ -1,0 +1,3 @@
+# create vanilla camera if no camera is selected
+# if camera is selected then it will convert it into containerized object
+# it is major versioned in publish

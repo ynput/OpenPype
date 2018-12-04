@@ -2,7 +2,7 @@ import pyblish.api
 from avalon import api
 
 
-class CollectMindbenderTime(pyblish.api.ContextPlugin):
+class CollectTime(pyblish.api.ContextPlugin):
     """Store global time at the time of publish"""
 
     label = "Collect Current Time"

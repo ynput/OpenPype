@@ -10,14 +10,12 @@ from avalon import io, lib, pipeline
 from avalon import session as sess
 import acre
 
-from app.api import (
-    Templates,
-    Logger
-)
 
-t = Templates(
-    type=["anatomy"]
-)
+from pype import api as pype
+
+log = pype.Logger.getLogger(__name__, "ftrack")
+
+log.debug("pype.Anatomy: {}".format(pype.Anatomy))
 
 
 class AppAction(object):
@@ -34,7 +32,7 @@ class AppAction(object):
     def __init__(self, session, label, name, executable, variant=None, icon=None, description=None):
         '''Expects a ftrack_api.Session instance'''
 
-        self.log = Logger.getLogger(self.__class__.__name__)
+        self.log = pype.Logger.getLogger(self.__class__.__name__)
 
         # self.logger = Logger.getLogger(__name__)
 
@@ -243,7 +241,9 @@ class AppAction(object):
         os.environ["AVALON_APP"] = self.identifier
         os.environ["AVALON_APP_NAME"] = self.identifier + "_" + self.variant
 
-        anatomy = t.anatomy
+        os.environ["FTRACK_TASKID"] = id
+
+        anatomy = pype.Anatomy
         io.install()
         hierarchy = io.find_one({"type": 'asset', "name": entity['parent']['name']})[
             'data']['parents']
@@ -257,9 +257,10 @@ class AppAction(object):
                 "task": entity['name'],
                 "asset": entity['parent']['name'],
                 "hierarchy": hierarchy}
-
-        anatomy = anatomy.format(data)
-
+        try:
+            anatomy = anatomy.format(data)
+        except Exception as e:
+            log.error("{0} Error in anatomy.format: {1}".format(__name__, e))
         os.environ["AVALON_WORKDIR"] = os.path.join(anatomy.work.root, anatomy.work.folder)
 
         # TODO Add paths to avalon setup from tomls
@@ -400,7 +401,7 @@ class BaseAction(object):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
 
-        self.log = Logger.getLogger(self.__class__.__name__)
+        self.log = pype.Logger.getLogger(self.__class__.__name__)
 
         if self.label is None:
             raise ValueError(
@@ -437,7 +438,7 @@ class BaseAction(object):
             ),
             self._launch
         )
-        
+
         self.log.info("Action '{}' - Registered successfully".format(self.__class__.__name__))
 
     def _discover(self, event):

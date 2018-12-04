@@ -18,6 +18,3 @@ class CollectTemplates(pyblish.api.ContextPlugin):
             type=["anatomy"]
         )
         context.data['anatomy'] = templates.anatomy
-        for key in templates.anatomy:
-            self.log.info(str(key) + ": " + str(templates.anatomy[key]))
-        # return

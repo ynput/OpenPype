@@ -7,11 +7,19 @@ import time
 from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
 from pype.ftrack import credentials, login_dialog as login_dialog
-from app.api import Logger
+
 from FtrackServer import FtrackServer
 
-log = Logger.getLogger(__name__)
+from pype import api as pype
+
+
+# load data from templates
+pype.load_data_from_templates()
+
+log = pype.Logger.getLogger(__name__, "ftrack")
 # Validation if alredy logged into Ftrack
+
+
 class FtrackRunner:
     def __init__(self, main_parent=None, parent=None):
 
@@ -76,7 +84,7 @@ class FtrackRunner:
     def runActionServer(self):
         if self.actionThread is None:
             self.actionThread = threading.Thread(target=self.setActionServer)
-            self.actionThread.daemon=True
+            self.actionThread.daemon = True
             self.actionThread.start()
 
         log.info("Ftrack action server launched")
@@ -107,7 +115,7 @@ class FtrackRunner:
     def runEventServer(self):
         if self.eventThread is None:
             self.eventThread = threading.Thread(target=self.setEventServer)
-            self.eventThread.daemon=True
+            self.eventThread.daemon = True
             self.eventThread.start()
 
         log.info("Ftrack event server launched")
@@ -168,9 +176,9 @@ class FtrackRunner:
         self.smEventS.addAction(self.aStopEventS)
 
         # Actions - basic
-        self.aLogin = QtWidgets.QAction("Login",self.menu)
+        self.aLogin = QtWidgets.QAction("Login", self.menu)
         self.aLogin.triggered.connect(self.validate)
-        self.aLogout = QtWidgets.QAction("Logout",self.menu)
+        self.aLogout = QtWidgets.QAction("Logout", self.menu)
         self.aLogout.triggered.connect(self.logout)
 
         self.menu.addAction(self.aLogin)
