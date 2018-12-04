@@ -60,12 +60,20 @@ class SyncToAvalon(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
-
+        roleCheck = False
         discover = False
-        for entity in entities:
-            if entity.entity_type.lower() not in ['task', 'assetversion']:
-                discover = True
-                break
+        roleList = ['Administrator', 'Project Manager']
+        userId = event['source']['user']['id']
+        user = session.query('User where id is ' + userId).one()
+
+        for role in user['user_security_roles']:
+            if role['security_role']['name'] in roleList:
+                roleCheck = True
+        if roleCheck is True:
+            for entity in entities:
+                if entity.entity_type.lower() not in ['task', 'assetversion']:
+                    discover = True
+                    break
 
         return discover
 
