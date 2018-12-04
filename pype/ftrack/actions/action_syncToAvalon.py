@@ -35,9 +35,8 @@ class SyncToAvalon(BaseAction):
         - run 'Create Custom Attributes' action or do it manually (Not recommended)
 
     If Ftrack entity already has Custom Attribute 'avalon_mongo_id' that stores ID:
-    - names are checked -> shows error if names are not exact the same
-        - after sync is not allowed to change names!
-        - only way is to create new entity in ftrack with new name
+    - name, parents and silo are checked -> shows error if are not exact the same
+        - after sync it is not allowed to change names or move entities
 
     If ID in 'avalon_mongo_id' is empty string or is not found in DB:
     - tries to find entity by name
@@ -281,6 +280,10 @@ class SyncToAvalon(BaseAction):
 
         elif avalon_asset['name'] != entity['name']:
             raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly - please create new asset'.format(avalon_asset['name'], name))
+        elif avalon_asset['silo'] != silo or avalon_asset['data']['parents'] != data['parents']:
+            old_path = "/".join(avalon_asset['data']['parents'])
+            new_path = "/".join(data['parents'])
+            raise ValueError('You can\'t move with entities. Entity "{}" was moved from "{}" to "{}" '.format(avalon_asset['name'], old_path, new_path))
 
         # Update info
         io.update_many({'type': 'asset','name': name},
