@@ -8,6 +8,7 @@ from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
 from pype.ftrack import credentials, login_dialog as login_dialog
 
+from pype.vendor.pynput import mouse, keyboard
 from FtrackServer import FtrackServer
 
 from pype import api as pype
