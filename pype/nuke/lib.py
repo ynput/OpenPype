@@ -207,7 +207,6 @@ def reset_resolution():
         width = asset["data"].get("resolution_width", 1920)
         height = asset["data"].get("resolution_height", 1080)
         pixel_aspect = asset["data"].get("pixel_aspect", 1)
-
         bbox = asset["data"].get("crop", "0.0.1920.1080")
 
         try:
@@ -236,6 +235,7 @@ def reset_resolution():
             format_name = project["name"] + "_1"
 
     if used_formats:
+        check_format = used_formats[-1]
         format_name = "{}_{}".format(
             project["name"],
             int(used_formats[-1][-1])+1
@@ -245,6 +245,8 @@ def reset_resolution():
                      used_formats[-1],
                      format_name)
                  )
+
+    # format_build
 
     make_format(
         width=int(width),
