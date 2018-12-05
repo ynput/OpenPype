@@ -3,6 +3,8 @@ import os
 import nuke
 import pyblish.api
 import logging
+from avalon import io, api
+
 log = logging.getLogger(__name__)
 
 
@@ -15,6 +17,9 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
+        asset_data = io.find_one({"type": "asset",
+                                  "name": api.Session["AVALON_ASSET"]})
+        self.log.debug("asset_data: {}".format(asset_data["data"]))
         for instance in context.data["instances"]:
             self.log.debug("checking instance: {}".format(instance))
             node = instance[0]
@@ -63,9 +68,9 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             else:
                 # dealing with local/farm rendering
                 if node["render_farm"].value():
-                    families = "{}.farm".format(instance.data["families"][0])
+                    families = "{}.farm".format(instance.data["avalonKnob"]["families"][0])
                 else:
-                    families = "{}.local".format(instance.data["families"][0])
+                    families = "{}.local".format(instance.data["avalonKnob"]["families"][0])
 
             self.log.debug("checking for error: {}".format(label))
             instance.data.update({
@@ -74,11 +79,14 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "ext": ext,
                 "label": label,
                 "families": [families, 'ftrack'],
-                "firstFrame": first_frame,
-                "lastFrame": last_frame,
+                "startFrame": first_frame,
+                "endFrame": last_frame,
                 "outputType": output_type,
                 "stagingDir": output_dir,
-
+                "colorspace": node["colorspace"].value(),
+                "handles": int(asset_data["data"].get("handles", 0)),
+                "step": 1,
+                "fps": int(nuke.root()['fps'].value())
             })
 
             self.log.debug("instance.data: {}".format(instance.data))

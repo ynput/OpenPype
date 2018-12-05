@@ -113,8 +113,7 @@ def install():
 
     # Disable all families except for the ones we explicitly want to see
     family_states = [
-        "render",
-        "still"
+        "write",
         "lifeGroup",
         "backdrop",
         "imagesequence",
