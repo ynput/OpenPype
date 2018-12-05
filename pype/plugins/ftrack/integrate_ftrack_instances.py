@@ -1,5 +1,6 @@
 import pyblish.api
 import os
+import clique
 
 
 class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
@@ -20,7 +21,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'rig': 'rig',
                       'setdress': 'setdress',
                       'pointcache': 'cache',
-                      'review': 'mov'}
+                      'review': 'mov',
+                      'write': 'comp'}
 
     def process(self, instance):
 
@@ -36,20 +38,25 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         componentList = []
 
-        transfers = instance.data["transfers"]
+        dst_list = instance.data['destination_list']
 
         ft_session = instance.context.data["ftrackSession"]
         location = ft_session.query(
             'Location where name is "ftrack.unmanaged"').one()
         self.log.debug('location {}'.format(location))
 
-        for src, dest in transfers:
-            filename, ext = os.path.splitext(src)
-            self.log.debug('source filename: ' + filename)
-            self.log.debug('source ext: ' + ext)
+        for file in instance.data['destination_list']:
+            self.log.debug('file {}'.format(file))
+
+        for file in dst_list:
+            filename, ext = os.path.splitext(file)
+            self.log.debug('dest ext: ' + ext)
 
             componentList.append({"assettype_data": {
                 "short": asset_type,
+            },
+                "asset_data": {
+                "name": instance.data["subset"],
             },
                 "assetversion_data": {
                 "version": version_number,
@@ -57,7 +64,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 "component_data": {
                 "name": ext[1:],  # Default component name is "main".
             },
-                "component_path": dest,
+                "component_path": file,
                 'component_location': location,
                 "component_overwrite": False,
             }

@@ -1,6 +1,7 @@
 import os
 import logging
 import shutil
+import clique
 
 import errno
 import pyblish.api
@@ -30,7 +31,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         self.register(instance)
 
         self.log.info("Integrating Asset in to the database ...")
-        # self.integrate(instance)
+        if instance.data.get('transfer', True):
+            self.integrate(instance)
 
     def register(self, instance):
 
@@ -124,12 +126,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
-        # template_data = {"root": root,
-        #                  "project": PROJECT,
-        #                  "silo": asset['silo'],
-        #                  "asset": ASSET,
-        #                  "subset": subset["name"],
-        #                  "version": version["name"]}
         hierarchy = io.find_one({"type":'asset', "name":ASSET})['data']['parents']
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
@@ -139,6 +135,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                          "project": {"name": PROJECT,
                                      "code": "prjX"},
                          "silo": asset['silo'],
+                         "task": api.Session["AVALON_TASK"],
                          "asset": ASSET,
                          "family": instance.data['family'],
                          "subset": subset["name"],
@@ -151,6 +148,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         # Find the representations to transfer amongst the files
         # Each should be a single representation (as such, a single extension)
         representations = []
+        destination_list = []
 
         for files in instance.data["files"]:
 
@@ -164,26 +162,30 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
             # |_______|
             #
             if isinstance(files, list):
+
                 collection = files
                 # Assert that each member has identical suffix
-                _, ext = os.path.splitext(collection[0])
-                assert all(ext == os.path.splitext(name)[1]
-                           for name in collection), (
-                    "Files had varying suffixes, this is a bug"
-                )
 
-                assert not any(os.path.isabs(name) for name in collection)
-
-                template_data["representation"] = ext[1:]
-
+                dst_collection = []
                 for fname in collection:
+
+                    filename, ext = os.path.splitext(fname)
+                    _, frame = os.path.splitext(filename)
+
+                    template_data["representation"] = ext[1:]
+                    template_data["frame"] = frame[1:]
 
                     src = os.path.join(stagingdir, fname)
                     anatomy_filled = anatomy.format(template_data)
-                    dst = anatomy_filled.publish.path
+                    dst = anatomy_filled.render.path
 
-                    # if instance.data.get('transfer', True):
-                    # instance.data["transfers"].append([src, dst])
+                    dst_collection.append(dst)
+                    instance.data["transfers"].append([src, dst])
+
+                template = anatomy.render.path
+
+                collections, remainder = clique.assemble(dst_collection)
+                dst = collections[0].format('{head}{padding}{tail}')
 
             else:
                 # Single file
@@ -204,19 +206,17 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled.publish.path
+                dst = anatomy_filled.render.path
+                template = anatomy.render.path
+                instance.data["transfers"].append([src, dst])
 
-
-                # if instance.data.get('transfer', True):
-                #     dst = src
-                # instance.data["transfers"].append([src, dst])
 
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
-                "data": {'path': src},
+                "data": {'path': dst, 'template': template},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
@@ -235,6 +235,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                      "representation": ext[1:]
                 }
             }
+            destination_list.append(dst)
+            instance.data['destination_list'] = destination_list
             representations.append(representation)
 
         self.log.info("Registering {} items".format(len(representations)))

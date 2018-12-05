@@ -45,6 +45,14 @@ class ValidateCollection(pyblish.api.InstancePlugin):
 
         assert remainder is not None, self.log.info("There are some extra files in folder")
 
+        basename, ext = os.path.splitext(list(collections[0])[0])
+        assert all(ext == os.path.splitext(name)[1]
+            for name in collections[0]), self.log.info(
+            "Files had varying suffixes"
+        )
+
+        assert not any(os.path.isabs(name) for name in collections[0]), self.log.info("some file name are absolute")
+
         self.log.info('frame_length: {}'.format(frame_length))
         self.log.info('len(list(instance.data["files"])): {}'.format(
             len(list(instance.data["files"][0]))))
