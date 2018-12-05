@@ -230,49 +230,73 @@ def reset_resolution():
     used_formats = list()
     for f in nuke.formats():
         if project["name"] in str(f.name()):
-            used_formats.append(f.name())
+            used_formats.append(f)
         else:
             format_name = project["name"] + "_1"
 
+    crnt_fmt_str = ""
     if used_formats:
         check_format = used_formats[-1]
         format_name = "{}_{}".format(
             project["name"],
-            int(used_formats[-1][-1])+1
+            int(used_formats[-1].name()[-1])+1
         )
-        log.info("Format exists: {}. "
-                 "Will create new: {}...".format(
-                     used_formats[-1],
-                     format_name)
-                 )
+        log.info(
+            "Format exists: {}. "
+            "Will create new: {}...".format(
+                used_formats[-1].name(),
+                format_name)
+        )
+        crnt_fmt_kargs = {
+            "width": (check_format.width()),
+            "height": (check_format.height()),
+            "x": int(check_format.x()),
+            "y": int(check_format.y()),
+            "r": int(check_format.r()),
+            "t": int(check_format.t()),
+            "pixel_aspect": float(check_format.pixelAspect())
+        }
+        crnt_fmt_str = make_format_string(**crnt_fmt_kargs)
+        log.info("crnt_fmt_str: {}".format(crnt_fmt_str))
 
-    # format_build
+    new_fmt_kargs = {
+        "width": int(width),
+        "height": int(height),
+        "x": int(x),
+        "y": int(y),
+        "r": int(r),
+        "t": int(t),
+        "pixel_aspect": float(pixel_aspect),
+        "project_name": format_name
+    }
 
-    make_format(
-        width=int(width),
-        height=int(height),
-        x=int(x),
-        y=int(y),
-        r=int(r),
-        t=int(t),
-        pixel_aspect=float(pixel_aspect),
-        project_name=format_name
-    )
-    log.info("Format is set")
+    new_fmt_str = make_format_string(**new_fmt_kargs)
+    log.info("new_fmt_str: {}".format(new_fmt_str))
+
+    if new_fmt_str not in crnt_fmt_str:
+        make_format(frm_str=new_fmt_str,
+                    project_name=new_fmt_kargs["project_name"])
+
+        log.info("Format is set")
 
 
-def make_format(**args):
-    log.info("Format does't exist, will create: \n{}".format(args))
-    nuke.addFormat(
+def make_format_string(**args):
+    format_str = (
         "{width} "
         "{height} "
         "{x} "
         "{y} "
         "{r} "
         "{t} "
-        "{pixel_aspect} "
-        "{project_name}".format(**args)
+        "{pixel_aspect:.2f}".format(**args)
     )
+    return format_str
+
+
+def make_format(**args):
+    log.info("Format does't exist, will create: \n{}".format(args))
+    nuke.addFormat("{frm_str} "
+                   "{project_name}".format(**args))
     nuke.root()["format"].setValue("{project_name}".format(**args))
 
 
