@@ -73,7 +73,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "outputDir": output_dir,
                 "ext": ext,
                 "label": label,
-                "families": [families],
+                "families": [families, 'ftrack'],
                 "firstFrame": first_frame,
                 "lastFrame": last_frame,
                 "outputType": output_type,
