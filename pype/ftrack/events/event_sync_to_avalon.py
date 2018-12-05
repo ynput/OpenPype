@@ -12,12 +12,17 @@ from pype.ftrack import ftrack_utils
 class Sync_to_Avalon(BaseEvent):
 
     def launch(self, session, entities, event):
+
         self.ca_mongoid = 'avalon_mongo_id'
+        # If mongo_id textfield has changed: RETURN!
+        # - infinite loop
         for ent in event['data']['entities']:
-            if self.ca_mongoid in ent['keys']:
-                return False
+            if 'keys' in ent:
+                if self.ca_mongoid in ent['keys']:
+                    return
         self.proj = None
 
+        # get project
         for entity in entities:
             try:
                 base_proj = entity['link'][0]
@@ -26,13 +31,24 @@ class Sync_to_Avalon(BaseEvent):
             self.proj = session.get(base_proj['type'], base_proj['id'])
             break
 
-        if self.proj is None:
-            return False
+        # check if project is set to auto-sync
+        if (self.proj is None or
+            'avalon_auto_sync' not in self.proj['custom_attributes'] or
+            self.proj['custom_attributes']['avalon_auto_sync'] is False):
+                return
 
-        os.environ["AVALON_PROJECT"] = self.proj['full_name']
+        # check if project have Custom Attribute 'avalon_mongo_id'
+        if self.ca_mongoid not in self.proj['custom_attributes']:
+            message = "Custom attribute '{}' for 'Project' is not created or don't have set permissions for API".format(self.ca_mongoid)
+            self.log.warning(message)
+            self.show_message(event, message, False)
+            return
 
         self.projectId = self.proj['custom_attributes'][self.ca_mongoid]
 
+        os.environ["AVALON_PROJECT"] = self.proj['full_name']
+
+        # get avalon project if possible
         io.install()
         try:
             self.avalon_project = io.find_one({"_id": ObjectId(self.projectId)})
@@ -40,13 +56,13 @@ class Sync_to_Avalon(BaseEvent):
             self.avalon_project = None
 
         importEntities = []
-
         if self.avalon_project is None:
             self.avalon_project = io.find_one({"type": "project", "name": self.proj["full_name"]})
             if self.avalon_project is None:
                 importEntities.append(self.proj)
             else:
                 self.projectId = self.avalon_project['_id']
+
         io.uninstall()
 
         for entity in entities:
@@ -56,7 +72,8 @@ class Sync_to_Avalon(BaseEvent):
             try:
                 mongo_id = entity['custom_attributes'][self.ca_mongoid]
             except:
-                message = "Please run 'Create Attributes' action or create custom attribute 'avalon_mongo_id' manually for {}".format(entity.entity_type)
+                message = "Custom attribute '{}' for '{}' is not created or don't have set permissions for API".format(self.ca_mongoid, entity.entity_type)
+                self.log.warning(message)
                 self.show_message(event, message, False)
                 return
 
@@ -69,60 +86,37 @@ class Sync_to_Avalon(BaseEvent):
         self.setAvalonAttributes()
 
         io.install()
+        try:
+            for entity in importEntities:
+                self.importToAvalon(session, entity)
+                session.commit()
 
-        for entity in importEntities:
-            self.importToAvalon(entity)
+        except ValueError as ve:
+            message = str(ve)
+            self.show_message(event, message, False)
+            self.log.warning(message)
+
+        except Exception as e:
+            message = str(e)
+            ftrack_message = "SyncToAvalon event ended with unexpected error please check log file for more information."
+            self.show_message(event, ftrack_message, False)
+            self.log.error(message)
 
         io.uninstall()
 
-        session.commit()
+        return
 
-        if message != "":
-            self.show_message(event, message, False)
+    def importToAvalon(self, session, entity):
+        if self.ca_mongoid not in entity['custom_attributes']:
+            raise ValueError("Custom attribute '{}' for '{}' is not created or don't have set permissions for API".format(self.ca_mongoid, entity['name']))
 
-        return True
-
-    def importToAvalon(self, entity):
-        data = {}
+        ftrack_utils.avalon_check_name(entity)
 
         entity_type = entity.entity_type
 
-        type = 'asset'
-        name = entity['name']
-        silo = 'Film'
         if entity_type in ['Project']:
             type = 'project'
             name = entity['full_name']
-            data['code'] = entity['name']
-        elif entity_type in ['AssetBuild', 'Library']:
-            silo = 'Assets'
-
-        os.environ["AVALON_ASSET"] = name
-        os.environ["AVALON_SILO"] = silo
-
-        data['ftrackId'] = entity['id']
-        data['entityType'] = entity_type
-
-        for cust_attr in self.custom_attributes:
-            key = cust_attr['key']
-            if cust_attr['entity_type'].lower() in ['asset']:
-                data[key] = entity['custom_attributes'][key]
-
-            elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
-                data[key] = entity['custom_attributes'][key]
-
-            elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
-                # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
-                entity_type_full = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
-                # Get object id of entity type
-                ent_obj_type_id = self.session.query('ObjectType where name is "{}"'.format(entity_type_full)).one()['id']
-
-                if cust_attr['object_type_id'] == ent_obj_type_id:
-                    data[key] = entity['custom_attributes'][key]
-
-        mongo_id = entity['custom_attributes'][self.ca_mongoid]
-
-        if entity_type in ['Project']:
             config = ftrack_utils.get_config(entity)
             template = lib.get_avalon_project_template_schema()
 
@@ -130,8 +124,12 @@ class Sync_to_Avalon(BaseEvent):
                 inventory.save(name, config, template)
                 self.avalon_project = io.find_one({'type': 'project', 'name': name})
 
+            elif self.avalon_project['name'] != name:
+                raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly!'.format(self.avalon_project['name'], name))
+
             self.projectId = self.avalon_project['_id']
-            data['code'] = entity['name']
+
+            data = ftrack_utils.get_data(self, entity, session,self.custom_attributes)
 
             io.update_many(
                 {"_id": ObjectId(self.projectId)},
@@ -140,48 +138,30 @@ class Sync_to_Avalon(BaseEvent):
                     'config':config,
                     'data':data,
                     }})
-            try:
-                entity['custom_attributes'][self.ca_mongoid] = str(self.projectId)
-            except Exception as e:
-                self.log.error(e)
+
+            entity['custom_attributes'][self.ca_mongoid] = str(self.projectId)
+
             return
 
-
         if self.avalon_project is None:
-            self.importToAvalon(self.proj)
+            self.importToAvalon(session, self.proj)
 
-        tasks = []
-        for child in entity['children']:
-            if child.entity_type in ['Task']:
-                tasks.append(child['name'])
+        data = ftrack_utils.get_data(self, entity, session,self.custom_attributes)
 
-        folderStruct = []
-        parentId = None
+        # return if entity is silo
+        if len(data['parents']) == 0:
+            return
+        else:
+            silo = data['parents'][0]
 
-        parents = []
-        for i in range(1, len(entity['link'])-1):
-            tmp_type = entity['link'][i]['type']
-            tmp_id = entity['link'][i]['id']
-            tmp = self.session.get(tmp_type, tmp_id)
-            parents.append(tmp)
+        name = entity['name']
 
-        for parent in parents:
-            parname = self.checkName(parent['name'])
-            folderStruct.append(parname)
-            avalonAarent = io.find_one({'type': 'asset', 'name': parname})
-            if parent['parent'].entity_type != 'project' and avalonAarent is None:
-                self.importToAvalon(parent)
-            parentId = io.find_one({'type': 'asset', 'name': parname})['_id']
-
-        hierarchy = os.path.sep.join(folderStruct)
-
-        data['tasks'] = tasks
-        if parentId is not None:
-            data['parents'] = folderStruct
-            data['visualParent'] = parentId
-            data['hierarchy'] = hierarchy
+        os.environ["AVALON_ASSET"] = name
+        os.environ['AVALON_SILO'] = silo
 
         avalon_asset = None
+        # existence of this custom attr is already checked
+        mongo_id = entity['custom_attributes'][self.ca_mongoid]
 
         if mongo_id is not "":
             avalon_asset = io.find_one({'_id': ObjectId(mongo_id)})
@@ -190,15 +170,17 @@ class Sync_to_Avalon(BaseEvent):
             avalon_asset = io.find_one({'type': 'asset', 'name': name})
             if avalon_asset is None:
                 mongo_id = inventory.create_asset(name, silo, data, ObjectId(self.projectId))
-        else:
-            if name != avalon_asset['name']:
-                string = "'{}->{}'".format(name, avalon_asset['name'])
-                if entity_type in ['Shot','AssetBuild']:
-                    self.nameShotAsset.append(string)
-                    mongo_id = inventory.create_asset(name, silo, data, ObjectId(self.projectId))
-                else:
-                    self.nameChanged.append(string)
-                return
+            # Raise error if it seems to be different ent. with same name
+            elif (avalon_asset['data']['parents'] != data['parents'] or
+                avalon_asset['silo'] != silo):
+                    raise ValueError('In Avalon DB already exists entity with name "{0}"'.format(name))
+        elif avalon_asset['name'] != entity['name']:
+            raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly - please set name back'.format(avalon_asset['name'], name))
+        elif avalon_asset['silo'] != silo or avalon_asset['data']['parents'] != data['parents']:
+            old_path = "/".join(avalon_asset['data']['parents'])
+            new_path = "/".join(data['parents'])
+            raise ValueError('You can\'t move with entities. Entity "{}" was moved from "{}" to "{}" , avalon DB won\'t work properly'.format(avalon_asset['name'], old_path, new_path))
+
 
         io.update_many(
             {"_id": ObjectId(mongo_id)},
@@ -206,21 +188,9 @@ class Sync_to_Avalon(BaseEvent):
                 'name':name,
                 'silo':silo,
                 'data':data,
-                'parent': self.projectId}})
+                'parent': ObjectId(self.projectId)}})
 
-        try:
-            entity['custom_attributes'][self.ca_mongoid] = str(mongo_id)
-        except Exception as e:
-            self.log.error(e)
-
-
-    def checkName(self, input_name):
-        if input_name.find(" ") == -1:
-            name = input_name
-        else:
-            name = input_name.replace(" ", "-")
-            print("Name of {} was changed to {}".format(input_name, name))
-        return name
+        entity['custom_attributes'][self.ca_mongoid] = str(mongo_id)
 
     def setAvalonAttributes(self):
         self.custom_attributes = []

@@ -17,18 +17,15 @@ from app.api import (
 
 
 class BaseEvent(object):
-    '''Custom Action base class
+    '''Custom Event base class
 
-    `label` a descriptive string identifing your action.
+    BaseEvent is based on ftrack.update event
+    - get entities from event
 
-    `varaint` To group actions together, give them the same
-    label and specify a unique variant per action.
+    If want to use different event base
+    - override register and *optional _translate_event method
 
-    `identifier` a unique identifier for your action.
-
-    `description` a verbose descriptive text for you action
-
-     '''
+    '''
 
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
@@ -46,7 +43,7 @@ class BaseEvent(object):
         '''Registers the event, subscribing the the discover and launch topics.'''
         self.session.event_hub.subscribe('topic=ftrack.update', self._launch)
 
-        self.log.info("----- event - <" + self.__class__.__name__ + "> - Has been registered -----")
+        self.log.info("Event '{}' - Registered successfully".format(self.__class__.__name__))
 
     def _translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''
@@ -91,25 +88,18 @@ class BaseEvent(object):
         )
 
     def _launch(self, event):
+
+        self.session.reset()
+
         args = self._translate_event(
             self.session, event
         )
 
-        # TODO REMOVE THIS - ONLY FOR TEST PROJECT
-        for a in args[0]:
-            try:
-                if (a['project']['name'] != 'eventproj'):
-                    return True
-            except:
-                continue
-
-        response = self.launch(
+        self.launch(
             self.session, *args
         )
 
-        return self._handle_result(
-            self.session, response, *args
-        )
+        return
 
     def launch(self, session, entities, event):
         '''Callback method for the custom action.
@@ -133,6 +123,14 @@ class BaseEvent(object):
         raise NotImplementedError()
 
     def show_message(self, event, input_message, result = False):
+        """
+        Shows message to user who triggered event
+        - event - just source of user id
+        - input_message - message that is shown to user
+        - result - changes color of message (based on ftrack settings)
+            - True = Violet
+            - False = Red
+        """
         if not isinstance(result, bool):
             result = False
 
@@ -147,38 +145,10 @@ class BaseEvent(object):
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='message',
-                    success=False,
+                    success=result,
                     message=message
                 ),
                 target='applicationId=ftrack.client.web and user.id="{0}"'.format(user_id)
             ),
             on_error='ignore'
         )
-
-    def _handle_result(self, session, result, entities, event):
-        '''Validate the returned result from the action callback'''
-        if isinstance(result, bool):
-            result = {
-                'success': result,
-                'message': (
-                    '{0} launched successfully.'.format(
-                        self.__class__.__name__
-                    )
-                )
-            }
-
-        elif isinstance(result, dict):
-            for key in ('success', 'message'):
-                if key in result:
-                    continue
-
-                raise KeyError(
-                    'Missing required key: {0}.'.format(key)
-                )
-
-        else:
-            self.log.error(
-                'Invalid result type must be bool or dictionary!'
-            )
-
-        return result
