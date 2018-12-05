@@ -219,7 +219,7 @@ class SyncToAvalon(BaseAction):
                     })
 
             elif self.avalon_project['name'] != entity['full_name']:
-                raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly!'.format(avalon_asset['name'], name))
+                raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly!'.format(self.avalon_project['name'], name))
 
             data = ftrack_utils.get_data(self, entity, session,self.custom_attributes)
 
@@ -235,7 +235,7 @@ class SyncToAvalon(BaseAction):
             if self.ca_mongoid in entity['custom_attributes']:
                 entity['custom_attributes'][self.ca_mongoid] = str(self.projectId)
             else:
-                self.log.error("Custom attribute for <{}> is not created.".format(entity['name']))
+                self.log.error('Custom attribute for "{}" is not created.'.format(entity['name']))
             return
 
         ## ----- ASSETS ------
@@ -271,15 +271,12 @@ class SyncToAvalon(BaseAction):
                 self.log.debug("Asset {} - created".format(name))
 
             # Raise error if it seems to be different ent. with same name
-            else:
-                aD = avalon_asset['data']
-                # check_attr = ['parents', 'ftrackId', 'visualParent']
-                if (avalon_asset['data']['parents'] != data['parents'] or
-                    avalon_asset['silo'] != silo):
+            elif (avalon_asset['data']['parents'] != data['parents'] or
+                avalon_asset['silo'] != silo):
                     raise ValueError('In Avalon DB already exists entity with name "{0}"'.format(name))
 
         elif avalon_asset['name'] != entity['name']:
-            raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly - please create new asset'.format(avalon_asset['name'], name))
+            raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly - please set name back'.format(avalon_asset['name'], name))
         elif avalon_asset['silo'] != silo or avalon_asset['data']['parents'] != data['parents']:
             old_path = "/".join(avalon_asset['data']['parents'])
             new_path = "/".join(data['parents'])
