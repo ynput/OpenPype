@@ -72,8 +72,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
         self.log.debug("Establishing staging directory @ %s" % stagingdir)
 
-        project = io.find_one({"type": "project"},
-                              projection={"config.template.publish": True})
+        project = io.find_one({"type": "project"})
 
         asset = io.find_one({"type": "asset",
                              "name": ASSET,
@@ -133,7 +132,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
         template_data = {"root": root,
                          "project": {"name": PROJECT,
-                                     "code": "prjX"},
+                                     "code": project['data']['code']},
                          "silo": asset['silo'],
                          "task": api.Session["AVALON_TASK"],
                          "asset": ASSET,
@@ -224,7 +223,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 "context": {
                      "root": root,
                      "project": PROJECT,
-                     "projectcode": "prjX",
+                     "projectcode": project['data']['code'],
                      'task': api.Session["AVALON_TASK"],
                      "silo": asset['silo'],
                      "asset": ASSET,
