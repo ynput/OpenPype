@@ -14,9 +14,6 @@ import acre
 
 from pype import api as pype
 
-log = pype.Logger.getLogger(__name__, "ftrack")
-
-log.debug("pype.Anatomy: {}".format(pype.Anatomy))
 
 
 class AppAction(object):
@@ -231,13 +228,9 @@ class AppAction(object):
         entity, id = entities[0]
         entity = session.get(entity, id)
 
-        silo = "Film"
-        if entity.entity_type == "AssetBuild":
-            silo = "Asset"
-
         # set environments for Avalon
         os.environ["AVALON_PROJECT"] = entity['project']['full_name']
-        os.environ["AVALON_SILO"] = silo
+        os.environ["AVALON_SILO"] = entity['ancestors'][0]['name']
         os.environ["AVALON_ASSET"] = entity['parent']['name']
         os.environ["AVALON_TASK"] = entity['name']
         os.environ["AVALON_APP"] = self.identifier
@@ -262,7 +255,7 @@ class AppAction(object):
         try:
             anatomy = anatomy.format(data)
         except Exception as e:
-            log.error("{0} Error in anatomy.format: {1}".format(__name__, e))
+            self.log.error("{0} Error in anatomy.format: {1}".format(__name__, e))
         os.environ["AVALON_WORKDIR"] = os.path.join(anatomy.work.root, anatomy.work.folder)
 
         # TODO Add paths to avalon setup from tomls
@@ -328,7 +321,7 @@ class AppAction(object):
                 try:
                     fp = open(execfile)
                 except PermissionError as p:
-                    log.error('Access denied on {0} - {1}'.
+                    self.log.error('Access denied on {0} - {1}'.
                               format(execfile, p))
                     return {
                         'success': False,
@@ -338,7 +331,7 @@ class AppAction(object):
                 fp.close()
                 # check executable permission
                 if not os.access(execfile, os.X_OK):
-                    log.error('No executable permission on {}'.
+                    self.log.error('No executable permission on {}'.
                               format(execfile))
                     return {
                         'success': False,
@@ -347,7 +340,7 @@ class AppAction(object):
                         }
                     pass
             else:
-                log.error('Launcher doesn\'t exist - {}'.
+                self.log.error('Launcher doesn\'t exist - {}'.
                           format(execfile))
                 return {
                     'success': False,
