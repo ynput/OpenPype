@@ -94,6 +94,7 @@ def override_toolbox_ui():
         return
 
     # Create our controls
+    background_color = (0.267, 0.267, 0.267)
     controls = []
 
     control = mc.iconTextButton(
@@ -102,6 +103,7 @@ def override_toolbox_ui():
         label="Loader",
         image=os.path.join(icons, "loader.png"),
         command=lambda: loader.show(use_context=True),
+        bgc=background_color,
         width=icon_size,
         height=icon_size,
         parent=parent)
@@ -113,6 +115,7 @@ def override_toolbox_ui():
         label="Inventory",
         image=os.path.join(icons, "inventory.png"),
         command=lambda: inventory.show(),
+        bgc=background_color,
         width=icon_size,
         height=icon_size,
         parent=parent)
@@ -123,6 +126,7 @@ def override_toolbox_ui():
         annotation="Colorbleed",
         label="Colorbleed",
         image=os.path.join(icons, "colorbleed_logo_36x36.png"),
+        bgc=background_color,
         width=icon_size,
         height=icon_size,
         parent=parent)
@@ -135,6 +139,6 @@ def override_toolbox_ui():
         previous = controls[i - 1] if i > 0 else web_button
 
         mc.formLayout(parent, edit=True,
-                      attachControl=[control, "bottom", 1, previous],
+                      attachControl=[control, "bottom", 0, previous],
                       attachForm=([control, "left", 1],
                                   [control, "right", 1]))
