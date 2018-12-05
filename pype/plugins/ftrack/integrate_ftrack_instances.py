@@ -22,7 +22,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'setdress': 'setdress',
                       'pointcache': 'cache',
                       'review': 'mov',
-                      'write': 'comp'}
+                      'write': 'img',
+                      'render': 'render'}
 
     def process(self, instance):
 
