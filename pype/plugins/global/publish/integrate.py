@@ -82,8 +82,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         self.log.debug("Establishing staging directory @ %s" % stagingdir)
 
-        project = io.find_one({"type": "project"},
-                              projection={"config.template.publish": True})
+        project = io.find_one({"type": "project"})
 
         asset = io.find_one({"type": "asset",
                              "name": ASSET,
@@ -136,12 +135,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
-        # template_data = {"root": root,
-        #                  "project": PROJECT,
-        #                  "silo": asset['silo'],
-        #                  "asset": ASSET,
-        #                  "subset": subset["name"],
-        #                  "version": version["name"]}
         hierarchy = io.find_one({"type":'asset', "name":ASSET})['data']['parents']
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
@@ -149,7 +142,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         template_data = {"root": root,
                          "project": {"name": PROJECT,
-                                     "code": "prjX"},
+                                     "code": project['data']['code']},
                          "silo": asset['silo'],
                          "asset": ASSET,
                          "family": instance.data['family'],
@@ -163,6 +156,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Find the representations to transfer amongst the files
         # Each should be a single representation (as such, a single extension)
         representations = []
+        destination_list = []
 
         for files in instance.data["files"]:
 
@@ -195,6 +189,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     dst = anatomy_filled.publish.path
 
                     instance.data["transfers"].append([src, dst])
+                    template = anatomy.publish.path
 
             else:
                 # Single file
@@ -218,13 +213,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 dst = anatomy_filled.publish.path
 
                 instance.data["transfers"].append([src, dst])
+                template = anatomy.publish.path
 
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
-                "data": {'path': dst},
+                "data": {'path': dst, 'template': template},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
@@ -232,7 +228,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "context": {
                      "root": root,
                      "project": PROJECT,
-                     "projectcode": "prjX",
+                     "projectcode": project['data']['code'],
                      'task': api.Session["AVALON_TASK"],
                      "silo": asset['silo'],
                      "asset": ASSET,
@@ -243,6 +239,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                      "representation": ext[1:]
                 }
             }
+
+            destination_list.append(dst)
+            instance.data['destination_list'] = destination_list
             representations.append(representation)
 
         self.log.info("Registering {} items".format(len(representations)))
