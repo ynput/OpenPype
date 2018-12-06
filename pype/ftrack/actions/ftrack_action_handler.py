@@ -72,9 +72,7 @@ class AppAction(object):
             ),
             self._launch
         )
-        self.log.info("Application '{}' - Registered successfully".format(self.label))
-
-        self.log.info("Application '{}' - Registered successfully".format(self.label))
+        self.log.info("Application '{} {}' - Registered successfully".format(self.label,self.variant))
 
     def _discover(self, event):
         args = self._translate_event(
