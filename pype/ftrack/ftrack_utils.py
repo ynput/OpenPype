@@ -62,7 +62,7 @@ def get_data(parent, entity, session, custom_attributes):
     for parent in parents:
         parentId = io.find_one({'type': 'asset', 'name': parName})['_id']
         if parent['parent'].entity_type != 'project' and parentId is None:
-            parent.importToAvalon(parent)
+            parent.importToAvalon(session, parent)
             parentId = io.find_one({'type': 'asset', 'name': parName})['_id']
 
     hierarchy = os.path.sep.join(folderStruct)
