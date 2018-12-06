@@ -35,8 +35,8 @@ class ValidateCollection(pyblish.api.InstancePlugin):
         collections, remainder = clique.assemble(*instance.data['files'])
         self.log.info('collections: {}'.format(str(collections)))
 
-        frame_length = instance.data["lastFrame"] \
-            - instance.data["firstFrame"] + 1
+        frame_length = instance.data["endFrame"] \
+            - instance.data["startFrame"] + 1
 
         if frame_length is not 1:
             assert len(collections) == 1, self.log.info(
@@ -44,6 +44,14 @@ class ValidateCollection(pyblish.api.InstancePlugin):
             assert collections[0].is_contiguous(), self.log.info("Some frames appear to be missing")
 
         assert remainder is not None, self.log.info("There are some extra files in folder")
+
+        basename, ext = os.path.splitext(list(collections[0])[0])
+        assert all(ext == os.path.splitext(name)[1]
+            for name in collections[0]), self.log.info(
+            "Files had varying suffixes"
+        )
+
+        assert not any(os.path.isabs(name) for name in collections[0]), self.log.info("some file name are absolute")
 
         self.log.info('frame_length: {}'.format(frame_length))
         self.log.info('len(list(instance.data["files"])): {}'.format(
