@@ -48,9 +48,9 @@ class SyncToAvalon(BaseAction):
     '''
 
     #: Action identifier.
-    identifier = 'sync.to.avalon'
+    identifier = 'sync.to.avalon.local'
     #: Action label.
-    label = 'SyncToAvalon'
+    label = 'SyncToAvalon - Local'
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
@@ -61,7 +61,7 @@ class SyncToAvalon(BaseAction):
         ''' Validation '''
         roleCheck = False
         discover = False
-        roleList = ['Administrator', 'Project Manager']
+        roleList = ['Pypeclub']
         userId = event['source']['user']['id']
         user = session.query('User where id is ' + userId).one()
 
