@@ -67,6 +67,7 @@ if nuke_handler.get_name() \
     not in [handler.get_name()
             for handler in api.Logger.logging.root.handlers[:]]:
     api.Logger.logging.getLogger().addHandler(nuke_handler)
+    api.Logger.logging.getLogger().setLevel(api.Logger.logging.DEBUG)
 
 if not self.nLogger:
     self.nLogger = api.Logger

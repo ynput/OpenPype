@@ -70,7 +70,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 if node["render_farm"].value():
                     families = "{}.farm".format(instance.data["avalonKnob"]["families"][0])
                 else:
-                    families = "{}.local".format(instance.data["avalonKnob"]["families"][0])
+                    families = "{}.local".format(instance.data["avalonKnob"]["families"])
 
             self.log.debug("checking for error: {}".format(label))
             instance.data.update({
