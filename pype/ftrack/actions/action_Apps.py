@@ -31,11 +31,19 @@ def registerApp(app, session):
         label = apptoml['ftrack_label']
 
     icon = None
+    ftrack_resources = "" # Path to resources here
+
     if 'icon' in apptoml:
         icon = apptoml['icon']
+        if '{ftrack_resources}' in icon:
+            icon = icon.format(ftrack_resources)
+
+    description = None
+    if 'description' in apptoml:
+        description = apptoml['description']
 
     # register action
-    AppAction(session, label, name, executable, variant, icon).register()
+    AppAction(session, label, name, executable, variant, icon, description).register()
 
 
 def register(session):
