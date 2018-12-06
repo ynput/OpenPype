@@ -20,7 +20,7 @@ class ExtractOutputDirectory(pyblish.api.InstancePlugin):
             path = instance.data["collection"].format()
 
         if "output_path" in instance.data.keys():
-            path = instance.data["output_path"]
+            path = instance.data["path"]
 
         if not path:
             return

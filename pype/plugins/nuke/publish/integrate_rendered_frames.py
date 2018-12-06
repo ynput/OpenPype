@@ -1,6 +1,7 @@
 import os
 import logging
 import shutil
+import clique
 
 import errno
 import pyblish.api
@@ -10,7 +11,7 @@ from avalon import api, io
 log = logging.getLogger(__name__)
 
 
-class IntegrateAsset(pyblish.api.InstancePlugin):
+class IntegrateFrames(pyblish.api.InstancePlugin):
     """Resolve any dependency issies
 
     This plug-in resolves any paths which, if not updated might break
@@ -21,29 +22,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     publish the shading network. Same goes for file dependent assets.
     """
 
-    label = "Integrate Asset"
+    label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    families = ["animation",
-                "camera",
-                "imagesequence",
-                "look",
-                "mayaAscii",
-                "model",
-                "pointcache",
-                "vdbcache",
-                "setdress",
-                "rig",
-                "vrayproxy",
-                "yetiRig",
-                "yeticache",
-                "review"]
+    families = ["prerendered.frames"]
 
     def process(self, instance):
 
         self.register(instance)
 
         self.log.info("Integrating Asset in to the database ...")
-        self.integrate(instance)
+        if instance.data.get('transfer', True):
+            self.integrate(instance)
 
     def register(self, instance):
 
@@ -122,9 +111,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                                       locations=[LOCATION],
                                       data=version_data)
 
+        self.log.debug("version: {}".format(version))
         self.log.debug("Creating version ...")
-        version_id = io.insert_one(version).inserted_id
 
+        version_id = io.insert_one(version).inserted_id
+        self.log.debug("version_id: {}".format(version_id))
         # Write to disk
         #          _
         #         | |
@@ -136,22 +127,24 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
-        hierarchy = io.find_one({"type":'asset', "name":ASSET})['data']['parents']
+        hierarchy = io.find_one({"type": 'asset', "name": ASSET})['data']['parents']
+
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
-
+        self.log.debug("hierarchy: {}".format(hierarchy))
         template_data = {"root": root,
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
                          "silo": asset['silo'],
+                         "task": api.Session["AVALON_TASK"],
                          "asset": ASSET,
                          "family": instance.data['family'],
                          "subset": subset["name"],
                          "VERSION": version["name"],
                          "hierarchy": hierarchy}
 
-        template_publish = project["config"]["template"]["publish"]
+        # template_publish = project["config"]["template"]["publish"]
         anatomy = instance.context.data['anatomy']
 
         # Find the representations to transfer amongst the files
@@ -160,7 +153,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         destination_list = []
 
         for files in instance.data["files"]:
-
             # Collection
             #   _______
             #  |______|\
@@ -171,26 +163,30 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # |_______|
             #
             if isinstance(files, list):
+
                 collection = files
                 # Assert that each member has identical suffix
-                _, ext = os.path.splitext(collection[0])
-                assert all(ext == os.path.splitext(name)[1]
-                           for name in collection), (
-                    "Files had varying suffixes, this is a bug"
-                )
 
-                assert not any(os.path.isabs(name) for name in collection)
-
-                template_data["representation"] = ext[1:]
-
+                dst_collection = []
                 for fname in collection:
+
+                    filename, ext = os.path.splitext(fname)
+                    _, frame = os.path.splitext(filename)
+
+                    template_data["representation"] = ext[1:]
+                    template_data["frame"] = frame[1:]
 
                     src = os.path.join(stagingdir, fname)
                     anatomy_filled = anatomy.format(template_data)
-                    dst = anatomy_filled.publish.path
+                    dst = anatomy_filled.render.path
 
+                    dst_collection.append(dst)
                     instance.data["transfers"].append([src, dst])
-                    template = anatomy.publish.path
+
+                template = anatomy.render.path
+
+                collections, remainder = clique.assemble(dst_collection)
+                dst = collections[0].format('{head}{padding}{tail}')
 
             else:
                 # Single file
@@ -211,10 +207,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled.publish.path
-
+                dst = anatomy_filled.render.path
+                template = anatomy.render.path
                 instance.data["transfers"].append([src, dst])
-                template = anatomy.publish.path
+
 
             representation = {
                 "schema": "pype:representation-2.0",
@@ -240,7 +236,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                      "representation": ext[1:]
                 }
             }
-
             destination_list.append(dst)
             instance.data['destination_list'] = destination_list
             representations.append(representation)
@@ -361,9 +356,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                         "comment": context.data.get("comment")}
 
         # Include optional data if present in
-        optionals = ["startFrame", "endFrame", "step", "handles"]
+        optionals = ["startFrame", "endFrame", "step",
+                     "handles", "colorspace", "fps", "outputDir"]
+
         for key in optionals:
             if key in instance.data:
-                version_data[key] = instance.data[key]
+                version_data[key] = instance.data.get(key, None)
 
         return version_data
