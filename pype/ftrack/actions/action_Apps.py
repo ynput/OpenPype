@@ -9,7 +9,7 @@ from app.api import Logger
 log = Logger.getLogger(__name__)
 
 def registerApp(app, session):
-    name = app['name'].replace("_", ".")
+    name = app['name']
     variant = ""
     try:
         variant = app['name'].split("_")[1]
@@ -17,6 +17,7 @@ def registerApp(app, session):
         log.warning("'{0}' - App 'name' and 'variant' is not separated by '_' (variant is not set)".format(app['name']))
         return
 
+    log.warning("app name {}".format(name))
     abspath = lib.which_app(app['name'])
     if abspath == None:
         log.error("'{0}' - App don't have config toml file".format(app['name']))
