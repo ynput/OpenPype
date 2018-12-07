@@ -179,9 +179,9 @@ class FtrackRunner:
 
     def stop_timer_thread(self):
         try:
-            self.thread_timer.terminate()
-            QThread.wait()
             if self.thread_timer is not None:
+                self.thread_timer.terminate()
+                self.thread_timer.wait()
                 self.thread_timer = None
 
         except Exception as e:
@@ -198,7 +198,8 @@ class FtrackRunner:
     def stop_countdown_thread(self):
         if self.thread_timer_coundown is not None:
             self.thread_timer_coundown.runs=False
-            self.thread_timer_coundown.quit()
+            self.thread_timer_coundown.terminate()
+            self.thread_timer_coundown.wait()
             self.thread_timer_coundown = None
 
     def show_widget_timer(self):
@@ -288,8 +289,8 @@ class CountdownThread(QtCore.QThread):
         super(CountdownThread, self).__init__()
         self.runs = True
         self.over_line = False
-        self.count_length = 60*5 # 5 minutes
-        self.border_line = 31
+        self.count_length = 5#60*5 # 5 minutes
+        self.border_line = 2#31
         self.reset_count()
         self.signal_reset_timer.connect(self.reset_count)
         self.signal_continue_timer.connect(self.continue_timer)
@@ -328,9 +329,11 @@ class CountdownThread(QtCore.QThread):
                 self.signal_stop_timer.emit()
 
         thread_mouse.signal_stop.emit()
-        thread_mouse.quit()
+        thread_mouse.terminate()
+        thread_mouse.wait()
         thread_keyboard.signal_stop.emit()
-        thread_keyboard.quit()
+        thread_keyboard.terminate()
+        thread_keyboard.wait()
 
 
 class MouseThread(QtCore.QThread):
