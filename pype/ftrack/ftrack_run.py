@@ -29,14 +29,11 @@ class FtrackRunner:
         self.loginWidget = login_dialog.Login_Dialog_ui(self)
         self.actionThread = None
         self.actionServer = FtrackServer('action')
-        self.eventThread = None
-        self.eventServer = FtrackServer('event')
         self.timerThread = None
         self.timerCoundownThread = None
 
         self.boolLogged = False
         self.boolActionServer = False
-        self.boolEventServer = False
         self.boolTimerEvent = False
 
     def showLoginWidget(self):
@@ -79,7 +76,6 @@ class FtrackRunner:
     def logout(self):
         credentials._clear_credentials()
         self.stopActionServer()
-        self.stopEventServer()
 
         log.info("Logged out of Ftrack")
         self.boolLogged = False
@@ -116,37 +112,6 @@ class FtrackRunner:
         except Exception as e:
             log.error("During Killing action server: {0}".format(e))
 
-    # Events part
-    def runEventServer(self):
-        if self.eventThread is None:
-            self.eventThread = threading.Thread(target=self.setEventServer)
-            self.eventThread.daemon = True
-            self.eventThread.start()
-
-        log.info("Ftrack event server launched")
-        self.boolEventServer = True
-        self.setMenuVisibility()
-
-    def setEventServer(self):
-        self.eventServer.run_server()
-
-    def resetEventServer(self):
-        self.stopEventServer()
-        self.runEventServer()
-
-    def stopEventServer(self):
-        try:
-            self.eventServer.stop_session()
-            if self.eventThread is not None:
-                self.eventThread.join()
-                self.eventThread = None
-
-            log.info("Ftrack event server stopped")
-            self.boolEventServer = False
-            self.setMenuVisibility()
-        except Exception as e:
-            log.error("During Killing Event server: {0}".format(e))
-
     # Definition of Tray menu
     def trayMenu(self, parent):
         # Menu for Tray App
@@ -166,19 +131,6 @@ class FtrackRunner:
         self.smActionS.addAction(self.aRunActionS)
         self.smActionS.addAction(self.aResetActionS)
         self.smActionS.addAction(self.aStopActionS)
-
-        # Actions - server
-        self.smEventS = self.menu.addMenu("Event server")
-        self.aRunEventS = QtWidgets.QAction("Run event server", self.smEventS)
-        self.aRunEventS.triggered.connect(self.runEventServer)
-        self.aResetEventS = QtWidgets.QAction("Reset event server", self.smEventS)
-        self.aResetEventS.triggered.connect(self.resetEventServer)
-        self.aStopEventS = QtWidgets.QAction("Stop event server", self.smEventS)
-        self.aStopEventS.triggered.connect(self.stopEventServer)
-
-        self.smEventS.addAction(self.aRunEventS)
-        self.smEventS.addAction(self.aResetEventS)
-        self.smEventS.addAction(self.aStopEventS)
 
         # Actions - basic
         self.aLogin = QtWidgets.QAction("Login", self.menu)
@@ -224,7 +176,7 @@ class FtrackRunner:
         if self.time_left_int < 31:
             self.update_gui()
 
-    def update_gui(self):
+    def updateGui(self):
         txt = "Continue ({})".format(self.time_left_int)
         self.parent.ftrackTimer.btnContinue.setText(txt)
 
@@ -293,9 +245,6 @@ class FtrackRunner:
 
         if self.boolTimerEvent is False:
             self.runTimerThread()
-        self.aRunEventS.setVisible(not self.boolEventServer)
-        self.aResetEventS.setVisible(self.boolEventServer)
-        self.aStopEventS.setVisible(self.boolEventServer)
 
 class StopTimer(QtWidgets.QWidget):
 
@@ -368,5 +317,6 @@ class StopTimer(QtWidgets.QWidget):
 
     def stop_timer(self):
         print("now i should stop the timer")
+
     def close_widget(self):
         self.close()
