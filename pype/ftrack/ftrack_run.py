@@ -289,8 +289,8 @@ class CountdownThread(QtCore.QThread):
         super(CountdownThread, self).__init__()
         self.runs = True
         self.over_line = False
-        self.count_length = 5#60*5 # 5 minutes
-        self.border_line = 2#31
+        self.count_length = 60*5 # 5 minutes
+        self.border_line = 31
         self.reset_count()
         self.signal_reset_timer.connect(self.reset_count)
         self.signal_continue_timer.connect(self.continue_timer)
