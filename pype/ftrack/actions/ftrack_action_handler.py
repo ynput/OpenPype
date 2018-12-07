@@ -135,7 +135,7 @@ class AppAction(object):
         else:
             apps = []
             for app in project['config']['apps']:
-                apps.append(app['name'].split("_")[0])
+                apps.append(app['name'])
 
             if self.identifier not in apps:
                 return False
@@ -238,8 +238,8 @@ class AppAction(object):
         os.environ["AVALON_SILO"] = silo
         os.environ["AVALON_ASSET"] = entity['parent']['name']
         os.environ["AVALON_TASK"] = entity['name']
-        os.environ["AVALON_APP"] = self.identifier
-        os.environ["AVALON_APP_NAME"] = self.identifier + "_" + self.variant
+        os.environ["AVALON_APP"] = self.identifier.split("_")[0]
+        os.environ["AVALON_APP_NAME"] = self.identifier
 
         os.environ["FTRACK_TASKID"] = id
 
@@ -280,7 +280,7 @@ class AppAction(object):
             parents.append(session.get(item['type'], item['id']))
 
         # collect all the 'environment' attributes from parents
-        tools_attr = [os.environ["AVALON_APP_NAME"]]
+        tools_attr = [os.environ["AVALON_APP"], os.environ["AVALON_APP_NAME"]]
         for parent in reversed(parents):
             # check if the attribute is empty, if not use it
             if parent['custom_attributes']['tools_env']:
