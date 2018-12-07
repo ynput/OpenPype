@@ -19,25 +19,28 @@ from pype import api as pype
 pype.load_data_from_templates()
 
 log = pype.Logger.getLogger(__name__, "ftrack")
-# Validation if alredy logged into Ftrack
 
 
 class FtrackRunner:
+
     def __init__(self, main_parent=None, parent=None):
 
         self.parent = parent
-        self.loginWidget = login_dialog.Login_Dialog_ui(self)
-        self.actionThread = None
-        self.actionServer = FtrackServer('action')
-        self.timerThread = None
-        self.timerCoundownThread = None
+        self.widget_login = login_dialog.Login_Dialog_ui(self)
+        self.widget_timer = StopTimer(self)
+        self.action_server = FtrackServer('action')
+        self.thread_action_server = None
+        self.thread_timer = None
+        self.thread_timer_coundown = None
 
-        self.boolLogged = False
-        self.boolActionServer = False
-        self.boolTimerEvent = False
+        # self.signal_start_timer.connect(self.timerStart)
 
-    def showLoginWidget(self):
-        self.loginWidget.show()
+        self.bool_logged = False
+        self.bool_action_server = False
+        self.bool_timer_event = False
+
+    def show_login_widget(self):
+        self.widget_login.show()
 
     def validate(self):
         validation = False
@@ -49,9 +52,9 @@ class FtrackRunner:
                     cred['apiKey']
                 )
                 if validation is False:
-                    self.showLoginWidget()
+                    self.show_login_widget()
             else:
-                self.showLoginWidget()
+                self.show_login_widget()
 
         except Exception as e:
             log.error("We are unable to connect to Ftrack: {0}".format(e))
@@ -62,53 +65,53 @@ class FtrackRunner:
             self.loginChange()
         else:
             log.warning("Please sign in to Ftrack")
-            self.boolLogged = False
-            self.setMenuVisibility()
+            self.bool_logged = False
+            self.set_menu_visibility()
 
         return validation
 
     # Necessary - login_dialog works with this method after logging in
     def loginChange(self):
-        self.boolLogged = True
-        self.setMenuVisibility()
-        self.runActionServer()
+        self.bool_logged = True
+        self.set_menu_visibility()
+        self.start_action_server()
 
     def logout(self):
         credentials._clear_credentials()
-        self.stopActionServer()
+        self.stop_action_server()
 
         log.info("Logged out of Ftrack")
-        self.boolLogged = False
-        self.setMenuVisibility()
+        self.bool_logged = False
+        self.set_menu_visibility()
 
     # Actions part
-    def runActionServer(self):
-        if self.actionThread is None:
-            self.actionThread = threading.Thread(target=self.setActionServer)
-            self.actionThread.daemon = True
-            self.actionThread.start()
+    def start_action_server(self):
+        if self.thread_action_server is None:
+            self.thread_action_server = threading.Thread(target=self.set_action_server)
+            self.thread_action_server.daemon = True
+            self.thread_action_server.start()
 
         log.info("Ftrack action server launched")
-        self.boolActionServer = True
-        self.setMenuVisibility()
+        self.bool_action_server = True
+        self.set_menu_visibility()
 
-    def setActionServer(self):
-        self.actionServer.run_server()
+    def set_action_server(self):
+        self.action_server.run_server()
 
-    def resetActionServer(self):
-        self.stopActionServer()
-        self.runActionServer()
+    def reset_action_server(self):
+        self.stop_action_server()
+        self.start_action_server()
 
-    def stopActionServer(self):
+    def stop_action_server(self):
         try:
-            self.actionServer.stop_session()
-            if self.actionThread is not None:
-                self.actionThread.join()
-                self.actionThread = None
+            self.action_server.stop_session()
+            if self.thread_action_server is not None:
+                self.thread_action_server.join()
+                self.thread_action_server = None
 
             log.info("Ftrack action server stopped")
-            self.boolActionServer = False
-            self.setMenuVisibility()
+            self.bool_action_server = False
+            self.set_menu_visibility()
         except Exception as e:
             log.error("During Killing action server: {0}".format(e))
 
@@ -122,11 +125,11 @@ class FtrackRunner:
         # Actions - server
         self.smActionS = self.menu.addMenu("Action server")
         self.aRunActionS = QtWidgets.QAction("Run action server", self.smActionS)
-        self.aRunActionS.triggered.connect(self.runActionServer)
+        self.aRunActionS.triggered.connect(self.start_action_server)
         self.aResetActionS = QtWidgets.QAction("Reset action server", self.smActionS)
-        self.aResetActionS.triggered.connect(self.resetActionServer)
+        self.aResetActionS.triggered.connect(self.reset_action_server)
         self.aStopActionS = QtWidgets.QAction("Stop action server", self.smActionS)
-        self.aStopActionS.triggered.connect(self.stopActionServer)
+        self.aStopActionS.triggered.connect(self.stop_action_server)
 
         self.smActionS.addAction(self.aRunActionS)
         self.smActionS.addAction(self.aResetActionS)
@@ -141,71 +144,112 @@ class FtrackRunner:
         self.menu.addAction(self.aLogin)
         self.menu.addAction(self.aLogout)
 
-        self.boolLogged = False
-        self.setMenuVisibility()
+        self.bool_logged = False
+        self.set_menu_visibility()
 
         return self.menu
 
-    def timerEvent(self):
-        cred = credentials._get_credentials()
-        username = cred['username']
-        self.boolTimerEvent = True
-        self.timerSession = ftrack_api.Session()
-        self.timerSession.event_hub.subscribe(
-            'topic=ftrack.update and source.user.username={}'.format(username),
-            self.eventHandler)
-        # keep event_hub on session running
-        self.timerSession.event_hub.wait()
+    # Definition of visibility of each menu actions
+    def set_menu_visibility(self):
 
-    def timerCountdown(self):
-        self.time_left_int = 3
-        self.my_qtimer = QtCore.QTimer()
-        self.my_qtimer.timeout.connect(self.timer_timeout)
-        self.my_qtimer.start(1000)
+        self.smActionS.menuAction().setVisible(self.bool_logged)
+        self.aLogin.setVisible(not self.bool_logged)
+        self.aLogout.setVisible(self.bool_logged)
 
-        if self.time_left_int < 31:
-            self.update_gui()
+        if self.bool_logged is False:
+            if self.bool_timer_event is True:
+                self.stop_timer_thread()
+            return
 
-    def timer_timeout(self):
-        self.time_left_int -= 1
+        self.aRunActionS.setVisible(not self.bool_action_server)
+        self.aResetActionS.setVisible(self.bool_action_server)
+        self.aStopActionS.setVisible(self.bool_action_server)
 
-        if self.time_left_int == 0:
-            self.widget_counter_int = (self.widget_counter_int + 1) % 4
-            self.pages_qsw.setCurrentIndex(self.widget_counter_int)
-            self.time_left_int = DURATION_INT
-        if self.time_left_int < 31:
-            self.update_gui()
+        if self.bool_timer_event is False:
+            self.start_timer_thread()
 
-    def updateGui(self):
-        txt = "Continue ({})".format(self.time_left_int)
-        self.parent.ftrackTimer.btnContinue.setText(txt)
 
-    def runTimerThread(self):
-        if self.timerThread is None:
-            self.timerThread = threading.Thread(target=self.timerEvent)
-            self.timerThread.daemon = True
-            self.timerThread.start()
-        if self.timerCoundownThread is None:
-            self.timerCoundownThread = threading.Thread(target=self.timerCountdown)
-            self.timerCoundownThread.daemon = True
-            self.timerCoundownThread.start()
+    def start_timer_thread(self):
+        if self.thread_timer is None:
+            self.thread_timer = FtrackEventsThread(self)
+            self.bool_timer_event = True
+            self.thread_timer.signal_timer_started.connect(self.timer_started)
+            self.thread_timer.signal_timer_stopped.connect(self.timer_stopped)
+            self.thread_timer.start()
 
-    def stopTimerThread(self):
+    def stop_timer_thread(self):
         try:
-            self.timerThread.stop_session()
-            if self.timerThread is not None:
-                self.timerThread.join()
-                self.timerThread = None
-            self.timerCoundownThread.stop_session()
-            if self.timerCoundownThread is not None:
-                self.timerCoundownThread.join()
-                self.timerCoundownThread = None
-            log.info("Timer event server stopped")
-            self.boolTimerEvent = False
+            self.thread_timer.terminate()
+            QThread.wait()
+            if self.thread_timer is not None:
+                self.thread_timer = None
+
         except Exception as e:
             log.error("During Killing Timer event server: {0}".format(e))
 
-    def eventHandler(self, event):
+    def start_countdown_thread(self):
+        if self.thread_timer_coundown is None:
+            self.thread_timer_coundown = CountdownThread(self)
+            self.thread_timer_coundown.signal_show_question.connect(self.show_widget_timer)
+            self.thread_timer_coundown.signal_send_time.connect(self.change_count_widget)
+            self.thread_timer_coundown.signal_stop_timer.connect(self.timer_stop)
+            self.thread_timer_coundown.start()
+
+    def stop_countdown_thread(self):
+        if self.thread_timer_coundown is not None:
+            self.thread_timer_coundown.runs=False
+            self.thread_timer_coundown.quit()
+            self.thread_timer_coundown = None
+
+    def show_widget_timer(self):
+        self.widget_timer.show()
+        self.widget_timer.setWindowState(QtCore.Qt.WindowMinimized)
+        self.widget_timer.setWindowState(QtCore.Qt.WindowActive)
+        # self.widget_timer.activateWindow()
+
+    def change_count_widget(self, time):
+        self.widget_timer.lbl_rest_time.setText(str(time))
+
+    def timer_started(self):
+        self.start_countdown_thread()
+
+    def timer_stopped(self):
+        self.stop_countdown_thread()
+
+    def timer_stop(self):
+        if self.thread_timer is not None:
+            self.widget_timer.main_context = False
+            self.widget_timer.refresh_context()
+            self.thread_timer.signal_stop_timer.emit()
+        if self.thread_timer_coundown is not None:
+            self.stop_countdown_thread()
+
+    def timer_continue(self):
+        if self.thread_timer_coundown is not None:
+            self.thread_timer_coundown.signal_continue_timer.emit()
+
+class FtrackEventsThread(QtCore.QThread):
+    # Senders
+    signal_timer_started = QtCore.Signal()
+    signal_timer_stopped = QtCore.Signal()
+    # Listeners
+    signal_stop_timer = QtCore.Signal()
+
+    def __init__(self, parent):
+        super(FtrackEventsThread, self).__init__()
+        cred = credentials._get_credentials()
+        self.username = cred['username']
+        self.signal_stop_timer.connect(self.ftrack_stop_timer)
+
+    def run(self):
+        self.timer_session = ftrack_api.Session(auto_connect_event_hub=True)
+        self.timer_session.event_hub.subscribe(
+            'topic=ftrack.update and source.user.username={}'.format(self.username),
+            self.event_handler)
+
+        self.timer_session.event_hub.wait()
+
+    def event_handler(self, event):
         try:
             if event['data']['entities'][0]['objectTypeId'] != 'timer':
                 return
@@ -213,53 +257,135 @@ class FtrackRunner:
             return
         new = event['data']['entities'][0]['changes']['start']['new']
         old = event['data']['entities'][0]['changes']['start']['old']
+        self.userId = event['source']['user']['id']
         if old is None and new is None:
             return
         elif old is None:
-            self.timerStart()
+            self.signal_timer_started.emit()
         elif new is None:
-            self.timerStop()
+            self.signal_timer_stopped.emit()
 
-    def timerStart(self):
-        self.parent.ftrackTimer.show()
+    def ftrack_stop_timer(self):
+        try:
+            user = self.timer_session.query('User where id is ' + self.userId).one()
+            user.stop_timer()
+            self.timer_session.commit()
+        except Exception as e:
+            log.debug("Timer stop had issues: {}".format(e))
 
-    def timerStop(self):
-        print("timer has stopped!")
 
-    # Definition of visibility of each menu actions
-    def setMenuVisibility(self):
+class CountdownThread(QtCore.QThread):
+    # Senders
+    signal_show_question = QtCore.Signal()
+    signal_send_time = QtCore.Signal(object)
+    signal_stop_timer = QtCore.Signal()
+    signal_stop_countdown = QtCore.Signal()
+    # Listeners
+    signal_reset_timer = QtCore.Signal()
+    signal_continue_timer = QtCore.Signal()
 
-        self.smActionS.menuAction().setVisible(self.boolLogged)
-        self.smEventS.menuAction().setVisible(self.boolLogged)
-        self.aLogin.setVisible(not self.boolLogged)
-        self.aLogout.setVisible(self.boolLogged)
+    def __init__(self, parent):
+        super(CountdownThread, self).__init__()
+        self.runs = True
+        self.over_line = False
+        self.count_length = 60*5 # 5 minutes
+        self.border_line = 31
+        self.reset_count()
+        self.signal_reset_timer.connect(self.reset_count)
+        self.signal_continue_timer.connect(self.continue_timer)
 
-        if self.boolLogged is False:
-            if self.boolTimerEvent is True:
-                self.stopTimerThread()
-            return
+    def continue_timer(self):
+        self.over_line = False
+        self.reset_count()
 
-        self.aRunActionS.setVisible(not self.boolActionServer)
-        self.aResetActionS.setVisible(self.boolActionServer)
-        self.aStopActionS.setVisible(self.boolActionServer)
+    def reset_count(self):
+        if self.over_line is True:
+            self.actual = self.border_line
+        else:
+            self.actual = self.count_length
 
-        if self.boolTimerEvent is False:
-            self.runTimerThread()
+    def stop(self):
+        self.runs = False
+
+    def run(self):
+        thread_mouse = MouseThread(self)
+        thread_mouse.start()
+        thread_keyboard = KeyboardThread(self)
+        thread_keyboard.start()
+        while self.runs:
+            if self.actual == self.border_line:
+                self.signal_show_question.emit()
+                self.over_line = True
+
+            if self.actual <= self.border_line:
+                self.signal_send_time.emit(self.actual)
+
+            time.sleep(1)
+            self.actual -= 1
+
+            if self.actual == 0:
+                self.runs = False
+                self.signal_stop_timer.emit()
+
+        thread_mouse.signal_stop.emit()
+        thread_mouse.quit()
+        thread_keyboard.signal_stop.emit()
+        thread_keyboard.quit()
+
+
+class MouseThread(QtCore.QThread):
+    signal_stop = QtCore.Signal()
+
+    def __init__(self, parent):
+        super(MouseThread, self).__init__()
+        self.parent = parent
+        self.signal_stop.connect(self.stop)
+        self.m_listener = None
+
+    def stop(self):
+        if self.m_listener is not None:
+            self.m_listener.stop()
+
+    def on_move(self, posx, posy):
+        self.parent.signal_reset_timer.emit()
+
+    def run(self):
+        self.m_listener = mouse.Listener(on_move=self.on_move)
+        self.m_listener.start()
+
+
+class KeyboardThread(QtCore.QThread):
+    signal_stop = QtCore.Signal()
+
+    def __init__(self, parent):
+        super(KeyboardThread, self).__init__()
+        self.parent = parent
+        self.signal_stop.connect(self.stop)
+        self.k_listener = None
+
+    def stop(self):
+        if self.k_listener is not None:
+            self.k_listener.stop()
+
+    def on_press(self, key):
+        self.parent.signal_reset_timer.emit()
+
+    def run(self):
+        self.k_listener = keyboard.Listener(on_press=self.on_press)
+        self.k_listener.start()
 
 class StopTimer(QtWidgets.QWidget):
 
     SIZE_W = 300
-    SIZE_H = 230
+    SIZE_H = 160
 
     def __init__(self, parent=None):
 
         super(StopTimer, self).__init__()
 
+        self.main_context = True
         self.parent = parent
-        self.msg = """ You didn't work for a long time.
-        Would you like to stop Ftrack timer?
-        """
-        # self.setWindowIcon(self.parent.parent.icon)
+        self.setWindowIcon(self.parent.parent.icon)
         self.setWindowFlags(QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowMinimizeButtonHint)
 
         self._translate = QtCore.QCoreApplication.translate
@@ -277,6 +403,7 @@ class StopTimer(QtWidgets.QWidget):
         self.setStyleSheet(style.load_stylesheet())
 
         self.setLayout(self._main())
+        self.refresh_context()
         self.setWindowTitle('Pype - Stop Ftrack timer')
 
     def _main(self):
@@ -287,36 +414,90 @@ class StopTimer(QtWidgets.QWidget):
         self.form.setContentsMargins(10, 15, 10, 5)
         self.form.setObjectName("form")
 
-        self.info_label = QtWidgets.QLabel(self.msg)
-        self.info_label.setFont(self.font)
-        self.info_label.setTextFormat(QtCore.Qt.RichText)
-        self.info_label.setObjectName("info_label")
-        self.info_label.setWordWrap(True);
+        msg_info = "You didn't work for a long time."
+        msg_question = "Would you like to stop Ftrack timer?"
+        msg_stopped = "Your Ftrack timer was stopped!"
 
-        self.form.addRow(self.info_label)
+        self.lbl_info = QtWidgets.QLabel(msg_info)
+        self.lbl_info.setFont(self.font)
+        self.lbl_info.setTextFormat(QtCore.Qt.RichText)
+        self.lbl_info.setObjectName("lbl_info")
+        self.lbl_info.setWordWrap(True);
 
-        self.btnGroup = QtWidgets.QHBoxLayout()
-        self.btnGroup.addStretch(1)
-        self.btnGroup.setObjectName("btnGroup")
+        self.lbl_question = QtWidgets.QLabel(msg_question)
+        self.lbl_question.setFont(self.font)
+        self.lbl_question.setTextFormat(QtCore.Qt.RichText)
+        self.lbl_question.setObjectName("lbl_question")
+        self.lbl_question.setWordWrap(True);
 
-        self.btnStop = QtWidgets.QPushButton("Stop timer")
-        self.btnStop.setToolTip('Stop\'s Ftrack timer')
-        self.btnStop.clicked.connect(self.stop_timer)
+        self.lbl_stopped = QtWidgets.QLabel(msg_stopped)
+        self.lbl_stopped.setFont(self.font)
+        self.lbl_stopped.setTextFormat(QtCore.Qt.RichText)
+        self.lbl_stopped.setObjectName("lbl_stopped")
+        self.lbl_stopped.setWordWrap(True);
 
-        self.btnContinue = QtWidgets.QPushButton("Continue")
-        self.btnContinue.setToolTip('Timer will continue')
-        self.btnContinue.clicked.connect(self.close_widget)
+        self.lbl_rest_time = QtWidgets.QLabel("")
+        self.lbl_rest_time.setFont(self.font)
+        self.lbl_rest_time.setTextFormat(QtCore.Qt.RichText)
+        self.lbl_rest_time.setObjectName("lbl_rest_time")
+        self.lbl_rest_time.setWordWrap(True);
+        self.lbl_rest_time.setAlignment(QtCore.Qt.AlignCenter)
 
-        self.btnGroup.addWidget(self.btnContinue)
-        self.btnGroup.addWidget(self.btnStop)
+        self.form.addRow(self.lbl_info)
+        self.form.addRow(self.lbl_question)
+        self.form.addRow(self.lbl_stopped)
+        self.form.addRow(self.lbl_rest_time)
+
+        self.group_btn = QtWidgets.QHBoxLayout()
+        self.group_btn.addStretch(1)
+        self.group_btn.setObjectName("group_btn")
+
+        self.btn_stop = QtWidgets.QPushButton("Stop timer")
+        self.btn_stop.setToolTip('Stop\'s Ftrack timer')
+        self.btn_stop.clicked.connect(self.stop_timer)
+
+        self.btn_continue = QtWidgets.QPushButton("Continue")
+        self.btn_continue.setToolTip('Timer will continue')
+        self.btn_continue.clicked.connect(self.continue_timer)
+
+        self.btn_ok = QtWidgets.QPushButton("OK")
+        self.btn_ok.setToolTip('Close window')
+        self.btn_ok.clicked.connect(self.close_widget)
+
+        self.group_btn.addWidget(self.btn_continue)
+        self.group_btn.addWidget(self.btn_stop)
+        self.group_btn.addWidget(self.btn_ok)
 
         self.main.addLayout(self.form)
-        self.main.addLayout(self.btnGroup)
+        self.main.addLayout(self.group_btn)
 
         return self.main
 
+    def refresh_context(self):
+        self.lbl_question.setVisible(self.main_context)
+        self.lbl_rest_time.setVisible(self.main_context)
+        self.lbl_stopped.setVisible(not self.main_context)
+
+        self.btn_continue.setVisible(self.main_context)
+        self.btn_stop.setVisible(self.main_context)
+        self.btn_ok.setVisible(not self.main_context)
+
     def stop_timer(self):
-        print("now i should stop the timer")
+        self.parent.timer_stop()
+        self.close_widget()
+
+    def continue_timer(self):
+        self.parent.timer_continue()
+        self.close_widget()
+
+    def closeEvent(self, event):
+        event.ignore()
+        if self.main_context is True:
+            self.continue_timer()
+        else:
+            self.close_widget()
 
     def close_widget(self):
-        self.close()
+        self.main_context = True
+        self.refresh_context()
+        self.hide()
