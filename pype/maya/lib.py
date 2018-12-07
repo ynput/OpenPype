@@ -275,6 +275,7 @@ def collect_animation_data():
     # get scene values as defaults
     start = cmds.playbackOptions(query=True, animationStartTime=True)
     end = cmds.playbackOptions(query=True, animationEndTime=True)
+    fps = mel.eval('currentTimeUnitToFPS()')
 
     # build attributes
     data = OrderedDict()
@@ -282,6 +283,7 @@ def collect_animation_data():
     data["endFrame"] = end
     data["handles"] = 1
     data["step"] = 1.0
+    data["fps"] = fps
 
     return data
 

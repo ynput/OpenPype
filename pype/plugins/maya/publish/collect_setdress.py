@@ -23,7 +23,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.49
+    order = pyblish.api.CollectorOrder + 0.2
     label = "Set Dress"
     families = ["setdress"]
 

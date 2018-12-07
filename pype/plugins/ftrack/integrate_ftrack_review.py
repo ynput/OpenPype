@@ -14,7 +14,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
     order = pyblish.api.IntegratorOrder + 0.48
     label = 'Integrate Ftrack Component'
-    families = ["ftrack"]
+    families = ['review', 'ftrack']
 
     family_mapping = {'camera': 'cam',
                       'look': 'look',
@@ -23,6 +23,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'rig': 'rig',
                       'setdress': 'setdress',
                       'pointcache': 'cache',
+                      'review': 'mov',
                       'write': 'img',
                       'render': 'render'}
 
@@ -43,9 +44,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         dst_list = instance.data['destination_list']
 
         ft_session = instance.context.data["ftrackSession"]
-        location = ft_session.query(
-            'Location where name is "ftrack.unmanaged"').one()
-        self.log.debug('location {}'.format(location))
+
 
         for file in instance.data['destination_list']:
             self.log.debug('file {}'.format(file))
@@ -54,17 +53,14 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             filename, ext = os.path.splitext(file)
             self.log.debug('dest ext: ' + ext)
 
-            if family == 'review':
-                component_name = "ftrackreview-mp4"
-                location = ft_session.query(
-                    'Location where name is "ftrack.server"').one()
-                metadata = {'ftr_meta': json.dumps({
-                                'frameIn': int(instance.data["startFrame"]),
-                                'frameOut': int(instance.data["startFrame"]),
-                                'frameRate': 25})}
-            else:
-                component_name = ext[1:]
-                metadata = None
+            component_name = "ftrackreview-mp4"
+            location = ft_session.query(
+                'Location where name is "ftrack.server"').one()
+            metadata = {'ftr_meta': json.dumps({
+                            'frameIn': int(instance.data["startFrame"]),
+                            'frameOut': int(instance.data["startFrame"]),
+                            'frameRate': 25})}
+
 
             componentList.append({"assettype_data": {
                 "short": asset_type,
@@ -84,6 +80,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 "component_overwrite": False
             }
             )
+
+
 
         self.log.debug('componentsList: {}'.format(str(componentList)))
         instance.data["ftrackComponentsList"] = componentList

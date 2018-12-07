@@ -1,15 +1,18 @@
 import os
 import contextlib
 import time
+import sys
 
 import capture_gui
+import clique
 
 import pype.maya.lib as lib
 import pype.api
 
 from maya import cmds
 import pymel.core as pm
-
+from pype.vendor import ffmpeg
+reload(ffmpeg)
 
 import avalon.maya
 
@@ -33,7 +36,7 @@ class ExtractQuicktime(pype.api.Extractor):
 
     """
 
-    label = "Quicktime (Alembic)"
+    label = "Quicktime"
     hosts = ["maya"]
     families = ["review"]
 
@@ -126,29 +129,40 @@ class ExtractQuicktime(pype.api.Extractor):
         preset['filename'] = path
         preset['overwrite'] = True
 
-        # pm.refresh(f=True)
-        #
-        # refreshFrameInt = int(pm.playbackOptions(q=True, minTime=True))
-        # pm.currentTime(refreshFrameInt - 1, edit=True)
-        # pm.currentTime(refreshFrameInt, edit=True)
+        pm.refresh(f=True)
+
+        refreshFrameInt = int(pm.playbackOptions(q=True, minTime=True))
+        pm.currentTime(refreshFrameInt - 1, edit=True)
+        pm.currentTime(refreshFrameInt, edit=True)
 
         with maintained_time():
             playblast = capture_gui.lib.capture_scene(preset)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
-        instance.data["files"].append(playblast)
-
-
-
-
-
-
+        self.log.info("file list  {}".format(playblast))
         # self.log.info("Calculating HUD data overlay")
 
-        # movieFullPth = path + ".mov"
-        # fls = [os.path.join(dir_path, f).replace("\\","/") for f in os.listdir( dir_path ) if f.endswith(preset['compression'])]
-        #self.log.info(" these  %s" % fls[0])
+        # stagingdir = "C:/Users/milan.kolar/AppData/Local/Temp/pyblish_tmp_ucsymm"
+        collected_frames = os.listdir(stagingdir)
+        collections, remainder = clique.assemble(collected_frames)
+        input_path = os.path.join(stagingdir, collections[0].format('{head}{padding}{tail}'))
+        self.log.info("input {}".format(input_path))
+
+        movieFile = filename + ".mov"
+        full_movie_path = os.path.join(stagingdir, movieFile)
+        self.log.info("output {}".format(full_movie_path))
+        # fls = [os.path.join(stagingdir, filename).replace("\\","/") for f in os.listdir( dir_path ) if f.endswith(preset['compression'])]
+        # self.log.info("file list  {}}".format(fls[0]))
+
+        out, err = (
+            ffmpeg
+            .input(input_path, framerate=25)
+            .output(full_movie_path)
+            .run(overwrite_output=True)
+        )
+
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+        instance.data["files"].append(movieFile)
 
         # ftrackStrings = fStrings.annotationData()
         # nData = ftrackStrings.niceData
@@ -170,10 +184,6 @@ class ExtractQuicktime(pype.api.Extractor):
         #     os.remove(f)
 
         # playblast = (ann.expPth).replace("\\","/")
-
-
-        instance.data["outputPath_qt"] = playblast
-        self.log.info("Outputting video to %s" % playblast)
 
 
 @contextlib.contextmanager

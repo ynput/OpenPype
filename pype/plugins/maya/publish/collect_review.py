@@ -7,7 +7,7 @@ class CollectReviewData(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.499
+    order = pyblish.api.CollectorOrder + 0.3
     label = 'Collect Review Data'
     families = ["review"]
 
