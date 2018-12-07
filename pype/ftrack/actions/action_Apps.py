@@ -9,7 +9,7 @@ from app.api import Logger
 log = Logger.getLogger(__name__)
 
 def registerApp(app, session):
-    name = app['name'].split("_")[0]
+    name = app['name']
     variant = ""
     try:
         variant = app['name'].split("_")[1]
@@ -31,11 +31,19 @@ def registerApp(app, session):
         label = apptoml['ftrack_label']
 
     icon = None
+    ftrack_resources = "" # Path to resources here
+
     if 'icon' in apptoml:
         icon = apptoml['icon']
+        if '{ftrack_resources}' in icon:
+            icon = icon.format(ftrack_resources)
+
+    description = None
+    if 'description' in apptoml:
+        description = apptoml['description']
 
     # register action
-    AppAction(session, label, name, executable, variant, icon).register()
+    AppAction(session, label, name, executable, variant, icon, description).register()
 
 
 def register(session):
@@ -59,6 +67,7 @@ def register(session):
                 appNames.append(app['name'])
                 apps.append(app)
 
+    apps = sorted(apps, key=lambda x: x['name'])
     for app in apps:
         try:
             registerApp(app, session)
