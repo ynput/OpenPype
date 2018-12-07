@@ -3,7 +3,7 @@ import sys
 from avalon import api as avalon
 from pyblish import api as pyblish
 
-from .. import api as pype
+from .. import api
 
 from pype.nuke import menu
 
@@ -15,12 +15,12 @@ import nuke
 
 # removing logger handler created in avalon_core
 for name, handler in [(handler.get_name(), handler)
-                      for handler in pype.Logger.logging.root.handlers[:]]:
+                      for handler in api.Logger.logging.root.handlers[:]]:
     if "pype" not in str(name).lower():
-        pype.Logger.logging.root.removeHandler(handler)
+        api.Logger.logging.root.removeHandler(handler)
 
 
-log = pype.Logger.getLogger(__name__, "nuke")
+log = api.Logger.getLogger(__name__, "nuke")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -37,7 +37,7 @@ self = sys.modules[__name__]
 self.nLogger = None
 
 
-class NukeHandler(pype.Logger.logging.Handler):
+class NukeHandler(api.Logger.logging.Handler):
     '''
     Nuke Handler - emits logs into nuke's script editor.
     warning will emit nuke.warning()
@@ -45,7 +45,7 @@ class NukeHandler(pype.Logger.logging.Handler):
     '''
 
     def __init__(self):
-        pype.Logger.logging.Handler.__init__(self)
+        api.Logger.logging.Handler.__init__(self)
         self.set_name("Pype_Nuke_Handler")
 
     def emit(self, record):
@@ -65,11 +65,11 @@ class NukeHandler(pype.Logger.logging.Handler):
 nuke_handler = NukeHandler()
 if nuke_handler.get_name() \
     not in [handler.get_name()
-            for handler in pype.Logger.logging.root.handlers[:]]:
-    pype.Logger.logging.getLogger().addHandler(nuke_handler)
+            for handler in api.Logger.logging.root.handlers[:]]:
+    api.Logger.logging.getLogger().addHandler(nuke_handler)
 
 if not self.nLogger:
-    self.nLogger = pype.Logger
+    self.nLogger = api.Logger
 
 
 def reload_config():
@@ -86,8 +86,6 @@ def reload_config():
         "app.api",
         "{}.api".format(AVALON_CONFIG),
         "{}.templates".format(AVALON_CONFIG),
-        "{}.nuke".format(AVALON_CONFIG),
-        "{}.nuke.lib".format(AVALON_CONFIG),
         "{}.nuke.templates".format(AVALON_CONFIG),
         "{}.nuke.menu".format(AVALON_CONFIG)
     ):
@@ -100,7 +98,8 @@ def reload_config():
 
 
 def install():
-    pype.fill_avalon_workdir()
+
+    api.fill_avalon_workdir()
     reload_config()
 
     log.info("Registering Nuke plug-ins..")
@@ -113,8 +112,7 @@ def install():
 
     # Disable all families except for the ones we explicitly want to see
     family_states = [
-        "render",
-        "still"
+        "write",
         "lifeGroup",
         "backdrop",
         "imagesequence",
@@ -129,7 +127,7 @@ def install():
     menu.install()
 
     # load data from templates
-    pype.load_data_from_templates()
+    api.load_data_from_templates()
 
 
 def uninstall():
@@ -141,7 +139,7 @@ def uninstall():
     pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
 
     # reset data from templates
-    pype.reset_data_from_templates()
+    api.reset_data_from_templates()
 
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
