@@ -14,9 +14,6 @@ import acre
 
 from pype import api as pype
 
-log = pype.Logger.getLogger(__name__, "ftrack")
-
-log.debug("pype.Anatomy: {}".format(pype.Anatomy))
 
 
 class AppAction(object):
@@ -72,9 +69,7 @@ class AppAction(object):
             ),
             self._launch
         )
-        self.log.info("Application '{}' - Registered successfully".format(self.label))
-
-        self.log.info("Application '{}' - Registered successfully".format(self.label))
+        self.log.info("Application '{} {}' - Registered successfully".format(self.label,self.variant))
 
     def _discover(self, event):
         args = self._translate_event(
@@ -137,7 +132,7 @@ class AppAction(object):
         else:
             apps = []
             for app in project['config']['apps']:
-                apps.append(app['name'].split("_")[0])
+                apps.append(app['name'])
 
             if self.identifier not in apps:
                 return False
@@ -231,17 +226,13 @@ class AppAction(object):
         entity, id = entities[0]
         entity = session.get(entity, id)
 
-        silo = "Film"
-        if entity.entity_type == "AssetBuild":
-            silo = "Asset"
-
         # set environments for Avalon
         os.environ["AVALON_PROJECT"] = entity['project']['full_name']
-        os.environ["AVALON_SILO"] = silo
+        os.environ["AVALON_SILO"] = entity['ancestors'][0]['name']
         os.environ["AVALON_ASSET"] = entity['parent']['name']
         os.environ["AVALON_TASK"] = entity['name']
-        os.environ["AVALON_APP"] = self.identifier
-        os.environ["AVALON_APP_NAME"] = self.identifier + "_" + self.variant
+        os.environ["AVALON_APP"] = self.identifier.split("_")[0]
+        os.environ["AVALON_APP_NAME"] = self.identifier
 
         os.environ["FTRACK_TASKID"] = id
 
@@ -262,7 +253,7 @@ class AppAction(object):
         try:
             anatomy = anatomy.format(data)
         except Exception as e:
-            log.error("{0} Error in anatomy.format: {1}".format(__name__, e))
+            self.log.error("{0} Error in anatomy.format: {1}".format(__name__, e))
         os.environ["AVALON_WORKDIR"] = os.path.join(anatomy.work.root, anatomy.work.folder)
 
         # TODO Add paths to avalon setup from tomls
@@ -282,7 +273,7 @@ class AppAction(object):
             parents.append(session.get(item['type'], item['id']))
 
         # collect all the 'environment' attributes from parents
-        tools_attr = [os.environ["AVALON_APP_NAME"]]
+        tools_attr = [os.environ["AVALON_APP"], os.environ["AVALON_APP_NAME"]]
         for parent in reversed(parents):
             # check if the attribute is empty, if not use it
             if parent['custom_attributes']['tools_env']:
@@ -328,7 +319,7 @@ class AppAction(object):
                 try:
                     fp = open(execfile)
                 except PermissionError as p:
-                    log.error('Access denied on {0} - {1}'.
+                    self.log.error('Access denied on {0} - {1}'.
                               format(execfile, p))
                     return {
                         'success': False,
@@ -338,7 +329,7 @@ class AppAction(object):
                 fp.close()
                 # check executable permission
                 if not os.access(execfile, os.X_OK):
-                    log.error('No executable permission on {}'.
+                    self.log.error('No executable permission on {}'.
                               format(execfile))
                     return {
                         'success': False,
@@ -347,7 +338,7 @@ class AppAction(object):
                         }
                     pass
             else:
-                log.error('Launcher doesn\'t exist - {}'.
+                self.log.error('Launcher doesn\'t exist - {}'.
                           format(execfile))
                 return {
                     'success': False,
