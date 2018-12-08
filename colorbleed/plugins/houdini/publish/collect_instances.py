@@ -30,8 +30,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        instances = []
-
         nodes = hou.node("/out").children()
         for node in nodes:
 
@@ -67,8 +65,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             instance[:] = [node]
             instance.data.update(data)
-
-            instances.append(instance)
 
         def sort_by_family(instance):
             """Sort by family"""
