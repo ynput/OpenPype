@@ -2,10 +2,15 @@ import pyblish.api
 
 
 class ValidateOutputNode(pyblish.api.InstancePlugin):
-    """Validate if output node:
-        - exists
-        - is of type 'output'
-        - has an input"""
+    """Validate the instance SOP Output Node.
+
+    This will ensure:
+        - The SOP Path is set.
+        - The SOP Path refers to an existing object.
+        - The SOP Path node is of type 'output' or 'camera'
+        - The SOP Path node has at least one input connection (has an input)
+
+    """
 
     order = pyblish.api.ValidatorOrder
     families = ["*"]
@@ -16,7 +21,8 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Output node(s) `%s` are incorrect" % invalid)
+            raise RuntimeError("Output node(s) `%s` are incorrect. "
+                               "See plug-in log for details." % invalid)
 
     @classmethod
     def get_invalid(cls, instance):
@@ -25,16 +31,17 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
 
         if output_node is None:
             node = instance[0]
-            cls.log.error("Output node at '%s' does not exist, see source" %
-                          node.path())
+            cls.log.error("SOP Output node in '%s' does not exist. "
+                          "Ensure a valid SOP output path is set."
+                          % node.path())
 
             return node.path()
 
         # Check if type is correct
         type_name = output_node.type().name()
         if type_name not in ["output", "cam"]:
-            cls.log.error("Output node `%s` is not an accepted type `output` "
-                          "or `camera`" %
+            cls.log.error("Output node `%s` is not an accepted type."
+                          "Expected types: `output` or `camera`" %
                           output_node.path())
             return [output_node.path()]
 
