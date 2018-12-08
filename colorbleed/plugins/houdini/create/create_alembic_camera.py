@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 from avalon import houdini
 
 
