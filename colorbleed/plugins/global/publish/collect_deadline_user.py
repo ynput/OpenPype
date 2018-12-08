@@ -2,6 +2,7 @@ import os
 import subprocess
 
 import pyblish.api
+from colorbleed.plugin import contextplugin_should_run
 
 CREATE_NO_WINDOW = 0x08000000
 
@@ -39,6 +40,10 @@ class CollectDeadlineUser(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Inject the current working file"""
+
+        # Workaround bug pyblish-base#250
+        if not contextplugin_should_run(self, context):
+            return
 
         user = deadline_command("GetCurrentUserName").strip()
 
