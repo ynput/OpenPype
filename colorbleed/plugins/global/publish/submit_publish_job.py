@@ -147,11 +147,14 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             subset=subset
         )
 
-        # Add in start/end frame
+        # Get start/end frame from instance, if not available get from context
         context = instance.context
-        start = instance.data.get("startFrame", context.data["startFrame"])
-        end = instance.data.get("endFrame", context.data["endFrame"])
-        resources = []
+        start = instance.data.get("startFrame")
+        if start is None:
+            start = context.data["startFrame"]
+        end = instance.data.get("endFrame")
+        if end is None:
+            end = context.data["endFrame"]
 
         # Add in regex for sequence filename
         # This assumes the output files start with subset name and ends with
@@ -187,6 +190,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
 
+        resources = []
         if data.get("extendFrames", False):
 
             family = "colorbleed.imagesequence"

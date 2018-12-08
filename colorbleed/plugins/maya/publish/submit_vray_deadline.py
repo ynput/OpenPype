@@ -41,7 +41,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         filename = os.path.basename(filepath)
         task_name = "{} - {}".format(filename, instance.name)
 
-        batch_name = "VRay Scene Export - {}".format(filename)
+        batch_name = "{} - (vrscene)".format(filename)
 
         # Get the output template for vrscenes
         vrscene_output = instance.data["vrsceneOutput"]
@@ -63,7 +63,9 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
                 "BatchName": batch_name,
 
                 # Job name, as seen in Monitor
-                "Name": "{} [{}-{}]".format(task_name, start_frame, end_frame),
+                "Name": "Export {} [{}-{}]".format(task_name,
+                                                   start_frame,
+                                                   end_frame),
 
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": deadline_user,

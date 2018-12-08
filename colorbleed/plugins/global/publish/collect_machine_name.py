@@ -11,4 +11,4 @@ class CollectMachineName(pyblish.api.ContextPlugin):
 
         machine_name = socket.gethostname()
         self.log.info("Machine name: %s" % machine_name)
-        context.data.update({"machine": machine_name})
+        context.data["machine"] = machine_name

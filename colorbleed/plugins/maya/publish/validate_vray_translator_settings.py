@@ -1,5 +1,6 @@
 import pyblish.api
 import colorbleed.api
+from colorbleed.plugin import contextplugin_should_run
 
 from maya import cmds
 
@@ -13,6 +14,10 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
+        # Workaround bug pyblish-base#250
+        if not contextplugin_should_run(self, context):
+            return
+
         invalid = self.get_invalid(context)
         if invalid:
             raise RuntimeError("Found invalid VRay Translator settings!")
@@ -21,21 +26,6 @@ class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
     def get_invalid(cls, context):
 
         invalid = False
-
-        # Check if there are any vray scene instances
-        # The reason to not use host.lsattr() as used in collect_vray_scene
-        # is because that information is already available in the context
-        vrayscene_instances = [i for i in context[:] if i.data["family"]
-                               in cls.families]
-
-        if not vrayscene_instances:
-            cls.log.info("No VRay Scene instances found, skipping..")
-            return
-
-        # Ignore if no VRayScenes are enabled for publishing
-        if not any(i.data.get("publish", True) for i in vrayscene_instances):
-            cls.log.info("VRay Scene instances are disabled, skipping..")
-            return
 
         # Get vraySettings node
         vray_settings = cmds.ls(type="VRaySettingsNode")

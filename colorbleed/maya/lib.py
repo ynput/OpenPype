@@ -2087,3 +2087,57 @@ def bake_to_world_space(nodes,
              shape=shape)
 
     return world_space_nodes
+
+
+def get_attr_in_layer(attr, layer):
+    """Return attribute value in specified renderlayer.
+
+    Same as cmds.getAttr but this gets the attribute's value in a
+    given render layer without having to switch to it.
+
+    Note: This is much faster for Maya's renderLayer system, yet the code
+        does no optimized query for render setup.
+
+    Args:
+        attr (str): attribute name, ex. "node.attribute"
+        layer (str): layer name
+
+    Returns:
+        The return value from `maya.cmds.getAttr`
+
+    """
+    if cmds.mayaHasRenderSetup():
+        log.debug("lib.get_attr_in_layer is not optimized for render setup")
+        with renderlayer(layer):
+            return cmds.getAttr(attr)
+
+    connections = cmds.listConnections(attr,
+                                       plugs=True,
+                                       source=False,
+                                       destination=True,
+                                       type="renderLayer") or []
+
+    connections = filter(lambda x: x.endswith(".plug"), connections)
+    if not connections:
+        return cmds.getAttr(attr)
+
+    for connection in connections:
+        if connection.startswith(layer):
+            attr_split = connection.split(".")
+            if attr_split[0] == layer:
+                attr = ".".join(attr_split[0:-1])
+                return cmds.getAttr("%s.value" % attr)
+
+    else:
+        # When connections are present, but none
+        # to the specific renderlayer than the layer
+        # should have the "defaultRenderLayer"'s value
+        layer = "defaultRenderLayer"
+        for connection in connections:
+            if connection.startswith(layer):
+                attr_split = connection.split(".")
+                if attr_split[0] == "defaultRenderLayer":
+                    attr = ".".join(attr_split[0:-1])
+                    return cmds.getAttr("%s.value" % attr)
+
+    return cmds.getAttr(attr)

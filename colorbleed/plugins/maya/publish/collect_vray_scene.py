@@ -29,7 +29,8 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         # Get VRay Scene instance
         vray_scenes = host.lsattr("family", "colorbleed.vrayscene")
         if not vray_scenes:
-            self.log.info("No instance found of family: `colorbleed.vrayscene`")
+            self.log.info("Skipping vrayScene collection, no "
+                          "colorbleed.vrayscene instance found..")
             return
 
         assert len(vray_scenes) == 1, "Multiple vrayscene instances found!"
@@ -50,13 +51,6 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         file_name = context.data["currentFile"].replace("\\", "/")
         vrscene = ("vrayscene", "<Scene>", "<Scene>_<Layer>", "<Layer>")
         vrscene_output = os.path.join(work_dir, *vrscene)
-
-        vrscene_data["startFrame"] = start_frame
-        vrscene_data["endFrame"] = end_frame
-        vrscene_data["vrsceneOutput"] = vrscene_output
-
-        context.data["startFrame"] = start_frame
-        context.data["endFrame"] = end_frame
 
         # Check and create render output template for render job
         # outputDir is required for submit_publish_job
@@ -103,7 +97,10 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
 
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
-                "source": file_name
+                "source": file_name,
+
+                # Store VRay Scene additional data
+                "vrsceneOutput": vrscene_output
             }
 
             data.update(vrscene_data)
