@@ -29,6 +29,8 @@ class ValidatOutputNodeExists(pyblish.api.InstancePlugin):
         result = set()
 
         node = instance[0]
+        assert node, "No node in instance. This is a bug."
+
         if node.type().name() == "alembic":
             soppath_parm = "sop_path"
         else:
