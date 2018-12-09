@@ -23,9 +23,19 @@ class Login_Dialog_ui(QtWidgets.QWidget):
 
         self.parent = parent
 
-        self.setWindowIcon(self.parent.parent.icon)
+        if hasattr(parent,'icon'):
+            self.setWindowIcon(self.parent.icon)
+        elif hasattr(parent,'parent') and hasattr(parent.parent,'icon'):
+            self.setWindowIcon(self.parent.parent.icon)
+        else:
+            pype_setup = os.getenv('PYPE_SETUP_ROOT')
+            items = [pype_setup, "app", "resources", "icon.png"]
+            fname = os.path.sep.join(items)
+            icon = QtGui.QIcon(fname)
+            self.setWindowIcon(icon)
+
         self.setWindowFlags(QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowMinimizeButtonHint)
-        
+
         self.loginSignal.connect(self.loginWithCredentials)
         self._translate = QtCore.QCoreApplication.translate
 
@@ -189,6 +199,8 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         if verification:
             credentials._save_credentials(username, apiKey)
             credentials._set_env(username, apiKey)
+            if self.parent is not None:
+                self.parent.loginChange()
             self._close_widget()
         else:
             self._invalid_input(self.user_input)
@@ -285,7 +297,8 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         if verification is True:
             credentials._save_credentials(username, apiKey)
             credentials._set_env(username, apiKey)
-            self.parent.loginChange()
+            if self.parent is not None:
+                self.parent.loginChange()
             self._close_widget()
 
     def closeEvent(self, event):
