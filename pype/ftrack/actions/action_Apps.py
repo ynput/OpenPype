@@ -9,7 +9,7 @@ from app.api import Logger
 log = Logger.getLogger(__name__)
 
 def registerApp(app, session):
-    name = app['name'].replace("_", ".")
+    name = app['name']
     variant = ""
     try:
         variant = app['name'].split("_")[1]
