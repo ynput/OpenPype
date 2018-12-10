@@ -24,7 +24,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
     label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    families = ["prerendered.frames"]
+    families = ["render.frames", "still.frames", "prerender.frames"]
 
     def process(self, instance):
 
@@ -211,7 +211,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 template = anatomy.render.path
                 instance.data["transfers"].append([src, dst])
 
-
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
@@ -223,21 +222,23 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                     "root": root,
-                     "project": PROJECT,
-                     "projectcode": project['data']['code'],
-                     'task': api.Session["AVALON_TASK"],
-                     "silo": asset['silo'],
-                     "asset": ASSET,
-                     "family": instance.data['family'],
-                     "subset": subset["name"],
-                     "version": version["name"],
-                     "hierarchy": hierarchy,
-                     "representation": ext[1:]
+                    "root": root,
+                    "project": PROJECT,
+                    "projectcode": project['data']['code'],
+                    'task': api.Session["AVALON_TASK"],
+                    "silo": asset['silo'],
+                    "asset": ASSET,
+                    "family": instance.data['family'],
+                    "subset": subset["name"],
+                    "version": version["name"],
+                    "hierarchy": hierarchy,
+                    "representation": ext[1:]
                 }
             }
             destination_list.append(dst)
             instance.data['destination_list'] = destination_list
+            self.log.warning("instance: {}".format(instance))
+            instance[0]["render"].setValue(False)
             representations.append(representation)
 
         self.log.info("Registering {} items".format(len(representations)))

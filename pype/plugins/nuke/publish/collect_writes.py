@@ -58,19 +58,29 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
 
             # preredered frames
             if not node["render"].value():
-                families = "prerendered.frames"
-                collected_frames = os.listdir(output_dir)
-                self.log.debug("collected_frames: {}".format(label))
-                if "files" not in instance.data:
-                    instance.data["files"] = list()
-                instance.data["files"].append(collected_frames)
-                instance.data['transfer'] = False
+                try:
+                    families = [
+                        "{}.frames".format(instance.data["avalonKnob"]["families"]),
+                        'ftrack'
+                    ]
+                    collected_frames = os.listdir(output_dir)
+                    self.log.debug("collected_frames: {}".format(label))
+                    if "files" not in instance.data:
+                        instance.data["files"] = list()
+                    instance.data["files"].append(collected_frames)
+                    instance.data['transfer'] = False
+                except Exception:
+                    node["render"].setValue(True)
+                    raise self.log.warning("needs to refresh the publishing")
             else:
                 # dealing with local/farm rendering
                 if node["render_farm"].value():
-                    families = "{}.farm".format(instance.data["avalonKnob"]["families"][0])
+                    families = [
+                        "{}.farm".format(instance.data["avalonKnob"]["families"])]
                 else:
-                    families = "{}.local".format(instance.data["avalonKnob"]["families"])
+                    families = [
+                        "{}.local".format(instance.data["avalonKnob"]["families"])
+                    ]
 
             self.log.debug("checking for error: {}".format(label))
             instance.data.update({
@@ -78,7 +88,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "outputDir": output_dir,
                 "ext": ext,
                 "label": label,
-                "families": [families, 'ftrack'],
+                "families": families,
                 "startFrame": first_frame,
                 "endFrame": last_frame,
                 "outputType": output_type,
