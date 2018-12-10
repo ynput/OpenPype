@@ -47,14 +47,8 @@ class ExtractThumbnail(pype.api.Extractor):
         end = cmds.currentTime(query=True)
         self.log.info("start: {}, end: {}".format(start, end))
 
-        # get cameras
         members = instance.data['setMembers']
-        cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
-                          dag=True, type="camera")
-
-        # validate required settings
-        assert len(cameras) == 1, "Not a single camera found in extraction"
-        camera = cameras[0]
+        camera = instance.data['review_camera']
 
 
         # project_code = ftrack_data['Project']['code']
@@ -134,9 +128,9 @@ class ExtractThumbnail(pype.api.Extractor):
         with maintained_time():
             playblast = capture_gui.lib.capture_scene(preset)
 
-        thumbnail = filename + ".jpg"
+        _, thumbnail = os.path.split(playblast)
 
-        self.log.info("file list  {}".format(playblast))
+        self.log.info("file list  {}".format(thumbnail))
         # self.log.info("Calculating HUD data overlay")
 
         # stagingdir = "C:/Users/milan.kolar/AppData/Local/Temp/pyblish_tmp_ucsymm"

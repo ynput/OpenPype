@@ -24,7 +24,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'setdress': 'setdress',
                       'pointcache': 'cache',
                       'write': 'img',
-                      'render': 'render'}
+                      'render': 'render',
+                      'review': 'mov'}
 
     def process(self, instance):
 
@@ -43,9 +44,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         dst_list = instance.data['destination_list']
 
         ft_session = instance.context.data["ftrackSession"]
-        location = ft_session.query(
-            'Location where name is "ftrack.unmanaged"').one()
-        self.log.debug('location {}'.format(location))
+
 
         for file in instance.data['destination_list']:
             self.log.debug('file {}'.format(file))
@@ -53,18 +52,34 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         for file in dst_list:
             filename, ext = os.path.splitext(file)
             self.log.debug('dest ext: ' + ext)
+            thumbnail = False
 
-            if family == 'review':
-                component_name = "ftrackreview-mp4"
+            if ext in ['.mov']:
                 location = ft_session.query(
-                    'Location where name is "ftrack.server"').one()
-                metadata = {'ftr_meta': json.dumps({
-                                'frameIn': int(instance.data["startFrame"]),
-                                'frameOut': int(instance.data["startFrame"]),
-                                'frameRate': 25})}
+                'Location where name is "ftrack.server"').one()
+                component_data = {
+                    "name": "ftrackreview-mp4",  # Default component name is "main".
+                    "metadata": {'ftr_meta': json.dumps({
+                    'frameIn': int(instance.data["startFrame"]),
+                    'frameOut': int(instance.data["startFrame"]),
+                    'frameRate': 25})}
+                    }
+            elif ext in [".jpg"]:
+                component_data = {
+                    "name": "thumbnail"  # Default component name is "main".
+                    }
+                thumbnail = True
+                location = ft_session.query(
+                'Location where name is "ftrack.server"').one()
             else:
-                component_name = ext[1:]
-                metadata = None
+                component_data = {
+                    "name": ext[1:]  # Default component name is "main".
+                    }
+
+                location = ft_session.query(
+                    'Location where name is "ftrack.unmanaged"').one()
+
+            self.log.debug('location {}'.format(location))
 
             componentList.append({"assettype_data": {
                 "short": asset_type,
@@ -75,13 +90,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 "assetversion_data": {
                 "version": version_number,
             },
-                "component_data": {
-                "name": component_name,  # Default component name is "main".
-                "metadata": metadata
-            },
+                "component_data": component_data,
                 "component_path": file,
                 'component_location': location,
-                "component_overwrite": False
+                "component_overwrite": False,
+                "thumbnail": thumbnail
             }
             )
 

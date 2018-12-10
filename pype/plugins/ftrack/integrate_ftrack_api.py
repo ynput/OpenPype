@@ -28,6 +28,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         queries = []
         for key, value in data.iteritems():
             if not isinstance(value, (basestring, int)):
+                self.log.info(value)
                 if "id" in value.keys():
                     queries.append(
                         "{0}.id is \"{1}\"".format(key, value["id"])

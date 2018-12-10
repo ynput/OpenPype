@@ -39,6 +39,7 @@ class ExtractQuicktime(pype.api.Extractor):
     label = "Quicktime"
     hosts = ["maya"]
     families = ["review"]
+    optional = True
 
     def process(self, instance):
         self.log.info("Extracting capture..")
@@ -53,12 +54,13 @@ class ExtractQuicktime(pype.api.Extractor):
 
         # get cameras
         members = instance.data['setMembers']
-        cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
-                          dag=True, type="camera")
+        camera = instance.data['review_camera']
+        # cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
+        #                   dag=True, type="camera")
 
-        # validate required settings
-        assert len(cameras) == 1, "Not a single camera found in extraction"
-        camera = cameras[0]
+        # # validate required settings
+        # assert len(cameras) == 1, "Not a single camera found in extraction"
+        # camera = cameras[0]
 
 
         # project_code = ftrack_data['Project']['code']

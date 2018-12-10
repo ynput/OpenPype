@@ -46,6 +46,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         objectset = cmds.ls("*.id", long=True, type="objectSet",
                             recursive=True, objectsOnly=True)
+
+        context.data['objectsets'] = objectset
         for objset in objectset:
 
             if not cmds.attributeQuery("id", node=objset, exists=True):
