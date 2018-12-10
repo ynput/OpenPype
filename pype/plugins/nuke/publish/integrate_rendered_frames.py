@@ -97,6 +97,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
         assumed_data = instance.data["assumedTemplateData"]
         assumed_version = assumed_data["version"]
+
         if assumed_version != next_version:
             raise AttributeError("Assumed version 'v{0:03d}' does not match"
                                  "next version in database "
@@ -237,8 +238,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
             }
             destination_list.append(dst)
             instance.data['destination_list'] = destination_list
-            self.log.warning("instance: {}".format(instance))
-            instance[0]["render"].setValue(False)
             representations.append(representation)
 
         self.log.info("Registering {} items".format(len(representations)))

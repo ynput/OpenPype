@@ -1,5 +1,5 @@
 import os
-
+import tempfile
 import nuke
 import pyblish.api
 import logging
@@ -47,6 +47,8 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             path = nuke.filename(node)
             output_dir = os.path.dirname(path)
             self.log.debug('output dir: {}'.format(output_dir))
+
+            instance.data.update({"stagingDir": output_dir})
             # Include start and end render frame in label
             name = node.name()
 
@@ -60,7 +62,8 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             if not node["render"].value():
                 try:
                     families = [
-                        "{}.frames".format(instance.data["avalonKnob"]["families"]),
+                        "{}.frames".format(
+                            instance.data["avalonKnob"]["families"]),
                         'ftrack'
                     ]
                     collected_frames = os.listdir(output_dir)
@@ -71,7 +74,8 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                     instance.data['transfer'] = False
                 except Exception:
                     node["render"].setValue(True)
-                    raise self.log.warning("needs to refresh the publishing")
+                    raise AttributeError(
+                        "Files in `{}`. Needs to refresh the publishing".format(output_dir))
             else:
                 # dealing with local/farm rendering
                 if node["render_farm"].value():
@@ -81,6 +85,8 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                     families = [
                         "{}.local".format(instance.data["avalonKnob"]["families"])
                     ]
+                    # adding for local renderings
+                    instance.data.update({"stagingDir": tempfile.mkdtemp().replace("\\", "/")})
 
             self.log.debug("checking for error: {}".format(label))
             instance.data.update({
@@ -92,7 +98,6 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "startFrame": first_frame,
                 "endFrame": last_frame,
                 "outputType": output_type,
-                "stagingDir": output_dir,
                 "colorspace": node["colorspace"].value(),
                 "handles": int(asset_data["data"].get("handles", 0)),
                 "step": 1,

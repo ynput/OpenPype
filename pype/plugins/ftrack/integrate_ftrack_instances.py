@@ -13,7 +13,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
     order = pyblish.api.IntegratorOrder + 0.48
     label = 'Integrate Ftrack Component'
-    families = ["render.frames", "still.frames"]
 
     family_mapping = {'camera': 'cam',
                       'look': 'look',
@@ -27,7 +26,12 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'render': 'render'
                       }
 
+    exclude = ["prerender.frames"]
+
     def process(self, instance):
+        for ex in self.exclude:
+            if ex in instance.data['families']:
+                return
 
         self.log.debug('instance {}'.format(instance))
 

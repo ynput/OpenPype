@@ -1,5 +1,7 @@
 import pyblish.api
 import nuke
+import shutil
+import os
 
 
 class NukeRenderLocal(pyblish.api.InstancePlugin):
@@ -17,7 +19,7 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
     families = ["render.local", "prerender.local", "still.local"]
 
     def process(self, instance):
-
+        node = instance[0]
         # This should be a ContextPlugin, but this is a workaround
         # for a bug in pyblish to run once for a family: issue #250
         context = instance.context
@@ -33,6 +35,12 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
         last_frame = instance.data.get("endFrame", None)
         node_subset_name = instance.data.get("name", None)
 
+        # swap path to stageDir
+        temp_dir = instance.data.get("stagingDir")
+        output_dir = instance.data.get("outputDir")
+        path = node['file'].value()
+        node['file'].setValue(path.replace(output_dir, temp_dir))
+
         self.log.info("Starting render")
         self.log.info("Start frame: {}".format(first_frame))
         self.log.info("End frame: {}".format(last_frame))
@@ -43,6 +51,22 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
             int(first_frame),
             int(last_frame)
         )
+
+        # copy data to correct dir
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
+            self.log.info("output dir has been created")
+
+        for f in os.listdir(temp_dir):
+            self.log.info(f)
+            shutil.copy(os.path.join(temp_dir, os.path.basename(f)),
+                        os.path.join(output_dir, os.path.basename(f)))
+
+        # swap path back to publish path
+        path = node['file'].value()
+        node['file'].setValue(path.replace(temp_dir, output_dir))
+
         # swith to prerendered.frames
         instance[0]["render"].setValue(False)
+
         self.log.info('Finished render')
