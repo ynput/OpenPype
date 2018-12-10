@@ -37,16 +37,17 @@ class CollectReviewData(pyblish.api.InstancePlugin):
 
         reviewable_subset = None
         reviewable_subset = list(set(members) & set(objectset))
-        assert len(reviewable_subset) == 1, "Multiple subsets for review"
-        self.log.debug('subset for review: {}'.format(reviewable_subset))
+        if reviewable_subset:
+            assert len(reviewable_subset) <= 1, "Multiple subsets for review"
+            self.log.debug('subset for review: {}'.format(reviewable_subset))
 
-        for inst in context:
-            self.log.debug('instance: {}'.format(instance))
-            if inst.name == reviewable_subset[0]:
-                inst.data['families'].append('review')
-                inst.data['review_camera'] = camera
-                self.log.info('adding review family to {}'.format(reviewable_subset))
-                cmds.setAttr(str(instance) + '.active', 0)
-
-        instance.data['subset'] = task + 'Review'
-        instance.data['review_camera'] = camera
+            for inst in context:
+                self.log.debug('instance: {}'.format(instance))
+                if inst.name == reviewable_subset[0]:
+                    inst.data['families'].append('review')
+                    inst.data['review_camera'] = camera
+                    self.log.info('adding review family to {}'.format(reviewable_subset))
+                    cmds.setAttr(str(instance) + '.active', 0)
+        else:
+            instance.data['subset'] = task + 'Review'
+            instance.data['review_camera'] = camera
