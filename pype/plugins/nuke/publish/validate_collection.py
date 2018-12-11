@@ -23,9 +23,9 @@ class RepairCollectionAction(pyblish.api.Action):
 class ValidateCollection(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
-    order = pyblish.api.ValidatorOrder
-    # optional = True
-    families = ['prerendered.frames']
+    order = pyblish.api.ValidatorOrder + 0.1
+    families = ["render.frames", "still.frames", "prerender.frames"]
+
     label = "Check prerendered frames"
     hosts = ["nuke"]
     actions = [RepairCollectionAction]
@@ -47,11 +47,12 @@ class ValidateCollection(pyblish.api.InstancePlugin):
 
         basename, ext = os.path.splitext(list(collections[0])[0])
         assert all(ext == os.path.splitext(name)[1]
-            for name in collections[0]), self.log.info(
+                   for name in collections[0]), self.log.info(
             "Files had varying suffixes"
         )
 
-        assert not any(os.path.isabs(name) for name in collections[0]), self.log.info("some file name are absolute")
+        assert not any(os.path.isabs(name)
+                       for name in collections[0]), self.log.info("some file name are absolute")
 
         self.log.info('frame_length: {}'.format(frame_length))
         self.log.info('len(list(instance.data["files"])): {}'.format(

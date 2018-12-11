@@ -24,7 +24,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
     label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    families = ["render.frames", "still.frames", "prerender.frames"]
+    families = ["render.frames", "still.frames", "prerender.frames",
+                "render.local", "still.local", "prerender.local"]
 
     def process(self, instance):
 
@@ -97,7 +98,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
         assumed_data = instance.data["assumedTemplateData"]
         assumed_version = assumed_data["version"]
-
         if assumed_version != next_version:
             raise AttributeError("Assumed version 'v{0:03d}' does not match"
                                  "next version in database "
@@ -112,11 +112,9 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                                       locations=[LOCATION],
                                       data=version_data)
 
-        self.log.debug("version: {}".format(version))
         self.log.debug("Creating version ...")
-
         version_id = io.insert_one(version).inserted_id
-        self.log.debug("version_id: {}".format(version_id))
+
         # Write to disk
         #          _
         #         | |
@@ -129,11 +127,10 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         #
         root = api.registered_root()
         hierarchy = io.find_one({"type": 'asset', "name": ASSET})['data']['parents']
-
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
-        self.log.debug("hierarchy: {}".format(hierarchy))
+
         template_data = {"root": root,
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
@@ -199,6 +196,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # |_______|
                 #
                 fname = files
+                self.log.info("fname: {}".format(fname))
                 assert not os.path.isabs(fname), (
                     "Given file name is a full path"
                 )

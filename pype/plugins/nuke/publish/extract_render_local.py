@@ -52,21 +52,8 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
             int(last_frame)
         )
 
-        # copy data to correct dir
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-            self.log.info("output dir has been created")
-
-        for f in os.listdir(temp_dir):
-            self.log.info(f)
-            shutil.copy(os.path.join(temp_dir, os.path.basename(f)),
-                        os.path.join(output_dir, os.path.basename(f)))
-
         # swap path back to publish path
         path = node['file'].value()
         node['file'].setValue(path.replace(temp_dir, output_dir))
-
-        # swith to prerendered.frames
-        instance[0]["render"].setValue(False)
 
         self.log.info('Finished render')

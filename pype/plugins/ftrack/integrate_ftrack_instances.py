@@ -26,7 +26,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'render': 'render'
                       }
 
-    exclude = ["prerender.frames"]
+    exclude = []
 
     def process(self, instance):
         for ex in self.exclude:

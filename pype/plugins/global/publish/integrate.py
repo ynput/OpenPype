@@ -135,7 +135,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
-        hierarchy = io.find_one({"type":'asset', "name":ASSET})['data']['parents']
+        hierarchy = io.find_one({"type": 'asset', "name": ASSET})['data']['parents']
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
@@ -226,17 +226,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                     "root": root,
-                     "project": PROJECT,
-                     "projectcode": project['data']['code'],
-                     'task': api.Session["AVALON_TASK"],
-                     "silo": asset['silo'],
-                     "asset": ASSET,
-                     "family": instance.data['family'],
-                     "subset": subset["name"],
-                     "version": version["name"],
-                     "hierarchy": hierarchy,
-                     "representation": ext[1:]
+                    "root": root,
+                    "project": PROJECT,
+                    "projectcode": project['data']['code'],
+                    'task': api.Session["AVALON_TASK"],
+                    "silo": asset['silo'],
+                    "asset": ASSET,
+                    "family": instance.data['family'],
+                    "subset": subset["name"],
+                    "version": version["name"],
+                    "hierarchy": hierarchy,
+                    "representation": ext[1:]
                 }
             }
 
