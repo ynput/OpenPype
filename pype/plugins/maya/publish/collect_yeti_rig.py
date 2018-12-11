@@ -19,7 +19,7 @@ SETTINGS = {"renderDensity",
 class CollectYetiRig(pyblish.api.InstancePlugin):
     """Collect all information of the Yeti Rig"""
 
-    order = pyblish.api.CollectorOrder + 0.4
+    order = pyblish.api.CollectorOrder + 0.2
     label = "Collect Yeti Rig"
     families = ["yetiRig"]
     hosts = ["maya"]

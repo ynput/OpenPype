@@ -35,7 +35,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "rig",
                 "vrayproxy",
                 "yetiRig",
-                "yeticache"]
+                "yeticache",
+                "review"]
 
     def process(self, instance):
 

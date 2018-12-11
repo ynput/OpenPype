@@ -28,6 +28,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         queries = []
         for key, value in data.iteritems():
             if not isinstance(value, (basestring, int)):
+                self.log.info(value)
                 if "id" in value.keys():
                     queries.append(
                         "{0}.id is \"{1}\"".format(key, value["id"])
@@ -64,7 +65,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Create a new entity if none exits.
             if not assettype_entity:
                 assettype_entity = session.create("AssetType", assettype_data)
-                self.log.info(
+                self.log.debug(
                     "Created new AssetType with data: ".format(assettype_data)
                 )
 
@@ -88,7 +89,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Create a new entity if none exits.
             if not asset_entity:
                 asset_entity = session.create("Asset", asset_data)
-                self.log.info(
+                self.log.debug(
                     info_msg.format(
                         entity_type="Asset",
                         data=asset_data,
@@ -123,7 +124,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 assetversion_entity = session.create(
                     "AssetVersion", assetversion_data
                 )
-                self.log.info(
+                self.log.debug(
                     info_msg.format(
                         entity_type="AssetVersion",
                         data=assetversion_data,
@@ -270,6 +271,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             existing_component_metadata = component_entity["metadata"]
             existing_component_metadata.update(component_metadata)
             component_entity["metadata"] = existing_component_metadata
+
+            # if component_data['name'] = 'ftrackreview-mp4-mp4':
+            #     assetversion_entity["thumbnail_id"]
 
             # Setting assetversion thumbnail
             if data.get("thumbnail", False):
