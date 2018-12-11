@@ -22,6 +22,7 @@ log = pype.Logger.getLogger(__name__, "ftrack")
 
 
 class FtrackRunner:
+
     def __init__(self, main_parent=None, parent=None):
 
         self.parent = parent
@@ -31,7 +32,7 @@ class FtrackRunner:
         self.thread_action_server = None
         self.thread_timer = None
         self.thread_timer_coundown = None
-        self.thread_logout = None
+
         # self.signal_start_timer.connect(self.timerStart)
 
         self.bool_logged = False
@@ -76,25 +77,12 @@ class FtrackRunner:
         self.start_action_server()
 
     def logout(self):
+        credentials._clear_credentials()
+        self.stop_action_server()
+
+        log.info("Logged out of Ftrack")
         self.bool_logged = False
         self.set_menu_visibility()
-        self.aLogin.setEnabled(False)
-        log.debug('Ftrack logout started')
-        if self.thread_logout is not None:
-            self.thread_logout.terminate()
-            self.thread_logout.wait()
-
-        self.thread_logout = LogoutThread(self)
-        self.thread_logout.signal_logged_out.connect(self.logged_out)
-        self.thread_logout.start()
-
-    def logged_out(self):
-        message = 'You were successfully Logged out from Ftrack'
-        self.parent.showMessage('Ftrack logout', message, 0)
-        self.aLogin.setEnabled(True)
-        self.thread_logout.terminate()
-        self.thread_logout.wait()
-        self.thread_logout = None
 
     # Actions part
     def start_action_server(self):
@@ -240,20 +228,6 @@ class FtrackRunner:
     def timer_continue(self):
         if self.thread_timer_coundown is not None:
             self.thread_timer_coundown.signal_continue_timer.emit()
-
-class LogoutThread(QtCore.QThread):
-    # Senders
-    signal_logged_out = QtCore.Signal()
-
-    def __init__(self, parent):
-        super(LogoutThread, self).__init__()
-        self.parent = parent
-
-    def run(self):
-        credentials._clear_credentials()
-        self.parent.stop_action_server()
-        log.info("Logged out of Ftrack")
-        self.signal_logged_out.emit()
 
 class FtrackEventsThread(QtCore.QThread):
     # Senders
@@ -520,11 +494,13 @@ class StopTimer(QtWidgets.QWidget):
         self.close_widget()
 
     def closeEvent(self, event):
+        event.ignore()
         if self.main_context is True:
             self.continue_timer()
-
-        self.main_context = True
-        self.refresh_context()
+        else:
+            self.close_widget()
 
     def close_widget(self):
-        self.close()
+        self.main_context = True
+        self.refresh_context()
+        self.hide()

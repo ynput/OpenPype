@@ -301,5 +301,9 @@ class Login_Dialog_ui(QtWidgets.QWidget):
                 self.parent.loginChange()
             self._close_widget()
 
+    def closeEvent(self, event):
+        event.ignore()
+        self._close_widget()
+
     def _close_widget(self):
-        self.close()
+        self.hide()
