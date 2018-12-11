@@ -48,6 +48,7 @@ class CollectReviewData(pyblish.api.InstancePlugin):
                     inst.data['review_camera'] = camera
                     self.log.info('adding review family to {}'.format(reviewable_subset))
                     cmds.setAttr(str(instance) + '.active', 0)
+                    inst.data['publish'] = 0
         else:
             instance.data['subset'] = task + 'Review'
             instance.data['review_camera'] = camera
