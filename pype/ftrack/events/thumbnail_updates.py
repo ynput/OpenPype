@@ -1,0 +1,48 @@
+import ftrack_api
+from ftrack_event_handler import BaseEvent
+
+
+class ThumbnailEvents(BaseEvent):
+
+    def launch(self, session, entities, event):
+        '''just a testing event'''
+
+        # self.log.info(event)
+        # start of event procedure ----------------------------------
+        for entity in event['data'].get('entities', []):
+
+            # update created task thumbnail with first parent thumbnail
+            if entity['entityType'] == 'task' and entity['action'] == 'add':
+
+                task = session.get('TypedContext', entity['entityId'])
+                parent = task['parent']
+
+                if parent.get('thumbnail') and not task.get('thumbnail'):
+                    task['thumbnail'] = parent['thumbnail']
+                    self.log.info('>>> Updated thumbnail on [ %s/%s ]'.format(
+                        parent['name'], task['name']))
+
+            # Update task thumbnail from published version
+            if (entity['entityType'] == 'assetversion' and
+                    entity['action'] == 'encoded'):
+
+                version = session.get('AssetVersion', entity['entityId'])
+                thumbnail = version.get('thumbnail')
+                task = version['task']
+
+                if thumbnail:
+                    task['thumbnail'] = thumbnail
+                    task['parent']['thumbnail'] = thumbnail
+                    self.log.info('>>> Updating thumbnail for task and shot\
+                        [ {} ]'.format(task['name']))
+
+            session.commit()
+
+
+def register(session, **kw):
+    '''Register plugin. Called when used as an plugin.'''
+    if not isinstance(session, ftrack_api.session.Session):
+        return
+
+    event = ThumbnailEvents(session)
+    event.register()
