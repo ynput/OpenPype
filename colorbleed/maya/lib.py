@@ -2118,15 +2118,27 @@ def get_attr_in_layer(attr, layer):
                                        type="renderLayer") or []
 
     connections = filter(lambda x: x.endswith(".plug"), connections)
-    if not connections:
+    if not connections or layer == cmds.editRenderLayerGlobals(query=True,
+                                                               currentRenderLayer=True):
         return cmds.getAttr(attr)
-
+        
+    # Some value types perform a conversion when assigning
+    # TODO: See if there's a maya method to allow this conversion
+    # instead of computing it ourselves.
+    attr_type = cmds.getAttr(attr, type=True)
+    conversion = None
+    if attr_type == "time":
+        conversion = mel.eval('currentTimeUnitToFPS()')  # returns float
+        
     for connection in connections:
-        if connection.startswith(layer):
+        if connection.startswith(layer + "."):
             attr_split = connection.split(".")
             if attr_split[0] == layer:
                 attr = ".".join(attr_split[0:-1])
-                return cmds.getAttr("%s.value" % attr)
+                value = cmds.getAttr("%s.value" % attr)
+                if conversion:
+                    value *= conversion
+                return value
 
     else:
         # When connections are present, but none
@@ -2138,6 +2150,9 @@ def get_attr_in_layer(attr, layer):
                 attr_split = connection.split(".")
                 if attr_split[0] == "defaultRenderLayer":
                     attr = ".".join(attr_split[0:-1])
-                    return cmds.getAttr("%s.value" % attr)
+                    value = cmds.getAttr("%s.value" % attr)
+                    if conversion:
+                        value *= conversion * conversion
+                    return value
 
     return cmds.getAttr(attr)
