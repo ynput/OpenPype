@@ -2152,7 +2152,7 @@ def get_attr_in_layer(attr, layer):
                     attr = ".".join(attr_split[0:-1])
                     value = cmds.getAttr("%s.value" % attr)
                     if conversion:
-                        value *= conversion * conversion
+                        value *= conversion
                     return value
 
     return cmds.getAttr(attr)
