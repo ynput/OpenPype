@@ -12,29 +12,14 @@ class CollectInstances(pyblish.api.ContextPlugin):
     Identifier:
         id (str): "pyblish.avalon.instance"
 
-    Supported Families:
-        avalon.model: Geometric representation of artwork
-        avalon.rig: An articulated model for animators.
-            A rig may contain a series of sets in which to identify
-            its contents.
-
-            - cache_SEL: Should contain cachable polygonal meshes
-            - controls_SEL: Should contain animatable controllers for animators
-            - resources_SEL: Should contain nodes that reference external files
-
-            Limitations:
-                - Only Maya is supported
-                - One (1) rig per scene file
-                - Unmanaged history, it is up to the TD to ensure
-                    history is up to par.
-        avalon.animation: Pointcache of `avalon.rig`
-
     Limitations:
         - Does not take into account nodes connected to those
             within an objectSet. Extractors are assumed to export
             with history preserved, but this limits what they will
             be able to achieve and the amount of data available
-            to validators.
+            to validators. An additional collector could also
+            append this input data into the instance, as we do
+            for `colorbleed.rig` with collect_history.
 
     """
 
