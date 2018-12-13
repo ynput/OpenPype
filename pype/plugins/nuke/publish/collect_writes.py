@@ -22,11 +22,12 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             if not instance.data["publish"]:
                 continue
 
-            self.log.debug("checking instance: {}".format(instance))
             node = instance[0]
 
             if node.Class() != "Write":
                 continue
+
+            self.log.debug("checking instance: {}".format(instance))
 
             # Determine defined file type
             ext = node["file_type"].value()
