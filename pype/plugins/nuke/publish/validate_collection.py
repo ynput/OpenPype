@@ -32,6 +32,9 @@ class ValidateCollection(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.log.debug('instance.data["files"]: {}'.format(instance.data['files']))
+        if not instance.data["files"]:
+            return
+
         collections, remainder = clique.assemble(*instance.data['files'])
         self.log.info('collections: {}'.format(str(collections)))
 

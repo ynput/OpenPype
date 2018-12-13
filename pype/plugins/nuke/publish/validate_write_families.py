@@ -1,19 +1,21 @@
-import os
+
 import pyblish.api
-import clique
+import pype.api
+import pype.nuke.actions
 
 
-@pyblish.api.log
 class RepairWriteFamiliesAction(pyblish.api.Action):
     label = "Fix Write's render attributes"
     on = "failed"
     icon = "wrench"
 
-    def process(self, context, plugin):
-        context[0][0]["render"].setValue(True)
+    def process(self, instance, plugin):
+        self.log.info("instance {}".format(instance))
+        instance["render"].setValue(True)
         self.log.info("Rendering toggled ON")
 
 
+@pyblish.api.log
 class ValidateWriteFamilies(pyblish.api.InstancePlugin):
     """ Validates write families. """
 
@@ -21,18 +23,29 @@ class ValidateWriteFamilies(pyblish.api.InstancePlugin):
     label = "Check correct writes families"
     hosts = ["nuke"]
     families = ["write"]
-    actions = [RepairWriteFamiliesAction]
+    actions = [pype.nuke.actions.SelectInvalidAction, pype.api.RepairAction]
 
-    def process(self, instance):
-        self.log.debug('instance.data["files"]: {}'.format(instance.data['files']))
-
+    @staticmethod
+    def get_invalid(instance):
         if not [f for f in instance.data["families"]
                 if ".frames" in f]:
             return
 
-        assert instance.data["files"], self.log.info(
-            "`{}`: Swith `Render` on! \n"
-            "No available frames to add to database. \n"
-            "Use repair to render all frames".format(__name__))
+        if not instance.data["files"]:
+            return (instance)
+
+    def process(self, instance):
+        self.log.debug('instance.data["files"]: {}'.format(instance.data['files']))
+        invalid = self.get_invalid(instance)
+
+        if invalid:
+            raise ValueError(str("`{}`: Switch `Render` on! "
+                                 "> {}".format(__name__, invalid)))
 
         self.log.info("Checked correct writes families")
+
+    @classmethod
+    def repair(cls, instance):
+        cls.log.info("instance {}".format(instance))
+        instance[0]["render"].setValue(True)
+        cls.log.info("Rendering toggled ON")

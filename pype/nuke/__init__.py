@@ -87,6 +87,7 @@ def reload_config():
         "app.api",
         "{}.api".format(AVALON_CONFIG),
         "{}.templates".format(AVALON_CONFIG),
+        "{}.nuke.actions".format(AVALON_CONFIG),
         "{}.nuke.templates".format(AVALON_CONFIG),
         "{}.nuke.menu".format(AVALON_CONFIG)
     ):

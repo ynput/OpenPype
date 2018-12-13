@@ -1,5 +1,4 @@
 import sys
-import os
 from collections import OrderedDict
 from pprint import pprint
 from avalon.vendor.Qt import QtGui
