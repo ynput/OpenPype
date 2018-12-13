@@ -7,6 +7,34 @@ import colorbleed.api
 from colorbleed.maya.lib import extract_alembic
 
 
+def iter_parents(node):
+    n = node.count("|")
+    for i in range(1, n):
+        yield node.rsplit("|", i)[0]
+
+
+def get_highest_in_hierarchy(nodes):
+    """Return the highest in the hierachies from nodes
+
+    This will return each highest node in separate hierarchies.
+    E.g.
+        get_highest_in_hierarchy(["|A|B|C", "A|B", "D|E"])
+        # ["A|B", "D|E"]
+
+    """
+    # Ensure we use long names
+    nodes = cmds.ls(nodes, long=True)
+    lookup = set(nodes)
+    highest = []
+    for node in nodes:
+        # If no parents are within the original list
+        # then this is a highest node
+        if not any(n in lookup for n in iter_parents(node)):
+            highest.append(node)
+
+    return highest
+
+
 class ExtractColorbleedAlembic(colorbleed.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
@@ -59,6 +87,12 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
             "uvWrite": True,
             "selection": True
         }
+
+        if not instance.data.get("includeParentHierarchy", True):
+            # Set the root nodes if we don't want to include parents
+            # The roots are to be considered the ones that are the actual
+            # direct members of the set
+            options["root"] = instance.data.get("setMembers")
 
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.

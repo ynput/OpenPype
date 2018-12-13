@@ -27,12 +27,12 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
             raise RuntimeError("Couldn't find exactly one out_SET: "
                                "{0}".format(out_sets))
         out_set = out_sets[0]
-        nodes = cmds.sets(out_set, query=True)
+        roots = cmds.sets(out_set, query=True)
 
         # Include all descendants
-        nodes += cmds.listRelatives(nodes,
-                                    allDescendents=True,
-                                    fullPath=True) or []
+        nodes = roots + cmds.listRelatives(roots,
+                                           allDescendents=True,
+                                           fullPath=True) or []
 
         # Collect the start and end including handles
         start = instance.data["startFrame"]
@@ -57,6 +57,12 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
             "uvWrite": True,
             "selection": True
         }
+
+        if not instance.data.get("includeParentHierarchy", True):
+            # Set the root nodes if we don't want to include parents
+            # The roots are to be considered the ones that are the actual
+            # direct members of the set
+            options["root"] = roots
 
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.

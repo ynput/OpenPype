@@ -99,7 +99,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                                           fullPath=True) or []
             children = cmds.ls(children, noIntermediate=True, long=True)
 
-            parents = self.get_all_parents(members)
+            parents = []
+            if data.get("includeParentHierarchy", True):
+                # If `includeParentHierarchy` then include the parents
+                # so they will also be picked up in the instance by validators
+                parents = self.get_all_parents(members)
             members_hierarchy = list(set(members + children + parents))
 
             # Create the instance
