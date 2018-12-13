@@ -2095,6 +2095,12 @@ def get_attr_in_layer(attr, layer):
     Same as cmds.getAttr but this gets the attribute's value in a
     given render layer without having to switch to it.
 
+    Warning for parent attribute overrides:
+        Attributes that have render layer overrides to their parent attribute
+        are not captured correctly since they do not have a direct connection.
+        For example, an override to sphere.rotate when querying sphere.rotateX
+        will not return correctly!
+
     Note: This is much faster for Maya's renderLayer system, yet the code
         does no optimized query for render setup.
 
@@ -2106,22 +2112,27 @@ def get_attr_in_layer(attr, layer):
         The return value from `maya.cmds.getAttr`
 
     """
+
     if cmds.mayaHasRenderSetup():
         log.debug("lib.get_attr_in_layer is not optimized for render setup")
         with renderlayer(layer):
             return cmds.getAttr(attr)
+
+    # Ignore complex query if we're in the layer anyway
+    current_layer = cmds.editRenderLayerGlobals(query=True,
+                                                currentRenderLayer=True)
+    if layer == current_layer:
+        return cmds.getAttr(attr)
 
     connections = cmds.listConnections(attr,
                                        plugs=True,
                                        source=False,
                                        destination=True,
                                        type="renderLayer") or []
-
     connections = filter(lambda x: x.endswith(".plug"), connections)
-    if not connections or layer == cmds.editRenderLayerGlobals(query=True,
-                                                               currentRenderLayer=True):
+    if not connections:
         return cmds.getAttr(attr)
-        
+
     # Some value types perform a conversion when assigning
     # TODO: See if there's a maya method to allow this conversion
     # instead of computing it ourselves.
@@ -2129,7 +2140,14 @@ def get_attr_in_layer(attr, layer):
     conversion = None
     if attr_type == "time":
         conversion = mel.eval('currentTimeUnitToFPS()')  # returns float
-        
+    elif attr_type == "doubleAngle":
+        # Radians to Degrees: 180 / pi
+        # TODO: This will likely only be correct when Maya units are set
+        #       to degrees
+        conversion = 57.2957795131
+    elif attr_type == "doubleLinear":
+        raise NotImplementedError("doubleLinear conversion not implemented.")
+
     for connection in connections:
         if connection.startswith(layer + "."):
             attr_split = connection.split(".")
