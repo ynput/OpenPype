@@ -27,8 +27,17 @@ class TestAction(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
+        discover = False
+        roleList = ['Pypeclub']
+        userId = event['source']['user']['id']
+        user = session.query('User where id is ' + userId).one()
 
-        return True
+        for role in user['user_security_roles']:
+            if role['security_role']['name'] in roleList:
+                discover = True
+                break
+
+        return discover
 
 
     def launch(self, session, entities, event):
@@ -70,7 +79,7 @@ def register(session, **kw):
         return
 
     action_handler = TestAction(session)
-    action_handler.register()
+    action_handler.register(10000)
 
 
 def main(arguments=None):
