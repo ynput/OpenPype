@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import avalon.maya
 
 
@@ -14,8 +12,12 @@ class CreateModel(avalon.maya.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateModel, self).__init__(*args, **kwargs)
 
-        data = {"writeColorSets": False,  # Vertex colors with the geometry.
-                "attr": "",  # Add options for custom attributes
-                "attrPrefix": ""}
+        # Vertex colors with the geometry
+        self.data["writeColorSets"] = False
 
-        self.data.update(data)
+        # Include attributes by attribute name or prefix
+        self.data["attr"] = ""
+        self.data["attrPrefix"] = ""
+
+        # Whether to include parent hierarchy of nodes in the instance
+        self.data["includeParentHierarchy"] = False

@@ -60,6 +60,12 @@ class ExtractColorbleedAlembic(colorbleed.api.Extractor):
             "selection": True
         }
 
+        if not instance.data.get("includeParentHierarchy", True):
+            # Set the root nodes if we don't want to include parents
+            # The roots are to be considered the ones that are the actual
+            # direct members of the set
+            options["root"] = instance.data.get("setMembers")
+
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.
             options["writeUVSets"] = True

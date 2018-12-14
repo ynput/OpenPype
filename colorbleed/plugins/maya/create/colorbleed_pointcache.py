@@ -19,6 +19,7 @@ class CreatePointCache(avalon.maya.Creator):
         self.data["writeColorSets"] = False  # Vertex colors with the geometry.
         self.data["renderableOnly"] = False  # Only renderable visible shapes
         self.data["visibleOnly"] = False     # only nodes that are visible
+        self.data["includeParentHierarchy"] = False  # Include parent groups
 
         # Add options for custom attributes
         self.data["attr"] = ""
