@@ -5,6 +5,7 @@ import sys
 import argparse
 import json
 import ftrack_api
+import arrow
 from ftrack_action_handler import BaseAction
 
 """
@@ -97,8 +98,10 @@ EXAMPLE:
 }
 """
 
+
 class CustAttrException(Exception):
     pass
+
 
 class CustomAttributes(BaseAction):
     '''Edit meta data action.'''
@@ -114,9 +117,8 @@ class CustomAttributes(BaseAction):
         super().__init__(session)
 
         templates = os.environ['PYPE_STUDIO_TEMPLATES']
-        path_items = [templates,'presets','ftrack', 'ftrack_custom_attributes.json']
+        path_items = [templates, 'presets', 'ftrack', 'ftrack_custom_attributes.json']
         self.filepath = os.path.sep.join(path_items)
-        # self.all_current_attributes = session.query('CustomAttributeConfiguration').all()
         self.types = {}
         self.object_type_ids = {}
         self.groups = {}
@@ -138,7 +140,6 @@ class CustomAttributes(BaseAction):
                 success = True
 
         return success
-
 
     def launch(self, session, entities, event):
         # JOB SETTINGS
@@ -190,7 +191,7 @@ class CustomAttributes(BaseAction):
         for obj_type in all_obj_types:
             name = obj_type['name']
             if " " in name:
-                name = name.replace(" ","")
+                name = name.replace(" ", "")
 
             if obj_type['name'] not in self.object_type_ids:
                 self.object_type_ids[name] = obj_type['id']
@@ -199,7 +200,7 @@ class CustomAttributes(BaseAction):
                 filtered_types_id.add(obj_type['id'])
 
         # Set security roles for attribute
-        role_list = ["API","Administrator"]
+        role_list = ["API", "Administrator"]
         roles = self.get_security_role(role_list)
         # Set Text type of Attribute
         custom_attribute_type = self.get_type('text')
@@ -231,7 +232,7 @@ class CustomAttributes(BaseAction):
                 json_dict = json.load(data_file)
         except Exception as e:
             msg = 'Loading "Custom attribute file" Failed. Please check log for more information'
-            self.log.warning("{} - {}".format(msg,str(e)))
+            self.log.warning("{} - {}".format(msg, str(e)))
             self.show_message(event, msg)
             return
 
@@ -288,7 +289,6 @@ class CustomAttributes(BaseAction):
         else:
             raise CustAttrException("Is duplicated")
 
-
     def get_required(self, attr):
         output = {}
         for key in self.required_keys:
@@ -323,7 +323,7 @@ class CustomAttributes(BaseAction):
         else:
             isdecimal = False
 
-        config = json.dumps({'isdecimal':isdecimal})
+        config = json.dumps({'isdecimal': isdecimal})
 
         return config
 
@@ -332,11 +332,11 @@ class CustomAttributes(BaseAction):
             markdown = attr['config']['markdown']
         else:
             markdown = False
-        config = json.dumps({'markdown':markdown})
+        config = json.dumps({'markdown': markdown})
 
         return config
 
-    def get_enumerator_config(self,attr):
+    def get_enumerator_config(self, attr):
         if 'config' not in attr:
             raise CustAttrException("Missing config with data")
         if 'data' not in attr['config']:
@@ -351,13 +351,17 @@ class CustomAttributes(BaseAction):
                 item_data['value'] = key
                 data.append(item_data)
 
-        if 'multiSelect' in attr['config']:
-            multiSelect = attr['config']['multiSelect']
-        else:
-            multiSelect = False
+        multiSelect = False
+        for k in attr['config']:
+            if k.lower() == 'multiselect':
+                if isinstance(attr['config'][k], bool):
+                    multiSelect = attr['config'][k]
+                else:
+                    raise CustAttrException("Multiselect must be boolean")
+                break
 
         config = json.dumps({
-            'multiSelect':multiSelect,
+            'multiSelect': multiSelect,
             'data': json.dumps(data)
             })
 
@@ -508,7 +512,7 @@ class CustomAttributes(BaseAction):
             raise CustAttrException('Missing entity_type')
 
         if attr['entity_type'].lower() != 'task':
-            return {'entity_type':attr['entity_type']}
+            return {'entity_type': attr['entity_type']}
 
         if 'object_type' not in attr:
             raise CustAttrException('Missing object_type')
@@ -529,6 +533,7 @@ class CustomAttributes(BaseAction):
             'object_type_id': object_type_id
         }
 
+
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''
 
@@ -544,6 +549,8 @@ def register(session, **kw):
 
 def main(arguments=None):
     '''Set up logging and register action.'''
+    import logging
+
     if arguments is None:
         arguments = []
 
