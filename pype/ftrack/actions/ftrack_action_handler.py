@@ -255,17 +255,6 @@ class AppAction(object):
             self.log.error("{0} Error in anatomy.format: {1}".format(__name__, e))
         os.environ["AVALON_WORKDIR"] = os.path.join(anatomy.work.root, anatomy.work.folder)
 
-        # # TODO Add paths to avalon setup from tomls
-        # if self.identifier == 'maya':
-        #     os.environ['PYTHONPATH'] += os.pathsep + \
-        #         os.path.join(os.getenv("AVALON_CORE"), 'setup', 'maya')
-        # elif self.identifier == 'nuke':
-        #     os.environ['NUKE_PATH'] = os.pathsep + \
-        #         os.path.join(os.getenv("AVALON_CORE"), 'setup', 'nuke')
-        # config = toml.load(lib.which_app(self.identifier + "_" + self.variant))
-
-        env = os.environ
-
         # collect all parents from the task
         parents = []
         for item in entity['link']:
