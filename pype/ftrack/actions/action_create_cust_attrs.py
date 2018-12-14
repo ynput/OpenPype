@@ -497,7 +497,12 @@ class CustomAttributes(BaseAction):
     def get_entity_type(self, attr):
         if 'is_hierarchical' in attr:
             if attr['is_hierarchical'] is True:
-                return {'is_hierarchical':True}
+                type = attr['entity_type'] if ('entity_type' in attr) else 'show'
+
+                return {
+                    'is_hierarchical': True,
+                    'entity_type': type
+                }
 
         if 'entity_type' not in attr:
             raise CustAttrException('Missing entity_type')
