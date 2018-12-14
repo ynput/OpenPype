@@ -45,8 +45,10 @@ def get_look_attrs(node):
     if cmds.objectType(node, isAType="shape"):
         attrs = cmds.listAttr(node, changedSinceFileOpen=True) or []
         for attr in attrs:
-            if attr in SHAPE_ATTRS:
-                result.append(attr)
+            result.append(attr)
+            # if attr in SHAPE_ATTRS:
+            #     result.append(attr)
+
 
     return result
 
@@ -361,6 +363,8 @@ class CollectLook(pyblish.api.InstancePlugin):
 
             # Collect changes to "custom" attributes
             node_attrs = get_look_attrs(node)
+
+            self.log.info('attr: {}'.format(node_attrs))
 
             # Only include if there are any properties we care about
             if not node_attrs:
