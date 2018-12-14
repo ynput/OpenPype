@@ -449,7 +449,7 @@ class CustomAttributes(BaseAction):
             if not isinstance(default, bool):
                 raise CustAttrException('{} boolean'.format(err_msg))
         elif type == 'enumerator':
-            if not isinstance(default, array):
+            if not isinstance(default, list):
                 raise CustAttrException('{} array with strings'.format(err_msg))
             # TODO check if multiSelect is available and if default is one of data menu
             if not isinstance(default[0], str):
