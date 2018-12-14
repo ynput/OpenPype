@@ -372,26 +372,6 @@ def evaluation(mode="off"):
 
 
 @contextlib.contextmanager
-def no_refresh():
-    """Temporarily disables Maya's UI updates
-
-    Note:
-        This only disabled the main pane and will sometimes still
-        trigger updates in torn off panels.
-
-    """
-
-    pane = _get_mel_global('gMainPane')
-    state = cmds.paneLayout(pane, query=True, manage=True)
-    cmds.paneLayout(pane, edit=True, manage=False)
-
-    try:
-        yield
-    finally:
-        cmds.paneLayout(pane, edit=True, manage=state)
-
-
-@contextlib.contextmanager
 def empty_sets(sets, force=False):
     """Remove all members of the sets during the context"""
 
