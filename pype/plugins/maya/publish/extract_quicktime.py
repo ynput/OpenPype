@@ -44,8 +44,8 @@ class ExtractQuicktime(pype.api.Extractor):
     def process(self, instance):
         self.log.info("Extracting capture..")
 
-        start = instance.data["startFrame"]
-        end = instance.data["endFrame"]
+        start = instance.data.get("startFrame", 1)
+        end = instance.data.get("endFrame", 25)
         self.log.info("start: {}, end: {}".format(start, end))
         handles = instance.data.get("handles", 0)
         if handles:

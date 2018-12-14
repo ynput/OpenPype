@@ -15,9 +15,12 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
         self.create_destination_template(instance)
 
         template_data = instance.data["assumedTemplateData"]
-        template = instance.data["template"]
+        # template = instance.data["template"]
 
-        mock_template = template.format(**template_data)
+        anatomy = instance.context.data['anatomy']
+        # template = anatomy.publish.path
+        anatomy_filled = anatomy.format(template_data)
+        mock_template = anatomy_filled.publish.path
 
         # For now assume resources end up in a "resources" folder in the
         # published folder
@@ -77,6 +80,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
                               projection={"config": True, "data": True})
 
         template = project["config"]["template"]["publish"]
+        # anatomy = instance.context.data['anatomy']
 
         asset = io.find_one({"type": "asset",
                              "name": asset_name,
@@ -108,13 +112,13 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
             hierarchy = os.path.join(*hierarchy)
 
         template_data = {"root": api.Session["AVALON_PROJECTS"],
-                         "project": project_name,
-                         "projectcode": project['data']['code'],
+                         "project": {"name": project_name,
+                                     "code": project['data']['code']},
                          "silo": silo,
                          "family": instance.data['family'],
                          "asset": asset_name,
                          "subset": subset_name,
-                         "version": version_number,
+                         "VERSION": version_number,
                          "hierarchy": hierarchy,
                          "representation": "TEMP"}
 

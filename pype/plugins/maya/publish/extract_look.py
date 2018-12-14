@@ -47,6 +47,10 @@ class ExtractLook(pype.api.Extractor):
 
         resources = instance.data["resources"]
 
+        frame = cmds.currentTime(query=True)
+        instance.data['startFrame'] = frame
+        instance.data['endFrame'] = frame
+
         remap = OrderedDict()  # needs to be ordered, see color space values
         for resource in resources:
             attr = resource['attribute']
