@@ -24,13 +24,13 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder + 0.01
-    families = ["look']
+    families = ["look"]
     hosts = ['maya']
     label = 'Look No Default Shaders'
     actions = [pype.maya.action.SelectInvalidAction]
 
     DEFAULT_SHADERS = {"lambert1", "initialShadingGroup",
-                      "initialParticleSE", "particleCloud1"}
+                       "initialParticleSE", "particleCloud1"}
 
     def process(self, instance):
         """Process all the nodes in the instance"""
