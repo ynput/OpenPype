@@ -20,13 +20,10 @@ class ExtractVDBCache(colorbleed.api.Extractor):
         sop_output = ropnode.evalParm("sopoutput")
         staging_dir = os.path.normpath(os.path.dirname(sop_output))
         instance.data["stagingDir"] = staging_dir
+        file_name = os.path.basename(sop_output)
 
-        if instance.data.get("executeBackground", True):
-            self.log.info("Creating background task..")
-            ropnode.parm("executebackground").pressButton()
-            self.log.info("Finished")
-        else:
-            ropnode.render()
+        self.log.info("Writing VDB '%s' to '%s'" % (file_name, staging_dir))
+        ropnode.render()
 
         if "files" not in instance.data:
             instance.data["files"] = []

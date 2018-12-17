@@ -15,10 +15,8 @@ class CreateVDBCache(houdini.Creator):
         # Remove the active, we are checking the bypass flag of the nodes
         self.data.pop("active", None)
 
-        self.data.update({
-            "node_type": "geometry",  # Set node type to create for output
-            "executeBackground": True  # Render node in background
-        })
+        # Set node type to create for output
+        self.data["node_type"] = "geometry"
 
     def process(self):
         instance = super(CreateVDBCache, self).process()
