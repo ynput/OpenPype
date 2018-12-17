@@ -46,3 +46,4 @@ class CollectMayaCurrentFile(pyblish.api.ContextPlugin):
         self.log.info('Collected instance: {}'.format(file))
         self.log.info('Scene path: {}'.format(current_file))
         self.log.info('stagin Dir: {}'.format(folder))
+        self.log.info('subset: {}'.format(filename))

@@ -229,6 +229,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             # running Linux and the submitter is on Windows.
             "PYTHONPATH",
 
+            "MTOA_EXTENSIONS_PATH",
+            "MTOA_EXTENSIONS",
+            "DYLD_LIBRARY_PATH",
+            "MAYA_RENDER_DESC_PATH",
+            "MAYA_MODULE_PATH",
+            "ARNOLD_PLUGIN_PATH",
+
             # todo: This is a temporary fix for yeti variables
             "PEREGRINEL_LICENSE",
             "REDSHIFT_MAYAEXTENSIONSPATH",
