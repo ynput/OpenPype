@@ -88,7 +88,6 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     targets = ["filesequence"]
     label = "File Sequences"
-    hosts = ['maya']
 
     def process(self, context):
 
