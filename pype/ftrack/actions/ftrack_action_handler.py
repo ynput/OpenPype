@@ -54,12 +54,12 @@ class AppAction(object):
         '''Return current session.'''
         return self._session
 
-    def register(self):
+    def register(self, priority = 100):
         '''Registers the action, subscribing the discover and launch topics.'''
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover and source.user.username={0}'.format(
                 self.session.api_user
-            ), self._discover
+            ), self._discover,priority=priority
         )
 
         self.session.event_hub.subscribe(
@@ -467,12 +467,15 @@ class BaseAction(object):
     def reset_session(self):
         self.session.reset()
 
-    def register(self):
-        '''Registers the action, subscribing the the discover and launch topics.'''
+    def register(self, priority = 100):
+        '''
+        Registers the action, subscribing the the discover and launch topics.
+        - highest priority event will show last
+        '''
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover and source.user.username={0}'.format(
                 self.session.api_user
-            ), self._discover
+            ), self._discover, priority=priority
         )
 
         self.session.event_hub.subscribe(
@@ -631,6 +634,37 @@ class BaseAction(object):
         *event* the unmodified original event
         '''
         return None
+
+    def show_message(self, event, input_message, result = False):
+        """
+        Shows message to user who triggered event
+        - event - just source of user id
+        - input_message - message that is shown to user
+        - result - changes color of message (based on ftrack settings)
+            - True = Violet
+            - False = Red
+        """
+        if not isinstance(result, bool):
+            result = False
+
+        try:
+            message = str(input_message)
+        except:
+            return
+
+        user_id = event['source']['user']['id']
+        self.session.event_hub.publish(
+            ftrack_api.event.base.Event(
+                topic='ftrack.action.trigger-user-interface',
+                data=dict(
+                    type='message',
+                    success=result,
+                    message=message
+                ),
+                target='applicationId=ftrack.client.web and user.id="{0}"'.format(user_id)
+            ),
+            on_error='ignore'
+        )
 
     def _handle_result(self, session, result, entities, event):
         '''Validate the returned result from the action callback'''
