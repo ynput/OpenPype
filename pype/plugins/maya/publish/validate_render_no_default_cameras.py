@@ -11,7 +11,7 @@ class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["renderlayer']
+    families = ["renderlayer"]
     label = "No Default Cameras Renderable"
     actions = [pype.maya.action.SelectInvalidAction]
 

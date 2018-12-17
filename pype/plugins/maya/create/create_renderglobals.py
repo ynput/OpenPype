@@ -4,7 +4,7 @@ from maya import cmds
 
 from avalon.vendor import requests
 import avalon.maya
-from avalon import api
+import os
 
 
 class CreateRenderGlobals(avalon.maya.Creator):
