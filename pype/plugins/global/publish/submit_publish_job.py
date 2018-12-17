@@ -120,7 +120,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     """
 
     label = "Submit image sequence jobs to Deadline"
-    order = pyblish.api.IntegratorOrder + 0.1
+    order = pyblish.api.IntegratorOrder + 0.2
 
     hosts = ["fusion", "maya", "nuke"]
 

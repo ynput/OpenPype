@@ -97,11 +97,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     """
 
     label = "Submit to Deadline"
-    order = pyblish.api.IntegratorOrder
+    order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
     families = ["renderlayer"]
 
     def process(self, instance):
+
+        self.log.debug('Starting deadline submitter')
 
         try:
             deadline_url = os.environ["DEADLINE_REST_URL"]
@@ -110,11 +112,29 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         # AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
         #                                  "http://localhost:8082")
-        # assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        # assert AVALON_DEADLINE, "Requires AVALON_DEADLINE
 
         context = instance.context
+
+        filepath = None
+
+        allInstances = []
+        for result in context.data["results"]:
+            if (result["instance"] is not None and
+               result["instance"] not in allInstances):
+                allInstances.append(result["instance"])
+
+        for inst in allInstances:
+            print(inst)
+            if inst.data['family'] == 'scene':
+                filepath = inst.data['destination_list'][0]
+
+        if not filepath:
+            filepath = context.data["currentFile"]
+
+        self.log.debug(filepath)
+
         workspace = context.data["workspaceDir"]
-        filepath = context.data["currentFile"]
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
         scene = os.path.splitext(filename)[0]
@@ -224,6 +244,17 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         PATHS = os.environ["PATH"].split(";")
         environment["PATH"] = ";".join([p for p in PATHS
                                         if p.startswith("P:")])
+
+        clean_pythonpath = ''
+        for path in environment['PYTHONPATH'].split(os.pathsep):
+            # self.log.debug('checking path for UTF: {}'.format(path))
+            try:
+                path.decode('UTF-8', 'strict')
+                clean_pythonpath += os.pathsep + path
+            except UnicodeDecodeError:
+                self.log.debug('path contains non UTF characters')
+
+        environment['PYTHONPATH'] = clean_pythonpath
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
