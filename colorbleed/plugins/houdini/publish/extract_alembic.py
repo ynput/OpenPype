@@ -23,7 +23,8 @@ class ExtractAlembic(colorbleed.api.Extractor):
         file_name = os.path.basename(output)
 
         # We run the render
-        self.log.info("Writing alembic '%s' to '%s'" % (file_name, staging_dir))
+        self.log.info("Writing alembic '%s' to '%s'" % (file_name,
+                                                        staging_dir))
         ropnode.render()
 
         if "files" not in instance.data:
