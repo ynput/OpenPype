@@ -108,7 +108,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.info("Verifying version from assumed destination")
 
         assumed_data = instance.data["assumedTemplateData"]
-        assumed_version = assumed_data["version"]
+        assumed_version = assumed_data["VERSION"]
         if assumed_version != next_version:
             raise AttributeError("Assumed version 'v{0:03d}' does not match"
                                  "next version in database "
@@ -171,6 +171,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # |       ||
             # |_______|
             #
+
             if isinstance(files, list):
                 collection = files
                 # Assert that each member has identical suffix
@@ -229,8 +230,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # for performance reasons.
                 "context": {
                     "root": root,
-                    "project": PROJECT,
-                    "projectcode": project['data']['code'],
+                    "project": {"name": PROJECT,
+                                "code": project['data']['code']},
                     'task': api.Session["AVALON_TASK"],
                     "silo": asset['silo'],
                     "asset": ASSET,
