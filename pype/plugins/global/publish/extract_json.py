@@ -4,7 +4,7 @@ import datetime
 import time
 
 import pyblish.api
-from config.vendor import clique
+from pype.vendor import clique
 
 
 class ExtractJSON(pyblish.api.ContextPlugin):
@@ -12,6 +12,7 @@ class ExtractJSON(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder
     label = "JSON"
+    hosts = ['nuke', 'maya']
 
     def process(self, context):
 
