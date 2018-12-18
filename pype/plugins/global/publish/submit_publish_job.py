@@ -148,6 +148,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
                                "submission prior to this plug-in.")
 
         data = instance.data.copy()
+        asset = data.get("asset") or api.Session["AVALON_ASSET"]
         subset = data["subset"]
         state = data.get("publishJobState", "Suspended")
         job_name = "{batch} - {subset} [publish image sequence]".format(
@@ -172,13 +173,24 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         regex = "^{subset}.*\d+{ext}$".format(subset=re.escape(subset),
                                               ext=ext)
 
+        try:
+            source = data['source']
+        except KeyError:
+            source = context.data["currentFile"]
+
+        relative_path = os.path.relpath(source, api.registered_root())
+        source = os.path.join("{root}", relative_path).replace("\\", "/")
+
         # Write metadata for publish job
         render_job = data.pop("deadlineSubmissionJob")
         metadata = {
+            "asset": asset,
             "regex": regex,
             "startFrame": start,
             "endFrame": end,
-            "families": ["imagesequence"],
+            "families": ["render"],
+            "source": source,
+            "user": context.data["user"],
 
             # Optional metadata (for debugging)
             "metadata": {
@@ -195,7 +207,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
         if data.get("extendFrames", False):
 
-            family = "imagesequence"
+            family = "render"
             override = data["overrideExistingFrame"]
 
             # override = data.get("overrideExistingFrame", False)

@@ -51,7 +51,7 @@ def get_renderer_variables(renderlayer=None):
         # returns an index number.
         filename_base = os.path.basename(filename_0)
         extension = os.path.splitext(filename_base)[-1].strip(".")
-        filename_prefix = "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
+        filename_prefix = "<Scene>/<RenderLayer>/<RenderLayer>"
 
     return {"ext": extension,
             "filename_prefix": filename_prefix,
@@ -78,7 +78,7 @@ def preview_fname(folder, scene, layer, padding, ext):
     """
 
     # Following hardcoded "<Scene>/<Scene>_<Layer>/<Layer>"
-    output = "{scene}/{scene}_{layer}/{layer}.{number}.{ext}".format(
+    output = "{scene}/{layer}/{layer}.{number}.{ext}".format(
         scene=scene,
         layer=layer,
         number="#" * padding,
@@ -308,6 +308,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             raise Exception(response.text)
 
         # Store output dir for unified publisher (filesequence)
+        instance.data['source'] = filepath
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
         instance.data["deadlineSubmissionJob"] = response.json()
 
