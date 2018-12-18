@@ -1,10 +1,10 @@
 import pyblish.api
 import nuke
-import shutil
 import os
+import pype
 
 
-class NukeRenderLocal(pyblish.api.InstancePlugin):
+class NukeRenderLocal(pype.api.Extractor):
     # TODO: rewrite docstring to nuke
     """Render the current Fusion composition locally.
 
@@ -36,7 +36,7 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
         node_subset_name = instance.data.get("name", None)
 
         # swap path to stageDir
-        temp_dir = instance.data.get("stagingDir")
+        temp_dir = self.staging_dir(instance).replace("\\", "/")
         output_dir = instance.data.get("outputDir")
         path = node['file'].value()
         node['file'].setValue(path.replace(output_dir, temp_dir))
@@ -55,5 +55,15 @@ class NukeRenderLocal(pyblish.api.InstancePlugin):
         # swap path back to publish path
         path = node['file'].value()
         node['file'].setValue(path.replace(temp_dir, output_dir))
+
+        if "files" not in instance.data:
+            instance.data["files"] = list()
+
+        instance.data["files"].append(os.listdir(temp_dir))
+
+        self.log.info("Extracted instance '{0}' to: {1}".format(
+            instance.name,
+            output_dir
+        ))
 
         self.log.info('Finished render')

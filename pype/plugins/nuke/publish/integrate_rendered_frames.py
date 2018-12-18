@@ -24,14 +24,21 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
     label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    families = ["render.frames", "still.frames", "prerender.frames",
-                "render.local", "still.local", "prerender.local"]
+    family_targets = [".frames", ".local", ".review"]
 
     def process(self, instance):
+
+        families = [f for f in instance.data["families"]
+                    for search in self.family_targets
+                    if search in f]
+
+        if not families:
+            return
 
         self.register(instance)
 
         self.log.info("Integrating Asset in to the database ...")
+        self.log.info("instance.data: {}".format(instance.data))
         if instance.data.get('transfer', True):
             self.integrate(instance)
 
@@ -97,7 +104,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         self.log.info("Verifying version from assumed destination")
 
         assumed_data = instance.data["assumedTemplateData"]
-        assumed_version = assumed_data["version"]
+        assumed_version = assumed_data["VERSION"]
         if assumed_version != next_version:
             raise AttributeError("Assumed version 'v{0:03d}' does not match"
                                  "next version in database "
@@ -149,7 +156,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         # Each should be a single representation (as such, a single extension)
         representations = []
         destination_list = []
-
+        self.log.debug("integrate_frames:instance.data[files]: {}".format(
+            instance.data["files"]))
         for files in instance.data["files"]:
             # Collection
             #   _______
@@ -167,7 +175,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 dst_collection = []
                 for fname in collection:
-
+                    self.log.warning("fname: {}".format(fname))
                     filename, ext = os.path.splitext(fname)
                     _, frame = os.path.splitext(filename)
 
@@ -195,7 +203,12 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # |       |
                 # |_______|
                 #
+
+                if template_data.get("frame"):
+                    template_data.pop("frame")
+
                 fname = files
+
                 self.log.info("fname: {}".format(fname))
                 assert not os.path.isabs(fname), (
                     "Given file name is a full path"
@@ -205,9 +218,11 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 template_data["representation"] = ext[1:]
 
                 src = os.path.join(stagingdir, fname)
+
                 anatomy_filled = anatomy.format(template_data)
                 dst = anatomy_filled.render.path
                 template = anatomy.render.path
+
                 instance.data["transfers"].append([src, dst])
 
             representation = {
@@ -254,6 +269,11 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         transfers = instance.data["transfers"]
 
         for src, dest in transfers:
+            src = os.path.normpath(src)
+            dest = os.path.normpath(dest)
+            if src in dest:
+                continue
+
             self.log.info("Copying file .. {} -> {}".format(src, dest))
             self.copy_file(src, dest)
 

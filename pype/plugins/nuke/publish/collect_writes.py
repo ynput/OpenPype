@@ -68,15 +68,10 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             try:
                 collected_frames = os.listdir(output_dir)
                 self.log.debug("collected_frames: {}".format(label))
-
                 instance.data["files"].append(collected_frames)
+
             except Exception:
                 pass
-
-            # adding stage dir for faster local renderings
-            staging_dir = tempfile.mkdtemp().replace("\\", "/")
-            instance.data.update({"stagingDir": staging_dir})
-            self.log.debug('staging_dir: {}'.format(staging_dir))
 
             instance.data.update({
                 "path": path,

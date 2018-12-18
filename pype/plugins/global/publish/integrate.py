@@ -36,7 +36,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "vrayproxy",
                 "yetiRig",
                 "yeticache",
-                "script",
+                "nukescript",
                 "review"]
 
     def process(self, instance):
@@ -47,7 +47,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.integrate(instance)
 
     def register(self, instance):
-
         # Required environment variables
         PROJECT = api.Session["AVALON_PROJECT"]
         ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]

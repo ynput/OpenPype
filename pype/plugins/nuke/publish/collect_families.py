@@ -23,20 +23,20 @@ class CollectInstanceFamilies(pyblish.api.ContextPlugin):
                 node = instance[0]
 
                 if not node["render"].value():
-                    families = "{}.frames".format(
-                        instance.data["avalonKnob"]["families"])
+                    families = ["{}.frames".format(
+                        instance.data["avalonKnob"]["families"])]
                     # to ignore staging dir op in integrate
                     instance.data['transfer'] = False
                 else:
                     # dealing with local/farm rendering
                     if node["render_farm"].value():
-                        families = "{}.farm".format(
-                            instance.data["avalonKnob"]["families"])
+                        families = ["{}.farm".format(
+                            instance.data["avalonKnob"]["families"])]
                     else:
-                        families = "{}.local".format(
-                            instance.data["avalonKnob"]["families"])
+                        families = ["{}.local".format(
+                            instance.data["avalonKnob"]["families"])]
 
-                instance.data["families"].append(families)
+                instance.data["families"].extend(families)
 
         # Sort/grouped by family (preserving local index)
         context[:] = sorted(context, key=self.sort_by_family)
