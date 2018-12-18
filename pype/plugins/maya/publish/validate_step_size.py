@@ -12,7 +12,7 @@ class ValidateStepSize(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     label = 'Step size'
-    families = ["camera',
+    families = ["camera",
                 'studio.pointcache',
                 'studio.animation']
     actions = [pype.maya.action.SelectInvalidAction]
