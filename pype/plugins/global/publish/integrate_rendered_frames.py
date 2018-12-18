@@ -24,7 +24,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
     label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    families = ["prerendered.frames"]
+    families = ["prerendered.frames", "imagesequence", "render"]
 
     def process(self, instance):
 
@@ -96,7 +96,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         self.log.info("Verifying version from assumed destination")
 
         assumed_data = instance.data["assumedTemplateData"]
-        assumed_version = assumed_data["version"]
+        assumed_version = assumed_data["VERSION"]
         if assumed_version != next_version:
             raise AttributeError("Assumed version 'v{0:03d}' does not match"
                                  "next version in database "
@@ -231,7 +231,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                      "asset": ASSET,
                      "family": instance.data['family'],
                      "subset": subset["name"],
-                     "version": version["name"],
+                     "VERSION": version["name"],
                      "hierarchy": hierarchy,
                      "representation": ext[1:]
                 }
@@ -344,10 +344,13 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
             families.append(instance_family)
         families += current_families
 
-        # create relative source path for DB
-        relative_path = os.path.relpath(context.data["currentFile"],
-                                        api.registered_root())
-        source = os.path.join("{root}", relative_path).replace("\\", "/")
+        try:
+            source = instance.data['source']
+        except KeyError:
+            source = context.data["currentFile"]
+
+            relative_path = os.path.relpath(source, api.registered_root())
+            source = os.path.join("{root}", relative_path).replace("\\", "/")
 
         version_data = {"families": families,
                         "time": context.data["time"],
