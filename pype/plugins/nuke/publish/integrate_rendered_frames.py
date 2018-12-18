@@ -170,29 +170,42 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
             #
             if isinstance(files, list):
 
-                collection = files
+                src_collections, remainder = clique.assemble(files)
+                self.log.warning(src_collections)
+                src_collection = src_collections[0]
                 # Assert that each member has identical suffix
+                src_head = src_collection.format("{head}")
+                src_tail = src_collection.format("{tail}")
 
-                dst_collection = []
-                for fname in collection:
-                    self.log.warning("fname: {}".format(fname))
-                    filename, ext = os.path.splitext(fname)
-                    _, frame = os.path.splitext(filename)
-
-                    template_data["representation"] = ext[1:]
-                    template_data["frame"] = frame[1:]
-
-                    src = os.path.join(stagingdir, fname)
+                test_dest_files = list()
+                for i in [1, 2]:
+                    template_data["representation"] = src_tail[1:]
+                    template_data["frame"] = src_collection.format(
+                        "{padding}") % i
+                    self.log.warning(template_data)
                     anatomy_filled = anatomy.format(template_data)
-                    dst = anatomy_filled.render.path
+                    self.log.warning(anatomy_filled)
+                    test_dest_files.append(anatomy_filled.render.path)
 
-                    dst_collection.append(dst)
+                self.log.warning(test_dest_files)
+                dst_collections, remainder = clique.assemble(test_dest_files)
+                self.log.warning(dst_collections)
+                dst_collection = dst_collections[0]
+                dst_head = dst_collection.format("{head}")
+                dst_tail = dst_collection.format("{tail}")
+
+                for i in src_collection.indexes:
+                    src_padding = src_collection.format("{padding}") % i
+                    src_file_name = "{0}{1}{2}".format(src_head, src_padding, src_tail)
+                    dst_padding = dst_collection.format("{padding}") % i
+                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
+
+                    src = os.path.join(stagingdir, src_file_name)
+                    self.log.warning(src_file_name)
+
                     instance.data["transfers"].append([src, dst])
 
                 template = anatomy.render.path
-
-                collections, remainder = clique.assemble(dst_collection)
-                dst = collections[0].format('{head}{padding}{tail}')
 
             else:
                 # Single file
