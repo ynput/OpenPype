@@ -34,7 +34,7 @@ def registerApp(app, session):
     ftrack_resources = "" # Path to resources here
 
     if 'icon' in apptoml:
-        icon = apptoml['icon']
+        icon = apptoml['ftrack_icon']
         if '{ftrack_resources}' in icon:
             icon = icon.format(ftrack_resources)
 
