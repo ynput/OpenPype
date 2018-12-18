@@ -10,30 +10,20 @@ import nuke
 log = pype.Logger.getLogger(__name__, "nuke")
 
 
-def subset_to_families(subset, family, families):
-    subset_sufx = str(subset).replace(family, "")
-    new_subset = families + subset_sufx
-    return "{}.{}".format(family, new_subset)
-
-
 class CrateRead(avalon.nuke.Creator):
     # change this to template preset
-    preset = "render"
-
-    name = "WriteRender"
-    label = "Create Write Render"
+    name = "ReadCopy"
+    label = "Create Read Copy"
     hosts = ["nuke"]
-    family = "{}_write".format(preset)
-    families = preset
+    # family = "read"
+    family = "source"
     icon = "sign-out"
 
     def __init__(self, *args, **kwargs):
-        super(CrateWriteRender, self).__init__(*args, **kwargs)
+        super(CrateRead, self).__init__(*args, **kwargs)
 
         data = OrderedDict()
-
-        data["family"] = self.family.split("_")[1]
-        data["families"] = self.families
+        data['family'] = self.family
 
         {data.update({k: v}) for k, v in self.data.items()
          if k not in data.keys()}
@@ -42,106 +32,25 @@ class CrateRead(avalon.nuke.Creator):
     def process(self):
         self.name = self.data["subset"]
 
-        family = self.family.split("_")[0]
-        node = self.family.split("_")[1]
+        nodes = nuke.selectedNodes()
 
-        instance = nuke.toNode(self.data["subset"])
+        if not nodes:
+            nuke.message('Please select Read node')
+        elif len(nodes) == 1:
+            if nodes[0].Class() != 'Read':
+                nuke.message('Please select Read node')
+            else:
 
-        if not instance:
-            write_data = {
-                "class": node,
-                "preset": family,
-                "avalon": self.data
-            }
-
-            create_write_node(self.data["subset"], write_data)
-
+                node = nodes[0]
+                name = node["name"].value()
+                avalon_data = self.data
+                avalon_data['subset'] = "{}_{}".format(self.family, name)
+                change_read_node(self.data["subset"], node, avalon_data)
+        else:
+            nuke.message('Please select only one Read node')
         return
 
 
-class CrateWritePrerender(avalon.nuke.Creator):
-    # change this to template preset
-    preset = "prerender"
-
-    name = "WritePrerender"
-    label = "Create Write Prerender"
-    hosts = ["nuke"]
-    family = "{}_write".format(preset)
-    families = preset
-    icon = "sign-out"
-
-    def __init__(self, *args, **kwargs):
-        super(CrateWritePrerender, self).__init__(*args, **kwargs)
-
-        data = OrderedDict()
-
-        data["family"] = self.family.split("_")[1]
-        data["families"] = self.families
-
-        {data.update({k: v}) for k, v in self.data.items()
-         if k not in data.keys()}
-        self.data = data
-
-    def process(self):
-        self.name = self.data["subset"]
-
-        instance = nuke.toNode(self.data["subset"])
-
-        family = self.family.split("_")[0]
-        node = self.family.split("_")[1]
-
-        if not instance:
-            write_data = {
-                "class": node,
-                "preset": family,
-                "avalon": self.data
-            }
-
-            create_write_node(self.data["subset"], write_data)
-
-        return
-
-
-class CrateWriteStill(avalon.nuke.Creator):
-    # change this to template preset
-    preset = "still"
-
-    name = "WriteStill"
-    label = "Create Write Still"
-    hosts = ["nuke"]
-    family = "{}_write".format(preset)
-    families = preset
-    icon = "image"
-
-    def __init__(self, *args, **kwargs):
-        super(CrateWriteStill, self).__init__(*args, **kwargs)
-
-        data = OrderedDict()
-
-        data["family"] = self.family.split("_")[1]
-        data["families"] = self.families
-
-        {data.update({k: v}) for k, v in self.data.items()
-         if k not in data.keys()}
-        self.data = data
-
-    def process(self):
-        self.name = self.data["subset"]
-
-        instance = nuke.toNode(self.data["subset"])
-
-        family = self.family.split("_")[0]
-        node = self.family.split("_")[1]
-
-        if not instance:
-            write_data = {
-                "frame_range": [nuke.frame(), nuke.frame()],
-                "class": node,
-                "preset": family,
-                "avalon": self.data
-            }
-
-            nuke.createNode("FrameHold", "first_frame {}".format(nuke.frame()))
-            create_write_node(self.data["subset"], write_data)
-
-        return
+def change_read_node(name, node, data):
+    node = avalon.nuke.lib.imprint(node, data)
+    node['tile_color'].setValue(16711935)
