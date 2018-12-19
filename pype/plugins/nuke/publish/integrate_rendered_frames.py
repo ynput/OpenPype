@@ -201,7 +201,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
 
                     src = os.path.join(stagingdir, src_file_name)
-                    self.log.warning(src_file_name)
+                    self.log.warning(src)
+                    self.log.warning(dst)
 
                     instance.data["transfers"].append([src, dst])
 
@@ -237,6 +238,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 template = anatomy.render.path
 
                 instance.data["transfers"].append([src, dst])
+                self.log.warning(src)
+                self.log.warning(dst)
 
             representation = {
                 "schema": "pype:representation-2.0",
@@ -268,6 +271,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
         self.log.info("Registering {} items".format(len(representations)))
 
+        self.log.warning(representations)
+
         io.insert_many(representations)
 
     def integrate(self, instance):
@@ -284,6 +289,9 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         for src, dest in transfers:
             src = os.path.normpath(src)
             dest = os.path.normpath(dest)
+            self.log.warning("copying")
+            self.log.warning(src)
+            self.log.warning(dest)
             if src in dest:
                 continue
 
