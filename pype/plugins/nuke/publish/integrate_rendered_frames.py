@@ -171,25 +171,20 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
             if isinstance(files, list):
 
                 src_collections, remainder = clique.assemble(files)
-                self.log.warning(src_collections)
                 src_collection = src_collections[0]
                 # Assert that each member has identical suffix
                 src_head = src_collection.format("{head}")
-                src_tail = src_collection.format("{tail}")
+                src_tail = ext = src_collection.format("{tail}")
 
                 test_dest_files = list()
                 for i in [1, 2]:
                     template_data["representation"] = src_tail[1:]
                     template_data["frame"] = src_collection.format(
                         "{padding}") % i
-                    self.log.warning(template_data)
                     anatomy_filled = anatomy.format(template_data)
-                    self.log.warning(anatomy_filled)
                     test_dest_files.append(anatomy_filled.render.path)
 
-                self.log.warning(test_dest_files)
                 dst_collections, remainder = clique.assemble(test_dest_files)
-                self.log.warning(dst_collections)
                 dst_collection = dst_collections[0]
                 dst_head = dst_collection.format("{head}")
                 dst_tail = dst_collection.format("{tail}")
@@ -201,11 +196,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
 
                     src = os.path.join(stagingdir, src_file_name)
-                    self.log.warning(src)
-                    self.log.warning(dst)
-
                     instance.data["transfers"].append([src, dst])
-
                 template = anatomy.render.path
 
             else:
@@ -218,12 +209,13 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # |_______|
                 #
 
-                if template_data.get("frame"):
-                    template_data.pop("frame")
+                template_data.pop("frame", None)
+                anatomy.pop("frame", None)
 
                 fname = files
 
                 self.log.info("fname: {}".format(fname))
+
                 assert not os.path.isabs(fname), (
                     "Given file name is a full path"
                 )
@@ -238,8 +230,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 template = anatomy.render.path
 
                 instance.data["transfers"].append([src, dst])
-                self.log.warning(src)
-                self.log.warning(dst)
 
             representation = {
                 "schema": "pype:representation-2.0",
@@ -265,14 +255,12 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                     "representation": ext[1:]
                 }
             }
+
             destination_list.append(dst)
             instance.data['destination_list'] = destination_list
             representations.append(representation)
 
         self.log.info("Registering {} items".format(len(representations)))
-
-        self.log.warning(representations)
-
         io.insert_many(representations)
 
     def integrate(self, instance):
@@ -289,9 +277,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         for src, dest in transfers:
             src = os.path.normpath(src)
             dest = os.path.normpath(dest)
-            self.log.warning("copying")
-            self.log.warning(src)
-            self.log.warning(dest)
             if src in dest:
                 continue
 

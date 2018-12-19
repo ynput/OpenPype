@@ -26,16 +26,18 @@ class ExtractDataForReview(pype.api.Extractor):
                     if search in f]
         if not families:
             return
-
+        self.log.debug("here:")
         # Store selection
         selection = [i for i in nuke.allNodes() if i["selected"].getValue()]
-
+        self.log.debug("here:")
         # Deselect all nodes to prevent external connections
         [i["selected"].setValue(False) for i in nuke.allNodes()]
-
+        self.log.debug("here:")
+        self.log.debug("creating staging dir:")
         self.staging_dir(instance)
         self.render_review_representation(instance,
                                           representation="mov")
+        self.log.debug("review mov:")
         self.transcode_mov(instance)
         self.render_review_representation(instance,
                                           representation="jpeg")
@@ -98,6 +100,7 @@ class ExtractDataForReview(pype.api.Extractor):
 
         collection = instance.data.get("collection", None)
 
+        self.log.warning("instance.data['files']: {}".format(instance.data['files']))
         if not collection:
             collections, remainder = clique.assemble(*instance.data['files'])
             collection = collections[0]

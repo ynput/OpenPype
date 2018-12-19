@@ -59,7 +59,7 @@ class NukeRenderLocal(pype.api.Extractor):
         if "files" not in instance.data:
             instance.data["files"] = list()
 
-        instance.data["files"].append(os.listdir(temp_dir))
+        instance.data["files"] = [os.listdir(temp_dir)]
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name,
@@ -67,3 +67,4 @@ class NukeRenderLocal(pype.api.Extractor):
         ))
 
         self.log.info('Finished render')
+        return
