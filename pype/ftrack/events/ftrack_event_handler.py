@@ -88,9 +88,6 @@ class BaseEvent(object):
         )
 
     def _launch(self, event):
-
-        self.session.reset()
-
         args = self._translate_event(
             self.session, event
         )
