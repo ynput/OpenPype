@@ -1,13 +1,13 @@
 import pyblish.api
 
 
-class CollectOutputNode(pyblish.api.InstancePlugin):
-    """Collect the out node which of the instance"""
+class CollectOutputSOPPath(pyblish.api.InstancePlugin):
+    """Collect the out node's SOP Path value."""
 
     order = pyblish.api.CollectorOrder
     families = ["*"]
     hosts = ["houdini"]
-    label = "Collect Output Node"
+    label = "Collect Output SOP Path"
 
     def process(self, instance):
 
