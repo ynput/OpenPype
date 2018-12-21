@@ -13,7 +13,8 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["*"]
+    families = ["colorbleed.pointcache",
+                "colorbleed.vdbcache"]
     hosts = ["houdini"]
     label = "Validate Output Node"
 
@@ -39,10 +40,9 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
 
         # Check if type is correct
         type_name = output_node.type().name()
-        if type_name not in ["output", "cam"]:
-            cls.log.error("Output node `%s` is not an accepted type."
-                          "Expected types: `output` or `camera`" %
-                          output_node.path())
+        if type_name != "output":
+            cls.log.error("Output node `%s` is not an `output` type node."
+                          % output_node.path())
             return [output_node.path()]
 
         # Check if output node has incoming connections
