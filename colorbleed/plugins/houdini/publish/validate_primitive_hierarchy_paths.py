@@ -35,6 +35,7 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
         if not build_from_path:
             cls.log.debug("Alembic ROP has 'Build from Path' disabled. "
                           "Validation is ignored..")
+            return
 
         path_attr = rop.parm("path_attrib").eval()
         if not path_attr:
