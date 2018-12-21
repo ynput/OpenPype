@@ -2,7 +2,7 @@ import pyblish.api
 import colorbleed.api
 
 
-class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
+class ValidateCameraROP(pyblish.api.InstancePlugin):
     """Validate Camera ROP settings."""
 
     order = colorbleed.api.ValidateContentsOrder
