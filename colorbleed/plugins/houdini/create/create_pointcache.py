@@ -2,7 +2,7 @@ from avalon import houdini
 
 
 class CreatePointCache(houdini.Creator):
-    """Alembic pointcache for animated data"""
+    """Alembic ROP to pointcache"""
 
     name = "pointcache"
     label = "Point Cache"
