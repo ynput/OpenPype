@@ -3,13 +3,7 @@ import colorbleed.api
 
 
 class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
-    """Validate if node attribute Create intermediate Directories is turned on
-
-    Rules:
-        * The node must have Create intermediate Directories turned on to
-        ensure the output file will be created
-
-    """
+    """Validate Create Intermediate Directories is enabled on ROP node."""
 
     order = colorbleed.api.ValidateContentsOrder
     families = ['colorbleed.pointcache']
