@@ -77,6 +77,7 @@ def override_toolbox_ui():
 
     import avalon.tools.cbsceneinventory as inventory
     import avalon.tools.cbloader as loader
+    from avalon.maya.pipeline import launch_workfiles_app
 
     # Ensure the maya web icon on toolbox exists
     web_button = "ToolBox|MainToolboxLayout|mayaWebButton"
@@ -96,6 +97,18 @@ def override_toolbox_ui():
     # Create our controls
     background_color = (0.267, 0.267, 0.267)
     controls = []
+
+    control = mc.iconTextButton(
+        "colorbleed_toolbox_workfiles",
+        annotation="Work Files",
+        label="Work Files",
+        image=os.path.join(icons, "workfiles.png"),
+        command=lambda: launch_workfiles_app(),
+        bgc=background_color,
+        width=icon_size,
+        height=icon_size,
+        parent=parent)
+    controls.append(control)
 
     control = mc.iconTextButton(
         "colorbleed_toolbox_loader",
