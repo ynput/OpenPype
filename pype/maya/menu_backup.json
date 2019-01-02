@@ -5,13 +5,13 @@
 	"title": "Version Up",
 	"tooltip": "Incremental save with a specific format"
 },
-/* {
+{
 	"type": "action",
 	"command": "$PYPE_SCRIPTS\\others\\show_current_scene_in_explorer.py",
 	"sourcetype": "file",
 	"title": "Explore current scene..",
 	"tooltip": "Show current scene in Explorer"
-}, */
+},
 {
 	"type": "action",
 	"command": "$PYPE_SCRIPTS\\avalon\\launch_manager.py",
