@@ -44,12 +44,12 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "label": node.name(),
                 "name": node.name(),
                 "subset": subset,
-                "families": [avalon_knob_data["families"]],
                 "family": avalon_knob_data["family"],
                 "avalonKnob": avalon_knob_data,
                 "publish": node.knob('publish')
-
             })
+            if node.Class() == "Write":
+                instance.data["families"] = [avalon_knob_data["families"]]
             self.log.info("collected instance: {}".format(instance.data))
             instances.append(instance)
 

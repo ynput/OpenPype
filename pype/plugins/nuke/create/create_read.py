@@ -1,7 +1,6 @@
 from collections import OrderedDict
 import avalon.api
 import avalon.nuke
-from pype.nuke import create_write_node
 from pype import api as pype
 
 import nuke
@@ -34,20 +33,23 @@ class CrateRead(avalon.nuke.Creator):
 
         nodes = nuke.selectedNodes()
 
-        if not nodes:
+        if not nodes or len(nodes) == 0:
             nuke.message('Please select Read node')
         elif len(nodes) == 1:
             if nodes[0].Class() != 'Read':
                 nuke.message('Please select Read node')
             else:
-
                 node = nodes[0]
                 name = node["name"].value()
                 avalon_data = self.data
                 avalon_data['subset'] = "{}_{}".format(self.family, name)
                 change_read_node(self.data["subset"], node, avalon_data)
         else:
-            nuke.message('Please select only one Read node')
+            for node in nodes:
+                name = node["name"].value()
+                avalon_data = self.data
+                avalon_data['subset'] = "{}_{}".format(self.family, name)
+                change_read_node(self.data["subset"], node, avalon_data)
         return
 
 
