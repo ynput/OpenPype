@@ -51,7 +51,7 @@ def get_renderer_variables(renderlayer=None):
         # returns an index number.
         filename_base = os.path.basename(filename_0)
         extension = os.path.splitext(filename_base)[-1].strip(".")
-        filename_prefix = "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
+        filename_prefix = "<Scene>/<RenderLayer>/<RenderLayer>"
 
     return {"ext": extension,
             "filename_prefix": filename_prefix,
@@ -78,7 +78,7 @@ def preview_fname(folder, scene, layer, padding, ext):
     """
 
     # Following hardcoded "<Scene>/<Scene>_<Layer>/<Layer>"
-    output = "{scene}/{scene}_{layer}/{layer}.{number}.{ext}".format(
+    output = "{scene}/{layer}/{layer}.{number}.{ext}".format(
         scene=scene,
         layer=layer,
         number="#" * padding,
@@ -97,11 +97,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     """
 
     label = "Submit to Deadline"
-    order = pyblish.api.IntegratorOrder
+    order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
     families = ["renderlayer"]
 
     def process(self, instance):
+
+        self.log.debug('Starting deadline submitter')
 
         try:
             deadline_url = os.environ["DEADLINE_REST_URL"]
@@ -110,11 +112,29 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         # AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
         #                                  "http://localhost:8082")
-        # assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        # assert AVALON_DEADLINE, "Requires AVALON_DEADLINE
 
         context = instance.context
+
+        filepath = None
+
+        allInstances = []
+        for result in context.data["results"]:
+            if (result["instance"] is not None and
+               result["instance"] not in allInstances):
+                allInstances.append(result["instance"])
+
+        for inst in allInstances:
+            print(inst)
+            if inst.data['family'] == 'scene':
+                filepath = inst.data['destination_list'][0]
+
+        if not filepath:
+            filepath = context.data["currentFile"]
+
+        self.log.debug(filepath)
+
         workspace = context.data["workspaceDir"]
-        filepath = context.data["currentFile"]
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
         scene = os.path.splitext(filename)[0]
@@ -209,6 +229,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             # running Linux and the submitter is on Windows.
             "PYTHONPATH",
 
+            "MTOA_EXTENSIONS_PATH",
+            "MTOA_EXTENSIONS",
+            "DYLD_LIBRARY_PATH",
+            "MAYA_RENDER_DESC_PATH",
+            "MAYA_MODULE_PATH",
+            "ARNOLD_PLUGIN_PATH",
+            "AVALON_SCHEMA",
+
             # todo: This is a temporary fix for yeti variables
             "PEREGRINEL_LICENSE",
             "REDSHIFT_MAYAEXTENSIONSPATH",
@@ -216,14 +244,43 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "VRAY_FOR_MAYA2018_PLUGINS_X64",
             "VRAY_PLUGINS_X64",
             "VRAY_USE_THREAD_AFFINITY",
-            "MAYA_MODULE_PATH"
+            "MAYA_MODULE_PATH",
+            "TOOL_ENV"
         ]
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
 
+        for path in os.environ:
+            if path.lower().startswith('pype_'):
+                environment[path] = os.environ[path]
+
         PATHS = os.environ["PATH"].split(";")
         environment["PATH"] = ";".join([p for p in PATHS
                                         if p.startswith("P:")])
+        clean_pythonpath = ''
+        for path in environment['PYTHONPATH'].split(os.pathsep):
+            # self.log.debug('checking path for UTF: {}'.format(path))
+            try:
+                path.decode('UTF-8', 'strict')
+                # path = path.lower().replace("k:/", r"\\kre-c01\\share\\").replace("p:/", r"\\kre-p01\\share\\")
+                clean_pythonpath += path + os.pathsep
+            except UnicodeDecodeError:
+                self.log.debug('path contains non UTF characters')
+        environment['PYTHONPATH'] = clean_pythonpath
+
+        for key in environment:
+            remapped_key = ''
+            list_paths = environment[key].split(os.pathsep)
+            if len(list_paths) > 1:
+                for path in list_paths:
+                    path = path.replace("K:/", "\\\\kre-c01\\share\\").replace("P:/", "\\\\kre-p01\\share\\")
+                    path = path.replace("K:\\", "\\\\kre-c01\\share\\").replace("P:\\", "\\\\kre-p01\\share\\")
+                    remapped_key += path + os.pathsep
+            else:
+                path = list_paths[0].replace("K:/", "\\\\kre-c01\\share\\").replace("P:/", "\\\\kre-p01\\share\\")
+                path = path.replace("K:\\", "\\\\kre-c01\\share\\").replace("P:\\", "\\\\kre-p01\\share\\")
+                remapped_key = path
+            environment[key] = remapped_key
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
@@ -251,6 +308,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             raise Exception(response.text)
 
         # Store output dir for unified publisher (filesequence)
+        instance.data['source'] = filepath
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
         instance.data["deadlineSubmissionJob"] = response.json()
 

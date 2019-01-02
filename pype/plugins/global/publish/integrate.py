@@ -25,7 +25,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     families = ["animation",
                 "camera",
-                "imagesequence",
                 "look",
                 "mayaAscii",
                 "model",
@@ -36,7 +35,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "vrayproxy",
                 "yetiRig",
                 "yeticache",
-                "review"]
+                "review",
+                "scene"]
 
     def process(self, instance):
 
@@ -351,11 +351,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             families.append(instance_family)
         families += current_families
 
+        self.log.debug("Registered roor: {}".format(api.registered_root()))
         # create relative source path for DB
-        relative_path = os.path.relpath(context.data["currentFile"],
-                                        api.registered_root())
-        source = os.path.join("{root}", relative_path).replace("\\", "/")
+        try:
+            source = instance.data['source']
+        except KeyError:
+            source = context.data["currentFile"]
 
+            relative_path = os.path.relpath(source, api.registered_root())
+            source = os.path.join("{root}", relative_path).replace("\\", "/")
+
+        self.log.debug("Source: {}".format(source))
         version_data = {"families": families,
                         "time": context.data["time"],
                         "author": context.data["user"],
