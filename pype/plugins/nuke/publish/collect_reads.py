@@ -48,8 +48,6 @@ class CollectNukeReads(pyblish.api.ContextPlugin):
                     isSequence = True
 
             # # Get frame range
-            # first_frame = int(nuke.root()["first_frame"].getValue())
-            # last_frame = int(nuke.root()["last_frame"].getValue())
             first_frame = node['first'].value()
             last_frame = node['last'].value()
 
@@ -72,12 +70,17 @@ class CollectNukeReads(pyblish.api.ContextPlugin):
                 int(first_frame),
                 int(last_frame)
             )
-            nuke.message(str(source_files))
+
             self.log.debug("collected_frames: {}".format(label))
             if "files" not in instance.data:
                 instance.data["files"] = list()
             instance.data["files"] = source_files
-            instance.data['transfer'] = False
+
+            transfer = False
+            if "transferSource" in node.knobs():
+                transfer = node["transferSource"]
+
+            instance.data['transfer'] = transfer
 
             self.log.debug("checking for error: {}".format(label))
             instance.data.update({
