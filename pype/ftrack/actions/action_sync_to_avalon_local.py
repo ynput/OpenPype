@@ -309,7 +309,7 @@ def register(session, **kw):
         return
 
     action_handler = SyncToAvalon(session)
-    action_handler.register()
+    action_handler.register(200)
 
 
 def main(arguments=None):

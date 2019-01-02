@@ -1704,6 +1704,14 @@ def set_scene_fps(fps, update=True):
 
     """
 
+    fps_mapping = {'15': 'game',
+                   '24': 'film',
+                   '25': 'pal',
+                   '30': 'ntsc',
+                   '48': 'show',
+                   '50': 'palf',
+                   '60': 'ntscf'}
+
     if fps in FLOAT_FPS:
         unit = "{}fps".format(fps)
 
@@ -1712,6 +1720,14 @@ def set_scene_fps(fps, update=True):
 
     else:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
+
+    # get maya version
+    version = int(cmds.about(version=True))
+    if version < 2018:
+        # pull from mapping
+        unit = fps_mapping.get(str(int(fps)), None)
+        if unit is None:
+            raise ValueError("Unsupported FPS value: `%s`" % fps)
 
     # Get time slider current state
     start_frame = cmds.playbackOptions(query=True, minTime=True)

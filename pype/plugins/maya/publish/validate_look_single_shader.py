@@ -13,7 +13,7 @@ class ValidateSingleShader(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["look']
+    families = ["look"]
     hosts = ['maya']
     label = 'Look Single Shader Per Shape'
     actions = [pype.maya.action.SelectInvalidAction]

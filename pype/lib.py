@@ -109,8 +109,8 @@ def update_task_from_path(path):
     # Find the changes between current Session and the path's context.
     current = {
         "asset": avalon.api.Session["AVALON_ASSET"],
-        "task": avalon.api.Session["AVALON_TASK"],
-        "app": avalon.api.Session["AVALON_APP"]
+        "task": avalon.api.Session["AVALON_TASK"]
+        # "app": avalon.api.Session["AVALON_APP"]
     }
     changes = {key: context[key] for key, current_value in current.items()
                if context[key] != current_value}
