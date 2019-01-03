@@ -24,7 +24,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
     label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    family_targets = [".frames", ".local", ".review"]
+    family_targets = [".frames", ".local", ".review", "source"]
 
     def process(self, instance):
 

@@ -37,6 +37,15 @@ class CollectNukeReads(pyblish.api.ContextPlugin):
 
             ext = items[-1]
 
+            # # Get frame range
+            first_frame = node['first'].value()
+            last_frame = node['last'].value()
+
+            # # Easier way to sequence - Not tested
+            # isSequence = True
+            # if first_frame == last_frame:
+            #     isSequence = False
+
             isSequence = False
             if len(items) > 1:
                 sequence = items[-2]
@@ -47,18 +56,12 @@ class CollectNukeReads(pyblish.api.ContextPlugin):
                 if hash_match or seq_match:
                     isSequence = True
 
-            # # Get frame range
-            first_frame = node['first'].value()
-            last_frame = node['last'].value()
-
             # get source path
             path = nuke.filename(node)
             source_dir = os.path.dirname(path)
             self.log.debug('source dir: {}'.format(source_dir))
 
             if isSequence:
-                # collections, remainder = clique.assemble(os.listdir(source_dir))
-                # source_files = collections[0]
                 source_files = os.listdir(source_dir)
             else:
                 source_files = file_name
@@ -72,13 +75,12 @@ class CollectNukeReads(pyblish.api.ContextPlugin):
             )
 
             self.log.debug("collected_frames: {}".format(label))
-            if "files" not in instance.data:
-                instance.data["files"] = list()
-            instance.data["files"] = source_files
+
+            instance.data["files"] = [source_files]
 
             transfer = False
-            if "transferSource" in node.knobs():
-                transfer = node["transferSource"]
+            if "publish" in node.knobs():
+                transfer = node["publish"]
 
             instance.data['transfer'] = transfer
 

@@ -23,7 +23,7 @@ class CrateRead(avalon.nuke.Creator):
 
         data = OrderedDict()
         data['family'] = self.family
-        data['families'] = self.family
+        data['families'] = self.families
         {data.update({k: v}) for k, v in self.data.items()
          if k not in data.keys()}
         self.data = data
@@ -52,15 +52,4 @@ class CrateRead(avalon.nuke.Creator):
 
     def change_read_node(self, name, node, data):
         node = avalon.nuke.lib.imprint(node, data)
-        node = self.add_transfer_knob(node)
         node['tile_color'].setValue(16711935)
-
-    def add_transfer_knob(self, node):
-        knob_name = "transferSource"
-        knob_label = "Transfer"
-        if knob_name not in node.knobs():
-            knob = nuke.Boolean_Knob(knob_name, knob_label)
-            knob.setValue(True)
-            knob.setFlag(nuke.STARTLINE)
-            node.addKnob(knob)
-        return node

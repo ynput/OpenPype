@@ -15,12 +15,11 @@ class CollectInstanceFamilies(pyblish.api.ContextPlugin):
             if not instance.data["publish"]:
                 continue
 
-            # set for ftrack to accept
-            instance.data["families"] = ["ftrack"]
-
             if "write" in instance.data["family"]:
-
                 node = instance[0]
+
+                # set for ftrack to accept
+                instance.data["families"] = ["ftrack"]
 
                 if not node["render"].value():
                     families = ["{}.frames".format(
@@ -37,6 +36,12 @@ class CollectInstanceFamilies(pyblish.api.ContextPlugin):
                             instance.data["avalonKnob"]["families"])]
 
                 instance.data["families"].extend(families)
+
+            elif "source" in instance.data["family"]:
+                families = []
+                families.append(instance.data["avalonKnob"]["families"])
+
+                instance.data["families"] = families
 
         # Sort/grouped by family (preserving local index)
         context[:] = sorted(context, key=self.sort_by_family)
