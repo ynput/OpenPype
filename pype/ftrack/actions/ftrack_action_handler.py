@@ -353,7 +353,6 @@ class AppAction(object):
         task = session.query('Task where id is {}'.format(entity['id'])).one()
         self.log.info('Starting timer for task: ' + task['name'])
         user.start_timer(task, force=True)
-        os.environ["FTRACK_LAST_TASK_ID"] = entity['id']
 
         return {
             'success': True,
