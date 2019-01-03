@@ -250,6 +250,7 @@ class FtrackEventsThread(QtCore.QThread):
         self.signal_stop_timer.connect(self.ftrack_stop_timer)
         self.signal_restart_timer.connect(self.ftrack_restart_timer)
         self.user = None
+        self.last_task = None
 
     def run(self):
         self.timer_session = ftrack_api.Session(auto_connect_event_hub=True)
@@ -257,8 +258,14 @@ class FtrackEventsThread(QtCore.QThread):
             'topic=ftrack.update and source.user.username={}'.format(self.username),
             self.event_handler)
 
-        query = 'User where username is "{}"'.format(self.username)
-        self.user = self.timer_session.query(query).one()
+        user_query = 'User where username is "{}"'.format(self.username)
+        self.user = self.timer_session.query(user_query).one()
+
+        timer_query = 'Timer where user.username is "{}"'.format(self.username)
+        timer = self.timer_session.query(timer_query).first()
+        if timer is not None:
+            self.last_task = timer['context']
+            self.signal_timer_started.emit()
 
         self.timer_session.event_hub.wait()
 
@@ -274,7 +281,13 @@ class FtrackEventsThread(QtCore.QThread):
 
         if old is None and new is None:
             return
-        elif old is None:
+
+        timer_query = 'Timer where user.username is "{}"'.format(self.username)
+        timer = self.timer_session.query(timer_query).first()
+        if timer is not None:
+            self.last_task = timer['context']
+
+        if old is None:
             self.signal_timer_started.emit()
         elif new is None:
             self.signal_timer_stopped.emit()
@@ -294,8 +307,8 @@ class FtrackEventsThread(QtCore.QThread):
                 query = 'Task where id is {}'.format(task_id)
                 last_task = self.timer_session.query(query).one()
 
-            if (last_task is not None) and (self.user is not None):
-                self.user.start_timer(last_task)
+            if (self.last_task is not None) and (self.user is not None):
+                self.user.start_timer(self.last_task)
                 self.timer_session.commit()
         except Exception as e:
             log.debug("Timer stop had issues: {}".format(e))
@@ -374,7 +387,7 @@ class CountdownThread(QtCore.QThread):
                 data = json_dict['timer']
         except Exception as e:
             msg = 'Loading "Ftrack Config file" Failed. Please check log for more information. Times are set to default.'
-            self.log.warning("{} - {}".format(msg, str(e)))
+            log.warning("{} - {}".format(msg, str(e)))
 
         data = self.validate_timer_values(data)
 
