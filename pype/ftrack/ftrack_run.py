@@ -1,7 +1,6 @@
 import sys
 import os
-import argparse
-import subprocess
+import json
 import threading
 import time
 import ftrack_api
@@ -168,7 +167,6 @@ class FtrackRunner:
         if self.bool_timer_event is False:
             self.start_timer_thread()
 
-
     def start_timer_thread(self):
         if self.thread_timer is None:
             self.thread_timer = FtrackEventsThread(self)
@@ -197,7 +195,7 @@ class FtrackRunner:
 
     def stop_countdown_thread(self):
         if self.thread_timer_coundown is not None:
-            self.thread_timer_coundown.runs=False
+            self.thread_timer_coundown.runs = False
             self.thread_timer_coundown.terminate()
             self.thread_timer_coundown.wait()
             self.thread_timer_coundown = None
@@ -209,7 +207,8 @@ class FtrackRunner:
         # self.widget_timer.activateWindow()
 
     def change_count_widget(self, time):
-        self.widget_timer.lbl_rest_time.setText(str(time))
+        str_time = str(time).replace(".0", "")
+        self.widget_timer.lbl_rest_time.setText(str_time)
 
     def timer_started(self):
         self.start_countdown_thread()
@@ -225,9 +224,16 @@ class FtrackRunner:
         if self.thread_timer_coundown is not None:
             self.stop_countdown_thread()
 
+    def timer_restart(self):
+        if self.thread_timer is not None:
+            self.thread_timer.signal_restart_timer.emit()
+
+        self.timer_started()
+
     def timer_continue(self):
         if self.thread_timer_coundown is not None:
             self.thread_timer_coundown.signal_continue_timer.emit()
+
 
 class FtrackEventsThread(QtCore.QThread):
     # Senders
@@ -235,18 +241,31 @@ class FtrackEventsThread(QtCore.QThread):
     signal_timer_stopped = QtCore.Signal()
     # Listeners
     signal_stop_timer = QtCore.Signal()
+    signal_restart_timer = QtCore.Signal()
 
     def __init__(self, parent):
         super(FtrackEventsThread, self).__init__()
         cred = credentials._get_credentials()
         self.username = cred['username']
         self.signal_stop_timer.connect(self.ftrack_stop_timer)
+        self.signal_restart_timer.connect(self.ftrack_restart_timer)
+        self.user = None
+        self.last_task = None
 
     def run(self):
         self.timer_session = ftrack_api.Session(auto_connect_event_hub=True)
         self.timer_session.event_hub.subscribe(
             'topic=ftrack.update and source.user.username={}'.format(self.username),
             self.event_handler)
+
+        user_query = 'User where username is "{}"'.format(self.username)
+        self.user = self.timer_session.query(user_query).one()
+
+        timer_query = 'Timer where user.username is "{}"'.format(self.username)
+        timer = self.timer_session.query(timer_query).first()
+        if timer is not None:
+            self.last_task = timer['context']
+            self.signal_timer_started.emit()
 
         self.timer_session.event_hub.wait()
 
@@ -256,21 +275,41 @@ class FtrackEventsThread(QtCore.QThread):
                 return
         except:
             return
+
         new = event['data']['entities'][0]['changes']['start']['new']
         old = event['data']['entities'][0]['changes']['start']['old']
-        self.userId = event['source']['user']['id']
+
         if old is None and new is None:
             return
-        elif old is None:
+
+        timer_query = 'Timer where user.username is "{}"'.format(self.username)
+        timer = self.timer_session.query(timer_query).first()
+        if timer is not None:
+            self.last_task = timer['context']
+
+        if old is None:
             self.signal_timer_started.emit()
         elif new is None:
             self.signal_timer_stopped.emit()
 
     def ftrack_stop_timer(self):
         try:
-            user = self.timer_session.query('User where id is ' + self.userId).one()
-            user.stop_timer()
+            self.user.stop_timer()
             self.timer_session.commit()
+        except Exception as e:
+            log.debug("Timer stop had issues: {}".format(e))
+
+    def ftrack_restart_timer(self):
+        try:
+            last_task = None
+            if "FTRACK_LAST_TASK_ID" in os.environ:
+                task_id = os.environ["FTRACK_LAST_TASK_ID"]
+                query = 'Task where id is {}'.format(task_id)
+                last_task = self.timer_session.query(query).one()
+
+            if (self.last_task is not None) and (self.user is not None):
+                self.user.start_timer(self.last_task)
+                self.timer_session.commit()
         except Exception as e:
             log.debug("Timer stop had issues: {}".format(e))
 
@@ -287,10 +326,12 @@ class CountdownThread(QtCore.QThread):
 
     def __init__(self, parent):
         super(CountdownThread, self).__init__()
+
         self.runs = True
         self.over_line = False
-        self.count_length = 60*5 # 5 minutes
-        self.border_line = 31
+        config_data = self.load_timer_values()
+        self.count_length = config_data['full_time']*60
+        self.border_line = config_data['message_time']*60 + 1
         self.reset_count()
         self.signal_reset_timer.connect(self.reset_count)
         self.signal_continue_timer.connect(self.continue_timer)
@@ -335,6 +376,38 @@ class CountdownThread(QtCore.QThread):
         thread_keyboard.terminate()
         thread_keyboard.wait()
 
+    def load_timer_values(self):
+        templates = os.environ['PYPE_STUDIO_TEMPLATES']
+        path_items = [templates, 'presets', 'ftrack', 'ftrack_config.json']
+        filepath = os.path.sep.join(path_items)
+        data = dict()
+        try:
+            with open(filepath) as data_file:
+                json_dict = json.load(data_file)
+                data = json_dict['timer']
+        except Exception as e:
+            msg = 'Loading "Ftrack Config file" Failed. Please check log for more information. Times are set to default.'
+            log.warning("{} - {}".format(msg, str(e)))
+
+        data = self.validate_timer_values(data)
+
+        return data
+
+    def validate_timer_values(self, data):
+        # default values
+        if 'full_time' not in data:
+            data['full_time'] = 15
+        if 'message_time' not in data:
+            data['message_time'] = 0.5
+
+        # minimum values
+        if data['full_time'] < 2:
+            data['full_time'] = 2
+        # message time is earlier that full time
+        if data['message_time'] > data['full_time']:
+            data['message_time'] = data['full_time'] - 0.5
+        return data
+
 
 class MouseThread(QtCore.QThread):
     signal_stop = QtCore.Signal()
@@ -376,6 +449,7 @@ class KeyboardThread(QtCore.QThread):
     def run(self):
         self.k_listener = keyboard.Listener(on_press=self.on_press)
         self.k_listener.start()
+
 
 class StopTimer(QtWidgets.QWidget):
 
@@ -419,31 +493,31 @@ class StopTimer(QtWidgets.QWidget):
 
         msg_info = "You didn't work for a long time."
         msg_question = "Would you like to stop Ftrack timer?"
-        msg_stopped = "Your Ftrack timer was stopped!"
+        msg_stopped = "Your Ftrack timer was stopped. Do you want to start again?"
 
         self.lbl_info = QtWidgets.QLabel(msg_info)
         self.lbl_info.setFont(self.font)
         self.lbl_info.setTextFormat(QtCore.Qt.RichText)
         self.lbl_info.setObjectName("lbl_info")
-        self.lbl_info.setWordWrap(True);
+        self.lbl_info.setWordWrap(True)
 
         self.lbl_question = QtWidgets.QLabel(msg_question)
         self.lbl_question.setFont(self.font)
         self.lbl_question.setTextFormat(QtCore.Qt.RichText)
         self.lbl_question.setObjectName("lbl_question")
-        self.lbl_question.setWordWrap(True);
+        self.lbl_question.setWordWrap(True)
 
         self.lbl_stopped = QtWidgets.QLabel(msg_stopped)
         self.lbl_stopped.setFont(self.font)
         self.lbl_stopped.setTextFormat(QtCore.Qt.RichText)
         self.lbl_stopped.setObjectName("lbl_stopped")
-        self.lbl_stopped.setWordWrap(True);
+        self.lbl_stopped.setWordWrap(True)
 
         self.lbl_rest_time = QtWidgets.QLabel("")
         self.lbl_rest_time.setFont(self.font)
         self.lbl_rest_time.setTextFormat(QtCore.Qt.RichText)
         self.lbl_rest_time.setObjectName("lbl_rest_time")
-        self.lbl_rest_time.setWordWrap(True);
+        self.lbl_rest_time.setWordWrap(True)
         self.lbl_rest_time.setAlignment(QtCore.Qt.AlignCenter)
 
         self.form.addRow(self.lbl_info)
@@ -463,13 +537,18 @@ class StopTimer(QtWidgets.QWidget):
         self.btn_continue.setToolTip('Timer will continue')
         self.btn_continue.clicked.connect(self.continue_timer)
 
-        self.btn_ok = QtWidgets.QPushButton("OK")
-        self.btn_ok.setToolTip('Close window')
-        self.btn_ok.clicked.connect(self.close_widget)
+        self.btn_close = QtWidgets.QPushButton("Close")
+        self.btn_close.setToolTip('Close window')
+        self.btn_close.clicked.connect(self.close_widget)
+
+        self.btn_restart = QtWidgets.QPushButton("Start timer")
+        self.btn_restart.setToolTip('Timer will be started again')
+        self.btn_restart.clicked.connect(self.restart_timer)
 
         self.group_btn.addWidget(self.btn_continue)
         self.group_btn.addWidget(self.btn_stop)
-        self.group_btn.addWidget(self.btn_ok)
+        self.group_btn.addWidget(self.btn_restart)
+        self.group_btn.addWidget(self.btn_close)
 
         self.main.addLayout(self.form)
         self.main.addLayout(self.group_btn)
@@ -483,10 +562,15 @@ class StopTimer(QtWidgets.QWidget):
 
         self.btn_continue.setVisible(self.main_context)
         self.btn_stop.setVisible(self.main_context)
-        self.btn_ok.setVisible(not self.main_context)
+        self.btn_restart.setVisible(not self.main_context)
+        self.btn_close.setVisible(not self.main_context)
 
     def stop_timer(self):
         self.parent.timer_stop()
+        self.close_widget()
+
+    def restart_timer(self):
+        self.parent.timer_restart()
         self.close_widget()
 
     def continue_timer(self):
