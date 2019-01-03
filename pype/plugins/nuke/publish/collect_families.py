@@ -12,9 +12,6 @@ class CollectInstanceFamilies(pyblish.api.ContextPlugin):
     def process(self, context):
         for instance in context.data["instances"]:
 
-            if not instance.data["publish"]:
-                continue
-
             if "write" in instance.data["family"]:
                 node = instance[0]
 
