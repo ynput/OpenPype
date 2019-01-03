@@ -16,7 +16,7 @@ class CrateRead(avalon.nuke.Creator):
     hosts = ["nuke"]
     family = "source"
     families = family
-    icon = "sign-out"
+    icon = "film"
 
     def __init__(self, *args, **kwargs):
         super(CrateRead, self).__init__(*args, **kwargs)
