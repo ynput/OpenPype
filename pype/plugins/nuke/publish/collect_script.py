@@ -34,6 +34,12 @@ class CollectScript(pyblish.api.ContextPlugin):
         first_frame = int(root["first_frame"].getValue())
         last_frame = int(root["last_frame"].getValue())
 
+        # Get format
+        format = root['format'].value()
+        resolution_width = format.width()
+        resolution_height = format.height()
+        pixel_aspect = format.pixelAspect()
+
         # Create instance
         instance = context.create_instance(subset)
         instance.add(root)
@@ -45,6 +51,9 @@ class CollectScript(pyblish.api.ContextPlugin):
             "name": base_name,
             "startFrame": first_frame,
             "endFrame": last_frame,
+            "resolution_width": resolution_width,
+            "resolution_height": resolution_height,
+            "pixel_aspect": pixel_aspect,
             "publish": root.knob('publish').value(),
             "family": family,
             "representation": "nk",
