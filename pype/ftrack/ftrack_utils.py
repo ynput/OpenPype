@@ -13,6 +13,7 @@ from app.api import Logger
 
 log = Logger.getLogger(__name__)
 
+
 def get_data(parent, entity, session, custom_attributes):
     entity_type = entity.entity_type
 
@@ -22,13 +23,20 @@ def get_data(parent, entity, session, custom_attributes):
 
     for cust_attr in custom_attributes:
         key = cust_attr['key']
-        if cust_attr['entity_type'].lower() in ['asset']:
+        if (
+            cust_attr['is_hierarchical'] is True or
+            cust_attr['entity_type'].lower() in ['asset'] or
+            (
+                cust_attr['entity_type'].lower() in ['show'] and
+                entity_type.lower() == 'project'
+            )
+        ):
             data[key] = entity['custom_attributes'][key]
 
-        elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
-            data[key] = entity['custom_attributes'][key]
-
-        elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
+        elif (
+            cust_attr['entity_type'].lower() in ['task'] and
+            entity_type.lower() != 'project'
+        ):
             # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
             entity_type_full = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
             # Get object id of entity type
