@@ -32,7 +32,7 @@ from .templates import (
     get_asset,
     get_task,
     fill_avalon_workdir,
-    get_version_from_workfile
+    get_version_from_path
 )
 
 __all__ = [
@@ -61,7 +61,7 @@ __all__ = [
     "get_asset",
     "get_task",
     "fill_avalon_workdir",
-    "get_version_from_workfile",
+    "get_version_from_path",
 
     # preloaded templates
     "Anatomy",

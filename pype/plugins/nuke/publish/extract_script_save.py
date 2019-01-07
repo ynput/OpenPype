@@ -6,7 +6,7 @@ class ExtractScriptSave(pyblish.api.Extractor):
     """
     """
     label = 'Script Save'
-    order = pyblish.api.Extractor.order - 0.45
+    order = pyblish.api.Extractor.order - 0.1
     hosts = ['nuke']
 
     def process(self, instance):

@@ -24,13 +24,21 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
     label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    families = ["prerendered.frames", "imagesequence", "render"]
+    family_targets = [".frames", ".local", ".review", "imagesequence", "render"]
 
     def process(self, instance):
+
+        families = [f for f in instance.data["families"]
+                    for search in self.family_targets
+                    if search in f]
+
+        if not families:
+            return
 
         self.register(instance)
 
         self.log.info("Integrating Asset in to the database ...")
+        self.log.info("instance.data: {}".format(instance.data))
         if instance.data.get('transfer', True):
             self.integrate(instance)
 
@@ -111,11 +119,9 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                                       locations=[LOCATION],
                                       data=version_data)
 
-        self.log.debug("version: {}".format(version))
         self.log.debug("Creating version ...")
-
         version_id = io.insert_one(version).inserted_id
-        self.log.debug("version_id: {}".format(version_id))
+
         # Write to disk
         #          _
         #         | |
@@ -128,11 +134,10 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         #
         root = api.registered_root()
         hierarchy = io.find_one({"type": 'asset', "name": ASSET})['data']['parents']
-
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
-        self.log.debug("hierarchy: {}".format(hierarchy))
+
         template_data = {"root": root,
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
@@ -151,7 +156,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         # Each should be a single representation (as such, a single extension)
         representations = []
         destination_list = []
-
+        self.log.debug("integrate_frames:instance.data[files]: {}".format(
+            instance.data["files"]))
         for files in instance.data["files"]:
             # Collection
             #   _______
@@ -164,29 +170,34 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
             #
             if isinstance(files, list):
 
-                collection = files
+                src_collections, remainder = clique.assemble(files)
+                src_collection = src_collections[0]
                 # Assert that each member has identical suffix
+                src_head = src_collection.format("{head}")
+                src_tail = ext = src_collection.format("{tail}")
 
-                dst_collection = []
-                for fname in collection:
-
-                    filename, ext = os.path.splitext(fname)
-                    _, frame = os.path.splitext(filename)
-
-                    template_data["representation"] = ext[1:]
-                    template_data["frame"] = frame[1:]
-
-                    src = os.path.join(stagingdir, fname)
+                test_dest_files = list()
+                for i in [1, 2]:
+                    template_data["representation"] = src_tail[1:]
+                    template_data["frame"] = src_collection.format(
+                        "{padding}") % i
                     anatomy_filled = anatomy.format(template_data)
-                    dst = anatomy_filled.render.path
+                    test_dest_files.append(anatomy_filled.render.path)
 
-                    dst_collection.append(dst)
+                dst_collections, remainder = clique.assemble(test_dest_files)
+                dst_collection = dst_collections[0]
+                dst_head = dst_collection.format("{head}")
+                dst_tail = dst_collection.format("{tail}")
+
+                for i in src_collection.indexes:
+                    src_padding = src_collection.format("{padding}") % i
+                    src_file_name = "{0}{1}{2}".format(src_head, src_padding, src_tail)
+                    dst_padding = dst_collection.format("{padding}") % i
+                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
+
+                    src = os.path.join(stagingdir, src_file_name)
                     instance.data["transfers"].append([src, dst])
-
                 template = anatomy.render.path
-
-                collections, remainder = clique.assemble(dst_collection)
-                dst = collections[0].format('{head}{padding}{tail}')
 
             else:
                 # Single file
@@ -197,7 +208,14 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # |       |
                 # |_______|
                 #
+
+                template_data.pop("frame", None)
+                anatomy.pop("frame", None)
+
                 fname = files
+
+                self.log.info("fname: {}".format(fname))
+
                 assert not os.path.isabs(fname), (
                     "Given file name is a full path"
                 )
@@ -206,11 +224,12 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 template_data["representation"] = ext[1:]
 
                 src = os.path.join(stagingdir, fname)
+
                 anatomy_filled = anatomy.format(template_data)
                 dst = anatomy_filled.render.path
                 template = anatomy.render.path
-                instance.data["transfers"].append([src, dst])
 
+                instance.data["transfers"].append([src, dst])
 
             representation = {
                 "schema": "pype:representation-2.0",
@@ -236,12 +255,12 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                      "representation": ext[1:]
                 }
             }
+
             destination_list.append(dst)
             instance.data['destination_list'] = destination_list
             representations.append(representation)
 
         self.log.info("Registering {} items".format(len(representations)))
-
         io.insert_many(representations)
 
     def integrate(self, instance):
@@ -256,6 +275,11 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         transfers = instance.data["transfers"]
 
         for src, dest in transfers:
+            src = os.path.normpath(src)
+            dest = os.path.normpath(dest)
+            if src in dest:
+                continue
+
             self.log.info("Copying file .. {} -> {}".format(src, dest))
             self.copy_file(src, dest)
 
