@@ -9,10 +9,10 @@ from avalon.vendor import toml
 from bson.objectid import ObjectId
 from pype.ftrack import ftrack_utils
 
+
 class Sync_to_Avalon(BaseEvent):
 
     def launch(self, session, entities, event):
-
         self.ca_mongoid = 'avalon_mongo_id'
         # If mongo_id textfield has changed: RETURN!
         # - infinite loop
@@ -21,7 +21,7 @@ class Sync_to_Avalon(BaseEvent):
                 if self.ca_mongoid in ent['keys']:
                     return
         self.proj = None
-
+        self.errors = []
         # get project
         for entity in entities:
             try:
@@ -32,10 +32,12 @@ class Sync_to_Avalon(BaseEvent):
             break
 
         # check if project is set to auto-sync
-        if (self.proj is None or
+        if (
+            self.proj is None or
             'avalon_auto_sync' not in self.proj['custom_attributes'] or
-            self.proj['custom_attributes']['avalon_auto_sync'] is False):
-                return
+            self.proj['custom_attributes']['avalon_auto_sync'] is False
+        ):
+            return
 
         # check if project have Custom Attribute 'avalon_mongo_id'
         if self.ca_mongoid not in self.proj['custom_attributes']:
@@ -51,13 +53,18 @@ class Sync_to_Avalon(BaseEvent):
         # get avalon project if possible
         io.install()
         try:
-            self.avalon_project = io.find_one({"_id": ObjectId(self.projectId)})
+            self.avalon_project = io.find_one({
+                "_id": ObjectId(self.projectId)
+            })
         except:
             self.avalon_project = None
 
         importEntities = []
         if self.avalon_project is None:
-            self.avalon_project = io.find_one({"type": "project", "name": self.proj["full_name"]})
+            self.avalon_project = io.find_one({
+                "type": "project",
+                "name": self.proj["full_name"]
+            })
             if self.avalon_project is None:
                 importEntities.append(self.proj)
             else:
@@ -69,9 +76,10 @@ class Sync_to_Avalon(BaseEvent):
             if entity.entity_type.lower() in ['task']:
                 entity = entity['parent']
 
-            try:
-                mongo_id = entity['custom_attributes'][self.ca_mongoid]
-            except:
+            if (
+                'custom_attributes' not in entity or
+                self.ca_mongoid not in entity['custom_attributes']
+            ):
                 message = "Custom attribute '{}' for '{}' is not created or don't have set permissions for API".format(self.ca_mongoid, entity.entity_type)
                 self.log.warning(message)
                 self.show_message(event, message, False)
@@ -93,13 +101,25 @@ class Sync_to_Avalon(BaseEvent):
 
         except ValueError as ve:
             message = str(ve)
-            self.show_message(event, message, False)
+            items = [{
+                'label': 'Error',
+                'type': 'textarea',
+                'name': 'error',
+                'value': message
+            }]
+            self.show_interface(event, items)
             self.log.warning(message)
 
         except Exception as e:
             message = str(e)
             ftrack_message = "SyncToAvalon event ended with unexpected error please check log file for more information."
-            self.show_message(event, ftrack_message, False)
+            items = [{
+                'label': 'Error',
+                'type': 'textarea',
+                'name': 'error',
+                'value': ftrack_message
+            }]
+            self.show_interface(event, items)
             self.log.error(message)
 
         io.uninstall()
@@ -122,21 +142,26 @@ class Sync_to_Avalon(BaseEvent):
 
             if self.avalon_project is None:
                 inventory.save(name, config, template)
-                self.avalon_project = io.find_one({'type': 'project', 'name': name})
+                self.avalon_project = io.find_one({'type': type, 'name': name})
 
             elif self.avalon_project['name'] != name:
-                raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly!'.format(self.avalon_project['name'], name))
+                entity['name'] = self.avalon_project['name']
+                session.commit()
+
+                msg = 'You can\'t change name {} to {}, avalon wouldn\'t work properly!\nName was changed back!'.format(self.avalon_project['name'], name)
+                self.errors.append(msg)
+                return
 
             self.projectId = self.avalon_project['_id']
 
-            data = ftrack_utils.get_data(self, entity, session,self.custom_attributes)
+            data = ftrack_utils.get_data(self, entity, session, self.custom_attributes)
 
             io.update_many(
                 {"_id": ObjectId(self.projectId)},
-                {'$set':{
-                    'name':name,
-                    'config':config,
-                    'data':data,
+                {'$set': {
+                    'name': name,
+                    'config': config,
+                    'data': data,
                     }})
 
             entity['custom_attributes'][self.ca_mongoid] = str(self.projectId)
@@ -146,7 +171,7 @@ class Sync_to_Avalon(BaseEvent):
         if self.avalon_project is None:
             self.importToAvalon(session, self.proj)
 
-        data = ftrack_utils.get_data(self, entity, session,self.custom_attributes)
+        data = ftrack_utils.get_data(self, entity, session, self.custom_attributes)
 
         # return if entity is silo
         if len(data['parents']) == 0:
@@ -171,30 +196,64 @@ class Sync_to_Avalon(BaseEvent):
             if avalon_asset is None:
                 mongo_id = inventory.create_asset(name, silo, data, ObjectId(self.projectId))
             # Raise error if it seems to be different ent. with same name
-            elif (avalon_asset['data']['parents'] != data['parents'] or
-                avalon_asset['silo'] != silo):
-                    raise ValueError('In Avalon DB already exists entity with name "{0}"'.format(name))
-        elif avalon_asset['name'] != entity['name']:
-            raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly - please set name back'.format(avalon_asset['name'], name))
-        elif avalon_asset['silo'] != silo or avalon_asset['data']['parents'] != data['parents']:
-            old_path = "/".join(avalon_asset['data']['parents'])
-            new_path = "/".join(data['parents'])
-            raise ValueError('You can\'t move with entities. Entity "{}" was moved from "{}" to "{}" , avalon DB won\'t work properly'.format(avalon_asset['name'], old_path, new_path))
+            elif (
+                avalon_asset['data']['parents'] != data['parents'] or
+                avalon_asset['silo'] != silo
+            ):
+                msg = 'In Avalon DB already exists entity with name "{0}"'.format(name)
+                self.errors.append(msg)
+                return
+        else:
+            if avalon_asset['name'] != entity['name']:
+                self.assetNamer(session, entity, avalon_asset)
 
+            if avalon_asset['silo'] != silo or avalon_asset['data']['parents'] != data['parents']:
+                old_path = "/".join(avalon_asset['data']['parents'])
+                new_path = "/".join(data['parents'])
+                msg = 'You can\'t move with entities. Entity "{}" was moved from "{}" to "{}" , avalon DB won\'t work properly'.format(avalon_asset['name'], old_path, new_path)
+                self.errors.append(msg)
+
+        if len(self.errors) > 0:
+            return
 
         io.update_many(
             {"_id": ObjectId(mongo_id)},
-            {'$set':{
-                'name':name,
-                'silo':silo,
-                'data':data,
+            {'$set': {
+                'name': name,
+                'silo': silo,
+                'data': data,
                 'parent': ObjectId(self.projectId)}})
 
         entity['custom_attributes'][self.ca_mongoid] = str(mongo_id)
 
+    def checkChilds(self, entity):
+        if entity['children']:
+            childs = entity['children']
+            for child in childs:
+                if child.entity_type.lower() == 'task':
+                    pass
+                else:
+                    self.checkChilds()
+
+    def assetNamer(self, session, entity, asset):
+        ability = True
+        if entity['children']:
+            childs = entity['children']
+            for child in childs:
+                if child.entity_type.lower() == 'task':
+                    pass
+
+        if ability is True:
+            return
+        msg = 'You can\'t change name {} to {}, avalon wouldn\'t work properly!\nPlease create new entity.\nName was changed back!'.format(avalon_asset['name'], name)
+        entity['name'] = asset['name']
+        session.commit()
+        self.errors.append(msg)
+
     def setAvalonAttributes(self):
         self.custom_attributes = []
-        all_avalon_attr = self.session.query('CustomAttributeGroup where name is "avalon"').one()
+        query = 'CustomAttributeGroup where name is "avalon"'
+        all_avalon_attr = self.session.query(query).one()
         for cust_attr in all_avalon_attr['custom_attribute_configurations']:
             if 'avalon_' not in cust_attr['key']:
                 self.custom_attributes.append(cust_attr)
@@ -210,10 +269,13 @@ class Sync_to_Avalon(BaseEvent):
             self.session, *args
         )
         return
-        
+
     def _translate_event(self, session, event):
-        exceptions = ['assetversion', 'job', 'user', 'reviewsessionobject', 'timer', 'socialfeed', 'timelog']
-        _selection = event['data'].get('entities',[])
+        exceptions = [
+            'assetversion', 'job', 'user', 'reviewsessionobject', 'timer',
+            'socialfeed', 'timelog'
+        ]
+        _selection = event['data'].get('entities', [])
 
         _entities = list()
         for entity in _selection:
@@ -226,6 +288,7 @@ class Sync_to_Avalon(BaseEvent):
             )
 
         return [_entities, event]
+
 
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''
