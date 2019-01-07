@@ -34,8 +34,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     actions = [pype.api.RepairAction]
 
     DEFAULT_PADDING = 4
-    RENDERER_PREFIX = {"vray": "<Scene>/<Scene>_<Layer>/<Layer>"}
-    DEFAULT_PREFIX = "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
+    RENDERER_PREFIX = {"vray": "<Scene>/<Layer>/<Layer>"}
+    DEFAULT_PREFIX = "<Scene>/<RenderLayer>/<RenderLayer>"
 
     def process(self, instance):
 

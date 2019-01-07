@@ -24,7 +24,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
     label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    family_targets = [".frames", ".local", ".review"]
+    family_targets = [".frames", ".local", ".review", "imagesequence", "render"]
 
     def process(self, instance):
 
@@ -242,17 +242,17 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                    "root": root,
-                    "project": PROJECT,
-                    "projectcode": project['data']['code'],
-                    'task': api.Session["AVALON_TASK"],
-                    "silo": asset['silo'],
-                    "asset": ASSET,
-                    "family": instance.data['family'],
-                    "subset": subset["name"],
-                    "version": version["name"],
-                    "hierarchy": hierarchy,
-                    "representation": ext[1:]
+                     "root": root,
+                     "project": PROJECT,
+                     "projectcode": project['data']['code'],
+                     'task': api.Session["AVALON_TASK"],
+                     "silo": asset['silo'],
+                     "asset": ASSET,
+                     "family": instance.data['family'],
+                     "subset": subset["name"],
+                     "VERSION": version["name"],
+                     "hierarchy": hierarchy,
+                     "representation": ext[1:]
                 }
             }
 
@@ -368,10 +368,13 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
             families.append(instance_family)
         families += current_families
 
-        # create relative source path for DB
-        relative_path = os.path.relpath(context.data["currentFile"],
-                                        api.registered_root())
-        source = os.path.join("{root}", relative_path).replace("\\", "/")
+        try:
+            source = instance.data['source']
+        except KeyError:
+            source = context.data["currentFile"]
+
+            relative_path = os.path.relpath(source, api.registered_root())
+            source = os.path.join("{root}", relative_path).replace("\\", "/")
 
         version_data = {"families": families,
                         "time": context.data["time"],

@@ -199,6 +199,18 @@ class Sync_to_Avalon(BaseEvent):
             if 'avalon_' not in cust_attr['key']:
                 self.custom_attributes.append(cust_attr)
 
+    def _launch(self, event):
+        self.session.reset()
+
+        args = self._translate_event(
+            self.session, event
+        )
+
+        self.launch(
+            self.session, *args
+        )
+        return
+        
     def _translate_event(self, session, event):
         exceptions = ['assetversion', 'job', 'user', 'reviewsessionobject', 'timer', 'socialfeed', 'timelog']
         _selection = event['data'].get('entities',[])

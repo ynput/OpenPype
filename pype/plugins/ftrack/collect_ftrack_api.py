@@ -25,6 +25,6 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
         result = session.query('Task where\
             project.full_name is "{0}" and\
             name is "{1}" and\
-            parent.name is "{2}"'.format(project, task, asset))
+            parent.name is "{2}"'.format(project, task, asset)).one()
 
         context.data["ftrackTask"] = result
