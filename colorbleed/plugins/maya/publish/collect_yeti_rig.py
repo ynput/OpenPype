@@ -99,7 +99,13 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             list
         """
         resources = []
-        image_search_path = cmds.getAttr("{}.imageSearchPath".format(node))
+
+        image_search_paths = cmds.getAttr("{}.imageSearchPath".format(node))
+
+        # TODO: Somehow this uses OS environment path separator, `:` vs `;`
+        # Later on check whether this is pipeline OS cross-compatible.
+        image_search_paths = [p for p in
+                              image_search_paths.split(os.path.pathsep) if p]
 
         # List all related textures
         texture_filenames = cmds.pgYetiCommand(node, listTextures=True)
@@ -111,35 +117,32 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                                            type="reference")
         self.log.info("Found %i reference node(s)" % len(reference_nodes))
 
-        if texture_filenames and not image_search_path:
+        if texture_filenames and not image_search_paths:
             raise ValueError("pgYetiMaya node '%s' is missing the path to the "
                              "files in the 'imageSearchPath "
                              "atttribute'" % node)
 
         # Collect all texture files
         for texture in texture_filenames:
-            item = {"files": [], "source": texture, "node": node}
-            texture_filepath = os.path.join(image_search_path, texture)
-            if len(texture.split(".")) > 2:
-
-                # For UDIM based textures (tiles)
-                if "<UDIM>" in texture:
-                    sequences = self.get_sequence(texture_filepath,
-                                                  pattern="<UDIM>")
-                    item["files"].extend(sequences)
-
-                # Based textures (animated masks f.e)
-                elif "%04d" in texture:
-                    sequences = self.get_sequence(texture_filepath,
-                                                  pattern="%04d")
-                    item["files"].extend(sequences)
-                # Assuming it is a fixed name
-                else:
-                    item["files"].append(texture_filepath)
-            else:
-                item["files"].append(texture_filepath)
+            item = {
+                "files": self.search_textures(paths=image_search_paths,
+                                              texture=texture),
+                "source": texture,
+                "node": node
+            }
 
             resources.append(item)
+
+        # For now validate that every texture has at least a single file
+        # resolved. Since a 'resource' does not have the requirement of having
+        # a `files` explicitly mapped it's not explicitly validated.
+        # TODO: Validate this as a validator
+        invalid_resources = []
+        for resource in resources:
+            if not resource['files']:
+                invalid_resources.append(resource)
+        if invalid_resources:
+            raise RuntimeError("Invalid resources")
 
         # Collect all referenced files
         for reference_node in reference_nodes:
@@ -149,6 +152,9 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                                         getParamValue=True)
 
             if not os.path.isfile(ref_file):
+                self.log.warning("Reference node '%s' has no valid file "
+                                 "path set: %s" % (reference_node, ref_file))
+                # TODO: This should allow to pass and fail in Validator instead
                 raise RuntimeError("Reference file must be a full file path!")
 
             # Create resource dict
@@ -168,6 +174,44 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             resources.append(item)
 
         return resources
+
+    def search_textures(self, paths, texture):
+        """Search the texture source files in the image search paths.
+
+        This also parses to full sequences.
+
+        """
+
+        # TODO: Check if texture is abspath, if so don't search.
+
+        # Collect the first matching texture from the search paths
+        for root in paths:
+            texture_filepath = os.path.join(root, texture)
+
+            # Collect full sequence if it matches a sequence pattern
+            if len(texture.split(".")) > 2:
+
+                # For UDIM based textures (tiles)
+                if "<UDIM>" in texture:
+                    sequences = self.get_sequence(texture_filepath,
+                                                  pattern="<UDIM>")
+                    if sequences:
+                        return sequences
+
+                # Based textures (animated masks f.e)
+                elif "%04d" in texture:
+                    sequences = self.get_sequence(texture_filepath,
+                                                  pattern="%04d")
+                    if sequences:
+                        return sequences
+
+            # Assuming it is a fixed name
+            if os.path.exists(texture_filepath):
+                return [texture_filepath]
+
+        self.log.warning("No texture found for: %s (searched: %s)" % (texture,
+                                                                      paths))
+        return []
 
     def get_sequence(self, filename, pattern="%04d"):
         """Get sequence from filename
