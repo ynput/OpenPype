@@ -128,11 +128,11 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             files = []
             if os.path.isabs(texture):
                 self.log.debug("Texture is absolute path, ignoring "
-                               "image search paths.. %s" % texture)
+                               "image search paths for: %s" % texture)
                 files = self.search_textures(texture)
             else:
                 for root in image_search_paths:
-                    filepath = os.path.join(root, image_search_paths)
+                    filepath = os.path.join(root, texture)
                     files = self.search_textures(filepath)
                     if files:
                         # Break out on first match in search paths..
