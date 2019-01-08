@@ -124,9 +124,27 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
         # Collect all texture files
         for texture in texture_filenames:
+
+            files = []
+            if os.path.isabs(texture):
+                self.log.debug("Texture is absolute path, ignoring "
+                               "image search paths.. %s" % texture)
+                files = self.search_textures(texture)
+            else:
+                for root in image_search_paths:
+                    filepath = os.path.join(root, image_search_paths)
+                    files = self.search_textures(filepath)
+                    if files:
+                        # Break out on first match in search paths..
+                        break
+
+            if not files:
+                self.log.warning(
+                    "No texture found for: %s "
+                    "(searched: %s)" % (texture, image_search_paths))
+
             item = {
-                "files": self.search_textures(paths=image_search_paths,
-                                              texture=texture),
+                "files": files,
                 "source": texture,
                 "node": node
             }
@@ -175,46 +193,42 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
         return resources
 
-    def search_textures(self, paths, texture):
+    def search_textures(self, filepath):
         """Search the texture source files in the image search paths.
 
         This also parses to full sequences.
 
         """
+        filename = os.path.basename(filepath)
 
-        # TODO: Check if texture is abspath, if so don't search.
+        # Collect full sequence if it matches a sequence pattern
+        if len(filename.split(".")) > 2:
 
-        # Collect the first matching texture from the search paths
-        for root in paths:
-            texture_filepath = os.path.join(root, texture)
+            # For UDIM based textures (tiles)
+            if "<UDIM>" in filename:
+                sequences = self.get_sequence(filepath,
+                                              pattern="<UDIM>")
+                if sequences:
+                    return sequences
 
-            # Collect full sequence if it matches a sequence pattern
-            if len(texture.split(".")) > 2:
+            # Frame/time - Based textures (animated masks f.e)
+            elif "%04d" in filename:
+                sequences = self.get_sequence(filepath,
+                                              pattern="%04d")
+                if sequences:
+                    return sequences
 
-                # For UDIM based textures (tiles)
-                if "<UDIM>" in texture:
-                    sequences = self.get_sequence(texture_filepath,
-                                                  pattern="<UDIM>")
-                    if sequences:
-                        return sequences
-
-                # Based textures (animated masks f.e)
-                elif "%04d" in texture:
-                    sequences = self.get_sequence(texture_filepath,
-                                                  pattern="%04d")
-                    if sequences:
-                        return sequences
-
-            # Assuming it is a fixed name
-            if os.path.exists(texture_filepath):
-                return [texture_filepath]
-
-        self.log.warning("No texture found for: %s (searched: %s)" % (texture,
-                                                                      paths))
+        # Assuming it is a fixed name (single file)
+        if os.path.exists(filepath):
+            return [filepath]
         return []
 
     def get_sequence(self, filename, pattern="%04d"):
-        """Get sequence from filename
+        """Get sequence from filename.
+
+        This will only return files if they exist on disk as it tries
+        to collect the sequence using the filename pattern and searching
+        for them on disk.
 
         Supports negative frame ranges like -001, 0000, 0001 and -0001,
         0000, 0001.
