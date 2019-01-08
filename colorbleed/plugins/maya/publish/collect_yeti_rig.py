@@ -234,7 +234,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
         return []
 
-    def get_sequence(self, filename, pattern="%04d"):
+    def get_sequence(self, filepath, pattern="%04d"):
         """Get sequence from filename.
 
         This will only return files if they exist on disk as it tries
@@ -245,7 +245,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         0000, 0001.
 
         Arguments:
-            filename (str): The full path to filename containing the given
+            filepath (str): The full path to filename containing the given
             pattern.
             pattern (str): The pattern to swap with the variable frame number.
 
@@ -255,10 +255,10 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         """
         from avalon.vendor import clique
 
-        escaped = re.escape(filename)
+        escaped = re.escape(filepath)
         re_pattern = escaped.replace(pattern, "-?[0-9]+")
 
-        source_dir = os.path.dirname(filename)
+        source_dir = os.path.dirname(filepath)
         files = [f for f in os.listdir(source_dir)
                  if re.match(re_pattern, f)]
 
