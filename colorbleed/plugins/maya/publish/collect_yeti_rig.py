@@ -196,9 +196,17 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         return resources
 
     def search_textures(self, filepath):
-        """Search the texture source files in the image search paths.
+        """Search all texture files on disk.
 
-        This also parses to full sequences.
+        This also parses to full sequences for those with dynamic patterns
+        like <UDIM> and %04d in the filename.
+
+        Args:
+            filepath (str): The full path to the file, including any
+                dynamic patterns like <UDIM> or %04d
+
+        Returns:
+            list: The files found on disk
 
         """
         filename = os.path.basename(filepath)
@@ -223,6 +231,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         # Assuming it is a fixed name (single file)
         if os.path.exists(filepath):
             return [filepath]
+
         return []
 
     def get_sequence(self, filename, pattern="%04d"):
