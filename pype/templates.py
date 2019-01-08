@@ -34,15 +34,16 @@ def reset_data_from_templates():
     log.info("Data from templates were Unloaded...")
 
 
-def get_version_from_workfile(file):
+def get_version_from_path(file, warning=True):
     pattern = re.compile(r"_v([0-9]*)")
     try:
         v_string = pattern.findall(file)[0]
         return v_string
-    except IndexError:
-        log.error("templates:get_version_from_workfile:"
-                  "`{}` missing version string."
-                  "Example `v004`".format(file))
+    except IndexError as e:
+        if warning:
+            log.error("Exception: {} \nPlease save as version! "
+                      "\nExample: script_name_v001.nk \n{}".format(
+                          __name__ + ".get_version_from_path()", e))
 
 
 def get_project_code():
