@@ -169,25 +169,27 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                                         param="reference_file",
                                         getParamValue=True)
 
-            if not os.path.isfile(ref_file):
-                self.log.warning("Reference node '%s' has no valid file "
-                                 "path set: %s" % (reference_node, ref_file))
-                # TODO: This should allow to pass and fail in Validator instead
-                raise RuntimeError("Reference file must be a full file path!")
-
             # Create resource dict
-            item = {"files": [],
-                    "source": ref_file,
-                    "node": node,
-                    "graphnode": reference_node,
-                    "param": "reference_file"}
+            item = {
+                "source": ref_file,
+                "node": node,
+                "graphnode": reference_node,
+                "param": "reference_file",
+                "files": []
+            }
 
             ref_file_name = os.path.basename(ref_file)
             if "%04d" in ref_file_name:
-                ref_files = self.get_sequence(ref_file)
-                item["files"].extend(ref_files)
+                item["files"] = self.get_sequence(ref_file)
             else:
-                item["files"].append(ref_file)
+                if os.path.exists(ref_file) and os.path.isfile(ref_file):
+                    item["files"] = [ref_file]
+
+            if not item["files"]:
+                self.log.warning("Reference node '%s' has no valid file "
+                                 "path set: %s" % (reference_node, ref_file))
+                # TODO: This should allow to pass and fail in Validator instead
+                raise RuntimeError("Reference node  must be a full file path!")
 
             resources.append(item)
 
