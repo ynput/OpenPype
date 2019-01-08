@@ -10,7 +10,7 @@ import toml
 from avalon import io, lib, pipeline
 from avalon import session as sess
 import acre
-
+from pype.ftrack import ftrack_utils
 
 from pype import api as pype
 
@@ -353,6 +353,11 @@ class AppAction(object):
         task = session.query('Task where id is {}'.format(entity['id'])).one()
         self.log.info('Starting timer for task: ' + task['name'])
         user.start_timer(task, force=True)
+
+        # Change status of task to In progress
+        config = ftrack_utils.get_config_data()
+        statuses = config['sync_to_avalon']['statuses_name_change']
+        status = config['status_on_app_launch']
 
         return {
             'success': True,
