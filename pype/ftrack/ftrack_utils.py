@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import json
 from pprint import *
 
 import ftrack_api
@@ -12,6 +13,22 @@ from avalon.vendor import toml, jsonschema
 from app.api import Logger
 
 log = Logger.getLogger(__name__)
+
+
+def get_config_data():
+    templates = os.environ['PYPE_STUDIO_TEMPLATES']
+    path_items = [templates, 'presets', 'ftrack', 'ftrack_config.json']
+    filepath = os.path.sep.join(path_items)
+    data = dict()
+    try:
+        with open(filepath) as data_file:
+            data = json.load(data_file)
+
+    except Exception as e:
+        msg = 'Loading "Ftrack Config file" Failed. Please check log for more information. Times are set to default.'
+        log.warning("{} - {}".format(msg, str(e)))
+
+    return data
 
 def get_data(parent, entity, session, custom_attributes):
     entity_type = entity.entity_type
