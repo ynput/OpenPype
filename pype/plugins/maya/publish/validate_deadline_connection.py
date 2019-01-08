@@ -15,15 +15,10 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
 
     def process(self, instance):
 
-        # AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
-        #                                   "http://localhost:8082")
-        #
-        # assert AVALON_DEADLINE is not None, "Requires AVALON_DEADLINE"
-
-        try:
-            deadline_url = os.environ["DEADLINE_REST_URL"]
-        except KeyError:
+        deadline_url = os.environ.get('DEADLINE_REST_URL', None)
+        if deadline_url is None:
             self.log.error("Deadline REST API url not found.")
+            raise ValueError("Deadline REST API url not found.")
 
         # Check response
         response = requests.get(deadline_url)

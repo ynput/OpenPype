@@ -20,18 +20,22 @@ class CreateRenderGlobals(avalon.maya.Creator):
         self.data["id"] = "avalon.renderglobals"
 
         # get pools
-        try:
-            deadline_url = os.environ["DEADLINE_REST_URL"]
-        except KeyError:
-            self.log.error("Deadline REST API url not found.")
+        pools = []
+        data = OrderedDict(**self.data)
 
-        argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
-        response = requests.get(argument)
-        if not response.ok:
-            self.log.warning("No pools retrieved")
-            pools = []
+        deadline_url = os.environ.get('DEADLINE_REST_URL', None)
+        if deadline_url is None:
+            self.log.warning("Deadline REST API url not found.")
         else:
-            pools = response.json()
+            argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
+            response = requests.get(argument)
+            if not response.ok:
+                self.log.warning("No pools retrieved")
+            else:
+                pools = response.json()
+                data["primaryPool"] = pools
+                # We add a string "-" to allow the user to not set any secondary pools
+                data["secondaryPool"] = ["-"] + pools
 
         # We don't need subset or asset attributes
         self.data.pop("subset", None)
@@ -49,9 +53,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
         data["whitelist"] = False
         data["machineList"] = ""
         data["useMayaBatch"] = True
-        data["primaryPool"] = pools
-        # We add a string "-" to allow the user to not set any secondary pools
-        data["secondaryPool"] = ["-"] + pools
+
 
         self.data = data
         self.options = {"useSelection": False}  # Force no content
