@@ -1,0 +1,19 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <title>Pico Example</title>
+    <!-- Load the pico Javascript client, always automatically available at /pico.js -->
+    <script src="/pico.js"></script>
+     <!-- Load our example module -->
+    <script src="/example.js"></script>
+</head>
+<body>
+  <p id="message"></p>
+  <script>
+  var example = pico.importModule('example')
+  example.hello("Fergal").then(function(response){
+    document.getElementById('message').innerHTML = response;
+  });
+  </script>
+</body>
+</html>

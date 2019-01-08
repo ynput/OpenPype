@@ -23,6 +23,7 @@ from . import (
     Metadata,
     Dataflow
 )
+
 from .templates import (
     load_data_from_templates,
     reset_data_from_templates,
@@ -32,8 +33,11 @@ from .templates import (
     get_asset,
     get_task,
     fill_avalon_workdir,
-    get_version_from_workfile
+    get_version_from_workfile,
+    make_workdir_path
 )
+
+from .lib import modified_environ
 
 __all__ = [
     # plugin classes
@@ -62,6 +66,8 @@ __all__ = [
     "get_task",
     "fill_avalon_workdir",
     "get_version_from_workfile",
+    "make_workdir_path",
+    "modified_environ",
 
     # preloaded templates
     "Anatomy",

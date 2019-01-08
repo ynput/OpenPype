@@ -98,3 +98,18 @@ def fill_avalon_workdir():
     awd_filled = os.path.normpath(format(awd, data))
     os.environ["AVALON_WORKDIR"] = awd_filled
     log.info("`AVALON_WORKDIR` fixed to: {}".format(awd_filled))
+
+
+def make_workdir_path(anatomy):
+    try:
+        data = {"project": {"name": get_project_name(),
+                            "code": get_project_code()},
+                "task": get_task(),
+                "asset": get_asset(),
+                "hierarchy": os.environ["AVALON_HIERARCHY"]}
+
+        anatomy = anatomy.format(data)
+    except Exception as e:
+        log.error("{0} Error in anatomy.format: {1}".format(__name__, e))
+    return os.path.join(anatomy.work.root,
+                        anatomy.work.folder)
