@@ -182,9 +182,10 @@ class Sync_to_Avalon(BaseEvent):
 
         # only check name if entity is silo
         if len(data['parents']) == 0:
-            if self.checkSilo(entity, event, session) is False:
-                raise ExpectedError
-            return
+            silo = None
+            # if self.checkSilo(entity, event, session) is False:
+            #     raise ExpectedError
+            # return
         else:
             silo = data['parents'][0]
 
