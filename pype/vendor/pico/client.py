@@ -124,6 +124,8 @@ class PicoClient(object):
 
 def load(module_name):
     ip = os.getenv("PICO_IP", '127.0.0.1')
+    if ip.startswith('http'):
+        ip = ip.replace("http://", "")
     port = int(os.getenv("PICO_PORT", 4242))
     client = PicoClient(
         "http://{0}:{1}".format(ip, port)

@@ -40,7 +40,12 @@ if __name__ == '__main__':
             module_name += ':app'
         app = import_string(module_name)
 
-    kwargs = {"ip": os.getenv("PICO_IP", None),
+    ip = os.getenv("PICO_IP", None)
+
+    if ip and ip.startswith('http'):
+        ip = ip.replace("http://", "")
+
+    kwargs = {"ip": ip,
               "port": int(os.getenv("PICO_PORT", None)),
               "use_debugger": os.getenv("PICO_DEBUG", None),
               "use_reloader": os.getenv("PICO_RELOADER", None),
