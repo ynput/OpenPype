@@ -8,7 +8,7 @@ import pype.api
 import pype.maya.lib as lib
 
 
-class ExtractModel(pype.api.Extractor):
+class ExtractAssProxy(pype.api.Extractor):
     """Extract proxy model as Maya Ascii to use as arnold standin
 
 
