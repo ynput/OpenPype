@@ -10,7 +10,7 @@ s = example.hello("Python")
 
 Use help(example.hello) or example.hello? as normal to check function parameters and docstrings.
 """
-
+import os
 import pico.pragmaticjson as json
 import imp
 import requests
@@ -68,7 +68,8 @@ class PicoClient(object):
                     yield s
 
     def _call_function(self, module, function, args):
-        url = '{base_url}/{module}/{function}/'.format(base_url=self.url, module=module.replace('.', '/'), function=function)
+        url = '{base_url}/{module}/{function}/'.format(
+            base_url=self.url, module=module.replace('.', '/'), function=function)
         return self._request(url, args)
 
     def load(self, module_name):
@@ -89,7 +90,8 @@ class PicoClient(object):
         module.__doc__ = module_def['doc']
         module._pico_client = self
         for function_def in module_def['functions']:
-            args = [(arg['name'], arg.get('default', None)) for arg in function_def['args']] + [('_timeout', None), ('_headers', {})]
+            args = [(arg['name'], arg.get('default', None))
+                    for arg in function_def['args']] + [('_timeout', None), ('_headers', {})]
             args_string = ', '.join(["%s=%r" % (a, d) for a, d in args])
             code = 'def {name}({arg_string}):\n'
             code += '    """ {docstring} """\n'
@@ -120,7 +122,10 @@ class PicoClient(object):
         self.session.headers.pop('Authorization', None)
 
 
-def load(module_url):
-    url, module_name = module_url.rsplit('/', 1)
-    client = PicoClient(url)
+def load(module_name):
+    ip = os.getenv("PICO_IP", '127.0.0.1')
+    port = int(os.getenv("PICO_PORT", 4242))
+    client = PicoClient(
+        "http://{0}:{1}".format(ip, port)
+    )
     return client.load(module_name)
