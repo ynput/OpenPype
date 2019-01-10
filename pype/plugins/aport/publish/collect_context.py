@@ -1,15 +1,35 @@
 import pyblish.api
-from avalon import api as avalon
-from avalon import io
+from avalon import (
+    io,
+    api as avalon
+)
+import pprint
 
 
-class CollectContextDataEditorial(pyblish.api.ContextPlugin):
-    """Collecting data from temp json sent from premiera context"""
+class CollectContextDataFromAport(pyblish.api.ContextPlugin):
+    """
+    Collecting temp json data sent from a host context
+    and path for returning json data back to hostself.
 
-    label = "Collect Editorial Context"
+    Setting avalon session into correct context
+
+    Args:
+        context (obj): pyblish context session
+
+    """
+
+    label = "Collect Aport Context"
     order = pyblish.api.CollectorOrder + 0.1
 
     def process(self, context):
-        data_path = context.data['json_context_data_path']
-        self.log.info("Context is: {}".format(data_path))
-        self.log.warning("avalon.session is: {}".format(avalon.session))
+        rqst_json_data_path = context.data['rqst_json_data_path']
+        post_json_data_path = context.data['post_json_data_path']
+
+        self.log.info("Context.data are: {}".format(
+            context.data))
+
+        self.log.info("rqst_json_data_path is: {}".format(rqst_json_data_path))
+
+        self.log.info("post_json_data_path is: {}".format(post_json_data_path))
+
+        self.log.info("avalon.session is: {}".format(avalon.session))

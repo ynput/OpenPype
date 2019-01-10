@@ -22,19 +22,24 @@ PACKAGE_DIR = os.path.dirname(PARENT_DIR)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
 PUBLISH_PATH = os.path.join(
-    PLUGINS_DIR, "premiera", "publish"
+    PLUGINS_DIR, "premiere", "publish"
 ).replace("\\", "/")
 
-LOAD_PATH = os.path.join(PLUGINS_DIR, "premiera", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "premiera", "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "premiera", "inventory")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "premiere", "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "premiere", "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "premiere", "inventory")
 
 
 def request_aport(url_path, data={}):
     try:
         api.add_tool_to_environment(["aport"])
+
         ip = os.getenv("PICO_IP", None)
+        if ip and ip.startswith('http'):
+            ip = ip.replace("http://", "")
+
         port = int(os.getenv("PICO_PORT", None))
+
         url = "http://{0}:{1}{2}".format(ip, port, url_path)
         req = requests.post(url, data=data).text
         return req
@@ -73,9 +78,11 @@ def install():
 
     api.set_avalon_workdir()
     log.info("Registering Premiera plug-ins..")
+
     reg_paths = request_aport("/pipeline/register_plugin_path",
                               {"publish_path": PUBLISH_PATH})
-    api.message(title="pyblish_paths", message=str(reg_paths), level="info")
+    log.info(str(reg_paths))
+    # api.message(title="pyblish_paths", message=str(reg_paths), level="info")
 
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
