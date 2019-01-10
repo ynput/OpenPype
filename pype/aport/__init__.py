@@ -7,7 +7,7 @@ from app import api as app
 
 from .. import api
 
-log = api.Logger.getLogger(__name__, "editorial")
+log = api.Logger.getLogger(__name__, "aport")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -16,8 +16,8 @@ PACKAGE_DIR = os.path.dirname(PARENT_DIR)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
 PUBLISH_PATH = os.path.join(
-    PLUGINS_DIR, "editorial", "publish"
-)
+    PLUGINS_DIR, "aport", "publish"
+).replace("\\", "/")
 
 if os.getenv("PUBLISH_PATH", None):
     os.environ["PUBLISH_PATH"] = os.pathsep.join(
@@ -27,15 +27,15 @@ if os.getenv("PUBLISH_PATH", None):
 else:
     os.environ["PUBLISH_PATH"] = PUBLISH_PATH
 
-LOAD_PATH = os.path.join(PLUGINS_DIR, "editorial", "load")
-CREATE_PATH = os.path.join(PLUGINS_DIR, "editorial", "create")
-INVENTORY_PATH = os.path.join(PLUGINS_DIR, "editorial", "inventory")
+LOAD_PATH = os.path.join(PLUGINS_DIR, "aport", "load")
+CREATE_PATH = os.path.join(PLUGINS_DIR, "aport", "create")
+INVENTORY_PATH = os.path.join(PLUGINS_DIR, "aport", "inventory")
 
 
 def install():
-    api.fill_avalon_workdir()
+    api.set_avalon_workdir()
 
-    log.info("Registering Editorial plug-ins..")
+    log.info("Registering Aport plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
@@ -58,7 +58,7 @@ def install():
 
 
 def uninstall():
-    log.info("Deregistering Editorial plug-ins..")
+    log.info("Deregistering Aport plug-ins..")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
@@ -71,7 +71,7 @@ def pico_server_launch():
     try:
         args = [sys.executable, "-m", "pico.server", "pipeline"]
 
-        returncode = app.forward(
+        app.forward(
             args,
             cwd=os.path.dirname(__file__)
         )

@@ -99,7 +99,7 @@ def reload_config():
 
 def install():
 
-    api.fill_avalon_workdir()
+    api.set_avalon_workdir()
     reload_config()
 
     log.info("Registering Nuke plug-ins..")

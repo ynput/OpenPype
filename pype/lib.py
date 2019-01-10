@@ -15,6 +15,24 @@ import avalon
 log = logging.getLogger(__name__)
 
 
+def add_tool_to_environment(tools):
+    """
+    It is adding dynamic environment to os environment.
+
+    Args:
+        tool (list, tuple): list of tools, name should corespond to json/toml
+
+    Returns:
+        os.environ[KEY]: adding to os.environ
+    """
+
+    import acre
+    tools_env = acre.get_tools(tools)
+    env = acre.compute(tools_env)
+    env = acre.merge(env, current_env=dict(os.environ))
+    os.environ.update(env)
+
+
 @contextlib.contextmanager
 def modified_environ(*remove, **update):
     """
@@ -383,7 +401,8 @@ def get_avalon_project_template_schema():
 def get_avalon_project_template():
     from app.api import Templates
 
-    """Get avalon template
+    """
+    Get avalon template
 
     Returns:
         dictionary with templates

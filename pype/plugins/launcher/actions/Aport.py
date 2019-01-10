@@ -9,13 +9,13 @@ import pype.api as pype
 
 from pype.api import Logger
 
-log = Logger.getLogger(__name__, "editorial")
+log = Logger.getLogger(__name__, "aport")
 
 
-class Editorial(api.Action):
+class Aport(api.Action):
 
-    name = "editorial"
-    label = "Pype Editorial Server"
+    name = "aport"
+    label = "Aport - Avalon's Server"
     icon = "retweet"
     order = 996
 
@@ -38,6 +38,7 @@ class Editorial(api.Action):
 
         with pype.modified_environ(**session):
             # Get executable by name
+            print(self.name)
             app = lib.get_application(self.name)
             executable = lib.which(app["executable"])
 
@@ -49,10 +50,7 @@ class Editorial(api.Action):
             env = acre.merge(env, current_env=dict(os.environ))
 
             if not env.get('AVALON_WORKDIR', None):
-                pype.load_data_from_templates()
-                os.environ["AVALON_WORKDIR"] = pype.make_workdir_path(
-                    pype.Anatomy)
-                pype.reset_data_from_templates()
+                os.environ["AVALON_WORKDIR"] = pype.get_workdir_template()
 
             env.update(dict(os.environ))
 

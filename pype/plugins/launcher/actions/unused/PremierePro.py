@@ -45,7 +45,7 @@ class PremierePro(api.Action):
 
             if not env.get('AVALON_WORKDIR', None):
                 pype.load_data_from_templates()
-                os.environ["AVALON_WORKDIR"] = pype.make_workdir_path(
+                os.environ["AVALON_WORKDIR"] = pype.get_workdir_template(
                     pype.Anatomy)
                 pype.reset_data_from_templates()
 

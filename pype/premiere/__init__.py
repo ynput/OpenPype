@@ -6,9 +6,12 @@ from pysync import walktree
 from avalon import api as avalon
 from pyblish import api as pyblish
 from app import api as app
-
-from .. import api
 from pprint import pprint
+from .. import api
+
+import requests
+
+
 log = api.Logger.getLogger(__name__, "premiere")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
@@ -20,11 +23,27 @@ PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
 PUBLISH_PATH = os.path.join(
     PLUGINS_DIR, "premiera", "publish"
-)
+).replace("\\", "/")
 
 LOAD_PATH = os.path.join(PLUGINS_DIR, "premiera", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "premiera", "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "premiera", "inventory")
+
+
+def request_aport(url_path, data={}):
+    try:
+        api.add_tool_to_environment(["aport"])
+        ip = os.getenv("PICO_IP", None)
+        port = int(os.getenv("PICO_PORT", None))
+        url = "http://{0}:{1}{2}".format(ip, port, url_path)
+        req = requests.post(url, data=data).text
+        return req
+
+    except Exception as e:
+        api.message(title="Premiere Aport Server",
+                    message="Before you can run Premiere, start Aport Server. \n Error: {}".format(
+                        e),
+                    level="critical")
 
 
 def extensions_sync():
@@ -51,10 +70,13 @@ def extensions_sync():
 
 
 def install():
-    api.fill_avalon_workdir()
 
+    api.set_avalon_workdir()
     log.info("Registering Premiera plug-ins..")
-    pyblish.register_plugin_path(PUBLISH_PATH)
+    reg_paths = request_aport("/pipeline/register_plugin_path",
+                              {"publish_path": PUBLISH_PATH})
+    api.message(title="pyblish_paths", message=str(reg_paths), level="info")
+
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
