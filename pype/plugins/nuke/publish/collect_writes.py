@@ -1,9 +1,9 @@
 import os
-
+import tempfile
 import nuke
 import pyblish.api
 import logging
-from avalon import io, api
+
 
 log = logging.getLogger(__name__)
 
@@ -17,15 +17,17 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]})
-        self.log.debug("asset_data: {}".format(asset_data["data"]))
         for instance in context.data["instances"]:
-            self.log.debug("checking instance: {}".format(instance))
+
+            if not instance.data["publish"]:
+                continue
+
             node = instance[0]
 
             if node.Class() != "Write":
                 continue
+
+            self.log.debug("checking instance: {}".format(instance))
 
             # Determine defined file type
             ext = node["file_type"].value()
@@ -47,9 +49,10 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             path = nuke.filename(node)
             output_dir = os.path.dirname(path)
             self.log.debug('output dir: {}'.format(output_dir))
-            # Include start and end render frame in label
-            name = node.name()
 
+            # create label
+            name = node.name()
+            # Include start and end render frame in label
             label = "{0} ({1}-{2})".format(
                 name,
                 int(first_frame),
@@ -57,42 +60,30 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             )
 
             # preredered frames
-            if not node["render"].value():
-                families = "prerendered.frames"
+            # collect frames by try
+            # collect families in next file
+            if "files" not in instance.data:
+                instance.data["files"] = list()
+
+            try:
                 collected_frames = os.listdir(output_dir)
                 self.log.debug("collected_frames: {}".format(label))
-                if "files" not in instance.data:
-                    instance.data["files"] = list()
                 instance.data["files"].append(collected_frames)
-                instance.data['transfer'] = False
-            else:
-                # dealing with local/farm rendering
-                if node["render_farm"].value():
-                    families = "{}.farm".format(instance.data["avalonKnob"]["families"][0])
-                else:
-                    families = "{}.local".format(instance.data["avalonKnob"]["families"][0])
 
-            self.log.debug("checking for error: {}".format(label))
+            except Exception:
+                pass
+
             instance.data.update({
                 "path": path,
                 "outputDir": output_dir,
                 "ext": ext,
                 "label": label,
-                "families": [families, 'ftrack'],
                 "startFrame": first_frame,
                 "endFrame": last_frame,
                 "outputType": output_type,
-                "stagingDir": output_dir,
                 "colorspace": node["colorspace"].value(),
-                "handles": int(asset_data["data"].get("handles", 0)),
-                "step": 1,
-                "fps": int(nuke.root()['fps'].value())
             })
 
             self.log.debug("instance.data: {}".format(instance.data))
 
         self.log.debug("context: {}".format(context))
-
-    def sort_by_family(self, instance):
-        """Sort by family"""
-        return instance.data.get("families", instance.data.get("family"))

@@ -228,6 +228,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             # have accesss to these paths, such as if slaves are
             # running Linux and the submitter is on Windows.
             "PYTHONPATH",
+            "PATH",
 
             "MTOA_EXTENSIONS_PATH",
             "MTOA_EXTENSIONS",
@@ -254,33 +255,28 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             if path.lower().startswith('pype_'):
                 environment[path] = os.environ[path]
 
-        PATHS = os.environ["PATH"].split(";")
-        environment["PATH"] = ";".join([p for p in PATHS
-                                        if p.startswith("P:")])
+        environment["PATH"] = os.environ["PATH"]
+
         clean_pythonpath = ''
         for path in environment['PYTHONPATH'].split(os.pathsep):
-            # self.log.debug('checking path for UTF: {}'.format(path))
             try:
                 path.decode('UTF-8', 'strict')
-                # path = path.lower().replace("k:/", r"\\kre-c01\\share\\").replace("p:/", r"\\kre-p01\\share\\")
                 clean_pythonpath += path + os.pathsep
             except UnicodeDecodeError:
                 self.log.debug('path contains non UTF characters')
         environment['PYTHONPATH'] = clean_pythonpath
 
-        for key in environment:
-            remapped_key = ''
-            list_paths = environment[key].split(os.pathsep)
-            if len(list_paths) > 1:
-                for path in list_paths:
-                    path = path.replace("K:/", "\\\\kre-c01\\share\\").replace("P:/", "\\\\kre-p01\\share\\")
-                    path = path.replace("K:\\", "\\\\kre-c01\\share\\").replace("P:\\", "\\\\kre-p01\\share\\")
-                    remapped_key += path + os.pathsep
-            else:
-                path = list_paths[0].replace("K:/", "\\\\kre-c01\\share\\").replace("P:/", "\\\\kre-p01\\share\\")
-                path = path.replace("K:\\", "\\\\kre-c01\\share\\").replace("P:\\", "\\\\kre-p01\\share\\")
-                remapped_key = path
-            environment[key] = remapped_key
+        clean_path = ''
+        for path in environment['PATH'].split(os.pathsep):
+            clean_path += os.path.normpath(path) + os.pathsep
+
+        environment['PATH'] = clean_path
+
+        for path in environment:
+                environment[path] = environment[path].replace(
+                    os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
+                    environment['PYPE_STUDIO_CORE'])
+
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
