@@ -1,9 +1,9 @@
+import os
 import pyblish.api
 from avalon import (
     io,
     api as avalon
 )
-import pprint
 
 
 class CollectContextDataFromAport(pyblish.api.ContextPlugin):
@@ -19,11 +19,21 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
     """
 
     label = "Collect Aport Context"
-    order = pyblish.api.CollectorOrder + 0.1
+    order = pyblish.api.CollectorOrder - 0.01
 
     def process(self, context):
+        context.data["avalonSession"] = session = avalon.session
         rqst_json_data_path = context.data['rqst_json_data_path']
         post_json_data_path = context.data['post_json_data_path']
+        context.data["stagingDir"] = staging_dir = os.path.dirname(post_json_data_path)
+
+        pyblish.api.deregister_all_hosts()
+        pyblish.api.register_host(session["AVALON_APP"])
+
+        context.data["currentFile"] = session["AVALON_WORKDIR"]
+
+        if not os.path.exists(staging_dir):
+            os.makedirs(staging_dir)
 
         self.log.info("Context.data are: {}".format(
             context.data))

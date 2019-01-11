@@ -82,7 +82,7 @@ def install():
     reg_paths = request_aport("/pipeline/register_plugin_path",
                               {"publish_path": PUBLISH_PATH})
     log.info(str(reg_paths))
-    # api.message(title="pyblish_paths", message=str(reg_paths), level="info")
+    api.message(title="pyblish_paths", message=str(reg_paths), level="info")
 
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
