@@ -25,10 +25,15 @@ def get_config_data():
             data = json.load(data_file)
 
     except Exception as e:
-        msg = 'Loading "Ftrack Config file" Failed. Please check log for more information. Times are set to default.'
+        msg = (
+            'Loading "Ftrack Config file" Failed.'
+            ' Please check log for more information.'
+            ' Times are set to default.'
+        )
         log.warning("{} - {}".format(msg, str(e)))
 
     return data
+
 
 def get_data(parent, entity, session, custom_attributes):
     entity_type = entity.entity_type
@@ -42,14 +47,21 @@ def get_data(parent, entity, session, custom_attributes):
         if cust_attr['entity_type'].lower() in ['asset']:
             data[key] = entity['custom_attributes'][key]
 
-        elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
+        elif (
+            cust_attr['entity_type'].lower() in ['show'] and
+            entity_type.lower() == 'project'
+        ):
             data[key] = entity['custom_attributes'][key]
 
-        elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
+        elif (
+            cust_attr['entity_type'].lower() in ['task'] and
+            entity_type.lower() != 'project'
+        ):
             # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
             entity_type_full = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
             # Get object id of entity type
-            ent_obj_type_id = session.query('ObjectType where name is "{}"'.format(entity_type_full)).one()['id']
+            query = 'ObjectType where name is "{}"'.format(entity_type_full)
+            ent_obj_type_id = session.query(query).one()['id']
 
             if cust_attr['object_type_id'] == ent_obj_type_id:
                 data[key] = entity['custom_attributes'][key]
@@ -68,11 +80,13 @@ def get_data(parent, entity, session, custom_attributes):
     parents = []
     folderStruct = []
     for i in range(1, len(entity['link'])-1):
-        parEnt = session.get(entity['link'][i]['type'], entity['link'][i]['id'])
+        parEnt = session.get(
+            entity['link'][i]['type'],
+            entity['link'][i]['id']
+        )
         parName = parEnt['name']
         folderStruct.append(parName)
-        if i > 1:
-            parents.append(parEnt)
+        parents.append(parEnt)
 
     parentId = None
 
@@ -91,7 +105,8 @@ def get_data(parent, entity, session, custom_attributes):
 
     return data
 
-def avalon_check_name(entity, inSchema = None):
+
+def avalon_check_name(entity, inSchema=None):
     ValidationError = jsonschema.ValidationError
     alright = True
     name = entity['name']
@@ -123,8 +138,8 @@ def avalon_check_name(entity, inSchema = None):
         alright = False
 
     if alright is False:
-        raise ValueError("{} includes unsupported symbols like 'dash' or 'space'".format(name))
-
+        msg = "{} includes unsupported symbols like 'dash' or 'space'"
+        raise ValueError(msg.format(name))
 
 
 def get_apps(entity):
@@ -149,6 +164,7 @@ def get_apps(entity):
             log.warning('Error with application {0} - {1}'.format(app, e))
     return apps
 
+
 def get_config(entity):
     config = {}
     config['schema'] = lib.get_avalon_project_config_schema()
@@ -157,6 +173,7 @@ def get_config(entity):
     config['template'] = lib.get_avalon_project_template()
 
     return config
+
 
 def checkRegex():
     # _handle_result -> would be solution?
@@ -186,7 +203,6 @@ def checkRegex():
 
 
 def get_context(entity):
-
     parents = []
     item = entity
     while True:
@@ -208,7 +224,6 @@ def get_context(entity):
         pass
 
     ctx[entity['object_type']['name']] = entityDic
-
 
     # add all parents to the context
     for parent in parents:
