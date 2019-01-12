@@ -39,8 +39,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
         self.register(instance)
 
-        self.log.info("Integrating Asset in to the database ...")
-        self.log.info("instance.data: {}".format(instance.data))
+        # self.log.info("Integrating Asset in to the database ...")
+        # self.log.info("instance.data: {}".format(instance.data))
         if instance.data.get('transfer', True):
             self.integrate(instance)
 
@@ -158,8 +158,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         # Each should be a single representation (as such, a single extension)
         representations = []
         destination_list = []
-        self.log.debug("integrate_frames:instance.data[files]: {}".format(
-            instance.data["files"]))
+
         for files in instance.data["files"]:
             # Collection
             #   _______
@@ -193,7 +192,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 for i in src_collection.indexes:
                     src_padding = src_collection.format("{padding}") % i
-                    src_file_name = "{0}{1}{2}".format(src_head, src_padding, src_tail)
+                    src_file_name = "{0}{1}{2}".format(src_head,
+                                                       src_padding, src_tail)
                     dst_padding = dst_collection.format("{padding}") % i
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
 
@@ -244,17 +244,17 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                     "root": root,
-                     "project": PROJECT,
-                     "projectcode": project['data']['code'],
-                     'task': api.Session["AVALON_TASK"],
-                     "silo": asset['silo'],
-                     "asset": ASSET,
-                     "family": instance.data['family'],
-                     "subset": subset["name"],
-                     "VERSION": version["name"],
-                     "hierarchy": hierarchy,
-                     "representation": ext[1:]
+                    "root": root,
+                    "project": PROJECT,
+                    "projectcode": project['data']['code'],
+                    'task': api.Session["AVALON_TASK"],
+                    "silo": asset['silo'],
+                    "asset": ASSET,
+                    "family": instance.data['family'],
+                    "subset": subset["name"],
+                    "VERSION": version["name"],
+                    "hierarchy": hierarchy,
+                    "representation": ext[1:]
                 }
             }
 

@@ -35,6 +35,7 @@ class ExtractDataForReview(pype.api.Extractor):
         self.log.debug("here:")
         self.log.debug("creating staging dir:")
         self.staging_dir(instance)
+
         self.render_review_representation(instance,
                                           representation="mov")
         self.log.debug("review mov:")
@@ -52,7 +53,7 @@ class ExtractDataForReview(pype.api.Extractor):
         staging_dir = instance.data["stagingDir"]
         file_name = collection.format("{head}mov")
 
-        review_mov = os.path.join(staging_dir, file_name)
+        review_mov = os.path.join(staging_dir, file_name).replace("\\", "/")
 
         if instance.data.get("baked_colorspace_movie"):
             args = [
@@ -109,9 +110,6 @@ class ExtractDataForReview(pype.api.Extractor):
         # Create nodes
         first_frame = min(collection.indexes)
         last_frame = max(collection.indexes)
-
-        self.log.warning("first_frame: {}".format(first_frame))
-        self.log.warning("last_frame: {}".format(last_frame))
 
         node = previous_node = nuke.createNode("Read")
 
