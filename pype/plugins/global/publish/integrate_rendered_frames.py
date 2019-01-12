@@ -233,6 +233,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
 
+            self.log.debug('ext[1:]: {}'.format(ext[1:]))
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
