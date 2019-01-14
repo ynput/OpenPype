@@ -39,7 +39,13 @@ from .templates import (
     set_project_code
 )
 
-from .lib import modified_environ, add_tool_to_environment
+from .lib import (
+    get_project_data,
+    get_asset_data,
+    modified_environ,
+    add_tool_to_environment,
+    get_data_hierarchical_attr
+)
 
 from .widgets.message_window import message
 
@@ -63,6 +69,8 @@ __all__ = [
     "reset_data_from_templates",
 
     # get contextual data
+    "get_project_data",
+    "get_asset_data",
     "get_project_name",
     "get_project_code",
     "get_hierarchy",
@@ -75,6 +83,7 @@ __all__ = [
     "add_tool_to_environment",
     "set_hierarchy",
     "set_project_code",
+    "get_data_hierarchical_attr",
 
     # preloaded templates
     "Anatomy",

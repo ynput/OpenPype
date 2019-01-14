@@ -132,9 +132,9 @@ def get_asset():
     Raises:
         log: error
     """
-
     asset = SESSION.get("AVALON_ASSET", None) \
         or os.getenv("AVALON_ASSET", None)
+    log.info("asset: {}".format(asset))
     assert asset, log.error("missing `AVALON_ASSET`"
                             "in avalon session "
                             "or os.environ!")

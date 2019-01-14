@@ -6,6 +6,8 @@ from avalon import (
     api as avalon
 )
 
+from pype import api as pype
+
 
 class CollectInstancesFromJson(pyblish.api.ContextPlugin):
     """
@@ -20,17 +22,84 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
     """
 
     label = "Collect instances from JSON"
-    order = pyblish.api.CollectorOrder - 0.05
+    order = pyblish.api.CollectorOrder - 0.48
 
     def process(self, context):
+        a_session = context.data.get("avalonSession")
         json_data = context.data.get("json_data", None)
+        assert json_data, "No `json_data` data in json file"
+
         instances_data = json_data.get("instances", None)
         assert instances_data, "No `instance` data in json file"
 
         presets = context.data["presets"]
         rules_tasks = presets["rules_tasks"]
 
+        asset_default = presets["asset_default"]
+        assert instances_data, "No `asset_default` data in json file"
+
+        asset_name = a_session["AVALON_ASSET"]
+        entity = io.find_one({"name": asset_name,
+                              "type": "asset"})
+
+        # get frame start > first try from asset data
+        frame_start = context.data["assetData"].get("fstart", None)
+        if not frame_start:
+            self.log.debug("frame_start not on assetData")
+            # get frame start > second try from parent data
+            frame_start = pype.get_data_hierarchical_attr(entity, "fstart")
+            if not frame_start:
+                self.log.debug("frame_start not on any parent entity")
+                # get frame start > third try from parent data
+                frame_start = asset_default["fstart"]
+
+        assert frame_start, "No `frame_start` data found, "
+        "please set `fstart` on asset"
+        self.log.debug("frame_start: `{}`".format(frame_start))
+
+        # get handles > first try from asset data
+        handles = context.data["assetData"].get("handles", None)
+        if not handles:
+            # get frame start > second try from parent data
+            handles = pype.get_data_hierarchical_attr(entity, "handles")
+            if not handles:
+                # get frame start > third try from parent data
+                handles = asset_default["handles"]
+
+        assert handles, "No `handles` data found, "
+        "please set `fstart` on asset"
+        self.log.debug("handles: `{}`".format(handles))
+
         instances = []
+
+        task = a_session["AVALON_TASK"]
+        current_file = os.path.basename(context.data.get("currentFile"))
+        name, ext = os.path.splitext(current_file)
+
+        # get current file host
+        host = a_session["AVALON_APP"]
+        family = "workfile"
+        families = "filesave"
+        subset_name = "{0}_{1}".format(task, family)
+        # Set label
+        label = "{0} - {1} > {2}".format(name, task, families)
+
+        # get working file into instance for publishing
+        instance = context.create_instance(subset_name)
+        instance.data.update({
+            "subset": subset_name,
+            "task": task,
+            "representation": ext[1:],
+            "host": host,
+            "asset": asset_name,
+            "label": label,
+            "name": name,
+            "family": family,
+            "families": [families],
+            "publish": True,
+        })
+        instances.append(instance)
+
         for inst in instances_data:
             # for key, value in inst.items():
             #     self.log.debug('instance[key]: {}'.format(key))
@@ -60,6 +129,8 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                     instance.data.update({
                         "subset": subset_name,
                         "task": task,
+                        "fstart": frame_start,
+                        "handles": handles,
                         "host": host,
                         "asset": asset,
                         "label": "{0} - {1} > {2}".format(name, task, subset),
@@ -67,6 +138,8 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                         "family": inst["family"],
                         "families": [subset],
                         "jsonData": inst,
+                        "parents": , # bez tasku
+                        "hierarchy": ,
                         "publish": True,
                     })
                     self.log.info("collected instance: {}".format(instance.data))

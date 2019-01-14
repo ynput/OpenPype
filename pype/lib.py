@@ -378,14 +378,29 @@ def get_asset_data(asset=None):
     Returns:
         dict
     """
-
     asset_name = asset or avalon.api.Session["AVALON_ASSET"]
     document = io.find_one({"name": asset_name,
                             "type": "asset"})
-
     data = document.get("data", {})
 
     return data
+
+
+def get_data_hierarchical_attr(entity, attr_name):
+    vp_attr = 'visualParent'
+    data = entity['data']
+    value = data.get(attr_name, None)
+    if value is not None:
+        return value
+    elif vp_attr in data:
+        if data[vp_attr] is None:
+            parent_id = entity['parent']
+        else:
+            parent_id = data[vp_attr]
+        parent = io.find_one({"_id": parent_id})
+        return get_data_hierarchical_attr(parent, attr_name)
+    else:
+        return None
 
 
 def get_avalon_project_config_schema():

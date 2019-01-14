@@ -8,5 +8,5 @@ class CollectContextDataPremiera(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.1
 
     def process(self, context):
-        data_path = context.data['json_context_data_path']
+        data_path = context.data['rqst_json_data_path']
         self.log.info("Context is: {}".format(data_path))

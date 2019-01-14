@@ -70,7 +70,7 @@ def publish(json_data_path, staging_dir=None):
     forward([
         sys.executable, "-u"
     ] + args,
-        cwd=os.getenv('PYPE_SETUP_ROOT')
+        cwd=os.getenv('AVALON_WORKDIR').replace("\\", "/")
     )
 
     return {"return_json_path": return_json_path}
@@ -88,9 +88,12 @@ def context(project, asset, task, app):
     pype.set_project_code(project_code)
     hierarchy = pype.get_hierarchy()
     pype.set_hierarchy(hierarchy)
+    fix_paths = {k: v.replace("\\", "/") for k, v in SESSION.items()
+                 if isinstance(v, str)}
+    SESSION.update(fix_paths)
     SESSION.update({"AVALON_HIERARCHY": hierarchy,
                     "AVALON_PROJECTCODE": project_code,
-                    "current_dir": os.getcwd()
+                    "current_dir": os.getcwd().replace("\\", "/")
                     })
 
     return SESSION
@@ -124,6 +127,13 @@ def register_plugin_path(publish_path):
     return "Publish registered paths: {}".format(
         os.environ["PUBLISH_PATH"].split(os.pathsep)
     )
+
+
+@pico.expose()
+def nuke_test():
+    import nuke
+    n = nuke.createNode("Constant")
+    log.info(n)
 
 
 app = PicoApp()

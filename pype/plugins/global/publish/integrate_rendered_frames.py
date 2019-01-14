@@ -27,8 +27,12 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
     families = ["imagesequence", "render", "write", "source"]
 
     family_targets = [".frames", ".local", ".review", "imagesequence", "render"]
+    exclude_families = ["clip"]
 
     def process(self, instance):
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
 
         families = [f for f in instance.data["families"]
                     for search in self.family_targets
@@ -244,17 +248,17 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                     "root": root,
-                     "project": PROJECT,
-                     "projectcode": project['data']['code'],
-                     'task': api.Session["AVALON_TASK"],
-                     "silo": asset['silo'],
-                     "asset": ASSET,
-                     "family": instance.data['family'],
-                     "subset": subset["name"],
-                     "VERSION": version["name"],
-                     "hierarchy": hierarchy,
-                     "representation": ext[1:]
+                    "root": root,
+                    "project": PROJECT,
+                    "projectcode": project['data']['code'],
+                    'task': api.Session["AVALON_TASK"],
+                    "silo": asset['silo'],
+                    "asset": ASSET,
+                    "family": instance.data['family'],
+                    "subset": subset["name"],
+                    "VERSION": version["name"],
+                    "hierarchy": hierarchy,
+                    "representation": ext[1:]
                 }
             }
 

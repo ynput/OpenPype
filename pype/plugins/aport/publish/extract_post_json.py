@@ -1,3 +1,4 @@
+
 import json
 import clique
 import pyblish.api
@@ -18,21 +19,21 @@ class ExtractJSON(pyblish.api.ContextPlugin):
         instances_data = []
         for instance in context:
 
-            data = {}
+            iData = {}
             for key, value in instance.data.items():
                 if isinstance(value, clique.Collection):
                     value = value.format()
 
                 try:
                     json.dumps(value)
-                    data[key] = value
+                    iData[key] = value
                 except KeyError:
                     msg = "\"{0}\"".format(value)
                     msg += " in instance.data[\"{0}\"]".format(key)
                     msg += " could not be serialized."
                     self.log.debug(msg)
 
-            instances_data.append(data)
+            instances_data.append(iData)
 
         data["instances"] = instances_data
 
@@ -57,11 +58,14 @@ class ExtractJSON(pyblish.api.ContextPlugin):
                 pass
             return value
 
-        if isinstance(data, object):
-            data = dict(data)
+        # self.log.info("1: {}".format(data))
+
+        if not isinstance(data, dict):
+            # self.log.info("2: {}".format(data))
+            return data
 
         for key, value in data.items():
-            if "records" in key:
+            if key in ["records", "instances", "results"]:
                 # escape all record objects
                 data[key] = None
                 continue
@@ -69,7 +73,7 @@ class ExtractJSON(pyblish.api.ContextPlugin):
             if hasattr(value, '__module__'):
                 # only deals with module objects
                 if "plugins" in value.__module__:
-                    # only dealing with plugin objects
+                        # only dealing with plugin objects
                     data[key] = str(value.__module__)
                 else:
                     if ".lib." in value.__module__:

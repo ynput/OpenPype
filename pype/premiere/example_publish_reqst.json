@@ -7,29 +7,14 @@
     "framerate": "24.0",
     "host": "premiere",
     "hostVersion": "2019",
-    "startFrame": 1001,
     "isRenderedReference": true,
-    "referenceFile": "C:\\Users\\hubert\\_PYPE_testing\\projects\\jakub_projectx\\resources\\reference\\e01\\sequence01\\conform\\jkprx_e01_conform_v001.mov",
-    "presets": {"rules_tasks": {
-            "defaultTasks": ["compositing"],
-            "taskHost":{
-                "compositing": "nuke",
-                "3d": "maya",
-                "roto": "nukeAssist"
-            },
-            "taskSubsets": {
-                "compositing": ["nukescript", "read", "write"],
-                "3d": ["scene", "camera", "imageplane"],
-                "roto": ["nukescript", "read", "write"]
-            }
-        }
-    },
+    "referenceFile": "C:/Users/hubert/_PYPE_testing/projects/jakub_projectx/resources/reference/e01/sequence01/conform/jkprx_e01_conform_v001.mov",
     "instances": [
         {
             "publish": true,
             "family": "clip",
             "name": "e01_s010_0010",
-            "filePath": "C:\\Users\\hubert\\_PYPE_testing\\projects\\jakub_projectx\\resources\\footage\\raw\\day01\\bbt_test_001_raw.mov",
+            "filePath": "C:/Users/hubert/_PYPE_testing/projects/jakub_projectx/resources/footage/raw/day01/bbt_test_001_raw.mov",
             "tags": [
                 {"task": "compositing"},
                 {"task": "roto"},
@@ -75,7 +60,7 @@
             "publish": true,
             "family": "clip",
             "name": "e01_s010_0020",
-            "filePath": "C:\\Users\\hubert\\_PYPE_testing\\projects\\jakub_projectx\\resources\\footage\\raw\\day01\\bbt_test_001_raw.mov",
+            "filePath": "C:/Users/hubert/_PYPE_testing/projects/jakub_projectx/resources/footage/raw/day01/bbt_test_001_raw.mov",
             "tags": [
                 {"task": "compositing"},
                 {"task": "roto"},
