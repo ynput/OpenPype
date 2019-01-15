@@ -23,7 +23,6 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            invalid = [node.path() for node in invalid]
             raise RuntimeError("Output node(s) `%s` are incorrect. "
                                "See plug-in log for details." % invalid)
 
@@ -40,7 +39,7 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
                           "Ensure a valid SOP output path is set."
                           % node.path())
 
-            return node.path()
+            return [node.path()]
 
         # Output node must be a Sop node.
         if not isinstance(output_node, hou.SopNode):
@@ -51,7 +50,7 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
                             output_node.type().category().name()
                             )
                           )
-            return [output_node]
+            return [output_node.path()]
 
         # For the sake of completeness also assert the category type
         # is Sop to avoid potential edge case scenarios even though
