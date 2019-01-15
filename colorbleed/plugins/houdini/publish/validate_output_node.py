@@ -23,6 +23,7 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
+            invalid = [node.path() for node in invalid]
             raise RuntimeError("Output node(s) `%s` are incorrect. "
                                "See plug-in log for details." % invalid)
 
