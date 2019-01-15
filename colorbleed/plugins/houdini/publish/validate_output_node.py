@@ -61,7 +61,7 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
         )
 
         # Check if output node has incoming connections
-        if output_node.inputConnections():
+        if not output_node.inputConnections():
             cls.log.error("Output node `%s` has no incoming connections"
                           % output_node.path())
             return [output_node.path()]
