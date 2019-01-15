@@ -39,6 +39,8 @@ def install():
     avalon.on("save", on_save)
     avalon.on("open", on_open)
 
+    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
+
     log.info("Setting default family states for loader..")
     avalon.data["familiesStateToggled"] = ["colorbleed.imagesequence"]
 
@@ -91,3 +93,20 @@ def on_open(*args):
                               "your Maya scene.")
             dialog.on_show.connect(_on_show_inventory)
             dialog.show()
+
+
+def on_pyblish_instance_toggled(instance, new_value, old_value):
+    """Toggle saver tool passthrough states on instance toggles."""
+
+    nodes = instance[:]
+    if not nodes:
+        return
+
+    # Assume instance node is first node
+    instance_node = nodes[0]
+
+    if instance_node.isBypassed() != (not old_value):
+        print("%s old bypass state didn't match old instance state, "
+              "updating anyway.." % instance_node.path())
+
+    instance_node.bypass(not new_value)
