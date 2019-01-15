@@ -12,6 +12,7 @@ from avalon import io, inventory
 
 from pype.ftrack import ftrack_utils
 
+
 class Sync_To_Avalon(BaseAction):
     '''
     Synchronizing data action - from Ftrack to Avalon DB
@@ -54,7 +55,10 @@ class Sync_To_Avalon(BaseAction):
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
-    icon = 'https://cdn1.iconfinder.com/data/icons/hawcons/32/699650-icon-92-inbox-download-512.png'
+    icon = (
+        'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
+        '699650-icon-92-inbox-download-512.png'
+    )
 
     def register(self):
         '''Registers the action, subscribing the the discover and launch topics.'''
@@ -69,8 +73,10 @@ class Sync_To_Avalon(BaseAction):
             ),
             self._launch
         )
-        
-        self.log.info("Action '{}' - Registered successfully".format(self.__class__.__name__))
+        msg = (
+            "Action '{}' - Registered successfully"
+        ).format(self.__class__.__name__)
+        self.log.info(msg)
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -91,7 +97,6 @@ class Sync_To_Avalon(BaseAction):
 
         return discover
 
-
     def launch(self, session, entities, event):
         message = ""
 
@@ -108,10 +113,10 @@ class Sync_To_Avalon(BaseAction):
         })
 
         try:
-            self.log.info("Action <" + self.__class__.__name__ + "> is running")
-            self.ca_mongoid = 'avalon_mongo_id'
-            #TODO AVALON_PROJECTS, AVALON_ASSET, AVALON_SILO should be set up otherwise console log shows avalon debug
-            self.setAvalonAttributes()
+            self.log.info(
+                "Action <" + self.__class__.__name__ + "> is running"
+            )
+
             self.importable = []
 
             # get from top entity in hierarchy all parent entities
@@ -123,7 +128,7 @@ class Sync_To_Avalon(BaseAction):
 
             # get all child entities separately/unique
             for entity in entities:
-                self.getShotAsset(entity)
+                self.add_childs_to_importable(entity)
 
             # Check names: REGEX in schema/duplicates - raise error if found
             all_names = []
@@ -137,24 +142,63 @@ class Sync_To_Avalon(BaseAction):
                     all_names.append(e['name'])
 
             if len(duplicates) > 0:
-                raise ValueError("Entity name duplication: {}".format(", ".join(duplicates)))
+                raise ValueError(
+                    "Entity name duplication: {}".format(", ".join(duplicates))
+                )
 
-            ## ----- PROJECT ------
-            # store Ftrack project- self.importable[0] must be project entity!!!
-            self.entityProj = self.importable[0]
+            # ----- PROJECT ------
+            # store Ftrack project- self.importable[0] must be project entity!!
+            ft_project = self.importable[0]
+
             # set AVALON_ env
-            os.environ["AVALON_PROJECT"] = self.entityProj["full_name"]
-            os.environ["AVALON_ASSET"] = self.entityProj["full_name"]
+            os.environ["AVALON_PROJECT"] = ft_project["full_name"]
+            os.environ["AVALON_ASSET"] = ft_project["full_name"]
+            os.environ["AVALON_SILO"] = ""
 
-            self.avalon_project = None
+            avalon_project = ftrack_utils.get_avalon_proj(ft_project)
+            custom_attributes = ftrack_utils.get_avalon_attr(session)
 
             io.install()
 
             # Import all entities to Avalon DB
-            for e in self.importable:
-                self.importToAvalon(session, e)
+            for entity in self.importable:
+                result = ftrack_utils.import_to_avalon(
+                    session=session,
+                    entity=entity,
+                    ft_project=ft_project,
+                    av_project=avalon_project,
+                    custom_attributes=custom_attributes
+                )
 
-            io.uninstall()
+                if 'errors' in result and len(result['errors']) > 0:
+                    print('error')
+                    items = []
+                    for error in result['errors']:
+                        for key, message in error.items():
+                            name = key.lower().replace(' ', '')
+                            info = {
+                                'label': key,
+                                'type': 'textarea',
+                                'name': name,
+                                'value': message
+                            }
+                            items.append(info)
+                            self.log.error(
+                                '{}: {}'.format(key, message)
+                            )
+                    io.uninstall()
+
+                    job['status'] = 'failed'
+                    session.commit()
+                    self.show_interface(event, items)
+                    return {
+                        'success': False,
+                        'message': "Sync to avalon FAILED"
+                    }
+
+                if avalon_project is None:
+                    if 'project' in result:
+                        avalon_project = result['project']
 
             job['status'] = 'done'
             session.commit()
@@ -171,9 +215,18 @@ class Sync_To_Avalon(BaseAction):
             session.commit()
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            log_message = "{}/{}/Line: {}".format(exc_type, fname, exc_tb.tb_lineno)
-            self.log.error('Error during syncToAvalon: {}'.format(log_message))
-            message = 'Unexpected Error - Please check Log for more information'
+            log_message = "{}/{}/Line: {}".format(
+                exc_type, fname, exc_tb.tb_lineno
+            )
+            self.log.error(
+                'Error during syncToAvalon: {}'.format(log_message)
+            )
+            message = (
+                'Unexpected Error'
+                ' - Please check Log for more information'
+            )
+
+        io.uninstall()
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)
@@ -187,14 +240,7 @@ class Sync_To_Avalon(BaseAction):
             'message': "Synchronization was successfull"
         }
 
-    def setAvalonAttributes(self):
-        self.custom_attributes = []
-        all_avalon_attr = self.session.query('CustomAttributeGroup where name is "avalon"').one()
-        for cust_attr in all_avalon_attr['custom_attribute_configurations']:
-            if 'avalon_' not in cust_attr['key']:
-                self.custom_attributes.append(cust_attr)
-
-    def getShotAsset(self, entity):
+    def add_childs_to_importable(self, entity):
         if not (entity.entity_type in ['Task']):
             if entity not in self.importable:
                 self.importable.append(entity)
@@ -202,116 +248,7 @@ class Sync_To_Avalon(BaseAction):
             if entity['children']:
                 childrens = entity['children']
                 for child in childrens:
-                    self.getShotAsset(child)
-
-    def importToAvalon(self, session, entity):
-        # --- Begin: PUSH TO Avalon ---
-
-        entity_type = entity.entity_type
-
-        if entity_type.lower() in ['project']:
-            # Set project Config
-            config = ftrack_utils.get_config(entity)
-            # Set project template
-            template = lib.get_avalon_project_template_schema()
-            if self.ca_mongoid in entity['custom_attributes']:
-                try:
-                    projectId = ObjectId(self.entityProj['custom_attributes'][self.ca_mongoid])
-                    self.avalon_project = io.find_one({"_id": projectId})
-                except:
-                    self.log.debug("Entity {} don't have stored entity id in ftrack".format(entity['name']))
-
-            if self.avalon_project is None:
-                self.avalon_project = io.find_one({
-                    "type": "project",
-                    "name": entity["full_name"]
-                })
-                if self.avalon_project is None:
-                    inventory.save(entity['full_name'], config, template)
-                    self.avalon_project = io.find_one({
-                        "type": "project",
-                        "name": entity["full_name"]
-                    })
-
-            elif self.avalon_project['name'] != entity['full_name']:
-                raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly!'.format(self.avalon_project['name'], name))
-
-            data = ftrack_utils.get_data(self, entity, session,self.custom_attributes)
-
-            # Store info about project (FtrackId)
-            io.update_many({
-                'type': 'project',
-                'name': entity['full_name']
-                }, {
-                '$set':{'data':data, 'config':config}
-                })
-
-            self.projectId = self.avalon_project["_id"]
-            if self.ca_mongoid in entity['custom_attributes']:
-                entity['custom_attributes'][self.ca_mongoid] = str(self.projectId)
-            else:
-                self.log.error('Custom attribute for "{}" is not created.'.format(entity['name']))
-            return
-
-        ## ----- ASSETS ------
-        # Presets:
-        data = ftrack_utils.get_data(self, entity, session, self.custom_attributes)
-
-        # return if entity is silo
-        if len(data['parents']) == 0:
-            silo = None
-        else:
-            silo = data['parents'][0]
-
-        os.environ['AVALON_SILO'] = silo
-
-        name = entity['name']
-        os.environ['AVALON_ASSET'] = name
-
-
-        # Try to find asset in current database
-        avalon_asset = None
-        if self.ca_mongoid in entity['custom_attributes']:
-            try:
-                entityId = ObjectId(entity['custom_attributes'][self.ca_mongoid])
-                avalon_asset = io.find_one({"_id": entityId})
-            except:
-                self.log.debug("Entity {} don't have stored entity id in ftrack".format(entity['name']))
-
-        if avalon_asset is None:
-            avalon_asset = io.find_one({'type': 'asset', 'name': name})
-            # Create if don't exists
-            if avalon_asset is None:
-                inventory.create_asset(name, silo, data, self.projectId)
-                self.log.debug("Asset {} - created".format(name))
-
-            # Raise error if it seems to be different ent. with same name
-            elif (avalon_asset['data']['parents'] != data['parents'] or
-                avalon_asset['silo'] != silo):
-                    raise ValueError('In Avalon DB already exists entity with name "{0}"'.format(name))
-
-        elif avalon_asset['name'] != entity['name']:
-            raise ValueError('You can\'t change name {} to {}, avalon DB won\'t work properly - please set name back'.format(avalon_asset['name'], name))
-        elif avalon_asset['silo'] != silo or avalon_asset['data']['parents'] != data['parents']:
-            old_path = "/".join(avalon_asset['data']['parents'])
-            new_path = "/".join(data['parents'])
-            raise ValueError('You can\'t move with entities. Entity "{}" was moved from "{}" to "{}" '.format(avalon_asset['name'], old_path, new_path))
-
-        # Update info
-        io.update_many({'type': 'asset','name': name},
-            {'$set':{'data':data, 'silo': silo}})
-
-        self.log.debug("Asset {} - updated".format(name))
-
-        entityId = io.find_one({'type': 'asset', 'name': name})['_id']
-        ## FTRACK FEATURE - FTRACK MUST HAVE avalon_mongo_id FOR EACH ENTITY TYPE EXCEPT TASK
-        # Set custom attribute to avalon/mongo id of entity (parentID is last)
-        if self.ca_mongoid in entity['custom_attributes']:
-            entity['custom_attributes'][self.ca_mongoid] = str(entityId)
-        else:
-            self.log.error("Custom attribute for <{}> is not created.".format(entity['name']))
-
-        session.commit()
+                    self.add_childs_to_importable(child)
 
 
 def register(session, **kw):
