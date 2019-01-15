@@ -7,13 +7,15 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
     This will ensure:
         - The SOP Path is set.
         - The SOP Path refers to an existing object.
-        - The SOP Path node is of type 'output' or 'camera'
+        - The SOP Path node is a SOP node.
         - The SOP Path node has at least one input connection (has an input)
+        - The SOP Path has geometry data.
 
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["*"]
+    families = ["colorbleed.pointcache",
+                "colorbleed.vdbcache"]
     hosts = ["houdini"]
     label = "Validate Output Node"
 
@@ -27,6 +29,8 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
+        import hou
+
         output_node = instance.data["output_node"]
 
         if output_node is None:
@@ -35,18 +39,35 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
                           "Ensure a valid SOP output path is set."
                           % node.path())
 
-            return node.path()
+            return [node.path()]
 
-        # Check if type is correct
-        type_name = output_node.type().name()
-        if type_name not in ["output", "cam"]:
-            cls.log.error("Output node `%s` is not an accepted type."
-                          "Expected types: `output` or `camera`" %
-                          output_node.path())
+        # Output node must be a Sop node.
+        if not isinstance(output_node, hou.SopNode):
+            cls.log.error("Output node %s is not a SOP node. "
+                          "SOP Path must point to a SOP node, "
+                          "instead found category type: %s" % (
+                            output_node.path(),
+                            output_node.type().category().name()
+                            )
+                          )
             return [output_node.path()]
 
+        # For the sake of completeness also assert the category type
+        # is Sop to avoid potential edge case scenarios even though
+        # the isinstance check above should be stricter than this category
+        assert output_node.type().category().name() == "Sop", (
+            "Output node %s is not of category Sop. This is a bug.." %
+            output_node.path()
+        )
+
         # Check if output node has incoming connections
-        if type_name == "output" and not output_node.inputConnections():
+        if output_node.inputConnections():
             cls.log.error("Output node `%s` has no incoming connections"
+                          % output_node.path())
+            return [output_node.path()]
+
+        # Ensure the output node has at least Geometry data
+        if not output_node.geometry():
+            cls.log.error("Output node `%s` has no geometry data."
                           % output_node.path())
             return [output_node.path()]
