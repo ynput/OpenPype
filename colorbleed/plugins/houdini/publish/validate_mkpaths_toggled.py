@@ -7,7 +7,8 @@ class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
 
     order = colorbleed.api.ValidateContentsOrder
     families = ['colorbleed.pointcache',
-                'colorbleed.camera']
+                'colorbleed.camera',
+                'colorbleed.vdbcache']
     hosts = ['houdini']
     label = 'Create Intermediate Directories Checked'
 
@@ -15,8 +16,8 @@ class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
 
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found ROP nodes with Create Intermediate "
-                               "Directories turned off")
+            raise RuntimeError("Found ROP node with Create Intermediate "
+                               "Directories turned off: %s" % invalid)
 
     @classmethod
     def get_invalid(cls, instance):
