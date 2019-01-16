@@ -11,7 +11,7 @@ s = example.hello("Python")
 Use help(example.hello) or example.hello? as normal to check function parameters and docstrings.
 """
 import os
-import pico.pragmaticjson as json
+from . import pragmaticjson as json
 import imp
 import requests
 

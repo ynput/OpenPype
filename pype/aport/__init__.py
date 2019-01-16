@@ -68,12 +68,24 @@ def uninstall():
 
 
 def pico_server_launch():
+    # path = "C:/Users/hubert/CODE/github/pico/examples/everything"
+    path = os.path.join(
+        os.path.dirname(__file__),
+        # "package"
+    )
+
+    os.chdir(path)
+    print(os.getcwd())
+    print(os.listdir(path))
     try:
-        args = [sys.executable, "-m", "pico.server", "pipeline"]
+        args = [sys.executable, "-m", "pico.server",
+                # "pipeline",
+                "api"
+                ]
 
         app.forward(
             args,
-            cwd=os.path.dirname(__file__)
+            cwd=path
         )
     except Exception as e:
         log.error(e)

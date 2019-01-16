@@ -138,8 +138,8 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                         "family": inst["family"],
                         "families": [subset],
                         "jsonData": inst,
-                        "parents": , # bez tasku
-                        "hierarchy": ,
+                        # "parents": , # bez tasku
+                        # "hierarchy": ,
                         "publish": True,
                     })
                     self.log.info("collected instance: {}".format(instance.data))
