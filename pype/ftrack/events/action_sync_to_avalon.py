@@ -1,16 +1,11 @@
+import os
 import sys
 import argparse
 import logging
-import os
 import ftrack_api
 import json
-import re
-from pype import lib
-from pype.ftrack.actions.ftrack_action_handler import BaseAction
-from bson.objectid import ObjectId
-from avalon import io, inventory
-
 from pype.ftrack import ftrack_utils
+from pype.ftrack.actions.ftrack_action_handler import BaseAction
 
 
 class Sync_To_Avalon(BaseAction):
@@ -149,16 +144,8 @@ class Sync_To_Avalon(BaseAction):
             # ----- PROJECT ------
             # store Ftrack project- self.importable[0] must be project entity!!
             ft_project = self.importable[0]
-
-            # set AVALON_ env
-            os.environ["AVALON_PROJECT"] = ft_project["full_name"]
-            os.environ["AVALON_ASSET"] = ft_project["full_name"]
-            os.environ["AVALON_SILO"] = ""
-
-            avalon_project = ftrack_utils.get_avalon_proj(ft_project)
+            avalon_project = ftrack_utils.get_avalon_project(ft_project)
             custom_attributes = ftrack_utils.get_avalon_attr(session)
-
-            io.install()
 
             # Import all entities to Avalon DB
             for entity in self.importable:
@@ -186,7 +173,6 @@ class Sync_To_Avalon(BaseAction):
                             self.log.error(
                                 '{}: {}'.format(key, message)
                             )
-                    io.uninstall()
 
                     job['status'] = 'failed'
                     session.commit()
@@ -225,8 +211,6 @@ class Sync_To_Avalon(BaseAction):
                 'Unexpected Error'
                 ' - Please check Log for more information'
             )
-
-        io.uninstall()
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)

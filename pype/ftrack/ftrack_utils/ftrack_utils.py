@@ -45,7 +45,7 @@ def avalon_check_name(entity, inSchema=None):
     if entity.entity_type in ['Project']:
         # data['type'] = 'project'
         name = entity['full_name']
-        # schema = get_avalon_project_template_schema()['schema']
+        # schema = get_avalon_project_template_schema()
     # elif entity.entity_type in ['AssetBuild','Library']:
         # data['silo'] = 'Assets'
     # else:

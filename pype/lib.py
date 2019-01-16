@@ -337,13 +337,16 @@ def get_asset_data(asset=None):
 
     return data
 
+
 def get_avalon_project_config_schema():
     schema = 'avalon-core:config-1.0'
     return schema
 
+
 def get_avalon_project_template_schema():
-    schema = {"schema": "avalon-core:inventory-1.0"}
+    schema = "avalon-core:inventory-1.0"
     return schema
+
 
 def get_avalon_project_template():
     from app.api import Templates
@@ -364,3 +367,8 @@ def get_avalon_project_template():
     proj_template['work'] = "{root}/{project}/{hierarchy}/{asset}/work/{task}"
     proj_template['publish'] = "{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}"
     return proj_template
+
+
+def get_avalon_asset_template_schema():
+    schema = "avalon-core:asset-2.0"
+    return schema
