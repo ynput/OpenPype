@@ -70,6 +70,13 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
 
                 # check if any objectSets are not present ion the relationships
                 missing_sets = [s for s in sets if s not in relationships]
+
+                for set in missing_sets:
+                    if set.endswith("_SET"):
+                        missing_sets.remove(set)
+                    cls.log.info("Missing Sets "
+                                 "'{}'".format(missing_sets))
+
                 if missing_sets:
                     # A set of this node is not coming along, this is wrong!
                     cls.log.error("Missing sets '{}' for node "

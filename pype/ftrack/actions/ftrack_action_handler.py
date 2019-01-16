@@ -6,6 +6,7 @@ import platform
 import ftrack_api
 from avalon import io, lib
 import acre
+from pype.ftrack import ftrack_utils
 
 from pype import api as pype
 
@@ -383,6 +384,27 @@ class AppAction(object):
         task = session.query('Task where id is {}'.format(entity['id'])).one()
         self.log.info('Starting timer for task: ' + task['name'])
         user.start_timer(task, force=True)
+
+        # Change status of task to In progress
+        config = ftrack_utils.get_config_data()
+
+        if (
+            'status_on_app_launch' in config and
+            'sync_to_avalon' in config and
+            'statuses_name_change' in config['sync_to_avalon']
+        ):
+            statuses = config['sync_to_avalon']['statuses_name_change']
+            if entity['status']['name'].lower() in statuses:
+                status_name = config['status_on_app_launch']
+
+                try:
+                    query = 'Status where name is "{}"'.format(status_name)
+                    status = session.query(query).one()
+                    task['status'] = status
+                    session.commit()
+                except Exception as e:
+                    msg = "Status '{}' in config wasn't found on Ftrack".format(status_name)
+                    self.log.warning(msg)
 
         return {
             'success': True,
