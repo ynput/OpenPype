@@ -37,7 +37,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "yeticache",
                 "nukescript",
                 "review",
-                "scene"]
+                "scene",
+                "ass"]
 
     def process(self, instance):
 

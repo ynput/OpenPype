@@ -44,7 +44,14 @@ def get_data(parent, entity, session, custom_attributes):
 
     for cust_attr in custom_attributes:
         key = cust_attr['key']
-        if cust_attr['entity_type'].lower() in ['asset']:
+        if (
+            cust_attr['is_hierarchical'] is True or
+            cust_attr['entity_type'].lower() in ['asset'] or
+            (
+                cust_attr['entity_type'].lower() in ['show'] and
+                entity_type.lower() == 'project'
+            )
+        ):
             data[key] = entity['custom_attributes'][key]
 
         elif (
