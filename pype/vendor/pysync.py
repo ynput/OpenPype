@@ -57,7 +57,7 @@ else:
 def compare(fa, fb, options_input=[]):
     if isfile(fa) == isfile(fb):
         if isdir(fa):
-            walktree(fa, fb)
+            walktree(fa, fb, options_input)
         elif isfile(fa):
             if getsize(fa) != getsize(fb) \
                     or int(getmtime(fa)) != int(getmtime(fb)):
@@ -166,7 +166,7 @@ def walktree(source, target, options_input=[]):
             continue
         if tpath in tarentry:
             continue
-        copy(tpath, spath)
+        copy(tpath, spath, options_input)
 
 
 if __name__ == '__main__':
@@ -202,5 +202,5 @@ if __name__ == '__main__':
     for folder in sto_content:
         if folder in tar_content:
             print('Processing', folder)
-            walktree(sto_content[folder], tar_content[folder])
+            walktree(sto_content[folder], tar_content[folder], options_input)
     print("Done.")

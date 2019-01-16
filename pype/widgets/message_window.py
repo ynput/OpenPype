@@ -45,7 +45,7 @@ class Window(QWidget):
     def exit(self):
         self.hide()
         # self.parent.exec_()
-        self.parent.hide()
+        # self.parent.hide()
         return
 
 
@@ -54,4 +54,4 @@ def message(title=None, message=None, level="info"):
     app = QApplication(sys.argv)
     ex = Window(app, title, message, level)
     ex.show()
-    sys.exit(app.exec_())
+    # sys.exit(app.exec_())

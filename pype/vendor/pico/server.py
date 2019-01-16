@@ -13,14 +13,15 @@ log = logging.getLogger(__name__)
 
 
 def run_app(app, **kwargs):
-    ip = kwargs.get("ip", '127.0.0.1')
-    port = kwargs.get("port", 4242)
-    use_debugger = kwargs.get("use_debugger", True)
-    use_reloader = kwargs.get("use_reloader", True)
-    threaded = kwargs.get("threaded", True)
-
+    ip = kwargs.get("ip")
+    port = kwargs.get("port")
+    use_debugger = kwargs.get("use_debugger")
+    use_reloader = kwargs.get("use_reloader")
+    threaded = kwargs.get("threaded")
+    html_dir = kwargs.get("html_dir")
+    log.info("html_dir: {}".format(html_dir))
     app = SharedDataMiddleware(app, {
-        '/': 'static'
+        '/': html_dir
     })
     while True:
         try:
@@ -40,18 +41,20 @@ if __name__ == '__main__':
             module_name += ':app'
         app = import_string(module_name)
 
-    ip = os.getenv("PICO_IP", None)
+    ip = os.getenv("PICO_IP", '127.0.0.1')
 
     if ip and ip.startswith('http'):
         ip = ip.replace("http://", "")
 
     kwargs = {"ip": ip,
-              "port": int(os.getenv("PICO_PORT", None)),
-              "use_debugger": os.getenv("PICO_DEBUG", None),
-              "use_reloader": os.getenv("PICO_RELOADER", None),
-              "threaded": os.getenv("PICO_THREADED", None), }
+              "port": int(os.getenv("PICO_PORT", 4242)),
+              "use_debugger": os.getenv("PICO_DEBUG", True),
+              "use_reloader": os.getenv("PICO_RELOADER", True),
+              "threaded": os.getenv("PICO_THREADED", True),
+              "html_dir": os.getenv("PICO_HTML_DIR", 'static'), }
 
     log.info("Pico.server > settings: "
+             "\n\thtml_dir: {html_dir}"
              "\n\tip: {ip}"
              "\n\tport: {port}"
              "\n\tuse_debugger: {use_debugger}"

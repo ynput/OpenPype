@@ -79,10 +79,10 @@ def install():
     api.set_avalon_workdir()
     log.info("Registering Premiera plug-ins..")
 
-    reg_paths = request_aport("/pipeline/register_plugin_path",
+    reg_paths = request_aport("/api/register_plugin_path",
                               {"publish_path": PUBLISH_PATH})
+
     log.info(str(reg_paths))
-    api.message(title="pyblish_paths", message=str(reg_paths), level="info")
 
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
@@ -102,6 +102,7 @@ def install():
 
     # synchronize extensions
     extensions_sync()
+    api.message(title="pyblish_paths", message=str(reg_paths), level="info")
 
 
 def uninstall():
