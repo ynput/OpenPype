@@ -1,11 +1,9 @@
 import os
 import sys
-import re
 import ftrack_api
 from ftrack_event_handler import BaseEvent
 from pype import lib
 from avalon import io, inventory
-from avalon.vendor import toml
 from bson.objectid import ObjectId
 from pype.ftrack import ftrack_utils
 
@@ -46,7 +44,10 @@ class Sync_to_Avalon(BaseEvent):
 
         # check if project have Custom Attribute 'avalon_mongo_id'
         if self.ca_mongoid not in self.proj['custom_attributes']:
-            message = "Custom attribute '{}' for 'Project' is not created or don't have set permissions for API".format(self.ca_mongoid)
+            message = (
+                "Custom attribute '{}' for 'Project' is not created"
+                " or don't have set permissions for API"
+            ).format(self.ca_mongoid)
             self.log.warning(message)
             self.show_message(event, message, False)
             return
@@ -85,7 +86,11 @@ class Sync_to_Avalon(BaseEvent):
                 'custom_attributes' not in entity or
                 self.ca_mongoid not in entity['custom_attributes']
             ):
-                message = "Custom attribute '{}' for '{}' is not created or don't have set permissions for API".format(self.ca_mongoid, entity.entity_type)
+                message = (
+                    "Custom attribute '{}' for '{}' is not created"
+                    " or don't have set permissions for API"
+                ).format(self.ca_mongoid, entity.entity_type)
+
                 self.log.warning(message)
                 self.show_message(event, message, False)
                 return
@@ -119,7 +124,10 @@ class Sync_to_Avalon(BaseEvent):
 
         except Exception as e:
             message = str(e)
-            ftrack_message = "SyncToAvalon event ended with unexpected error please check log file for more information."
+            ftrack_message = (
+                'SyncToAvalon event ended with unexpected error'
+                ' please check log file for more information.'
+            )
             items = [{
                 'label': 'Error',
                 'type': 'textarea',
@@ -135,7 +143,11 @@ class Sync_to_Avalon(BaseEvent):
 
     def importToAvalon(self, session, event, entity):
         if self.ca_mongoid not in entity['custom_attributes']:
-            raise ValueError("Custom attribute '{}' for '{}' is not created or don't have set permissions for API".format(self.ca_mongoid, entity['name']))
+            msg = (
+                "Custom attribute '{}' for '{}' is not created"
+                " or don't have set permissions for API"
+            ).format(self.ca_mongoid, entity['name'])
+            raise ValueError(msg)
 
         ftrack_utils.avalon_check_name(entity)
 
@@ -155,13 +167,19 @@ class Sync_to_Avalon(BaseEvent):
                 entity['name'] = self.avalon_project['name']
                 session.commit()
 
-                msg = 'You can\'t change name {} to {}, avalon wouldn\'t work properly!\nName was changed back!'.format(self.avalon_project['name'], name)
+                msg = (
+                    'You can\'t change name {} to {}'
+                    ', avalon wouldn\'t work properly!'
+                    '\nName was changed back!'
+                ).format(self.avalon_project['name'], name)
                 self.errors.append(msg)
                 return
 
             self.projectId = self.avalon_project['_id']
 
-            data = ftrack_utils.get_data(self, entity, session, self.custom_attributes)
+            data = ftrack_utils.get_data(
+                self, entity, session, self.custom_attributes
+            )
 
             io.update_many(
                 {"_id": ObjectId(self.projectId)},
@@ -178,13 +196,13 @@ class Sync_to_Avalon(BaseEvent):
         if self.avalon_project is None:
             self.importToAvalon(session, event, self.proj)
 
-        data = ftrack_utils.get_data(self, entity, session, self.custom_attributes)
+        data = ftrack_utils.get_data(
+            self, entity, session, self.custom_attributes
+        )
 
         # only check name if entity is silo
         if len(data['parents']) == 0:
-            if self.checkSilo(entity, event, session) is False:
-                raise ExpectedError
-            return
+            silo = None
         else:
             silo = data['parents'][0]
 
@@ -203,27 +221,44 @@ class Sync_to_Avalon(BaseEvent):
         if avalon_asset is None:
             avalon_asset = io.find_one({'type': 'asset', 'name': name})
             if avalon_asset is None:
-                mongo_id = inventory.create_asset(name, silo, data, ObjectId(self.projectId))
+                mongo_id = inventory.create_asset(
+                    name, silo, data, ObjectId(self.projectId)
+                )
             # Raise error if it seems to be different ent. with same name
             elif (
                 avalon_asset['data']['parents'] != data['parents'] or
                 avalon_asset['silo'] != silo
             ):
-                msg = 'In Avalon DB already exists entity with name "{0}"'.format(name)
+                msg = (
+                    'In Avalon DB already exists entity with name "{0}"'
+                ).format(name)
                 self.errors.append(msg)
                 return
         else:
             if avalon_asset['name'] != entity['name']:
-                if self.checkChilds(entity) is False:
-                    msg = 'You can\'t change name {} to {}, avalon wouldn\'t work properly!\n\nName was changed back!\n\nCreate new entity if you want to change name.'.format(avalon_asset['name'], entity['name'])
+                if silo is None or self.checkChilds(entity) is False:
+                    msg = (
+                        'You can\'t change name {} to {}'
+                        ', avalon wouldn\'t work properly!'
+                        '\n\nName was changed back!'
+                        '\n\nCreate new entity if you want to change name.'
+                    ).format(avalon_asset['name'], entity['name'])
                     entity['name'] = avalon_asset['name']
                     session.commit()
                     self.errors.append(msg)
 
-            if avalon_asset['silo'] != silo or avalon_asset['data']['parents'] != data['parents']:
+            if (
+                avalon_asset['silo'] != silo or
+                avalon_asset['data']['parents'] != data['parents']
+            ):
                 old_path = "/".join(avalon_asset['data']['parents'])
                 new_path = "/".join(data['parents'])
-                msg = 'You can\'t move with entities.\nEntity "{}" was moved from "{}" to "{}"\n\nAvalon won\'t work properly, please move them back!'.format(avalon_asset['name'], old_path, new_path)
+                msg = (
+                    'You can\'t move with entities.'
+                    '\nEntity "{}" was moved from "{}" to "{}"'
+                    '\n\nAvalon won\'t work properly, please move them back!'
+                ).format(avalon_asset['name'], old_path, new_path)
+
                 self.errors.append(msg)
 
         if len(self.errors) > 0:
@@ -261,44 +296,6 @@ class Sync_to_Avalon(BaseEvent):
         # If everything is allright
         return True
 
-    def checkSilo(self, entity, event, session):
-        changes = event['data']['entities'][0]['changes']
-        if 'name' not in changes:
-            return True
-        new_name = changes['name']['new']
-        old_name = changes['name']['old']
-
-        if 'children' not in entity or len(entity['children']) < 1:
-            return True
-
-        if self.checkChilds(entity) is True:
-            self.updateSilo(old_name, new_name)
-            return True
-
-        new_found = 0
-        old_found = 0
-        for asset in io.find({'silo': new_name}):
-            new_found += 1
-        for asset in io.find({'silo': old_name}):
-            old_found += 1
-
-        if new_found > 0 or old_found == 0:
-            return True
-
-        # If any condition is possible, show error to user and change name back
-        msg = 'You can\'t change name {} to {}, avalon wouldn\'t work properly!\n\nName was changed back!\n\nCreate new entity if you want to change name.'.format(old_name, new_name)
-        self.errors.append(msg)
-        entity['name'] = old_name
-        session.commit()
-
-        return False
-
-    def updateSilo(self, old, new):
-        io.update_many(
-            {'silo': old},
-            {'$set': {'silo': new}}
-        )
-
     def setAvalonAttributes(self):
         self.custom_attributes = []
         query = 'CustomAttributeGroup where name is "avalon"'
@@ -332,7 +329,10 @@ class Sync_to_Avalon(BaseEvent):
                 continue
             _entities.append(
                 (
-                    session.get(self._get_entity_type(entity), entity.get('entityId'))
+                    session.get(
+                        self._get_entity_type(entity),
+                        entity.get('entityId')
+                    )
                 )
             )
 

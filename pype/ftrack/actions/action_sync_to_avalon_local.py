@@ -244,7 +244,7 @@ class SyncToAvalon(BaseAction):
 
         # return if entity is silo
         if len(data['parents']) == 0:
-            return
+            silo = None
         else:
             silo = data['parents'][0]
 
