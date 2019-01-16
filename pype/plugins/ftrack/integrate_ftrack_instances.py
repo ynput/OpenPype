@@ -63,10 +63,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 component_data = {
                     "name": "ftrackreview-mp4",  # Default component name is "main".
                     "metadata": {'ftr_meta': json.dumps({
-                        'frameIn': int(instance.data["startFrame"]),
-                        'frameOut': int(instance.data["startFrame"]),
-                        'frameRate': 25})}
-                }
+                                 'frameIn': int(instance.data["startFrame"]),
+                                 'frameOut': int(instance.data["startFrame"]),
+                                 'frameRate': 25})}
+                                }
             elif ext in [".jpg"]:
                 component_data = {
                     "name": "thumbnail"  # Default component name is "main".

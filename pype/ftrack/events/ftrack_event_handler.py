@@ -1,19 +1,7 @@
 # :coding: utf-8
 # :copyright: Copyright (c) 2017 ftrack
-import os
-import logging
-import getpass
-# import platform
 import ftrack_api
-import toml
-from avalon import io, lib, pipeline
-from avalon import session as sess
-import acre
-
-from app.api import (
-    Templates,
-    Logger
-)
+from app.api import Logger
 
 
 class BaseEvent(object):
@@ -47,7 +35,7 @@ class BaseEvent(object):
 
     def _translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''
-        _selection = event['data'].get('entities',[])
+        _selection = event['data'].get('entities', [])
 
         _entities = list()
         for entity in _selection:
@@ -119,7 +107,7 @@ class BaseEvent(object):
         '''
         raise NotImplementedError()
 
-    def show_message(self, event, input_message, result = False):
+    def show_message(self, event, input_message, result=False):
         """
         Shows message to user who triggered event
         - event - just source of user id
@@ -137,6 +125,8 @@ class BaseEvent(object):
             return
 
         user_id = event['source']['user']['id']
+        target = 'applicationId=ftrack.client.web and user.id="{0}"'.format(user_id)
+
         self.session.event_hub.publish(
             ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
@@ -145,7 +135,27 @@ class BaseEvent(object):
                     success=result,
                     message=message
                 ),
-                target='applicationId=ftrack.client.web and user.id="{0}"'.format(user_id)
+                target=target
+            ),
+            on_error='ignore'
+        )
+
+    def show_interface(self, event, items):
+        """
+        Shows interface to user who triggered event
+        - 'items' must be list containing Ftrack interface items
+        """
+        user_id = event['source']['user']['id']
+        target = 'applicationId=ftrack.client.web and user.id="{0}"'.format(user_id)
+
+        self.session.event_hub.publish(
+            ftrack_api.event.base.Event(
+                topic='ftrack.action.trigger-user-interface',
+                data=dict(
+                    type='widget',
+                    items=items
+                ),
+                target=target
             ),
             on_error='ignore'
         )

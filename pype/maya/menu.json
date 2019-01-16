@@ -7,9 +7,9 @@
 },
 {
 	"type": "action",
-	"command": "$PYPE_SCRIPTS\\others\\show_current_scene_in_explorer.py",
+	"command": "$PYPE_SCRIPTS\\others\\open_current_folder.py",
 	"sourcetype": "file",
-	"title": "# Explore current scene..",
+	"title": "Open working folder..",
 	"tooltip": "Show current scene in Explorer"
 },
 {
@@ -25,47 +25,7 @@
 {
 	"type": "menu",
 	"title": "# Modeling",
-	"items": [{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\modeling\\duplicate_normalized.py",
-		"sourcetype": "file",
-		"tags": ["modeling",
-		"duplicate",
-		"normalized"],
-		"title": "# # Duplicate Normalized",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\modeling\\transferUVs.py",
-		"sourcetype": "file",
-		"tags": ["modeling",
-		"transfer",
-		"uv"],
-		"title": "# Transfer UVs",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\modeling\\mirrorSymmetry.py",
-		"sourcetype": "file",
-		"tags": ["modeling",
-		"mirror",
-		"symmetry"],
-		"title": "# Mirror Symmetry",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\modeling\\selectOutlineUI.py",
-		"sourcetype": "file",
-		"tags": ["modeling",
-		"select",
-		"outline",
-		"ui"],
-		"title": "# Select Outline UI",
-		"tooltip": ""
-	},
+	"items": [
 	{
 		"type": "action",
 		"command": "$PYPE_SCRIPTS\\modeling\\polyDeleteOtherUVSets.py",
@@ -75,17 +35,6 @@
 		"uvset",
 		"delete"],
 		"title": "# Polygon Delete Other UV Sets",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\modeling\\polyCombineQuick.py",
-		"sourcetype": "file",
-		"tags": ["modeling",
-		"combine",
-		"polygon",
-		"quick"],
-		"title": "# Polygon Combine Quick",
 		"tooltip": ""
 	},
 	{
@@ -106,16 +55,6 @@
 		"detach",
 		"separate"],
 		"title": "# Polygon Detach and Separate",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\modeling\\polyRelaxVerts.py",
-		"sourcetype": "file",
-		"tags": ["modeling",
-		"relax",
-		"verts"],
-		"title": "# Polygon Relax Vertices",
 		"tooltip": ""
 	},
 	{
@@ -142,322 +81,16 @@
 },
 {
 	"type": "menu",
-	"title": "# Rigging",
-	"items": [{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\addCurveBetween.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"addCurveBetween",
-		"file"],
-		"title": "# Add Curve Between"
-	},
+	"title": "Rigging",
+	"items": [
 	{
 		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\averageSkinWeights.py",
+		"command": "$PYPE_SCRIPTS\\rigging\\advancedSkeleton.py",
 		"sourcetype": "file",
 		"tags": ["rigging",
-		"average",
-		"skin weights",
+		"autorigger", "advanced", "skeleton", "advancedskeleton",
 		"file"],
-		"title": "# Average Skin Weights"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\cbSmoothSkinWeightUI.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"cbSmoothSkinWeightUI",
-		"file"],
-		"title": "# CB Smooth Skin Weight UI"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\channelBoxManagerUI.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"channelBoxManagerUI",
-		"file"],
-		"title": "# Channel Box Manager UI"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\characterAutorigger.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"characterAutorigger",
-		"file"],
-		"title": "# Character Auto Rigger"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\connectUI.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"connectUI",
-		"file"],
-		"title": "# Connect UI"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\copySkinWeightsLocal.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"copySkinWeightsLocal",
-		"file"],
-		"title": "# Copy Skin Weights Local"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\createCenterLocator.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"createCenterLocator",
-		"file"],
-		"title": "# Create Center Locator"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\freezeTransformToGroup.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"freezeTransformToGroup",
-		"file"],
-		"title": "# Freeze Transform To Group"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\groupSelected.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"groupSelected",
-		"file"],
-		"title": "# Group Selected"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\ikHandlePoleVectorLocator.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"ikHandlePoleVectorLocator",
-		"file"],
-		"title": "# IK Handle Pole Vector Locator"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\jointOrientUI.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"jointOrientUI",
-		"file"],
-		"title": "# Joint Orient UI"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\jointsOnCurve.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"jointsOnCurve",
-		"file"],
-		"title": "# Joints On Curve"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\resetBindSelectedSkinJoints.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"resetBindSelectedSkinJoints",
-		"file"],
-		"title": "# Reset Bind Selected Skin Joints"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedComponents.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"selectSkinclusterJointsFromSelectedComponents",
-		"file"],
-		"title": "# Select Skincluster Joints From Selected Components"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\selectSkinclusterJointsFromSelectedMesh.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"selectSkinclusterJointsFromSelectedMesh",
-		"file"],
-		"title": "# Select Skincluster Joints From Selected Mesh"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\setJointLabels.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"setJointLabels",
-		"file"],
-		"title": "# Set Joint Labels"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\setJointOrientationFromCurrentRotation.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"setJointOrientationFromCurrentRotation",
-		"file"],
-		"title": "# Set Joint Orientation From Current Rotation"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\setSelectedJointsOrientationZero.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"setSelectedJointsOrientationZero",
-		"file"],
-		"title": "# Set Selected Joints Orientation Zero"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\mirrorCurveShape.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"mirrorCurveShape",
-		"file"],
-		"title": "# Mirror Curve Shape"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\setRotationOrderUI.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"setRotationOrderUI",
-		"file"],
-		"title": "# Set Rotation Order UI"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\paintItNowUI.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"paintItNowUI",
-		"file"],
-		"title": "# Paint It Now UI"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\parentScaleConstraint.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"parentScaleConstraint",
-		"file"],
-		"title": "# Parent Scale Constraint"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\quickSetWeightsUI.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"quickSetWeightsUI",
-		"file"],
-		"title": "# Quick Set Weights UI"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\rapidRig.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"rapidRig",
-		"file"],
-		"title": "# Rapid Rig"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\regenerate_blendshape_targets.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"regenerate_blendshape_targets",
-		"file"],
-		"title": "# Regenerate Blendshape Targets"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\removeRotationAxis.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"removeRotationAxis",
-		"file"],
-		"title": "# Remove Rotation Axis"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\resetBindSelectedMeshes.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"resetBindSelectedMeshes",
-		"file"],
-		"title": "# Reset Bind Selected Meshes"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\simpleControllerOnSelection.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"simpleControllerOnSelection",
-		"file"],
-		"title": "# Simple Controller On Selection"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\simpleControllerOnSelectionHierarchy.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"simpleControllerOnSelectionHierarchy",
-		"file"],
-		"title": "# Simple Controller On Selection Hierarchy"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\superRelativeCluster.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"superRelativeCluster",
-		"file"],
-		"title": "# Super Relative Cluster"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\tfSmoothSkinWeight.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"tfSmoothSkinWeight",
-		"file"],
-		"title": "# TF Smooth Skin Weight"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\toggleIntermediates.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"toggleIntermediates",
-		"file"],
-		"title": "# Toggle Intermediates"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\toggleSegmentScaleCompensate.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"toggleSegmentScaleCompensate",
-		"file"],
-		"title": "# Toggle Segment Scale Compensate"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\rigging\\toggleSkinclusterDeformNormals.py",
-		"sourcetype": "file",
-		"tags": ["rigging",
-		"toggleSkinclusterDeformNormals",
-		"file"],
-		"title": "# Toggle Skincluster Deform Normals"
+		"title": "Advanced Skeleton"
 	}]
 },
 {
@@ -841,7 +474,7 @@
 },
 {
 	"type": "menu",
-	"title": "# Animation",
+	"title": "Animation",
 	"items": [{
 		"type": "menu",
 		"title": "# Attributes",
@@ -1060,10 +693,10 @@
 	},
 	{
 		"sourcetype": "file",
-		"command": "$PYPE_SCRIPTS\\animation\\poseLibrary.py",
+		"command": "$PYPE_SCRIPTS\\animation\\animLibrary.py",
 		"tags": ["animation",
-		"poseLibrary.py"],
-		"title": "# Pose Library",
+		"studiolibrary.py"],
+		"title": "Anim Library",
 		"type": "action"
 	}]
 },
@@ -1222,92 +855,11 @@
 	},
 	{
 		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\objectsToParticlesAndInstancerCleanSource.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"objects",
-		"Particles",
-		"Instancer",
-		"Clean",
-		"Source"],
-		"title": "# Objects To Particles & Instancer - Clean Source",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\particleComponentsToLocators.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"components",
-		"locators"],
-		"title": "# Particle Components To Locators",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\objectsToParticlesAndInstancer.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"objects",
-		"particles",
-		"instancer"],
-		"title": "# Objects To Particles And Instancer",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\spawnParticlesOnMesh.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"spawn",
-		"on",
-		"mesh"],
-		"title": "# Spawn Particles On Mesh",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
 		"command": "$PYPE_SCRIPTS\\particles\\instancerToObjectsInstancesWithAnimation.py",
 		"sourcetype": "file",
 		"tags": ["particles",
 		"instancerToObjectsInstancesWithAnimation"],
 		"title": "# Instancer To Objects Instances With Animation",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\objectsToParticles.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"objectsToParticles"],
-		"title": "# Objects To Particles",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\add_particle_cacheFile_attrs.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"add_particle_cacheFile_attrs"],
-		"title": "# Add Particle CacheFile Attributes",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\mergeParticleSystems.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"mergeParticleSystems"],
-		"title": "# Merge Particle Systems",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\particlesToLocators.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"particlesToLocators"],
-		"title": "# Particles To Locators",
 		"tooltip": ""
 	},
 	{
@@ -1318,61 +870,11 @@
 		"instancerToObjectsWithAnimation"],
 		"title": "# Instancer To Objects With Animation",
 		"tooltip": ""
-	},
-	{
-		"type": "separator"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\mayaReplicateHoudiniTool.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"houdini",
-		"houdiniTool",
-		"houdiniEngine"],
-		"title": "# Replicate Houdini Tool",
-		"tooltip": ""
-	},
-	{
-		"type": "separator"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\clearInitialState.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"clearInitialState"],
-		"title": "# Clear Initial State",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\particles\\killSelectedParticles.py",
-		"sourcetype": "file",
-		"tags": ["particles",
-		"killSelectedParticles"],
-		"title": "# Kill Selected Particles",
-		"tooltip": ""
 	}]
 },
 {
 	"type": "menu",
-	"title": "# Yeti",
-	"items": [{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\yeti\\yeti_rig_manager.py",
-		"sourcetype": "file",
-		"tags": ["yeti",
-		"rig",
-		"fur",
-		"manager"],
-		"title": "# Open Yeti Rig Manager",
-		"tooltip": ""
-	}]
-},
-{
-	"type": "menu",
-	"title": "# Cleanup",
+	"title": "Cleanup",
 	"items": [{
 		"type": "action",
 		"command": "$PYPE_SCRIPTS\\cleanup\\repair_faulty_containers.py",
@@ -1381,35 +883,6 @@
 		"repair",
 		"containers"],
 		"title": "# Find and Repair Containers",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\cleanup\\selectByType.py",
-		"sourcetype": "file",
-		"tags": ["cleanup",
-		"selectByType"],
-		"title": "# Select By Type",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\cleanup\\selectIntermediateObjects.py",
-		"sourcetype": "file",
-		"tags": ["cleanup",
-		"selectIntermediateObjects"],
-		"title": "# Select Intermediate Objects",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\cleanup\\selectNonUniqueNames.py",
-		"sourcetype": "file",
-		"tags": ["cleanup",
-		"select",
-		"non unique",
-		"names"],
-		"title": "# Select Non Unique Names",
 		"tooltip": ""
 	},
 	{
@@ -1471,27 +944,7 @@
 		"tooltip": "Remove all loaded yet unused Avalon look containers"
 	},
 	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\cleanup\\deleteGhostIntermediateObjects.py",
-		"sourcetype": "file",
-		"tags": ["cleanup",
-		"deleteGhostIntermediateObjects"],
-		"title": "# Delete Ghost Intermediate Objects",
-		"tooltip": ""
-	},
-	{
 		"type": "separator"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\cleanup\\resetViewportCache.py",
-		"sourcetype": "file",
-		"tags": ["cleanup",
-		"reset",
-		"viewport",
-		"cache"],
-		"title": "# Reset Viewport Cache",
-		"tooltip": ""
 	},
 	{
 		"type": "action",
@@ -1527,13 +980,13 @@
 	},
 	{
 		"type": "action",
-		"command": "$PYPE_SCRIPTS\\cleanup\\colorbleedRename.py",
+		"command": "$PYPE_SCRIPTS\\cleanup\\ccRenameReplace.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"rename",
 		"ui"],
-		"title": "# Colorbleed Renamer",
-		"tooltip": "Colorbleed Rename UI"
+		"title": "Renamer",
+		"tooltip": "Rename UI"
 	},
 	{
 		"type": "action",
@@ -1542,226 +995,6 @@
 		"tags": ["cleanup",
 		"renameShapesToTransform"],
 		"title": "# Rename Shapes To Transform",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\cleanup\\reorderUI.py",
-		"sourcetype": "file",
-		"tags": ["cleanup",
-		"reorderUI"],
-		"title": "# Reorder UI",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\cleanup\\pastedCleaner.py",
-		"sourcetype": "file",
-		"tags": ["cleanup",
-		"pastedCleaner"],
-		"title": "# Pasted Cleaner",
-		"tooltip": ""
-	}]
-},
-{
-	"type": "menu",
-	"title": "# Others",
-	"items": [{
-		"type": "menu",
-		"sourcetype": "file",
-		"title": "# Yeti",
-		"items": [{
-			"type": "action",
-			"command": "$PYPE_SCRIPTS\\others\\yeti\\cache_selected_yeti_nodes.py",
-			"sourcetype": "file",
-			"tags": ["others",
-			"yeti",
-			"cache",
-			"selected"],
-			"title": "# Cache Selected Yeti Nodes",
-			"tooltip": ""
-		}]
-	},
-	{
-		"type": "menu",
-		"title": "# Hair",
-		"tooltip": "",
-		"items": [{
-			"type": "action",
-			"command": "$PYPE_SCRIPTS\\others\\hair\\recolorHairCurrentCurve",
-			"sourcetype": "file",
-			"tags": ["others",
-			"selectSoftSelection"],
-			"title": "# Select Soft Selection",
-			"tooltip": ""
-		}]
-	},
-	{
-		"type": "menu",
-		"command": "$PYPE_SCRIPTS\\others\\display",
-		"sourcetype": "file",
-		"tags": ["others",
-		"display"],
-		"title": "# Display",
-		"items": [{
-			"type": "action",
-			"command": "$PYPE_SCRIPTS\\others\\display\\wireframeSelectedObjects.py",
-			"sourcetype": "file",
-			"tags": ["others",
-			"wireframe",
-			"selected",
-			"objects"],
-			"title": "# Wireframe Selected Objects",
-			"tooltip": ""
-		}]
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\archiveSceneUI.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"archiveSceneUI"],
-		"title": "# Archive Scene UI",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\getSimilarMeshes.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"getSimilarMeshes"],
-		"title": "# Get Similar Meshes",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\createBoundingBoxEachSelected.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"createBoundingBoxEachSelected"],
-		"title": "# Create BoundingBox Each Selected",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\curveFromPositionEveryFrame.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"curveFromPositionEveryFrame"],
-		"title": "# Curve From Position",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\instanceLeafSmartTransform.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"instance",
-		"leaf",
-		"smart",
-		"transform"],
-		"title": "# Instance Leaf Smart Transform",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\instanceSmartTransform.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"instance",
-		"smart",
-		"transform"],
-		"title": "# Instance Smart Transform",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\randomizeUVShellsSelectedObjects.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"randomizeUVShellsSelectedObjects"],
-		"title": "# Randomize UV Shells",
-		"tooltip": "Select objects before running action"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\centerPivotGroup.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"centerPivotGroup"],
-		"title": "# Center Pivot Group",
-		"tooltip": ""
-	},
-	{
-		"type": "separator"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\locatorsOnSelectedFaces.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"locatorsOnSelectedFaces"],
-		"title": "# Locators On Selected Faces",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\locatorsOnEdgeSelectionPrompt.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"locatorsOnEdgeSelectionPrompt"],
-		"title": "# Locators On Edge Selection Prompt",
-		"tooltip": ""
-	},
-	{
-		"type": "separator"
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\copyDeformers.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"copyDeformers"],
-		"title": "# Copy Deformers",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\selectInReferenceEditor.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"selectInReferenceEditor"],
-		"title": "# Select In Reference Editor",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\selectConstrainingObject.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"selectConstrainingObject"],
-		"title": "# Select Constraining Object",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\deformerSetRelationsUI.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"deformerSetRelationsUI"],
-		"title": "# Deformer Set Relations UI",
-		"tooltip": ""
-	},
-	{
-		"type": "action",
-		"command": "$PYPE_SCRIPTS\\others\\recreateBaseNodesForAllLatticeNodes.py",
-		"sourcetype": "file",
-		"tags": ["others",
-		"recreate",
-		"base",
-		"nodes",
-		"lattice"],
-		"title": "# Recreate Base Nodes For Lattice Nodes",
 		"tooltip": ""
 	}]
 }]

@@ -3,7 +3,7 @@ import json
 import re
 
 import pyblish.api
-from config.vendor import clique
+from pype.vendor import clique
 
 
 class CollectJSON(pyblish.api.ContextPlugin):

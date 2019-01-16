@@ -1,54 +1,49 @@
 import os
-import logging
 import toml
-import ftrack_api
 from ftrack_action_handler import AppAction
 from avalon import io, lib
 from app.api import Logger
 
 log = Logger.getLogger(__name__)
 
+
 def registerApp(app, session):
     name = app['name']
     variant = ""
     try:
         variant = app['name'].split("_")[1]
-    except Exception as e:
-        log.warning("'{0}' - App 'name' and 'variant' is not separated by '_' (variant is not set)".format(app['name']))
+    except Exception:
+        log.warning((
+            '"{0}" - App "name" and "variant" is not separated by "_"'
+            ' (variant is not set)'
+        ).format(app['name']))
         return
 
     abspath = lib.which_app(app['name'])
-    if abspath == None:
-        log.error("'{0}' - App don't have config toml file".format(app['name']))
+    if abspath is None:
+        log.error(
+            "'{0}' - App don't have config toml file".format(app['name'])
+        )
         return
 
     apptoml = toml.load(abspath)
 
     executable = apptoml['executable']
-
-    label = app['label']
-    if 'ftrack_label' in apptoml:
-        label = apptoml['ftrack_label']
-
-    icon = None
-    ftrack_resources = "" # Path to resources here
-
-    if 'icon' in apptoml:
-        icon = apptoml['ftrack_icon']
-        if '{ftrack_resources}' in icon:
-            icon = icon.format(ftrack_resources)
-
-    description = None
-    if 'description' in apptoml:
-        description = apptoml['description']
+    label = apptoml.get('ftrack_label', app['label'])
+    icon = apptoml.get('ftrack_icon', None)
+    description = apptoml.get('description', None)
 
     # register action
-    AppAction(session, label, name, executable, variant, icon, description).register()
+    AppAction(
+        session, label, name, executable, variant, icon, description
+    ).register()
 
 
 def register(session):
-    # TODO AVALON_PROJECT, AVALON_ASSET, AVALON_SILO need to be set or debug from avalon
-
+    # set avalon environ - they just must exist
+    os.environ['AVALON_PROJECT'] = ''
+    os.environ['AVALON_ASSET'] = ''
+    os.environ['AVALON_SILO'] = ''
     # Get all projects from Avalon DB
     try:
         io.install()
@@ -61,7 +56,6 @@ def register(session):
     appNames = []
     # Get all application from all projects
     for project in projects:
-        os.environ['AVALON_PROJECT'] = project['name']
         for app in project['config']['apps']:
             if app['name'] not in appNames:
                 appNames.append(app['name'])
