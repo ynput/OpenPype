@@ -4,10 +4,14 @@ import os
 import sys
 import platform
 import ftrack_api
-from avalon import io, lib
+from avalon import lib
 import acre
 
+from pype.ftrack import ftrack_utils
 from pype import api as pype
+
+
+ignore_me = True
 
 
 class AppAction(object):
@@ -122,33 +126,20 @@ class AppAction(object):
         entity = session.get(entity_type, entity_id)
 
         # TODO Should return False if not TASK ?!!!
-        if entity.entity_type != 'Task':
-            return False
-
         # TODO Should return False if more than one entity is selected ?!!!
-        if len(entities) > 1:
+        if (
+            len(entities) > 1 or
+            entity.entity_type.lower() != 'task'
+        ):
             return False
 
-        ft_project = entity
-        if (entity.entity_type != 'Project'):
-            ft_project = entity['project']
+        ft_project = entity['project']
 
-        silo = ""
-        if 'ancestors' in entity:
-            for ancestor in entity['ancestors']:
-                silo = ancestor['name']
-                break
-
-        os.environ['AVALON_PROJECT'] = ft_project['full_name']
-        os.environ['AVALON_ASSET'] = entity['name']
-        os.environ['AVALON_SILO'] = silo
-
-        io.install()
-        avalon_project = io.find_one({
-            "type": "project",
-            "name": ft_project['full_name']
+        database = ftrack_utils.get_avalon_database()
+        project_name = ft_project['full_name']
+        avalon_project = database[project_name].find_one({
+            "type": "project"
         })
-        io.uninstall()
 
         if avalon_project is None:
             return False
@@ -249,24 +240,37 @@ class AppAction(object):
 
         entity, id = entities[0]
         entity = session.get(entity, id)
+        project_name = entity['project']['full_name']
+
+        database = ftrack_utils.get_avalon_database()
+
+        # Get current environments
+        env_list = [
+            'AVALON_PROJECT',
+            'AVALON_SILO',
+            'AVALON_ASSET',
+            'AVALON_TASK',
+            'AVALON_APP',
+            'AVALON_APP_NAME'
+        ]
+        env_origin = {}
+        for env in env_list:
+            env_origin[env] = os.environ.get(env, None)
 
         # set environments for Avalon
-        os.environ["AVALON_PROJECT"] = entity['project']['full_name']
+        os.environ["AVALON_PROJECT"] = project_name
         os.environ["AVALON_SILO"] = entity['ancestors'][0]['name']
         os.environ["AVALON_ASSET"] = entity['parent']['name']
         os.environ["AVALON_TASK"] = entity['name']
         os.environ["AVALON_APP"] = self.identifier.split("_")[0]
         os.environ["AVALON_APP_NAME"] = self.identifier
 
-        os.environ["FTRACK_TASKID"] = id
-
         anatomy = pype.Anatomy
-        io.install()
-        hierarchy = io.find_one({
+        hierarchy = database[project_name].find_one({
             "type": 'asset',
             "name": entity['parent']['name']
         })['data']['parents']
-        io.uninstall()
+
         if hierarchy:
             hierarchy = os.path.join(*hierarchy)
 
@@ -383,6 +387,10 @@ class AppAction(object):
         task = session.query('Task where id is {}'.format(entity['id'])).one()
         self.log.info('Starting timer for task: ' + task['name'])
         user.start_timer(task, force=True)
+
+        # Set origin avalon environments
+        for key, value in env_origin.items():
+            os.environ[key] = value
 
         return {
             'success': True,
@@ -729,7 +737,7 @@ class BaseAction(object):
 
         return result
 
-    def show_interface(self, event, items):
+    def show_interface(self, event, items, title=''):
         """
         Shows interface to user who triggered event
         - 'items' must be list containing Ftrack interface items
@@ -744,7 +752,8 @@ class BaseAction(object):
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='widget',
-                    items=items
+                    items=items,
+                    title=title
                 ),
                 target=target
             ),

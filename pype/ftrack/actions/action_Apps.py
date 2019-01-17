@@ -1,8 +1,9 @@
-import os
 import toml
+import time
 from ftrack_action_handler import AppAction
-from avalon import io, lib
+from avalon import lib
 from app.api import Logger
+from pype import lib as pypelib
 
 log = Logger.getLogger(__name__)
 
@@ -28,8 +29,11 @@ def registerApp(app, session):
 
     apptoml = toml.load(abspath)
 
+    ''' REQUIRED '''
     executable = apptoml['executable']
-    label = apptoml.get('ftrack_label', app['label'])
+
+    ''' OPTIONAL '''
+    label = apptoml.get('ftrack_label', app.get('label', name))
     icon = apptoml.get('ftrack_icon', None)
     description = apptoml.get('description', None)
 
@@ -40,17 +44,7 @@ def registerApp(app, session):
 
 
 def register(session):
-    # set avalon environ - they just must exist
-    os.environ['AVALON_PROJECT'] = ''
-    os.environ['AVALON_ASSET'] = ''
-    os.environ['AVALON_SILO'] = ''
-    # Get all projects from Avalon DB
-    try:
-        io.install()
-        projects = sorted(io.projects(), key=lambda x: x['name'])
-        io.uninstall()
-    except Exception as e:
-        log.error(e)
+    projects = pypelib.get_all_avalon_projects()
 
     apps = []
     appNames = []
@@ -65,5 +59,6 @@ def register(session):
     for app in apps:
         try:
             registerApp(app, session)
+            time.sleep(0.05)
         except Exception as e:
             log.warning("'{0}' - not proper App ({1})".format(app['name'], e))

@@ -1,7 +1,8 @@
 import os
 import re
 from pype import lib
-from avalon import io, schema
+from pype.lib import get_avalon_database
+from avalon import schema
 from bson.objectid import ObjectId
 from pype.ftrack.ftrack_utils import ftrack_utils
 from avalon.vendor import jsonschema
@@ -9,12 +10,6 @@ from app.api import Logger
 ValidationError = jsonschema.ValidationError
 
 log = Logger.getLogger(__name__)
-
-
-def get_avalon_database():
-    if io._database is None:
-        io.install()
-    return io._database
 
 
 def get_ca_mongoid():
@@ -213,6 +208,10 @@ def import_to_avalon(
             errors.append({'Entity name duplication': msg})
             output['errors'] = errors
             return output
+
+        # Store new ID (in case that asset was removed from DB)
+        else:
+            mongo_id = avalon_asset['_id']
     else:
         if avalon_asset['name'] != entity['name']:
             if silo is None or changeability_check_childs(entity) is False:
@@ -388,7 +387,7 @@ def get_data(entity, session, custom_attributes):
     parentId = None
 
     for parent in parents:
-        parentId = database[project_name](
+        parentId = database[project_name].find_one(
             {'type': 'asset', 'name': parName}
         )['_id']
         if parent['parent'].entity_type != 'project' and parentId is None:

@@ -158,7 +158,6 @@ class Sync_To_Avalon(BaseAction):
                 )
 
                 if 'errors' in result and len(result['errors']) > 0:
-                    print('error')
                     items = []
                     for error in result['errors']:
                         for key, message in error.items():
@@ -173,10 +172,12 @@ class Sync_To_Avalon(BaseAction):
                             self.log.error(
                                 '{}: {}'.format(key, message)
                             )
+                    title = 'Hey You! Few Errors were raised! (*look below*)'
 
                     job['status'] = 'failed'
                     session.commit()
-                    self.show_interface(event, items)
+
+                    self.show_interface(event, items, title)
                     return {
                         'success': False,
                         'message': "Sync to avalon FAILED"

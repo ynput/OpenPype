@@ -86,7 +86,6 @@ class Sync_to_Avalon(BaseEvent):
                     custom_attributes=custom_attributes
                 )
                 if 'errors' in result and len(result['errors']) > 0:
-                    print('error')
                     items = []
                     for error in result['errors']:
                         for key, message in error.items():
@@ -101,9 +100,9 @@ class Sync_to_Avalon(BaseEvent):
                             self.log.error(
                                 '{}: {}'.format(key, message)
                             )
-
                     session.commit()
-                    self.show_interface(event, items)
+                    title = 'Hey You! You raised few Errors! (*look below*)'
+                    self.show_interface(event, items, title)
                     return
 
                 if avalon_project is None:
@@ -122,7 +121,8 @@ class Sync_to_Avalon(BaseEvent):
                 'name': 'error',
                 'value': ftrack_message
             }]
-            self.show_interface(event, items)
+            title = 'Hey You! Unknown Error has been raised! (*look below*)'
+            self.show_interface(event, items, title)
             self.log.error(message)
 
         return
