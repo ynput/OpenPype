@@ -6,7 +6,6 @@ import json
 import importlib
 
 import ftrack_api
-from avalon import io
 from ftrack_action_handler import BaseAction
 from pype.ftrack import ftrack_utils
 
@@ -134,16 +133,8 @@ class SyncToAvalon(BaseAction):
             # ----- PROJECT ------
             # store Ftrack project- self.importable[0] must be project entity!!
             ft_project = self.importable[0]
-
-            # set AVALON_ env
-            os.environ["AVALON_PROJECT"] = ft_project["full_name"]
-            os.environ["AVALON_ASSET"] = ft_project["full_name"]
-            os.environ["AVALON_SILO"] = ""
-
-            avalon_project = ftrack_utils.get_avalon_proj(ft_project)
+            avalon_project = ftrack_utils.get_avalon_project(ft_project)
             custom_attributes = ftrack_utils.get_avalon_attr(session)
-
-            io.install()
 
             # Import all entities to Avalon DB
             for entity in self.importable:
@@ -156,7 +147,6 @@ class SyncToAvalon(BaseAction):
                 )
 
                 if 'errors' in result and len(result['errors']) > 0:
-                    print('error')
                     items = []
                     for error in result['errors']:
                         for key, message in error.items():
@@ -171,11 +161,12 @@ class SyncToAvalon(BaseAction):
                             self.log.error(
                                 '{}: {}'.format(key, message)
                             )
-                    io.uninstall()
+                    title = 'Hey You! Few Errors were raised! (*look below*)'
 
                     job['status'] = 'failed'
                     session.commit()
-                    self.show_interface(event, items)
+
+                    self.show_interface(event, items, title)
                     return {
                         'success': False,
                         'message': "Sync to avalon FAILED"
@@ -210,8 +201,6 @@ class SyncToAvalon(BaseAction):
                 'Unexpected Error'
                 ' - Please check Log for more information'
             )
-
-        io.uninstall()
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)

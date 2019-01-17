@@ -1,7 +1,8 @@
 import os
 import re
 from pype import lib
-from avalon import io, inventory
+from pype.lib import get_avalon_database
+from avalon import schema
 from bson.objectid import ObjectId
 from pype.ftrack.ftrack_utils import ftrack_utils
 from avalon.vendor import jsonschema
@@ -19,6 +20,8 @@ def get_ca_mongoid():
 def import_to_avalon(
     session, entity, ft_project, av_project, custom_attributes
 ):
+    database = get_avalon_database()
+    project_name = ft_project['full_name']
     output = {}
     errors = []
 
@@ -46,9 +49,9 @@ def import_to_avalon(
     # Project ////////////////////////////////////////////////////////////////
     if entity_type in ['Project']:
         type = 'project'
-        name = entity['full_name']
+
         config = ftrack_utils.get_config(entity)
-        template = lib.get_avalon_project_template_schema()
+        schema.validate(config)
 
         av_project_code = None
         if av_project is not None and 'code' in av_project['data']:
@@ -56,23 +59,46 @@ def import_to_avalon(
         ft_project_code = ft_project['name']
 
         if av_project is None:
-            inventory.save(name, config, template)
-            av_project = io.find_one({'type': type, 'name': name})
+            project_schema = lib.get_avalon_project_template_schema()
+            item = {
+                'schema': project_schema,
+                'type': type,
+                'name': project_name,
+                'data': dict(),
+                'config': config,
+                'parent': None,
+            }
+            schema.validate(item)
 
-        elif av_project['name'] != name or av_project_code != ft_project_code:
+            database[project_name].insert_one(item)
+
+            av_project = database[project_name].find_one(
+                {'type': type}
+            )
+
+        elif (
+            av_project['name'] != project_name or
+            (
+                av_project_code is not None and
+                av_project_code != ft_project_code
+            )
+        ):
             msg = (
                 'You can\'t change {0} "{1}" to "{2}"'
                 ', avalon wouldn\'t work properly!'
                 '\n{0} was changed back!'
             )
-            if av_project['name'] != name:
+            if av_project['name'] != project_name:
                 entity['full_name'] = av_project['name']
                 errors.append(
                     {'Changed name error': msg.format(
-                        'Project name', av_project['name'], name
+                        'Project name', av_project['name'], project_name
                     )}
                 )
-            if av_project_code != ft_project_code:
+            if (
+                av_project_code is not None and
+                av_project_code != ft_project_code
+            ):
                 entity['name'] = av_project_code
                 errors.append(
                     {'Changed name error': msg.format(
@@ -91,10 +117,10 @@ def import_to_avalon(
             entity, session, custom_attributes
         )
 
-        io.update_many(
+        database[project_name].update_many(
             {'_id': ObjectId(projectId)},
             {'$set': {
-                'name': name,
+                'name': project_name,
                 'config': config,
                 'data': data,
             }})
@@ -137,9 +163,6 @@ def import_to_avalon(
 
     name = entity['name']
 
-    os.environ['AVALON_SILO'] = silo
-    os.environ['AVALON_ASSET'] = name
-
     avalon_asset = None
     # existence of this custom attr is already checked
     if ca_mongoid not in entity['custom_attributes']:
@@ -153,14 +176,27 @@ def import_to_avalon(
     mongo_id = entity['custom_attributes'][ca_mongoid]
 
     if mongo_id is not '':
-        avalon_asset = io.find_one({'_id': ObjectId(mongo_id)})
+        avalon_asset = database[project_name].find_one(
+            {'_id': ObjectId(mongo_id)}
+        )
 
     if avalon_asset is None:
-        avalon_asset = io.find_one({'type': 'asset', 'name': name})
+        avalon_asset = database[project_name].find_one(
+            {'type': 'asset', 'name': name}
+        )
         if avalon_asset is None:
-            mongo_id = inventory.create_asset(
-                name, silo, data, ObjectId(projectId)
-            )
+            asset_schema = lib.get_avalon_asset_template_schema()
+            item = {
+                'schema': asset_schema,
+                'name': name,
+                'silo': silo,
+                'parent': ObjectId(projectId),
+                'type': 'asset',
+                'data': data
+            }
+            schema.validate(item)
+            mongo_id = database[project_name].insert_one(item).inserted_id
+
         # Raise error if it seems to be different ent. with same name
         elif (
             avalon_asset['data']['parents'] != data['parents'] or
@@ -172,6 +208,10 @@ def import_to_avalon(
             errors.append({'Entity name duplication': msg})
             output['errors'] = errors
             return output
+
+        # Store new ID (in case that asset was removed from DB)
+        else:
+            mongo_id = avalon_asset['_id']
     else:
         if avalon_asset['name'] != entity['name']:
             if silo is None or changeability_check_childs(entity) is False:
@@ -205,7 +245,9 @@ def import_to_avalon(
                 else:
                     asset_parent_id = avalon_asset['data']['visualParent']
 
-                asset_parent = io.find_one({'_id': ObjectId(asset_parent_id)})
+                asset_parent = database[project_name].find_one(
+                    {'_id': ObjectId(asset_parent_id)}
+                )
                 ft_parent_id = asset_parent['data']['ftrackId']
                 try:
                     entity['parent_id'] = ft_parent_id
@@ -231,7 +273,7 @@ def import_to_avalon(
         output['errors'] = errors
         return output
 
-    io.update_many(
+    database[project_name].update_many(
         {'_id': ObjectId(mongo_id)},
         {'$set': {
             'name': name,
@@ -280,7 +322,17 @@ def changeability_check_childs(entity):
 
 
 def get_data(entity, session, custom_attributes):
+    database = get_avalon_database()
+
     entity_type = entity.entity_type
+
+    if entity_type.lower() == 'project':
+        ft_project = entity
+    elif entity_type.lower() != 'project':
+        ft_project = entity['project']
+        av_project = get_avalon_project(ft_project)
+
+    project_name = ft_project['full_name']
 
     data = {}
     data['ftrackId'] = entity['id']
@@ -335,10 +387,16 @@ def get_data(entity, session, custom_attributes):
     parentId = None
 
     for parent in parents:
-        parentId = io.find_one({'type': 'asset', 'name': parName})['_id']
+        parentId = database[project_name].find_one(
+            {'type': 'asset', 'name': parName}
+        )['_id']
         if parent['parent'].entity_type != 'project' and parentId is None:
-            parent.importToAvalon(session, parent)
-            parentId = io.find_one({'type': 'asset', 'name': parName})['_id']
+            import_to_avalon(
+                session, parent, ft_project, av_project, custom_attributes
+            )
+            parentId = database[project_name].find_one(
+                {'type': 'asset', 'name': parName}
+            )['_id']
 
     hierarchy = os.path.sep.join(folderStruct)
 
@@ -350,27 +408,25 @@ def get_data(entity, session, custom_attributes):
     return data
 
 
-def get_avalon_proj(ft_project):
-    io.install()
-
+def get_avalon_project(ft_project):
+    database = get_avalon_database()
+    project_name = ft_project['full_name']
     ca_mongoid = get_ca_mongoid()
     if ca_mongoid not in ft_project['custom_attributes']:
         return None
 
+    # try to find by Id
     project_id = ft_project['custom_attributes'][ca_mongoid]
     try:
-        avalon_project = io.find_one({
-            "_id": ObjectId(project_id)
+        avalon_project = database[project_name].find_one({
+            '_id': ObjectId(project_id)
         })
     except Exception:
         avalon_project = None
 
     if avalon_project is None:
-        avalon_project = io.find_one({
-            "type": "project",
-            "name": ft_project["full_name"]
+        avalon_project = database[project_name].find_one({
+            'type': 'project'
         })
-
-    io.uninstall()
 
     return avalon_project

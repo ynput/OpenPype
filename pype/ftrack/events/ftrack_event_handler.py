@@ -140,7 +140,7 @@ class BaseEvent(object):
             on_error='ignore'
         )
 
-    def show_interface(self, event, items):
+    def show_interface(self, event, items, title=''):
         """
         Shows interface to user who triggered event
         - 'items' must be list containing Ftrack interface items
@@ -153,7 +153,8 @@ class BaseEvent(object):
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='widget',
-                    items=items
+                    items=items,
+                    title=title
                 ),
                 target=target
             ),

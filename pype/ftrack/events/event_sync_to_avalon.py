@@ -1,8 +1,7 @@
 import os
 import ftrack_api
-from ftrack_event_handler import BaseEvent
-from avalon import io
 from pype.ftrack import ftrack_utils
+from ftrack_event_handler import BaseEvent
 
 
 class Sync_to_Avalon(BaseEvent):
@@ -45,14 +44,12 @@ class Sync_to_Avalon(BaseEvent):
             self.show_message(event, message, False)
             return
 
-        os.environ["AVALON_PROJECT"] = ft_project['full_name']
-        os.environ["AVALON_ASSET"] = ft_project["full_name"]
-        os.environ["AVALON_SILO"] = ""
-
         # get avalon project if possible
         import_entities = []
 
-        avalon_project = ftrack_utils.get_avalon_proj(ft_project)
+        custom_attributes = ftrack_utils.get_avalon_attr(session)
+
+        avalon_project = ftrack_utils.get_avalon_project(ft_project)
         if avalon_project is None:
             import_entities.append(ft_project)
 
@@ -79,11 +76,6 @@ class Sync_to_Avalon(BaseEvent):
         if len(import_entities) < 1:
             return
 
-        avalon_project = ftrack_utils.get_avalon_proj(ft_project)
-        custom_attributes = ftrack_utils.get_avalon_attr(session)
-
-        io.install()
-
         try:
             for entity in import_entities:
                 result = ftrack_utils.import_to_avalon(
@@ -94,7 +86,6 @@ class Sync_to_Avalon(BaseEvent):
                     custom_attributes=custom_attributes
                 )
                 if 'errors' in result and len(result['errors']) > 0:
-                    print('error')
                     items = []
                     for error in result['errors']:
                         for key, message in error.items():
@@ -109,10 +100,9 @@ class Sync_to_Avalon(BaseEvent):
                             self.log.error(
                                 '{}: {}'.format(key, message)
                             )
-                    io.uninstall()
-
                     session.commit()
-                    self.show_interface(event, items)
+                    title = 'Hey You! You raised few Errors! (*look below*)'
+                    self.show_interface(event, items, title)
                     return
 
                 if avalon_project is None:
@@ -131,10 +121,9 @@ class Sync_to_Avalon(BaseEvent):
                 'name': 'error',
                 'value': ftrack_message
             }]
-            self.show_interface(event, items)
+            title = 'Hey You! Unknown Error has been raised! (*look below*)'
+            self.show_interface(event, items, title)
             self.log.error(message)
-
-        io.uninstall()
 
         return
 
