@@ -26,8 +26,6 @@ accordance with the terms of the Adobe license agreement accompanying * it. If y
 					<ScriptPath>./jsx/pypeAvalon.jsx</ScriptPath>
 					<CEFCommandLine>
 						<Parameter>--enable-nodejs</Parameter>
-						<Parameter>--allow-file-access</Parameter>
-						<Parameter>--allow-file-access-from-files</Parameter>
 						<Parameter>--disable-application-cache</Parameter>
 					</CEFCommandLine>
 				</Resources>

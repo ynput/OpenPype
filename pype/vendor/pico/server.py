@@ -20,9 +20,7 @@ def run_app(app, **kwargs):
     threaded = kwargs.get("threaded")
     html_dir = kwargs.get("html_dir")
     log.info("html_dir: {}".format(html_dir))
-    app = SharedDataMiddleware(app, {
-        '/': html_dir
-    })
+    app = SharedDataMiddleware(app, html_dirs)
     while True:
         try:
             run_simple(ip, port, app, use_debugger=use_debugger,
@@ -41,6 +39,12 @@ if __name__ == '__main__':
             module_name += ':app'
         app = import_string(module_name)
 
+    html_dirs = os.getenv("PICO_HTML_DIR") or None
+    if html_dirs:
+        html_dirs = {"/{}".format(os.path.basename(p)): p.replace("\\", "/")
+                     for p in html_dirs.split(os.pathsep)}
+
+    log.info("> html_dirs: {}".format(html_dirs))
     ip = os.getenv("PICO_IP", '127.0.0.1')
 
     if ip and ip.startswith('http'):
@@ -51,7 +55,7 @@ if __name__ == '__main__':
               "use_debugger": os.getenv("PICO_DEBUG", True),
               "use_reloader": os.getenv("PICO_RELOADER", True),
               "threaded": os.getenv("PICO_THREADED", True),
-              "html_dir": os.getenv("PICO_HTML_DIR", 'static'), }
+              "html_dir": html_dirs}
 
     log.info("Pico.server > settings: "
              "\n\thtml_dir: {html_dir}"
