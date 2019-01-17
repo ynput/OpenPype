@@ -72,7 +72,7 @@ def compare(fa, fb, options_input=[]):
 
                 set = [i for i in options_input if i in [">", "<"]][0]
 
-                s = flush_input('What to do?(>,<,r,n)['+act+']', set=set)
+                s = flush_input('What to do?(>,<,r,n)[' + act + ']', set=set)
                 if len(s) > 0:
                     act = s[0]
                 if act == '>':
@@ -101,7 +101,7 @@ def compare(fa, fb, options_input=[]):
 
 def copy(fa, fb, options_input=[]):
     set = [i for i in options_input if i in ["y"]][0]
-    s = flush_input('Copy '+fa+' to another side?(r,y,n)[y]', set=set)
+    s = flush_input('Copy ' + fa + ' to another side?(r,y,n)[y]', set=set)
     if len(s) > 0:
         act = s[0]
     else:
@@ -157,6 +157,8 @@ def walktree(source, target, options_input=[]):
             copy(spath, tpath, options_input)
 
     # exists in target dir only
+    set = [i for i in options_input if i in ["<"]]
+
     for f in tarlist:
         if f in ignoreFiles:
             continue
@@ -166,7 +168,15 @@ def walktree(source, target, options_input=[]):
             continue
         if tpath in tarentry:
             continue
-        copy(tpath, spath, options_input)
+        if set:
+            copy(tpath, spath, options_input)
+        else:
+            print("REMOVING: {}".format(f))
+            if os.path.isdir(tpath):
+                shutil.rmtree(tpath)
+            else:
+                os.remove(tpath)
+            print("REMOVING: {}".format(f))
 
 
 if __name__ == '__main__':
