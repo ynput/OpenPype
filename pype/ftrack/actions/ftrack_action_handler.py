@@ -2,18 +2,17 @@
 # :copyright: Copyright (c) 2017 ftrack
 import os
 import sys
-import logging
-import getpass
 import platform
 import ftrack_api
-import toml
-from avalon import io, lib, pipeline
-from avalon import session as sess
+from avalon import lib
 import acre
 from pype.ftrack import ftrack_utils
 
+from pype.ftrack import ftrack_utils
 from pype import api as pype
 
+
+ignore_me = True
 
 
 class AppAction(object):
@@ -27,7 +26,10 @@ class AppAction(object):
     <icon>  - icon in ftrack
      '''
 
-    def __init__(self, session, label, name, executable, variant=None, icon=None, description=None):
+    def __init__(
+        self, session, label, name, executable,
+        variant=None, icon=None, description=None
+    ):
         '''Expects a ftrack_api.Session instance'''
 
         self.log = pype.Logger.getLogger(self.__class__.__name__)
@@ -54,22 +56,34 @@ class AppAction(object):
         '''Return current session.'''
         return self._session
 
-    def register(self, priority = 100):
+    def register(self, priority=100):
         '''Registers the action, subscribing the discover and launch topics.'''
-        self.session.event_hub.subscribe(
-            'topic=ftrack.action.discover and source.user.username={0}'.format(
-                self.session.api_user
-            ), self._discover,priority=priority
-        )
+
+        discovery_subscription = (
+            'topic=ftrack.action.discover and source.user.username={0}'
+        ).format(self.session.api_user)
 
         self.session.event_hub.subscribe(
-            'topic=ftrack.action.launch and data.actionIdentifier={0} and source.user.username={1}'.format(
-                self.identifier,
-                self.session.api_user
-            ),
+            discovery_subscription,
+            self._discover,
+            priority=priority
+        )
+
+        launch_subscription = (
+            'topic=ftrack.action.launch'
+            ' and data.actionIdentifier={0}'
+            ' and source.user.username={1}'
+        ).format(
+            self.identifier,
+            self.session.api_user
+        )
+        self.session.event_hub.subscribe(
+            launch_subscription,
             self._launch
         )
-        self.log.info("Application '{} {}' - Registered successfully".format(self.label,self.variant))
+        self.log.info((
+            "Application '{} {}' - Registered successfully"
+        ).format(self.label, self.variant))
 
     def _discover(self, event):
         args = self._translate_event(
@@ -81,7 +95,7 @@ class AppAction(object):
         )
 
         if accepts:
-            self.log.info('Selection is valid')
+            self.log.debug('Selection is valid')
             return {
                 'items': [{
                     'label': self.label,
@@ -92,7 +106,7 @@ class AppAction(object):
                 }]
             }
         else:
-            self.log.info('Selection is _not_ valid')
+            self.log.debug('Selection is _not_ valid')
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
@@ -113,25 +127,26 @@ class AppAction(object):
         entity = session.get(entity_type, entity_id)
 
         # TODO Should return False if not TASK ?!!!
-        if entity.entity_type != 'Task':
-            return False
-
         # TODO Should return False if more than one entity is selected ?!!!
-        if len(entities) > 1:
+        if (
+            len(entities) > 1 or
+            entity.entity_type.lower() != 'task'
+        ):
             return False
 
-        ft_project = entity['project'] if (entity.entity_type != 'Project') else entity
+        ft_project = entity['project']
 
-        os.environ['AVALON_PROJECT'] = ft_project['full_name']
-        io.install()
-        project = io.find_one({"type": "project", "name": ft_project['full_name']})
-        io.uninstall()
+        database = ftrack_utils.get_avalon_database()
+        project_name = ft_project['full_name']
+        avalon_project = database[project_name].find_one({
+            "type": "project"
+        })
 
-        if project is None:
+        if avalon_project is None:
             return False
         else:
             apps = []
-            for app in project['config']['apps']:
+            for app in avalon_project['config']['apps']:
                 apps.append(app['name'])
 
             if self.identifier not in apps:
@@ -220,27 +235,43 @@ class AppAction(object):
 
         '''
 
-        # TODO Delete this line
-        self.log.info("Action - {0} ({1}) - just started".format(self.label, self.identifier))
+        self.log.info((
+            "Action - {0} ({1}) - just started"
+        ).format(self.label, self.identifier))
 
         entity, id = entities[0]
         entity = session.get(entity, id)
+        project_name = entity['project']['full_name']
+
+        database = ftrack_utils.get_avalon_database()
+
+        # Get current environments
+        env_list = [
+            'AVALON_PROJECT',
+            'AVALON_SILO',
+            'AVALON_ASSET',
+            'AVALON_TASK',
+            'AVALON_APP',
+            'AVALON_APP_NAME'
+        ]
+        env_origin = {}
+        for env in env_list:
+            env_origin[env] = os.environ.get(env, None)
 
         # set environments for Avalon
-        os.environ["AVALON_PROJECT"] = entity['project']['full_name']
+        os.environ["AVALON_PROJECT"] = project_name
         os.environ["AVALON_SILO"] = entity['ancestors'][0]['name']
         os.environ["AVALON_ASSET"] = entity['parent']['name']
         os.environ["AVALON_TASK"] = entity['name']
         os.environ["AVALON_APP"] = self.identifier.split("_")[0]
         os.environ["AVALON_APP_NAME"] = self.identifier
 
-        os.environ["FTRACK_TASKID"] = id
-
         anatomy = pype.Anatomy
-        io.install()
-        hierarchy = io.find_one({"type": 'asset', "name": entity['parent']['name']})[
-            'data']['parents']
-        io.uninstall()
+        hierarchy = database[project_name].find_one({
+            "type": 'asset',
+            "name": entity['parent']['name']
+        })['data']['parents']
+
         if hierarchy:
             hierarchy = os.path.join(*hierarchy)
 
@@ -252,8 +283,12 @@ class AppAction(object):
         try:
             anatomy = anatomy.format(data)
         except Exception as e:
-            self.log.error("{0} Error in anatomy.format: {1}".format(__name__, e))
-        os.environ["AVALON_WORKDIR"] = os.path.join(anatomy.work.root, anatomy.work.folder)
+            self.log.error(
+                "{0} Error in anatomy.format: {1}".format(__name__, e)
+            )
+        os.environ["AVALON_WORKDIR"] = os.path.join(
+            anatomy.work.root, anatomy.work.folder
+        )
 
         # collect all parents from the task
         parents = []
@@ -307,36 +342,37 @@ class AppAction(object):
                 try:
                     fp = open(execfile)
                 except PermissionError as p:
-                    self.log.error('Access denied on {0} - {1}'.
-                              format(execfile, p))
+                    self.log.error('Access denied on {0} - {1}'.format(
+                        execfile, p))
                     return {
                         'success': False,
-                        'message': "Access denied on launcher - {}".
-                        format(execfile)
+                        'message': "Access denied on launcher - {}".format(
+                            execfile)
                     }
                 fp.close()
                 # check executable permission
                 if not os.access(execfile, os.X_OK):
-                    self.log.error('No executable permission on {}'.
-                              format(execfile))
+                    self.log.error('No executable permission on {}'.format(
+                        execfile))
                     return {
                         'success': False,
-                        'message': "No executable permission - {}"
-                        .format(execfile)
+                        'message': "No executable permission - {}".format(
+                            execfile)
                         }
                     pass
             else:
-                self.log.error('Launcher doesn\'t exist - {}'.
-                          format(execfile))
+                self.log.error('Launcher doesn\'t exist - {}'.format(
+                    execfile))
                 return {
                     'success': False,
-                    'message': "Launcher doesn't exist - {}"
-                    .format(execfile)
+                    'message': "Launcher doesn't exist - {}".format(execfile)
                 }
                 pass
             # Run SW if was found executable
             if execfile is not None:
-                lib.launch('/usr/bin/env', args=['bash', execfile], environment=env)
+                lib.launch(
+                    '/usr/bin/env', args=['bash', execfile], environment=env
+                )
             else:
                 return {
                     'success': False,
@@ -347,10 +383,9 @@ class AppAction(object):
 
         # RUN TIMER IN FTRACK
         username = event['source']['user']['username']
-        query_user = 'User where username is "{}"'.format(username)
-        query_task = 'Task where id is {}'.format(entity['id'])
-        user = session.query(query_user).one()
-        task = session.query(query_task).one()
+        user_query = 'User where username is "{}"'.format(username)
+        user = session.query(user_query).one()
+        task = session.query('Task where id is {}'.format(entity['id'])).one()
         self.log.info('Starting timer for task: ' + task['name'])
         user.start_timer(task, force=True)
 
@@ -374,6 +409,10 @@ class AppAction(object):
                 except Exception as e:
                     msg = "Status '{}' in config wasn't found on Ftrack".format(status_name)
                     self.log.warning(msg)
+
+        # Set origin avalon environments
+        for key, value in env_origin.items():
+            os.environ[key] = value
 
         return {
             'success': True,
@@ -476,7 +515,7 @@ class BaseAction(object):
     def reset_session(self):
         self.session.reset()
 
-    def register(self, priority = 100):
+    def register(self, priority=100):
         '''
         Registers the action, subscribing the the discover and launch topics.
         - highest priority event will show last
@@ -487,15 +526,21 @@ class BaseAction(object):
             ), self._discover, priority=priority
         )
 
+        launch_subscription = (
+            'topic=ftrack.action.launch'
+            ' and data.actionIdentifier={0}'
+            ' and source.user.username={1}'
+        ).format(
+            self.identifier,
+            self.session.api_user
+        )
         self.session.event_hub.subscribe(
-            'topic=ftrack.action.launch and data.actionIdentifier={0} and source.user.username={1}'.format(
-                self.identifier,
-                self.session.api_user
-            ),
+            launch_subscription,
             self._launch
         )
 
-        self.log.info("Action '{}' - Registered successfully".format(self.__class__.__name__))
+        self.log.info("Action '{}' - Registered successfully".format(
+            self.__class__.__name__))
 
     def _discover(self, event):
         args = self._translate_event(
@@ -546,8 +591,10 @@ class BaseAction(object):
         for entity in _selection:
             _entities.append(
                 (
-                    session.get(self._get_entity_type(entity), entity.get('entityId'))
-                    # self._get_entity_type(entity), entity.get('entityId')
+                    session.get(
+                        self._get_entity_type(entity),
+                        entity.get('entityId')
+                    )
                 )
             )
 
@@ -644,7 +691,7 @@ class BaseAction(object):
         '''
         return None
 
-    def show_message(self, event, input_message, result = False):
+    def show_message(self, event, input_message, result=False):
         """
         Shows message to user who triggered event
         - event - just source of user id
@@ -658,10 +705,13 @@ class BaseAction(object):
 
         try:
             message = str(input_message)
-        except:
+        except Exception:
             return
 
         user_id = event['source']['user']['id']
+        target = (
+            'applicationId=ftrack.client.web and user.id="{0}"'
+        ).format(user_id)
         self.session.event_hub.publish(
             ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
@@ -670,7 +720,7 @@ class BaseAction(object):
                     success=result,
                     message=message
                 ),
-                target='applicationId=ftrack.client.web and user.id="{0}"'.format(user_id)
+                target=target
             ),
             on_error='ignore'
         )
@@ -688,13 +738,19 @@ class BaseAction(object):
             }
 
         elif isinstance(result, dict):
-            for key in ('success', 'message'):
-                if key in result:
-                    continue
+            if 'items' in result:
+                items = result['items']
+                if not isinstance(items, list):
+                    raise ValueError('Invalid items format, must be list!')
 
-                raise KeyError(
-                    'Missing required key: {0}.'.format(key)
-                )
+            else:
+                for key in ('success', 'message'):
+                    if key in result:
+                        continue
+
+                    raise KeyError(
+                        'Missing required key: {0}.'.format(key)
+                    )
 
         else:
             self.log.error(
@@ -702,3 +758,26 @@ class BaseAction(object):
             )
 
         return result
+
+    def show_interface(self, event, items, title=''):
+        """
+        Shows interface to user who triggered event
+        - 'items' must be list containing Ftrack interface items
+        """
+        user_id = event['source']['user']['id']
+        target = (
+            'applicationId=ftrack.client.web and user.id="{0}"'
+        ).format(user_id)
+
+        self.session.event_hub.publish(
+            ftrack_api.event.base.Event(
+                topic='ftrack.action.trigger-user-interface',
+                data=dict(
+                    type='widget',
+                    items=items,
+                    title=title
+                ),
+                target=target
+            ),
+            on_error='ignore'
+        )
