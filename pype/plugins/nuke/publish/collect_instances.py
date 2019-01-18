@@ -56,8 +56,8 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "fps": int(nuke.root()['fps'].value())
 
             })
-            if node.Class() == "Write":
-                instance.data["families"] = [avalon_knob_data["families"]]
+            # if node.Class() == "Write":
+            #     instance.data["families"] = [avalon_knob_data["families"]]
             self.log.info("collected instance: {}".format(instance.data))
             instances.append(instance)
 

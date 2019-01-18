@@ -64,14 +64,13 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             # collect families in next file
             if "files" not in instance.data:
                 instance.data["files"] = list()
-
             try:
                 collected_frames = os.listdir(output_dir)
                 self.log.debug("collected_frames: {}".format(label))
                 instance.data["files"].append(collected_frames)
 
             except Exception:
-                pass
+                self.log.debug("couldn't collect frames: {}".format(label))
 
             instance.data.update({
                 "path": path,

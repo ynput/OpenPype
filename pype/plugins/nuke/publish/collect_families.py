@@ -15,30 +15,27 @@ class CollectInstanceFamilies(pyblish.api.ContextPlugin):
             if "write" in instance.data["family"]:
                 node = instance[0]
 
-                # set for ftrack to accept
-                instance.data["families"] = ["ftrack"]
+                families = []
+                if instance.data.get('families'):
+                    families.append(instance.data['families'])
 
-                if not node["render"].value():
-                    families = ["{}.frames".format(
-                        instance.data["avalonKnob"]["families"])]
-                    # to ignore staging dir op in integrate
-                    instance.data['transfer'] = False
-                else:
+                # set for ftrack to accept
+                # instance.data["families"] = ["ftrack"]
+
+                if node["render"].value():
                     # dealing with local/farm rendering
                     if node["render_farm"].value():
-                        families = ["{}.farm".format(
-                            instance.data["avalonKnob"]["families"])]
+                        families.append("render.farm")
                     else:
-                        families = ["{}.local".format(
-                            instance.data["avalonKnob"]["families"])]
+                        families.append("render.local")
+                else:
+                    families.append("render.frames")
+                    # to ignore staging dir op in integrate
+                    instance.data['transfer'] = False
 
-                instance.data["families"].extend(families)
-
-            elif "source" in instance.data["family"]:
-                families = []
-                families.append(instance.data["avalonKnob"]["families"])
 
                 instance.data["families"] = families
+
 
         # Sort/grouped by family (preserving local index)
         context[:] = sorted(context, key=self.sort_by_family)

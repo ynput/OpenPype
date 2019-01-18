@@ -20,29 +20,31 @@ class ValidateWriteFamilies(pyblish.api.InstancePlugin):
     """ Validates write families. """
 
     order = pyblish.api.ValidatorOrder
-    label = "Check correct writes families"
+    label = "Valitade writes families"
     hosts = ["nuke"]
     families = ["write"]
     actions = [pype.nuke.actions.SelectInvalidAction, pype.api.RepairAction]
 
-    @staticmethod
-    def get_invalid(instance):
-        if not [f for f in instance.data["families"]
-                if ".frames" in f]:
-            return
-
-        if not instance.data["files"]:
-            return (instance)
+    # @staticmethod
+    # def get_invalid(instance):
+    #     for f in instance.data["families"]:
+    #         if ".frames" in f:
+    #             return
+    #
+    #     if not instance.data["files"]:
+    #         return (instance)
 
     def process(self, instance):
         self.log.debug('instance.data["files"]: {}'.format(instance.data['files']))
-        invalid = self.get_invalid(instance)
 
-        if invalid:
-            raise ValueError(str("`{}`: Switch `Render` on! "
-                                 "> {}".format(__name__, invalid)))
-
-        self.log.info("Checked correct writes families")
+        # if any(".frames"  in f for f in instance.data["families"]):
+        #     if not instance.data["files"]:
+        #         raise ValueError("instance {} is set to publish frames\
+        #             but no files were collected, render the frames first or\
+        #             check 'render' checkbox onthe no to 'ON'".format(instance)))
+        #
+        #
+        # self.log.info("Checked correct writes families")
 
     @classmethod
     def repair(cls, instance):

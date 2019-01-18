@@ -20,20 +20,19 @@ class RepairCollectionAction(pyblish.api.Action):
         self.log.info("Rendering toggled ON")
 
 
-class ValidateCollection(pyblish.api.InstancePlugin):
+class ValidatePrerenderedFrames(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
     families = ["render.frames", "still.frames", "prerender.frames"]
 
-    label = "Check prerendered frames"
+    label = "Validate prerendered frame"
     hosts = ["nuke"]
     actions = [RepairCollectionAction]
 
     def process(self, instance):
         self.log.debug('instance.data["files"]: {}'.format(instance.data['files']))
-        if not instance.data["files"]:
-            return
+        assert instance.data["files"], "No frames have been collected"
 
         collections, remainder = clique.assemble(*instance.data['files'])
         self.log.info('collections: {}'.format(str(collections)))
@@ -57,3 +56,5 @@ class ValidateCollection(pyblish.api.InstancePlugin):
             collection.indexes
         ) is frame_length, "{} missing frames. Use "
         "repair to render all frames".format(__name__)
+
+        instance.data['collection'] = collection

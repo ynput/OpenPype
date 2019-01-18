@@ -36,13 +36,13 @@ def preserve_trim(node):
         if start_at_frame:
             node['frame_mode'].setValue("start at")
             node['frame'].setValue(str(script_start))
-            log.info("start frame of reader was set to"
+            log.info("start frame of Read was set to"
                      "{}".format(script_start))
 
         if offset_frame:
             node['frame_mode'].setValue("offset")
             node['frame'].setValue(str((script_start + offset_frame)))
-            log.info("start frame of reader was set to"
+            log.info("start frame of Read was set to"
                      "{}".format(script_start))
 
 
@@ -67,7 +67,7 @@ def loader_shift(node, frame, relative=True):
 
     if relative:
         node['frame_mode'].setValue("start at")
-        node['frame'].setValue(str(script_start))
+        node['frame'].setValue(str(frame))
 
     return int(script_start)
 
@@ -75,7 +75,7 @@ def loader_shift(node, frame, relative=True):
 class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
-    families = ["write"]
+    families = ["write", "source"]
     representations = ["*"]
 
     label = "Load sequence"
@@ -142,8 +142,9 @@ class LoadSequence(api.Loader):
             data_imprint = {}
             for k in add_keys:
                 data_imprint.update({k: context["version"]['data'][k]})
+            data_imprint.update({"objectName": read_name})
 
-            containerise(r,
+            return containerise(r,
                          name=name,
                          namespace=namespace,
                          context=context,
@@ -168,9 +169,9 @@ class LoadSequence(api.Loader):
             update_container
         )
         log.info("this i can see")
-        node = container["_tool"]
-        # TODO: prepare also for other readers img/geo/camera
-        assert node.Class() == "Reader", "Must be Reader"
+        node = nuke.toNode(container['objectName'])
+        # TODO: prepare also for other Read img/geo/camera
+        assert node.Class() == "Read", "Must be Read"
 
         root = api.get_representation_path(representation)
         file = ls_img_sequence(os.path.dirname(root), one=True)
@@ -189,7 +190,7 @@ class LoadSequence(api.Loader):
 
             # Update the loader's path whilst preserving some values
             with preserve_trim(node):
-                node["file"] = file["path"]
+                node["file"].setValue(file["path"])
 
             # Set the global in to the start frame of the sequence
             global_in_changed = loader_shift(node, start, relative=False)
@@ -208,8 +209,8 @@ class LoadSequence(api.Loader):
 
         from avalon.nuke import viewer_update_and_undo_stop
 
-        node = container["_tool"]
-        assert node.Class() == "Reader", "Must be Reader"
+        node = nuke.toNode(container['objectName'])
+        assert node.Class() == "Read", "Must be Read"
 
         with viewer_update_and_undo_stop():
             nuke.delete(node)
