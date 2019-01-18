@@ -11,6 +11,7 @@ class CollectJSON(pyblish.api.ContextPlugin):
 
     label = "JSON"
     order = pyblish.api.CollectorOrder
+    hosts = ['maya']
 
     def version_get(self, string, prefix):
         """ Extract version information from filenames.  Code from Foundry"s

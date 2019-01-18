@@ -12,7 +12,7 @@ class ExtractJSON(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder
     label = "JSON"
-    hosts = ['nuke', 'maya']
+    hosts = ['maya']
 
     def process(self, context):
 
