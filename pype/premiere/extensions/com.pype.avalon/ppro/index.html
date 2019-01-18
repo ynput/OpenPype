@@ -1,13 +1,18 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Pype extention</title>
     <!-- Load the pico Javascript client, always automatically available at /pico.js -->
     <script src="/pico.js"></script>
     <!-- Or load our module proxy -->
     <script src="/api.js"></script>
+
+    <link href="./css/bootstrap.min.css" type="text/css" rel="stylesheet">
+    <link href="./css/avalon.min.css" type="text/css" rel="stylesheet">
+
 
     <script>
         if (typeof module === 'object') {
@@ -16,142 +21,112 @@
         }
     </script>
 
-
-    <script data-require="angular.js@1.4.x" src="./js/vendor/angular-1-7-2.min.js"></script>
-    <!-- <script src="./js/vendor/offlineManager.js"></script> -->
-    <script src="./js/vendor/offline.min.js"></script>
-    <script src="./js/vendor/sleep.js"></script>
-    <script src="./js/vendor/underscore-min.js"></script>
-    <script src="./js/vendor/md5.min.js"></script>
-    <script src="./js/vendor/angular.rangeSlider.js"></script>
     <script src="./js/vendor/jquery-3.3.1.min.js"></script>
-    <script src="./js/vendor/jquery-ui.min.js"></script>
-    <script src="./js/vendor/velocity.min.js"></script>
     <script src="./js/vendor/CSInterface-8.js"></script>
-    <script src="./js/vendor/ui-bootstrap-tpls-0.11.0.min.js"></script>
-    <script src="./js/build.js"></script>
+    <script src="./js/vendor/popper.min.js"></script>
+    <script src="./js/vendor/bootstrap.min.js"></script>
 
     <script>
         if (window.module) module = window.module;
     </script>
-
-    <link rel="stylesheet" href="./css/angular.rangeSlider.css">
-
-    <style type="text/css">
-        html,
-        body {
-            height: 100%;
-            margin: 0px;
-            padding: 0px;
-        }
-
-        div {
-            padding: 5px;
-        }
-
-        #container {
-            height: 100%;
-        }
-
-        #header {
-            height: 5%;
-        }
-
-        #main {
-            height: 70%;
-        }
-
-        #output {
-            background-color: #333;
-            color: #aaa;
-            min-height: 15%;
-            overflow-y: scroll;
-            padding: 20px;
-            position: fixed;
-            bottom: 0px;
-            width: 100%;
-        }
-
-        .error {
-            color: #f00 !important;
-        }
-
-        #examples li {
-            padding: 10px;
-            margin: 10px;
-            background-color: silver;
-        }
-
-        code {
-            border-radius: 0;
-            */ margin: 5px;
-            white-space: pre !important;
-        }
-
-        #source {
-            height: 100%;
-        }
-
-        #examples {
-            height: 100%;
-        }
-
-        #spacer {
-            height: 20%;
-        }
-
-        .highlight {
-            background-color: yellow;
-        }
-    </style>
 </head>
 
-<body onresize="resizePanel()">
-    <a href="javascript:history.go(0)">Refresh panel</a>
-    <div id="container">
-        <div class="row row-eq-height" id="main">
-            <div class="col-md-6" id="examples">
-                <ol>
-                    <li id="context">
-                        <h4>Set context here</h4>
-                        <pre><code class="js"></code></pre>
-                        Project<input type="text" name="project" value="jakub_projectx" />Asset<input type="text" name="asset" value="shot01" />task<input type="text" name="task" value="compositing" />app<input type="text" name="app" value="premiera" />
-                        <button class="btn btn-default btn-sm" type="button" onclick="context()">Set context</button>
-                    </li>
-                    <li id="deregister">
-                        <h4>deregister_plugin_path</h4>
-                        <pre><code class="js"></code></pre>
-                        <button class="btn btn-default btn-sm" type="button" onclick="deregister()">Deregister</button>
-                    </li>
-                    <li id="register">
-                        <h4>register_plugin_path</h4>
-                        <pre><code class="js"></code></pre>
-                        Path: <input type="text" name="path" value="C:/Users/hubertCODE/pype-setup/repos/pype-config/pype/plugins/premiere/publish" />
-                        <button class="btn btn-default btn-sm" type="button" onclick="register()">Register path</button>
-                    </li>
-                    <li id="publish">
-                        <h4>Publish</h4>
-                        <pre><code class="js"></code></pre>
-                        Json path: <input type="text" name="path" value="C:/Users/hubert/CODE/pype-setup/repos/pype-config/pype/premiere/example_publish_reqst.json" />
-                        Gui<input type="checkbox" name="gui" value="True" checked>
-                        <button class="btn btn-default btn-sm" type="button" onclick="publish()">Publish</button>
-                    </li>
+<body>
 
-                </ol>
-                <div id="spacer">
-                </div>
-            </div>
-            <div class="col-md-6" id="source">
+<div id="section"><a href="javascript:history.go(0)">Refresh panel</a>
+  <ul class="list-group list-group-flush dark">
+    <li class="list-group-item" id="context">
+      <h5>Set context here</h5>
+      <pre><code class="js"></code></pre>
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon1">Project</span>
+        </div>
+        <input type="text" class="form-control" name="project" placeholder="Project" aria-label="Project" aria-describedby="basic-addon1" value="jakub_projectx">
+      </div>
+
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon2">Asset</span>
+        </div>
+        <input type="text" class="form-control" name="asset" placeholder="Asset" aria-label="Asset" aria-describedby="basic-addon2" value="shot01">
+      </div>
+
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon3">Task</span>
+        </div>
+        <input type="text" class="form-control" name="task" placeholder="Task" aria-label="Task" aria-describedby="basic-addon3" value="compositing">
+      </div>
+
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon4">App</span>
+        </div>
+        <input type="text" class="form-control" name="app" placeholder="App" aria-label="App" aria-describedby="basic-addon4" value="premiere">
+      </div>
+      <button id="btn-set-context" type="button" class="btn btn-dark btn-sm btn-block">Set context</button>
+    </li>
+
+    <li  class="list-group-item" id="deregister">
+      <h5>deregister_plugin_path</h5>
+      <pre><code class="js"></code></pre>
+      <button id="btn-deregister" type="button" class="btn btn-dark btn-sm btn-block">Deregister</button>
+    </li>
+
+    <li class="list-group-item" id="register">
+      <h5>register_plugin_path</h5>
+      <pre><code class="js"></code></pre>
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon5">Path</span>
+        </div>
+        <input type="text" class="form-control" name="path" placeholder="Path" aria-label="Path" aria-describedby="basic-addon5" value="C:/Users/hubertCODE/pype-setup/repos/pype-config/pype/plugins/premiere/publish">
+      </div>
+      <button id="btn-register" type="button" class="btn btn-dark btn-sm btn-block">Register path</button>
+    </li>
+
+    <li class="list-group-item" id="publish">
+      <h5>Publish</h5>
+      <pre><code class="js"></code></pre>
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+
+            <span class="input-group-text" id="basic-addon6">Path</span>
+
+        </div>
+        <input type="text" class="form-control" name="path" placeholder="JSON" aria-label="JSON" aria-describedby="basic-addon6" value="C:/Users/hubert/CODE/pype-setup/repos/pype-config/pype/premiere/example_publish_reqst.json">
+        <div class="input-group-append">
+          <div class="input-group-text">
+            <input type="checkbox" name="gui" checked="checked" aria-label="Checkbox for following text input"> GUI
+          </div>
+        </div>
+      </div>
+      <button id="btn-publish" type="button" class="btn btn-dark btn-sm btn-block">Publish</button>
+    </li>
+  </ul>
+
+  <hr />
+  <h5>PPRO function tests:</h5>
+  <ul class="list-group dark">
+    <li class="list-group-item"><button id="btn-get-sequence" type="button" class="btn btn-info btn-sm btn-block">Get Sequences</button></li>
+    <li class="list-group-item"><button id="btn-get-selected" type="button" class="btn btn-info btn-sm btn-block">Get Selected Clips</button></li>
+  </ul>
+
+  <hr />
+
+  <div class="col-md-6" id="source">
                 <!-- <pre>
                 <code class="python"></code>
             </pre> -->
-            </div>
-        </div>
-        <div class="row" id="output">
-        </div>
-    </div>
+  </div>
+  <h5>Output</h5>
+  <div class="row" id="output">
 
-    <script src="./js/script.js"></script>
+  </div>
+
+  <script src="./js/script.js"></script>
+  <script src="./js/avalon.js"></script>
 </body>
 
 </html>

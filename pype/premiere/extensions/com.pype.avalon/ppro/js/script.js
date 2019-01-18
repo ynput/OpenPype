@@ -47,33 +47,7 @@ function unindent(code){
   return lines.map(function(s){ return s.substr(margin)}).join('\n');
 }
 
-function deregister(){
-  var $ = querySelector("#deregister");
-  api.deregister_plugin_path().then(displayResult);
-}
 
-function register(){
-  var $ = querySelector("#register");
-  var path = $("input[name=path]").value;
-  api.register_plugin_path(path).then(displayResult);
-}
-
-
-function publish(){
-  var $ = querySelector("#publish");
-  var path = $("input[name=path]").value;
-  var gui = $("input[name=gui]").checked;
-  api.publish(path, gui).then(displayResult);
-}
-
-function context(){
-  var $ = querySelector("#context");
-  var project = $("input[name=project]").value;
-  var asset = $("input[name=asset]").value;
-  var task = $("input[name=task]").value;
-  var app = $("input[name=app]").value;
-  api.context(project,asset,task,app).then(displayResult);
-}
 
 
 //
