@@ -344,7 +344,7 @@ def get_avalon_project_config_schema():
 
 
 def get_avalon_project_template_schema():
-    schema = "avalon-core:inventory-1.0"
+    schema = "avalon-core:project-2.0"
     return schema
 
 
