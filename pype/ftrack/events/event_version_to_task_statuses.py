@@ -1,5 +1,5 @@
 import ftrack_api
-from ftrack_event_handler import BaseEvent
+from pype.ftrack import BaseEvent
 
 
 class VersionToTaskStatus(BaseEvent):
@@ -15,8 +15,9 @@ class VersionToTaskStatus(BaseEvent):
                     'statusid' in entity['keys']):
 
                 version = session.get('AssetVersion', entity['entityId'])
-                version_status = session.get('Status',
-                                             entity['changes']['statusid']['new'])
+                version_status = session.get(
+                    'Status', entity['changes']['statusid']['new']
+                )
                 task_status = version_status
                 task = version['task']
                 self.log.info('>>> version status: [ {} ]'.format(
@@ -34,8 +35,8 @@ class VersionToTaskStatus(BaseEvent):
                     '>>> status to set: [ {} ]'.format(status_to_set))
 
                 if status_to_set is not None:
-                    task_status = session.query(
-                        'Status where name is "{}"'.format(status_to_set)).one()
+                    query = 'Status where name is "{}"'.format(status_to_set)
+                    task_status = session.query(query).one()
 
                 # Proceed if the task status was set
                 if task_status:

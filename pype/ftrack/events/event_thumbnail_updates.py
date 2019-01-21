@@ -1,5 +1,5 @@
 import ftrack_api
-from ftrack_event_handler import BaseEvent
+from pype.ftrack import BaseEvent
 
 
 class ThumbnailEvents(BaseEvent):
