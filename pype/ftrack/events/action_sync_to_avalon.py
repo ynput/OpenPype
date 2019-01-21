@@ -4,8 +4,7 @@ import argparse
 import logging
 import ftrack_api
 import json
-from pype.ftrack import ftrack_utils
-from pype.ftrack.actions.ftrack_action_handler import BaseAction
+from pype.ftrack import ftrack_utils, BaseAction
 
 
 class Sync_To_Avalon(BaseAction):
@@ -56,7 +55,6 @@ class Sync_To_Avalon(BaseAction):
     )
 
     def register(self):
-        '''Registers the action, subscribing the the discover and launch topics.'''
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover',
             self._discover
@@ -68,10 +66,6 @@ class Sync_To_Avalon(BaseAction):
             ),
             self._launch
         )
-        msg = (
-            "Action '{}' - Registered successfully"
-        ).format(self.__class__.__name__)
-        self.log.info(msg)
 
     def discover(self, session, entities, event):
         ''' Validation '''

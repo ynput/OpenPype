@@ -1,7 +1,6 @@
 import sys
 import argparse
 import logging
-import getpass
 import ftrack_api
 from pype.ftrack import BaseAction
 

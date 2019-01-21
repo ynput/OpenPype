@@ -1,7 +1,5 @@
-import os
 import ftrack_api
-from pype.ftrack import ftrack_utils
-from ftrack_event_handler import BaseEvent
+from pype.ftrack import ftrack_utils, BaseEvent
 
 
 class Sync_to_Avalon(BaseEvent):

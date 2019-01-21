@@ -6,7 +6,7 @@ import argparse
 import json
 import ftrack_api
 import arrow
-from pype.ftrack import BaseAction
+from pype.ftrack import BaseAction, get_ca_mongoid
 
 """
 This action creates/updates custom attributes.
@@ -170,13 +170,13 @@ class CustomAttributes(BaseAction):
             session.rollback()
             job['status'] = 'failed'
             session.commit()
-            self.log.error("Creating custom attributes failed ({})".format(e))
+            self.log.error('Creating custom attributes failed ({})'.format(e))
 
         return True
 
     def avalon_mongo_id_attributes(self, session):
         # Attribute Name and Label
-        cust_attr_name = 'avalon_mongo_id'
+        cust_attr_name = get_ca_mongoid()
         cust_attr_label = 'Avalon/Mongo Id'
 
         # Types that don't need object_type_id
@@ -195,7 +195,7 @@ class CustomAttributes(BaseAction):
         for obj_type in all_obj_types:
             name = obj_type['name']
             if " " in name:
-                name = name.replace(" ", "")
+                name = name.replace(' ', '')
 
             if obj_type['name'] not in self.object_type_ids:
                 self.object_type_ids[name] = obj_type['id']
@@ -204,7 +204,7 @@ class CustomAttributes(BaseAction):
                 filtered_types_id.add(obj_type['id'])
 
         # Set security roles for attribute
-        role_list = ["API", "Administrator"]
+        role_list = ['API', 'Administrator']
         roles = self.get_security_role(role_list)
         # Set Text type of Attribute
         custom_attribute_type = self.get_type('text')
@@ -235,7 +235,10 @@ class CustomAttributes(BaseAction):
             with open(self.filepath) as data_file:
                 json_dict = json.load(data_file)
         except Exception as e:
-            msg = 'Loading "Custom attribute file" Failed. Please check log for more information'
+            msg = (
+                'Loading "Custom attribute file" Failed.'
+                ' Please check log for more information'
+            )
             self.log.warning("{} - {}".format(msg, str(e)))
             self.show_message(event, msg)
             return
@@ -254,7 +257,9 @@ class CustomAttributes(BaseAction):
                 self.process_attribute(data)
 
             except CustAttrException as cae:
-                msg = 'Custom attribute error "{}" - {}'.format(cust_attr_name, str(cae))
+                msg = 'Custom attribute error "{}" - {}'.format(
+                    cust_attr_name, str(cae)
+                )
                 self.log.warning(msg)
                 self.show_message(event, msg)
 
@@ -264,16 +269,20 @@ class CustomAttributes(BaseAction):
         existing_atr = self.session.query('CustomAttributeConfiguration').all()
         matching = []
         for attr in existing_atr:
-            if (attr['key'] != data['key'] or
-                attr['type']['name'] != data['type']['name']):
+            if (
+                attr['key'] != data['key'] or
+                attr['type']['name'] != data['type']['name']
+            ):
                 continue
 
             if 'is_hierarchical' in data:
                 if data['is_hierarchical'] == attr['is_hierarchical']:
                     matching.append(attr)
             elif 'object_type_id' in data:
-                if (attr['entity_type'] == data['entity_type'] and
-                    attr['object_type_id'] == data['object_type_id']):
+                if (
+                    attr['entity_type'] == data['entity_type'] and
+                    attr['object_type_id'] == data['object_type_id']
+                ):
                     matching.append(attr)
             else:
                 if attr['entity_type'] == data['entity_type']:
@@ -286,21 +295,29 @@ class CustomAttributes(BaseAction):
         elif len(matching) == 1:
             attr_update = matching[0]
             for key in data:
-                if key not in ['is_hierarchical','entity_type', 'object_type_id']:
+                if (
+                    key not in [
+                        'is_hierarchical', 'entity_type', 'object_type_id'
+                    ]
+                ):
                     attr_update[key] = data[key]
             self.session.commit()
 
         else:
-            raise CustAttrException("Is duplicated")
+            raise CustAttrException('Is duplicated')
 
     def get_required(self, attr):
         output = {}
         for key in self.required_keys:
             if key not in attr:
-                raise CustAttrException("Key {} is required - please set".format(key))
+                raise CustAttrException(
+                    'Key {} is required - please set'.format(key)
+                )
 
         if attr['type'].lower() not in self.type_posibilities:
-            raise CustAttrException("Type {} is not valid".format(attr['type']))
+            raise CustAttrException(
+                'Type {} is not valid'.format(attr['type'])
+            )
 
         type_name = attr['type'].lower()
 
@@ -342,9 +359,9 @@ class CustomAttributes(BaseAction):
 
     def get_enumerator_config(self, attr):
         if 'config' not in attr:
-            raise CustAttrException("Missing config with data")
+            raise CustAttrException('Missing config with data')
         if 'data' not in attr['config']:
-            raise CustAttrException("Missing data in config")
+            raise CustAttrException('Missing data in config')
 
         data = []
         for item in attr['config']['data']:
@@ -361,7 +378,7 @@ class CustomAttributes(BaseAction):
                 if isinstance(attr['config'][k], bool):
                     multiSelect = attr['config'][k]
                 else:
-                    raise CustAttrException("Multiselect must be boolean")
+                    raise CustAttrException('Multiselect must be boolean')
                 break
 
         config = json.dumps({
@@ -397,7 +414,9 @@ class CustomAttributes(BaseAction):
             return group
 
         else:
-            raise CustAttrException("Found more than one group '{}'".format(group_name))
+            raise CustAttrException(
+                'Found more than one group "{}"'.format(group_name)
+            )
 
     def get_role_ALL(self):
         role_name = 'ALL'
@@ -434,8 +453,10 @@ class CustomAttributes(BaseAction):
                     role = self.session.query(query).one()
                     self.security_roles[role_name] = role
                     roles.append(role)
-                except Exception as e:
-                    raise CustAttrException("Securit role '{}' does not exist".format(role_name))
+                except Exception:
+                    raise CustAttrException(
+                        'Securit role "{}" does not exist'.format(role_name)
+                    )
 
         return roles
 
@@ -454,12 +475,15 @@ class CustomAttributes(BaseAction):
                 raise CustAttrException('{} boolean'.format(err_msg))
         elif type == 'enumerator':
             if not isinstance(default, list):
-                raise CustAttrException('{} array with strings'.format(err_msg))
-            # TODO check if multiSelect is available and if default is one of data menu
+                raise CustAttrException(
+                    '{} array with strings'.format(err_msg)
+                )
+            # TODO check if multiSelect is available
+            # and if default is one of data menu
             if not isinstance(default[0], str):
                 raise CustAttrException('{} array of strings'.format(err_msg))
         elif type == 'date':
-            date_items = default.split(" ")
+            date_items = default.split(' ')
             try:
                 if len(date_items) == 1:
                     default = arrow.get(default, 'YY.M.D')
@@ -467,7 +491,7 @@ class CustomAttributes(BaseAction):
                     default = arrow.get(default, 'YY.M.D H:m:s')
                 else:
                     raise Exception
-            except Exception as e:
+            except Exception:
                 raise CustAttrException('Date is not in proper format')
         elif type == 'dynamic enumerator':
             raise CustAttrException('Dynamic enumerator can\'t have default')
@@ -505,7 +529,9 @@ class CustomAttributes(BaseAction):
     def get_entity_type(self, attr):
         if 'is_hierarchical' in attr:
             if attr['is_hierarchical'] is True:
-                type = attr['entity_type'] if ('entity_type' in attr) else 'show'
+                type = 'show'
+                if 'entity_type' in attr:
+                    type = attr['entity_type']
 
                 return {
                     'is_hierarchical': True,
@@ -524,10 +550,14 @@ class CustomAttributes(BaseAction):
         object_type_name = attr['object_type']
         if object_type_name not in self.object_type_ids:
             try:
-                query = 'ObjectType where name is "{}"'.format(object_type_name)
+                query = 'ObjectType where name is "{}"'.format(
+                    object_type_name
+                )
                 object_type_id = self.session.query(query).one()['id']
-            except Exception as e:
-                raise CustAttrException('Object type with name "{}" don\'t exist'.format(object_type_name))
+            except Exception:
+                raise CustAttrException((
+                    'Object type with name "{}" don\'t exist'
+                ).format(object_type_name))
             self.object_type_ids[object_type_name] = object_type_id
         else:
             object_type_id = self.object_type_ids[object_type_name]
