@@ -13,6 +13,9 @@ from pype.ftrack import BaseAction
 from avalon import io, inventory, schema
 
 
+ignore_me = True
+
+
 class TestAction(BaseAction):
     '''Edit meta data action.'''
 
@@ -22,6 +25,8 @@ class TestAction(BaseAction):
     label = 'Test action'
     #: Action description.
     description = 'Test action'
+    #: priority
+    priority = 10000
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -38,7 +43,7 @@ class TestAction(BaseAction):
         return discover
 
     def launch(self, session, entities, event):
-        entity = entities[0]
+        self.log.info(event)
 
         return True
 
@@ -50,7 +55,7 @@ def register(session, **kw):
         return
 
     action_handler = TestAction(session)
-    action_handler.register(10000)
+    action_handler.register()
 
 
 def main(arguments=None):
