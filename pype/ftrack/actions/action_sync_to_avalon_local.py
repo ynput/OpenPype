@@ -56,6 +56,8 @@ class SyncToAvalon(BaseAction):
         'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
         '699650-icon-92-inbox-download-512.png'
     )
+    #: Action priority
+    priority = 200
 
     def __init__(self, session):
         super(SyncToAvalon, self).__init__(session)
@@ -236,7 +238,7 @@ def register(session, **kw):
         return
 
     action_handler = SyncToAvalon(session)
-    action_handler.register(200)
+    action_handler.register()
 
 
 def main(arguments=None):
