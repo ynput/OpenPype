@@ -492,7 +492,10 @@ class StopTimer(QtWidgets.QWidget):
         self.main_context = True
         self.parent = parent
         self.setWindowIcon(self.parent.parent.icon)
-        self.setWindowFlags(QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowMinimizeButtonHint)
+        self.setWindowFlags(
+            QtCore.Qt.WindowCloseButtonHint |
+            QtCore.Qt.WindowMinimizeButtonHint
+        )
 
         self._translate = QtCore.QCoreApplication.translate
 
