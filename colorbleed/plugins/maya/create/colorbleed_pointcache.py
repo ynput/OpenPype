@@ -20,6 +20,7 @@ class CreatePointCache(avalon.maya.Creator):
         self.data["renderableOnly"] = False  # Only renderable visible shapes
         self.data["visibleOnly"] = False     # only nodes that are visible
         self.data["includeParentHierarchy"] = False  # Include parent groups
+        self.data["worldSpace"] = True       # Default to exporting world-space
 
         # Add options for custom attributes
         self.data["attr"] = ""

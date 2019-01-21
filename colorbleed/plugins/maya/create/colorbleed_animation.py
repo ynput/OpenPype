@@ -32,3 +32,6 @@ class CreateAnimation(avalon.maya.Creator):
 
         # Include the groups above the out_SET content
         self.data["includeParentHierarchy"] = False  # Include parent groups
+
+        # Default to exporting world-space
+        self.data["worldSpace"] = True

@@ -55,7 +55,8 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
             "writeVisibility": True,
             "writeCreases": True,
             "uvWrite": True,
-            "selection": True
+            "selection": True,
+            "worldSpace": instance.data.get("worldSpace", True)
         }
 
         if not instance.data.get("includeParentHierarchy", True):
