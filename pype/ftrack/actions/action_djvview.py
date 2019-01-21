@@ -5,26 +5,24 @@ import os
 import re
 from operator import itemgetter
 import ftrack_api
-from app.api import Logger
+from pype.ftrack import BaseHandler
 
 
-class DJVViewAction(object):
+class DJVViewAction(BaseHandler):
     """Launch DJVView action."""
     identifier = "djvview-launch-action"
     # label = "DJV View"
     # icon = "http://a.fsdn.com/allura/p/djv/icon"
+    type = 'Application'
 
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
-
-        self.log = Logger.getLogger(self.__class__.__name__)
+        super().__init__(session)
 
         if self.identifier is None:
             raise ValueError(
                 'Action missing identifier.'
             )
-
-        self.session = session
 
     def is_valid_selection(self, event):
         selection = event["data"].get("selection", [])
@@ -86,11 +84,6 @@ class DJVViewAction(object):
                 self.session.api_user
             ),
             self.launch
-        )
-        self.log.info(
-            "Action '{}' - Registered successfully".format(
-                self.__class__.__name__
-            )
         )
 
     def get_applications(self):
@@ -346,15 +339,21 @@ class DJVViewAction(object):
                         try:
                             # TODO This is proper way to get filepath!!!
                             # THIS WON'T WORK RIGHT NOW
-                            location = component['component_locations'][0]['location']
+                            location = component[
+                                'component_locations'
+                            ][0]['location']
                             file_path = location.get_filesystem_path(component)
                             # if component.isSequence():
                             #     if component.getMembers():
-                            #         frame = int(component.getMembers()[0].getName())
+                            #         frame = int(
+                            #             component.getMembers()[0].getName()
+                            #         )
                             #         file_path = file_path % frame
                         except Exception:
                             # This works but is NOT proper way
-                            file_path = component['component_locations'][0]['resource_identifier']
+                            file_path = component[
+                                'component_locations'
+                            ][0]['resource_identifier']
 
                         event["data"]["items"].append(
                             {"label": label, "value": file_path}
@@ -382,7 +381,7 @@ class DJVViewAction(object):
         }
 
 
-def register(session, **kw):
+def register(session):
     """Register hooks."""
     if not isinstance(session, ftrack_api.session.Session):
         return
