@@ -4,48 +4,89 @@ import sys
 import argparse
 import logging
 
-import datetime
 import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.ftrack import BaseAction
 
 
 class JobKiller(BaseAction):
     '''Edit meta data action.'''
 
     #: Action identifier.
-    identifier = 'job.kill'
+    identifier = 'job.killer'
     #: Action label.
     label = 'Job Killer'
     #: Action description.
     description = 'Killing all running jobs younger than day'
-
 
     def discover(self, session, entities, event):
         ''' Validation '''
 
         return True
 
+    def interface(self, session, entities, event):
+        if not event['data'].get('values', {}):
+            title = 'Select jobs to kill'
+
+            jobs = session.query(
+                'select id, status from Job'
+                ' where status in ("queued", "running")'
+            )
+
+            items = []
+            import json
+            for job in jobs:
+                data = json.loads(job['data'])
+                user = job['user']['username']
+                created = job['created_at'].strftime('%d.%m.%Y %H:%M:%S')
+                label = '{}/ {}/ {}'.format(
+                    data['description'], created, user
+                )
+                item = {
+                    'label': label,
+                    'name': job['id'],
+                    'type': 'boolean',
+                    'value': False
+                }
+                items.append(item)
+
+            return {
+                'items': items,
+                'title': title
+            }
 
     def launch(self, session, entities, event):
         """ GET JOB """
+        if 'values' not in event['data']:
+            return
 
-        yesterday = datetime.date.today() - datetime.timedelta(days=1)
+        values = event['data']['values']
+        if len(values) <= 0:
+            return {
+                'success': True,
+                'message': 'No jobs to kill!'
+            }
+        jobs = []
+        job_ids = []
 
-        jobs = session.query(
-            'select id, status from Job '
-            'where status in ("queued", "running") and created_at > {0}'.format(yesterday)
-        )
+        for k, v in values.items():
+            if v is True:
+                job_ids.append(k)
 
+        for id in job_ids:
+            query = 'Job where id is "{}"'.format(id)
+            jobs.append(session.query(query).one())
         # Update all the queried jobs, setting the status to failed.
         for job in jobs:
-            self.log.debug(job['created_at'])
-            self.log.debug('Changing Job ({}) status: {} -> failed'.format(job['id'], job['status']))
-            job['status'] = 'failed'
-
-        try:
-            session.commit()
-        except:
-            session.rollback()
+            try:
+                job['status'] = 'failed'
+                session.commit()
+                self.log.debug((
+                    'Changing Job ({}) status: {} -> failed'
+                ).format(job['id'], job['status']))
+            except Exception:
+                self.warning.debug((
+                    'Changing Job ({}) has failed'
+                ).format(job['id']))
 
         self.log.info('All running jobs were killed Successfully!')
         return {
