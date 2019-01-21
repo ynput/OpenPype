@@ -59,6 +59,6 @@ def register(session):
     for app in apps:
         try:
             registerApp(app, session)
-            time.sleep(0.03)
+            time.sleep(0.05)
         except Exception as e:
             log.warning("'{0}' - not proper App ({1})".format(app['name'], e))
