@@ -1,6 +1,6 @@
 import toml
 import time
-from ftrack_action_handler import AppAction
+from pype.ftrack import AppAction
 from avalon import lib
 from app.api import Logger
 from pype import lib as pypelib
@@ -59,6 +59,6 @@ def register(session):
     for app in apps:
         try:
             registerApp(app, session)
-            time.sleep(0.05)
+            time.sleep(0.03)
         except Exception as e:
             log.warning("'{0}' - not proper App ({1})".format(app['name'], e))
