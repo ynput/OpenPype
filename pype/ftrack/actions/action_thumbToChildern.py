@@ -4,11 +4,11 @@
 import sys
 import argparse
 import logging
-import getpass
 import json
 
 import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.ftrack import BaseAction
+
 
 class ThumbToChildren(BaseAction):
     '''Custom action.'''
@@ -18,8 +18,10 @@ class ThumbToChildren(BaseAction):
     # Action label
     label = 'Thumbnail to Children'
     # Action icon
-    icon = "https://cdn3.iconfinder.com/data/icons/transfers/100/239322-download_transfer-128.png"
-
+    icon = (
+        'https://cdn3.iconfinder.com/data/icons/transfers/100/'
+        '239322-download_transfer-128.png'
+    )
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -28,7 +30,6 @@ class ThumbToChildren(BaseAction):
             return False
 
         return True
-
 
     def launch(self, session, entities, event):
         '''Callback method for action.'''
@@ -53,7 +54,7 @@ class ThumbToChildren(BaseAction):
 
             # inform the user that the job is done
             job['status'] = 'done'
-        except:
+        except Exception:
             # fail the job if something goes wrong
             job['status'] = 'failed'
             raise
@@ -66,7 +67,6 @@ class ThumbToChildren(BaseAction):
         }
 
 
-
 def register(session, **kw):
     '''Register action. Called when used as an event plugin.'''
     if not isinstance(session, ftrack_api.session.Session):
@@ -74,6 +74,7 @@ def register(session, **kw):
 
     action_handler = ThumbToChildren(session)
     action_handler.register()
+
 
 def main(arguments=None):
     '''Set up logging and register action.'''

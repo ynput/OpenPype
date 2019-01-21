@@ -6,7 +6,7 @@ import json
 import importlib
 
 import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.ftrack import BaseAction
 from pype.ftrack import ftrack_utils
 
 
@@ -177,18 +177,15 @@ class SyncToAvalon(BaseAction):
                         avalon_project = result['project']
 
             job['status'] = 'done'
-            session.commit()
             self.log.info('Synchronization to Avalon was successfull!')
 
         except ValueError as ve:
             job['status'] = 'failed'
-            session.commit()
             message = str(ve)
             self.log.error('Error during syncToAvalon: {}'.format(message))
 
         except Exception as e:
             job['status'] = 'failed'
-            session.commit()
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             log_message = "{}/{}/Line: {}".format(
@@ -201,6 +198,10 @@ class SyncToAvalon(BaseAction):
                 'Unexpected Error'
                 ' - Please check Log for more information'
             )
+        finally:
+            if job['status'] in ['queued', 'running']:
+                job['status'] = 'failed'
+            session.commit()
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)

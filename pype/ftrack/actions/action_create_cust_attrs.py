@@ -6,7 +6,7 @@ import argparse
 import json
 import ftrack_api
 import arrow
-from ftrack_action_handler import BaseAction
+from pype.ftrack import BaseAction
 
 """
 This action creates/updates custom attributes.
@@ -117,15 +117,19 @@ class CustomAttributes(BaseAction):
         super().__init__(session)
 
         templates = os.environ['PYPE_STUDIO_TEMPLATES']
-        path_items = [templates, 'presets', 'ftrack', 'ftrack_custom_attributes.json']
+        path_items = [
+            templates, 'presets', 'ftrack', 'ftrack_custom_attributes.json'
+        ]
         self.filepath = os.path.sep.join(path_items)
         self.types = {}
         self.object_type_ids = {}
         self.groups = {}
         self.security_roles = {}
         self.required_keys = ['key', 'label', 'type']
-        self.type_posibilities = ['text', 'boolean', 'date', 'enumerator',
-                                    'dynamic enumerator', 'number']
+        self.type_posibilities = [
+            'text', 'boolean', 'date', 'enumerator',
+            'dynamic enumerator', 'number'
+        ]
 
     def discover(self, session, entities, event):
         '''

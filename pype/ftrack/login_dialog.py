@@ -1,4 +1,3 @@
-import sys
 import os
 import requests
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
@@ -23,9 +22,9 @@ class Login_Dialog_ui(QtWidgets.QWidget):
 
         self.parent = parent
 
-        if hasattr(parent,'icon'):
+        if hasattr(parent, 'icon'):
             self.setWindowIcon(self.parent.icon)
-        elif hasattr(parent,'parent') and hasattr(parent.parent,'icon'):
+        elif hasattr(parent, 'parent') and hasattr(parent.parent, 'icon'):
             self.setWindowIcon(self.parent.parent.icon)
         else:
             pype_setup = os.getenv('PYPE_SETUP_ROOT')
@@ -34,7 +33,10 @@ class Login_Dialog_ui(QtWidgets.QWidget):
             icon = QtGui.QIcon(fname)
             self.setWindowIcon(icon)
 
-        self.setWindowFlags(QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowMinimizeButtonHint)
+        self.setWindowFlags(
+            QtCore.Qt.WindowCloseButtonHint |
+            QtCore.Qt.WindowMinimizeButtonHint
+        )
 
         self.loginSignal.connect(self.loginWithCredentials)
         self._translate = QtCore.QCoreApplication.translate
@@ -85,7 +87,9 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         self.user_input.setEnabled(True)
         self.user_input.setFrame(True)
         self.user_input.setObjectName("user_input")
-        self.user_input.setPlaceholderText(self._translate("main","user.name"))
+        self.user_input.setPlaceholderText(
+            self._translate("main", "user.name")
+        )
         self.user_input.textChanged.connect(self._user_changed)
 
         self.api_label = QtWidgets.QLabel("API Key:")
@@ -98,19 +102,21 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         self.api_input.setEnabled(True)
         self.api_input.setFrame(True)
         self.api_input.setObjectName("api_input")
-        self.api_input.setPlaceholderText(self._translate("main","e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"))
+        self.api_input.setPlaceholderText(self._translate(
+            "main", "e.g. xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+        ))
         self.api_input.textChanged.connect(self._api_changed)
 
         self.error_label = QtWidgets.QLabel("")
         self.error_label.setFont(self.font)
         self.error_label.setTextFormat(QtCore.Qt.RichText)
         self.error_label.setObjectName("error_label")
-        self.error_label.setWordWrap(True);
+        self.error_label.setWordWrap(True)
         self.error_label.hide()
 
         self.form.addRow(self.ftsite_label, self.ftsite_input)
         self.form.addRow(self.user_label, self.user_input)
-        self.form.addRow(self.api_label,self.api_input)
+        self.form.addRow(self.api_label, self.api_input)
         self.form.addRow(self.error_label)
 
         self.btnGroup = QtWidgets.QHBoxLayout()
@@ -118,7 +124,9 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         self.btnGroup.setObjectName("btnGroup")
 
         self.btnEnter = QtWidgets.QPushButton("Login")
-        self.btnEnter.setToolTip('Set Username and API Key with entered values')
+        self.btnEnter.setToolTip(
+            'Set Username and API Key with entered values'
+        )
         self.btnEnter.clicked.connect(self.enter_credentials)
 
         self.btnClose = QtWidgets.QPushButton("Close")
@@ -157,7 +165,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
 
             self.ftsite_input.setText(newurl)
 
-        except Exception as e:
+        except Exception:
             self.setError("FTRACK_SERVER is not set in templates")
             self.btnEnter.setEnabled(False)
             self.btnFtrack.setEnabled(False)
@@ -174,7 +182,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
     def _api_changed(self):
         self.api_input.setStyleSheet("")
 
-    def _invalid_input(self,entity):
+    def _invalid_input(self, entity):
         entity.setStyleSheet("border: 1px solid red;")
 
     def enter_credentials(self):
@@ -205,11 +213,13 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         else:
             self._invalid_input(self.user_input)
             self._invalid_input(self.api_input)
-            self.setError("We're unable to sign in to Ftrack with these credentials")
+            self.setError(
+                "We're unable to sign in to Ftrack with these credentials"
+            )
 
     def open_ftrack(self):
         url = self.ftsite_input.text()
-        self.loginWithCredentials(url,None,None)
+        self.loginWithCredentials(url, None, None)
 
     def checkUrl(self, url):
         url = url.strip('/ ')
@@ -218,7 +228,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
             self.setError("There is no URL set in Templates")
             return
 
-        if not 'http' in url:
+        if 'http' not in url:
             if url.endswith('ftrackapp.com'):
                 url = 'https://' + url
             else:
@@ -226,14 +236,14 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         try:
             result = requests.get(
                 url,
-                allow_redirects=False  # Old python API will not work with redirect.
+                # Old python API will not work with redirect.
+                allow_redirects=False
             )
         except requests.exceptions.RequestException:
             self.setError(
                 'The server URL set in Templates could not be reached.'
             )
             return
-
 
         if (
             result.status_code != 200 or 'FTRACK_VERSION' not in result.headers
@@ -254,7 +264,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
             )
             return
 
-        if not 'http' in url:
+        if 'http' not in url:
             if url.endswith('ftrackapp.com'):
                 url = 'https://' + url
             else:
@@ -262,14 +272,14 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         try:
             result = requests.get(
                 url,
-                allow_redirects=False  # Old python API will not work with redirect.
+                # Old python API will not work with redirect.
+                allow_redirects=False
             )
         except requests.exceptions.RequestException:
             self.setError(
                 'The server URL you provided could not be reached.'
             )
             return
-
 
         if (
             result.status_code != 200 or 'FTRACK_VERSION' not in result.headers

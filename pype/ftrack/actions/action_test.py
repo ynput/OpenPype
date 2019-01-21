@@ -9,7 +9,7 @@ import json
 import re
 
 import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.ftrack import BaseAction
 from avalon import io, inventory, schema
 
 

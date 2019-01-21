@@ -75,15 +75,23 @@ class DJVViewAction(object):
                 self.session.api_user
                 ), self.discover
         )
-
+        launch_subscription = (
+            'topic=ftrack.action.launch'
+            ' and data.actionIdentifier={0}'
+            ' and source.user.username={1}'
+        )
         self.session.event_hub.subscribe(
-            'topic=ftrack.action.launch and data.actionIdentifier={0} and source.user.username={1}'.format(
+            launch_subscription.format(
                 self.identifier,
                 self.session.api_user
             ),
             self.launch
         )
-        self.log.info("----- action - <" + self.__class__.__name__ + "> - Has been registered -----")
+        self.log.info(
+            "Action '{}' - Registered successfully".format(
+                self.__class__.__name__
+            )
+        )
 
     def get_applications(self):
         applications = []
@@ -115,16 +123,17 @@ class DJVViewAction(object):
 
         if not os.path.exists(start):
             raise ValueError(
-                'First part "{0}" of expression "{1}" must match exactly to an '
-                'existing entry on the filesystem.'
+                'First part "{0}" of expression "{1}" must match exactly to an'
+                ' existing entry on the filesystem.'
                 .format(start, expression)
             )
-
 
         expressions = list(map(re.compile, pieces))
         expressionsCount = len(expression)-1
 
-        for location, folders, files in os.walk(start, topdown=True, followlinks=True):
+        for location, folders, files in os.walk(
+            start, topdown=True, followlinks=True
+        ):
             level = location.rstrip(os.path.sep).count(os.path.sep)
             expression = expressions[level]
 
@@ -158,8 +167,8 @@ class DJVViewAction(object):
                         else:
                             self.logger.debug(
                                 'Discovered application executable, but it '
-                                'does not appear to o contain required version '
-                                'information: {0}'.format(path)
+                                'does not appear to o contain required version'
+                                ' information: {0}'.format(path)
                             )
 
                 # Don't descend any further as out of patterns to match.
@@ -175,7 +184,9 @@ class DJVViewAction(object):
         entities = list()
         for entity in selection:
             entities.append(
-                (session.get(self.get_entity_type(entity), entity.get('entityId')))
+                (session.get(
+                    self.get_entity_type(entity), entity.get('entityId')
+                ))
             )
 
         return entities
@@ -213,7 +224,7 @@ class DJVViewAction(object):
             # TODO Is this proper way?
             try:
                 fps = int(entities[0]['custom_attributes']['fps'])
-            except:
+            except Exception:
                 fps = 24
 
             # TODO issequence is probably already built-in validation in ftrack
@@ -239,29 +250,46 @@ class DJVViewAction(object):
                         range = (padding % start) + '-' + (padding % end)
                         filename = re.sub('%[0-9]*d', range, filename)
                 else:
+                    msg = (
+                        'DJV View - Filename has more than one'
+                        ' sequence identifier.'
+                    )
                     return {
                         'success': False,
-                        'message': 'DJV View - Filename has more than one seqence identifier.'
+                        'message': (msg)
                     }
 
             cmd = []
             # DJV path
             cmd.append(os.path.normpath(self.djv_path))
             # DJV Options Start ##############################################
-            # cmd.append('-file_layer (value)') #layer name
-            cmd.append('-file_proxy 1/2')  # Proxy scale: 1/2, 1/4, 1/8
-            cmd.append('-file_cache True')  # Cache: True, False.
-            # cmd.append('-window_fullscreen') #Start in full screen
-            # cmd.append("-window_toolbar False") # Toolbar controls: False, True.
-            # cmd.append("-window_playbar False") # Window controls: False, True.
-            # cmd.append("-view_grid None") # Grid overlay: None, 1x1, 10x10, 100x100.
-            # cmd.append("-view_hud True") # Heads up display: True, False.
-            cmd.append("-playback Forward")  # Playback: Stop, Forward, Reverse.
-            # cmd.append("-playback_frame (value)") # Frame.
+            '''layer name'''
+            # cmd.append('-file_layer (value)')
+            ''' Proxy scale: 1/2, 1/4, 1/8'''
+            cmd.append('-file_proxy 1/2')
+            ''' Cache: True, False.'''
+            cmd.append('-file_cache True')
+            ''' Start in full screen '''
+            # cmd.append('-window_fullscreen')
+            ''' Toolbar controls: False, True.'''
+            # cmd.append("-window_toolbar False")
+            ''' Window controls: False, True.'''
+            # cmd.append("-window_playbar False")
+            ''' Grid overlay: None, 1x1, 10x10, 100x100.'''
+            # cmd.append("-view_grid None")
+            ''' Heads up display: True, False.'''
+            # cmd.append("-view_hud True")
+            ''' Playback: Stop, Forward, Reverse.'''
+            cmd.append("-playback Forward")
+            ''' Frame.'''
+            # cmd.append("-playback_frame (value)")
             cmd.append("-playback_speed " + str(fps))
-            # cmd.append("-playback_timer (value)") # Timer: Sleep, Timeout. Value: Sleep.
-            # cmd.append("-playback_timer_resolution (value)") # Timer resolution (seconds): 0.001.
-            cmd.append("-time_units Frames")  # Time units: Timecode, Frames.
+            ''' Timer: Sleep, Timeout. Value: Sleep.'''
+            # cmd.append("-playback_timer (value)")
+            ''' Timer resolution (seconds): 0.001.'''
+            # cmd.append("-playback_timer_resolution (value)")
+            ''' Time units: Timecode, Frames.'''
+            cmd.append("-time_units Frames")
             # DJV Options End ################################################
 
             # PATH TO COMPONENT
@@ -287,7 +315,7 @@ class DJVViewAction(object):
                     if entity['components'][0]['file_type'] in allowed_types:
                         versions.append(entity)
 
-                if entity.entity_type.lower() == "task":
+                elif entity.entity_type.lower() == "task":
                     # AssetVersions are obtainable only from shot!
                     shotentity = entity['parent']
 
@@ -297,7 +325,8 @@ class DJVViewAction(object):
                             if version['task']['id'] != entity['id']:
                                 continue
                             # Get only components with allowed type
-                            if version['components'][0]['file_type'] in allowed_types:
+                            filetype = version['components'][0]['file_type']
+                            if filetype in allowed_types:
                                 versions.append(version)
 
                 # Raise error if no components were found
@@ -323,7 +352,7 @@ class DJVViewAction(object):
                             #     if component.getMembers():
                             #         frame = int(component.getMembers()[0].getName())
                             #         file_path = file_path % frame
-                        except:
+                        except Exception:
                             # This works but is NOT proper way
                             file_path = component['component_locations'][0]['resource_identifier']
 
@@ -367,6 +396,7 @@ def main(arguments=None):
     if arguments is None:
         arguments = []
 
+    import argparse
     parser = argparse.ArgumentParser()
     # Allow setting of logging level from arguments.
     loggingLevels = {}

@@ -1,17 +1,17 @@
 import sys
-import os
 from pype.ftrack import credentials, login_dialog as login_dialog
 from FtrackServer import FtrackServer
-from app.vendor.Qt import QtCore, QtGui, QtWidgets
+from app.vendor.Qt import QtWidgets
 from pype import api
 
 log = api.Logger.getLogger(__name__, "ftrack-event-server")
+
 
 class EventServer:
     def __init__(self):
         self.login_widget = login_dialog.Login_Dialog_ui(self)
         self.event_server = FtrackServer('event')
-        
+
         cred = credentials._get_credentials()
 
         if 'username' in cred and 'apiKey' in cred:
@@ -27,10 +27,12 @@ class EventServer:
         self.login_widget.close()
         self.event_server.run_server()
 
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
     event = EventServer()
     sys.exit(app.exec_())
+
 
 if (__name__ == ('__main__')):
     main()
