@@ -4,7 +4,7 @@ from pype import lib
 from pype.lib import get_avalon_database
 from avalon import schema
 from bson.objectid import ObjectId
-from pype.ftrack.ftrack_utils import ftrack_utils
+from . import ftrack_utils
 from avalon.vendor import jsonschema
 from app.api import Logger
 ValidationError = jsonschema.ValidationError
@@ -50,7 +50,7 @@ def import_to_avalon(
     if entity_type in ['Project']:
         type = 'project'
 
-        config = ftrack_utils.get_config(entity)
+        config = ftrack_utils.get_project_config(entity)
         schema.validate(config)
 
         av_project_code = None
