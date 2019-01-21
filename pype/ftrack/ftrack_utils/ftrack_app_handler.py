@@ -8,9 +8,10 @@ import acre
 from . import ftrack_utils
 from pype import api as pype
 from pype import lib as pypelib
+from .ftrack_base_handler import BaseHandler
 
 
-class AppAction(object):
+class AppAction(BaseHandler):
     '''Custom Action base class
 
     <label> - a descriptive string identifing your action.
@@ -19,17 +20,16 @@ class AppAction(object):
     <identifier>  - a unique identifier for app.
     <description>   - a verbose descriptive text for you action
     <icon>  - icon in ftrack
-     '''
+    '''
+
+    type = 'Application'
 
     def __init__(
         self, session, label, name, executable,
         variant=None, icon=None, description=None
     ):
+        super().__init__(session)
         '''Expects a ftrack_api.Session instance'''
-
-        self.log = pype.Logger.getLogger(self.__class__.__name__)
-
-        # self.logger = Logger.getLogger(__name__)
 
         if label is None:
             raise ValueError('Action missing label.')
@@ -38,7 +38,6 @@ class AppAction(object):
         elif executable is None:
             raise ValueError('Action missing executable.')
 
-        self._session = session
         self.label = label
         self.identifier = name
         self.executable = executable
@@ -46,12 +45,7 @@ class AppAction(object):
         self.icon = icon
         self.description = description
 
-    @property
-    def session(self):
-        '''Return current session.'''
-        return self._session
-
-    def register(self, priority=100):
+    def register(self):
         '''Registers the action, subscribing the discover and launch topics.'''
 
         discovery_subscription = (
@@ -61,7 +55,7 @@ class AppAction(object):
         self.session.event_hub.subscribe(
             discovery_subscription,
             self._discover,
-            priority=priority
+            priority=self.priority
         )
 
         launch_subscription = (
@@ -76,32 +70,6 @@ class AppAction(object):
             launch_subscription,
             self._launch
         )
-        self.log.info((
-            "Application '{} {}' - Registered successfully"
-        ).format(self.label, self.variant))
-
-    def _discover(self, event):
-        args = self._translate_event(
-            self.session, event
-        )
-
-        accepts = self.discover(
-            self.session, *args
-        )
-
-        if accepts:
-            self.log.debug('Selection is valid')
-            return {
-                'items': [{
-                    'label': self.label,
-                    'variant': self.variant,
-                    'description': self.description,
-                    'actionIdentifier': self.identifier,
-                    'icon': self.icon,
-                }]
-            }
-        else:
-            self.log.debug('Selection is _not_ valid')
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
@@ -118,8 +86,7 @@ class AppAction(object):
 
         '''
 
-        entity_type, entity_id = entities[0]
-        entity = session.get(entity_type, entity_id)
+        entity = entities[0]
 
         # TODO Should return False if not TASK ?!!!
         # TODO Should return False if more than one entity is selected ?!!!
@@ -149,58 +116,10 @@ class AppAction(object):
 
         return True
 
-    def _translate_event(self, session, event):
-        '''Return *event* translated structure to be used with the API.'''
-
-        _selection = event['data'].get('selection', [])
-
-        _entities = list()
-        for entity in _selection:
-            _entities.append(
-                (
-                    self._get_entity_type(entity), entity.get('entityId')
-                )
-            )
-
-        return [
-            _entities,
-            event
-        ]
-
-    def _get_entity_type(self, entity):
-        '''Return translated entity type tht can be used with API.'''
-        # Get entity type and make sure it is lower cased. Most places except
-        # the component tab in the Sidebar will use lower case notation.
-        entity_type = entity.get('entityType').replace('_', '').lower()
-
-        for schema in self.session.schemas:
-            alias_for = schema.get('alias_for')
-
-            if (
-                alias_for and isinstance(alias_for, str) and
-                alias_for.lower() == entity_type
-            ):
-                return schema['id']
-
-        for schema in self.session.schemas:
-            if schema['id'].lower() == entity_type:
-                return schema['id']
-
-        raise ValueError(
-            'Unable to translate entity type: {0}.'.format(entity_type)
-        )
-
     def _launch(self, event):
         args = self._translate_event(
             self.session, event
         )
-
-        interface = self._interface(
-            self.session, *args
-        )
-
-        if interface:
-            return interface
 
         response = self.launch(
             self.session, *args
@@ -234,8 +153,7 @@ class AppAction(object):
             "Action - {0} ({1}) - just started"
         ).format(self.label, self.identifier))
 
-        entity, id = entities[0]
-        entity = session.get(entity, id)
+        entity = entities[0]
         project_name = entity['project']['full_name']
 
         database = pypelib.get_avalon_database()
@@ -415,54 +333,3 @@ class AppAction(object):
             'success': True,
             'message': "Launching {0}".format(self.label)
         }
-
-    def _interface(self, *args):
-        interface = self.interface(*args)
-
-        if interface:
-            return {
-                'items': interface
-            }
-
-    def interface(self, session, entities, event):
-        '''Return a interface if applicable or None
-
-        *session* is a `ftrack_api.Session` instance
-
-        *entities* is a list of tuples each containing the entity type and the entity id.
-        If the entity is a hierarchical you will always get the entity
-        type TypedContext, once retrieved through a get operation you
-        will have the "real" entity type ie. example Shot, Sequence
-        or Asset Build.
-
-        *event* the unmodified original event
-        '''
-        return None
-
-    def _handle_result(self, session, result, entities, event):
-        '''Validate the returned result from the action callback'''
-        if isinstance(result, bool):
-            result = {
-                'success': result,
-                'message': (
-                    '{0} launched successfully.'.format(
-                        self.label
-                    )
-                )
-            }
-
-        elif isinstance(result, dict):
-            for key in ('success', 'message'):
-                if key in result:
-                    continue
-
-                raise KeyError(
-                    'Missing required key: {0}.'.format(key)
-                )
-
-        else:
-            self.log.error(
-                'Invalid result type must be bool or dictionary!'
-            )
-
-        return result
