@@ -28,10 +28,12 @@ class BaseEvent(object):
         return self._session
 
     def register(self):
-        '''Registers the event, subscribing the the discover and launch topics.'''
+        '''Registers the event, subscribing the discover and launch topics.'''
         self.session.event_hub.subscribe('topic=ftrack.update', self._launch)
 
-        self.log.info("Event '{}' - Registered successfully".format(self.__class__.__name__))
+        self.log.info("Event '{}' - Registered successfully".format(
+            self.__class__.__name__)
+        )
 
     def _translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''
@@ -43,7 +45,10 @@ class BaseEvent(object):
                 continue
             _entities.append(
                 (
-                    session.get(self._get_entity_type(entity), entity.get('entityId'))
+                    session.get(
+                        self._get_entity_type(entity),
+                        entity.get('entityId')
+                    )
                 )
             )
 
@@ -110,7 +115,7 @@ class BaseEvent(object):
     def show_message(self, event, input_message, result=False):
         """
         Shows message to user who triggered event
-        - event - just source of user id
+        - event - is just source of user id
         - input_message - message that is shown to user
         - result - changes color of message (based on ftrack settings)
             - True = Violet
@@ -121,11 +126,13 @@ class BaseEvent(object):
 
         try:
             message = str(input_message)
-        except:
+        except Exception:
             return
 
         user_id = event['source']['user']['id']
-        target = 'applicationId=ftrack.client.web and user.id="{0}"'.format(user_id)
+        target = (
+            'applicationId=ftrack.client.web and user.id="{0}"'
+        ).format(user_id)
 
         self.session.event_hub.publish(
             ftrack_api.event.base.Event(
@@ -143,10 +150,13 @@ class BaseEvent(object):
     def show_interface(self, event, items, title=''):
         """
         Shows interface to user who triggered event
+        - this interface is not interactive by default
         - 'items' must be list containing Ftrack interface items
         """
         user_id = event['source']['user']['id']
-        target = 'applicationId=ftrack.client.web and user.id="{0}"'.format(user_id)
+        target = (
+            'applicationId=ftrack.client.web and user.id="{0}"'
+        ).format(user_id)
 
         self.session.event_hub.publish(
             ftrack_api.event.base.Event(
