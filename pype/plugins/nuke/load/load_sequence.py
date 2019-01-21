@@ -76,7 +76,7 @@ class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
     families = ["write", "source"]
-    representations = ["*"]
+    representations = ["exr"]
 
     label = "Load sequence"
     order = -10
@@ -86,44 +86,33 @@ class LoadSequence(api.Loader):
     def load(self, context, name, namespace, data):
         from avalon.nuke import (
             containerise,
-            ls_img_sequence,
             viewer_update_and_undo_stop
         )
-        for k, v in context.items():
-            log.info("key: `{}`, value: {}\n".format(k, v))
+        # for k, v in context.items():
+        #     log.info("key: `{}`, value: {}\n".format(k, v))
+
+        version = context['version']
+        version_data = version.get("data", {})
+
+        first = version_data.get("startFrame", None)
+        last = version_data.get("endFrame", None)
 
         # Fallback to asset name when namespace is None
         if namespace is None:
             namespace = context['asset']['name']
 
-        # Use the first file for now
-        # TODO: fix path fname
-        file = ls_img_sequence(os.path.dirname(self.fname), one=True)
-        log.info("file: {}\n".format(file))
+        file = self.fname
+        log.info("file: {}\n".format(self.fname))
 
         read_name = "Read_" + context["representation"]["context"]["subset"]
+
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
             # TODO: it might be universal read to img/geo/camera
             r = nuke.createNode(
                 "Read",
                 "name {}".format(read_name))
-            r["file"].setValue(file['path'])
-            if len(file['frames']) is 1:
-                first = file['frames'][0][0]
-                last = file['frames'][0][1]
-                r["origfirst"].setValue(first)
-                r["first"].setValue(first)
-                r["origlast"].setValue(last)
-                r["last"].setValue(last)
-            else:
-                first = file['frames'][0][0]
-                last = file['frames'][:-1][1]
-                r["origfirst"].setValue(first)
-                r["first"].setValue(first)
-                r["origlast"].setValue(last)
-                r["last"].setValue(last)
-                log.warning("Missing frames in image sequence")
+            r["file"].setValue(self.fname)
 
             # Set colorspace defined in version data
             colorspace = context["version"]["data"].get("colorspace", None)
@@ -134,6 +123,10 @@ class LoadSequence(api.Loader):
             start = context["version"]["data"].get("startFrame", None)
             if start is not None:
                 loader_shift(r, start, relative=True)
+                r["origfirst"].setValue(first)
+                r["first"].setValue(first)
+                r["origlast"].setValue(last)
+                r["last"].setValue(last)
 
             # add additional metadata from the version to imprint to Avalon knob
             add_keys = ["startFrame", "endFrame", "handles",

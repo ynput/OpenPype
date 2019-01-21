@@ -16,7 +16,7 @@ class ExtractDataForReview(pype.api.Extractor):
     label = "Extract Review"
     optional = True
 
-    families = ["review"]
+    families = ["render.review"]
     hosts = ["nuke"]
 
     def process(self, instance):

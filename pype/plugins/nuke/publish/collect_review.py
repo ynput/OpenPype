@@ -25,5 +25,5 @@ class CollectReview(pyblish.api.InstancePlugin):
             #     root_families,
             #     self.family
             # ]))
-            instance.data["families"].append("review")
+            instance.data["families"].append("render.review")
             self.log.info("Review collected: `{}`".format(instance))

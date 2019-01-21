@@ -199,7 +199,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                     src = os.path.join(stagingdir, src_file_name)
                     instance.data["transfers"].append([src, dst])
-                template = anatomy.render.path
 
             else:
                 # Single file
@@ -229,31 +228,35 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 anatomy_filled = anatomy.format(template_data)
                 dst = anatomy_filled.render.path
-                template = anatomy.render.path
 
                 instance.data["transfers"].append([src, dst])
 
+            template_data["frame"] = "#####"
+            anatomy_filled = anatomy.format(template_data)
+            path_to_save = anatomy_filled.render.path
+            template = anatomy.render.fullpath
             self.log.debug('ext[1:]: {}'.format(ext[1:]))
+
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
-                "data": {'path': dst, 'template': template},
+                "data": {'path': path_to_save, 'template': template},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
                     "root": root,
-                    "project": PROJECT,
-                    "projectcode": project['data']['code'],
+                    "project": {"name": PROJECT,
+                                "code": project['data']['code']},
                     'task': api.Session["AVALON_TASK"],
                     "silo": asset['silo'],
                     "asset": ASSET,
                     "family": instance.data['family'],
                     "subset": subset["name"],
-                    "VERSION": version["name"],
+                    "version": version["name"],
                     "hierarchy": hierarchy,
                     "representation": ext[1:]
                 }

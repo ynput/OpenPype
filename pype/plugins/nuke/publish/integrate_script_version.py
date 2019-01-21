@@ -13,6 +13,8 @@ class IncrementScriptVersion(pyblish.api.ContextPlugin):
     families = ["nukescript", "render.local", "render.frames"]
 
     def process(self, context):
+        # return
+        #
         from pype.lib import version_up
         path = context.data["currentFile"]
         nuke.scriptSaveAs(version_up(path))
