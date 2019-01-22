@@ -4,7 +4,6 @@ import json
 from pype import lib
 from pype.lib import get_avalon_database
 from bson.objectid import ObjectId
-from . import ftrack_utils
 import avalon
 import avalon.api
 from avalon import schema
@@ -42,7 +41,7 @@ def import_to_avalon(
 
     # Validate if entity name match REGEX in schema
     try:
-        ftrack_utils.avalon_check_name(entity)
+        avalon_check_name(entity)
     except ValidationError:
         msg = '"{}" includes unsupported symbols like "dash" or "space"'
         errors.append({'Unsupported character': msg})
@@ -308,7 +307,7 @@ def changeability_check_childs(entity):
         childs = entity['children']
         for child in childs:
             if child.entity_type.lower() == 'task':
-                config = ftrack_utils.get_config_data()
+                config = get_config_data()
                 if 'sync_to_avalon' in config:
                     config = config['sync_to_avalon']
                 if 'statuses_name_change' in config:

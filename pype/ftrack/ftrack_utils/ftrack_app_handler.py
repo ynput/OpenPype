@@ -5,7 +5,7 @@ import sys
 import platform
 from avalon import lib
 import acre
-from . import ftrack_utils
+from pype.ftrack import ftrack_utils
 from pype import api as pype
 from pype import lib as pypelib
 from .ftrack_base_handler import BaseHandler

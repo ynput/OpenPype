@@ -26,10 +26,6 @@ class BaseEvent(BaseHandler):
             priority=self.priority
         )
 
-        self.log.info("Event '{}' - Registered successfully".format(
-            self.__class__.__name__)
-        )
-
     def _launch(self, event):
         args = self._translate_event(
             self.session, event
