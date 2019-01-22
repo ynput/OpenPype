@@ -6,6 +6,7 @@ from maya import cmds
 import pyblish.api
 
 from colorbleed.maya import lib
+from colorbleed.lib import pairwise
 
 
 SETTINGS = {"renderDensity",
@@ -29,6 +30,27 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         assert "input_SET" in instance.data["setMembers"], (
             "Yeti Rig must have an input_SET")
 
+        input_connections = self.collect_input_connections(instance)
+
+        # Collect any textures if used
+        yeti_resources = []
+        yeti_nodes = cmds.ls(instance[:], type="pgYetiMaya", long=True)
+        for node in yeti_nodes:
+            # Get Yeti resources (textures)
+            resources = self.get_yeti_resources(node)
+            yeti_resources.extend(resources)
+
+        instance.data["rigsettings"] = {"inputs": input_connections}
+
+        instance.data["resources"] = yeti_resources
+
+        # Force frame range for export
+        instance.data["startFrame"] = 1
+        instance.data["endFrame"] = 1
+
+    def collect_input_connections(self, instance):
+        """Collect the inputs for all nodes in the input_SET"""
+
         # Get the input meshes information
         input_content = cmds.ls(cmds.sets("input_SET", query=True), long=True)
 
@@ -39,6 +61,8 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
         # Ignore intermediate objects
         input_content = cmds.ls(input_content, long=True, noIntermediate=True)
+        if not input_content:
+            return []
 
         # Store all connections
         connections = cmds.listConnections(input_content,
@@ -49,37 +73,26 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                                            # (avoid display layers, etc.)
                                            type="dagNode",
                                            plugs=True) or []
-
-        # Group per source, destination pair. We need to reverse the connection
-        # list as it comes in with the shape used to query first while that
-        # shape is the destination of the connection
-        grouped = [(connections[i+1], item) for i, item in
-                   enumerate(connections) if i % 2 == 0]
+        connections = cmds.ls(connections, long=True)      # Ensure long names
 
         inputs = []
-        for src, dest in grouped:
+        for dest, src in pairwise(connections):
             source_node, source_attr = src.split(".", 1)
             dest_node, dest_attr = dest.split(".", 1)
+
+            # Ensure the source of the connection is not included in the
+            # current instance's hierarchy. If so, we ignore that connection
+            # as we will want to preserve it even over a publish.
+            if source_node in instance:
+                self.log.debug("Ignoring input connection between nodes "
+                               "inside the instance: %s -> %s" % (src, dest))
+                continue
 
             inputs.append({"connections": [source_attr, dest_attr],
                            "sourceID": lib.get_id(source_node),
                            "destinationID": lib.get_id(dest_node)})
 
-        # Collect any textures if used
-        yeti_resources = []
-        yeti_nodes = cmds.ls(instance[:], type="pgYetiMaya", long=True)
-        for node in yeti_nodes:
-            # Get Yeti resources (textures)
-            resources = self.get_yeti_resources(node)
-            yeti_resources.extend(resources)
-
-        instance.data["rigsettings"] = {"inputs": inputs}
-
-        instance.data["resources"] = yeti_resources
-
-        # Force frame range for export
-        instance.data["startFrame"] = 1
-        instance.data["endFrame"] = 1
+        return inputs
 
     def get_yeti_resources(self, node):
         """Get all resource file paths
