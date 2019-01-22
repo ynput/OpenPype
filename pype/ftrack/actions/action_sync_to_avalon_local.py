@@ -3,11 +3,9 @@ import sys
 import argparse
 import logging
 import json
-import importlib
 
 import ftrack_api
-from pype.ftrack import BaseAction
-from pype.ftrack import ftrack_utils
+from pype.ftrack import BaseAction, ftrack_utils
 
 
 class SyncToAvalon(BaseAction):
@@ -62,7 +60,6 @@ class SyncToAvalon(BaseAction):
     def __init__(self, session):
         super(SyncToAvalon, self).__init__(session)
         # reload utils on initialize (in case of server restart)
-        importlib.reload(ftrack_utils)
 
     def discover(self, session, entities, event):
         ''' Validation '''
