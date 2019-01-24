@@ -5,7 +5,7 @@ import logging
 import json
 
 import ftrack_api
-from pype.ftrack import BaseAction, ftrack_utils
+from pype.ftrack import BaseAction, lib
 
 
 class SyncToAvalon(BaseAction):
@@ -118,7 +118,7 @@ class SyncToAvalon(BaseAction):
             duplicates = []
 
             for e in self.importable:
-                ftrack_utils.avalon_check_name(e)
+                lib.avalon_check_name(e)
                 if e['name'] in all_names:
                     duplicates.append("'{}'".format(e['name']))
                 else:
@@ -132,12 +132,12 @@ class SyncToAvalon(BaseAction):
             # ----- PROJECT ------
             # store Ftrack project- self.importable[0] must be project entity!!
             ft_project = self.importable[0]
-            avalon_project = ftrack_utils.get_avalon_project(ft_project)
-            custom_attributes = ftrack_utils.get_avalon_attr(session)
+            avalon_project = lib.get_avalon_project(ft_project)
+            custom_attributes = lib.get_avalon_attr(session)
 
             # Import all entities to Avalon DB
             for entity in self.importable:
-                result = ftrack_utils.import_to_avalon(
+                result = lib.import_to_avalon(
                     session=session,
                     entity=entity,
                     ft_project=ft_project,

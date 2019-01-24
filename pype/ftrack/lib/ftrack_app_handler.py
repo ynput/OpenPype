@@ -5,9 +5,9 @@ import sys
 import platform
 from avalon import lib
 import acre
-from pype.ftrack import ftrack_utils
 from pype import api as pype
 from pype import lib as pypelib
+from .avalon_sync import get_config_data
 from .ftrack_base_handler import BaseHandler
 
 
@@ -303,7 +303,7 @@ class AppAction(BaseHandler):
         user.start_timer(task, force=True)
 
         # Change status of task to In progress
-        config = ftrack_utils.get_config_data()
+        config = get_config_data()
 
         if (
             'status_on_app_launch' in config and
