@@ -39,8 +39,12 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "review",
                 "scene",
                 "ass"]
+    exclude_families = ["clip"]
 
     def process(self, instance):
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
 
         self.register(instance)
 

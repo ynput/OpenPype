@@ -3,6 +3,7 @@ import re
 import logging
 import importlib
 import itertools
+import contextlib
 
 from .vendor import pather
 from .vendor.pather.error import ParseError
@@ -12,6 +13,55 @@ import avalon.api
 import avalon
 
 log = logging.getLogger(__name__)
+
+
+def add_tool_to_environment(tools):
+    """
+    It is adding dynamic environment to os environment.
+
+    Args:
+        tool (list, tuple): list of tools, name should corespond to json/toml
+
+    Returns:
+        os.environ[KEY]: adding to os.environ
+    """
+
+    import acre
+    tools_env = acre.get_tools(tools)
+    env = acre.compute(tools_env)
+    env = acre.merge(env, current_env=dict(os.environ))
+    os.environ.update(env)
+
+
+@contextlib.contextmanager
+def modified_environ(*remove, **update):
+    """
+    Temporarily updates the ``os.environ`` dictionary in-place.
+
+    The ``os.environ`` dictionary is updated in-place so that the modification
+    is sure to work in all situations.
+
+    :param remove: Environment variables to remove.
+    :param update: Dictionary of environment variables and values to add/update.
+    """
+    env = os.environ
+    update = update or {}
+    remove = remove or []
+
+    # List of environment variables being updated or removed.
+    stomped = (set(update.keys()) | set(remove)) & set(env.keys())
+    # Environment variables and values to restore on exit.
+    update_after = {k: env[k] for k in stomped}
+    # Environment variables and values to remove on exit.
+    remove_after = frozenset(k for k in update if k not in env)
+
+    try:
+        env.update(update)
+        [env.pop(k, None) for k in remove]
+        yield
+    finally:
+        env.update(update_after)
+        [env.pop(k) for k in remove_after]
 
 
 def pairwise(iterable):
@@ -328,14 +378,29 @@ def get_asset_data(asset=None):
     Returns:
         dict
     """
-
     asset_name = asset or avalon.api.Session["AVALON_ASSET"]
     document = io.find_one({"name": asset_name,
                             "type": "asset"})
-
     data = document.get("data", {})
 
     return data
+
+
+def get_data_hierarchical_attr(entity, attr_name):
+    vp_attr = 'visualParent'
+    data = entity['data']
+    value = data.get(attr_name, None)
+    if value is not None:
+        return value
+    elif vp_attr in data:
+        if data[vp_attr] is None:
+            parent_id = entity['parent']
+        else:
+            parent_id = data[vp_attr]
+        parent = io.find_one({"_id": parent_id})
+        return get_data_hierarchical_attr(parent, attr_name)
+    else:
+        return None
 
 
 def get_avalon_project_config_schema():
@@ -351,7 +416,8 @@ def get_avalon_project_template_schema():
 def get_avalon_project_template():
     from app.api import Templates
 
-    """Get avalon template
+    """
+    Get avalon template
 
     Returns:
         dictionary with templates
