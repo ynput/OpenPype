@@ -3,7 +3,7 @@
 import os
 import sys
 import platform
-from avalon import lib
+from avalon import lib as avalonlib
 import acre
 from pype import api as pype
 from pype import lib as pypelib
@@ -240,7 +240,7 @@ class AppAction(BaseHandler):
 
             # Run SW if was found executable
             if execfile is not None:
-                lib.launch(executable=execfile, args=[], environment=env)
+                avalonlib.launch(executable=execfile, args=[], environment=env)
             else:
                 return {
                     'success': False,
@@ -283,7 +283,7 @@ class AppAction(BaseHandler):
                 pass
             # Run SW if was found executable
             if execfile is not None:
-                lib.launch(
+                avalonlib.launch(
                     '/usr/bin/env', args=['bash', execfile], environment=env
                 )
             else:

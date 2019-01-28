@@ -1,7 +1,7 @@
 import os
 import re
 import json
-from pype import lib
+from pype import lib as pypelib
 from pype.lib import get_avalon_database
 from bson.objectid import ObjectId
 import avalon
@@ -62,7 +62,7 @@ def import_to_avalon(
         ft_project_code = ft_project['name']
 
         if av_project is None:
-            project_schema = lib.get_avalon_project_template_schema()
+            project_schema = pypelib.get_avalon_project_template_schema()
             item = {
                 'schema': project_schema,
                 'type': type,
@@ -188,7 +188,7 @@ def import_to_avalon(
             {'type': 'asset', 'name': name}
         )
         if avalon_asset is None:
-            asset_schema = lib.get_avalon_asset_template_schema()
+            asset_schema = pypelib.get_avalon_asset_template_schema()
             item = {
                 'schema': asset_schema,
                 'name': name,
@@ -437,10 +437,10 @@ def get_avalon_project(ft_project):
 
 def get_project_config(entity):
     config = {}
-    config['schema'] = lib.get_avalon_project_config_schema()
+    config['schema'] = pypelib.get_avalon_project_config_schema()
     config['tasks'] = [{'name': ''}]
     config['apps'] = get_project_apps(entity)
-    config['template'] = lib.get_avalon_project_template()
+    config['template'] = pypelib.get_avalon_project_template()
 
     return config
 
@@ -502,7 +502,7 @@ def avalon_check_name(entity, inSchema=None):
 
 
 def get_config_data():
-    path_items = [lib.get_presets_path(), 'ftrack', 'ftrack_config.json']
+    path_items = [pypelib.get_presets_path(), 'ftrack', 'ftrack_config.json']
     filepath = os.path.sep.join(path_items)
     data = dict()
     try:
