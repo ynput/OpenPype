@@ -291,6 +291,9 @@ class CustomAttributes(BaseAction):
         if len(matching) == 0:
             self.session.create('CustomAttributeConfiguration', data)
             self.session.commit()
+            self.log.debug(
+                '{}: "{}" created'.format(self.label, data['label'])
+            )
 
         elif len(matching) == 1:
             attr_update = matching[0]
@@ -301,6 +304,10 @@ class CustomAttributes(BaseAction):
                     ]
                 ):
                     attr_update[key] = data[key]
+
+            self.log.debug(
+                '{}: "{}" updated'.format(self.label, data['label'])
+            )
             self.session.commit()
 
         else:
