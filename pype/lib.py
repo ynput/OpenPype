@@ -409,7 +409,7 @@ def get_avalon_project_config_schema():
 
 
 def get_avalon_project_template_schema():
-    schema = {"schema": "avalon-core:inventory-1.0"}
+    schema = "avalon-core:project-2.0"
     return schema
 
 
@@ -433,3 +433,29 @@ def get_avalon_project_template():
     proj_template['work'] = "{root}/{project}/{hierarchy}/{asset}/work/{task}"
     proj_template['publish'] = "{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}"
     return proj_template
+
+
+def get_avalon_asset_template_schema():
+    schema = "avalon-core:asset-2.0"
+    return schema
+
+
+def get_avalon_database():
+    if io._database is None:
+        project = os.environ.get('AVALON_PROJECT', '')
+        asset = os.environ.get('AVALON_ASSET', '')
+        silo = os.environ.get('AVALON_SILO', '')
+        os.environ['AVALON_PROJECT'] = project
+        os.environ['AVALON_ASSET'] = asset
+        os.environ['AVALON_SILO'] = silo
+        io.install()
+    return io._database
+
+
+def get_all_avalon_projects():
+    db = get_avalon_database()
+    project_names = db.collection_names()
+    projects = []
+    for name in project_names:
+        projects.append(db[name].find_one({'type': 'project'}))
+    return projects

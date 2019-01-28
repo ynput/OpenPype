@@ -6,6 +6,8 @@ import sys
 import json
 import base64
 
+
+ignore_me = True
 # sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 # from ftrack_kredenc.lucidity.vendor import yaml
 # from ftrack_kredenc import lucidity
