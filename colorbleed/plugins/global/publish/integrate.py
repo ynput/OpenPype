@@ -25,6 +25,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     families = ["colorbleed.animation",
                 "colorbleed.camera",
+                "colorbleed.fbx",
                 "colorbleed.imagesequence",
                 "colorbleed.look",
                 "colorbleed.mayaAscii",
@@ -339,7 +340,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                         "time": context.data["time"],
                         "author": context.data["user"],
                         "source": source,
-                        "comment": context.data.get("comment")}
+                        "comment": context.data.get("comment"),
+                        "machine": context.data.get("machine"),
+                        "fps": context.data.get("fps")}
 
         # Include optional data if present in
         optionals = ["startFrame", "endFrame", "step", "handles"]

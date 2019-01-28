@@ -1445,6 +1445,15 @@
 	},
 	{
 		"type": "action",
+		"command": "$COLORBLEED_SCRIPTS\\cleanup\\removeUnknownPlugins.py",
+		"sourcetype": "file",
+		"tags": ["cleanup",
+		"removeUnknownPlugins"],
+		"title": "Remove Unknown Plugins UI",
+		"tooltip": "Remove unknown plugins UI"
+	},
+	{
+		"type": "action",
 		"command": "$COLORBLEED_SCRIPTS\\cleanup\\removeUnloadedReferences.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",

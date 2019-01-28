@@ -24,7 +24,7 @@ def get_invalid_sets(shape):
     """
 
     invalid = []
-    sets = cmds.listSets(object=shape, t=1, extendToShape=False)
+    sets = cmds.listSets(object=shape, t=1, extendToShape=False) or []
     for s in sets:
         members = cmds.sets(s, query=True, nodesOnly=True)
         if not members:
@@ -93,7 +93,9 @@ class ValidateMeshShaderConnections(pyblish.api.InstancePlugin):
     def get_invalid(instance):
 
         shapes = cmds.ls(instance[:], dag=1, leaf=1, shapes=1, long=True)
-        shapes = cmds.ls(shapes, shapes=True, noIntermediate=True, long=True)
+
+        # todo: allow to check anything that can have a shader
+        shapes = cmds.ls(shapes, noIntermediate=True, long=True, type="mesh")
 
         invalid = []
         for shape in shapes:

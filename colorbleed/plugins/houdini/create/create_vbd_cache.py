@@ -2,7 +2,7 @@ from avalon import houdini
 
 
 class CreateVDBCache(houdini.Creator):
-    """Alembic pointcache for animated data"""
+    """OpenVDB from Geometry ROP"""
 
     name = "vbdcache"
     label = "VDB Cache"
@@ -15,10 +15,8 @@ class CreateVDBCache(houdini.Creator):
         # Remove the active, we are checking the bypass flag of the nodes
         self.data.pop("active", None)
 
-        self.data.update({
-            "node_type": "geometry",  # Set node type to create for output
-            "executeBackground": True  # Render node in background
-        })
+        # Set node type to create for output
+        self.data["node_type"] = "geometry"
 
     def process(self):
         instance = super(CreateVDBCache, self).process()
@@ -28,6 +26,6 @@ class CreateVDBCache(houdini.Creator):
 
         if self.nodes:
             node = self.nodes[0]
-            parms.update({"sop_path": node.path()})
+            parms.update({"soppath": node.path()})
 
         instance.setParms(parms)

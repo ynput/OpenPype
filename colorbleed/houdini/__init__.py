@@ -35,10 +35,11 @@ def install():
 
     log.info("Installing callbacks ... ")
     avalon.on("init", on_init)
+    avalon.before("save", before_save)
     avalon.on("save", on_save)
     avalon.on("open", on_open)
 
-    log.info("Overriding existing event 'taskChanged'")
+    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
     log.info("Setting default family states for loader..")
     avalon.data["familiesStateToggled"] = ["colorbleed.imagesequence"]
@@ -46,6 +47,10 @@ def install():
 
 def on_init(*args):
     houdini.on_houdini_initialize()
+
+
+def before_save(*args):
+    return lib.validate_fps()
 
 
 def on_save(*args):
@@ -72,7 +77,6 @@ def on_open(*args):
 
         # Get main window
         parent = hou.ui.mainQtWindow()
-
         if parent is None:
             log.info("Skipping outdated content pop-up "
                      "because Maya window can't be found.")
@@ -89,3 +93,20 @@ def on_open(*args):
                               "your Maya scene.")
             dialog.on_show.connect(_on_show_inventory)
             dialog.show()
+
+
+def on_pyblish_instance_toggled(instance, new_value, old_value):
+    """Toggle saver tool passthrough states on instance toggles."""
+
+    nodes = instance[:]
+    if not nodes:
+        return
+
+    # Assume instance node is first node
+    instance_node = nodes[0]
+
+    if instance_node.isBypassed() != (not old_value):
+        print("%s old bypass state didn't match old instance state, "
+              "updating anyway.." % instance_node.path())
+
+    instance_node.bypass(not new_value)

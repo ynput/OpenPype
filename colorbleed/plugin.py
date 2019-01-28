@@ -32,3 +32,38 @@ class Extractor(pyblish.api.InstancePlugin):
             instance.data['stagingDir'] = staging_dir
 
         return staging_dir
+
+
+def contextplugin_should_run(plugin, context):
+    """Return whether the ContextPlugin should run on the given context.
+
+    This is a helper function to work around a bug pyblish-base#250
+    Whenever a ContextPlugin sets specific families it will still trigger even
+    when no instances are present that have those families.
+
+    This actually checks it correctly and returns whether it should run.
+
+    """
+    required = set(plugin.families)
+
+    # When no filter always run
+    if "*" in required:
+        return True
+
+    for instance in context:
+
+        # Ignore inactive instances
+        if (not instance.data.get("publish", True) or
+                not instance.data.get("active", True)):
+            continue
+
+        families = instance.data.get("families", [])
+        if any(f in required for f in families):
+            return True
+
+        family = instance.data.get("family")
+        if family and family in required:
+            return True
+
+    return False
+

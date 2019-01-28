@@ -2,7 +2,7 @@ from avalon import houdini
 
 
 class CreatePointCache(houdini.Creator):
-    """Alembic pointcache for animated data"""
+    """Alembic ROP to pointcache"""
 
     name = "pointcache"
     label = "Point Cache"
@@ -22,7 +22,7 @@ class CreatePointCache(houdini.Creator):
 
         parms = {"use_sop_path": True,  # Export single node from SOP Path
                  "build_from_path": True,  # Direct path of primitive in output
-                 "path_attrib": "path",  # Pass path attribute for output\
+                 "path_attrib": "path",  # Pass path attribute for output
                  "prim_to_detail_pattern": "cbId",
                  "format": 2,  # Set format to Ogawa
                  "filename": "$HIP/pyblish/%s.abc" % self.name}

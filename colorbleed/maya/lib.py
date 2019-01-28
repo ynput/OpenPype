@@ -372,26 +372,6 @@ def evaluation(mode="off"):
 
 
 @contextlib.contextmanager
-def no_refresh():
-    """Temporarily disables Maya's UI updates
-
-    Note:
-        This only disabled the main pane and will sometimes still
-        trigger updates in torn off panels.
-
-    """
-
-    pane = _get_mel_global('gMainPane')
-    state = cmds.paneLayout(pane, query=True, manage=True)
-    cmds.paneLayout(pane, edit=True, manage=False)
-
-    try:
-        yield
-    finally:
-        cmds.paneLayout(pane, edit=True, manage=state)
-
-
-@contextlib.contextmanager
 def empty_sets(sets, force=False):
     """Remove all members of the sets during the context"""
 
@@ -519,11 +499,14 @@ def no_undo(flush=False):
         cmds.undoInfo(**{keyword: original})
 
 
-def get_shader_assignments_from_shapes(shapes):
+def get_shader_assignments_from_shapes(shapes, components=True):
     """Return the shape assignment per related shading engines.
 
     Returns a dictionary where the keys are shadingGroups and the values are
     lists of assigned shapes or shape-components.
+
+    Since `maya.cmds.sets` returns shader members on the shapes as components
+    on the transform we correct that in this method too.
 
     For the 'shapes' this will return a dictionary like:
         {
@@ -533,6 +516,7 @@ def get_shader_assignments_from_shapes(shapes):
 
     Args:
         shapes (list): The shapes to collect the assignments for.
+        components (bool): Whether to include the component assignments.
 
     Returns:
         dict: The {shadingEngine: shapes} relationships
@@ -541,7 +525,6 @@ def get_shader_assignments_from_shapes(shapes):
 
     shapes = cmds.ls(shapes,
                      long=True,
-                     selection=True,
                      shapes=True,
                      objectsOnly=True)
     if not shapes:
@@ -560,7 +543,37 @@ def get_shader_assignments_from_shapes(shapes):
                                               type="shadingEngine") or []
         shading_groups = list(set(shading_groups))
         for shading_group in shading_groups:
-            assignments[shading_group].add(shape)
+            assignments[shading_group].append(shape)
+
+    if components:
+        # Note: Components returned from maya.cmds.sets are "listed" as if
+        # being assigned to the transform like: pCube1.f[0] as opposed
+        # to pCubeShape1.f[0] so we correct that here too.
+
+        # Build a mapping from parent to shapes to include in lookup.
+        transforms = {shape.rsplit("|", 1)[0]: shape for shape in shapes}
+        lookup = set(shapes + transforms.keys())
+
+        component_assignments = defaultdict(list)
+        for shading_group in assignments.keys():
+            members = cmds.ls(cmds.sets(shading_group, query=True), long=True)
+            for member in members:
+
+                node = member.split(".", 1)[0]
+                if node not in lookup:
+                    continue
+
+                # Component
+                if "." in member:
+
+                    # Fix transform to shape as shaders are assigned to shapes
+                    if node in transforms:
+                        shape = transforms[node]
+                        component = member.split(".", 1)[1]
+                        member = "{0}.{1}".format(shape, component)
+
+                component_assignments[shading_group].append(member)
+        assignments = component_assignments
 
     return dict(assignments)
 
@@ -569,7 +582,7 @@ def get_shader_assignments_from_shapes(shapes):
 def shader(nodes, shadingEngine="initialShadingGroup"):
     """Assign a shader to nodes during the context"""
 
-    shapes = cmds.ls(nodes, dag=1, o=1, shapes=1, long=1)
+    shapes = cmds.ls(nodes, dag=1, objectsOnly=1, shapes=1, long=1)
     original = get_shader_assignments_from_shapes(shapes)
 
     try:
@@ -582,7 +595,7 @@ def shader(nodes, shadingEngine="initialShadingGroup"):
         # Assign original shaders
         for sg, members in original.items():
             if members:
-                cmds.sets(shapes, edit=True, forceElement=shadingEngine)
+                cmds.sets(members, edit=True, forceElement=sg)
 
 
 @contextlib.contextmanager
@@ -927,6 +940,18 @@ def extract_alembic(file,
             raise TypeError("Alembic option unsupported type: "
                             "{0} (expected {1})".format(value, valid_types))
 
+        # Ignore empty values, like an empty string, since they mess up how
+        # job arguments are built
+        if isinstance(value, (list, tuple)):
+            value = [x for x in value if x.strip()]
+
+            # Ignore option completely if no values remaining
+            if not value:
+                options.pop(key)
+                continue
+
+            options[key] = value
+
     # The `writeCreases` argument was changed to `autoSubd` in Maya 2018+
     maya_version = int(cmds.about(version=True))
     if maya_version >= 2018:
@@ -993,9 +1018,14 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
         nodes (set): list of filtered nodes
     """
 
+    lookup = None
     if nodes is None:
         # Consider all nodes
         nodes = cmds.ls()
+    else:
+        # Build a lookup for the only allowed nodes in output based
+        # on `nodes` input of the function (+ ensure long names)
+        lookup = set(cmds.ls(nodes, long=True))
 
     def _node_type_exists(node_type):
         try:
@@ -1004,8 +1034,8 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
         except RuntimeError:
             return False
 
-    # `readOnly` flag is obsolete as of Maya 2016 therefor we explicitly remove
-    # default nodes and reference nodes
+    # `readOnly` flag is obsolete as of Maya 2016 therefore we explicitly
+    # remove default nodes and reference nodes
     camera_shapes = ["frontShape", "sideShape", "topShape", "perspShape"]
 
     ignore = set()
@@ -1029,8 +1059,7 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
     if cmds.pluginInfo("pgYetiMaya",  query=True, loaded=True):
         types.append("pgYetiMaya")
 
-    # We *always* ignore intermediate shapes, so we filter them out
-    # directly
+    # We *always* ignore intermediate shapes, so we filter them out directly
     nodes = cmds.ls(nodes, type=types, long=True, noIntermediate=True)
 
     # The items which need to pass the id to their parent
@@ -1046,6 +1075,12 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
     nodes -= ignore  # Remove the ignored nodes
     if not nodes:
         return nodes
+
+    # Ensure only nodes from the input `nodes` are returned when a
+    # filter was applied on function call because we also iterated
+    # to parents and alike
+    if lookup is not None:
+        nodes &= lookup
 
     # Avoid locked nodes
     nodes_list = list(nodes)
@@ -2032,3 +2067,90 @@ def bake_to_world_space(nodes,
              shape=shape)
 
     return world_space_nodes
+
+
+def get_attr_in_layer(attr, layer):
+    """Return attribute value in specified renderlayer.
+
+    Same as cmds.getAttr but this gets the attribute's value in a
+    given render layer without having to switch to it.
+
+    Warning for parent attribute overrides:
+        Attributes that have render layer overrides to their parent attribute
+        are not captured correctly since they do not have a direct connection.
+        For example, an override to sphere.rotate when querying sphere.rotateX
+        will not return correctly!
+
+    Note: This is much faster for Maya's renderLayer system, yet the code
+        does no optimized query for render setup.
+
+    Args:
+        attr (str): attribute name, ex. "node.attribute"
+        layer (str): layer name
+
+    Returns:
+        The return value from `maya.cmds.getAttr`
+
+    """
+
+    if cmds.mayaHasRenderSetup():
+        log.debug("lib.get_attr_in_layer is not optimized for render setup")
+        with renderlayer(layer):
+            return cmds.getAttr(attr)
+
+    # Ignore complex query if we're in the layer anyway
+    current_layer = cmds.editRenderLayerGlobals(query=True,
+                                                currentRenderLayer=True)
+    if layer == current_layer:
+        return cmds.getAttr(attr)
+
+    connections = cmds.listConnections(attr,
+                                       plugs=True,
+                                       source=False,
+                                       destination=True,
+                                       type="renderLayer") or []
+    connections = filter(lambda x: x.endswith(".plug"), connections)
+    if not connections:
+        return cmds.getAttr(attr)
+
+    # Some value types perform a conversion when assigning
+    # TODO: See if there's a maya method to allow this conversion
+    # instead of computing it ourselves.
+    attr_type = cmds.getAttr(attr, type=True)
+    conversion = None
+    if attr_type == "time":
+        conversion = mel.eval('currentTimeUnitToFPS()')  # returns float
+    elif attr_type == "doubleAngle":
+        # Radians to Degrees: 180 / pi
+        # TODO: This will likely only be correct when Maya units are set
+        #       to degrees
+        conversion = 57.2957795131
+    elif attr_type == "doubleLinear":
+        raise NotImplementedError("doubleLinear conversion not implemented.")
+
+    for connection in connections:
+        if connection.startswith(layer + "."):
+            attr_split = connection.split(".")
+            if attr_split[0] == layer:
+                attr = ".".join(attr_split[0:-1])
+                value = cmds.getAttr("%s.value" % attr)
+                if conversion:
+                    value *= conversion
+                return value
+
+    else:
+        # When connections are present, but none
+        # to the specific renderlayer than the layer
+        # should have the "defaultRenderLayer"'s value
+        layer = "defaultRenderLayer"
+        for connection in connections:
+            if connection.startswith(layer):
+                attr_split = connection.split(".")
+                if attr_split[0] == "defaultRenderLayer":
+                    attr = ".".join(attr_split[0:-1])
+                    value = cmds.getAttr("%s.value" % attr)
+                    if conversion:
+                        value *= conversion
+                    return value
+
+    return cmds.getAttr(attr)

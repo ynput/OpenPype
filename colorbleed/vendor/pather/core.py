@@ -9,8 +9,8 @@ import glob
 from .error import ParseError
 
 # Regex pattern that matches valid file
-# TODO: Implement complete pattern if required
-RE_FILENAME = '[-\w.,; \[\]]'
+# A filename may not contain \/:*?"<>|
+RE_FILENAME = r"[^\\/:\"*?<>|]"
 
 
 def format(pattern, data, allow_partial=True):
