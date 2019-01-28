@@ -7,7 +7,7 @@ from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
-self._menu = "colorbleed"
+self._menu = "pype"
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def deferred():
         import scriptsmenu.launchformaya as launchformaya
         import scriptsmenu.scriptsmenu as scriptsmenu
     except ImportError:
-        log.warning("Skipping colorbleed.menu install, because "
+        log.warning("Skipping pype.menu install, because "
                     "'scriptsmenu' module seems unavailable.")
         return
 
@@ -61,7 +61,7 @@ def uninstall():
 def install():
 
     if cmds.about(batch=True):
-        print("Skipping colorbleed.menu initialization in batch mode..")
+        print("Skipping pype.menu initialization in batch mode..")
         return
 
     uninstall()

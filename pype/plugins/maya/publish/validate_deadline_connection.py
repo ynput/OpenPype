@@ -2,7 +2,7 @@ import pyblish.api
 
 import avalon.api as api
 from avalon.vendor import requests
-from colorbleed.plugin import contextplugin_should_run
+from pype.plugin import contextplugin_should_run
 
 
 class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
@@ -11,7 +11,7 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
     label = "Validate Deadline Web Service"
     order = pyblish.api.ValidatorOrder
     hosts = ["maya"]
-    families = ["colorbleed.renderlayer"]
+    families = ["renderlayer"]
 
     def process(self, context):
 

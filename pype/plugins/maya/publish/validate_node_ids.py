@@ -1,8 +1,8 @@
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
-from colorbleed.maya import lib
+from pype.maya import lib
 
 
 class ValidateNodeIDs(pyblish.api.InstancePlugin):
@@ -14,19 +14,19 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidatePipelineOrder
+    order = pype.api.ValidatePipelineOrder
     label = 'Instance Nodes Have ID'
     hosts = ['maya']
-    families = ["colorbleed.model",
-                "colorbleed.look",
-                "colorbleed.rig",
-                "colorbleed.pointcache",
-                "colorbleed.animation",
-                "colorbleed.setdress",
-                "colorbleed.yetiRig"]
+    families = ["model",
+                "look",
+                "rig",
+                "pointcache",
+                "animation",
+                "setdress",
+                "yetiRig"]
 
-    actions = [colorbleed.maya.action.SelectInvalidAction,
-               colorbleed.maya.action.GenerateUUIDsOnInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

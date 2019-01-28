@@ -1,6 +1,6 @@
 import pyblish.api
 
-from colorbleed.houdini import lib
+from pype.houdini import lib
 
 
 class ValidateAnimationSettings(pyblish.api.InstancePlugin):
@@ -23,7 +23,7 @@ class ValidateAnimationSettings(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Validate Frame Settings"
-    families = ["colorbleed.vdbcache"]
+    families = ["vdbcache"]
 
     def process(self, instance):
 

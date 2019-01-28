@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 
-import colorbleed.maya.lib as lib
+import pype.maya.lib as lib
 
 
 class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
@@ -27,7 +27,7 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.01
     label = "Render Elements / AOVs"
     hosts = ["maya"]
-    families = ["colorbleed.renderlayer"]
+    families = ["renderlayer"]
 
     def process(self, instance):
 

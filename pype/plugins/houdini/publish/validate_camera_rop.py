@@ -1,12 +1,12 @@
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
 class ValidateCameraROP(pyblish.api.InstancePlugin):
     """Validate Camera ROP settings."""
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.camera']
+    order = pype.api.ValidateContentsOrder
+    families = ['camera']
     hosts = ['houdini']
     label = 'Camera ROP'
 

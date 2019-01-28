@@ -12,7 +12,7 @@ import pyblish.api
 def _get_script():
     """Get path to the image sequence script"""
     try:
-        from colorbleed.scripts import publish_filesequence
+        from pype.scripts import publish_filesequence
     except Exception as e:
         raise RuntimeError("Expected module 'publish_imagesequence'"
                            "to be available")
@@ -123,9 +123,9 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     label = "Submit image sequence jobs to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["fusion", "maya"]
-    families = ["colorbleed.saver.deadline",
-                "colorbleed.renderlayer",
-                "colorbleed.vrayscene"]
+    families = ["saver.deadline",
+                "renderlayer",
+                "vrayscene"]
 
     def process(self, instance):
 
@@ -175,7 +175,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             "regex": regex,
             "startFrame": start,
             "endFrame": end,
-            "families": ["colorbleed.imagesequence"],
+            "families": ["imagesequence"],
 
             # Optional metadata (for debugging)
             "metadata": {
@@ -193,7 +193,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         resources = []
         if data.get("extendFrames", False):
 
-            family = "colorbleed.imagesequence"
+            family = "imagesequence"
             override = data["overrideExistingFrame"]
 
             # override = data.get("overrideExistingFrame", False)

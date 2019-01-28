@@ -1536,7 +1536,7 @@
 	},
 	{
 		"type": "action",
-		"command": "$COLORBLEED_SCRIPTS\\cleanup\\colorbleedRename.py",
+		"command": "$COLORBLEED_SCRIPTS\\cleanup\\pypeRename.py",
 		"sourcetype": "file",
 		"tags": ["cleanup",
 		"rename",

@@ -1,16 +1,16 @@
 import pyblish.api
-import colorbleed.api
-from colorbleed.plugin import contextplugin_should_run
+import pype.api
+from pype.plugin import contextplugin_should_run
 
 from maya import cmds
 
 
 class ValidateVRayTranslatorEnabled(pyblish.api.ContextPlugin):
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     label = "VRay Translator Settings"
-    families = ["colorbleed.vrayscene"]
-    actions = [colorbleed.api.RepairContextAction]
+    families = ["vrayscene"]
+    actions = [pype.api.RepairContextAction]
 
     def process(self, context):
 

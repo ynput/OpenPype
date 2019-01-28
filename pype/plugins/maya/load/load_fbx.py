@@ -1,10 +1,10 @@
-import colorbleed.maya.plugin
+import pype.maya.plugin
 
 
-class FBXLoader(colorbleed.maya.plugin.ReferenceLoader):
+class FBXLoader(pype.maya.plugin.ReferenceLoader):
     """Load the FBX"""
 
-    families = ["colorbleed.fbx"]
+    families = ["fbx"]
     representations = ["fbx"]
 
     label = "Reference FBX"

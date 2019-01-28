@@ -1,10 +1,10 @@
 import pyblish.api
 
-import colorbleed.action
+import pype.action
 
 import maya.cmds as cmds
 
-import colorbleed.maya.action
+import pype.maya.action
 
 
 class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
@@ -19,9 +19,9 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = "Yeti Rig Cache State"
     hosts = ["maya"]
-    families = ["colorbleed.yetiRig"]
-    actions = [colorbleed.action.RepairAction,
-               colorbleed.maya.action.SelectInvalidAction]
+    families = ["yetiRig"]
+    actions = [pype.action.RepairAction,
+               pype.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

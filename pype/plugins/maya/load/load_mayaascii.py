@@ -1,10 +1,10 @@
-import colorbleed.maya.plugin
+import pype.maya.plugin
 
 
-class MayaAsciiLoader(colorbleed.maya.plugin.ReferenceLoader):
+class MayaAsciiLoader(pype.maya.plugin.ReferenceLoader):
     """Load the model"""
 
-    families = ["colorbleed.mayaAscii"]
+    families = ["mayaAscii"]
     representations = ["ma"]
 
     label = "Reference Maya Ascii"

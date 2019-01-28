@@ -12,7 +12,7 @@ class ValidateYetiRigSettings(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     label = "Yeti Rig Settings"
-    families = ["colorbleed.yetiRig"]
+    families = ["yetiRig"]
 
     def process(self, instance):
 

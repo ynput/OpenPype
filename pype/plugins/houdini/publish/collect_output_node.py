@@ -5,8 +5,8 @@ class CollectOutputSOPPath(pyblish.api.InstancePlugin):
     """Collect the out node's SOP Path value."""
 
     order = pyblish.api.CollectorOrder
-    families = ["colorbleed.pointcache",
-                "colorbleed.vdbcache"]
+    families = ["pointcache",
+                "vdbcache"]
     hosts = ["houdini"]
     label = "Collect Output SOP Path"
 

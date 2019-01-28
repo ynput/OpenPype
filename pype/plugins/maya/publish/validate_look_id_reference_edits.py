@@ -2,8 +2,8 @@ from collections import defaultdict
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
@@ -16,12 +16,12 @@ class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.look']
+    order = pype.api.ValidateContentsOrder
+    families = ['look']
     hosts = ['maya']
     label = 'Look Id Reference Edits'
-    actions = [colorbleed.maya.action.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.api.RepairAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

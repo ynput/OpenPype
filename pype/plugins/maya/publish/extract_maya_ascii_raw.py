@@ -3,10 +3,10 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
+import pype.api
 
 
-class ExtractMayaAsciiRaw(colorbleed.api.Extractor):
+class ExtractMayaAsciiRaw(pype.api.Extractor):
     """Extract as Maya Ascii (raw)
 
     This will preserve all references, construction history, etc.
@@ -15,7 +15,7 @@ class ExtractMayaAsciiRaw(colorbleed.api.Extractor):
 
     label = "Maya ASCII (Raw)"
     hosts = ["maya"]
-    families = ["colorbleed.mayaAscii"]
+    families = ["mayaAscii"]
 
     def process(self, instance):
 

@@ -70,8 +70,8 @@ def override_component_mask_commands():
 def override_toolbox_ui():
     """Add custom buttons in Toolbox as replacement for Maya web help icon."""
 
-    import colorbleed
-    res = os.path.join(os.path.dirname(os.path.dirname(colorbleed.__file__)),
+    import pype
+    res = os.path.join(os.path.dirname(os.path.dirname(pype.__file__)),
                        "res")
     icons = os.path.join(res, "icons")
 
@@ -99,7 +99,7 @@ def override_toolbox_ui():
     controls = []
 
     control = mc.iconTextButton(
-        "colorbleed_toolbox_workfiles",
+        "pype_toolbox_workfiles",
         annotation="Work Files",
         label="Work Files",
         image=os.path.join(icons, "workfiles.png"),
@@ -111,7 +111,7 @@ def override_toolbox_ui():
     controls.append(control)
 
     control = mc.iconTextButton(
-        "colorbleed_toolbox_loader",
+        "pype_toolbox_loader",
         annotation="Loader",
         label="Loader",
         image=os.path.join(icons, "loader.png"),
@@ -123,7 +123,7 @@ def override_toolbox_ui():
     controls.append(control)
 
     control = mc.iconTextButton(
-        "colorbleed_toolbox_manager",
+        "pype_toolbox_manager",
         annotation="Inventory",
         label="Inventory",
         image=os.path.join(icons, "inventory.png"),
@@ -135,10 +135,10 @@ def override_toolbox_ui():
     controls.append(control)
 
     control = mc.iconTextButton(
-        "colorbleed_toolbox",
+        "pype_toolbox",
         annotation="Colorbleed",
         label="Colorbleed",
-        image=os.path.join(icons, "colorbleed_logo_36x36.png"),
+        image=os.path.join(icons, "pype_logo_36x36.png"),
         bgc=background_color,
         width=icon_size,
         height=icon_size,

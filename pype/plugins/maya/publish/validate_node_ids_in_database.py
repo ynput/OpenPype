@@ -2,9 +2,9 @@ import pyblish.api
 
 import avalon.io as io
 
-import colorbleed.api
-import colorbleed.maya.action
-from colorbleed.maya import lib
+import pype.api
+import pype.maya.action
+from pype.maya import lib
 
 
 class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
@@ -18,13 +18,13 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidatePipelineOrder
+    order = pype.api.ValidatePipelineOrder
     label = 'Node Ids in Database'
     hosts = ['maya']
     families = ["*"]
 
-    actions = [colorbleed.maya.action.SelectInvalidAction,
-               colorbleed.maya.action.GenerateUUIDsOnInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

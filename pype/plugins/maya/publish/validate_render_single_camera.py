@@ -1,6 +1,6 @@
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
@@ -14,12 +14,12 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     label = "Render Single Camera"
     hosts = ['maya']
-    families = ["colorbleed.renderlayer",
-                "colorbleed.vrayscene"]
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    families = ["renderlayer",
+                "vrayscene"]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the cameras in the instance"""

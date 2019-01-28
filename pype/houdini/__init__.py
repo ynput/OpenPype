@@ -8,9 +8,9 @@ from pyblish import api as pyblish
 from avalon import api as avalon
 from avalon.houdini import pipeline as houdini
 
-from colorbleed.houdini import lib
+from pype.houdini import lib
 
-from colorbleed.lib import (
+from pype.lib import (
     any_outdated,
     update_task_from_path
 )
@@ -24,7 +24,7 @@ PUBLISH_PATH = os.path.join(PLUGINS_DIR, "houdini", "publish")
 LOAD_PATH = os.path.join(PLUGINS_DIR, "houdini", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "houdini", "create")
 
-log = logging.getLogger("colorbleed.houdini")
+log = logging.getLogger("pype.houdini")
 
 
 def install():
@@ -42,7 +42,7 @@ def install():
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
     log.info("Setting default family states for loader..")
-    avalon.data["familiesStateToggled"] = ["colorbleed.imagesequence"]
+    avalon.data["familiesStateToggled"] = ["imagesequence"]
 
 
 def on_init(*args):

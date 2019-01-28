@@ -3,7 +3,7 @@ from avalon import api
 
 class LoadVDBtoVRay(api.Loader):
 
-    families = ["colorbleed.vdbcache"]
+    families = ["vdbcache"]
     representations = ["vdb"]
 
     label = "Load VDB to VRay"

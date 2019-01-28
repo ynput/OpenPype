@@ -1,14 +1,14 @@
 import os
 
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
-class ExtractVDBCache(colorbleed.api.Extractor):
+class ExtractVDBCache(pype.api.Extractor):
 
     order = pyblish.api.ExtractorOrder + 0.1
     label = "Extract VDB Cache"
-    families = ["colorbleed.vdbcache"]
+    families = ["vdbcache"]
     hosts = ["houdini"]
 
     def process(self, instance):

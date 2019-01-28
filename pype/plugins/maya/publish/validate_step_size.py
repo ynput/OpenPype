@@ -1,6 +1,6 @@
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateStepSize(pyblish.api.InstancePlugin):
@@ -10,12 +10,12 @@ class ValidateStepSize(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     label = 'Step size'
-    families = ['colorbleed.camera',
-                'colorbleed.pointcache',
-                'colorbleed.animation']
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    families = ['camera',
+                'pointcache',
+                'animation']
+    actions = [pype.maya.action.SelectInvalidAction]
 
     MIN = 0.01
     MAX = 1.0

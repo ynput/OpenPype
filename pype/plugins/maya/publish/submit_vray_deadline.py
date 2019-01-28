@@ -24,7 +24,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline ( vrscene )"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
-    families = ["colorbleed.vrayscene"]
+    families = ["vrayscene"]
 
     def process(self, instance):
 

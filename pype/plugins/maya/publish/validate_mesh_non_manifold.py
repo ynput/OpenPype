@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateMeshNonManifold(pyblish.api.Validator):
@@ -13,11 +13,11 @@ class ValidateMeshNonManifold(pyblish.api.Validator):
 
     """
 
-    order = colorbleed.api.ValidateMeshOrder
+    order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['model']
     label = 'Mesh Non-Manifold Vertices/Edges'
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

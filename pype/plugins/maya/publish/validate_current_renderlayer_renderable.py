@@ -1,7 +1,7 @@
 import pyblish.api
 
 from maya import cmds
-from colorbleed.plugin import contextplugin_should_run
+from pype.plugin import contextplugin_should_run
 
 
 class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin):
@@ -19,7 +19,7 @@ class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin):
     label = "Current Render Layer Has Renderable Camera"
     order = pyblish.api.ValidatorOrder
     hosts = ["maya"]
-    families = ["colorbleed.renderlayer"]
+    families = ["renderlayer"]
 
     def process(self, context):
 

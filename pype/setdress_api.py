@@ -10,7 +10,7 @@ from maya import cmds
 from avalon import api
 import avalon.io as io
 from avalon.maya.lib import unique_namespace
-from colorbleed.maya.lib import matrix_equals
+from pype.maya.lib import matrix_equals
 
 log = logging.getLogger("PackageLoader")
 
@@ -137,7 +137,7 @@ def load_package(filepath, name, namespace=None):
     # manager
     # for container in containers:
     #     cmds.setAttr("%s.id" % container,
-    #                  "colorbleed.setdress.container",
+    #                  "setdress.container",
     #                  type="string")
 
     # TODO: Lock all loaded nodes
@@ -162,7 +162,7 @@ def _add(instance, representation_id, loaders, namespace, root="|"):
 
     """
 
-    from colorbleed.maya.lib import get_container_transforms
+    from pype.maya.lib import get_container_transforms
 
     # Process within the namespace
     with namespaced(namespace, new=False) as namespace:
@@ -359,7 +359,7 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 
     """
 
-    from colorbleed.maya.lib import DEFAULT_MATRIX, get_container_transforms
+    from pype.maya.lib import DEFAULT_MATRIX, get_container_transforms
 
     set_namespace = set_container['namespace']
 

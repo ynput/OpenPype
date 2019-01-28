@@ -1,10 +1,10 @@
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 import avalon.io as io
-import colorbleed.maya.action
+import pype.maya.action
 
-from colorbleed.maya import lib
+from pype.maya import lib
 
 
 class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
@@ -12,16 +12,16 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidatePipelineOrder
+    order = pype.api.ValidatePipelineOrder
     label = 'Node Ids Related (ID)'
     hosts = ['maya']
-    families = ["colorbleed.model",
-                "colorbleed.look",
-                "colorbleed.rig"]
+    families = ["model",
+                "look",
+                "rig"]
     optional = True
 
-    actions = [colorbleed.maya.action.SelectInvalidAction,
-               colorbleed.maya.action.GenerateUUIDsOnInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all nodes in instance (including hierarchy)"""

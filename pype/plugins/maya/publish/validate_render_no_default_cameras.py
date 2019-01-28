@@ -1,18 +1,18 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
     """Ensure no default (startup) cameras are to be rendered."""
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.renderlayer']
+    families = ['renderlayer']
     label = "No Default Cameras Renderable"
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

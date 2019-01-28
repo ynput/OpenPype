@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
 class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
@@ -16,8 +16,8 @@ class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.look']
+    order = pype.api.ValidateContentsOrder
+    families = ['look']
     hosts = ['maya']
     label = 'Look Default Shader Connections'
 

@@ -1,18 +1,18 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import colorbleed.api
-from colorbleed import lib
-import colorbleed.maya.lib as mayalib
+import pype.api
+from pype import lib
+import pype.maya.lib as mayalib
 
 
 class ValidateMayaUnits(pyblish.api.ContextPlugin):
     """Check if the Maya units are set correct"""
 
-    order = colorbleed.api.ValidateSceneOrder
+    order = pype.api.ValidateSceneOrder
     label = "Maya Units"
     hosts = ['maya']
-    actions = [colorbleed.api.RepairContextAction]
+    actions = [pype.api.RepairContextAction]
 
     def process(self, context):
 

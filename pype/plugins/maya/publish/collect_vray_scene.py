@@ -27,10 +27,10 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
         work_dir = context.data["workspaceDir"]
 
         # Get VRay Scene instance
-        vray_scenes = host.lsattr("family", "colorbleed.vrayscene")
+        vray_scenes = host.lsattr("family", "vrayscene")
         if not vray_scenes:
             self.log.info("Skipping vrayScene collection, no "
-                          "colorbleed.vrayscene instance found..")
+                          "vrayscene instance found..")
             return
 
         assert len(vray_scenes) == 1, "Multiple vrayscene instances found!"
@@ -90,7 +90,7 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
 
                 # instance subset
                 "family": "VRay Scene",
-                "families": ["colorbleed.vrayscene"],
+                "families": ["vrayscene"],
                 "asset": asset,
                 "time": api.time(),
                 "author": context.data["user"],

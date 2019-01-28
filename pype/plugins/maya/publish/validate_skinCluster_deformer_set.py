@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateSkinclusterDeformerSet(pyblish.api.InstancePlugin):
@@ -14,11 +14,11 @@ class ValidateSkinclusterDeformerSet(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.fbx']
+    families = ['fbx']
     label = "Skincluster Deformer Relationships"
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the transform nodes in the instance"""

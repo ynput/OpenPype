@@ -3,11 +3,11 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
-import colorbleed.maya.lib as lib
+import pype.api
+import pype.maya.lib as lib
 
 
-class ExtractModel(colorbleed.api.Extractor):
+class ExtractModel(pype.api.Extractor):
     """Extract as Model (Maya Ascii)
 
     Only extracts contents based on the original "setMembers" data to ensure
@@ -24,7 +24,7 @@ class ExtractModel(colorbleed.api.Extractor):
 
     label = "Model (Maya ASCII)"
     hosts = ["maya"]
-    families = ["colorbleed.model"]
+    families = ["model"]
 
     def process(self, instance):
 

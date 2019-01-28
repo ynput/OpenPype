@@ -1,15 +1,15 @@
 import os
 
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
-class ExtractAlembic(colorbleed.api.Extractor):
+class ExtractAlembic(pype.api.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract Alembic"
     hosts = ["houdini"]
-    families = ["colorbleed.pointcache", "colorbleed.camera"]
+    families = ["pointcache", "camera"]
 
     def process(self, instance):
 

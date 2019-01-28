@@ -1,20 +1,20 @@
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 from maya import cmds
 
-import colorbleed.maya.action
+import pype.maya.action
 
 
 class ValidateShapeRenderStats(pyblish.api.Validator):
     """Ensure all render stats are set to the default values."""
 
-    order = colorbleed.api.ValidateMeshOrder
+    order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['model']
     label = 'Shape Default Render Stats'
-    actions = [colorbleed.maya.action.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.api.RepairAction]
 
     defaults = {'castsShadows': 1,
                 'receiveShadows': 1,

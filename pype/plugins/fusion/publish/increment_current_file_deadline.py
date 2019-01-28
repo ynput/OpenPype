@@ -11,13 +11,13 @@ class FusionIncrementCurrentFile(pyblish.api.ContextPlugin):
     label = "Increment current file"
     order = pyblish.api.IntegratorOrder + 9.0
     hosts = ["fusion"]
-    families = ["colorbleed.saver.deadline"]
+    families = ["saver.deadline"]
     optional = True
 
     def process(self, context):
 
-        from colorbleed.lib import version_up
-        from colorbleed.action import get_errored_plugins_from_data
+        from pype.lib import version_up
+        from pype.action import get_errored_plugins_from_data
 
         errored_plugins = get_errored_plugins_from_data(context)
         if any(plugin.__name__ == "FusionSubmitDeadline"

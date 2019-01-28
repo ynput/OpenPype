@@ -1,8 +1,8 @@
-import colorbleed.maya.action
-from colorbleed.maya import lib
+import pype.maya.action
+from pype.maya import lib
 
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
 class ValidateLookSets(pyblish.api.InstancePlugin):
@@ -38,11 +38,11 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.look']
+    order = pype.api.ValidateContentsOrder
+    families = ['look']
     hosts = ['maya']
     label = 'Look Sets'
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""

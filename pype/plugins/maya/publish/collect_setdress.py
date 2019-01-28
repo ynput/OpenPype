@@ -3,7 +3,7 @@ import pyblish.api
 
 from maya import cmds, mel
 from avalon import maya as avalon
-from colorbleed.maya import lib
+from pype.maya import lib
 
 # TODO : Publish of setdress: -unique namespace for all assets, VALIDATOR!
 
@@ -25,7 +25,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.49
     label = "Set Dress"
-    families = ["colorbleed.setdress"]
+    families = ["setdress"]
 
     def process(self, instance):
 

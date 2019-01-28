@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
 class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
@@ -11,8 +11,8 @@ class ValidatePrimitiveHierarchyPaths(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder + 0.1
-    families = ["colorbleed.pointcache"]
+    order = pype.api.ValidateContentsOrder + 0.1
+    families = ["pointcache"]
     hosts = ["houdini"]
     label = "Validate Prims Hierarchy Path"
 

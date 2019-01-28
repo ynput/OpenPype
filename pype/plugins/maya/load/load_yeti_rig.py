@@ -1,9 +1,9 @@
-import colorbleed.maya.plugin
+import pype.maya.plugin
 
 
-class YetiRigLoader(colorbleed.maya.plugin.ReferenceLoader):
+class YetiRigLoader(pype.maya.plugin.ReferenceLoader):
 
-    families = ["colorbleed.yetiRig"]
+    families = ["yetiRig"]
     representations = ["ma"]
 
     label = "Load Yeti Rig"

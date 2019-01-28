@@ -2,7 +2,7 @@ import os
 import re
 
 import pyblish.api
-from colorbleed.houdini import lib
+from pype.houdini import lib
 
 
 class CollectFrames(pyblish.api.InstancePlugin):
@@ -10,7 +10,7 @@ class CollectFrames(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Collect Frames"
-    families = ["colorbleed.vdbcache"]
+    families = ["vdbcache"]
 
     def process(self, instance):
 

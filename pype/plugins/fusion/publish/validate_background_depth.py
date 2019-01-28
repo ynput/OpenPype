@@ -1,6 +1,6 @@
 import pyblish.api
 
-from colorbleed import action
+from pype import action
 
 
 class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
@@ -10,7 +10,7 @@ class ValidateBackgroundDepth(pyblish.api.InstancePlugin):
     label = "Validate Background Depth 32 bit"
     actions = [action.RepairAction]
     hosts = ["fusion"]
-    families = ["colorbleed.saver"]
+    families = ["saver"]
     optional = True
 
     @classmethod

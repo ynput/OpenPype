@@ -1,11 +1,11 @@
-import colorbleed.maya.plugin
+import pype.maya.plugin
 
 
-class AbcLoader(colorbleed.maya.plugin.ReferenceLoader):
-    """Specific loader of Alembic for the colorbleed.animation family"""
+class AbcLoader(pype.maya.plugin.ReferenceLoader):
+    """Specific loader of Alembic for the pype.animation family"""
 
-    families = ["colorbleed.animation",
-                "colorbleed.pointcache"]
+    families = ["animation",
+                "pointcache"]
     label = "Reference animation"
     representations = ["abc"]
     order = -10

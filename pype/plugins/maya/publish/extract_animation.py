@@ -3,11 +3,11 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
-from colorbleed.maya.lib import extract_alembic
+import pype.api
+from pype.maya.lib import extract_alembic
 
 
-class ExtractColorbleedAnimation(colorbleed.api.Extractor):
+class ExtractColorbleedAnimation(pype.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals, uvs, creases are preserved, but nothing more,
@@ -17,7 +17,7 @@ class ExtractColorbleedAnimation(colorbleed.api.Extractor):
 
     label = "Extract Animation"
     hosts = ["maya"]
-    families = ["colorbleed.animation"]
+    families = ["animation"]
 
     def process(self, instance):
 

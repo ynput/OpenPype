@@ -5,8 +5,8 @@ from maya import cmds
 
 import pyblish.api
 
-from colorbleed.maya import lib
-from colorbleed.lib import pairwise
+from pype.maya import lib
+from pype.lib import pairwise
 
 
 SETTINGS = {"renderDensity",
@@ -22,7 +22,7 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.4
     label = "Collect Yeti Rig"
-    families = ["colorbleed.yetiRig"]
+    families = ["yetiRig"]
     hosts = ["maya"]
 
     def process(self, instance):

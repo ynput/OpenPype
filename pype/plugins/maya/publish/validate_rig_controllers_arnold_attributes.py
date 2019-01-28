@@ -1,10 +1,10 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import pype.api
 
-import colorbleed.maya.lib as lib
-import colorbleed.maya.action
+import pype.maya.lib as lib
+import pype.maya.action
 
 
 class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
@@ -26,12 +26,12 @@ class ValidateRigControllersArnoldAttributes(pyblish.api.InstancePlugin):
     This validator will ensure they are hidden or unkeyable attributes.
 
     """
-    order = colorbleed.api.ValidateContentsOrder + 0.05
+    order = pype.api.ValidateContentsOrder + 0.05
     label = "Rig Controllers (Arnold Attributes)"
     hosts = ["maya"]
-    families = ["colorbleed.rig"]
-    actions = [colorbleed.api.RepairAction,
-               colorbleed.maya.action.SelectInvalidAction]
+    families = ["rig"]
+    actions = [pype.api.RepairAction,
+               pype.maya.action.SelectInvalidAction]
 
     attributes = [
         "rcurve",

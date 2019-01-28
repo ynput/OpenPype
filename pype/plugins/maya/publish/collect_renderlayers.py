@@ -3,7 +3,7 @@ from maya import cmds
 import pyblish.api
 
 from avalon import maya, api
-import colorbleed.maya.lib as lib
+import pype.maya.lib as lib
 
 
 class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
@@ -72,7 +72,7 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
 
                 # instance subset
                 "family": "Render Layers",
-                "families": ["colorbleed.renderlayer"],
+                "families": ["renderlayer"],
                 "asset": asset,
                 "time": api.time(),
                 "author": context.data["user"],

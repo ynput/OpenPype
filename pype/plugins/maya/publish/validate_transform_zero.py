@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateTransformZero(pyblish.api.Validator):
@@ -14,13 +14,13 @@ class ValidateTransformZero(pyblish.api.Validator):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["colorbleed.model"]
+    families = ["model"]
     category = "geometry"
     version = (0, 1, 0)
     label = "Transform Zero (Freeze)"
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     _identity = [1.0, 0.0, 0.0, 0.0,
                  0.0, 1.0, 0.0, 0.0,

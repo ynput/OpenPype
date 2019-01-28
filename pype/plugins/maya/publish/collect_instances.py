@@ -19,7 +19,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
             be able to achieve and the amount of data available
             to validators. An additional collector could also
             append this input data into the instance, as we do
-            for `colorbleed.rig` with collect_history.
+            for `pype.rig` with collect_history.
 
     """
 

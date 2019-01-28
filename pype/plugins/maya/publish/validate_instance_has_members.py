@@ -1,15 +1,15 @@
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateInstanceHasMembers(pyblish.api.InstancePlugin):
     """Validates instance objectSet has *any* members."""
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     hosts = ["maya"]
     label = 'Instance has members'
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

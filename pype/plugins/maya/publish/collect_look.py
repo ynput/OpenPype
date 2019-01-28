@@ -4,7 +4,7 @@ import glob
 
 from maya import cmds
 import pyblish.api
-import colorbleed.maya.lib as lib
+import pype.maya.lib as lib
 
 SHAPE_ATTRS = ["castsShadows",
                "receiveShadows",
@@ -203,7 +203,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.4
-    families = ["colorbleed.look"]
+    families = ["look"]
     label = "Collect Look"
     hosts = ["maya"]
 

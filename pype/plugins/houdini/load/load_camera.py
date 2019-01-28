@@ -6,7 +6,7 @@ from avalon.houdini import pipeline, lib
 class CameraLoader(api.Loader):
     """Specific loader of Alembic for the avalon.animation family"""
 
-    families = ["colorbleed.camera"]
+    families = ["camera"]
     label = "Load Camera (abc)"
     representations = ["abc"]
     order = -10

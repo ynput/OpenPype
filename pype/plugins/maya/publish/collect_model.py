@@ -9,7 +9,7 @@ class CollectModelData(pyblish.api.InstancePlugin):
     Ensures always only a single frame is extracted (current frame).
     
     Note:
-        This is a workaround so that the `colorbleed.model` family can use the
+        This is a workaround so that the `pype.model` family can use the
         same pointcache extractor implementation as animation and pointcaches.
         This always enforces the "current" frame to be published.
 
@@ -17,7 +17,7 @@ class CollectModelData(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.499
     label = 'Collect Model Data'
-    families = ["colorbleed.model"]
+    families = ["model"]
 
     def process(self, instance):
         # Extract only current frame (override)

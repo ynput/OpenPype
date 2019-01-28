@@ -1,5 +1,5 @@
 import avalon.maya
-from colorbleed.maya import lib
+from pype.maya import lib
 
 
 class CreateAnimation(avalon.maya.Creator):
@@ -7,7 +7,7 @@ class CreateAnimation(avalon.maya.Creator):
 
     name = "animationDefault"
     label = "Animation"
-    family = "colorbleed.animation"
+    family = "animation"
     icon = "male"
 
     def __init__(self, *args, **kwargs):

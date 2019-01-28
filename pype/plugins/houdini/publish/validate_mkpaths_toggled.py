@@ -1,14 +1,14 @@
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
 class ValidateIntermediateDirectoriesChecked(pyblish.api.InstancePlugin):
     """Validate Create Intermediate Directories is enabled on ROP node."""
 
-    order = colorbleed.api.ValidateContentsOrder
-    families = ['colorbleed.pointcache',
-                'colorbleed.camera',
-                'colorbleed.vdbcache']
+    order = pype.api.ValidateContentsOrder
+    families = ['pointcache',
+                'camera',
+                'vdbcache']
     hosts = ['houdini']
     label = 'Create Intermediate Directories Checked'
 

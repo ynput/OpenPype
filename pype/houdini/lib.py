@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 import hou
 
-from colorbleed import lib
+from pype import lib
 
 from avalon import api, io
 from avalon.houdini import lib as houdini

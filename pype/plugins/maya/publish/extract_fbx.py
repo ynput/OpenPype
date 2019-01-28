@@ -6,10 +6,10 @@ import maya.mel as mel
 import pyblish.api
 import avalon.maya
 
-import colorbleed.api
+import pype.api
 
 
-class ExtractFBX(colorbleed.api.Extractor):
+class ExtractFBX(pype.api.Extractor):
     """Extract FBX from Maya.
 
     This extracts reproducible FBX exports ignoring any of the settings set
@@ -31,7 +31,7 @@ class ExtractFBX(colorbleed.api.Extractor):
 
     order = pyblish.api.ExtractorOrder
     label = "Extract FBX"
-    families = ["colorbleed.fbx"]
+    families = ["fbx"]
 
     @property
     def options(self):

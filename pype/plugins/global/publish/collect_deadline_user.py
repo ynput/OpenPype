@@ -2,7 +2,7 @@ import os
 import subprocess
 
 import pyblish.api
-from colorbleed.plugin import contextplugin_should_run
+from pype.plugin import contextplugin_should_run
 
 CREATE_NO_WINDOW = 0x08000000
 
@@ -36,7 +36,7 @@ class CollectDeadlineUser(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.499
     label = "Deadline User"
     hosts = ['maya', 'fusion']
-    families = ["colorbleed.renderlayer", "colorbleed.saver.deadline"]
+    families = ["renderlayer", "saver.deadline"]
 
     def process(self, context):
         """Inject the current working file"""

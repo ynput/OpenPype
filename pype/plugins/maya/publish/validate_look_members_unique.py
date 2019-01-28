@@ -1,8 +1,8 @@
 from collections import defaultdict
 
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
@@ -20,13 +20,13 @@ class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidatePipelineOrder
+    order = pype.api.ValidatePipelineOrder
     label = 'Look members unique'
     hosts = ['maya']
-    families = ['colorbleed.look']
+    families = ['look']
 
-    actions = [colorbleed.maya.action.SelectInvalidAction,
-               colorbleed.maya.action.GenerateUUIDsOnInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

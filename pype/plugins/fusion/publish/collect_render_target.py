@@ -13,7 +13,7 @@ class CollectFusionRenderMode(pyblish.api.InstancePlugin):
     available tool does not visualize which render mode is set for the
     current comp, please run the following line in the console (Py2)
 
-    comp.GetData("colorbleed.rendermode")
+    comp.GetData("pype.rendermode")
 
     This will return the name of the current render mode as seen above under
     Options.
@@ -23,7 +23,7 @@ class CollectFusionRenderMode(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.4
     label = "Collect Render Mode"
     hosts = ["fusion"]
-    families = ["colorbleed.saver"]
+    families = ["saver"]
 
     def process(self, instance):
         """Collect all image sequence tools"""
@@ -34,11 +34,11 @@ class CollectFusionRenderMode(pyblish.api.InstancePlugin):
             raise RuntimeError("No comp previously collected, unable to "
                                "retrieve Fusion version.")
 
-        rendermode = comp.GetData("colorbleed.rendermode") or "renderlocal"
+        rendermode = comp.GetData("pype.rendermode") or "renderlocal"
         assert rendermode in options, "Must be supported render mode"
 
         self.log.info("Render mode: {0}".format(rendermode))
 
         # Append family
-        family = "colorbleed.saver.{0}".format(rendermode)
+        family = "saver.{0}".format(rendermode)
         instance.data["families"].append(family)

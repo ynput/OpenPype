@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
 class ValidateRigContents(pyblish.api.InstancePlugin):
@@ -13,10 +13,10 @@ class ValidateRigContents(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     label = "Rig Contents"
     hosts = ["maya"]
-    families = ["colorbleed.rig"]
+    families = ["rig"]
 
     accepted_output = ["mesh", "transform"]
     accepted_controllers = ["transform"]

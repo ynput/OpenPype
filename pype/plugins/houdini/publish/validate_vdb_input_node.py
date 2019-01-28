@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
 class ValidateVDBInputNode(pyblish.api.InstancePlugin):
@@ -16,8 +16,8 @@ class ValidateVDBInputNode(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder + 0.1
-    families = ["colorbleed.vdbcache"]
+    order = pype.api.ValidateContentsOrder + 0.1
+    families = ["vdbcache"]
     hosts = ["houdini"]
     label = "Validate Input Node (VDB)"
 

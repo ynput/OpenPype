@@ -1,5 +1,5 @@
 import avalon.maya
-from colorbleed.maya import lib
+from pype.maya import lib
 
 
 class CreateFBX(avalon.maya.Creator):
@@ -7,7 +7,7 @@ class CreateFBX(avalon.maya.Creator):
 
     name = "fbxDefault"
     label = "FBX"
-    family = "colorbleed.fbx"
+    family = "fbx"
     icon = "plug"
 
     def __init__(self, *args, **kwargs):

@@ -8,12 +8,12 @@ from maya import cmds
 
 from avalon import api
 from avalon.maya import lib as avalon_lib, pipeline
-from colorbleed.maya import lib
+from pype.maya import lib
 
 
 class YetiCacheLoader(api.Loader):
 
-    families = ["colorbleed.yeticache", "colorbleed.yetiRig"]
+    families = ["yeticache", "yetiRig"]
     representations = ["fur"]
 
     label = "Load Yeti Cache"

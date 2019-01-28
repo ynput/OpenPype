@@ -4,7 +4,7 @@ import avalon.maya
 class CreateVRayScene(avalon.maya.Creator):
 
     label = "VRay Scene"
-    family = "colorbleed.vrayscene"
+    family = "vrayscene"
     icon = "cubes"
 
     def __init__(self, *args, **kwargs):

@@ -1,7 +1,7 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 
 class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
@@ -20,10 +20,10 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     label = "Yeti Render Script Callbacks"
     hosts = ["maya"]
-    families = ["colorbleed.renderlayer"]
+    families = ["renderlayer"]
 
     # Settings per renderer
     callbacks = {

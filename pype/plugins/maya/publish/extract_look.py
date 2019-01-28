@@ -9,8 +9,8 @@ from maya import cmds
 import pyblish.api
 import avalon.maya
 
-import colorbleed.api
-import colorbleed.maya.lib as lib
+import pype.api
+import pype.maya.lib as lib
 
 
 @contextlib.contextmanager
@@ -45,7 +45,7 @@ def no_workspace_dir():
         os.rmdir(fake_workspace_dir)
 
 
-class ExtractLook(colorbleed.api.Extractor):
+class ExtractLook(pype.api.Extractor):
     """Extract Look (Maya Ascii + JSON)
 
     Only extracts the sets (shadingEngines and alike) alongside a .json file
@@ -56,7 +56,7 @@ class ExtractLook(colorbleed.api.Extractor):
 
     label = "Extract Look (Maya ASCII + JSON)"
     hosts = ["maya"]
-    families = ["colorbleed.look"]
+    families = ["look"]
     order = pyblish.api.ExtractorOrder + 0.2
 
     def process(self, instance):

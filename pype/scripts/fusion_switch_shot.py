@@ -8,8 +8,8 @@ from avalon import api, io, pipeline
 import avalon.fusion
 
 # Config imports
-import colorbleed.lib as colorbleed
-import colorbleed.fusion.lib as fusion_lib
+import pype.lib as pype
+import pype.fusion.lib as fusion_lib
 
 log = logging.getLogger("Update Slap Comp")
 
@@ -87,7 +87,7 @@ def _format_filepath(session):
 
     # Create new unqiue filepath
     if os.path.exists(new_filepath):
-        new_filepath = colorbleed.version_up(new_filepath)
+        new_filepath = pype.version_up(new_filepath)
 
     return new_filepath
 
@@ -189,7 +189,7 @@ def switch(asset_name, filepath=None, new=True):
     representations = []
     for container in containers:
         try:
-            representation = colorbleed.switch_item(container,
+            representation = pype.switch_item(container,
                                                     asset_name=asset_name)
             representations.append(representation)
         except Exception as e:
@@ -209,7 +209,7 @@ def switch(asset_name, filepath=None, new=True):
         # Update savers output based on new session
         _update_savers(current_comp, switch_to_session)
     else:
-        comp_path = colorbleed.version_up(filepath)
+        comp_path = pype.version_up(filepath)
 
     current_comp.Print(comp_path)
 

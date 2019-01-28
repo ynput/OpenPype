@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
@@ -13,14 +13,14 @@ class ValidateMeshNormalsUnlocked(pyblish.api.Validator):
 
     """
 
-    order = colorbleed.api.ValidateMeshOrder
+    order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['model']
     category = 'geometry'
     version = (0, 1, 0)
     label = 'Mesh Normals Unlocked'
-    actions = [colorbleed.maya.action.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.api.RepairAction]
     optional = True
 
     @staticmethod

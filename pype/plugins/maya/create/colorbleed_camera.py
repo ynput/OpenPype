@@ -1,5 +1,5 @@
 import avalon.maya
-from colorbleed.maya import lib
+from pype.maya import lib
 
 
 class CreateCamera(avalon.maya.Creator):
@@ -7,7 +7,7 @@ class CreateCamera(avalon.maya.Creator):
 
     name = "cameraDefault"
     label = "Camera"
-    family = "colorbleed.camera"
+    family = "camera"
     icon = "video-camera"
 
     def __init__(self, *args, **kwargs):

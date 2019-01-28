@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import pype.api
 import os
 
 from collections import defaultdict
@@ -13,7 +13,7 @@ class ValidateTransfers(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     label = "Transfers"
 
     def process(self, instance):

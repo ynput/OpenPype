@@ -6,7 +6,7 @@ class CreateModel(avalon.maya.Creator):
 
     name = "modelDefault"
     label = "Model"
-    family = "colorbleed.model"
+    family = "model"
     icon = "cube"
 
     def __init__(self, *args, **kwargs):

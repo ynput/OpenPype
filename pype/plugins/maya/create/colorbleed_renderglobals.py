@@ -1,6 +1,6 @@
 from maya import cmds
 
-import colorbleed.maya.lib as lib
+import pype.maya.lib as lib
 
 from avalon.vendor import requests
 import avalon.maya
@@ -10,7 +10,7 @@ from avalon import api
 class CreateRenderGlobals(avalon.maya.Creator):
 
     label = "Render Globals"
-    family = "colorbleed.renderglobals"
+    family = "renderglobals"
     icon = "gears"
 
     def __init__(self, *args, **kwargs):

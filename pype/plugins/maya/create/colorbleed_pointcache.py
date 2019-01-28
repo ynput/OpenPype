@@ -1,5 +1,5 @@
 import avalon.maya
-from colorbleed.maya import lib
+from pype.maya import lib
 
 
 class CreatePointCache(avalon.maya.Creator):
@@ -7,7 +7,7 @@ class CreatePointCache(avalon.maya.Creator):
 
     name = "pointcache"
     label = "Point Cache"
-    family = "colorbleed.pointcache"
+    family = "pointcache"
     icon = "gears"
 
     def __init__(self, *args, **kwargs):

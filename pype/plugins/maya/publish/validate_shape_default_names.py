@@ -3,8 +3,8 @@ import re
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 def short_name(node):
@@ -31,15 +31,15 @@ class ValidateShapeDefaultNames(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.model']
+    families = ['model']
     category = 'cleanup'
     optional = True
     version = (0, 1, 0)
     label = "Shape Default Naming"
-    actions = [colorbleed.maya.action.SelectInvalidAction,
-               colorbleed.api.RepairAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.api.RepairAction]
 
     @staticmethod
     def _define_default_name(shape):

@@ -2,7 +2,7 @@ import pyblish.api
 
 from maya import cmds
 
-from colorbleed.maya import lib
+from pype.maya import lib
 
 
 class CollectRenderableCamera(pyblish.api.InstancePlugin):
@@ -11,8 +11,8 @@ class CollectRenderableCamera(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.01
     label = "Collect Renderable Camera(s)"
     hosts = ["maya"]
-    families = ["colorbleed.vrayscene",
-                "colorbleed.renderlayer"]
+    families = ["vrayscene",
+                "renderlayer"]
 
     def process(self, instance):
         layer = instance.data["setMembers"]

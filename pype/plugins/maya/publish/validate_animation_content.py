@@ -1,6 +1,6 @@
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateAnimationContent(pyblish.api.InstancePlugin):
@@ -11,11 +11,11 @@ class ValidateAnimationContent(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     hosts = ["maya"]
-    families = ["colorbleed.animation"]
+    families = ["animation"]
     label = "Animation Content"
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     @classmethod
     def get_invalid(cls, instance):

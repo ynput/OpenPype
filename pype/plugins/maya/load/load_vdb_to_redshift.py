@@ -4,7 +4,7 @@ from avalon import api
 class LoadVDBtoRedShift(api.Loader):
     """Load OpenVDB in a Redshift Volume Shape"""
 
-    families = ["colorbleed.vdbcache"]
+    families = ["vdbcache"]
     representations = ["vdb"]
 
     label = "Load VDB to RedShift"

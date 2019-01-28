@@ -1,10 +1,10 @@
-import colorbleed.maya.plugin
+import pype.maya.plugin
 
 
-class LookLoader(colorbleed.maya.plugin.ReferenceLoader):
+class LookLoader(pype.maya.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
 
-    families = ["colorbleed.look"]
+    families = ["look"]
     representations = ["ma"]
 
     label = "Reference look"

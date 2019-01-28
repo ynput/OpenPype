@@ -1,10 +1,10 @@
-import colorbleed.maya.plugin
+import pype.maya.plugin
 
 
-class CameraLoader(colorbleed.maya.plugin.ReferenceLoader):
-    """Specific loader of Alembic for the colorbleed.camera family"""
+class CameraLoader(pype.maya.plugin.ReferenceLoader):
+    """Specific loader of Alembic for the pype.camera family"""
 
-    families = ["colorbleed.camera"]
+    families = ["camera"]
     label = "Reference camera"
     representations = ["abc", "ma"]
     order = -10

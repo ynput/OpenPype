@@ -14,8 +14,8 @@ class ValidateOutputNode(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder
-    families = ["colorbleed.pointcache",
-                "colorbleed.vdbcache"]
+    families = ["pointcache",
+                "vdbcache"]
     hosts = ["houdini"]
     label = "Validate Output Node"
 

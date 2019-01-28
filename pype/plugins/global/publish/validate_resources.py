@@ -1,5 +1,5 @@
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 import os
 
@@ -17,7 +17,7 @@ class ValidateResources(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     label = "Resources"
 
     def process(self, instance):

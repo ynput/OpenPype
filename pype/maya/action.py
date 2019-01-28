@@ -72,7 +72,7 @@ class GenerateUUIDsOnInvalidAction(pyblish.api.Action):
             nodes (list): all nodes to regenerate ids on
         """
 
-        import colorbleed.maya.lib as lib
+        import pype.maya.lib as lib
         import avalon.io as io
 
         asset = instance.data['asset']

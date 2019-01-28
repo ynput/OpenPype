@@ -5,8 +5,8 @@ import contextlib
 from maya import cmds
 
 import avalon.maya.lib as lib
-import colorbleed.api
-import colorbleed.maya.lib as maya
+import pype.api
+import pype.maya.lib as maya
 
 
 @contextlib.contextmanager
@@ -88,12 +88,12 @@ def yetigraph_attribute_values(assumed_destination, resources):
                 pass
 
 
-class ExtractYetiRig(colorbleed.api.Extractor):
+class ExtractYetiRig(pype.api.Extractor):
     """Extract the Yeti rig to a MayaAscii and write the Yeti rig data"""
 
     label = "Extract Yeti Rig"
     hosts = ["maya"]
-    families = ["colorbleed.yetiRig"]
+    families = ["yetiRig"]
 
     def process(self, instance):
 

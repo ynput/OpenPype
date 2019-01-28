@@ -1,6 +1,6 @@
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.lib as lib
+import pype.api
+import pype.maya.lib as lib
 
 from maya import cmds
 
@@ -15,10 +15,10 @@ class ValidateVRayDistributedRendering(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     label = "VRay Distributed Rendering"
-    families = ["colorbleed.renderlayer"]
-    actions = [colorbleed.api.RepairAction]
+    families = ["renderlayer"]
+    actions = [pype.api.RepairAction]
 
     # V-Ray attribute names
     enabled_attr = "vraySettings.sys_distributed_rendering_on"

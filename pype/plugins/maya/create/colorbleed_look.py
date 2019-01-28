@@ -1,5 +1,5 @@
 import avalon.maya
-from colorbleed.maya import lib
+from pype.maya import lib
 
 
 class CreateLook(avalon.maya.Creator):
@@ -7,7 +7,7 @@ class CreateLook(avalon.maya.Creator):
 
     name = "look"
     label = "Look"
-    family = "colorbleed.look"
+    family = "look"
     icon = "paint-brush"
 
     def __init__(self, *args, **kwargs):

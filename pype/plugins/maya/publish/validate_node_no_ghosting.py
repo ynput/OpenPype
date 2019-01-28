@@ -1,8 +1,8 @@
 from maya import cmds
 
 import pyblish.api
-import colorbleed.api
-import colorbleed.maya.action
+import pype.api
+import pype.maya.action
 
 
 class ValidateNodeNoGhosting(pyblish.api.InstancePlugin):
@@ -17,11 +17,11 @@ class ValidateNodeNoGhosting(pyblish.api.InstancePlugin):
 
     """
 
-    order = colorbleed.api.ValidateContentsOrder
+    order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ['colorbleed.model', 'colorbleed.rig']
+    families = ['model', 'rig']
     label = "No Ghosting"
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction]
 
     _attributes = {'ghosting': 0}
 

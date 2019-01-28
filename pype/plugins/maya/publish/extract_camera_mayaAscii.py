@@ -3,9 +3,9 @@ import os
 from maya import cmds
 
 import avalon.maya
-import colorbleed.api
-from colorbleed.lib import grouper
-from colorbleed.maya import lib
+import pype.api
+from pype.lib import grouper
+from pype.maya import lib
 
 
 def massage_ma_file(path):
@@ -65,7 +65,7 @@ def unlock(plug):
             cmds.disconnectAttr(source, destination)
 
 
-class ExtractCameraMayaAscii(colorbleed.api.Extractor):
+class ExtractCameraMayaAscii(pype.api.Extractor):
     """Extract a Camera as Maya Ascii.
 
     This will create a duplicate of the camera that will be baked *with*
@@ -83,7 +83,7 @@ class ExtractCameraMayaAscii(colorbleed.api.Extractor):
 
     label = "Camera (Maya Ascii)"
     hosts = ["maya"]
-    families = ["colorbleed.camera"]
+    families = ["camera"]
 
     def process(self, instance):
 

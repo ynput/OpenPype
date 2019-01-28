@@ -2,13 +2,13 @@ import json
 
 import os
 
-import colorbleed.api
-from colorbleed.maya.lib import extract_alembic
+import pype.api
+from pype.maya.lib import extract_alembic
 
 from maya import cmds
 
 
-class ExtractSetDress(colorbleed.api.Extractor):
+class ExtractSetDress(pype.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals are preserved, but nothing more,
@@ -18,7 +18,7 @@ class ExtractSetDress(colorbleed.api.Extractor):
 
     label = "Extract Set Dress"
     hosts = ["maya"]
-    families = ["colorbleed.setdress"]
+    families = ["setdress"]
 
     def process(self, instance):
 

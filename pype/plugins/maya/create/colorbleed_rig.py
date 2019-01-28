@@ -1,6 +1,6 @@
 from maya import cmds
 
-import colorbleed.maya.lib as lib
+import pype.maya.lib as lib
 import avalon.maya
 
 
@@ -9,7 +9,7 @@ class CreateRig(avalon.maya.Creator):
 
     name = "rigDefault"
     label = "Rig"
-    family = "colorbleed.rig"
+    family = "rig"
     icon = "wheelchair"
 
     def process(self):

@@ -6,5 +6,5 @@ class CreateMayaAscii(avalon.maya.Creator):
 
     name = "mayaAscii"
     label = "Maya Ascii"
-    family = "colorbleed.mayaAscii"
+    family = "mayaAscii"
     icon = "file-archive-o"

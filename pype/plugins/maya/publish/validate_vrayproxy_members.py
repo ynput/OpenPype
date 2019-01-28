@@ -1,9 +1,9 @@
 import pyblish.api
-import colorbleed.api
+import pype.api
 
 from maya import cmds
 
-import colorbleed.maya.action
+import pype.maya.action
 
 
 class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
@@ -12,8 +12,8 @@ class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = 'VRay Proxy Members'
     hosts = ['maya']
-    families = ['colorbleed.vrayproxy']
-    actions = [colorbleed.maya.action.SelectInvalidAction]
+    families = ['vrayproxy']
+    actions = [pype.maya.action.SelectInvalidAction]
 
     def process(self, instance):
 

@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 
-from colorbleed.maya import lib
+from pype.maya import lib
 
 SETTINGS = {"renderDensity",
             "renderWidth",
@@ -28,7 +28,7 @@ class CollectYetiCache(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.45
     label = "Collect Yeti Cache"
-    families = ["colorbleed.yetiRig", "colorbleed.yeticache"]
+    families = ["yetiRig", "yeticache"]
     hosts = ["maya"]
     tasks = ["animation", "fx"]
 

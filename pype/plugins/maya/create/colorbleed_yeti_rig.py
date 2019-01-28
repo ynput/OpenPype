@@ -1,6 +1,6 @@
 from maya import cmds
 
-import colorbleed.maya.lib as lib
+import pype.maya.lib as lib
 import avalon.maya
 
 
@@ -8,7 +8,7 @@ class CreateYetiRig(avalon.maya.Creator):
     """Output for procedural plugin nodes ( Yeti / XGen / etc)"""
 
     label = "Yeti Rig"
-    family = "colorbleed.yetiRig"
+    family = "yetiRig"
     icon = "usb"
 
     def process(self):
