@@ -26,7 +26,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     families = ["imagesequence", "render", "write", "source"]
 
-    family_targets = [".frames", ".local", ".review", "imagesequence", "render"]
+    family_targets = [".frames", ".local", ".review",
+                      "imagesequence", "render", "source"]
     exclude_families = ["clip"]
 
     def process(self, instance):
@@ -139,7 +140,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
-        hierarchy = io.find_one({"type": 'asset', "name": ASSET})['data']['parents']
+        hierarchy = io.find_one({"type": 'asset', "name": ASSET})[
+            'data']['parents']
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
@@ -197,7 +199,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 for i in src_collection.indexes:
                     src_padding = src_collection.format("{padding}") % i
-                    src_file_name = "{0}{1}{2}".format(src_head, src_padding, src_tail)
+                    src_file_name = "{0}{1}{2}".format(
+                        src_head, src_padding, src_tail)
                     dst_padding = dst_collection.format("{padding}") % i
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
 
