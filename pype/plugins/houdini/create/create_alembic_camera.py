@@ -1,9 +1,8 @@
-from collections import OrderedDict
-
 from avalon import houdini
 
 
 class CreateAlembicCamera(houdini.Creator):
+    """Single baked camera from Alembic ROP"""
 
     name = "camera"
     label = "Camera (Abc)"
@@ -22,13 +21,25 @@ class CreateAlembicCamera(houdini.Creator):
     def process(self):
         instance = super(CreateAlembicCamera, self).process()
 
-        parms = {"use_sop_path": True,
-                 "build_from_path": True,
-                 "path_attrib": "path",
-                 "filename": "$HIP/pyblish/%s.abc" % self.name}
+        parms = {
+            "filename": "$HIP/pyblish/%s.abc" % self.name,
+            "use_sop_path": False
+        }
 
         if self.nodes:
             node = self.nodes[0]
-            parms.update({"sop_path": node.path()})
+            path = node.path()
+
+            # Split the node path into the first root and the remainder
+            # So we can set the root and objects parameters correctly
+            _, root, remainder = path.split("/", 2)
+            parms.update({
+                "root": "/" + root,
+                "objects": remainder
+            })
 
         instance.setParms(parms)
+
+        # Lock the Use Sop Path setting so the
+        # user doesn't accidentally enable it.
+        instance.parm("use_sop_path").lock(True)

@@ -33,7 +33,7 @@ class ExtractSetDress(pype.api.Extractor):
             json.dump(instance.data["scenedata"], filepath, ensure_ascii=False)
 
         self.log.info("Extracting point cache ..")
-        cmds.select(instance.data["\\"])
+        cmds.select(instance.data["hierarchy"])
 
         # Run basic alembic exporter
         extract_alembic(file=hierarchy_path,

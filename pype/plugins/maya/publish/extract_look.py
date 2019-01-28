@@ -1,5 +1,7 @@
 import os
 import json
+import tempfile
+import contextlib
 from collections import OrderedDict
 
 from maya import cmds
@@ -9,6 +11,38 @@ import avalon.maya
 
 import pype.api
 import pype.maya.lib as lib
+
+
+@contextlib.contextmanager
+def no_workspace_dir():
+    """Force maya to a fake temporary workspace directory.
+
+    Note: This is not maya.cmds.workspace 'rootDirectory' but the 'directory'
+
+    This helps to avoid Maya automatically remapping image paths to files
+    relative to the currently set directory.
+
+    """
+
+    # Store current workspace
+    original = cmds.workspace(query=True, directory=True)
+
+    # Set a fake workspace
+    fake_workspace_dir = tempfile.mkdtemp()
+    cmds.workspace(directory=fake_workspace_dir)
+
+    try:
+        yield
+    finally:
+        try:
+            cmds.workspace(directory=original)
+        except RuntimeError:
+            # If the original workspace directory didn't exist either
+            # ignore the fact that it fails to reset it to the old path
+            pass
+
+        # Remove the temporary directory
+        os.rmdir(fake_workspace_dir)
 
 
 class ExtractLook(pype.api.Extractor):
@@ -47,10 +81,6 @@ class ExtractLook(pype.api.Extractor):
 
         resources = instance.data["resources"]
 
-        frame = cmds.currentTime(query=True)
-        instance.data['startFrame'] = frame
-        instance.data['endFrame'] = frame
-
         remap = OrderedDict()  # needs to be ordered, see color space values
         for resource in resources:
             attr = resource['attribute']
@@ -69,18 +99,23 @@ class ExtractLook(pype.api.Extractor):
         with lib.renderlayer(layer):
             # TODO: Ensure membership edits don't become renderlayer overrides
             with lib.empty_sets(sets, force=True):
-                with lib.attribute_values(remap):
-                    with avalon.maya.maintained_selection():
-                        cmds.select(sets, noExpand=True)
-                        cmds.file(maya_path,
-                                  force=True,
-                                  typ="mayaAscii",
-                                  exportSelected=True,
-                                  preserveReferences=False,
-                                  channels=True,
-                                  constraints=True,
-                                  expressions=True,
-                                  constructionHistory=True)
+                # To avoid Maya trying to automatically remap the file
+                # textures relative to the `workspace -directory` we force
+                # it to a fake temporary workspace. This fixes textures
+                # getting incorrectly remapped. (LKD-17, PLN-101)
+                with no_workspace_dir():
+                    with lib.attribute_values(remap):
+                        with avalon.maya.maintained_selection():
+                            cmds.select(sets, noExpand=True)
+                            cmds.file(maya_path,
+                                      force=True,
+                                      typ="mayaAscii",
+                                      exportSelected=True,
+                                      preserveReferences=False,
+                                      channels=True,
+                                      constraints=True,
+                                      expressions=True,
+                                      constructionHistory=True)
 
         # Write the JSON data
         self.log.info("Extract json..")

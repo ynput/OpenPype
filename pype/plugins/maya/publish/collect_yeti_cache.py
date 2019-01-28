@@ -26,7 +26,7 @@ class CollectYetiCache(pyblish.api.InstancePlugin):
     Other information is the name of the transform and it's Colorbleed ID
     """
 
-    order = pyblish.api.CollectorOrder + 0.2
+    order = pyblish.api.CollectorOrder + 0.45
     label = "Collect Yeti Cache"
     families = ["yetiRig", "yeticache"]
     hosts = ["maya"]
