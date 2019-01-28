@@ -459,3 +459,10 @@ def get_all_avalon_projects():
     for name in project_names:
         projects.append(db[name].find_one({'type': 'project'}))
     return projects
+
+
+def get_presets_path():
+    templates = os.environ['PYPE_STUDIO_TEMPLATES']
+    path_items = [templates, 'presets']
+    filepath = os.path.sep.join(path_items)
+    return filepath

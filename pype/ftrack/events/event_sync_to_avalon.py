@@ -1,14 +1,12 @@
-import os
 import ftrack_api
-from pype.ftrack import ftrack_utils
-from ftrack_event_handler import BaseEvent
+from pype.ftrack import BaseEvent, lib
 
 
 class Sync_to_Avalon(BaseEvent):
 
     def launch(self, session, entities, event):
 
-        ca_mongoid = ftrack_utils.get_ca_mongoid()
+        ca_mongoid = lib.get_ca_mongoid()
         # If mongo_id textfield has changed: RETURN!
         # - infinite loop
         for ent in event['data']['entities']:
@@ -47,9 +45,9 @@ class Sync_to_Avalon(BaseEvent):
         # get avalon project if possible
         import_entities = []
 
-        custom_attributes = ftrack_utils.get_avalon_attr(session)
+        custom_attributes = lib.get_avalon_attr(session)
 
-        avalon_project = ftrack_utils.get_avalon_project(ft_project)
+        avalon_project = lib.get_avalon_project(ft_project)
         if avalon_project is None:
             import_entities.append(ft_project)
 
@@ -78,7 +76,7 @@ class Sync_to_Avalon(BaseEvent):
 
         try:
             for entity in import_entities:
-                result = ftrack_utils.import_to_avalon(
+                result = lib.import_to_avalon(
                     session=session,
                     entity=entity,
                     ft_project=ft_project,

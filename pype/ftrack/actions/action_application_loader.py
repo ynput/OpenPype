@@ -1,6 +1,6 @@
 import toml
 import time
-from ftrack_action_handler import AppAction
+from pype.ftrack import AppAction
 from avalon import lib
 from app.api import Logger
 from pype import lib as pypelib

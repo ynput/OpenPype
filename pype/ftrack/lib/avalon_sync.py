@@ -1,12 +1,15 @@
 import os
 import re
-from pype import lib
+import json
+from pype import lib as pypelib
 from pype.lib import get_avalon_database
-from avalon import schema
 from bson.objectid import ObjectId
-from pype.ftrack.ftrack_utils import ftrack_utils
-from avalon.vendor import jsonschema
+import avalon
+import avalon.api
+from avalon import schema
+from avalon.vendor import toml, jsonschema
 from app.api import Logger
+
 ValidationError = jsonschema.ValidationError
 
 log = Logger.getLogger(__name__)
@@ -38,7 +41,7 @@ def import_to_avalon(
 
     # Validate if entity name match REGEX in schema
     try:
-        ftrack_utils.avalon_check_name(entity)
+        avalon_check_name(entity)
     except ValidationError:
         msg = '"{}" includes unsupported symbols like "dash" or "space"'
         errors.append({'Unsupported character': msg})
@@ -50,7 +53,7 @@ def import_to_avalon(
     if entity_type in ['Project']:
         type = 'project'
 
-        config = ftrack_utils.get_config(entity)
+        config = get_project_config(entity)
         schema.validate(config)
 
         av_project_code = None
@@ -59,7 +62,7 @@ def import_to_avalon(
         ft_project_code = ft_project['name']
 
         if av_project is None:
-            project_schema = lib.get_avalon_project_template_schema()
+            project_schema = pypelib.get_avalon_project_template_schema()
             item = {
                 'schema': project_schema,
                 'type': type,
@@ -185,7 +188,7 @@ def import_to_avalon(
             {'type': 'asset', 'name': name}
         )
         if avalon_asset is None:
-            asset_schema = lib.get_avalon_asset_template_schema()
+            asset_schema = pypelib.get_avalon_asset_template_schema()
             item = {
                 'schema': asset_schema,
                 'name': name,
@@ -304,7 +307,7 @@ def changeability_check_childs(entity):
         childs = entity['children']
         for child in childs:
             if child.entity_type.lower() == 'task':
-                config = ftrack_utils.get_config_data()
+                config = get_config_data()
                 if 'sync_to_avalon' in config:
                     config = config['sync_to_avalon']
                 if 'statuses_name_change' in config:
@@ -430,3 +433,87 @@ def get_avalon_project(ft_project):
         })
 
     return avalon_project
+
+
+def get_project_config(entity):
+    config = {}
+    config['schema'] = pypelib.get_avalon_project_config_schema()
+    config['tasks'] = [{'name': ''}]
+    config['apps'] = get_project_apps(entity)
+    config['template'] = pypelib.get_avalon_project_template()
+
+    return config
+
+
+def get_project_apps(entity):
+    """ Get apps from project
+    Requirements:
+        'Entity' MUST be object of ftrack entity with entity_type 'Project'
+    Checking if app from ftrack is available in Templates/bin/{app_name}.toml
+
+    Returns:
+        Array with dictionaries with app Name and Label
+    """
+    apps = []
+    for app in entity['custom_attributes']['applications']:
+        try:
+            app_config = {}
+            app_config['name'] = app
+            app_config['label'] = toml.load(avalon.lib.which_app(app))['label']
+
+            apps.append(app_config)
+
+        except Exception as e:
+            log.warning('Error with application {0} - {1}'.format(app, e))
+    return apps
+
+
+def avalon_check_name(entity, inSchema=None):
+    ValidationError = jsonschema.ValidationError
+    alright = True
+    name = entity['name']
+    if " " in name:
+        alright = False
+
+    data = {}
+    data['data'] = {}
+    data['type'] = 'asset'
+    schema = "avalon-core:asset-2.0"
+    # TODO have project any REGEX check?
+    if entity.entity_type in ['Project']:
+        # data['type'] = 'project'
+        name = entity['full_name']
+        # schema = get_avalon_project_template_schema()
+
+    data['silo'] = 'Film'
+
+    if inSchema is not None:
+        schema = inSchema
+    data['schema'] = schema
+    data['name'] = name
+    try:
+        avalon.schema.validate(data)
+    except ValidationError:
+        alright = False
+
+    if alright is False:
+        msg = '"{}" includes unsupported symbols like "dash" or "space"'
+        raise ValueError(msg.format(name))
+
+
+def get_config_data():
+    path_items = [pypelib.get_presets_path(), 'ftrack', 'ftrack_config.json']
+    filepath = os.path.sep.join(path_items)
+    data = dict()
+    try:
+        with open(filepath) as data_file:
+            data = json.load(data_file)
+
+    except Exception as e:
+        msg = (
+            'Loading "Ftrack Config file" Failed.'
+            ' Please check log for more information.'
+        )
+        log.warning("{} - {}".format(msg, str(e)))
+
+    return data

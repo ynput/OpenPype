@@ -5,7 +5,7 @@ import sys
 import errno
 
 import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.ftrack import BaseAction
 import json
 from pype import api as pype
 
@@ -21,7 +21,10 @@ class CreateFolders(BaseAction):
     label = 'Create Folders'
 
     #: Action Icon.
-    icon = 'https://cdn1.iconfinder.com/data/icons/hawcons/32/698620-icon-105-folder-add-512.png'
+    icon = (
+        'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
+        '698620-icon-105-folder-add-512.png'
+    )
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -120,7 +123,7 @@ class CreateFolders(BaseAction):
             message = str(ve)
             self.log.error('Error during syncToAvalon: {}'.format(message))
 
-        except Exception as e:
+        except Exception:
             job['status'] = 'failed'
             session.commit()
 

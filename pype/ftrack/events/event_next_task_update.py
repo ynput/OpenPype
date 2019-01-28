@@ -1,5 +1,5 @@
 import ftrack_api
-from ftrack_event_handler import BaseEvent
+from pype.ftrack import BaseEvent
 import operator
 
 
@@ -64,14 +64,17 @@ class NextTaskUpdate(BaseEvent):
 
                         # Setting next task status
                         try:
-                            status_to_set = session.query(
-                                'Status where name is "{}"'.format('Ready')).one()
+                            query = 'Status where name is "{}"'.format('Ready')
+                            status_to_set = session.query(query).one()
                             next_task['status'] = status_to_set
                         except Exception as e:
-                            self.log.warning('!!! [ {} ] status couldnt be set: [ {} ]'.format(
-                                path, e))
+                            self.log.warning((
+                                '!!! [ {} ] status couldnt be set: [ {} ]'
+                            ).format(path, e))
                         else:
-                            self.log.info('>>> [ {} ] updated to [ Ready ]'.format(path))
+                            self.log.info((
+                                '>>> [ {} ] updated to [ Ready ]'
+                            ).format(path))
 
                 session.commit()
 
