@@ -177,6 +177,11 @@ def import_to_avalon(
         return output
 
     mongo_id = entity['custom_attributes'][ca_mongoid]
+    mongo_id = mongo_id.replace(' ', '').replace('\n', '')
+    try:
+        ObjectId(mongo_id)
+    except Exception:
+        mongo_id = ''
 
     if mongo_id is not '':
         avalon_asset = database[project_name].find_one(
