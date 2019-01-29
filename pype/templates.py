@@ -2,14 +2,14 @@ import os
 import re
 from avalon import io
 from avalon import api as avalon
-
+from . import lib
 from app.api import (Templates, Logger, format)
 log = Logger.getLogger(__name__,
                        os.getenv("AVALON_APP", "pype-config"))
 
 SESSION = avalon.session
 if not SESSION:
-    io.install()
+    lib.set_io_database()
 
 
 def load_data_from_templates():
