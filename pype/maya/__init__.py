@@ -99,11 +99,22 @@ def on_init(_):
         except Exception as exc:
             print(exc)
 
+    # Force load Alembic so referenced alembics
+    # work correctly on scene open
     cmds.loadPlugin("AbcImport", quiet=True)
     cmds.loadPlugin("AbcExport", quiet=True)
 
-    from .customize import override_component_mask_commands
+    # Force load objExport plug-in (requested by artists)
+    cmds.loadPlugin("objExport", quiet=True)
+
+    from .customize import (
+        override_component_mask_commands,
+        override_toolbox_ui
+    )
     safe_deferred(override_component_mask_commands)
+
+    if not IS_HEADLESS:
+        safe_deferred(override_toolbox_ui)
 
 
 def on_before_save(return_code, _):
@@ -120,8 +131,8 @@ def on_save(_):
 
     avalon.logger.info("Running callback on save..")
 
-    # # Update current task for the current scene
-    # update_task_from_path(cmds.file(query=True, sceneName=True))
+    # Update current task for the current scene
+    update_task_from_path(cmds.file(query=True, sceneName=True))
 
     # Generate ids of the current context on nodes in the scene
     nodes = lib.get_id_required_nodes(referenced_nodes=False)

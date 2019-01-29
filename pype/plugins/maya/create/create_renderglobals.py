@@ -1,10 +1,10 @@
-from collections import OrderedDict
-
 from maya import cmds
+
+import pype.maya.lib as lib
 
 from avalon.vendor import requests
 import avalon.maya
-import os
+from avalon import api
 
 
 class CreateRenderGlobals(avalon.maya.Creator):
@@ -19,13 +19,13 @@ class CreateRenderGlobals(avalon.maya.Creator):
         # We won't be publishing this one
         self.data["id"] = "avalon.renderglobals"
 
-        # get pools
+        # Get available Deadline pools
         try:
             deadline_url = os.environ["DEADLINE_REST_URL"]
         except KeyError:
             self.log.error("Deadline REST API url not found.")
 
-        argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
+        argument = "{}/api/pools?NamesOnly=true".format(AVALON_DEADLINE)
         response = requests.get(argument)
         if not response.ok:
             self.log.warning("No pools retrieved")
@@ -38,33 +38,31 @@ class CreateRenderGlobals(avalon.maya.Creator):
         self.data.pop("asset", None)
         self.data.pop("active", None)
 
-        data = OrderedDict(**self.data)
-
-        data["suspendPublishJob"] = False
-        data["extendFrames"] = False
-        data["overrideExistingFrame"] = True
-        data["useLegacyRenderLayers"] = True
-        data["priority"] = 50
-        data["framesPerTask"] = 1
-        data["whitelist"] = False
-        data["machineList"] = ""
-        data["useMayaBatch"] = True
-        data["primaryPool"] = pools
+        self.data["suspendPublishJob"] = False
+        self.data["extendFrames"] = False
+        self.data["overrideExistingFrame"] = True
+        self.data["useLegacyRenderLayers"] = True
+        self.data["priority"] = 50
+        self.data["framesPerTask"] = 1
+        self.data["whitelist"] = False
+        self.data["machineList"] = ""
+        self.data["useMayaBatch"] = True
+        self.data["primaryPool"] = pools
         # We add a string "-" to allow the user to not set any secondary pools
-        data["secondaryPool"] = ["-"] + pools
+        self.data["secondaryPool"] = ["-"] + pools
 
-        self.data = data
         self.options = {"useSelection": False}  # Force no content
 
     def process(self):
 
         exists = cmds.ls(self.name)
         assert len(exists) <= 1, (
-            "More than one renderglobal exists, this is a bug")
+            "More than one renderglobal exists, this is a bug"
+        )
 
         if exists:
             return cmds.warning("%s already exists." % exists[0])
 
-        super(CreateRenderGlobals, self).process()
-
-        cmds.setAttr("{}.machineList".format(self.name), lock=True)
+        with lib.undo_chunk():
+            super(CreateRenderGlobals, self).process()
+            cmds.setAttr("{}.machineList".format(self.name), lock=True)

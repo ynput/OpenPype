@@ -45,10 +45,8 @@ def get_look_attrs(node):
     if cmds.objectType(node, isAType="shape"):
         attrs = cmds.listAttr(node, changedSinceFileOpen=True) or []
         for attr in attrs:
-            result.append(attr)
-            # if attr in SHAPE_ATTRS:
-            #     result.append(attr)
-
+            if attr in SHAPE_ATTRS:
+                result.append(attr)
 
     return result
 
@@ -108,7 +106,6 @@ def seq_to_glob(path):
         "<frame0": "<frame0\d+>",
         "<f>": "<f>"
     }
-
 
     lower = path.lower()
     has_pattern = False
@@ -205,7 +202,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.2
+    order = pyblish.api.CollectorOrder + 0.4
     families = ["look"]
     label = "Collect Look"
     hosts = ["maya"]
@@ -363,8 +360,6 @@ class CollectLook(pyblish.api.InstancePlugin):
 
             # Collect changes to "custom" attributes
             node_attrs = get_look_attrs(node)
-
-            self.log.info('attr: {}'.format(node_attrs))
 
             # Only include if there are any properties we care about
             if not node_attrs:

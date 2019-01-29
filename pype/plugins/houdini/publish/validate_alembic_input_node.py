@@ -7,7 +7,7 @@ class ValidateAlembicInputNode(pyblish.api.InstancePlugin):
 
     The connected node cannot be of the following types for Alembic:
         - VDB
-        - Volumne
+        - Volume
 
     """
 

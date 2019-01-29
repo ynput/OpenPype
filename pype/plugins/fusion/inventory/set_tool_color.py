@@ -1,10 +1,10 @@
 from avalon import api, style
 from avalon.vendor.Qt import QtGui, QtWidgets
 
-import avalon.nuke
+import avalon.fusion
 
 
-class NukeSetToolColor(api.InventoryAction):
+class FusionSetToolColor(api.InventoryAction):
     """Update the color of the selected tools"""
 
     label = "Set Tool Color"
@@ -16,20 +16,15 @@ class NukeSetToolColor(api.InventoryAction):
         """Color all selected tools the selected colors"""
 
         result = []
+        comp = avalon.fusion.get_current_comp()
 
         # Get tool color
         first = containers[0]
-        node = first["_tool"]
-        color = node["tile_color"].value()
-        hex = '%08x' % color
-        rgba = [
-            float(int(hex[0:2], 16)) / 255.0,
-            float(int(hex[2:4], 16)) / 255.0,
-            float(int(hex[4:6], 16)) / 255.0
-        ]
+        tool = first["_tool"]
+        color = tool.TileColor
 
         if color is not None:
-            qcolor = QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])
+            qcolor = QtGui.QColor().fromRgbF(color["R"], color["G"], color["B"])
         else:
             qcolor = self._fallback_color
 
@@ -38,21 +33,15 @@ class NukeSetToolColor(api.InventoryAction):
         if not picked_color:
             return
 
-        with avalon.nuke.viewer_update_and_undo_stop():
+        with avalon.fusion.comp_lock_and_undo_chunk(comp):
             for container in containers:
                 # Convert color to RGB 0-1 floats
                 rgb_f = picked_color.getRgbF()
-                hexColour = int(
-                    '%02x%02x%02x%02x' % (
-                        rgb_f[0]*255,
-                        rgb_f[1]*255,
-                        rgb_f[2]*255,
-                        1),
-                    16
-                )
+                rgb_f_table = {"R": rgb_f[0], "G": rgb_f[1], "B": rgb_f[2]}
+
                 # Update tool
-                node = container["_tool"]
-                node['tile_color'].value(hexColour)
+                tool = container["_tool"]
+                tool.TileColor = rgb_f_table
 
                 result.append(container)
 

@@ -303,7 +303,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             self.log.info("Subset '%s' not found, creating.." % subset_name)
 
             _id = io.insert_one({
-                "schema": "pype:subset-2.0",
+                "schema": "avalon-core:subset-2.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": {},
@@ -329,7 +329,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         version_locations = [location for location in locations if
                              location is not None]
 
-        return {"schema": "pype:version-2.0",
+        return {"schema": "avalon-core:version-2.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,
@@ -370,7 +370,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                         "time": context.data["time"],
                         "author": context.data["user"],
                         "source": source,
-                        "comment": context.data.get("comment")}
+                        "comment": context.data.get("comment"),
+                        "machine": context.data.get("machine"),
+                        "fps": context.data.get("fps")}
 
         # Include optional data if present in
         optionals = ["startFrame", "endFrame", "step", "handles"]

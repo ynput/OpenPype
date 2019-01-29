@@ -127,7 +127,7 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
         self.log.info("Performing camera bakes for: {0}".format(transform))
         with avalon.maya.maintained_selection():
             with lib.evaluation("off"):
-                with lib.no_refresh():
+                with avalon.maya.suspended_refresh():
                     baked = lib.bake_to_world_space(
                         transform,
                         frame_range=range_with_handles,

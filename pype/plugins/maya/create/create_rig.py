@@ -1,5 +1,6 @@
 from maya import cmds
 
+import pype.maya.lib as lib
 import avalon.maya
 
 
@@ -12,10 +13,11 @@ class CreateRig(avalon.maya.Creator):
     icon = "wheelchair"
 
     def process(self):
-        instance = super(CreateRig, self).process()
 
-        self.log.info("Creating Rig instance set up ...")
+        with lib.undo_chunk():
+            instance = super(CreateRig, self).process()
 
-        controls = cmds.sets(name="controls_SET", empty=True)
-        pointcache = cmds.sets(name="out_SET", empty=True)
-        cmds.sets([controls, pointcache], forceElement=instance)
+            self.log.info("Creating Rig instance set up ...")
+            controls = cmds.sets(name="controls_SET", empty=True)
+            pointcache = cmds.sets(name="out_SET", empty=True)
+            cmds.sets([controls, pointcache], forceElement=instance)
