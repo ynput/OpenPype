@@ -1,7 +1,5 @@
 import os
 import contextlib
-import time
-import sys
 
 import capture_gui
 import clique
@@ -9,30 +7,18 @@ import clique
 import pype.maya.lib as lib
 import pype.api
 
-from maya import cmds
+from maya import cmds, mel
 import pymel.core as pm
 from pype.vendor import ffmpeg
 reload(ffmpeg)
 
-import avalon.maya
 
-# import maya_utils as mu
-
-# from tweakHUD import master
-# from tweakHUD import draft_hud as dHUD
-# from tweakHUD import ftrackStrings as fStrings
-
-#
-# def soundOffsetFunc(oSF, SF, H):
-#     tmOff = (oSF - H) - SF
-#     return tmOff
-
-
+# TODO: move codec settings to presets
 class ExtractQuicktime(pype.api.Extractor):
-    """Extract a Camera as Alembic.
+    """Extract Quicktime from viewport capture.
 
-    The cameras gets baked to world space by default. Only when the instance's
-    `bakeToWorldSpace` is set to False it will include its full hierarchy.
+    Takes review camera and creates review Quicktime video based on viewport
+    capture.
 
     """
 
@@ -44,8 +30,17 @@ class ExtractQuicktime(pype.api.Extractor):
     def process(self, instance):
         self.log.info("Extracting capture..")
 
-        start = instance.data.get("startFrame", 1)
-        end = instance.data.get("endFrame", 25)
+        # get scene fps
+        fps = mel.eval('currentTimeUnitToFPS()')
+
+        # if start and end frames cannot be determined, get them
+        # from Maya timeline
+        start = instance.data.get("startFrame")
+        end = instance.data.get("endFrame")
+        if start is None:
+            start = cmds.playbackOptions(query=True, animationStartTime=True)
+        if end is None:
+            end = cmds.playbackOptions(query=True, animationEndTime=True)
         self.log.info("start: {}, end: {}".format(start, end))
         handles = instance.data.get("handles", 0)
         if handles:
@@ -53,46 +48,7 @@ class ExtractQuicktime(pype.api.Extractor):
             end += handles
 
         # get cameras
-        members = instance.data['setMembers']
         camera = instance.data['review_camera']
-        # cameras = cmds.ls(members, leaf=True, shapes=True, long=True,
-        #                   dag=True, type="camera")
-
-        # # validate required settings
-        # assert len(cameras) == 1, "Not a single camera found in extraction"
-        # camera = cameras[0]
-
-
-        # project_code = ftrack_data['Project']['code']
-        # task_type = ftrack_data['Task']['type']
-        #
-        # # load Preset
-        # studio_repos = os.path.abspath(os.environ.get('studio_repos'))
-        # shot_preset_path = os.path.join(studio_repos, 'maya',
-        #                             'capture_gui_presets',
-        #                            (project_code + '_' + task_type + '_' + asset + '.json'))
-        #
-        # task_preset_path = os.path.join(studio_repos, 'maya',
-        #                             'capture_gui_presets',
-        #                            (project_code + '_' + task_type + '.json'))
-        #
-        # project_preset_path = os.path.join(studio_repos, 'maya',
-        #                            'capture_gui_presets',
-        #                            (project_code + '.json'))
-        #
-        # default_preset_path = os.path.join(studio_repos, 'maya',
-        #                            'capture_gui_presets',
-        #                            'default.json')
-        #
-        # if os.path.isfile(shot_preset_path):
-        #     preset_to_use = shot_preset_path
-        # elif os.path.isfile(task_preset_path):
-        #     preset_to_use = task_preset_path
-        # elif os.path.isfile(project_preset_path):
-        #     preset_to_use = project_preset_path
-        # else:
-        #     preset_to_use = default_preset_path
-
         capture_preset = ""
         try:
             preset = lib.load_capture_preset(capture_preset)
@@ -100,15 +56,13 @@ class ExtractQuicktime(pype.api.Extractor):
             preset = {}
         self.log.info('using viewport preset: {}'.format(capture_preset))
 
-        #preset["off_screen"] =  False
-
         preset['camera'] = camera
         preset['format'] = "image"
         # preset['compression'] = "qt"
         preset['quality'] = 50
         preset['compression'] = "jpg"
-        preset['start_frame'] = 1
-        preset['end_frame'] = 25
+        preset['start_frame'] = start
+        preset['end_frame'] = end
         preset['camera_options'] = {
             "displayGateMask": False,
             "displayResolution": False,
@@ -143,21 +97,19 @@ class ExtractQuicktime(pype.api.Extractor):
         self.log.info("file list  {}".format(playblast))
         # self.log.info("Calculating HUD data overlay")
 
-        # stagingdir = "C:/Users/milan.kolar/AppData/Local/Temp/pyblish_tmp_ucsymm"
         collected_frames = os.listdir(stagingdir)
         collections, remainder = clique.assemble(collected_frames)
-        input_path = os.path.join(stagingdir, collections[0].format('{head}{padding}{tail}'))
+        input_path = os.path.join(
+            stagingdir, collections[0].format('{head}{padding}{tail}'))
         self.log.info("input {}".format(input_path))
 
         movieFile = filename + ".mov"
         full_movie_path = os.path.join(stagingdir, movieFile)
         self.log.info("output {}".format(full_movie_path))
-        # fls = [os.path.join(stagingdir, filename).replace("\\","/") for f in os.listdir( dir_path ) if f.endswith(preset['compression'])]
-        # self.log.info("file list  {}}".format(fls[0]))
 
         out, err = (
             ffmpeg
-            .input(input_path, framerate=25)
+            .input(input_path, framerate=fps)
             .output(full_movie_path)
             .run(overwrite_output=True)
         )
@@ -165,27 +117,6 @@ class ExtractQuicktime(pype.api.Extractor):
         if "files" not in instance.data:
             instance.data["files"] = list()
         instance.data["files"].append(movieFile)
-
-        # ftrackStrings = fStrings.annotationData()
-        # nData = ftrackStrings.niceData
-        # nData['version'] = instance.context.data('version')
-        # fFrame = int(pm.playbackOptions( q = True,  minTime = True))
-        # eFrame = int(pm.playbackOptions( q = True,  maxTime = True))
-        # nData['frame'] = [(str("{0:05d}".format(f))) for f in range(fFrame, eFrame + 1)]
-        # soundOfst = int(float(nData['oFStart'])) - int(float(nData['handle'])) - fFrame
-        # soundFile = mu.giveMePublishedAudio()
-        # self.log.info("SOUND offset  %s" % str(soundOfst))
-        # self.log.info("SOUND source video to %s" % str(soundFile))
-        # ann = dHUD.draftAnnotate()
-        # if soundFile:
-        #     ann.addAnotation(seqFls = fls, outputMoviePth = movieFullPth, annotateDataArr = nData, soundFile = soundFile, soundOffset = soundOfst)
-        # else:
-        #     ann.addAnotation(seqFls = fls, outputMoviePth = movieFullPth, annotateDataArr = nData)
-
-        # for f in fls:
-        #     os.remove(f)
-
-        # playblast = (ann.expPth).replace("\\","/")
 
 
 @contextlib.contextmanager
