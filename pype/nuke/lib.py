@@ -68,7 +68,7 @@ def format_anatomy(data):
     padding = anatomy.render.padding
 
     data.update({
-        "hierarchy": pype.get_hiearchy(),
+        "hierarchy": pype.get_hierarchy(),
         "frame": "#"*padding,
         "VERSION": pype.get_version_from_path(file)
     })

@@ -1,5 +1,6 @@
 import os
 import json
+import pprint
 import re
 
 from avalon import api, io
@@ -11,7 +12,7 @@ import pyblish.api
 def _get_script():
     """Get path to the image sequence script"""
     try:
-        from pype.fusion.scripts import publish_filesequence
+        from pype.scripts import publish_filesequence
     except Exception as e:
         raise RuntimeError("Expected module 'publish_imagesequence'"
                            "to be available")
@@ -156,15 +157,18 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             subset=subset
         )
 
-        # Add in start/end frame
+        # Get start/end frame from instance, if not available get from context
         context = instance.context
-        start = instance.data.get("startFrame", context.data["startFrame"])
-        end = instance.data.get("endFrame", context.data["endFrame"])
-        resources = []
+        start = instance.data.get("startFrame")
+        if start is None:
+            start = context.data["startFrame"]
+        end = instance.data.get("endFrame")
+        if end is None:
+            end = context.data["endFrame"]
 
         # Add in regex for sequence filename
         # This assumes the output files start with subset name and ends with
-        # a file extension.
+        # a file extension. The "ext" key includes the dot with the extension.
         if "ext" in instance.data:
             ext = re.escape(instance.data["ext"])
         else:

@@ -13,9 +13,12 @@ class CleanUp(pyblish.api.InstancePlugin):
 
     order = pyblish.api.IntegratorOrder + 10
     label = "Clean Up"
+    exclude_families = ["clip"]
 
     def process(self, instance):
-
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
         import tempfile
 
         staging_dir = instance.data.get("stagingDir", None)

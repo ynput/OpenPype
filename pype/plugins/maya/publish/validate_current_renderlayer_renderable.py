@@ -1,6 +1,7 @@
 import pyblish.api
 
 from maya import cmds
+from pype.plugin import contextplugin_should_run
 
 
 class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin):
@@ -20,7 +21,12 @@ class ValidateCurrentRenderLayerIsRenderable(pyblish.api.ContextPlugin):
     hosts = ["maya"]
     families = ["renderlayer"]
 
-    def process(self, instance):
+    def process(self, context):
+
+        # Workaround bug pyblish-base#250
+        if not contextplugin_should_run(self, context):
+            return
+
         layer = cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
         cameras = cmds.ls(type="camera", long=True)
         renderable = any(c for c in cameras if cmds.getAttr(c + ".renderable"))

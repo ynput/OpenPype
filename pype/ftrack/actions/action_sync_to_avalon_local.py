@@ -3,11 +3,9 @@ import sys
 import argparse
 import logging
 import json
-import importlib
 
 import ftrack_api
-from ftrack_action_handler import BaseAction
-from pype.ftrack import ftrack_utils
+from pype.ftrack import BaseAction, lib as ftracklib
 
 
 class SyncToAvalon(BaseAction):
@@ -56,11 +54,12 @@ class SyncToAvalon(BaseAction):
         'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
         '699650-icon-92-inbox-download-512.png'
     )
+    #: Action priority
+    priority = 200
 
     def __init__(self, session):
         super(SyncToAvalon, self).__init__(session)
         # reload utils on initialize (in case of server restart)
-        importlib.reload(ftrack_utils)
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -118,12 +117,12 @@ class SyncToAvalon(BaseAction):
             all_names = []
             duplicates = []
 
-            for e in self.importable:
-                ftrack_utils.avalon_check_name(e)
-                if e['name'] in all_names:
+            for entity in self.importable:
+                ftracklib.avalon_check_name(entity)
+                if entity['name'] in all_names:
                     duplicates.append("'{}'".format(e['name']))
                 else:
-                    all_names.append(e['name'])
+                    all_names.append(entity['name'])
 
             if len(duplicates) > 0:
                 raise ValueError(
@@ -133,12 +132,12 @@ class SyncToAvalon(BaseAction):
             # ----- PROJECT ------
             # store Ftrack project- self.importable[0] must be project entity!!
             ft_project = self.importable[0]
-            avalon_project = ftrack_utils.get_avalon_project(ft_project)
-            custom_attributes = ftrack_utils.get_avalon_attr(session)
+            avalon_project = ftracklib.get_avalon_project(ft_project)
+            custom_attributes = ftracklib.get_avalon_attr(session)
 
             # Import all entities to Avalon DB
             for entity in self.importable:
-                result = ftrack_utils.import_to_avalon(
+                result = ftracklib.import_to_avalon(
                     session=session,
                     entity=entity,
                     ft_project=ft_project,
@@ -177,18 +176,15 @@ class SyncToAvalon(BaseAction):
                         avalon_project = result['project']
 
             job['status'] = 'done'
-            session.commit()
             self.log.info('Synchronization to Avalon was successfull!')
 
         except ValueError as ve:
             job['status'] = 'failed'
-            session.commit()
             message = str(ve)
             self.log.error('Error during syncToAvalon: {}'.format(message))
 
         except Exception as e:
             job['status'] = 'failed'
-            session.commit()
             exc_type, exc_obj, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             log_message = "{}/{}/Line: {}".format(
@@ -201,6 +197,10 @@ class SyncToAvalon(BaseAction):
                 'Unexpected Error'
                 ' - Please check Log for more information'
             )
+        finally:
+            if job['status'] in ['queued', 'running']:
+                job['status'] = 'failed'
+            session.commit()
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)
@@ -235,7 +235,7 @@ def register(session, **kw):
         return
 
     action_handler = SyncToAvalon(session)
-    action_handler.register(200)
+    action_handler.register()
 
 
 def main(arguments=None):

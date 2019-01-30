@@ -1,10 +1,13 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib import parse
+import os
 import webbrowser
 import functools
+import pype
+import inspect
 from app.vendor.Qt import QtCore
 
-# class LoginServerHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+
 class LoginServerHandler(BaseHTTPRequestHandler):
     '''Login server handler.'''
 
@@ -25,51 +28,27 @@ class LoginServerHandler(BaseHTTPRequestHandler):
             login_credentials = parse.parse_qs(query)
             api_user = login_credentials['api_user'][0]
             api_key = login_credentials['api_key'][0]
-            message = """
-                <html>
-                    <style type="text/css">
-
-                        body {{
-                            background-color: #333;
-                            text-align: center;
-                            color: #ccc;
-                            margin-top: 200px;
-                        }}
-
-                        h1 {{
-                            font-family: "DejaVu Sans";
-                            font-size: 36px;
-                            margin: 20px 0;
-                        }}
-
-                        h3 {{
-                            font-weight: normal;
-                            font-family: "DejaVu Sans";
-                            margin: 30px 10px;
-                        }}
-
-                        em {{
-                            color: #fff;
-                        }}
-                    </style>
-                    <body>
-                        <h1>Sign in to Ftrack was successful</h1>
-                        <h3>
-                            You signed in with username <em>{0}</em>.
-                        </h3>
-                        <h3>
-                            You can close this window now.
-                        </h3>
-                    </body>
-                </html>
-            """.format(api_user)
+            # get path to resources
+            path_items = os.path.dirname(
+                inspect.getfile(pype)
+            ).split(os.path.sep)
+            del path_items[-1]
+            path_items.extend(['res', 'ftrack', 'sign_in_message.html'])
+            message_filepath = os.path.sep.join(path_items)
+            message_file = open(message_filepath, 'r')
+            sign_in_message = message_file.read()
+            message_file.close()
+            # formatting html code for python
+            replacement = [('{', '{{'), ('}', '}}'), ('{{}}', '{}')]
+            for r in (replacement):
+                sign_in_message = sign_in_message.replace(*r)
+            message = sign_in_message.format(api_user)
         else:
             message = '<h1>Failed to sign in</h1>'
 
         self.send_response(200)
         self.end_headers()
         self.wfile.write(message.encode())
-
 
         if login_credentials:
             self.login_callback(
@@ -83,7 +62,6 @@ class LoginServerThread(QtCore.QThread):
 
     # Login signal.
     loginSignal = QtCore.Signal(object, object, object)
-
 
     def start(self, url):
         '''Start thread.'''
@@ -103,8 +81,11 @@ class LoginServerThread(QtCore.QThread):
                 LoginServerHandler, self._handle_login
             )
         )
+        unformated_url = (
+            '{0}/user/api_credentials?''redirect_url=http://localhost:{1}'
+        )
         webbrowser.open_new_tab(
-            '{0}/user/api_credentials?redirect_url=http://localhost:{1}'.format(
+            unformated_url.format(
                 self.url, self._server.server_port
             )
         )
