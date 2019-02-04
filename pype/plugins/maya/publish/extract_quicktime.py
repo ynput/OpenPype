@@ -107,12 +107,19 @@ class ExtractQuicktime(pype.api.Extractor):
         full_movie_path = os.path.join(stagingdir, movieFile)
         self.log.info("output {}".format(full_movie_path))
 
-        out, err = (
-            ffmpeg
-            .input(input_path, framerate=fps)
-            .output(full_movie_path)
-            .run(overwrite_output=True)
-        )
+        try:
+            (
+                ffmpeg
+                .input(input_path, framerate=fps, start_number=int(start))
+                .output(full_movie_path)
+                .run(overwrite_output=True,
+                     capture_stdout=True,
+                     capture_stderr=True)
+            )
+        except ffmpeg.Error as e:
+            ffmpeg_error = 'ffmpeg error: {}'.format(e.stderr.decode())
+            self.log.error(ffmpeg_error)
+            raise Exception(ffmpeg_error)
 
         if "files" not in instance.data:
             instance.data["files"] = list()
