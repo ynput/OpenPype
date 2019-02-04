@@ -87,6 +87,4 @@ class RepairContextAction(pyblish.api.Action):
         # Apply pyblish.logic to get the instances for the plug-in
         if plugin in errored_plugins:
             self.log.info("Attempting fix ...")
-            plugin.repair()
-
-
+            plugin.repair(context)

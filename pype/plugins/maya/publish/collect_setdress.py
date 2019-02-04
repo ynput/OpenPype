@@ -23,7 +23,7 @@ class CollectSetDress(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.2
+    order = pyblish.api.CollectorOrder + 0.49
     label = "Set Dress"
     families = ["setdress"]
 
@@ -31,7 +31,6 @@ class CollectSetDress(pyblish.api.InstancePlugin):
 
         # Find containers
         containers = avalon.ls()
-
 
         # Get all content from the instance
         instance_lookup = set(cmds.ls(instance, type="transform", long=True))
@@ -41,7 +40,6 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         for container in containers:
 
             root = lib.get_container_transforms(container, root=True)
-            self.log.debug(root)
             if not root or root not in instance_lookup:
                 continue
 

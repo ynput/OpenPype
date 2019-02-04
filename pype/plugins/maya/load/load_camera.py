@@ -2,7 +2,7 @@ import pype.maya.plugin
 
 
 class CameraLoader(pype.maya.plugin.ReferenceLoader):
-    """Specific loader of Alembic for the studio.camera family"""
+    """Specific loader of Alembic for the pype.camera family"""
 
     families = ["camera"]
     label = "Reference camera"

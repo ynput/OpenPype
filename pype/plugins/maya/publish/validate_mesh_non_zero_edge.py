@@ -17,7 +17,7 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateMeshOrder
-    families = ["model"]
+    families = ['model']
     hosts = ['maya']
     category = 'geometry'
     version = (0, 1, 0)

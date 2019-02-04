@@ -67,7 +67,7 @@ class ExtractCameraAlembic(pype.api.Extractor):
             job_str += ' -file "{0}"'.format(path)
 
             with lib.evaluation("off"):
-                with lib.no_refresh():
+                with avalon.maya.suspended_refresh():
                     cmds.AbcExport(j=job_str, verbose=False)
 
         if "files" not in instance.data:

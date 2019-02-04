@@ -6,11 +6,11 @@ import pype.api
 
 
 class ValidateLookSets(pyblish.api.InstancePlugin):
-    """Validate if any sets are missing from the instance and look data
+    """Validate if any sets relationships are not being collected.
 
     A shader can be assigned to a node that is missing a Colorbleed ID.
     Because it is missing the ID it has not been collected in the instance.
-    This validator ensures no relationships and thus considers it invalid
+    This validator ensures those relationships and thus considers it invalid
     if a relationship was not collected.
 
     When the relationship needs to be maintained the artist might need to
@@ -25,8 +25,10 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
 
     - Displacement objectSets (like V-Ray):
 
-        It is best practice to add the transform group of the shape to the
-        displacement objectSet.
+        It is best practice to add the transform of the shape to the
+        displacement objectSet. Any parent groups will not work as groups
+        do not receive a Colorbleed Id. As such the assignments need to be
+        made to the shapes and their transform.
 
         Example content:
             [asset_GRP|geometry_GRP|body_GES,
@@ -37,7 +39,7 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["look"]
+    families = ['look']
     hosts = ['maya']
     label = 'Look Sets'
     actions = [pype.maya.action.SelectInvalidAction]

@@ -1,4 +1,3 @@
-import sys
 import os
 import json
 import threading
@@ -6,6 +5,7 @@ import time
 import ftrack_api
 from app import style
 from app.vendor.Qt import QtCore, QtGui, QtWidgets
+
 from pype.ftrack import credentials, login_dialog as login_dialog
 
 from pype.vendor.pynput import mouse, keyboard
@@ -21,7 +21,6 @@ log = pype.Logger.getLogger(__name__, "ftrack")
 
 
 class FtrackRunner:
-
     def __init__(self, main_parent=None, parent=None):
 
         self.parent = parent
@@ -86,7 +85,9 @@ class FtrackRunner:
     # Actions part
     def start_action_server(self):
         if self.thread_action_server is None:
-            self.thread_action_server = threading.Thread(target=self.set_action_server)
+            self.thread_action_server = threading.Thread(
+                target=self.set_action_server
+            )
             self.thread_action_server.daemon = True
             self.thread_action_server.start()
 
@@ -95,7 +96,14 @@ class FtrackRunner:
         self.set_menu_visibility()
 
     def set_action_server(self):
-        self.action_server.run_server()
+        try:
+            self.action_server.run_server()
+        except Exception:
+            msg = 'Ftrack Action server crashed! Please try to start again.'
+            log.error(msg)
+            # TODO show message to user
+            self.bool_action_server = False
+            self.set_menu_visibility()
 
     def reset_action_server(self):
         self.stop_action_server()
@@ -123,11 +131,19 @@ class FtrackRunner:
 
         # Actions - server
         self.smActionS = self.menu.addMenu("Action server")
-        self.aRunActionS = QtWidgets.QAction("Run action server", self.smActionS)
+
+        self.aRunActionS = QtWidgets.QAction(
+            "Run action server", self.smActionS
+        )
+        self.aResetActionS = QtWidgets.QAction(
+            "Reset action server", self.smActionS
+        )
+        self.aStopActionS = QtWidgets.QAction(
+            "Stop action server", self.smActionS
+        )
+
         self.aRunActionS.triggered.connect(self.start_action_server)
-        self.aResetActionS = QtWidgets.QAction("Reset action server", self.smActionS)
         self.aResetActionS.triggered.connect(self.reset_action_server)
-        self.aStopActionS = QtWidgets.QAction("Stop action server", self.smActionS)
         self.aStopActionS.triggered.connect(self.stop_action_server)
 
         self.smActionS.addAction(self.aRunActionS)
@@ -168,12 +184,19 @@ class FtrackRunner:
             self.start_timer_thread()
 
     def start_timer_thread(self):
-        if self.thread_timer is None:
-            self.thread_timer = FtrackEventsThread(self)
-            self.bool_timer_event = True
-            self.thread_timer.signal_timer_started.connect(self.timer_started)
-            self.thread_timer.signal_timer_stopped.connect(self.timer_stopped)
-            self.thread_timer.start()
+        try:
+            if self.thread_timer is None:
+                self.thread_timer = FtrackEventsThread(self)
+                self.bool_timer_event = True
+                self.thread_timer.signal_timer_started.connect(
+                    self.timer_started
+                )
+                self.thread_timer.signal_timer_stopped.connect(
+                    self.timer_stopped
+                )
+                self.thread_timer.start()
+        except Exception:
+            pass
 
     def stop_timer_thread(self):
         try:
@@ -188,9 +211,15 @@ class FtrackRunner:
     def start_countdown_thread(self):
         if self.thread_timer_coundown is None:
             self.thread_timer_coundown = CountdownThread(self)
-            self.thread_timer_coundown.signal_show_question.connect(self.show_widget_timer)
-            self.thread_timer_coundown.signal_send_time.connect(self.change_count_widget)
-            self.thread_timer_coundown.signal_stop_timer.connect(self.timer_stop)
+            self.thread_timer_coundown.signal_show_question.connect(
+                self.show_widget_timer
+            )
+            self.thread_timer_coundown.signal_send_time.connect(
+                self.change_count_widget
+            )
+            self.thread_timer_coundown.signal_stop_timer.connect(
+                self.timer_stop
+            )
             self.thread_timer_coundown.start()
 
     def stop_countdown_thread(self):
@@ -255,7 +284,9 @@ class FtrackEventsThread(QtCore.QThread):
     def run(self):
         self.timer_session = ftrack_api.Session(auto_connect_event_hub=True)
         self.timer_session.event_hub.subscribe(
-            'topic=ftrack.update and source.user.username={}'.format(self.username),
+            'topic=ftrack.update and source.user.username={}'.format(
+                self.username
+            ),
             self.event_handler)
 
         user_query = 'User where username is "{}"'.format(self.username)
@@ -273,7 +304,7 @@ class FtrackEventsThread(QtCore.QThread):
         try:
             if event['data']['entities'][0]['objectTypeId'] != 'timer':
                 return
-        except:
+        except Exception:
             return
 
         new = event['data']['entities'][0]['changes']['start']['new']
@@ -301,12 +332,6 @@ class FtrackEventsThread(QtCore.QThread):
 
     def ftrack_restart_timer(self):
         try:
-            last_task = None
-            if "FTRACK_LAST_TASK_ID" in os.environ:
-                task_id = os.environ["FTRACK_LAST_TASK_ID"]
-                query = 'Task where id is {}'.format(task_id)
-                last_task = self.timer_session.query(query).one()
-
             if (self.last_task is not None) and (self.user is not None):
                 self.user.start_timer(self.last_task)
                 self.timer_session.commit()
@@ -386,7 +411,11 @@ class CountdownThread(QtCore.QThread):
                 json_dict = json.load(data_file)
                 data = json_dict['timer']
         except Exception as e:
-            msg = 'Loading "Ftrack Config file" Failed. Please check log for more information. Times are set to default.'
+            msg = (
+                'Loading "Ftrack Config file" Failed.'
+                ' Please check log for more information.'
+                ' Times are set to default.'
+            )
             log.warning("{} - {}".format(msg, str(e)))
 
         data = self.validate_timer_values(data)
@@ -463,7 +492,10 @@ class StopTimer(QtWidgets.QWidget):
         self.main_context = True
         self.parent = parent
         self.setWindowIcon(self.parent.parent.icon)
-        self.setWindowFlags(QtCore.Qt.WindowCloseButtonHint | QtCore.Qt.WindowMinimizeButtonHint)
+        self.setWindowFlags(
+            QtCore.Qt.WindowCloseButtonHint |
+            QtCore.Qt.WindowMinimizeButtonHint
+        )
 
         self._translate = QtCore.QCoreApplication.translate
 
@@ -485,15 +517,17 @@ class StopTimer(QtWidgets.QWidget):
 
     def _main(self):
         self.main = QtWidgets.QVBoxLayout()
-        self.main.setObjectName("main")
+        self.main.setObjectName('main')
 
         self.form = QtWidgets.QFormLayout()
         self.form.setContentsMargins(10, 15, 10, 5)
-        self.form.setObjectName("form")
+        self.form.setObjectName('form')
 
-        msg_info = "You didn't work for a long time."
-        msg_question = "Would you like to stop Ftrack timer?"
-        msg_stopped = "Your Ftrack timer was stopped. Do you want to start again?"
+        msg_info = 'You didn\'t work for a long time.'
+        msg_question = 'Would you like to stop Ftrack timer?'
+        msg_stopped = (
+            'Your Ftrack timer was stopped. Do you want to start again?'
+        )
 
         self.lbl_info = QtWidgets.QLabel(msg_info)
         self.lbl_info.setFont(self.font)

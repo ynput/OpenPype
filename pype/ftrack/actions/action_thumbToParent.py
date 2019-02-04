@@ -4,10 +4,10 @@
 import sys
 import argparse
 import logging
-import getpass
 import json
 import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.ftrack import BaseAction
+
 
 class ThumbToParent(BaseAction):
     '''Custom action.'''
@@ -17,8 +17,10 @@ class ThumbToParent(BaseAction):
     # Action label
     label = 'Thumbnail to Parent'
     # Action icon
-    icon = "https://cdn3.iconfinder.com/data/icons/transfers/100/239419-upload_transfer-512.png"
-
+    icon = (
+        "https://cdn3.iconfinder.com/data/icons/transfers/100/"
+        "239419-upload_transfer-512.png"
+    )
 
     def discover(self, session, entities, event):
         '''Return action config if triggered on asset versions.'''
@@ -27,7 +29,6 @@ class ThumbToParent(BaseAction):
             return False
 
         return True
-
 
     def launch(self, session, entities, event):
         '''Callback method for action.'''
@@ -50,14 +51,19 @@ class ThumbToParent(BaseAction):
                 if entity.entity_type.lower() == 'assetversion':
                     try:
                         parent = entity['task']
-                    except:
+                    except Exception:
                         par_ent = entity['link'][-2]
                         parent = session.get(par_ent['type'], par_ent['id'])
                 else:
                     try:
                         parent = entity['parent']
-                    except:
-                        self.log.error("Durin Action 'Thumb to Parent' went something wrong")
+                    except Exception as e:
+                        msg = (
+                            "Durin Action 'Thumb to Parent'"
+                            " went something wrong"
+                        )
+                        self.log.error(msg)
+                        raise e
                 thumbid = entity['thumbnail_id']
 
                 if parent and thumbid:
@@ -69,10 +75,10 @@ class ThumbToParent(BaseAction):
             # inform the user that the job is done
             job['status'] = status or 'done'
 
-        except:
+        except Exception as e:
             # fail the job if something goes wrong
             job['status'] = 'failed'
-            raise
+            raise e
 
         finally:
             session.commit()
@@ -90,6 +96,7 @@ def register(session, **kw):
 
     action_handler = ThumbToParent(session)
     action_handler.register()
+
 
 def main(arguments=None):
     '''Set up logging and register action.'''

@@ -2,7 +2,7 @@ import pype.maya.plugin
 
 
 class AbcLoader(pype.maya.plugin.ReferenceLoader):
-    """Specific loader of Alembic for the studio.animation family"""
+    """Specific loader of Alembic for the pype.animation family"""
 
     families = ["animation",
                 "pointcache"]

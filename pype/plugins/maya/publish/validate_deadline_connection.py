@@ -1,8 +1,7 @@
 import pyblish.api
-import os
 
-import avalon.api as api
 from avalon.vendor import requests
+from pype.plugin import contextplugin_should_run
 
 
 class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
@@ -13,15 +12,20 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
     hosts = ["maya"]
     families = ["renderlayer"]
 
-    def process(self, instance):
+    def process(self, context):
 
-        deadline_url = os.environ.get('DEADLINE_REST_URL', None)
-        if deadline_url is None:
+        # Workaround bug pyblish-base#250
+        if not contextplugin_should_run(self, context):
+            return
+
+        try:
+            deadline_url = os.environ["DEADLINE_REST_URL"]
+        except KeyError:
             self.log.error("Deadline REST API url not found.")
             raise ValueError("Deadline REST API url not found.")
 
         # Check response
-        response = requests.get(deadline_url)
+        response = requests.get(AVALON_DEADLINE)
         assert response.ok, "Response must be ok"
         assert response.text.startswith("Deadline Web Service "), (
             "Web service did not respond with 'Deadline Web Service'"

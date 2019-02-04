@@ -2,16 +2,22 @@ import os
 import sys
 import re
 import ftrack_api
-from ftrack_event_handler import BaseEvent
+from pype.ftrack import BaseEvent
 from app import api
 
+
+ignore_me = True
+
+
 class Test_Event(BaseEvent):
+
+    priority = 10000
 
     def launch(self, session, entities, event):
 
         '''just a testing event'''
 
-        # self.log.info(event)
+        self.log.info(event)
 
         return True
 
