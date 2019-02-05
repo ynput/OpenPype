@@ -53,7 +53,7 @@ def import_to_avalon(
     if entity_type in ['Project']:
         type = 'project'
 
-        config = get_config_from_ftproject(entity)
+        config = get_project_config(entity)
         schema.validate(config)
 
         av_project_code = None
@@ -440,40 +440,14 @@ def get_avalon_project(ft_project):
     return avalon_project
 
 
-def get_config_from_ftproject(entity=None):
+def get_project_config(entity):
     config = {}
     config['schema'] = pypelib.get_avalon_project_config_schema()
+    config['tasks'] = [{'name': ''}]
+    config['apps'] = get_project_apps(entity)
     config['template'] = pypelib.get_avalon_project_template()
 
-    apps = []
-    tasks = [{'name': ''}]
-    if entity is not None:
-        apps = get_project_apps(entity)
-
-        tasks = []
-        if entity.entity_type.lower() != 'project':
-            project = entity['project']
-        else:
-            project = entity
-        for task_type in get_all_task_types_ftproj(project):
-            tasks.append({'name': task_type})
-
-    config['apps'] = apps
-    config['tasks'] = tasks
-
     return config
-
-
-def get_all_task_types_ftproj(project):
-    tasks = {}
-    proj_template = project['project_schema']
-    temp_task_types = proj_template['_task_type_schema']['types']
-
-    for type in temp_task_types:
-        if type['name'] not in tasks:
-            tasks[type['name']] = type
-
-    return tasks
 
 
 def get_project_apps(entity):
@@ -548,18 +522,3 @@ def get_config_data():
         log.warning("{} - {}".format(msg, str(e)))
 
     return data
-
-
-def get_all_object_type_array(self, session):
-    # basic excluded types
-    excludes = ['bug', 'epic', 'feature', 'information']
-    # TODO read from presets which also will be excluded
-    all_obj_types = set()
-    for obj in session.query('ObjectType').all():
-        name = obj['name']
-        if ' ' in name:
-            name = name.replace(' ', '')
-        if name.lower() in excludes:
-            continue
-        all_obj_types.add(name)
-    return list(all_obj_types)
