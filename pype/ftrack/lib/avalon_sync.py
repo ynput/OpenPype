@@ -548,3 +548,18 @@ def get_config_data():
         log.warning("{} - {}".format(msg, str(e)))
 
     return data
+
+
+def get_all_object_type_array(self, session):
+    # basic excluded types
+    excludes = ['bug', 'epic', 'feature', 'information']
+    # TODO read from presets which also will be excluded
+    all_obj_types = set()
+    for obj in session.query('ObjectType').all():
+        name = obj['name']
+        if ' ' in name:
+            name = name.replace(' ', '')
+        if name.lower() in excludes:
+            continue
+        all_obj_types.add(name)
+    return list(all_obj_types)
