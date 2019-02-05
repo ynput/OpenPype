@@ -1,4 +1,5 @@
 import os
+import subprocess
 import contextlib
 
 import capture_gui
@@ -6,6 +7,7 @@ import clique
 
 import pype.maya.lib as lib
 import pype.api
+import avalon.maya
 
 from maya import cmds, mel
 import pymel.core as pm
@@ -106,20 +108,20 @@ class ExtractQuicktime(pype.api.Extractor):
         movieFile = filename + ".mov"
         full_movie_path = os.path.join(stagingdir, movieFile)
         self.log.info("output {}".format(full_movie_path))
-
-        try:
-            (
-                ffmpeg
-                .input(input_path, framerate=fps, start_number=int(start))
-                .output(full_movie_path)
-                .run(overwrite_output=True,
-                     capture_stdout=True,
-                     capture_stderr=True)
-            )
-        except ffmpeg.Error as e:
-            ffmpeg_error = 'ffmpeg error: {}'.format(e.stderr.decode())
-            self.log.error(ffmpeg_error)
-            raise Exception(ffmpeg_error)
+        with avalon.maya.suspended_refresh():
+            try:
+                (
+                    ffmpeg
+                    .input(input_path, framerate=fps, start_number=int(start))
+                    .output(full_movie_path)
+                    .run(overwrite_output=True,
+                         capture_stdout=True,
+                         capture_stderr=True)
+                )
+            except ffmpeg.Error as e:
+                ffmpeg_error = 'ffmpeg error: {}'.format(e.stderr)
+                self.log.error(ffmpeg_error)
+                raise RuntimeError(ffmpeg_error)
 
         if "files" not in instance.data:
             instance.data["files"] = list()
