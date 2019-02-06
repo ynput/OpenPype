@@ -25,17 +25,23 @@ class ValidateWriteFamilies(pyblish.api.InstancePlugin):
     families = ["write"]
     actions = [pype.nuke.actions.SelectInvalidAction, pype.api.RepairAction]
 
-    # @staticmethod
-    # def get_invalid(instance):
-    #     for f in instance.data["families"]:
-    #         if ".frames" in f:
-    #             return
-    #
-    #     if not instance.data["files"]:
-    #         return (instance)
+    @staticmethod
+    def get_invalid(self, instance):
+        if not [f for f in instance.data["families"]
+                if ".frames" in f]:
+            return
+
+        if not instance.data.get('files'):
+            return (instance)
 
     def process(self, instance):
         self.log.debug('instance.data["files"]: {}'.format(instance.data['files']))
+
+        invalid = self.get_invalid(self, instance)
+
+        if invalid:
+            raise ValueError(str("`{}`: Switch `Render` on! "
+                                 "> {}".format(__name__, invalid)))
 
         # if any(".frames"  in f for f in instance.data["families"]):
         #     if not instance.data["files"]:

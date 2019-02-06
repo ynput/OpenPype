@@ -25,6 +25,7 @@ class ExtractJSON(pyblish.api.ContextPlugin):
 
         output_data = []
         for instance in context:
+            self.log.debug(instance['data'])
 
             data = {}
             for key, value in instance.data.iteritems():

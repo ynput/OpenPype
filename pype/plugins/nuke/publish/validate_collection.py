@@ -30,9 +30,11 @@ class ValidatePrerenderedFrames(pyblish.api.InstancePlugin):
     hosts = ["nuke"]
     actions = [RepairCollectionAction]
 
+
     def process(self, instance):
         self.log.debug('instance.data["files"]: {}'.format(instance.data['files']))
-        assert instance.data["files"], "No frames have been collected"
+
+        assert instance.data.get('files'), "no frames were collected, you need to render them"
 
         collections, remainder = clique.assemble(*instance.data['files'])
         self.log.info('collections: {}'.format(str(collections)))

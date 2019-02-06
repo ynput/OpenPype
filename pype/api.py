@@ -33,7 +33,7 @@ from .templates import (
     get_asset,
     get_task,
     set_avalon_workdir,
-    get_version_from_workfile,
+    get_version_from_path,
     get_workdir_template,
     set_hierarchy,
     set_project_code
@@ -77,7 +77,7 @@ __all__ = [
     "get_asset",
     "get_task",
     "set_avalon_workdir",
-    "get_version_from_workfile",
+    "get_version_from_path",
     "get_workdir_template",
     "modified_environ",
     "add_tool_to_environment",

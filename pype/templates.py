@@ -58,7 +58,7 @@ def reset_data_from_templates():
     log.info("Data from templates were Unloaded...")
 
 
-def get_version_from_workfile(file):
+def get_version_from_path(file):
     """
     Finds version number in file path string
 

@@ -35,14 +35,14 @@ def writes_version_sync():
     for each in nuke.allNodes():
         if each.Class() == 'Write':
             avalon_knob_data = get_avalon_knob_data(each)
-            # if avalon_knob_data['families'] not in ["render"]:
-            #     log.info(avalon_knob_data['families'])
-            #     continue
+            if avalon_knob_data['families'] not in ["render"]:
+                log.info(avalon_knob_data['families'])
+                continue
             try:
                 node_file = each['file'].value()
                 log.info("node_file: {}".format(node_file))
 
-                node_version = pype.get_version_from_path(node_file, None)
+                node_version = pype.get_version_from_path(node_file)
                 log.info("node_version: {}".format(node_version))
 
                 node_new_file = node_file.replace(node_version, new_version)

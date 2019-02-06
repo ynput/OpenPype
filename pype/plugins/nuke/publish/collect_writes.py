@@ -3,6 +3,7 @@ import tempfile
 import nuke
 import pyblish.api
 import logging
+import pype.api as pype
 
 
 log = logging.getLogger(__name__)
@@ -49,6 +50,11 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             path = nuke.filename(node)
             output_dir = os.path.dirname(path)
             self.log.debug('output dir: {}'.format(output_dir))
+
+            # get version
+            version = pype.get_version_from_path(path)
+            instance.data['version'] = version
+            self.log.debug('Write Version: %s' % instance.data('version'))
 
             # create label
             name = node.name()

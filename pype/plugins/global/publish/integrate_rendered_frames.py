@@ -117,6 +117,9 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                                  "('v{1:03d}')".format(assumed_version,
                                                        next_version))
 
+        if instance.data.get('version'):
+            next_version = int(instance.data.get('version'))
+
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
         version_data = self.create_version_data(context, instance)
@@ -261,7 +264,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                     "asset": ASSET,
                     "family": instance.data['family'],
                     "subset": subset["name"],
-                    "VERSION": version["name"],
+                    "version": version["name"],
                     "hierarchy": hierarchy,
                     "representation": ext[1:]
                 }
