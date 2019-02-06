@@ -167,14 +167,16 @@ def get_hierarchy():
         string: asset hierarchy path
 
     """
-    hierarchy = io.find_one({
+    parents = io.find_one({
         "type": 'asset',
         "name": get_asset()}
     )['data']['parents']
 
-    if hierarchy:
+    hierarchy = ""
+    if parents and len(parents) > 0:
         # hierarchy = os.path.sep.join(hierarchy)
-        return os.path.join(*hierarchy).replace("\\", "/")
+        hierarchy = os.path.join(*parents).replace("\\", "/")
+    return hierarchy
 
 
 def set_hierarchy(hierarchy):
