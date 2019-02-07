@@ -2,43 +2,46 @@ import pyblish.api
 
 
 @pyblish.api.log
-class CollectInstanceFamilies(pyblish.api.ContextPlugin):
+class CollectInstanceFamilies(pyblish.api.InstancePlugin):
     """Collect families for all instances"""
 
     order = pyblish.api.CollectorOrder + 0.2
     label = "Collect Families"
     hosts = ["nuke", "nukeassist"]
+    families = ['write']
 
-    def process(self, context):
-        for instance in context.data["instances"]:
+    def process(self, instance):
 
-            if "write" in instance.data["family"]:
-                node = instance[0]
+        node = instance[0]
 
-                families = []
-                if instance.data.get('families'):
-                    families.append(instance.data['families'])
+        self.log.info('processing {}'.format(node))
 
-                # set for ftrack to accept
-                # instance.data["families"] = ["ftrack"]
+        families = []
+        if instance.data.get('families'):
+            families.append(instance.data['families'])
 
-                if node["render"].value():
-                    # dealing with local/farm rendering
-                    if node["render_farm"].value():
-                        families.append("render.farm")
-                    else:
-                        families.append("render.local")
-                else:
-                    families.append("render.frames")
-                    # to ignore staging dir op in integrate
-                    instance.data['transfer'] = False
+        # set for ftrack to accept
+        # instance.data["families"] = ["ftrack"]
+
+        if node["render"].value():
+            # dealing with local/farm rendering
+            if node["render_farm"].value():
+                families.append("render.farm")
+            else:
+                families.append("render.local")
+        else:
+            families.append("render.frames")
+            # to ignore staging dir op in integrate
+            instance.data['transfer'] = False
+
+        families.append('ftrack')
 
 
-                instance.data["families"] = families
+        instance.data["families"] = families
 
 
         # Sort/grouped by family (preserving local index)
-        context[:] = sorted(context, key=self.sort_by_family)
+        instance.context[:] = sorted(instance.context, key=self.sort_by_family)
 
     def sort_by_family(self, instance):
         """Sort by family"""

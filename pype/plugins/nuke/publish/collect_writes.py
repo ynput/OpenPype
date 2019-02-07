@@ -89,6 +89,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "colorspace": node["colorspace"].value(),
             })
 
+
             self.log.debug("instance.data: {}".format(instance.data))
 
         self.log.debug("context: {}".format(context))
