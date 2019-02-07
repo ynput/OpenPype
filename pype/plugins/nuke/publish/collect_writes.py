@@ -90,6 +90,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             })
 
 
+
             self.log.debug("instance.data: {}".format(instance.data))
 
         self.log.debug("context: {}".format(context))
