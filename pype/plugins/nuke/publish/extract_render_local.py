@@ -2,6 +2,7 @@ import pyblish.api
 import nuke
 import os
 import pype
+import clique
 
 
 class NukeRenderLocal(pype.api.Extractor):
@@ -65,6 +66,12 @@ class NukeRenderLocal(pype.api.Extractor):
             instance.name,
             output_dir
         ))
+
+        collections, remainder = clique.assemble(*instance.data['files'])
+        self.log.info('collections: {}'.format(str(collections)))
+
+        collection = collections[0]
+        instance.data['collection'] = collection
 
         self.log.info('Finished render')
         return
