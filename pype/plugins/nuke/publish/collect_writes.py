@@ -3,6 +3,7 @@ import tempfile
 import nuke
 import pyblish.api
 import logging
+import pype.api as pype
 
 
 log = logging.getLogger(__name__)
@@ -50,6 +51,11 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             output_dir = os.path.dirname(path)
             self.log.debug('output dir: {}'.format(output_dir))
 
+            # get version
+            version = pype.get_version_from_path(path)
+            instance.data['version'] = version
+            self.log.debug('Write Version: %s' % instance.data('version'))
+
             # create label
             name = node.name()
             # Include start and end render frame in label
@@ -64,14 +70,13 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             # collect families in next file
             if "files" not in instance.data:
                 instance.data["files"] = list()
-
             try:
                 collected_frames = os.listdir(output_dir)
                 self.log.debug("collected_frames: {}".format(label))
                 instance.data["files"].append(collected_frames)
 
             except Exception:
-                pass
+                self.log.debug("couldn't collect frames: {}".format(label))
 
             instance.data.update({
                 "path": path,
@@ -83,6 +88,8 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "outputType": output_type,
                 "colorspace": node["colorspace"].value(),
             })
+
+
 
             self.log.debug("instance.data: {}".format(instance.data))
 

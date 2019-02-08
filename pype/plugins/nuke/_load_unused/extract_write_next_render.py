@@ -13,6 +13,7 @@ class WriteToRender(pyblish.api.InstancePlugin):
     families = ["write"]
 
     def process(self, instance):
+        return
         if [f for f in instance.data["families"]
                 if ".frames" in f]:
             instance[0]["render"].setValue(True)

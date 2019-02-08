@@ -2,6 +2,7 @@ import os
 import nuke
 import pyblish.api
 import pype
+from pype.vendor import ffmpeg
 
 
 class ExtractDataForReview(pype.api.Extractor):
@@ -12,29 +13,21 @@ class ExtractDataForReview(pype.api.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder + 0.01
-    label = "Data for review"
+    label = "Extract Review"
     optional = True
 
-    families = ["write"]
+    families = ["render.review"]
     hosts = ["nuke"]
-    family_targets = [".local", ".review"]
 
     def process(self, instance):
 
-        families = [f for f in instance.data["families"]
-                    for search in self.family_targets
-                    if search in f]
-        if not families:
-            return
-        self.log.debug("here:")
         # Store selection
         selection = [i for i in nuke.allNodes() if i["selected"].getValue()]
-        self.log.debug("here:")
         # Deselect all nodes to prevent external connections
         [i["selected"].setValue(False) for i in nuke.allNodes()]
-        self.log.debug("here:")
         self.log.debug("creating staging dir:")
         self.staging_dir(instance)
+
         self.render_review_representation(instance,
                                           representation="mov")
         self.log.debug("review mov:")
@@ -52,34 +45,20 @@ class ExtractDataForReview(pype.api.Extractor):
         staging_dir = instance.data["stagingDir"]
         file_name = collection.format("{head}mov")
 
-        review_mov = os.path.join(staging_dir, file_name)
-
-        if instance.data.get("baked_colorspace_movie"):
-            args = [
-                "ffmpeg", "-y",
-                "-i", instance.data["baked_colorspace_movie"],
-                "-pix_fmt", "yuv420p",
-                "-crf", "18",
-                "-timecode", "00:00:00:01",
-            ]
-
-        args.append(review_mov)
-
-        self.log.debug("Executing args: {0}".format(args))
+        review_mov = os.path.join(staging_dir, file_name).replace("\\", "/")
 
         self.log.info("transcoding review mov: {0}".format(review_mov))
-        p = subprocess.Popen(
-            args,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            stdin=subprocess.PIPE,
-            cwd=os.path.dirname(args[-1])
-        )
+        if instance.data.get("baked_colorspace_movie"):
+            input_movie = instance.data["baked_colorspace_movie"]
+            out, err = (
+                ffmpeg
+                .input(input_movie)
+                .output(review_mov, pix_fmt='yuv420p', crf=18, timecode="00:00:00:01")
+                .overwrite_output()
+                .run()
+            )
 
-        output = p.communicate()[0]
 
-        if p.returncode != 0:
-            raise ValueError(output)
 
         self.log.debug("Removing `{0}`...".format(
             instance.data["baked_colorspace_movie"]))
@@ -100,18 +79,9 @@ class ExtractDataForReview(pype.api.Extractor):
 
         collection = instance.data.get("collection", None)
 
-        self.log.warning("instance.data['files']: {}".format(instance.data['files']))
-        if not collection:
-            collections, remainder = clique.assemble(*instance.data['files'])
-            collection = collections[0]
-            instance.data["collection"] = collection
-
         # Create nodes
         first_frame = min(collection.indexes)
         last_frame = max(collection.indexes)
-
-        self.log.warning("first_frame: {}".format(first_frame))
-        self.log.warning("last_frame: {}".format(last_frame))
 
         node = previous_node = nuke.createNode("Read")
 
@@ -158,6 +128,7 @@ class ExtractDataForReview(pype.api.Extractor):
         if representation in "mov":
             file = collection.format("{head}baked.mov")
             path = os.path.join(staging_dir, file).replace("\\", "/")
+            self.log.debug("Path: {}".format(path))
             instance.data["baked_colorspace_movie"] = path
             write_node["file"].setValue(path)
             write_node["file_type"].setValue("mov")
