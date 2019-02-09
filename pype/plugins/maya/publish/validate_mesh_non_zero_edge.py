@@ -23,6 +23,7 @@ class ValidateMeshNonZeroEdgeLength(pyblish.api.InstancePlugin):
     version = (0, 1, 0)
     label = 'Mesh Edge Length Non Zero'
     actions = [pype.maya.action.SelectInvalidAction]
+    optional = True
 
     __tolerance = 1e-5
 

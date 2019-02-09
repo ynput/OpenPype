@@ -37,8 +37,8 @@ class ExtractQuicktime(pype.api.Extractor):
 
         # if start and end frames cannot be determined, get them
         # from Maya timeline
-        start = instance.data.get("startFrame")
-        end = instance.data.get("endFrame")
+        start = instance.data.get("startFrameReview")
+        end = instance.data.get("endFrameReview")
         if start is None:
             start = cmds.playbackOptions(query=True, animationStartTime=True)
         if end is None:
