@@ -15,7 +15,7 @@ class CollectModelData(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.499
+    order = pyblish.api.CollectorOrder + 0.4
     label = 'Collect Model Data'
     families = ["model"]
 

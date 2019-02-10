@@ -4,6 +4,7 @@ import pymel.core as pm
 import pyblish.api
 import avalon.api
 
+
 class CollectReview(pyblish.api.InstancePlugin):
     """Collect Review data
 
@@ -40,6 +41,9 @@ class CollectReview(pyblish.api.InstancePlugin):
 
             i = 0
             for inst in instance.context:
+
+                self.log.debug('processing {}'.format(inst))
+                self.log.debug('processing2 {}'.format(instance.context[i]))
                 data = instance.context[i].data
 
                 if inst.name == reviewable_subset[0]:
@@ -56,9 +60,9 @@ class CollectReview(pyblish.api.InstancePlugin):
                     data['step'] = instance.data['step']
                     data['fps'] = instance.data['fps']
                     cmds.setAttr(str(instance) + '.active', 0)
-                    i += 1
                     instance.context[i].data.update(data)
                     instance.data['remove'] = True
+                i += 1
         else:
             instance.data['subset'] = task + 'Review'
             instance.data['review_camera'] = camera
