@@ -406,7 +406,9 @@ def get_data(entity, session, custom_attributes):
                 {'type': 'asset', 'name': parName}
             )['_id']
 
-    hierarchy = os.path.sep.join(folderStruct)
+    hierarchy = ""
+    if len(folderStruct) > 0:
+        hierarchy = os.path.sep.join(folderStruct)
 
     data['visualParent'] = parentId
     data['parents'] = folderStruct

@@ -180,13 +180,14 @@ class AppAction(BaseHandler):
         os.environ["AVALON_APP_NAME"] = self.identifier
 
         anatomy = pype.Anatomy
-        hierarchy = database[project_name].find_one({
+        hierarchy = ""
+        parents = database[project_name].find_one({
             "type": 'asset',
             "name": entity['parent']['name']
         })['data']['parents']
 
-        if hierarchy:
-            hierarchy = os.path.join(*hierarchy)
+        if parents:
+            hierarchy = os.path.join(*parents)
 
         data = {"project": {"name": entity['project']['full_name'],
                             "code": entity['project']['name']},
