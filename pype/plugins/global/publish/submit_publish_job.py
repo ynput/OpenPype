@@ -133,14 +133,14 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        # AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
-        #                                   "http://localhost:8082")
-        # assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+                                          "http://localhost:8082")
+        assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
 
-        try:
-            deadline_url = os.environ["DEADLINE_REST_URL"]
-        except KeyError:
-            self.log.error("Deadline REST API url not found.")
+        # try:
+        #     deadline_url = os.environ["DEADLINE_REST_URL"]
+        # except KeyError:
+        #     self.log.error("Deadline REST API url not found.")
 
         # Get a submission job
         job = instance.data.get("deadlineSubmissionJob")
