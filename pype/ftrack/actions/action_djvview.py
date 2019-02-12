@@ -1,23 +1,30 @@
+import os
+import sys
+import re
+import json
 import logging
 import subprocess
-import sys
-import os
-import re
 from operator import itemgetter
 import ftrack_api
 from pype.ftrack import BaseHandler
+from app.api import Logger
+from pype import lib
+
+log = Logger.getLogger(__name__)
 
 
 class DJVViewAction(BaseHandler):
     """Launch DJVView action."""
     identifier = "djvview-launch-action"
-    # label = "DJV View"
-    # icon = "http://a.fsdn.com/allura/p/djv/icon"
+    label = "DJV View"
+    icon = "http://a.fsdn.com/allura/p/djv/icon"
     type = 'Application'
 
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
         super().__init__(session)
+        self.variant = None
+        self.djv_path = None
 
         if self.identifier is None:
             raise ValueError(
@@ -44,23 +51,21 @@ class DJVViewAction(BaseHandler):
             return
 
         items = []
-        applications = self.get_applications()
-        applications = sorted(
-            applications, key=lambda application: application["label"]
-        )
+        application = self.get_application()
+        if application is None:
+            log.debug("DVJ View application was not found")
+            return
 
-        for application in applications:
-            self.djv_path = application.get("path", None)
-            applicationIdentifier = application["identifier"]
-            label = application["label"]
-            items.append({
-                "actionIdentifier": self.identifier,
-                "label": label,
-                "variant": application.get("variant", None),
-                "description": application.get("description", None),
-                "icon": application.get("icon", "default"),
-                "applicationIdentifier": applicationIdentifier
-            })
+        applicationIdentifier = application["identifier"]
+        label = application["label"]
+        items.append({
+            "actionIdentifier": self.identifier,
+            "label": label,
+            "variant": application.get("variant", None),
+            "description": application.get("description", None),
+            "icon": application.get("icon", "default"),
+            "applicationIdentifier": applicationIdentifier
+        })
 
         return {
             "items": items
@@ -86,88 +91,50 @@ class DJVViewAction(BaseHandler):
             self.launch
         )
 
-    def get_applications(self):
-        applications = []
+    def get_application(self):
 
-        label = "DJVView {version}"
-        versionExpression = re.compile(r"(?P<version>\d+.\d+.\d+)")
         applicationIdentifier = "djvview"
         description = "DJV View Launcher"
-        icon = "http://a.fsdn.com/allura/p/djv/icon"
-        expression = []
-        if sys.platform == "win32":
-            expression = ["C:\\", "Program Files", "djv-\d.+",
-                          "bin", "djv_view.exe"]
 
-        elif sys.platform == "darwin":
-            expression = ["Application", "DJV.app", "Contents", "MacOS", "DJV"]
-        # Linuxs
-        else:
-            expression = ["usr", "local", "djv", "djv_view"]
+        path_items = [lib.get_presets_path(), 'djv_view', 'app_paths.json']
+        filepath = os.path.sep.join(path_items)
 
-        pieces = expression[:]
-        start = pieces.pop(0)
-
-        if sys.platform == 'win32':
-            # On Windows C: means current directory so convert roots that look
-            # like drive letters to the C:\ format.
-            if start and start[-1] == ':':
-                start += '\\'
-
-        if not os.path.exists(start):
-            raise ValueError(
-                'First part "{0}" of expression "{1}" must match exactly to an'
-                ' existing entry on the filesystem.'
-                .format(start, expression)
+        data = dict()
+        try:
+            with open(filepath) as data_file:
+                data = json.load(data_file)
+        except Exception as e:
+            log.warning(
+                'Failed to load data from DJV presets file ({})'.format(e)
             )
+            return None
 
-        expressions = list(map(re.compile, pieces))
-        expressionsCount = len(expression)-1
+        possible_paths = data.get("djv_paths", [])
+        for path in possible_paths:
+            if os.path.exists(path):
+                self.djv_path = path
+                break
 
-        for location, folders, files in os.walk(
-            start, topdown=True, followlinks=True
-        ):
-            level = location.rstrip(os.path.sep).count(os.path.sep)
-            expression = expressions[level]
+        if self.djv_path is None:
+            log.warning('Any path from presets match your DJV View path')
+            return None
 
-            if level < (expressionsCount - 1):
-                # If not yet at final piece then just prune directories.
-                folders[:] = [folder for folder in folders
-                              if expression.match(folder)]
-            else:
-                # Match executable. Note that on OSX executable might equate to
-                # a folder (.app).
-                for entry in folders + files:
-                    match = expression.match(entry)
-                    if match:
-                        # Extract version from full matching path.
-                        path = os.path.join(start, location, entry)
-                        versionMatch = versionExpression.search(path)
-                        if versionMatch:
-                            version = versionMatch.group('version')
+        application = {
+            'identifier': applicationIdentifier,
+            'label': self.label,
+            'icon': self.icon,
+            'description': description
+        }
 
-                            applications.append({
-                                'identifier': applicationIdentifier.format(
-                                    version=version
-                                ),
-                                'path': path,
-                                'version': version,
-                                'label': label.format(version=version),
-                                'icon': icon,
-                                # 'variant': variant.format(version=version),
-                                'description': description
-                            })
-                        else:
-                            self.logger.debug(
-                                'Discovered application executable, but it '
-                                'does not appear to o contain required version'
-                                ' information: {0}'.format(path)
-                            )
+        versionExpression = re.compile(r"(?P<version>\d+.\d+.\d+)")
+        versionMatch = versionExpression.search(self.djv_path)
+        if versionMatch:
+            new_label = '{} {}'.format(
+                application['label'], versionMatch.group('version')
+            )
+            application['label'] = new_label
 
-                # Don't descend any further as out of patterns to match.
-                del folders[:]
-
-        return applications
+        return application
 
     def translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''
