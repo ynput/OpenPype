@@ -1,7 +1,10 @@
 import os
-
-import ftrack_api_old as ftrack_api
 import pyblish.api
+
+try:
+    import ftrack_api_old as ftrack_api
+except Exception:
+    import ftrack_api
 
 
 class CollectFtrackApi(pyblish.api.ContextPlugin):
