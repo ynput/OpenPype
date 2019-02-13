@@ -12,7 +12,7 @@ class AssetsRemover(BaseAction):
     #: Action identifier.
     identifier = 'remove.assets'
     #: Action label.
-    label = 'Assets remover'
+    label = 'Delete Assets by Name'
     #: Action description.
     description = 'Removes assets from Ftrack and Avalon db with all childs'
     #: Db
