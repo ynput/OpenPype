@@ -313,7 +313,8 @@ class AppAction(BaseHandler):
             next_status_name = None
             for key, value in statuses.items():
                 if actual_status in value or '_any_' in value:
-                    next_status_name = key
+                    if key != '_ignore_':
+                        next_status_name = key
                     break
 
             if next_status_name is not None:
