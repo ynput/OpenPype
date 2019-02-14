@@ -265,7 +265,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                     "asset": ASSET,
                     "family": instance.data['family'],
                     "subset": subset["name"],
-                    "version": version["name"],
+                    "VERSION": version["name"],
                     "hierarchy": hierarchy,
                     "representation": ext[1:]
                 }

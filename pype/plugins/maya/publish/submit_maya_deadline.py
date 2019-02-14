@@ -51,7 +51,7 @@ def get_renderer_variables(renderlayer=None):
         # returns an index number.
         filename_base = os.path.basename(filename_0)
         extension = os.path.splitext(filename_base)[-1].strip(".")
-        filename_prefix = "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
+        filename_prefix = "<Scene>/<RenderLayer>/<RenderLayer>"
 
     return {"ext": extension,
             "filename_prefix": filename_prefix,
@@ -78,7 +78,7 @@ def preview_fname(folder, scene, layer, padding, ext):
     """
 
     # Following hardcoded "<Scene>/<Scene>_<Layer>/<Layer>"
-    output = "{scene}/{scene}_{layer}/{layer}.{number}.{ext}".format(
+    output = "{scene}/{layer}/{layer}.{number}.{ext}".format(
         scene=scene,
         layer=layer,
         number="#" * padding,
@@ -97,9 +97,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     """
 
     label = "Submit to Deadline"
-    order = pyblish.api.IntegratorOrder
+    order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
     families = ["renderlayer"]
+    optional = True
 
     def process(self, instance):
 
@@ -109,7 +110,25 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         context = instance.context
         workspace = context.data["workspaceDir"]
-        filepath = context.data["currentFile"]
+
+        filepath = None
+
+        allInstances = []
+        for result in context.data["results"]:
+            if (result["instance"] is not None and
+               result["instance"] not in allInstances):
+                allInstances.append(result["instance"])
+
+        for inst in allInstances:
+            print(inst)
+            if inst.data['family'] == 'scene':
+                filepath = inst.data['destination_list'][0]
+
+        if not filepath:
+            filepath = context.data["currentFile"]
+
+        self.log.debug(filepath)
+
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
         scene = os.path.splitext(filename)[0]
@@ -203,22 +222,64 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             # have accesss to these paths, such as if slaves are
             # running Linux and the submitter is on Windows.
             "PYTHONPATH",
+            "PATH",
+
+            "MTOA_EXTENSIONS_PATH",
+            "MTOA_EXTENSIONS",
+            "DYLD_LIBRARY_PATH",
+            "MAYA_RENDER_DESC_PATH",
+            "MAYA_MODULE_PATH",
+            "ARNOLD_PLUGIN_PATH",
+            "AVALON_SCHEMA",
 
             # todo: This is a temporary fix for yeti variables
             "PEREGRINEL_LICENSE",
             "REDSHIFT_MAYAEXTENSIONSPATH",
-            "REDSHIFT_DISABLEOUTPUTLOCKFILES",
-            "VRAY_FOR_MAYA2018_PLUGINS",
-            "VRAY_PLUGINS",
+            "REDSHIFT_DISABLEOUTPUTLOCKFILES"
+            "VRAY_FOR_MAYA2018_PLUGINS_X64",
+            "VRAY_PLUGINS_X64",
             "VRAY_USE_THREAD_AFFINITY",
-            "MAYA_MODULE_PATH"
+            "MAYA_MODULE_PATH",
+            "TOOL_ENV"
         ]
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
+        self.log.debug("enviro: {}".format(pprint(environment)))
+        for path in os.environ:
+            if path.lower().startswith('pype_'):
+                environment[path] = os.environ[path]
 
-        PATHS = os.environ["PATH"].split(";")
-        environment["PATH"] = ";".join([p for p in PATHS
-                                        if p.startswith("P:")])
+        environment["PATH"] = os.environ["PATH"]
+        self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
+        clean_environment = {}
+        for key in environment:
+            clean_path = ""
+            self.log.debug("key: {}".format(key))
+            to_process = environment[key]
+            if key == "PYPE_STUDIO_CORE_MOUNT":
+                clean_path = environment[key]
+            elif "://" in environment[key]:
+                clean_path = environment[key]
+            elif os.pathsep not in to_process:
+                try:
+                    path = environment[key]
+                    path.decode('UTF-8', 'strict')
+                    clean_path = os.path.normpath(path)
+                except UnicodeDecodeError:
+                    print('path contains non UTF characters')
+            else:
+                for path in environment[key].split(os.pathsep):
+                    try:
+                        path.decode('UTF-8', 'strict')
+                        clean_path += os.path.normpath(path) + os.pathsep
+                    except UnicodeDecodeError:
+                        print('path contains non UTF characters')
+            clean_path = clean_path.replace(
+                                            os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
+                                            os.path.normpath(environment['PYPE_STUDIO_CORE']))
+            clean_environment[key] = clean_path
+
+        environment = clean_environment
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(

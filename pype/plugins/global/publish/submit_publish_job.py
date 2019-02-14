@@ -326,7 +326,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
-        url = "{}/api/jobs".format(deadline_url)
+        url = "{}/api/jobs".format(AVALON_DEADLINE)
         response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)
