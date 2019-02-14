@@ -25,6 +25,7 @@ class DJVViewAction(BaseHandler):
         super().__init__(session)
         self.variant = None
         self.djv_path = None
+        self.config_data = None
 
         if self.identifier is None:
             raise ValueError(
@@ -51,6 +52,9 @@ class DJVViewAction(BaseHandler):
             return
 
         items = []
+        if self.config_data is None:
+            self.load_config_data()
+
         application = self.get_application()
         if application is None:
             log.debug("DVJ View application was not found")
@@ -91,12 +95,8 @@ class DJVViewAction(BaseHandler):
             self.launch
         )
 
-    def get_application(self):
-
-        applicationIdentifier = "djvview"
-        description = "DJV View Launcher"
-
-        path_items = [lib.get_presets_path(), 'djv_view', 'app_paths.json']
+    def load_config_data(self):
+        path_items = [lib.get_presets_path(), 'djv_view', 'config.json']
         filepath = os.path.sep.join(path_items)
 
         data = dict()
@@ -107,9 +107,14 @@ class DJVViewAction(BaseHandler):
             log.warning(
                 'Failed to load data from DJV presets file ({})'.format(e)
             )
-            return None
 
-        possible_paths = data.get("djv_paths", [])
+        self.config_data = data
+
+    def get_application(self):
+        applicationIdentifier = "djvview"
+        description = "DJV View Launcher"
+
+        possible_paths = self.config_data.get("djv_paths", [])
         for path in possible_paths:
             if os.path.exists(path):
                 self.djv_path = path
@@ -269,7 +274,9 @@ class DJVViewAction(BaseHandler):
         try:
             for entity in entities:
                 versions = []
-                allowed_types = ["img", "mov", "exr"]
+                self.load_config_data()
+                default_types = ["img", "mov", "exr"]
+                allowed_types = self.config_data.get('file_ext', default_types)
 
                 if entity.entity_type.lower() == "assetversion":
                     if entity['components'][0]['file_type'] in allowed_types:
