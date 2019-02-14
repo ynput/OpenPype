@@ -312,7 +312,7 @@ class AppAction(BaseHandler):
             actual_status = entity['status']['name'].lower()
             next_status_name = None
             for key, value in statuses.items():
-                if actual_status in value:
+                if actual_status in value or '_any_' in value:
                     next_status_name = key
                     break
 
