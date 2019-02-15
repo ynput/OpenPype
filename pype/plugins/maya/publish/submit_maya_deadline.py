@@ -244,7 +244,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         ]
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
-        self.log.debug("enviro: {}".format(pprint(environment)))
+        #self.log.debug("enviro: {}".format(pprint(environment)))
         for path in os.environ:
             if path.lower().startswith('pype_'):
                 environment[path] = os.environ[path]
