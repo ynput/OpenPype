@@ -206,6 +206,11 @@ def version_up(filepath):
         new_label = label.replace(version, new_version, 1)
         new_basename = _rreplace(basename, label, new_label)
 
+    if not new_basename.endswith(new_label):
+        index = (new_basename.find(new_label))
+        index += len(new_label)
+        new_basename = new_basename[:index]
+
     new_filename = "{}{}".format(new_basename, ext)
     new_filename = os.path.join(dirname, new_filename)
     new_filename = os.path.normpath(new_filename)
@@ -214,9 +219,10 @@ def version_up(filepath):
         raise RuntimeError("Created path is the same as current file,"
                            "this is a bug")
 
-    if os.path.exists(new_filename):
-        log.info("Skipping existing version %s" % new_label)
-        return version_up(new_filename)
+    for file in os.listdir(dirname):
+        if file.endswith(ext) and file.startswith(new_basename):
+            log.info("Skipping existing version %s" % new_label)
+            return version_up(new_filename)
 
     log.info("New version %s" % new_label)
     return new_filename
