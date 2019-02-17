@@ -108,7 +108,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
 
         # if there is a subset there ought to be version
         if version is not None:
-            version_number += version["name"]
+            version_number += int(version["name"])
 
         hierarchy = asset['data']['parents']
         if hierarchy:
@@ -122,7 +122,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
                          "family": instance.data['family'],
                          "asset": asset_name,
                          "subset": subset_name,
-                         "VERSION": version_number,
+                         "version": version_number,
                          "hierarchy": hierarchy,
                          "representation": "TEMP"}
 
