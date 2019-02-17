@@ -58,7 +58,7 @@ def reset_data_from_templates():
     log.info("Data from templates were Unloaded...")
 
 
-def get_version_from_workfile(file):
+def get_version_from_path(file):
     """
     Finds version number in file path string
 
@@ -167,14 +167,16 @@ def get_hierarchy():
         string: asset hierarchy path
 
     """
-    hierarchy = io.find_one({
+    parents = io.find_one({
         "type": 'asset',
         "name": get_asset()}
     )['data']['parents']
 
-    if hierarchy:
+    hierarchy = ""
+    if parents and len(parents) > 0:
         # hierarchy = os.path.sep.join(hierarchy)
-        return os.path.join(*hierarchy).replace("\\", "/")
+        hierarchy = os.path.join(*parents).replace("\\", "/")
+    return hierarchy
 
 
 def set_hierarchy(hierarchy):
@@ -266,10 +268,9 @@ def get_workdir_template(data=None):
     anatomy = api.Anatomy
 
     try:
-        anatomy = anatomy.format(data or get_context_data())
+        work = anatomy.work.format(data or get_context_data())
     except Exception as e:
         log.error("{0} Error in "
                   "get_workdir_template(): {1}".format(__name__, e))
 
-    return os.path.join(anatomy.work.root,
-                        anatomy.work.folder)
+    return os.path.join(work.root, work.folder)

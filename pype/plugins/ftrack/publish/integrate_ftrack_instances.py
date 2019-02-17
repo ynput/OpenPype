@@ -67,7 +67,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                                  'frameOut': int(instance.data["startFrame"]),
                                  'frameRate': 25})}
                                 }
-            elif ext in [".jpg"]:
+            elif ext in [".jpg", ".jpeg"]:
                 component_data = {
                     "name": "thumbnail"  # Default component name is "main".
                 }

@@ -4,8 +4,8 @@ import pype.maya.lib as lib
 
 from avalon.vendor import requests
 import avalon.maya
-from avalon import api
-
+# from avalon import api
+import os
 
 class CreateRenderGlobals(avalon.maya.Creator):
 
@@ -21,7 +21,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
 
         # Get available Deadline pools
         try:
-            deadline_url = os.environ["DEADLINE_REST_URL"]
+            AVALON_DEADLINE = os.environ["AVALON_DEADLINE"]
         except KeyError:
             self.log.error("Deadline REST API url not found.")
 
@@ -34,9 +34,9 @@ class CreateRenderGlobals(avalon.maya.Creator):
             pools = response.json()
 
         # We don't need subset or asset attributes
-        self.data.pop("subset", None)
-        self.data.pop("asset", None)
-        self.data.pop("active", None)
+        # self.data.pop("subset", None)
+        # self.data.pop("asset", None)
+        # self.data.pop("active", None)
 
         self.data["suspendPublishJob"] = False
         self.data["extendFrames"] = False

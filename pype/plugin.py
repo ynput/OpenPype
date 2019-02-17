@@ -1,4 +1,5 @@
 import tempfile
+import os
 import pyblish.api
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
@@ -28,7 +29,9 @@ class Extractor(pyblish.api.InstancePlugin):
         staging_dir = instance.data.get('stagingDir', None)
 
         if not staging_dir:
-            staging_dir = tempfile.mkdtemp(prefix="pyblish_tmp_")
+            staging_dir = os.path.normpath(
+                tempfile.mkdtemp(prefix="pyblish_tmp_")
+            )
             instance.data['stagingDir'] = staging_dir
 
         return staging_dir

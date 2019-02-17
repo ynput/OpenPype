@@ -2,46 +2,46 @@ import pyblish.api
 
 
 @pyblish.api.log
-class CollectInstanceFamilies(pyblish.api.ContextPlugin):
+class CollectInstanceFamilies(pyblish.api.InstancePlugin):
     """Collect families for all instances"""
 
     order = pyblish.api.CollectorOrder + 0.2
     label = "Collect Families"
     hosts = ["nuke", "nukeassist"]
+    families = ['write']
 
-    def process(self, context):
-        for instance in context.data["instances"]:
+    def process(self, instance):
 
-            if "write" in instance.data["family"]:
-                node = instance[0]
+        node = instance[0]
 
-                # set for ftrack to accept
-                instance.data["families"] = ["ftrack"]
+        self.log.info('processing {}'.format(node))
 
-                if not node["render"].value():
-                    families = ["{}.frames".format(
-                        instance.data["avalonKnob"]["families"])]
-                    # to ignore staging dir op in integrate
-                    instance.data['transfer'] = False
-                else:
-                    # dealing with local/farm rendering
-                    if node["render_farm"].value():
-                        families = ["{}.farm".format(
-                            instance.data["avalonKnob"]["families"])]
-                    else:
-                        families = ["{}.local".format(
-                            instance.data["avalonKnob"]["families"])]
+        families = []
+        if instance.data.get('families'):
+            families.append(instance.data['families'])
 
-                instance.data["families"].extend(families)
+        # set for ftrack to accept
+        # instance.data["families"] = ["ftrack"]
 
-            elif "source" in instance.data["family"]:
-                families = []
-                families.append(instance.data["avalonKnob"]["families"])
+        if node["render"].value():
+            # dealing with local/farm rendering
+            if node["render_farm"].value():
+                families.append("render.farm")
+            else:
+                families.append("render.local")
+        else:
+            families.append("render.frames")
+            # to ignore staging dir op in integrate
+            instance.data['transfer'] = False
 
-                instance.data["families"] = families
+        families.append('ftrack')
+
+
+        instance.data["families"] = families
+
 
         # Sort/grouped by family (preserving local index)
-        context[:] = sorted(context, key=self.sort_by_family)
+        instance.context[:] = sorted(instance.context, key=self.sort_by_family)
 
     def sort_by_family(self, instance):
         """Sort by family"""

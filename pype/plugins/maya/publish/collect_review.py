@@ -4,7 +4,8 @@ import pymel.core as pm
 import pyblish.api
 import avalon.api
 
-class CollectReviewData(pyblish.api.InstancePlugin):
+
+class CollectReview(pyblish.api.InstancePlugin):
     """Collect Review data
 
     """
@@ -15,12 +16,9 @@ class CollectReviewData(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        # make ftrack publishable
-        instance.data["families"] = ['ftrack']
-        context = instance.context
+        self.log.debug('instance: {}'.format(instance))
 
         task = avalon.api.Session["AVALON_TASK"]
-        # pseudo code
 
         # get cameras
         members = instance.data['setMembers']
@@ -33,7 +31,7 @@ class CollectReviewData(pyblish.api.InstancePlugin):
         camera = cameras[0]
         self.log.debug('camera: {}'.format(camera))
 
-        objectset = context.data['objectsets']
+        objectset = instance.context.data['objectsets']
 
         reviewable_subset = None
         reviewable_subset = list(set(members) & set(objectset))
@@ -41,14 +39,37 @@ class CollectReviewData(pyblish.api.InstancePlugin):
             assert len(reviewable_subset) <= 1, "Multiple subsets for review"
             self.log.debug('subset for review: {}'.format(reviewable_subset))
 
-            for inst in context:
-                self.log.debug('instance: {}'.format(instance))
+            i = 0
+            for inst in instance.context:
+
+                self.log.debug('processing {}'.format(inst))
+                self.log.debug('processing2 {}'.format(instance.context[i]))
+                data = instance.context[i].data
+
                 if inst.name == reviewable_subset[0]:
-                    inst.data['families'].append('review')
-                    inst.data['review_camera'] = camera
-                    self.log.info('adding review family to {}'.format(reviewable_subset))
+                    if data.get('families'):
+                        data['families'].append('review')
+                    else:
+                        data['families'] = ['review']
+                    self.log.debug('adding review family to {}'.format(reviewable_subset))
+                    data['review_camera'] = camera
+                    data["publish"] = False
+                    data['startFrameReview'] = instance.data['startFrame']
+                    data['endFrameReview'] = instance.data['endFrame']
+                    data['handles'] = instance.data['handles']
+                    data['step'] = instance.data['step']
+                    data['fps'] = instance.data['fps']
                     cmds.setAttr(str(instance) + '.active', 0)
-                    inst.data['publish'] = 0
+                    instance.context[i].data.update(data)
+                    instance.data['remove'] = True
+                i += 1
         else:
             instance.data['subset'] = task + 'Review'
             instance.data['review_camera'] = camera
+            instance.data['startFrameReview'] = instance.data['startFrame']
+            instance.data['endFrameReview'] = instance.data['endFrame']
+
+            # make ftrack publishable
+            instance.data["families"] = ['ftrack']
+
+            cmds.setAttr(str(instance) + '.active', 1)

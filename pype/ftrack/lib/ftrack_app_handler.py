@@ -180,13 +180,14 @@ class AppAction(BaseHandler):
         os.environ["AVALON_APP_NAME"] = self.identifier
 
         anatomy = pype.Anatomy
-        hierarchy = database[project_name].find_one({
+        hierarchy = ""
+        parents = database[project_name].find_one({
             "type": 'asset',
             "name": entity['parent']['name']
         })['data']['parents']
 
-        if hierarchy:
-            hierarchy = os.path.join(*hierarchy)
+        if parents:
+            hierarchy = os.path.join(*parents)
 
         data = {"project": {"name": entity['project']['full_name'],
                             "code": entity['project']['name']},
@@ -305,24 +306,27 @@ class AppAction(BaseHandler):
         # Change status of task to In progress
         config = get_config_data()
 
-        if (
-            'status_on_app_launch' in config and
-            'sync_to_avalon' in config and
-            'statuses_name_change' in config['sync_to_avalon']
-        ):
-            statuses = config['sync_to_avalon']['statuses_name_change']
-            if entity['status']['name'].lower() in statuses:
-                status_name = config['status_on_app_launch']
+        if 'status_update' in config:
+            statuses = config['status_update']
 
+            actual_status = entity['status']['name'].lower()
+            next_status_name = None
+            for key, value in statuses.items():
+                if actual_status in value or '_any_' in value:
+                    if key != '_ignore_':
+                        next_status_name = key
+                    break
+
+            if next_status_name is not None:
                 try:
-                    query = 'Status where name is "{}"'.format(status_name)
+                    query = 'Status where name is "{}"'.format(next_status_name)
                     status = session.query(query).one()
-                    task['status'] = status
+                    entity['status'] = status
                     session.commit()
-                except Exception as e:
+                except Exception:
                     msg = (
                         'Status "{}" in config wasn\'t found on Ftrack'
-                    ).format(status_name)
+                    ).format(next_status_name)
                     self.log.warning(msg)
 
         # Set origin avalon environments

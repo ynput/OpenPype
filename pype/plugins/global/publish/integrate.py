@@ -141,10 +141,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
-        hierarchy = io.find_one({"type": 'asset', "name": ASSET})['data']['parents']
-        if hierarchy:
+        hierarchy = ""
+        parents = io.find_one({
+            "type": 'asset',
+            "name": ASSET
+        })['data']['parents']
+        if parents and len(parents) > 0:
             # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = os.path.join(*hierarchy)
+            hierarchy = os.path.join(*parents)
 
         template_data = {"root": root,
                          "project": {"name": PROJECT,

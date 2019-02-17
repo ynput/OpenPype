@@ -114,6 +114,18 @@ def import_to_avalon(
             output['errors'] = errors
             return output
 
+        else:
+            # not override existing templates!
+            templates = av_project['config'].get('template', None)
+            if templates is not None:
+                for key, value in config['template'].items():
+                    if (
+                        key in templates and
+                        templates[key] is not None and
+                        templates[key] != value
+                    ):
+                        config['template'][key] = templates[key]
+
         projectId = av_project['_id']
 
         data = get_data(
@@ -406,7 +418,9 @@ def get_data(entity, session, custom_attributes):
                 {'type': 'asset', 'name': parName}
             )['_id']
 
-    hierarchy = os.path.sep.join(folderStruct)
+    hierarchy = ""
+    if len(folderStruct) > 0:
+        hierarchy = os.path.sep.join(folderStruct)
 
     data['visualParent'] = parentId
     data['parents'] = folderStruct

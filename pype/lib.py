@@ -427,6 +427,13 @@ def get_avalon_project_template():
     proj_template['workfile'] = template.anatomy.avalon.workfile
     proj_template['work'] = template.anatomy.avalon.work
     proj_template['publish'] = template.anatomy.avalon.publish
+<<<<<<< HEAD
+=======
+    # Old - hardcoded = BackUp
+    # proj_template['workfile'] = "{asset[name]}_{task[name]}_v{version:0>3}<_{comment}>"
+    # proj_template['work'] = "{root}/{project}/{hierarchy}/{asset}/work/{task}"
+    # proj_template['publish'] = "{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}"
+>>>>>>> develop
     return proj_template
 
 
