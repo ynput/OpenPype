@@ -87,7 +87,7 @@ def get_project_code():
         string: project code
     """
 
-    return io.find_one({"type": "project"})["data"]["code"]
+    return io.find_one({"type": "project"})["data"].get("code", '')
 
 
 def set_project_code(code):

@@ -70,7 +70,7 @@ def format_anatomy(data):
     data.update({
         "hierarchy": pype.get_hierarchy(),
         "frame": "#"*padding,
-        "VERSION": pype.get_version_from_path(file)
+        "version": pype.get_version_from_path(file)
     })
 
     # log.info("format_anatomy:anatomy: {}".format(anatomy))
