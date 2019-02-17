@@ -268,10 +268,9 @@ def get_workdir_template(data=None):
     anatomy = api.Anatomy
 
     try:
-        anatomy = anatomy.format(data or get_context_data())
+        work = anatomy.work.format(data or get_context_data())
     except Exception as e:
         log.error("{0} Error in "
                   "get_workdir_template(): {1}".format(__name__, e))
 
-    return os.path.join(anatomy.work.root,
-                        anatomy.work.folder)
+    return os.path.join(work.root, work.folder)
