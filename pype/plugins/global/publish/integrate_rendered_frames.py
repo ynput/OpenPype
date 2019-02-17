@@ -258,17 +258,11 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 # for performance reasons.
                 "context": {
                     "root": root,
-<<<<<<< HEAD
                     "project": {
                         "name": PROJECT,
                         "code": project['data']['code']
                     },
                     "task": api.Session["AVALON_TASK"],
-=======
-                    "project": {"name": PROJECT,
-                                "code": project['data']['code']},
-                    'task': api.Session["AVALON_TASK"],
->>>>>>> develop
                     "silo": asset['silo'],
                     "asset": ASSET,
                     "family": instance.data['family'],
