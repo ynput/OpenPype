@@ -279,7 +279,7 @@ class DJVViewAction(BaseHandler):
                 allowed_types = self.config_data.get('file_ext', default_types)
 
                 if entity.entity_type.lower() == "assetversion":
-                    if entity['components'][0]['file_type'] in allowed_types:
+                    if entity['components'][0]['file_type'][1:] in allowed_types:
                         versions.append(entity)
 
                 elif entity.entity_type.lower() == "task":
@@ -293,7 +293,7 @@ class DJVViewAction(BaseHandler):
                                 continue
                             # Get only components with allowed type
                             filetype = version['components'][0]['file_type']
-                            if filetype in allowed_types:
+                            if filetype[1:] in allowed_types:
                                 versions.append(version)
 
                 # Raise error if no components were found
@@ -301,6 +301,7 @@ class DJVViewAction(BaseHandler):
                     raise ValueError('There are no Asset Versions to open.')
 
                 for version in versions:
+                    logging.info(version['components'])
                     for component in version['components']:
                         label = "v{0} - {1} - {2}"
 
