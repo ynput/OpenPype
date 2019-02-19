@@ -329,9 +329,17 @@ class DJVViewAction(BaseHandler):
                                 'component_locations'
                             ][0]['resource_identifier']
 
-                        event["data"]["items"].append(
-                            {"label": label, "value": file_path}
-                        )
+                        dirpath = os.path.dirname(file_path)
+                        if os.path.isdir(dirpath):
+                            event["data"]["items"].append(
+                                {"label": label, "value": file_path}
+                            )
+
+                # Raise error if any component is playable
+                if len(event["data"]["items"]) == 0:
+                    raise ValueError(
+                        'There are no Asset Versions with accessible path.'
+                    )
 
         except Exception as e:
             return {
