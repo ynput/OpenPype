@@ -57,7 +57,6 @@ class DJVViewAction(BaseHandler):
 
         application = self.get_application()
         if application is None:
-            log.debug("DVJ View application was not found")
             return
 
         applicationIdentifier = application["identifier"]
@@ -121,7 +120,7 @@ class DJVViewAction(BaseHandler):
                 break
 
         if self.djv_path is None:
-            log.warning('Any path from presets match your DJV View path')
+            log.debug("DJV View application was not found")
             return None
 
         application = {
