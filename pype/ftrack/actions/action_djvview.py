@@ -259,8 +259,16 @@ class DJVViewAction(BaseHandler):
             # PATH TO COMPONENT
             cmd.append(os.path.normpath(filename))
 
-            # Run DJV with these commands
-            subprocess.Popen(' '.join(cmd))
+            try:
+                # Run DJV with these commands
+                subprocess.Popen(' '.join(cmd))
+            except FileNotFoundError:
+                return {
+                    'success': False,
+                    'message': 'File "{}" was not found.'.format(
+                        os.path.basename(filename)
+                    )
+                }
 
             return {
                 'success': True,
