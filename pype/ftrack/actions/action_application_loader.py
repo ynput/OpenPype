@@ -1,3 +1,4 @@
+import os
 import toml
 import time
 from pype.ftrack import AppAction
@@ -36,10 +37,25 @@ def registerApp(app, session):
     label = apptoml.get('ftrack_label', app.get('label', name))
     icon = apptoml.get('ftrack_icon', None)
     description = apptoml.get('description', None)
+    preactions = apptoml.get('preactions', None)
+    process_name = apptoml.get('process_name', None)
+    script_path = apptoml.get('script_path', None)
 
+    once_run_data = None
+    if process_name is not None or script_path is not None:
+        try:
+            script_path = script_path.format(**os.environ)
+            script_path.replace('/', os.path.sep)
+        except Exception:
+            pass
+        once_run_data = {
+            'process_name': process_name,
+            'script_path': script_path
+        }
     # register action
     AppAction(
-        session, label, name, executable, variant, icon, description
+        session, label, name, executable, variant, icon, description,
+        preactions, once_run_data
     ).register()
 
 
