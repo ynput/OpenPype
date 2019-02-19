@@ -3,8 +3,10 @@
 import os
 import sys
 import platform
+import psutil
 from avalon import lib as avalonlib
 import acre
+import ftrack_api
 from pype import api as pype
 from pype import lib as pypelib
 from .avalon_sync import get_config_data
@@ -20,13 +22,17 @@ class AppAction(BaseHandler):
     <identifier>  - a unique identifier for app.
     <description>   - a verbose descriptive text for you action
     <icon>  - icon in ftrack
+
+    <script path> - if is set, only one app will be allowed to run if script is
+        set to script which launches app
     '''
 
     type = 'Application'
 
     def __init__(
         self, session, label, name, executable,
-        variant=None, icon=None, description=None
+        variant=None, icon=None, description=None,
+        preactions=None, once_run_data=None
     ):
         super().__init__(session)
         '''Expects a ftrack_api.Session instance'''
@@ -44,6 +50,8 @@ class AppAction(BaseHandler):
         self.variant = variant
         self.icon = icon
         self.description = description
+        self.preactions = preactions
+        self.once_run_data = once_run_data
 
     def register(self):
         '''Registers the action, subscribing the discover and launch topics.'''
@@ -121,13 +129,74 @@ class AppAction(BaseHandler):
             self.session, event
         )
 
-        response = self.launch(
-            self.session, *args
+        self._launch_preactions(
+            self.session, event
         )
+
+        if self._check_is_running():
+            response = {
+                'success': False,
+                'message': '"{0}" is already running'.format(self.label)
+            }
+        else:
+            response = self.launch(
+                self.session, *args
+            )
 
         return self._handle_result(
             self.session, response, *args
         )
+
+    def _check_is_running(self):
+        data = self.once_run_data
+        if data is None:
+            return False
+
+        process_name = data.get('process_name', None)
+        script_path = data.get('script_path', None)
+
+        if process_name is None and script_path is None:
+            return False
+        elif process_name is None:
+            procs = [p for p in psutil.process_iter() if (
+                'python.exe' in p.name() and
+                script_path in p.cmdline()
+            )]
+        elif script_path is None:
+            procs = [p for p in psutil.process_iter() if (
+                process_name in p.name()
+            )]
+        else:
+            procs = [p for p in psutil.process_iter() if (
+                process_name in p.name() and
+                script_path in p.cmdline()
+            )]
+
+        if len(procs) > 0:
+            return True
+        return False
+
+    def _launch_preactions(self, session, event):
+        selection = event.get('data', {}).get('selection', None)
+        if (
+            selection is None or
+            self.preactions is None or
+            len(self.preactions) == 0
+        ):
+            return
+
+        for preaction in self.preactions:
+            event = ftrack_api.event.base.Event(
+                topic='ftrack.action.launch',
+                data=dict(
+                    actionIdentifier=preaction,
+                    selection=selection
+                ),
+                source=dict(
+                    user=dict(username=session.api_user)
+                )
+            )
+            session.event_hub.publish(event, on_error='ignore')
 
     def launch(self, session, entities, event):
         '''Callback method for the custom action.
@@ -319,7 +388,9 @@ class AppAction(BaseHandler):
 
             if next_status_name is not None:
                 try:
-                    query = 'Status where name is "{}"'.format(next_status_name)
+                    query = 'Status where name is "{}"'.format(
+                        next_status_name
+                    )
                     status = session.query(query).one()
                     entity['status'] = status
                     session.commit()
