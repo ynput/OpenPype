@@ -278,7 +278,11 @@ class DJVViewAction(BaseHandler):
                 allowed_types = self.config_data.get('file_ext', default_types)
 
                 if entity.entity_type.lower() == "assetversion":
-                    if entity['components'][0]['file_type'][1:] in allowed_types:
+                    if (
+                        entity[
+                            'components'
+                        ][0]['file_type'][1:] in allowed_types
+                    ):
                         versions.append(entity)
 
                 elif entity.entity_type.lower() == "task":
