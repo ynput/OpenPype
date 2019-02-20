@@ -1,11 +1,11 @@
 import avalon.maya
 
 
-class CreateSetDress(avalon.maya.Creator):
+class CreateLayout(avalon.maya.Creator):
     """A grouped package of loaded content"""
 
-    name = "layout"
+    name = "layoutMain"
     label = "Layout"
     family = "layout"
-    icon = "map-marked"
+    icon = "boxes"
     defaults = ["Main"]
