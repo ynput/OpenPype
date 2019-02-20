@@ -12,6 +12,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
     label = "Render Globals"
     family = "renderglobals"
     icon = "gears"
+    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreateRenderGlobals, self).__init__(*args, **kwargs)

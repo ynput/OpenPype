@@ -8,3 +8,4 @@ class CreateMayaAscii(avalon.maya.Creator):
     label = "Maya Ascii"
     family = "mayaAscii"
     icon = "file-archive-o"
+    defaults = ['Main']
