@@ -3,7 +3,7 @@ import pype.api
 import pype.maya.action
 
 
-class ValidateSetdressNamespaces(pyblish.api.InstancePlugin):
+class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin):
     """Ensure namespaces are not nested
 
     In the outliner an item in a normal namespace looks as following:
@@ -15,9 +15,9 @@ class ValidateSetdressNamespaces(pyblish.api.InstancePlugin):
 
     """
 
-    label = "Validate Setdress Namespaces"
+    label = "Validate Assembly Namespaces"
     order = pyblish.api.ValidatorOrder
-    families = ["setdress"]
+    families = ["assembly"]
     actions = [pype.maya.action.SelectInvalidAction]
 
     def process(self, instance):

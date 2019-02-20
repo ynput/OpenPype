@@ -4,10 +4,11 @@ import avalon.maya
 class CreateModel(avalon.maya.Creator):
     """Polygonal static geometry"""
 
-    name = "modelDefault"
+    name = "modelMain"
     label = "Model"
     family = "model"
     icon = "cube"
+    defaults = ["Main", "Proxy"]
 
     def __init__(self, *args, **kwargs):
         super(CreateModel, self).__init__(*args, **kwargs)

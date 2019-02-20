@@ -4,7 +4,9 @@ import pype.maya.plugin
 class MayaAsciiLoader(pype.maya.plugin.ReferenceLoader):
     """Load the model"""
 
-    families = ["mayaAscii"]
+    families = ["mayaAscii",
+                "setdress",
+                "layout"]
     representations = ["ma"]
 
     label = "Reference Maya Ascii"

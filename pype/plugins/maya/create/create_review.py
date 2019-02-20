@@ -10,6 +10,7 @@ class CreateReview(avalon.maya.Creator):
     label = "Review"
     family = "review"
     icon = "video-camera"
+    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreateReview, self).__init__(*args, **kwargs)

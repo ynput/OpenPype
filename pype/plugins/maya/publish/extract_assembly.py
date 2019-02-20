@@ -8,7 +8,7 @@ from pype.maya.lib import extract_alembic
 from maya import cmds
 
 
-class ExtractSetDress(pype.api.Extractor):
+class ExtractAssembly(pype.api.Extractor):
     """Produce an alembic of just point positions and normals.
 
     Positions and normals are preserved, but nothing more,
@@ -16,9 +16,9 @@ class ExtractSetDress(pype.api.Extractor):
 
     """
 
-    label = "Extract Set Dress"
+    label = "Extract Assembly"
     hosts = ["maya"]
-    families = ["setdress"]
+    families = ["assembly"]
 
     def process(self, instance):
 

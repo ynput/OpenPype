@@ -5,11 +5,11 @@ from maya import cmds, mel
 from avalon import maya as avalon
 from pype.maya import lib
 
-# TODO : Publish of setdress: -unique namespace for all assets, VALIDATOR!
+# TODO : Publish of assembly: -unique namespace for all assets, VALIDATOR!
 
 
-class CollectSetDress(pyblish.api.InstancePlugin):
-    """Collect all relevant setdress items
+class CollectAssembly(pyblish.api.InstancePlugin):
+    """Collect all relevant assembly items
 
     Collected data:
 
@@ -24,8 +24,8 @@ class CollectSetDress(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.49
-    label = "Set Dress"
-    families = ["setdress"]
+    label = "Assemby"
+    families = ["assembly"]
 
     def process(self, instance):
 
@@ -35,11 +35,14 @@ class CollectSetDress(pyblish.api.InstancePlugin):
         # Get all content from the instance
         instance_lookup = set(cmds.ls(instance, type="transform", long=True))
         data = defaultdict(list)
+        self.log.info(instance_lookup)
 
         hierarchy_nodes = []
         for container in containers:
 
+            self.log.info(container)
             root = lib.get_container_transforms(container, root=True)
+            self.log.info(root)
             if not root or root not in instance_lookup:
                 continue
 

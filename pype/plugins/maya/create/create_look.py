@@ -9,6 +9,7 @@ class CreateLook(avalon.maya.Creator):
     label = "Look"
     family = "look"
     icon = "paint-brush"
+    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreateLook, self).__init__(*args, **kwargs)

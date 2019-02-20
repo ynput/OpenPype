@@ -12,6 +12,7 @@ class CreateAss(avalon.maya.Creator):
     label = "Ass StandIn"
     family = "ass"
     icon = "cube"
+    defaults = ['Main']
 
     def process(self):
         instance = super(CreateAss, self).process()
