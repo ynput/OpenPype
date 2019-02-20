@@ -31,6 +31,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "pointcache",
                 "vdbcache",
                 "setdress",
+                "assembly",
+                "layout",
                 "rig",
                 "vrayproxy",
                 "yetiRig",
