@@ -20,6 +20,8 @@ class DeleteAsset(BaseAction):
     #: Db
     db = DbConnector()
 
+    value = None
+
     def discover(self, session, entities, event):
         ''' Validation '''
         selection = event["data"].get("selection", None)
@@ -55,8 +57,15 @@ class DeleteAsset(BaseAction):
                 self.session, *args
             )
 
+            confirmation = self.confirm_delete(
+                True, *args
+            )
+
             if interface:
                 return interface
+
+            if confirmation:
+                return confirmation
 
             response = self.launch(
                 self.session, *args
@@ -70,6 +79,7 @@ class DeleteAsset(BaseAction):
 
     def interface(self, session, entities, event):
         if not event['data'].get('values', {}):
+            self.attempt = 1
             items = []
             entity = entities[0]
             title = 'Choose items to delete from "{}"'.format(entity['name'])
@@ -84,7 +94,7 @@ class DeleteAsset(BaseAction):
 
             asset_label = {
                 'type': 'label',
-                'value': '*Delete whole asset:*'
+                'value': '## Delete whole asset: ##'
             }
             asset_item = {
                 'label': av_entity['name'],
@@ -92,24 +102,15 @@ class DeleteAsset(BaseAction):
                 'type': 'boolean',
                 'value': False
             }
-            delete_item = {
-                'label': 'Enter "DELETE" to confirm',
-                'name': 'delete_key',
-                'type': 'text',
-                'value': '',
-                'empty_text': 'Type Delete here...'
-            }
             splitter = {
                 'type': 'label',
                 'value': '{}'.format(200*"-")
             }
             subset_label = {
                 'type': 'label',
-                'value': '*Subsets:*'
+                'value': '## Subsets: ##'
             }
             if av_entity is not None:
-                items.append(delete_item)
-                items.append(splitter)
                 items.append(asset_label)
                 items.append(asset_item)
                 items.append(splitter)
@@ -142,6 +143,69 @@ class DeleteAsset(BaseAction):
                 'title': title
             }
 
+    def confirm_delete(self, first_attempt, entities, event):
+        if first_attempt is True:
+            if 'values' not in event['data']:
+                return
+
+            values = event['data']['values']
+
+            if len(values) <= 0:
+                return
+            if 'whole_asset' not in values:
+                return
+        else:
+            values = self.values
+
+        title = 'Confirmation of deleting {}'
+        if values['whole_asset'] is True:
+            title = title.format(
+                'whole asset {}'.format(
+                    entities[0]['name']
+                )
+            )
+        else:
+            subsets = []
+            for key, value in values.items():
+                if value is True:
+                    subsets.append(key)
+            len_subsets = len(subsets)
+            if len_subsets == 0:
+                return {
+                    'success': True,
+                    'message': 'Nothing was selected to delete'
+                }
+            elif len_subsets == 1:
+                title = title.format(
+                    '{} subset'.format(len_subsets)
+                )
+            else:
+                title = title.format(
+                    '{} subset'.format(len_subsets)
+                )
+
+        self.values = values
+        items = []
+
+        delete_label = {
+            'type': 'label',
+            'value': 'Please enter "DELETE" to confirm'
+        }
+
+        delete_item = {
+            'name': 'delete_key',
+            'type': 'text',
+            'value': '',
+            'empty_text': 'Type Delete here...'
+        }
+        items.append(delete_label)
+        items.append(delete_item)
+
+        return {
+            'items': items,
+            'title': title
+        }
+
     def launch(self, session, entities, event):
         if 'values' not in event['data']:
             return
@@ -149,10 +213,25 @@ class DeleteAsset(BaseAction):
         values = event['data']['values']
         if len(values) <= 0:
             return
-        elif values.get('delete_key', '').lower() != 'delete':
+        if 'delete_key' not in values:
+            return
+
+        if values['delete_key'].lower() != 'delete':
+            if values['delete_key'].lower() == '':
+                return {
+                    'success': False,
+                    'message': 'Deleting cancelled'
+                }
+            if self.attempt < 3:
+                self.attempt += 1
+                return_dict = self.confirm_delete(False, entities, event)
+                return_dict['title'] = '{} ({} attempt)'.format(
+                    return_dict['title'], self.attempt
+                )
+                return return_dict
             return {
                 'success': False,
-                'message': 'You didn\'t enter "DELETE" properly!'
+                'message': 'You didn\'t enter "DELETE" properly 3 times!'
             }
 
         entity = entities[0]
@@ -161,7 +240,7 @@ class DeleteAsset(BaseAction):
         self.db.Session['AVALON_PROJECT'] = project["full_name"]
 
         all_ids = []
-        if values.get('whole_asset', False) is True:
+        if self.values.get('whole_asset', False) is True:
             av_entity = self.db.find_one({
                 'type': 'asset',
                 'name': entity['name']
@@ -175,7 +254,7 @@ class DeleteAsset(BaseAction):
             session.commit()
         else:
             subset_names = []
-            for key, value in values.items():
+            for key, value in self.values.items():
                 if key == 'delete_key' or value is False:
                     continue
 
