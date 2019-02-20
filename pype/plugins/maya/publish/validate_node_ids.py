@@ -22,8 +22,8 @@ class ValidateNodeIDs(pyblish.api.InstancePlugin):
                 "rig",
                 "pointcache",
                 "animation",
-                "setdress",
-                "yetiRig"]
+                "yetiRig",
+                "assembly"]
 
     actions = [pype.maya.action.SelectInvalidAction,
                pype.maya.action.GenerateUUIDsOnInvalidAction]
