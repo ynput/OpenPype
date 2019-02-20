@@ -96,7 +96,8 @@ class DeleteAsset(BaseAction):
                 'label': 'Enter "DELETE" to confirm',
                 'name': 'delete_key',
                 'type': 'text',
-                'value': ''
+                'value': '',
+                'empty_text': 'Type *Delete* here...'
             }
             splitter = {
                 'type': 'label',
