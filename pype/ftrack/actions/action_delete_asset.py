@@ -189,7 +189,7 @@ class DeleteAsset(BaseAction):
 
         delete_label = {
             'type': 'label',
-            'value': 'Please enter "DELETE" to confirm'
+            'value': '# Please enter "DELETE" to confirm #'
         }
 
         delete_item = {
