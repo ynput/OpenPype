@@ -42,7 +42,7 @@ def writes_version_sync():
                 node_file = each['file'].value()
                 log.info("node_file: {}".format(node_file))
 
-                node_version = pype.get_version_from_path(node_file, None)
+                node_version = pype.get_version_from_path(node_file)
                 log.info("node_version: {}".format(node_version))
 
                 node_new_file = node_file.replace(node_version, new_version)
@@ -70,7 +70,7 @@ def format_anatomy(data):
     data.update({
         "hierarchy": pype.get_hierarchy(),
         "frame": "#"*padding,
-        "VERSION": pype.get_version_from_path(file)
+        "version": pype.get_version_from_path(file)
     })
 
     # log.info("format_anatomy:anatomy: {}".format(anatomy))

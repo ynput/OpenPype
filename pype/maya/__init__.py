@@ -107,6 +107,9 @@ def on_init(_):
     # Force load objExport plug-in (requested by artists)
     cmds.loadPlugin("objExport", quiet=True)
 
+    # Force load objExport plug-in (requested by artists)
+    cmds.loadPlugin("spore", quiet=True)
+
     from .customize import (
         override_component_mask_commands,
         override_toolbox_ui
@@ -131,8 +134,8 @@ def on_save(_):
 
     avalon.logger.info("Running callback on save..")
 
-    # Update current task for the current scene
-    update_task_from_path(cmds.file(query=True, sceneName=True))
+    # # Update current task for the current scene
+    # update_task_from_path(cmds.file(query=True, sceneName=True))
 
     # Generate ids of the current context on nodes in the scene
     nodes = lib.get_id_required_nodes(referenced_nodes=False)
@@ -146,8 +149,8 @@ def on_open(_):
     from avalon.vendor.Qt import QtWidgets
     from ..widgets import popup
 
-    # Update current task for the current scene
-    update_task_from_path(cmds.file(query=True, sceneName=True))
+    # # Update current task for the current scene
+    # update_task_from_path(cmds.file(query=True, sceneName=True))
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset

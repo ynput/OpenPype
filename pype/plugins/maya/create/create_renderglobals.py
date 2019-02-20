@@ -4,6 +4,7 @@ import pype.maya.lib as lib
 
 from avalon.vendor import requests
 import avalon.maya
+import os
 
 
 class CreateRenderGlobals(avalon.maya.Creator):
@@ -32,13 +33,14 @@ class CreateRenderGlobals(avalon.maya.Creator):
             else:
                 pools = response.json()
                 self.data["primaryPool"] = pools
-                # We add a string "-" to allow the user to not set any secondary pools
+                # We add a string "-" to allow the user to not
+                # set any secondary pools
                 self.data["secondaryPool"] = ["-"] + pools
 
         # We don't need subset or asset attributes
-        self.data.pop("subset", None)
-        self.data.pop("asset", None)
-        self.data.pop("active", None)
+        # self.data.pop("subset", None)
+        # self.data.pop("asset", None)
+        # self.data.pop("active", None)
 
         self.data["suspendPublishJob"] = False
         self.data["extendFrames"] = False

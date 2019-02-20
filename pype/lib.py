@@ -424,14 +424,9 @@ def get_avalon_project_template():
     """
     template = Templates(type=["anatomy"])
     proj_template = {}
-    # TODO this down should work but it can't be in default.toml:
-    #  - Raises error when App (e.g. Nuke) is started
-    # proj_template['workfile'] = template.anatomy.avalon.workfile
-    # proj_template['work'] = template.anatomy.avalon.work
-    # proj_template['publish'] = template.anatomy.avalon.publish
-    proj_template['workfile'] = "{asset[name]}_{task[name]}_v{version:0>3}<_{comment}>"
-    proj_template['work'] = "{root}/{project}/{hierarchy}/{asset}/work/{task}"
-    proj_template['publish'] = "{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}"
+    proj_template['workfile'] = template.anatomy.avalon.workfile
+    proj_template['work'] = template.anatomy.avalon.work
+    proj_template['publish'] = template.anatomy.avalon.publish
     return proj_template
 
 

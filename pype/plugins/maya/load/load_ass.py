@@ -1,6 +1,7 @@
 from avalon import api
 import pype.maya.plugin
 import os
+import pymel.core as pm
 
 
 class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
@@ -37,7 +38,6 @@ class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
 
             # Set attributes
             proxyShape = pm.ls(nodes, type="mesh")[0]
-            proxyShape = pm.ls(nodes, type="mesh")[0]
 
             proxyShape.aiTranslator.set('procedural')
             proxyShape.dso.set(path)
@@ -50,6 +50,67 @@ class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
 
     def switch(self, container, representation):
         self.update(container, representation)
+
+    def update(self, container, representation):
+
+        import os
+        from maya import cmds
+
+        node = container["objectName"]
+
+        path = api.get_representation_path(representation)
+        # path = self.fname
+        proxyPath = os.path.splitext(path)[0] + ".ma"
+
+        # Get reference node from container members
+        members = cmds.sets(node, query=True, nodesOnly=True)
+        reference_node = self._get_reference_node(members)
+
+        assert os.path.exists(path), "%s does not exist." % proxyPath
+
+        try:
+            content = cmds.file(proxyPath,
+                                loadReference=reference_node,
+                                type="mayaAscii",
+                                returnNewNodes=True)
+
+            # Set attributes
+            proxyShape = pm.ls(content, type="mesh")[0]
+
+            proxyShape.aiTranslator.set('procedural')
+            proxyShape.dso.set(path)
+            proxyShape.aiOverrideShaders.set(0)
+
+        except RuntimeError as exc:
+            # When changing a reference to a file that has load errors the
+            # command will raise an error even if the file is still loaded
+            # correctly (e.g. when raising errors on Arnold attributes)
+            # When the file is loaded and has content, we consider it's fine.
+            if not cmds.referenceQuery(reference_node, isLoaded=True):
+                raise
+
+            content = cmds.referenceQuery(reference_node,
+                                          nodes=True,
+                                          dagPath=True)
+            if not content:
+                raise
+
+            self.log.warning("Ignoring file read error:\n%s", exc)
+
+        # Add new nodes of the reference to the container
+        cmds.sets(content, forceElement=node)
+
+        # Remove any placeHolderList attribute entries from the set that
+        # are remaining from nodes being removed from the referenced file.
+        members = cmds.sets(node, query=True)
+        invalid = [x for x in members if ".placeHolderList" in x]
+        if invalid:
+            cmds.sets(invalid, remove=node)
+
+        # Update metadata
+        cmds.setAttr("{}.representation".format(node),
+                     str(representation["_id"]),
+                     type="string")
 
 
 class AssStandinLoader(api.Loader):
@@ -98,10 +159,6 @@ class AssStandinLoader(api.Loader):
 
         # Set the standin filepath
         standinShape.dso.set(self.fname)
-
-
-        # Lock parenting of the transform and standin
-        cmds.lockNode([root, standin], lock=True)
 
         nodes = [root, standin]
         self[:] = nodes

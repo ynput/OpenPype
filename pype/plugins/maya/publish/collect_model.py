@@ -15,7 +15,7 @@ class CollectModelData(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.499
+    order = pyblish.api.CollectorOrder + 0.4
     label = 'Collect Model Data'
     families = ["model"]
 
@@ -26,4 +26,7 @@ class CollectModelData(pyblish.api.InstancePlugin):
         instance.data['endFrame'] = frame
 
         # make ftrack publishable
-        instance.data["families"] = ['ftrack']
+        if instance.data.get('families'):
+            instance.data['families'].append('ftrack')
+        else:
+            instance.data['families'] = ['ftrack']

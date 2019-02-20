@@ -43,8 +43,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
         self.register(instance)
 
-        self.log.info("Integrating Asset in to the database ...")
-        self.log.info("instance.data: {}".format(instance.data))
+        # self.log.info("Integrating Asset in to the database ...")
+        # self.log.info("instance.data: {}".format(instance.data))
         if instance.data.get('transfer', True):
             self.integrate(instance)
 
@@ -110,12 +110,15 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         self.log.info("Verifying version from assumed destination")
 
         assumed_data = instance.data["assumedTemplateData"]
-        assumed_version = assumed_data["VERSION"]
+        assumed_version = assumed_data["version"]
         if assumed_version != next_version:
             raise AttributeError("Assumed version 'v{0:03d}' does not match"
                                  "next version in database "
                                  "('v{1:03d}')".format(assumed_version,
                                                        next_version))
+
+        if instance.data.get('version'):
+            next_version = int(instance.data.get('version'))
 
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
@@ -139,11 +142,12 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
-        hierarchy = io.find_one({"type": 'asset', "name": ASSET})[
+        hierarchy = ""
+        parents = io.find_one({"type": 'asset', "name": ASSET})[
             'data']['parents']
-        if hierarchy:
+        if parents and len(parents) > 0:
             # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = os.path.join(*hierarchy)
+            hierarchy = os.path.join(*parents)
 
         template_data = {"root": root,
                          "project": {"name": PROJECT,
@@ -153,7 +157,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                          "asset": ASSET,
                          "family": instance.data['family'],
                          "subset": subset["name"],
-                         "VERSION": version["name"],
+                         "version": int(version["name"]),
                          "hierarchy": hierarchy}
 
         # template_publish = project["config"]["template"]["publish"]
@@ -163,8 +167,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         # Each should be a single representation (as such, a single extension)
         representations = []
         destination_list = []
-        self.log.debug("integrate_frames:instance.data[files]: {}".format(
-            instance.data["files"]))
+
         for files in instance.data["files"]:
             # Collection
             #   _______
@@ -205,7 +208,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                     src = os.path.join(stagingdir, src_file_name)
                     instance.data["transfers"].append([src, dst])
-                template = anatomy.render.path
 
             else:
                 # Single file
@@ -235,30 +237,37 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 anatomy_filled = anatomy.format(template_data)
                 dst = anatomy_filled.render.path
-                template = anatomy.render.path
 
                 instance.data["transfers"].append([src, dst])
+
+            template_data["frame"] = "#####"
+            anatomy_filled = anatomy.format(template_data)
+            path_to_save = anatomy_filled.render.path
+            template = anatomy.render.fullpath
+            self.log.debug('ext[1:]: {}'.format(ext[1:]))
 
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
-                "data": {'path': dst, 'template': template},
+                "data": {'path': path_to_save, 'template': template},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
                     "root": root,
-                    "project": PROJECT,
-                    "projectcode": project['data']['code'],
-                    'task': api.Session["AVALON_TASK"],
+                    "project": {
+                        "name": PROJECT,
+                        "code": project['data']['code']
+                    },
+                    "task": api.Session["AVALON_TASK"],
                     "silo": asset['silo'],
                     "asset": ASSET,
                     "family": instance.data['family'],
                     "subset": subset["name"],
-                    "VERSION": version["name"],
+                    "version": int(version["name"]),
                     "hierarchy": hierarchy,
                     "representation": ext[1:]
                 }

@@ -78,6 +78,8 @@ def override_toolbox_ui():
     import avalon.tools.cbsceneinventory as inventory
     import avalon.tools.cbloader as loader
     from avalon.maya.pipeline import launch_workfiles_app
+    import mayalookassigner
+
 
     # Ensure the maya web icon on toolbox exists
     web_button = "ToolBox|MainToolboxLayout|mayaWebButton"
@@ -97,6 +99,18 @@ def override_toolbox_ui():
     # Create our controls
     background_color = (0.267, 0.267, 0.267)
     controls = []
+
+    control = mc.iconTextButton(
+        "pype_toolbox_lookmanager",
+        annotation="Look Manager",
+        label="Look Manager",
+        image=os.path.join(icons, "lookmanager.png"),
+        command=lambda: mayalookassigner.show(),
+        bgc=background_color,
+        width=icon_size,
+        height=icon_size,
+        parent=parent)
+    controls.append(control)
 
     control = mc.iconTextButton(
         "pype_toolbox_workfiles",
@@ -134,16 +148,16 @@ def override_toolbox_ui():
         parent=parent)
     controls.append(control)
 
-    control = mc.iconTextButton(
-        "pype_toolbox",
-        annotation="Colorbleed",
-        label="Colorbleed",
-        image=os.path.join(icons, "pype_logo_36x36.png"),
-        bgc=background_color,
-        width=icon_size,
-        height=icon_size,
-        parent=parent)
-    controls.append(control)
+    # control = mc.iconTextButton(
+    #     "pype_toolbox",
+    #     annotation="Kredenc",
+    #     label="Kredenc",
+    #     image=os.path.join(icons, "kredenc_logo.png"),
+    #     bgc=background_color,
+    #     width=icon_size,
+    #     height=icon_size,
+    #     parent=parent)
+    # controls.append(control)
 
     # Add the buttons on the bottom and stack
     # them above each other with side padding
