@@ -160,10 +160,6 @@ class AssStandinLoader(api.Loader):
         # Set the standin filepath
         standinShape.dso.set(self.fname)
 
-
-        # Lock parenting of the transform and standin
-        cmds.lockNode([root, standin], lock=True)
-
         nodes = [root, standin]
         self[:] = nodes
 
