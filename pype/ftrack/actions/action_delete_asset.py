@@ -1,22 +1,21 @@
 import sys
 import logging
-import random
-import string
+from bson.objectid import ObjectId
 import argparse
 import ftrack_api
 from pype.ftrack import BaseAction
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
 
-class DeleteEntity(BaseAction):
+class DeleteAsset(BaseAction):
     '''Edit meta data action.'''
 
     #: Action identifier.
-    identifier = 'delete.entity'
+    identifier = 'delete.asset'
     #: Action label.
-    label = 'Delete entity'
+    label = 'Delete asset/subsets'
     #: Action description.
-    description = 'Removes assets from Ftrack and Avalon db with all childs'
+    description = 'Removes from Avalon with all childs and asset from Ftrack'
     icon = "https://www.iconsdb.com/icons/preview/white/full-trash-xxl.png"
     #: Db
     db = DbConnector()
@@ -44,19 +43,98 @@ class DeleteEntity(BaseAction):
 
         return discover
 
+    def _launch(self, event):
+        self.reset_session()
+        try:
+            self.db.install()
+            args = self._translate_event(
+                self.session, event
+            )
+
+            interface = self._interface(
+                self.session, *args
+            )
+
+            if interface:
+                return interface
+
+            response = self.launch(
+                self.session, *args
+            )
+        finally:
+            self.db.uninstall()
+
+        return self._handle_result(
+            self.session, response, *args
+        )
+
     def interface(self, session, entities, event):
         if not event['data'].get('values', {}):
-            entity = entities[0]
-            title = 'Going to delete "{}"'.format(entity['name'])
-
             items = []
-            item = {
+            entity = entities[0]
+            title = 'Choose items to delete from "{}"'.format(entity['name'])
+            project = entity['project']
+
+            self.db.Session['AVALON_PROJECT'] = project["full_name"]
+
+            av_entity = self.db.find_one({
+                'type': 'asset',
+                'name': entity['name']
+            })
+
+            asset_label = {
+                'type': 'label',
+                'value': '*Delete whole asset:*'
+            }
+            asset_item = {
+                'label': av_entity['name'],
+                'name': 'whole_asset',
+                'type': 'boolean',
+                'value': False
+            }
+            delete_item = {
                 'label': 'Enter "DELETE" to confirm',
-                'name': 'key',
+                'name': 'delete_key',
                 'type': 'text',
                 'value': ''
             }
-            items.append(item)
+            splitter = {
+                'type': 'label',
+                'value': '{}'.format(200*"-")
+            }
+            subset_label = {
+                'type': 'label',
+                'value': '*Subsets:*'
+            }
+            if av_entity is not None:
+                items.append(delete_item)
+                items.append(splitter)
+                items.append(asset_label)
+                items.append(asset_item)
+                items.append(splitter)
+
+                all_subsets = self.db.find({
+                    'type': 'subset',
+                    'parent': av_entity['_id']
+                })
+
+                subset_items = []
+                for subset in all_subsets:
+                    item = {
+                        'label': subset['name'],
+                        'name': str(subset['_id']),
+                        'type': 'boolean',
+                        'value': False
+                    }
+                    subset_items.append(item)
+                if len(subset_items) > 0:
+                    items.append(subset_label)
+                    items.extend(subset_items)
+            else:
+                return {
+                    'success': False,
+                    'message': 'Didn\'t found assets in avalon'
+                }
 
             return {
                 'items': items,
@@ -69,47 +147,54 @@ class DeleteEntity(BaseAction):
 
         values = event['data']['values']
         if len(values) <= 0:
-            return {
-                'success': True,
-                'message': 'No Assets to delete!'
-            }
-        elif values.get('key', '').lower() != 'delete':
+            return
+        elif values.get('delete_key', '').lower() != 'delete':
             return {
                 'success': False,
-                'message': 'Entered key does not match'
+                'message': 'You didn\'t enter "DELETE" properly!'
             }
+
         entity = entities[0]
         project = entity['project']
 
-        self.db.install()
         self.db.Session['AVALON_PROJECT'] = project["full_name"]
 
-        av_entity = self.db.find_one({
-            'type': 'asset',
-            'name': entity['name']
-        })
+        all_ids = []
+        if values.get('whole_asset', False) is True:
+            av_entity = self.db.find_one({
+                'type': 'asset',
+                'name': entity['name']
+            })
 
-        if av_entity is not None:
-            all_ids = []
-            all_ids.append(av_entity['_id'])
-            all_ids.extend(self.find_child(av_entity))
+            if av_entity is not None:
+                all_ids.append(av_entity['_id'])
+                all_ids.extend(self.find_child(av_entity))
 
-            if len(all_ids) == 0:
-                self.db.uninstall()
-                return {
-                    'success': True,
-                    'message': 'None of assets'
-                }
+            session.delete(entity)
+            session.commit()
+        else:
+            for key, value in values.items():
+                if key == 'delete_key' or value is False:
+                    continue
 
-            or_subquery = []
-            for id in all_ids:
-                or_subquery.append({'_id': id})
-            delete_query = {'$or': or_subquery}
-            self.db.delete_many(delete_query)
+                entity_id = ObjectId(key)
+                av_entity = self.db.find_one({'_id': entity_id})
+                if av_entity is None:
+                    continue
+                all_ids.append(entity_id)
+                all_ids.extend(self.find_child(av_entity))
 
-        session.delete(entity)
-        session.commit()
-        self.db.uninstall()
+        if len(all_ids) == 0:
+            return {
+                'success': True,
+                'message': 'No entities to delete in avalon'
+            }
+
+        or_subquery = []
+        for id in all_ids:
+            or_subquery.append({'_id': id})
+        delete_query = {'$or': or_subquery}
+        self.db.delete_many(delete_query)
 
         return {
             'success': True,
@@ -148,8 +233,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = DeleteEntity(session)
-    action_handler.register()
+    DeleteAsset(session).register()
 
 
 def main(arguments=None):
