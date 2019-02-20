@@ -97,7 +97,7 @@ class DeleteAsset(BaseAction):
                 'name': 'delete_key',
                 'type': 'text',
                 'value': '',
-                'empty_text': 'Type *Delete* here...'
+                'empty_text': 'Type Delete here...'
             }
             splitter = {
                 'type': 'label',
@@ -174,16 +174,23 @@ class DeleteAsset(BaseAction):
             session.delete(entity)
             session.commit()
         else:
+            subset_names = []
             for key, value in values.items():
                 if key == 'delete_key' or value is False:
                     continue
 
                 entity_id = ObjectId(key)
                 av_entity = self.db.find_one({'_id': entity_id})
+                subset_names.append(av_entity['name'])
                 if av_entity is None:
                     continue
                 all_ids.append(entity_id)
                 all_ids.extend(self.find_child(av_entity))
+
+            for ft_asset in entity['assets']:
+                if ft_asset['name'] in subset_names:
+                    session.delete(ft_asset)
+                    session.commit()
 
         if len(all_ids) == 0:
             return {
