@@ -39,6 +39,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "yeticache",
                 "nukescript",
                 "review",
+                "workfile",
                 "scene",
                 "ass"]
     exclude_families = ["clip"]
