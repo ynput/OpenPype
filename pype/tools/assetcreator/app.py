@@ -2,10 +2,13 @@ import os
 import sys
 import json
 
-import ftrack_api_old as ftrack_api
+try:
+    import ftrack_api_old as ftrack_api
+except Exception:
+    import ftrack_api
 from pype import lib as pypelib
 from avalon.vendor.Qt import QtWidgets, QtCore
-from avalon import io, api, style
+from avalon import io, api, style, schema
 from avalon.tools import lib as parentlib
 from . import widget, model
 
@@ -42,13 +45,13 @@ class Window(QtWidgets.QDialog):
         label_outlink = QtWidgets.QLabel("Outlink:")
         input_outlink = QtWidgets.QLineEdit()
         input_outlink.setReadOnly(True)
-        input_outlink.setStyleSheet("background-color: #333333;")  # greyed out
+        input_outlink.setStyleSheet("background-color: #333333;")
         checkbox_outlink = QtWidgets.QCheckBox("Use outlink")
         # Parent
         label_parent = QtWidgets.QLabel("Parent:")
         input_parent = QtWidgets.QLineEdit()
         input_parent.setReadOnly(True)
-        input_parent.setStyleSheet("background-color: #333333;")  # greyed out
+        input_parent.setStyleSheet("background-color: #333333;")
 
         # Name
         label_name = QtWidgets.QLabel("Name:")
@@ -236,25 +239,25 @@ class Window(QtWidgets.QDialog):
             return
 
         # Get Ftrack entity of parent
-        ft_asset = None
+        ft_parent = None
         assets_model = self.data["model"]["assets"]
         selected = assets_model.get_selected_assets()
-        asset = io.find_one({"_id": selected[0], "type": "asset"})
-        asset_id = asset.get('data', {}).get('ftrackId', None)
-        asset_entity_type = asset.get('data', {}).get('entityType', None)
+        parent = io.find_one({"_id": selected[0], "type": "asset"})
+        asset_id = parent.get('data', {}).get('ftrackId', None)
+        asset_entity_type = parent.get('data', {}).get('entityType', None)
         asset_query = '{} where id is "{}"'
         if asset_id is not None and asset_entity_type is not None:
             try:
-                ft_asset = session.query(asset_query.format(
+                ft_parent = session.query(asset_query.format(
                     asset_entity_type, asset_id)
                 ).one()
             except Exception:
-                ft_asset = None
+                ft_parent = None
 
-        if ft_asset is None:
-            ft_asset = self.get_ftrack_asset(asset, ft_project)
+        if ft_parent is None:
+            ft_parent = self.get_ftrack_asset(parent, ft_project)
 
-        if ft_asset is None:
+        if ft_parent is None:
             message.setText("Parent's Ftrack entity was not found")
             message.show()
             return
@@ -269,7 +272,7 @@ class Window(QtWidgets.QDialog):
             message.show()
             return
 
-        for children in ft_asset['children']:
+        for children in ft_parent['children']:
             if children['name'] == name:
                 message.setText("Entered Asset name is occupied")
                 message.show()
@@ -302,12 +305,11 @@ class Window(QtWidgets.QDialog):
         asset_build_data = {
             'name': name,
             'project_id': ft_project['id'],
-            'parent_id': ft_asset['id'],
+            'parent_id': ft_parent['id'],
             'type': asset_type
         }
 
         new_entity = session.create('AssetBuild', asset_build_data)
-        session.commit()
 
         task_data = {
             'project_id': ft_project['id'],
@@ -320,7 +322,42 @@ class Window(QtWidgets.QDialog):
             task_data['type_id'] = type['id']
             task_data['name'] = task
             session.create('Task', task_data)
-            session.commit()
+
+        av_project = io.find_one({'type': 'project'})
+        silo = parent['silo']
+        if silo is None:
+            silo = parent['name']
+
+        hiearchy_items = []
+        hiearchy_items.append(parent['name'])
+        hiearchy_items.extend(self.get_avalon_parent(parent))
+        hierarchy = os.path.sep.join(hiearchy_items)
+        new_asset_data = {
+            'ftrackId': new_entity['id'],
+            'entityType': new_entity.entity_type,
+            'visualParent': parent['_id'],
+            'tasks': tasks,
+            'parents': hiearchy_items,
+            'hierarchy': hierarchy
+        }
+        new_asset_info = {
+            'parent': av_project['_id'],
+            'name': name,
+            'schema': pypelib.get_avalon_asset_template_schema(),
+            'silo': silo,
+            'type': 'asset',
+            'data': new_asset_data
+        }
+        try:
+            schema.validate(new_asset_info)
+        except Exception:
+            message.setText((
+                'Asset information are not valid'
+                ' to create asset in avalon database'
+            ))
+            message.show()
+        io.insert_one(new_asset_info)
+        session.commit()
 
         outlink_cb = self.data['inputs']['outlink_cb']
         if outlink_cb.isChecked() is True:
