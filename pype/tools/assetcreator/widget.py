@@ -496,6 +496,7 @@ class AssetWidget(QtWidgets.QWidget):
         self.view = view
 
     def _refresh_model(self):
+        self.model.refresh()
         self.assets_refreshed.emit()
 
     def refresh(self):
