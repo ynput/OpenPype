@@ -19,10 +19,18 @@ class AssetCreator(api.Action):
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
-
-        return True
+        if "AVALON_PROJECT" in session:
+            return True
+        return False
 
     def process(self, session, **kwargs):
-        return lib.launch(executable="python",
-                          args=["-u", "-m", "pype.tools.assetcreator",
-                                session['AVALON_PROJECT']])
+        asset = None
+        if 'AVALON_ASSET' in session:
+            asset = session['AVALON_ASSET']
+        return lib.launch(
+            executable="python",
+            args=[
+                "-u", "-m", "pype.tools.assetcreator",
+                session['AVALON_PROJECT'], asset
+            ]
+        )
