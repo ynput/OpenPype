@@ -14,7 +14,7 @@ class AssetCreator(api.Action):
 
     name = "asset_creator"
     label = "Asset Creator"
-    icon = "retweet"
+    icon = "plus-square"
     order = 250
 
     def is_compatible(self, session):
