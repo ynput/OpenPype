@@ -418,7 +418,7 @@ class Window(QtWidgets.QDialog):
 
         checkbox_app = self.data['inputs']['open_app']
         if checkbox_app is not None and checkbox_app.isChecked() is True:
-            origin_asset = api.Session.get('AVALON_TASK', None)
+            origin_asset = api.Session.get('AVALON_ASSET', None)
             origin_task = api.Session.get('AVALON_TASK', None)
             asset_name = name
             task_view = self.data["view"]["tasks"]
@@ -433,6 +433,7 @@ class Window(QtWidgets.QDialog):
             try:
                 api.update_current_task(task=task_name, asset=asset_name)
                 self.open_app()
+
             finally:
                 if origin_task is not None and origin_asset is not None:
                     api.update_current_task(

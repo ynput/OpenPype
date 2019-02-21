@@ -189,7 +189,7 @@ class TasksTemplateModel(TreeModel):
 
     def __init__(self):
         super(TasksTemplateModel, self).__init__()
-        self.selectable = True
+        self.selectable = False
         self._icons = {
             "__default__": awesome.icon("fa.folder-o",
                                         color=style.colors.default)
