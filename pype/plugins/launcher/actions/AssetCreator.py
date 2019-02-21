@@ -24,7 +24,7 @@ class AssetCreator(api.Action):
         return False
 
     def process(self, session, **kwargs):
-        asset = None
+        asset = ''
         if 'AVALON_ASSET' in session:
             asset = session['AVALON_ASSET']
         return lib.launch(

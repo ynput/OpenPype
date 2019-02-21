@@ -497,7 +497,7 @@ def cli(args):
     io.install()
 
     api.Session["AVALON_PROJECT"] = project
-    if asset is not None:
+    if asset != '':
         api.Session["AVALON_ASSET"] = asset
 
     show()
