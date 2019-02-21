@@ -488,58 +488,18 @@ class AssetWidget(QtWidgets.QWidget):
         selection = view.selectionModel()
         selection.selectionChanged.connect(self.selection_changed)
         selection.currentChanged.connect(self.current_changed)
-        # silo.silo_changed.connect(self._on_silo_changed)
         refresh.clicked.connect(self.refresh)
 
         self.refreshButton = refresh
-        # self.silo = silo
         self.model = model
         self.proxy = proxy
         self.view = view
 
-    # def _on_silo_changed(self):
-    #     """Callback for silo change"""
-    #
-    #     self._refresh_model()
-    #     silo = self.get_current_silo()
-    #     self.silo_changed.emit(silo)
-    #     self.selection_changed.emit()
-
     def _refresh_model(self):
-
-        # silo = self.get_current_silo()
-        # with preserve_expanded_rows(self.view,
-        #                             column=0,
-        #                             role=self.model.ObjectIdRole):
-        #     with preserve_selection(self.view,
-        #                             column=0,
-        #                             role=self.model.ObjectIdRole):
-        #         self.model.set_silo(silo)
-
         self.assets_refreshed.emit()
 
     def refresh(self):
-
-        # silos = _list_project_silos()
-        # self.silo.set_silos(silos)
-        # set first silo as active so tasks are shown
-        # if len(silos) > 0:
-        #     self.silo.set_current_silo(self.silo.tabText(0))
         self._refresh_model()
-
-    # def get_current_silo(self):
-    #     """Returns the currently active silo."""
-    #     return self.silo.get_current_silo()
-
-    # def get_silo_object(self, silo_name=None):
-    #     """ Returns silo object from db. None if not found.
-    #     Current silo is found if silo_name not entered."""
-    #     if silo_name is None:
-    #         silo_name = self.get_current_silo()
-    #     try:
-    #         return io.find_one({"type": "asset", "name": silo_name})
-    #     except Exception:
-    #         return None
 
     def get_active_asset(self):
         """Return the asset id the current asset."""
@@ -554,10 +514,6 @@ class AssetWidget(QtWidgets.QWidget):
         selection = self.view.selectionModel()
         rows = selection.selectedRows()
         return [row.data(self.model.ObjectIdRole) for row in rows]
-
-    # def set_silo(self, silo):
-    #     """Set the active silo tab"""
-    #     self.silo.set_current_silo(silo)
 
     def select_assets(self, assets, expand=True):
         """Select assets by name.
