@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-
+from subprocess import Popen
 try:
     import ftrack_api_old as ftrack_api
 except Exception:
@@ -21,8 +21,9 @@ class Window(QtWidgets.QDialog):
 
     """
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, context=None):
         super(Window, self).__init__(parent)
+        self.context = context
         project_name = io.active_project()
         self.setWindowTitle("Asset creator ({0})".format(project_name))
         self.setFocusPolicy(QtCore.Qt.StrongFocus)
@@ -86,11 +87,17 @@ class Window(QtWidgets.QDialog):
         # Add button
         btns_widget = QtWidgets.QWidget()
         btns_widget.setContentsMargins(0, 0, 0, 0)
-        btn_layout = QtWidgets.QVBoxLayout(btns_widget)
+        btn_layout = QtWidgets.QHBoxLayout(btns_widget)
         btn_create_asset = QtWidgets.QPushButton("Create asset")
         btn_create_asset.setToolTip(
             "Creates all neccessary components for asset"
         )
+        checkbox_app = None
+        if self.context is not None:
+            checkbox_app = QtWidgets.QCheckBox("Open {}".format(
+                self.context.capitalize())
+            )
+            btn_layout.addWidget(checkbox_app)
         btn_layout.addWidget(btn_create_asset)
 
         task_view = QtWidgets.QTreeView()
@@ -130,6 +137,9 @@ class Window(QtWidgets.QDialog):
             "label": {
                 "message": message,
             },
+            "view": {
+                "tasks": task_view
+            },
             "model": {
                 "assets": assets,
                 "tasks": task_model
@@ -140,7 +150,8 @@ class Window(QtWidgets.QDialog):
                 "parent": input_parent,
                 "name": input_name,
                 "assetbuild": combo_assetbuilt,
-                "tasktemplate": combo_task_template
+                "tasktemplate": combo_task_template,
+                "open_app": checkbox_app
             },
             "buttons": {
                 "create_asset": btn_create_asset
@@ -154,12 +165,23 @@ class Window(QtWidgets.QDialog):
         combo_task_template.currentTextChanged.connect(
             self.on_task_template_changed
         )
+        if self.context is not None:
+            checkbox_app.toggled.connect(self.on_app_checkbox_change)
         # on start
         self.on_start()
 
         self.resize(600, 500)
 
         self.echo("Connected to project: {0}".format(project_name))
+
+    def open_app(self):
+        if self.context == 'maya':
+            Popen("maya")
+        else:
+            message = QtWidgets.QMessageBox(self)
+            message.setWindowTitle("App is not set")
+            message.setIcon(QtWidgets.QMessageBox.Critical)
+            message.show()
 
     def on_start(self):
         # Load config
@@ -394,6 +416,29 @@ class Window(QtWidgets.QDialog):
             session.create('TypedContextLink', link_data)
             session.commit()
 
+        checkbox_app = self.data['inputs']['open_app']
+        if checkbox_app is not None and checkbox_app.isChecked() is True:
+            origin_asset = api.Session.get('AVALON_TASK', None)
+            origin_task = api.Session.get('AVALON_TASK', None)
+            asset_name = name
+            task_view = self.data["view"]["tasks"]
+            task_model = self.data["model"]["tasks"]
+            try:
+                index = task_view.selectedIndexes()[0]
+            except Exception:
+                message.setText("No task is selected. App won't be launched")
+                message.show()
+                return
+            task_name = task_model.itemData(index)[0]
+            try:
+                api.update_current_task(task=task_name, asset=asset_name)
+                self.open_app()
+            finally:
+                if origin_task is not None and origin_asset is not None:
+                    api.update_current_task(
+                        task=origin_task, asset=origin_asset
+                    )
+
         message.setWindowTitle("Asset Created")
         message.setText("Asset Created successfully")
         message.setIcon(QtWidgets.QMessageBox.Information)
@@ -458,6 +503,14 @@ class Window(QtWidgets.QDialog):
         ab_combobox.clear()
         ab_combobox.addItems(types)
 
+    def on_app_checkbox_change(self):
+        task_model = self.data['model']['tasks']
+        app_checkbox = self.data['inputs']['open_app']
+        if app_checkbox.isChecked() is True:
+            task_model.selectable = True
+        else:
+            task_model.selectable = False
+
     def on_outlink_checkbox_change(self):
         checkbox_outlink = self.data['inputs']['outlink_cb']
         outlink_input = self.data['inputs']['outlink']
@@ -496,7 +549,7 @@ class Window(QtWidgets.QDialog):
             parent_input.setText('< Nothing is selected >')
 
 
-def show(root=None, debug=False, parent=None):
+def show(parent=None, debug=False, context=None):
     """Display Loader GUI
 
     Arguments:
@@ -515,7 +568,7 @@ def show(root=None, debug=False, parent=None):
         io.install()
 
     with parentlib.application():
-        window = Window(parent)
+        window = Window(parent, context)
         window.setStyleSheet(style.load_stylesheet())
         window.show()
 

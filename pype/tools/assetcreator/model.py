@@ -189,6 +189,7 @@ class TasksTemplateModel(TreeModel):
 
     def __init__(self):
         super(TasksTemplateModel, self).__init__()
+        self.selectable = True
         self._icons = {
             "__default__": awesome.icon("fa.folder-o",
                                         color=style.colors.default)
@@ -222,9 +223,13 @@ class TasksTemplateModel(TreeModel):
         self.endResetModel()
 
     def flags(self, index):
-        return (
-            QtCore.Qt.ItemIsEnabled
-        )
+        if self.selectable is False:
+            return QtCore.Qt.ItemIsEnabled
+        else:
+            return (
+                QtCore.Qt.ItemIsEnabled |
+                QtCore.Qt.ItemIsSelectable
+            )
 
     def data(self, index, role):
 
