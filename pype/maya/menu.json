@@ -20,6 +20,13 @@
 	"tooltip": "Add assets to the project"
 },
 {
+	"type": "action",
+	"command": "from pype.tools.assetcreator import app as assetcreator; assetcreator.show()",
+	"sourcetype": "python",
+	"title": "Asset Creator",
+	"tooltip": "Open the Asset Creator"
+},
+{
 	"type": "separator"
 },
 {
