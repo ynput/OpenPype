@@ -2,6 +2,8 @@ import pype.maya.plugin
 from avalon import api, io
 import json
 import pype.maya.lib
+from collections import defaultdict
+
 
 class LookLoader(pype.maya.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
@@ -102,27 +104,35 @@ class LookLoader(pype.maya.plugin.ReferenceLoader):
             cmds.sets(invalid, remove=node)
 
         # Get container members
-        self.log.info("container {}".format(container))
-        shader_nodes = members
+        shader_nodes = cmds.ls(members, type='shadingEngine')
 
-        nodes = []
+        nodes_list = []
         for shader in shader_nodes:
-            nodes.append(cmds.listConnections(cmds.listHistory(shader, f=1), type='mesh'))
-        self.log.info("nodes {}".format(nodes))
+            connections = cmds.listConnections(cmds.listHistory(shader, f=1),
+                                               type='mesh')
+            if connections:
+                for connection in connections:
+                    nodes_list.extend(cmds.listRelatives(connection,
+                                                         shapes=True))
+        nodes = set(nodes_list)
 
         json_representation = io.find_one({"type": "representation",
                                            "parent": representation['parent'],
                                            "name": "json"})
-        self.log.info("Found json representation {}".format(json_representation))
 
         # Load relationships
         shader_relation = api.get_representation_path(json_representation)
         with open(shader_relation, "r") as f:
             relationships = json.load(f)
 
+        attributes = relationships.get("attributes", [])
 
-        # Assign relationships
-        pype.maya.lib.apply_shaders(relationships, shader_nodes, nodes)
+        # region compute lookup
+        nodes_by_id = defaultdict(list)
+        for n in nodes:
+            nodes_by_id[pype.maya.lib.get_id(n)].append(n)
+
+        pype.maya.lib.apply_attributes(attributes, nodes_by_id)
 
         # Update metadata
         cmds.setAttr("{}.representation".format(node),
