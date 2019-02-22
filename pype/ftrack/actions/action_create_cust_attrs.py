@@ -130,12 +130,11 @@ class CustomAttributes(BaseAction):
             'dynamic enumerator', 'number'
         ]
 
-    def discover(self, session, entities, event):
+    def prediscover(self, event):
         '''
         Validation
         - action is only for Administrators
         '''
-
         return True
 
     def launch(self, session, entities, event):

@@ -18,7 +18,7 @@ class JobKiller(BaseAction):
     #: Action description.
     description = 'Killing all running jobs younger than day'
 
-    def discover(self, session, entities, event):
+    def prediscover(self, event):
         ''' Validation '''
 
         return True

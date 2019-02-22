@@ -18,7 +18,7 @@ class AssetsRemover(BaseAction):
     #: Db
     db = DbConnector()
 
-    def discover(self, session, entities, event):
+    def prediscover(self, event):
         ''' Validation '''
         selection = event["data"].get("selection", None)
         if selection is None or len(selection) != 1:
