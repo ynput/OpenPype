@@ -19,6 +19,27 @@ class DJVViewAction(BaseHandler):
         '''Expects a ftrack_api.Session instance'''
         super().__init__(session)
 
+        items = []
+        applications = self.get_applications()
+        applications = sorted(
+            applications, key=lambda application: application["label"]
+        )
+
+        for application in applications:
+            self.djv_path = application.get("path", None)
+            applicationIdentifier = application["identifier"]
+            label = application["label"]
+            items.append({
+                "actionIdentifier": self.identifier,
+                "label": label,
+                "variant": application.get("variant", None),
+                "description": application.get("description", None),
+                "icon": application.get("icon", "default"),
+                "applicationIdentifier": applicationIdentifier
+            })
+
+        self.items = items
+
         if self.identifier is None:
             raise ValueError(
                 'Action missing identifier.'
@@ -43,27 +64,8 @@ class DJVViewAction(BaseHandler):
         if not self.is_valid_selection(event):
             return
 
-        items = []
-        applications = self.get_applications()
-        applications = sorted(
-            applications, key=lambda application: application["label"]
-        )
-
-        for application in applications:
-            self.djv_path = application.get("path", None)
-            applicationIdentifier = application["identifier"]
-            label = application["label"]
-            items.append({
-                "actionIdentifier": self.identifier,
-                "label": label,
-                "variant": application.get("variant", None),
-                "description": application.get("description", None),
-                "icon": application.get("icon", "default"),
-                "applicationIdentifier": applicationIdentifier
-            })
-
         return {
-            "items": items
+            "items": self.items
         }
 
     def register(self):
