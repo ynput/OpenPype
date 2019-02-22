@@ -1,6 +1,5 @@
 import pyblish.api
 
-import avalon.api as api
 from avalon.vendor import requests
 from pype.plugin import contextplugin_should_run
 import os
@@ -23,6 +22,7 @@ class ValidateDeadlineConnection(pyblish.api.ContextPlugin):
             AVALON_DEADLINE = os.environ["AVALON_DEADLINE"]
         except KeyError:
             self.log.error("Deadline REST API url not found.")
+            raise ValueError("Deadline REST API url not found.")
 
         # Check response
         response = requests.get(AVALON_DEADLINE)
