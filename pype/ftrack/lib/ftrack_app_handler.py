@@ -107,9 +107,9 @@ class AppAction(BaseHandler):
         if avalon_project is None:
             return False
         else:
-            apps = []
-            for app in avalon_project['config']['apps']:
-                apps.append(app['name'])
+            apps = [app['name'] for app in avalon_project['config'].get(
+                'apps', []
+            )]
 
             if self.identifier not in apps:
                 return False

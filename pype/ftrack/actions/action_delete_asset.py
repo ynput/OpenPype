@@ -33,17 +33,7 @@ class DeleteAsset(BaseAction):
         if entityType.lower() not in valid:
             return False
 
-        discover = False
-        roleList = ['Pypeclub', 'Administrator']
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
-
-        for role in user['user_security_roles']:
-            if role['security_role']['name'] in roleList:
-                discover = True
-                break
-
-        return discover
+        return True
 
     def _launch(self, event):
         self.reset_session()
@@ -320,7 +310,23 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    DeleteAsset(session).register()
+    roleList = ['Pypeclub', 'Administrator']
+
+    username = session.api_user
+    user = session.query('User where username is "{}"'.format(username)).one()
+    available = False
+    for role in user['user_security_roles']:
+        if role['security_role']['name'] in roleList:
+            available = True
+            break
+    if available is True:
+        DeleteAsset(session).register()
+    else:
+        logging.info(
+            "!!! You're missing required permissions for action {}".format(
+                DeleteAsset.__name__
+            )
+        )
 
 
 def main(arguments=None):

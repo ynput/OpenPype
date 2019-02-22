@@ -141,8 +141,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = CreateFolders(session)
-    action_handler.register()
+    CreateFolders(session).register()
 
 
 def main(arguments=None):
