@@ -98,7 +98,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     plug-in.
 
     Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable AVALON_DEADLINE
+    supplied via the environment variable DEADLINE_REST_URL
 
     Options in instance.data:
         - deadlineSubmission (dict, Required): The returned .json
@@ -133,9 +133,9 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+        DEADLINE_REST_URL = api.Session.get("DEADLINE_REST_URL",
                                           "http://localhost:8082")
-        assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
         # try:
         #     deadline_url = os.environ["DEADLINE_REST_URL"]
@@ -326,7 +326,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
-        url = "{}/api/jobs".format(AVALON_DEADLINE)
+        url = "{}/api/jobs".format(DEADLINE_REST_URL)
         response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)
