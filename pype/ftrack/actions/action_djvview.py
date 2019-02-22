@@ -27,6 +27,27 @@ class DJVViewAction(BaseHandler):
         self.djv_path = None
         self.config_data = None
 
+        items = []
+        if self.config_data is None:
+            self.load_config_data()
+
+        application = self.get_application()
+        if application is None:
+            return
+
+        applicationIdentifier = application["identifier"]
+        label = application["label"]
+        items.append({
+            "actionIdentifier": self.identifier,
+            "label": label,
+            "variant": application.get("variant", None),
+            "description": application.get("description", None),
+            "icon": application.get("icon", "default"),
+            "applicationIdentifier": applicationIdentifier
+        })
+
+        self.items = items
+
         if self.identifier is None:
             raise ValueError(
                 'Action missing identifier.'
@@ -51,27 +72,8 @@ class DJVViewAction(BaseHandler):
         if not self.is_valid_selection(event):
             return
 
-        items = []
-        if self.config_data is None:
-            self.load_config_data()
-
-        application = self.get_application()
-        if application is None:
-            return
-
-        applicationIdentifier = application["identifier"]
-        label = application["label"]
-        items.append({
-            "actionIdentifier": self.identifier,
-            "label": label,
-            "variant": application.get("variant", None),
-            "description": application.get("description", None),
-            "icon": application.get("icon", "default"),
-            "applicationIdentifier": applicationIdentifier
-        })
-
         return {
-            "items": items
+            "items": self.items
         }
 
     def register(self):
