@@ -1,25 +1,39 @@
-import sys
 import os
 import subprocess
-
+import json
+from pype import lib as pypelib
 from avalon import api
 
 
-def open(filepath):
-    """Open file with system default executable"""
-    if sys.platform.startswith('darwin'):
-        subprocess.call(('open', filepath))
-    elif os.name == 'nt':
-        os.startfile(filepath)
-    elif os.name == 'posix':
-        subprocess.call(('xdg-open', filepath))
+def get_config_data():
+    path_items = [pypelib.get_presets_path(), 'djv_view', 'config.json']
+    filepath = os.path.sep.join(path_items)
+    data = dict()
+    with open(filepath) as data_file:
+        data = json.load(data_file)
+    return data
+
+
+def get_families():
+    families = []
+    paths = get_config_data().get('djv_paths', [])
+    for path in paths:
+        if os.path.exists(path):
+            families.append("*")
+            break
+    return families
+
+
+def get_representation():
+    return get_config_data().get('file_ext', [])
 
 
 class OpenInDJV(api.Loader):
     """Open Image Sequence with system default"""
 
-    # families = ["write"]
-    representations = ["*"]
+    config_data = get_config_data()
+    families = get_families()
+    representations = get_representation()
 
     label = "Open in DJV"
     order = -10
@@ -27,23 +41,96 @@ class OpenInDJV(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-
-        directory = self.fname
+        self.djv_path = None
+        paths = get_config_data().get('djv_paths', [])
+        for path in paths:
+            if os.path.exists(path):
+                self.djv_path = path
+                break
+        directory = os.path.dirname(self.fname)
         from avalon.vendor import clique
 
         pattern = clique.PATTERNS["frames"]
         files = os.listdir(directory)
-        collections, remainder = clique.assemble(files,
-                                                 patterns=[pattern],
-                                                 minimum_items=1)
+        collections, remainder = clique.assemble(
+            files,
+            patterns=[pattern],
+            minimum_items=1
+        )
 
-        assert not remainder, ("There shouldn't have been a remainder for "
-                               "'%s': %s" % (directory, remainder))
-
-        seqeunce = collections[0]
-        first_image = list(seqeunce)[0]
+        if not remainder:
+            seqeunce = collections[0]
+            first_image = list(seqeunce)[0]
+        else:
+            first_image = self.fname
         filepath = os.path.normpath(os.path.join(directory, first_image))
 
         self.log.info("Opening : {}".format(filepath))
 
-        open(filepath)
+        # file_type = filepath.split(".")[-1]
+        #
+        # # TODO Is this proper way?
+        context.get('project', {}).get('data', {}).get('fps', 24)
+
+        #
+        # # TODO issequence is probably already built-in validation in ftrack
+        # isseq = re.findall('%[0-9]*d', filename)
+        # if len(isseq) > 0:
+        #     if len(isseq) == 1:
+        #         frames = []
+        #         padding = re.findall('%[0-9]*d', filename).pop()
+        #         index = filename.find(padding)
+        #
+        #         full_file = filename[0:index-1]
+        #         file = full_file.split(os.sep)[-1]
+        #         folder = os.path.dirname(full_file)
+        #
+        #         for fname in os.listdir(path=folder):
+        #             if fname.endswith(file_type) and file in fname:
+        #                 frames.append(int(fname.split(".")[-2]))
+        #
+        #         if len(frames) > 0:
+        #             start = min(frames)
+        #             end = max(frames)
+        #
+        #             range = (padding % start) + '-' + (padding % end)
+        #             filename = re.sub('%[0-9]*d', range, filename)
+
+        cmd = []
+        # DJV path
+        cmd.append(os.path.normpath(self.djv_path))
+        # DJV Options Start ##############################################
+        '''layer name'''
+        # cmd.append('-file_layer (value)')
+        ''' Proxy scale: 1/2, 1/4, 1/8'''
+        cmd.append('-file_proxy 1/2')
+        ''' Cache: True, False.'''
+        cmd.append('-file_cache True')
+        ''' Start in full screen '''
+        # cmd.append('-window_fullscreen')
+        ''' Toolbar controls: False, True.'''
+        # cmd.append("-window_toolbar False")
+        ''' Window controls: False, True.'''
+        # cmd.append("-window_playbar False")
+        ''' Grid overlay: None, 1x1, 10x10, 100x100.'''
+        # cmd.append("-view_grid None")
+        ''' Heads up display: True, False.'''
+        # cmd.append("-view_hud True")
+        ''' Playback: Stop, Forward, Reverse.'''
+        cmd.append("-playback Forward")
+        ''' Frame.'''
+        # cmd.append("-playback_frame (value)")
+        cmd.append("-playback_speed " + str(fps))
+        ''' Timer: Sleep, Timeout. Value: Sleep.'''
+        # cmd.append("-playback_timer (value)")
+        ''' Timer resolution (seconds): 0.001.'''
+        # cmd.append("-playback_timer_resolution (value)")
+        ''' Time units: Timecode, Frames.'''
+        cmd.append("-time_units Frames")
+        # DJV Options End ################################################
+
+        # PATH TO COMPONENT
+        cmd.append(os.path.normpath(filepath))
+
+        # Run DJV with these commands
+        subprocess.Popen(' '.join(cmd))
