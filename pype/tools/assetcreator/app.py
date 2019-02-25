@@ -384,6 +384,7 @@ class Window(QtWidgets.QDialog):
         hiearchy_items = []
         hiearchy_items.append(parent['name'])
         hiearchy_items.extend(self.get_avalon_parent(parent))
+        hiearchy_items = reversed(hiearchy_items)
         hierarchy = os.path.sep.join(hiearchy_items)
         new_asset_data = {
             'ftrackId': new_entity['id'],
