@@ -242,6 +242,7 @@ class Window(QtWidgets.QDialog):
             error_message = "Parent is not selected"
         elif test_name == '':
             error_message = "Name is not set"
+
         if error_message is not None:
             message.setText(error_message)
             message.show()
@@ -256,6 +257,18 @@ class Window(QtWidgets.QDialog):
             message.setText("Entered Asset name is occupied")
             message.show()
             return
+
+        checkbox_app = self.data['inputs']['open_app']
+        if checkbox_app is not None and checkbox_app.isChecked() is True:
+            task_view = self.data["view"]["tasks"]
+            task_model = self.data["model"]["tasks"]
+            try:
+                index = task_view.selectedIndexes()[0]
+                task_name = task_model.itemData(index)[0]
+            except Exception:
+                message.setText("Please select task")
+                message.show()
+                return
 
         # Get ftrack session
         if self.session is None:
@@ -434,7 +447,6 @@ class Window(QtWidgets.QDialog):
             session.create('TypedContextLink', link_data)
             session.commit()
 
-        checkbox_app = self.data['inputs']['open_app']
         if checkbox_app is not None and checkbox_app.isChecked() is True:
             origin_asset = api.Session.get('AVALON_ASSET', None)
             origin_task = api.Session.get('AVALON_TASK', None)
