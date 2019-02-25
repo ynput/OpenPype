@@ -184,12 +184,26 @@ class Window(QtWidgets.QDialog):
             message.show()
 
     def on_start(self):
+        project_name = io.Session['AVALON_PROJECT']
+        project_query = 'Project where full_name is "{}"'.format(project_name)
+        if self.session is None:
+            session = ftrack_api.Session()
+            self.session = session
+        else:
+            session = self.session
+        ft_project = session.query(project_query).one()
+        schema_name = ft_project['project_schema']['name']
         # Load config
         preset_path = pypelib.get_presets_path()
-        config_file_items = [
-            preset_path, 'tools', 'asset_creator', 'config.json'
-        ]
-        config_file = os.path.sep.join(config_file_items)
+        schemas_items = [preset_path, 'ftrack', 'project_schemas']
+        schema_dir = os.path.sep.join(schemas_items)
+
+        config_file = 'default.json'
+        for filename in os.listdir(schema_dir):
+            if filename.startswith(schema_name):
+                config_file = filename
+                break
+        config_file = os.path.sep.join([schema_dir, config_file])
         with open(config_file) as data_file:
             self.config_data = json.load(data_file)
 
@@ -302,7 +316,11 @@ class Window(QtWidgets.QDialog):
 
         task_template_combo = self.data['inputs']['tasktemplate']
         task_template = task_template_combo.currentText()
-        tasks = self.config_data['task_templates'].get(task_template, [])
+        tasks = []
+        for template in self.config_data['task_templates']:
+            if template['name'] == task_template:
+                tasks = template['task_types']
+                break
 
         available_task_types = []
         task_types = ft_project['project_schema']['_task_type_schema']
@@ -488,18 +506,22 @@ class Window(QtWidgets.QDialog):
         print(message)
 
     def load_task_templates(self):
-        templates = self.config_data.get('task_templates', {})
+        templates = self.config_data.get('task_templates', [])
         all_names = []
-        for name, statuses in templates.items():
-            all_names.append(name)
+        for template in templates:
+            all_names.append(template['name'])
 
         tt_combobox = self.data['inputs']['tasktemplate']
         tt_combobox.clear()
         tt_combobox.addItems(all_names)
 
     def load_assetbuild_types(self):
-        types = self.config_data.get('assetbuild_types', [])
-
+        types = []
+        schemas = self.config_data.get('schemas', [])
+        for _schema in schemas:
+            if _schema['object_type'] == 'Asset Build':
+                types = _schema['task_types']
+                break
         ab_combobox = self.data['inputs']['assetbuild']
         ab_combobox.clear()
         ab_combobox.addItems(types)
@@ -526,7 +548,11 @@ class Window(QtWidgets.QDialog):
         combobox = self.data['inputs']['tasktemplate']
         task_model = self.data['model']['tasks']
         name = combobox.currentText()
-        tasks = self.config_data['task_templates'].get(name, [])
+        tasks = []
+        for template in self.config_data['task_templates']:
+            if template['name'] == name:
+                tasks = template['task_types']
+                break
         task_model.set_tasks(tasks)
 
     def on_asset_changed(self):

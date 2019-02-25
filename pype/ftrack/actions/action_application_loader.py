@@ -18,7 +18,6 @@ def registerApp(app, session):
             '"{0}" - App "name" and "variant" is not separated by "_"'
             ' (variant is not set)'
         ).format(app['name']))
-        return
 
     abspath = lib.which_app(app['name'])
     if abspath is None:

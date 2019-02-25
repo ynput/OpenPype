@@ -1,6 +1,3 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2015 Milan Kolar
-
 import sys
 import argparse
 import logging
