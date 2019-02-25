@@ -61,16 +61,19 @@ class OpenInDJV(api.Loader):
         if not remainder:
             seqeunce = collections[0]
             first_image = list(seqeunce)[0]
+            # start = min(collections)
+            # end = max(collections)
+            #
+            # range = (padding % start) + '-' + (padding % end)
+            # filename = re.sub('%[0-9]*d', range, filename)
         else:
             first_image = self.fname
         filepath = os.path.normpath(os.path.join(directory, first_image))
 
         self.log.info("Opening : {}".format(filepath))
 
-        # file_type = filepath.split(".")[-1]
-        #
-        # # TODO Is this proper way?
-        context.get('project', {}).get('data', {}).get('fps', 24)
+        fps = context.get('project', {}).get('data', {}).get('fps', 24)
+
 
         #
         # # TODO issequence is probably already built-in validation in ftrack
