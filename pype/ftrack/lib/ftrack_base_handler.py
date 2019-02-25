@@ -75,26 +75,33 @@ class BaseHandler(object):
         raise NotImplementedError()
 
     def _discover(self, event):
-        args = self._translate_event(
-            self.session, event
-        )
+        items = {
+            'items': [{
+                'label': self.label,
+                'variant': self.variant,
+                'description': self.description,
+                'actionIdentifier': self.identifier,
+                'icon': self.icon,
+            }]
+        }
+        accepts = self.prediscover(event)
+        if accepts is None:
+            args = self._translate_event(
+                self.session, event
+            )
 
-        accepts = self.discover(
-            self.session, *args
-        )
+            accepts = self.discover(
+                self.session, *args
+            )
 
-        if accepts:
+        if accepts is True:
             self.log.debug(u'Discovering action with selection: {0}'.format(
                 args[1]['data'].get('selection', [])))
-            return {
-                'items': [{
-                    'label': self.label,
-                    'variant': self.variant,
-                    'description': self.description,
-                    'actionIdentifier': self.identifier,
-                    'icon': self.icon,
-                }]
-            }
+            return items
+
+    def prediscover(self, event):
+        "return True if can handle selected entities before handling entities"
+        return None
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.

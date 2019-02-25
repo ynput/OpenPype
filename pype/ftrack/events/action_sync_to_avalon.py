@@ -78,6 +78,7 @@ class Sync_To_Avalon(BaseAction):
         for role in user['user_security_roles']:
             if role['security_role']['name'] in roleList:
                 roleCheck = True
+                break
         if roleCheck is True:
             for entity in entities:
                 if entity.entity_type.lower() not in ['task', 'assetversion']:

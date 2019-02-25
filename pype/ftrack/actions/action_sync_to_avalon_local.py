@@ -63,22 +63,11 @@ class SyncToAvalon(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
-        role_check = False
-        discover = False
-        role_list = ['Pypeclub']
-        user_id = event['source']['user']['id']
-        user = session.query('User where id is ' + user_id).one()
+        for entity in entities:
+            if entity.entity_type.lower() not in ['task', 'assetversion']:
+                return True
 
-        for role in user['user_security_roles']:
-            if role['security_role']['name'] in role_list:
-                role_check = True
-        if role_check is True:
-            for entity in entities:
-                if entity.entity_type.lower() not in ['task', 'assetversion']:
-                    discover = True
-                    break
-
-        return discover
+        return False
 
     def launch(self, session, entities, event):
         message = ""
@@ -234,9 +223,23 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = SyncToAvalon(session)
-    action_handler.register()
+    roleList = ['Pypeclub']
 
+    username = session.api_user
+    user = session.query('User where username is "{}"'.format(username)).one()
+    available = False
+    for role in user['user_security_roles']:
+        if role['security_role']['name'] in roleList:
+            available = True
+            break
+    if available is True:
+        SyncToAvalon(session).register()
+    else:
+        logging.info(
+            "!!! You're missing required permissions for action {}".format(
+                SyncToAvalon.__name__
+            )
+        )
 
 def main(arguments=None):
     '''Set up logging and register action.'''

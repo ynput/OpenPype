@@ -18,10 +18,10 @@ class AssetsRemover(BaseAction):
     #: Db
     db = DbConnector()
 
-    def discover(self, session, entities, event):
+    def prediscover(self, event):
         ''' Validation '''
         selection = event["data"].get("selection", None)
-        if selection is None:
+        if selection is None or len(selection) != 1:
             return False
 
         valid = ["show", "task"]
@@ -29,17 +29,7 @@ class AssetsRemover(BaseAction):
         if entityType.lower() not in valid:
             return False
 
-        discover = False
-        roleList = ['Pypeclub', 'Administrator']
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
-
-        for role in user['user_security_roles']:
-            if role['security_role']['name'] in roleList:
-                discover = True
-                break
-
-        return discover
+        return True
 
     def interface(self, session, entities, event):
         if not event['data'].get('values', {}):
@@ -145,8 +135,23 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = AssetsRemover(session)
-    action_handler.register()
+    roleList = ['Pypeclub', 'Administrator']
+
+    username = session.api_user
+    user = session.query('User where username is "{}"'.format(username)).one()
+    available = False
+    for role in user['user_security_roles']:
+        if role['security_role']['name'] in roleList:
+            available = True
+            break
+    if available is True:
+        AssetsRemover(session).register()
+    else:
+        logging.info(
+            "!!! You're missing required permissions for action {}".format(
+                AssetsRemover.__name__
+            )
+        )
 
 
 def main(arguments=None):

@@ -1,5 +1,3 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
 import os
 import sys
 import platform
@@ -86,17 +84,13 @@ class AppAction(BaseHandler):
 
         '''
 
-        entity = entities[0]
-
-        # TODO Should return False if not TASK ?!!!
-        # TODO Should return False if more than one entity is selected ?!!!
         if (
-            len(entities) > 1 or
-            entity.entity_type.lower() != 'task'
+            len(entities) != 1 or
+            entities[0].entity_type.lower() != 'task'
         ):
             return False
 
-        ft_project = entity['project']
+        ft_project = entities[0]['project']
 
         database = pypelib.get_avalon_database()
         project_name = ft_project['full_name']
@@ -107,9 +101,9 @@ class AppAction(BaseHandler):
         if avalon_project is None:
             return False
         else:
-            apps = []
-            for app in avalon_project['config']['apps']:
-                apps.append(app['name'])
+            apps = [app['name'] for app in avalon_project['config'].get(
+                'apps', []
+            )]
 
             if self.identifier not in apps:
                 return False

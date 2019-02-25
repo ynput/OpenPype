@@ -1,11 +1,10 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
 import os
 import sys
 import argparse
 import json
 import ftrack_api
 import arrow
+import logging
 from pype.ftrack import BaseAction, get_ca_mongoid
 
 """
@@ -131,19 +130,12 @@ class CustomAttributes(BaseAction):
             'dynamic enumerator', 'number'
         ]
 
-    def discover(self, session, entities, event):
+    def prediscover(self, event):
         '''
         Validation
         - action is only for Administrators
         '''
-        success = False
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
-        for role in user['user_security_roles']:
-            if role['security_role']['name'] == 'Administrator':
-                success = True
-
-        return success
+        return True
 
     def launch(self, session, entities, event):
         # JOB SETTINGS
@@ -584,14 +576,27 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = CustomAttributes(session)
-    action_handler.register()
+    roleList = ['Pypeclub', 'Administrator']
+
+    username = session.api_user
+    user = session.query('User where username is "{}"'.format(username)).one()
+    available = False
+    for role in user['user_security_roles']:
+        if role['security_role']['name'] in roleList:
+            available = True
+            break
+    if available is True:
+        CustomAttributes(session).register()
+    else:
+        logging.info(
+            "!!! You're missing required permissions for action {}".format(
+                CustomAttributes.__name__
+            )
+        )
 
 
 def main(arguments=None):
     '''Set up logging and register action.'''
-    import logging
-
     if arguments is None:
         arguments = []
 

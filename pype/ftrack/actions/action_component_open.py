@@ -1,6 +1,3 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2015 Milan Kolar
-
 import sys
 import argparse
 import logging
@@ -45,9 +42,7 @@ class ComponentOpen(BaseAction):
         # Get component filepath
         # TODO with locations it will be different???
         fpath = entity['component_locations'][0]['resource_identifier']
-        items = fpath.split(os.sep)
-        items.pop(-1)
-        fpath = os.sep.join(items)
+        fpath = os.path.normpath(os.path.dirname(fpath))
 
         if os.path.isdir(fpath):
             if 'win' in sys.platform:  # windows
@@ -80,8 +75,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = ComponentOpen(session)
-    action_handler.register()
+    ComponentOpen(session).register()
 
 
 def main(arguments=None):
