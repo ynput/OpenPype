@@ -96,7 +96,7 @@ class BaseHandler(object):
 
         if accepts is True:
             self.log.debug(u'Discovering action with selection: {0}'.format(
-                args[1]['data'].get('selection', [])))
+                event['data'].get('selection', [])))
             return items
 
     def prediscover(self, event):
