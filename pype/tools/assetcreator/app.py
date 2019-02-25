@@ -227,7 +227,6 @@ class Window(QtWidgets.QDialog):
         self.on_asset_changed()
 
     def create_asset(self):
-        # Init validation
         name_input = self.data['inputs']['name']
         name = name_input.text()
         test_name = name.replace(' ', '')
@@ -410,6 +409,8 @@ class Window(QtWidgets.QDialog):
                 ' to create asset in avalon database'
             ))
             message.show()
+            session.rollback()
+            return
         io.insert_one(new_asset_info)
         session.commit()
 
