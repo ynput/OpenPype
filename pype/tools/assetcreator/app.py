@@ -382,9 +382,9 @@ class Window(QtWidgets.QDialog):
             silo = parent['name']
 
         hiearchy_items = []
-        hiearchy_items.append(parent['name'])
         hiearchy_items.extend(self.get_avalon_parent(parent))
-        hiearchy_items = reversed(hiearchy_items)
+        hiearchy_items.append(parent['name'])
+
         hierarchy = os.path.sep.join(hiearchy_items)
         new_asset_data = {
             'ftrackId': new_entity['id'],
@@ -506,8 +506,8 @@ class Window(QtWidgets.QDialog):
         parents = []
         if parent_id is not None:
             parent = io.find_one({'_id': parent_id})
-            parents.append(parent['name'])
             parents.extend(self.get_avalon_parent(parent))
+            parents.append(parent['name'])
         return parents
 
     def echo(self, message):
