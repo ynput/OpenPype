@@ -6,8 +6,8 @@ class VersionToTaskStatus(BaseEvent):
 
     def launch(self, session, entities, event):
         '''Propagates status from version to task when changed'''
+        session.commit()
 
-        # self.log.info(event)
         # start of event procedure ----------------------------------
         for entity in event['data'].get('entities', []):
             # Filter non-assetversions

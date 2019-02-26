@@ -78,7 +78,6 @@ class NextTaskUpdate(BaseEvent):
 
                 session.commit()
 
-
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''
     if not isinstance(session, ftrack_api.session.Session):
