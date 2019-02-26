@@ -479,9 +479,9 @@ class Window(QtWidgets.QDialog):
 
     def get_ftrack_asset(self, asset, ft_project):
         parenthood = []
-        parenthood.append(asset['name'])
         parenthood.extend(self.get_avalon_parent(asset))
-
+        parenthood.append(asset['name'])
+        parenthood = list(reversed(parenthood))
         output_entity = None
         ft_entity = ft_project
         index = len(parenthood) - 1
