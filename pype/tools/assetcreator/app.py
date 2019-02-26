@@ -227,7 +227,6 @@ class Window(QtWidgets.QDialog):
         self.on_asset_changed()
 
     def create_asset(self):
-        # Init validation
         name_input = self.data['inputs']['name']
         name = name_input.text()
         test_name = name.replace(' ', '')
@@ -242,6 +241,7 @@ class Window(QtWidgets.QDialog):
             error_message = "Parent is not selected"
         elif test_name == '':
             error_message = "Name is not set"
+
         if error_message is not None:
             message.setText(error_message)
             message.show()
@@ -256,6 +256,18 @@ class Window(QtWidgets.QDialog):
             message.setText("Entered Asset name is occupied")
             message.show()
             return
+
+        checkbox_app = self.data['inputs']['open_app']
+        if checkbox_app is not None and checkbox_app.isChecked() is True:
+            task_view = self.data["view"]["tasks"]
+            task_model = self.data["model"]["tasks"]
+            try:
+                index = task_view.selectedIndexes()[0]
+                task_name = task_model.itemData(index)[0]
+            except Exception:
+                message.setText("Please select task")
+                message.show()
+                return
 
         # Get ftrack session
         if self.session is None:
@@ -369,8 +381,9 @@ class Window(QtWidgets.QDialog):
             silo = parent['name']
 
         hiearchy_items = []
-        hiearchy_items.append(parent['name'])
         hiearchy_items.extend(self.get_avalon_parent(parent))
+        hiearchy_items.append(parent['name'])
+
         hierarchy = os.path.sep.join(hiearchy_items)
         new_asset_data = {
             'ftrackId': new_entity['id'],
@@ -396,6 +409,8 @@ class Window(QtWidgets.QDialog):
                 ' to create asset in avalon database'
             ))
             message.show()
+            session.rollback()
+            return
         io.insert_one(new_asset_info)
         session.commit()
 
@@ -434,7 +449,6 @@ class Window(QtWidgets.QDialog):
             session.create('TypedContextLink', link_data)
             session.commit()
 
-        checkbox_app = self.data['inputs']['open_app']
         if checkbox_app is not None and checkbox_app.isChecked() is True:
             origin_asset = api.Session.get('AVALON_ASSET', None)
             origin_task = api.Session.get('AVALON_TASK', None)
@@ -465,9 +479,9 @@ class Window(QtWidgets.QDialog):
 
     def get_ftrack_asset(self, asset, ft_project):
         parenthood = []
-        parenthood.append(asset['name'])
         parenthood.extend(self.get_avalon_parent(asset))
-
+        parenthood.append(asset['name'])
+        parenthood = list(reversed(parenthood))
         output_entity = None
         ft_entity = ft_project
         index = len(parenthood) - 1
@@ -493,8 +507,8 @@ class Window(QtWidgets.QDialog):
         parents = []
         if parent_id is not None:
             parent = io.find_one({'_id': parent_id})
-            parents.append(parent['name'])
             parents.extend(self.get_avalon_parent(parent))
+            parents.append(parent['name'])
         return parents
 
     def echo(self, message):
