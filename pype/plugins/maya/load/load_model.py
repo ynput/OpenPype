@@ -7,6 +7,7 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
 
     families = ["model"]
     representations = ["ma"]
+    tool_names = ["loader"]
 
     label = "Reference Model"
     order = -10
@@ -129,6 +130,7 @@ class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
 
     families = ["model"]
     representations = ["abc"]
+    tool_names = ["loader"]
 
     label = "Reference Model"
     order = -10
