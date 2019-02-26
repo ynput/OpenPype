@@ -38,6 +38,7 @@ class ThumbnailEvents(BaseEvent):
 
             session.commit()
 
+        pass
 
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''

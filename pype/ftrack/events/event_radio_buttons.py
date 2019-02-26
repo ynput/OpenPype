@@ -31,7 +31,6 @@ class Radio_buttons(BaseEvent):
 
             session.commit()
 
-
 def register(session):
     '''Register plugin. Called when used as an plugin.'''
     if not isinstance(session, ftrack_api.session.Session):

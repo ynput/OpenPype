@@ -49,6 +49,7 @@ class DelAvalonIdFromNew(BaseEvent):
             except Exception:
                 continue
 
+
     def register(self):
         '''Registers the event, subscribing the discover and launch topics.'''
         self.session.event_hub.subscribe(

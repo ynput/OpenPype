@@ -6,18 +6,23 @@ class VersionToTaskStatus(BaseEvent):
 
     def launch(self, session, entities, event):
         '''Propagates status from version to task when changed'''
+        session.commit()
 
-        # self.log.info(event)
         # start of event procedure ----------------------------------
         for entity in event['data'].get('entities', []):
             # Filter non-assetversions
-            if (entity['entityType'] == 'assetversion' and
-                    'statusid' in entity['keys']):
+            if (
+                entity['entityType'] == 'assetversion' and
+                'statusid' in entity['keys']
+            ):
 
                 version = session.get('AssetVersion', entity['entityId'])
-                version_status = session.get(
-                    'Status', entity['changes']['statusid']['new']
-                )
+                try:
+                    version_status = session.get(
+                        'Status', entity['changes']['statusid']['new']
+                    )
+                except Exception:
+                    continue
                 task_status = version_status
                 task = version['task']
                 self.log.info('>>> version status: [ {} ]'.format(
@@ -36,10 +41,18 @@ class VersionToTaskStatus(BaseEvent):
 
                 if status_to_set is not None:
                     query = 'Status where name is "{}"'.format(status_to_set)
-                    task_status = session.query(query).one()
+                    try:
+                        task_status = session.query(query).one()
+                    except Exception:
+                        self.log.info(
+                            'During update {}: Status {} was not found'.format(
+                                entity['name'], status_to_set
+                            )
+                        )
+                        continue
 
                 # Proceed if the task status was set
-                if task_status:
+                if task_status is not None:
                     # Get path to task
                     path = task['name']
                     for p in task['ancestors']:

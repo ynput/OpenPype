@@ -17,7 +17,7 @@ class Test_Event(BaseEvent):
 
         '''just a testing event'''
 
-        self.log.info(event)
+        # self.log.info(event)
 
         return True
 

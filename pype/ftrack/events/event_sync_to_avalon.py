@@ -5,7 +5,6 @@ from pype.ftrack import BaseEvent, lib
 class Sync_to_Avalon(BaseEvent):
 
     def launch(self, session, entities, event):
-
         ca_mongoid = lib.get_ca_mongoid()
         # If mongo_id textfield has changed: RETURN!
         # - infinite loop
