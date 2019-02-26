@@ -104,7 +104,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        DEADLINE_REST_URL = api.Session.get("DEADLINE_REST_URL",
+        DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
                                           "http://localhost:8082")
         assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
