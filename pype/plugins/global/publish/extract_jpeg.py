@@ -41,9 +41,23 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
         self.log.info("output {}".format(full_output_path))
 
-        subprocess_jpeg = "ffmpeg -y -gamma 2.2 -i {} {}".format(
-            full_input_path, full_output_path
-        )
+        config_data = instance.context.data['output_repre_config']
+
+        proj_name = os.environ.get('AVALON_PROJECT', '__default__')
+        profile = config_data.get(proj_name, config_data['__default__'])
+
+        jpeg_items = []
+        jpeg_items.append("ffmpeg")
+        # override file if already exists
+        jpeg_items.append("-y")
+        # use same input args like with mov
+        jpeg_items.extend(profile.get('input', []))
+        # input file
+        jpeg_items.append("-i {}".format(full_input_path))
+        # output file
+        jpeg_items.append(full_output_path)
+
+        subprocess_jpeg = " ".join(jpeg_items)
         subprocess.Popen(subprocess_jpeg)
 
         if "files" not in instance.data:

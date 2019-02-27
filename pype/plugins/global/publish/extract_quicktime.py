@@ -41,18 +41,26 @@ class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):
 
         self.log.info("output {}".format(full_output_path))
 
-        input_args = [
-            "-y -gamma 2.2",
-            "-i {}".format(full_input_path),
-            "-framerate {}".format(fps),
-            "-start_number {}".format(start)
-        ]
-        output_args = [
-            "-c:v libx264",
-            "-vf colormatrix=bt601:bt709",
-            full_output_path
-        ]
+        config_data = instance.context.data['output_repre_config']
 
+        proj_name = os.environ.get('AVALON_PROJECT', '__default__')
+        profile = config_data.get(proj_name, config_data['__default__'])
+
+        input_args = []
+        # overrides output file
+        input_args.append("-y")
+        # preset's input data
+        input_args.extend(profile.get('input', []))
+        # necessary input data
+        input_args.append("-i {}".format(full_input_path))
+        input_args.append("-framerate {}".format(fps))
+        input_args.append("-start_number {}".format(start))
+
+        output_args = []
+        # preset's output data
+        output_args.extend(profile.get('output', []))
+        # output filename
+        output_args.append(full_output_path)
         mov_args = [
             "ffmpeg",
             " ".join(input_args),
