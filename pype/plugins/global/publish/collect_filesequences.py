@@ -147,11 +147,13 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                                    "found sequence")
                     raise RuntimeError("Invalid sequence")
 
+            fps = data.get("fps", 25)
+
             # Get family from the data
             families = data.get("families", ["render"])
             assert isinstance(families, (list, tuple)), "Must be iterable"
             assert families, "Must have at least a single family"
-
+            families.append("ftrack")
             for collection in collections:
                 instance = context.create_instance(str(collection))
                 self.log.info("Collection: %s" % list(collection))
@@ -180,6 +182,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     "files": [list(collection)],
                     "startFrame": start,
                     "endFrame": end,
+                    "fps": fps,
                     "source": data.get('source', '')
                 })
                 instance.append(collection)
