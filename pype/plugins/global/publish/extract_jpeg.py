@@ -58,7 +58,8 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         jpeg_items.append(full_output_path)
 
         subprocess_jpeg = " ".join(jpeg_items)
-        subprocess.Popen(subprocess_jpeg)
+        sub_proc = subprocess.Popen(subprocess_jpeg)
+        sub_proc.wait()
 
         if "files" not in instance.data:
             instance.data["files"] = list()
