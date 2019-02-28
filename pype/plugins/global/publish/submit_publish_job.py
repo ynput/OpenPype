@@ -192,6 +192,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             "regex": regex,
             "startFrame": start,
             "endFrame": end,
+            "fps": context.data.get("fps", None),
             "families": ["render"],
             "source": source,
             "user": context.data["user"],

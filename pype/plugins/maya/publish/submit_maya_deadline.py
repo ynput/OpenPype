@@ -231,14 +231,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "MAYA_MODULE_PATH",
             "ARNOLD_PLUGIN_PATH",
             "AVALON_SCHEMA",
+            "FTRACK_API_KEY",
+            "FTRACK_API_USER",
+            "FTRACK_SERVER",
+            "PYBLISHPLUGINPATH",
 
             # todo: This is a temporary fix for yeti variables
             "PEREGRINEL_LICENSE",
-            "REDSHIFT_MAYAEXTENSIONSPATH",
-            "REDSHIFT_DISABLEOUTPUTLOCKFILES"
-            "VRAY_FOR_MAYA2018_PLUGINS_X64",
-            "VRAY_PLUGINS_X64",
-            "VRAY_USE_THREAD_AFFINITY",
+            "ARNOLD_LICENSE"
             "MAYA_MODULE_PATH",
             "TOOL_ENV"
         ]
@@ -274,6 +274,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                         clean_path += os.path.normpath(path) + os.pathsep
                     except UnicodeDecodeError:
                         print('path contains non UTF characters')
+
+            if key == "PYTHONPATH":
+                clean_path = clean_path.replace('python2', 'python3')
             clean_path = clean_path.replace(
                                             os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
                                             os.path.normpath(environment['PYPE_STUDIO_CORE']))
