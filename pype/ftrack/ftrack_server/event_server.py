@@ -9,10 +9,12 @@ log = api.Logger.getLogger(__name__, "ftrack-event-server")
 
 class EventServer:
     def __init__(self):
-        self.login_widget = login_dialog.Login_Dialog_ui(self)
+        self.login_widget = login_dialog.Login_Dialog_ui(
+            parent=self, is_event=True
+        )
         self.event_server = FtrackServer('event')
 
-        cred = credentials._get_credentials()
+        cred = credentials._get_credentials(True)
 
         if 'username' in cred and 'apiKey' in cred:
             self.login_widget.user_input.setText(cred['username'])
@@ -24,6 +26,7 @@ class EventServer:
 
     def loginChange(self):
         log.info("Logged successfully")
+
         self.login_widget.close()
         self.event_server.run_server()
 
