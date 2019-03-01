@@ -9,6 +9,7 @@ class CollectOutputRepreConfig(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Collect Config for representation"
+    hosts = ["shell"]
 
     def process(self, context):
         config_items = [
