@@ -1,12 +1,11 @@
 import os
-import toml
-
+import json
 import ftrack_api
 import appdirs
 
 
 config_path = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
-config_name = 'ftrack_cred.toml'
+config_name = 'ftrack_cred.json'
 fpath = os.path.join(config_path, config_name)
 folder = os.path.dirname(fpath)
 
@@ -28,7 +27,7 @@ def _get_credentials():
         filecreate.close()
         file = open(fpath, 'r')
 
-    credentials = toml.load(file)
+    credentials = json.load(file)
     file.close()
 
     return credentials
@@ -42,7 +41,7 @@ def _save_credentials(username, apiKey):
         'apiKey': apiKey
     }
 
-    credentials = toml.dumps(data)
+    credentials = json.dumps(data)
     file.write(credentials)
     file.close()
 
