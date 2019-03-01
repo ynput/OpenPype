@@ -26,6 +26,7 @@ class BaseHandler(object):
 
         # Using decorator
         self.register = self.register_log(self.register)
+        self.launch = self.launch_log(self.launch)
 
     # Decorator
     def register_log(self, func):
@@ -57,6 +58,29 @@ class BaseHandler(object):
                     self.type, label, str(e))
                 )
         return wrapper_register
+
+    # Decorator
+    def launch_log(self, func):
+        @functools.wraps(func)
+        def wrapper_launch(*args, **kwargs):
+            label = self.__class__.__name__
+            if hasattr(self, 'label'):
+                if self.variant is None:
+                    label = self.label
+                else:
+                    label = '{} {}'.format(self.label, self.variant)
+
+            try:
+                result = func(*args, **kwargs)
+                self.log.info((
+                    '{} "{}" Launched'
+                ).format(self.type, label))
+                return result
+            except Exception as e:
+                self.log.error('{} "{}": Launch failed ({})'.format(
+                    self.type, label, str(e))
+                )
+        return wrapper_launch
 
     @property
     def session(self):

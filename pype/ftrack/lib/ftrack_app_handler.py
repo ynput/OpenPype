@@ -143,10 +143,6 @@ class AppAction(BaseHandler):
 
         '''
 
-        self.log.info((
-            "Action - {0} ({1}) - just started"
-        ).format(self.label, self.identifier))
-
         entity = entities[0]
         project_name = entity['project']['full_name']
 

@@ -5,7 +5,7 @@ import ftrack_api
 from . import FtrackServer
 from app import api
 
-log = api.Logger.getLogger(__name__)
+log = api.Logger.getLogger(__name__, "ftrack-event-server-cli")
 
 
 def check_cred(user, key):
