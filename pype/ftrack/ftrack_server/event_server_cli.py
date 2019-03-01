@@ -2,7 +2,7 @@ import os
 import json
 import appdirs
 import ftrack_api
-from . import FtrackServer
+from pype.ftrack.ftrack_server import FtrackServer
 from app import api
 
 log = api.Logger.getLogger(__name__, "ftrack-event-server-cli")

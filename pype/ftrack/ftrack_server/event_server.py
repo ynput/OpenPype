@@ -1,6 +1,6 @@
 import sys
 from pype.ftrack import credentials, login_dialog as login_dialog
-from . import FtrackServer
+from pype.ftrack.ftrack_server import FtrackServer
 from app.vendor.Qt import QtWidgets
 from pype import api
 
