@@ -13,10 +13,12 @@ class DeleteAsset(BaseAction):
     #: Action identifier.
     identifier = 'delete.asset'
     #: Action label.
-    label = 'Delete asset/subsets'
+    label = 'Delete Asset/Subsets'
     #: Action description.
     description = 'Removes from Avalon with all childs and asset from Ftrack'
     icon = "https://www.iconsdb.com/icons/preview/white/full-trash-xxl.png"
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub', 'Administrator']
     #: Db
     db = DbConnector()
 
@@ -310,23 +312,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    roleList = ['Pypeclub', 'Administrator']
-
-    username = session.api_user
-    user = session.query('User where username is "{}"'.format(username)).one()
-    available = False
-    for role in user['user_security_roles']:
-        if role['security_role']['name'] in roleList:
-            available = True
-            break
-    if available is True:
-        DeleteAsset(session).register()
-    else:
-        logging.info(
-            "!!! You're missing required permissions for action {}".format(
-                DeleteAsset.__name__
-            )
-        )
+    DeleteAsset(session).register()
 
 
 def main(arguments=None):

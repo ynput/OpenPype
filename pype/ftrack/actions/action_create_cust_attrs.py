@@ -111,6 +111,8 @@ class CustomAttributes(BaseAction):
     label = 'Create/Update Avalon Attributes'
     #: Action description.
     description = 'Creates Avalon/Mongo ID for double check'
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub', 'Administrator']
 
     def __init__(self, session):
         super().__init__(session)
@@ -576,23 +578,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    roleList = ['Pypeclub', 'Administrator']
-
-    username = session.api_user
-    user = session.query('User where username is "{}"'.format(username)).one()
-    available = False
-    for role in user['user_security_roles']:
-        if role['security_role']['name'] in roleList:
-            available = True
-            break
-    if available is True:
-        CustomAttributes(session).register()
-    else:
-        logging.info(
-            "!!! You're missing required permissions for action {}".format(
-                CustomAttributes.__name__
-            )
-        )
+    CustomAttributes(session).register()
 
 
 def main(arguments=None):

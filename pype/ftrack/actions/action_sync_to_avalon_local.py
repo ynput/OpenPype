@@ -54,6 +54,8 @@ class SyncToAvalon(BaseAction):
         'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
         '699650-icon-92-inbox-download-512.png'
     )
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub']
     #: Action priority
     priority = 200
 
@@ -223,23 +225,8 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    roleList = ['Pypeclub']
+    SyncToAvalon(session).register()
 
-    username = session.api_user
-    user = session.query('User where username is "{}"'.format(username)).one()
-    available = False
-    for role in user['user_security_roles']:
-        if role['security_role']['name'] in roleList:
-            available = True
-            break
-    if available is True:
-        SyncToAvalon(session).register()
-    else:
-        logging.info(
-            "!!! You're missing required permissions for action {}".format(
-                SyncToAvalon.__name__
-            )
-        )
 
 def main(arguments=None):
     '''Set up logging and register action.'''

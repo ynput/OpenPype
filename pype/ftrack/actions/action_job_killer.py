@@ -17,7 +17,8 @@ class JobKiller(BaseAction):
     label = 'Job Killer'
     #: Action description.
     description = 'Killing all running jobs younger than day'
-
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub', 'Administrator']
     def prediscover(self, event):
         ''' Validation '''
 
@@ -103,23 +104,8 @@ def register(session, **kw):
     # return without doing anything.
     if not isinstance(session, ftrack_api.session.Session):
         return
-    roleList = ['Pypeclub', 'Administrator']
 
-    username = session.api_user
-    user = session.query('User where username is "{}"'.format(username)).one()
-    available = False
-    for role in user['user_security_roles']:
-        if role['security_role']['name'] in roleList:
-            available = True
-            break
-    if available is True:
-        JobKiller(session).register()
-    else:
-        logging.info(
-            "!!! You're missing required permissions for action {}".format(
-                JobKiller.__name__
-            )
-        )
+    JobKiller(session).register()
 
 
 def main(arguments=None):

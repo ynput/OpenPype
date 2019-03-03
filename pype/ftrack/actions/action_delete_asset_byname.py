@@ -15,6 +15,8 @@ class AssetsRemover(BaseAction):
     label = 'Delete Assets by Name'
     #: Action description.
     description = 'Removes assets from Ftrack and Avalon db with all childs'
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub', 'Administrator']
     #: Db
     db = DbConnector()
 
@@ -135,23 +137,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    roleList = ['Pypeclub', 'Administrator']
-
-    username = session.api_user
-    user = session.query('User where username is "{}"'.format(username)).one()
-    available = False
-    for role in user['user_security_roles']:
-        if role['security_role']['name'] in roleList:
-            available = True
-            break
-    if available is True:
-        AssetsRemover(session).register()
-    else:
-        logging.info(
-            "!!! You're missing required permissions for action {}".format(
-                AssetsRemover.__name__
-            )
-        )
+    AssetsRemover(session).register()
 
 
 def main(arguments=None):
