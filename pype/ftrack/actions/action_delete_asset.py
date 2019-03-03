@@ -16,7 +16,11 @@ class DeleteAsset(BaseAction):
     label = 'Delete Asset/Subsets'
     #: Action description.
     description = 'Removes from Avalon with all childs and asset from Ftrack'
-    icon = "https://www.iconsdb.com/icons/preview/white/full-trash-xxl.png"
+    icon = (
+        'https://cdn4.iconfinder.com/data/icons/'
+        'ios-web-user-interface-multi-circle-flat-vol-5/512/'
+        'Delete_dustbin_empty_recycle_recycling_remove_trash-512.png'
+    )
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
     #: Db

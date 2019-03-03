@@ -19,6 +19,10 @@ class JobKiller(BaseAction):
     description = 'Killing all running jobs younger than day'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
+    icon = (
+        'https://cdn2.iconfinder.com/data/icons/new-year-resolutions/64/'
+        'resolutions-23-512.png'
+    )
     def prediscover(self, event):
         ''' Validation '''
 

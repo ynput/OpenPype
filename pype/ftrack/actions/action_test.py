@@ -27,6 +27,10 @@ class TestAction(BaseAction):
     priority = 10000
     #: roles that are allowed to register this action
     role_list = ['Pypecub']
+    icon = (
+        'https://cdn4.iconfinder.com/data/icons/hospital-19/512/'
+        '8_hospital-512.png'
+    )
     def prediscover(self, event):
         ''' Validation '''
 
