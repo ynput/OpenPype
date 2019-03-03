@@ -45,5 +45,4 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    event = ThumbnailEvents(session)
-    event.register()
+    ThumbnailEvents(session).register()

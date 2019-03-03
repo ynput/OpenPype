@@ -165,5 +165,4 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    event = Sync_to_Avalon(session)
-    event.register()
+    Sync_to_Avalon(session).register()

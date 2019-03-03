@@ -51,8 +51,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = VersionsCleanup(session)
-    action_handler.register()
+    VersionsCleanup(session).register()
 
 
 def main(arguments=None):

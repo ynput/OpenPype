@@ -83,5 +83,4 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    event = NextTaskUpdate(session)
-    event.register()
+    NextTaskUpdate(session).register()

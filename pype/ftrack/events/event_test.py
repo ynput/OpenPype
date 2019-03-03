@@ -27,5 +27,4 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    event = Test_Event(session)
-    event.register()
+    Test_Event(session).register()
