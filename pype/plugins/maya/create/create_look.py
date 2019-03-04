@@ -15,3 +15,6 @@ class CreateLook(avalon.maya.Creator):
         super(CreateLook, self).__init__(*args, **kwargs)
 
         self.data["renderlayer"] = lib.get_current_renderlayer()
+
+        # Whether to automatically convert the textures to .tx upon publish.
+        self.data["maketx"] = True
