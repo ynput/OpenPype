@@ -275,7 +275,7 @@ class CollectLook(pyblish.api.InstancePlugin):
         if looksets:
             for look in looksets:
                 for at in shaderAttrs:
-                    con = cmds.listConnections("{}.{}".format("aiStandard_SG", at))
+                    con = cmds.listConnections("{}.{}".format(look, at))
                     if con:
                         materials.extend(con)
 
