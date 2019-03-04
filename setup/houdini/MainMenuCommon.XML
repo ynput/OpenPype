@@ -54,6 +54,17 @@ publish.show(parent)
 
             <separatorItem/>
 
+            <scriptItem id="workfiles">
+                <label>Work Files</label>
+                <scriptCode><![CDATA[
+import hou, os
+from avalon.tools import workfiles
+workfiles.show(os.environ["AVALON_WORKDIR"])
+                ]]></scriptCode>
+            </scriptItem>
+
+            <separatorItem/>
+
             <subMenu id="avalon_reload_pipeline">
                 <label>System</label>
                 <scriptItem>
