@@ -170,8 +170,18 @@ class BaseHandler(object):
         '''Return *event* translated structure to be used with the API.'''
 
         '''Return *event* translated structure to be used with the API.'''
+        _entities = event['data'].get('entities', None)
+        if _entities is None:
+            selection = event['data'].get('selection', [])
+            _entities = []
+            for entity in selection:
+                _entities.append(
+                    self.session.get(
+                        self._get_entity_type(entity),
+                        entity.get('entityId')
+                    )
+                )
 
-        _entities = event['data']['entities']
         return [
             _entities,
             event
