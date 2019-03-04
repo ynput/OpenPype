@@ -6,7 +6,7 @@ class CollectEntities(BaseEvent):
 
     priority = 1
 
-    def launch(self, event):
+    def _launch(self, event):
         entities, entity_types = self.translate_event(event)
         entities_count = len(entities)
         event['data']['entities'] = entities
@@ -57,7 +57,7 @@ class CollectEntities(BaseEvent):
         self.session.event_hub.subscribe(
             'topic=ftrack.action.discover'
             ' and source.user.username={0}'.format(self.session.api_user),
-            self.launch,
+            self._launch,
             priority=self.priority
         )
 
