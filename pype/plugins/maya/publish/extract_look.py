@@ -38,7 +38,9 @@ def source_hash(filepath, *args):
     time = str(os.path.getmtime(filepath))
     size = str(os.path.getsize(filepath))
     return "|".join([
-        file_name, time, size
+        file_name,
+        time,
+        size
     ] + list(args)).replace(".", ",")
 
 
