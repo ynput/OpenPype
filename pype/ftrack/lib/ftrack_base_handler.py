@@ -57,7 +57,6 @@ class BaseHandler(object):
                     if available is False:
                         raise MissingPermision
 
-
                 start_time = time.perf_counter()
                 func(*args, **kwargs)
                 end_time = time.perf_counter()
@@ -172,19 +171,7 @@ class BaseHandler(object):
 
         '''Return *event* translated structure to be used with the API.'''
 
-        _selection = event['data'].get('selection', [])
-
-        _entities = list()
-        for entity in _selection:
-            _entities.append(
-                (
-                    session.get(
-                        self._get_entity_type(entity),
-                        entity.get('entityId')
-                    )
-                )
-            )
-
+        _entities = event['data']['entities']
         return [
             _entities,
             event
