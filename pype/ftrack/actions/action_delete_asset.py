@@ -177,7 +177,7 @@ class DeleteAsset(BaseAction):
                 )
             else:
                 title = title.format(
-                    '{} subset'.format(len_subsets)
+                    '{} subsets'.format(len_subsets)
                 )
 
         self.values = values
