@@ -240,8 +240,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = Sync_To_Avalon(session)
-    action_handler.register()
+    Sync_To_Avalon(session).register()
 
 
 def main(arguments=None):

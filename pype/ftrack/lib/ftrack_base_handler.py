@@ -4,6 +4,11 @@ import time
 from pype import api as pype
 
 
+class MissingPermision(Exception):
+     def __init__(self):
+        super().__init__('Missing permission')
+
+
 class BaseHandler(object):
     '''Custom Action base class
 
@@ -25,10 +30,11 @@ class BaseHandler(object):
         self.log = pype.Logger.getLogger(self.__class__.__name__)
 
         # Using decorator
-        self.register = self.register_log(self.register)
+        self.register = self.register_decorator(self.register)
+        self.launch = self.launch_log(self.launch)
 
     # Decorator
-    def register_log(self, func):
+    def register_decorator(self, func):
         @functools.wraps(func)
         def wrapper_register(*args, **kwargs):
             label = self.__class__.__name__
@@ -37,8 +43,20 @@ class BaseHandler(object):
                     label = self.label
                 else:
                     label = '{} {}'.format(self.label, self.variant)
-
             try:
+                if hasattr(self, "role_list") and len(self.role_list) > 0:
+                    username = self.session.api_user
+                    user = self.session.query(
+                        'User where username is "{}"'.format(username)
+                    ).one()
+                    available = False
+                    for role in user['user_security_roles']:
+                        if role['security_role']['name'] in self.role_list:
+                            available = True
+                            break
+                    if available is False:
+                        raise MissingPermision
+
                 start_time = time.perf_counter()
                 func(*args, **kwargs)
                 end_time = time.perf_counter()
@@ -46,6 +64,10 @@ class BaseHandler(object):
                 self.log.info((
                     '{} "{}" - Registered successfully ({:.4f}sec)'
                 ).format(self.type, label, run_time))
+            except MissingPermision:
+                self.log.info((
+                    '!{} "{}" - You\'re missing required permissions'
+                ).format(self.type, label))
             except NotImplementedError:
                 self.log.error((
                     '{} "{}" - Register method is not implemented'
@@ -57,6 +79,29 @@ class BaseHandler(object):
                     self.type, label, str(e))
                 )
         return wrapper_register
+
+    # Decorator
+    def launch_log(self, func):
+        @functools.wraps(func)
+        def wrapper_launch(*args, **kwargs):
+            label = self.__class__.__name__
+            if hasattr(self, 'label'):
+                if self.variant is None:
+                    label = self.label
+                else:
+                    label = '{} {}'.format(self.label, self.variant)
+
+            try:
+                result = func(*args, **kwargs)
+                self.log.info((
+                    '{} "{}" Launched'
+                ).format(self.type, label))
+                return result
+            except Exception as e:
+                self.log.error('{} "{}": Launch failed ({})'.format(
+                    self.type, label, str(e))
+                )
+        return wrapper_launch
 
     @property
     def session(self):
@@ -126,19 +171,7 @@ class BaseHandler(object):
 
         '''Return *event* translated structure to be used with the API.'''
 
-        _selection = event['data'].get('selection', [])
-
-        _entities = list()
-        for entity in _selection:
-            _entities.append(
-                (
-                    session.get(
-                        self._get_entity_type(entity),
-                        entity.get('entityId')
-                    )
-                )
-            )
-
+        _entities = event['data']['entities']
         return [
             _entities,
             event

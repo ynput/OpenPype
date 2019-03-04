@@ -25,8 +25,13 @@ class TestAction(BaseAction):
     description = 'Test action'
     #: priority
     priority = 10000
-
-    def prediscover(self, session, entities, event):
+    #: roles that are allowed to register this action
+    role_list = ['Pypecub']
+    icon = (
+        'https://cdn4.iconfinder.com/data/icons/hospital-19/512/'
+        '8_hospital-512.png'
+    )
+    def prediscover(self, event):
         ''' Validation '''
 
         return True
@@ -43,23 +48,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    roleList = ['Pypeclub']
-
-    username = session.api_user
-    user = session.query('User where username is "{}"'.format(username)).one()
-    available = False
-    for role in user['user_security_roles']:
-        if role['security_role']['name'] in roleList:
-            available = True
-            break
-    if available is True:
-        TestAction(session).register()
-    else:
-        logging.info(
-            "!!! You're missing required permissions for action {}".format(
-                TestAction.__name__
-            )
-        )
+    TestAction(session).register()
 
 
 def main(arguments=None):

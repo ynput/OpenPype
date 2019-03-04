@@ -75,5 +75,4 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    event = VersionToTaskStatus(session)
-    event.register()
+    VersionToTaskStatus(session).register()

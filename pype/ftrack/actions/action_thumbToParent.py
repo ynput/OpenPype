@@ -91,8 +91,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = ThumbToParent(session)
-    action_handler.register()
+    ThumbToParent(session).register()
 
 
 def main(arguments=None):

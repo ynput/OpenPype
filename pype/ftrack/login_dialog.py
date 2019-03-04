@@ -16,11 +16,12 @@ class Login_Dialog_ui(QtWidgets.QWidget):
     buttons = []
     labels = []
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, is_event=False):
 
         super(Login_Dialog_ui, self).__init__()
 
         self.parent = parent
+        self.is_event = is_event
 
         if hasattr(parent, 'icon'):
             self.setWindowIcon(self.parent.icon)
@@ -205,7 +206,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         verification = credentials._check_credentials(username, apiKey)
 
         if verification:
-            credentials._save_credentials(username, apiKey)
+            credentials._save_credentials(username, apiKey, self.is_event)
             credentials._set_env(username, apiKey)
             if self.parent is not None:
                 self.parent.loginChange()
@@ -305,7 +306,7 @@ class Login_Dialog_ui(QtWidgets.QWidget):
         verification = credentials._check_credentials(username, apiKey)
 
         if verification is True:
-            credentials._save_credentials(username, apiKey)
+            credentials._save_credentials(username, apiKey, self.is_event)
             credentials._set_env(username, apiKey)
             if self.parent is not None:
                 self.parent.loginChange()
