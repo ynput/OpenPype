@@ -24,7 +24,7 @@ class ValidateLookNoDefaultShaders(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder + 0.01
-    families = ["look']
+    families = ['look']
     hosts = ['maya']
     label = 'Look No Default Shaders'
     actions = [pype.maya.action.SelectInvalidAction]

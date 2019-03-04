@@ -39,7 +39,7 @@ class ValidateNoNullTransforms(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["model']
+    families = ['model']
     category = 'cleanup'
     version = (0, 1, 0)
     label = 'No Empty/Null Transforms'

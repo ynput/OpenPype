@@ -3,7 +3,7 @@ import json
 import re
 
 import pyblish.api
-from config.vendor import clique
+from pype.vendor import clique
 
 
 class CollectJSON(pyblish.api.ContextPlugin):
@@ -11,6 +11,7 @@ class CollectJSON(pyblish.api.ContextPlugin):
 
     label = "JSON"
     order = pyblish.api.CollectorOrder
+    hosts = ['maya']
 
     def version_get(self, string, prefix):
         """ Extract version information from filenames.  Code from Foundry"s
@@ -26,7 +27,7 @@ class CollectJSON(pyblish.api.ContextPlugin):
         return matches[-1:][0][1], re.search(r"\d+", matches[-1:][0]).group()
 
     def process(self, context):
-        current_file = context.data("currentFile")
+        current_file = context.data.get("currentFile", '')
         # Skip if current file is not a directory
         if not os.path.isdir(current_file):
             return

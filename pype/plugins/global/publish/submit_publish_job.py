@@ -1,5 +1,6 @@
 import os
 import json
+import pprint
 import re
 
 from avalon import api, io
@@ -11,7 +12,7 @@ import pyblish.api
 def _get_script():
     """Get path to the image sequence script"""
     try:
-        from pype.fusion.scripts import publish_filesequence
+        from pype.scripts import publish_filesequence
     except Exception as e:
         raise RuntimeError("Expected module 'publish_imagesequence'"
                            "to be available")
@@ -97,7 +98,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     plug-in.
 
     Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable AVALON_DEADLINE
+    supplied via the environment variable DEADLINE_REST_URL
 
     Options in instance.data:
         - deadlineSubmission (dict, Required): The returned .json
@@ -120,26 +121,26 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
     """
 
     label = "Submit image sequence jobs to Deadline"
-    order = pyblish.api.IntegratorOrder + 0.1
+    order = pyblish.api.IntegratorOrder + 0.2
 
     hosts = ["fusion", "maya", "nuke"]
 
     families = [
-        "render.deadline",
+        "render.farm",
         "renderlayer",
         "imagesequence"
     ]
 
     def process(self, instance):
 
-        # AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
-        #                                   "http://localhost:8082")
-        # assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
+                                          "http://localhost:8082")
+        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
-        try:
-            deadline_url = os.environ["DEADLINE_REST_URL"]
-        except KeyError:
-            self.log.error("Deadline REST API url not found.")
+        # try:
+        #     deadline_url = os.environ["DEADLINE_REST_URL"]
+        # except KeyError:
+        #     self.log.error("Deadline REST API url not found.")
 
         # Get a submission job
         job = instance.data.get("deadlineSubmissionJob")
@@ -148,6 +149,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
                                "submission prior to this plug-in.")
 
         data = instance.data.copy()
+        asset = data.get("asset") or api.Session["AVALON_ASSET"]
         subset = data["subset"]
         state = data.get("publishJobState", "Suspended")
         job_name = "{batch} - {subset} [publish image sequence]".format(
@@ -155,15 +157,18 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             subset=subset
         )
 
-        # Add in start/end frame
+        # Get start/end frame from instance, if not available get from context
         context = instance.context
-        start = instance.data.get("startFrame", context.data["startFrame"])
-        end = instance.data.get("endFrame", context.data["endFrame"])
-        resources = []
+        start = instance.data.get("startFrame")
+        if start is None:
+            start = context.data["startFrame"]
+        end = instance.data.get("endFrame")
+        if end is None:
+            end = context.data["endFrame"]
 
         # Add in regex for sequence filename
         # This assumes the output files start with subset name and ends with
-        # a file extension.
+        # a file extension. The "ext" key includes the dot with the extension.
         if "ext" in instance.data:
             ext = re.escape(instance.data["ext"])
         else:
@@ -172,13 +177,25 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         regex = "^{subset}.*\d+{ext}$".format(subset=re.escape(subset),
                                               ext=ext)
 
+        try:
+            source = data['source']
+        except KeyError:
+            source = context.data["currentFile"]
+
+        relative_path = os.path.relpath(source, api.registered_root())
+        source = os.path.join("{root}", relative_path).replace("\\", "/")
+
         # Write metadata for publish job
         render_job = data.pop("deadlineSubmissionJob")
         metadata = {
+            "asset": asset,
             "regex": regex,
             "startFrame": start,
             "endFrame": end,
-            "families": ["imagesequence"],
+            "fps": context.data.get("fps", None),
+            "families": ["render"],
+            "source": source,
+            "user": context.data["user"],
 
             # Optional metadata (for debugging)
             "metadata": {
@@ -195,7 +212,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
         if data.get("extendFrames", False):
 
-            family = "imagesequence"
+            family = "render"
             override = data["overrideExistingFrame"]
 
             # override = data.get("overrideExistingFrame", False)
@@ -310,7 +327,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
-        url = "{}/api/jobs".format(deadline_url)
+        url = "{}/api/jobs".format(DEADLINE_REST_URL)
         response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)

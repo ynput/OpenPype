@@ -36,13 +36,13 @@ def preserve_trim(node):
         if start_at_frame:
             node['frame_mode'].setValue("start at")
             node['frame'].setValue(str(script_start))
-            log.info("start frame of reader was set to"
+            log.info("start frame of Read was set to"
                      "{}".format(script_start))
 
         if offset_frame:
             node['frame_mode'].setValue("offset")
             node['frame'].setValue(str((script_start + offset_frame)))
-            log.info("start frame of reader was set to"
+            log.info("start frame of Read was set to"
                      "{}".format(script_start))
 
 
@@ -67,7 +67,7 @@ def loader_shift(node, frame, relative=True):
 
     if relative:
         node['frame_mode'].setValue("start at")
-        node['frame'].setValue(str(script_start))
+        node['frame'].setValue(str(frame))
 
     return int(script_start)
 
@@ -75,8 +75,8 @@ def loader_shift(node, frame, relative=True):
 class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
-    families = ["write"]
-    representations = ["*"]
+    families = ["write", "source"]
+    representations = ["exr", "dpx"]
 
     label = "Load sequence"
     order = -10
@@ -86,44 +86,33 @@ class LoadSequence(api.Loader):
     def load(self, context, name, namespace, data):
         from avalon.nuke import (
             containerise,
-            ls_img_sequence,
             viewer_update_and_undo_stop
         )
-        for k, v in context.items():
-            log.info("key: `{}`, value: {}\n".format(k, v))
+        # for k, v in context.items():
+        #     log.info("key: `{}`, value: {}\n".format(k, v))
+
+        version = context['version']
+        version_data = version.get("data", {})
+
+        first = version_data.get("startFrame", None)
+        last = version_data.get("endFrame", None)
 
         # Fallback to asset name when namespace is None
         if namespace is None:
             namespace = context['asset']['name']
 
-        # Use the first file for now
-        # TODO: fix path fname
-        file = ls_img_sequence(os.path.dirname(self.fname), one=True)
-        log.info("file: {}\n".format(file))
+        file = self.fname
+        log.info("file: {}\n".format(self.fname))
 
         read_name = "Read_" + context["representation"]["context"]["subset"]
+
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
             # TODO: it might be universal read to img/geo/camera
             r = nuke.createNode(
                 "Read",
                 "name {}".format(read_name))
-            r["file"].setValue(file['path'])
-            if len(file['frames']) is 1:
-                first = file['frames'][0][0]
-                last = file['frames'][0][1]
-                r["origfirst"].setValue(first)
-                r["first"].setValue(first)
-                r["origlast"].setValue(last)
-                r["last"].setValue(last)
-            else:
-                first = file['frames'][0][0]
-                last = file['frames'][:-1][1]
-                r["origfirst"].setValue(first)
-                r["first"].setValue(first)
-                r["origlast"].setValue(last)
-                r["last"].setValue(last)
-                log.warning("Missing frames in image sequence")
+            r["file"].setValue(self.fname)
 
             # Set colorspace defined in version data
             colorspace = context["version"]["data"].get("colorspace", None)
@@ -134,6 +123,10 @@ class LoadSequence(api.Loader):
             start = context["version"]["data"].get("startFrame", None)
             if start is not None:
                 loader_shift(r, start, relative=True)
+                r["origfirst"].setValue(first)
+                r["first"].setValue(first)
+                r["origlast"].setValue(last)
+                r["last"].setValue(last)
 
             # add additional metadata from the version to imprint to Avalon knob
             add_keys = ["startFrame", "endFrame", "handles",
@@ -142,8 +135,9 @@ class LoadSequence(api.Loader):
             data_imprint = {}
             for k in add_keys:
                 data_imprint.update({k: context["version"]['data'][k]})
+            data_imprint.update({"objectName": read_name})
 
-            containerise(r,
+            return containerise(r,
                          name=name,
                          namespace=namespace,
                          context=context,
@@ -168,9 +162,9 @@ class LoadSequence(api.Loader):
             update_container
         )
         log.info("this i can see")
-        node = container["_tool"]
-        # TODO: prepare also for other readers img/geo/camera
-        assert node.Class() == "Reader", "Must be Reader"
+        node = nuke.toNode(container['objectName'])
+        # TODO: prepare also for other Read img/geo/camera
+        assert node.Class() == "Read", "Must be Read"
 
         root = api.get_representation_path(representation)
         file = ls_img_sequence(os.path.dirname(root), one=True)
@@ -189,7 +183,7 @@ class LoadSequence(api.Loader):
 
             # Update the loader's path whilst preserving some values
             with preserve_trim(node):
-                node["file"] = file["path"]
+                node["file"].setValue(file["path"])
 
             # Set the global in to the start frame of the sequence
             global_in_changed = loader_shift(node, start, relative=False)
@@ -208,8 +202,8 @@ class LoadSequence(api.Loader):
 
         from avalon.nuke import viewer_update_and_undo_stop
 
-        node = container["_tool"]
-        assert node.Class() == "Reader", "Must be Reader"
+        node = nuke.toNode(container['objectName'])
+        assert node.Class() == "Read", "Must be Read"
 
         with viewer_update_and_undo_stop():
             nuke.delete(node)

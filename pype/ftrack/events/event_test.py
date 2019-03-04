@@ -2,10 +2,16 @@ import os
 import sys
 import re
 import ftrack_api
-from ftrack_event_handler import BaseEvent
+from pype.ftrack import BaseEvent
 from app import api
 
+
+ignore_me = True
+
+
 class Test_Event(BaseEvent):
+
+    priority = 10000
 
     def launch(self, session, entities, event):
 
@@ -21,5 +27,4 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    event = Test_Event(session)
-    event.register()
+    Test_Event(session).register()

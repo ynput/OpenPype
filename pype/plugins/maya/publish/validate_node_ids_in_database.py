@@ -23,7 +23,8 @@ class ValidateNodeIdsInDatabase(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ["*"]
 
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.maya.action.SelectInvalidAction,
+               pype.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

@@ -25,19 +25,29 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     families = ["animation",
                 "camera",
-                "imagesequence",
                 "look",
                 "mayaAscii",
                 "model",
                 "pointcache",
                 "vdbcache",
                 "setdress",
+                "assembly",
+                "layout",
                 "rig",
                 "vrayproxy",
                 "yetiRig",
-                "yeticache"]
+                "yeticache",
+                "nukescript",
+                "review",
+                "workfile",
+                "scene",
+                "ass"]
+    exclude_families = ["clip"]
 
     def process(self, instance):
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
 
         self.register(instance)
 
@@ -45,7 +55,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.integrate(instance)
 
     def register(self, instance):
-
         # Required environment variables
         PROJECT = api.Session["AVALON_PROJECT"]
         ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
@@ -135,10 +144,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
-        hierarchy = io.find_one({"type":'asset', "name":ASSET})['data']['parents']
-        if hierarchy:
+        hierarchy = ""
+        parents = io.find_one({
+            "type": 'asset',
+            "name": ASSET
+        })['data']['parents']
+        if parents and len(parents) > 0:
             # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = os.path.join(*hierarchy)
+            hierarchy = os.path.join(*parents)
 
         template_data = {"root": root,
                          "project": {"name": PROJECT,
@@ -147,7 +160,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                          "asset": ASSET,
                          "family": instance.data['family'],
                          "subset": subset["name"],
-                         "VERSION": version["name"],
+                         "version": int(version["name"]),
                          "hierarchy": hierarchy}
 
         template_publish = project["config"]["template"]["publish"]
@@ -169,6 +182,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # |       ||
             # |_______|
             #
+
             if isinstance(files, list):
                 collection = files
                 # Assert that each member has identical suffix
@@ -226,17 +240,17 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                     "root": root,
-                     "project": PROJECT,
-                     "projectcode": project['data']['code'],
-                     'task': api.Session["AVALON_TASK"],
-                     "silo": asset['silo'],
-                     "asset": ASSET,
-                     "family": instance.data['family'],
-                     "subset": subset["name"],
-                     "version": version["name"],
-                     "hierarchy": hierarchy,
-                     "representation": ext[1:]
+                    "root": root,
+                    "project": {"name": PROJECT,
+                                "code": project['data']['code']},
+                    'task': api.Session["AVALON_TASK"],
+                    "silo": asset['silo'],
+                    "asset": ASSET,
+                    "family": instance.data['family'],
+                    "subset": subset["name"],
+                    "version": version["name"],
+                    "hierarchy": hierarchy,
+                    "representation": ext[1:]
                 }
             }
 
@@ -296,7 +310,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             self.log.info("Subset '%s' not found, creating.." % subset_name)
 
             _id = io.insert_one({
-                "schema": "pype:subset-2.0",
+                "schema": "avalon-core:subset-2.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": {},
@@ -322,7 +336,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         version_locations = [location for location in locations if
                              location is not None]
 
-        return {"schema": "pype:version-2.0",
+        return {"schema": "avalon-core:version-2.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,
@@ -348,16 +362,24 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             families.append(instance_family)
         families += current_families
 
+        self.log.debug("Registered roor: {}".format(api.registered_root()))
         # create relative source path for DB
-        relative_path = os.path.relpath(context.data["currentFile"],
-                                        api.registered_root())
-        source = os.path.join("{root}", relative_path).replace("\\", "/")
+        try:
+            source = instance.data['source']
+        except KeyError:
+            source = context.data["currentFile"]
 
+            relative_path = os.path.relpath(source, api.registered_root())
+            source = os.path.join("{root}", relative_path).replace("\\", "/")
+
+        self.log.debug("Source: {}".format(source))
         version_data = {"families": families,
                         "time": context.data["time"],
                         "author": context.data["user"],
                         "source": source,
-                        "comment": context.data.get("comment")}
+                        "comment": context.data.get("comment"),
+                        "machine": context.data.get("machine"),
+                        "fps": context.data.get("fps")}
 
         # Include optional data if present in
         optionals = ["startFrame", "endFrame", "step", "handles"]

@@ -12,6 +12,50 @@ self = sys.modules[__name__]
 self._project = None
 
 
+def onScriptLoad():
+    if nuke.env['LINUX']:
+        nuke.tcl('load ffmpegReader')
+        nuke.tcl('load ffmpegWriter')
+    else:
+        nuke.tcl('load movReader')
+        nuke.tcl('load movWriter')
+
+
+def writes_version_sync():
+    try:
+        rootVersion = pype.get_version_from_path(nuke.root().name())
+        padding = len(rootVersion)
+        new_version = str("{" + ":0>{}".format(padding) + "}").format(
+            int(rootVersion)
+        )
+        log.info("new_version: {}".format(new_version))
+    except Exception:
+        return
+
+    for each in nuke.allNodes():
+        if each.Class() == 'Write':
+            avalon_knob_data = get_avalon_knob_data(each)
+            if avalon_knob_data['families'] not in ["render"]:
+                log.info(avalon_knob_data['families'])
+                continue
+            try:
+                node_file = each['file'].value()
+                log.info("node_file: {}".format(node_file))
+
+                node_version = pype.get_version_from_path(node_file)
+                log.info("node_version: {}".format(node_version))
+
+                node_new_file = node_file.replace(node_version, new_version)
+                each['file'].setValue(node_new_file)
+            except Exception as e:
+                log.debug("Write node: `{}` has no version in path: {}".format(each.name(), e))
+
+
+def version_up_script():
+    import nukescripts
+    nukescripts.script_and_write_nodes_version_up()
+
+
 def format_anatomy(data):
     from .templates import (
         get_anatomy
@@ -24,9 +68,9 @@ def format_anatomy(data):
     padding = anatomy.render.padding
 
     data.update({
-        "hierarchy": pype.get_hiearchy(),
+        "hierarchy": pype.get_hierarchy(),
         "frame": "#"*padding,
-        "VERSION": pype.get_version_from_workfile(file)
+        "version": pype.get_version_from_path(file)
     })
 
     # log.info("format_anatomy:anatomy: {}".format(anatomy))

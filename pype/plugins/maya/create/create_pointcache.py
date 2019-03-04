@@ -1,5 +1,3 @@
-from collections import OrderedDict
-
 import avalon.maya
 from pype.maya import lib
 
@@ -11,26 +9,20 @@ class CreatePointCache(avalon.maya.Creator):
     label = "Point Cache"
     family = "pointcache"
     icon = "gears"
+    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreatePointCache, self).__init__(*args, **kwargs)
 
-        # create an ordered dict with the existing data first
-        data = OrderedDict(**self.data)
+        # Add animation data
+        self.data.update(lib.collect_animation_data())
 
-        # get basic animation data : start / end / handles / steps
-        for key, value in lib.collect_animation_data().items():
-            data[key] = value
+        self.data["writeColorSets"] = False  # Vertex colors with the geometry.
+        self.data["renderableOnly"] = False  # Only renderable visible shapes
+        self.data["visibleOnly"] = False     # only nodes that are visible
+        self.data["includeParentHierarchy"] = False  # Include parent groups
+        self.data["worldSpace"] = True       # Default to exporting world-space
 
-        # Write vertex colors with the geometry.
-        data["writeColorSets"] = False
-
-        # Include only renderable visible shapes.
-        # Skips locators and empty transforms
-        data["renderableOnly"] = False
-
-        # Include only nodes that are visible at least once during the
-        # frame range.
-        data["visibleOnly"] = False
-
-        self.data = data
+        # Add options for custom attributes
+        self.data["attr"] = ""
+        self.data["attrPrefix"] = ""

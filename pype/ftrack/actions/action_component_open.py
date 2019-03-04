@@ -1,14 +1,10 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2015 Milan Kolar
-
 import sys
 import argparse
 import logging
-import getpass
 import subprocess
 import os
 import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.ftrack import BaseAction
 
 
 class ComponentOpen(BaseAction):
@@ -19,8 +15,10 @@ class ComponentOpen(BaseAction):
     # Action label
     label = 'Open File'
     # Action icon
-    icon = 'https://cdn4.iconfinder.com/data/icons/rcons-application/32/application_go_run-256.png',
-
+    icon = (
+        'https://cdn4.iconfinder.com/data/icons/rcons-application/32/'
+        'application_go_run-256.png'
+    )
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -29,13 +27,13 @@ class ComponentOpen(BaseAction):
 
         return True
 
-
     def launch(self, session, entities, event):
 
         entity = entities[0]
 
         # Return error if component is on ftrack server
-        if entity['component_locations'][0]['location']['name'] == 'ftrack.server':
+        location_name = entity['component_locations'][0]['location']['name']
+        if location_name == 'ftrack.server':
             return {
                 'success': False,
                 'message': "This component is stored on ftrack server!"
@@ -44,12 +42,10 @@ class ComponentOpen(BaseAction):
         # Get component filepath
         # TODO with locations it will be different???
         fpath = entity['component_locations'][0]['resource_identifier']
-        items = fpath.split(os.sep)
-        items.pop(-1)
-        fpath = os.sep.join(items)
+        fpath = os.path.normpath(os.path.dirname(fpath))
 
         if os.path.isdir(fpath):
-            if 'win' in sys.platform: # windows
+            if 'win' in sys.platform:  # windows
                 subprocess.Popen('explorer "%s"' % fpath)
             elif sys.platform == 'darwin':  # macOS
                 subprocess.Popen(['open', fpath])
@@ -79,8 +75,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = ComponentOpen(session)
-    action_handler.register()
+    ComponentOpen(session).register()
 
 
 def main(arguments=None):

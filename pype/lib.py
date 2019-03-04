@@ -3,6 +3,7 @@ import re
 import logging
 import importlib
 import itertools
+import contextlib
 
 from .vendor import pather
 from .vendor.pather.error import ParseError
@@ -12,6 +13,55 @@ import avalon.api
 import avalon
 
 log = logging.getLogger(__name__)
+
+
+def add_tool_to_environment(tools):
+    """
+    It is adding dynamic environment to os environment.
+
+    Args:
+        tool (list, tuple): list of tools, name should corespond to json/toml
+
+    Returns:
+        os.environ[KEY]: adding to os.environ
+    """
+
+    import acre
+    tools_env = acre.get_tools(tools)
+    env = acre.compute(tools_env)
+    env = acre.merge(env, current_env=dict(os.environ))
+    os.environ.update(env)
+
+
+@contextlib.contextmanager
+def modified_environ(*remove, **update):
+    """
+    Temporarily updates the ``os.environ`` dictionary in-place.
+
+    The ``os.environ`` dictionary is updated in-place so that the modification
+    is sure to work in all situations.
+
+    :param remove: Environment variables to remove.
+    :param update: Dictionary of environment variables and values to add/update.
+    """
+    env = os.environ
+    update = update or {}
+    remove = remove or []
+
+    # List of environment variables being updated or removed.
+    stomped = (set(update.keys()) | set(remove)) & set(env.keys())
+    # Environment variables and values to restore on exit.
+    update_after = {k: env[k] for k in stomped}
+    # Environment variables and values to remove on exit.
+    remove_after = frozenset(k for k in update if k not in env)
+
+    try:
+        env.update(update)
+        [env.pop(k, None) for k in remove]
+        yield
+    finally:
+        env.update(update_after)
+        [env.pop(k) for k in remove_after]
 
 
 def pairwise(iterable):
@@ -109,8 +159,8 @@ def update_task_from_path(path):
     # Find the changes between current Session and the path's context.
     current = {
         "asset": avalon.api.Session["AVALON_ASSET"],
-        "task": avalon.api.Session["AVALON_TASK"],
-        "app": avalon.api.Session["AVALON_APP"]
+        "task": avalon.api.Session["AVALON_TASK"]
+        # "app": avalon.api.Session["AVALON_APP"]
     }
     changes = {key: context[key] for key, current_value in current.items()
                if context[key] != current_value}
@@ -328,39 +378,90 @@ def get_asset_data(asset=None):
     Returns:
         dict
     """
-
     asset_name = asset or avalon.api.Session["AVALON_ASSET"]
     document = io.find_one({"name": asset_name,
                             "type": "asset"})
-
     data = document.get("data", {})
 
     return data
+
+
+def get_data_hierarchical_attr(entity, attr_name):
+    vp_attr = 'visualParent'
+    data = entity['data']
+    value = data.get(attr_name, None)
+    if value is not None:
+        return value
+    elif vp_attr in data:
+        if data[vp_attr] is None:
+            parent_id = entity['parent']
+        else:
+            parent_id = data[vp_attr]
+        parent = io.find_one({"_id": parent_id})
+        return get_data_hierarchical_attr(parent, attr_name)
+    else:
+        return None
+
 
 def get_avalon_project_config_schema():
     schema = 'avalon-core:config-1.0'
     return schema
 
+
 def get_avalon_project_template_schema():
-    schema = {"schema": "avalon-core:inventory-1.0"}
+    schema = "avalon-core:project-2.0"
     return schema
+
 
 def get_avalon_project_template():
     from app.api import Templates
 
-    """Get avalon template
+    """
+    Get avalon template
 
     Returns:
         dictionary with templates
     """
     template = Templates(type=["anatomy"])
     proj_template = {}
-    proj_template['workfile'] = '{asset[name]}_{task[name]}_v{version:0>3}<_{comment}>'
-    proj_template['work'] = '{root}/{project}/{hierarchy}/{asset}/work/{task}'
-    proj_template['publish'] = '{root}/{project}/{hierarchy}/{asset}/publish/{family}/{subset}/v{version}/{projectcode}_{asset}_{subset}_v{version}.{representation}'
-    # TODO this down should work but it can't be in default.toml:
-    #  - Raises error when App (e.g. Nuke) is started
-    # proj_template['workfile'] = template.anatomy.avalon.workfile
-    # proj_template['work'] = template.anatomy.avalon.work
-    # proj_template['publish'] = template.anatomy.avalon.publish
+    proj_template['workfile'] = template.anatomy.avalon.workfile
+    proj_template['work'] = template.anatomy.avalon.work
+    proj_template['publish'] = template.anatomy.avalon.publish
     return proj_template
+
+
+def get_avalon_asset_template_schema():
+    schema = "avalon-core:asset-2.0"
+    return schema
+
+
+def get_avalon_database():
+    if io._database is None:
+        set_io_database()
+    return io._database
+
+
+def set_io_database():
+    project = os.environ.get('AVALON_PROJECT', '')
+    asset = os.environ.get('AVALON_ASSET', '')
+    silo = os.environ.get('AVALON_SILO', '')
+    os.environ['AVALON_PROJECT'] = project
+    os.environ['AVALON_ASSET'] = asset
+    os.environ['AVALON_SILO'] = silo
+    io.install()
+
+
+def get_all_avalon_projects():
+    db = get_avalon_database()
+    project_names = db.collection_names()
+    projects = []
+    for name in project_names:
+        projects.append(db[name].find_one({'type': 'project'}))
+    return projects
+
+
+def get_presets_path():
+    templates = os.environ['PYPE_STUDIO_TEMPLATES']
+    path_items = [templates, 'presets']
+    filepath = os.path.sep.join(path_items)
+    return filepath

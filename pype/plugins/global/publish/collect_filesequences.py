@@ -88,7 +88,6 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
     targets = ["filesequence"]
     label = "File Sequences"
-    hosts = ['maya']
 
     def process(self, context):
 
@@ -148,11 +147,13 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                                    "found sequence")
                     raise RuntimeError("Invalid sequence")
 
+            fps = data.get("fps", 25)
+
             # Get family from the data
-            families = data.get("families", ["imagesequence"])
+            families = data.get("families", ["render"])
             assert isinstance(families, (list, tuple)), "Must be iterable"
             assert families, "Must have at least a single family"
-
+            families.append("ftrack")
             for collection in collections:
                 instance = context.create_instance(str(collection))
                 self.log.info("Collection: %s" % list(collection))
@@ -168,6 +169,9 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 start = data.get("startFrame", indices[0])
                 end = data.get("endFrame", indices[-1])
 
+                # root = os.path.normpath(root)
+                # self.log.info("Source: {}}".format(data.get("source", "")))
+
                 instance.data.update({
                     "name": str(collection),
                     "family": families[0],  # backwards compatibility / pyblish
@@ -177,9 +181,14 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     "stagingDir": root,
                     "files": [list(collection)],
                     "startFrame": start,
-                    "endFrame": end
+                    "endFrame": end,
+                    "fps": fps,
+                    "source": data.get('source', '')
                 })
                 instance.append(collection)
+
+                if data.get('user'):
+                    context.data["user"] = data['user']
 
                 self.log.debug("Collected instance:\n"
                                "{}".format(pprint.pformat(instance.data)))

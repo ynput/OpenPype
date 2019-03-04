@@ -17,7 +17,7 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ["model', 'studio.pointcache']
+    families = ['model', 'pointcache']
     category = 'uv'
     optional = True
     version = (0, 1, 0)

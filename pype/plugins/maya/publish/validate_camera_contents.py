@@ -16,7 +16,7 @@ class ValidateCameraContents(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["camera']
+    families = ['camera']
     hosts = ['maya']
     label = 'Camera Contents'
     actions = [pype.maya.action.SelectInvalidAction]

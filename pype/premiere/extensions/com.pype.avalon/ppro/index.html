@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+
+<html lang="en">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Pype extention</title>
+    <!-- Load the pico Javascript client, always automatically available at /pico.js -->
+    <script src="/pico.js"></script>
+    <!-- Or load our module proxy -->
+    <script src="/api.js"></script>
+
+    <link href="./css/bootstrap.min.css" type="text/css" rel="stylesheet">
+    <link href="./css/avalon.min.css" type="text/css" rel="stylesheet">
+
+
+    <script>
+        if (typeof module === 'object') {
+            window.module = module;
+            module = undefined;
+        }
+    </script>
+
+    <script src="./js/vendor/jquery-3.3.1.min.js"></script>
+    <script src="./js/vendor/CSInterface-8.js"></script>
+    <script src="./js/vendor/popper.min.js"></script>
+    <script src="./js/vendor/bootstrap.min.js"></script>
+
+    <script>
+        if (window.module) module = window.module;
+    </script>
+</head>
+
+<body>
+
+<div id="section"><a href="javascript:history.go(0)">Refresh panel</a>
+  <ul class="list-group list-group-flush dark">
+    <li class="list-group-item" id="context">
+      <h5>Set context here</h5>
+      <pre><code class="js"></code></pre>
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon1">Project</span>
+        </div>
+        <input type="text" class="form-control" name="project" placeholder="Project" aria-label="Project" aria-describedby="basic-addon1" value="jakub_projectx">
+      </div>
+
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon2">Asset</span>
+        </div>
+        <input type="text" class="form-control" name="asset" placeholder="Asset" aria-label="Asset" aria-describedby="basic-addon2" value="shot01">
+      </div>
+
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon3">Task</span>
+        </div>
+        <input type="text" class="form-control" name="task" placeholder="Task" aria-label="Task" aria-describedby="basic-addon3" value="compositing">
+      </div>
+
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon4">App</span>
+        </div>
+        <input type="text" class="form-control" name="app" placeholder="App" aria-label="App" aria-describedby="basic-addon4" value="premiere">
+      </div>
+      <button id="btn-set-context" type="button" class="btn btn-dark btn-sm btn-block">Set context</button>
+    </li>
+
+    <li  class="list-group-item" id="deregister">
+      <h5>deregister_plugin_path</h5>
+      <pre><code class="js"></code></pre>
+      <button id="btn-deregister" type="button" class="btn btn-dark btn-sm btn-block">Deregister</button>
+    </li>
+
+    <li class="list-group-item" id="register">
+      <h5>register_plugin_path</h5>
+      <pre><code class="js"></code></pre>
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+          <span class="input-group-text" id="basic-addon5">Path</span>
+        </div>
+        <input type="text" class="form-control" name="path" placeholder="Path" aria-label="Path" aria-describedby="basic-addon5" value="C:/Users/hubertCODE/pype-setup/repos/pype-config/pype/plugins/premiere/publish">
+      </div>
+      <button id="btn-register" type="button" class="btn btn-dark btn-sm btn-block">Register path</button>
+    </li>
+
+    <li class="list-group-item" id="publish">
+      <h5>Publish</h5>
+      <pre><code class="js"></code></pre>
+      <div class="input-group input-group-sm mb-3">
+        <div class="input-group-prepend">
+
+            <span class="input-group-text" id="basic-addon6">Path</span>
+
+        </div>
+        <input type="text" class="form-control" name="path" placeholder="JSON" aria-label="JSON" aria-describedby="basic-addon6" value="C:/Users/hubert/CODE/pype-setup/repos/pype-config/pype/premiere/example_publish_reqst.json">
+        <div class="input-group-append">
+          <div class="input-group-text">
+            <input type="checkbox" name="gui" checked="checked" aria-label="Checkbox for following text input"> GUI
+          </div>
+        </div>
+      </div>
+      <button id="btn-publish" type="button" class="btn btn-dark btn-sm btn-block">Publish</button>
+    </li>
+  </ul>
+
+  <hr />
+  <h5>PPRO function tests:</h5>
+  <ul class="list-group dark">
+    <li class="list-group-item"><button id="btn-get-sequence" type="button" class="btn btn-info btn-sm btn-block">Get Sequences</button></li>
+    <li class="list-group-item"><button id="btn-get-selected" type="button" class="btn btn-info btn-sm btn-block">Get Selected Clips</button></li>
+  </ul>
+
+  <hr />
+
+  <div class="col-md-6" id="source">
+                <!-- <pre>
+                <code class="python"></code>
+            </pre> -->
+  </div>
+  <h5>Output</h5>
+  <div class="row" id="output">
+
+  </div>
+
+  <script src="./js/script.js"></script>
+  <script src="./js/avalon.js"></script>
+</body>
+
+</html>

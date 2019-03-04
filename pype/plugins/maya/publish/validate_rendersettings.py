@@ -34,8 +34,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     actions = [pype.api.RepairAction]
 
     DEFAULT_PADDING = 4
-    RENDERER_PREFIX = {"vray": "<Scene>/<Scene>_<Layer>/<Layer>"}
-    DEFAULT_PREFIX = "<Scene>/<Scene>_<RenderLayer>/<RenderLayer>"
+    RENDERER_PREFIX = {"vray": "<Scene>/<Layer>/<Layer>"}
+    DEFAULT_PREFIX = "<Scene>/<RenderLayer>/<RenderLayer>"
 
     def process(self, instance):
 
@@ -50,37 +50,33 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         invalid = False
 
         renderer = instance.data['renderer']
-        layer_node = instance.data['setMembers']
+        layer = instance.data['setMembers']
 
-        # Collect the filename prefix in the render layer
-        with lib.renderlayer(layer_node):
+        # Get the node attributes for current renderer
+        attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS['default'])
+        prefix = lib.get_attr_in_layer("{node}.{prefix}".format(**attrs),
+                                       layer=layer)
+        padding = lib.get_attr_in_layer("{node}.{padding}".format(**attrs),
+                                        layer=layer)
 
-            render_attrs = lib.RENDER_ATTRS.get(renderer,
-                                                lib.RENDER_ATTRS['default'])
-            node = render_attrs["node"]
-            padding_attr = render_attrs["padding"]
-            prefix_attr = render_attrs["prefix"]
+        anim_override = lib.get_attr_in_layer("defaultRenderGlobals.animation",
+                                              layer=layer)
+        if not anim_override:
+            invalid = True
+            cls.log.error("Animation needs to be enabled. Use the same "
+                          "frame for start and end to render single frame")
 
-            prefix = cmds.getAttr("{}.{}".format(node, prefix_attr))
-            padding = cmds.getAttr("{}.{}".format(node, padding_attr))
+        fname_prefix = cls.RENDERER_PREFIX.get(renderer,
+                                               cls.DEFAULT_PREFIX)
+        if prefix != fname_prefix:
+            invalid = True
+            cls.log.error("Wrong file name prefix: %s (expected: %s)"
+                          % (prefix, fname_prefix))
 
-            anim_override = cmds.getAttr("defaultRenderGlobals.animation")
-            if not anim_override:
-                invalid = True
-                cls.log.error("Animation needs to be enabled. Use the same "
-                              "frame for start and end to render single frame")
-
-            fname_prefix = cls.RENDERER_PREFIX.get(renderer,
-                                                   cls.DEFAULT_PREFIX)
-            if prefix != fname_prefix:
-                invalid = True
-                cls.log.error("Wrong file name prefix, expecting %s"
-                              % fname_prefix)
-
-            if padding != cls.DEFAULT_PADDING:
-                invalid = True
-                cls.log.error("Expecting padding of {} ( {} )".format(
-                    cls.DEFAULT_PADDING, "0" * cls.DEFAULT_PADDING))
+        if padding != cls.DEFAULT_PADDING:
+            invalid = True
+            cls.log.error("Expecting padding of {} ( {} )".format(
+                cls.DEFAULT_PADDING, "0" * cls.DEFAULT_PADDING))
 
         return invalid
 

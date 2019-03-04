@@ -19,7 +19,7 @@ class ValidateMeshNoNegativeScale(pyblish.api.Validator):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ["model']
+    families = ['model']
     label = 'Mesh No Negative Scale'
     actions = [pype.maya.action.SelectInvalidAction]
 

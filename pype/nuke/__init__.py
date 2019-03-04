@@ -53,7 +53,7 @@ class NukeHandler(api.Logger.logging.Handler):
         msg = self.format(record)
 
         if record.levelname.lower() in [
-            "warning",
+            # "warning",
             "critical",
             "fatal",
             "error"
@@ -67,6 +67,7 @@ if nuke_handler.get_name() \
     not in [handler.get_name()
             for handler in api.Logger.logging.root.handlers[:]]:
     api.Logger.logging.getLogger().addHandler(nuke_handler)
+    api.Logger.logging.getLogger().setLevel(api.Logger.logging.INFO)
 
 if not self.nLogger:
     self.nLogger = api.Logger
@@ -86,6 +87,7 @@ def reload_config():
         "app.api",
         "{}.api".format(AVALON_CONFIG),
         "{}.templates".format(AVALON_CONFIG),
+        "{}.nuke.actions".format(AVALON_CONFIG),
         "{}.nuke.templates".format(AVALON_CONFIG),
         "{}.nuke.menu".format(AVALON_CONFIG)
     ):
@@ -99,7 +101,7 @@ def reload_config():
 
 def install():
 
-    api.fill_avalon_workdir()
+    api.set_avalon_workdir()
     reload_config()
 
     log.info("Registering Nuke plug-ins..")
@@ -113,12 +115,7 @@ def install():
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "write",
-        "lifeGroup",
-        "backdrop",
-        "imagesequence",
-        "mov"
-        "camera",
-        "pointcache",
+        "review"
     ]
 
     avalon.data["familiesStateDefault"] = False

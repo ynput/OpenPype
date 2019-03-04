@@ -15,12 +15,13 @@ class CreateYetiCache(avalon.maya.Creator):
     def __init__(self, *args, **kwargs):
         super(CreateYetiCache, self).__init__(*args, **kwargs)
 
-        data = OrderedDict(**self.data)
-        data["peroll"] = 0
+        self.data["preroll"] = 0
 
+        # Add animation data without step and handles
         anim_data = lib.collect_animation_data()
-        data.update({"startFrame": anim_data["startFrame"],
-                     "endFrame": anim_data["endFrame"],
-                     "samples": 3})
+        anim_data.pop("step")
+        anim_data.pop("handles")
+        self.data.update(anim_data)
 
-        self.data = data
+        # Add samples
+        self.data["samples"] = 3

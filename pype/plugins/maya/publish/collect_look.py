@@ -107,7 +107,6 @@ def seq_to_glob(path):
         "<f>": "<f>"
     }
 
-
     lower = path.lower()
     has_pattern = False
     for pattern, regex_pattern in patterns.items():
@@ -158,6 +157,9 @@ def get_file_node_path(node):
         if any(pattern in lower for pattern in patterns):
             return texture_pattern
 
+    if cmds.nodeType(node) == 'aiImage':
+        return cmds.getAttr('{0}.filename'.format(node))
+
     # otherwise use fileTextureName
     return cmds.getAttr('{0}.fileTextureName'.format(node))
 
@@ -203,7 +205,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.4
+    order = pyblish.api.CollectorOrder + 0.2
     families = ["look"]
     label = "Collect Look"
     hosts = ["maya"]
@@ -262,15 +264,37 @@ class CollectLook(pyblish.api.InstancePlugin):
         # Collect file nodes used by shading engines (if we have any)
         files = list()
         looksets = sets.keys()
+        shaderAttrs = [
+                    "surfaceShader",
+                    "volumeShader",
+                    "displacementShader",
+                    "aiSurfaceShader",
+                    "aiVolumeShader"]
+        materials = list()
+
         if looksets:
+            for look in looksets:
+                for at in shaderAttrs:
+                    con = cmds.listConnections("{}.{}".format(look, at))
+                    if con:
+                        materials.extend(con)
+
+            self.log.info("Found materials:\n{}".format(materials))
+
             self.log.info("Found the following sets:\n{}".format(looksets))
             # Get the entire node chain of the look sets
-            history = cmds.listHistory(looksets)
+            # history = cmds.listHistory(looksets)
+            history = list()
+            for material in materials:
+                history.extend(cmds.listHistory(material))
             files = cmds.ls(history, type="file", long=True)
+            files.extend(cmds.ls(history, type="aiImage", long=True))
 
+        self.log.info("Collected file nodes:\n{}".format(files))
         # Collect textures if any file nodes are found
         instance.data["resources"] = [self.collect_resource(n)
                                       for n in files]
+        self.log.info("Collected resources:\n{}".format(instance.data["resources"]))
 
         # Log a warning when no relevant sets were retrieved for the look.
         if not instance.data["lookData"]["relationships"]:
@@ -388,13 +412,21 @@ class CollectLook(pyblish.api.InstancePlugin):
             dict
         """
 
-        attribute = "{}.fileTextureName".format(node)
+        self.log.debug("processing: {}".format(node))
+        if cmds.nodeType(node) == 'file':
+            self.log.debug("file node")
+            attribute = "{}.fileTextureName".format(node)
+            computed_attribute = "{}.computedFileTextureNamePattern".format(node)
+        elif cmds.nodeType(node) == 'aiImage':
+            self.log.debug("aiImage node")
+            attribute = "{}.filename".format(node)
+            computed_attribute = attribute
         source = cmds.getAttr(attribute)
 
         # Compare with the computed file path, e.g. the one with the <UDIM>
         # pattern in it, to generate some logging information about this
         # difference
-        computed_attribute = "{}.computedFileTextureNamePattern".format(node)
+        # computed_attribute = "{}.computedFileTextureNamePattern".format(node)
         computed_source = cmds.getAttr(computed_attribute)
         if source != computed_source:
             self.log.debug("Detected computed file pattern difference "

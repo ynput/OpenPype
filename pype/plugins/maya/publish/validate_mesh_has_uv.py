@@ -47,7 +47,7 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ["model']
+    families = ['model']
     category = 'geometry'
     label = 'Mesh Has UVs'
     actions = [pype.maya.action.SelectInvalidAction]

@@ -6,11 +6,11 @@ import pype.api
 
 
 class ValidateLookSets(pyblish.api.InstancePlugin):
-    """Validate if any sets are missing from the instance and look data
+    """Validate if any sets relationships are not being collected.
 
     A shader can be assigned to a node that is missing a Colorbleed ID.
     Because it is missing the ID it has not been collected in the instance.
-    This validator ensures no relationships and thus considers it invalid
+    This validator ensures those relationships and thus considers it invalid
     if a relationship was not collected.
 
     When the relationship needs to be maintained the artist might need to
@@ -25,8 +25,10 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
 
     - Displacement objectSets (like V-Ray):
 
-        It is best practice to add the transform group of the shape to the
-        displacement objectSet.
+        It is best practice to add the transform of the shape to the
+        displacement objectSet. Any parent groups will not work as groups
+        do not receive a Colorbleed Id. As such the assignments need to be
+        made to the shapes and their transform.
 
         Example content:
             [asset_GRP|geometry_GRP|body_GES,
@@ -37,7 +39,7 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["look']
+    families = ['look']
     hosts = ['maya']
     label = 'Look Sets'
     actions = [pype.maya.action.SelectInvalidAction]
@@ -71,11 +73,13 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
                 # check if any objectSets are not present ion the relationships
                 missing_sets = [s for s in sets if s not in relationships]
                 if missing_sets:
-                    # A set of this node is not coming along, this is wrong!
-                    cls.log.error("Missing sets '{}' for node "
-                                  "'{}'".format(missing_sets, node))
-                    invalid.append(node)
-                    continue
+                    for set in missing_sets:
+                        if '_SET' not in set:
+                        # A set of this node is not coming along, this is wrong!
+                        cls.log.error("Missing sets '{}' for node "
+                                      "'{}'".format(missing_sets, node))
+                        invalid.append(node)
+                        continue
 
                 # Ensure the node is in the sets that are collected
                 for shaderset, data in relationships.items():

@@ -19,8 +19,7 @@ class ValidateTemplates(pyblish.api.ContextPlugin):
             data = { "project": {"name": "D001_projectsx",
                                 "code": "prjX"},
                      "representation": "exr",
-                     "VERSION": 3,
-                     "SUBVERSION": 10,
+                     "version": 3,
                      "task": "animation",
                      "asset": "sh001",
                      "hierarchy": "ep101/sq01/sh010"}
@@ -32,8 +31,7 @@ class ValidateTemplates(pyblish.api.ContextPlugin):
             data = { "project": {"name": "D001_projectsy",
                                 "code": "prjY"},
                      "representation": "abc",
-                     "VERSION": 1,
-                     "SUBVERSION": 5,
+                     "version": 1,
                      "task": "lookdev",
                      "asset": "bob",
                      "hierarchy": "ep101/sq01/bob"}

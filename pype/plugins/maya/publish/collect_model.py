@@ -9,13 +9,13 @@ class CollectModelData(pyblish.api.InstancePlugin):
     Ensures always only a single frame is extracted (current frame).
 
     Note:
-        This is a workaround so that the `studio.model` family can use the
+        This is a workaround so that the `pype.model` family can use the
         same pointcache extractor implementation as animation and pointcaches.
         This always enforces the "current" frame to be published.
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.499
+    order = pyblish.api.CollectorOrder + 0.2
     label = 'Collect Model Data'
     families = ["model"]
 
@@ -26,4 +26,7 @@ class CollectModelData(pyblish.api.InstancePlugin):
         instance.data['endFrame'] = frame
 
         # make ftrack publishable
-        instance.data["families"] = ['ftrack']
+        if instance.data.get('families'):
+            instance.data['families'].append('ftrack')
+        else:
+            instance.data['families'] = ['ftrack']

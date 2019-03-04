@@ -17,7 +17,7 @@ class ValidateMeshUVSetMap1(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ["model']
+    families = ['model']
     optional = True
     label = "Mesh has map1 UV Set"
     actions = [pype.maya.action.SelectInvalidAction,
