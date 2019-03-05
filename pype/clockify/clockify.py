@@ -1,188 +1,68 @@
 import os
-import requests
-import json
-import datetime
-import appdirs
+from app import style
+from app.vendor.Qt import QtWidgets
+from pype.clockify import ClockifySettings, ClockifyAPI
 
 
-class ClockifyAPI:
-    endpoint = "https://api.clockify.me/api/"
-    headers = {"X-Api-Key": None}
-    app_dir = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
-    file_name = 'clockify.json'
-    fpath = os.path.join(app_dir, file_name)
-    workspace = None
+class ClockifyModule:
 
-    def __init__(self, workspace=None, debug=False):
-        self.debug = debug
-        self.set_api()
-        if workspace is not None:
-            self.set_workspace(workspace)
+    def __init__(self, main_parent=None, parent=None):
+        self.main_parent = main_parent
+        self.parent = parent
+        self.clockapi = ClockifyAPI()
+        self.widget_settings = ClockifySettings(main_parent, self)
 
-    def set_api(self):
-        api_key = self.get_api_key()
-        if api_key is not None:
-            self.headers["X-Api-Key"] = api_key
+        # Bools
+        self.bool_api_key_set = False
+        self.bool_workspace_set = False
+        self.bool_timer_run = False
+
+    def start_up(self):
+        self.bool_api_key_set = self.clockapi.set_api()
+        if self.bool_api_key_set is False:
+            self.show_settings()
             return
 
-        raise ValueError('Api key is not set')
-
-    def set_workspace(self, name):
-        all_workspaces = self.get_workspaces()
-        if name in all_workspaces:
-            self.workspace = name
+        workspace = os.environ.get('CLOCKIFY_WORKSPACE', None)
+        print(workspace)
+        self.bool_workspace_set = self.clockapi.set_workspace(workspace)
+        if self.bool_workspace_set is False:
+            # TODO show message to user
+            print("Nope Workspace: clockify.py - line 29")
             return
+        if self.clockapi.get_in_progress() is not None:
+            self.bool_timer_run = True
 
-    def get_api_key(self):
-        credentials = None
-        try:
-            file = open(self.fpath, 'r')
-            credentials = json.load(file).get('api_key', None)
-        except Exception:
-            file = open(self.fpath, 'w')
-        file.close()
-        return credentials
+        self.set_menu_visibility()
 
-    def get_workspaces(self):
-        action_url = 'workspaces/'
-        response = requests.get(
-            self.endpoint + action_url,
-            headers=self.headers
+    # Definition of Tray menu
+    def tray_menu(self, parent):
+        # Menu for Tray App
+        self.menu = QtWidgets.QMenu('Clockify', parent)
+        self.menu.setProperty('submenu', 'on')
+        self.menu.setStyleSheet(style.load_stylesheet())
+
+        # Actions
+        self.aShowSettings = QtWidgets.QAction(
+            "Settings", self.menu
         )
-        return {
-            workspace["name"]: workspace["id"] for workspace in response.json()
-        }
-
-    def get_projects(self, workspace=None):
-        if workspace is None:
-            workspace = self.workspace
-        action_url = 'workspaces/{}/projects/'.format(workspace)
-        response = requests.get(
-            self.endpoint + action_url,
-            headers=self.headers
+        self.aStopTimer = QtWidgets.QAction(
+            "Stop timer", self.menu
         )
 
-        return {
-            project["name"]: project["id"] for project in response.json()
-        }
+        self.menu.addAction(self.aShowSettings)
+        self.menu.addAction(self.aStopTimer)
 
-    def print_json(self, inputjson):
-        print(json.dumps(inputjson, indent=2))
+        self.aShowSettings.triggered.connect(self.show_settings)
+        self.aStopTimer.triggered.connect(self.clockapi.finish_time_entry)
 
-    def get_current_time(self):
-        return str(datetime.datetime.utcnow().isoformat())+'Z'
+        self.set_menu_visibility()
 
-    def start_time_entry(
-        self, description, project_id, task_id, billable="true", workspace=None
-    ):
-        if workspace is None:
-            workspace = self.workspace
-        action_url = 'workspaces/{}/timeEntries/'.format(workspace)
-        start = self.get_current_time()
-        body = {
-            "start": start,
-            "billable": billable,
-            "description": description,
-            "projectId": project_id,
-            "taskId": task_id,
-            "tagIds": None
-        }
-        response = requests.post(
-            self.endpoint + action_url,
-            headers=self.headers,
-            json=body
-        )
-        return response.json()
+        return self.menu
 
-    def get_in_progress(self, workspace=None):
-        if workspace is None:
-            workspace = self.workspace
-        action_url = 'workspaces/{}/timeEntries/inProgress'.format(workspace)
-        response = requests.get(
-            self.endpoint + action_url,
-            headers=self.headers
-        )
-        return response.json()
+    def show_settings(self):
+        self.widget_settings.input_api_key.setText(self.clockapi.get_api_key())
+        self.widget_settings.show()
 
-    def finish_time_entry(self, workspace=None):
-        if workspace is None:
-            workspace = self.workspace
-        current = self.get_in_progress(workspace)
-        current_id = current["id"]
-        action_url = 'workspaces/{}/timeEntries/{}'.format(
-            workspace, current_id
-        )
-        body = {
-            "start": current["timeInterval"]["start"],
-            "billable": current["billable"],
-            "description": current["description"],
-            "projectId": current["projectId"],
-            "taskId": current["taskId"],
-            "tagIds": current["tagIds"],
-            "end": self.get_current_time()
-        }
-        response = requests.put(
-            self.endpoint + action_url,
-            headers=self.headers,
-            json=body
-        )
-        return response.json()
-
-    def get_time_entries(self, workspace=None):
-        if workspace is None:
-            workspace = self.workspace
-        action_url = 'workspaces/{}/timeEntries/'.format(workspace)
-        response = requests.get(
-            self.endpoint + action_url,
-            headers=self.headers
-        )
-        return response.json()[:10]
-
-    def remove_time_entry(self, tid, workspace=None):
-        if workspace is None:
-            workspace = self.workspace
-        action_url = 'workspaces/{}/timeEntries/{tid}'.format(workspace)
-        response = requests.delete(
-            self.endpoint + action_url,
-            headers=self.headers
-        )
-        return response.json()
-
-    def add_project(self, name, workspace=None):
-        if workspace is None:
-            workspace = self.workspace
-        action_url = 'workspaces/{}/projects/'.format(workspace)
-        body = {
-            "name": name,
-            "clientId": "",
-            "isPublic": "false",
-            "estimate": None,
-            "color": None,
-            "billable": None
-        }
-        response = requests.post(
-            self.endpoint + action_url,
-            headers=self.headers,
-            json=body
-        )
-        return response.json()
-
-    def add_workspace(self, name):
-        action_url = 'workspaces/'
-        body = {"name": name}
-        response = requests.post(
-            self.endpoint + action_url,
-            headers=self.headers,
-            json=body
-        )
-        return response.json()
-
-
-def main():
-    clockify = ClockifyAPI()
-    from pprint import pprint
-    pprint(clockify.get_workspaces())
-
-
-if __name__ == "__main__":
-    main()
+    def set_menu_visibility(self):
+        self.aStopTimer.setVisible(self.bool_timer_run)
