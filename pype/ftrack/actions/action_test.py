@@ -31,7 +31,8 @@ class TestAction(BaseAction):
         'https://cdn4.iconfinder.com/data/icons/hospital-19/512/'
         '8_hospital-512.png'
     )
-    def prediscover(self, event):
+
+    def discover(self, session, entities, event):
         ''' Validation '''
 
         return True

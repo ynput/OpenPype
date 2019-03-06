@@ -129,24 +129,19 @@ class BaseHandler(object):
                 'icon': self.icon,
             }]
         }
-        accepts = self.prediscover(event)
-        if accepts is None:
-            args = self._translate_event(
-                self.session, event
-            )
 
-            accepts = self.discover(
-                self.session, *args
-            )
+        args = self._translate_event(
+            self.session, event
+        )
+
+        accepts = self.discover(
+            self.session, *args
+        )
 
         if accepts is True:
             self.log.debug(u'Discovering action with selection: {0}'.format(
                 event['data'].get('selection', [])))
             return items
-
-    def prediscover(self, event):
-        "return True if can handle selected entities before handling entities"
-        return None
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
