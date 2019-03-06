@@ -317,6 +317,41 @@ class ClockifyAPI(metaclass=Singleton):
         )
         return response.json()
 
+    def add_task(
+        self, name, project_name=None, project_id=None,
+        workspace_name=None, workspace_id=None
+    ):
+        workspace_id = self.convert_input(workspace_id, workspace_name)
+        project_id = self.convert_input(project_id, project_name, 'Project')
+        action_url = 'workspaces/{}/projects/{}/tasks/'.format(
+            workspace_id, project_id
+        )
+        body = {
+            "name": name,
+            "projectId": project_id
+        }
+        response = requests.post(
+            self.endpoint + action_url,
+            headers=self.headers,
+            json=body
+        )
+        return response.json()
+
+    def delete_project(
+        self, project_name=None, project_id=None,
+        workspace_name=None, workspace_id=None
+    ):
+        workspace_id = self.convert_input(workspace_id, workspace_name)
+        project_id = self.convert_input(project_id, project_name, 'Project')
+        action_url = '/workspaces/{}/projects/{}'.format(
+            workspace_id, project_id
+        )
+        response = requests.delete(
+            self.endpoint + action_url,
+            headers=self.headers,
+        )
+        return response.json()
+
     def convert_input(
         self, entity_id, entity_name, mode='Workspace', project_id=None
     ):
