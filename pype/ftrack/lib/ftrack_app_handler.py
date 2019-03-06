@@ -129,9 +129,11 @@ class AppAction(BaseHandler):
             self.session, event
         )
 
-        self._launch_preactions(
+        preactions_launched = self._handle_preactions(
             self.session, event
         )
+        if preactions_launched is False:
+            return
 
         if self._check_is_running():
             response = {
@@ -176,15 +178,23 @@ class AppAction(BaseHandler):
             return True
         return False
 
-    def _launch_preactions(self, session, event):
+    def _handle_preactions(self, session, event):
+        # If no selection
         selection = event.get('data', {}).get('selection', None)
+        if (selection is None):
+            return False
+        # If preactions are not set
         if (
-            selection is None or
-            self.preactions is None or
-            len(self.preactions) == 0
+            not hasattr(self, 'preactions') and
+            self.preactions is None and
+            len(self.preactions) < 1
         ):
-            return
+            return True
+        # If preactions were already started
+        if event['data'].get('preactions_launched', None) is True:
+            return True
 
+        # Launch preactions
         for preaction in self.preactions:
             event = ftrack_api.event.base.Event(
                 topic='ftrack.action.launch',
@@ -197,6 +207,21 @@ class AppAction(BaseHandler):
                 )
             )
             session.event_hub.publish(event, on_error='ignore')
+        # Relaunch this action
+        event = ftrack_api.event.base.Event(
+            topic='ftrack.action.launch',
+            data=dict(
+                actionIdentifier=self.identifier,
+                selection=selection,
+                preactions_launched=True
+            ),
+            source=dict(
+                user=dict(username=session.api_user)
+            )
+        )
+        session.event_hub.publish(event, on_error='ignore')
+
+        return False
 
     def launch(self, session, entities, event):
         '''Callback method for the custom action.
