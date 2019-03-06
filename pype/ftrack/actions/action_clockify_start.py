@@ -11,7 +11,7 @@ class StartClockify(BaseAction):
     '''Starts timer on clockify.'''
 
     #: Action identifier.
-    identifier = 'start.clockify.timer'
+    identifier = 'clockify.start.timer'
     #: Action label.
     label = 'Start timer'
     #: Action description.
