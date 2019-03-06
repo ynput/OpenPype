@@ -296,9 +296,12 @@ class ClockifyAPI(metaclass=Singleton):
             "name": name,
             "clientId": "",
             "isPublic": "false",
-            "estimate": None,
-            "color": None,
-            "billable": None
+            "estimate": {
+                # "estimate": "3600",
+                "type": "AUTO"
+            },
+            "color": "#f44336",
+            "billable": "true"
         }
         response = requests.post(
             self.endpoint + action_url,
