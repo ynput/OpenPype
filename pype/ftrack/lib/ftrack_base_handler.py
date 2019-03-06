@@ -164,7 +164,7 @@ class BaseHandler(object):
         '''Return *event* translated structure to be used with the API.'''
 
         '''Return *event* translated structure to be used with the API.'''
-        _entities = event['data'].get('entities', None)
+        _entities = event['data'].get('entities_object', None)
         if _entities is None:
             selection = event['data'].get('selection', [])
             _entities = []

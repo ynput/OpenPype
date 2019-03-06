@@ -7,11 +7,8 @@ class CollectEntities(BaseEvent):
     priority = 1
 
     def _launch(self, event):
-        entities, entity_types = self.translate_event(event)
-        entities_count = len(entities)
-        event['data']['entities'] = entities
-        event['data']['entity_types'] = entity_types
-        event['data']['entities_count'] = entities_count
+        entities = self.translate_event(event)
+        event['data']['entities_object'] = entities
 
         return True
 
@@ -19,16 +16,14 @@ class CollectEntities(BaseEvent):
         selection = event['data'].get('selection', [])
 
         entities = list()
-        entity_types = set()
         for entity in selection:
             ent = self.session.get(
                 self.get_entity_type(entity),
                 entity.get('entityId')
             )
             entities.append(ent)
-            entity_types.add(ent.entity_type)
 
-        return [entities, entity_types]
+        return entities
 
     def get_entity_type(self, entity):
         '''Return translated entity type tht can be used with API.'''
