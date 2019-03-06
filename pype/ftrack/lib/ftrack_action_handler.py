@@ -62,7 +62,6 @@ class BaseAction(BaseHandler):
         )
 
     def _launch(self, event):
-        self.reset_session()
         args = self._translate_event(
             self.session, event
         )
