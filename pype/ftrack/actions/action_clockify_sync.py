@@ -3,7 +3,7 @@ import argparse
 import logging
 import json
 import ftrack_api
-from pype.ftrack import BaseAction
+from pype.ftrack import BaseAction, MissingPermision
 from pype.clockify import ClockifyAPI
 
 
@@ -19,16 +19,16 @@ class SyncClocify(BaseAction):
     #: priority
     priority = 100
     #: roles that are allowed to register this action
-    role_list = ['Pypecub', 'Administrator']
+    role_list = ['Pypeclub', 'Administrator']
     #: icon
     icon = 'https://clockify.me/assets/images/clockify-logo-white.svg'
     #: CLockifyApi
     clockapi = ClockifyAPI()
 
-    def discover(self, session, entities, event):
-        ''' Validation '''
-
-        return True
+    def register(self):
+        if self.validate_auth_rights() is False:
+            raise MissingPermision
+        super().register()
 
     def validate_auth_rights(self):
         test_project = '__test__'
@@ -39,16 +39,57 @@ class SyncClocify(BaseAction):
         self.clockapi.delete_project(test_project)
         return True
 
-    def launch(self, session, entities, event):
-        authorization = self.validate_auth_rights()
-        if authorization is False:
-            return {
-                'success': False,
-                'message': (
-                    'You don\'t have permission to modify Clockify'
-                    ' workspace {}'.format(self.clockapi.workspace)
-                )
+    def discover(self, session, entities, event):
+        ''' Validation '''
+
+        return True
+
+    def interface(self, session, entities, event):
+        if not event['data'].get('values', {}):
+            title = 'Select projects to sync'
+
+            projects = session.query('Project').all()
+
+            items = []
+            all_projects_label = {
+                'type': 'label',
+                'value': 'All projects'
             }
+            all_projects_value = {
+                'name': '__all__',
+                'type': 'boolean',
+                'value': False
+            }
+            line = {
+                'type': 'label',
+                'value': '___'
+            }
+            items.append(all_projects_label)
+            items.append(all_projects_value)
+            items.append(line)
+            for project in projects:
+                label = project['full_name']
+                item_label = {
+                    'type': 'label',
+                    'value': label
+                }
+                item_value = {
+                    'name': project['id'],
+                    'type': 'boolean',
+                    'value': False
+                }
+                items.append(item_label)
+                items.append(item_value)
+
+            return {
+                'items': items,
+                'title': title
+            }
+
+    def launch(self, session, entities, event):
+        values = event['data'].get('values', {})
+        if not values:
+            return
 
         # JOB SETTINGS
         userId = event['source']['user']['id']
@@ -63,8 +104,19 @@ class SyncClocify(BaseAction):
         })
         session.commit()
         try:
+            if values.get('__all__', False) is True:
+                projects_to_sync = session.query('Project').all()
+            else:
+                projects_to_sync = []
+                project_query = 'Project where id is "{}"'
+                for project_id, sync in values.items():
+                    if sync is True:
+                        projects_to_sync.append(session.query(
+                            project_query.format(project_id)
+                        ).one())
+
             projects_info = {}
-            for project in session.query('Project').all():
+            for project in projects_to_sync:
                 task_types = []
                 for task_type in project['project_schema']['_task_type_schema'][
                     'types'
