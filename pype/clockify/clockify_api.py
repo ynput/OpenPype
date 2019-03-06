@@ -200,7 +200,7 @@ class ClockifyAPI(metaclass=Singleton):
             ):
                 self.bool_timer_run = True
                 return self.bool_timer_run
-            return False
+            self.finish_time_entry(workspace_id=workspace_id)
 
         # Convert billable to strings
         if billable:
