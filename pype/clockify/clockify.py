@@ -35,6 +35,9 @@ class ClockifyModule:
 
         self.set_menu_visibility()
 
+    def stop_timer(self):
+        self.clockapi.finish_time_entry()
+
     # Definition of Tray menu
     def tray_menu(self, parent):
         # Menu for Tray App
@@ -54,7 +57,7 @@ class ClockifyModule:
         self.menu.addAction(self.aStopTimer)
 
         self.aShowSettings.triggered.connect(self.show_settings)
-        self.aStopTimer.triggered.connect(self.clockapi.finish_time_entry)
+        self.aStopTimer.triggered.connect(self.stop_timer)
 
         self.set_menu_visibility()
 
