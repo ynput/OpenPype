@@ -56,6 +56,13 @@ class CollectEntities(BaseEvent):
             priority=self.priority
         )
 
+        self.session.event_hub.subscribe(
+            'topic=ftrack.action.launch'
+            ' and source.user.username={0}'.format(self.session.api_user),
+            self._launch,
+            priority=self.priority
+        )
+
 
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''
