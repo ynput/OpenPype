@@ -26,22 +26,12 @@ class SyncClocify(BaseAction):
     clockapi = ClockifyAPI()
 
     def register(self):
-        if self.validate_auth_rights() is False:
+        if self.clockapi.validate_workspace_perm() is False:
             raise MissingPermision
         super().register()
 
-    def validate_auth_rights(self):
-        test_project = '__test__'
-        try:
-            self.clockapi.add_project(test_project)
-        except Exception:
-            return False
-        self.clockapi.delete_project(test_project)
-        return True
-
     def discover(self, session, entities, event):
         ''' Validation '''
-
         return True
 
     def interface(self, session, entities, event):

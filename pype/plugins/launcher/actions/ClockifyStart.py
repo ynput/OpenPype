@@ -1,15 +1,16 @@
 from avalon import api, io
 from pype.clockify import ClockifyAPI
 from pype.api import Logger
-log = Logger.getLogger(__name__, "start_clockify")
+log = Logger.getLogger(__name__, "clockify_start")
 
 
-class StartClockify(api.Action):
+class ClockifyStart(api.Action):
 
-    name = "start_clockify_timer"
-    label = "Start Timer - Clockify"
+    name = "clockify_start_timer"
+    label = "Clockify - Start Timer"
     icon = "clockify_icon"
     order = 500
+    clockapi = ClockifyAPI()
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
@@ -18,7 +19,6 @@ class StartClockify(api.Action):
         return False
 
     def process(self, session, **kwargs):
-        clockapi = ClockifyAPI()
         project_name = session['AVALON_PROJECT']
         asset_name = session['AVALON_ASSET']
         task_name = session['AVALON_TASK']
@@ -33,7 +33,7 @@ class StartClockify(api.Action):
             desc_items.append(asset_name)
             description = '/'.join(desc_items)
 
-        clockapi.start_time_entry(
+        self.clockapi.start_time_entry(
             description=description,
             project_name=project_name,
             task_name=task_name,

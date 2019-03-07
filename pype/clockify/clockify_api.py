@@ -43,6 +43,23 @@ class ClockifyAPI(metaclass=Singleton):
             return False
         return True
 
+    def validate_workspace_perm(self):
+        test_project = '__test__'
+        action_url = 'workspaces/{}/projects/'.format(self.workspace_id)
+        body = {
+            "name": test_project, "clientId": "", "isPublic": "false",
+            "estimate": {"type": "AUTO"},
+            "color": "#f44336", "billable": "true"
+        }
+        response = requests.post(
+            self.endpoint + action_url,
+            headers=self.headers, json=body
+        )
+        if response.status_code >= 300:
+            return False
+        self.delete_project(test_project)
+        return True
+
     def set_workspace(self, name=None):
         if name is None:
             self.workspace = None
