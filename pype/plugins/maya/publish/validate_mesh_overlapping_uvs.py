@@ -5,12 +5,11 @@ import pype.api
 import pype.maya.action
 import math
 import maya.api.OpenMaya as om
-from pymel.core import *
-from pymel.core.datatypes import *
+from pymel.core import polyUVSet
 
 
 class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
-    """Validate the current mesh overlapping UVs.
+    """ Validate the current mesh overlapping UVs.
 
     It validates whether the current UVs are overlapping or not.
     It is optional to warn publisher about it.
@@ -25,15 +24,16 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
     optional = True
 
     def _createBoundingCircle(self, meshfn):
-        """ Parameter: meshfn - MFnMesh
-            Represent a face by a center and radius, i.eself.
-            center = [center1u, center1v, center2u, center2v, ... ]
-            radius = [radius1, radius2,  ... ]
-            return (center, radius)
+        """ Represent a face by center and radius
+
+            :param meshfn: MFnMesh class
+            :type meshfn: :class:`maya.api.OpenMaya.MFnMesh`
+            :returns: (center, radius)
+            :rtype: tuple
         """
         center = []
         radius = []
-        for i in xrange(meshfn.numPolygons):  # noqa: F405
+        for i in xrange(meshfn.numPolygons):  # noqa: F821
             # get uvs from face
             uarray = []
             varray = []
@@ -66,10 +66,19 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
 
     def _createRayGivenFace(self, meshfn, faceId):
         """ Represent a face by a series of edges(rays), i.e.
+
+            :param meshfn: MFnMesh class
+            :type meshfn: :class:`maya.api.OpenMaya.MFnMesh`
+            :param faceId: face id
+            :type faceId: int
+            :returns: False if no valid uv's.
+                      ""(True, orig, vec)"" or ""(False, None, None)""
+            :rtype: tuple
+
+            .. code-block:: python
+
             orig = [orig1u, orig1v, orig2u, orig2v, ... ]
             vec  = [vec1u,  vec1v,  vec2u,  vec2v,  ... ]
-            return false if no valid uv's.
-            return (true, orig, vec) or (false, None, None)
         """
         orig = []
         vec = []
@@ -87,7 +96,7 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
         # loop throught all vertices to construct edges/rays
         u = uarray[-1]
         v = varray[-1]
-        for i in xrange(len(uarray)):  # noqa: F405
+        for i in xrange(len(uarray)):  # noqa: F821
             orig.append(uarray[i])
             orig.append(varray[i])
             vec.append(u - uarray[i])
@@ -97,40 +106,39 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
 
         return (True, orig, vec)
 
-    def _area(self, orig):
-        sum = 0.0
-        num = len(orig)/2
-        for i in xrange(num):  # noqa: F405
-            idx = 2 * i
-            idy = (i + 1) % num
-            idy = 2 * idy + 1
-            idy2 = (i + num - 1) % num
-            idy2 = 2 * idy2 + 1
-            sum += orig[idx] * (orig[idy] - orig[idy2])
-
-        return math.fabs(sum) * 0.5
-
     def _checkCrossingEdges(self,
                             face1Orig,
                             face1Vec,
                             face2Orig,
                             face2Vec):
         """ Check if there are crossing edges between two faces.
-            Return true if there are crossing edges and false otherwise.
+            Return True if there are crossing edges and False otherwise.
+
+            :param face1Orig: origin of face 1
+            :type face1Orig: tuple
+            :param face1Vec: face 1 edges
+            :type face1Vec: list
+            :param face2Orig: origin of face 2
+            :type face2Orig: tuple
+            :param face2Vec: face 2 edges
+            :type face2Vec: list
+
             A face is represented by a series of edges(rays), i.e.
-            faceOrig[] = [orig1u, orig1v, orig2u, orig2v, ... ]
-            faceVec[]  = [vec1u,  vec1v,  vec2u,  vec2v,  ... ]
+            .. code-block:: python
+
+               faceOrig[] = [orig1u, orig1v, orig2u, orig2v, ... ]
+               faceVec[]  = [vec1u,  vec1v,  vec2u,  vec2v,  ... ]
         """
         face1Size = len(face1Orig)
         face2Size = len(face2Orig)
-        for i in xrange(0, face1Size, 2):
+        for i in xrange(0, face1Size, 2):  # noqa: F821
             o1x = face1Orig[i]
             o1y = face1Orig[i+1]
             v1x = face1Vec[i]
             v1y = face1Vec[i+1]
             n1x = v1y
             n1y = -v1x
-            for j in xrange(0, face2Size, 2):
+            for j in xrange(0, face2Size, 2):  # noqa: F821
                 # Given ray1(O1, V1) and ray2(O2, V2)
                 # Normal of ray1 is (V1.y, V1.x)
                 o2x = face2Orig[j]
@@ -167,7 +175,13 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
         return 0
 
     def _getOverlapUVFaces(self, meshName):
-        """ Return overlapping faces """
+        """ Return overlapping faces
+
+            :param meshName: name of mesh
+            :type meshName: str
+            :returns: list of overlapping faces
+            :rtype: list
+        """
         faces = []
         # find polygon mesh node
         selList = om.MSelectionList()
@@ -183,7 +197,7 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
         meshfn = om.MFnMesh(mesh)
 
         center, radius = self._createBoundingCircle(meshfn)
-        for i in xrange(meshfn.numPolygons):  # noqa: F405
+        for i in xrange(meshfn.numPolygons):  # noqa: F821
             rayb1, face1Orig, face1Vec = self._createRayGivenFace(
                                                     meshfn, i)
             if not rayb1:
@@ -225,34 +239,19 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
 
     @classmethod
     def _has_overlapping_uvs(cls, node):
+        """ Check if mesh has overlapping UVs.
 
-        overlapFaces = []
-        flipped = []
-        oStr = ''
-        for s in ls(sl=1, fl=1):
-            curUV = polyUVSet(s, q=1, cuv=1)
-            for i, uv in enumerate(polyUVSet(s, q=1, auv=1)):
-                polyUVSet(s, cuv=1, uvSet=uv)
-                of = getOverlapUVFaces(str(s))
-                if of != []:
-                    oStr += s + " has " + str(len(of)) + " overlapped faces in uvset " + uv + '\n'
-                    overlapFaces.extend(of)
-
+            :param node: node to check
+            :type node: str
+            :returns: True is has overlapping UVs, False otherwise
+            :rtype: bool
         """
-            # inverted
-            flf = []
-            for f in ls( PyNode( s ).getShape().f, fl=1 ):
-            uvPos = polyEditUV( [ polyListComponentConversion( vf, fvf=1, toUV=1 )[0] for vf in ls( polyListComponentConversion( f, tvf=1 ), fl=1 ) ], q=1 )
-            uvAB = Vector( [ uvPos[2] - uvPos[0], uvPos[3] - uvPos[1] ] )
-            uvBC = Vector( [ uvPos[4] - uvPos[2], uvPos[5] - uvPos[3] ] )
-            if uvAB.cross( uvBC ) * Vector([0, 0, 1]) <= 0: flf.append( f )
-            if flf != []:
-            oStr += s + " has " + str( len( flf ) ) + " inverted faces in uvset " + uv + '\n'
-            flipped.extend( flf )
-
-            polyUVSet( s, cuv=1, uvSet=str( curUV ) )
-            oStr += '\n'
-        """
+        for i, uv in enumerate(polyUVSet(node, q=1, auv=1)):
+            polyUVSet(node, cuv=1, uvSet=uv)
+            of = cls._getOverlapUVFaces(str(node))
+            if of != []:
+                return True
+        return False
 
     @classmethod
     def get_invalid(cls, instance):
