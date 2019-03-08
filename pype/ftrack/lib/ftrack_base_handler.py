@@ -92,12 +92,12 @@ class BaseHandler(object):
                     label = '{} {}'.format(self.label, self.variant)
 
             try:
-                self.log.info((
-                    '{} "{}" Launched'
-                ).format(self.type, label))
-                return func(*args, **kwargs)
+                self.log.info(('{} "{}": Launched').format(self.type, label))
+                result = func(*args, **kwargs)
+                self.log.info(('{} "{}": Finished').format(self.type, label))
+                return result
             except Exception as e:
-                self.log.error('{} "{}": Launch failed ({})'.format(
+                self.log.error('{} "{}": Failed ({})'.format(
                     self.type, label, str(e))
                 )
         return wrapper_launch
