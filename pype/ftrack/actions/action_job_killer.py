@@ -23,7 +23,8 @@ class JobKiller(BaseAction):
         'https://cdn2.iconfinder.com/data/icons/new-year-resolutions/64/'
         'resolutions-23-512.png'
     )
-    def prediscover(self, event):
+
+    def discover(self, session, entities, event):
         ''' Validation '''
 
         return True

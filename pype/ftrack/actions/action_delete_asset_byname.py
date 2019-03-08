@@ -25,14 +25,13 @@ class AssetsRemover(BaseAction):
     #: Db
     db = DbConnector()
 
-    def prediscover(self, event):
+    def discover(self, session, entities, event):
         ''' Validation '''
-        selection = event["data"].get("selection", None)
-        if selection is None or len(selection) != 1:
+        if len(entities) != 1:
             return False
 
         valid = ["show", "task"]
-        entityType = selection[0].get("entityType", "")
+        entityType = event["data"]["selection"][0].get("entityType", "")
         if entityType.lower() not in valid:
             return False
 

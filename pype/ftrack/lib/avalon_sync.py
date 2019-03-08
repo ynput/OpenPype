@@ -457,12 +457,17 @@ def get_avalon_project(ft_project):
 def get_project_config(entity):
     config = {}
     config['schema'] = pypelib.get_avalon_project_config_schema()
-    config['tasks'] = [{'name': ''}]
+    config['tasks'] = get_tasks(entity)
     config['apps'] = get_project_apps(entity)
     config['template'] = pypelib.get_avalon_project_template()
 
     return config
 
+def get_tasks(project):
+    return [
+        {'name': task_type['name']} for task_type in project[
+        'project_schema']['_task_type_schema']['types']
+    ]
 
 def get_project_apps(entity):
     """ Get apps from project
