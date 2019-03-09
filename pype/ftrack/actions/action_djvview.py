@@ -66,7 +66,8 @@ class DJVViewAction(BaseHandler):
 
     def discover(self, event):
         """Return available actions based on *event*. """
-
+        if self.djv_path is None:
+            return
         if not self.is_valid_selection(event):
             return
 
