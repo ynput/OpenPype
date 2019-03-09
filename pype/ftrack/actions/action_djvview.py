@@ -47,28 +47,6 @@ class DJVViewAction(BaseHandler):
         })
 
         self.items = items
-
-        items = []
-        applications = self.get_applications()
-        applications = sorted(
-            applications, key=lambda application: application["label"]
-        )
-
-        for application in applications:
-            self.djv_path = application.get("path", None)
-            applicationIdentifier = application["identifier"]
-            label = application["label"]
-            items.append({
-                "actionIdentifier": self.identifier,
-                "label": label,
-                "variant": application.get("variant", None),
-                "description": application.get("description", None),
-                "icon": application.get("icon", "default"),
-                "applicationIdentifier": applicationIdentifier
-            })
-
-        self.items = items
-
         if self.identifier is None:
             raise ValueError(
                 'Action missing identifier.'
@@ -347,7 +325,6 @@ class DJVViewAction(BaseHandler):
 
                         try:
                             # TODO This is proper way to get filepath!!!
-                            # THIS WON'T WORK RIGHT NOW
                             location = component[
                                 'component_locations'
                             ][0]['location']
