@@ -27,7 +27,7 @@ class DJVViewAction(BaseHandler):
         self.djv_path = None
         self.config_data = None
 
-        items = []
+        self.items = []
         if self.config_data is None:
             self.load_config_data()
 
@@ -37,7 +37,7 @@ class DJVViewAction(BaseHandler):
 
         applicationIdentifier = application["identifier"]
         label = application["label"]
-        items.append({
+        self.items.append({
             "actionIdentifier": self.identifier,
             "label": label,
             "variant": application.get("variant", None),
@@ -46,7 +46,6 @@ class DJVViewAction(BaseHandler):
             "applicationIdentifier": applicationIdentifier
         })
 
-        self.items = items
         if self.identifier is None:
             raise ValueError(
                 'Action missing identifier.'
