@@ -10,7 +10,7 @@ class CollectEntities(BaseEvent):
         entities = self.translate_event(event)
         event['data']['entities_object'] = entities
 
-        return True
+        return
 
     def translate_event(self, event):
         selection = event['data'].get('selection', [])
