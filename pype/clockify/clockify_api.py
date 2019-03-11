@@ -93,6 +93,8 @@ class ClockifyAPI(metaclass=Singleton):
             result = False
         if result is not False:
             self.workspace_id = result
+            if self.master_parent is not None:
+                self.master_parent.start_timer_check()
             return True
         return False
 
