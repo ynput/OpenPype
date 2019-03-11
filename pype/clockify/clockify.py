@@ -21,16 +21,14 @@ class ClockifyModule:
         self.bool_timer_run = False
 
     def start_up(self):
+        self.clockapi.set_master(self)
         self.bool_api_key_set = self.clockapi.set_api()
         if self.bool_api_key_set is False:
             self.show_settings()
             return
 
-        workspace = os.environ.get('CLOCKIFY_WORKSPACE', None)
-        self.bool_workspace_set = self.clockapi.set_workspace(workspace)
+        self.bool_workspace_set = self.clockapi.workspace_id is not None
         if self.bool_workspace_set is False:
-            # TODO show message to user
-            print("Nope Workspace: clockify.py - line 29")
             return
 
         self.bool_thread_check_running = True
