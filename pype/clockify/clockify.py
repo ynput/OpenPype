@@ -1,4 +1,3 @@
-import os
 import threading
 from app import style
 from app.vendor.Qt import QtWidgets
@@ -12,6 +11,7 @@ class ClockifyModule:
         self.parent = parent
         self.clockapi = ClockifyAPI()
         self.widget_settings = ClockifySettings(main_parent, self)
+        self.widget_settings_required = None
 
         self.thread_timer_check = None
         # Bools
@@ -31,22 +31,24 @@ class ClockifyModule:
         if self.bool_workspace_set is False:
             return
 
-        self.bool_thread_check_running = True
         self.start_timer_check()
 
         self.set_menu_visibility()
 
-    def change_timer_run(self, bool_run):
-        self.bool_timer_run = bool_run
-        self.set_menu_visibility()
-
     def start_timer_check(self):
+        self.bool_thread_check_running = True
         if self.thread_timer_check is None:
             self.thread_timer_check = threading.Thread(
                 target=self.check_running
             )
             self.thread_timer_check.daemon = True
             self.thread_timer_check.start()
+
+    def stop_timer_check(self):
+        self.bool_thread_check_running = True
+        if self.thread_timer_check is not None:
+            self.thread_timer_check.join()
+            self.thread_timer_check = None
 
     def check_running(self):
         import time
@@ -60,6 +62,7 @@ class ClockifyModule:
 
     def stop_timer(self):
         self.clockapi.finish_time_entry()
+        self.bool_timer_run = False
 
     # Definition of Tray menu
     def tray_menu(self, parent):
