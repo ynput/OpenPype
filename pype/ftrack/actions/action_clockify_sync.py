@@ -30,7 +30,7 @@ class SyncClocify(BaseAction):
             raise ValueError('Clockify Workspace or API key are not set!')
 
         if self.clockapi.validate_workspace_perm() is False:
-            raise MissingPermision
+            raise MissingPermision('Clockify')
         super().register()
 
     def discover(self, session, entities, event):
