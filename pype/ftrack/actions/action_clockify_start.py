@@ -26,6 +26,8 @@ class StartClockify(BaseAction):
             return False
         if entities[0].entity_type.lower() != 'task':
             return False
+        if self.clockapi.workspace_id is None:
+            return False
         return True
 
     def launch(self, session, entities, event):

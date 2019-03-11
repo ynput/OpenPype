@@ -26,6 +26,9 @@ class SyncClocify(BaseAction):
     clockapi = ClockifyAPI()
 
     def register(self):
+        if self.clockapi.workspace_id is None:
+            raise ValueError('Clockify Workspace or API key are not set!')
+
         if self.clockapi.validate_workspace_perm() is False:
             raise MissingPermision
         super().register()
