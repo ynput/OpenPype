@@ -8,7 +8,7 @@ class ClockifySync(api.Action):
 
     name = "sync_to_clockify"
     label = "Sync to Clockify"
-    icon = "clockify_icon"
+    icon = "clockify_white_icon"
     order = 500
     clockapi = ClockifyAPI()
     have_permissions = clockapi.validate_workspace_perm()
