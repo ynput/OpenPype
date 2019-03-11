@@ -120,13 +120,12 @@ class ClockifySettings(QtWidgets.QWidget):
 
     def click_ok(self):
         api_key = self.input_api_key.text().strip()
-        if self.optional:
-            if api_key == '':
-                self.clockapi.save_api_key(None)
-                self.clockapi.set_api(api_key)
-                self.validated = False
-                self._close_widget()
-                return
+        if self.optional is True and api_key == '':
+            self.clockapi.save_api_key(None)
+            self.clockapi.set_api(api_key)
+            self.validated = False
+            self._close_widget()
+            return
 
         validation = self.clockapi.validate_api_key(api_key)
 
