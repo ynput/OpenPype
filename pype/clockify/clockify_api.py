@@ -23,6 +23,12 @@ class ClockifyAPI(metaclass=Singleton):
     file_name = 'clockify.json'
     fpath = os.path.join(app_dir, file_name)
 
+    def verify_api(self):
+        for key, value in self.headers.items():
+            if value is None or value.strip() == '':
+                return False
+        return True
+
     def set_api(self, api_key=None):
         if api_key is None:
             api_key = self.get_api_key()
