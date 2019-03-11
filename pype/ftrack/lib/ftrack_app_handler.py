@@ -314,7 +314,7 @@ class AppAction(BaseHandler):
 
         # RUN TIMER IN Clockify
         if clockify_timer is not None:
-            task_name = task['name']
+            task_name = task['type']['name']
             project_name = task['project']['full_name']
 
             def get_parents(entity):
