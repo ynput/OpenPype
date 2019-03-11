@@ -67,10 +67,18 @@ class ClockifyAPI(metaclass=Singleton):
             self.endpoint + action_url,
             headers=self.headers, json=body
         )
-        if response.status_code >= 300:
-            return False
-        self.delete_project(test_project)
-        return True
+        if response.status_code == 201:
+            self.delete_project(self.get_project_id(test_project))
+            return True
+        else:
+            projects = self.get_projects()
+            if test_project in projects:
+                try:
+                    self.delete_project(self.get_project_id(test_project))
+                    return True
+                except json.decoder.JSONDecodeError:
+                    return False
+        return False
 
     def set_workspace(self, name=None):
         if name is None:
