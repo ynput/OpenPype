@@ -124,7 +124,7 @@ class ClockifyAPI(metaclass=Singleton):
             workspace["name"]: workspace["id"] for workspace in response.json()
         }
 
-    def get_projects(self, workspace_id):
+    def get_projects(self, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/projects/'.format(workspace_id)
@@ -209,7 +209,6 @@ class ClockifyAPI(metaclass=Singleton):
         # Workspace
         if workspace_id is None:
             workspace_id = self.workspace_id
-        print(workspace_id)
 
         # Check if is currently run another times and has same values
         current = self.get_in_progress(workspace_id)
