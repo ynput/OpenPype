@@ -142,8 +142,14 @@ class ClockifySettings(QtWidgets.QWidget):
             )
 
     def closeEvent(self, event):
-        event.ignore()
-        self._close_widget()
+        if self.optional is True:
+            event.ignore()
+            self._close_widget()
+        else:
+            self.validated = False
 
     def _close_widget(self):
-        self.hide()
+        if self.optional is True:
+            self.hide()
+        else:
+            self.close()
