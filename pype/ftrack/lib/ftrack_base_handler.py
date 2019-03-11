@@ -289,13 +289,15 @@ class BaseHandler(object):
             }
 
         elif isinstance(result, dict):
-            for key in ('success', 'message'):
-                if key in result:
-                    continue
+            items = 'items' in result
+            if items is False:
+                for key in ('success', 'message'):
+                    if key in result:
+                        continue
 
-                raise KeyError(
-                    'Missing required key: {0}.'.format(key)
-                )
+                    raise KeyError(
+                        'Missing required key: {0}.'.format(key)
+                    )
 
         else:
             self.log.error(
