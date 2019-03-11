@@ -22,6 +22,7 @@ class ClockifyAPI(metaclass=Singleton):
     app_dir = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
     file_name = 'clockify.json'
     fpath = os.path.join(app_dir, file_name)
+    workspace_id = None
 
     def verify_api(self):
         for key, value in self.headers.items():
@@ -35,6 +36,7 @@ class ClockifyAPI(metaclass=Singleton):
 
         if api_key is not None and self.validate_api_key(api_key) is True:
             self.headers["X-Api-Key"] = api_key
+            self.set_workspace()
             return True
         return False
 
@@ -68,20 +70,23 @@ class ClockifyAPI(metaclass=Singleton):
 
     def set_workspace(self, name=None):
         if name is None:
-            self.workspace = None
-            self.workspace_id = None
+            name = os.environ.get('CLOCKIFY_WORKSPACE', None)
+        self.workspace = name
+        self.workspace_id = None
+        if self.workspace is None:
             return
-        result = self.validate_workspace(name)
-        if result is False:
-            self.workspace = None
-            self.workspace_id = None
-            return False
-        else:
-            self.workspace = name
+        try:
+            result = self.validate_workspace()
+        except Exception:
+            result = False
+        if result is not False:
             self.workspace_id = result
             return True
+        return False
 
-    def validate_workspace(self, name):
+    def validate_workspace(self, name=None):
+        if name is None:
+            name = self.workspace
         all_workspaces = self.get_workspaces()
         if name in all_workspaces:
             return all_workspaces[name]
