@@ -44,11 +44,10 @@ class StartClockify(BaseAction):
 
         desc_items = get_parents(task['parent'])
         description = '/'.join(desc_items)
-
+        project_id = self.clockapi.get_project_id(project_name)
+        task_id = self.clockapi.get_task_id(task_name, project_id)
         self.clockapi.start_time_entry(
-            description=description,
-            project_name=project_name,
-            task_name=task_name,
+            description, project_id, task_id
         )
 
         return True

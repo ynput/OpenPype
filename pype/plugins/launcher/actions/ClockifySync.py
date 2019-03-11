@@ -47,12 +47,12 @@ class ClockifySync(api.Action):
                 project_id = clockify_projects[project_name]
 
             clockify_project_tasks = self.clockapi.get_tasks(
-                project_id=project_id
+                project_id
             )
             for task_type in task_types:
                 if task_type not in clockify_project_tasks:
                     response = self.clockapi.add_task(
-                        task_type, project_id=project_id
+                        task_type, project_id
                     )
                     if 'id' not in response:
                         self.log.error('Task {} can\'t be created'.format(

@@ -109,8 +109,9 @@ class ClockifyAPI(metaclass=Singleton):
             workspace["name"]: workspace["id"] for workspace in response.json()
         }
 
-    def get_projects(self, workspace_name=None, workspace_id=None):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
+    def get_projects(self, workspace_id):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
         action_url = 'workspaces/{}/projects/'.format(workspace_id)
         response = requests.get(
             self.endpoint + action_url,
@@ -121,10 +122,9 @@ class ClockifyAPI(metaclass=Singleton):
             project["name"]: project["id"] for project in response.json()
         }
 
-    def get_tags(
-        self, workspace_name=None, workspace_id=None
-    ):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
+    def get_tags(self, workspace_id):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
         action_url = 'workspaces/{}/tags/'.format(workspace_id)
         response = requests.get(
             self.endpoint + action_url,
@@ -135,13 +135,9 @@ class ClockifyAPI(metaclass=Singleton):
             tag["name"]: tag["id"] for tag in response.json()
         }
 
-    def get_tasks(
-        self,
-        workspace_name=None, project_name=None,
-        workspace_id=None, project_id=None
-    ):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
-        project_id = self.convert_input(project_id, project_name, 'Project')
+    def get_tasks(self, project_id, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.add_workspace_id
         action_url = 'workspaces/{}/projects/{}/tasks/'.format(
             workspace_id, project_id
         )
@@ -160,31 +156,29 @@ class ClockifyAPI(metaclass=Singleton):
             return None
         return all_workspaces[workspace_name]
 
-    def get_project_id(
-        self, project_name, workspace_name=None, workspace_id=None
-    ):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
-        all_projects = self.get_projects(workspace_id=workspace_id)
+    def get_project_id(self, project_name, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
+        all_projects = self.get_projects(workspace_id)
         if project_name not in all_projects:
             return None
         return all_projects[project_name]
 
-    def get_tag_id(self, tag_name, workspace_name=None, workspace_id=None):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
-        all_tasks = self.get_tags(workspace_id=workspace_id)
+    def get_tag_id(self, tag_name, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
+        all_tasks = self.get_tags(workspace_id)
         if tag_name not in all_tasks:
             return None
         return all_tasks[tag_name]
 
     def get_task_id(
-        self, task_name,
-        project_name=None, workspace_name=None,
-        project_id=None, workspace_id=None
+        self, task_name, project_id, workspace_id=None
     ):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
-        project_id = self.convert_input(project_id, project_name, 'Project')
+        if workspace_id is None:
+            workspace_id = self.workspace_id
         all_tasks = self.get_tasks(
-            workspace_id=workspace_id, project_id=project_id
+            project_id, workspace_id
         )
         if task_name not in all_tasks:
             return None
@@ -194,21 +188,16 @@ class ClockifyAPI(metaclass=Singleton):
         return str(datetime.datetime.utcnow().isoformat())+'Z'
 
     def start_time_entry(
-        self, description, project_name=None, task_name=None,
-        billable=True, workspace_name=None,
-        project_id=None, task_id=None, workspace_id=None
+        self, description, project_id, task_id,
+        workspace_id=None, billable=True
     ):
         # Workspace
-        workspace_id = self.convert_input(workspace_id, workspace_name)
-        # Project
-        project_id = self.convert_input(
-            project_id, project_name, 'Project'
-        )
-        # Task
-        task_id = self.convert_input(task_id, task_name, 'Task', project_id)
+        if workspace_id is None:
+            workspace_id = self.workspace_id
+        print(workspace_id)
 
         # Check if is currently run another times and has same values
-        current = self.get_in_progress(workspace_id=workspace_id)
+        current = self.get_in_progress(workspace_id)
         if current is not None:
             if (
                 current.get("description", None) == description and
@@ -217,7 +206,7 @@ class ClockifyAPI(metaclass=Singleton):
             ):
                 self.bool_timer_run = True
                 return self.bool_timer_run
-            self.finish_time_entry(workspace_id=workspace_id)
+            self.finish_time_entry(workspace_id)
 
         # Convert billable to strings
         if billable:
@@ -246,8 +235,9 @@ class ClockifyAPI(metaclass=Singleton):
             success = True
         return success
 
-    def get_in_progress(self, workspace_name=None, workspace_id=None):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
+    def get_in_progress(self, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
         action_url = 'workspaces/{}/timeEntries/inProgress'.format(
             workspace_id
         )
@@ -261,9 +251,10 @@ class ClockifyAPI(metaclass=Singleton):
             output = None
         return output
 
-    def finish_time_entry(self, workspace_name=None, workspace_id=None):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
-        current = self.get_in_progress(workspace_id=workspace_id)
+    def finish_time_entry(self, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
+        current = self.get_in_progress(workspace_id)
         current_id = current["id"]
         action_url = 'workspaces/{}/timeEntries/{}'.format(
             workspace_id, current_id
@@ -285,9 +276,10 @@ class ClockifyAPI(metaclass=Singleton):
         return response.json()
 
     def get_time_entries(
-        self, quantity=10, workspace_name=None, workspace_id=None
+        self, workspace_id=None, quantity=10
     ):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
+        if workspace_id is None:
+            workspace_id = self.workspace_id
         action_url = 'workspaces/{}/timeEntries/'.format(workspace_id)
         response = requests.get(
             self.endpoint + action_url,
@@ -295,8 +287,9 @@ class ClockifyAPI(metaclass=Singleton):
         )
         return response.json()[:quantity]
 
-    def remove_time_entry(self, tid, workspace_name=None, workspace_id=None):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
+    def remove_time_entry(self, tid, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
         action_url = 'workspaces/{}/timeEntries/{}'.format(
             workspace_id, tid
         )
@@ -306,8 +299,9 @@ class ClockifyAPI(metaclass=Singleton):
         )
         return response.json()
 
-    def add_project(self, name, workspace_name=None, workspace_id=None):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
+    def add_project(self, name, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
         action_url = 'workspaces/{}/projects/'.format(workspace_id)
         body = {
             "name": name,
@@ -338,11 +332,10 @@ class ClockifyAPI(metaclass=Singleton):
         return response.json()
 
     def add_task(
-        self, name, project_name=None, project_id=None,
-        workspace_name=None, workspace_id=None
+        self, name, project_id, workspace_id=None
     ):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
-        project_id = self.convert_input(project_id, project_name, 'Project')
+        if workspace_id is None:
+            workspace_id = self.workspace_id
         action_url = 'workspaces/{}/projects/{}/tasks/'.format(
             workspace_id, project_id
         )
@@ -358,11 +351,10 @@ class ClockifyAPI(metaclass=Singleton):
         return response.json()
 
     def delete_project(
-        self, project_name=None, project_id=None,
-        workspace_name=None, workspace_id=None
+        self, project_id, workspace_id=None
     ):
-        workspace_id = self.convert_input(workspace_id, workspace_name)
-        project_id = self.convert_input(project_id, project_name, 'Project')
+        if workspace_id is None:
+            workspace_id = self.workspace_id
         action_url = '/workspaces/{}/projects/{}'.format(
             workspace_id, project_id
         )
