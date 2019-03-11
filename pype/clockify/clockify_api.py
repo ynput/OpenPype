@@ -22,7 +22,11 @@ class ClockifyAPI(metaclass=Singleton):
     app_dir = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
     file_name = 'clockify.json'
     fpath = os.path.join(app_dir, file_name)
+    master_parent = None
     workspace_id = None
+
+    def set_master(self, master_parent):
+        self.master_parent = master_parent
 
     def verify_api(self):
         for key, value in self.headers.items():
