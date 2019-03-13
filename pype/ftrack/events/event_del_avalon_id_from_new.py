@@ -20,14 +20,14 @@ class DelAvalonIdFromNew(BaseEvent):
             try:
                 entity_id = entity['entityId']
 
-                if entity['action'] == 'add':
+                if entity.get('action', None) == 'add':
                     id_dict = entity['changes']['id']
 
                     if id_dict['new'] is not None and id_dict['old'] is None:
                         created.append(id_dict['new'])
 
                 elif (
-                    entity['action'] == 'update' and
+                    entity.get('action', None) == 'update' and
                     get_ca_mongoid() in entity['keys'] and
                     entity_id in created
                 ):
