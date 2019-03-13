@@ -260,7 +260,10 @@ class BaseHandler(object):
     def _interface(self, *args):
         interface = self.interface(*args)
         if interface:
-            if 'items' in interface:
+            if (
+                'items' in interface or
+                ('success' in interface and 'message' in interface)
+            ):
                 return interface
 
             return {
