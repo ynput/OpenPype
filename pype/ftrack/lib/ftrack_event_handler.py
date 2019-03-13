@@ -1,3 +1,4 @@
+import functools
 from .ftrack_base_handler import BaseHandler
 
 
@@ -17,6 +18,16 @@ class BaseEvent(BaseHandler):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
         super().__init__(session)
+
+    # Decorator
+    def launch_log(self, func):
+        @functools.wraps(func)
+        def wrapper_launch(*args, **kwargs):
+            try:
+                func(*args, **kwargs)
+            except Exception:
+                self.log.info('{} Failed'.format(self.__class__.__name__))
+        return wrapper_launch
 
     def register(self):
         '''Registers the event, subscribing the discover and launch topics.'''
