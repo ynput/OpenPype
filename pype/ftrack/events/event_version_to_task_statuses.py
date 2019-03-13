@@ -45,10 +45,9 @@ class VersionToTaskStatus(BaseEvent):
                         task_status = session.query(query).one()
                     except Exception:
                         self.log.info(
-                            'During update {}: Status {} was not found'.format(
-                                entity['name'], status_to_set
-                            )
-                        )
+                            '!!! status was not found in Ftrack [ {} ]'.format(
+                                status_to_set
+                        ))
                         continue
 
                 # Proceed if the task status was set
