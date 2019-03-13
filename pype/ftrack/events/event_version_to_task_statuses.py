@@ -4,7 +4,7 @@ from pype.ftrack import BaseEvent
 
 class VersionToTaskStatus(BaseEvent):
 
-    def launch(self, session, entities, event):
+    def launch(self, session, event):
         '''Propagates status from version to task when changed'''
         session.commit()
 

@@ -4,7 +4,12 @@ from pype.ftrack import BaseEvent, lib
 
 class Sync_to_Avalon(BaseEvent):
 
-    def launch(self, session, entities, event):
+    ignore_entityType = [
+        'assetversion', 'job', 'user', 'reviewsessionobject', 'timer',
+        'socialfeed', 'socialnotification', 'timelog'
+    ]
+
+    def launch(self, session, event):
         ca_mongoid = lib.get_ca_mongoid()
         # If mongo_id textfield has changed: RETURN!
         # - infinite loop
@@ -13,6 +18,7 @@ class Sync_to_Avalon(BaseEvent):
                 if ca_mongoid in ent['keys']:
                     return
 
+        entities = self._get_entities(session, event, self.ignore_entityType)
         ft_project = None
         # get project
         for entity in entities:
@@ -108,40 +114,6 @@ class Sync_to_Avalon(BaseEvent):
             self.log.error('Fatal error during sync: {}'.format(message))
 
         return
-
-    def _launch(self, event):
-        self.session.reset()
-
-        args = self._translate_event(
-            self.session, event
-        )
-
-        self.launch(
-            self.session, *args
-        )
-        return
-
-    def _translate_event(self, session, event):
-        exceptions = [
-            'assetversion', 'job', 'user', 'reviewsessionobject', 'timer',
-            'socialfeed', 'timelog'
-        ]
-        _selection = event['data'].get('entities', [])
-
-        _entities = list()
-        for entity in _selection:
-            if entity['entityType'] in exceptions:
-                continue
-            _entities.append(
-                (
-                    session.get(
-                        self._get_entity_type(entity),
-                        entity.get('entityId')
-                    )
-                )
-            )
-
-        return [_entities, event]
 
 
 def register(session, **kw):

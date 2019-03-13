@@ -13,7 +13,7 @@ class DelAvalonIdFromNew(BaseEvent):
     '''
     priority = Sync_to_Avalon.priority - 1
 
-    def launch(self, event):
+    def launch(self, session, event):
         created = []
         entities = event['data']['entities']
         for entity in entities:
@@ -31,7 +31,7 @@ class DelAvalonIdFromNew(BaseEvent):
                     get_ca_mongoid() in entity['keys'] and
                     entity_id in created
                 ):
-                    ftrack_entity = self.session.get(
+                    ftrack_entity = session.get(
                         self._get_entity_type(entity),
                         entity_id
                     )
@@ -44,20 +44,11 @@ class DelAvalonIdFromNew(BaseEvent):
                         ftrack_entity['custom_attributes'][
                             get_ca_mongoid()
                         ] = ''
-                        self.session.commit()
+                        session.commit()
 
             except Exception:
-                self.session.rollback()
+                session.rollback()
                 continue
-
-
-    def register(self):
-        '''Registers the event, subscribing the discover and launch topics.'''
-        self.session.event_hub.subscribe(
-            'topic=ftrack.update',
-            self.launch,
-            priority=self.priority
-        )
 
 
 def register(session, **kw):

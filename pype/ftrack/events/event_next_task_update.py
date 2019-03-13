@@ -34,7 +34,7 @@ class NextTaskUpdate(BaseEvent):
 
         return None
 
-    def launch(self, session, entities, event):
+    def launch(self, session, event):
         '''Propagates status from version to task when changed'''
 
         # self.log.info(event)

@@ -40,14 +40,11 @@ class BaseEvent(BaseHandler):
         )
 
     def _launch(self, event):
-        self.session._local_cache.clear()
         self.session.rollback()
-        args = self._translate_event(
-            self.session, event
-        )
+        self.session._local_cache.clear()
 
         self.launch(
-            self.session, *args
+            self.session, event
         )
 
         return

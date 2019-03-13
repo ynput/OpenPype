@@ -4,7 +4,7 @@ from pype.ftrack import BaseEvent
 
 class ThumbnailEvents(BaseEvent):
 
-    def launch(self, session, entities, event):
+    def launch(self, session, event):
         '''just a testing event'''
 
         # self.log.info(event)
