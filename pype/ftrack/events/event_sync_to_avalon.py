@@ -83,23 +83,9 @@ class Sync_to_Avalon(BaseEvent):
                     custom_attributes=custom_attributes
                 )
                 if 'errors' in result and len(result['errors']) > 0:
-                    items = []
-                    for error in result['errors']:
-                        for key, message in error.items():
-                            name = key.lower().replace(' ', '')
-                            info = {
-                                'label': key,
-                                'type': 'textarea',
-                                'name': name,
-                                'value': message
-                            }
-                            items.append(info)
-                            self.log.error(
-                                '{}: {}'.format(key, message)
-                            )
                     session.commit()
-                    title = 'Hey You! You raised few Errors! (*look below*)'
-                    self.show_interface(event, items, title)
+                    lib.show_errors(self, event, result['errors'])
+
                     return
 
                 if avalon_project is None:
@@ -108,19 +94,18 @@ class Sync_to_Avalon(BaseEvent):
 
         except Exception as e:
             message = str(e)
+            title = 'Hey You! Unknown Error has been raised! (*look below*)'
             ftrack_message = (
                 'SyncToAvalon event ended with unexpected error'
-                ' please check log file for more information.'
+                ' please check log file or contact Administrator'
+                ' for more information.'
             )
-            items = [{
-                'label': 'Fatal Error',
-                'type': 'textarea',
-                'name': 'error',
-                'value': ftrack_message
-            }]
-            title = 'Hey You! Unknown Error has been raised! (*look below*)'
+            items = [
+                {'type': 'label', 'value':'# Fatal Error'},
+                {'type': 'label', 'value': '<p>{}</p>'.format(ftrack_message)}
+            ]
             self.show_interface(event, items, title)
-            self.log.error(message)
+            self.log.error('Fatal error during sync: {}'.format(message))
 
         return
 
