@@ -2,6 +2,9 @@ import ftrack_api
 from pype.ftrack import BaseEvent
 
 
+ignore_me = True
+
+
 class Radio_buttons(BaseEvent):
 
     def launch(self, session, entities, event):
