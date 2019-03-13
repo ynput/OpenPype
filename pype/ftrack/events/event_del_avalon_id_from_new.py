@@ -47,6 +47,7 @@ class DelAvalonIdFromNew(BaseEvent):
                         self.session.commit()
 
             except Exception:
+                self.session.rollback()
                 continue
 
 
