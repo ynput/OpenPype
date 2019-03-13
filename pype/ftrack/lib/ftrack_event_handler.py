@@ -25,8 +25,10 @@ class BaseEvent(BaseHandler):
         def wrapper_launch(*args, **kwargs):
             try:
                 func(*args, **kwargs)
-            except Exception:
-                self.log.info('{} Failed'.format(self.__class__.__name__))
+            except Exception as e:
+                self.log.info('{} Failed ({})'.format(
+                    self.__class__.__name__, str(e))
+                )
         return wrapper_launch
 
     def register(self):
