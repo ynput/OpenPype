@@ -52,11 +52,20 @@ class BaseEvent(BaseHandler):
 
     def _translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''
-        _selection = event['data'].get('entities', [])
+        return [
+            self._get_entities(session, event),
+            event
+        ]
 
+    def _get_entities(
+        self, session, event, ignore=['socialfeed', 'socialnotification']
+    ):
+        _selection = event['data'].get('entities', [])
         _entities = list()
+        if isinstance(ignore, str):
+            ignore = list(ignore)
         for entity in _selection:
-            if entity['entityType'] in ['socialfeed', 'socialnotification']:
+            if entity['entityType'] in ignore:
                 continue
             _entities.append(
                 (
@@ -66,8 +75,4 @@ class BaseEvent(BaseHandler):
                     )
                 )
             )
-
-        return [
-            _entities,
-            event
-        ]
+        return _entities
