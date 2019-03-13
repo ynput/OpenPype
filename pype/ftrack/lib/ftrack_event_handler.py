@@ -56,7 +56,7 @@ class BaseEvent(BaseHandler):
 
         _entities = list()
         for entity in _selection:
-            if entity['entityType'] in ['socialfeed']:
+            if entity['entityType'] in ['socialfeed', 'socialnotification']:
                 continue
             _entities.append(
                 (
