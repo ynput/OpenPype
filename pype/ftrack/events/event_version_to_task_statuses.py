@@ -13,7 +13,7 @@ class VersionToTaskStatus(BaseEvent):
             # Filter non-assetversions
             if (
                 entity['entityType'] == 'assetversion' and
-                'statusid' in entity['keys']
+                'statusid' in entity.get('keys', [])
             ):
 
                 version = session.get('AssetVersion', entity['entityId'])

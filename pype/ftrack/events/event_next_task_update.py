@@ -75,16 +75,16 @@ class NextTaskUpdate(BaseEvent):
                         query = 'Status where name is "{}"'.format('Ready')
                         status_to_set = session.query(query).one()
                         next_task['status'] = status_to_set
+                        session.commit()
+                        self.log.info((
+                            '>>> [ {} ] updated to [ Ready ]'
+                        ).format(path))
                     except Exception as e:
                         self.log.warning((
                             '!!! [ {} ] status couldnt be set: [ {} ]'
                         ).format(path, e))
-                    else:
-                        self.log.info((
-                            '>>> [ {} ] updated to [ Ready ]'
-                        ).format(path))
+                        session.rollback()
 
-            session.commit()
 
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''
