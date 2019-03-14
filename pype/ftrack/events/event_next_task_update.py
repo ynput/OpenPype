@@ -41,8 +41,10 @@ class NextTaskUpdate(BaseEvent):
         # start of event procedure ----------------------------------
 
         for entity in event['data'].get('entities', []):
-
-            statusid_changes = entity.get('changes', {}).get('statusid', {})
+            changes = entity.get('changes', None)
+            if changes is None:
+                continue
+            statusid_changes = changes.get('statusid', {})
             if (
                 entity['entityType'] != 'task' or
                 'statusid' not in entity['keys'] or
