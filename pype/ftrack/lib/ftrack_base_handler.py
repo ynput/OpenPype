@@ -288,14 +288,20 @@ class BaseHandler(object):
     def _handle_result(self, session, result, entities, event):
         '''Validate the returned result from the action callback'''
         if isinstance(result, bool):
-            result = {
-                'success': result,
-                'message': (
-                    '{0} launched successfully.'.format(
-                        self.label
+            if result is True:
+                result = {
+                    'success': result,
+                    'message': (
+                        '{0} launched successfully.'.format(self.label)
                     )
-                )
-            }
+                }
+            else:
+                result = {
+                    'success': result,
+                    'message': (
+                        '{0} launch failed.'.format(self.label)
+                    )
+                }
 
         elif isinstance(result, dict):
             for key in ('success', 'message'):
