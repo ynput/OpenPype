@@ -218,6 +218,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         # make ftrack publishable
         instance.data["families"] = ['ftrack']
+        instance.data['maketx'] = True
 
     def collect(self, instance):
 
