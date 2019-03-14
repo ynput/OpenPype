@@ -162,7 +162,7 @@ class ClockifyAPI(metaclass=Singleton):
 
     def get_tasks(self, project_id, workspace_id=None):
         if workspace_id is None:
-            workspace_id = self.add_workspace_id
+            workspace_id = self.workspace_id
         action_url = 'workspaces/{}/projects/{}/tasks/'.format(
             workspace_id, project_id
         )
