@@ -34,49 +34,57 @@ class NextTaskUpdate(BaseEvent):
 
         return None
 
-    def launch(self, session, entities, event):
+    def launch(self, session, event):
         '''Propagates status from version to task when changed'''
 
         # self.log.info(event)
         # start of event procedure ----------------------------------
 
         for entity in event['data'].get('entities', []):
+            changes = entity.get('changes', None)
+            if changes is None:
+                continue
+            statusid_changes = changes.get('statusid', {})
+            if (
+                entity['entityType'] != 'task' or
+                'statusid' not in entity['keys'] or
+                statusid_changes.get('new', None) is None or
+                statusid_changes.get('old', None) is None
+            ):
+                continue
 
-            if (entity['entityType'] == 'task' and
-                    'statusid' in entity['keys']):
+            task = session.get('Task', entity['entityId'])
 
-                task = session.get('Task', entity['entityId'])
+            status = session.get('Status',
+                                 entity['changes']['statusid']['new'])
+            state = status['state']['name']
 
-                status = session.get('Status',
-                                     entity['changes']['statusid']['new'])
-                state = status['state']['name']
+            next_task = self.get_next_task(task, session)
 
-                next_task = self.get_next_task(task, session)
+            # Setting next task to Ready, if on NOT READY
+            if next_task and state == 'Done':
+                if next_task['status']['name'].lower() == 'not ready':
 
-                # Setting next task to Ready, if on NOT READY
-                if next_task and state == 'Done':
-                    if next_task['status']['name'].lower() == 'not ready':
+                    # Get path to task
+                    path = task['name']
+                    for p in task['ancestors']:
+                        path = p['name'] + '/' + path
 
-                        # Get path to task
-                        path = task['name']
-                        for p in task['ancestors']:
-                            path = p['name'] + '/' + path
+                    # Setting next task status
+                    try:
+                        query = 'Status where name is "{}"'.format('Ready')
+                        status_to_set = session.query(query).one()
+                        next_task['status'] = status_to_set
+                        session.commit()
+                        self.log.info((
+                            '>>> [ {} ] updated to [ Ready ]'
+                        ).format(path))
+                    except Exception as e:
+                        self.log.warning((
+                            '!!! [ {} ] status couldnt be set: [ {} ]'
+                        ).format(path, e))
+                        session.rollback()
 
-                        # Setting next task status
-                        try:
-                            query = 'Status where name is "{}"'.format('Ready')
-                            status_to_set = session.query(query).one()
-                            next_task['status'] = status_to_set
-                        except Exception as e:
-                            self.log.warning((
-                                '!!! [ {} ] status couldnt be set: [ {} ]'
-                            ).format(path, e))
-                        else:
-                            self.log.info((
-                                '>>> [ {} ] updated to [ Ready ]'
-                            ).format(path))
-
-                session.commit()
 
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''

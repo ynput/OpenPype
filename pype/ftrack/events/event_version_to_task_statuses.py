@@ -4,7 +4,7 @@ from pype.ftrack import BaseEvent
 
 class VersionToTaskStatus(BaseEvent):
 
-    def launch(self, session, entities, event):
+    def launch(self, session, event):
         '''Propagates status from version to task when changed'''
         session.commit()
 
@@ -13,7 +13,7 @@ class VersionToTaskStatus(BaseEvent):
             # Filter non-assetversions
             if (
                 entity['entityType'] == 'assetversion' and
-                'statusid' in entity['keys']
+                'statusid' in entity.get('keys', [])
             ):
 
                 version = session.get('AssetVersion', entity['entityId'])
@@ -45,10 +45,9 @@ class VersionToTaskStatus(BaseEvent):
                         task_status = session.query(query).one()
                     except Exception:
                         self.log.info(
-                            'During update {}: Status {} was not found'.format(
-                                entity['name'], status_to_set
-                            )
-                        )
+                            '!!! status was not found in Ftrack [ {} ]'.format(
+                                status_to_set
+                        ))
                         continue
 
                 # Proceed if the task status was set
