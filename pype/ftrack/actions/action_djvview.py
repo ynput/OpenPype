@@ -198,7 +198,7 @@ class DJVViewAction(BaseHandler):
             '''layer name'''
             # cmd.append('-file_layer (value)')
             ''' Proxy scale: 1/2, 1/4, 1/8'''
-            cmd.append('-file_proxy 1/2')
+            # cmd.append('-file_proxy 1/2')
             ''' Cache: True, False.'''
             cmd.append('-file_cache True')
             ''' Start in full screen '''
