@@ -238,6 +238,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
             # todo: This is a temporary fix for yeti variables
             "PEREGRINEL_LICENSE",
+            "SOLIDANGLE_LICENSE",
             "ARNOLD_LICENSE"
             "MAYA_MODULE_PATH",
             "TOOL_ENV"
