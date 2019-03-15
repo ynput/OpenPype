@@ -314,7 +314,7 @@ class AppAction(BaseHandler):
 
         # RUN TIMER IN Clockify
         if clockify_timer is not None:
-            task_name = task['type']['name']
+            task_type = task['type']['name']
             project_name = task['project']['full_name']
 
             def get_parents(entity):
@@ -331,9 +331,10 @@ class AppAction(BaseHandler):
             description = '/'.join(desc_items)
 
             project_id = clockapi.get_project_id(project_name)
-            task_id = clockapi.get_task_id(task_name, project_id)
-            clockapi.start_time_entry(
-                description, project_id, task_id,
+            tag_ids = []
+            tag_ids.append(self.clockapi.get_tag_id(task_type))
+            self.clockapi.start_time_entry(
+                description, project_id, tag_ids=tag_ids
             )
 
         # Change status of task to In progress
