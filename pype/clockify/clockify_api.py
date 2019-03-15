@@ -147,7 +147,7 @@ class ClockifyAPI(metaclass=Singleton):
             project["name"]: project["id"] for project in response.json()
         }
 
-    def get_tags(self, workspace_id):
+    def get_tags(self, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
         action_url = 'workspaces/{}/tags/'.format(workspace_id)
@@ -213,7 +213,7 @@ class ClockifyAPI(metaclass=Singleton):
         return str(datetime.datetime.utcnow().isoformat())+'Z'
 
     def start_time_entry(
-        self, description, project_id, task_id,
+        self, description, project_id, task_id=None, tag_ids=[],
         workspace_id=None, billable=True
     ):
         # Workspace
@@ -246,7 +246,7 @@ class ClockifyAPI(metaclass=Singleton):
             "description": description,
             "projectId": project_id,
             "taskId": task_id,
-            "tagIds": None
+            "tagIds": tag_ids
         }
         response = requests.post(
             self.endpoint + action_url,
@@ -366,6 +366,20 @@ class ClockifyAPI(metaclass=Singleton):
         body = {
             "name": name,
             "projectId": project_id
+        }
+        response = requests.post(
+            self.endpoint + action_url,
+            headers=self.headers,
+            json=body
+        )
+        return response.json()
+
+    def add_tag(self, name, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
+        action_url = 'workspaces/{}/tags'.format(workspace_id)
+        body = {
+            "name": name
         }
         response = requests.post(
             self.endpoint + action_url,
