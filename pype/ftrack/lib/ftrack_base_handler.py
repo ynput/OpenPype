@@ -68,6 +68,10 @@ class BaseHandler(object):
                 self.log.info((
                     '!{} "{}" - You\'re missing required permissions'
                 ).format(self.type, label))
+            except AssertionError as ae:
+                self.log.info((
+                    '!{} "{}" - {}'
+                ).format(self.type, label, str(ae)))
             except NotImplementedError:
                 self.log.error((
                     '{} "{}" - Register method is not implemented'
