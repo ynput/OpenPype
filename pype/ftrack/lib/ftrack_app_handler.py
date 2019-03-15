@@ -327,6 +327,7 @@ class AppAction(BaseHandler):
                 return output
 
             desc_items = get_parents(task['parent'])
+            desc_items.append(task['name'])
             description = '/'.join(desc_items)
 
             project_id = clockapi.get_project_id(project_name)

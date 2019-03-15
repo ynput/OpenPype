@@ -45,6 +45,7 @@ class StartClockify(BaseAction):
             return output
 
         desc_items = get_parents(task['parent'])
+        desc_items.append(task['name'])
         description = '/'.join(desc_items)
         project_id = self.clockapi.get_project_id(project_name)
         task_id = self.clockapi.get_task_id(task_name, project_id)

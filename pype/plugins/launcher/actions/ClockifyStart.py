@@ -31,6 +31,7 @@ class ClockifyStart(api.Action):
         if asset is not None:
             desc_items = asset.get('data', {}).get('parents', [])
             desc_items.append(asset_name)
+            desc_items.append(task_name)
             description = '/'.join(desc_items)
 
         project_id = self.clockapi.get_project_id(project_name)
