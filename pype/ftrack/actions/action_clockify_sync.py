@@ -81,12 +81,10 @@ class SyncClocify(BaseAction):
             else:
                 project_id = clockify_projects[project_name]
 
-            clockify_project_tasks = self.clockapi.get_tasks(project_id)
+            clockify_workspace_tags = self.clockapi.get_tags()
             for task_type in task_types:
-                if task_type not in clockify_project_tasks:
-                    response = self.clockapi.add_task(
-                        task_type, project_id
-                    )
+                if task_type not in clockify_workspace_tags:
+                    response = self.clockapi.add_tag(task_type)
                     if 'id' not in response:
                         self.log.error('Task {} can\'t be created'.format(
                             task_type
