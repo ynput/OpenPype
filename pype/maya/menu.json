@@ -31,17 +31,18 @@
 },
 {
 	"type": "menu",
-	"title": "# Modeling",
+	"title": "Modeling",
 	"items": [
 	{
 		"type": "action",
-		"command": "$PYPE_SCRIPTS\\modeling\\polyDeleteOtherUVSets.py",
-		"sourcetype": "file",
+		"command": "import easyTreezSource; reload(easyTreezSource); easyTreezSource.easyTreez()",
+		"sourcetype": "python",
 		"tags": ["modeling",
-		"polygon",
-		"uvset",
-		"delete"],
-		"title": "# Polygon Delete Other UV Sets",
+		"trees",
+		"generate",
+		"create",
+		"plants"],
+		"title": "EasyTreez",
 		"tooltip": ""
 	},
 	{

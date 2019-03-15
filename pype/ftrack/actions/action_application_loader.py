@@ -55,9 +55,12 @@ def register(session):
                 apps.append(app)
 
     apps = sorted(apps, key=lambda x: x['name'])
+    app_counter = 0
     for app in apps:
         try:
             registerApp(app, session)
-            time.sleep(0.05)
+            if app_counter%5 == 0:
+                time.sleep(0.1)
+            app_counter += 1
         except Exception as e:
             log.warning("'{0}' - not proper App ({1})".format(app['name'], e))
