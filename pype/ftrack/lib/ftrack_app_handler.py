@@ -332,8 +332,8 @@ class AppAction(BaseHandler):
 
             project_id = clockapi.get_project_id(project_name)
             tag_ids = []
-            tag_ids.append(self.clockapi.get_tag_id(task_type))
-            self.clockapi.start_time_entry(
+            tag_ids.append(clockapi.get_tag_id(task_type))
+            clockapi.start_time_entry(
                 description, project_id, tag_ids=tag_ids
             )
 
