@@ -5,8 +5,10 @@ from pype import api as pype
 
 
 class MissingPermision(Exception):
-     def __init__(self):
-        super().__init__('Missing permission')
+    def __init__(self, message=None):
+        if message is None:
+            message = 'Ftrack'
+        super().__init__(message)
 
 
 class BaseHandler(object):
@@ -64,10 +66,10 @@ class BaseHandler(object):
                 self.log.info((
                     '{} "{}" - Registered successfully ({:.4f}sec)'
                 ).format(self.type, label, run_time))
-            except MissingPermision:
+            except MissingPermision as MPE:
                 self.log.info((
-                    '!{} "{}" - You\'re missing required permissions'
-                ).format(self.type, label))
+                    '!{} "{}" - You\'re missing required {} permissions'
+                ).format(self.type, label, str(MPE)))
             except AssertionError as ae:
                 self.log.info((
                     '!{} "{}" - {}'
@@ -308,13 +310,15 @@ class BaseHandler(object):
                 }
 
         elif isinstance(result, dict):
-            for key in ('success', 'message'):
-                if key in result:
-                    continue
+            items = 'items' in result
+            if items is False:
+                for key in ('success', 'message'):
+                    if key in result:
+                        continue
 
-                raise KeyError(
-                    'Missing required key: {0}.'.format(key)
-                )
+                    raise KeyError(
+                        'Missing required key: {0}.'.format(key)
+                    )
 
         else:
             self.log.error(
