@@ -27,20 +27,15 @@ class AvalonApps:
                 self.log.warning('Parent menu is not set')
                 return
 
-        avalon_launcher_icon = launcher_lib.resource("icon", "main.png")
-        aShowLauncher = QtWidgets.QAction(
-            QtGui.QIcon(avalon_launcher_icon), "&Launcher", parent_menu
-        )
-
+        icon = QtGui.QIcon(launcher_lib.resource("icon", "main.png"))
+        aShowLauncher = QtWidgets.QAction(icon, "&Launcher", parent_menu)
         aLibraryLoader = QtWidgets.QAction("&Library", parent_menu)
-
-        parent_menu.addAction(aShowLauncher)
-        parent_menu.addAction(aLibraryLoader)
 
         aShowLauncher.triggered.connect(self.show_launcher)
         aLibraryLoader.triggered.connect(self.show_library_loader)
 
-        return
+        parent_menu.addAction(aShowLauncher)
+        parent_menu.addAction(aLibraryLoader)
 
     def show_launcher(self):
         # if app_launcher don't exist create it/otherwise only show main window
@@ -57,7 +52,6 @@ class AvalonApps:
             io.install()
             APP_PATH = launcher_lib.resource("qml", "main.qml")
             self.app_launcher = launcher_widget.Launcher(root, APP_PATH)
-
         self.app_launcher.window.show()
 
     def show_library_loader(self):
