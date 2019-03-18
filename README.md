@@ -1,8 +1,11 @@
 The base studio *config* for [Avalon](https://getavalon.github.io/)
 
-<br>
+Currently this config is dependent on our customised avalon instalation so it won't work with vanilla avalon core. We're working on open sourcing all of the necessary code though. You can still get inspiration or take our individual validators and scripts which should work just fine in other pipelines.
+
 
 _This configuration acts as a starting point for all pype club clients wth avalon deployment._
+
+
 
 ### Code convention
 

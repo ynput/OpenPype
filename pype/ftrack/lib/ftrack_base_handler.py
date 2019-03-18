@@ -70,6 +70,10 @@ class BaseHandler(object):
                 self.log.info((
                     '!{} "{}" - You\'re missing required {} permissions'
                 ).format(self.type, label, str(MPE)))
+            except AssertionError as ae:
+                self.log.info((
+                    '!{} "{}" - {}'
+                ).format(self.type, label, str(ae)))
             except NotImplementedError:
                 self.log.error((
                     '{} "{}" - Register method is not implemented'
@@ -94,15 +98,17 @@ class BaseHandler(object):
                     label = '{} {}'.format(self.label, self.variant)
 
             try:
+                self.log.info(('{} "{}": Launched').format(self.type, label))
                 result = func(*args, **kwargs)
-                self.log.info((
-                    '{} "{}" Launched'
-                ).format(self.type, label))
+                self.log.info(('{} "{}": Finished').format(self.type, label))
                 return result
             except Exception as e:
-                self.log.error('{} "{}": Launch failed ({})'.format(
-                    self.type, label, str(e))
-                )
+                msg = '{} "{}": Failed ({})'.format(self.type, label, str(e))
+                self.log.error(msg)
+                return {
+                    'success': False,
+                    'message': msg
+                }
         return wrapper_launch
 
     @property
@@ -131,24 +137,19 @@ class BaseHandler(object):
                 'icon': self.icon,
             }]
         }
-        accepts = self.prediscover(event)
-        if accepts is None:
-            args = self._translate_event(
-                self.session, event
-            )
 
-            accepts = self.discover(
-                self.session, *args
-            )
+        args = self._translate_event(
+            self.session, event
+        )
+
+        accepts = self.discover(
+            self.session, *args
+        )
 
         if accepts is True:
             self.log.debug(u'Discovering action with selection: {0}'.format(
                 event['data'].get('selection', [])))
             return items
-
-    def prediscover(self, event):
-        "return True if can handle selected entities before handling entities"
-        return None
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
@@ -172,22 +173,31 @@ class BaseHandler(object):
         '''Return *event* translated structure to be used with the API.'''
 
         '''Return *event* translated structure to be used with the API.'''
-        _entities = event['data'].get('entities', None)
-        if _entities is None:
-            selection = event['data'].get('selection', [])
-            _entities = []
-            for entity in selection:
-                _entities.append(
-                    self.session.get(
-                        self._get_entity_type(entity),
-                        entity.get('entityId')
-                    )
-                )
+        _entities = event['data'].get('entities_object', None)
+        if (
+            _entities is None or
+            _entities[0].get('link', None) == ftrack_api.symbol.NOT_SET
+        ):
+            _entities = self._get_entities(event)
 
         return [
             _entities,
             event
         ]
+
+    def _get_entities(self, event):
+        self.session._local_cache.clear()
+        selection = event['data'].get('selection', [])
+        _entities = []
+        for entity in selection:
+            _entities.append(
+                self.session.get(
+                    self._get_entity_type(entity),
+                    entity.get('entityId')
+                )
+            )
+        event['data']['entities_object'] = _entities
+        return _entities
 
     def _get_entity_type(self, entity):
         '''Return translated entity type tht can be used with API.'''
@@ -256,7 +266,10 @@ class BaseHandler(object):
     def _interface(self, *args):
         interface = self.interface(*args)
         if interface:
-            if 'items' in interface:
+            if (
+                'items' in interface or
+                ('success' in interface and 'message' in interface)
+            ):
                 return interface
 
             return {
@@ -281,14 +294,20 @@ class BaseHandler(object):
     def _handle_result(self, session, result, entities, event):
         '''Validate the returned result from the action callback'''
         if isinstance(result, bool):
-            result = {
-                'success': result,
-                'message': (
-                    '{0} launched successfully.'.format(
-                        self.label
+            if result is True:
+                result = {
+                    'success': result,
+                    'message': (
+                        '{0} launched successfully.'.format(self.label)
                     )
-                )
-            }
+                }
+            else:
+                result = {
+                    'success': result,
+                    'message': (
+                        '{0} launch failed.'.format(self.label)
+                    )
+                }
 
         elif isinstance(result, dict):
             items = 'items' in result

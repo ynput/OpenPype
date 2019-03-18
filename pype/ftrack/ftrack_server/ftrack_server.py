@@ -118,15 +118,18 @@ class FtrackServer():
         if len(functions) < 1:
             raise Exception
 
+        function_counter = 0
         for function in functions:
             try:
                 function['register'](self.session)
+                if function_counter%7 == 0:
+                    time.sleep(0.1)
+                function_counter += 1
             except Exception as e:
                 msg = '"{}" - register was not successful ({})'.format(
                     function['name'], str(e)
                 )
                 log.warning(msg)
-            time.sleep(0.05)
 
     def run_server(self):
         self.session = ftrack_api.Session(auto_connect_event_hub=True,)

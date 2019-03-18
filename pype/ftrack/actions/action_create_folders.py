@@ -26,7 +26,7 @@ class CreateFolders(BaseAction):
         '698620-icon-105-folder-add-512.png'
     )
 
-    def prediscover(self, event):
+    def discover(self, session, entities, event):
         ''' Validation '''
 
         return True
