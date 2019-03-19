@@ -16,6 +16,7 @@ class AbcLoader(pype.maya.plugin.ReferenceLoader):
 
         import maya.cmds as cmds
 
+        groupName = "{}:{}".format(namespace, name)
         cmds.loadPlugin("AbcImport.mll", quiet=True)
         nodes = cmds.file(self.fname,
                           namespace=namespace,
@@ -24,6 +25,8 @@ class AbcLoader(pype.maya.plugin.ReferenceLoader):
                           groupName="{}:{}".format(namespace, name),
                           reference=True,
                           returnNewNodes=True)
+
+        cmds.makeIdentity(groupName, apply=False, rotate=True, translate=True, scale=True)
 
         self[:] = nodes
 

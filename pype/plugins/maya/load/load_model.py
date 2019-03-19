@@ -20,12 +20,16 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
         from avalon import maya
 
         with maya.maintained_selection():
+
+            groupName = "{}:{}".format(namespace, name)
             nodes = cmds.file(self.fname,
                               namespace=namespace,
                               reference=True,
                               returnNewNodes=True,
                               groupReference=True,
-                              groupName="{}:{}".format(namespace, name))
+                              groupName=groupName)
+
+            cmds.makeIdentity(groupName, apply=False, rotate=True, translate=True, scale=True)
 
         self[:] = nodes
 
@@ -141,14 +145,17 @@ class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
 
         import maya.cmds as cmds
 
+        groupName = "{}:{}".format(namespace, name)
         cmds.loadPlugin("AbcImport.mll", quiet=True)
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           sharedReferenceFile=False,
                           groupReference=True,
-                          groupName="{}:{}".format(namespace, name),
+                          groupName=groupName,
                           reference=True,
                           returnNewNodes=True)
+
+        cmds.makeIdentity(groupName, apply=False, rotate=True, translate=True, scale=True)
 
         self[:] = nodes
 

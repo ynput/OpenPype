@@ -21,12 +21,15 @@ class RigLoader(pype.maya.plugin.ReferenceLoader):
 
     def process_reference(self, context, name, namespace, data):
 
+        groupName = "{}:{}".format(namespace, name)
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           reference=True,
                           returnNewNodes=True,
                           groupReference=True,
-                          groupName="{}:{}".format(namespace, name))
+                          groupName=groupName)
+
+        cmds.makeIdentity(groupName, apply=False, rotate=True, translate=True, scale=True)
 
         # Store for post-process
         self[:] = nodes
