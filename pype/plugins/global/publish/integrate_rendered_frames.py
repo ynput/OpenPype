@@ -168,6 +168,9 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         representations = []
         destination_list = []
 
+        if 'transfers' not in instance.data:
+            instance.data['transfers'] = []
+
         for files in instance.data["files"]:
             # Collection
             #   _______
