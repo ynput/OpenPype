@@ -206,6 +206,10 @@ class FtrackRunner:
         except Exception as e:
             log.error("During Killing Timer event server: {0}".format(e))
 
+    def process_modules(self, modules):
+        if 'TimersManager' in modules:
+            self.timer_manager = modules['TimersManager']
+            self.timer_manager.add_module(self)
 
     def start_timer_manager(self, data):
         if self.thread_timer is not None:
