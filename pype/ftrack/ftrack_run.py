@@ -123,9 +123,9 @@ class FtrackRunner:
             log.error("During Killing action server: {0}".format(e))
 
     # Definition of Tray menu
-    def trayMenu(self, parent):
+    def tray_menu(self, parent_menu):
         # Menu for Tray App
-        self.menu = QtWidgets.QMenu('Ftrack', parent)
+        self.menu = QtWidgets.QMenu('Ftrack', parent_menu)
         self.menu.setProperty('submenu', 'on')
         self.menu.setStyleSheet(style.load_stylesheet())
 
@@ -162,7 +162,9 @@ class FtrackRunner:
         self.bool_logged = False
         self.set_menu_visibility()
 
-        return self.menu
+        parent_menu.addMenu(self.menu)
+
+        self.validate()
 
     # Definition of visibility of each menu actions
     def set_menu_visibility(self):
