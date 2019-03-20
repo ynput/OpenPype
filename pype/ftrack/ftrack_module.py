@@ -11,7 +11,7 @@ from pype.ftrack import FtrackServer, credentials, login_dialog as login_dialog
 from pype import api as pype
 
 
-log = pype.Logger().get_logger(FtrackModule.__name__, "ftrack")
+log = pype.Logger().get_logger("FtrackModule", "ftrack")
 
 
 class FtrackModule:
