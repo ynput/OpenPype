@@ -14,7 +14,7 @@ from pype import api as pype
 log = pype.Logger().get_logger(FtrackModule.__name__, "ftrack")
 
 
-class FtrackRunner:
+class FtrackModule:
     def __init__(self, main_parent=None, parent=None):
 
         self.parent = parent
