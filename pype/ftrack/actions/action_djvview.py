@@ -5,12 +5,12 @@ import json
 import logging
 import subprocess
 from operator import itemgetter
-import ftrack_api
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseHandler
 from app.api import Logger
 from pype import lib
 
-log = Logger.getLogger(__name__)
+log = Logger().get_logger(__name__)
 
 
 class DJVViewAction(BaseHandler):

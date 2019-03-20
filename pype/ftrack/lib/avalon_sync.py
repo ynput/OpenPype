@@ -8,11 +8,11 @@ import avalon
 import avalon.api
 from avalon import schema
 from avalon.vendor import toml, jsonschema
-from app.api import Logger
+from pypeapp.api import Logger
 
 ValidationError = jsonschema.ValidationError
 
-log = Logger.getLogger(__name__)
+log = Logger().get_logger(__name__)
 
 
 def get_ca_mongoid():

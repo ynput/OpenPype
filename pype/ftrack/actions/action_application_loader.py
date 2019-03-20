@@ -2,10 +2,10 @@ import toml
 import time
 from pype.ftrack import AppAction
 from avalon import lib
-from app.api import Logger
+from pypeapp.api import Logger
 from pype import lib as pypelib
 
-log = Logger.getLogger(__name__)
+log = Logger().get_logger(__name__)
 
 
 def registerApp(app, session):

@@ -1,7 +1,7 @@
 import os
 import requests
-from app.vendor.Qt import QtCore, QtGui, QtWidgets
-from app import style
+from Qt import QtCore, QtGui, QtWidgets
+from pypeapp import style
 from . import credentials, login_tools
 
 

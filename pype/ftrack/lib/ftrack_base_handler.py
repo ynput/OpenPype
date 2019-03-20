@@ -1,7 +1,7 @@
-import ftrack_api
 import functools
 import time
 from pype import api as pype
+from pype.vendor import ftrack_api
 
 
 class MissingPermision(Exception):
@@ -27,7 +27,7 @@ class BaseHandler(object):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
         self._session = session
-        self.log = pype.Logger.getLogger(self.__class__.__name__)
+        self.log = pype.Logger().get_logger(self.__class__.__name__)
 
         # Using decorator
         self.register = self.register_decorator(self.register)

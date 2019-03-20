@@ -2,22 +2,16 @@ import os
 import json
 import threading
 import time
-import ftrack_api
-from app import style
-from app.vendor.Qt import QtCore, QtGui, QtWidgets
+from Qt import QtCore, QtGui, QtWidgets
 
-from pype.ftrack import credentials, login_dialog as login_dialog
-
-from pype.vendor.pynput import mouse, keyboard
-from . import FtrackServer
+from pype.vendor import ftrack_api
+from pypeapp import style
+from pype.ftrack import FtrackServer, credentials, login_dialog as login_dialog
 
 from pype import api as pype
 
 
-# load data from templates
-pype.load_data_from_templates()
-
-log = pype.Logger.getLogger(__name__, "ftrack")
+log = pype.Logger().get_logger(FtrackModule.__name__, "ftrack")
 
 
 class FtrackRunner:

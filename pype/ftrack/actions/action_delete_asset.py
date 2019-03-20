@@ -2,7 +2,7 @@ import sys
 import logging
 from bson.objectid import ObjectId
 import argparse
-import ftrack_api
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
