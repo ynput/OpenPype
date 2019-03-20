@@ -220,7 +220,7 @@ class FtrackRunner:
 
 class FtrackEventsThread(QtCore.QThread):
     # Senders
-    signal_timer_started = QtCore.Signal()
+    signal_timer_started = QtCore.Signal(object)
     signal_timer_stopped = QtCore.Signal()
 
     def __init__(self, parent):
@@ -245,8 +245,29 @@ class FtrackEventsThread(QtCore.QThread):
         timer = self.timer_session.query(timer_query).first()
         if timer is not None:
             self.last_task = timer['context']
+            self.signal_timer_started.emit(
+                self.get_data_from_task(self.last_task)
+            )
 
         self.timer_session.event_hub.wait()
+
+    def get_data_from_task(self, task_entity):
+        data = {}
+        data['task_name'] = task_entity['name']
+        data['task_type'] = task_entity['type']['name']
+        data['project_name'] = task_entity['project']['full_name']
+        data['hierarchy'] = self.get_parents(task_entity['parent'])
+
+        return data
+
+    def get_parents(self, entity):
+        output = []
+        if entity.entity_type.lower() == 'project':
+            return output
+        output.extend(self.get_parents(entity['parent']))
+        output.append(entity['name'])
+
+        return output
 
     def event_handler(self, event):
         try:
@@ -267,6 +288,9 @@ class FtrackEventsThread(QtCore.QThread):
             self.last_task = timer['context']
 
         if old is None:
+            self.signal_timer_started.emit(
+                self.get_data_from_task(self.last_task)
+            )
         elif new is None:
             self.signal_timer_stopped.emit()
 
@@ -274,7 +298,28 @@ class FtrackEventsThread(QtCore.QThread):
         try:
             self.user.stop_timer()
             self.timer_session.commit()
+            self.signal_timer_stopped.emit()
         except Exception as e:
             log.debug("Timer stop had issues: {}".format(e))
 
+    def ftrack_start_timer(self, input_data):
+        if self.user is None:
+            return
+        if (
+            input_data['task_name'] == self.last_task['name'] and
+            input_data['hierarchy'][-1] == self.last_task['parent']['name']
+        ):
+            return
+        task_query = (
+            'Task where name is "{task_name}"'
+            ' and parent.name is "{entity_name}"'
+            ' and project.full_name is "{project_name}"'
+        ).format(**input_data)
+
+        task = self.timer_session.query(task_query).one()
+        self.last_task = task
+        self.user.start_timer(task)
+        self.timer_session.commit()
+        self.signal_timer_started.emit(
+            self.get_data_from_task(self.last_task)
         )
