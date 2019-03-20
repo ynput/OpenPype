@@ -25,13 +25,9 @@ class FtrackRunner:
 
         self.parent = parent
         self.widget_login = login_dialog.Login_Dialog_ui(self)
-        self.widget_timer = StopTimer(self)
         self.action_server = FtrackServer('action')
         self.thread_action_server = None
         self.thread_timer = None
-        self.thread_timer_coundown = None
-
-        # self.signal_start_timer.connect(self.timerStart)
 
         self.bool_logged = False
         self.bool_action_server = False
@@ -211,11 +207,21 @@ class FtrackRunner:
             log.error("During Killing Timer event server: {0}".format(e))
 
 
+    def start_timer_manager(self, data):
         if self.thread_timer is not None:
+            self.thread_timer.ftrack_start_timer(data)
 
+    def stop_timer_manager(self):
         if self.thread_timer is not None:
+            self.thread_timer.ftrack_stop_timer()
 
+    def timer_started(self, data):
+        if hasattr(self, 'timer_manager'):
+            self.timer_manager.start_timers(data)
 
+    def timer_stopped(self):
+        if hasattr(self, 'timer_manager'):
+            self.timer_manager.stop_timers()
 
 
 class FtrackEventsThread(QtCore.QThread):
