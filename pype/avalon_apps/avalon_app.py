@@ -29,7 +29,7 @@ class AvalonApps:
 
         icon = QtGui.QIcon(launcher_lib.resource("icon", "main.png"))
         aShowLauncher = QtWidgets.QAction(icon, "&Launcher", parent_menu)
-        aLibraryLoader = QtWidgets.QAction("&Library", parent_menu)
+        aLibraryLoader = QtWidgets.QAction("Library", parent_menu)
 
         aShowLauncher.triggered.connect(self.show_launcher)
         aLibraryLoader.triggered.connect(self.show_library_loader)

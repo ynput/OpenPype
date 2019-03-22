@@ -5,6 +5,10 @@ from pypeapp import Logger
 
 
 class IdleManager(QtCore.QThread):
+    """ Measure user's idle time in seconds.
+    Idle time resets on keyboard/mouse input.
+    Is able to emit signals at specific time idle.
+    """
     time_signals = {}
     idle_time = 0
     signal_reset_timer = QtCore.Signal()
@@ -16,6 +20,12 @@ class IdleManager(QtCore.QThread):
         self._is_running = False
 
     def add_time_signal(self, emit_time, signal):
+        """ If any module want to use IdleManager, need to use add_time_signal
+        :param emit_time: time when signal will be emitted
+        :type emit_time: int
+        :param signal: signal that will be emitted (without objects)
+        :type signal: QtCore.Signal
+        """
         if emit_time not in self.time_signals:
             self.time_signals[emit_time] = []
         self.time_signals[emit_time].append(signal)
@@ -54,6 +64,8 @@ class IdleManager(QtCore.QThread):
 
 
 class MouseThread(QtCore.QThread):
+    """Listens user's mouse movement
+    """
     signal_stop = QtCore.Signal()
 
     def __init__(self, signal):
@@ -76,6 +88,8 @@ class MouseThread(QtCore.QThread):
 
 
 class KeyboardThread(QtCore.QThread):
+    """Listens user's keyboard input
+    """
     signal_stop = QtCore.Signal()
 
     def __init__(self, signal):

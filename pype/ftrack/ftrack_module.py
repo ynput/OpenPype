@@ -117,7 +117,6 @@ class FtrackModule:
         # Menu for Tray App
         self.menu = QtWidgets.QMenu('Ftrack', parent_menu)
         self.menu.setProperty('submenu', 'on')
-        self.menu.setStyleSheet(style.load_stylesheet())
 
         # Actions - server
         self.smActionS = self.menu.addMenu("Action server")

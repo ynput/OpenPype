@@ -5,6 +5,8 @@ from pypeapp import Logger
 
 
 class Singleton(type):
+    """ Signleton implementation
+    """
     _instances = {}
 
     def __call__(cls, *args, **kwargs):
@@ -16,6 +18,12 @@ class Singleton(type):
 
 
 class TimersManager(metaclass=Singleton):
+    """ Handles about Timers.
+
+    Should be able to start/stop all timers at once.
+    If IdleManager is imported then is able to handle about stop timers
+        when user idles for a long time (set in presets).
+    """
     modules = []
     is_running = False
     last_task = None
@@ -39,11 +47,20 @@ class TimersManager(metaclass=Singleton):
             return False
 
     def add_module(self, module):
+        """ Adds module to context
+
+        Module must have implemented methods:
+            - ``start_timer_manager(data)``
+            - ``stop_timer_manager()``
+        """
         self.modules.append(module)
 
     def start_timers(self, data):
         '''
-        Dictionary "data" should contain:
+        :param data: basic information needed to start any timer
+        :type data: dict
+        ..note::
+            Dictionary "data" should contain:
             - project_name(str) - Name of Project
             - hierarchy(list/tuple) - list of parents(except project)
             - task_type(str)
@@ -53,6 +70,7 @@ class TimersManager(metaclass=Singleton):
             - to run timers for task in
                 'C001_BackToPast/assets/characters/villian/Lookdev BG'
             - input data should contain:
+            .. code-block:: Python
                 data = {
                     'project_name': 'C001_BackToPast',
                     'hierarchy': ['assets', 'characters', 'villian'],
@@ -79,6 +97,11 @@ class TimersManager(metaclass=Singleton):
         self.is_running = False
 
     def process_modules(self, modules):
+        """ Gives ability to connect with imported modules from TrayManager.
+
+        :param modules: All imported modules from TrayManager
+        :type modules: dict
+        """
         self.s_handler = SignalHandler(self)
 
         if 'IdleManager' in modules:
