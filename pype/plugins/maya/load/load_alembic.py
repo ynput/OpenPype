@@ -1,4 +1,6 @@
 import pype.maya.plugin
+import os
+import json
 
 
 class AbcLoader(pype.maya.plugin.ReferenceLoader):
@@ -26,7 +28,22 @@ class AbcLoader(pype.maya.plugin.ReferenceLoader):
                           reference=True,
                           returnNewNodes=True)
 
-        cmds.makeIdentity(groupName, apply=False, rotate=True, translate=True, scale=True)
+        cmds.makeIdentity(groupName, apply=False, rotate=True,
+                          translate=True, scale=True)
+
+        preset_file = os.path.join(
+            os.environ.get('PYPE_STUDIO_TEMPLATES'),
+            'presets', 'tools',
+            'family_colors.json'
+        )
+        with open(preset_file, 'r') as cfile:
+            colors = json.load(cfile)
+
+        c = colors.get('pointcache')
+        if c is not None:
+            cmds.setAttr(groupName + ".useOutlinerColor", 1)
+            cmds.setAttr(groupName + ".outlinerColor",
+                         c[0], c[1], c[2])
 
         self[:] = nodes
 

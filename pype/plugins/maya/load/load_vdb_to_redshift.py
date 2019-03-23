@@ -1,4 +1,6 @@
 from avalon import api
+import os
+import json
 
 
 class LoadVDBtoRedShift(api.Loader):
@@ -48,6 +50,19 @@ class LoadVDBtoRedShift(api.Loader):
         # Root group
         label = "{}:{}".format(namespace, name)
         root = cmds.group(name=label, empty=True)
+        preset_file = os.path.join(
+            os.environ.get('PYPE_STUDIO_TEMPLATES'),
+            'presets', 'tools',
+            'family_colors.json'
+        )
+        with open(preset_file, 'r') as cfile:
+            colors = json.load(cfile)
+
+        c = colors.get('vdbcache')
+        if c is not None:
+            cmds.setAttr(root + ".useOutlinerColor", 1)
+            cmds.setAttr(root + ".outlinerColor",
+                         c[0], c[1], c[2])
 
         # Create VR
         volume_node = cmds.createNode("RedshiftVolumeShape",
