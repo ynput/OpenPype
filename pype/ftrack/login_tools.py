@@ -5,7 +5,7 @@ import webbrowser
 import functools
 import pype
 import inspect
-from app.vendor.Qt import QtCore
+from Qt import QtCore
 
 
 class LoginServerHandler(BaseHTTPRequestHandler):

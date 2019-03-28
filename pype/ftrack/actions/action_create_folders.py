@@ -4,7 +4,7 @@ import argparse
 import sys
 import errno
 
-import ftrack_api
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 import json
 from pype import api as pype

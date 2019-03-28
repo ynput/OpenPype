@@ -2,12 +2,12 @@ import os
 import sys
 import types
 import importlib
-import ftrack_api
+from pype.vendor import ftrack_api
 import time
 import logging
-from app.api import Logger
+from pypeapp.api import Logger
 
-log = Logger.getLogger(__name__)
+log = Logger().get_logger(__name__)
 
 """
 # Required - Needed for connection to Ftrack

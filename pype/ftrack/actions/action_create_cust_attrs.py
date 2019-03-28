@@ -2,10 +2,11 @@ import os
 import sys
 import argparse
 import json
-import ftrack_api
 import arrow
 import logging
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, get_ca_mongoid
+from pypeapp.lib.config import get_presets
 
 """
 This action creates/updates custom attributes.
@@ -122,11 +123,6 @@ class CustomAttributes(BaseAction):
     def __init__(self, session):
         super().__init__(session)
 
-        templates = os.environ['PYPE_STUDIO_TEMPLATES']
-        path_items = [
-            templates, 'presets', 'ftrack', 'ftrack_custom_attributes.json'
-        ]
-        self.filepath = os.path.sep.join(path_items)
         self.types = {}
         self.object_type_ids = {}
         self.groups = {}
@@ -230,22 +226,12 @@ class CustomAttributes(BaseAction):
             self.process_attribute(data)
 
     def custom_attributes_from_file(self, session, event):
-        try:
-            with open(self.filepath) as data_file:
-                json_dict = json.load(data_file)
-        except Exception as e:
-            msg = (
-                'Loading "Custom attribute file" Failed.'
-                ' Please check log for more information'
-            )
-            self.log.warning("{} - {}".format(msg, str(e)))
-            self.show_message(event, msg)
-            return
+        presets = get_presets()['ftrack']['ftrack_custom_attributes']
 
-        for cust_attr_name in json_dict:
+        for cust_attr_name in presets:
             try:
                 data = {}
-                cust_attr = json_dict[cust_attr_name]
+                cust_attr = presets[cust_attr_name]
                 # Get key, label, type
                 data.update(self.get_required(cust_attr))
                 # Get hierachical/ entity_type/ object_id

@@ -3,8 +3,9 @@ import re
 from avalon import io
 from avalon import api as avalon
 from . import lib
-from app.api import (Templates, Logger, format)
-log = Logger.getLogger(__name__,
+# from pypeapp.api import (Templates, Logger, format)
+from pypeapp.api import Logger
+log = Logger().get_logger(__name__,
                        os.getenv("AVALON_APP", "pype-config"))
 
 SESSION = None

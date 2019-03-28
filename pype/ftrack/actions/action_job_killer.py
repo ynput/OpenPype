@@ -1,10 +1,8 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
 import sys
 import argparse
 import logging
 
-import ftrack_api
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 
 

@@ -1,10 +1,10 @@
 import sys
 from pype.ftrack import credentials, login_dialog as login_dialog
 from pype.ftrack.ftrack_server import FtrackServer
-from app.vendor.Qt import QtWidgets
+from Qt import QtWidgets
 from pype import api
 
-log = api.Logger.getLogger(__name__, "ftrack-event-server")
+log = api.Logger().get_logger(__name__, "ftrack-event-server")
 
 
 class EventServer:

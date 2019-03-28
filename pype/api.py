@@ -15,7 +15,7 @@ from .action import (
     RepairContextAction
 )
 
-from app.api import Logger
+from pypeapp.api import Logger
 
 from . import (
     Anatomy,

@@ -77,7 +77,6 @@ def _check_credentials(username=None, apiKey=None):
         session = ftrack_api.Session()
         session.close()
     except Exception as e:
-        print(e)
         return False
 
     return True
