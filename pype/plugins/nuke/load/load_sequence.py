@@ -101,7 +101,7 @@ class LoadSequence(api.Loader):
         if namespace is None:
             namespace = context['asset']['name']
 
-        file = self.fname
+        file = self.fname.replace("\\", "/")
         log.info("file: {}\n".format(self.fname))
 
         read_name = "Read_" + context["representation"]["context"]["subset"]
@@ -112,7 +112,7 @@ class LoadSequence(api.Loader):
             r = nuke.createNode(
                 "Read",
                 "name {}".format(read_name))
-            r["file"].setValue(self.fname)
+            r["file"].setValue(file)
 
             # Set colorspace defined in version data
             colorspace = context["version"]["data"].get("colorspace", None)
