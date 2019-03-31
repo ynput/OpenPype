@@ -243,7 +243,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
 
-            template_data["frame"] = "#####"
+            template_data["frame"] = "#" * anatomy.render.padding
             anatomy_filled = anatomy.format(template_data)
             path_to_save = anatomy_filled.render.path
             template = anatomy.render.fullpath
