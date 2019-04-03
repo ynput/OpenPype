@@ -190,6 +190,9 @@ class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
                           reference=True,
                           returnNewNodes=True)
 
+        namespace = cmds.referenceQuery(nodes[0], namespace=True)
+        groupName = "{}:{}".format(namespace, name)
+
         cmds.makeIdentity(groupName, apply=False, rotate=True,
                           translate=True, scale=True)
 
