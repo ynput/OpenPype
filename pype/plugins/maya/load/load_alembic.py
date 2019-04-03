@@ -18,6 +18,11 @@ class AbcLoader(pype.maya.plugin.ReferenceLoader):
 
         import maya.cmds as cmds
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "animation"
+
         groupName = "{}:{}".format(namespace, name)
         cmds.loadPlugin("AbcImport.mll", quiet=True)
         nodes = cmds.file(self.fname,
@@ -39,7 +44,7 @@ class AbcLoader(pype.maya.plugin.ReferenceLoader):
         with open(preset_file, 'r') as cfile:
             colors = json.load(cfile)
 
-        c = colors.get('pointcache')
+        c = colors.get(family)
         if c is not None:
             cmds.setAttr(groupName + ".useOutlinerColor", 1)
             cmds.setAttr(groupName + ".outlinerColor",

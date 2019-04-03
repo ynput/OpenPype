@@ -21,6 +21,10 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
         import maya.cmds as cmds
         from avalon import maya
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "model"
         preset_file = os.path.join(
             os.environ.get('PYPE_STUDIO_TEMPLATES'),
             'presets', 'tools',
@@ -42,7 +46,7 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
             cmds.makeIdentity(groupName, apply=False, rotate=True,
                               translate=True, scale=True)
 
-            c = colors.get('model')
+            c = colors.get(family)
             if c is not None:
                 cmds.setAttr(groupName + ".useOutlinerColor", 1)
                 cmds.setAttr(groupName + ".outlinerColor",

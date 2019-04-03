@@ -19,6 +19,11 @@ class LoadVDBtoRedShift(api.Loader):
         import avalon.maya.lib as lib
         from avalon.maya.pipeline import containerise
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "vdbcache"
+
         # Check if the plugin for redshift is available on the pc
         try:
             cmds.loadPlugin("redshift4maya", quiet=True)
@@ -58,7 +63,7 @@ class LoadVDBtoRedShift(api.Loader):
         with open(preset_file, 'r') as cfile:
             colors = json.load(cfile)
 
-        c = colors.get('vdbcache')
+        c = colors.get(family)
         if c is not None:
             cmds.setAttr(root + ".useOutlinerColor", 1)
             cmds.setAttr(root + ".outlinerColor",

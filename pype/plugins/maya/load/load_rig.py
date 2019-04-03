@@ -23,6 +23,11 @@ class RigLoader(pype.maya.plugin.ReferenceLoader):
 
     def process_reference(self, context, name, namespace, data):
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "rig"
+
         groupName = "{}:{}".format(namespace, name)
         nodes = cmds.file(self.fname,
                           namespace=namespace,
@@ -42,7 +47,7 @@ class RigLoader(pype.maya.plugin.ReferenceLoader):
         with open(preset_file, 'r') as cfile:
             colors = json.load(cfile)
 
-        c = colors.get('rig')
+        c = colors.get(family)
         if c is not None:
             cmds.setAttr(groupName + ".useOutlinerColor", 1)
             cmds.setAttr(groupName + ".outlinerColor",

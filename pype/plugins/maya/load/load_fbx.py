@@ -19,6 +19,11 @@ class FBXLoader(pype.maya.plugin.ReferenceLoader):
         import maya.cmds as cmds
         from avalon import maya
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "fbx"
+
         # Ensure FBX plug-in is loaded
         cmds.loadPlugin("fbxmaya", quiet=True)
 
@@ -39,7 +44,7 @@ class FBXLoader(pype.maya.plugin.ReferenceLoader):
         with open(preset_file, 'r') as cfile:
             colors = json.load(cfile)
 
-        c = colors.get('fbx')
+        c = colors.get(family)
         if c is not None:
             cmds.setAttr(groupName + ".useOutlinerColor", 1)
             cmds.setAttr(groupName + ".outlinerColor",

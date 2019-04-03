@@ -23,6 +23,11 @@ class YetiCacheLoader(api.Loader):
 
     def load(self, context, name=None, namespace=None, data=None):
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "yeticache"
+
         # Build namespace
         asset = context["asset"]
         if namespace is None:
@@ -57,7 +62,7 @@ class YetiCacheLoader(api.Loader):
         with open(preset_file, 'r') as cfile:
             colors = json.load(cfile)
 
-        c = colors.get('yeticache')
+        c = colors.get(family)
         if c is not None:
             cmds.setAttr(group_name + ".useOutlinerColor", 1)
             cmds.setAttr(group_name + ".outlinerColor",

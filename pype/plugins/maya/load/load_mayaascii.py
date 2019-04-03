@@ -21,6 +21,11 @@ class MayaAsciiLoader(pype.maya.plugin.ReferenceLoader):
         import maya.cmds as cmds
         from avalon import maya
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "model"
+
         with maya.maintained_selection():
             nodes = cmds.file(self.fname,
                               namespace=namespace,
@@ -39,7 +44,7 @@ class MayaAsciiLoader(pype.maya.plugin.ReferenceLoader):
         with open(preset_file, 'r') as cfile:
             colors = json.load(cfile)
 
-        c = colors.get('mayaAscii')
+        c = colors.get(family)
         if c is not None:
             cmds.setAttr(groupName + ".useOutlinerColor", 1)
             cmds.setAttr(groupName + ".outlinerColor",

@@ -22,6 +22,11 @@ class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
         from avalon import maya
         import pymel.core as pm
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "ass"
+
         with maya.maintained_selection():
 
             groupName = "{}:{}".format(namespace, name)
@@ -53,7 +58,7 @@ class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
             with open(preset_file, 'r') as cfile:
                 colors = json.load(cfile)
 
-            c = colors.get('ass')
+            c = colors.get(family)
             if c is not None:
                 cmds.setAttr(groupName + ".useOutlinerColor", 1)
                 cmds.setAttr(groupName + ".outlinerColor",

@@ -18,6 +18,11 @@ class CameraLoader(pype.maya.plugin.ReferenceLoader):
         import maya.cmds as cmds
         # Get family type from the context
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "camera"
+
         cmds.loadPlugin("AbcImport.mll", quiet=True)
         groupName = "{}:{}".format(namespace, name)
         nodes = cmds.file(self.fname,
@@ -38,7 +43,7 @@ class CameraLoader(pype.maya.plugin.ReferenceLoader):
         with open(preset_file, 'r') as cfile:
             colors = json.load(cfile)
 
-        c = colors.get('camera')
+        c = colors.get(family)
         if c is not None:
             cmds.setAttr(groupName + ".useOutlinerColor", 1)
             cmds.setAttr(groupName + ".outlinerColor",
