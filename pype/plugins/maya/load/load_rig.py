@@ -2,6 +2,8 @@ from maya import cmds
 
 import pype.maya.plugin
 from avalon import api, maya
+import os
+import json
 
 
 class RigLoader(pype.maya.plugin.ReferenceLoader):
@@ -21,6 +23,11 @@ class RigLoader(pype.maya.plugin.ReferenceLoader):
 
     def process_reference(self, context, name, namespace, data):
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "rig"
+
         groupName = "{}:{}".format(namespace, name)
         nodes = cmds.file(self.fname,
                           namespace=namespace,
@@ -29,7 +36,22 @@ class RigLoader(pype.maya.plugin.ReferenceLoader):
                           groupReference=True,
                           groupName=groupName)
 
-        cmds.makeIdentity(groupName, apply=False, rotate=True, translate=True, scale=True)
+        cmds.makeIdentity(groupName, apply=False, rotate=True,
+                          translate=True, scale=True)
+
+        preset_file = os.path.join(
+            os.environ.get('PYPE_STUDIO_TEMPLATES'),
+            'presets', 'tools',
+            'family_colors.json'
+        )
+        with open(preset_file, 'r') as cfile:
+            colors = json.load(cfile)
+
+        c = colors.get(family)
+        if c is not None:
+            cmds.setAttr(groupName + ".useOutlinerColor", 1)
+            cmds.setAttr(groupName + ".outlinerColor",
+                         c[0], c[1], c[2])
 
         # Store for post-process
         self[:] = nodes

@@ -1,5 +1,7 @@
 from avalon import api
 import pype.maya.plugin
+import json
+import os
 
 
 class ModelLoader(pype.maya.plugin.ReferenceLoader):
@@ -19,6 +21,18 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
         import maya.cmds as cmds
         from avalon import maya
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "model"
+        preset_file = os.path.join(
+            os.environ.get('PYPE_STUDIO_TEMPLATES'),
+            'presets', 'tools',
+            'family_colors.json'
+        )
+        with open(preset_file, 'r') as cfile:
+            colors = json.load(cfile)
+
         with maya.maintained_selection():
 
             groupName = "{}:{}".format(namespace, name)
@@ -29,7 +43,14 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
                               groupReference=True,
                               groupName=groupName)
 
-            cmds.makeIdentity(groupName, apply=False, rotate=True, translate=True, scale=True)
+            cmds.makeIdentity(groupName, apply=False, rotate=True,
+                              translate=True, scale=True)
+
+            c = colors.get(family)
+            if c is not None:
+                cmds.setAttr(groupName + ".useOutlinerColor", 1)
+                cmds.setAttr(groupName + ".outlinerColor",
+                             c[0], c[1], c[2])
 
         self[:] = nodes
 
@@ -68,6 +89,19 @@ class GpuCacheLoader(api.Loader):
         # Root group
         label = "{}:{}".format(namespace, name)
         root = cmds.group(name=label, empty=True)
+        preset_file = os.path.join(
+            os.environ.get('PYPE_STUDIO_TEMPLATES'),
+            'presets', 'tools',
+            'family_colors.json'
+        )
+        with open(preset_file, 'r') as cfile:
+            colors = json.load(cfile)
+
+        c = colors.get('model')
+        if c is not None:
+            cmds.setAttr(root + ".useOutlinerColor", 1)
+            cmds.setAttr(root + ".outlinerColor",
+                         c[0], c[1], c[2])
 
         # Create transform with shape
         transform_name = label + "_GPU"
@@ -129,6 +163,7 @@ class GpuCacheLoader(api.Loader):
         except RuntimeError:
             pass
 
+
 class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
     """Specific loader of Alembic for the studio.animation family"""
 
@@ -155,7 +190,25 @@ class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
                           reference=True,
                           returnNewNodes=True)
 
-        cmds.makeIdentity(groupName, apply=False, rotate=True, translate=True, scale=True)
+        namespace = cmds.referenceQuery(nodes[0], namespace=True)
+        groupName = "{}:{}".format(namespace, name)
+
+        cmds.makeIdentity(groupName, apply=False, rotate=True,
+                          translate=True, scale=True)
+
+        preset_file = os.path.join(
+            os.environ.get('PYPE_STUDIO_TEMPLATES'),
+            'presets', 'tools',
+            'family_colors.json'
+        )
+        with open(preset_file, 'r') as cfile:
+            colors = json.load(cfile)
+
+        c = colors.get('model')
+        if c is not None:
+            cmds.setAttr(groupName + ".useOutlinerColor", 1)
+            cmds.setAttr(groupName + ".outlinerColor",
+                         c[0], c[1], c[2])
 
         self[:] = nodes
 
