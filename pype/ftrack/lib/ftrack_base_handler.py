@@ -25,6 +25,7 @@ class BaseHandler(object):
     priority = 100
     # Type is just for logging purpose (e.g.: Action, Event, Application,...)
     type = 'No-type'
+    preactions = []
 
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
