@@ -54,6 +54,8 @@ class SyncToAvalon(BaseAction):
         'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
         '699650-icon-92-inbox-download-512.png'
     )
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub']
     #: Action priority
     priority = 200
 
@@ -63,22 +65,11 @@ class SyncToAvalon(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
-        role_check = False
-        discover = False
-        role_list = ['Pypeclub']
-        user_id = event['source']['user']['id']
-        user = session.query('User where id is ' + user_id).one()
+        for entity in entities:
+            if entity.entity_type.lower() not in ['task', 'assetversion']:
+                return True
 
-        for role in user['user_security_roles']:
-            if role['security_role']['name'] in role_list:
-                role_check = True
-        if role_check is True:
-            for entity in entities:
-                if entity.entity_type.lower() not in ['task', 'assetversion']:
-                    discover = True
-                    break
-
-        return discover
+        return False
 
     def launch(self, session, entities, event):
         message = ""
@@ -91,15 +82,11 @@ class SyncToAvalon(BaseAction):
             'user': user,
             'status': 'running',
             'data': json.dumps({
-                'description': 'Synch Ftrack to Avalon.'
+                'description': 'Sync Ftrack to Avalon.'
             })
         })
-
+        session.commit()
         try:
-            self.log.info(
-                "Action <" + self.__class__.__name__ + "> is running"
-            )
-
             self.importable = []
 
             # get from top entity in hierarchy all parent entities
@@ -146,26 +133,11 @@ class SyncToAvalon(BaseAction):
                 )
 
                 if 'errors' in result and len(result['errors']) > 0:
-                    items = []
-                    for error in result['errors']:
-                        for key, message in error.items():
-                            name = key.lower().replace(' ', '')
-                            info = {
-                                'label': key,
-                                'type': 'textarea',
-                                'name': name,
-                                'value': message
-                            }
-                            items.append(info)
-                            self.log.error(
-                                '{}: {}'.format(key, message)
-                            )
-                    title = 'Hey You! Few Errors were raised! (*look below*)'
-
                     job['status'] = 'failed'
                     session.commit()
 
-                    self.show_interface(event, items, title)
+                    ftracklib.show_errors(self, event, result['errors'])
+
                     return {
                         'success': False,
                         'message': "Sync to avalon FAILED"
@@ -176,7 +148,6 @@ class SyncToAvalon(BaseAction):
                         avalon_project = result['project']
 
             job['status'] = 'done'
-            self.log.info('Synchronization to Avalon was successfull!')
 
         except ValueError as ve:
             job['status'] = 'failed'
@@ -234,8 +205,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = SyncToAvalon(session)
-    action_handler.register()
+    SyncToAvalon(session).register()
 
 
 def main(arguments=None):

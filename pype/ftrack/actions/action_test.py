@@ -1,5 +1,3 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
 import sys
 import argparse
 import logging
@@ -27,20 +25,17 @@ class TestAction(BaseAction):
     description = 'Test action'
     #: priority
     priority = 10000
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub']
+    icon = (
+        'https://cdn4.iconfinder.com/data/icons/hospital-19/512/'
+        '8_hospital-512.png'
+    )
 
     def discover(self, session, entities, event):
         ''' Validation '''
-        discover = False
-        roleList = ['Pypeclub']
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
 
-        for role in user['user_security_roles']:
-            if role['security_role']['name'] in roleList:
-                discover = True
-                break
-
-        return discover
+        return True
 
     def launch(self, session, entities, event):
         self.log.info(event)
@@ -54,8 +49,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = TestAction(session)
-    action_handler.register()
+    TestAction(session).register()
 
 
 def main(arguments=None):

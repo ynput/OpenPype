@@ -78,6 +78,7 @@ class Sync_To_Avalon(BaseAction):
         for role in user['user_security_roles']:
             if role['security_role']['name'] in roleList:
                 roleCheck = True
+                break
         if roleCheck is True:
             for entity in entities:
                 if entity.entity_type.lower() not in ['task', 'assetversion']:
@@ -97,15 +98,11 @@ class Sync_To_Avalon(BaseAction):
             'user': user,
             'status': 'running',
             'data': json.dumps({
-                'description': 'Synch Ftrack to Avalon.'
+                'description': 'Sync Ftrack to Avalon.'
             })
         })
-
+        session.commit()
         try:
-            self.log.info(
-                "Action <" + self.__class__.__name__ + "> is running"
-            )
-
             self.importable = []
 
             # get from top entity in hierarchy all parent entities
@@ -152,26 +149,11 @@ class Sync_To_Avalon(BaseAction):
                 )
 
                 if 'errors' in result and len(result['errors']) > 0:
-                    items = []
-                    for error in result['errors']:
-                        for key, message in error.items():
-                            name = key.lower().replace(' ', '')
-                            info = {
-                                'label': key,
-                                'type': 'textarea',
-                                'name': name,
-                                'value': message
-                            }
-                            items.append(info)
-                            self.log.error(
-                                '{}: {}'.format(key, message)
-                            )
-                    title = 'Hey You! Few Errors were raised! (*look below*)'
-
                     job['status'] = 'failed'
                     session.commit()
 
-                    self.show_interface(event, items, title)
+                    lib.show_errors(self, event, result['errors'])
+
                     return {
                         'success': False,
                         'message': "Sync to avalon FAILED"
@@ -183,7 +165,6 @@ class Sync_To_Avalon(BaseAction):
 
             job['status'] = 'done'
             session.commit()
-            self.log.info('Synchronization to Avalon was successfull!')
 
         except ValueError as ve:
             job['status'] = 'failed'
@@ -239,8 +220,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = Sync_To_Avalon(session)
-    action_handler.register()
+    Sync_To_Avalon(session).register()
 
 
 def main(arguments=None):

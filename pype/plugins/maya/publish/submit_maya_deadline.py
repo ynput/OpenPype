@@ -92,7 +92,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit available render layers to Deadline
 
     Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable AVALON_DEADLINE
+    supplied via the environment variable DEADLINE_REST_URL
 
     """
 
@@ -104,9 +104,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+        DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
                                           "http://localhost:8082")
-        assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
         context = instance.context
         workspace = context.data["workspaceDir"]
@@ -231,14 +231,15 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "MAYA_MODULE_PATH",
             "ARNOLD_PLUGIN_PATH",
             "AVALON_SCHEMA",
+            "FTRACK_API_KEY",
+            "FTRACK_API_USER",
+            "FTRACK_SERVER",
+            "PYBLISHPLUGINPATH",
 
             # todo: This is a temporary fix for yeti variables
             "PEREGRINEL_LICENSE",
-            "REDSHIFT_MAYAEXTENSIONSPATH",
-            "REDSHIFT_DISABLEOUTPUTLOCKFILES"
-            "VRAY_FOR_MAYA2018_PLUGINS_X64",
-            "VRAY_PLUGINS_X64",
-            "VRAY_USE_THREAD_AFFINITY",
+            "SOLIDANGLE_LICENSE",
+            "ARNOLD_LICENSE"
             "MAYA_MODULE_PATH",
             "TOOL_ENV"
         ]
@@ -274,6 +275,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                         clean_path += os.path.normpath(path) + os.pathsep
                     except UnicodeDecodeError:
                         print('path contains non UTF characters')
+
+            if key == "PYTHONPATH":
+                clean_path = clean_path.replace('python2', 'python3')
             clean_path = clean_path.replace(
                                             os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
                                             os.path.normpath(environment['PYPE_STUDIO_CORE']))
@@ -301,7 +305,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(AVALON_DEADLINE)
+        url = "{}/api/jobs".format(DEADLINE_REST_URL)
         response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)

@@ -6,7 +6,7 @@ from maya import cmds
 import pype.maya.action
 
 
-class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
+class ValidateAssemblyModelTransforms(pyblish.api.InstancePlugin):
     """Verify only root nodes of the loaded asset have transformations.
 
     Note: This check is temporary and is subject to change.
@@ -26,8 +26,8 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     """
 
     order = pyblish.api.ValidatorOrder + 0.49
-    label = "Setdress Model Transforms"
-    families = ["setdress"]
+    label = "Assembly Model Transforms"
+    families = ["assembly"]
     actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
 
@@ -38,7 +38,7 @@ class ValidateSetDressModelTransforms(pyblish.api.InstancePlugin):
     def process(self, instance):
         invalid = self.get_invalid(instance)
         if invalid:
-            raise RuntimeError("Found {} invalid transforms of setdress "
+            raise RuntimeError("Found {} invalid transforms of assembly "
                                "items".format(len(invalid)))
 
     @classmethod

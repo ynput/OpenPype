@@ -4,8 +4,12 @@ from pype.ftrack import BaseEvent, lib
 
 class Sync_to_Avalon(BaseEvent):
 
-    def launch(self, session, entities, event):
+    ignore_entityType = [
+        'assetversion', 'job', 'user', 'reviewsessionobject', 'timer',
+        'socialfeed', 'socialnotification', 'timelog'
+    ]
 
+    def launch(self, session, event):
         ca_mongoid = lib.get_ca_mongoid()
         # If mongo_id textfield has changed: RETURN!
         # - infinite loop
@@ -14,6 +18,7 @@ class Sync_to_Avalon(BaseEvent):
                 if ca_mongoid in ent['keys']:
                     return
 
+        entities = self._get_entities(session, event, self.ignore_entityType)
         ft_project = None
         # get project
         for entity in entities:
@@ -84,23 +89,9 @@ class Sync_to_Avalon(BaseEvent):
                     custom_attributes=custom_attributes
                 )
                 if 'errors' in result and len(result['errors']) > 0:
-                    items = []
-                    for error in result['errors']:
-                        for key, message in error.items():
-                            name = key.lower().replace(' ', '')
-                            info = {
-                                'label': key,
-                                'type': 'textarea',
-                                'name': name,
-                                'value': message
-                            }
-                            items.append(info)
-                            self.log.error(
-                                '{}: {}'.format(key, message)
-                            )
                     session.commit()
-                    title = 'Hey You! You raised few Errors! (*look below*)'
-                    self.show_interface(event, items, title)
+                    lib.show_errors(self, event, result['errors'])
+
                     return
 
                 if avalon_project is None:
@@ -109,55 +100,20 @@ class Sync_to_Avalon(BaseEvent):
 
         except Exception as e:
             message = str(e)
+            title = 'Hey You! Unknown Error has been raised! (*look below*)'
             ftrack_message = (
                 'SyncToAvalon event ended with unexpected error'
-                ' please check log file for more information.'
+                ' please check log file or contact Administrator'
+                ' for more information.'
             )
-            items = [{
-                'label': 'Fatal Error',
-                'type': 'textarea',
-                'name': 'error',
-                'value': ftrack_message
-            }]
-            title = 'Hey You! Unknown Error has been raised! (*look below*)'
+            items = [
+                {'type': 'label', 'value':'# Fatal Error'},
+                {'type': 'label', 'value': '<p>{}</p>'.format(ftrack_message)}
+            ]
             self.show_interface(event, items, title)
-            self.log.error(message)
+            self.log.error('Fatal error during sync: {}'.format(message))
 
         return
-
-    def _launch(self, event):
-        self.session.reset()
-
-        args = self._translate_event(
-            self.session, event
-        )
-
-        self.launch(
-            self.session, *args
-        )
-        return
-
-    def _translate_event(self, session, event):
-        exceptions = [
-            'assetversion', 'job', 'user', 'reviewsessionobject', 'timer',
-            'socialfeed', 'timelog'
-        ]
-        _selection = event['data'].get('entities', [])
-
-        _entities = list()
-        for entity in _selection:
-            if entity['entityType'] in exceptions:
-                continue
-            _entities.append(
-                (
-                    session.get(
-                        self._get_entity_type(entity),
-                        entity.get('entityId')
-                    )
-                )
-            )
-
-        return [_entities, event]
 
 
 def register(session, **kw):
@@ -166,5 +122,4 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    event = Sync_to_Avalon(session)
-    event.register()
+    Sync_to_Avalon(session).register()

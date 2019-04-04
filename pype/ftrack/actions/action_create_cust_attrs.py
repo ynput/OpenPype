@@ -1,11 +1,10 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
 import os
 import sys
 import argparse
 import json
 import ftrack_api
 import arrow
+import logging
 from pype.ftrack import BaseAction, get_ca_mongoid
 
 """
@@ -112,6 +111,13 @@ class CustomAttributes(BaseAction):
     label = 'Create/Update Avalon Attributes'
     #: Action description.
     description = 'Creates Avalon/Mongo ID for double check'
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub', 'Administrator']
+    icon = (
+        'https://cdn4.iconfinder.com/data/icons/'
+        'ios-web-user-interface-multi-circle-flat-vol-4/512/'
+        'Bullet_list_menu_lines_points_items_options-512.png'
+    )
 
     def __init__(self, session):
         super().__init__(session)
@@ -136,14 +142,7 @@ class CustomAttributes(BaseAction):
         Validation
         - action is only for Administrators
         '''
-        success = False
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
-        for role in user['user_security_roles']:
-            if role['security_role']['name'] == 'Administrator':
-                success = True
-
-        return success
+        return True
 
     def launch(self, session, entities, event):
         # JOB SETTINGS
@@ -584,14 +583,11 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = CustomAttributes(session)
-    action_handler.register()
+    CustomAttributes(session).register()
 
 
 def main(arguments=None):
     '''Set up logging and register action.'''
-    import logging
-
     if arguments is None:
         arguments = []
 

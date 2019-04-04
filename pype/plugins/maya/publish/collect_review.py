@@ -60,6 +60,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                     data['step'] = instance.data['step']
                     data['fps'] = instance.data['fps']
                     cmds.setAttr(str(instance) + '.active', 0)
+                    self.log.debug('data {}'.format(instance.context[i].data))
                     instance.context[i].data.update(data)
                     instance.data['remove'] = True
                 i += 1

@@ -9,8 +9,12 @@ class CreateLook(avalon.maya.Creator):
     label = "Look"
     family = "look"
     icon = "paint-brush"
+    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreateLook, self).__init__(*args, **kwargs)
 
         self.data["renderlayer"] = lib.get_current_renderlayer()
+
+        # Whether to automatically convert the textures to .tx upon publish.
+        self.data["maketx"] = True

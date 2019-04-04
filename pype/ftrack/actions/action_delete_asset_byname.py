@@ -15,31 +15,27 @@ class AssetsRemover(BaseAction):
     label = 'Delete Assets by Name'
     #: Action description.
     description = 'Removes assets from Ftrack and Avalon db with all childs'
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub', 'Administrator']
+    icon = (
+        'https://cdn4.iconfinder.com/data/icons/'
+        'ios-web-user-interface-multi-circle-flat-vol-5/512/'
+        'Clipboard_copy_delete_minus_paste_remove-512.png'
+    )
     #: Db
     db = DbConnector()
 
     def discover(self, session, entities, event):
         ''' Validation '''
-        selection = event["data"].get("selection", None)
-        if selection is None:
+        if len(entities) != 1:
             return False
 
         valid = ["show", "task"]
-        entityType = selection[0].get("entityType", "")
+        entityType = event["data"]["selection"][0].get("entityType", "")
         if entityType.lower() not in valid:
             return False
 
-        discover = False
-        roleList = ['Pypeclub', 'Administrator']
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
-
-        for role in user['user_security_roles']:
-            if role['security_role']['name'] in roleList:
-                discover = True
-                break
-
-        return discover
+        return True
 
     def interface(self, session, entities, event):
         if not event['data'].get('values', {}):
@@ -145,8 +141,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = AssetsRemover(session)
-    action_handler.register()
+    AssetsRemover(session).register()
 
 
 def main(arguments=None):

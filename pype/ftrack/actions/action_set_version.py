@@ -80,8 +80,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = SetVersion(session)
-    action_handler.register()
+    SetVersion(session).register()
 
 
 def main(arguments=None):

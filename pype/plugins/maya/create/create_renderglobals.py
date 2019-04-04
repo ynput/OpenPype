@@ -4,14 +4,15 @@ import pype.maya.lib as lib
 
 from avalon.vendor import requests
 import avalon.maya
-# from avalon import api
 import os
+
 
 class CreateRenderGlobals(avalon.maya.Creator):
 
     label = "Render Globals"
     family = "renderglobals"
     icon = "gears"
+    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreateRenderGlobals, self).__init__(*args, **kwargs)
@@ -19,19 +20,23 @@ class CreateRenderGlobals(avalon.maya.Creator):
         # We won't be publishing this one
         self.data["id"] = "avalon.renderglobals"
 
-        # Get available Deadline pools
-        try:
-            AVALON_DEADLINE = os.environ["AVALON_DEADLINE"]
-        except KeyError:
-            self.log.error("Deadline REST API url not found.")
+        # get pools
+        pools = []
 
-        argument = "{}/api/pools?NamesOnly=true".format(AVALON_DEADLINE)
-        response = requests.get(argument)
-        if not response.ok:
-            self.log.warning("No pools retrieved")
-            pools = []
+        deadline_url = os.environ.get('DEADLINE_REST_URL', None)
+        if deadline_url is None:
+            self.log.warning("Deadline REST API url not found.")
         else:
-            pools = response.json()
+            argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
+            response = requests.get(argument)
+            if not response.ok:
+                self.log.warning("No pools retrieved")
+            else:
+                pools = response.json()
+                self.data["primaryPool"] = pools
+                # We add a string "-" to allow the user to not
+                # set any secondary pools
+                self.data["secondaryPool"] = ["-"] + pools
 
         # We don't need subset or asset attributes
         # self.data.pop("subset", None)
@@ -47,9 +52,6 @@ class CreateRenderGlobals(avalon.maya.Creator):
         self.data["whitelist"] = False
         self.data["machineList"] = ""
         self.data["useMayaBatch"] = True
-        self.data["primaryPool"] = pools
-        # We add a string "-" to allow the user to not set any secondary pools
-        self.data["secondaryPool"] = ["-"] + pools
 
         self.options = {"useSelection": False}  # Force no content
 

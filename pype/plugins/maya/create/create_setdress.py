@@ -4,7 +4,8 @@ import avalon.maya
 class CreateSetDress(avalon.maya.Creator):
     """A grouped package of loaded content"""
 
-    name = "setdress"
+    name = "setdressMain"
     label = "Set Dress"
     family = "setdress"
-    icon = "cubes"
+    icon = "boxes"
+    defaults = ["Main", "Anim"]

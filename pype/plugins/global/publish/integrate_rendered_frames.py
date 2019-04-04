@@ -168,6 +168,9 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         representations = []
         destination_list = []
 
+        if 'transfers' not in instance.data:
+            instance.data['transfers'] = []
+
         for files in instance.data["files"]:
             # Collection
             #   _______
@@ -240,7 +243,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
 
-            template_data["frame"] = "#####"
+            template_data["frame"] = "#" * anatomy.render.padding
             anatomy_filled = anatomy.format(template_data)
             path_to_save = anatomy_filled.render.path
             template = anatomy.render.fullpath

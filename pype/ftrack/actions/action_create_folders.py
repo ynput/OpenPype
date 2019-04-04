@@ -29,10 +29,6 @@ class CreateFolders(BaseAction):
     def discover(self, session, entities, event):
         ''' Validation '''
 
-        # if (len(entities) == 0 or entities[0].entity_type not in
-        #         ['Episode', 'Sequence', 'Shot', 'Folder', 'Asset Build']):
-        #     return False
-
         return True
 
     def getShotAsset(self, entity):
@@ -141,8 +137,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = CreateFolders(session)
-    action_handler.register()
+    CreateFolders(session).register()
 
 
 def main(arguments=None):

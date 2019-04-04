@@ -5,6 +5,7 @@ import shutil
 import errno
 import pyblish.api
 from avalon import api, io
+from avalon.vendor import filelink
 
 
 log = logging.getLogger(__name__)
@@ -31,12 +32,15 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 "pointcache",
                 "vdbcache",
                 "setdress",
+                "assembly",
+                "layout",
                 "rig",
                 "vrayproxy",
                 "yetiRig",
                 "yeticache",
                 "nukescript",
                 "review",
+                "workfile",
                 "scene",
                 "ass"]
     exclude_families = ["clip"]
@@ -87,6 +91,13 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # extra check if stagingDir actually exists and is available
 
         self.log.debug("Establishing staging directory @ %s" % stagingdir)
+
+        # Ensure at least one file is set up for transfer in staging dir.
+        files = instance.data.get("files", [])
+        assert files, "Instance has no files to transfer"
+        assert isinstance(files, (list, tuple)), (
+            "Instance 'files' must be a list, got: {0}".format(files)
+        )
 
         project = io.find_one({"type": "project"})
 
@@ -167,6 +178,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Each should be a single representation (as such, a single extension)
         representations = []
         destination_list = []
+        if 'transfers' not in instance.data:
+            instance.data['transfers'] = []
 
         for files in instance.data["files"]:
 
@@ -268,11 +281,21 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             instance: the instance to integrate
         """
 
-        transfers = instance.data["transfers"]
+        transfers = instance.data.get("transfers", list())
 
         for src, dest in transfers:
             self.log.info("Copying file .. {} -> {}".format(src, dest))
             self.copy_file(src, dest)
+
+        # Produce hardlinked copies
+        # Note: hardlink can only be produced between two files on the same
+        # server/disk and editing one of the two will edit both files at once.
+        # As such it is recommended to only make hardlinks between static files
+        # to ensure publishes remain safe and non-edited.
+        hardlinks = instance.data.get("hardlinks", list())
+        for src, dest in hardlinks:
+            self.log.info("Hardlinking file .. {} -> {}".format(src, dest))
+            self.hardlink_file(src, dest)
 
     def copy_file(self, src, dst):
         """ Copy given source to destination
@@ -295,6 +318,20 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 raise
 
         shutil.copy(src, dst)
+
+    def hardlink_file(self, src, dst):
+
+        dirname = os.path.dirname(dst)
+        try:
+            os.makedirs(dirname)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                self.log.critical("An unexpected error occurred.")
+                raise
+
+        filelink.create(src, dst, filelink.HARDLINK)
 
     def get_subset(self, asset, instance):
 
@@ -359,7 +396,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             families.append(instance_family)
         families += current_families
 
-        self.log.debug("Registered roor: {}".format(api.registered_root()))
+        self.log.debug("Registered root: {}".format(api.registered_root()))
         # create relative source path for DB
         try:
             source = instance.data['source']
@@ -379,7 +416,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                         "fps": context.data.get("fps")}
 
         # Include optional data if present in
-        optionals = ["startFrame", "endFrame", "step", "handles"]
+        optionals = [
+            "startFrame", "endFrame", "step", "handles", "sourceHashes"
+        ]
         for key in optionals:
             if key in instance.data:
                 version_data[key] = instance.data[key]

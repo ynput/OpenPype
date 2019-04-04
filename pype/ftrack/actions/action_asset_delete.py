@@ -87,8 +87,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = AssetDelete(session)
-    action_handler.register()
+    AssetDelete(session).register()
 
 
 def main(arguments=None):

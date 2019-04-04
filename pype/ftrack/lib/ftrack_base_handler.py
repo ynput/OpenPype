@@ -4,6 +4,13 @@ import time
 from pype import api as pype
 
 
+class MissingPermision(Exception):
+    def __init__(self, message=None):
+        if message is None:
+            message = 'Ftrack'
+        super().__init__(message)
+
+
 class BaseHandler(object):
     '''Custom Action base class
 
@@ -25,10 +32,11 @@ class BaseHandler(object):
         self.log = pype.Logger.getLogger(self.__class__.__name__)
 
         # Using decorator
-        self.register = self.register_log(self.register)
+        self.register = self.register_decorator(self.register)
+        self.launch = self.launch_log(self.launch)
 
     # Decorator
-    def register_log(self, func):
+    def register_decorator(self, func):
         @functools.wraps(func)
         def wrapper_register(*args, **kwargs):
             label = self.__class__.__name__
@@ -37,8 +45,20 @@ class BaseHandler(object):
                     label = self.label
                 else:
                     label = '{} {}'.format(self.label, self.variant)
-
             try:
+                if hasattr(self, "role_list") and len(self.role_list) > 0:
+                    username = self.session.api_user
+                    user = self.session.query(
+                        'User where username is "{}"'.format(username)
+                    ).one()
+                    available = False
+                    for role in user['user_security_roles']:
+                        if role['security_role']['name'] in self.role_list:
+                            available = True
+                            break
+                    if available is False:
+                        raise MissingPermision
+
                 start_time = time.perf_counter()
                 func(*args, **kwargs)
                 end_time = time.perf_counter()
@@ -46,6 +66,14 @@ class BaseHandler(object):
                 self.log.info((
                     '{} "{}" - Registered successfully ({:.4f}sec)'
                 ).format(self.type, label, run_time))
+            except MissingPermision as MPE:
+                self.log.info((
+                    '!{} "{}" - You\'re missing required {} permissions'
+                ).format(self.type, label, str(MPE)))
+            except AssertionError as ae:
+                self.log.info((
+                    '!{} "{}" - {}'
+                ).format(self.type, label, str(ae)))
             except NotImplementedError:
                 self.log.error((
                     '{} "{}" - Register method is not implemented'
@@ -57,6 +85,31 @@ class BaseHandler(object):
                     self.type, label, str(e))
                 )
         return wrapper_register
+
+    # Decorator
+    def launch_log(self, func):
+        @functools.wraps(func)
+        def wrapper_launch(*args, **kwargs):
+            label = self.__class__.__name__
+            if hasattr(self, 'label'):
+                if self.variant is None:
+                    label = self.label
+                else:
+                    label = '{} {}'.format(self.label, self.variant)
+
+            try:
+                self.log.info(('{} "{}": Launched').format(self.type, label))
+                result = func(*args, **kwargs)
+                self.log.info(('{} "{}": Finished').format(self.type, label))
+                return result
+            except Exception as e:
+                msg = '{} "{}": Failed ({})'.format(self.type, label, str(e))
+                self.log.error(msg)
+                return {
+                    'success': False,
+                    'message': msg
+                }
+        return wrapper_launch
 
     @property
     def session(self):
@@ -75,6 +128,16 @@ class BaseHandler(object):
         raise NotImplementedError()
 
     def _discover(self, event):
+        items = {
+            'items': [{
+                'label': self.label,
+                'variant': self.variant,
+                'description': self.description,
+                'actionIdentifier': self.identifier,
+                'icon': self.icon,
+            }]
+        }
+
         args = self._translate_event(
             self.session, event
         )
@@ -83,18 +146,10 @@ class BaseHandler(object):
             self.session, *args
         )
 
-        if accepts:
+        if accepts is True:
             self.log.debug(u'Discovering action with selection: {0}'.format(
-                args[1]['data'].get('selection', [])))
-            return {
-                'items': [{
-                    'label': self.label,
-                    'variant': self.variant,
-                    'description': self.description,
-                    'actionIdentifier': self.identifier,
-                    'icon': self.icon,
-                }]
-            }
+                event['data'].get('selection', [])))
+            return items
 
     def discover(self, session, entities, event):
         '''Return true if we can handle the selected entities.
@@ -118,24 +173,31 @@ class BaseHandler(object):
         '''Return *event* translated structure to be used with the API.'''
 
         '''Return *event* translated structure to be used with the API.'''
-
-        _selection = event['data'].get('selection', [])
-
-        _entities = list()
-        for entity in _selection:
-            _entities.append(
-                (
-                    session.get(
-                        self._get_entity_type(entity),
-                        entity.get('entityId')
-                    )
-                )
-            )
+        _entities = event['data'].get('entities_object', None)
+        if (
+            _entities is None or
+            _entities[0].get('link', None) == ftrack_api.symbol.NOT_SET
+        ):
+            _entities = self._get_entities(event)
 
         return [
             _entities,
             event
         ]
+
+    def _get_entities(self, event):
+        self.session._local_cache.clear()
+        selection = event['data'].get('selection', [])
+        _entities = []
+        for entity in selection:
+            _entities.append(
+                self.session.get(
+                    self._get_entity_type(entity),
+                    entity.get('entityId')
+                )
+            )
+        event['data']['entities_object'] = _entities
+        return _entities
 
     def _get_entity_type(self, entity):
         '''Return translated entity type tht can be used with API.'''
@@ -204,7 +266,10 @@ class BaseHandler(object):
     def _interface(self, *args):
         interface = self.interface(*args)
         if interface:
-            if 'items' in interface:
+            if (
+                'items' in interface or
+                ('success' in interface and 'message' in interface)
+            ):
                 return interface
 
             return {
@@ -229,23 +294,31 @@ class BaseHandler(object):
     def _handle_result(self, session, result, entities, event):
         '''Validate the returned result from the action callback'''
         if isinstance(result, bool):
-            result = {
-                'success': result,
-                'message': (
-                    '{0} launched successfully.'.format(
-                        self.label
+            if result is True:
+                result = {
+                    'success': result,
+                    'message': (
+                        '{0} launched successfully.'.format(self.label)
                     )
-                )
-            }
+                }
+            else:
+                result = {
+                    'success': result,
+                    'message': (
+                        '{0} launch failed.'.format(self.label)
+                    )
+                }
 
         elif isinstance(result, dict):
-            for key in ('success', 'message'):
-                if key in result:
-                    continue
+            items = 'items' in result
+            if items is False:
+                for key in ('success', 'message'):
+                    if key in result:
+                        continue
 
-                raise KeyError(
-                    'Missing required key: {0}.'.format(key)
-                )
+                    raise KeyError(
+                        'Missing required key: {0}.'.format(key)
+                    )
 
         else:
             self.log.error(

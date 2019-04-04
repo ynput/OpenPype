@@ -28,13 +28,13 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+        DEADLINE_REST_URL = api.Session.get("DEADLINE_REST_URL",
                                           "http://localhost:8082")
-        assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
         context = instance.context
 
-        deadline_url = "{}/api/jobs".format(AVALON_DEADLINE)
+        deadline_url = "{}/api/jobs".format(DEADLINE_REST_URL)
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
 
         filepath = context.data["currentFile"]

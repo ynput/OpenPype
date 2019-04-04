@@ -16,7 +16,13 @@ class JobKiller(BaseAction):
     #: Action label.
     label = 'Job Killer'
     #: Action description.
-    description = 'Killing all running jobs younger than day'
+    description = 'Killing selected running jobs'
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub', 'Administrator']
+    icon = (
+        'https://cdn2.iconfinder.com/data/icons/new-year-resolutions/64/'
+        'resolutions-23-512.png'
+    )
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -30,29 +36,42 @@ class JobKiller(BaseAction):
             jobs = session.query(
                 'select id, status from Job'
                 ' where status in ("queued", "running")'
-            )
+            ).all()
 
             items = []
             import json
+            item_splitter = {'type': 'label', 'value': '---'}
             for job in jobs:
                 data = json.loads(job['data'])
                 user = job['user']['username']
                 created = job['created_at'].strftime('%d.%m.%Y %H:%M:%S')
-                label = '{}/ {}/ {}'.format(
+                label = '{} - {} - {}'.format(
                     data['description'], created, user
                 )
+                item_label = {
+                    'type': 'label',
+                    'value': label
+                }
                 item = {
-                    'label': label,
                     'name': job['id'],
                     'type': 'boolean',
                     'value': False
                 }
+                if len(items) > 0:
+                    items.append(item_splitter)
+                items.append(item_label)
                 items.append(item)
 
-            return {
-                'items': items,
-                'title': title
-            }
+            if len(items) == 0:
+                return {
+                    'success': False,
+                    'message': 'Didn\'t found any running jobs'
+                }
+            else:
+                return {
+                    'items': items,
+                    'title': title
+                }
 
     def launch(self, session, entities, event):
         """ GET JOB """
@@ -104,8 +123,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = JobKiller(session)
-    action_handler.register()
+    JobKiller(session).register()
 
 
 def main(arguments=None):

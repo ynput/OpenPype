@@ -1,9 +1,9 @@
 from avalon import api
 
 
-class SetDressLoader(api.Loader):
+class AssemblyLoader(api.Loader):
 
-    families = ["setdress"]
+    families = ["assembly"]
     representations = ["json"]
 
     label = "Load Set Dress"

@@ -57,14 +57,20 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             self.log.debug('dest ext: ' + ext)
             thumbnail = False
 
+
+
             if ext in ['.mov']:
+                if not instance.data.get('startFrameReview'):
+                    instance.data['startFrameReview'] = instance.data['startFrame']
+                if not instance.data.get('endFrameReview'):
+                    instance.data['endFrameReview'] = instance.data['endFrame']
                 location = ft_session.query(
                     'Location where name is "ftrack.server"').one()
                 component_data = {
                     "name": "ftrackreview-mp4",  # Default component name is "main".
                     "metadata": {'ftr_meta': json.dumps({
-                                 'frameIn': int(instance.data["startFrame"]),
-                                 'frameOut': int(instance.data["startFrame"]),
+                                 'frameIn': int(instance.data['startFrameReview']),
+                                 'frameOut': int(instance.data['startFrameReview']),
                                  'frameRate': 25})}
                                 }
             elif ext in [".jpg", ".jpeg"]:

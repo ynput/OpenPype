@@ -10,7 +10,7 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
     order = pyblish.api.CollectorOrder - 0.1
-    label = "Maya Scene"
+    label = "Maya Workfile"
     hosts = ['maya']
 
     def process(self, context):
@@ -29,14 +29,14 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
 
         # create instance
         instance = context.create_instance(name=filename)
-        subset = 'scene' + task.capitalize()
+        subset = 'workfile' + task.capitalize()
 
         data.update({
             "subset": subset,
             "asset": os.getenv("AVALON_ASSET", None),
             "label": subset,
-            "publish": True,
-            "family": 'scene',
+            "publish": False,
+            "family": 'workfile',
             "representation": "ma",
             "setMembers": [current_file],
             "stagingDir": folder
