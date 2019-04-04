@@ -3,7 +3,6 @@ import sys
 import platform
 from avalon import lib as avalonlib
 import acre
-import ftrack_api
 from pype import api as pype
 from pype import lib as pypelib
 from .avalon_sync import get_config_data
@@ -123,6 +122,9 @@ class AppAction(BaseHandler):
         if preactions_launched is False:
             return
 
+        response = self.launch(
+            self.session, *args
+        )
 
         return self._handle_result(
             self.session, response, *args

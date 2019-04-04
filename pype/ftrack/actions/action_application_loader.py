@@ -35,7 +35,7 @@ def registerApp(app, session):
     label = apptoml.get('ftrack_label', app.get('label', name))
     icon = apptoml.get('ftrack_icon', None)
     description = apptoml.get('description', None)
-    preactions = apptoml.get('preactions', None)
+    preactions = apptoml.get('preactions', [])
 
     # register action
     AppAction(
