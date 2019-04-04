@@ -1,7 +1,7 @@
 import os
 import pyblish.api
 
-from avalon import io, api
+from avalon import io, api, lib
 
 
 class CollectAssumedDestination(pyblish.api.InstancePlugin):
@@ -67,7 +67,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
-
+        application = lib.get_application(os.environ["AVALON_APP_NAME"])
         template_data = {"root": api.Session["AVALON_PROJECTS"],
                          "project": {"name": project_name,
                                      "code": project['data']['code']},
@@ -77,7 +77,8 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
                          "subset": subset_name,
                          "version": version_number,
                          "hierarchy": hierarchy,
-                         "representation": "TEMP"}
+                         "representation": "TEMP",
+                         "app": application["application_dir"]}
 
         instance.data["template"] = template
         instance.data["assumedTemplateData"] = template_data
