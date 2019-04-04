@@ -22,8 +22,7 @@ class ValidateTemplates(pyblish.api.ContextPlugin):
                      "version": 3,
                      "task": "animation",
                      "asset": "sh001",
-                     "hierarchy": "ep101/sq01/sh010",
-                     "app": "nuke"}
+                     "hierarchy": "ep101/sq01/sh010"}
 
 
             anatomy = context.data["anatomy"].format(data)
@@ -35,8 +34,7 @@ class ValidateTemplates(pyblish.api.ContextPlugin):
                      "version": 1,
                      "task": "lookdev",
                      "asset": "bob",
-                     "hierarchy": "ep101/sq01/bob",
-                     "app": "nuke"}
+                     "hierarchy": "ep101/sq01/bob"}
 
             anatomy = context.data["anatomy"].format(data)
             self.log.info(anatomy.work.file)

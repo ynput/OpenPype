@@ -5,7 +5,7 @@ import clique
 
 import errno
 import pyblish.api
-from avalon import api, io, lib
+from avalon import api, io
 
 
 log = logging.getLogger(__name__)
@@ -148,7 +148,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         if parents and len(parents) > 0:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*parents)
-        application = lib.get_application(os.environ["AVALON_APP_NAME"])
+
         template_data = {"root": root,
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
@@ -158,8 +158,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                          "family": instance.data['family'],
                          "subset": subset["name"],
                          "version": int(version["name"]),
-                         "hierarchy": hierarchy,
-                         "app": application["application_dir"]}
+                         "hierarchy": hierarchy}
 
         # template_publish = project["config"]["template"]["publish"]
         anatomy = instance.context.data['anatomy']
@@ -273,8 +272,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                     "subset": subset["name"],
                     "version": int(version["name"]),
                     "hierarchy": hierarchy,
-                    "representation": ext[1:],
-                    "app": application["application_dir"]
+                    "representation": ext[1:]
                 }
             }
 
