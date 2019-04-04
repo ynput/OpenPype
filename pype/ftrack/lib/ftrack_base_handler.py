@@ -284,6 +284,47 @@ class BaseHandler(object):
         '''
         raise NotImplementedError()
 
+    def _handle_preactions(self, session, event):
+        # If preactions are not set
+        if len(self.preactions) == 0:
+            return True
+        # If no selection
+        selection = event.get('data', {}).get('selection', None)
+        if (selection is None):
+            return False
+        # If preactions were already started
+        if event['data'].get('preactions_launched', None) is True:
+            return True
+
+        # Launch preactions
+        for preaction in self.preactions:
+            event = ftrack_api.event.base.Event(
+                topic='ftrack.action.launch',
+                data=dict(
+                    actionIdentifier=preaction,
+                    selection=selection
+                ),
+                source=dict(
+                    user=dict(username=session.api_user)
+                )
+            )
+            session.event_hub.publish(event, on_error='ignore')
+        # Relaunch this action
+        event = ftrack_api.event.base.Event(
+            topic='ftrack.action.launch',
+            data=dict(
+                actionIdentifier=self.identifier,
+                selection=selection,
+                preactions_launched=True
+            ),
+            source=dict(
+                user=dict(username=session.api_user)
+            )
+        )
+        session.event_hub.publish(event, on_error='ignore')
+
+        return False
+
     def _interface(self, *args):
         interface = self.interface(*args)
         if interface:

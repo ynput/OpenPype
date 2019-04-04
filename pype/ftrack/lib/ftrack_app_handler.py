@@ -128,52 +128,6 @@ class AppAction(BaseHandler):
             self.session, response, *args
         )
 
-
-    def _handle_preactions(self, session, event):
-        # If no selection
-        selection = event.get('data', {}).get('selection', None)
-        if (selection is None):
-            return False
-        # If preactions are not set
-        if (
-            not hasattr(self, 'preactions') and
-            self.preactions is None and
-            len(self.preactions) < 1
-        ):
-            return True
-        # If preactions were already started
-        if event['data'].get('preactions_launched', None) is True:
-            return True
-
-        # Launch preactions
-        for preaction in self.preactions:
-            event = ftrack_api.event.base.Event(
-                topic='ftrack.action.launch',
-                data=dict(
-                    actionIdentifier=preaction,
-                    selection=selection
-                ),
-                source=dict(
-                    user=dict(username=session.api_user)
-                )
-            )
-            session.event_hub.publish(event, on_error='ignore')
-        # Relaunch this action
-        event = ftrack_api.event.base.Event(
-            topic='ftrack.action.launch',
-            data=dict(
-                actionIdentifier=self.identifier,
-                selection=selection,
-                preactions_launched=True
-            ),
-            source=dict(
-                user=dict(username=session.api_user)
-            )
-        )
-        session.event_hub.publish(event, on_error='ignore')
-
-        return False
-
     def launch(self, session, entities, event):
         '''Callback method for the custom action.
 
