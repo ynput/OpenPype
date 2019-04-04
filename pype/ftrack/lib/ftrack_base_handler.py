@@ -46,18 +46,7 @@ class BaseHandler(object):
                 else:
                     label = '{} {}'.format(self.label, self.variant)
             try:
-                if hasattr(self, "role_list") and len(self.role_list) > 0:
-                    username = self.session.api_user
-                    user = self.session.query(
-                        'User where username is "{}"'.format(username)
-                    ).one()
-                    available = False
-                    for role in user['user_security_roles']:
-                        if role['security_role']['name'] in self.role_list:
-                            available = True
-                            break
-                    if available is False:
-                        raise MissingPermision
+                self._preregister()
 
                 start_time = time.perf_counter()
                 func(*args, **kwargs)
@@ -118,6 +107,37 @@ class BaseHandler(object):
 
     def reset_session(self):
         self.session.reset()
+
+    def _preregister(self):
+        # Rolecheck
+        if hasattr(self, "role_list") and len(self.role_list) > 0:
+            username = self.session.api_user
+            user = self.session.query(
+                'User where username is "{}"'.format(username)
+            ).one()
+            available = False
+            for role in user['user_security_roles']:
+                if role['security_role']['name'] in self.role_list:
+                    available = True
+                    break
+            if available is False:
+                raise MissingPermision
+
+        # Custom validations
+        result = self.preregister()
+        if result is True:
+            return
+        msg = "Pre-register conditions were not met"
+        if isinstance(result, str):
+            msg = result
+        raise Exception(msg)
+
+    def preregister(self):
+        '''
+        Preregister conditions.
+        Registration continues if returns True.
+        '''
+        return True
 
     def register(self):
         '''
