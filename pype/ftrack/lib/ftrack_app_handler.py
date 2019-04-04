@@ -1,7 +1,6 @@
 import os
 import sys
 import platform
-import psutil
 from avalon import lib as avalonlib
 import acre
 import ftrack_api
@@ -20,17 +19,13 @@ class AppAction(BaseHandler):
     <identifier>  - a unique identifier for app.
     <description>   - a verbose descriptive text for you action
     <icon>  - icon in ftrack
-
-    <script path> - if is set, only one app will be allowed to run if script is
-        set to script which launches app
     '''
 
     type = 'Application'
 
     def __init__(
         self, session, label, name, executable,
-        variant=None, icon=None, description=None,
-        preactions=None, once_run_data=None
+        variant=None, icon=None, description=None, preactions=[]
     ):
         super().__init__(session)
         '''Expects a ftrack_api.Session instance'''
@@ -49,7 +44,6 @@ class AppAction(BaseHandler):
         self.icon = icon
         self.description = description
         self.preactions = preactions
-        self.once_run_data = once_run_data
 
     def register(self):
         '''Registers the action, subscribing the discover and launch topics.'''
@@ -129,48 +123,11 @@ class AppAction(BaseHandler):
         if preactions_launched is False:
             return
 
-        if self._check_is_running():
-            response = {
-                'success': False,
-                'message': '"{0}" is already running'.format(self.label)
-            }
-        else:
-            response = self.launch(
-                self.session, *args
-            )
 
         return self._handle_result(
             self.session, response, *args
         )
 
-    def _check_is_running(self):
-        data = self.once_run_data
-        if data is None:
-            return False
-
-        process_name = data.get('process_name', None)
-        script_path = data.get('script_path', None)
-
-        if process_name is None and script_path is None:
-            return False
-        elif process_name is None:
-            procs = [p for p in psutil.process_iter() if (
-                'python.exe' in p.name() and
-                script_path in p.cmdline()
-            )]
-        elif script_path is None:
-            procs = [p for p in psutil.process_iter() if (
-                process_name in p.name()
-            )]
-        else:
-            procs = [p for p in psutil.process_iter() if (
-                process_name in p.name() and
-                script_path in p.cmdline()
-            )]
-
-        if len(procs) > 0:
-            return True
-        return False
 
     def _handle_preactions(self, session, event):
         # If no selection
