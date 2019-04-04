@@ -42,7 +42,7 @@ class AppAction(BaseHandler):
         self.variant = variant
         self.icon = icon
         self.description = description
-        self.preactions = preactions
+        self.preactions.extend(preactions)
 
     def register(self):
         '''Registers the action, subscribing the discover and launch topics.'''
