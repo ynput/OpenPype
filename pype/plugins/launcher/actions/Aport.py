@@ -1,5 +1,7 @@
 import os
-import psutil
+import sys
+from avalon import io
+from pprint import pprint
 import acre
 
 from avalon import api, lib
@@ -23,16 +25,6 @@ class Aport(api.Action):
             return True
         return False
 
-    def is_running(self, filename):
-        procs = [p for p in psutil.process_iter() if (
-            'python.exe' in p.name() and
-            filename in p.cmdline()
-        )]
-
-        if len(procs) > 0:
-            return True
-        return False
-
     def process(self, session, **kwargs):
         """Implement the behavior for when the action is triggered
 
@@ -43,17 +35,10 @@ class Aport(api.Action):
             Popen instance of newly spawned process
 
         """
-        av_core_path = os.environ.get('AVALON_CORE', None)
-        path_items = [
-            av_core_path, 'setup', 'aport', 'pythonpath', 'init.py'
-        ]
-        aport_path = os.path.sep.join(path_items)
-        if self.is_running(aport_path):
-            log.info("Aport server is already running")
-            return
 
         with pype.modified_environ(**session):
             # Get executable by name
+            print(self.name)
             app = lib.get_application(self.name)
             executable = lib.which(app["executable"])
 
