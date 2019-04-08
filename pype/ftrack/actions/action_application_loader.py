@@ -2,7 +2,7 @@ import toml
 import time
 from pype.ftrack import AppAction
 from avalon import lib
-from pypeapp.api import Logger
+from pypeapp import Logger
 from pype import lib as pypelib
 
 log = Logger().get_logger(__name__)

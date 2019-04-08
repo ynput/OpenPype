@@ -8,6 +8,8 @@ from pype import lib as pypelib
 from .avalon_sync import get_config_data
 from .ftrack_base_handler import BaseHandler
 
+from pypeapp import Anatomy
+
 
 class AppAction(BaseHandler):
     '''Custom Action base class
@@ -169,7 +171,8 @@ class AppAction(BaseHandler):
         os.environ["AVALON_APP"] = self.identifier.split("_")[0]
         os.environ["AVALON_APP_NAME"] = self.identifier
 
-        anatomy = pype.Anatomy
+        anatomy = Anatomy(project_name=project_name)
+
         hierarchy = ""
         parents = database[project_name].find_one({
             "type": 'asset',
@@ -179,20 +182,21 @@ class AppAction(BaseHandler):
         if parents:
             hierarchy = os.path.join(*parents)
 
-        data = {"project": {"name": entity['project']['full_name'],
+        data = {
+                "root": {"work": os.environ.get("PYPE_STUDIO_PROJECTS_PATH")},
+                "project": {"name": entity['project']['full_name'],
                             "code": entity['project']['name']},
                 "task": entity['name'],
                 "asset": entity['parent']['name'],
                 "hierarchy": hierarchy}
         try:
-            anatomy = anatomy.format(data)
+            anatomy_filled = anatomy.format(data)
+            # anatomy = anatomy.format(data)
         except Exception as e:
             self.log.error(
                 "{0} Error in anatomy.format: {1}".format(__name__, e)
             )
-        os.environ["AVALON_WORKDIR"] = os.path.join(
-            anatomy.work.root, anatomy.work.folder
-        )
+        os.environ["AVALON_WORKDIR"] = anatomy_filled['work']['folder']
 
         # collect all parents from the task
         parents = []
@@ -210,13 +214,22 @@ class AppAction(BaseHandler):
         tools_env = acre.get_tools(tools_attr)
         env = acre.compute(tools_env)
         env = acre.merge(env, current_env=dict(os.environ))
+        env = acre.append(dict(os.environ), env)
+
+
+        # 
+        # tools_env = acre.get_tools(tools)
+        # env = acre.compute(dict(tools_env))
+        # env = acre.merge(env, dict(os.environ))
+        # os.environ = acre.append(dict(os.environ), env)
+        # os.environ = acre.compute(os.environ)
 
         # Get path to execute
-        st_temp_path = os.environ['PYPE_STUDIO_TEMPLATES']
+        st_temp_path = os.environ['PYPE_CONFIG']
         os_plat = platform.system().lower()
 
         # Path to folder with launchers
-        path = os.path.join(st_temp_path, 'bin', os_plat)
+        path = os.path.join(st_temp_path, 'launchers', os_plat)
         # Full path to executable launcher
         execfile = None
 
@@ -321,6 +334,8 @@ class AppAction(BaseHandler):
 
         # Set origin avalon environments
         for key, value in env_origin.items():
+            if value == None:
+                value = ""
             os.environ[key] = value
 
         return {
