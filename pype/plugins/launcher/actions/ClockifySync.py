@@ -1,5 +1,8 @@
 from avalon import api, io
-from pype.clockify import ClockifyAPI
+try:
+    from pype.clockify import ClockifyAPI
+except Exception:
+    pass
 from pype.api import Logger
 log = Logger.getLogger(__name__, "clockify_sync")
 
@@ -10,11 +13,16 @@ class ClockifySync(api.Action):
     label = "Sync to Clockify"
     icon = "clockify_white_icon"
     order = 500
-    clockapi = ClockifyAPI()
-    have_permissions = clockapi.validate_workspace_perm()
+    exec(
+        "try:\n\tclockapi = ClockifyAPI()"
+        "\n\thave_permissions = clockapi.validate_workspace_perm()"
+        "\nexcept:\n\tclockapi = None"
+    )
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
+        if self.clockapi is None:
+            return False
         return self.have_permissions
 
     def process(self, session, **kwargs):
