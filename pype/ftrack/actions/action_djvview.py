@@ -8,7 +8,7 @@ from operator import itemgetter
 import ftrack_api
 from pype.ftrack import BaseAction
 from app.api import Logger
-from pype import pypelib
+from pype import lib as pypelib
 
 
 log = Logger.getLogger(__name__)
