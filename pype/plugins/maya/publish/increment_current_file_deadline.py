@@ -31,10 +31,11 @@ class IncrementCurrentFileDeadline(pyblish.api.ContextPlugin):
         current_filepath = context.data["currentFile"]
         new_filepath = version_up(current_filepath)
 
-        # Ensure the suffix is .ma because we're saving to `mayaAscii` type
-        if not new_filepath.endswith(".ma"):
-            self.log.warning("Refactoring scene to .ma extension")
-            new_filepath = os.path.splitext(new_filepath)[0] + ".ma"
+        # # Ensure the suffix is .ma because we're saving to `mayaAscii` type
+        if new_filepath.endswith(".ma"):
+            fileType = "mayaAscii"
+        elif new_filepath.endswith(".mb"):
+            fileType = "mayaBinary"
 
         cmds.file(rename=new_filepath)
-        cmds.file(save=True, force=True, type="mayaAscii")
+        cmds.file(save=True, force=True, type=fileType)
