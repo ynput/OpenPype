@@ -63,8 +63,8 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
         pyblish.api.register_host(host)
 
         # get path to studio templates
-        templates_dir = os.getenv("PYPE_STUDIO_TEMPLATES", None)
-        assert templates_dir, "Missing `PYPE_STUDIO_TEMPLATES` in os.environ"
+        templates_dir = os.getenv("PYPE_CONFIG", None)
+        assert templates_dir, "Missing `PYPE_CONFIG` in os.environ"
 
         # get presets for host
         presets_dir = os.path.join(templates_dir, "presets", host)

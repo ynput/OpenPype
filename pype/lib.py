@@ -467,7 +467,7 @@ def get_all_avalon_projects():
 
 
 def get_presets_path():
-    templates = os.environ['PYPE_STUDIO_TEMPLATES']
+    templates = os.environ['PYPE_CONFIG']
     path_items = [templates, 'presets']
     filepath = os.path.sep.join(path_items)
     return filepath
