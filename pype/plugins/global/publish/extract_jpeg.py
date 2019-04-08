@@ -16,9 +16,10 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     """
 
     label = "Extract Jpeg EXR"
+    hosts = ["shell"]
     order = pyblish.api.ExtractorOrder
     families = ["imagesequence", "render", "write", "source"]
-    host = ["shell"]
+
 
     def process(self, instance):
         start = instance.data.get("startFrame")

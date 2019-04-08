@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 from avalon import io
 from avalon import api as avalon
 from . import lib
@@ -7,12 +8,14 @@ from app.api import (Templates, Logger, format)
 log = Logger.getLogger(__name__,
                        os.getenv("AVALON_APP", "pype-config"))
 
-SESSION = None
+
+self = sys.modules[__name__]
+self.SESSION = None
 
 
 def set_session():
     lib.set_io_database()
-    SESSION = avalon.session
+    self.SESSION = avalon.session
 
 
 def load_data_from_templates():
@@ -104,9 +107,9 @@ def set_project_code(code):
         os.environ[KEY]: project code
         avalon.sesion[KEY]: project code
     """
-    if SESSION is None:
+    if self.SESSION is None:
         set_session()
-    SESSION["AVALON_PROJECTCODE"] = code
+    self.SESSION["AVALON_PROJECTCODE"] = code
     os.environ["AVALON_PROJECTCODE"] = code
 
 
@@ -118,9 +121,9 @@ def get_project_name():
         string: project name
 
     """
-    if SESSION is None:
+    if self.SESSION is None:
         set_session()
-    project_name = SESSION.get("AVALON_PROJECT", None) \
+    project_name = self.SESSION.get("AVALON_PROJECT", None) \
         or os.getenv("AVALON_PROJECT", None)
     assert project_name, log.error("missing `AVALON_PROJECT`"
                                    "in avalon session "
@@ -138,9 +141,9 @@ def get_asset():
     Raises:
         log: error
     """
-    if SESSION is None:
+    if self.SESSION is None:
         set_session()
-    asset = SESSION.get("AVALON_ASSET", None) \
+    asset = self.SESSION.get("AVALON_ASSET", None) \
         or os.getenv("AVALON_ASSET", None)
     log.info("asset: {}".format(asset))
     assert asset, log.error("missing `AVALON_ASSET`"
@@ -159,9 +162,9 @@ def get_task():
     Raises:
         log: error
     """
-    if SESSION is None:
+    if self.SESSION is None:
         set_session()
-    task = SESSION.get("AVALON_TASK", None) \
+    task = self.SESSION.get("AVALON_TASK", None) \
         or os.getenv("AVALON_TASK", None)
     assert task, log.error("missing `AVALON_TASK`"
                            "in avalon session "
@@ -196,9 +199,9 @@ def set_hierarchy(hierarchy):
     Args:
         hierarchy (string): hierarchy path ("silo/folder/seq")
     """
-    if SESSION is None:
+    if self.SESSION is None:
         set_session()
-    SESSION["AVALON_HIERARCHY"] = hierarchy
+    self.SESSION["AVALON_HIERARCHY"] = hierarchy
     os.environ["AVALON_HIERARCHY"] = hierarchy
 
 
@@ -248,10 +251,10 @@ def set_avalon_workdir(project=None,
         avalon.session[AVALON_WORKDIR]: workdir path
 
     """
-    if SESSION is None:
+    if self.SESSION is None:
         set_session()
-    awd = SESSION.get("AVALON_WORKDIR", None) \
-        or os.getenv("AVALON_WORKDIR", None)
+
+    awd = self.SESSION.get("AVALON_WORKDIR", None) or os.getenv("AVALON_WORKDIR", None)
     data = get_context_data(project, hierarchy, asset, task)
 
     if (not awd) or ("{" not in awd):
@@ -259,7 +262,7 @@ def set_avalon_workdir(project=None,
 
     awd_filled = os.path.normpath(format(awd, data))
 
-    SESSION["AVALON_WORKDIR"] = awd_filled
+    self.SESSION["AVALON_WORKDIR"] = awd_filled
     os.environ["AVALON_WORKDIR"] = awd_filled
     log.info("`AVALON_WORKDIR` fixed to: {}".format(awd_filled))
 

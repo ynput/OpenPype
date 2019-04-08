@@ -47,6 +47,8 @@ def get_look_attrs(node):
         for attr in attrs:
             if attr in SHAPE_ATTRS:
                 result.append(attr)
+            elif attr.startswith('ai'):
+                result.append(attr)
 
     return result
 
@@ -386,6 +388,8 @@ class CollectLook(pyblish.api.InstancePlugin):
 
             # Collect changes to "custom" attributes
             node_attrs = get_look_attrs(node)
+
+            self.log.info(node_attrs)
 
             # Only include if there are any properties we care about
             if not node_attrs:

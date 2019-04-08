@@ -7,7 +7,7 @@ from pype.tools import assetcreator
 
 from pype.api import Logger
 
-log = Logger.getLogger(__name__, "aport")
+log = Logger.getLogger(__name__, "asset_creator")
 
 
 class AssetCreator(api.Action):

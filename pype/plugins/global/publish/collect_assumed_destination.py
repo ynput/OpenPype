@@ -8,14 +8,10 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
     """Generate the assumed destination path where the file will be stored"""
 
     label = "Collect Assumed Destination"
-    order = pyblish.api.CollectorOrder + 0.499
+    order = pyblish.api.CollectorOrder + 0.498
     exclude_families = ["clip"]
 
     def process(self, instance):
-        if [ef for ef in self.exclude_families
-                if instance.data["family"] in ef]:
-            return
-
         """Create a destination filepath based on the current data available
 
         Example template:
@@ -27,6 +23,9 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
         Returns:
             file path (str)
         """
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
 
         # get all the stuff from the database
         subset_name = instance.data["subset"]
