@@ -1,8 +1,7 @@
 import os
 import re
 import sys
-from avalon import io
-from avalon import api as avalon
+from avalon import io, api as avalon, lib as avalonlib
 from . import lib
 from app.api import (Templates, Logger, format)
 log = Logger.getLogger(__name__,
@@ -222,13 +221,14 @@ def get_context_data(project=None,
         dict: contextual data
 
     """
-
+    application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
     data = {
         "task": task or get_task(),
         "asset": asset or get_asset(),
         "project": {"name": project or get_project_name(),
                     "code": get_project_code()},
         "hierarchy": hierarchy or get_hierarchy(),
+        "app": application["application_dir"]
     }
     return data
 

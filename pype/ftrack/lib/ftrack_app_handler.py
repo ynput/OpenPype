@@ -198,10 +198,13 @@ class AppAction(BaseHandler):
         if parents:
             hierarchy = os.path.join(*parents)
 
+        application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
+
         data = {"project": {"name": entity['project']['full_name'],
                             "code": entity['project']['name']},
                 "task": entity['name'],
                 "asset": entity['parent']['name'],
+                "app": application["application_dir"],
                 "hierarchy": hierarchy}
         try:
             anatomy = anatomy.format(data)

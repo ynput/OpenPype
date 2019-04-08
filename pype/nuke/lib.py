@@ -2,7 +2,7 @@ import sys
 from collections import OrderedDict
 from pprint import pprint
 from avalon.vendor.Qt import QtGui
-from avalon import api, io
+from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
 import nuke
@@ -88,6 +88,7 @@ def create_write_node(name, data):
     )
     nuke_dataflow_writes = get_dataflow(**data)
     nuke_colorspace_writes = get_colorspace(**data)
+    application = lib.get_application(os.environ["AVALON_APP_NAME"])
     try:
         anatomy_filled = format_anatomy({
             "subset": data["avalon"]["subset"],
@@ -97,6 +98,7 @@ def create_write_node(name, data):
             "project": {"name": pype.get_project_name(),
                         "code": pype.get_project_code()},
             "representation": nuke_dataflow_writes.file_type,
+            "app": application["application_dir"],
         })
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))
