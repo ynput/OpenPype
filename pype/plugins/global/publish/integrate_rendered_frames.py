@@ -192,7 +192,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                     template_data["frame"] = src_collection.format(
                         "{padding}") % i
                     anatomy_filled = anatomy.format(template_data)
-                    test_dest_files.append(anatomy_filled["render"]["path"])
+                    test_dest_files.append(anatomy_filled.render.path)
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
@@ -242,8 +242,8 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
             template_data["frame"] = "#####"
             anatomy_filled = anatomy.format(template_data)
-            path_to_save = anatomy_filled["render"]["path"]
-            template = anatomy["render"]["path"]
+            path_to_save = anatomy_filled.render.path
+            template = anatomy.render.fullpath
             self.log.debug('ext[1:]: {}'.format(ext[1:]))
 
             representation = {
