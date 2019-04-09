@@ -1,7 +1,9 @@
 
-import pype.api as pype
+# import pype.api as pype
 
 import pyblish.api
+from pypeapp import Anatomy
+import os
 
 
 class CollectTemplates(pyblish.api.ContextPlugin):
@@ -11,6 +13,8 @@ class CollectTemplates(pyblish.api.ContextPlugin):
     label = "Collect Templates"
 
     def process(self, context):
-        pype.load_data_from_templates()
-        context.data['anatomy'] = pype.Anatomy
+        # pype.load_data_from_templates()
+
+        anatomy = Anatomy(project_name=os.environ.get("AVALON_PROJECT"))
+        context.data['anatomy'] = anatomy
         self.log.info("Anatomy templates collected...")

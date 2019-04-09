@@ -200,10 +200,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
                     src = os.path.join(stagingdir, fname)
                     anatomy_filled = anatomy.format(template_data)
-                    dst = anatomy_filled.publish.path
+                    dst = anatomy_filled["publish"]["path"]
 
                     instance.data["transfers"].append([src, dst])
-                    template = anatomy.publish.path
+                    template = anatomy.anatomy["publish"]["path"]
 
             else:
                 # Single file
@@ -224,10 +224,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled.publish.path
+                dst = anatomy_filled["publish"]["path"]
 
                 instance.data["transfers"].append([src, dst])
-                template = anatomy.publish.path
+                template = anatomy.anatomy["publish"]["path"]
 
             representation = {
                 "schema": "pype:representation-2.0",
