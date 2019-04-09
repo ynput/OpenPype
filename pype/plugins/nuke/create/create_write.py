@@ -5,11 +5,12 @@ from pype.nuke import (
     create_write_node
 )
 from pype import api as pype
+# from pypeapp import Logger
 
 import nuke
 
 
-log = pype.Logger.getLogger(__name__, "nuke")
+log = pype.Logger().get_logger(__name__, "nuke")
 
 
 def subset_to_families(subset, family, families):

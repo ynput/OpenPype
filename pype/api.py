@@ -15,14 +15,14 @@ from .action import (
     RepairContextAction
 )
 
-from pypeapp.api import Logger
+from pypeapp import Logger
 
-from . import (
-    Anatomy,
-    Colorspace,
-    Metadata,
-    Dataflow
-)
+# from . import (
+#     Anatomy,
+#     Colorspace,
+#     Metadata,
+#     Dataflow
+# )
 
 from .templates import (
     load_data_from_templates,

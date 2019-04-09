@@ -5,7 +5,7 @@ import importlib
 from pype.vendor import ftrack_api
 import time
 import logging
-from pypeapp.api import Logger
+from pypeapp import Logger
 
 log = Logger().get_logger(__name__)
 

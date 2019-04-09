@@ -8,7 +8,7 @@ import avalon.io as io
 import nuke
 
 from pype.api import Logger
-log = Logger.getLogger(__name__, "nuke")
+log = Logger.get_looger(__name__, "nuke")
 
 
 @contextlib.contextmanager

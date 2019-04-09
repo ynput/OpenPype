@@ -8,7 +8,7 @@ import avalon
 import avalon.api
 from avalon import schema
 from avalon.vendor import toml, jsonschema
-from pypeapp.api import Logger
+from pypeapp import Logger
 
 ValidationError = jsonschema.ValidationError
 

@@ -7,7 +7,9 @@ import avalon.nuke
 import pype.api as pype
 import nuke
 
-log = pype.Logger.getLogger(__name__, "nuke")
+from pypeapp import Logger
+log = Logger().get_logger(__name__, "nuke")
+
 self = sys.modules[__name__]
 self._project = None
 

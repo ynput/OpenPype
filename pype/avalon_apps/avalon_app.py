@@ -2,7 +2,7 @@ import os
 import argparse
 from Qt import QtGui, QtWidgets
 from avalon.tools import libraryloader
-from pypeapp.api import Logger
+from pypeapp import Logger
 from avalon import io
 from launcher import launcher_widget, lib as launcher_lib
 

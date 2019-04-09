@@ -19,12 +19,15 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
         self.create_destination_template(instance)
 
         template_data = instance.data["assumedTemplateData"]
-        # template = instance.data["template"]
+        template = instance.data["template"]
 
         anatomy = instance.context.data['anatomy']
+        # self.log.info(anatomy.anatomy())
+        self.log.info(anatomy.anatomy)
         # template = anatomy.publish.path
         anatomy_filled = anatomy.format(template_data)
-        mock_template = anatomy_filled.publish.path
+        self.log.info(anatomy_filled)
+        mock_template = anatomy_filled["publish"]["path"]
 
         # For now assume resources end up in a "resources" folder in the
         # published folder

@@ -1,6 +1,6 @@
 from pype import api as pype
 
-log = pype.Logger.getLogger(__name__, "aport")
+log = pype.Logger().get_logger(__name__, "aport")
 
 
 def get_anatomy(**kwarg):

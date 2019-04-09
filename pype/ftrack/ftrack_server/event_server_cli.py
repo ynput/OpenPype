@@ -1,9 +1,9 @@
 import sys
 from pype.ftrack import credentials
 from pype.ftrack.ftrack_server import FtrackServer
-from pypeapp import api
+from pypeapp import Logger
 
-log = api.Logger().get_logger(__name__, "ftrack-event-server-cli")
+log = Logger().get_logger(__name__, "ftrack-event-server-cli")
 
 possible_yes = ['y', 'yes']
 possible_no = ['n', 'no']
