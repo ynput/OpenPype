@@ -7,7 +7,7 @@ from app import api as app
 
 from .. import api
 
-log = api.Logger.getLogger(__name__, "aport")
+log = api.Logger.get_logger(__name__, "aport")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 

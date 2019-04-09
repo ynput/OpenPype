@@ -6,7 +6,7 @@ import pyblish.api
 import logging
 from avalon import io, api
 
-log = logging.getLogger(__name__)
+log = logging.get_logger(__name__)
 
 
 @pyblish.api.log
