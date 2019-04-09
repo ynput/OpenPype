@@ -1,7 +1,7 @@
 import functools
 import time
 from pype import api as pype
-from pype.vendor import ftrack_api
+import ftrack_api
 
 
 class MissingPermision(Exception):
