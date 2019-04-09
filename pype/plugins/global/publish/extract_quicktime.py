@@ -18,7 +18,7 @@ class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):
     label = "Extract Quicktime EXR"
     order = pyblish.api.ExtractorOrder
     families = ["imagesequence", "render", "write", "source"]
-    host = ["shell"]
+    hosts = ["shell"]
 
     def process(self, instance):
         fps = instance.data.get("fps")

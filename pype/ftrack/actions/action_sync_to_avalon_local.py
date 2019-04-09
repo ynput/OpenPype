@@ -82,15 +82,11 @@ class SyncToAvalon(BaseAction):
             'user': user,
             'status': 'running',
             'data': json.dumps({
-                'description': 'Synch Ftrack to Avalon.'
+                'description': 'Sync Ftrack to Avalon.'
             })
         })
-
+        session.commit()
         try:
-            self.log.info(
-                "Action <" + self.__class__.__name__ + "> is running"
-            )
-
             self.importable = []
 
             # get from top entity in hierarchy all parent entities
@@ -137,26 +133,11 @@ class SyncToAvalon(BaseAction):
                 )
 
                 if 'errors' in result and len(result['errors']) > 0:
-                    items = []
-                    for error in result['errors']:
-                        for key, message in error.items():
-                            name = key.lower().replace(' ', '')
-                            info = {
-                                'label': key,
-                                'type': 'textarea',
-                                'name': name,
-                                'value': message
-                            }
-                            items.append(info)
-                            self.log.error(
-                                '{}: {}'.format(key, message)
-                            )
-                    title = 'Hey You! Few Errors were raised! (*look below*)'
-
                     job['status'] = 'failed'
                     session.commit()
 
-                    self.show_interface(event, items, title)
+                    ftracklib.show_errors(self, event, result['errors'])
+
                     return {
                         'success': False,
                         'message': "Sync to avalon FAILED"
@@ -167,7 +148,6 @@ class SyncToAvalon(BaseAction):
                         avalon_project = result['project']
 
             job['status'] = 'done'
-            self.log.info('Synchronization to Avalon was successfull!')
 
         except ValueError as ve:
             job['status'] = 'failed'

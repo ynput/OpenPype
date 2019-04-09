@@ -13,7 +13,7 @@ class Test_Event(BaseEvent):
 
     priority = 10000
 
-    def launch(self, session, entities, event):
+    def launch(self, session, event):
 
         '''just a testing event'''
 

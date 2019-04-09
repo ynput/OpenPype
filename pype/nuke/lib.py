@@ -2,7 +2,7 @@ import sys
 from collections import OrderedDict
 from pprint import pprint
 from avalon.vendor.Qt import QtGui
-from avalon import api, io
+from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
 import nuke
@@ -37,10 +37,12 @@ def writes_version_sync():
     for each in nuke.allNodes():
         if each.Class() == 'Write':
             avalon_knob_data = get_avalon_knob_data(each)
-            if avalon_knob_data['families'] not in ["render"]:
-                log.info(avalon_knob_data['families'])
-                continue
+
             try:
+                if avalon_knob_data['families'] not in ["render"]:
+                    log.info(avalon_knob_data['families'])
+                    continue
+
                 node_file = each['file'].value()
                 log.info("node_file: {}".format(node_file))
 
@@ -90,6 +92,7 @@ def create_write_node(name, data):
     )
     nuke_dataflow_writes = get_dataflow(**data)
     nuke_colorspace_writes = get_colorspace(**data)
+    application = lib.get_application(os.environ["AVALON_APP_NAME"])
     try:
         anatomy_filled = format_anatomy({
             "subset": data["avalon"]["subset"],
@@ -99,6 +102,7 @@ def create_write_node(name, data):
             "project": {"name": pype.get_project_name(),
                         "code": pype.get_project_code()},
             "representation": nuke_dataflow_writes.file_type,
+            "app": application["application_dir"],
         })
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))

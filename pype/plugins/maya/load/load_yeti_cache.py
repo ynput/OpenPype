@@ -23,6 +23,11 @@ class YetiCacheLoader(api.Loader):
 
     def load(self, context, name=None, namespace=None, data=None):
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "yeticache"
+
         # Build namespace
         asset = context["asset"]
         if namespace is None:
@@ -49,6 +54,19 @@ class YetiCacheLoader(api.Loader):
 
         group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
+        preset_file = os.path.join(
+            os.environ.get('PYPE_STUDIO_TEMPLATES'),
+            'presets', 'tools',
+            'family_colors.json'
+        )
+        with open(preset_file, 'r') as cfile:
+            colors = json.load(cfile)
+
+        c = colors.get(family)
+        if c is not None:
+            cmds.setAttr(group_name + ".useOutlinerColor", 1)
+            cmds.setAttr(group_name + ".outlinerColor",
+                         c[0], c[1], c[2])
 
         nodes.append(group_node)
 

@@ -1,5 +1,5 @@
-import pyblish.api
 import os
+import pyblish.api
 
 from avalon import io, api
 
@@ -8,7 +8,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
     """Generate the assumed destination path where the file will be stored"""
 
     label = "Collect Assumed Destination"
-    order = pyblish.api.CollectorOrder + 0.499
+    order = pyblish.api.CollectorOrder + 0.498
     exclude_families = ["clip"]
 
     def process(self, instance):
@@ -76,6 +76,9 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
         Returns:
             file path (str)
         """
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
 
         # get all the stuff from the database
         subset_name = instance.data["subset"]
@@ -87,7 +90,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
                               projection={"config": True, "data": True})
 
         template = project["config"]["template"]["publish"]
-        # anatomy = instance.context.data['anatomy']
+        anatomy = instance.context.data['anatomy']
 
         asset = io.find_one({"type": "asset",
                              "name": asset_name,
@@ -129,5 +132,10 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
                          "hierarchy": hierarchy,
                          "representation": "TEMP"}
 
-        instance.data["assumedTemplateData"] = template_data
         instance.data["template"] = template
+        instance.data["assumedTemplateData"] = template_data
+
+        # We take the parent folder of representation 'filepath'
+        instance.data["assumedDestination"] = os.path.dirname(
+            (anatomy.format(template_data)).publish.path
+        )

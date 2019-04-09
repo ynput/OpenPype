@@ -541,3 +541,26 @@ def get_config_data():
         log.warning("{} - {}".format(msg, str(e)))
 
     return data
+
+def show_errors(obj, event, errors):
+    title = 'Hey You! You raised few Errors! (*look below*)'
+    items = []
+    splitter = {'type': 'label', 'value': '---'}
+    for error in errors:
+        for key, message in error.items():
+            error_title = {
+                'type': 'label',
+                'value': '# {}'.format(key)
+            }
+            error_message = {
+                'type': 'label',
+                'value': '<p>{}</p>'.format(message)
+            }
+            if len(items) > 0:
+                items.append(splitter)
+            items.append(error_title)
+            items.append(error_message)
+            obj.log.error(
+                '{}: {}'.format(key, message)
+            )
+    obj.show_interface(event, items, title)

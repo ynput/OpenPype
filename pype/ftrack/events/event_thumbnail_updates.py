@@ -4,7 +4,7 @@ from pype.ftrack import BaseEvent
 
 class ThumbnailEvents(BaseEvent):
 
-    def launch(self, session, entities, event):
+    def launch(self, session, event):
         '''just a testing event'''
 
         # self.log.info(event)
@@ -23,8 +23,12 @@ class ThumbnailEvents(BaseEvent):
                         parent['name'], task['name']))
 
             # Update task thumbnail from published version
-            if (entity['entityType'] == 'assetversion' and
-                    entity['action'] == 'encoded'):
+            # if (entity['entityType'] == 'assetversion' and
+            #         entity['action'] == 'encoded'):
+            if (
+                entity['entityType'] == 'assetversion'
+                and 'thumbid' in entity['keys']
+            ):
 
                 version = session.get('AssetVersion', entity['entityId'])
                 thumbnail = version.get('thumbnail')
@@ -39,6 +43,7 @@ class ThumbnailEvents(BaseEvent):
             session.commit()
 
         pass
+
 
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''
