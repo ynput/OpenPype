@@ -20,7 +20,7 @@ for name, handler in [(handler.get_name(), handler)
     if "pype" not in str(name).lower():
         pype.Logger.logging.root.removeHandler(handler)
 
-log = pype.Logger.get_logger(__name__, "aport")
+log = pype.Logger().get_logger(__name__, "aport")
 
 
 SESSION = avalon.session

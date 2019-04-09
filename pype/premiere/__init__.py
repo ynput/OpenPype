@@ -12,7 +12,7 @@ from .. import api
 import requests
 
 
-log = api.Logger.get_logger(__name__, "premiere")
+log = api.Logger().get_logger(__name__, "premiere")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 EXTENSIONS_PATH_LOCAL = os.getenv("EXTENSIONS_PATH", None)

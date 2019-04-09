@@ -19,7 +19,7 @@ from app.api import forward
 from pype import api as pype
 
 
-log = pype.Logger.get_logger(__name__, "aport")
+log = pype.Logger().get_logger(__name__, "aport")
 
 
 SESSION = avalon.session
