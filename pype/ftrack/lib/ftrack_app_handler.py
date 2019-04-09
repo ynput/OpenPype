@@ -201,6 +201,8 @@ class AppAction(BaseHandler):
         if parents:
             hierarchy = os.path.join(*parents)
 
+        application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
+
         data = {
                 "root": os.environ.get("PYPE_STUDIO_PROJECTS_PATH"),
                 "project": {"name": entity['project']['full_name'],

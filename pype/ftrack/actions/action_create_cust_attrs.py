@@ -6,7 +6,7 @@ import arrow
 import logging
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, get_ca_mongoid
-from pypeapp.config import get_presets
+from pypeapp import config
 
 """
 This action creates/updates custom attributes.
@@ -226,7 +226,7 @@ class CustomAttributes(BaseAction):
             self.process_attribute(data)
 
     def custom_attributes_from_file(self, session, event):
-        presets = get_presets()['ftrack']['ftrack_custom_attributes']
+        presets = config.get_presets()['ftrack']['ftrack_custom_attributes']
 
         for cust_attr_name in presets:
             try:

@@ -1,7 +1,8 @@
 from avalon import api
 import pype.maya.plugin
-import json
 import os
+from pypeapp import config
+reload(config)
 
 
 class ModelLoader(pype.maya.plugin.ReferenceLoader):
@@ -21,18 +22,6 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
         import maya.cmds as cmds
         from avalon import maya
 
-        try:
-            family = context["representation"]["context"]["family"]
-        except ValueError:
-            family = "model"
-        preset_file = os.path.join(
-            os.environ.get('PYPE_STUDIO_TEMPLATES'),
-            'presets', 'tools',
-            'family_colors.json'
-        )
-        with open(preset_file, 'r') as cfile:
-            colors = json.load(cfile)
-
         with maya.maintained_selection():
 
             groupName = "{}:{}".format(namespace, name)
@@ -46,7 +35,9 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
             cmds.makeIdentity(groupName, apply=False, rotate=True,
                               translate=True, scale=True)
 
-            c = colors.get(family)
+            presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+            colors = presets['plugins']['maya']['load']['colors']
+            c = colors.get('model')
             if c is not None:
                 cmds.setAttr(groupName + ".useOutlinerColor", 1)
                 cmds.setAttr(groupName + ".outlinerColor",
@@ -89,14 +80,9 @@ class GpuCacheLoader(api.Loader):
         # Root group
         label = "{}:{}".format(namespace, name)
         root = cmds.group(name=label, empty=True)
-        preset_file = os.path.join(
-            os.environ.get('PYPE_STUDIO_TEMPLATES'),
-            'presets', 'tools',
-            'family_colors.json'
-        )
-        with open(preset_file, 'r') as cfile:
-            colors = json.load(cfile)
 
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
         c = colors.get('model')
         if c is not None:
             cmds.setAttr(root + ".useOutlinerColor", 1)
@@ -196,14 +182,8 @@ class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
         cmds.makeIdentity(groupName, apply=False, rotate=True,
                           translate=True, scale=True)
 
-        preset_file = os.path.join(
-            os.environ.get('PYPE_STUDIO_TEMPLATES'),
-            'presets', 'tools',
-            'family_colors.json'
-        )
-        with open(preset_file, 'r') as cfile:
-            colors = json.load(cfile)
-
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
         c = colors.get('model')
         if c is not None:
             cmds.setAttr(groupName + ".useOutlinerColor", 1)

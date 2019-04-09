@@ -1,5 +1,5 @@
 import pype.maya.plugin
-import json
+from pypeapp import config
 import os
 
 
@@ -36,13 +36,9 @@ class MayaAsciiLoader(pype.maya.plugin.ReferenceLoader):
 
         self[:] = nodes
         groupName = "{}:{}".format(namespace, name)
-        preset_file = os.path.join(
-            os.environ.get('PYPE_STUDIO_TEMPLATES'),
-            'presets', 'tools',
-            'family_colors.json'
-        )
-        with open(preset_file, 'r') as cfile:
-            colors = json.load(cfile)
+
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
 
         c = colors.get(family)
         if c is not None:

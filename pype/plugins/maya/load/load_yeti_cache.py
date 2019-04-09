@@ -9,6 +9,7 @@ from maya import cmds
 from avalon import api
 from avalon.maya import lib as avalon_lib, pipeline
 from pype.maya import lib
+from pypeapp import config
 
 
 class YetiCacheLoader(api.Loader):
@@ -54,13 +55,9 @@ class YetiCacheLoader(api.Loader):
 
         group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
-        preset_file = os.path.join(
-            os.environ.get('PYPE_STUDIO_TEMPLATES'),
-            'presets', 'tools',
-            'family_colors.json'
-        )
-        with open(preset_file, 'r') as cfile:
-            colors = json.load(cfile)
+
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
 
         c = colors.get(family)
         if c is not None:
