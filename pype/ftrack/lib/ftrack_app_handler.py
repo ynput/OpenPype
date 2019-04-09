@@ -183,7 +183,7 @@ class AppAction(BaseHandler):
             hierarchy = os.path.join(*parents)
 
         data = {
-                "root": {"work": os.environ.get("PYPE_STUDIO_PROJECTS_PATH")},
+                "root": os.environ.get("PYPE_STUDIO_PROJECTS_PATH"),
                 "project": {"name": entity['project']['full_name'],
                             "code": entity['project']['name']},
                 "task": entity['name'],
@@ -217,7 +217,7 @@ class AppAction(BaseHandler):
         env = acre.append(dict(os.environ), env)
 
 
-        # 
+        #
         # tools_env = acre.get_tools(tools)
         # env = acre.compute(dict(tools_env))
         # env = acre.merge(env, dict(os.environ))
