@@ -5,7 +5,9 @@ import json
 import subprocess
 import ftrack_api
 import logging
-from pype import pypelib
+import operator
+import re
+from pype import lib as pypelib
 from app.api import Logger
 
 log = Logger.getLogger(__name__)
@@ -13,7 +15,7 @@ log = Logger.getLogger(__name__)
 
 class RVAction(BaseAction):
     """ Launch RV action """
-    identifier = "rv-launch-action"
+    identifier = "rv.launch.action"
     label = "rv"
     description = "rv Launcher"
     icon = "https://img.icons8.com/color/48/000000/circled-play.png"
@@ -166,7 +168,7 @@ class RVAction(BaseAction):
             'name': 'path',
             'data': sorted(
                 items,
-                key=itemgetter('label'),
+                key=operator.itemgetter('label'),
                 reverse=True
             )
         }
@@ -179,7 +181,6 @@ class RVAction(BaseAction):
 
     def launch(self, session, entities, event):
         """Callback method for RV action."""
-
         # Launching application
         if "values" not in event["data"]:
             return
@@ -188,20 +189,32 @@ class RVAction(BaseAction):
         fps = entities[0].get('custom_attributes', {}).get('fps', None)
 
         cmd = []
+        # change frame number to padding string for RV to play sequence
+        try:
+            frame = re.findall(r'(\d+).', filename)[-1]
+        except KeyError:
+            # we didn't detected frame number
+            pass
+        else:
+            padding = '#' * len(frame)
+            pos = filename.rfind(frame)
+            filename = filename[:pos] + padding + filename[
+                filename.rfind('.'):]
+
         # RV path
         cmd.append(os.path.normpath(self.rv_path))
         if fps is not None:
             cmd.append("-fps {}".format(int(fps)))
         cmd.append(os.path.normpath(filename))
-
+        log.info('Running rv: {}'.format(' '.join(cmd)))
         try:
             # Run RV with these commands
-            subprocess.Popen(' '.join(cmd))
-        except FileNotFoundError:
+            subprocess.Popen(' '.join(cmd), shell=True)
+        except Exception as e:
             return {
                 'success': False,
                 'message': 'File "{}" was not found.'.format(
-                    os.path.basename(filename)
+                    e
                 )
             }
 
