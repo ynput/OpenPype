@@ -91,6 +91,30 @@ class CreateFolders(BaseAction):
 
     def launch(self, session, entities, event):
         '''Callback method for custom action.'''
+        with_childrens = True
+        if self.without_interface is False:
+            if 'values' not in event['data']:
+                return
+            with_childrens = event['data']['values']['children_included']
+        entity = entities[0]
+        if entity.entity_type.lower() == 'project':
+            proj = entity
+        else:
+            proj = entity['project']
+        project_name = proj['full_name']
+        project_code = proj['name']
+        if entity.entity_type.lower() == 'project' and with_childrens == False:
+            return {
+                'success': True,
+                'message': 'Nothing was created'
+            }
+        data = {
+            "root": os.environ["AVALON_PROJECTS"],
+            "project": {
+                "name": project_name,
+                "code": project_code
+            }
+        }
 
         #######################################################################
 
