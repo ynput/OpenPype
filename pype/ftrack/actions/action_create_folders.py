@@ -27,6 +27,7 @@ class CreateFolders(BaseAction):
         'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
         '698620-icon-105-folder-add-512.png'
     )
+    db = DbConnector()
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -115,87 +116,105 @@ class CreateFolders(BaseAction):
                 "code": project_code
             }
         }
+        all_entities = []
+        all_entities.append(entity)
+        if with_childrens:
+            all_entities = self.get_notask_children(entity)
 
-        #######################################################################
-
-        # JOB SETTINGS
-        userId = event['source']['user']['id']
-        user = session.query('User where id is ' + userId).one()
-
-        job = session.create('Job', {
-            'user': user,
-            'status': 'running',
-            'data': json.dumps({
-                'description': 'Creating Folders.'
-            })
-        })
-
+        av_project = None
         try:
-            self.importable = set([])
-            # self.importable = []
-
-            self.Anatomy = pype.Anatomy
-
-            project = entities[0]['project']
-
-            paths_collected = set([])
-
-            # get all child entities separately/unique
-            for entity in entities:
-                self.getShotAsset(entity)
-
-            for ent in self.importable:
-                self.log.info("{}".format(ent['name']))
-
-            for entity in self.importable:
-                print(entity['name'])
-
-                anatomy = pype.Anatomy
-                parents = entity['link']
-
-                hierarchy_names = []
-                for p in parents[1:-1]:
-                    hierarchy_names.append(p['name'])
-
-                if hierarchy_names:
-                    # hierarchy = os.path.sep.join(hierarchy)
-                    hierarchy = os.path.join(*hierarchy_names)
-
-                template_data = {"project": {"name": project['full_name'],
-                                             "code": project['name']},
-                                 "asset": entity['name'],
-                                 "hierarchy": hierarchy}
-
-                for task in entity['children']:
-                    if task['object_type']['name'] == 'Task':
-                        self.log.info('child: {}'.format(task['name']))
-                        template_data['task'] = task['name']
-                        anatomy_filled = anatomy.format(template_data)
-                        paths_collected.add(anatomy_filled.work.folder)
-                        paths_collected.add(anatomy_filled.publish.folder)
-
-            for path in paths_collected:
-                self.log.info(path)
-                try:
-                    os.makedirs(path)
-                except OSError as error:
-                    if error.errno != errno.EEXIST:
-                        raise
-
-            job['status'] = 'done'
-            session.commit()
-
-        except ValueError as ve:
-            job['status'] = 'failed'
-            session.commit()
-            message = str(ve)
-            self.log.error('Error during syncToAvalon: {}'.format(message))
-
+            self.db.install()
+            self.db.Session['AVALON_PROJECT'] = project_name
+            av_project = self.db.find_one({'type': 'project'})
+            template_work = av_project['config']['template']['work']
+            template_publish = av_project['config']['template']['publish']
+            self.db.uninstall()
         except Exception:
-            job['status'] = 'failed'
-            session.commit()
+            anatomy = pype.Anatomy
+            template_work = anatomy.avalon.work
+            template_publish = anatomy.avalon.publish
 
-        #######################################################################
+        collected_paths = []
+        presets = self.get_presets()
+        for entity in all_entities:
+            if entity.entity_type.lower() == 'project':
+                continue
+            ent_data = data.copy()
+
+            asset_name = entity['name']
+            ent_data['asset'] = asset_name
+
+            parents = entity['link']
+            hierarchy_names = [p['name'] for p in parents[1:-1]]
+            hierarchy = ''
+            if hierarchy_names:
+                hierarchy = os.path.sep.join(hierarchy_names)
+            ent_data['hierarchy'] = hierarchy
+
+            tasks_created = False
+            if entity['children']:
+                for child in entity['children']:
+                    if child['object_type']['name'].lower() != 'task':
+                        continue
+                    tasks_created = True
+                    task_type_name = child['type']['name'].lower()
+                    task_data = ent_data.copy()
+                    task_data['task'] = child['name']
+                    possible_apps = presets.get(task_type_name, [])
+                    template_work_created = False
+                    template_publish_created = False
+                    apps = []
+                    for app in possible_apps:
+                        try:
+                            app_data = avalonlib.get_application(app)
+                            app_dir = app_data['application_dir']
+                        except ValueError:
+                            app_dir = app
+                        apps.append(app_dir)
+
+                    # Template wok
+                    if '{app}' in template_work:
+                        for app in apps:
+                            template_work_created = True
+                            app_data = task_data.copy()
+                            app_data['app'] = app
+                            collected_paths.append(
+                                self.compute_template(
+                                    template_work, app_data
+                                )
+                            )
+                    if template_work_created is False:
+                        collected_paths.append(
+                            self.compute_template(template_work, task_data)
+                        )
+                    # Template publish
+                    if '{app}' in template_publish:
+                        for app in apps:
+                            template_publish_created = True
+                            app_data = task_data.copy()
+                            app_data['app'] = app
+                            collected_paths.append(
+                                self.compute_template(
+                                    template_publish, app_data
+                                )
+                            )
+                    if template_publish_created is False:
+                        collected_paths.append(
+                            self.compute_template(template_publish, task_data)
+                        )
+
+            if not tasks_created:
+                # create path for entity
+                collected_paths.append(
+                    self.compute_template(template_work, ent_data)
+                )
+                collected_paths.append(
+                    self.compute_template(template_publish, ent_data)
+                )
+
+        for path in set(collected_paths):
+            if not os.path.exists(path):
+                os.makedirs(path)
 
         return {
             'success': True,
