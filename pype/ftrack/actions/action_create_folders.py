@@ -35,15 +35,6 @@ class CreateFolders(BaseAction):
             return False
         return True
 
-    def getShotAsset(self, entity):
-        if entity not in self.importable:
-            if entity['object_type']['name'] != 'Task':
-                self.importable.add(entity)
-
-        if entity['children']:
-            children = entity['children']
-            for child in children:
-                self.getShotAsset(child)
 
     def launch(self, session, entities, event):
         '''Callback method for custom action.'''
@@ -133,6 +124,19 @@ class CreateFolders(BaseAction):
             'success': True,
             'message': 'Created Folders Successfully!'
         }
+
+    def get_notask_children(self, entity):
+        output = []
+        if entity.get('object_type', {}).get(
+            'name', entity.entity_type
+        ).lower() == 'task':
+            return output
+        else:
+            output.append(entity)
+        if entity['children']:
+            for child in entity['children']:
+                output.extend(self.get_notask_children(child))
+        return output
 
     def get_presets(self):
         fpath_items = [pypelib.get_presets_path(), 'tools', 'sw_folders.json']
