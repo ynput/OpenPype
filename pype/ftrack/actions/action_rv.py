@@ -33,7 +33,11 @@ class RVAction(BaseAction):
 
         # RV_HOME should be set if properly installed
         if os.environ.get('RV_HOME'):
-            self.rv_path = os.environ.get('RV_HOME')
+            self.rv_path = os.path.join(
+                os.environ.get('RV_HOME'),
+                'bin',
+                'rv'
+            )
         else:
             # if not, fallback to config file location
             self.load_config_data()
