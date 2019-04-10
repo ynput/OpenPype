@@ -71,10 +71,7 @@ class RVAction(BaseAction):
         self.config_data = data
 
     def set_rv_path(self):
-        for path in self.config_data.get("rv_paths", []):
-            if os.path.exists(path):
-                self.rv_path = path
-                break
+        self.rv_path = self.config_data.get("rv_path")
 
     def register(self):
         assert (self.rv_path is not None), (
