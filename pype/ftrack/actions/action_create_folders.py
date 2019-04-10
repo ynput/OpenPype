@@ -1,13 +1,15 @@
-import logging
 import os
-import argparse
 import sys
-import errno
+import logging
+import argparse
+import re
+import json
 
 import ftrack_api
 from pype.ftrack import BaseAction
-import json
-from pype import api as pype
+from pype import api as pype, lib as pypelib
+from avalon import lib as avalonlib
+from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
 
 class CreateFolders(BaseAction):
@@ -35,6 +37,57 @@ class CreateFolders(BaseAction):
             return False
         return True
 
+    def interface(self, session, entities, event):
+        if event['data'].get('values', {}):
+            return
+        entity = entities[0]
+        without_interface = True
+        for child in entity['children']:
+            if child['object_type']['name'].lower() != 'task':
+                without_interface = False
+                break
+        self.without_interface = without_interface
+        if without_interface:
+            return
+        title = 'Create folders'
+
+        entity_name = entity['name']
+        msg = (
+            '<h2>Do you want create folders also'
+            ' for all children of "{}"?</h2>'
+        )
+        if entity.entity_type.lower() == 'project':
+            entity_name = entity['full_name']
+            msg = msg.replace(' also', '')
+            msg += '<h3>(Project root won\'t be created if not checked)</h3>'
+        items = []
+        item_msg = {
+            'type': 'label',
+            'value': msg.format(entity_name)
+        }
+        item_label = {
+            'type': 'label',
+            'value': 'With all chilren entities'
+        }
+        item = {
+            'name': 'children_included',
+            'type': 'boolean',
+            'value': False
+        }
+        items.append(item_msg)
+        items.append(item_label)
+        items.append(item)
+
+        if len(items) == 0:
+            return {
+                'success': False,
+                'message': 'Didn\'t found any running jobs'
+            }
+        else:
+            return {
+                'items': items,
+                'title': title
+            }
 
     def launch(self, session, entities, event):
         '''Callback method for custom action.'''
