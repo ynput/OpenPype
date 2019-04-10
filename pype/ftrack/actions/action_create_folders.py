@@ -145,6 +145,76 @@ class CreateFolders(BaseAction):
             self.log.warning('Wasn\'t able to load presets')
         return dict(presets)
 
+    def template_format(self, template, data):
+
+        partial_data = PartialDict(data)
+
+        # remove subdict items from string (like 'project[name]')
+        subdict = PartialDict()
+        count = 1
+        store_pattern = 5*'_'+'{:0>3}'
+        regex_patern = "\{\w*\[[^\}]*\]\}"
+        matches = re.findall(regex_patern, template)
+
+        for match in matches:
+            key = store_pattern.format(count)
+            subdict[key] = match
+            template = template.replace(match, '{'+key+'}')
+            count += 1
+        # solve fillind keys with optional keys
+        solved = self._solve_with_optional(template, partial_data)
+        # try to solve subdict and replace them back to string
+        for k, v in subdict.items():
+            try:
+                v = v.format_map(data)
+            except (KeyError, TypeError):
+                pass
+            subdict[k] = v
+
+        return solved.format_map(subdict)
+
+    def _solve_with_optional(self, template, data):
+            # Remove optional missing keys
+            pattern = re.compile(r"(<.*?[^{0]*>)[^0-9]*?")
+            invalid_optionals = []
+            for group in pattern.findall(template):
+                try:
+                    group.format(**data)
+                except KeyError:
+                    invalid_optionals.append(group)
+            for group in invalid_optionals:
+                template = template.replace(group, "")
+
+            solved = template.format_map(data)
+
+            # solving after format optional in second round
+            for catch in re.compile(r"(<.*?[^{0]*>)[^0-9]*?").findall(solved):
+                if "{" in catch:
+                    # remove all optional
+                    solved = solved.replace(catch, "")
+                else:
+                    # Remove optional symbols
+                    solved = solved.replace(catch, catch[1:-1])
+
+            return solved
+
+    def compute_template(self, str, data):
+        first_result = self.template_format(str, data)
+        if first_result == first_result.split('{')[0]:
+            return os.path.normpath(first_result)
+
+        index = first_result.index('{')
+
+        regex = '\{\w*[^\}]*\}'
+        match = re.findall(regex, first_result[index:])[0]
+        without_missing = str.split(match)[0].split('}')
+        output_items = []
+        for part in without_missing:
+            if '{' in part:
+                output_items.append(part + '}')
+        return os.path.normpath(
+            self.template_format(''.join(output_items), data)
+        )
 
 
 class PartialDict(dict):
