@@ -195,12 +195,14 @@ class CreateFolders(BaseAction):
                             app_data['app'] = app
                             collected_paths.append(
                                 self.compute_template(
-                                    template_publish, app_data
+                                    template_publish, app_data, True
                                 )
                             )
                     if template_publish_created is False:
                         collected_paths.append(
-                            self.compute_template(template_publish, task_data)
+                            self.compute_template(
+                                template_publish, task_data, True
+                            )
                         )
 
             if not tasks_created:
@@ -211,8 +213,10 @@ class CreateFolders(BaseAction):
                 collected_paths.append(
                     self.compute_template(template_publish, ent_data)
                 )
-
+        if len(collected_paths) > 0:
+            self.log.info('Creating folders:')
         for path in set(collected_paths):
+            self.log.info(path)
             if not os.path.exists(path):
                 os.makedirs(path)
 
@@ -298,10 +302,12 @@ class CreateFolders(BaseAction):
 
             return solved
 
-    def compute_template(self, str, data):
+    def compute_template(self, str, data, task=False):
         first_result = self.template_format(str, data)
         if first_result == first_result.split('{')[0]:
             return os.path.normpath(first_result)
+        if task:
+            return os.path.normpath(first_result.split('{')[0])
 
         index = first_result.index('{')
 
