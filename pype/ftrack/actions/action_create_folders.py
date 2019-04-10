@@ -145,6 +145,19 @@ class CreateFolders(BaseAction):
             self.log.warning('Wasn\'t able to load presets')
         return dict(presets)
 
+
+
+class PartialDict(dict):
+    def __getitem__(self, item):
+        out = super().__getitem__(item)
+        if isinstance(out, dict):
+            return '{'+item+'}'
+        return out
+
+    def __missing__(self, key):
+        return '{'+key+'}'
+
+
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''
 
