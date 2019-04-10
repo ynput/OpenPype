@@ -3,6 +3,7 @@ import pyblish.api
 import pype.utils
 
 
+
 @pyblish.api.log
 class RepairNukeWriteNodeVersionAction(pyblish.api.Action):
     label = "Repair"
@@ -10,21 +11,14 @@ class RepairNukeWriteNodeVersionAction(pyblish.api.Action):
     icon = "wrench"
 
     def process(self, context, plugin):
-
+        import pype.nuke.lib as nukelib
         instances = pype.utils.filter_instances(context, plugin)
 
         for instance in instances:
-            if "create_directories" in instance[0].knobs():
-                instance[0]['create_directories'].setValue(True)
-            else:
-                path, file = os.path.split(instance[0].data['outputFilename'])
-                self.log.info(path)
-
-                if not os.path.exists(path):
-                    os.makedirs(path)
-
-            if "metadata" in instance[0].knobs().keys():
-                instance[0]["metadata"].setValue("all metadata")
+            node = instance[0]
+            render_path = nukelib.get_render_path(node)
+            self.log.info("render_path: {}".format(render_path))
+            node['file'].setValue(render_path.replace("\\", "/"))
 
 
 class ValidateVersionMatch(pyblish.api.InstancePlugin):

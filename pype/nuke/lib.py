@@ -59,6 +59,32 @@ def version_up_script():
     nukescripts.script_and_write_nodes_version_up()
 
 
+def get_render_path(node):
+    from .templates import (
+        get_dataflow,
+        get_colorspace
+    )
+    data = dict()
+    data['avalon'] = get_avalon_knob_data(node)
+
+    data_preset = {
+        "class": data['avalon']['family'],
+        "preset": data['avalon']['families']
+        }
+
+    nuke_dataflow_writes = get_dataflow(**data_preset)
+    nuke_colorspace_writes = get_colorspace(**data_preset)
+
+    application = lib.get_application(os.environ["AVALON_APP_NAME"])
+    data.update({
+        "application": application,
+        "nuke_dataflow_writes": nuke_dataflow_writes,
+        "nuke_colorspace_writes": nuke_colorspace_writes
+    })
+
+    anatomy_filled = format_anatomy(data)
+    return anatomy_filled.render.path
+
 def format_anatomy(data):
     from .templates import (
         get_anatomy
@@ -76,11 +102,11 @@ def format_anatomy(data):
     data.update({
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
-        "task": pype.get_task(),
+        "task": str(pype.get_task()).lower(),
         "family": data["avalon"]["family"],
         "project": {"name": pype.get_project_name(),
                     "code": pype.get_project_code()},
-        "representation": ["nuke_dataflow_writes"].file_type,
+        "representation": data["nuke_dataflow_writes"].file_type,
         "app": data["application"]["application_dir"],
         "hierarchy": pype.get_hierarchy(),
         "frame": "#" * padding,
