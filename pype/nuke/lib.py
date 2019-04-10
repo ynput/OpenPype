@@ -1,4 +1,5 @@
 import sys
+import os
 from collections import OrderedDict
 from pprint import pprint
 from avalon.vendor.Qt import QtGui
@@ -62,17 +63,27 @@ def format_anatomy(data):
     from .templates import (
         get_anatomy
     )
-    file = script_name()
 
     anatomy = get_anatomy()
 
     # TODO: perhaps should be in try!
     padding = anatomy.render.padding
+    version = data.get("version", None)
+    if not version:
+        file = script_name()
+        data["version"] = pype.get_version_from_path(file)
 
     data.update({
+        "subset": data["avalon"]["subset"],
+        "asset": data["avalon"]["asset"],
+        "task": pype.get_task(),
+        "family": data["avalon"]["family"],
+        "project": {"name": pype.get_project_name(),
+                    "code": pype.get_project_code()},
+        "representation": ["nuke_dataflow_writes"].file_type,
+        "app": data["application"]["application_dir"],
         "hierarchy": pype.get_hierarchy(),
-        "frame": "#"*padding,
-        "version": pype.get_version_from_path(file)
+        "frame": "#" * padding,
     })
 
     # log.info("format_anatomy:anatomy: {}".format(anatomy))
@@ -88,20 +99,20 @@ def create_write_node(name, data):
         get_dataflow,
         get_colorspace
     )
+
     nuke_dataflow_writes = get_dataflow(**data)
     nuke_colorspace_writes = get_colorspace(**data)
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
+
     try:
-        anatomy_filled = format_anatomy({
-            "subset": data["avalon"]["subset"],
-            "asset": data["avalon"]["asset"],
-            "task": pype.get_task(),
-            "family": data["avalon"]["family"],
-            "project": {"name": pype.get_project_name(),
-                        "code": pype.get_project_code()},
-            "representation": nuke_dataflow_writes.file_type,
-            "app": application["application_dir"],
+        data.update({
+            "application": application,
+            "nuke_dataflow_writes": nuke_dataflow_writes,
+            "nuke_colorspace_writes": nuke_colorspace_writes
         })
+
+        anatomy_filled = format_anatomy(data)
+
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))
 
@@ -133,7 +144,6 @@ def create_write_node(name, data):
     instance = avalon.nuke.lib.imprint(instance, data["avalon"])
     add_rendering_knobs(instance)
     return instance
-
 
 def add_rendering_knobs(node):
     if "render" not in node.knobs():
