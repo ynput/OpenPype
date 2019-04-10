@@ -32,7 +32,7 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     optional = True
-    families = ["write.render"]
+    families = ["write"]
     label = "Write Node"
     actions = [RepairNukeWriteNodeAction]
     hosts = ["nuke"]
