@@ -28,7 +28,11 @@ class CreateFolders(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
-
+        not_allowed = ['assetversion']
+        if len(entities) != 1:
+            return False
+        if entities[0].entity_type.lower() in not_allowed:
+            return False
         return True
 
     def getShotAsset(self, entity):
