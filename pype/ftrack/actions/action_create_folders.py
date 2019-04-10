@@ -134,6 +134,16 @@ class CreateFolders(BaseAction):
             'message': 'Created Folders Successfully!'
         }
 
+    def get_presets(self):
+        fpath_items = [pypelib.get_presets_path(), 'tools', 'sw_folders.json']
+        filepath = os.path.normpath(os.path.sep.join(fpath_items))
+        presets = dict()
+        try:
+            with open(filepath) as data_file:
+                presets = json.load(data_file)
+        except Exception as e:
+            self.log.warning('Wasn\'t able to load presets')
+        return dict(presets)
 
 def register(session, **kw):
     '''Register plugin. Called when used as an plugin.'''
