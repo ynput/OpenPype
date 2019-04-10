@@ -36,6 +36,9 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "nuke", "inventory")
 self = sys.modules[__name__]
 self.nLogger = None
 
+if os.getenv("PYBLISH_GUI", None):
+    pyblish.register_gui(os.getenv("PYBLISH_GUI", None))
+
 
 class NukeHandler(api.Logger.logging.Handler):
     '''
