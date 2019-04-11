@@ -21,6 +21,7 @@ class AppAction(BaseHandler):
     '''
 
     type = 'Application'
+    preactions = ['start.timer']
 
     def __init__(
         self, session, label, name, executable,
@@ -152,25 +153,6 @@ class AppAction(BaseHandler):
 
         entity = entities[0]
         project_name = entity['project']['full_name']
-
-        # Validate Clockify settings if Clockify is required
-        clockify_timer = os.environ.get('CLOCKIFY_WORKSPACE', None)
-        if clockify_timer is not None:
-            from pype.clockify import ClockifyAPI
-            clockapi = ClockifyAPI()
-            if clockapi.verify_api() is False:
-                title = 'Launch message'
-                header = '# You Can\'t launch **any Application**'
-                message = (
-                    '<p>You don\'t have set Clockify API'
-                    ' key in Clockify settings</p>'
-                )
-                items = [
-                    {'type': 'label', 'value': header},
-                    {'type': 'label', 'value': message}
-                ]
-                self.show_interface(event, items, title)
-                return False
 
         database = pypelib.get_avalon_database()
 
@@ -310,39 +292,6 @@ class AppAction(BaseHandler):
                     .format(self.label)
                     }
                 pass
-
-        # RUN TIMER IN FTRACK
-        username = event['source']['user']['username']
-        user_query = 'User where username is "{}"'.format(username)
-        user = session.query(user_query).one()
-        task = session.query('Task where id is {}'.format(entity['id'])).one()
-        self.log.info('Starting timer for task: ' + task['name'])
-        user.start_timer(task, force=True)
-
-        # RUN TIMER IN Clockify
-        if clockify_timer is not None:
-            task_type = task['type']['name']
-            project_name = task['project']['full_name']
-
-            def get_parents(entity):
-                output = []
-                if entity.entity_type.lower() == 'project':
-                    return output
-                output.extend(get_parents(entity['parent']))
-                output.append(entity['name'])
-
-                return output
-
-            desc_items = get_parents(task['parent'])
-            desc_items.append(task['name'])
-            description = '/'.join(desc_items)
-
-            project_id = clockapi.get_project_id(project_name)
-            tag_ids = []
-            tag_ids.append(clockapi.get_tag_id(task_type))
-            clockapi.start_time_entry(
-                description, project_id, tag_ids=tag_ids
-            )
 
         # Change status of task to In progress
         config = get_config_data()
