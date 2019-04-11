@@ -1,6 +1,8 @@
 import os
 import pyblish.api
 import pype.utils
+import pype.nuke.lib as nukelib
+import avalon.nuke
 
 @pyblish.api.log
 class RepairNukeWriteNodeAction(pyblish.api.Action):
@@ -9,26 +11,14 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
     icon = "wrench"
 
     def process(self, context, plugin):
-        import pype.nuke.lib as nukelib
         instances = pype.utils.filter_instances(context, plugin)
 
         for instance in instances:
             node = instance[0]
-            render_path = nukelib.get_render_path(node).replace("\\", "/")
-            self.log.info("render_path: {}".format(render_path))
-            node['file'].setValue(render_path)
-
-            if "create_directories" in instance[0].knobs():
-                node['create_directories'].setValue(True)
-            else:
-                path, file = os.path.split(render_path)
-                self.log.info(path)
-
-                if not os.path.exists(path):
-                    os.makedirs(path)
-
-            if "metadata" in node.knobs().keys():
-                instance[0]["metadata"].setValue("all metadata")
+            correct_data = nukelib.get_write_node_template_attr(node)
+            for k, v in correct_data.items():
+                node[k].setValue(v)
+            self.log.info("Node attributes were fixed")
 
 
 class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
@@ -42,25 +32,38 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
     hosts = ["nuke"]
 
     def process(self, instance):
-        import pype.nuke.lib as nukelib
-        # validate: create_directories, created path, node file knob, version, metadata
-        # TODO: colorspace, dataflow from presets
+
         node = instance[0]
-        render_path = nukelib.get_render_path(node).replace("\\", "/")
-        self.log.info("render_path: {}".format(render_path))
+        correct_data = nukelib.get_write_node_template_attr(node)
 
-        msg_file = "path is not correct"
-        assert node['file'].value() is render_path, msg_file
+        check = []
+        for k, v in correct_data.items():
+            if k is 'file':
+                padding = len(v.split('#'))
+                ref_path = avalon.nuke.lib.get_node_path(v, padding)
+                n_path = avalon.nuke.lib.get_node_path(node[k].value(), padding)
+                isnt = False
+                for i, p in enumerate(ref_path):
+                    if str(n_path[i]) not in str(p):
+                        if not isnt:
+                            isnt = True
+                        else:
+                            continue
+                if isnt:
+                    check.append([k, v, node[k].value()])
+            else:
+                if str(node[k].value()) not in str(v):
+                    check.append([k, v, node[k].value()])
 
-        if "create_directories" in instance[0].knobs():
-            msg = "Use Create Directories"
-            assert instance[0].knobs()['create_directories'].value() is True, msg
-        else:
-            path, file = os.path.split(instance.data['outputFilename'])
-            msg = "Output directory doesn't exist: \"{0}\"".format(path)
-            assert os.path.exists(path), msg
+        self.log.info(check)
 
-        # Validate metadata knob
-        if "metadata" in instance[0].knobs().keys():
-            msg = "Metadata needs to be set to \"all metadata\"."
-            assert instance[0]["metadata"].value() == "all metadata", msg
+        msg = "Node's attribute `{0}` is not correct!\n" \
+              "\nCorrect: `{1}` \n\nWrong: `{2}` \n\n"
+
+        if check:
+            print_msg = ""
+            for item in check:
+                print_msg += msg.format(item[0], item[1], item[2])
+            print_msg += "`RMB` click to the validator and `A` to fix!"
+
+        assert not check, print_msg

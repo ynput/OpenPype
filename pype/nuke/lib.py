@@ -7,6 +7,10 @@ from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
 import nuke
+from .templates import (
+    get_dataflow,
+    get_colorspace
+)
 
 log = pype.Logger.getLogger(__name__, "nuke")
 self = sys.modules[__name__]
@@ -60,10 +64,7 @@ def version_up_script():
 
 
 def get_render_path(node):
-    from .templates import (
-        get_dataflow,
-        get_colorspace
-    )
+
     data = dict()
     data['avalon'] = get_avalon_knob_data(node)
 
@@ -83,7 +84,7 @@ def get_render_path(node):
     })
 
     anatomy_filled = format_anatomy(data)
-    return anatomy_filled.render.path
+    return anatomy_filled.render.path.replace("\\", "/")
 
 def format_anatomy(data):
     from .templates import (
@@ -121,11 +122,6 @@ def script_name():
 
 
 def create_write_node(name, data):
-    from .templates import (
-        get_dataflow,
-        get_colorspace
-    )
-
     nuke_dataflow_writes = get_dataflow(**data)
     nuke_colorspace_writes = get_colorspace(**data)
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
@@ -437,3 +433,37 @@ def get_additional_data(container):
     ]
 
     return {"color": QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
+
+
+def get_write_node_template_attr(node):
+    ''' Gets all defined data from presets
+        
+    '''
+    # get avalon data from node
+    data = dict()
+    data['avalon'] = get_avalon_knob_data(node)
+    data_preset = {
+        "class": data['avalon']['family'],
+        "preset": data['avalon']['families']
+        }
+
+    # get template data
+    nuke_dataflow_writes = get_dataflow(**data_preset)
+    nuke_colorspace_writes = get_colorspace(**data_preset)
+
+    # collecting correct data
+    correct_data = OrderedDict({
+        "file": get_render_path(node)
+    })
+
+    # adding dataflow template
+    {correct_data.update({k: v})
+     for k, v in nuke_dataflow_writes.items()
+     if k not in ["id", "previous"]}
+
+    # adding colorspace template
+    {correct_data.update({k: v})
+     for k, v in nuke_colorspace_writes.items()}
+
+    # fix badly encoded data
+    return avalon.nuke.lib.fix_data_for_node_create(correct_data)
