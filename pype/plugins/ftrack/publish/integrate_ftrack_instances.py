@@ -38,6 +38,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         assumed_data = instance.data["assumedTemplateData"]
         assumed_version = assumed_data["version"]
         version_number = int(assumed_version)
+        if instance.data.get('version'):
+            version_number = int(instance.data.get('version'))
+
         family = instance.data['family'].lower()
         asset_type = ''
 
