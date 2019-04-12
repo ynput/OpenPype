@@ -26,7 +26,7 @@ class CrateWriteRender(avalon.nuke.Creator):
     name = "WriteRender"
     label = "Create Write Render"
     hosts = ["nuke"]
-    family = "write"
+    family = "{}_write".format(preset)
     families = preset
     icon = "sign-out"
 
@@ -69,7 +69,7 @@ class CrateWritePrerender(avalon.nuke.Creator):
     name = "WritePrerender"
     label = "Create Write Prerender"
     hosts = ["nuke"]
-    family = "write"
+    family = "{}_write".format(preset)
     families = preset
     icon = "sign-out"
 
@@ -112,7 +112,7 @@ class CrateWriteStill(avalon.nuke.Creator):
     name = "WriteStill"
     label = "Create Write Still"
     hosts = ["nuke"]
-    family = "write"
+    family = "{}_write".format(preset)
     families = preset
     icon = "image"
 

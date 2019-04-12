@@ -204,21 +204,36 @@ class AppAction(BaseHandler):
         application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
 
         data = {
-                "root": os.environ.get("PYPE_STUDIO_PROJECTS_PATH"),
-                "project": {"name": entity['project']['full_name'],
-                            "code": entity['project']['name']},
-                "task": entity['name'],
-                "asset": entity['parent']['name'],
-                "app": application["application_dir"],
-                "hierarchy": hierarchy}
-        try:
-            anatomy_filled = anatomy.format(data)
-            # anatomy = anatomy.format(data)
-        except Exception as e:
-            self.log.error(
-                "{0} Error in anatomy.format: {1}".format(__name__, e)
+            "root": os.environ.get("PYPE_STUDIO_PROJECTS_PATH"),
+            "project": {
+                "name": entity['project']['full_name'],
+                "code": entity['project']['name']
+            },
+            "task": entity['name'],
+            "asset": entity['parent']['name'],
+            "app": application["application_dir"],
+            "hierarchy": hierarchy,
+        }
+
+        av_project = database[project_name].find_one({"type": 'project'})
+        templates = None
+        if av_project:
+            work_template = av_project.get('config', {}).get('template', {}).get(
+                'work', None
             )
-        os.environ["AVALON_WORKDIR"] = anatomy_filled['work']['folder']
+        work_template = None
+        try:
+            work_template = work_template.format(**data)
+        except Exception:
+            try:
+                anatomy = anatomy.format(data)
+                work_template = anatomy["work"]["path"]
+
+            except Exception as e:
+                self.log.error(
+                    "{0} Error in anatomy.format: {1}".format(__name__, e)
+                )
+        os.environ["AVALON_WORKDIR"] = os.path.normpath(work_template)
 
         # collect all parents from the task
         parents = []

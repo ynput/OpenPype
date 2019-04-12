@@ -15,7 +15,7 @@ class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):
     publish the shading network. Same goes for file dependent assets.
     """
 
-    label = "Extract Quicktime EXR"
+    label = "Extract Quicktime"
     order = pyblish.api.ExtractorOrder
     families = ["imagesequence", "render", "write", "source"]
     hosts = ["shell"]

@@ -40,6 +40,9 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "nuke", "inventory")
 self = sys.modules[__name__]
 self.nLogger = None
 
+if os.getenv("PYBLISH_GUI", None):
+    pyblish.register_gui(os.getenv("PYBLISH_GUI", None))
+
 
 # class NukeHandler(Logger.logging.Handler):
 #     '''
@@ -93,13 +96,15 @@ def reload_config():
         "{}.templates".format(AVALON_CONFIG),
         "{}.nuke.actions".format(AVALON_CONFIG),
         "{}.nuke.templates".format(AVALON_CONFIG),
-        "{}.nuke.menu".format(AVALON_CONFIG)
+        "{}.nuke.menu".format(AVALON_CONFIG),
+        "{}.nuke.lib".format(AVALON_CONFIG),
     ):
         log.info("Reloading module: {}...".format(module))
-        module = importlib.import_module(module)
         try:
+            module = importlib.import_module(module)
             reload(module)
-        except Exception:
+        except Exception as e:
+            log.warning("Cannot reload module: {}".format(e))
             importlib.reload(module)
 
 

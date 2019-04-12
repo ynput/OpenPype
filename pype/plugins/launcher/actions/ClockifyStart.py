@@ -5,7 +5,7 @@ try:
 except Exception:
     pass
 
-log = Logger.getLogger(__name__, "clockify_start")
+log = Logger().get_logger(__name__, "clockify_start")
 
 
 class ClockifyStart(api.Action):
