@@ -190,7 +190,7 @@ class AppAction(BaseHandler):
         os.environ["AVALON_APP"] = self.identifier.split("_")[0]
         os.environ["AVALON_APP_NAME"] = self.identifier
 
-        anatomy = Anatomy(project_name=project_name)
+        anatomy = Anatomy()
 
         hierarchy = ""
         parents = database[project_name].find_one({

@@ -430,11 +430,11 @@ def get_avalon_project_template():
     Returns:
         dictionary with templates
     """
-    anatomy = Anatomy(project_name=os.environ.get('AVALON_PROJECT')).anatomy
+    templates = Anatomy().templates
     proj_template = {}
-    proj_template['workfile'] = anatomy["avalon"]["workfile"]
-    proj_template['work'] = anatomy["avalon"]["work"]
-    proj_template['publish'] = anatomy["avalon"]["publish"]
+    proj_template['workfile'] = templates["avalon"]["workfile"]
+    proj_template['work'] = templates["avalon"]["work"]
+    proj_template['publish'] = templates["avalon"]["publish"]
     return proj_template
 
 
