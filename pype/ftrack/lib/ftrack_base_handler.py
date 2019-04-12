@@ -81,7 +81,7 @@ class BaseHandler(object):
                     self.type, label)
                 )
             except Exception as e:
-                self.log.error('{} "{}" - Registration failed ({})'.format(
+                self.log.exception('{} "{}" - Registration failed ({})'.format(
                     self.type, label, str(e))
                 )
         return wrapper_register
@@ -104,7 +104,7 @@ class BaseHandler(object):
                 return result
             except Exception as e:
                 msg = '{} "{}": Failed ({})'.format(self.type, label, str(e))
-                self.log.error(msg)
+                self.log.exception(msg)
                 return {
                     'success': False,
                     'message': msg

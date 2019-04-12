@@ -227,10 +227,10 @@ class AppAction(BaseHandler):
         except Exception:
             try:
                 anatomy = anatomy.format(data)
-                work_template = anatomy["work"]["path"]
+                work_template = anatomy["work"]["folder"]
 
             except Exception as e:
-                self.log.error(
+                self.log.exception(
                     "{0} Error in anatomy.format: {1}".format(__name__, e)
                 )
         os.environ["AVALON_WORKDIR"] = os.path.normpath(work_template)
@@ -296,7 +296,7 @@ class AppAction(BaseHandler):
                 try:
                     fp = open(execfile)
                 except PermissionError as p:
-                    self.log.error('Access denied on {0} - {1}'.format(
+                    self.log.exception('Access denied on {0} - {1}'.format(
                         execfile, p))
                     return {
                         'success': False,

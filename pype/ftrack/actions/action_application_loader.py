@@ -63,4 +63,4 @@ def register(session):
                 time.sleep(0.1)
             app_counter += 1
         except Exception as e:
-            log.warning("'{0}' - not proper App ({1})".format(app['name'], e))
+            log.exception("'{0}' - not proper App ({1})".format(app['name'], e))

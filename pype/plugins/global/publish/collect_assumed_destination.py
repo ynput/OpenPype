@@ -23,7 +23,7 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
 
         anatomy = instance.context.data['anatomy']
         # self.log.info(anatomy.anatomy())
-        self.log.info(anatomy.anatomy)
+        self.log.info(anatomy.templates)
         # template = anatomy.publish.path
         anatomy_filled = anatomy.format(template_data)
         self.log.info(anatomy_filled)
@@ -137,5 +137,5 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
 
         # We take the parent folder of representation 'filepath'
         instance.data["assumedDestination"] = os.path.dirname(
-            (anatomy.format(template_data)).publish.path
+            (anatomy.format(template_data))["publish"]["path"]
         )
