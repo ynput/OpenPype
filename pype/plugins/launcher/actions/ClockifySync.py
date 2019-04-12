@@ -4,7 +4,7 @@ try:
 except Exception:
     pass
 from pype.api import Logger
-log = Logger.getLogger(__name__, "clockify_sync")
+log = Logger().get_logger(__name__, "clockify_sync")
 
 
 class ClockifySync(api.Action):
