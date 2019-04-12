@@ -3,7 +3,6 @@ import sys
 import re
 import ftrack_api
 from pype.ftrack import BaseEvent
-from app import api
 
 
 ignore_me = True

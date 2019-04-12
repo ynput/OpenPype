@@ -15,7 +15,7 @@ from avalon import io
 
 import pyblish.api as pyblish
 
-from app.api import forward
+from pypeapp import execute
 from pype import api as pype
 
 
@@ -68,7 +68,7 @@ def publish(json_data_path, staging_dir=None):
     log.debug(args)
 
     # start standalone pyblish qml
-    forward([
+    execute([
         sys.executable, "-u"
     ] + args,
         cwd=cwd
@@ -239,8 +239,8 @@ app.register_module(__name__)
 
 # remove all Handlers created by pico
 for name, handler in [(handler.get_name(), handler)
-                      for handler in pype.Logger.logging.root.handlers[:]]:
+                      for handler in Logger().logging.root.handlers[:]]:
     if "pype" not in str(name).lower():
         print(name)
         print(handler)
-        pype.Logger.logging.root.removeHandler(handler)
+        Logger().logging.root.removeHandler(handler)

@@ -1,6 +1,6 @@
 import os
-from app.vendor.Qt import QtCore, QtGui, QtWidgets
-from app import style
+from Qt import QtCore, QtGui, QtWidgets
+from pypeapp import style
 
 
 class ClockifySettings(QtWidgets.QWidget):

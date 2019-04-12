@@ -1,7 +1,4 @@
 import pyblish.api
-from app.api import (
-    Templates
-)
 
 class ValidateTemplates(pyblish.api.ContextPlugin):
     """Check if all templates were filed"""
@@ -14,7 +11,7 @@ class ValidateTemplates(pyblish.api.ContextPlugin):
 
         anatomy = context.data["anatomy"]
         if not anatomy:
-            raise RuntimeError("Did not find templates")
+            raise RuntimeError("Did not find anatomy")
         else:
             data = { "project": {"name": "D001_projectsx",
                                 "code": "prjX"},
@@ -26,7 +23,7 @@ class ValidateTemplates(pyblish.api.ContextPlugin):
 
 
             anatomy = context.data["anatomy"].format(data)
-            self.log.info(anatomy.work.path)
+            self.log.info(anatomy["work"]["path"])
 
             data = { "project": {"name": "D001_projectsy",
                                 "code": "prjY"},
@@ -37,4 +34,4 @@ class ValidateTemplates(pyblish.api.ContextPlugin):
                      "hierarchy": "ep101/sq01/bob"}
 
             anatomy = context.data["anatomy"].format(data)
-            self.log.info(anatomy.work.file)
+            self.log.info(anatomy["work"]["file"])

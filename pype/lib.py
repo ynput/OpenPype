@@ -420,8 +420,6 @@ def get_avalon_project_template_schema():
 
 
 def get_avalon_project_template():
-    # from app.api import Templates
-
     from pypeapp import Anatomy
 
     """

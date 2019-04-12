@@ -1,6 +1,6 @@
 import threading
-from app import style
-from app.vendor.Qt import QtWidgets
+from pypeapp import style
+from Qt import QtWidgets
 from pype.clockify import ClockifySettings, ClockifyAPI
 
 

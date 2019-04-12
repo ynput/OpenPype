@@ -3,11 +3,11 @@ import sys
 
 from avalon import api as avalon
 from pyblish import api as pyblish
-from app import api as app
+from pypeapp import execute, Logger
 
 from .. import api
 
-log = api.Logger().get_logger(__name__, "aport")
+log = Logger().get_logger(__name__, "aport")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -83,7 +83,7 @@ def pico_server_launch():
                 "api"
                 ]
 
-        app.forward(
+        execute(
             args,
             cwd=path
         )

@@ -1,18 +1,15 @@
 import os
-import sys
 
 from pysync import walktree
 
 from avalon import api as avalon
 from pyblish import api as pyblish
-from app import api as app
-from pprint import pprint
+from pypeapp import Logger
 from .. import api
 
 import requests
 
-
-log = api.Logger().get_logger(__name__, "premiere")
+log = Logger().get_logger(__name__, "premiere")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 EXTENSIONS_PATH_LOCAL = os.getenv("EXTENSIONS_PATH", None)

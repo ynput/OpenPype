@@ -8,9 +8,9 @@ import logging
 import operator
 import re
 from pype import lib as pypelib
-from app.api import Logger
+from pypeapp import Logger
 
-log = Logger.getLogger(__name__)
+log = Logger().get_logger(__name__)
 
 
 class RVAction(BaseAction):
