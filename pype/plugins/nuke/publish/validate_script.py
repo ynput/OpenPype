@@ -8,7 +8,7 @@ class ValidateScript(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder + 0.1
     families = ["nukescript"]
-    label = "Check nukescript settings"
+    label = "Check script settings"
     hosts = ["nuke"]
 
     def process(self, instance):

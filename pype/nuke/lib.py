@@ -1,5 +1,6 @@
 import os
 import sys
+import os
 from collections import OrderedDict
 from pprint import pprint
 from avalon.vendor.Qt import QtGui
@@ -7,6 +8,10 @@ from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
 import nuke
+from .templates import (
+    get_dataflow,
+    get_colorspace
+)
 
 log = pype.Logger.getLogger(__name__, "nuke")
 self = sys.modules[__name__]
@@ -59,21 +64,54 @@ def version_up_script():
     nukescripts.script_and_write_nodes_version_up()
 
 
+def get_render_path(node):
+
+    data = dict()
+    data['avalon'] = get_avalon_knob_data(node)
+
+    data_preset = {
+        "class": data['avalon']['family'],
+        "preset": data['avalon']['families']
+        }
+
+    nuke_dataflow_writes = get_dataflow(**data_preset)
+    nuke_colorspace_writes = get_colorspace(**data_preset)
+
+    application = lib.get_application(os.environ["AVALON_APP_NAME"])
+    data.update({
+        "application": application,
+        "nuke_dataflow_writes": nuke_dataflow_writes,
+        "nuke_colorspace_writes": nuke_colorspace_writes
+    })
+
+    anatomy_filled = format_anatomy(data)
+    return anatomy_filled.render.path.replace("\\", "/")
+
 def format_anatomy(data):
     from .templates import (
         get_anatomy
     )
-    file = script_name()
 
     anatomy = get_anatomy()
 
     # TODO: perhaps should be in try!
     padding = anatomy.render.padding
+    version = data.get("version", None)
+    if not version:
+        file = script_name()
+        data["version"] = pype.get_version_from_path(file)
 
     data.update({
+        "subset": data["avalon"]["subset"],
+        "asset": data["avalon"]["asset"],
+        "task": str(pype.get_task()).lower(),
+        "family": data["avalon"]["family"],
+        "project": {"name": pype.get_project_name(),
+                    "code": pype.get_project_code()},
+        "representation": data["nuke_dataflow_writes"].file_type,
+        "app": data["application"]["application_dir"],
         "hierarchy": pype.get_hierarchy(),
-        "frame": "#"*padding,
-        "version": pype.get_version_from_path(file)
+        "frame": "#" * padding,
     })
 
     # log.info("format_anatomy:anatomy: {}".format(anatomy))
@@ -85,24 +123,19 @@ def script_name():
 
 
 def create_write_node(name, data):
-    from .templates import (
-        get_dataflow,
-        get_colorspace
-    )
     nuke_dataflow_writes = get_dataflow(**data)
     nuke_colorspace_writes = get_colorspace(**data)
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
+
     try:
-        anatomy_filled = format_anatomy({
-            "subset": data["avalon"]["subset"],
-            "asset": data["avalon"]["asset"],
-            "task": pype.get_task(),
-            "family": data["avalon"]["family"],
-            "project": {"name": pype.get_project_name(),
-                        "code": pype.get_project_code()},
-            "representation": nuke_dataflow_writes.file_type,
-            "app": application["application_dir"],
+        data.update({
+            "application": application,
+            "nuke_dataflow_writes": nuke_dataflow_writes,
+            "nuke_colorspace_writes": nuke_colorspace_writes
         })
+
+        anatomy_filled = format_anatomy(data)
+
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))
 
@@ -134,7 +167,6 @@ def create_write_node(name, data):
     instance = avalon.nuke.lib.imprint(instance, data["avalon"])
     add_rendering_knobs(instance)
     return instance
-
 
 def add_rendering_knobs(node):
     if "render" not in node.knobs():
@@ -402,3 +434,37 @@ def get_additional_data(container):
     ]
 
     return {"color": QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
+
+
+def get_write_node_template_attr(node):
+    ''' Gets all defined data from presets
+        
+    '''
+    # get avalon data from node
+    data = dict()
+    data['avalon'] = get_avalon_knob_data(node)
+    data_preset = {
+        "class": data['avalon']['family'],
+        "preset": data['avalon']['families']
+        }
+
+    # get template data
+    nuke_dataflow_writes = get_dataflow(**data_preset)
+    nuke_colorspace_writes = get_colorspace(**data_preset)
+
+    # collecting correct data
+    correct_data = OrderedDict({
+        "file": get_render_path(node)
+    })
+
+    # adding dataflow template
+    {correct_data.update({k: v})
+     for k, v in nuke_dataflow_writes.items()
+     if k not in ["id", "previous"]}
+
+    # adding colorspace template
+    {correct_data.update({k: v})
+     for k, v in nuke_colorspace_writes.items()}
+
+    # fix badly encoded data
+    return avalon.nuke.lib.fix_data_for_node_create(correct_data)
