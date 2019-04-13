@@ -1,15 +1,12 @@
 import os
 import sys
-import re
 import json
 import logging
 import subprocess
 from operator import itemgetter
-import ftrack_api
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
-from pypeapp import Logger
-from pype import lib as pypelib
-
+from pypeapp import Logger, config
 
 log = Logger().get_logger(__name__)
 
@@ -28,7 +25,8 @@ class DJVViewAction(BaseAction):
         self.djv_path = None
         self.config_data = None
 
-        self.load_config_data()
+        # self.load_config_data()
+        self.config_data = config.get_presets()['djv_view']['config']
         self.set_djv_path()
 
         if self.djv_path is None:
@@ -57,7 +55,8 @@ class DJVViewAction(BaseAction):
         return False
 
     def load_config_data(self):
-        path_items = [pypelib.get_presets_path(), 'djv_view', 'config.json']
+        # path_items = [pypelib.get_presets_path(), 'djv_view', 'config.json']
+        path_items = config.get_presets()['djv_view']['config']
         filepath = os.path.sep.join(path_items)
 
         data = dict()

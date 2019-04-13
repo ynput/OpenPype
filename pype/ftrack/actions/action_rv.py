@@ -3,12 +3,11 @@ import os
 import sys
 import json
 import subprocess
-import ftrack_api
+from pype.vendor import ftrack_api
 import logging
 import operator
 import re
-from pype import lib as pypelib
-from pypeapp import Logger
+from pypeapp import Logger, config
 
 log = Logger().get_logger(__name__)
 
@@ -40,7 +39,8 @@ class RVAction(BaseAction):
             )
         else:
             # if not, fallback to config file location
-            self.load_config_data()
+            # self.load_config_data()
+            self.config_data = config.get_presets()['djv_view']['config']
             self.set_rv_path()
 
         if self.rv_path is None:
@@ -62,7 +62,7 @@ class RVAction(BaseAction):
         return False
 
     def load_config_data(self):
-        path_items = [pypelib.get_presets_path(), 'rv', 'config.json']
+        path_items = config.get_presets['rv']['config.json']
         filepath = os.path.sep.join(path_items)
 
         data = dict()

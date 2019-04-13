@@ -3,13 +3,14 @@ import sys
 import logging
 import argparse
 import re
-import json
+# import json
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
-from pype import api as pype, lib as pypelib
+# from pype import api as pype, lib as pypelib
 from avalon import lib as avalonlib
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pypeapp import config, Anatomy
 
 
 class CreateFolders(BaseAction):
@@ -130,12 +131,12 @@ class CreateFolders(BaseAction):
             template_publish = av_project['config']['template']['publish']
             self.db.uninstall()
         except Exception:
-            anatomy = pype.Anatomy
-            template_work = anatomy.avalon.work
-            template_publish = anatomy.avalon.publish
+            templates = Anatomy().templates
+            template_work = templates["avalon"]["work"]
+            template_publish = templates["avalon"]["publish"]
 
         collected_paths = []
-        presets = self.get_presets()
+        presets = config.get_presets()['tools']['sw_folders']
         for entity in all_entities:
             if entity.entity_type.lower() == 'project':
                 continue
@@ -238,16 +239,16 @@ class CreateFolders(BaseAction):
                 output.extend(self.get_notask_children(child))
         return output
 
-    def get_presets(self):
-        fpath_items = [pypelib.get_presets_path(), 'tools', 'sw_folders.json']
-        filepath = os.path.normpath(os.path.sep.join(fpath_items))
-        presets = dict()
-        try:
-            with open(filepath) as data_file:
-                presets = json.load(data_file)
-        except Exception as e:
-            self.log.warning('Wasn\'t able to load presets')
-        return dict(presets)
+    # def get_presets(self):
+    #     fpath_items = [pypelib.get_presets_path(), 'tools', 'sw_folders.json']
+    #     filepath = os.path.normpath(os.path.sep.join(fpath_items))
+    #     presets = dict()
+    #     try:
+    #         with open(filepath) as data_file:
+    #             presets = json.load(data_file)
+    #     except Exception as e:
+    #         self.log.warning('Wasn\'t able to load presets')
+    #     return dict(presets)
 
     def template_format(self, template, data):
 
