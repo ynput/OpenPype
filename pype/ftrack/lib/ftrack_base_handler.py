@@ -25,6 +25,7 @@ class BaseHandler(object):
     priority = 100
     # Type is just for logging purpose (e.g.: Action, Event, Application,...)
     type = 'No-type'
+    preactions = []
 
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
@@ -46,18 +47,7 @@ class BaseHandler(object):
                 else:
                     label = '{} {}'.format(self.label, self.variant)
             try:
-                if hasattr(self, "role_list") and len(self.role_list) > 0:
-                    username = self.session.api_user
-                    user = self.session.query(
-                        'User where username is "{}"'.format(username)
-                    ).one()
-                    available = False
-                    for role in user['user_security_roles']:
-                        if role['security_role']['name'] in self.role_list:
-                            available = True
-                            break
-                    if available is False:
-                        raise MissingPermision
+                self._preregister()
 
                 start_time = time.perf_counter()
                 func(*args, **kwargs)
@@ -118,6 +108,37 @@ class BaseHandler(object):
 
     def reset_session(self):
         self.session.reset()
+
+    def _preregister(self):
+        # Rolecheck
+        if hasattr(self, "role_list") and len(self.role_list) > 0:
+            username = self.session.api_user
+            user = self.session.query(
+                'User where username is "{}"'.format(username)
+            ).one()
+            available = False
+            for role in user['user_security_roles']:
+                if role['security_role']['name'] in self.role_list:
+                    available = True
+                    break
+            if available is False:
+                raise MissingPermision
+
+        # Custom validations
+        result = self.preregister()
+        if result is True:
+            return
+        msg = "Pre-register conditions were not met"
+        if isinstance(result, str):
+            msg = result
+        raise Exception(msg)
+
+    def preregister(self):
+        '''
+        Preregister conditions.
+        Registration continues if returns True.
+        '''
+        return True
 
     def register(self):
         '''
@@ -227,6 +248,10 @@ class BaseHandler(object):
             self.session, event
         )
 
+        preactions_launched = self._handle_preactions(self.session, event)
+        if preactions_launched is False:
+            return
+
         interface = self._interface(
             self.session, *args
         )
@@ -262,6 +287,47 @@ class BaseHandler(object):
 
         '''
         raise NotImplementedError()
+
+    def _handle_preactions(self, session, event):
+        # If preactions are not set
+        if len(self.preactions) == 0:
+            return True
+        # If no selection
+        selection = event.get('data', {}).get('selection', None)
+        if (selection is None):
+            return False
+        # If preactions were already started
+        if event['data'].get('preactions_launched', None) is True:
+            return True
+
+        # Launch preactions
+        for preaction in self.preactions:
+            event = ftrack_api.event.base.Event(
+                topic='ftrack.action.launch',
+                data=dict(
+                    actionIdentifier=preaction,
+                    selection=selection
+                ),
+                source=dict(
+                    user=dict(username=session.api_user)
+                )
+            )
+            session.event_hub.publish(event, on_error='ignore')
+        # Relaunch this action
+        event = ftrack_api.event.base.Event(
+            topic='ftrack.action.launch',
+            data=dict(
+                actionIdentifier=self.identifier,
+                selection=selection,
+                preactions_launched=True
+            ),
+            source=dict(
+                user=dict(username=session.api_user)
+            )
+        )
+        session.event_hub.publish(event, on_error='ignore')
+
+        return False
 
     def _interface(self, *args):
         interface = self.interface(*args)
