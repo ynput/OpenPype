@@ -89,8 +89,7 @@ def maketx(source, destination, *args):
             creationflags=CREATE_NO_WINDOW
         )
     except subprocess.CalledProcessError as exc:
-        print exc
-        print out
+        print(exc)
         import traceback
         traceback.print_exc()
         raise
@@ -164,7 +163,6 @@ class ExtractLook(pype.api.Extractor):
         relationships = lookdata["relationships"]
         sets = relationships.keys()
 
-
         # Extract the textures to transfer, possibly convert with maketx and
         # remap the node paths to the destination path. Note that a source
         # might be included more than once amongst the resources as they could
@@ -172,30 +170,35 @@ class ExtractLook(pype.api.Extractor):
         resources = instance.data["resources"]
         do_maketx = instance.data.get("maketx", False)
 
-        # Preserve color space values (force value after filepath change)
-        # This will also trigger in the same order at end of context to
-        # ensure after context it's still the original value.
-        color_space_attr = resource['node'] + ".colorSpace"
-        color_space = cmds.getAttr(color_space_attr)
-
-        linearise = False
-        if color_space_attr == "sRGB":
-            linearise = True
-
         # Collect all unique files used in the resources
         files = set()
+        files_metadata = dict()
         for resource in resources:
+            # Preserve color space values (force value after filepath change)
+            # This will also trigger in the same order at end of context to
+            # ensure after context it's still the original value.
+            color_space = resource.get('color_space')
 
-            files.update(os.path.normpath(f) for f in resource["files"])
+            for f in resource["files"]:
+
+                files_metadata[os.path.normpath(f)] = {'color_space': color_space}
+                # files.update(os.path.normpath(f))
 
         # Process the resource files
         transfers = list()
         hardlinks = list()
         hashes = dict()
-        for resource in resources
-        for filepath in files:
+
+        self.log.info(files)
+        for filepath in files_metadata:
+
+            cspace = files_metadata[filepath]['color_space']
+            linearise = False
+            if cspace == 'sRGB':
+                linearise = True
+
             source, mode, hash = self._process_texture(
-                filepath, do_maketx, staging=dir_path, linearise
+                filepath, do_maketx, staging=dir_path, linearise=linearise
             )
             destination = self.resource_destination(
                 instance, source, do_maketx

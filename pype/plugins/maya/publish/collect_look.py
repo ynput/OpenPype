@@ -428,8 +428,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             computed_attribute = attribute
         source = cmds.getAttr(attribute)
 
-        color_space = "{}.colorSpace".format(node)
-
+        color_space_attr = "{}.colorSpace".format(node)
+        color_space = cmds.getAttr(color_space_attr)
         # Compare with the computed file path, e.g. the one with the <UDIM>
         # pattern in it, to generate some logging information about this
         # difference
