@@ -19,3 +19,5 @@ from .model_tree_view_deselectable import DeselectableTreeView
 
 from .widget_asset_view import AssetView
 from .widget_asset import AssetWidget
+from .widget_family_desc import FamilyDescriptionWidget
+from .widget_family import FamilyWidget
