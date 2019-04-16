@@ -15,6 +15,7 @@ from .model_tree import TreeModel
 from .model_asset import AssetModel
 from .model_filter_proxy_exact_match import ExactMatchesFilterProxyModel
 from .model_filter_proxy_recursive_sort import RecursiveSortFilterProxyModel
+from .model_tasks_template import TasksTemplateModel
 from .model_tree_view_deselectable import DeselectableTreeView
 
 from .widget_asset_view import AssetView
