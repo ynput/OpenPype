@@ -14,7 +14,10 @@ from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 class Window(QtWidgets.QDialog):
     _db = DbConnector()
     _jobs = {}
-    WIDTH = 1000
+    valid_family = False
+    valid_components = False
+    initialized = False
+    WIDTH = 1100
     HEIGHT = 500
     NOT_SELECTED = '< Nothing is selected >'
 
@@ -76,6 +79,7 @@ class Window(QtWidgets.QDialog):
         self.label_message = label_message
         self.widget_assets = widget_assets
         self.widget_family = widget_family
+        self.widget_components = widget_components
 
         self.echo("Connected to Database")
 
@@ -87,8 +91,10 @@ class Window(QtWidgets.QDialog):
         return self._db
 
     def on_start(self):
+        self.initialized = True
         # Refresh asset input in Family widget
         self.on_asset_changed()
+        self.validation()
 
     def get_avalon_parent(self, entity):
         parent_id = entity['data']['visualParent']
@@ -119,6 +125,26 @@ class Window(QtWidgets.QDialog):
             self.widget_family.change_asset(self.NOT_SELECTED)
         self.widget_family.on_data_changed()
 
+    def validation(self):
+        if not self.initialized:
+            return
+        valid = self.valid_family and self.valid_components
+        self.widget_components.set_valid(valid)
+
+    def set_valid_family(self, valid):
+        self.valid_family = valid
+        self.validation()
+
+    def set_valid_components(self, valid):
+        self.valid_components = valid
+        self.validation()
+
+    def collect_data(self):
+        data = {}
+        data.update(self.widget_assets.collect_data())
+        data.update(self.widget_family.collect_data())
+
+        return data
 
 def show(parent=None, debug=False, context=None):
     """Display Loader GUI
