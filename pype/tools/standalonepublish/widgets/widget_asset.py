@@ -178,6 +178,13 @@ class AssetWidget(QtWidgets.QWidget):
     def db(self):
         return self.parent_widget.db
 
+    def collect_data(self):
+        data = {
+            'project': self.combo_projects.currentText(),
+            'asset': get_active_asset
+        }
+        return data
+
     def _set_projects(self):
         projects = list()
         for project in self.db.projects():
