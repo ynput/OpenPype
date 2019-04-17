@@ -67,7 +67,6 @@ class DropDataFrame(QtWidgets.QFrame):
                 paths.append(local_path)
             else:
                 print('Invalid input: "{}"'.format(local_path))
-
         return paths
 
     def _add_components(self, paths):
@@ -158,20 +157,16 @@ class DropDataFrame(QtWidgets.QFrame):
     def _process_collection(self, collection):
         file_base = os.path.basename(collection.head)
         folder_path = os.path.dirname(collection.head)
-        if file_base[-1] in ['.']:
+        if file_base[-1] in ['.', '_']:
             file_base = file_base[:-1]
         file_ext = collection.tail
         repr_name = file_ext.replace('.', '')
-        range = self._get_ranges(collection.indexes)
+        range = collection.format('{ranges}')
 
-        files = []
-        for file in os.listdir(folder_path):
-            if file.startswith(file_base) and file.endswith(file_ext):
-                files.append(os.path.sep.join([folder_path, file]))
         actions = []
 
         data = {
-            'files': files,
+            'files': [file for file in collection],
             'name': file_base,
             'ext': file_ext,
             'file_info': range,
@@ -245,7 +240,10 @@ class DropDataFrame(QtWidgets.QFrame):
         if data['is_sequence']:
             icon += 's'
         data['icon'] = icon
-        data['thumb'] = ext in self.presets['thumbnailable']
+        data['thumb'] = (
+            ext in self.presets['thumbnailable'] and
+            data['is_sequence'] is False
+        )
         data['prev'] = ext in self.presets['extensions']['video_file']
 
         found = False
@@ -260,9 +258,18 @@ class DropDataFrame(QtWidgets.QFrame):
 
             # If both are single files
             if not new_is_seq and not ex_is_seq:
-                if data['name'] != item.in_data['name']:
+                if data['name'] == item.in_data['name']:
+                    found = True
+                    break
+                paths = data['files']
+                paths.extend(item.in_data['files'])
+                c, r = clique.assemble(paths)
+                if len(c) == 0:
                     continue
+
                 found = True
+                self._remove_item(item)
+                self._process_collection(c[0])
                 break
             # If new is sequence and ex is single file
             elif new_is_seq and not ex_is_seq:
@@ -279,6 +286,7 @@ class DropDataFrame(QtWidgets.QFrame):
                 paths = data['files']
                 paths.append(ex_file)
                 collections, remainders = clique.assemble(paths)
+                self._remove_item(item)
                 self._process_collection(collections[0])
                 break
             # If new is single file existing is sequence
@@ -288,6 +296,13 @@ class DropDataFrame(QtWidgets.QFrame):
                 new_file = data['files'][0]
                 found = True
                 if new_file in item.in_data['files']:
+                    paths = []
+                    for path in item.in_data['files']:
+                        if os.path.exists(path):
+                            paths.append(path)
+                    if len(paths) == 1:
+                        self._remove_item(item)
+                        found = False
                     break
                 paths = item.in_data['files']
                 paths.append(new_file)
