@@ -168,7 +168,7 @@ class DropDataFrame(QtWidgets.QFrame):
         for file in os.listdir(folder_path):
             if file.startswith(file_base) and file.endswith(file_ext):
                 files.append(os.path.sep.join([folder_path, file]))
-        info = {}
+        actions = []
 
         data = {
             'files': files,
@@ -178,7 +178,7 @@ class DropDataFrame(QtWidgets.QFrame):
             'representation': repr_name,
             'folder_path': folder_path,
             'is_sequence': True,
-            'info': info
+            'actions': actions
         }
         self._process_data(data)
 
@@ -219,7 +219,7 @@ class DropDataFrame(QtWidgets.QFrame):
         files = []
         files.append(remainder)
 
-        info = {}
+        actions = []
 
         data = {
             'files': files,
@@ -229,7 +229,7 @@ class DropDataFrame(QtWidgets.QFrame):
             'representation': repr_name,
             'folder_path': folder_path,
             'is_sequence': False,
-            'info': info
+            'actions': actions
         }
 
         self._process_data(data)

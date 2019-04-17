@@ -49,8 +49,8 @@ class ComponentItem(QtWidgets.QFrame):
         self.icon.setText("")
         self.icon.setScaledContents(True)
 
-        self.info = SvgButton(
-            get_resource('information.svg'), 22, 22,
+        self.action_menu = SvgButton(
+            get_resource('menu.svg'), 22, 22,
             [self.C_NORMAL, self.C_HOVER],
             frame_image_info, False
         )
@@ -62,7 +62,7 @@ class ComponentItem(QtWidgets.QFrame):
         expanding_sizePolicy.setVerticalStretch(0)
 
         layout.addWidget(self.icon, alignment=QtCore.Qt.AlignCenter)
-        layout.addWidget(self.info, alignment=QtCore.Qt.AlignCenter)
+        layout.addWidget(self.action_menu, alignment=QtCore.Qt.AlignCenter)
 
         layout_main.addWidget(frame_image_info)
 
@@ -183,7 +183,6 @@ class ComponentItem(QtWidgets.QFrame):
         file_info = data['file_info']
         thumb = data['thumb']
         prev = data['prev']
-        info = data['info']
         icon = data['icon']
 
         resource = None
