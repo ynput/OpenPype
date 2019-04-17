@@ -100,6 +100,15 @@ class FamilyWidget(QtWidgets.QWidget):
 
         self.refresh()
 
+    def collect_data(self):
+        plugin = self.list_families.currentItem().data(PluginRole)
+        family = plugin.family.rsplit(".", 1)[-1]
+        data = {
+            'family': family,
+            'subset': self.input_subset.text()
+        }
+        return data
+
     @property
     def db(self):
         return self.parent_widget.db
@@ -109,6 +118,7 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def _on_state_changed(self, state):
         self.state['valid'] = state
+        self.parent_widget.set_valid_family(state)
 
     def _build_menu(self, default_names):
         """Create optional predefined subset names
