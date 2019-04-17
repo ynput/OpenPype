@@ -12,19 +12,12 @@ class DropDataWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(self)
 
-        bottomCenterAlignment = QtCore.Qt.AlignBottom | QtCore.Qt.AlignHCenter
-        topCenterAlignment = QtCore.Qt.AlignTop | QtCore.Qt.AlignHCenter
+        CenterAlignment = QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter
 
         self._label = QtWidgets.QLabel('Drop files here')
         layout.addWidget(
             self._label,
-            alignment=bottomCenterAlignment
-        )
-
-        self._browseButton = QtWidgets.QPushButton('Browse')
-        self._browseButton.setToolTip('Browse for file(s).')
-        layout.addWidget(
-            self._browseButton, alignment=topCenterAlignment
+            alignment=CenterAlignment
         )
 
     def paintEvent(self, event):
