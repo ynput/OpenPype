@@ -22,12 +22,11 @@ from .widget_asset_view import AssetView
 from .widget_asset import AssetWidget
 from .widget_family_desc import FamilyDescriptionWidget
 from .widget_family import FamilyWidget
-from .widget_drop_data import DropDataWidget
 
-from .widget_component import ComponentWidget
-from .widget_tree_components import TreeComponents
+from .widget_drop_empty import DropEmpty
 from .widget_component_item import ComponentItem
+from .widget_components_list import ComponentsList
 
-from .widget_drop_files import DropDataFrame
+from .widget_drop_frame import DropDataFrame
 
 from .widget_components import ComponentsWidget

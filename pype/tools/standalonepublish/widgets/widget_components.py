@@ -14,9 +14,11 @@ class ComponentsWidget(QtWidgets.QWidget):
 
         self.btn_browse = QtWidgets.QPushButton('Browse')
         self.btn_browse.setToolTip('Browse for file(s).')
+        self.btn_browse.setFocusPolicy(QtCore.Qt.NoFocus)
 
         self.btn_publish = QtWidgets.QPushButton('Publish')
         self.btn_publish.setToolTip('Publishes data.')
+        self.btn_publish.setFocusPolicy(QtCore.Qt.NoFocus)
 
         layout.addWidget(self.btn_browse, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.btn_publish, alignment=QtCore.Qt.AlignRight)
@@ -33,13 +35,15 @@ class ComponentsWidget(QtWidgets.QWidget):
         layout.addWidget(body)
 
         self.btn_browse.clicked.connect(self._browse)
-        # self.setStyleSheet("border: 1px solid black;")
 
     def set_valid(self, in_bool):
         self.btn_publish.setEnabled(in_bool)
 
     def set_valid_components(self, in_bool):
         self.parent_widget.set_valid_components(in_bool)
+
+    def process_mime_data(self, mime_data):
+        self.drop_frame.process_ent_mime(mime_data)
 
     def _browse(self):
         options = [

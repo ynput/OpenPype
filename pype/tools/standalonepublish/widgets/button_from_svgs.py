@@ -6,6 +6,7 @@ from PyQt5 import QtSvg, QtXml
 
 class SvgResizable(QtSvg.QSvgWidget):
     clicked = QtCore.Signal()
+
     def __init__(self, filepath, width=None, height=None, fill=None):
         super().__init__()
         self.xmldoc = minidom.parse(filepath)
@@ -13,6 +14,7 @@ class SvgResizable(QtSvg.QSvgWidget):
         for element in itemlist:
             if fill:
                 element.setAttribute('fill', str(fill))
+        # TODO auto scale if only one is set
         if width is not None and height is not None:
             self.setMaximumSize(width, height)
             self.setMinimumSize(width, height)
