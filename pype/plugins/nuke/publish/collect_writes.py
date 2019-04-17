@@ -1,5 +1,4 @@
 import os
-import tempfile
 import nuke
 import pyblish.api
 import logging
@@ -65,9 +64,6 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 int(last_frame)
             )
 
-            # preredered frames
-            # collect frames by try
-            # collect families in next file
             if "files" not in instance.data:
                 instance.data["files"] = list()
             try:
@@ -88,8 +84,6 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "outputType": output_type,
                 "colorspace": node["colorspace"].value(),
             })
-
-
 
             self.log.debug("instance.data: {}".format(instance.data))
 
