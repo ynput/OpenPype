@@ -1,20 +1,19 @@
 import os
 import clique
+from pypeapp import config
 from . import QtWidgets, QtCore
 from . import ComponentItem, TreeComponents, DropDataWidget
 
 
 class DropDataFrame(QtWidgets.QFrame):
-    # signal_dropped = QtCore.Signal(object)
-
     def __init__(self, parent):
         super().__init__()
-
+        self.parent_widget = parent
         self.items = []
+        self.presets = config.get_presets()['tools']['standalone_publish']
 
         self.setAcceptDrops(True)
         layout = QtWidgets.QVBoxLayout(self)
-
         self.tree_widget = TreeComponents(self)
         layout.addWidget(self.tree_widget)
 
@@ -63,12 +62,42 @@ class DropDataFrame(QtWidgets.QFrame):
         # Assign to self so garbage collector wont remove the component
         # during initialization
         self.new_component = ComponentItem(self.tree_widget, data)
-        self.new_component._widget.signal_remove.connect(self._remove_item)
         self.tree_widget.addTopLevelItem(self.new_component)
+        self.new_component.set_context()
+
+        self.new_component._widget.signal_remove.connect(self._remove_item)
+        self.new_component._widget.signal_preview.connect(self._set_preview)
+        self.new_component._widget.signal_thumbnail.connect(
+            self._set_thumbnail
+        )
         self.items.append(self.new_component)
         self.new_component = None
 
         self._refresh_view()
+
+    def _set_thumbnail(self, in_item):
+        checked_item = None
+        for item in self.items:
+            if item.is_thumbnail():
+                checked_item = item
+                break
+        if checked_item is None or checked_item == in_item:
+            in_item.change_thumbnail()
+        else:
+            checked_item.change_thumbnail(False)
+            in_item.change_thumbnail()
+
+    def _set_preview(self, in_item):
+        checked_item = None
+        for item in self.items:
+            if item.is_preview():
+                checked_item = item
+                break
+        if checked_item is None or checked_item == in_item:
+            in_item.change_preview()
+        else:
+            checked_item.change_preview(False)
+            in_item.change_preview()
 
     def _remove_item(self, item):
         root = self.tree_widget.invisibleRootItem()
@@ -78,9 +107,10 @@ class DropDataFrame(QtWidgets.QFrame):
 
     def _refresh_view(self):
         _bool = len(self.items) == 0
-
         self.tree_widget.setVisible(not _bool)
         self.drop_widget.setVisible(_bool)
+
+        self.parent_widget.set_valid_components(not _bool)
 
     def _process_paths(self, in_paths):
         paths = self._get_all_paths(in_paths)
@@ -114,13 +144,6 @@ class DropDataFrame(QtWidgets.QFrame):
         file_ext = collection.tail
         repr_name = file_ext.replace('.', '')
         range = self._get_ranges(collection.indexes)
-        thumb = False
-        if file_ext in ['.jpeg']:
-            thumb = True
-
-        prev = False
-        if file_ext in ['.jpeg']:
-            prev = True
 
         files = []
         for file in os.listdir(folder_path):
@@ -135,9 +158,6 @@ class DropDataFrame(QtWidgets.QFrame):
             'file_info': range,
             'representation': repr_name,
             'folder_path': folder_path,
-            'icon': 'sequence',
-            'thumb': thumb,
-            'prev': prev,
             'is_sequence': True,
             'info': info
         }
@@ -176,13 +196,6 @@ class DropDataFrame(QtWidgets.QFrame):
         file_base, file_ext = os.path.splitext(filename)
         repr_name = file_ext.replace('.', '')
         file_info = None
-        thumb = False
-        if file_ext in ['.jpeg']:
-            thumb = True
-
-        prev = False
-        if file_ext in ['.jpeg']:
-            prev = True
 
         files = []
         files.append(remainder)
@@ -196,9 +209,6 @@ class DropDataFrame(QtWidgets.QFrame):
             'file_info': file_info,
             'representation': repr_name,
             'folder_path': folder_path,
-            'icon': 'sequence',
-            'thumb': thumb,
-            'prev': prev,
             'is_sequence': False,
             'info': info
         }
@@ -206,6 +216,19 @@ class DropDataFrame(QtWidgets.QFrame):
         self._process_data(data)
 
     def _process_data(self, data):
+        ext = data['ext']
+        icon = 'default'
+        for ico, exts in self.presets['extensions'].items():
+            if ext in exts:
+                icon = ico
+                break
+        # Add 's' to icon_name if is sequence (image -> images)
+        if data['is_sequence']:
+            icon += 's'
+        data['icon'] = icon
+        data['thumb'] = ext in self.presets['thumbnailable']
+        data['prev'] = ext in self.presets['extensions']['video_file']
+
         found = False
         for item in self.items:
             if data['ext'] != item.in_data['ext']:

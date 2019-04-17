@@ -1,3 +1,4 @@
+import os
 from . import QtCore, QtGui, QtWidgets
 from . import SvgButton
 from . import get_resource
@@ -9,6 +10,8 @@ class ComponentWidget(QtWidgets.QFrame):
     C_ACTIVE = '#4BB543'
     C_ACTIVE_HOVER = '#4BF543'
     signal_remove = QtCore.Signal(object)
+    signal_thumbnail = QtCore.Signal(object)
+    signal_preview = QtCore.Signal(object)
 
     def __init__(self, parent):
         super().__init__()
@@ -162,8 +165,9 @@ class ComponentWidget(QtWidgets.QFrame):
         # self.frame.setStyleSheet("border: 1px solid black;")
 
     def set_context(self, data):
-
         self.remove.clicked.connect(self._remove)
+        self.thumbnail.clicked.connect(self._thumbnail_clicked)
+        self.preview.clicked.connect(self._preview_clicked)
         name = data['name']
         representation = data['representation']
         ext = data['ext']
@@ -194,8 +198,14 @@ class ComponentWidget(QtWidgets.QFrame):
         else:
             self.file_info.setText('[{}]'.format(file_info))
 
-        # self.thumbnail.setVisible(thumb)
-        # self.preview.setVisible(prev)
+        self.thumbnail.setVisible(thumb)
+        self.preview.setVisible(prev)
 
     def _remove(self):
         self.signal_remove.emit(self.parent_item)
+
+    def _thumbnail_clicked(self):
+        self.signal_thumbnail.emit(self.parent_item)
+
+    def _preview_clicked(self):
+        self.signal_preview.emit(self.parent_item)
