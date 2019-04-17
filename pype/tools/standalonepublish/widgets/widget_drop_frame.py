@@ -2,7 +2,7 @@ import os
 import clique
 from pypeapp import config
 from . import QtWidgets, QtCore
-from . import ComponentItem, TreeComponents, DropDataWidget
+from . import DropEmpty, ComponentsList, ComponentItem
 
 
 class DropDataFrame(QtWidgets.QFrame):
@@ -14,10 +14,18 @@ class DropDataFrame(QtWidgets.QFrame):
 
         self.setAcceptDrops(True)
         layout = QtWidgets.QVBoxLayout(self)
-        self.tree_widget = TreeComponents(self)
-        layout.addWidget(self.tree_widget)
+        self.components_list = ComponentsList(self)
+        layout.addWidget(self.components_list)
 
-        self.drop_widget = DropDataWidget(self)
+        self.drop_widget = DropEmpty(self)
+
+        sizePolicy = QtWidgets.QSizePolicy(
+            QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.drop_widget.sizePolicy().hasHeightForWidth())
+        self.drop_widget.setSizePolicy(sizePolicy)
+
         layout.addWidget(self.drop_widget)
 
         self._refresh_view()
@@ -30,17 +38,28 @@ class DropDataFrame(QtWidgets.QFrame):
         event.accept()
 
     def dropEvent(self, event):
-        paths = self._processMimeData(event.mimeData())
+        self.process_ent_mime(event)
+        event.accept()
+
+    def process_ent_mime(self, ent):
+        paths = []
+        if ent.mimeData().hasUrls():
+            paths = self._processMimeData(ent.mimeData())
+        else:
+            # If path is in clipboard as string
+            try:
+                path = ent.text()
+                if os.path.exists(path):
+                    paths.append(path)
+                else:
+                    print('Dropped invalid file/folder')
+            except Exception:
+                pass
         if paths:
             self._add_components(paths)
-        event.accept()
 
     def _processMimeData(self, mimeData):
         paths = []
-
-        if not mimeData.hasUrls():
-            print('Dropped invalid file/folder')
-            return paths
 
         for path in mimeData.urls():
             local_path = path.toLocalFile()
@@ -61,17 +80,16 @@ class DropDataFrame(QtWidgets.QFrame):
     def _add_item(self, data):
         # Assign to self so garbage collector wont remove the component
         # during initialization
-        self.new_component = ComponentItem(self.tree_widget, data)
-        self.tree_widget.addTopLevelItem(self.new_component)
-        self.new_component.set_context()
+        new_component = ComponentItem(self.components_list)
+        new_component.set_context(data)
+        self.components_list.add_widget(new_component)
 
-        self.new_component._widget.signal_remove.connect(self._remove_item)
-        self.new_component._widget.signal_preview.connect(self._set_preview)
-        self.new_component._widget.signal_thumbnail.connect(
+        new_component.signal_remove.connect(self._remove_item)
+        new_component.signal_preview.connect(self._set_preview)
+        new_component.signal_thumbnail.connect(
             self._set_thumbnail
         )
-        self.items.append(self.new_component)
-        self.new_component = None
+        self.items.append(new_component)
 
         self._refresh_view()
 
@@ -100,14 +118,15 @@ class DropDataFrame(QtWidgets.QFrame):
             in_item.change_preview()
 
     def _remove_item(self, item):
-        root = self.tree_widget.invisibleRootItem()
-        (item.parent() or root).removeChild(item)
-        self.items.remove(item)
+        index = self.components_list.widget_index(item)
+        self.components_list.remove_widget(index)
+        if item in self.items:
+            self.items.remove(item)
         self._refresh_view()
 
     def _refresh_view(self):
         _bool = len(self.items) == 0
-        self.tree_widget.setVisible(not _bool)
+        self.components_list.setVisible(not _bool)
         self.drop_widget.setVisible(_bool)
 
         self.parent_widget.set_valid_components(not _bool)
