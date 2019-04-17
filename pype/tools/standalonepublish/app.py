@@ -64,8 +64,8 @@ class Window(QtWidgets.QDialog):
         body.addWidget(widget_family)
         body.addWidget(widget_components)
         body.setStretchFactor(body.indexOf(widget_assets_wrap), 2)
-        body.setStretchFactor(body.indexOf(widget_family), 2)
-        body.setStretchFactor(body.indexOf(widget_components), 3)
+        body.setStretchFactor(body.indexOf(widget_family), 3)
+        body.setStretchFactor(body.indexOf(widget_components), 5)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.addWidget(body)
@@ -123,6 +123,12 @@ class Window(QtWidgets.QDialog):
             self.valid_parent = False
             self.widget_family.change_asset(self.NOT_SELECTED)
         self.widget_family.on_data_changed()
+
+    def keyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_V and event.modifiers() == QtCore.Qt.ControlModifier:
+            clip = QtWidgets.QApplication.clipboard()
+            self.widget_components.process_mime_data(clip)
+        super().keyPressEvent(event)
 
     def validation(self):
         if not self.initialized:
