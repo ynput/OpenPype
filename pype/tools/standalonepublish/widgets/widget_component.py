@@ -40,13 +40,11 @@ class ComponentWidget(QtWidgets.QFrame):
         layout.setSpacing(2)
         layout.setContentsMargins(2, 2, 2, 2)
 
-        image = QtWidgets.QLabel(frame)
-        image.setMinimumSize(QtCore.QSize(22, 22))
-        image.setMaximumSize(QtCore.QSize(22, 22))
-        image.setText("")
-        image.setScaledContents(True)
-        pixmap = QtGui.QPixmap(get_resource('image_sequence.png'))
-        image.setPixmap(pixmap)
+        self.icon = QtWidgets.QLabel(frame)
+        self.icon.setMinimumSize(QtCore.QSize(22, 22))
+        self.icon.setMaximumSize(QtCore.QSize(22, 22))
+        self.icon.setText("")
+        self.icon.setScaledContents(True)
 
         self.info = SvgButton(
             get_resource('information.svg'), 22, 22,
@@ -60,7 +58,7 @@ class ComponentWidget(QtWidgets.QFrame):
         expanding_sizePolicy.setHorizontalStretch(0)
         expanding_sizePolicy.setVerticalStretch(0)
 
-        layout.addWidget(image, alignment=QtCore.Qt.AlignCenter)
+        layout.addWidget(self.icon, alignment=QtCore.Qt.AlignCenter)
         layout.addWidget(self.info, alignment=QtCore.Qt.AlignCenter)
 
         layout_main.addWidget(frame_image_info)
@@ -173,6 +171,20 @@ class ComponentWidget(QtWidgets.QFrame):
         thumb = data['thumb']
         prev = data['prev']
         info = data['info']
+        icon = data['icon']
+
+        resource = None
+        if icon is not None:
+            resource = get_resource('{}.png'.format(icon))
+
+        if resource is None or not os.path.isfile(resource):
+            if data['is_sequence']:
+                resource = get_resource('files.png')
+            else:
+                resource = get_resource('file.png')
+
+        pixmap = QtGui.QPixmap(resource)
+        self.icon.setPixmap(pixmap)
 
         self.name.setText(name)
         self.input_repre.setText(representation)

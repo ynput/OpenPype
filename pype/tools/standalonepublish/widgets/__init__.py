@@ -29,3 +29,5 @@ from .widget_tree_components import TreeComponents
 from .widget_component_item import ComponentItem
 
 from .widget_drop_files import DropDataFrame
+
+from .widget_components import ComponentsWidget
