@@ -1,6 +1,7 @@
 from . import QtWidgets, QtCore, QtGui
 from . import DropDataFrame
 
+
 class ComponentsWidget(QtWidgets.QWidget):
     def __init__(self, parent):
         super().__init__()
@@ -35,6 +36,7 @@ class ComponentsWidget(QtWidgets.QWidget):
         layout.addWidget(body)
 
         self.btn_browse.clicked.connect(self._browse)
+        self.btn_publish.clicked.connect(self._publish)
 
     def set_valid(self, in_bool):
         self.btn_publish.setEnabled(in_bool)
@@ -81,3 +83,8 @@ class ComponentsWidget(QtWidgets.QWidget):
         # process the browsed files/folders for publishing
         paths = file_dialog.selectedFiles()
         self.drop_frame._process_paths(paths)
+
+    def _publish(self):
+        data = self.parent_widget.collect_data()
+        from pprint import pprint
+        pprint(data)
