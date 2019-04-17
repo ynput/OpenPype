@@ -68,20 +68,20 @@ class ComponentWidget(QtWidgets.QFrame):
 
         # Name + representation
         self.name = QtWidgets.QLabel(frame)
-        self.frames = QtWidgets.QLabel(frame)
+        self.file_info = QtWidgets.QLabel(frame)
         self.ext = QtWidgets.QLabel(frame)
 
         self.name.setFont(font)
-        self.frames.setFont(font)
+        self.file_info.setFont(font)
         self.ext.setFont(font)
 
-        self.frames.setStyleSheet('padding-left:3px;')
+        self.file_info.setStyleSheet('padding-left:3px;')
 
         expanding_sizePolicy.setHeightForWidth(self.name.sizePolicy().hasHeightForWidth())
 
         frame_name_repre = QtWidgets.QFrame(frame)
 
-        self.frames.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
+        self.file_info.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.ext.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
         self.name.setTextInteractionFlags(QtCore.Qt.NoTextInteraction)
 
@@ -89,21 +89,30 @@ class ComponentWidget(QtWidgets.QFrame):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.name, alignment=QtCore.Qt.AlignLeft)
-        layout.addWidget(self.frames, alignment=QtCore.Qt.AlignLeft)
+        layout.addWidget(self.file_info, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(self.ext, alignment=QtCore.Qt.AlignRight)
 
         frame_name_repre.setSizePolicy(
             QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding
         )
 
-        # Frames + icons
+        # Repre + icons
         frame_repre_icons = QtWidgets.QFrame(frame)
+
+        frame_repre = QtWidgets.QFrame(frame_repre_icons)
 
         label_repre = QtWidgets.QLabel()
         label_repre.setText('Representation:')
 
         self.input_repre = QtWidgets.QLineEdit()
         self.input_repre.setMaximumWidth(50)
+
+        layout = QtWidgets.QHBoxLayout(frame_repre)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        layout.addWidget(label_repre, alignment=QtCore.Qt.AlignLeft)
+        layout.addWidget(self.input_repre, alignment=QtCore.Qt.AlignLeft)
 
         frame_icons = QtWidgets.QFrame(frame_repre_icons)
 
@@ -129,8 +138,7 @@ class ComponentWidget(QtWidgets.QFrame):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        layout.addWidget(label_repre, alignment=QtCore.Qt.AlignLeft)
-        layout.addWidget(self.input_repre, alignment=QtCore.Qt.AlignLeft)
+        layout.addWidget(frame_repre, alignment=QtCore.Qt.AlignLeft)
         layout.addWidget(frame_icons, alignment=QtCore.Qt.AlignRight)
 
         frame_middle = QtWidgets.QFrame(frame)

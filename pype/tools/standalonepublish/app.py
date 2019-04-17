@@ -46,12 +46,11 @@ class Window(QtWidgets.QDialog):
         layout_assets.addWidget(widget_assets)
         layout_assets.addWidget(label_message)
 
-
         # family widget
         widget_family = FamilyWidget(self)
 
         # components widget
-        widget_components = DropDataFrame(self)
+        widget_components = ComponentsWidget(self)
 
         # Body
         body = QtWidgets.QSplitter()
