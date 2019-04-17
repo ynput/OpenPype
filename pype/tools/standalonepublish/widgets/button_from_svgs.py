@@ -87,9 +87,13 @@ class SvgButton(QtWidgets.QFrame):
                 self.mousePressEvent(event)
             return False
 
-    def change_checked(self, in_bool=False):
+    def change_checked(self, hover=True):
         if self.checkable:
-            self.checked = in_bool
+            self.checked = not self.checked
+        if hover:
+            self.hoverEnterEvent()
+        else:
+            self.hoverLeaveEvent()
 
     def hoverEnterEvent(self, event=None):
         color = self.c_hover
@@ -104,6 +108,4 @@ class SvgButton(QtWidgets.QFrame):
         self.svg_widget.change_color(color)
 
     def mousePressEvent(self, event=None):
-        self.change_checked(not self.checked)
-        self.hoverEnterEvent()
         self.clicked.emit()
