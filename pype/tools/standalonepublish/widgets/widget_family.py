@@ -4,13 +4,11 @@ import inspect
 import json
 from collections import namedtuple
 
-from . import QtWidgets, QtCore, QtGui
+from . import QtWidgets, QtCore
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole
 from . import FamilyDescriptionWidget
-from pype.vendor import six
 
-from avalon import api, io, style
-from pype import lib as pypelib
+from pypeapp import config
 
 
 class FamilyWidget(QtWidgets.QWidget):
@@ -249,14 +247,9 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def refresh(self):
         has_families = False
-
-        path_items = [
-            pypelib.get_presets_path(), 'tools', 'standalone_publish.json'
-        ]
-        filepath = os.path.sep.join(path_items)
-        presets = dict()
-        with open(filepath) as data_file:
-            presets = json.load(data_file)
+        presets = config.get_presets().get('tools', {}).get(
+            'standalone_publish', {}
+        )
 
         for creator in presets.get('families', {}).values():
             creator = namedtuple("Creator", creator.keys())(*creator.values())
@@ -276,9 +269,6 @@ class FamilyWidget(QtWidgets.QWidget):
             item = QtWidgets.QListWidgetItem("No registered families")
             item.setData(QtCore.Qt.ItemIsEnabled, False)
             self.list_families.addItem(item)
-
-        presets_path = pypelib.get_presets_path()
-        config_file = os.path.sep.join([presets_path, 'tools', 'creator.json'])
 
         self.list_families.setCurrentItem(self.list_families.item(0))
 
