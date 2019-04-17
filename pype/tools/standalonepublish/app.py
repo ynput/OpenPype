@@ -148,7 +148,8 @@ class Window(QtWidgets.QDialog):
         data = {}
         data.update(self.widget_assets.collect_data())
         data.update(self.widget_family.collect_data())
-
+        data.update(self.widget_components.collect_data())
+        
         return data
 
 def show(parent=None, debug=False, context=None):

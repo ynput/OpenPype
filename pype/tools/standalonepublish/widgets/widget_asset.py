@@ -179,11 +179,23 @@ class AssetWidget(QtWidgets.QWidget):
         return self.parent_widget.db
 
     def collect_data(self):
+        project = self.db.find_one({'type': 'project'})
+        asset = self.db.find_one({'_id': self.get_active_asset()})
         data = {
-            'project': self.combo_projects.currentText(),
-            'asset': get_active_asset
+            'project': project,
+            'asset': asset,
+            'parents': self.get_parents(asset)
         }
         return data
+
+    def get_parents(self, entity):
+        output = []
+        if entity.get('data', {}).get('visualParent', None) is None:
+            return output
+        parent = self.db.find_one({'_id': entity['data']['visualParent']})
+        output.append(parent)
+        output.extend(self.get_parents(parent))
+        return output
 
     def _set_projects(self):
         projects = list()

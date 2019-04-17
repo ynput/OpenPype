@@ -45,6 +45,9 @@ class ComponentsWidget(QtWidgets.QWidget):
     def process_mime_data(self, mime_data):
         self.drop_frame.process_ent_mime(mime_data)
 
+    def collect_data(self):
+        return self.drop_frame.collect_data()
+
     def _browse(self):
         options = [
             QtWidgets.QFileDialog.DontResolveSymlinks,

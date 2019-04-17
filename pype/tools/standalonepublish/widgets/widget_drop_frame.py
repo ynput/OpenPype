@@ -313,3 +313,9 @@ class DropDataFrame(QtWidgets.QFrame):
 
         if found is False:
             self._add_item(data)
+
+    def collect_data(self):
+        data = {'components' : []}
+        for item in self.items:
+            data['components'].append(item.collect_data())
+        return data

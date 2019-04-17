@@ -230,3 +230,13 @@ class ComponentItem(QtWidgets.QFrame):
 
     def change_preview(self, hover=True):
         self.preview.change_checked(hover)
+
+    def collect_data(self):
+        data = {
+            'ext': self.in_data['ext'],
+            'representation': self.input_repre.text(),
+            'files': self.in_data['files'],
+            'thumbnail': self.is_thumbnail(),
+            'preview': self.is_preview()
+        }
+        return data
