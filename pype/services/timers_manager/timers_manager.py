@@ -25,6 +25,7 @@ class TimersManager(metaclass=Singleton):
         when user idles for a long time (set in presets).
     """
     modules = []
+    failed = False
     is_running = False
     last_task = None
 
