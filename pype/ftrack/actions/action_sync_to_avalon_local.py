@@ -50,7 +50,7 @@ class SyncToAvalon(BaseAction):
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
-    icon = '{}/ftrack/action_icons/SyncToAvalon-512.png'.format(
+    icon = '{}/ftrack/action_icons/SyncToAvalon-local.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
     #: roles that are allowed to register this action
