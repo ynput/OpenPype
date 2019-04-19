@@ -94,6 +94,18 @@ class Window(QtWidgets.QDialog):
         # Refresh asset input in Family widget
         self.on_asset_changed()
         self.validation()
+        self.shadow_widget = ShadowWidget(self)
+        self.shadow_widget.setVisible(False)
+
+    def resizeEvent(self, event=None):
+        position_x = (self.frameGeometry().width()-self.shadow_widget.frameGeometry().width())/2
+        position_y = (self.frameGeometry().height()-self.shadow_widget.frameGeometry().height())/2
+        self.shadow_widget.move(position_x, position_y)
+        w = self.frameGeometry().width()
+        h = self.frameGeometry().height()
+        self.shadow_widget.resize(QtCore.QSize(w, h))
+        if event:
+            super().resizeEvent(event)
 
     def get_avalon_parent(self, entity):
         parent_id = entity['data']['visualParent']
@@ -129,6 +141,17 @@ class Window(QtWidgets.QDialog):
             clip = QtWidgets.QApplication.clipboard()
             self.widget_components.process_mime_data(clip)
         super().keyPressEvent(event)
+
+    def working_start(self, msg=None):
+        if msg is None:
+            msg = 'Please wait...'
+        self.shadow_widget.message = msg
+        self.shadow_widget.setVisible(True)
+        self.resizeEvent()
+        QtWidgets.QApplication.processEvents()
+
+    def working_stop(self):
+        self.shadow_widget.setVisible(False)
 
     def validation(self):
         if not self.initialized:
