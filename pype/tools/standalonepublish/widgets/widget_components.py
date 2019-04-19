@@ -1,6 +1,8 @@
 from . import QtWidgets, QtCore, QtGui
 from . import DropDataFrame
 
+from .. import publish
+
 
 class ComponentsWidget(QtWidgets.QWidget):
     def __init__(self, parent):
@@ -93,6 +95,12 @@ class ComponentsWidget(QtWidgets.QWidget):
             self.parent_widget.working_stop()
 
     def _publish(self):
-        data = self.parent_widget.collect_data()
-        from pprint import pprint
-        pprint(data)
+        self.working_start('Pyblish is running')
+        try:
+            data = self.parent_widget.collect_data()
+            publish.set_context(
+                data['project'], data['asset'], 'standalonepublish'
+            )
+            publish.publish(data)
+        finally:
+            self.working_stop()
