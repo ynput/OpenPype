@@ -17,7 +17,9 @@ class StartClockify(BaseAction):
     #: Action description.
     description = 'Starts timer on clockify'
     #: roles that are allowed to register this action
-    icon = 'https://clockify.me/assets/images/clockify-logo.png'
+    icon = '{}/app_icons/clockify.png'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
     #: Clockify api
     clockapi = ClockifyAPI()
 
