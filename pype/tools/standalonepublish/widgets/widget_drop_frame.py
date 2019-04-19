@@ -1,5 +1,6 @@
 import os
 import clique
+import subprocess
 from pypeapp import config
 from . import QtWidgets, QtCore
 from . import DropEmpty, ComponentsList, ComponentItem
@@ -218,14 +219,41 @@ class DropDataFrame(QtWidgets.QFrame):
             'files': files,
             'name': file_base,
             'ext': file_ext,
-            'file_info': file_info,
             'representation': repr_name,
             'folder_path': folder_path,
             'is_sequence': False,
             'actions': actions
         }
+        data['file_info'] = self.get_file_info(data)
 
         self._process_data(data)
+
+    def get_file_info(self, data):
+        output = None
+        if data['ext'] == '.mov':
+            try:
+                # ffProbe must be in PATH
+                filepath = data['files'][0]
+                args = ['ffprobe', '-show_streams', filepath]
+                p = subprocess.Popen(
+                    args,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    shell=True
+                )
+                datalines=[]
+                for line in iter(p.stdout.readline, b''):
+                    line = line.decode("utf-8").replace('\r\n', '')
+                    datalines.append(line)
+
+                find_value = 'codec_name'
+                for line in datalines:
+                    if line.startswith(find_value):
+                        output = line.replace(find_value + '=', '')
+                        break
+            except Exception as e:
+                pass
+        return output
 
     def _process_data(self, data):
         ext = data['ext']
