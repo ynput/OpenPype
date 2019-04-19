@@ -66,6 +66,10 @@ class BaseAction(BaseHandler):
             self.session, event
         )
 
+        preactions_launched = self._handle_preactions(self.session, event)
+        if preactions_launched is False:
+            return
+
         interface = self._interface(
             self.session, *args
         )
