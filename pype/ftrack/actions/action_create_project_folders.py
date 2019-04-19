@@ -20,9 +20,8 @@ class CreateProjectFolders(BaseAction):
     description = 'Creates folder structure'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = (
-        'https://cdn2.iconfinder.com/data/icons/'
-        'buttons-9/512/Button_Add-01.png'
+    icon = '{}/ftrack/action_icons/CreateProjectFolders.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     pattern_array = re.compile('\[.*\]')

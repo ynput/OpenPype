@@ -17,7 +17,9 @@ class RVAction(BaseAction):
     identifier = "rv.launch.action"
     label = "rv"
     description = "rv Launcher"
-    icon = "https://img.icons8.com/color/48/000000/circled-play.png"
+    icon = '{}/ftrack/action_icons/RV.png'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
     type = 'Application'
 
     def __init__(self, session):

@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import logging
@@ -17,9 +18,8 @@ class JobKiller(BaseAction):
     description = 'Killing selected running jobs'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = (
-        'https://cdn2.iconfinder.com/data/icons/new-year-resolutions/64/'
-        'resolutions-23-512.png'
+    icon = '{}/ftrack/action_icons/JobKiller-512.png'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     def discover(self, session, entities, event):

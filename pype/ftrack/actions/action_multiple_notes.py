@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import logging
@@ -15,9 +16,8 @@ class MultipleNotes(BaseAction):
     label = 'Multiple Notes'
     #: Action description.
     description = 'Add same note to multiple Asset Versions'
-    icon = (
-        'https://cdn2.iconfinder.com/data/icons/'
-        'mixed-rounded-flat-icon/512/note_1-512.png'
+    icon = '{}/ftrack/action_icons/MultipleNotes-512.png'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     def discover(self, session, entities, event):

@@ -1,8 +1,8 @@
+import os
 import sys
 import argparse
 import logging
 import collections
-import os
 import json
 import re
 
@@ -27,9 +27,8 @@ class TestAction(BaseAction):
     priority = 10000
     #: roles that are allowed to register this action
     role_list = ['Pypeclub']
-    icon = (
-        'https://cdn4.iconfinder.com/data/icons/hospital-19/512/'
-        '8_hospital-512.png'
+    icon = '{}/ftrack/action_icons/TestAction-512.png'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     def discover(self, session, entities, event):

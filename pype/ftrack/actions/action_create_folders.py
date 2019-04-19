@@ -24,10 +24,10 @@ class CreateFolders(BaseAction):
     label = 'Create Folders'
 
     #: Action Icon.
-    icon = (
-        'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
-        '698620-icon-105-folder-add-512.png'
+    icon = '{}/ftrack/action_icons/CreateFolders.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
+
     db = DbConnector()
 
     def discover(self, session, entities, event):

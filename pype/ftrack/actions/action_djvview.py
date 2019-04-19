@@ -16,7 +16,9 @@ class DJVViewAction(BaseAction):
     identifier = "djvview-launch-action"
     label = "DJV View"
     description = "DJV View Launcher"
-    icon = "http://a.fsdn.com/allura/p/djv/icon"
+    icon = '{}/app_icons/djvView.png'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
     type = 'Application'
 
     def __init__(self, session):
