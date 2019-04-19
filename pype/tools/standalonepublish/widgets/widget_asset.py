@@ -182,8 +182,8 @@ class AssetWidget(QtWidgets.QWidget):
         project = self.db.find_one({'type': 'project'})
         asset = self.db.find_one({'_id': self.get_active_asset()})
         data = {
-            'project': project,
-            'asset': asset,
+            'project': project['name'],
+            'asset': asset['name'],
             'parents': self.get_parents(asset)
         }
         return data
@@ -193,7 +193,7 @@ class AssetWidget(QtWidgets.QWidget):
         if entity.get('data', {}).get('visualParent', None) is None:
             return output
         parent = self.db.find_one({'_id': entity['data']['visualParent']})
-        output.append(parent)
+        output.append(parent['name'])
         output.extend(self.get_parents(parent))
         return output
 
