@@ -56,7 +56,7 @@ class DropDataFrame(QtWidgets.QFrame):
             except Exception:
                 pass
         if paths:
-            self._add_components(paths)
+            self._process_paths(paths)
 
     def _processMimeData(self, mimeData):
         paths = []
@@ -69,17 +69,10 @@ class DropDataFrame(QtWidgets.QFrame):
                 print('Invalid input: "{}"'.format(local_path))
         return paths
 
-    def _add_components(self, paths):
-        components = self._process_paths(paths)
-        if not components:
-            return
-        for component in components:
-            self._add_item(component)
-
-    def _add_item(self, data):
+    def _add_item(self, data, actions=[]):
         # Assign to self so garbage collector wont remove the component
         # during initialization
-        new_component = ComponentItem(self.components_list)
+        new_component = ComponentItem(self.components_list, self)
         new_component.set_context(data)
         self.components_list.add_widget(new_component)
 
@@ -88,6 +81,9 @@ class DropDataFrame(QtWidgets.QFrame):
         new_component.signal_thumbnail.connect(
             self._set_thumbnail
         )
+        for action in actions:
+            new_component.add_action(action)
+
         self.items.append(new_component)
 
         self._refresh_view()
@@ -131,12 +127,14 @@ class DropDataFrame(QtWidgets.QFrame):
         self.parent_widget.set_valid_components(not _bool)
 
     def _process_paths(self, in_paths):
+        self.parent_widget.working_start()
         paths = self._get_all_paths(in_paths)
         collections, remainders = clique.assemble(paths)
         for collection in collections:
             self._process_collection(collection)
         for remainder in remainders:
             self._process_remainder(remainder)
+        self.parent_widget.working_stop()
 
     def _get_all_paths(self, paths):
         output_paths = []
@@ -246,6 +244,9 @@ class DropDataFrame(QtWidgets.QFrame):
         )
         data['prev'] = ext in self.presets['extensions']['video_file']
 
+        actions = []
+        new_is_seq = data['is_sequence']
+
         found = False
         for item in self.items:
             if data['ext'] != item.in_data['ext']:
@@ -253,7 +254,6 @@ class DropDataFrame(QtWidgets.QFrame):
             if data['folder_path'] != item.in_data['folder_path']:
                 continue
 
-            new_is_seq = data['is_sequence']
             ex_is_seq = item.in_data['is_sequence']
 
             # If both are single files
@@ -266,68 +266,77 @@ class DropDataFrame(QtWidgets.QFrame):
                 c, r = clique.assemble(paths)
                 if len(c) == 0:
                     continue
+                a_name = 'merge'
+                item.add_action(a_name)
+                if a_name not in actions:
+                    actions.append(a_name)
 
-                found = True
-                self._remove_item(item)
-                self._process_collection(c[0])
-                break
             # If new is sequence and ex is single file
             elif new_is_seq and not ex_is_seq:
                 if data['name'] not in item.in_data['name']:
                     continue
                 ex_file = item.in_data['files'][0]
-                found = True
-                # If file is one of inserted sequence
-                if ex_file in data['files']:
-                    self._remove_item(item)
-                    self._add_item(data)
-                    break
-                # if file is missing in inserted sequence
-                paths = data['files']
-                paths.append(ex_file)
-                collections, remainders = clique.assemble(paths)
-                self._remove_item(item)
-                self._process_collection(collections[0])
-                break
+
+                a_name = 'merge'
+                item.add_action(a_name)
+                if a_name not in actions:
+                    actions.append(a_name)
+                continue
+
             # If new is single file existing is sequence
             elif not new_is_seq and ex_is_seq:
                 if item.in_data['name'] not in data['name']:
                     continue
-                new_file = data['files'][0]
-                found = True
-                if new_file in item.in_data['files']:
-                    paths = []
-                    for path in item.in_data['files']:
-                        if os.path.exists(path):
-                            paths.append(path)
-                    if len(paths) == 1:
-                        self._remove_item(item)
-                        found = False
-                    break
-                paths = item.in_data['files']
-                paths.append(new_file)
-                collections, remainders = clique.assemble(paths)
-                self._remove_item(item)
-                self._process_collection(collections[0])
+                a_name = 'merge'
+                item.add_action(a_name)
+                if a_name not in actions:
+                    actions.append(a_name)
 
-                break
             # If both are sequence
             else:
                 if data['name'] != item.in_data['name']:
                     continue
-                found = True
-                ex_files = item.in_data['files']
-                for file in data['files']:
-                    if file not in ex_files:
-                        ex_files.append(file)
-                paths = list(set(ex_files))
-                collections, remainders = clique.assemble(paths)
-                self._remove_item(item)
-                self._process_collection(collections[0])
-                break
+                if data['files'] == item.in_data['files']:
+                    found = True
+                    break
+                a_name = 'merge'
+                item.add_action(a_name)
+                if a_name not in actions:
+                    actions.append(a_name)
+
+        if new_is_seq:
+            actions.append('split')
 
         if found is False:
-            self._add_item(data)
+            self._add_item(data, actions)
+
+    def merge_items(self, in_item):
+        self.parent_widget.working_start()
+        items = []
+        in_paths = in_item.in_data['files']
+        paths = in_paths
+        for item in self.items:
+            if item.in_data['files'] == in_paths:
+                items.append(item)
+                continue
+            copy_paths = paths.copy()
+            copy_paths.extend(item.in_data['files'])
+            collections, remainders = clique.assemble(copy_paths)
+            if len(collections) == 1 and len(remainders) == 0:
+                paths.extend(item.in_data['files'])
+                items.append(item)
+        for item in items:
+            self._remove_item(item)
+        self._process_paths(paths)
+        self.parent_widget.working_stop()
+
+    def split_items(self, item):
+        self.parent_widget.working_start()
+        paths = item.in_data['files']
+        self._remove_item(item)
+        for path in paths:
+            self._process_remainder(path)
+        self.parent_widget.working_stop()
 
     def collect_data(self):
         data = {'components' : []}

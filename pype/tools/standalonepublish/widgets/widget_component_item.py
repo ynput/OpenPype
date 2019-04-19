@@ -2,6 +2,7 @@ import os
 from . import QtCore, QtGui, QtWidgets
 from . import SvgButton
 from . import get_resource
+from avalon import style
 
 
 class ComponentItem(QtWidgets.QFrame):
@@ -13,11 +14,13 @@ class ComponentItem(QtWidgets.QFrame):
     signal_thumbnail = QtCore.Signal(object)
     signal_preview = QtCore.Signal(object)
 
-    def __init__(self, parent):
+    def __init__(self, parent, main_parent):
         super().__init__()
+        self.actions = []
         self.resize(290, 70)
         self.setMinimumSize(QtCore.QSize(0, 70))
-        self.parent_item = parent
+        self.parent_list = parent
+        self.parent_widget = main_parent
         # Font
         font = QtGui.QFont()
         font.setFamily("DejaVu Sans Condensed")
@@ -49,11 +52,13 @@ class ComponentItem(QtWidgets.QFrame):
         self.icon.setText("")
         self.icon.setScaledContents(True)
 
-        self.action_menu = SvgButton(
+        self.btn_action_menu = SvgButton(
             get_resource('menu.svg'), 22, 22,
             [self.C_NORMAL, self.C_HOVER],
             frame_image_info, False
         )
+
+        self.action_menu = QtWidgets.QMenu()
 
         expanding_sizePolicy = QtWidgets.QSizePolicy(
             QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding
@@ -62,7 +67,7 @@ class ComponentItem(QtWidgets.QFrame):
         expanding_sizePolicy.setVerticalStretch(0)
 
         layout.addWidget(self.icon, alignment=QtCore.Qt.AlignCenter)
-        layout.addWidget(self.action_menu, alignment=QtCore.Qt.AlignCenter)
+        layout.addWidget(self.btn_action_menu, alignment=QtCore.Qt.AlignCenter)
 
         layout_main.addWidget(frame_image_info)
 
@@ -173,6 +178,7 @@ class ComponentItem(QtWidgets.QFrame):
         # self.frame.setStyleSheet("border: 1px solid black;")
 
     def set_context(self, data):
+        self.btn_action_menu.setVisible(False)
         self.in_data = data
         self.remove.clicked.connect(self._remove)
         self.thumbnail.clicked.connect(self._thumbnail_clicked)
@@ -209,6 +215,39 @@ class ComponentItem(QtWidgets.QFrame):
         self.thumbnail.setVisible(thumb)
         self.preview.setVisible(prev)
 
+    def add_action(self, action_name):
+        if action_name.lower() == 'split':
+            for action in self.actions:
+                if action.text() == 'Split to frames':
+                    return
+            new_action = QtWidgets.QAction('Split to frames', self)
+            new_action.triggered.connect(self.split_sequence)
+        elif action_name.lower() == 'merge':
+            for action in self.actions:
+                if action.text() == 'Merge components':
+                    return
+            new_action = QtWidgets.QAction('Merge components', self)
+            new_action.triggered.connect(self.merge_sequence)
+        else:
+            print('unknown action')
+            return
+        self.action_menu.addAction(new_action)
+        self.actions.append(new_action)
+        if not self.btn_action_menu.isVisible():
+            self.btn_action_menu.setVisible(True)
+            self.btn_action_menu.clicked.connect(self.show_actions)
+            self.action_menu.setStyleSheet(style.load_stylesheet())
+
+    def split_sequence(self):
+        self.parent_widget.split_items(self)
+
+    def merge_sequence(self):
+        self.parent_widget.merge_items(self)
+
+    def show_actions(self):
+        position = QtGui.QCursor().pos()
+        self.action_menu.popup(position)
+
     def _remove(self):
         self.signal_remove.emit(self)
 
@@ -233,6 +272,7 @@ class ComponentItem(QtWidgets.QFrame):
     def collect_data(self):
         data = {
             'ext': self.in_data['ext'],
+            'label': self.name.text(),
             'representation': self.input_repre.text(),
             'files': self.in_data['files'],
             'thumbnail': self.is_thumbnail(),

@@ -30,3 +30,5 @@ from .widget_components_list import ComponentsList
 from .widget_drop_frame import DropDataFrame
 
 from .widget_components import ComponentsWidget
+
+from.widget_shadow import ShadowWidget

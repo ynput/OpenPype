@@ -84,6 +84,14 @@ class ComponentsWidget(QtWidgets.QWidget):
         paths = file_dialog.selectedFiles()
         self.drop_frame._process_paths(paths)
 
+    def working_start(self, msg=None):
+        if hasattr(self, 'parent_widget'):
+            self.parent_widget.working_start(msg)
+
+    def working_stop(self):
+        if hasattr(self, 'parent_widget'):
+            self.parent_widget.working_stop()
+
     def _publish(self):
         data = self.parent_widget.collect_data()
         from pprint import pprint
