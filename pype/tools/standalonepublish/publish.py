@@ -15,6 +15,10 @@ import pyblish.api
 
 
 pype.install()
+PUBLISH_PATH = os.path.sep.join(
+    [pype.PLUGINS_DIR, 'standalonepublish', 'publish']
+)
+pyblish.api.register_plugin_path(PUBLISH_PATH)
 
 
 def set_context(project, asset, app):
