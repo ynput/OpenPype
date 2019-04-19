@@ -247,9 +247,7 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def refresh(self):
         has_families = False
-        presets = config.get_presets().get('tools', {}).get(
-            'standalone_publish', {}
-        )
+        presets = config.get_presets().get('standalone_publish', {})
 
         for creator in presets.get('families', {}).values():
             creator = namedtuple("Creator", creator.keys())(*creator.values())

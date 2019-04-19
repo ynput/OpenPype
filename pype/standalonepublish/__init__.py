@@ -1,3 +1,4 @@
+from .asapublish_module import ASAPublishModule
 from .app import (
     show,
     cli

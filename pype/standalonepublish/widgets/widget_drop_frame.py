@@ -11,7 +11,7 @@ class DropDataFrame(QtWidgets.QFrame):
         super().__init__()
         self.parent_widget = parent
         self.items = []
-        self.presets = config.get_presets()['tools']['standalone_publish']
+        self.presets = config.get_presets()['standalone_publish']
 
         self.setAcceptDrops(True)
         layout = QtWidgets.QVBoxLayout(self)
@@ -267,7 +267,7 @@ class DropDataFrame(QtWidgets.QFrame):
             icon += 's'
         data['icon'] = icon
         data['thumb'] = (
-            ext in self.presets['thumbnailable'] and
+            ext in self.presets['extensions']['thumbnailable'] and
             data['is_sequence'] is False
         )
         data['prev'] = ext in self.presets['extensions']['video_file']

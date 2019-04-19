@@ -10,6 +10,8 @@ from .widgets import *
 # Move this to pype lib?
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
+module = sys.modules[__name__]
+module.window = None
 
 class Window(QtWidgets.QDialog):
     _db = DbConnector()
@@ -22,7 +24,7 @@ class Window(QtWidgets.QDialog):
     NOT_SELECTED = '< Nothing is selected >'
 
     def __init__(self, parent=None):
-        super(Window, self).__init__(parent)
+        super(Window, self).__init__()
         self._db.install()
 
         self.setWindowTitle("Standalone Publish")
@@ -172,18 +174,10 @@ class Window(QtWidgets.QDialog):
         data.update(self.widget_assets.collect_data())
         data.update(self.widget_family.collect_data())
         data.update(self.widget_components.collect_data())
-        
+
         return data
 
-def show(parent=None, debug=False, context=None):
-    """Display Loader GUI
-
-    Arguments:
-        debug (bool, optional): Run loader in debug-mode,
-            defaults to False
-
-    """
-
+def show(parent=None, debug=False):
     try:
         module.window.close()
         del module.window
@@ -191,7 +185,7 @@ def show(parent=None, debug=False, context=None):
         pass
 
     with parentlib.application():
-        window = Window(parent, context)
+        window = Window(parent)
         window.show()
 
         module.window = window

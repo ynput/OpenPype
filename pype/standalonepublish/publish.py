@@ -23,7 +23,9 @@ pyblish.api.register_plugin_path(PUBLISH_PATH)
 
 def set_context(project, asset, app):
     os.environ["AVALON_PROJECT"] = project
+    io.Session["AVALON_PROJECT"] = project
     os.environ["AVALON_ASSET"] = asset
+    io.Session["AVALON_ASSET"] = asset
 
     io.install()
 
