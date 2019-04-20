@@ -195,8 +195,8 @@ def set_viewers_colorspace(viewer):
     erased_viewers = []
 
     for v in viewers:
-        v['viewerProcess'].setValue(str(viewer.viewerProcess))
-        if str(viewer.viewerProcess) not in v['viewerProcess'].value():
+        v['viewerProcess'].setValue(str(viewer["viewerProcess"]))
+        if str(viewer["viewerProcess"]) not in v['viewerProcess'].value():
             copy_inputs = v.dependencies()
             copy_knobs = {k: v[k].value() for k in v.knobs()
                           if k not in filter_knobs}
@@ -218,7 +218,7 @@ def set_viewers_colorspace(viewer):
                 nv[k].setValue(v)
 
             # set viewerProcess
-            nv['viewerProcess'].setValue(str(viewer.viewerProcess))
+            nv['viewerProcess'].setValue(str(viewer["viewerProcess"]))
 
     if erased_viewers:
         log.warning(
@@ -229,6 +229,16 @@ def set_viewers_colorspace(viewer):
 def set_root_colorspace(root_dict):
     assert isinstance(root_dict, dict), log.error(
         "set_root_colorspace(): argument should be dictionary")
+
+    # first set OCIO
+    if nuke.root()["colorManagement"].value() not in str(root_dict["colorManagement"]):
+        nuke.root()["colorManagement"].setValue(str(root_dict["colorManagement"]))
+
+    # second set ocio version
+    if nuke.root()["OCIO_config"].value() not in str(root_dict["OCIO_config"]):
+        nuke.root()["OCIO_config"].setValue(str(root_dict["OCIO_config"]))
+
+    # then set the rest
     for knob, value in root_dict.items():
         if nuke.root()[knob].value() not in value:
             nuke.root()[knob].setValue(str(value))
@@ -244,20 +254,20 @@ def set_writes_colorspace(write_dict):
 def set_colorspace():
     from pype import api as pype
 
-    nuke_colorspace = getattr(pype.Colorspace, "nuke", None)
+    nuke_colorspace = pype.Colorspace.get("nuke", None)
 
     try:
-        set_root_colorspace(nuke_colorspace.root)
+        set_root_colorspace(nuke_colorspace["root"])
     except AttributeError:
         log.error(
             "set_colorspace(): missing `root` settings in template")
     try:
-        set_viewers_colorspace(nuke_colorspace.viewer)
+        set_viewers_colorspace(nuke_colorspace["viewer"])
     except AttributeError:
         log.error(
             "set_colorspace(): missing `viewer` settings in template")
     try:
-        set_writes_colorspace(nuke_colorspace.write)
+        set_writes_colorspace(nuke_colorspace["write"])
     except AttributeError:
         log.error(
             "set_colorspace(): missing `write` settings in template")
@@ -440,7 +450,7 @@ def get_additional_data(container):
 
 def get_write_node_template_attr(node):
     ''' Gets all defined data from presets
-        
+
     '''
     # get avalon data from node
     data = dict()
