@@ -16,7 +16,7 @@ class MultipleNotes(BaseAction):
     label = 'Multiple Notes'
     #: Action description.
     description = 'Add same note to multiple Asset Versions'
-    icon = '{}/ftrack/action_icons/MultipleNotes-512.png'.format(
+    icon = '{}/ftrack/action_icons/MultipleNotes.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 

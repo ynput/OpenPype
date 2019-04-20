@@ -27,7 +27,7 @@ class TestAction(BaseAction):
     priority = 10000
     #: roles that are allowed to register this action
     role_list = ['Pypeclub']
-    icon = '{}/ftrack/action_icons/TestAction-512.png'.format(
+    icon = '{}/ftrack/action_icons/TestAction.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
