@@ -139,7 +139,7 @@ def install():
     menu.install()
 
     # load data from templates
-    # api.load_data_from_templates()
+    api.load_data_from_templates()
 
 
 def uninstall():
