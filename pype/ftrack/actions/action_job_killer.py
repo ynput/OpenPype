@@ -18,7 +18,7 @@ class JobKiller(BaseAction):
     description = 'Killing selected running jobs'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = '{}/ftrack/action_icons/JobKiller-512.png'.format(
+    icon = '{}/ftrack/action_icons/JobKiller.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
