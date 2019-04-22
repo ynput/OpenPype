@@ -26,12 +26,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'render': 'render',
                       'nukescript': 'comp',
                       'review': 'mov'}
-    exclude = []
-
-    def process(self, instance):
-        for ex in self.exclude:
-            if ex in instance.data['families']:
-                return
 
         self.log.debug('instance {}'.format(instance))
 
