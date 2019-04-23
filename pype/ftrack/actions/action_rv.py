@@ -41,7 +41,6 @@ class RVAction(BaseAction):
             )
         else:
             # if not, fallback to config file location
-            # self.load_config_data()
             self.config_data = config.get_presets()['djv_view']['config']
             self.set_rv_path()
 
@@ -62,21 +61,6 @@ class RVAction(BaseAction):
         if entityType in ["assetversion", "task"]:
             return True
         return False
-
-    def load_config_data(self):
-        path_items = config.get_presets['rv']['config.json']
-        filepath = os.path.sep.join(path_items)
-
-        data = dict()
-        try:
-            with open(filepath) as data_file:
-                data = json.load(data_file)
-        except Exception as e:
-            log.warning(
-                'Failed to load data from RV presets file ({})'.format(e)
-            )
-
-        self.config_data = data
 
     def set_rv_path(self):
         self.rv_path = self.config_data.get("rv_path")

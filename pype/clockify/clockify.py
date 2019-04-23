@@ -35,6 +35,28 @@ class ClockifyModule:
 
         self.set_menu_visibility()
 
+    def process_modules(self, modules):
+        if 'FtrackModule' in modules:
+            actions_path = os.path.sep.join([
+                os.path.dirname(__file__),
+                'ftrack_actions'
+            ])
+            current = os.environ('FTRACK_ACTIONS_PATH', '')
+            if current:
+                current += os.pathsep
+            os.environ['FTRACK_ACTIONS_PATH'] = current + actions_path
+
+        if 'AvalonApps' in modules:
+            from launcher import lib
+            actions_path = os.path.sep.join([
+                os.path.dirname(__file__),
+                'launcher_actions'
+            ])
+            current = os.environ.get('AVALON_ACTIONS', '')
+            if current:
+                current += os.pathsep
+            os.environ['AVALON_ACTIONS'] = current + actions_path
+
     def start_timer_check(self):
         self.bool_thread_check_running = True
         if self.thread_timer_check is None:

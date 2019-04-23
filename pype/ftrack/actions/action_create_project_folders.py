@@ -41,7 +41,7 @@ class CreateProjectFolders(BaseAction):
         else:
             project = entity['project']
 
-        presets = config.load_presets()['tools']['project_folder_structure']
+        presets = config.get_presets()['tools']['project_folder_structure']
         try:
             # Get paths based on presets
             basic_paths = self.get_path_items(presets)
@@ -140,28 +140,6 @@ class CreateProjectFolders(BaseAction):
         new_ent = self.session.create(ent_type, data)
         self.session.commit()
         return new_ent
-
-    # def load_presets(self):
-    #     preset_items = [
-    #         pypelib.get_presets_path(),
-    #         'tools',
-    #         'project_folder_structure.json'
-    #     ]
-    #     filepath = os.path.sep.join(preset_items)
-    #
-    #     # Load folder structure template from presets
-    #     presets = dict()
-    #     try:
-    #         with open(filepath) as data_file:
-    #             presets = json.load(data_file)
-    #     except Exception as e:
-    #         msg = 'Unable to load Folder structure preset'
-    #         self.log.warning(msg)
-    #         return {
-    #             'success': False,
-    #             'message': msg
-    #         }
-    #     return presets
 
     def get_path_items(self, in_dict):
         output = []

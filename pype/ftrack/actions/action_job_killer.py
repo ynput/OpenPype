@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 import logging
+import json
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
@@ -37,14 +38,18 @@ class JobKiller(BaseAction):
             ).all()
 
             items = []
-            import json
+
             item_splitter = {'type': 'label', 'value': '---'}
             for job in jobs:
-                data = json.loads(job['data'])
+                try:
+                    data = json.loads(job['data'])
+                    desctiption = data['description']
+                except Exception:
+                    desctiption = '*No description*'
                 user = job['user']['username']
                 created = job['created_at'].strftime('%d.%m.%Y %H:%M:%S')
                 label = '{} - {} - {}'.format(
-                    data['description'], created, user
+                    desctiption, created, user
                 )
                 item_label = {
                     'type': 'label',
