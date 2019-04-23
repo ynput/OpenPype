@@ -109,6 +109,7 @@ class BaseHandler(object):
     def reset_session(self):
         self.session.reset()
 
+    def _preregister(self):
         if hasattr(self, "role_list") and len(self.role_list) > 0:
             username = self.session.api_user
             user = self.session.query(
