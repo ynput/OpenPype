@@ -8,7 +8,7 @@ import avalon.io as io
 import nuke
 
 from pype.api import Logger
-log = Logger.get_looger(__name__, "nuke")
+log = Logger().get_logger(__name__, "nuke")
 
 
 @contextlib.contextmanager
@@ -88,8 +88,6 @@ class LoadSequence(api.Loader):
             containerise,
             viewer_update_and_undo_stop
         )
-        # for k, v in context.items():
-        #     log.info("key: `{}`, value: {}\n".format(k, v))
 
         version = context['version']
         version_data = version.get("data", {})
@@ -137,12 +135,14 @@ class LoadSequence(api.Loader):
                 data_imprint.update({k: context["version"]['data'][k]})
             data_imprint.update({"objectName": read_name})
 
+            r["tile_color"].setValue(int("0x4ecd25ff", 16))
+
             return containerise(r,
-                         name=name,
-                         namespace=namespace,
-                         context=context,
-                         loader=self.__class__.__name__,
-                         data=data_imprint)
+                                name=name,
+                                namespace=namespace,
+                                context=context,
+                                loader=self.__class__.__name__,
+                                data=data_imprint)
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -150,18 +150,17 @@ class LoadSequence(api.Loader):
     def update(self, container, representation):
         """Update the Loader's path
 
-        Fusion automatically tries to reset some variables when changing
+        Nuke automatically tries to reset some variables when changing
         the loader's path to a new file. These automatic changes are to its
         inputs:
 
         """
 
         from avalon.nuke import (
-            viewer_update_and_undo_stop,
             ls_img_sequence,
             update_container
         )
-        log.info("this i can see")
+
         node = nuke.toNode(container['objectName'])
         # TODO: prepare also for other Read img/geo/camera
         assert node.Class() == "Read", "Must be Read"
@@ -170,8 +169,19 @@ class LoadSequence(api.Loader):
         file = ls_img_sequence(os.path.dirname(root), one=True)
 
         # Get start frame from version data
-        version = io.find_one({"type": "version",
-                               "_id": representation["parent"]})
+        version = io.find_one({
+            "type": "version",
+            "_id": representation["parent"]
+        })
+
+        # get all versions in list
+        versions = io.find({
+            "type": "version",
+            "parent": version["parent"]
+        }).distinct('name')
+
+        max_version = max(versions)
+
         start = version["data"].get("startFrame")
         if start is None:
             log.warning("Missing start frame for updated version"
@@ -179,24 +189,44 @@ class LoadSequence(api.Loader):
                         "{} ({})".format(node['name'].value(), representation))
             start = 0
 
-        with viewer_update_and_undo_stop():
+        # Update the loader's path whilst preserving some values
+        with preserve_trim(node):
+            node["file"].setValue(file["path"])
+            log.info("__ node['file']: {}".format(node["file"]))
 
-            # Update the loader's path whilst preserving some values
-            with preserve_trim(node):
-                node["file"].setValue(file["path"])
+        # Set the global in to the start frame of the sequence
+        global_in_changed = loader_shift(node, start, relative=False)
+        if global_in_changed:
+            # Log this change to the user
+            log.debug("Changed '{}' global in:"
+                      " {:d}".format(node['name'].value(), start))
 
-            # Set the global in to the start frame of the sequence
-            global_in_changed = loader_shift(node, start, relative=False)
-            if global_in_changed:
-                # Log this change to the user
-                log.debug("Changed '{}' global in:"
-                          " {:d}".format(node['name'].value(), start))
+        updated_dict = {}
+        updated_dict.update({
+            "representation": str(representation["_id"]),
+            "startFrame": start,
+            "endFrame": version["data"].get("endFrame"),
+            "version": version.get("name"),
+            "colorspace": version["data"].get("colorspace"),
+            "source": version["data"].get("source"),
+            "handles": version["data"].get("handles"),
+            "fps": version["data"].get("fps"),
+            "author": version["data"].get("author"),
+            "outputDir": version["data"].get("outputDir"),
+        })
 
-            # Update the imprinted representation
-            update_container(
-                node,
-                {"representation": str(representation["_id"])}
-            )
+        # change color of node
+        if version.get("name") not in [max_version]:
+            node["tile_color"].setValue(int("0xd84f20ff", 16))
+        else:
+            node["tile_color"].setValue(int("0x4ecd25ff", 16))
+
+        # Update the imprinted representation
+        update_container(
+            node,
+            updated_dict
+        )
+        log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
 
