@@ -242,11 +242,17 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
 
-            template_data["frame"] = "#" * int(anatomy_filled["render"]["padding"])
+            if ext[1:] not in ["jpeg", "jpg", "mov", "mp4", "wav"]:
+                template_data["frame"] = "#" * int(anatomy_filled["render"]["padding"])
+
             anatomy_filled = anatomy.format(template_data)
             path_to_save = anatomy_filled["render"]["path"]
             template = anatomy.templates["render"]["path"]
-            self.log.debug('ext[1:]: {}'.format(ext[1:]))
+
+            self.log.debug("path_to_save: {}".format(path_to_save))
+
+
+
 
             representation = {
                 "schema": "pype:representation-2.0",
