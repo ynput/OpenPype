@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hieroXML>
+<hieroXML version="10" revision="159" release="10.5v1" name="Hiero">
+ <Project guid="{26e11125-2da7-a24c-a2d2-8ff1e43f0076}" floatLut="linear" ocioConfigName="custom" logLut="AlexaV3LogC" workingSpace="rec709" name="vfx_rec709" timedisplayformat="0" starttimecode="86400" shotPresetName="Basic Nuke Shot With Annotations" redVideoDecodeMode="0" sixteenBitLut="rec709" nukeUseOCIO="0" samplerate="48000/1" framerate="24/1" timelineReformatType="Disabled" viewerLut="rec709" ocioConfigCustom="0" thumbnailLut="sRGB" buildTrackName="VFX" ocioconfigpath="" timelineReformatCenter="1" useViewColors="0" editable="1" timelineReformatResizeType="Width" eightBitLut="sRGB">
+  <items>
+   <RootBinProjectItem editable="1" guid="{5a73c3ce-0194-f748-93cf-e0314c94e512}" name="Sequences">
+    <items>
+     <BinProjectItem editable="1" guid="{a0af2960-f7a7-d24e-a841-b8a6a754611a}" name="in">
+      <BinViewType>2</BinViewType>
+      <BinViewZoom>70</BinViewZoom>
+     </BinProjectItem>
+     <BinProjectItem editable="1" guid="{b49aa641-6b2c-f74b-92e5-9b79105ef212}" name="out">
+      <BinViewType>2</BinViewType>
+      <BinViewZoom>70</BinViewZoom>
+     </BinProjectItem>
+    </items>
+    <BinViewType>2</BinViewType>
+    <BinViewZoom>70</BinViewZoom>
+    <AllowedItems>13</AllowedItems>
+   </RootBinProjectItem>
+   <RootBinProjectItem editable="1" guid="{a0df9e8c-cdef-7a41-a818-a7437ca86567}" name="Tags">
+    <BinViewType>2</BinViewType>
+    <BinViewZoom>70</BinViewZoom>
+    <AllowedItems>17</AllowedItems>
+   </RootBinProjectItem>
+  </items>
+  <BinViewType>2</BinViewType>
+  <BinViewZoom>70</BinViewZoom>
+  <AllowedItems>2</AllowedItems>
+  <RootBinProjectItem objName="sequencesBin" guid="{5a73c3ce-0194-f748-93cf-e0314c94e512}" link="internal"/>
+  <RootBinProjectItem objName="tagsBin" guid="{a0df9e8c-cdef-7a41-a818-a7437ca86567}" link="internal"/>
+  <MediaFormatValue default="0" objName="outputformat" value="1,[ 0, 0, 1920, 1080],[ 0, 0, 1920, 1080],HD_1080" name=""/>
+  <Views>
+   <View name="main" color="#ffffff"/>
+  </Views>
+ </Project>
+ <UIState/>
+</hieroXML>
