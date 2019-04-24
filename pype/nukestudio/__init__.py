@@ -32,8 +32,6 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "nukestudio", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "nukestudio", "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "nukestudio", "inventory")
 
-self = sys.modules[__name__]
-self.nLogger = None
 
 if os.getenv("PYBLISH_GUI", None):
     pyblish.register_gui(os.getenv("PYBLISH_GUI", None))
@@ -49,14 +47,12 @@ def reload_config():
     import importlib
 
     for module in (
-        "app",
-        "app.api",
+        "pypeapp",
         "{}.api".format(AVALON_CONFIG),
         "{}.templates".format(AVALON_CONFIG),
-        "{}.nuke.actions".format(AVALON_CONFIG),
-        "{}.nuke.templates".format(AVALON_CONFIG),
-        "{}.nuke.menu".format(AVALON_CONFIG),
-        "{}.nuke.lib".format(AVALON_CONFIG),
+        "{}.nukestudio.inventory".format(AVALON_CONFIG),
+        "{}.nukestudio.lib".format(AVALON_CONFIG),
+        "{}.nukestudio.menu".format(AVALON_CONFIG),
     ):
         log.info("Reloading module: {}...".format(module))
         try:
@@ -74,17 +70,15 @@ def install():
 
     import sys
 
-    for path in sys.path:
-        if path.startswith("C:\\Users\\Public"):
-            sys.path.remove(path)
+    # for path in sys.path:
+    #     if path.startswith("C:\\Users\\Public"):
+    #         sys.path.remove(path)
 
     log.info("Registering Nuke plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
-
-    pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
 
     # Disable all families except for the ones we explicitly want to see
     family_states = [
@@ -98,7 +92,7 @@ def install():
     menu.install()
 
     # load data from templates
-    # api.load_data_from_templates()
+    api.load_data_from_templates()
 
 
 def uninstall():
@@ -107,30 +101,5 @@ def uninstall():
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
 
-    pyblish.deregister_callback("instanceToggled", on_pyblish_instance_toggled)
-
     # reset data from templates
     api.reset_data_from_templates()
-
-
-def on_pyblish_instance_toggled(instance, old_value, new_value):
-    """Toggle node passthrough states on instance toggles."""
-    self.log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
-        instance, old_value, new_value))
-
-    from avalon.nuke import (
-        viewer_update_and_undo_stop,
-        add_publish_knob
-    )
-
-    # Whether instances should be passthrough based on new value
-
-    with viewer_update_and_undo_stop():
-        n = instance[0]
-        try:
-            n["publish"].value()
-        except ValueError:
-            n = add_publish_knob(n)
-            log.info(" `Publish` knob was added to write node..")
-
-        n["publish"].setValue(new_value)

@@ -1,5 +1,10 @@
 import traceback
 
+# activate nukestudio from pype
+import avalon.api
+import pype.nukestudio
+avalon.api.install(pype.nukestudio)
+
 try:
     __import__("pype.nukestudio")
     __import__("pyblish")
