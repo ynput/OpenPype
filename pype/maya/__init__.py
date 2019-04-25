@@ -107,9 +107,6 @@ def on_init(_):
     # Force load objExport plug-in (requested by artists)
     cmds.loadPlugin("objExport", quiet=True)
 
-    # Force load objExport plug-in (requested by artists)
-    cmds.loadPlugin("spore", quiet=True)
-
     from .customize import (
         override_component_mask_commands,
         override_toolbox_ui
