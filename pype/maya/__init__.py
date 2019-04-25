@@ -6,6 +6,7 @@ from maya import utils, cmds, mel
 
 from avalon import api as avalon, pipeline, maya
 from avalon.maya.pipeline import IS_HEADLESS
+from avalon.tools import workfiles
 from pyblish import api as pyblish
 
 from ..lib import (
@@ -115,9 +116,19 @@ def on_init(_):
         override_toolbox_ui
     )
     safe_deferred(override_component_mask_commands)
+    safe_deferred(launch_workfiles_app)
 
     if not IS_HEADLESS:
         safe_deferred(override_toolbox_ui)
+
+
+def launch_workfiles_app(*args):
+    workfiles.show(
+        os.path.join(
+            cmds.workspace(query=True, rootDirectory=True),
+            cmds.workspace(fileRuleEntry="scene")
+        )
+    )
 
 
 def on_before_save(return_code, _):
