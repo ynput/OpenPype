@@ -153,7 +153,8 @@ class Window(QtWidgets.QDialog):
         QtWidgets.QApplication.processEvents()
 
     def working_stop(self):
-        self.shadow_widget.setVisible(False)
+        if self.shadow_widget.isVisible():
+            self.shadow_widget.setVisible(False)
 
     def validation(self):
         if not self.initialized:
