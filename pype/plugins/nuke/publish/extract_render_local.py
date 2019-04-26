@@ -17,18 +17,11 @@ class NukeRenderLocal(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Render Local"
     hosts = ["nuke"]
-    families = ["render.local", "prerender.local", "still.local"]
+    families = ["render.local"]
 
     def process(self, instance):
         node = instance[0]
-        # This should be a ContextPlugin, but this is a workaround
-        # for a bug in pyblish to run once for a family: issue #250
         context = instance.context
-        key = "__hasRun{}".format(self.__class__.__name__)
-        if context.data.get(key, False):
-            return
-        else:
-            context.data[key] = True
 
         self.log.debug("instance collected: {}".format(instance.data))
 
@@ -70,8 +63,9 @@ class NukeRenderLocal(pype.api.Extractor):
         collections, remainder = clique.assemble(*instance.data['files'])
         self.log.info('collections: {}'.format(str(collections)))
 
-        collection = collections[0]
-        instance.data['collection'] = collection
+        if collections:
+            collection = collections[0]
+            instance.data['collection'] = collection
 
         self.log.info('Finished render')
         return

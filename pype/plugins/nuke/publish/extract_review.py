@@ -28,21 +28,29 @@ class ExtractDataForReview(pype.api.Extractor):
         self.log.debug("creating staging dir:")
         self.staging_dir(instance)
 
-        self.render_review_representation(instance,
-                                          representation="mov")
-        self.log.debug("review mov:")
-        self.transcode_mov(instance)
-        self.render_review_representation(instance,
-                                          representation="jpeg")
+        self.log.debug("instance: {}".format(instance))
+        self.log.debug("instance.data[families]: {}".format(
+            instance.data["families"]))
+
+        if "still" not in instance.data["families"]:
+            self.render_review_representation(instance,
+                                              representation="mov")
+            self.log.debug("review mov:")
+            self.transcode_mov(instance)
+            self.log.debug("instance.data: {}".format(instance.data))
+            self.render_review_representation(instance,
+                                              representation="jpeg")
+        else:
+            self.log.debug("instance: {}".format(instance))
+            self.render_review_representation(instance, representation="jpeg")
+
         # Restore selection
         [i["selected"].setValue(False) for i in nuke.allNodes()]
         [i["selected"].setValue(True) for i in selection]
 
     def transcode_mov(self, instance):
-        import subprocess
-
         collection = instance.data["collection"]
-        staging_dir = instance.data["stagingDir"]
+        staging_dir = instance.data["stagingDir"].replace("\\", "/")
         file_name = collection.format("{head}mov")
 
         review_mov = os.path.join(staging_dir, file_name).replace("\\", "/")
@@ -53,12 +61,15 @@ class ExtractDataForReview(pype.api.Extractor):
             out, err = (
                 ffmpeg
                 .input(input_movie)
-                .output(review_mov, pix_fmt='yuv420p', crf=18, timecode="00:00:00:01")
+                .output(
+                    review_mov,
+                    pix_fmt='yuv420p',
+                    crf=18,
+                    timecode="00:00:00:01"
+                )
                 .overwrite_output()
                 .run()
             )
-
-
 
         self.log.debug("Removing `{0}`...".format(
             instance.data["baked_colorspace_movie"]))
@@ -72,23 +83,32 @@ class ExtractDataForReview(pype.api.Extractor):
 
         assert instance.data['files'], "Instance data files should't be empty!"
 
-        import clique
         import nuke
         temporary_nodes = []
-        staging_dir = instance.data["stagingDir"]
+        staging_dir = instance.data["stagingDir"].replace("\\", "/")
+        self.log.debug("StagingDir `{0}`...".format(staging_dir))
 
         collection = instance.data.get("collection", None)
 
-        # Create nodes
-        first_frame = min(collection.indexes)
-        last_frame = max(collection.indexes)
+        if collection:
+            # get path
+            fname = os.path.basename(collection.format(
+                "{head}{padding}{tail}"))
+            fhead = collection.format("{head}")
+
+            # get first and last frame
+            first_frame = min(collection.indexes)
+            last_frame = max(collection.indexes)
+        else:
+            fname = os.path.basename(instance.data.get("path", None))
+            fhead = os.path.splitext(fname)[0] + "."
+            first_frame = instance.data.get("startFrame", None)
+            last_frame = instance.data.get("endFrame", None)
 
         node = previous_node = nuke.createNode("Read")
 
         node["file"].setValue(
-            os.path.join(staging_dir,
-                         os.path.basename(collection.format(
-                             "{head}{padding}{tail}"))).replace("\\", "/"))
+            os.path.join(staging_dir, fname).replace("\\", "/"))
 
         node["first"].setValue(first_frame)
         node["origfirst"].setValue(first_frame)
@@ -126,7 +146,7 @@ class ExtractDataForReview(pype.api.Extractor):
         write_node = nuke.createNode("Write")
 
         if representation in "mov":
-            file = collection.format("{head}baked.mov")
+            file = fhead + "baked.mov"
             path = os.path.join(staging_dir, file).replace("\\", "/")
             self.log.debug("Path: {}".format(path))
             instance.data["baked_colorspace_movie"] = path
@@ -137,7 +157,7 @@ class ExtractDataForReview(pype.api.Extractor):
             temporary_nodes.append(write_node)
 
         elif representation in "jpeg":
-            file = collection.format("{head}jpeg")
+            file = fhead + "jpeg"
             path = os.path.join(staging_dir, file).replace("\\", "/")
             instance.data["thumbnail"] = path
             write_node["file"].setValue(path)
@@ -147,8 +167,8 @@ class ExtractDataForReview(pype.api.Extractor):
             temporary_nodes.append(write_node)
 
             # retime for
-            first_frame = int(last_frame)/2
-            last_frame = int(last_frame)/2
+            first_frame = int(last_frame) / 2
+            last_frame = int(last_frame) / 2
             # add into files for integration as representation
             instance.data["files"].append(file)
 

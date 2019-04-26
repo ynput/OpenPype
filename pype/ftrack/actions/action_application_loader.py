@@ -35,10 +35,15 @@ def registerApp(app, session):
     label = apptoml.get('ftrack_label', app.get('label', name))
     icon = apptoml.get('ftrack_icon', None)
     description = apptoml.get('description', None)
+    preactions = apptoml.get('preactions', [])
+
+    if icon:
+        icon = icon.format(os.environ.get('PYPE_STATICS_SERVER', ''))
 
     # register action
     AppAction(
-        session, label, name, executable, variant, icon, description
+        session, label, name, executable, variant,
+        icon, description, preactions
     ).register()
 
 

@@ -18,7 +18,7 @@ class CollectInstanceFamilies(pyblish.api.InstancePlugin):
 
         families = []
         if instance.data.get('families'):
-            families.append(instance.data['families'])
+            families += instance.data['families']
 
         # set for ftrack to accept
         # instance.data["families"] = ["ftrack"]
@@ -36,9 +36,7 @@ class CollectInstanceFamilies(pyblish.api.InstancePlugin):
 
         families.append('ftrack')
 
-
         instance.data["families"] = families
-
 
         # Sort/grouped by family (preserving local index)
         instance.context[:] = sorted(instance.context, key=self.sort_by_family)

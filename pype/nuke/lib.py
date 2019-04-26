@@ -58,7 +58,8 @@ def writes_version_sync():
                 node_new_file = node_file.replace(node_version, new_version)
                 each['file'].setValue(node_new_file)
             except Exception as e:
-                log.debug("Write node: `{}` has no version in path: {}".format(each.name(), e))
+                log.debug(
+                    "Write node: `{}` has no version in path: {}".format(each.name(), e))
 
 
 def version_up_script():
@@ -74,7 +75,7 @@ def get_render_path(node):
     data_preset = {
         "class": data['avalon']['family'],
         "preset": data['avalon']['families']
-        }
+    }
 
     nuke_dataflow_writes = get_dataflow(**data_preset)
     nuke_colorspace_writes = get_colorspace(**data_preset)
@@ -87,7 +88,8 @@ def get_render_path(node):
     })
 
     anatomy_filled = format_anatomy(data)
-    return anatomy_filled.render.path.replace("\\", "/")
+    return anatomy_filled["render"]["path"].replace("\\", "/")
+
 
 def format_anatomy(data):
     from .templates import (
@@ -95,28 +97,29 @@ def format_anatomy(data):
     )
 
     anatomy = get_anatomy()
-
+    log.info("__ anatomy.templates: {}".format(anatomy.templates))
     # TODO: perhaps should be in try!
-    padding = anatomy.render.padding
+    padding = int(anatomy.templates['render']['padding'])
     version = data.get("version", None)
     if not version:
         file = script_name()
         data["version"] = pype.get_version_from_path(file)
 
     data.update({
+        "root": api.Session["AVALON_PROJECTS"],
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
         "task": str(pype.get_task()).lower(),
         "family": data["avalon"]["family"],
         "project": {"name": pype.get_project_name(),
                     "code": pype.get_project_code()},
-        "representation": data["nuke_dataflow_writes"].file_type,
+        "representation": data["nuke_dataflow_writes"]["file_type"],
         "app": data["application"]["application_dir"],
         "hierarchy": pype.get_hierarchy(),
         "frame": "#" * padding,
     })
-
-    # log.info("format_anatomy:anatomy: {}".format(anatomy))
+    log.info("__ data: {}".format(data))
+    log.info("__ format_anatomy: {}".format(anatomy.format(data)))
     return anatomy.format(data)
 
 
@@ -141,10 +144,8 @@ def create_write_node(name, data):
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))
 
-    log.debug("anatomy_filled.render: {}".format(anatomy_filled.render))
-
     _data = OrderedDict({
-        "file": str(anatomy_filled.render.path).replace("\\", "/")
+        "file": str(anatomy_filled["render"]["path"]).replace("\\", "/")
     })
 
     # adding dataflow template
@@ -161,7 +162,7 @@ def create_write_node(name, data):
     log.debug(_data)
 
     _data["frame_range"] = data.get("frame_range", None)
-
+    log.info("__ _data3: {}".format(_data))
     instance = avalon.nuke.lib.add_write_node(
         name,
         **_data
@@ -169,6 +170,7 @@ def create_write_node(name, data):
     instance = avalon.nuke.lib.imprint(instance, data["avalon"])
     add_rendering_knobs(instance)
     return instance
+
 
 def add_rendering_knobs(node):
     if "render" not in node.knobs():
@@ -195,8 +197,8 @@ def set_viewers_colorspace(viewer):
     erased_viewers = []
 
     for v in viewers:
-        v['viewerProcess'].setValue(str(viewer.viewerProcess))
-        if str(viewer.viewerProcess) not in v['viewerProcess'].value():
+        v['viewerProcess'].setValue(str(viewer["viewerProcess"]))
+        if str(viewer["viewerProcess"]) not in v['viewerProcess'].value():
             copy_inputs = v.dependencies()
             copy_knobs = {k: v[k].value() for k in v.knobs()
                           if k not in filter_knobs}
@@ -218,7 +220,7 @@ def set_viewers_colorspace(viewer):
                 nv[k].setValue(v)
 
             # set viewerProcess
-            nv['viewerProcess'].setValue(str(viewer.viewerProcess))
+            nv['viewerProcess'].setValue(str(viewer["viewerProcess"]))
 
     if erased_viewers:
         log.warning(
@@ -229,6 +231,17 @@ def set_viewers_colorspace(viewer):
 def set_root_colorspace(root_dict):
     assert isinstance(root_dict, dict), log.error(
         "set_root_colorspace(): argument should be dictionary")
+
+    # first set OCIO
+    if nuke.root()["colorManagement"].value() not in str(root_dict["colorManagement"]):
+        nuke.root()["colorManagement"].setValue(
+            str(root_dict["colorManagement"]))
+
+    # second set ocio version
+    if nuke.root()["OCIO_config"].value() not in str(root_dict["OCIO_config"]):
+        nuke.root()["OCIO_config"].setValue(str(root_dict["OCIO_config"]))
+
+    # then set the rest
     for knob, value in root_dict.items():
         if nuke.root()[knob].value() not in value:
             nuke.root()[knob].setValue(str(value))
@@ -244,20 +257,20 @@ def set_writes_colorspace(write_dict):
 def set_colorspace():
     from pype import api as pype
 
-    nuke_colorspace = getattr(pype.Colorspace, "nuke", None)
+    nuke_colorspace = pype.Colorspace.get("nuke", None)
 
     try:
-        set_root_colorspace(nuke_colorspace.root)
+        set_root_colorspace(nuke_colorspace["root"])
     except AttributeError:
         log.error(
             "set_colorspace(): missing `root` settings in template")
     try:
-        set_viewers_colorspace(nuke_colorspace.viewer)
+        set_viewers_colorspace(nuke_colorspace["viewer"])
     except AttributeError:
         log.error(
             "set_colorspace(): missing `viewer` settings in template")
     try:
-        set_writes_colorspace(nuke_colorspace.write)
+        set_writes_colorspace(nuke_colorspace["write"])
     except AttributeError:
         log.error(
             "set_colorspace(): missing `write` settings in template")
@@ -322,7 +335,7 @@ def reset_resolution():
         check_format = used_formats[-1]
         format_name = "{}_{}".format(
             project["name"],
-            int(used_formats[-1].name()[-1])+1
+            int(used_formats[-1].name()[-1]) + 1
         )
         log.info(
             "Format exists: {}. "
@@ -440,7 +453,7 @@ def get_additional_data(container):
 
 def get_write_node_template_attr(node):
     ''' Gets all defined data from presets
-        
+
     '''
     # get avalon data from node
     data = dict()
@@ -448,7 +461,7 @@ def get_write_node_template_attr(node):
     data_preset = {
         "class": data['avalon']['family'],
         "preset": data['avalon']['families']
-        }
+    }
 
     # get template data
     nuke_dataflow_writes = get_dataflow(**data_preset)

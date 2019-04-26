@@ -153,6 +153,7 @@ class FtrackModule:
 
         parent_menu.addMenu(self.menu)
 
+    def tray_start(self):
         self.validate()
 
     # Definition of visibility of each menu actions
