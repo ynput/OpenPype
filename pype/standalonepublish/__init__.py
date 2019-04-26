@@ -1,4 +1,4 @@
-from .asapublish_module import ASAPublishModule
+from .standalonepublish_module import StandAlonePublishModule
 from .app import (
     show,
     cli
@@ -9,4 +9,4 @@ __all__ = [
 ]
 
 def tray_init(tray_widget, main_widget):
-    return ASAPublishModule(main_widget, tray_widget)
+    return StandAlonePublishModule(main_widget, tray_widget)

@@ -2,14 +2,14 @@ from .app import show
 from .widgets import QtWidgets
 
 
-class ASAPublishModule:
+class StandAlonePublishModule:
     def __init__(self, main_parent=None, parent=None):
         self.main_parent = main_parent
         self.parent_widget = parent
 
     def tray_menu(self, parent_menu):
         self.run_action = QtWidgets.QAction(
-            "ASAPublish", parent_menu
+            "Publish", parent_menu
         )
         self.run_action.triggered.connect(show)
         parent_menu.addAction(self.run_action)
