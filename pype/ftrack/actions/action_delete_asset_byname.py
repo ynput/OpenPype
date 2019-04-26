@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 import argparse
@@ -17,10 +18,8 @@ class AssetsRemover(BaseAction):
     description = 'Removes assets from Ftrack and Avalon db with all childs'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = (
-        'https://cdn4.iconfinder.com/data/icons/'
-        'ios-web-user-interface-multi-circle-flat-vol-5/512/'
-        'Clipboard_copy_delete_minus_paste_remove-512.png'
+    icon = '{}/ftrack/action_icons/AssetsRemover.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
     #: Db
     db = DbConnector()
