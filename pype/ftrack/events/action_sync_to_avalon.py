@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 import logging
-import ftrack_api
+from pype.vendor import ftrack_api
 import json
 from pype.ftrack import BaseAction, lib
 
