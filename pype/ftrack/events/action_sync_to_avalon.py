@@ -49,9 +49,8 @@ class Sync_To_Avalon(BaseAction):
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
-    icon = (
-        'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
-        '699650-icon-92-inbox-download-512.png'
+    icon = '{}/ftrack/action_icons/SyncToAvalon.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     def register(self):

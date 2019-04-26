@@ -114,10 +114,8 @@ class CustomAttributes(BaseAction):
     description = 'Creates Avalon/Mongo ID for double check'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = (
-        'https://cdn4.iconfinder.com/data/icons/'
-        'ios-web-user-interface-multi-circle-flat-vol-4/512/'
-        'Bullet_list_menu_lines_points_items_options-512.png'
+    icon = '{}/ftrack/action_icons/CustomAttributes.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     def __init__(self, session):

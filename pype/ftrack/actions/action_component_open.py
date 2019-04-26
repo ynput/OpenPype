@@ -1,8 +1,8 @@
+import os
 import sys
 import argparse
 import logging
 import subprocess
-import os
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 
@@ -15,9 +15,8 @@ class ComponentOpen(BaseAction):
     # Action label
     label = 'Open File'
     # Action icon
-    icon = (
-        'https://cdn4.iconfinder.com/data/icons/rcons-application/32/'
-        'application_go_run-256.png'
+    icon = '{}/ftrack/action_icons/ComponentOpen.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     def discover(self, session, entities, event):
