@@ -8,6 +8,7 @@ from avalon import api as avalon, pipeline, maya
 from avalon.maya.pipeline import IS_HEADLESS
 from avalon.tools import workfiles
 from pyblish import api as pyblish
+from pypeapp import config
 
 from ..lib import (
     any_outdated
@@ -107,15 +108,25 @@ def on_init(_):
     # Force load objExport plug-in (requested by artists)
     cmds.loadPlugin("objExport", quiet=True)
 
-    # Force load objExport plug-in (requested by artists)
-    cmds.loadPlugin("spore", quiet=True)
-
     from .customize import (
         override_component_mask_commands,
         override_toolbox_ui
     )
     safe_deferred(override_component_mask_commands)
-    safe_deferred(launch_workfiles_app)
+
+    launch_workfiles = True
+    try:
+        presets = config.get_presets()
+        launch_workfiles = presets['tools']['workfiles']['start_on_app_launch']
+    except KeyError:
+        log.info(
+            "Workfiles app start on launch configuration was not found."
+            " Defaulting to False."
+        )
+        launch_workfiles = False
+
+    if launch_workfiles:
+        safe_deferred(launch_workfiles_app)
 
     if not IS_HEADLESS:
         safe_deferred(override_toolbox_ui)
