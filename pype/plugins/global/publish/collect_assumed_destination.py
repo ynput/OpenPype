@@ -4,14 +4,18 @@ import pyblish.api
 from avalon import io, api
 
 
-class CollectAssumedDestination(pyblish.api.InstancePlugin):
+class CollectAssumedDestination(pyblish.api.ContextPlugin):
     """Generate the assumed destination path where the file will be stored"""
 
     label = "Collect Assumed Destination"
     order = pyblish.api.CollectorOrder + 0.498
     exclude_families = ["clip"]
 
-    def process(self, instance):
+    def process(self, context):
+        for instance in context:
+            self.process_item(instance)
+
+    def process_item(self, instance):
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
             return
@@ -19,7 +23,6 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
         self.create_destination_template(instance)
 
         template_data = instance.data["assumedTemplateData"]
-        template = instance.data["template"]
 
         anatomy = instance.context.data['anatomy']
         # self.log.info(anatomy.anatomy())
