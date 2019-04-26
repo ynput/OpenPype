@@ -367,7 +367,7 @@ class DropDataFrame(QtWidgets.QFrame):
         self.parent_widget.working_stop()
 
     def collect_data(self):
-        data = {'components' : []}
+        data = {'representations' : []}
         for item in self.items:
-            data['components'].append(item.collect_data())
+            data['representations'].append(item.collect_data())
         return data
