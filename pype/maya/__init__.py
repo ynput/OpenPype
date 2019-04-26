@@ -2,7 +2,7 @@ import os
 import logging
 import weakref
 
-from maya import utils, cmds, mel
+from maya import utils, cmds
 
 from avalon import api as avalon, pipeline, maya
 from avalon.maya.pipeline import IS_HEADLESS
@@ -10,7 +10,6 @@ from avalon.tools import workfiles
 from pyblish import api as pyblish
 
 from ..lib import (
-    update_task_from_path,
     any_outdated
 )
 from . import menu
