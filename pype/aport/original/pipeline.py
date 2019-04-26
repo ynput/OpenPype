@@ -55,7 +55,7 @@ def publish(json_data_path, staging_dir=None):
     return_json_path = os.path.join(staging_dir, "return_data.json")
 
     log.debug("avalon.session is: \n{}".format(SESSION))
-    pype_start = os.path.join(os.getenv('PYPE_SETUP_ROOT'),
+    pype_start = os.path.join(os.getenv('PYPE_ROOT'),
                               "app", "pype-start.py")
 
     args = [pype_start, "--publish",
