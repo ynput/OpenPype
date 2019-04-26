@@ -7,6 +7,7 @@ import string
 
 from avalon import io
 from avalon import api as avalon
+from avalon.tools import publish as av_publish
 
 import pype
 from pypeapp import execute
@@ -70,14 +71,14 @@ def publish(data, gui=True):
         "-pp", os.pathsep.join(pyblish.api.registered_paths())
     ]
 
-    if gui:
-        args += ["gui"]
-
     os.environ["PYBLISH_HOSTS"] = "shell"
     os.environ["ASAPUBLISH_INPATH"] = json_data_path
 
-    returncode = execute([
-        sys.executable, "-u", "-m", "pyblish"
-    ] + args, env=os.environ)
+    if gui:
+        av_publish.show()
+    else:
+        returncode = execute([
+            sys.executable, "-u", "-m", "pyblish"
+        ] + args, env=os.environ)
 
     io.uninstall()
