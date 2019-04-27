@@ -17,8 +17,13 @@ class IdleManager(QtCore.QThread):
         super(IdleManager, self).__init__()
         self.log = Logger().get_logger(self.__class__.__name__)
         self.signal_reset_timer.connect(self._reset_time)
-        self._failed = False
+        self.qaction = None
+        self.failed_icon = None
         self._is_running = False
+
+    def set_qaction(self, qaction, failed_icon):
+        self.qaction = qaction
+        self.failed_icon = failed_icon
 
     def tray_start(self):
         self.start()
@@ -33,10 +38,6 @@ class IdleManager(QtCore.QThread):
         if emit_time not in self.time_signals:
             self.time_signals[emit_time] = []
         self.time_signals[emit_time].append(signal)
-
-    @property
-    def failed(self):
-        return self._failed
 
     @property
     def is_running(self):
@@ -55,20 +56,26 @@ class IdleManager(QtCore.QThread):
         thread_mouse.start()
         thread_keyboard = KeyboardThread(self.signal_reset_timer)
         thread_keyboard.start()
-        while self._is_running:
-            self.idle_time += 1
-            if self.idle_time in self.time_signals:
-                for signal in self.time_signals[self.idle_time]:
-                    signal.emit()
-            time.sleep(1)
+        try:
+            while self.is_running:
+                self.idle_time += 1
+                if self.idle_time in self.time_signals:
+                    for signal in self.time_signals[self.idle_time]:
+                        signal.emit()
+                time.sleep(1)
+        except Exception:
+            self.log.warning(
+                'Idle Manager service has failed', exc_info=True
+            )
 
+        if self.qaction and self.failed_icon:
+            self.qaction.setIcon(self.failed_icon)
         thread_mouse.signal_stop.emit()
         thread_mouse.terminate()
         thread_mouse.wait()
         thread_keyboard.signal_stop.emit()
         thread_keyboard.terminate()
         thread_keyboard.wait()
-        self._failed = True
         self._is_running = False
         self.log.info('IdleManager has stopped')
 
