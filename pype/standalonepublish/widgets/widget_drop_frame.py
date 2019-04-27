@@ -11,6 +11,7 @@ class DropDataFrame(QtWidgets.QFrame):
         super().__init__()
         self.parent_widget = parent
         self.items = []
+        self.removed = []
         self.presets = config.get_presets()['standalone_publish']
 
         self.setAcceptDrops(True)
@@ -117,6 +118,7 @@ class DropDataFrame(QtWidgets.QFrame):
         index = self.components_list.widget_index(item)
         self.components_list.remove_widget(index)
         if item in self.items:
+            self.removed.append(item)
             self.items.remove(item)
         self._refresh_view()
 
