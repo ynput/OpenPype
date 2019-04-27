@@ -1,6 +1,9 @@
 import os
+import sys
+import datetime
 import socket
 import http.server
+from http import HTTPStatus
 import urllib
 import posixpath
 import socketserver
@@ -13,9 +16,14 @@ DIRECTORY = os.path.sep.join([os.environ['PYPE_MODULE_ROOT'], 'res'])
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
-    directory=DIRECTORY
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        py_version = sys.version.split('.')
+        # If python version is 3.7 or higher
+        if int(py_version[0]) >= 3 and int(py_version[1]) >= 7:
+            super().__init__(*args, directory=DIRECTORY, **kwargs)
+        else:
+            self.directory = DIRECTORY
+            super().__init__(*args, **kwargs)
 
     def send_head(self):
         """Common code for GET and HEAD commands.
@@ -62,7 +70,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     and "If-None-Match" not in self.headers):
                 # compare If-Modified-Since and time of last file modification
                 try:
-                    ims = email.utils.parsedate_to_datetime(
+                    ims = http.server.email.utils.parsedate_to_datetime(
                         self.headers["If-Modified-Since"])
                 except (TypeError, IndexError, OverflowError, ValueError):
                     # ignore ill-formed values
