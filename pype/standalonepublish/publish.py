@@ -15,7 +15,9 @@ from pypeapp import execute
 import pyblish.api
 
 
+# Registers Global pyblish plugins
 pype.install()
+# Registers Standalone pyblish plugins
 PUBLISH_PATH = os.path.sep.join(
     [pype.PLUGINS_DIR, 'standalonepublish', 'publish']
 )
@@ -23,6 +25,12 @@ pyblish.api.register_plugin_path(PUBLISH_PATH)
 
 
 def set_context(project, asset, app):
+    ''' Sets context for pyblish (must be done before pyblish is launched)
+    :param project: Name of `Project` where instance should be published
+    :type project: str
+    :param asset: Name of `Asset` where instance should be published
+    :type asset: str
+    '''
     os.environ["AVALON_PROJECT"] = project
     io.Session["AVALON_PROJECT"] = project
     os.environ["AVALON_ASSET"] = asset
@@ -56,6 +64,12 @@ def set_context(project, asset, app):
 
 
 def publish(data, gui=True):
+    ''' Launches Pyblish (GUI by default)
+    :param data: Should include data for pyblish and standalone collector
+    :type data: dict
+    :param gui: Pyblish will be launched in GUI mode if set to True
+    :type gui: bool
+    '''
     io.install()
 
     # Create hash name folder in temp
