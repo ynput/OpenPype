@@ -277,8 +277,8 @@ class DropDataFrame(QtWidgets.QFrame):
             icon += 's'
         data['icon'] = icon
         data['thumb'] = (
-            ext in self.presets['extensions']['thumbnailable'] and
-            data['is_sequence'] is False
+            ext in self.presets['extensions']['image_file'] or
+            ext in self.presets['extensions']['video_file']
         )
         data['prev'] = ext in self.presets['extensions']['video_file']
 
