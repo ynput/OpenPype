@@ -86,7 +86,7 @@ def publish(data, gui=True):
     ]
 
     os.environ["PYBLISH_HOSTS"] = "shell"
-    os.environ["ASAPUBLISH_INPATH"] = json_data_path
+    os.environ["SAPUBLISH_INPATH"] = json_data_path
 
     if gui:
         av_publish.show()

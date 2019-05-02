@@ -29,7 +29,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
     def process(self, context):
         # get json paths from os and load them
         io.install()
-        json_path = os.environ.get("ASAPUBLISH_INPATH")
+        json_path = os.environ.get("SAPUBLISH_INPATH")
         with open(json_path, "r") as f:
             in_data = json.load(f)
 
