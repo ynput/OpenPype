@@ -137,7 +137,15 @@ class Window(QtWidgets.QDialog):
         :type message: str
         '''
         self.label_message.setText(str(message))
-        QtCore.QTimer.singleShot(5000, lambda: self.label_message.setText(""))
+        def clear_text():
+            ''' Helps prevent crash if this Window object
+            is deleted before 5s passed
+            '''
+            try:
+                self.label_message.set_text("")
+            except:
+                pass
+        QtCore.QTimer.singleShot(5000, lambda: clear_text())
 
     def on_asset_changed(self):
         '''Callback on asset selection changed
