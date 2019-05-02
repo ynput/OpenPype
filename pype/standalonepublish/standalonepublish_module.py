@@ -11,5 +11,8 @@ class StandAlonePublishModule:
         self.run_action = QtWidgets.QAction(
             "Publish", parent_menu
         )
-        self.run_action.triggered.connect(show)
+        self.run_action.triggered.connect(self.show)
         parent_menu.addAction(self.run_action)
+
+    def show(self):
+        show(self.main_parent, False)
