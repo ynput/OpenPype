@@ -92,10 +92,9 @@ class Window(QtWidgets.QDialog):
         return self._db
 
     def on_start(self):
-        self.initialized = True
         # Refresh asset input in Family widget
         self.on_asset_changed()
-        self.validation()
+        self.widget_components.validation()
         self.shadow_widget = ShadowWidget(self)
         self.shadow_widget.setVisible(False)
 
@@ -156,19 +155,10 @@ class Window(QtWidgets.QDialog):
         if self.shadow_widget.isVisible():
             self.shadow_widget.setVisible(False)
 
-    def validation(self):
-        if not self.initialized:
-            return
-        valid = self.valid_family and self.valid_components
-        self.widget_components.set_valid(valid)
-
     def set_valid_family(self, valid):
         self.valid_family = valid
-        self.validation()
-
-    def set_valid_components(self, valid):
-        self.valid_components = valid
-        self.validation()
+        if hasattr(self, 'widget_components'):
+            self.widget_components.validation()
 
     def collect_data(self):
         data = {}

@@ -1,4 +1,5 @@
 import os
+import re
 import clique
 import subprocess
 from pypeapp import config
@@ -83,6 +84,7 @@ class DropDataFrame(QtWidgets.QFrame):
         new_component.signal_thumbnail.connect(
             self._set_thumbnail
         )
+        new_component.signal_repre_change.connect(self.repre_name_changed)
         for action in actions:
             new_component.add_action(action)
 
@@ -114,13 +116,19 @@ class DropDataFrame(QtWidgets.QFrame):
             checked_item.change_preview(False)
             in_item.change_preview()
 
-    def _remove_item(self, item):
-        index = self.components_list.widget_index(item)
+    def _remove_item(self, in_item):
+        index = self.components_list.widget_index(in_item)
         self.components_list.remove_widget(index)
-        if item in self.items:
-            self.removed.append(item)
-            self.items.remove(item)
+        if in_item in self.items:
+            self.removed.append(in_item)
+            self.items.remove(in_item)
         self._refresh_view()
+        if in_item.has_valid_repre:
+            return
+        for item in self.items:
+            if item.has_valid_repre:
+                continue
+            self.repre_name_changed(item, item.input_repre.text())
 
     def _refresh_view(self):
         _bool = len(self.items) == 0
@@ -338,7 +346,49 @@ class DropDataFrame(QtWidgets.QFrame):
             actions.append('split')
 
         if found is False:
+            new_repre = self.handle_new_repre_name(data['representation'])
+            data['representation'] = new_repre
             self._add_item(data, actions)
+
+    def handle_new_repre_name(self, repre_name):
+        renamed = False
+        for item in self.items:
+            if repre_name == item.input_repre.text():
+                check_regex = '\(\w+\)$'
+                result = re.findall(check_regex, repre_name)
+                next_num = 2
+                if len(result) == 1:
+                    repre_name = repre_name.replace(result[0], '')
+                    next_num = int(result[0].replace('(', '').replace(')', ''))
+                    next_num += 1
+                repre_name = '{}({})'.format(repre_name, next_num)
+                renamed = True
+                break
+        if renamed:
+            return self.handle_new_repre_name(repre_name)
+        return repre_name
+
+    def repre_name_changed(self, in_item, repre_name):
+        is_valid = True
+        for item in self.items:
+            if item == in_item:
+                continue
+            if item.input_repre.text() == repre_name:
+                item.set_repre_name_valid(False)
+                in_item.set_repre_name_valid(False)
+                is_valid = False
+        global_valid = is_valid
+        if is_valid:
+            in_item.set_repre_name_valid(True)
+            for item in self.items:
+                if item.has_valid_repre:
+                    continue
+                self.repre_name_changed(item, item.input_repre.text())
+            for item in self.items:
+                if not item.has_valid_repre:
+                    global_valid = False
+                    break
+        self.parent_widget.set_valid_repre_names(global_valid)
 
     def merge_items(self, in_item):
         self.parent_widget.working_start()

@@ -7,6 +7,11 @@ from .. import publish
 class ComponentsWidget(QtWidgets.QWidget):
     def __init__(self, parent):
         super().__init__()
+        self.initialized = False
+        self.valid_components = False
+        self.valid_family = False
+        self.valid_repre_names = False
+
         body = QtWidgets.QWidget()
         self.parent_widget = parent
         self.drop_frame = DropDataFrame(self)
@@ -39,12 +44,25 @@ class ComponentsWidget(QtWidgets.QWidget):
 
         self.btn_browse.clicked.connect(self._browse)
         self.btn_publish.clicked.connect(self._publish)
+        self.initialized = True
 
-    def set_valid(self, in_bool):
-        self.btn_publish.setEnabled(in_bool)
+    def validation(self):
+        if self.initialized is False:
+            return
+        valid = (
+            self.parent_widget.valid_family and
+            self.valid_components and
+            self.valid_repre_names
+        )
+        self.btn_publish.setEnabled(valid)
 
-    def set_valid_components(self, in_bool):
-        self.parent_widget.set_valid_components(in_bool)
+    def set_valid_components(self, valid):
+        self.valid_components = valid
+        self.validation()
+
+    def set_valid_repre_names(self, valid):
+        self.valid_repre_names = valid
+        self.validation()
 
     def process_mime_data(self, mime_data):
         self.drop_frame.process_ent_mime(mime_data)

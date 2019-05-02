@@ -13,9 +13,11 @@ class ComponentItem(QtWidgets.QFrame):
     signal_remove = QtCore.Signal(object)
     signal_thumbnail = QtCore.Signal(object)
     signal_preview = QtCore.Signal(object)
+    signal_repre_change = QtCore.Signal(object, object)
 
     def __init__(self, parent, main_parent):
         super().__init__()
+        self.has_valid_repre = True
         self.actions = []
         self.resize(290, 70)
         self.setMinimumSize(QtCore.QSize(0, 70))
@@ -183,6 +185,7 @@ class ComponentItem(QtWidgets.QFrame):
         self.remove.clicked.connect(self._remove)
         self.thumbnail.clicked.connect(self._thumbnail_clicked)
         self.preview.clicked.connect(self._preview_clicked)
+        self.input_repre.textChanged.connect(self._handle_duplicate_repre)
         name = data['name']
         representation = data['representation']
         ext = data['ext']
@@ -238,6 +241,13 @@ class ComponentItem(QtWidgets.QFrame):
             self.btn_action_menu.clicked.connect(self.show_actions)
             self.action_menu.setStyleSheet(style.load_stylesheet())
 
+    def set_repre_name_valid(self, valid):
+        self.has_valid_repre = valid
+        if valid:
+            self.input_repre.setStyleSheet("")
+        else:
+            self.input_repre.setStyleSheet("border: 1px solid red;")
+
     def split_sequence(self):
         self.parent_widget.split_items(self)
 
@@ -256,6 +266,9 @@ class ComponentItem(QtWidgets.QFrame):
 
     def _preview_clicked(self):
         self.signal_preview.emit(self)
+
+    def _handle_duplicate_repre(self, repre_name):
+        self.signal_repre_change.emit(self, repre_name)
 
     def is_thumbnail(self):
         return self.thumbnail.checked
