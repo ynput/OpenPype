@@ -89,7 +89,8 @@ class DropDataFrame(QtWidgets.QFrame):
             new_component.add_action(action)
 
         self.items.append(new_component)
-
+        if len(self.items) == 1:
+            self.parent_widget.set_valid_repre_names(True)
         self._refresh_view()
 
     def _set_thumbnail(self, in_item):
