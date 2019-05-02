@@ -370,13 +370,17 @@ class DropDataFrame(QtWidgets.QFrame):
 
     def repre_name_changed(self, in_item, repre_name):
         is_valid = True
-        for item in self.items:
-            if item == in_item:
-                continue
-            if item.input_repre.text() == repre_name:
-                item.set_repre_name_valid(False)
-                in_item.set_repre_name_valid(False)
-                is_valid = False
+        if repre_name.strip() == '':
+            in_item.set_repre_name_valid(False)
+            is_valid = False
+        else:
+            for item in self.items:
+                if item == in_item:
+                    continue
+                if item.input_repre.text() == repre_name:
+                    item.set_repre_name_valid(False)
+                    in_item.set_repre_name_valid(False)
+                    is_valid = False
         global_valid = is_valid
         if is_valid:
             in_item.set_repre_name_valid(True)
