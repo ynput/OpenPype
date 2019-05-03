@@ -46,7 +46,10 @@ class JobKiller(BaseAction):
                     desctiption = data['description']
                 except Exception:
                     desctiption = '*No description*'
-                user = job['user']['username']
+                try:
+                    user = job['user']['username']
+                except Exception:
+                    user = '*No user'
                 created = job['created_at'].strftime('%d.%m.%Y %H:%M:%S')
                 label = '{} - {} - {}'.format(
                     desctiption, created, user
