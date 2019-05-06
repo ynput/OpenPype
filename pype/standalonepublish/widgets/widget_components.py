@@ -119,6 +119,10 @@ class ComponentsWidget(QtWidgets.QWidget):
             publish.set_context(
                 data['project'], data['asset'], 'standalonepublish'
             )
-            publish.publish(data)
+            result = publish.publish(data)
+            # Clear widgets from components list if publishing was successful
+            if result:
+                self.drop_frame.components_list.clear_widgets()
+                self.drop_frame._refresh_view()
         finally:
             self.working_stop()
