@@ -46,7 +46,6 @@ class ComponentsList(QtWidgets.QTableWidget):
         return row
 
     def remove_widget(self, row):
-        self.removeCellWidget(row, self._main_column)
         self.removeRow(row)
 
     def move_widget(self, widget, newRow):

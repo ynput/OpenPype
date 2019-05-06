@@ -11,8 +11,6 @@ class DropDataFrame(QtWidgets.QFrame):
     def __init__(self, parent):
         super().__init__()
         self.parent_widget = parent
-        self.items = []
-        self.removed = []
         self.presets = config.get_presets()['standalone_publish']
 
         self.setAcceptDrops(True)
@@ -88,14 +86,13 @@ class DropDataFrame(QtWidgets.QFrame):
         for action in actions:
             new_component.add_action(action)
 
-        self.items.append(new_component)
-        if len(self.items) == 1:
+        if len(self.components_list.widgets()) == 1:
             self.parent_widget.set_valid_repre_names(True)
         self._refresh_view()
 
     def _set_thumbnail(self, in_item):
         checked_item = None
-        for item in self.items:
+        for item in self.components_list.widgets():
             if item.is_thumbnail():
                 checked_item = item
                 break
@@ -107,7 +104,7 @@ class DropDataFrame(QtWidgets.QFrame):
 
     def _set_preview(self, in_item):
         checked_item = None
-        for item in self.items:
+        for item in self.components_list.widgets():
             if item.is_preview():
                 checked_item = item
                 break
@@ -118,21 +115,21 @@ class DropDataFrame(QtWidgets.QFrame):
             in_item.change_preview()
 
     def _remove_item(self, in_item):
-        index = self.components_list.widget_index(in_item)
-        self.components_list.remove_widget(index)
-        if in_item in self.items:
-            self.removed.append(in_item)
-            self.items.remove(in_item)
+        valid_repre = in_item.has_valid_repre is True
+
+        self.components_list.remove_widget(
+            self.components_list.widget_index(in_item)
+        )
         self._refresh_view()
-        if in_item.has_valid_repre:
+        if valid_repre:
             return
-        for item in self.items:
+        for item in self.components_list.widgets():
             if item.has_valid_repre:
                 continue
             self.repre_name_changed(item, item.input_repre.text())
 
     def _refresh_view(self):
-        _bool = len(self.items) == 0
+        _bool = len(self.components_list.widgets()) == 0
         self.components_list.setVisible(not _bool)
         self.drop_widget.setVisible(_bool)
 
@@ -287,7 +284,7 @@ class DropDataFrame(QtWidgets.QFrame):
         new_is_seq = data['is_sequence']
 
         found = False
-        for item in self.items:
+        for item in self.components_list.widgets():
             if data['ext'] != item.in_data['ext']:
                 continue
             if data['folder_path'] != item.in_data['folder_path']:
@@ -353,7 +350,7 @@ class DropDataFrame(QtWidgets.QFrame):
 
     def handle_new_repre_name(self, repre_name):
         renamed = False
-        for item in self.items:
+        for item in self.components_list.widgets():
             if repre_name == item.input_repre.text():
                 check_regex = '\(\w+\)$'
                 result = re.findall(check_regex, repre_name)
@@ -375,7 +372,7 @@ class DropDataFrame(QtWidgets.QFrame):
             in_item.set_repre_name_valid(False)
             is_valid = False
         else:
-            for item in self.items:
+            for item in self.components_list.widgets():
                 if item == in_item:
                     continue
                 if item.input_repre.text() == repre_name:
@@ -385,11 +382,11 @@ class DropDataFrame(QtWidgets.QFrame):
         global_valid = is_valid
         if is_valid:
             in_item.set_repre_name_valid(True)
-            for item in self.items:
+            for item in self.components_list.widgets():
                 if item.has_valid_repre:
                     continue
                 self.repre_name_changed(item, item.input_repre.text())
-            for item in self.items:
+            for item in self.components_list.widgets():
                 if not item.has_valid_repre:
                     global_valid = False
                     break
@@ -400,7 +397,7 @@ class DropDataFrame(QtWidgets.QFrame):
         items = []
         in_paths = in_item.in_data['files']
         paths = in_paths
-        for item in self.items:
+        for item in self.components_list.widgets():
             if item.in_data['files'] == in_paths:
                 items.append(item)
                 continue
@@ -425,6 +422,6 @@ class DropDataFrame(QtWidgets.QFrame):
 
     def collect_data(self):
         data = {'representations' : []}
-        for item in self.items:
+        for item in self.components_list.widgets():
             data['representations'].append(item.collect_data())
         return data
