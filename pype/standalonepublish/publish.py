@@ -64,6 +64,13 @@ def set_context(project, asset, app):
 
 
 def publish(data, gui=True):
+    # cli pyblish seems like better solution
+    return cli_publish(data, gui)
+    # # this uses avalon pyblish launch tool
+    # avalon_api_publish(data, gui)
+
+
+def avalon_api_publish(data, gui=True):
     ''' Launches Pyblish (GUI by default)
     :param data: Should include data for pyblish and standalone collector
     :type data: dict
@@ -74,7 +81,7 @@ def publish(data, gui=True):
 
     # Create hash name folder in temp
     chars = "".join( [random.choice(string.ascii_letters) for i in range(15)] )
-    staging_dir = tempfile.mkdtemp(chars)#.replace("\\", "/")
+    staging_dir = tempfile.mkdtemp(chars)
 
     # create also json and fill with data
     json_data_path = staging_dir + os.path.basename(staging_dir) + '.json'
@@ -96,3 +103,46 @@ def publish(data, gui=True):
         ] + args, env=os.environ)
 
     io.uninstall()
+
+
+def cli_publish(data, gui=True):
+    io.install()
+
+    # Create hash name folder in temp
+    chars = "".join( [random.choice(string.ascii_letters) for i in range(15)] )
+    staging_dir = tempfile.mkdtemp(chars)
+
+    # create json for return data
+    return_data_path = (
+        staging_dir + os.path.basename(staging_dir) + 'return.json'
+    )
+    # create also json and fill with data
+    json_data_path = staging_dir + os.path.basename(staging_dir) + '.json'
+    with open(json_data_path, 'w') as outfile:
+        json.dump(data, outfile)
+
+    args = [
+        "-pp", os.pathsep.join(pyblish.api.registered_paths())
+    ]
+
+    if gui:
+        args += ["gui"]
+
+    os.environ["PYBLISH_HOSTS"] = "shell"
+    os.environ["SAPUBLISH_INPATH"] = json_data_path
+    os.environ["SAPUBLISH_OUTPATH"] = return_data_path
+
+    returncode = execute([
+        sys.executable, "-u", "-m", "pyblish"
+    ] + args, env=os.environ)
+
+    result = {}
+    if os.path.exists(json_data_path):
+        with open(json_data_path, "r") as f:
+            result = json.load(f)
+
+    io.uninstall()
+    # TODO: check if was pyblish successful
+    # if successful return True
+    print('Check result here')
+    return False
