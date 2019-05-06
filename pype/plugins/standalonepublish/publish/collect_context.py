@@ -51,7 +51,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
         instances = []
 
-        for component in in_data['components']:
+        for component in in_data['representations']:
             instance = context.create_instance(subset)
             # instance.add(node)
 
