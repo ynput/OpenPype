@@ -2,7 +2,7 @@ import functools
 import time
 from pype import api as pype
 from pype.vendor import ftrack_api
-from pype.vendor.ftrack_api.symbol import NOT_SET as ftrack_api_NOT_SET
+from pype.vendor.ftrack_api import session as fa_session
 
 
 class MissingPermision(Exception):
@@ -197,7 +197,9 @@ class BaseHandler(object):
         _entities = event['data'].get('entities_object', None)
         if (
             _entities is None or
-            _entities[0].get('link', None) == ftrack_api_NOT_SET
+            _entities[0].get(
+                'link', None
+            ) == fa_session.ftrack_api.symbol.NOT_SET
         ):
             _entities = self._get_entities(event)
 
@@ -302,7 +304,7 @@ class BaseHandler(object):
 
         # Launch preactions
         for preaction in self.preactions:
-            event = ftrack_api.event.base.Event(
+            event = fa_session.ftrack_api.event.base.Event(
                 topic='ftrack.action.launch',
                 data=dict(
                     actionIdentifier=preaction,
@@ -314,7 +316,7 @@ class BaseHandler(object):
             )
             session.event_hub.publish(event, on_error='ignore')
         # Relaunch this action
-        event = ftrack_api.event.base.Event(
+        event = fa_session.ftrack_api.event.base.Event(
             topic='ftrack.action.launch',
             data=dict(
                 actionIdentifier=self.identifier,
@@ -415,7 +417,7 @@ class BaseHandler(object):
             'applicationId=ftrack.client.web and user.id="{0}"'
         ).format(user_id)
         self.session.event_hub.publish(
-            ftrack_api.event.base.Event(
+            fa_session.ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='message',
@@ -438,7 +440,7 @@ class BaseHandler(object):
         ).format(user_id)
 
         self.session.event_hub.publish(
-            ftrack_api.event.base.Event(
+            fa_session.ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='widget',
