@@ -2,6 +2,7 @@ import functools
 import time
 from pype import api as pype
 from pype.vendor import ftrack_api
+from pype.vendor.ftrack_api.symbol import NOT_SET as ftrack_api_NOT_SET
 
 
 class MissingPermision(Exception):
@@ -196,7 +197,7 @@ class BaseHandler(object):
         _entities = event['data'].get('entities_object', None)
         if (
             _entities is None or
-            _entities[0].get('link', None) == ftrack_api.symbol.NOT_SET
+            _entities[0].get('link', None) == ftrack_api_NOT_SET
         ):
             _entities = self._get_entities(event)
 
