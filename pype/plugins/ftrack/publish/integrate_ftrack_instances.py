@@ -26,15 +26,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'render': 'render',
                       'nukescript': 'comp',
                       'review': 'mov'}
-    exclude = []
 
     def process(self, instance):
-        for ex in self.exclude:
-            if ex in instance.data['families']:
-                return
-
         self.log.debug('instance {}'.format(instance))
-
         assumed_data = instance.data["assumedTemplateData"]
         assumed_version = assumed_data["version"]
         version_number = int(assumed_version)
@@ -60,8 +54,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             self.log.debug('dest ext: ' + ext)
             thumbnail = False
 
-
-
             if ext in ['.mov']:
                 if not instance.data.get('startFrameReview'):
                     instance.data['startFrameReview'] = instance.data['startFrame']
@@ -70,12 +62,13 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 location = ft_session.query(
                     'Location where name is "ftrack.server"').one()
                 component_data = {
-                    "name": "ftrackreview-mp4",  # Default component name is "main".
+                    # Default component name is "main".
+                    "name": "ftrackreview-mp4",
                     "metadata": {'ftr_meta': json.dumps({
                                  'frameIn': int(instance.data['startFrameReview']),
                                  'frameOut': int(instance.data['startFrameReview']),
                                  'frameRate': 25})}
-                                }
+                }
             elif ext in [".jpg", ".jpeg"]:
                 component_data = {
                     "name": "thumbnail"  # Default component name is "main".

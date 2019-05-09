@@ -1,11 +1,9 @@
 from avalon import api, io
 from pype.api import Logger
-try:
-    from pype.clockify import ClockifyAPI
-except Exception:
-    pass
+from pype.clockify import ClockifyAPI
 
-log = Logger.getLogger(__name__, "clockify_start")
+
+log = Logger().get_logger(__name__, "clockify_start")
 
 
 class ClockifyStart(api.Action):
@@ -14,13 +12,10 @@ class ClockifyStart(api.Action):
     label = "Clockify - Start Timer"
     icon = "clockify_icon"
     order = 500
-
-    exec("try: clockapi = ClockifyAPI()\nexcept: clockapi = None")
+    clockapi = ClockifyAPI()
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
-        if self.clockapi is None:
-            return False
         if "AVALON_TASK" in session:
             return True
         return False

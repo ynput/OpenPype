@@ -1,11 +1,8 @@
 import os
 import nuke
 import pyblish.api
-import logging
 import pype.api as pype
 
-
-log = logging.getLogger(__name__)
 
 
 @pyblish.api.log

@@ -3,9 +3,9 @@ import re
 import sys
 from avalon import io, api as avalon, lib as avalonlib
 from . import lib
-from app.api import (Templates, Logger, format)
-log = Logger.getLogger(__name__,
-                       os.getenv("AVALON_APP", "pype-config"))
+# from pypeapp.api import (Templates, Logger, format)
+from pypeapp import Logger, config, Anatomy
+log = Logger().get_logger(__name__, os.getenv("AVALON_APP", "pype-config"))
 
 
 self = sys.modules[__name__]
@@ -19,7 +19,7 @@ def set_session():
 
 def load_data_from_templates():
     """
-    Load Templates `contextual` data as singleton object
+    Load Presets and Anatomy `contextual` data as singleton object
     [info](https://en.wikipedia.org/wiki/Singleton_pattern)
 
     Returns:
@@ -31,17 +31,29 @@ def load_data_from_templates():
     if not any([
         api.Dataflow,
         api.Anatomy,
-        api.Colorspace,
-        api.Metadata
+        api.Colorspace
     ]
     ):
-        # base = Templates()
-        t = Templates(type=["anatomy", "metadata", "dataflow", "colorspace"])
-        api.Anatomy = t.anatomy
-        api.Metadata = t.metadata.format()
-        data = {"metadata": api.Metadata}
-        api.Dataflow = t.dataflow.format(data)
-        api.Colorspace = t.colorspace
+        presets = config.get_presets()
+        anatomy = Anatomy()
+
+        try:
+            # try if it is not in projects custom directory
+            # `{PYPE_PROJECT_CONFIGS}/[PROJECT_NAME]/init.json`
+            # init.json define preset names to be used
+            p_init = presets["init"]
+            colorspace = presets["colorspace"][p_init["colorspace"]]
+            dataflow = presets["dataflow"][p_init["dataflow"]]
+        except KeyError:
+            log.warning("No projects custom preset available...")
+            colorspace = presets["colorspace"]["default"]
+            dataflow = presets["dataflow"]["default"]
+            log.info("Presets `colorspace` and `dataflow` loaded from `default`...")
+
+        api.Anatomy = anatomy
+        api.Dataflow = dataflow
+        api.Colorspace = colorspace
+
         log.info("Data from templates were Loaded...")
 
 
@@ -59,7 +71,6 @@ def reset_data_from_templates():
     api.Dataflow = None
     api.Anatomy = None
     api.Colorspace = None
-    api.Metadata = None
     log.info("Data from templates were Unloaded...")
 
 
@@ -283,11 +294,12 @@ def get_workdir_template(data=None):
     load_data_from_templates()
 
     anatomy = api.Anatomy
+    anatomy_filled = anatomy.format(data or get_context_data())
 
     try:
-        work = anatomy.work.format(data or get_context_data())
+        work = anatomy_filled["work"]
     except Exception as e:
         log.error("{0} Error in "
                   "get_workdir_template(): {1}".format(__name__, e))
 
-    return os.path.join(work.root, work.folder)
+    return work["folder"]

@@ -195,7 +195,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                     template_data["frame"] = src_collection.format(
                         "{padding}") % i
                     anatomy_filled = anatomy.format(template_data)
-                    test_dest_files.append(anatomy_filled.render.path)
+                    test_dest_files.append(anatomy_filled["render"]["path"])
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
@@ -223,7 +223,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 #
 
                 template_data.pop("frame", None)
-                anatomy.pop("frame", None)
 
                 fname = files
 
@@ -239,15 +238,21 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                 src = os.path.join(stagingdir, fname)
 
                 anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled.render.path
+                dst = anatomy_filled["render"]["path"]
 
                 instance.data["transfers"].append([src, dst])
 
-            template_data["frame"] = "#" * anatomy.render.padding
+            if ext[1:] not in ["jpeg", "jpg", "mov", "mp4", "wav"]:
+                template_data["frame"] = "#" * int(anatomy_filled["render"]["padding"])
+
             anatomy_filled = anatomy.format(template_data)
-            path_to_save = anatomy_filled.render.path
-            template = anatomy.render.fullpath
-            self.log.debug('ext[1:]: {}'.format(ext[1:]))
+            path_to_save = anatomy_filled["render"]["path"]
+            template = anatomy.templates["render"]["path"]
+
+            self.log.debug("path_to_save: {}".format(path_to_save))
+
+
+
 
             representation = {
                 "schema": "pype:representation-2.0",

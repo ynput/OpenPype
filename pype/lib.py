@@ -420,7 +420,7 @@ def get_avalon_project_template_schema():
 
 
 def get_avalon_project_template():
-    from app.api import Templates
+    from pypeapp import Anatomy
 
     """
     Get avalon template
@@ -428,11 +428,11 @@ def get_avalon_project_template():
     Returns:
         dictionary with templates
     """
-    template = Templates(type=["anatomy"])
+    templates = Anatomy().templates
     proj_template = {}
-    proj_template['workfile'] = template.anatomy.avalon.workfile
-    proj_template['work'] = template.anatomy.avalon.work
-    proj_template['publish'] = template.anatomy.avalon.publish
+    proj_template['workfile'] = templates["avalon"]["workfile"]
+    proj_template['work'] = templates["avalon"]["work"]
+    proj_template['publish'] = templates["avalon"]["publish"]
     return proj_template
 
 
@@ -467,7 +467,7 @@ def get_all_avalon_projects():
 
 
 def get_presets_path():
-    templates = os.environ['PYPE_STUDIO_TEMPLATES']
+    templates = os.environ['PYPE_CONFIG']
     path_items = [templates, 'presets']
     filepath = os.path.sep.join(path_items)
     return filepath

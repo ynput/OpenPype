@@ -9,10 +9,9 @@ from .lib import collect_container_metadata
 import logging
 log = logging.getLogger(__name__)
 
-# do not delete these are mandatory
+# # do not delete these are mandatory
 Anatomy = None
 Dataflow = None
-Metadata = None
 Colorspace = None
 
 PACKAGE_DIR = os.path.dirname(__file__)

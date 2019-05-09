@@ -3,14 +3,13 @@ import os
 import sys
 import json
 import subprocess
-import ftrack_api
+from pype.vendor import ftrack_api
 import logging
 import operator
 import re
-from pype import lib as pypelib
-from app.api import Logger
+from pypeapp import Logger, config
 
-log = Logger.getLogger(__name__)
+log = Logger().get_logger(__name__)
 
 
 class RVAction(BaseAction):
@@ -18,7 +17,9 @@ class RVAction(BaseAction):
     identifier = "rv.launch.action"
     label = "rv"
     description = "rv Launcher"
-    icon = "https://img.icons8.com/color/48/000000/circled-play.png"
+    icon = '{}/ftrack/action_icons/RV.png'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
     type = 'Application'
 
     def __init__(self, session):
@@ -40,7 +41,7 @@ class RVAction(BaseAction):
             )
         else:
             # if not, fallback to config file location
-            self.load_config_data()
+            self.config_data = config.get_presets()['djv_view']['config']
             self.set_rv_path()
 
         if self.rv_path is None:
@@ -60,21 +61,6 @@ class RVAction(BaseAction):
         if entityType in ["assetversion", "task"]:
             return True
         return False
-
-    def load_config_data(self):
-        path_items = [pypelib.get_presets_path(), 'rv', 'config.json']
-        filepath = os.path.sep.join(path_items)
-
-        data = dict()
-        try:
-            with open(filepath) as data_file:
-                data = json.load(data_file)
-        except Exception as e:
-            log.warning(
-                'Failed to load data from RV presets file ({})'.format(e)
-            )
-
-        self.config_data = data
 
     def set_rv_path(self):
         self.rv_path = self.config_data.get("rv_path")

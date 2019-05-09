@@ -15,12 +15,11 @@ from .action import (
     RepairContextAction
 )
 
-from app.api import Logger
+from pypeapp import Logger
 
 from . import (
     Anatomy,
     Colorspace,
-    Metadata,
     Dataflow
 )
 
@@ -88,7 +87,6 @@ __all__ = [
     # preloaded templates
     "Anatomy",
     "Colorspace",
-    "Metadata",
     "Dataflow",
 
     # QtWidgets

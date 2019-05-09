@@ -1,6 +1,6 @@
 import threading
-from app import style
-from app.vendor.Qt import QtWidgets
+from pypeapp import style
+from Qt import QtWidgets
 from pype.clockify import ClockifySettings, ClockifyAPI
 
 
@@ -34,6 +34,28 @@ class ClockifyModule:
         self.start_timer_check()
 
         self.set_menu_visibility()
+
+    def process_modules(self, modules):
+        if 'FtrackModule' in modules:
+            actions_path = os.path.sep.join([
+                os.path.dirname(__file__),
+                'ftrack_actions'
+            ])
+            current = os.environ('FTRACK_ACTIONS_PATH', '')
+            if current:
+                current += os.pathsep
+            os.environ['FTRACK_ACTIONS_PATH'] = current + actions_path
+
+        if 'AvalonApps' in modules:
+            from launcher import lib
+            actions_path = os.path.sep.join([
+                os.path.dirname(__file__),
+                'launcher_actions'
+            ])
+            current = os.environ.get('AVALON_ACTIONS', '')
+            if current:
+                current += os.pathsep
+            os.environ['AVALON_ACTIONS'] = current + actions_path
 
     def start_timer_check(self):
         self.bool_thread_check_running = True

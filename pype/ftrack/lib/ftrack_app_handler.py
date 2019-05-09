@@ -8,6 +8,8 @@ from pype import lib as pypelib
 from .avalon_sync import get_config_data
 from .ftrack_base_handler import BaseHandler
 
+from pypeapp import Anatomy
+
 
 class AppAction(BaseHandler):
     '''Custom Action base class
@@ -177,7 +179,8 @@ class AppAction(BaseHandler):
         os.environ["AVALON_APP"] = self.identifier.split("_")[0]
         os.environ["AVALON_APP_NAME"] = self.identifier
 
-        anatomy = pype.Anatomy
+        anatomy = Anatomy()
+
         hierarchy = ""
         parents = database[project_name].find_one({
             "type": 'asset',
@@ -190,7 +193,7 @@ class AppAction(BaseHandler):
         application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
 
         data = {
-            "root": os.environ["AVALON_PROJECTS"],
+            "root": os.environ.get("PYPE_STUDIO_PROJECTS_PATH"),
             "project": {
                 "name": entity['project']['full_name'],
                 "code": entity['project']['name']
@@ -213,12 +216,10 @@ class AppAction(BaseHandler):
         except Exception:
             try:
                 anatomy = anatomy.format(data)
-                work_template = os.path.join(
-                    anatomy.work.root,
-                    anatomy.work.folder
-                )
+                work_template = anatomy["work"]["folder"]
+
             except Exception as e:
-                self.log.error(
+                self.log.exception(
                     "{0} Error in anatomy.format: {1}".format(__name__, e)
                 )
         os.environ["AVALON_WORKDIR"] = os.path.normpath(work_template)
@@ -239,13 +240,22 @@ class AppAction(BaseHandler):
         tools_env = acre.get_tools(tools_attr)
         env = acre.compute(tools_env)
         env = acre.merge(env, current_env=dict(os.environ))
+        env = acre.append(dict(os.environ), env)
+
+
+        #
+        # tools_env = acre.get_tools(tools)
+        # env = acre.compute(dict(tools_env))
+        # env = acre.merge(env, dict(os.environ))
+        # os.environ = acre.append(dict(os.environ), env)
+        # os.environ = acre.compute(os.environ)
 
         # Get path to execute
-        st_temp_path = os.environ['PYPE_STUDIO_TEMPLATES']
+        st_temp_path = os.environ['PYPE_CONFIG']
         os_plat = platform.system().lower()
 
         # Path to folder with launchers
-        path = os.path.join(st_temp_path, 'bin', os_plat)
+        path = os.path.join(st_temp_path, 'launchers', os_plat)
         # Full path to executable launcher
         execfile = None
 
@@ -275,7 +285,7 @@ class AppAction(BaseHandler):
                 try:
                     fp = open(execfile)
                 except PermissionError as p:
-                    self.log.error('Access denied on {0} - {1}'.format(
+                    self.log.exception('Access denied on {0} - {1}'.format(
                         execfile, p))
                     return {
                         'success': False,
@@ -344,6 +354,8 @@ class AppAction(BaseHandler):
 
         # Set origin avalon environments
         for key, value in env_origin.items():
+            if value == None:
+                value = ""
             os.environ[key] = value
 
         return {

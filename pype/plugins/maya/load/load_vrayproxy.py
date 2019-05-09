@@ -1,6 +1,6 @@
 from avalon.maya import lib
 from avalon import api
-import json
+from pypeapp import config
 import os
 import maya.cmds as cmds
 
@@ -26,14 +26,6 @@ class VRayProxyLoader(api.Loader):
         except ValueError:
             family = "vrayproxy"
 
-        preset_file = os.path.join(
-            os.environ.get('PYPE_STUDIO_TEMPLATES'),
-            'presets', 'tools',
-            'family_colors.json'
-        )
-        with open(preset_file, 'r') as cfile:
-            colors = json.load(cfile)
-
         asset_name = context['asset']["name"]
         namespace = namespace or lib.unique_namespace(
             asset_name + "_",
@@ -53,6 +45,9 @@ class VRayProxyLoader(api.Loader):
         self[:] = nodes
         if not nodes:
             return
+
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
 
         c = colors.get(family)
         if c is not None:

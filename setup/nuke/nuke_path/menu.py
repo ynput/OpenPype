@@ -1,9 +1,9 @@
 
 from pype.nuke.lib import writes_version_sync, onScriptLoad
 import nuke
-from pype.api import Logger
+from pypeapp import Logger
 
-log = Logger.getLogger(__name__, "nuke")
+log = Logger().get_logger(__name__, "nuke")
 
 
 nuke.addOnScriptSave(writes_version_sync)

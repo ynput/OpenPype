@@ -1,8 +1,9 @@
+import os
 import sys
 import argparse
 import logging
 import json
-import ftrack_api
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, MissingPermision
 from pype.clockify import ClockifyAPI
 
@@ -21,7 +22,9 @@ class SyncClocify(BaseAction):
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
     #: icon
-    icon = 'https://clockify.me/assets/images/clockify-logo-white.svg'
+    icon = '{}/app_icons/clockify-white.png'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
     #: CLockifyApi
     clockapi = ClockifyAPI()
 

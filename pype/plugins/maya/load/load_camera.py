@@ -1,6 +1,6 @@
 import pype.maya.plugin
 import os
-import json
+from pypeapp import config
 
 
 class CameraLoader(pype.maya.plugin.ReferenceLoader):
@@ -35,13 +35,8 @@ class CameraLoader(pype.maya.plugin.ReferenceLoader):
 
         cameras = cmds.ls(nodes, type="camera")
 
-        preset_file = os.path.join(
-            os.environ.get('PYPE_STUDIO_TEMPLATES'),
-            'presets', 'tools',
-            'family_colors.json'
-        )
-        with open(preset_file, 'r') as cfile:
-            colors = json.load(cfile)
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
 
         c = colors.get(family)
         if c is not None:

@@ -1,11 +1,12 @@
+import os
 import toml
 import time
 from pype.ftrack import AppAction
 from avalon import lib
-from app.api import Logger
+from pypeapp import Logger
 from pype import lib as pypelib
 
-log = Logger.getLogger(__name__)
+log = Logger().get_logger(__name__)
 
 
 def registerApp(app, session):
@@ -37,6 +38,9 @@ def registerApp(app, session):
     description = apptoml.get('description', None)
     preactions = apptoml.get('preactions', [])
 
+    if icon:
+        icon = icon.format(os.environ.get('PYPE_STATICS_SERVER', ''))
+
     # register action
     AppAction(
         session, label, name, executable, variant,
@@ -65,4 +69,4 @@ def register(session):
                 time.sleep(0.1)
             app_counter += 1
         except Exception as e:
-            log.warning("'{0}' - not proper App ({1})".format(app['name'], e))
+            log.exception("'{0}' - not proper App ({1})".format(app['name'], e))

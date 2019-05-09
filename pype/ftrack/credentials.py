@@ -1,6 +1,6 @@
 import os
 import json
-import ftrack_api
+from pype.vendor import ftrack_api
 import appdirs
 
 
@@ -77,7 +77,6 @@ def _check_credentials(username=None, apiKey=None):
         session = ftrack_api.Session()
         session.close()
     except Exception as e:
-        print(e)
         return False
 
     return True

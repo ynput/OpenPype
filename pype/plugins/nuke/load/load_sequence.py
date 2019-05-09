@@ -8,7 +8,7 @@ import avalon.io as io
 import nuke
 
 from pype.api import Logger
-log = Logger.getLogger(__name__, "nuke")
+log = Logger().get_logger(__name__, "nuke")
 
 
 @contextlib.contextmanager
@@ -226,6 +226,7 @@ class LoadSequence(api.Loader):
             node,
             updated_dict
         )
+        log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
 
