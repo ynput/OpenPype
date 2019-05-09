@@ -5,6 +5,7 @@ from avalon import api
 from avalon.vendor import requests
 import pyblish.api
 import pype.maya.lib as lib
+import appdirs
 
 
 def get_renderer_variables(renderlayer=None):
@@ -99,6 +100,21 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
     optional = True
 
     _token = None
+    _user = None
+    _password = None
+
+    def _load_credentials(self):
+        app_dir = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
+        file_name = 'muster.json'
+        fpath = os.path.join(app_dir, file_name)
+        try:
+            file = open(fpath, 'r')
+            muster_json = json.load(file)
+            self.MUSTER_USER = muster_json.get('user', None)
+            self.MUSTER_PASSWORD = muster_json.get('password', None)
+        except Exception:
+            file = open(fpath, 'w')
+        file.close()
 
     def _authenticate(self):
         """
@@ -198,10 +214,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
 
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL",
                                               "https://localhost:9891")
-        self.MUSTER_USER = os.getenv('MUSTER_USER')
-        self.MUSTER_PASSWORD = os.getenv('MUSTER_PASSWORD')
-        self.TEMPLATE_ID
-
+        self._load_credentials()
         self._authenticate()
         self._get_templates()
 
@@ -212,8 +225,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
 
         allInstances = []
         for result in context.data["results"]:
-            if (result["instance"] is not None and
-               result["instance"] not in allInstances):
+            if result["instance"] is not None and
+            result["instance"] not in allInstances:
                 allInstances.append(result["instance"])
 
         for inst in allInstances:
