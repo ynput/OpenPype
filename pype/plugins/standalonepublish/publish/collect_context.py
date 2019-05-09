@@ -50,28 +50,28 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         })
         context.data['project'] = project
         context.data['asset'] = asset
-        context.data['family'] = family
-        context.data['subset'] = subset
 
-        instances = []
+        instance = context.create_instance(subset)
+
+        instance.data.update({
+            "subset": family + subset,
+            "asset": asset_name,
+            "label": family + subset,
+            "name": family + subset,
+            "family": family,
+            "families": [family, 'ftrack'],
+        })
+        self.log.info("collected instance: {}".format(instance.data))
+
+        instance.data["files"] = list()
+        instance.data['destination_list'] = list()
 
         for component in in_data['representations']:
-            instance = context.create_instance(subset)
             # instance.add(node)
 
-            instance.data.update({
-                "subset": subset,
-                "asset": asset_name,
-                "label": component['label'],
-                "name": component['representation'],
-                "subset": subset,
-                "family": family,
-                "is_thumbnail": component['thumbnail'],
-                "is_preview": component['preview']
-            })
+            instance.data["files"].append(component['files'])
+            instance.data['destination_list'].append(component['files'])
+            # "is_thumbnail": component['thumbnail'],
+            # "is_preview": component['preview']
 
-            self.log.info("collected instance: {}".format(instance.data))
-            instances.append(instance)
-
-        context.data["instances"] = instances
         self.log.info(in_data)
