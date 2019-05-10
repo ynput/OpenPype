@@ -56,7 +56,7 @@ def publish(json_data_path, gui):
 
     log.info("avalon.session is: \n{}".format(SESSION))
 
-    pype_start = os.path.join(os.getenv('PYPE_SETUP_ROOT'),
+    pype_start = os.path.join(os.getenv('PYPE_ROOT'),
                               "app", "pype-start.py")
 
     publish = "--publish-gui" if gui else "--publish"

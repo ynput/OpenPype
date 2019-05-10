@@ -6,6 +6,7 @@ from pyblish import api as pyblish
 from .. import api
 
 from pype.nuke import menu
+import logging
 
 from .lib import (
     create_write_node
@@ -44,40 +45,40 @@ if os.getenv("PYBLISH_GUI", None):
     pyblish.register_gui(os.getenv("PYBLISH_GUI", None))
 
 
-# class NukeHandler(Logger.logging.Handler):
-#     '''
-#     Nuke Handler - emits logs into nuke's script editor.
-#     warning will emit nuke.warning()
-#     critical and fatal would popup msg dialog to alert of the error.
-#     '''
-#
-#     def __init__(self):
-#         api.Logger.logging.Handler.__init__(self)
-#         self.set_name("Pype_Nuke_Handler")
-#
-#     def emit(self, record):
-#         # Formated message:
-#         msg = self.format(record)
-#
-#         if record.levelname.lower() in [
-#             # "warning",
-#             "critical",
-#             "fatal",
-#             "error"
-#         ]:
-#             nuke.message(msg)
+class NukeHandler(logging.Handler):
+    '''
+    Nuke Handler - emits logs into nuke's script editor.
+    warning will emit nuke.warning()
+    critical and fatal would popup msg dialog to alert of the error.
+    '''
 
-#
-# '''Adding Nuke Logging Handler'''
-# nuke_handler = NukeHandler()
-# if nuke_handler.get_name() \
-#     not in [handler.get_name()
-#             for handler in Logger.logging.root.handlers[:]]:
-#     api.Logger.logging.getLogger().addHandler(nuke_handler)
-#     api.Logger.logging.getLogger().setLevel(Logger.logging.INFO)
-#
-# if not self.nLogger:
-#     self.nLogger = Logger
+    def __init__(self):
+        logging.Handler.__init__(self)
+        self.set_name("Pype_Nuke_Handler")
+
+    def emit(self, record):
+        # Formated message:
+        msg = self.format(record)
+
+        if record.levelname.lower() in [
+            # "warning",
+            "critical",
+            "fatal",
+            "error"
+        ]:
+            nuke.message(msg)
+
+
+'''Adding Nuke Logging Handler'''
+nuke_handler = NukeHandler()
+if nuke_handler.get_name() \
+    not in [handler.get_name()
+            for handler in logging.root.handlers[:]]:
+    logging.getLogger().addHandler(nuke_handler)
+    logging.getLogger().setLevel(logging.INFO)
+
+if not self.nLogger:
+    self.nLogger = Logger
 
 
 def reload_config():
@@ -113,11 +114,11 @@ def install():
     # api.set_avalon_workdir()
     # reload_config()
 
-    import sys
+    # import sys
 
-    for path in sys.path:
-        if path.startswith("C:\\Users\\Public"):
-            sys.path.remove(path)
+    # for path in sys.path:
+    #     if path.startswith("C:\\Users\\Public"):
+    #         sys.path.remove(path)
 
     log.info("Registering Nuke plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
@@ -139,7 +140,7 @@ def install():
     menu.install()
 
     # load data from templates
-    # api.load_data_from_templates()
+    api.load_data_from_templates()
 
 
 def uninstall():

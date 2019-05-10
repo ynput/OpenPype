@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import logging
@@ -15,9 +16,8 @@ class ThumbToChildren(BaseAction):
     # Action label
     label = 'Thumbnail to Children'
     # Action icon
-    icon = (
-        'https://cdn3.iconfinder.com/data/icons/transfers/100/'
-        '239322-download_transfer-128.png'
+    icon = '{}/ftrack/action_icons/thumbToChildren.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     def discover(self, session, entities, event):

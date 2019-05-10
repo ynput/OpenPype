@@ -3,11 +3,9 @@ import sys
 import logging
 import argparse
 import re
-# import json
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
-# from pype import api as pype, lib as pypelib
 from avalon import lib as avalonlib
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 from pypeapp import config, Anatomy
@@ -24,10 +22,10 @@ class CreateFolders(BaseAction):
     label = 'Create Folders'
 
     #: Action Icon.
-    icon = (
-        'https://cdn1.iconfinder.com/data/icons/hawcons/32/'
-        '698620-icon-105-folder-add-512.png'
+    icon = '{}/ftrack/action_icons/CreateFolders.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
+
     db = DbConnector()
 
     def discover(self, session, entities, event):
@@ -238,17 +236,6 @@ class CreateFolders(BaseAction):
             for child in entity['children']:
                 output.extend(self.get_notask_children(child))
         return output
-
-    # def get_presets(self):
-    #     fpath_items = [pypelib.get_presets_path(), 'tools', 'sw_folders.json']
-    #     filepath = os.path.normpath(os.path.sep.join(fpath_items))
-    #     presets = dict()
-    #     try:
-    #         with open(filepath) as data_file:
-    #             presets = json.load(data_file)
-    #     except Exception as e:
-    #         self.log.warning('Wasn\'t able to load presets')
-    #     return dict(presets)
 
     def template_format(self, template, data):
 

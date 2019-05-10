@@ -17,12 +17,11 @@ from .action import (
 
 from pypeapp import Logger
 
-# from . import (
-#     Anatomy,
-#     Colorspace,
-#     Metadata,
-#     Dataflow
-# )
+from . import (
+    Anatomy,
+    Colorspace,
+    Dataflow
+)
 
 from .templates import (
     load_data_from_templates,
@@ -88,7 +87,6 @@ __all__ = [
     # preloaded templates
     "Anatomy",
     "Colorspace",
-    "Metadata",
     "Dataflow",
 
     # QtWidgets
