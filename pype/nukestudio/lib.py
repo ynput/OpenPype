@@ -10,8 +10,6 @@ import hiero
 
 from PySide2 import (QtWidgets, QtGui)
 
-# Local libraries
-import plugins
 
 cached_process = None
 
@@ -41,8 +39,6 @@ def setup(console=False, port=None, menu=True):
     # register bumpybox plugins
     pyblish.api.register_plugin_path(r"C:\Users\hubert\CODE\github\pyblish-bumpybox\pyblish_bumpybox\plugins\nukestudio")
 
-    register_plugins()
-    register_host()
     add_submission()
 
     if menu:
@@ -98,27 +94,6 @@ def remove_from_filemenu():
     raise NotImplementedError("Implement me please.")
 
 
-def deregister_plugins():
-    # De-register accompanying plugins
-    plugin_path = os.path.dirname(plugins.__file__)
-    pyblish.api.deregister_plugin_path(plugin_path)
-    print("pyblish: Deregistered %s" % plugin_path)
-
-
-def register_host():
-    """Register supported hosts"""
-    pyblish.api.register_host("nukestudio")
-
-
-def deregister_host():
-    """De-register supported hosts"""
-    pyblish.api.deregister_host("nukestudio")
-
-
-def register_plugins():
-    # Register accompanying plugins
-    plugin_path = os.path.dirname(plugins.__file__)
-    pyblish.api.register_plugin_path(plugin_path)
 
 
 def add_to_filemenu():

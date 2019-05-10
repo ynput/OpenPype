@@ -5,12 +5,11 @@ from pyblish import api as pyblish
 
 from .. import api
 
-from pype.nukestudio import menu
+from .menu import install as menu_install
 
 from .lib import (
     show,
     setup,
-    register_plugins,
     add_to_filemenu
 )
 
@@ -19,7 +18,7 @@ import nuke
 from pypeapp import Logger
 
 
-log = Logger().get_logger(__name__, "nuke")
+log = Logger().get_logger(__name__, "nukestudio")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -63,18 +62,18 @@ def reload_config():
             importlib.reload(module)
 
 
-def install():
+def install(config):
 
     # api.set_avalon_workdir()
     # reload_config()
 
-    import sys
-
+    # import sys
     # for path in sys.path:
     #     if path.startswith("C:\\Users\\Public"):
     #         sys.path.remove(path)
 
-    log.info("Registering Nuke plug-ins..")
+    log.info("Registering NukeStudio plug-ins..")
+    pyblish.register_host("nukestudio")
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
@@ -89,14 +88,15 @@ def install():
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
 
-    menu.install()
+    menu_install()
 
     # load data from templates
     api.load_data_from_templates()
 
 
 def uninstall():
-    log.info("Deregistering Nuke plug-ins..")
+    log.info("Deregistering NukeStudio plug-ins..")
+    pyblish.deregister_host("nukestudio")
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)

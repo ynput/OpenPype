@@ -1,7 +1,5 @@
+import os
 from avalon.api import Session
-
-from pype.nukestudio import lib
-
 
 import hiero.core
 
