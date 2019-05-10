@@ -352,14 +352,14 @@ class DropDataFrame(QtWidgets.QFrame):
         renamed = False
         for item in self.components_list.widgets():
             if repre_name == item.input_repre.text():
-                check_regex = '\(\w+\)$'
+                check_regex = '_\w+$'
                 result = re.findall(check_regex, repre_name)
                 next_num = 2
                 if len(result) == 1:
                     repre_name = repre_name.replace(result[0], '')
-                    next_num = int(result[0].replace('(', '').replace(')', ''))
+                    next_num = int(result[0].replace('_', ''))
                     next_num += 1
-                repre_name = '{}({})'.format(repre_name, next_num)
+                repre_name = '{}_{}'.format(repre_name, next_num)
                 renamed = True
                 break
         if renamed:
