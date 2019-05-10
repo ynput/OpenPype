@@ -21,11 +21,14 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         # Get render globals node
         try:
             render_globals = cmds.ls("renderglobalsMain")[0]
+            for instance in context:
+                self.log.debug(instance.name)
+                if instance.data['family'] == 'workfile':
+                    instance.data['publish'] = True
         except IndexError:
             self.log.info("Skipping renderlayer collection, no "
                           "renderGlobalsDefault found..")
             return
-
         # Get all valid renderlayers
         # This is how Maya populates the renderlayer display
         rlm_attribute = "renderLayerManager.renderLayerId"
@@ -51,7 +54,7 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                 continue
 
             if layer.endswith("defaultRenderLayer"):
-                layername = "masterLayer"
+                continue
             else:
                 # Remove Maya render setup prefix `rs_`
                 layername = layer.split("rs_", 1)[-1]
