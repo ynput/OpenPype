@@ -1,11 +1,10 @@
 from pyblish import api
-from pyblish_bumpybox import inventory
 
 
 class ExtractTasks(api.InstancePlugin):
     """Extract tasks."""
 
-    order = inventory.get_order(__file__, "ExtractTasks")
+    order = api.ExtractorOrder
     label = "Tasks"
     hosts = ["nukestudio"]
     families = ["trackItem.task"]

@@ -9,7 +9,7 @@ class CollectAssumedDestination(pyblish.api.ContextPlugin):
 
     label = "Collect Assumed Destination"
     order = pyblish.api.CollectorOrder + 0.498
-    exclude_families = ["clip"]
+    exclude_families = ["clip", "trackItem"]
 
     def process(self, context):
         for instance in context:

@@ -1,11 +1,10 @@
 from pyblish import api
-from pyblish_bumpybox import inventory
 
 
 class ValidateViewerLut(api.ContextPlugin):
     """Validate viewer lut in NukeStudio is the same as in Nuke."""
 
-    order = inventory.get_order(__file__, "ValidateViewerLut")
+    order = api.ValidatorOrder
     label = "Viewer LUT"
     hosts = ["nukestudio"]
     optional = True

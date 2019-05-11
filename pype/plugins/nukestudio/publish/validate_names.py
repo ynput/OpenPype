@@ -1,5 +1,4 @@
 from pyblish import api
-from pyblish_bumpybox import inventory
 
 
 class ValidateNames(api.InstancePlugin):
@@ -10,7 +9,7 @@ class ValidateNames(api.InstancePlugin):
     Exact matching to optimize processing.
     """
 
-    order = inventory.get_order(__file__, "ValidateNames")
+    order = api.ValidatorOrder
     families = ["trackItem"]
     match = api.Exact
     label = "Names"
@@ -39,5 +38,5 @@ class ValidateNamesFtrack(ValidateNames):
     accommodate for the ftrack family addition.
     """
 
-    order = inventory.get_order(__file__, "ValidateNamesFtrack")
+    order = api.ValidatorOrder
     families = ["trackItem", "ftrack"]

@@ -1,6 +1,4 @@
 from pyblish import api
-from pyblish_bumpybox import inventory
-
 
 class ValidateTrackItem(api.InstancePlugin):
     """Validate the track item to the sequence.
@@ -8,10 +6,10 @@ class ValidateTrackItem(api.InstancePlugin):
     Exact matching to optimize processing.
     """
 
-    order = inventory.get_order(__file__, "ValidateTrackItem")
+    order = api.ValidatorOrder
     families = ["trackItem"]
     match = api.Exact
-    label = "Track Item"
+    label = "Validate Track Item"
     hosts = ["nukestudio"]
     optional = True
 
@@ -21,7 +19,7 @@ class ValidateTrackItem(api.InstancePlugin):
         self.log.info("__ item: {}".format(item))
         media_source = item.source().mediaSource()
         self.log.info("__ media_source: {}".format(media_source))
-        
+
         msg = (
             'A setting does not match between track item "{0}" and sequence '
             '"{1}".'.format(item.name(), item.sequence().name()) +
@@ -55,5 +53,5 @@ class ValidateTrackItem(api.InstancePlugin):
 #     accommodate for the ftrack family addition.
 #     """
 #
-#     order = inventory.get_order(__file__, "ValidateTrackItemFtrack")
+#     order = api.ValidatorOrder
 #     families = ["trackItem", "ftrack"]
