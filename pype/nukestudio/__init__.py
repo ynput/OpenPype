@@ -13,7 +13,6 @@ from .lib import (
     add_to_filemenu
 )
 
-import nuke
 
 from pypeapp import Logger
 
@@ -103,3 +102,16 @@ def uninstall():
 
     # reset data from templates
     api.reset_data_from_templates()
+
+
+def ls():
+    """List available containers.
+
+    This function is used by the Container Manager in Nuke. You'll
+    need to implement a for-loop that then *yields* one Container at
+    a time.
+
+    See the `container.json` schema for details on how it should look,
+    and the Maya equivalent, which is in `avalon.maya.pipeline`
+    """
+    return

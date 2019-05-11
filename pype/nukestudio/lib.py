@@ -36,9 +36,6 @@ def setup(console=False, port=None, menu=True):
     if self._has_been_setup:
         teardown()
 
-    # register bumpybox plugins
-    pyblish.api.register_plugin_path(r"C:\Users\hubert\CODE\github\pyblish-bumpybox\pyblish_bumpybox\plugins\nukestudio")
-
     add_submission()
 
     if menu:
@@ -79,9 +76,6 @@ def teardown():
     if not self._has_been_setup:
         return
 
-    deregister_plugins()
-    deregister_host()
-
     if self._has_menu:
         remove_from_filemenu()
         self._has_menu = False
@@ -92,8 +86,6 @@ def teardown():
 
 def remove_from_filemenu():
     raise NotImplementedError("Implement me please.")
-
-
 
 
 def add_to_filemenu():
@@ -129,17 +121,13 @@ class PublishAction(QtWidgets.QAction):
         self.setShortcut("Ctrl+Alt+P")
 
     def publish(self):
-        import pyblish_nukestudio
-
         # Removing "submission" attribute from hiero module, to prevent tasks
         # from getting picked up when not using the "Export" dialog.
         if hasattr(hiero, "submission"):
             del hiero.submission
-
-        pyblish_nukestudio.show()
+        show()
 
     def eventHandler(self, event):
-
         # Add the Menu to the right-click menu
         event.menu.addAction(self)
 
