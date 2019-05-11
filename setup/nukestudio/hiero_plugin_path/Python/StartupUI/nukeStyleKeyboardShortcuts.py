@@ -12,25 +12,22 @@ except:
     from PySide2.QtCore import *
 
 #----------------------------------------------
-a = hiero.ui.findMenuAction('Import Clips...')
+a = hiero.ui.findMenuAction('Import File(s)...')
 # Note: You probably best to make this 'Ctrl+R' - currently conflicts with 'Red' in the Viewer!
 a.setShortcut(QKeySequence('R'))
 #----------------------------------------------
-a = hiero.ui.findMenuAction('Import Folder...')
+a = hiero.ui.findMenuAction('Import Folder(s)...')
 a.setShortcut(QKeySequence('Shift+R'))
 #----------------------------------------------
-a = hiero.ui.findMenuAction('Import EDL/XML...')
+a = hiero.ui.findMenuAction('Import EDL/XML/AAF...')
 a.setShortcut(QKeySequence('Ctrl+Shift+O'))
 #----------------------------------------------
-a = hiero.ui.findMenuAction('Show Metadata')
+a = hiero.ui.findMenuAction('Metadata View')
 a.setShortcut(QKeySequence('I'))
 #----------------------------------------------
 a = hiero.ui.findMenuAction('Edit Settings')
 a.setShortcut(QKeySequence('S'))
 #----------------------------------------------
-a = hiero.ui.findMenuAction('Monitor Controls')
+a = hiero.ui.findMenuAction('Monitor Output')
 a.setShortcut(QKeySequence('Ctrl+U'))
-#----------------------------------------------
-a = hiero.ui.findMenuAction('New Viewer')
-a.setShortcut(QKeySequence('Ctrl+I'))
 #----------------------------------------------
