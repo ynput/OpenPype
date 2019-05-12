@@ -23,7 +23,7 @@ PUBLISH_PATH = os.path.sep.join(
 )
 pyblish.api.register_plugin_path(PUBLISH_PATH)
 
-# Registers Standalone pyblish plugins
+# # Registers Standalone pyblish plugins
 # PUBLISH_PATH = os.path.sep.join(
 #     [pype.PLUGINS_DIR, 'ftrack', 'publish']
 # )
@@ -55,8 +55,8 @@ def set_context(project, asset, app):
     if parents and len(parents) > 0:
         hierarchy = os.path.sep.join(parents)
 
-    os.environ["AVALON_HIEARCHY"] = hierarchy
-    io.Session["AVALON_HIEARCHY"] = hierarchy
+    os.environ["AVALON_HIERARCHY"] = hierarchy
+    io.Session["AVALON_HIERARCHY"] = hierarchy
 
     os.environ["AVALON_PROJECTCODE"] = av_project['data'].get('code', '')
     io.Session["AVALON_PROJECTCODE"] = av_project['data'].get('code', '')
