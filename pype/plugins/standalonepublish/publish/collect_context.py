@@ -6,6 +6,7 @@ from avalon import (
 )
 import json
 import logging
+import clique
 
 
 log = logging.getLogger("collector")
@@ -65,12 +66,22 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
         instance.data["files"] = list()
         instance.data['destination_list'] = list()
+        instance.data['representations'] = list()
 
         for component in in_data['representations']:
             # instance.add(node)
+            component['destination'] = component['files']
+            collections, remainder = clique.assemble(component['files'])
+            if collections:
+                self.log.debug(collections)
+                range = collections[0].format('{range}')
+                instance.data['startFrame'] = range.split('-')[0]
+                instance.data['endFrame'] = range.split('-')[1]
 
-            instance.data["files"].append(component['files'])
-            instance.data['destination_list'].append(component['files'])
+
+            instance.data["files"].append(component)
+            instance.data["representations"].append(component)
+
             # "is_thumbnail": component['thumbnail'],
             # "is_preview": component['preview']
 
