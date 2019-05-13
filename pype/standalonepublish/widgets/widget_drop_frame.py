@@ -216,35 +216,9 @@ class DropDataFrame(QtWidgets.QFrame):
             'is_sequence': False,
             'actions': actions
         }
-        data['file_info'] = self.get_file_info(data)
 
         self._process_data(data)
 
-    def get_file_info(self, data):
-        output = None
-        if data['ext'] == '.mov':
-            try:
-                # ffProbe must be in PATH
-                filepath = data['files'][0]
-                args = ['ffprobe', '-show_streams', filepath]
-                p = subprocess.Popen(
-                    args,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True
-                )
-                datalines=[]
-                for line in iter(p.stdout.readline, b''):
-                    line = line.decode("utf-8").replace('\r\n', '')
-                    datalines.append(line)
-
-                find_value = 'codec_name'
-                for line in datalines:
-                    if line.startswith(find_value):
-                        output = line.replace(find_value + '=', '')
-                        break
-            except Exception as e:
-                pass
     def load_data_with_probe(self, filepath):
         args = [
             'ffprobe',
@@ -264,10 +238,53 @@ class DropDataFrame(QtWidgets.QFrame):
                 'Failed on ffprobe: check if ffprobe path is set in PATH env'
             )
         return json.loads(ffprobe_output)['streams'][0]
+
+    def get_file_data(self, data):
+        filepath = data['files'][0]
+        ext = data['ext']
+        output = {}
+        probe_data = self.load_data_with_probe(filepath)
+
+        if (
+            ext in self.presets['extensions']['image_file'] or
+            ext in self.presets['extensions']['video_file']
+        ):
+            if 'frameRate' not in data:
+                # default value
+                frameRate = 25
+                frameRate_string = probe_data.get('r_frame_rate')
+                if frameRate_string:
+                    frameRate = int(frameRate_string.split('/')[0])
+
+                output['frameRate'] = frameRate
+
+            if 'startFrame' not in data or 'endFrame' not in data:
+                startFrame = endFrame = 1
+                endFrame_string = probe_data.get('nb_frames')
+
+                if endFrame_string:
+                    endFrame = int(endFrame_string)
+
+                output['startFrame'] = startFrame
+                output['endFrame'] = endFrame
+
+        file_info = None
+        if 'file_info' in data:
+            file_info = data['file_info']
+        elif ext in ['.mov']:
+             file_info = probe_data.get('codec_name')
+
+        output['file_info'] = file_info
+
         return output
 
     def _process_data(self, data):
         ext = data['ext']
+        # load file data info
+        file_data = self.get_file_data(data)
+        for key, value in file_data.items():
+            data[key] = value
+
         icon = 'default'
         for ico, exts in self.presets['extensions'].items():
             if ext in exts:
