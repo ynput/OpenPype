@@ -16,10 +16,6 @@ class ComponentItem(QtWidgets.QFrame):
     signal_preview = QtCore.Signal(object)
     signal_repre_change = QtCore.Signal(object, object)
 
-    startFrame = None
-    endFrame = None
-    frameRate = None
-
     def __init__(self, parent, main_parent):
         super().__init__()
         self.has_valid_repre = True
