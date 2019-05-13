@@ -10,10 +10,15 @@ class ComponentItem(QtWidgets.QFrame):
     C_HOVER = '#ffffff'
     C_ACTIVE = '#4BB543'
     C_ACTIVE_HOVER = '#4BF543'
+
     signal_remove = QtCore.Signal(object)
     signal_thumbnail = QtCore.Signal(object)
     signal_preview = QtCore.Signal(object)
     signal_repre_change = QtCore.Signal(object, object)
+
+    startFrame = None
+    endFrame = None
+    frameRate = None
 
     def __init__(self, parent, main_parent):
         super().__init__()
@@ -291,4 +296,12 @@ class ComponentItem(QtWidgets.QFrame):
             'thumbnail': self.is_thumbnail(),
             'preview': self.is_preview()
         }
+
+        if ('startFrame' in self.in_data and 'endFrame' in self.in_data):
+            data['startFrame'] = self.in_data['startFrame']
+            data['endFrame'] = self.in_data['endFrame']
+
+        if 'frameRate' in self.in_data:
+            data['frameRate'] = self.in_data['frameRate']
+
         return data
