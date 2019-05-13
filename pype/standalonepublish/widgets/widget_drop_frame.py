@@ -182,34 +182,8 @@ class DropDataFrame(QtWidgets.QFrame):
             'is_sequence': True,
             'actions': actions
         }
-        self._process_data(data)
 
-    def _get_ranges(self, indexes):
-        if len(indexes) == 1:
-            return str(indexes[0])
-        ranges = []
-        first = None
-        last = None
-        for index in indexes:
-            if first is None:
-                first = index
-                last = index
-            elif (last+1) == index:
-                last = index
-            else:
-                if first == last:
-                    range = str(first)
-                else:
-                    range = '{}-{}'.format(first, last)
-                ranges.append(range)
-                first = index
-                last = index
-        if first == last:
-            range = str(first)
-        else:
-            range = '{}-{}'.format(first, last)
-        ranges.append(range)
-        return ', '.join(ranges)
+        self._process_data(data)
 
     def _process_remainder(self, remainder):
         filename = os.path.basename(remainder)
