@@ -170,6 +170,13 @@ class DropDataFrame(QtWidgets.QFrame):
         repr_name = file_ext.replace('.', '')
         range = collection.format('{ranges}')
 
+        # TODO: ranges must not be with missing frames!!!
+        # - this is goal implementation:
+        # startFrame, endFrame = range.split('-')
+        rngs = range.split(',')
+        startFrame = rngs[0].split('-')[0]
+        endFrame = rngs[-1].split('-')[-1]
+
         actions = []
 
         data = {
@@ -177,6 +184,8 @@ class DropDataFrame(QtWidgets.QFrame):
             'name': file_base,
             'ext': file_ext,
             'file_info': range,
+            'startFrame': startFrame,
+            'endFrame': endFrame,
             'representation': repr_name,
             'folder_path': folder_path,
             'is_sequence': True,
