@@ -40,15 +40,7 @@ class AvalonApps:
     def show_launcher(self):
         # if app_launcher don't exist create it/otherwise only show main window
         if self.app_launcher is None:
-            parser = argparse.ArgumentParser()
-            parser.add_argument("--demo", action="store_true")
-            parser.add_argument(
-                "--root", default=os.environ["AVALON_PROJECTS"]
-            )
-            kwargs = parser.parse_args()
-
-            root = kwargs.root
-            root = os.path.realpath(root)
+            root = os.path.realpath(os.environ["AVALON_PROJECTS"])
             io.install()
             APP_PATH = launcher_lib.resource("qml", "main.qml")
             self.app_launcher = launcher_widget.Launcher(root, APP_PATH)
