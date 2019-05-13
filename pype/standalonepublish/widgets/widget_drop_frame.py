@@ -49,7 +49,7 @@ class DropDataFrame(QtWidgets.QFrame):
         else:
             # If path is in clipboard as string
             try:
-                path = ent.text()
+                path = os.path.normpath(ent.text())
                 if os.path.exists(path):
                     paths.append(path)
                 else:
