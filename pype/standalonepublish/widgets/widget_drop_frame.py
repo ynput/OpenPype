@@ -1,5 +1,6 @@
 import os
 import re
+import json
 import clique
 import subprocess
 from pypeapp import config
@@ -244,6 +245,25 @@ class DropDataFrame(QtWidgets.QFrame):
                         break
             except Exception as e:
                 pass
+    def load_data_with_probe(self, filepath):
+        args = [
+            'ffprobe',
+            '-v', 'quiet',
+            '-print_format', 'json',
+            '-show_format',
+            '-show_streams', filepath
+        ]
+        ffprobe_p = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            shell=True
+        )
+        ffprobe_output = ffprobe_p.communicate()[0]
+        if ffprobe_p.returncode != 0:
+            raise RuntimeError(
+                'Failed on ffprobe: check if ffprobe path is set in PATH env'
+            )
+        return json.loads(ffprobe_output)['streams'][0]
         return output
 
     def _process_data(self, data):
