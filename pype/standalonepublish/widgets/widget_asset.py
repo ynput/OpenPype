@@ -250,7 +250,8 @@ class AssetWidget(QtWidgets.QWidget):
             asset = self.db.find_one({
                 "_id": selected[0], "type": "asset"
             })
-            tasks = asset['data'].get('tasks', [])
+            if asset:
+                tasks = asset.get('data', {}).get('tasks', [])
         self.task_model.set_tasks(tasks)
 
     def get_active_asset(self):
