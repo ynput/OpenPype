@@ -185,6 +185,7 @@ class AssetWidget(QtWidgets.QWidget):
         selection.currentChanged.connect(self.current_changed)
         refresh.clicked.connect(self.refresh)
 
+        self.selection_changed.connect(self._refresh_tasks)
 
         self.task_view = task_view
         self.task_model = task_model
@@ -241,6 +242,16 @@ class AssetWidget(QtWidgets.QWidget):
 
     def refresh(self):
         self._refresh_model()
+
+    def _refresh_tasks(self):
+        tasks = []
+        selected = self.get_selected_assets()
+        if len(selected) == 1:
+            asset = self.db.find_one({
+                "_id": selected[0], "type": "asset"
+            })
+            tasks = asset['data'].get('tasks', [])
+        self.task_model.set_tasks(tasks)
 
     def get_active_asset(self):
         """Return the asset id the current asset."""
