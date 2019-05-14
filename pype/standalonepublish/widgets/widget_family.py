@@ -245,10 +245,8 @@ class FamilyWidget(QtWidgets.QWidget):
         asset_name = self.input_asset.text()
         subset_name = self.input_result.text()
         if (
-            (
-                asset_name.strip() != '' or
-                asset_name == self.parent_widget.NOT_SELECTED
-            ) and subset_name.strip() != ''
+            asset_name != self.parent_widget.NOT_SELECTED and
+            subset_name.strip() != ''
         ):
             asset = self.db.find_one({
                 'type': 'asset',
