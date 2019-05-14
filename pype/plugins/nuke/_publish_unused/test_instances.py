@@ -1,21 +1,14 @@
-
-import nuke
 import pyblish.api
 
 
-class IncrementScriptVersion(pyblish.api.ContextPlugin):
+class IncrementTestPlugin(pyblish.api.ContextPlugin):
     """Increment current script version."""
 
-    order = pyblish.api.IntegratorOrder + 0.9
-    label = "Increment Script Version"
-    optional = True
+    order = pyblish.api.CollectorOrder + 0.5
+    label = "Test Plugin"
     hosts = ['nuke']
 
     def process(self, context):
-
-        assert all(result["success"] for result in context.data["results"]), (
-            "Atomicity not held, aborting.")
-
         instances = context[:]
 
         prerender_check = list()
@@ -27,7 +20,5 @@ class IncrementScriptVersion(pyblish.api.ContextPlugin):
                 families_check.append(True)
 
         if len(prerender_check) != len(families_check):
-            from pype.lib import version_up
-            path = context.data["currentFile"]
-            nuke.scriptSaveAs(version_up(path))
-            self.log.info('Incrementing script version')
+            self.log.info(prerender_check)
+            self.log.info(families_check)
