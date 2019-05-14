@@ -201,10 +201,17 @@ class AssetWidget(QtWidgets.QWidget):
     def collect_data(self):
         project = self.db.find_one({'type': 'project'})
         asset = self.db.find_one({'_id': self.get_active_asset()})
+
+        try:
+            index = self.task_view.selectedIndexes()[0]
+            task = self.task_model.itemData(index)[0]
+        except Exception:
+            task = None
         data = {
             'project': project['name'],
             'asset': asset['name'],
-            'parents': self.get_parents(asset)
+            'parents': self.get_parents(asset),
+            'task': task
         }
         return data
 
