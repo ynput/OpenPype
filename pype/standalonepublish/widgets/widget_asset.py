@@ -2,6 +2,8 @@ import contextlib
 from . import QtWidgets, QtCore
 from . import RecursiveSortFilterProxyModel, AssetModel, AssetView
 from . import awesome, style
+from . import TasksTemplateModel, DeselectableTreeView
+
 
 @contextlib.contextmanager
 def preserve_expanded_rows(tree_view,
@@ -128,7 +130,7 @@ class AssetWidget(QtWidgets.QWidget):
 
         self.parent_widget = parent
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
@@ -163,12 +165,29 @@ class AssetWidget(QtWidgets.QWidget):
         layout.addLayout(header)
         layout.addWidget(view)
 
+        # tasks
+        task_view = DeselectableTreeView()
+        task_view.setIndentation(0)
+        task_view.setHeaderHidden(True)
+
+        task_model = TasksTemplateModel()
+        task_view.setModel(task_model)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(4)
+        main_layout.addLayout(layout, 80)
+        main_layout.addWidget(task_view, 20)
+
         # Signals/Slots
         selection = view.selectionModel()
         selection.selectionChanged.connect(self.selection_changed)
         selection.currentChanged.connect(self.current_changed)
         refresh.clicked.connect(self.refresh)
 
+
+        self.task_view = task_view
+        self.task_model = task_model
         self.refreshButton = refresh
         self.model = model
         self.proxy = proxy
