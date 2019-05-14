@@ -26,7 +26,6 @@ class Window(QtWidgets.QDialog):
     initialized = False
     WIDTH = 1100
     HEIGHT = 500
-    NOT_SELECTED = '< Nothing is selected >'
 
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
@@ -160,7 +159,7 @@ class Window(QtWidgets.QDialog):
             self.widget_family.change_asset(asset['name'])
         else:
             self.valid_parent = False
-            self.widget_family.change_asset(self.NOT_SELECTED)
+            self.widget_family.change_asset(None)
         self.widget_family.on_data_changed()
 
     def keyPressEvent(self, event):

@@ -17,12 +17,14 @@ class FamilyWidget(QtWidgets.QWidget):
     data = dict()
     _jobs = dict()
     Separator = "---separator---"
+    NOT_SELECTED = '< Nothing is selected >'
 
     def __init__(self, parent):
         super().__init__(parent)
         # Store internal states in here
         self.state = {"valid": False}
         self.parent_widget = parent
+        self.asset_name = self.NOT_SELECTED
 
         body = QtWidgets.QWidget()
         lists = QtWidgets.QWidget()
@@ -132,7 +134,10 @@ class FamilyWidget(QtWidgets.QWidget):
         return self.parent_widget.db
 
     def change_asset(self, name):
-        self.input_asset.setText(name)
+        if name is None:
+            name = self.NOT_SELECTED
+        self.asset_name = name
+        self.on_data_changed()
 
     def _on_state_changed(self, state):
         self.state['valid'] = state
