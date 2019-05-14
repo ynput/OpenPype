@@ -10,7 +10,7 @@ class ValidateNames(api.InstancePlugin):
     """
 
     order = api.ValidatorOrder
-    families = ["trackItem"]
+    families = ["clip"]
     match = api.Exact
     label = "Names"
     hosts = ["nukestudio"]
@@ -39,4 +39,4 @@ class ValidateNamesFtrack(ValidateNames):
     """
 
     order = api.ValidatorOrder
-    families = ["trackItem", "ftrack"]
+    families = ["clip", "ftrack"]

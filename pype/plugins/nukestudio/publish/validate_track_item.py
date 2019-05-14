@@ -1,13 +1,13 @@
 from pyblish import api
 
-class ValidateTrackItem(api.InstancePlugin):
+class ValidateClip(api.InstancePlugin):
     """Validate the track item to the sequence.
 
     Exact matching to optimize processing.
     """
 
     order = api.ValidatorOrder
-    families = ["trackItem"]
+    families = ["clip"]
     match = api.Exact
     label = "Validate Track Item"
     hosts = ["nukestudio"]
@@ -44,14 +44,3 @@ class ValidateTrackItem(api.InstancePlugin):
         assert sequence.framerate() == source_framerate, msg.format(
             "framerate", source_framerate, sequence.framerate()
         )
-
-#
-# class ValidateTrackItemFtrack(ValidateTrackItem):
-#     """Validate the track item to the sequence.
-#
-#     Because we are matching the families exactly, we need this plugin to
-#     accommodate for the ftrack family addition.
-#     """
-#
-#     order = api.ValidatorOrder
-#     families = ["trackItem", "ftrack"]

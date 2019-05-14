@@ -1,28 +1,14 @@
 from pyblish import api
 
-class CollectFramerate(api.ContextPlugin):
-    """Collect framerate from selected sequence."""
 
-    order = api.CollectorOrder
-    label = "Collect Framerate"
-    hosts = ["nukestudio"]
-
-    def process(self, context):
-        for item in context.data.get("selection", []):
-            context.data["framerate"] = item.sequence().framerate().toFloat()
-            return
-
-
-class CollectTrackItems(api.ContextPlugin):
+class CollectClips(api.ContextPlugin):
     """Collect all Track items selection."""
 
     order = api.CollectorOrder
-    label = "Collect Track Items"
+    label = "Collect Clips"
     hosts = ["nukestudio"]
 
     def process(self, context):
-        import os
-
         data = {}
         for item in context.data.get("selection", []):
             self.log.info("__ item: {}".format(item))
@@ -43,13 +29,13 @@ class CollectTrackItems(api.ContextPlugin):
             }
 
         for key, value in data.items():
-
+            family = "clip"
             context.create_instance(
                 name=key,
-                subset="trackItem",
+                subset="{0}{1}".format(family, 'Default'),
                 asset=value["item"].name(),
                 item=value["item"],
-                family="trackItem",
+                family=family,
                 tasks=value["tasks"],
                 startFrame=value["startFrame"],
                 endFrame=value["endFrame"],

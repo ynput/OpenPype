@@ -1,36 +1,27 @@
-import os
 import pyblish.api
+import os
 
 from avalon import io, api
 
 
-class CollectAssumedDestination(pyblish.api.ContextPlugin):
+class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
     """Generate the assumed destination path where the file will be stored"""
 
-    label = "Collect Assumed Destination"
-    order = pyblish.api.CollectorOrder + 0.498
-    exclude_families = ["clip"]
+    label = "Integrate Assumed Destination"
+    order = pyblish.api.IntegratorOrder - 0.05
+    families = ["clip",  "projectfile"]
 
-    def process(self, context):
-        for instance in context:
-            self.process_item(instance)
-
-    def process_item(self, instance):
-        if [ef for ef in self.exclude_families
-                if instance.data["family"] in ef]:
-            return
+    def process(self, instance):
 
         self.create_destination_template(instance)
 
         template_data = instance.data["assumedTemplateData"]
+        # template = instance.data["template"]
 
         anatomy = instance.context.data['anatomy']
-        # self.log.info(anatomy.anatomy())
-        self.log.info(anatomy.templates)
         # template = anatomy.publish.path
         anatomy_filled = anatomy.format(template_data)
-        self.log.info(anatomy_filled)
-        mock_template = anatomy_filled["publish"]["path"]
+        mock_template = anatomy_filled.publish.path
 
         # For now assume resources end up in a "resources" folder in the
         # published folder
@@ -79,12 +70,10 @@ class CollectAssumedDestination(pyblish.api.ContextPlugin):
         Returns:
             file path (str)
         """
-        if [ef for ef in self.exclude_families
-                if instance.data["family"] in ef]:
-            return
 
         # get all the stuff from the database
         subset_name = instance.data["subset"]
+        self.log.info(subset_name)
         asset_name = instance.data["asset"]
         project_name = api.Session["AVALON_PROJECT"]
 
@@ -93,7 +82,7 @@ class CollectAssumedDestination(pyblish.api.ContextPlugin):
                               projection={"config": True, "data": True})
 
         template = project["config"]["template"]["publish"]
-        anatomy = instance.context.data['anatomy']
+        # anatomy = instance.context.data['anatomy']
 
         asset = io.find_one({"type": "asset",
                              "name": asset_name,
@@ -117,7 +106,10 @@ class CollectAssumedDestination(pyblish.api.ContextPlugin):
 
         # if there is a subset there ought to be version
         if version is not None:
-            version_number += int(version["name"])
+            version_number += version["name"]
+
+        if instance.data.get('version'):
+            version_number = int(instance.data.get('version'))
 
         hierarchy = asset['data']['parents']
         if hierarchy:
@@ -135,10 +127,6 @@ class CollectAssumedDestination(pyblish.api.ContextPlugin):
                          "hierarchy": hierarchy,
                          "representation": "TEMP"}
 
-        instance.data["template"] = template
         instance.data["assumedTemplateData"] = template_data
-
-        # We take the parent folder of representation 'filepath'
-        instance.data["assumedDestination"] = os.path.dirname(
-            (anatomy.format(template_data))["publish"]["path"]
-        )
+        self.log.info(template_data)
+        instance.data["template"] = template
