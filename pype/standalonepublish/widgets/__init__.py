@@ -20,15 +20,14 @@ from .model_tree_view_deselectable import DeselectableTreeView
 
 from .widget_asset_view import AssetView
 from .widget_asset import AssetWidget
+
 from .widget_family_desc import FamilyDescriptionWidget
 from .widget_family import FamilyWidget
 
 from .widget_drop_empty import DropEmpty
 from .widget_component_item import ComponentItem
 from .widget_components_list import ComponentsList
-
 from .widget_drop_frame import DropDataFrame
-
 from .widget_components import ComponentsWidget
 
-from.widget_shadow import ShadowWidget
+from .widget_shadow import ShadowWidget
