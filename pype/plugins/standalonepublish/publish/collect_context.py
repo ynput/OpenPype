@@ -55,7 +55,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         instance = context.create_instance(subset)
 
         instance.data.update({
-            "subset": family + subset,
+            "subset": subset,
             "asset": asset_name,
             "label": family + subset,
             "name": family + subset,

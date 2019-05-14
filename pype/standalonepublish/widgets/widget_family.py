@@ -119,7 +119,7 @@ class FamilyWidget(QtWidgets.QWidget):
         family = plugin.family.rsplit(".", 1)[-1]
         data = {
             'family': family,
-            'subset': self.input_subset.text(),
+            'subset': self.input_result.text(),
             'version': self.version_spinbox.value()
         }
         return data
