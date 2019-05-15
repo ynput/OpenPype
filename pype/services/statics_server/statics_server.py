@@ -1,6 +1,9 @@
 import os
+import sys
+import datetime
 import socket
 import http.server
+from http import HTTPStatus
 import urllib
 import posixpath
 import socketserver
@@ -13,9 +16,14 @@ DIRECTORY = os.path.sep.join([os.environ['PYPE_MODULE_ROOT'], 'res'])
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
-    directory=DIRECTORY
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        py_version = sys.version.split('.')
+        # If python version is 3.7 or higher
+        if int(py_version[0]) >= 3 and int(py_version[1]) >= 7:
+            super().__init__(*args, directory=DIRECTORY, **kwargs)
+        else:
+            self.directory = DIRECTORY
+            super().__init__(*args, **kwargs)
 
     def send_head(self):
         """Common code for GET and HEAD commands.
@@ -62,7 +70,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     and "If-None-Match" not in self.headers):
                 # compare If-Modified-Since and time of last file modification
                 try:
-                    ims = email.utils.parsedate_to_datetime(
+                    ims = http.server.email.utils.parsedate_to_datetime(
                         self.headers["If-Modified-Since"])
                 except (TypeError, IndexError, OverflowError, ValueError):
                     # ignore ill-formed values
@@ -132,11 +140,11 @@ class StaticsServer(QtCore.QThread):
     Idle time resets on keyboard/mouse input.
     Is able to emit signals at specific time idle.
     """
-
     def __init__(self):
         super(StaticsServer, self).__init__()
+        self.qaction = None
+        self.failed_icon = None
         self._is_running = False
-        self._failed = False
         self.log = Logger().get_logger(self.__class__.__name__)
         try:
             self.presets = config.get_presets().get(
@@ -146,16 +154,16 @@ class StaticsServer(QtCore.QThread):
 
         self.port = self.find_port()
 
+    def set_qaction(self, qaction, failed_icon):
+        self.qaction = qaction
+        self.failed_icon = failed_icon
+
     def tray_start(self):
         self.start()
 
     @property
     def is_running(self):
         return self._is_running
-
-    @property
-    def failed(self):
-        return self._failed
 
     def stop(self):
         self._is_running = False
@@ -167,8 +175,12 @@ class StaticsServer(QtCore.QThread):
                 while self._is_running:
                     httpd.handle_request()
         except Exception:
-            self._failed = True
-            self._is_running = False
+            self.log.warning(
+                'Statics Server service has failed', exc_info=True
+            )
+        self._is_running = False
+        if self.qaction and self.failed_icon:
+            self.qaction.setIcon(self.failed_icon)
 
     def find_port(self):
         start_port = self.presets['default_port']

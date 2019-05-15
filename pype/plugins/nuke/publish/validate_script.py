@@ -28,9 +28,7 @@ class ValidateScript(pyblish.api.InstancePlugin):
         ]
 
         # Value of these attributes can be found on parents
-        hierarchical_attributes = [
-            "fps", "resolution_width", "resolution_height",
-            "pixel_aspect", "handles"]
+        hierarchical_attributes = ["fps", "resolution_width", "resolution_height", "pixel_aspect", "handles"]
 
         missing_attributes = []
         asset_attributes = {}

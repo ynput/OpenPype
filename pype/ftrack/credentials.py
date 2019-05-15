@@ -1,6 +1,6 @@
 import os
 import json
-import ftrack_api
+from pype.vendor import ftrack_api
 import appdirs
 
 
