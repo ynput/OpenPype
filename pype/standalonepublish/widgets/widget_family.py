@@ -227,12 +227,12 @@ class FamilyWidget(QtWidgets.QWidget):
             self._build_menu(defaults)
 
             item.setData(ExistsRole, True)
-            self.echo("Ready ..")
         else:
             self._build_menu([])
             item.setData(ExistsRole, False)
             if asset_name != self.NOT_SELECTED:
-                self.echo("'%s' not found .." % asset_name)
+                # TODO add logging into standalone_publish
+                print("'%s' not found .." % asset_name)
 
         self.on_version_refresh()
 
@@ -338,10 +338,6 @@ class FamilyWidget(QtWidgets.QWidget):
             self.list_families.addItem(item)
 
         self.list_families.setCurrentItem(self.list_families.item(0))
-
-    def echo(self, message):
-        if hasattr(self.parent_widget, 'echo'):
-            self.parent_widget.echo(message)
 
     def schedule(self, func, time, channel="default"):
         try:
