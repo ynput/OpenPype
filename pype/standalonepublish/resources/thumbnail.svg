@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 890 200" fill="#777777" style="enable-background:new 0 0 890 200;" xml:space="preserve">
+	<g>
+		<path d="
+			M30,10
+			h830 a20,20 0 0 1 20,20
+			v140 a20,20 0 0 1 -20,20
+			h-830 a20,20 0 0 1 -20,-20
+			v-140 a20,20 0 0 1 20,-20 z
+
+			M17,37
+			v126 a20,20 0 0 0 20,20
+			h816 a20,20 0 0 0 20,-20
+			v-126 a20,20 0 0 0 -20,-20
+			h-816 a20,20 0 0 0 -20,20 z"/>
+		<text style='font-family:Trebuchet MS;font-size:140px;' x="70" y="155" class="small">THUMBNAIL</text>
+	</g>
+</svg>

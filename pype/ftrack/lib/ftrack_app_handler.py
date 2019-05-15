@@ -193,7 +193,7 @@ class AppAction(BaseHandler):
         application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
 
         data = {
-            "root": os.environ.get("PYPE_STUDIO_PROJECTS_PATH"),
+            "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
             "project": {
                 "name": entity['project']['full_name'],
                 "code": entity['project']['name']

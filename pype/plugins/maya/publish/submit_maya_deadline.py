@@ -280,7 +280,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 clean_path = clean_path.replace('python2', 'python3')
             clean_path = clean_path.replace(
                                             os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
-                                            os.path.normpath(environment['PYPE_STUDIO_CORE']))
+                                            os.path.normpath(environment['PYPE_STUDIO_CORE_PATH']))
             clean_environment[key] = clean_path
 
         environment = clean_environment
