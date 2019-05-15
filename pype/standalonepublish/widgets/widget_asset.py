@@ -169,6 +169,7 @@ class AssetWidget(QtWidgets.QWidget):
         task_view = DeselectableTreeView()
         task_view.setIndentation(0)
         task_view.setHeaderHidden(True)
+        task_view.setVisible(False)
 
         task_model = TasksTemplateModel()
         task_view.setModel(task_model)
@@ -260,6 +261,7 @@ class AssetWidget(QtWidgets.QWidget):
             if asset:
                 tasks = asset.get('data', {}).get('tasks', [])
         self.task_model.set_tasks(tasks)
+        self.task_view.setVisible(len(tasks)>0)
 
     def get_active_asset(self):
         """Return the asset id the current asset."""
