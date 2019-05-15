@@ -21,10 +21,11 @@ class IncrementScriptVersion(pyblish.api.ContextPlugin):
         prerender_check = list()
         families_check = list()
         for instance in instances:
-            if ("prerender" in str(instance)):
+            if ("prerender" in str(instance)) and instance.data.get("families", None):
                 prerender_check.append(instance)
             if instance.data.get("families", None):
                 families_check.append(True)
+
 
         if len(prerender_check) != len(families_check):
             from pype.lib import version_up
