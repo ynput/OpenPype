@@ -85,6 +85,12 @@ class DeleteAsset(BaseAction):
                 'type': 'asset',
                 'name': entity['name']
             })
+            
+            if av_entity is None:
+                return {
+                    'success': False,
+                    'message': 'Didn\'t found assets in avalon'
+                }
 
             asset_label = {
                 'type': 'label',
