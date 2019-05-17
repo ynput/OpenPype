@@ -46,8 +46,6 @@ from .lib import (
     get_data_hierarchical_attr
 )
 
-from .widgets.message_window import message
-
 __all__ = [
     # plugin classes
     "Extractor",
@@ -88,8 +86,5 @@ __all__ = [
     "Anatomy",
     "Colorspace",
     "Dataflow",
-
-    # QtWidgets
-    "message"
 
 ]
