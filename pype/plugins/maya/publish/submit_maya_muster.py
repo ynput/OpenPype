@@ -6,6 +6,7 @@ from avalon.vendor import requests
 import pyblish.api
 import pype.maya.lib as lib
 import appdirs
+from pypeapp.lib.config import get_presets
 
 
 def get_renderer_variables(renderlayer=None):
@@ -104,17 +105,17 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
     _password = None
 
     def _load_credentials(self):
-        app_dir = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
-        file_name = 'muster.json'
+        app_dir = os.path.normpath(
+            appdirs.user_data_dir('pype-app', 'pype', 'muster')
+        )
+        file_name = 'muster_cred.json'
         fpath = os.path.join(app_dir, file_name)
-        try:
-            file = open(fpath, 'r')
-            muster_json = json.load(file)
-            self.MUSTER_USER = muster_json.get('user', None)
-            self.MUSTER_PASSWORD = muster_json.get('password', None)
-        except Exception:
-            file = open(fpath, 'w')
+        file = open(fpath, 'r')
+        muster_json = json.load(file)
+        self.MUSTER_USER = muster_json.get('user', None)
+        self.MUSTER_PASSWORD = muster_json.get('password', None)
         file.close()
+        self.MUSTER_REST_URL = get_presets()['tools']['muster']['url']
 
     def _authenticate(self):
         """
@@ -225,8 +226,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
 
         allInstances = []
         for result in context.data["results"]:
-            if result["instance"] is not None and
-            result["instance"] not in allInstances:
+            if ((result["instance"] is not None) and
+               (result["instance"] not in allInstances)):
                 allInstances.append(result["instance"])
 
         for inst in allInstances:
@@ -259,7 +260,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                                           ext=render_variables["ext"])
 
         # TODO: set correct path
-        postjob_command = "python publish_filesequence.py"
+        postjob_command = "{} --publish"
 
         try:
             # Ensure render folder exists
