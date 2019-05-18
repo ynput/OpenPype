@@ -8,13 +8,13 @@ class TasksTemplateModel(TreeModel):
 
     COLUMNS = ["Tasks"]
 
-    def __init__(self):
+    def __init__(self, selectable=True):
         super(TasksTemplateModel, self).__init__()
-        self.selectable = False
-        self._icons = {
-            "__default__": awesome.icon("fa.folder-o",
-                                        color=style.colors.default)
-        }
+        self.selectable = selectable
+        self.icon = awesome.icon(
+            'fa.calendar-check-o',
+            color=style.colors.default
+        )
 
     def set_tasks(self, tasks):
         """Set assets to track by their database id
@@ -32,13 +32,11 @@ class TasksTemplateModel(TreeModel):
 
         self.beginResetModel()
 
-        icon = self._icons["__default__"]
         for task in tasks:
             node = Node({
                 "Tasks": task,
-                "icon": icon
+                "icon": self.icon
             })
-
             self.add_child(node)
 
         self.endResetModel()

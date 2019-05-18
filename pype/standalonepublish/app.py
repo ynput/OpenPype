@@ -26,7 +26,6 @@ class Window(QtWidgets.QDialog):
     initialized = False
     WIDTH = 1100
     HEIGHT = 500
-    NOT_SELECTED = '< Nothing is selected >'
 
     def __init__(self, parent=None):
         super(Window, self).__init__(parent=parent)
@@ -40,18 +39,8 @@ class Window(QtWidgets.QDialog):
         # Validators
         self.valid_parent = False
 
-        # statusbar - added under asset_widget
-        label_message = QtWidgets.QLabel()
-        label_message.setFixedHeight(20)
-
         # assets widget
-        widget_assets_wrap = QtWidgets.QWidget()
-        widget_assets_wrap.setContentsMargins(0, 0, 0, 0)
         widget_assets = AssetWidget(self)
-
-        layout_assets = QtWidgets.QVBoxLayout(widget_assets_wrap)
-        layout_assets.addWidget(widget_assets)
-        layout_assets.addWidget(label_message)
 
         # family widget
         widget_family = FamilyWidget(self)
@@ -67,10 +56,10 @@ class Window(QtWidgets.QDialog):
             QtWidgets.QSizePolicy.Expanding
         )
         body.setOrientation(QtCore.Qt.Horizontal)
-        body.addWidget(widget_assets_wrap)
+        body.addWidget(widget_assets)
         body.addWidget(widget_family)
         body.addWidget(widget_components)
-        body.setStretchFactor(body.indexOf(widget_assets_wrap), 2)
+        body.setStretchFactor(body.indexOf(widget_assets), 2)
         body.setStretchFactor(body.indexOf(widget_family), 3)
         body.setStretchFactor(body.indexOf(widget_components), 5)
 
@@ -82,12 +71,9 @@ class Window(QtWidgets.QDialog):
         # signals
         widget_assets.selection_changed.connect(self.on_asset_changed)
 
-        self.label_message = label_message
         self.widget_assets = widget_assets
         self.widget_family = widget_family
         self.widget_components = widget_components
-
-        self.echo("Connected to Database")
 
         # on start
         self.on_start()
@@ -131,22 +117,6 @@ class Window(QtWidgets.QDialog):
             parents.append(parent['name'])
         return parents
 
-    def echo(self, message):
-        ''' Shows message in label that disappear in 5s
-        :param message: Message that will be displayed
-        :type message: str
-        '''
-        self.label_message.setText(str(message))
-        def clear_text():
-            ''' Helps prevent crash if this Window object
-            is deleted before 5s passed
-            '''
-            try:
-                self.label_message.set_text("")
-            except:
-                pass
-        QtCore.QTimer.singleShot(5000, lambda: clear_text())
-
     def on_asset_changed(self):
         '''Callback on asset selection changed
 
@@ -160,7 +130,7 @@ class Window(QtWidgets.QDialog):
             self.widget_family.change_asset(asset['name'])
         else:
             self.valid_parent = False
-            self.widget_family.change_asset(self.NOT_SELECTED)
+            self.widget_family.change_asset(None)
         self.widget_family.on_data_changed()
 
     def keyPressEvent(self, event):

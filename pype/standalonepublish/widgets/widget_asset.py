@@ -2,6 +2,8 @@ import contextlib
 from . import QtWidgets, QtCore
 from . import RecursiveSortFilterProxyModel, AssetModel, AssetView
 from . import awesome, style
+from . import TasksTemplateModel, DeselectableTreeView
+
 
 @contextlib.contextmanager
 def preserve_expanded_rows(tree_view,
@@ -128,7 +130,7 @@ class AssetWidget(QtWidgets.QWidget):
 
         self.parent_widget = parent
 
-        layout = QtWidgets.QVBoxLayout(self)
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(4)
 
@@ -163,12 +165,31 @@ class AssetWidget(QtWidgets.QWidget):
         layout.addLayout(header)
         layout.addWidget(view)
 
+        # tasks
+        task_view = DeselectableTreeView()
+        task_view.setIndentation(0)
+        task_view.setHeaderHidden(True)
+        task_view.setVisible(False)
+
+        task_model = TasksTemplateModel()
+        task_view.setModel(task_model)
+
+        main_layout = QtWidgets.QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(4)
+        main_layout.addLayout(layout, 80)
+        main_layout.addWidget(task_view, 20)
+
         # Signals/Slots
         selection = view.selectionModel()
         selection.selectionChanged.connect(self.selection_changed)
         selection.currentChanged.connect(self.current_changed)
         refresh.clicked.connect(self.refresh)
 
+        self.selection_changed.connect(self._refresh_tasks)
+
+        self.task_view = task_view
+        self.task_model = task_model
         self.refreshButton = refresh
         self.model = model
         self.proxy = proxy
@@ -181,10 +202,17 @@ class AssetWidget(QtWidgets.QWidget):
     def collect_data(self):
         project = self.db.find_one({'type': 'project'})
         asset = self.db.find_one({'_id': self.get_active_asset()})
+
+        try:
+            index = self.task_view.selectedIndexes()[0]
+            task = self.task_model.itemData(index)[0]
+        except Exception:
+            task = None
         data = {
             'project': project['name'],
             'asset': asset['name'],
-            'parents': self.get_parents(asset)
+            'parents': self.get_parents(asset),
+            'task': task
         }
         return data
 
@@ -222,6 +250,18 @@ class AssetWidget(QtWidgets.QWidget):
 
     def refresh(self):
         self._refresh_model()
+
+    def _refresh_tasks(self):
+        tasks = []
+        selected = self.get_selected_assets()
+        if len(selected) == 1:
+            asset = self.db.find_one({
+                "_id": selected[0], "type": "asset"
+            })
+            if asset:
+                tasks = asset.get('data', {}).get('tasks', [])
+        self.task_model.set_tasks(tasks)
+        self.task_view.setVisible(len(tasks)>0)
 
     def get_active_asset(self):
         """Return the asset id the current asset."""

@@ -17,12 +17,14 @@ class FamilyWidget(QtWidgets.QWidget):
     data = dict()
     _jobs = dict()
     Separator = "---separator---"
+    NOT_SELECTED = '< Nothing is selected >'
 
     def __init__(self, parent):
         super().__init__(parent)
         # Store internal states in here
         self.state = {"valid": False}
         self.parent_widget = parent
+        self.asset_name = self.NOT_SELECTED
 
         body = QtWidgets.QWidget()
         lists = QtWidgets.QWidget()
@@ -30,12 +32,10 @@ class FamilyWidget(QtWidgets.QWidget):
         container = QtWidgets.QWidget()
 
         list_families = QtWidgets.QListWidget()
-        input_asset = QtWidgets.QLineEdit()
-        input_asset.setEnabled(False)
-        input_asset.setStyleSheet("color: #BBBBBB;")
+
         input_subset = QtWidgets.QLineEdit()
         input_result = QtWidgets.QLineEdit()
-        input_result.setStyleSheet("color: gray;")
+        input_result.setStyleSheet("color: #BBBBBB;")
         input_result.setEnabled(False)
 
         # region Menu for default subset names
@@ -51,6 +51,20 @@ class FamilyWidget(QtWidgets.QWidget):
         name_layout.addWidget(btn_subset)
         name_layout.setContentsMargins(0, 0, 0, 0)
 
+        # version
+        version_spinbox = QtWidgets.QSpinBox()
+        version_spinbox.setMinimum(1)
+        version_spinbox.setMaximum(9999)
+        version_spinbox.setEnabled(False)
+        version_spinbox.setStyleSheet("color: #BBBBBB;")
+
+        version_checkbox = QtWidgets.QCheckBox("Next Available Version")
+        version_checkbox.setCheckState(QtCore.Qt.CheckState(2))
+
+        version_layout = QtWidgets.QHBoxLayout()
+        version_layout.addWidget(version_spinbox)
+        version_layout.addWidget(version_checkbox)
+
         layout = QtWidgets.QVBoxLayout(container)
 
         header = FamilyDescriptionWidget(self)
@@ -58,11 +72,11 @@ class FamilyWidget(QtWidgets.QWidget):
 
         layout.addWidget(QtWidgets.QLabel("Family"))
         layout.addWidget(list_families)
-        layout.addWidget(QtWidgets.QLabel("Asset"))
-        layout.addWidget(input_asset)
         layout.addWidget(QtWidgets.QLabel("Subset"))
         layout.addLayout(name_layout)
         layout.addWidget(input_result)
+        layout.addWidget(QtWidgets.QLabel("Version"))
+        layout.addLayout(version_layout)
         layout.setContentsMargins(0, 0, 0, 0)
 
         options = QtWidgets.QWidget()
@@ -75,6 +89,7 @@ class FamilyWidget(QtWidgets.QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
 
         layout = QtWidgets.QVBoxLayout(body)
+
         layout.addWidget(lists)
         layout.addWidget(options, 0, QtCore.Qt.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -83,9 +98,9 @@ class FamilyWidget(QtWidgets.QWidget):
         layout.addWidget(body)
 
         input_subset.textChanged.connect(self.on_data_changed)
-        input_asset.textChanged.connect(self.on_data_changed)
         list_families.currentItemChanged.connect(self.on_selection_changed)
         list_families.currentItemChanged.connect(header.set_item)
+        version_checkbox.stateChanged.connect(self.on_version_refresh)
 
         self.stateChanged.connect(self._on_state_changed)
 
@@ -93,8 +108,9 @@ class FamilyWidget(QtWidgets.QWidget):
         self.menu_subset = menu_subset
         self.btn_subset = btn_subset
         self.list_families = list_families
-        self.input_asset = input_asset
         self.input_result = input_result
+        self.version_checkbox = version_checkbox
+        self.version_spinbox = version_spinbox
 
         self.refresh()
 
@@ -103,7 +119,8 @@ class FamilyWidget(QtWidgets.QWidget):
         family = plugin.family.rsplit(".", 1)[-1]
         data = {
             'family': family,
-            'subset': self.input_subset.text()
+            'subset': self.input_result.text(),
+            'version': self.version_spinbox.value()
         }
         return data
 
@@ -112,7 +129,10 @@ class FamilyWidget(QtWidgets.QWidget):
         return self.parent_widget.db
 
     def change_asset(self, name):
-        self.input_asset.setText(name)
+        if name is None:
+            name = self.NOT_SELECTED
+        self.asset_name = name
+        self.on_data_changed()
 
     def _on_state_changed(self, state):
         self.state['valid'] = state
@@ -153,22 +173,37 @@ class FamilyWidget(QtWidgets.QWidget):
         self.input_subset.setText(action.text())
 
     def _on_data_changed(self):
-        item = self.list_families.currentItem()
+        asset_name = self.asset_name
         subset_name = self.input_subset.text()
-        asset_name = self.input_asset.text()
+        item = self.list_families.currentItem()
 
-        # Get the assets from the database which match with the name
-        assets_db = self.db.find(filter={"type": "asset"}, projection={"name": 1})
-        assets = [asset for asset in assets_db if asset_name in asset["name"]]
         if item is None:
             return
-        if assets:
-            # Get plugin and family
-            plugin = item.data(PluginRole)
-            if plugin is None:
-                return
-            family = plugin.family.rsplit(".", 1)[-1]
 
+        assets = None
+        if asset_name != self.NOT_SELECTED:
+            # Get the assets from the database which match with the name
+            assets_db = self.db.find(
+                filter={"type": "asset"},
+                projection={"name": 1}
+            )
+            assets = [
+                asset for asset in assets_db if asset_name in asset["name"]
+            ]
+
+        # Get plugin and family
+        plugin = item.data(PluginRole)
+        if plugin is None:
+            return
+
+        family = plugin.family.rsplit(".", 1)[-1]
+
+        # Update the result
+        if subset_name:
+            subset_name = subset_name[0].upper() + subset_name[1:]
+        self.input_result.setText("{}{}".format(family, subset_name))
+
+        if assets:
             # Get all subsets of the current asset
             asset_ids = [asset["_id"] for asset in assets]
             subsets = self.db.find(filter={"type": "subset",
@@ -191,27 +226,61 @@ class FamilyWidget(QtWidgets.QWidget):
 
             self._build_menu(defaults)
 
-            # Update the result
-            if subset_name:
-                subset_name = subset_name[0].upper() + subset_name[1:]
-            self.input_result.setText("{}{}".format(family, subset_name))
-
             item.setData(ExistsRole, True)
-            self.echo("Ready ..")
         else:
             self._build_menu([])
             item.setData(ExistsRole, False)
-            if asset_name != self.parent_widget.NOT_SELECTED:
-                self.echo("'%s' not found .." % asset_name)
+            if asset_name != self.NOT_SELECTED:
+                # TODO add logging into standalone_publish
+                print("'%s' not found .." % asset_name)
+
+        self.on_version_refresh()
 
         # Update the valid state
         valid = (
+            asset_name != self.NOT_SELECTED and
             subset_name.strip() != "" and
-            asset_name.strip() != "" and
             item.data(QtCore.Qt.ItemIsEnabled) and
             item.data(ExistsRole)
         )
         self.stateChanged.emit(valid)
+
+    def on_version_refresh(self):
+        auto_version = self.version_checkbox.isChecked()
+        self.version_spinbox.setEnabled(not auto_version)
+        if not auto_version:
+            return
+
+        asset_name = self.asset_name
+        subset_name = self.input_result.text()
+        version = 1
+
+        if (
+            asset_name != self.NOT_SELECTED and
+            subset_name.strip() != ''
+        ):
+            asset = self.db.find_one({
+                'type': 'asset',
+                'name': asset_name
+            })
+            subset = self.db.find_one({
+                'type': 'subset',
+                'parent': asset['_id'],
+                'name': subset_name
+            })
+            if subset:
+                versions = self.db.find({
+                    'type': 'version',
+                    'parent': subset['_id']
+                })
+                if versions:
+                    versions = sorted(
+                        [v for v in versions],
+                        key=lambda ver: ver['name']
+                    )
+                    version = int(versions[-1]['name']) + 1
+
+        self.version_spinbox.setValue(version)
 
     def on_data_changed(self, *args):
 
@@ -269,10 +338,6 @@ class FamilyWidget(QtWidgets.QWidget):
             self.list_families.addItem(item)
 
         self.list_families.setCurrentItem(self.list_families.item(0))
-
-    def echo(self, message):
-        if hasattr(self.parent_widget, 'echo'):
-            self.parent_widget.echo(message)
 
     def schedule(self, func, time, channel="default"):
         try:
