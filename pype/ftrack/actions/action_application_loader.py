@@ -38,9 +38,6 @@ def registerApp(app, session):
     description = apptoml.get('description', None)
     preactions = apptoml.get('preactions', [])
 
-    if icon:
-        icon = icon.format(os.environ.get('PYPE_STATICS_SERVER', ''))
-
     # register action
     AppAction(
         session, label, name, executable, variant,

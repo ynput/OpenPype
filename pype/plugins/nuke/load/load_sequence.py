@@ -226,7 +226,6 @@ class LoadSequence(api.Loader):
             node,
             updated_dict
         )
-        log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
 
