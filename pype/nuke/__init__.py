@@ -6,6 +6,7 @@ from pyblish import api as pyblish
 from .. import api
 
 from pype.nuke import menu
+import logging
 
 from .lib import (
     create_write_node
@@ -13,14 +14,16 @@ from .lib import (
 
 import nuke
 
-# removing logger handler created in avalon_core
-for name, handler in [(handler.get_name(), handler)
-                      for handler in api.Logger.logging.root.handlers[:]]:
-    if "pype" not in str(name).lower():
-        api.Logger.logging.root.removeHandler(handler)
+from pypeapp import Logger
+
+# #removing logger handler created in avalon_core
+# for name, handler in [(handler.get_name(), handler)
+#                       for handler in Logger.logging.root.handlers[:]]:
+#     if "pype" not in str(name).lower():
+#         Logger.logging.root.removeHandler(handler)
 
 
-log = api.Logger.getLogger(__name__, "nuke")
+log = Logger().get_logger(__name__, "nuke")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
@@ -33,14 +36,13 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "nuke", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "nuke", "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "nuke", "inventory")
 
-self = sys.modules[__name__]
-self.nLogger = None
 
+# registering pyblish gui regarding settings in presets
 if os.getenv("PYBLISH_GUI", None):
     pyblish.register_gui(os.getenv("PYBLISH_GUI", None))
 
 
-class NukeHandler(api.Logger.logging.Handler):
+class NukeHandler(logging.Handler):
     '''
     Nuke Handler - emits logs into nuke's script editor.
     warning will emit nuke.warning()
@@ -48,7 +50,7 @@ class NukeHandler(api.Logger.logging.Handler):
     '''
 
     def __init__(self):
-        api.Logger.logging.Handler.__init__(self)
+        logging.Handler.__init__(self)
         self.set_name("Pype_Nuke_Handler")
 
     def emit(self, record):
@@ -61,6 +63,7 @@ class NukeHandler(api.Logger.logging.Handler):
             "fatal",
             "error"
         ]:
+            msg = self.format(record)
             nuke.message(msg)
 
 
@@ -68,12 +71,9 @@ class NukeHandler(api.Logger.logging.Handler):
 nuke_handler = NukeHandler()
 if nuke_handler.get_name() \
     not in [handler.get_name()
-            for handler in api.Logger.logging.root.handlers[:]]:
-    api.Logger.logging.getLogger().addHandler(nuke_handler)
-    api.Logger.logging.getLogger().setLevel(api.Logger.logging.INFO)
-
-if not self.nLogger:
-    self.nLogger = api.Logger
+            for handler in logging.root.handlers[:]]:
+    logging.getLogger().addHandler(nuke_handler)
+    logging.getLogger().setLevel(logging.INFO)
 
 
 def reload_config():
@@ -106,8 +106,14 @@ def reload_config():
 
 def install():
 
-    api.set_avalon_workdir()
-    reload_config()
+    # api.set_avalon_workdir()
+    # reload_config()
+
+    # import sys
+
+    # for path in sys.path:
+    #     if path.startswith("C:\\Users\\Public"):
+    #         sys.path.remove(path)
 
     log.info("Registering Nuke plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
@@ -146,7 +152,7 @@ def uninstall():
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node passthrough states on instance toggles."""
-    self.log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
+    log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
     from avalon.nuke import (

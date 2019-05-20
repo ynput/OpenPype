@@ -1,13 +1,8 @@
-import os
-import sys
-import acre
-
 from avalon import api, lib
-from pype.tools import assetcreator
 
 from pype.api import Logger
 
-log = Logger.getLogger(__name__, "asset_creator")
+log = Logger().get_logger(__name__, "asset_creator")
 
 
 class AssetCreator(api.Action):
@@ -19,9 +14,23 @@ class AssetCreator(api.Action):
 
     def is_compatible(self, session):
         """Return whether the action is compatible with the session"""
-        if "AVALON_PROJECT" in session:
-            return True
-        return False
+        compatible = True
+
+        # Check required modules.
+        module_names = [
+            "ftrack_api", "ftrack_api_old", "pype.tools.assetcreator"
+        ]
+        for name in module_names:
+            try:
+                __import__(name)
+            except ImportError:
+                compatible = False
+
+        # Check session environment.
+        if "AVALON_PROJECT" not in session:
+            compatible = False
+
+        return compatible
 
     def process(self, session, **kwargs):
         asset = ''

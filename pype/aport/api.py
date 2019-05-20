@@ -15,11 +15,11 @@ from avalon import io
 
 import pyblish.api as pyblish
 
-from app.api import forward
+from pypeapp import execute
 from pype import api as pype
 
 
-log = pype.Logger.getLogger(__name__, "aport")
+log = pype.Logger().get_logger(__name__, "aport")
 
 
 SESSION = avalon.session
@@ -56,7 +56,7 @@ def publish(json_data_path, gui):
 
     log.info("avalon.session is: \n{}".format(SESSION))
 
-    pype_start = os.path.join(os.getenv('PYPE_SETUP_ROOT'),
+    pype_start = os.path.join(os.getenv('PYPE_ROOT'),
                               "app", "pype-start.py")
 
     publish = "--publish-gui" if gui else "--publish"
@@ -70,7 +70,7 @@ def publish(json_data_path, gui):
     log.debug(args)
 
     # start standalone pyblish qml
-    forward([
+    execute([
         sys.executable, "-u"
     ] + args,
         cwd=cwd

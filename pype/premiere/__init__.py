@@ -1,18 +1,17 @@
 import os
-import sys
 
 from pysync import walktree
 
 from avalon import api as avalon
 from pyblish import api as pyblish
-from app import api as app
-from pprint import pprint
+from pypeapp import Logger
 from .. import api
+
+from ..widgets.message_window import message
 
 import requests
 
-
-log = api.Logger.getLogger(__name__, "premiere")
+log = Logger().get_logger(__name__, "premiere")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 EXTENSIONS_PATH_LOCAL = os.getenv("EXTENSIONS_PATH", None)
@@ -45,7 +44,7 @@ def request_aport(url_path, data={}):
         return req
 
     except Exception as e:
-        api.message(title="Premiere Aport Server",
+        message(title="Premiere Aport Server",
                     message="Before you can run Premiere, start Aport Server. \n Error: {}".format(
                         e),
                     level="critical")
@@ -102,7 +101,7 @@ def install():
 
     # synchronize extensions
     extensions_sync()
-    api.message(title="pyblish_paths", message=str(reg_paths), level="info")
+    message(title="pyblish_paths", message=str(reg_paths), level="info")
 
 
 def uninstall():

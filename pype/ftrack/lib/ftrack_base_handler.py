@@ -1,7 +1,8 @@
-import ftrack_api
 import functools
 import time
 from pype import api as pype
+from pype.vendor import ftrack_api
+from pype.vendor.ftrack_api import session as fa_session
 
 
 class MissingPermision(Exception):
@@ -30,7 +31,7 @@ class BaseHandler(object):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
         self._session = session
-        self.log = pype.Logger.getLogger(self.__class__.__name__)
+        self.log = pype.Logger().get_logger(self.__class__.__name__)
 
         # Using decorator
         self.register = self.register_decorator(self.register)
@@ -71,7 +72,7 @@ class BaseHandler(object):
                     self.type, label)
                 )
             except Exception as e:
-                self.log.error('{} "{}" - Registration failed ({})'.format(
+                self.log.exception('{} "{}" - Registration failed ({})'.format(
                     self.type, label, str(e))
                 )
         return wrapper_register
@@ -94,7 +95,7 @@ class BaseHandler(object):
                 return result
             except Exception as e:
                 msg = '{} "{}": Failed ({})'.format(self.type, label, str(e))
-                self.log.error(msg)
+                self.log.exception(msg)
                 return {
                     'success': False,
                     'message': msg
@@ -110,7 +111,6 @@ class BaseHandler(object):
         self.session.reset()
 
     def _preregister(self):
-        # Rolecheck
         if hasattr(self, "role_list") and len(self.role_list) > 0:
             username = self.session.api_user
             user = self.session.query(
@@ -197,7 +197,9 @@ class BaseHandler(object):
         _entities = event['data'].get('entities_object', None)
         if (
             _entities is None or
-            _entities[0].get('link', None) == ftrack_api.symbol.NOT_SET
+            _entities[0].get(
+                'link', None
+            ) == fa_session.ftrack_api.symbol.NOT_SET
         ):
             _entities = self._get_entities(event)
 
@@ -302,7 +304,7 @@ class BaseHandler(object):
 
         # Launch preactions
         for preaction in self.preactions:
-            event = ftrack_api.event.base.Event(
+            event = fa_session.ftrack_api.event.base.Event(
                 topic='ftrack.action.launch',
                 data=dict(
                     actionIdentifier=preaction,
@@ -314,7 +316,7 @@ class BaseHandler(object):
             )
             session.event_hub.publish(event, on_error='ignore')
         # Relaunch this action
-        event = ftrack_api.event.base.Event(
+        event = fa_session.ftrack_api.event.base.Event(
             topic='ftrack.action.launch',
             data=dict(
                 actionIdentifier=self.identifier,
@@ -415,7 +417,7 @@ class BaseHandler(object):
             'applicationId=ftrack.client.web and user.id="{0}"'
         ).format(user_id)
         self.session.event_hub.publish(
-            ftrack_api.event.base.Event(
+            fa_session.ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='message',
@@ -438,7 +440,7 @@ class BaseHandler(object):
         ).format(user_id)
 
         self.session.event_hub.publish(
-            ftrack_api.event.base.Event(
+            fa_session.ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='widget',

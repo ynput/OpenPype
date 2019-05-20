@@ -17,6 +17,10 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
     def process(self, context):
         asset_data = io.find_one({"type": "asset",
                                   "name": api.Session["AVALON_ASSET"]})
+
+        # add handles into context
+        context.data['handles'] = int(asset_data["data"].get("handles", 0))
+
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
         # creating instances per write node
@@ -51,7 +55,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "family": avalon_knob_data["family"],
                 "avalonKnob": avalon_knob_data,
                 "publish": node.knob('publish').value(),
-                "handles": int(asset_data["data"].get("handles", 0)),
                 "step": 1,
                 "fps": int(nuke.root()['fps'].value())
 

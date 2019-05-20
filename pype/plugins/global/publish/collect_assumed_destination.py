@@ -4,15 +4,71 @@ import pyblish.api
 from avalon import io, api
 
 
-class CollectAssumedDestination(pyblish.api.InstancePlugin):
+class CollectAssumedDestination(pyblish.api.ContextPlugin):
     """Generate the assumed destination path where the file will be stored"""
 
     label = "Collect Assumed Destination"
     order = pyblish.api.CollectorOrder + 0.498
     exclude_families = ["clip"]
 
-    def process(self, instance):
-        """Create a destination filepath based on the current data available
+    def process(self, context):
+        for instance in context:
+            self.process_item(instance)
+
+    def process_item(self, instance):
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
+
+        self.create_destination_template(instance)
+
+        template_data = instance.data["assumedTemplateData"]
+
+        anatomy = instance.context.data['anatomy']
+        # self.log.info(anatomy.anatomy())
+        self.log.info(anatomy.templates)
+        # template = anatomy.publish.path
+        anatomy_filled = anatomy.format(template_data)
+        self.log.info(anatomy_filled)
+        mock_template = anatomy_filled["publish"]["path"]
+
+        # For now assume resources end up in a "resources" folder in the
+        # published folder
+        mock_destination = os.path.join(os.path.dirname(mock_template),
+                                        "resources")
+
+        # Clean the path
+        mock_destination = os.path.abspath(os.path.normpath(mock_destination))
+
+        # Define resource destination and transfers
+        resources = instance.data.get("resources", list())
+        transfers = instance.data.get("transfers", list())
+        for resource in resources:
+
+            # Add destination to the resource
+            source_filename = os.path.basename(resource["source"])
+            destination = os.path.join(mock_destination, source_filename)
+
+            # Force forward slashes to fix issue with software unable
+            # to work correctly with backslashes in specific scenarios
+            # (e.g. escape characters in PLN-151 V-Ray UDIM)
+            destination = destination.replace("\\", "/")
+
+            resource['destination'] = destination
+
+            # Collect transfers for the individual files of the resource
+            # e.g. all individual files of a cache or UDIM textures.
+            files = resource['files']
+            for fsrc in files:
+                fname = os.path.basename(fsrc)
+                fdest = os.path.join(mock_destination, fname)
+                transfers.append([fsrc, fdest])
+
+        instance.data["resources"] = resources
+        instance.data["transfers"] = transfers
+
+    def create_destination_template(self, instance):
+        """Create a filepath based on the current data available
 
         Example template:
             {root}/{project}/{silo}/{asset}/publish/{subset}/v{version:0>3}/
@@ -84,5 +140,5 @@ class CollectAssumedDestination(pyblish.api.InstancePlugin):
 
         # We take the parent folder of representation 'filepath'
         instance.data["assumedDestination"] = os.path.dirname(
-            (anatomy.format(template_data)).publish.path
+            (anatomy.format(template_data))["publish"]["path"]
         )

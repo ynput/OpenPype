@@ -1,8 +1,9 @@
+import os
 import sys
 import logging
 from bson.objectid import ObjectId
 import argparse
-import ftrack_api
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
@@ -16,10 +17,8 @@ class DeleteAsset(BaseAction):
     label = 'Delete Asset/Subsets'
     #: Action description.
     description = 'Removes from Avalon with all childs and asset from Ftrack'
-    icon = (
-        'https://cdn4.iconfinder.com/data/icons/'
-        'ios-web-user-interface-multi-circle-flat-vol-5/512/'
-        'Delete_dustbin_empty_recycle_recycling_remove_trash-512.png'
+    icon = '{}/ftrack/action_icons/DeleteAsset.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
@@ -86,6 +85,12 @@ class DeleteAsset(BaseAction):
                 'type': 'asset',
                 'name': entity['name']
             })
+            
+            if av_entity is None:
+                return {
+                    'success': False,
+                    'message': 'Didn\'t found assets in avalon'
+                }
 
             asset_label = {
                 'type': 'label',

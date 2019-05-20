@@ -1,9 +1,10 @@
+import os
 import sys
 import argparse
 import logging
 import json
 
-import ftrack_api
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 
 
@@ -18,9 +19,8 @@ class JobKiller(BaseAction):
     description = 'Killing selected running jobs'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = (
-        'https://cdn2.iconfinder.com/data/icons/new-year-resolutions/64/'
-        'resolutions-23-512.png'
+    icon = '{}/ftrack/action_icons/JobKiller.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     def discover(self, session, entities, event):
@@ -46,10 +46,7 @@ class JobKiller(BaseAction):
                     desctiption = data['description']
                 except Exception:
                     desctiption = '*No description*'
-                try:
-                    user = job['user']['username']
-                except Exception:
-                    user = '*No user'
+                user = job['user']['username']
                 created = job['created_at'].strftime('%d.%m.%Y %H:%M:%S')
                 label = '{} - {} - {}'.format(
                     desctiption, created, user

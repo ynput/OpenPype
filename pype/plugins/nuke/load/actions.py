@@ -5,7 +5,7 @@
 from avalon import api
 from pype.api import Logger
 
-log = Logger.getLogger(__name__, "nuke")
+log = Logger().get_logger(__name__, "nuke")
 
 
 class SetFrameRangeLoader(api.Loader):

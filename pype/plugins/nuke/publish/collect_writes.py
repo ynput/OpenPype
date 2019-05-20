@@ -1,11 +1,8 @@
 import os
 import nuke
 import pyblish.api
-import logging
 import pype.api as pype
 
-
-log = logging.getLogger(__name__)
 
 
 @pyblish.api.log
@@ -38,10 +35,12 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 output_type = "mov"
 
             # Get frame range
+            handles = instance.context.data.get('handles', 0)
             first_frame = int(nuke.root()["first_frame"].getValue())
             last_frame = int(nuke.root()["last_frame"].getValue())
 
             if node["use_limit"].getValue():
+                handles = 0
                 first_frame = int(node["first"].getValue())
                 last_frame = int(node["last"].getValue())
 
@@ -79,6 +78,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
                 "outputDir": output_dir,
                 "ext": ext,
                 "label": label,
+                "handles": handles,
                 "startFrame": first_frame,
                 "endFrame": last_frame,
                 "outputType": output_type,

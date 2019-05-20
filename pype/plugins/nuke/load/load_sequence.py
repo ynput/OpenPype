@@ -8,7 +8,7 @@ import avalon.io as io
 import nuke
 
 from pype.api import Logger
-log = Logger.getLogger(__name__, "nuke")
+log = Logger().get_logger(__name__, "nuke")
 
 
 @contextlib.contextmanager
@@ -128,11 +128,15 @@ class LoadSequence(api.Loader):
 
             # add additional metadata from the version to imprint to Avalon knob
             add_keys = ["startFrame", "endFrame", "handles",
-                        "source", "colorspace", "author", "fps"]
+                        "source", "colorspace", "author", "fps", "version"]
 
             data_imprint = {}
             for k in add_keys:
-                data_imprint.update({k: context["version"]['data'][k]})
+                if k is 'version':
+                    data_imprint.update({k: context["version"]['name']})
+                else:
+                    data_imprint.update({k: context["version"]['data'][k]})
+                    
             data_imprint.update({"objectName": read_name})
 
             r["tile_color"].setValue(int("0x4ecd25ff", 16))
@@ -226,6 +230,7 @@ class LoadSequence(api.Loader):
             node,
             updated_dict
         )
+        log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
 

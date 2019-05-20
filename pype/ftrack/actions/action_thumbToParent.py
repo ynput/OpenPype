@@ -1,8 +1,9 @@
+import os
 import sys
 import argparse
 import logging
 import json
-import ftrack_api
+from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 
 
@@ -14,9 +15,8 @@ class ThumbToParent(BaseAction):
     # Action label
     label = 'Thumbnail to Parent'
     # Action icon
-    icon = (
-        "https://cdn3.iconfinder.com/data/icons/transfers/100/"
-        "239419-upload_transfer-512.png"
+    icon = '{}/ftrack/action_icons/thumbToParent.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     def discover(self, session, entities, event):

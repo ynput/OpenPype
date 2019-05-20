@@ -9,7 +9,7 @@ import pype.api as pype
 
 from pype.api import Logger
 
-log = Logger.getLogger(__name__, "aport")
+log = Logger().get_logger(__name__, "aport")
 
 
 class Aport(api.Action):

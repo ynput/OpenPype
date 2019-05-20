@@ -1,15 +1,12 @@
 
 
-from app import style
+from pypeapp import style
 from avalon.vendor.Qt import QtCore, QtGui, QtWidgets
 import os
 import getpass
 import platform
 
 import ftrack_api
-
-
-# object symbol
 
 
 class Project_name_getUI(QtWidgets.QWidget):

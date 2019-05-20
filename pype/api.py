@@ -15,12 +15,11 @@ from .action import (
     RepairContextAction
 )
 
-from app.api import Logger
+from pypeapp import Logger
 
 from . import (
     Anatomy,
     Colorspace,
-    Metadata,
     Dataflow
 )
 
@@ -46,8 +45,6 @@ from .lib import (
     add_tool_to_environment,
     get_data_hierarchical_attr
 )
-
-from .widgets.message_window import message
 
 __all__ = [
     # plugin classes
@@ -88,10 +85,6 @@ __all__ = [
     # preloaded templates
     "Anatomy",
     "Colorspace",
-    "Metadata",
     "Dataflow",
-
-    # QtWidgets
-    "message"
 
 ]

@@ -6,7 +6,7 @@ from pype import api as pype
 import nuke
 
 
-log = pype.Logger.getLogger(__name__, "nuke")
+log = pype.Logger().get_logger(__name__, "nuke")
 
 
 class CrateRead(avalon.nuke.Creator):
