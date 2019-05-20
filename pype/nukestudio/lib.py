@@ -8,7 +8,11 @@ import pyblish.api
 # Host libraries
 import hiero
 
-from PySide2 import (QtWidgets, QtGui)
+from pypeapp import Logger
+log = Logger().get_logger(__name__, "nukestudio")
+
+
+from avalon.vendor.Qt import (QtWidgets, QtGui)
 
 
 cached_process = None

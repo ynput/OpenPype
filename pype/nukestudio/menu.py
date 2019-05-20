@@ -26,7 +26,7 @@ def install():
         libraryloader
     )
 
-    menu_name = os.environ['PYPE_STUDIO_NAME']
+    menu_name = os.environ['AVALON_LABEL']
     # Grab Hiero's MenuBar
     M = hiero.ui.menuBar()
 
