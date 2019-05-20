@@ -284,11 +284,19 @@ class ComponentItem(QtWidgets.QFrame):
         self.preview.change_checked(hover)
 
     def collect_data(self):
+        in_files = self.in_data['files']
+        staging_dir = os.path.dirname(in_files[0])
+
+        files = [os.path.basename(file) for file in in_files]
+        if len(files) == 1:
+            files = files[0]
+
         data = {
             'ext': self.in_data['ext'],
             'label': self.name.text(),
-            'representation': self.input_repre.text(),
-            'files': self.in_data['files'],
+            'name': self.input_repre.text(),
+            'stagingDir': staging_dir,
+            'files': files,
             'thumbnail': self.is_thumbnail(),
             'preview': self.is_preview()
         }
