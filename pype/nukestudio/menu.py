@@ -43,50 +43,59 @@ def install():
     else:
         menu = check_made_menu.menu()
 
-    actions = [{
-        'action': QAction('Set Context', None),
-        'function': contextmanager.show,
-        'icon': QIcon('icons:Position.png')
-    },
+    actions = [
         {
-        'action': QAction('Create...', None),
-        'function': creator.show,
-        'icon': QIcon('icons:ColorAdd.png')
-    },
+            'action': QAction('Set Context', None),
+            'function': contextmanager.show,
+            'icon': QIcon('icons:Position.png')
+        },
+        "separator",
         {
-        'action': QAction('Load...', None),
-        'function': cbloader.show,
-        'icon': QIcon('icons:CopyRectangle.png')
-    },
+            'action': QAction("Work Files...", None),
+            'function': (lambda: workfiles.show(os.environ["AVALON_WORKDIR"])),
+            'icon': QIcon('icons:Position.png')
+        },
+        "separator",
         {
-        'action': QAction('Publish...', None),
-        'function': publish.show,
-        'icon': QIcon('icons:Output.png')
-    },
+            'action': QAction('Create...', None),
+            'function': creator.show,
+            'icon': QIcon('icons:ColorAdd.png')
+        },
         {
-        'action': QAction('Manage...', None),
-        'function': cbsceneinventory.show,
-        'icon': QIcon('icons:ModifyMetaData.png')
-    },
+            'action': QAction('Load...', None),
+            'function': cbloader.show,
+            'icon': QIcon('icons:CopyRectangle.png')
+        },
         {
-        'action': QAction('Library...', None),
-        'function': libraryloader.show,
-        'icon': QIcon('icons:ColorAdd.png')
-    }]
-
+            'action': QAction('Publish...', None),
+            'function': publish.show,
+            'icon': QIcon('icons:Output.png')
+        },
+        {
+            'action': QAction('Manage...', None),
+            'function': cbsceneinventory.show,
+            'icon': QIcon('icons:ModifyMetaData.png')
+        },
+        {
+            'action': QAction('Library...', None),
+            'function': libraryloader.show,
+            'icon': QIcon('icons:ColorAdd.png')
+        }]
 
     # Create menu items
     for a in actions:
-        pprint(a)
-        # create action
-        for k in a.keys():
-            if 'action' in k:
-                action = a[k]
-            elif 'function' in k:
-                action.triggered.connect(a[k])
-            elif 'icon' in k:
-                action.setIcon(a[k])
+        if isinstance(a, dict):
+            # create action
+            for k in a.keys():
+                if 'action' in k:
+                    action = a[k]
+                elif 'function' in k:
+                    action.triggered.connect(a[k])
+                elif 'icon' in k:
+                    action.setIcon(a[k])
 
-        # add action to menu
-        menu.addAction(action)
-        hiero.ui.registerAction(action)
+            # add action to menu
+            menu.addAction(action)
+            hiero.ui.registerAction(action)
+        elif isinstance(a, str):
+            menu.addSeparator()
