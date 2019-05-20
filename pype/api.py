@@ -43,7 +43,8 @@ from .lib import (
     get_asset_data,
     modified_environ,
     add_tool_to_environment,
-    get_data_hierarchical_attr
+    get_data_hierarchical_attr,
+    get_avalon_project_template
 )
 
 from .widgets.message_window import message
@@ -83,6 +84,7 @@ __all__ = [
     "set_hierarchy",
     "set_project_code",
     "get_data_hierarchical_attr",
+    "get_avalon_project_template",
 
     # preloaded templates
     "Anatomy",
