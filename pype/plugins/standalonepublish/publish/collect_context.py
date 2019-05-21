@@ -1,9 +1,6 @@
 import os
 import pyblish.api
-from avalon import (
-    io,
-    api as avalon
-)
+from avalon import io
 import json
 import logging
 import clique
@@ -33,13 +30,12 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         input_json_path = os.environ.get("SAPUBLISH_INPATH")
         output_json_path = os.environ.get("SAPUBLISH_OUTPATH")
 
-        context.data["stagingDir"] = os.path.dirname(input_json_path)
+        # context.data["stagingDir"] = os.path.dirname(input_json_path)
         context.data["returnJsonPath"] = output_json_path
 
         with open(input_json_path, "r") as f:
             in_data = json.load(f)
 
-        project_name = in_data['project']
         asset_name = in_data['asset']
         family = in_data['family']
         subset = in_data['subset']
@@ -67,21 +63,24 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         instance.data["files"] = list()
         instance.data['destination_list'] = list()
         instance.data['representations'] = list()
+        instance.data['source'] = 'standalone publisher'
 
         for component in in_data['representations']:
-            # instance.add(node)
+
             component['destination'] = component['files']
+            component['stagingDir'] = component['stagingDir']
+            component['anatomy_template'] = 'render'
             collections, remainder = clique.assemble(component['files'])
             if collections:
                 self.log.debug(collections)
-                instance.data['startFrame'] = component['startFrame']
-                instance.data['endFrame'] = component['endFrame']
-                instance.data['frameRate'] = component['frameRate']
+                instance.data['startFrame'] = int(component['startFrame'])
+                instance.data['endFrame'] = int(component['endFrame'])
+                instance.data['frameRate'] = int(component['frameRate'])
 
             instance.data["files"].append(component)
             instance.data["representations"].append(component)
 
-            # "is_thumbnail": component['thumbnail'],
-            # "is_preview": component['preview']
+            instance.data["thumbnail"] = component['thumbnail']
+            instance.data["preview"] = component['preview']
 
         self.log.info(in_data)
