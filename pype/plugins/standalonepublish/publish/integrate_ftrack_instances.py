@@ -60,7 +60,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 if not comp.get('startFrameReview'):
                     comp['startFrameReview'] = comp['startFrame']
                 if not comp.get('endFrameReview'):
-                    comp['endFrameReview'] = instance.data['endFrame']
+                    comp['endFrameReview'] = comp['endFrame']
                 location = ft_session.query(
                     'Location where name is "ftrack.server"').one()
                 component_data = {
@@ -69,11 +69,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "metadata": {'ftr_meta': json.dumps({
                                  'frameIn': int(comp['startFrameReview']),
                                  'frameOut': int(comp['endFrameReview']),
-                                 'frameRate': float(comp['frameRate')]})}
+                                 'frameRate': comp['frameRate']})}
                 }
             else:
                 component_data = {
-                    "name": comp['representation']  # Default component name is "main".
+                    "name": comp['name']
                 }
                 location = ft_session.query(
                     'Location where name is "ftrack.unmanaged"').one()
