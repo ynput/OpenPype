@@ -55,10 +55,10 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         instance = context.create_instance(subset)
 
         instance.data.update({
-            "subset": family + subset,
+            "subset": subset,
             "asset": asset_name,
-            "label": family + subset,
-            "name": family + subset,
+            "label": subset,
+            "name": subset,
             "family": family,
             "families": [family, 'ftrack'],
         })
@@ -74,10 +74,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             collections, remainder = clique.assemble(component['files'])
             if collections:
                 self.log.debug(collections)
-                range = collections[0].format('{range}')
-                instance.data['startFrame'] = range.split('-')[0]
-                instance.data['endFrame'] = range.split('-')[1]
-
+                instance.data['startFrame'] = component['startFrame']
+                instance.data['endFrame'] = component['endFrame']
+                instance.data['frameRate'] = component['frameRate']
 
             instance.data["files"].append(component)
             instance.data["representations"].append(component)

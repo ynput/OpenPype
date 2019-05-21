@@ -340,7 +340,9 @@ class AppAction(BaseHandler):
 
             if next_status_name is not None:
                 try:
-                    query = 'Status where name is "{}"'.format(next_status_name)
+                    query = 'Status where name is "{}"'.format(
+                        next_status_name
+                    )
                     status = session.query(query).one()
                     entity['status'] = status
                     session.commit()
