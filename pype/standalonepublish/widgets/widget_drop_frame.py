@@ -241,7 +241,7 @@ class DropDataFrame(QtWidgets.QFrame):
 
     def get_file_data(self, data):
         filepath = data['files'][0]
-        ext = data['ext']
+        ext = data['ext'].lower()
         output = {}
 
         file_info = None
