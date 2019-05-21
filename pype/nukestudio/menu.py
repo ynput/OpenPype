@@ -1,6 +1,4 @@
 import os
-from avalon.api import Session
-from pprint import pprint
 
 import hiero.core
 
@@ -12,7 +10,7 @@ except Exception:
 
 from hiero.ui import findMenuAction
 
-
+from .tags import add_tags_from_presets
 #
 def install():
     # here is the best place to add menu
@@ -53,6 +51,11 @@ def install():
         {
             'action': QAction("Work Files...", None),
             'function': (lambda: workfiles.show(os.environ["AVALON_WORKDIR"])),
+            'icon': QIcon('icons:Position.png')
+        },
+        {
+            'action': QAction('Create Default Tags..', None),
+            'function': add_tags_from_presets,
             'icon': QIcon('icons:Position.png')
         },
         "separator",

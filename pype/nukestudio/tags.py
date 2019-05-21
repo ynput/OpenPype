@@ -26,6 +26,23 @@ def create_tag(key, value):
 
     return tag
 
+def update_tag(tag, value):
+    """
+    Fixing Tag object.
+
+    Args:
+        tag (obj): Tag object
+        value (dict): parameters of tag
+    """
+
+    tag.setNote(value['note'])
+    tag.setIcon(value['icon']['path'])
+    mtd = tag.metadata()
+    pres_mtd = value.get('metadata', None)
+    if pres_mtd:
+        [mtd.setValue("tag.{}".format(k), v)
+         for k, v in pres_mtd.items()]
+
 
 def add_tags_from_presets():
     """
@@ -44,30 +61,48 @@ def add_tags_from_presets():
     root_bin = project.tagsBin()
 
     for _k, _val in nks_pres_tags.items():
-
         pattern = re.compile(r"\[(.*)\]")
         bin_find = pattern.findall(_k)
         if bin_find:
-            # create Bin object
-            bin = hiero.core.Bin(str(bin_find[0]))
+            # check what is in root bin
+            bins = [b for b in root_bin.items()
+                    if b.name() in str(bin_find[0])]
+
+            if bins:
+                bin = bins[0]
+            else:
+                # create Bin object
+                bin = hiero.core.Bin(str(bin_find[0]))
 
             for k, v in _val.items():
-                # create Tag obj
-                tag = create_tag(k, v)
+                tags = [t for t in bin.items()
+                        if str(k) in t.name()]
 
-            # adding Tag to Bin
-            bin.addItem(tag)
+                if not tags:
+                    # create Tag obj
+                    tag = create_tag(k, v)
 
-            # adding Tag to Root Bin
-            root_bin.addItem(bin)
+                    # adding Tag to Bin
+                    bin.addItem(tag)
+                else:
+                    # update Tag if already exists
+                    update_tag(tags[0], v)
+
+            if not bins:
+                # adding Tag to Root Bin
+                root_bin.addItem(bin)
 
         else:
-            print(_k, _val)
-            # create Tag
-            tag = create_tag(_k, _val)
+            tags = None
+            tags = [t for t in root_bin.items()
+                    if str(_k) in t.name()]
 
-            # adding Tag to Root Bin
-            root_bin.addItem(tag)
+            if not tags:
+                # create Tag
+                tag = create_tag(_k, _val)
 
-
-add_tags_from_presets()
+                # adding Tag to Root Bin
+                root_bin.addItem(tag)
+            else:
+                # update Tag if already exists
+                update_tag(tags[0], _val)

@@ -93,6 +93,7 @@ def install(config):
     api.load_data_from_templates()
 
 
+
 def uninstall():
     log.info("Deregistering NukeStudio plug-ins..")
     pyblish.deregister_host("nukestudio")
