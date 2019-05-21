@@ -1,6 +1,11 @@
 import os
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
+from pypeapp.lib import config
+from pype import api as pype
 # FFmpeg in PATH is required
+
+
+log = pype.Logger().get_logger("BurninWrapper", "burninwrap")
 
 
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
@@ -133,10 +138,8 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             'filters': filters
         }).strip()
 
-def example():
-    input = 'path/to/input/file'
-    output = 'path/to/output/file'
 
+def example(input_path, output_path):
     options_init = {
         'opacity': 1,
         'x_offset': 10,
@@ -148,7 +151,7 @@ def example():
     # First frame in burnin
     start_frame = 2000
     # Options init sets burnin look
-    burnin = ModifiedBurnins(input, options_init=options_init)
+    burnin = ModifiedBurnins(input_path, options_init=options_init)
     # Static text
     burnin.add_text('My Text', ModifiedBurnins.TOP_CENTERED)
     # Frame number
@@ -156,7 +159,66 @@ def example():
     # Timecode
     burnin.add_timecode(ModifiedBurnins.TOP_LEFT, start_frame=start_frame)
     # Start render (overwrite output file if exist)
-    burnin.render(output, overwrite=True)
+    burnin.render(output_path, overwrite=True)
+
+
+def example_with_presets(input_path, output_path, data):
+    presets = config.get_presets().get('tools', {}).get('burnins', {})
+    options_init = presets.get('options')
+
+    burnin = ModifiedBurnins(input_path, options_init=options_init)
+
+    start_frame = data.get("start_frame")
+    for align_text, preset in presets.get('burnins', {}).items():
+        align = None
+        if align_text == 'TOP_LEFT':
+            align = ModifiedBurnins.TOP_LEFT
+        elif align_text == 'TOP_CENTERED':
+            align = ModifiedBurnins.TOP_CENTERED
+        elif align_text == 'TOP_RIGHT':
+            align = ModifiedBurnins.TOP_RIGHT
+        elif align_text == 'BOTTOM_LEFT':
+            align = ModifiedBurnins.BOTTOM_LEFT
+        elif align_text == 'BOTTOM_CENTERED':
+            align = ModifiedBurnins.BOTTOM_CENTERED
+        elif align_text == 'BOTTOM_RIGHT':
+            align = ModifiedBurnins.BOTTOM_RIGHT
+
+        bi_func = preset.get('function')
+        if not bi_func:
+            log.error(
+                'Missing function for burnin!'
+                'Burnins are not created!'
+            )
+            return
+
+        if (
+            bi_func in ['frame_numbers', 'timecode'] and
+            not start_frame
+        ):
+            log.error(
+                'start_frame is not set in entered data!'
+                'Burnins are not created!'
+            )
+            return
+
+        if bi_func == 'frame_numbers':
+            burnin.add_frame_numbers(align, start_frame=start_frame)
+        elif bi_func == 'timecode':
+            burnin.add_timecode(align, start_frame=start_frame)
+        elif: bi_func == 'text':
+            if not preset.get('text'):
+                log.error('Text is not set for text function burnin!')
+                return
+            text = preset['text'].format(**data)
+            burnin.add_text(text, align)
+        else:
+            log.error(
+                'Unknown function for burnins {}'.format(bi_func)
+            )
+            return
+
+    burnin.render(output_path, overwrite=True)
 
 
 '''
