@@ -243,12 +243,12 @@ class DropDataFrame(QtWidgets.QFrame):
         filepath = data['files'][0]
         ext = data['ext']
         output = {}
-        probe_data = self.load_data_with_probe(filepath)
 
         if (
             ext in self.presets['extensions']['image_file'] or
             ext in self.presets['extensions']['video_file']
         ):
+            probe_data = self.load_data_with_probe(filepath)
             if 'frameRate' not in data:
                 # default value
                 frameRate = 25
@@ -268,13 +268,8 @@ class DropDataFrame(QtWidgets.QFrame):
                 output['startFrame'] = startFrame
                 output['endFrame'] = endFrame
 
-        file_info = None
-        if 'file_info' in data:
-            file_info = data['file_info']
-        elif ext in ['.mov']:
-             file_info = probe_data.get('codec_name')
-
-        output['file_info'] = file_info
+            if (ext == '.mov') and ('file_info' not in data):
+                output['file_info'] = probe_data.get('codec_name')
 
         return output
 
