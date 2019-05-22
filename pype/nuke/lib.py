@@ -29,6 +29,53 @@ def onScriptLoad():
         nuke.tcl('load movWriter')
 
 
+def checkInventoryVersions():
+    """
+    Actiual version idetifier of Loaded containers
+
+    Any time this function is run it will check all nodes and filter only Loader nodes for its version. It will get all versions from database
+    and check if the node is having actual version. If not then it will color it to red.
+
+    """
+
+
+    # get all Loader nodes by avalon attribute metadata
+    for each in nuke.allNodes():
+        if each.Class() == 'Read':
+            container = avalon.nuke.parse_container(each)
+
+            if container:
+                node = container["_tool"]
+                avalon_knob_data = get_avalon_knob_data(node)
+
+                # get representation from io
+                representation = io.find_one({
+                    "type": "representation",
+                    "_id": io.ObjectId(avalon_knob_data["representation"])
+                })
+
+                # Get start frame from version data
+                version = io.find_one({
+                    "type": "version",
+                    "_id": representation["parent"]
+                })
+
+                # get all versions in list
+                versions = io.find({
+                    "type": "version",
+                    "parent": version["parent"]
+                }).distinct('name')
+
+                max_version = max(versions)
+
+                # check the available version and do match
+                # change color of node if not max verion
+                if version.get("name") not in [max_version]:
+                    node["tile_color"].setValue(int("0xd84f20ff", 16))
+                else:
+                    node["tile_color"].setValue(int("0x4ecd25ff", 16))
+
+
 def writes_version_sync():
     try:
         rootVersion = pype.get_version_from_path(nuke.root().name())
