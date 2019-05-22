@@ -37,6 +37,16 @@ def check_url(url):
     return url
 
 def validate_credentials(url, user, api):
+    first_validation = True
+    if not user:
+        log.error('Ftrack Username is not set! Exiting.')
+        first_validation = False
+    if not api:
+        log.error('Ftrack API key is not set! Exiting.')
+        first_validation = False
+    if not first_validation:
+        return False
+
     try:
         session = ftrack_api.Session(
             server_url=url,
