@@ -55,10 +55,11 @@ def validate_credentials(url, user, api):
         )
         session.close()
     except Exception as e:
-        log.error('Can\'t log into Ftrack with used credentials.')
-        log.debug('Ftrack server: {}'.format(url))
-        log.debug('Username: {}'.format(user))
-        log.debug('API key: {}'.format(api))
+        log.error(
+            'Can\'t log into Ftrack with used credentials:'
+            ' Ftrack server: "{}" // Username: {} // API key: {}'.format(
+            url, user, api
+        ))
         return False
 
     log.debug('Credentials Username: "{}", API key: "{}" are valid.'.format(
