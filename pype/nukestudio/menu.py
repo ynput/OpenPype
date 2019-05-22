@@ -1,5 +1,5 @@
 import os
-
+import sys
 import hiero.core
 
 try:
@@ -10,8 +10,40 @@ except Exception:
 
 from hiero.ui import findMenuAction
 
+from avalon.api import Session
+
 from .tags import add_tags_from_presets
-#
+
+from .lib import (
+    reload_config
+)
+from pypeapp import Logger
+
+log = Logger().get_logger(__name__, "nukestudio")
+
+self = sys.modules[__name__]
+self._change_context_menu = None
+
+
+def _update_menu_task_label(*args):
+    """Update the task label in Avalon menu to current session"""
+    log.info("__ this is a test message showint this grigger works")
+
+    object_name = self._change_context_menu
+    found_menu = findMenuAction(object_name)
+
+    if not found_menu:
+        log.warning("Can't find menuItem: {}".format(object_name))
+        return
+
+    label = "{}, {}".format(Session["AVALON_ASSET"],
+                            Session["AVALON_TASK"])
+
+    menu = found_menu.menu()
+    self._change_context_menu = label
+    menu.setTitle(label)
+
+
 def install():
     # here is the best place to add menu
     from avalon.tools import (
@@ -25,11 +57,15 @@ def install():
     )
 
     menu_name = os.environ['AVALON_LABEL']
+
+    context_label = "{0}, {1}".format(
+        Session["AVALON_ASSET"], Session["AVALON_TASK"]
+    )
+
+    self._change_context_menu = context_label
+
     # Grab Hiero's MenuBar
     M = hiero.ui.menuBar()
-
-    # Add a Menu to the MenuBar
-    file_action = None
 
     try:
         check_made_menu = findMenuAction(menu_name)
@@ -43,6 +79,7 @@ def install():
 
     actions = [
         {
+            'parent': context_label,
             'action': QAction('Set Context', None),
             'function': contextmanager.show,
             'icon': QIcon('icons:Position.png')
@@ -83,13 +120,31 @@ def install():
             'action': QAction('Library...', None),
             'function': libraryloader.show,
             'icon': QIcon('icons:ColorAdd.png')
+        },
+        "separator",
+        {
+            'action': QAction('Reload pipeline...', None),
+            'function': reload_config,
+            'icon': QIcon('icons:ColorAdd.png')
         }]
+
+
 
     # Create menu items
     for a in actions:
+        add_to_menu = menu
         if isinstance(a, dict):
             # create action
             for k in a.keys():
+                if 'parent' in k:
+                    submenus = [sm for sm in a[k].split('/')]
+                    submenu = None
+                    for sm in submenus:
+                        if submenu:
+                            submenu.addMenu(sm)
+                        else:
+                            submenu = menu.addMenu(sm)
+                    add_to_menu = submenu
                 if 'action' in k:
                     action = a[k]
                 elif 'function' in k:
@@ -98,7 +153,7 @@ def install():
                     action.setIcon(a[k])
 
             # add action to menu
-            menu.addAction(action)
+            add_to_menu.addAction(action)
             hiero.ui.registerAction(action)
         elif isinstance(a, str):
-            menu.addSeparator()
+            add_to_menu.addSeparator()

@@ -23,6 +23,36 @@ self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
 
+AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
+
+def reload_config():
+    """Attempt to reload pipeline at run-time.
+
+    CAUTION: This is primarily for development and debugging purposes.
+
+    """
+
+    import importlib
+
+    for module in (
+        "avalon.api",
+        "avalon.lib",
+        "avalon.pipeline",
+        "pypeapp",
+        "{}.api".format(AVALON_CONFIG),
+        "{}.templates".format(AVALON_CONFIG),
+        "{}.nukestudio.lib".format(AVALON_CONFIG),
+        "{}.nukestudio.menu".format(AVALON_CONFIG),
+        "{}.nukestudio.tags".format(AVALON_CONFIG)
+    ):
+        log.info("Reloading module: {}...".format(module))
+        try:
+            module = importlib.import_module(module)
+            reload(module)
+        except Exception as e:
+            log.warning("Cannot reload module: {}".format(e))
+            importlib.reload(module)
+
 
 def setup(console=False, port=None, menu=True):
     """Setup integration
