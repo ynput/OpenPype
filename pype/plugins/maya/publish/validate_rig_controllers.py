@@ -152,7 +152,8 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
         """
         import maya.cmds as mc
 
-        attributes = mc.listAttr(control, keyable=True, scalar=True)
+        # Support controls without any attributes returning None
+        attributes = mc.listAttr(control, keyable=True, scalar=True) or []
         invalid = []
         for attr in attributes:
             plug = "{}.{}".format(control, attr)
