@@ -6,6 +6,7 @@ from avalon.vendor import requests
 import pyblish.api
 import pype.maya.lib as lib
 import appdirs
+import platform
 from pypeapp.lib.config import get_presets
 
 
@@ -260,7 +261,11 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                                           ext=render_variables["ext"])
 
         # TODO: set correct path
-        postjob_command = "{} --publish"
+        pype_command = "pype.bat"
+        if platform.system().lower() == "linux":
+            pype_command = "pype"
+        postjob_command = "{} --publish".format(
+            os.path.join(os.environ.get('PYPE_ROOT'), pype_command))
 
         try:
             # Ensure render folder exists
