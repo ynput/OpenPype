@@ -6,7 +6,8 @@ from Qt import QtCore, QtGui, QtWidgets
 
 from pype.vendor import ftrack_api
 from pypeapp import style
-from pype.ftrack import FtrackServer, credentials, login_dialog as login_dialog
+from pype.ftrack import FtrackServer, credentials
+from . import login_dialog
 
 from pype import api as pype
 
@@ -16,7 +17,6 @@ log = pype.Logger().get_logger("FtrackModule", "ftrack")
 
 class FtrackModule:
     def __init__(self, main_parent=None, parent=None):
-
         self.parent = parent
         self.widget_login = login_dialog.Login_Dialog_ui(self)
         self.action_server = FtrackServer('action')
