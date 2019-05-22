@@ -61,7 +61,9 @@ def validate_credentials(url, user, api):
         log.debug('API key: {}'.format(api))
         return False
 
-    log.debug('Credentials Username: "{}", API key: "{}" are valid.')
+    log.debug('Credentials Username: "{}", API key: "{}" are valid.'.format(
+        user, api
+    ))
     return True
 
 
