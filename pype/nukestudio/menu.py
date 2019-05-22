@@ -27,8 +27,7 @@ self._change_context_menu = None
 
 def _update_menu_task_label(*args):
     """Update the task label in Avalon menu to current session"""
-    log.info("__ this is a test message showint this grigger works")
-
+    
     object_name = self._change_context_menu
     found_menu = findMenuAction(object_name)
 

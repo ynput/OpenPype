@@ -35,7 +35,6 @@ def reload_config():
     import importlib
 
     for module in (
-        "avalon.api",
         "avalon.lib",
         "avalon.pipeline",
         "pypeapp",
