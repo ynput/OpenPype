@@ -4,3 +4,11 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Documentation
+###############
+/docs/build
+
+# Editor backup files #
+#######################
+*~

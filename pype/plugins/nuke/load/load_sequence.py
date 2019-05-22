@@ -136,7 +136,7 @@ class LoadSequence(api.Loader):
                     data_imprint.update({k: context["version"]['name']})
                 else:
                     data_imprint.update({k: context["version"]['data'][k]})
-                    
+
             data_imprint.update({"objectName": read_name})
 
             r["tile_color"].setValue(int("0x4ecd25ff", 16))
