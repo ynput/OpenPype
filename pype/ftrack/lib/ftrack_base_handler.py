@@ -111,7 +111,6 @@ class BaseHandler(object):
         self.session.reset()
 
     def _preregister(self):
-        # Rolecheck
         if hasattr(self, "role_list") and len(self.role_list) > 0:
             username = self.session.api_user
             user = self.session.query(
@@ -305,7 +304,7 @@ class BaseHandler(object):
 
         # Launch preactions
         for preaction in self.preactions:
-            event = ftrack_api.event.base.Event(
+            event = fa_session.ftrack_api.event.base.Event(
                 topic='ftrack.action.launch',
                 data=dict(
                     actionIdentifier=preaction,
@@ -317,7 +316,7 @@ class BaseHandler(object):
             )
             session.event_hub.publish(event, on_error='ignore')
         # Relaunch this action
-        event = ftrack_api.event.base.Event(
+        event = fa_session.ftrack_api.event.base.Event(
             topic='ftrack.action.launch',
             data=dict(
                 actionIdentifier=self.identifier,

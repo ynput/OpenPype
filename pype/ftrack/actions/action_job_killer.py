@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 import logging
@@ -45,10 +46,7 @@ class JobKiller(BaseAction):
                     desctiption = data['description']
                 except Exception:
                     desctiption = '*No description*'
-                try:
-                    user = job['user']['username']
-                except Exception:
-                    user = '*No user'
+                user = job['user']['username']
                 created = job['created_at'].strftime('%d.%m.%Y %H:%M:%S')
                 label = '{} - {} - {}'.format(
                     desctiption, created, user
