@@ -5,7 +5,6 @@ import json
 import logging
 import clique
 
-
 log = logging.getLogger("collector")
 
 
@@ -13,12 +12,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
     """
     Collecting temp json data sent from a host context
     and path for returning json data back to hostself.
-
-    Setting avalon session into correct context
-
-    Args:
-        context (obj): pyblish context session
-
     """
 
     label = "Collect Context - SA Publish"
@@ -59,8 +52,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             "families": [family, 'ftrack'],
         })
         self.log.info("collected instance: {}".format(instance.data))
+        self.log.info("parsing data: {}".format(in_data))
 
-        instance.data["files"] = list()
+        # instance.data["files"] = list()
         instance.data['destination_list'] = list()
         instance.data['representations'] = list()
         instance.data['source'] = 'standalone publisher'
@@ -70,17 +64,13 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             component['destination'] = component['files']
             component['stagingDir'] = component['stagingDir']
             component['anatomy_template'] = 'render'
-            collections, remainder = clique.assemble(component['files'])
-            if collections:
-                self.log.debug(collections)
+            if isinstance(component['files'], list):
+                collections, remainder = clique.assemble(component['files'])
+                self.log.debug("collecting sequence: {}".format(collections))
                 instance.data['startFrame'] = int(component['startFrame'])
                 instance.data['endFrame'] = int(component['endFrame'])
                 instance.data['frameRate'] = int(component['frameRate'])
 
-            instance.data["files"].append(component)
             instance.data["representations"].append(component)
-
-            instance.data["thumbnail"] = component['thumbnail']
-            instance.data["preview"] = component['preview']
 
         self.log.info(in_data)
