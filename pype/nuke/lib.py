@@ -3,7 +3,6 @@ import sys
 import os
 from collections import OrderedDict
 from pprint import pprint
-from avalon.vendor.Qt import QtGui
 from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
@@ -19,6 +18,12 @@ log = Logger().get_logger(__name__, "nuke")
 self = sys.modules[__name__]
 self._project = None
 
+
+for path in sys.path:
+    log.info(os.path.normpath(path))
+    if "C:\\Users\\Public" in os.path.normpath(path):
+        log.info("_ removing from sys.path: `{}`".format(path))
+        sys.path.remove(path)
 
 def onScriptLoad():
     if nuke.env['LINUX']:
@@ -472,30 +477,30 @@ def update_frame_range(start, end, root=None):
             else:
                 nuke.root()[key].setValue(value)
 
-
-def get_additional_data(container):
-    """Get Nuke's related data for the container
-
-    Args:
-        container(dict): the container found by the ls() function
-
-    Returns:
-        dict
-    """
-
-    node = container["_tool"]
-    tile_color = node['tile_color'].value()
-    if tile_color is None:
-        return {}
-
-    hex = '%08x' % tile_color
-    rgba = [
-        float(int(hex[0:2], 16)) / 255.0,
-        float(int(hex[2:4], 16)) / 255.0,
-        float(int(hex[4:6], 16)) / 255.0
-    ]
-
-    return {"color": QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
+# 
+# def get_additional_data(container):
+#     """Get Nuke's related data for the container
+#
+#     Args:
+#         container(dict): the container found by the ls() function
+#
+#     Returns:
+#         dict
+#     """
+#
+#     node = container["_tool"]
+#     tile_color = node['tile_color'].value()
+#     if tile_color is None:
+#         return {}
+#
+#     hex = '%08x' % tile_color
+#     rgba = [
+#         float(int(hex[0:2], 16)) / 255.0,
+#         float(int(hex[2:4], 16)) / 255.0,
+#         float(int(hex[4:6], 16)) / 255.0
+#     ]
+#
+#     return {"color": Qt.QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
 
 
 def get_write_node_template_attr(node):
