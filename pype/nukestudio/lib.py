@@ -11,6 +11,8 @@ import hiero
 from pypeapp import Logger
 log = Logger().get_logger(__name__, "nukestudio")
 
+import avalon.api as avalon
+import pype.api as pype
 
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 
@@ -24,6 +26,41 @@ self._has_menu = False
 self._registered_gui = None
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
+
+
+def set_workfiles():
+    ''' Wrapping function for workfiles launcher '''
+    from avalon.tools import workfiles
+    S = avalon.Session
+    active_project_root = os.path.normpath(
+        os.path.join(S['AVALON_PROJECTS'], S['AVALON_PROJECT'])
+    )
+    workdir = os.environ["AVALON_WORKDIR"]
+    workfiles.show(workdir)
+    project = hiero.core.projects()[-1]
+    project.setProjectRoot(active_project_root)
+
+    # get project data from avalon db
+    project_data = pype.get_project_data()
+
+    # get format and fps property from avalon db on project
+    width = project_data['resolution_width']
+    height = project_data['resolution_height']
+    pixel_aspect = project_data['pixel_aspect']
+    fps = project_data['fps']
+    format_name = project_data['code']
+
+    # create new format in hiero project
+    format = hiero.core.Format(width, height, pixel_aspect, format_name)
+    project.setOutputFormat(format)
+
+    # set fps to hiero project
+    project.setFramerate(fps)
+
+    log.info("Project property has been synchronised with Avalon db")
+
+
+
 
 def reload_config():
     """Attempt to reload pipeline at run-time.
