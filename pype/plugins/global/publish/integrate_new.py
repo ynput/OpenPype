@@ -8,12 +8,11 @@ import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
 
-
 log = logging.getLogger(__name__)
 
 
-class IntegrateAsset(pyblish.api.InstancePlugin):
-    """Resolve any dependency issies
+class IntegrateAssetNew(pyblish.api.InstancePlugin):
+    """Resolve any dependency issius
 
     This plug-in resolves any paths which, if not updated might break
     the published file.
@@ -21,25 +20,34 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     The order of families is important, when working with lookdev you want to
     first publish the texture, update the texture paths in the nodes and then
     publish the shading network. Same goes for file dependent assets.
+
+    Requirements for instance to be correctly integrated
+
+    instance.data['representations'] - must be a list and each member
+    must be a dictionary with following data:
+        'files': list of filenames for sequence, string for single file.
+                 Only the filename is allowed, without the folder path.
+        'stagingDir': "path/to/folder/with/files"
+        'name': representation name (usually the same as extension)
+        'ext': file extension
     """
 
-    label = "Integrate Asset"
+    label = "Integrate Asset New"
     order = pyblish.api.IntegratorOrder
-    families = ["look",
-                "vdbcache",
-                "assembly",
-                "vrayproxy",
-                "yetiRig",
-                "yeticache",
-                "nukescript",
-                "review",
-                "scene",
-                "render",
-                "imagesequence",
-                "write"]
+    families = ["workfile",
+                "pointcache",
+                "camera",
+                "animation",
+                "model",
+                "mayaAscii",
+                "setdress",
+                "layout",
+                "ass"
+                ]
     exclude_families = ["clip"]
 
     def process(self, instance):
+
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
             return
@@ -47,9 +55,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.register(instance)
 
         self.log.info("Integrating Asset in to the database ...")
+        self.log.info("instance.data: {}".format(instance.data))
         if instance.data.get('transfer', True):
             self.integrate(instance)
-
 
     def register(self, instance):
         # Required environment variables
@@ -81,18 +89,20 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #       |
         #
         stagingdir = instance.data.get("stagingDir")
-        assert stagingdir, ("Incomplete instance \"%s\": "
-                            "Missing reference to staging area." % instance)
+        if not stagingdir:
+            self.log.info('''{} is missing reference to staging
+                            directory Will try to get it from
+                            representation'''.format(instance))
 
         # extra check if stagingDir actually exists and is available
 
         self.log.debug("Establishing staging directory @ %s" % stagingdir)
 
         # Ensure at least one file is set up for transfer in staging dir.
-        files = instance.data.get("files", [])
-        assert files, "Instance has no files to transfer"
-        assert isinstance(files, (list, tuple)), (
-            "Instance 'files' must be a list, got: {0}".format(files)
+        repres = instance.data.get("representations", None)
+        assert repres, "Instance has no files to transfer"
+        assert isinstance(repres, (list, tuple)), (
+            "Instance 'files' must be a list, got: {0}".format(repres)
         )
 
         project = io.find_one({"type": "project"})
@@ -116,15 +126,18 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         if latest_version is not None:
             next_version += latest_version["name"]
 
-        self.log.info("Verifying version from assumed destination")
+        if instance.data.get('version'):
+            next_version = int(instance.data.get('version'))
 
-        assumed_data = instance.data["assumedTemplateData"]
-        assumed_version = assumed_data["version"]
-        if assumed_version != next_version:
-            raise AttributeError("Assumed version 'v{0:03d}' does not match"
-                                 "next version in database "
-                                 "('v{1:03d}')".format(assumed_version,
-                                                       next_version))
+        # self.log.info("Verifying version from assumed destination")
+
+        # assumed_data = instance.data["assumedTemplateData"]
+        # assumed_version = assumed_data["version"]
+        # if assumed_version != next_version:
+        #     raise AttributeError("Assumed version 'v{0:03d}' does not match"
+        #                          "next version in database "
+        #                          "('v{1:03d}')".format(assumed_version,
+        #                                                next_version))
 
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
@@ -136,6 +149,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         self.log.debug("Creating version ...")
         version_id = io.insert_one(version).inserted_id
+        instance.data['version'] = version['name']
 
         # Write to disk
         #          _
@@ -161,23 +175,24 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
                          "silo": asset['silo'],
+                         "task": api.Session["AVALON_TASK"],
                          "asset": ASSET,
                          "family": instance.data['family'],
                          "subset": subset["name"],
                          "version": int(version["name"]),
                          "hierarchy": hierarchy}
 
-        template_publish = project["config"]["template"]["publish"]
         anatomy = instance.context.data['anatomy']
 
         # Find the representations to transfer amongst the files
         # Each should be a single representation (as such, a single extension)
         representations = []
         destination_list = []
+        template_name = 'publish'
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
-        for files in instance.data["files"]:
+        for idx, repre in enumerate(instance.data["representations"]):
 
             # Collection
             #   _______
@@ -189,27 +204,50 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # |_______|
             #
 
+            files = repre['files']
+            if repre.get('stagingDir'):
+                stagingdir = repre['stagingDir']
+            if repre.get('anatomy_template'):
+                template_name = repre['anatomy_template']
+            template = anatomy.templates[template_name]["path"]
+
             if isinstance(files, list):
-                collection = files
+                src_collections, remainder = clique.assemble(files)
+                self.log.debug(
+                    "dst_collections: {}".format(str(src_collections)))
+                src_collection = src_collections[0]
                 # Assert that each member has identical suffix
-                _, ext = os.path.splitext(collection[0])
-                assert all(ext == os.path.splitext(name)[1]
-                           for name in collection), (
-                    "Files had varying suffixes, this is a bug"
-                )
+                src_head = src_collection.format("{head}")
+                src_tail = ext = src_collection.format("{tail}")
 
-                assert not any(os.path.isabs(name) for name in collection)
-
-                template_data["representation"] = ext[1:]
-
-                for fname in collection:
-
-                    src = os.path.join(stagingdir, fname)
+                test_dest_files = list()
+                for i in [1, 2]:
+                    template_data["representation"] = repre['ext']
+                    template_data["frame"] = src_collection.format(
+                        "{padding}") % i
                     anatomy_filled = anatomy.format(template_data)
-                    dst = anatomy_filled["publish"]["path"]
+                    test_dest_files.append(
+                        anatomy_filled[template_name]["path"])
 
+                dst_collections, remainder = clique.assemble(test_dest_files)
+                dst_collection = dst_collections[0]
+                dst_head = dst_collection.format("{head}")
+                dst_tail = dst_collection.format("{tail}")
+
+                instance.data["representations"][idx]['published_path'] = dst_collection.format()
+
+                for i in src_collection.indexes:
+                    src_padding = src_collection.format("{padding}") % i
+                    src_file_name = "{0}{1}{2}".format(
+                        src_head, src_padding, src_tail)
+
+                    dst_padding = dst_collection.format("{padding}") % i
+                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
+
+                    src = os.path.join(stagingdir, src_file_name)
+                    # src = src_file_name
+                    self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
-                    template = anatomy.templates["publish"]["path"]
 
             else:
                 # Single file
@@ -220,26 +258,29 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 # |       |
                 # |_______|
                 #
+                template_data.pop("frame", None)
                 fname = files
                 assert not os.path.isabs(fname), (
                     "Given file name is a full path"
                 )
                 _, ext = os.path.splitext(fname)
 
-                template_data["representation"] = ext[1:]
+                template_data["representation"] = repre['ext']
 
                 src = os.path.join(stagingdir, fname)
+                # src = fname
                 anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled["publish"]["path"]
+                dst = anatomy_filled[template_name]["path"]
 
                 instance.data["transfers"].append([src, dst])
-                template = anatomy.templates["publish"]["path"]
+                # template = anatomy.templates["publish"]["path"]
+                instance.data["representations"][idx]['published_path'] = dst
 
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
-                "name": ext[1:],
+                "name": repre['name'],
                 "data": {'path': dst, 'template': template},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
@@ -256,7 +297,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     "subset": subset["name"],
                     "version": version["name"],
                     "hierarchy": hierarchy,
-                    "representation": ext[1:]
+                    "representation": repre['ext']
                 }
             }
 
@@ -398,7 +439,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             source = instance.data['source']
         except KeyError:
             source = context.data["currentFile"]
-
             relative_path = os.path.relpath(source, api.registered_root())
             source = os.path.join("{root}", relative_path).replace("\\", "/")
 
