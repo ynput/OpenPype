@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 class IntegrateAsset(pyblish.api.InstancePlugin):
-    """Resolve any dependency issies
+    """Resolve any dependency issius
 
     This plug-in resolves any paths which, if not updated might break
     the published file.
@@ -20,6 +20,16 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     The order of families is important, when working with lookdev you want to
     first publish the texture, update the texture paths in the nodes and then
     publish the shading network. Same goes for file dependent assets.
+
+    Requirements for instance to be correctly integrated
+
+    instance.data['representations'] - must be a list and each member
+    must be a dictionary with following data:
+        'files': list of filenames for sequence, string for single file.
+                 Only the filename is allowed, without the folder path.
+        'stagingDir': "path/to/folder/with/files"
+        'name': representation name (usually the same as extension)
+        'ext': file extension
     """
 
     label = "Integrate Asset"
@@ -58,7 +68,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         if instance.data.get('transfer', True):
             self.integrate(instance)
 
-
     def register(self, instance):
         # Required environment variables
         PROJECT = api.Session["AVALON_PROJECT"]
@@ -90,19 +99,19 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
-            self.log.info("{} is missing reference to staging \
-                            directory Will try to get it from \
-                            representation".format(instance))
+            self.log.info('''{} is missing reference to staging
+                            directory Will try to get it from
+                            representation'''.format(instance))
 
         # extra check if stagingDir actually exists and is available
 
         self.log.debug("Establishing staging directory @ %s" % stagingdir)
 
         # Ensure at least one file is set up for transfer in staging dir.
-        files = instance.data.get("files", [])
-        assert files, "Instance has no files to transfer"
-        assert isinstance(files, (list, tuple)), (
-            "Instance 'files' must be a list, got: {0}".format(files)
+        repres = instance.data.get("representations", None)
+        assert repres, "Instance has no files to transfer"
+        assert isinstance(repres, (list, tuple)), (
+            "Instance 'files' must be a list, got: {0}".format(repres)
         )
 
         project = io.find_one({"type": "project"})
@@ -128,7 +137,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         if instance.data.get('version'):
             next_version = int(instance.data.get('version'))
-
 
         # self.log.info("Verifying version from assumed destination")
 
@@ -189,6 +197,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Each should be a single representation (as such, a single extension)
         representations = []
         destination_list = []
+        template_name = 'publish'
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
@@ -205,13 +214,16 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             #
 
             files = repre['files']
-            if repre['stagingDir']:
+            if repre.get('stagingDir'):
                 stagingdir = repre['stagingDir']
-            template = anatomy.templates[repre['anatomy_template']]["path"]
+            if repre.get('anatomy_template'):
+                template_name = repre['anatomy_template']
+            template = anatomy.templates[template_name]["path"]
 
             if isinstance(files, list):
                 src_collections, remainder = clique.assemble(files)
-                self.log.debug("dst_collections: {}".format(str(src_collections)))
+                self.log.debug(
+                    "dst_collections: {}".format(str(src_collections)))
                 src_collection = src_collections[0]
                 # Assert that each member has identical suffix
                 src_head = src_collection.format("{head}")
@@ -223,7 +235,8 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     template_data["frame"] = src_collection.format(
                         "{padding}") % i
                     anatomy_filled = anatomy.format(template_data)
-                    test_dest_files.append(anatomy_filled[repre['anatomy_template']]["path"])
+                    test_dest_files.append(
+                        anatomy_filled[template_name]["path"])
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
@@ -236,7 +249,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     src_padding = src_collection.format("{padding}") % i
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
-
 
                     dst_padding = dst_collection.format("{padding}") % i
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
@@ -267,7 +279,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                 src = os.path.join(stagingdir, fname)
                 # src = fname
                 anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled[repre['anatomy_template']]["path"]
+                dst = anatomy_filled[template_name]["path"]
 
                 instance.data["transfers"].append([src, dst])
                 # template = anatomy.templates["publish"]["path"]
@@ -287,14 +299,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                     "root": root,
                     "project": {"name": PROJECT,
                                 "code": project['data']['code']},
-                    # 'task': api.Session["AVALON_TASK"],
+                    'task': api.Session["AVALON_TASK"],
                     "silo": asset['silo'],
                     "asset": ASSET,
                     "family": instance.data['family'],
                     "subset": subset["name"],
                     "version": version["name"],
                     "hierarchy": hierarchy,
-                    # "representation": repre['representation']
+                    "representation": repre['ext']
                 }
             }
 
