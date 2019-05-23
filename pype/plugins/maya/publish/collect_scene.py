@@ -37,16 +37,19 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
             "label": subset,
             "publish": False,
             "family": 'workfile',
-            "representation": "ma",
-            "setMembers": [current_file],
-            "stagingDir": folder
+            "setMembers": [current_file]
         })
 
-        data['files'] = [file]
+        data['representations'] = [{
+            'name': 'ma',
+            'ext': '.ma',
+            'files': file,
+            "stagingDir": folder,
+        }]
 
         instance.data.update(data)
 
         self.log.info('Collected instance: {}'.format(file))
         self.log.info('Scene path: {}'.format(current_file))
-        self.log.info('stagin Dir: {}'.format(folder))
-        self.log.info('subset: {}'.format(filename))
+        self.log.info('staging Dir: {}'.format(folder))
+        self.log.info('subset: {}'.format(subset))
