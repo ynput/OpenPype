@@ -30,6 +30,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         'stagingDir': "path/to/folder/with/files"
         'name': representation name (usually the same as extension)
         'ext': file extension
+    optional data
+        'anatomy_template': 'publish' or 'render', etc.
+                            template from anatomy that should be used for
+                            integrating this file. Only the first level can
+                            be specified right now. 
+        'startFrame'
+        'endFrame'
+        'framerate'
     """
 
     label = "Integrate Asset New"
