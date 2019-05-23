@@ -1,5 +1,6 @@
 import pyblish.api
 from avalon import api
+import re
 
 
 class CollectHierarchyContext(pyblish.api.InstancePlugin):
@@ -24,38 +25,96 @@ class CollectHierarchyContext(pyblish.api.InstancePlugin):
         return new_dict
 
     def convert_to_entity(self, key, value):
+        # ftrack compatible entity types
         types = {"shot": "Shot",
                  "folder": "Folder",
                  "episode": "Episode",
-                 "Sequence": "Sequence",
+                 "sequence": "Sequence",
+                 "track": "Sequence",
                  }
-        return {"entity_type": types.get(key, None), "entity_name": value}
+        # convert to entity type
+        entity_type = types.get(key, None)
+
+        # return if any
+        if entity_type:
+            return {"entity_type": entity_type, "entity_name": value}
 
     def process(self, instance):
         context = instance.context
         tags = instance.data.get("tags", None)
-        self.log.info(tags)
-        if tags:
-            for t in tags:
-                t_metadata = dict(t["metadata"])
-                t_type = t_metadata.get("tag._type", "")
-                if "hierarchy" in t_type:
-                    self.log.info("__ type: {}".format(t_type))
-                    d_metadata = dict()
-                    for k, v in t_metadata.items():
-                        new_k = k.split(".")[1]
-                        try:
-                            d_metadata[new_k] = str(v).format(**context.data)
-                        except Exception:
-                            d_metadata[new_k] = v
+        clip = instance.data["item"]
+        asset = instance.data.get("asset")
 
+        # build data for inner nukestudio project property
+        data = {
+            "sequence": context.data['activeSequence'].name().replace(' ', '_'),
+            "track": clip.parent().name().replace(' ', '_'),
+            "clip": asset
+        }
+        self.log.info("__ data: {}".format(data))
 
-                    self.log.info("__ projectroot: {}".format(context.data["projectroot"]))
-                    self.log.info("__ d_metadata: {}".format(d_metadata))
-                    self.log.info(
-                        "__ hierarchy: {}".format(d_metadata["note"]))
-                    # self.log.info("__ hierarchy.format: {}".format(d_metadata["note"].format(
-                    #     **d_metadata)))
+        # checking if tags are available
+        if not tags:
+            return
+
+        # loop trough all tags
+        for t in tags:
+            t_metadata = dict(t["metadata"])
+            t_type = t_metadata.get("tag.label", "")
+            t_note = t_metadata.get("tag.note", "")
+
+            # and finding only hierarchical tag
+            if "hierarchy" in t_type.lower():
+                d_metadata = dict()
+                parents = list()
+
+                # take template from Tag.note and break it into parts
+                patern = re.compile(r"^\{([a-z]*?)\}")
+                par_split = [patern.findall(t)[0]
+                             for t in t_note.split("/")]
+
+                # format all {} in two layers
+                for k, v in t_metadata.items():
+                    new_k = k.split(".")[1]
+                    try:
+                        # first try all data and context data to
+                        # add to individual properties
+                        new_v = str(v).format(
+                            **dict(context.data, **data))
+                        d_metadata[new_k] = new_v
+
+                        # create parents
+                        # find matching index of order
+                        p_match_i = [i for i, p in enumerate(par_split)
+                                     if new_k in p]
+
+                        # if any is matching then convert to entity_types
+                        if p_match_i:
+                            self.log.info("__ new_k: {}".format(new_k))
+                            self.log.info("__ new_v: {}".format(new_v))
+                            parent = self.convert_to_entity(new_k, new_v)
+                            parents.insert(p_match_i[0], parent)
+                    except Exception:
+                        d_metadata[new_k] = v
+
+                # lastly fill those individual properties itno
+                # main template from Tag.note
+                hierarchy = d_metadata["note"].format(
+                    **d_metadata)
+
+                # check if hierarchy attribute is already created
+                # it should not be so return warning if it is
+                hd = instance.data.get("hierarchy")
+                self.log.info("__ hd: {}".format(hd))
+                assert not hd, "Only one Hierarchy Tag is \
+                            allowed. Clip: `{}`".format(asset)
+
+                # add formated hierarchy path into instance data
+                instance.data["hierarchy"] = hierarchy
+                instance.data["parents"] = parents
+                self.log.info("__ hierarchy.format: {}".format(hierarchy))
+                self.log.info("__ parents: {}".format(parents))
+                self.log.info("__ d_metadata: {}".format(d_metadata))
 
         #
         # json_data = context.data.get("jsonData", None)
