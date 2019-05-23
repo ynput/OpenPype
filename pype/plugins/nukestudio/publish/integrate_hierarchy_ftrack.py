@@ -40,12 +40,9 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         input_data = context.data["hierarchyContext"]
 
-        # adding ftrack types from presets
-        ftrack_types = context.data['ftrackTypes']
+        self.import_to_ftrack(input_data)
 
-        self.import_to_ftrack(input_data, ftrack_types)
-
-    def import_to_ftrack(self, input_data, ftrack_types, parent=None):
+    def import_to_ftrack(self, input_data, parent=None):
         for entity_name in input_data:
             entity_data = input_data[entity_name]
             entity_type = entity_data['entity_type'].capitalize()
@@ -82,7 +79,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             # CUSTOM ATTRIBUTES
             custom_attributes = entity_data.get('custom_attributes', [])
             instances = [
-                i for i in self.context.data["instances"] if i.data['asset'] in entity['name']]
+                i for i in self.context[:] if i.data['asset'] in entity['name']]
             for key in custom_attributes:
                 assert (key in entity['custom_attributes']), (
                     'Missing custom attribute')
@@ -111,14 +108,14 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             for task in tasks_to_create:
                 self.create_task(
                     name=task,
-                    task_type=ftrack_types[task],
+                    task_type=task.capitalize(),
                     parent=entity
                 )
                 self.session.commit()
 
             if 'childs' in entity_data:
                 self.import_to_ftrack(
-                    entity_data['childs'], ftrack_types, entity)
+                    entity_data['childs'], entity)
 
     def get_all_task_types(self, project):
         tasks = {}
