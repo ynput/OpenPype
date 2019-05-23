@@ -1,9 +1,9 @@
 import pyblish.api
-from avalon import api
+import avalon.api as avalon
 import re
 
 
-class CollectHierarchyContext(pyblish.api.InstancePlugin):
+class CollectHierarchyInstance(pyblish.api.InstancePlugin):
     """Collecting hierarchy context from `parents` and `hierarchy` data
     present in `clip` family instances coming from the request json data file
 
@@ -12,17 +12,9 @@ class CollectHierarchyContext(pyblish.api.InstancePlugin):
     don't exist yet
     """
 
-    label = "Collect Hierarchy Context"
+    label = "Collect Hierarchy Clip"
     order = pyblish.api.CollectorOrder + 0.1
     families = ["clip"]
-
-    def update_dict(self, ex_dict, new_dict):
-        for key in ex_dict:
-            if key in new_dict and isinstance(ex_dict[key], dict):
-                new_dict[key] = self.update_dict(ex_dict[key], new_dict[key])
-            else:
-                new_dict[key] = ex_dict[key]
-        return new_dict
 
     def convert_to_entity(self, key, value):
         # ftrack compatible entity types
@@ -37,7 +29,7 @@ class CollectHierarchyContext(pyblish.api.InstancePlugin):
 
         # return if any
         if entity_type:
-            return {"entity_type": entity_type, "entity_name": value}
+            return {"entityType": entity_type, "entityName": value}
 
     def process(self, instance):
         context = instance.context
@@ -49,9 +41,9 @@ class CollectHierarchyContext(pyblish.api.InstancePlugin):
         data = {
             "sequence": context.data['activeSequence'].name().replace(' ', '_'),
             "track": clip.parent().name().replace(' ', '_'),
-            "clip": asset
+            "shot": asset
         }
-        self.log.info("__ data: {}".format(data))
+        self.log.debug("__ data: {}".format(data))
 
         # checking if tags are available
         if not tags:
@@ -68,10 +60,17 @@ class CollectHierarchyContext(pyblish.api.InstancePlugin):
                 d_metadata = dict()
                 parents = list()
 
+                # main template from Tag.note
+                template = t_note
+
+                # if shot in template then remove it
+                if "shot" in template.lower():
+                    template = "/".join([t for t in template.split('/')][0:-1])
+
                 # take template from Tag.note and break it into parts
                 patern = re.compile(r"^\{([a-z]*?)\}")
                 par_split = [patern.findall(t)[0]
-                             for t in t_note.split("/")]
+                             for t in template.split("/")]
 
                 # format all {} in two layers
                 for k, v in t_metadata.items():
@@ -83,6 +82,9 @@ class CollectHierarchyContext(pyblish.api.InstancePlugin):
                             **dict(context.data, **data))
                         d_metadata[new_k] = new_v
 
+                        if 'shot' in new_k:
+                            instance.data["asset"] = new_v
+
                         # create parents
                         # find matching index of order
                         p_match_i = [i for i, p in enumerate(par_split)
@@ -90,16 +92,14 @@ class CollectHierarchyContext(pyblish.api.InstancePlugin):
 
                         # if any is matching then convert to entity_types
                         if p_match_i:
-                            self.log.info("__ new_k: {}".format(new_k))
-                            self.log.info("__ new_v: {}".format(new_v))
                             parent = self.convert_to_entity(new_k, new_v)
                             parents.insert(p_match_i[0], parent)
                     except Exception:
                         d_metadata[new_k] = v
 
                 # lastly fill those individual properties itno
-                # main template from Tag.note
-                hierarchy = d_metadata["note"].format(
+                # format the string with collected data
+                hierarchy = template.format(
                     **d_metadata)
 
                 # check if hierarchy attribute is already created
@@ -112,55 +112,75 @@ class CollectHierarchyContext(pyblish.api.InstancePlugin):
                 # add formated hierarchy path into instance data
                 instance.data["hierarchy"] = hierarchy
                 instance.data["parents"] = parents
-                self.log.info("__ hierarchy.format: {}".format(hierarchy))
-                self.log.info("__ parents: {}".format(parents))
-                self.log.info("__ d_metadata: {}".format(d_metadata))
+                self.log.debug("__ hierarchy.format: {}".format(hierarchy))
+                self.log.debug("__ parents: {}".format(parents))
+                self.log.debug("__ d_metadata: {}".format(d_metadata))
 
-        #
-        # json_data = context.data.get("jsonData", None)
-        # temp_context = {}
-        # for instance in json_data['instances']:
-        #     if instance['family'] in 'projectfile':
-        #         continue
-        #
-        #     in_info = {}
-        #     name = instance['name']
-        #     # suppose that all instances are Shots
-        #     in_info['entity_type'] = 'Shot'
-        #
-        #     instance_pyblish = [
-        #         i for i in context.data["instances"] if i.data['asset'] in name][0]
-        #     in_info['custom_attributes'] = {
-        #         'fend': instance_pyblish.data['endFrame'],
-        #         'fstart': instance_pyblish.data['startFrame'],
-        #         'fps': instance_pyblish.data['fps']
-        #     }
-        #
-        #     in_info['tasks'] = instance['tasks']
-        #
-        #     parents = instance.get('parents', [])
-        #
-        #     actual = {name: in_info}
-        #
-        #     for parent in reversed(parents):
-        #         next_dict = {}
-        #         parent_name = parent["entityName"]
-        #         next_dict[parent_name] = {}
-        #         next_dict[parent_name]["entity_type"] = parent["entityType"]
-        #         next_dict[parent_name]["childs"] = actual
-        #         actual = next_dict
-        #
-        #     temp_context = self.update_dict(temp_context, actual)
-        #     self.log.debug(temp_context)
-        #
-        # # TODO: 100% sure way of get project! Will be Name or Code?
-        # project_name = api.Session["AVALON_PROJECT"]
-        # final_context = {}
-        # final_context[project_name] = {}
-        # final_context[project_name]['entity_type'] = 'Project'
-        # final_context[project_name]['childs'] = temp_context
-        #
-        # # adding hierarchy context to instance
-        # context.data["hierarchyContext"] = final_context
-        # self.log.debug("context.data[hierarchyContext] is: {}".format(
-        #     context.data["hierarchyContext"]))
+
+class CollectHierarchyContext(pyblish.api.ContextPlugin):
+    '''Collecting Hierarchy from instaces and building
+    context hierarchy tree
+    '''
+
+    label = "Collect Hierarchy Context"
+    order = pyblish.api.CollectorOrder + 0.101
+
+    def update_dict(self, ex_dict, new_dict):
+        for key in ex_dict:
+            if key in new_dict and isinstance(ex_dict[key], dict):
+                new_dict[key] = self.update_dict(ex_dict[key], new_dict[key])
+            else:
+                new_dict[key] = ex_dict[key]
+        return new_dict
+
+    def process(self, context):
+        instances = context[:]
+        # create hierarchyContext attr if context has none
+        self.log.debug("__ instances: {}".format(context[:]))
+
+        temp_context = {}
+        for instance in instances:
+            if 'projectfile' in instance.data.get('family', ''):
+                continue
+
+
+            in_info = {}
+            name = instance.data["asset"]
+            # suppose that all instances are Shots
+            in_info['entity_type'] = 'Shot'
+
+            # get custom attributes of the shot
+            in_info['custom_attributes'] = {
+                'fend': instance.data['endFrame'],
+                'fstart': instance.data['startFrame'],
+                'fps': context.data["framerate"]
+            }
+
+            in_info['tasks'] = instance.data['tasks']
+
+            parents = instance.data.get('parents', [])
+
+            actual = {name: in_info}
+
+            for parent in reversed(parents):
+                next_dict = {}
+                parent_name = parent["entityName"]
+                next_dict[parent_name] = {}
+                next_dict[parent_name]["entity_type"] = parent["entityType"]
+                next_dict[parent_name]["childs"] = actual
+                actual = next_dict
+
+            temp_context = self.update_dict(temp_context, actual)
+            self.log.debug(temp_context)
+
+        # TODO: 100% sure way of get project! Will be Name or Code?
+        project_name = avalon.Session["AVALON_PROJECT"]
+        final_context = {}
+        final_context[project_name] = {}
+        final_context[project_name]['entity_type'] = 'Project'
+        final_context[project_name]['childs'] = temp_context
+
+        # adding hierarchy context to instance
+        context.data["hierarchyContext"] = final_context
+        self.log.debug("context.data[hierarchyContext] is: {}".format(
+            context.data["hierarchyContext"]))
