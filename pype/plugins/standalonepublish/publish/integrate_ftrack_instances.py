@@ -41,22 +41,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         componentList = []
         ft_session = instance.context.data["ftrackSession"]
 
-        components = instance.data['representations']
-
-        for comp in components:
+        for comp in instance.data['representations']:
             self.log.debug('component {}'.format(comp))
-            # filename, ext = os.path.splitext(file)
-            # self.log.debug('dest ext: ' + ext)
 
-            # ext = comp['Context']
-
-            if comp['thumbnail']:
+            if comp.get('thumbnail'):
                 location = ft_session.query(
                     'Location where name is "ftrack.server"').one()
                 component_data = {
                     "name": "thumbnail"  # Default component name is "main".
                 }
-            elif comp['preview']:
+            elif comp.get('preview'):
                 if not comp.get('startFrameReview'):
                     comp['startFrameReview'] = comp['startFrame']
                 if not comp.get('endFrameReview'):
