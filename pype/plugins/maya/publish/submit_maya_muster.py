@@ -100,12 +100,17 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["renderlayer"]
     optional = True
+    icon = "satellite-dish"
 
     _token = None
     _user = None
     _password = None
 
     def _load_credentials(self):
+        """
+        Load Muster credentials from file and set `MUSTER_USER`,
+        `MUSTER_PASSWORD`, `MUSTER_REST_URL` is loaded from presets.
+        """
         app_dir = os.path.normpath(
             appdirs.user_data_dir('pype-app', 'pype', 'muster')
         )
@@ -188,7 +193,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         except ValueError:
             raise Exception('Unimplemented renderer {}'.format(renderer))
 
-    def submit(self, payload):
+    def _submit(self, payload):
         """
         Submit job to Muster
 
@@ -213,7 +218,11 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         return response
 
     def process(self, instance):
-
+        """
+        Authenticate with Muster, collect all data, prepare path for post
+        render publish job and submit job to farm.
+        """
+        # setup muster environment
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL",
                                               "https://localhost:9891")
         self._load_credentials()
@@ -260,18 +269,27 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                                           padding=render_variables["padding"],
                                           ext=render_variables["ext"])
 
+        # build path for metadata file
+        metadata_filename = "{}_metadata.json".format(instance.data["subset"])
+        output_dir = instance.data["outputDir"]
+        metadata_path = os.path.join(output_dir, metadata_filename)
+
         # TODO: set correct path
         pype_command = "pype.bat"
         if platform.system().lower() == "linux":
             pype_command = "pype"
-        postjob_command = "{} --publish".format(
-            os.path.join(os.environ.get('PYPE_ROOT'), pype_command))
+        postjob_command = "{} --publish --paths {}".format(
+            os.path.join(os.environ.get('PYPE_ROOT'), pype_command),
+            metadata_path
+            )
 
         try:
             # Ensure render folder exists
             os.makedirs(dirname)
         except OSError:
             pass
+
+        env = self.clean_environment()
 
         payload = {
             "RequestData": {
@@ -290,6 +308,10 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "maximumInstances": 0,
                     "assignedInstances": 0,
                     "attributes": {
+                        "environmental_variables": {
+                            "value": ", ".join("{!s}={!r}".format(k, v)
+                                               for (k, v) in env.iteritems())
+                        },
                         "memo": {
                             "value": comment,
                             "state": True,
@@ -327,7 +349,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         self.log.info("Submitting ...")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
-        response = self._submit()
+        response = self._submit(payload)
         # response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)
@@ -335,6 +357,79 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         # Store output dir for unified publisher (filesequence)
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
         instance.data["musterSubmissionJob"] = response.json()
+
+    def clean_environment(self):
+        # Include critical environment variables with submission
+        keys = [
+            # This will trigger `userSetup.py` on the slave
+            # such that proper initialisation happens the same
+            # way as it does on a local machine.
+            # TODO(marcus): This won't work if the slaves don't
+            # have accesss to these paths, such as if slaves are
+            # running Linux and the submitter is on Windows.
+            "PYTHONPATH",
+            "PATH",
+
+            "MTOA_EXTENSIONS_PATH",
+            "MTOA_EXTENSIONS",
+            "DYLD_LIBRARY_PATH",
+            "MAYA_RENDER_DESC_PATH",
+            "MAYA_MODULE_PATH",
+            "ARNOLD_PLUGIN_PATH",
+            "AVALON_SCHEMA",
+            "FTRACK_API_KEY",
+            "FTRACK_API_USER",
+            "FTRACK_SERVER",
+            "PYBLISHPLUGINPATH",
+
+            # todo: This is a temporary fix for yeti variables
+            "PEREGRINEL_LICENSE",
+            "SOLIDANGLE_LICENSE",
+            "ARNOLD_LICENSE"
+            "MAYA_MODULE_PATH",
+            "TOOL_ENV"
+        ]
+        environment = dict({key: os.environ[key] for key in keys
+                            if key in os.environ}, **api.Session)
+        # self.log.debug("enviro: {}".format(pprint(environment)))
+        for path in os.environ:
+            if path.lower().startswith('pype_'):
+                environment[path] = os.environ[path]
+
+        environment["PATH"] = os.environ["PATH"]
+        self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
+        clean_environment = {}
+        for key in environment:
+            clean_path = ""
+            self.log.debug("key: {}".format(key))
+            to_process = environment[key]
+            if key == "PYPE_STUDIO_CORE_MOUNT":
+                clean_path = environment[key]
+            elif "://" in environment[key]:
+                clean_path = environment[key]
+            elif os.pathsep not in to_process:
+                try:
+                    path = environment[key]
+                    path.decode('UTF-8', 'strict')
+                    clean_path = os.path.normpath(path)
+                except UnicodeDecodeError:
+                    print('path contains non UTF characters')
+            else:
+                for path in environment[key].split(os.pathsep):
+                    try:
+                        path.decode('UTF-8', 'strict')
+                        clean_path += os.path.normpath(path) + os.pathsep
+                    except UnicodeDecodeError:
+                        print('path contains non UTF characters')
+
+            if key == "PYTHONPATH":
+                clean_path = clean_path.replace('python2', 'python3')
+            clean_path = clean_path.replace(
+                os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
+                os.path.normpath(environment['PYPE_STUDIO_CORE_PATH']))
+            clean_environment[key] = clean_path
+
+        return clean_environment
 
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
