@@ -1,0 +1,16 @@
+import pyblish.api
+import pype.api as pype
+
+
+
+class CollectProjectData(pyblish.api.ContextPlugin):
+    """Collecting project data from avalon db"""
+
+    label = "Collect Project Data"
+    order = pyblish.api.CollectorOrder
+
+    def process(self, context):
+        # get project data from avalon db
+        context.data["projectData"] = pype.get_project_data()
+
+        return
