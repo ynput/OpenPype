@@ -9,9 +9,10 @@ class CollectClips(api.ContextPlugin):
     hosts = ["nukestudio"]
 
     def process(self, context):
+        projectdata = context.data["projectData"]
         data = {}
         for item in context.data.get("selection", []):
-            self.log.info("__ item: {}".format(item))
+            self.log.debug("__ item: {}".format(item))
             # Skip audio track items
             # Try/Except is to handle items types, like EffectTrackItem
             try:
@@ -37,5 +38,5 @@ class CollectClips(api.ContextPlugin):
                 family=family,
                 startFrame=value["startFrame"],
                 endFrame=value["endFrame"],
-                handles=0
+                handles=projectdata['handles']
             )
