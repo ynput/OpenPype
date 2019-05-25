@@ -41,7 +41,7 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         data = {
             "sequence": context.data['activeSequence'].name().replace(' ', '_'),
             "track": clip.parent().name().replace(' ', '_'),
-            "shot": asset
+            "clip": asset
         }
         self.log.debug("__ data: {}".format(data))
 
@@ -65,25 +65,24 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
                 # if shot in template then remove it
                 if "shot" in template.lower():
+                    instance.data["asset"] = [t for t in template.split('/')][-1]
                     template = "/".join([t for t in template.split('/')][0:-1])
 
                 # take template from Tag.note and break it into parts
-                patern = re.compile(r"^\{([a-z]*?)\}")
+                patern = re.compile(r"\{([a-z]*?)\}")
                 par_split = [patern.findall(t)[0]
                              for t in template.split("/")]
 
                 # format all {} in two layers
                 for k, v in t_metadata.items():
                     new_k = k.split(".")[1]
+                    # self.log.info("__ new_k: `{}`".format(new_k))
                     try:
                         # first try all data and context data to
                         # add to individual properties
                         new_v = str(v).format(
                             **dict(context.data, **data))
                         d_metadata[new_k] = new_v
-
-                        if 'shot' in new_k:
-                            instance.data["asset"] = new_v
 
                         # create parents
                         # find matching index of order
@@ -97,6 +96,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                     except Exception:
                         d_metadata[new_k] = v
 
+                # create new shot asset name
+                instance.data["asset"] = instance.data["asset"].format(
+                    **d_metadata)
+
                 # lastly fill those individual properties itno
                 # format the string with collected data
                 hierarchy = template.format(
@@ -105,7 +108,6 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # check if hierarchy attribute is already created
                 # it should not be so return warning if it is
                 hd = instance.data.get("hierarchy")
-                self.log.info("__ hd: {}".format(hd))
                 assert not hd, "Only one Hierarchy Tag is \
                             allowed. Clip: `{}`".format(asset)
 
@@ -142,7 +144,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
         for instance in instances:
             if 'projectfile' in instance.data.get('family', ''):
                 continue
-
 
             in_info = {}
             name = instance.data["asset"]
