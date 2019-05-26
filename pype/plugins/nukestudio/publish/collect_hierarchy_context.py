@@ -65,7 +65,8 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
                 # if shot in template then remove it
                 if "shot" in template.lower():
-                    instance.data["asset"] = [t for t in template.split('/')][-1]
+                    instance.data["asset"] = [
+                        t for t in template.split('/')][-1]
                     template = "/".join([t for t in template.split('/')][0:-1])
 
                 # take template from Tag.note and break it into parts
@@ -76,6 +77,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # format all {} in two layers
                 for k, v in t_metadata.items():
                     new_k = k.split(".")[1]
+
+                    # ignore all help strings
+                    if 'help' in k:
+                        continue
                     # self.log.info("__ new_k: `{}`".format(new_k))
                     try:
                         # first try all data and context data to
