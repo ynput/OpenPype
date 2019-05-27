@@ -267,7 +267,6 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
                 # Store values for later.
                 instance.data["overlapping_faces"].extend(faces)
         else:
-            print(instance.data["overlapping_faces"])
             invalid.extend(instance.data["overlapping_faces"])
 
         return invalid
