@@ -23,9 +23,8 @@ class CollectClips(api.ContextPlugin):
 
             data[item.name()] = {
                 "item": item,
-                "tasks": [],
-                "startFrame": item.timelineIn(),
-                "endFrame": item.timelineOut()
+                "startFrame": int(item.timelineIn()),
+                "endFrame": int(item.timelineOut())
             }
 
         for key, value in data.items():
@@ -36,7 +35,6 @@ class CollectClips(api.ContextPlugin):
                 asset=value["item"].name(),
                 item=value["item"],
                 family=family,
-                tasks=value["tasks"],
                 startFrame=value["startFrame"],
                 endFrame=value["endFrame"],
                 handles=0
