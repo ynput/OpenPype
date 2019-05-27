@@ -34,7 +34,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         'anatomy_template': 'publish' or 'render', etc.
                             template from anatomy that should be used for
                             integrating this file. Only the first level can
-                            be specified right now. 
+                            be specified right now.
         'startFrame'
         'endFrame'
         'framerate'
@@ -50,7 +50,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "mayaAscii",
                 "setdress",
                 "layout",
-                "ass"
+                "ass",
+                "vdbcache",
+                "scene",
+                "vrayproxy",
+                "render",
+                "imagesequence",
+                "review"
                 ]
     exclude_families = ["clip"]
 
@@ -281,7 +287,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst = anatomy_filled[template_name]["path"]
 
                 instance.data["transfers"].append([src, dst])
-                # template = anatomy.templates["publish"]["path"]
                 instance.data["representations"][idx]['published_path'] = dst
 
             representation = {

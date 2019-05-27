@@ -35,9 +35,15 @@ class ExtractVDBCache(pype.api.Extractor):
             traceback.print_exc()
             raise RuntimeError("Render failed: {0}".format(exc))
 
-        if "files" not in instance.data:
-            instance.data["files"] = []
-
         output = instance.data["frames"]
 
-        instance.data["files"].append(output)
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        representation = {
+            'name': 'mov',
+            'ext': '.mov',
+            'files': output,
+            "stagingDir": staging_dir,
+        }
+        instance.data["representations"].append(representation)

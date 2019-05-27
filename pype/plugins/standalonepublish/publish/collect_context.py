@@ -54,7 +54,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         self.log.info("collected instance: {}".format(instance.data))
         self.log.info("parsing data: {}".format(in_data))
 
-        # instance.data["files"] = list()
         instance.data['destination_list'] = list()
         instance.data['representations'] = list()
         instance.data['source'] = 'standalone publisher'

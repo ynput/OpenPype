@@ -76,7 +76,16 @@ class CollectNukeReads(pyblish.api.ContextPlugin):
 
             self.log.debug("collected_frames: {}".format(label))
 
-            instance.data["files"] = [source_files]
+            if "representations" not in instance.data:
+                instance.data["representations"] = []
+
+            representation = {
+                'name': ext,
+                'ext': "." + ext,
+                'files': source_files,
+                "stagingDir": source_dir,
+            }
+            instance.data["representations"].append(representation)
 
             transfer = False
             if "publish" in node.knobs():

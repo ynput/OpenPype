@@ -26,16 +26,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
     families = ["look",
-                "vdbcache",
                 "assembly",
-                "vrayproxy",
                 "yetiRig",
                 "yeticache",
                 "nukescript",
-                "review",
-                "scene",
-                "render",
-                "imagesequence",
                 "write"]
     exclude_families = ["clip"]
 

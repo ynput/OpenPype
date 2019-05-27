@@ -146,9 +146,9 @@ class ExtractFBX(pype.api.Extractor):
         cmds.loadPlugin("fbxmaya", quiet=True)
 
         # Define output path
-        directory = self.staging_dir(instance)
+        stagingDir = self.staging_dir(instance)
         filename = "{0}.fbx".format(instance.name)
-        path = os.path.join(directory, filename)
+        path = os.path.join(stagingDir, filename)
 
         # The export requires forward slashes because we need
         # to format it into a string in a mel expression
@@ -208,9 +208,16 @@ class ExtractFBX(pype.api.Extractor):
             cmds.select(members, r=1, noExpand=True)
             mel.eval('FBXExport -f "{}" -s'.format(path))
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'mov',
+            'ext': '.mov',
+            'files': filename,
+            "stagingDir": stagingDir,
+        }
+        instance.data["representations"].append(representation)
+
 
         self.log.info("Extract FBX successful to: {0}".format(path))

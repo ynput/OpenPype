@@ -26,7 +26,7 @@ class ExtractDataForReview(pype.api.Extractor):
         # Deselect all nodes to prevent external connections
         [i["selected"].setValue(False) for i in nuke.allNodes()]
         self.log.debug("creating staging dir:")
-        self.staging_dir(instance)
+        self.stagingDir(instance)
 
         self.log.debug("instance: {}".format(instance))
         self.log.debug("instance.data[families]: {}".format(
@@ -50,10 +50,10 @@ class ExtractDataForReview(pype.api.Extractor):
 
     def transcode_mov(self, instance):
         collection = instance.data["collection"]
-        staging_dir = instance.data["stagingDir"].replace("\\", "/")
+        stagingDir = instance.data["stagingDir"].replace("\\", "/")
         file_name = collection.format("{head}mov")
 
-        review_mov = os.path.join(staging_dir, file_name).replace("\\", "/")
+        review_mov = os.path.join(stagingDir, file_name).replace("\\", "/")
 
         self.log.info("transcoding review mov: {0}".format(review_mov))
         if instance.data.get("baked_colorspace_movie"):
@@ -85,8 +85,8 @@ class ExtractDataForReview(pype.api.Extractor):
 
         import nuke
         temporary_nodes = []
-        staging_dir = instance.data["stagingDir"].replace("\\", "/")
-        self.log.debug("StagingDir `{0}`...".format(staging_dir))
+        stagingDir = instance.data["stagingDir"].replace("\\", "/")
+        self.log.debug("StagingDir `{0}`...".format(stagingDir))
 
         collection = instance.data.get("collection", None)
 
@@ -108,7 +108,7 @@ class ExtractDataForReview(pype.api.Extractor):
         node = previous_node = nuke.createNode("Read")
 
         node["file"].setValue(
-            os.path.join(staging_dir, fname).replace("\\", "/"))
+            os.path.join(stagingDir, fname).replace("\\", "/"))
 
         node["first"].setValue(first_frame)
         node["origfirst"].setValue(first_frame)
@@ -147,7 +147,7 @@ class ExtractDataForReview(pype.api.Extractor):
 
         if representation in "mov":
             file = fhead + "baked.mov"
-            path = os.path.join(staging_dir, file).replace("\\", "/")
+            path = os.path.join(stagingDir, file).replace("\\", "/")
             self.log.debug("Path: {}".format(path))
             instance.data["baked_colorspace_movie"] = path
             write_node["file"].setValue(path)
@@ -158,7 +158,7 @@ class ExtractDataForReview(pype.api.Extractor):
 
         elif representation in "jpeg":
             file = fhead + "jpeg"
-            path = os.path.join(staging_dir, file).replace("\\", "/")
+            path = os.path.join(stagingDir, file).replace("\\", "/")
             instance.data["thumbnail"] = path
             write_node["file"].setValue(path)
             write_node["file_type"].setValue("jpeg")
@@ -170,7 +170,17 @@ class ExtractDataForReview(pype.api.Extractor):
             first_frame = int(last_frame) / 2
             last_frame = int(last_frame) / 2
             # add into files for integration as representation
-            instance.data["files"].append(file)
+
+            if "representations" not in instance.data:
+                instance.data["representations"] = []
+
+            representation = {
+                'name': 'nk',
+                'ext': '.nk',
+                'files': file,
+                "stagingDir": stagingdir,
+            }
+            instance.data["representations"].append(representation)
 
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))
