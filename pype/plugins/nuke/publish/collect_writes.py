@@ -64,18 +64,26 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             )
 
             if "representations" not in instance.data:
-                instance.data["representations"] = []
+                instance.data["representations"] = list()
+            try:
+                collected_frames = os.listdir(output_dir)
 
-            representation = {
-                'name': ext,
-                'ext': "." + ext,
-                'files': collected_frames,
-                "stagingDir": output_dir,
-            }
-            instance.data["representations"].append(representation)
+                representation = {
+                    'name': ext,
+                    'ext': ext,
+                    'files': collected_frames,
+                    "stagingDir": output_dir,
+                    "anatomy_template": "render"
+                }
+                instance.data["representations"].append(representation)
 
             except Exception:
                 self.log.debug("couldn't collect frames: {}".format(label))
+
+
+
+            # except Exception:
+            #     self.log.debug("couldn't collect frames: {}".format(label))
 
             instance.data.update({
                 "path": path,

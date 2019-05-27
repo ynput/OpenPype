@@ -28,9 +28,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
     families = ["look",
                 "assembly",
                 "yetiRig",
-                "yeticache",
-                "nukescript",
-                "write"]
+                "yeticache"]
     exclude_families = ["clip"]
 
     def process(self, instance):

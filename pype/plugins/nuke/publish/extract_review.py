@@ -26,7 +26,7 @@ class ExtractDataForReview(pype.api.Extractor):
         # Deselect all nodes to prevent external connections
         [i["selected"].setValue(False) for i in nuke.allNodes()]
         self.log.debug("creating staging dir:")
-        self.stagingDir(instance)
+        self.staging_dir(instance)
 
         self.log.debug("instance: {}".format(instance))
         self.log.debug("instance.data[families]: {}".format(
@@ -75,13 +75,28 @@ class ExtractDataForReview(pype.api.Extractor):
             instance.data["baked_colorspace_movie"]))
         os.remove(instance.data["baked_colorspace_movie"])
 
-        instance.data["files"].append(file_name)
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        representation = {
+            'name': 'mov',
+            'ext': 'mov',
+            'files': file_name,
+            "stagingDir": stagingDir,
+            "anatomy_template": "render",
+            "thumbnail": False,
+            "preview": True,
+            'startFrameReview': instance.data['startFrame'],
+            'endFrameReview': instance.data['endFrame'],
+            'frameRate': instance.context.data["framerate"]
+        }
+        instance.data["representations"].append(representation)
 
     def render_review_representation(self,
                                      instance,
                                      representation="mov"):
 
-        assert instance.data['files'], "Instance data files should't be empty!"
+        assert instance.data['representations'][0]['files'], "Instance data files should't be empty!"
 
         import nuke
         temporary_nodes = []
@@ -155,6 +170,8 @@ class ExtractDataForReview(pype.api.Extractor):
             write_node["raw"].setValue(1)
             write_node.setInput(0, previous_node)
             temporary_nodes.append(write_node)
+            thumbnail = False
+            preview = True
 
         elif representation in "jpeg":
             file = fhead + "jpeg"
@@ -165,6 +182,8 @@ class ExtractDataForReview(pype.api.Extractor):
             write_node["raw"].setValue(1)
             write_node.setInput(0, previous_node)
             temporary_nodes.append(write_node)
+            thumbnail = True
+            preview = False
 
             # retime for
             first_frame = int(last_frame) / 2
@@ -174,13 +193,16 @@ class ExtractDataForReview(pype.api.Extractor):
             if "representations" not in instance.data:
                 instance.data["representations"] = []
 
-            representation = {
-                'name': 'nk',
-                'ext': '.nk',
+            repre = {
+                'name': representation,
+                'ext': representation,
                 'files': file,
-                "stagingDir": stagingdir,
+                "stagingDir": stagingDir,
+                "anatomy_template": "render",
+                "thumbnail": thumbnail,
+                "preview": preview
             }
-            instance.data["representations"].append(representation)
+            instance.data["representations"].append(repre)
 
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))

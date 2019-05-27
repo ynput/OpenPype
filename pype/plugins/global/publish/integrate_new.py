@@ -56,7 +56,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "vrayproxy",
                 "render",
                 "imagesequence",
-                "review"
+                "review",
+                "nukescript",
+                "render",
+                "write"
                 ]
     exclude_families = ["clip"]
 
@@ -228,7 +231,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if isinstance(files, list):
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
-                    "dst_collections: {}".format(str(src_collections)))
+                    "src_collections: {}".format(str(src_collections)))
                 src_collection = src_collections[0]
                 # Assert that each member has identical suffix
                 src_head = src_collection.format("{head}")
@@ -242,6 +245,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     anatomy_filled = anatomy.format(template_data)
                     test_dest_files.append(
                         anatomy_filled[template_name]["path"])
+                    self.log.debug(
+                        "test_dest_files: {}".format(str(test_dest_files)))
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]

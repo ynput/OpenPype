@@ -30,33 +30,33 @@ class ValidatePrerenderedFrames(pyblish.api.InstancePlugin):
     hosts = ["nuke"]
     actions = [RepairCollectionAction]
 
-
     def process(self, instance):
-        self.log.debug('instance.data["files"]: {}'.format(instance.data['files']))
 
-        assert instance.data.get('files'), "no frames were collected, you need to render them"
+        for repre in instance.data.get('representations'):
 
-        collections, remainder = clique.assemble(*instance.data['files'])
-        self.log.info('collections: {}'.format(str(collections)))
+            assert repre.get('files'), "no frames were collected, you need to render them"
 
-        collection = collections[0]
+            collections, remainder = clique.assemble(repre["files"])
+            self.log.info('collections: {}'.format(str(collections)))
 
-        frame_length = instance.data["endFrame"] \
-            - instance.data["startFrame"] + 1
+            collection = collections[0]
 
-        if frame_length is not 1:
-            assert len(collections) == 1, "There are multiple collections in the folder"
-            assert collection.is_contiguous(), "Some frames appear to be missing"
+            frame_length = instance.data["endFrame"] \
+                - instance.data["startFrame"] + 1
 
-        assert remainder is not None, "There are some extra files in folder"
+            if frame_length != 1:
+                assert len(collections) == 1, "There are multiple collections in the folder"
+                assert collection.is_contiguous(), "Some frames appear to be missing"
 
-        self.log.info('frame_length: {}'.format(frame_length))
-        self.log.info('len(collection.indexes): {}'.format(
-            len(collection.indexes)))
+            assert remainder is not None, "There are some extra files in folder"
 
-        assert len(
-            collection.indexes
-        ) is frame_length, "{} missing frames. Use "
-        "repair to render all frames".format(__name__)
+            self.log.info('frame_length: {}'.format(frame_length))
+            self.log.info('len(collection.indexes): {}'.format(
+                len(collection.indexes)))
 
-        instance.data['collection'] = collection
+            assert len(
+                collection.indexes
+            ) is frame_length, "{} missing frames. Use "
+            "repair to render all frames".format(__name__)
+
+            instance.data['collection'] = collection
