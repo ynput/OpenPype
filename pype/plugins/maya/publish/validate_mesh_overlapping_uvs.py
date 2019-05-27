@@ -1,11 +1,11 @@
-from maya import cmds
+import json
 
 import pyblish.api
 import pype.api
 import pype.maya.action
 import math
 import maya.api.OpenMaya as om
-from pymel.core import polyUVSet
+import pymel.core as pm
 
 
 class GetOverlappingUVs(object):
@@ -241,7 +241,7 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
     optional = True
 
     @classmethod
-    def _has_overlapping_uvs(cls, node):
+    def _get_overlapping_uvs(cls, node):
         """ Check if mesh has overlapping UVs.
 
             :param node: node to check
@@ -251,27 +251,45 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
         """
         ovl = GetOverlappingUVs()
 
-        for i, uv in enumerate(polyUVSet(node, q=1, auv=1)):
-            polyUVSet(node, cuv=1, uvSet=uv)
-            of = ovl._getOverlapUVFaces(str(node))
-            if of != []:
-                return True
-        return False
+        overlapping_faces = []
+        for i, uv in enumerate(pm.polyUVSet(node, q=1, auv=1)):
+            pm.polyUVSet(node, cuv=1, uvSet=uv)
+            overlapping_faces.extend(ovl._getOverlapUVFaces(str(node)))
+
+        return overlapping_faces
 
     @classmethod
-    def get_invalid(cls, instance):
+    def get_invalid(cls, instance, compute=False):
         invalid = []
 
-        for node in cmds.ls(instance, type='mesh'):
-            if cls._has_overlapping_uvs(node):
-                invalid.append(node)
+        for node in pm.ls(instance, type="mesh"):
+            # Ensure attribute exists.
+            if not hasattr(node, "overlapping_faces"):
+                pm.addAttr(
+                    node, longName="overlapping_faces", dataType="string"
+                )
+
+            if compute:
+                faces = cls._get_overlapping_uvs(node)
+                invalid.extend(faces)
+
+                # Store values for later.
+                node.overlapping_faces.set(json.dumps(faces))
+            else:
+                invalid.extend(json.loads(node.overlapping_faces.get()))
 
         return invalid
 
+    def clean_up(self, instance):
+        for node in pm.ls(instance, type="mesh"):
+            pm.deleteAttr(node.overlapping_faces)
+
     def process(self, instance):
 
-        invalid = self.get_invalid(instance)
+        invalid = self.get_invalid(instance, compute=True)
         if invalid:
-            raise RuntimeError("Meshes found with overlapping "
-                               "UVs: {0}".format(invalid))
-        pass
+            raise RuntimeError(
+                "Meshes found with overlapping UVs: {0}".format(invalid)
+            )
+        else:
+            self.clean_up(instance)
