@@ -1,6 +1,13 @@
 import hiero
 import re
-from pypeapp import config
+from pypeapp import (
+    config,
+    Logger
+)
+
+log = Logger().get_logger(__name__, "nukestudio")
+
+_hierarchy_orig = 'hierarchy_orig'
 
 
 def create_tag(key, value):
@@ -16,15 +23,9 @@ def create_tag(key, value):
     """
 
     tag = hiero.core.Tag(str(key))
-    tag.setNote(value['note'])
-    tag.setIcon(value['icon']['path'])
-    mtd = tag.metadata()
-    pres_mtd = value.get('metadata', None)
-    if pres_mtd:
-        [mtd.setValue("tag.{}".format(k), v)
-         for k, v in pres_mtd.items()]
 
-    return tag
+    return update_tag(tag, value)
+
 
 def update_tag(tag, value):
     """
@@ -42,6 +43,8 @@ def update_tag(tag, value):
     if pres_mtd:
         [mtd.setValue("tag.{}".format(k), v)
          for k, v in pres_mtd.items()]
+
+    return tag
 
 
 def add_tags_from_presets():
@@ -76,8 +79,8 @@ def add_tags_from_presets():
 
             for k, v in _val.items():
                 tags = [t for t in bin.items()
-                        if str(k) in t.name()]
-
+                        if str(k) in t.name()
+                        if len(str(k)) == len(t.name())]
                 if not tags:
                     # create Tag obj
                     tag = create_tag(k, v)
@@ -85,7 +88,6 @@ def add_tags_from_presets():
                     # adding Tag to Bin
                     bin.addItem(tag)
                 else:
-                    # update Tag if already exists
                     update_tag(tags[0], v)
 
             if not bins:
@@ -104,5 +106,26 @@ def add_tags_from_presets():
                 # adding Tag to Root Bin
                 root_bin.addItem(tag)
             else:
+                # check if Hierarchy in name
                 # update Tag if already exists
-                update_tag(tags[0], _val)
+                tag_names = [tg.name().lower() for tg in tags]
+                for _t in tags:
+                    if 'hierarchy' not in _t.name().lower():
+                        # update only non hierarchy tags
+                        # because hierarchy could be edited
+                        update_tag(_t, _val)
+                    elif _hierarchy_orig in _t.name().lower():
+                        # if hierarchy_orig already exists just
+                        # sync with preset
+                        update_tag(_t, _val)
+                    else:
+                        # if history tag already exist then create
+                        # backup synchronisable original Tag
+                        if (_hierarchy_orig not in tag_names):
+                            # create Tag obj
+                            tag = create_tag(
+                                _hierarchy_orig.capitalize(), _val
+                            )
+
+                            # adding Tag to Bin
+                            root_bin.addItem(tag)

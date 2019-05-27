@@ -19,9 +19,10 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         # template = instance.data["template"]
 
         anatomy = instance.context.data['anatomy']
-        # template = anatomy.publish.path
+        # self.log.info(anatomy.templates)
         anatomy_filled = anatomy.format(template_data)
-        mock_template = anatomy_filled.publish.path
+        # self.log.info(anatomy_filled)
+        mock_template = anatomy_filled["publish"]["path"]
 
         # For now assume resources end up in a "resources" folder in the
         # published folder

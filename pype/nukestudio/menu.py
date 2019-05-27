@@ -15,7 +15,8 @@ from avalon.api import Session
 from .tags import add_tags_from_presets
 
 from .lib import (
-    reload_config
+    reload_config,
+    set_workfiles
 )
 from pypeapp import Logger
 
@@ -27,7 +28,7 @@ self._change_context_menu = None
 
 def _update_menu_task_label(*args):
     """Update the task label in Avalon menu to current session"""
-    
+
     object_name = self._change_context_menu
     found_menu = findMenuAction(object_name)
 
@@ -48,7 +49,6 @@ def install():
     from avalon.tools import (
         creator,
         publish,
-        workfiles,
         cbloader,
         cbsceneinventory,
         contextmanager,
@@ -86,7 +86,7 @@ def install():
         "separator",
         {
             'action': QAction("Work Files...", None),
-            'function': (lambda: workfiles.show(os.environ["AVALON_WORKDIR"])),
+            'function': set_workfiles,
             'icon': QIcon('icons:Position.png')
         },
         {
