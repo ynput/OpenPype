@@ -1,5 +1,3 @@
-import json
-
 import pyblish.api
 import pype.api
 import pype.maya.action
@@ -261,28 +259,18 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance, compute=False):
         invalid = []
-
-        for node in pm.ls(instance, type="mesh"):
-            # Ensure attribute exists.
-            if not hasattr(node, "overlapping_faces"):
-                pm.addAttr(
-                    node, longName="overlapping_faces", dataType="string"
-                )
-
-            if compute:
+        if compute:
+            instance.data["overlapping_faces"] = []
+            for node in pm.ls(instance, type="mesh"):
                 faces = cls._get_overlapping_uvs(node)
                 invalid.extend(faces)
-
                 # Store values for later.
-                node.overlapping_faces.set(json.dumps(faces))
-            else:
-                invalid.extend(json.loads(node.overlapping_faces.get()))
+                instance.data["overlapping_faces"].extend(faces)
+        else:
+            print(instance.data["overlapping_faces"])
+            invalid.extend(instance.data["overlapping_faces"])
 
         return invalid
-
-    def clean_up(self, instance):
-        for node in pm.ls(instance, type="mesh"):
-            pm.deleteAttr(node.overlapping_faces)
 
     def process(self, instance):
 
@@ -291,5 +279,3 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
             raise RuntimeError(
                 "Meshes found with overlapping UVs: {0}".format(invalid)
             )
-        else:
-            self.clean_up(instance)
