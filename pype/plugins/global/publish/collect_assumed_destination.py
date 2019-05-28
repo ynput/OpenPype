@@ -17,7 +17,7 @@ class CollectAssumedDestination(pyblish.api.ContextPlugin):
 
     def process_item(self, instance):
         if [ef for ef in self.exclude_families
-                if instance.data["family"] in ef]:
+                if ef in instance.data["family"]]:
             return
 
         self.create_destination_template(instance)

@@ -10,6 +10,7 @@ class CollectClips(api.ContextPlugin):
 
     def process(self, context):
         projectdata = context.data["projectData"]
+        version = context.data.get("version", "001")
         data = {}
         for item in context.data.get("selection", []):
             self.log.debug("__ item: {}".format(item))
@@ -36,7 +37,11 @@ class CollectClips(api.ContextPlugin):
                 asset=value["item"].name(),
                 item=value["item"],
                 family=family,
+                families=[],
                 startFrame=value["startFrame"],
                 endFrame=value["endFrame"],
-                handles=projectdata['handles']
+                handles=projectdata['handles'],
+                handleStart=0,
+                handleEnd=0,
+                version=version
             )

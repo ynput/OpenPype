@@ -70,8 +70,9 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                     template = "/".join([t for t in template.split('/')][0:-1])
 
                 # take template from Tag.note and break it into parts
+                template_split = template.split("/")
                 patern = re.compile(r"\{([a-z]*?)\}")
-                par_split = [patern.findall(t)[0]
+                par_split = [patern.findall(t)
                              for t in template.split("/")]
 
                 # format all {} in two layers
@@ -96,7 +97,8 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
                         # if any is matching then convert to entity_types
                         if p_match_i:
-                            parent = self.convert_to_entity(new_k, new_v)
+                            parent = self.convert_to_entity(
+                                new_k, template_split[p_match_i[0]])
                             parents.insert(p_match_i[0], parent)
                     except Exception:
                         d_metadata[new_k] = v
@@ -107,6 +109,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
                 # lastly fill those individual properties itno
                 # format the string with collected data
+                parents = [{"entityName": p["entityName"].format(
+                    **d_metadata), "entityType": p["entityType"]}
+                    for p in parents]
+
                 hierarchy = template.format(
                     **d_metadata)
 
@@ -177,7 +183,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                 actual = next_dict
 
             temp_context = self.update_dict(temp_context, actual)
-            self.log.debug(temp_context)
 
         # TODO: 100% sure way of get project! Will be Name or Code?
         project_name = avalon.Session["AVALON_PROJECT"]
