@@ -59,7 +59,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "review",
                 "nukescript",
                 "render",
-                "write"
+                "write",
+                "plates"
                 ]
     exclude_families = ["clip"]
 
@@ -80,6 +81,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Required environment variables
         PROJECT = api.Session["AVALON_PROJECT"]
         ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
+        TASK = instance.data.get("task") or api.Session["AVALON_TASK"]
         LOCATION = api.Session["AVALON_LOCATION"]
 
         context = instance.context
@@ -192,7 +194,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
                          "silo": asset['silo'],
-                         "task": api.Session["AVALON_TASK"],
+                         "task": TASK,
                          "asset": ASSET,
                          "family": instance.data['family'],
                          "subset": subset["name"],
@@ -226,12 +228,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 stagingdir = repre['stagingDir']
             if repre.get('anatomy_template'):
                 template_name = repre['anatomy_template']
-            template = anatomy.templates[template_name]["path"]
+            template = os.path.normpath(
+                anatomy.templates[template_name]["path"])
 
             if isinstance(files, list):
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
-                    "src_collections: {}".format(str(src_collections)))
+                    "src_tail_collections: {}".format(str(src_collections)))
                 src_collection = src_collections[0]
                 # Assert that each member has identical suffix
                 src_head = src_collection.format("{head}")
@@ -243,10 +246,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     template_data["frame"] = src_collection.format(
                         "{padding}") % i
                     anatomy_filled = anatomy.format(template_data)
+
                     test_dest_files.append(
-                        anatomy_filled[template_name]["path"])
-                    self.log.debug(
-                        "test_dest_files: {}".format(str(test_dest_files)))
+                        os.path.normpath(
+                            anatomy_filled[template_name]["path"])
+                    )
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
@@ -262,10 +266,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                     dst_padding = dst_collection.format("{padding}") % i
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
-
+                    self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
-                    # src = src_file_name
-                    self.log.debug("source: {}".format(src))
+                    self.log.debug("source: `{}`".format(src))
                     instance.data["transfers"].append([src, dst])
 
             else:
@@ -287,7 +290,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 template_data["representation"] = repre['ext']
 
                 src = os.path.join(stagingdir, fname)
-                # src = fname
                 anatomy_filled = anatomy.format(template_data)
                 dst = anatomy_filled[template_name]["path"]
 
@@ -308,7 +310,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "root": root,
                     "project": {"name": PROJECT,
                                 "code": project['data']['code']},
-                    'task': api.Session["AVALON_TASK"],
+                    'task': TASK,
                     "silo": asset['silo'],
                     "asset": ASSET,
                     "family": instance.data['family'],
