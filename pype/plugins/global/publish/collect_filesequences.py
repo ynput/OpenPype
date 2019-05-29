@@ -2,7 +2,7 @@ import os
 import re
 import copy
 import json
-import pprint
+from pprint import pprint, pformat
 
 import pyblish.api
 from avalon import api
@@ -90,9 +90,9 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
     label = "File Sequences"
 
     def process(self, context):
-
-        if os.environ.get("FILESEQUENCE"):
-            paths = os.environ["FILESEQUENCE"].split(os.pathsep)
+        if os.environ.get("PYPE_PUBLISH_PATHS"):
+            paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
+            self.log.info("Collecting paths: {}".format(paths))
         else:
             cwd = context.get("workspaceDir", os.getcwd())
             paths = [cwd]
@@ -121,6 +121,12 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 else:
                     root = cwd
 
+                metadata = data.get("metadata")
+                if metadata:
+                    session = metadata.get("session")
+                    if session:
+                        self.log.info("setting session using metadata")
+                        api.Session.update(session)
             else:
                 # Search in directory
                 data = dict()
@@ -172,23 +178,28 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 # root = os.path.normpath(root)
                 # self.log.info("Source: {}}".format(data.get("source", "")))
 
-                instance.data.update({
-                    "name": str(collection),
-                    "family": families[0],  # backwards compatibility / pyblish
-                    "families": list(families),
-                    "subset": subset,
-                    "asset": data.get("asset", api.Session["AVALON_ASSET"]),
-                    "stagingDir": root,
-                    "files": [list(collection)],
-                    "startFrame": start,
-                    "endFrame": end,
-                    "fps": fps,
-                    "source": data.get('source', '')
-                })
+                try:
+                    instance.data.update({
+                        "name": str(collection),
+                        "family": families[0],
+                        "families": list(families),
+                        "subset": subset,
+                        "asset": data.get(
+                            "asset", api.Session.get("AVALON_ASSET")),
+                        "stagingDir": root,
+                        "files": [list(collection)],
+                        "startFrame": start,
+                        "endFrame": end,
+                        "fps": fps,
+                        "source": data.get('source', '')
+                    })
+                except Exception as e:
+                    print(e)
+                    raise
                 instance.append(collection)
 
                 if data.get('user'):
                     context.data["user"] = data['user']
 
                 self.log.debug("Collected instance:\n"
-                               "{}".format(pprint.pformat(instance.data)))
+                               "{}".format(pformat(instance.data)))

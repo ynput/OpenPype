@@ -90,18 +90,23 @@ def get_resource_files(resources, frame_range, override=True):
     return list(res_collection)
 
 
-class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
-    """Submit image sequence publish jobs to Deadline.
+class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
+    """Process Job submitted on farm.
 
-    These jobs are dependent on a deadline job submission prior to this
-    plug-in.
+    These jobs are dependent on a deadline or muster job
+    submission prior to this plug-in.
 
-    Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable DEADLINE_REST_URL
+    - In case of Deadline, it creates dependend job on farm publishing
+      rendered image sequence.
+
+    - In case of Muster, there is no need for such thing as dependend job,
+      post action will be executed and rendered sequence will be published.
 
     Options in instance.data:
-        - deadlineSubmission (dict, Required): The returned .json
-            data from the job submission to deadline.
+        - deadlineSubmissionJob (dict, Required): The returned .json
+          data from the job submission to deadline.
+
+        - musterSubmissionJob (dict, Required): same as deadline.
 
         - outputDir (str, Required): The output directory where the metadata
             file should be generated. It's assumed that this will also be
@@ -195,6 +200,14 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             raise Exception(response.text)
 
     def process(self, instance):
+        """
+        Detect type of renderfarm submission and create and post dependend job
+        in case of Deadline. It creates json file with metadata needed for
+        publishing in directory of render.
+
+        :param instance: Instance data
+        :type instance: dict
+        """
         # Get a submission job
         data = instance.data.copy()
         job = instance.data.get("deadlineSubmissionJob")
@@ -215,7 +228,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
                                                     "http://localhost:8082")
             assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
-            self.process_deadline(instance, job)
+            self._submit_deadline_post_job(instance, job)
 
         if submission_type == "muster":
             render_job = data.pop("musterSubmissionJob")

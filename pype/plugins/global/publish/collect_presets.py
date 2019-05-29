@@ -10,5 +10,5 @@ class CollectPresets(api.ContextPlugin):
 
     def process(self, context):
         context.data["presets"] = config.get_presets()
-        self.log.info(context.data["presets"])
+        # self.log.debug(context.data["presets"])
         return

@@ -397,7 +397,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 environment[path] = os.environ[path]
 
         environment["PATH"] = os.environ["PATH"]
-        self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
+        # self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
         clean_environment = {}
         for key in environment:
             clean_path = ""
