@@ -124,6 +124,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "Instance 'files' must be a list, got: {0}".format(repres)
         )
 
+        # FIXME: io is not initialized at this point for shell host
+        io.install()
         project = io.find_one({"type": "project"})
 
         asset = io.find_one({"type": "asset",
@@ -257,7 +259,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_head = dst_collection.format("{head}")
                 dst_tail = dst_collection.format("{tail}")
 
-                instance.data["representations"][idx]['published_path'] = dst_collection.format()
+                instance.data["representations"][idx]['published_path'] = dst_collection.format()  # noqa E01
 
                 for i in src_collection.indexes:
                     src_padding = src_collection.format("{padding}") % i

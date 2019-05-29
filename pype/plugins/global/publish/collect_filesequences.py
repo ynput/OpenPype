@@ -2,7 +2,7 @@ import os
 import re
 import copy
 import json
-from pprint import pprint, pformat
+from pprint import pformat
 
 import pyblish.api
 from avalon import api
@@ -127,6 +127,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     if session:
                         self.log.info("setting session using metadata")
                         api.Session.update(session)
+                        os.environ.update(session)
             else:
                 # Search in directory
                 data = dict()
@@ -178,6 +179,8 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 # root = os.path.normpath(root)
                 # self.log.info("Source: {}}".format(data.get("source", "")))
 
+                ext = list(collection)[0].split('.')[-1]
+
                 instance.data.update({
                     "name": str(collection),
                     "family": families[0],  # backwards compatibility / pyblish
@@ -192,13 +195,17 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 })
                 instance.append(collection)
 
+                if "representations" not in instance.data:
+                    instance.data["representations"] = []
+
                 representation = {
-                    'name': 'jpg',
-                    'ext': '.jpg',
-                    'files': [list(collection)],
+                    'name': ext,
+                    'ext': '.{}'.format(ext),
+                    'files': list(collection),
                     "stagingDir": root,
+                    "anatomy_template": "render"
                 }
-                instance.data["representations"] = [representation]
+                instance.data["representations"].append(representation)
 
                 if data.get('user'):
                     context.data["user"] = data['user']
