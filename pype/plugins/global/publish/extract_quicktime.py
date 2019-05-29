@@ -70,6 +70,13 @@ class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):
         sub_proc = subprocess.Popen(subprocess_mov)
         sub_proc.wait()
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
-        instance.data["files"].append(movFile)
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        representation = {
+            'name': 'mov',
+            'ext': '.mov',
+            'files': movFile,
+            "stagingDir": stagingdir,
+        }
+        instance.data["representations"].append(representation)

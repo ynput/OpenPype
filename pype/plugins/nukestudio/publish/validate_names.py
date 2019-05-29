@@ -29,14 +29,3 @@ class ValidateNames(api.InstancePlugin):
         msg = "Sequence \"{0}\" ends with a whitespace."
         msg = msg.format(item.parent().parent().name())
         assert not item.parent().parent().name().endswith(" "), msg
-
-
-class ValidateNamesFtrack(ValidateNames):
-    """Validate sequence, video track and track item names.
-
-    Because we are matching the families exactly, we need this plugin to
-    accommodate for the ftrack family addition.
-    """
-
-    order = api.ValidatorOrder
-    families = ["clip", "ftrack"]

@@ -21,8 +21,8 @@ class ExtractAssStandin(pype.api.Extractor):
     def process(self, instance):
 
         staging_dir = self.staging_dir(instance)
-        file_name = "{}.ass".format(instance.name)
-        file_path = os.path.join(staging_dir, file_name)
+        filename = "{}.ass".format(instance.name)
+        file_path = os.path.join(staging_dir, filename)
 
         # Write out .ass file
         self.log.info("Writing: '%s'" % file_path)
@@ -37,11 +37,16 @@ class ExtractAssStandin(pype.api.Extractor):
                                     boundingBox=True
                                     )
 
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
-
-        instance.data["files"].append(file_name)
+        representation = {
+            'name': 'ass',
+            'ext': '.ass',
+            'files': filename,
+            "stagingDir": staging_dir
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '%s' to: %s"
                       % (instance.name, staging_dir))

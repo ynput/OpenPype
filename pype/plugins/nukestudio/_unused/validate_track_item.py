@@ -8,7 +8,7 @@ class ValidateClip(api.InstancePlugin):
 
     order = api.ValidatorOrder
     families = ["clip"]
-    match = api.Exact
+    # match = api.Exact
     label = "Validate Track Item"
     hosts = ["nukestudio"]
     optional = True

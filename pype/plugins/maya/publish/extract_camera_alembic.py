@@ -70,10 +70,16 @@ class ExtractCameraAlembic(pype.api.Extractor):
                 with avalon.maya.suspended_refresh():
                     cmds.AbcExport(j=job_str, verbose=False)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'abc',
+            'ext': '.abc',
+            'files': filename,
+            "stagingDir": dir_path,
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, path))

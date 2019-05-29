@@ -50,10 +50,10 @@ class ExtractDataForReview(pype.api.Extractor):
 
     def transcode_mov(self, instance):
         collection = instance.data["collection"]
-        staging_dir = instance.data["stagingDir"].replace("\\", "/")
+        stagingDir = instance.data["stagingDir"].replace("\\", "/")
         file_name = collection.format("{head}mov")
 
-        review_mov = os.path.join(staging_dir, file_name).replace("\\", "/")
+        review_mov = os.path.join(stagingDir, file_name).replace("\\", "/")
 
         self.log.info("transcoding review mov: {0}".format(review_mov))
         if instance.data.get("baked_colorspace_movie"):
@@ -75,18 +75,33 @@ class ExtractDataForReview(pype.api.Extractor):
             instance.data["baked_colorspace_movie"]))
         os.remove(instance.data["baked_colorspace_movie"])
 
-        instance.data["files"].append(file_name)
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        representation = {
+            'name': 'mov',
+            'ext': 'mov',
+            'files': file_name,
+            "stagingDir": stagingDir,
+            "anatomy_template": "render",
+            "thumbnail": False,
+            "preview": True,
+            'startFrameReview': instance.data['startFrame'],
+            'endFrameReview': instance.data['endFrame'],
+            'frameRate': instance.context.data["framerate"]
+        }
+        instance.data["representations"].append(representation)
 
     def render_review_representation(self,
                                      instance,
                                      representation="mov"):
 
-        assert instance.data['files'], "Instance data files should't be empty!"
+        assert instance.data['representations'][0]['files'], "Instance data files should't be empty!"
 
         import nuke
         temporary_nodes = []
-        staging_dir = instance.data["stagingDir"].replace("\\", "/")
-        self.log.debug("StagingDir `{0}`...".format(staging_dir))
+        stagingDir = instance.data["stagingDir"].replace("\\", "/")
+        self.log.debug("StagingDir `{0}`...".format(stagingDir))
 
         collection = instance.data.get("collection", None)
 
@@ -108,7 +123,7 @@ class ExtractDataForReview(pype.api.Extractor):
         node = previous_node = nuke.createNode("Read")
 
         node["file"].setValue(
-            os.path.join(staging_dir, fname).replace("\\", "/"))
+            os.path.join(stagingDir, fname).replace("\\", "/"))
 
         node["first"].setValue(first_frame)
         node["origfirst"].setValue(first_frame)
@@ -147,7 +162,7 @@ class ExtractDataForReview(pype.api.Extractor):
 
         if representation in "mov":
             file = fhead + "baked.mov"
-            path = os.path.join(staging_dir, file).replace("\\", "/")
+            path = os.path.join(stagingDir, file).replace("\\", "/")
             self.log.debug("Path: {}".format(path))
             instance.data["baked_colorspace_movie"] = path
             write_node["file"].setValue(path)
@@ -155,22 +170,39 @@ class ExtractDataForReview(pype.api.Extractor):
             write_node["raw"].setValue(1)
             write_node.setInput(0, previous_node)
             temporary_nodes.append(write_node)
+            thumbnail = False
+            preview = True
 
         elif representation in "jpeg":
             file = fhead + "jpeg"
-            path = os.path.join(staging_dir, file).replace("\\", "/")
+            path = os.path.join(stagingDir, file).replace("\\", "/")
             instance.data["thumbnail"] = path
             write_node["file"].setValue(path)
             write_node["file_type"].setValue("jpeg")
             write_node["raw"].setValue(1)
             write_node.setInput(0, previous_node)
             temporary_nodes.append(write_node)
+            thumbnail = True
+            preview = False
 
             # retime for
             first_frame = int(last_frame) / 2
             last_frame = int(last_frame) / 2
             # add into files for integration as representation
-            instance.data["files"].append(file)
+
+            if "representations" not in instance.data:
+                instance.data["representations"] = []
+
+            repre = {
+                'name': representation,
+                'ext': representation,
+                'files': file,
+                "stagingDir": stagingDir,
+                "anatomy_template": "render",
+                "thumbnail": thumbnail,
+                "preview": preview
+            }
+            instance.data["representations"].append(repre)
 
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))

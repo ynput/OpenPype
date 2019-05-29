@@ -3,11 +3,10 @@ from pyblish import api
 class CollectFramerate(api.ContextPlugin):
     """Collect framerate from selected sequence."""
 
-    order = api.CollectorOrder
+    order = api.CollectorOrder + 0.01
     label = "Collect Framerate"
     hosts = ["nukestudio"]
 
     def process(self, context):
-        for item in context.data.get("selection", []):
-            context.data["framerate"] = item.sequence().framerate().toFloat()
-            return
+        sequence = context.data["activeSequence"]
+        context.data["framerate"] = sequence.framerate().toFloat()

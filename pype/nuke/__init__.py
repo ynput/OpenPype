@@ -109,12 +109,6 @@ def install():
     # api.set_avalon_workdir()
     # reload_config()
 
-    # import sys
-
-    # for path in sys.path:
-    #     if path.startswith("C:\\Users\\Public"):
-    #         sys.path.remove(path)
-
     log.info("Registering Nuke plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)

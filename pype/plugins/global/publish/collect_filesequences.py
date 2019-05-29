@@ -178,25 +178,27 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 # root = os.path.normpath(root)
                 # self.log.info("Source: {}}".format(data.get("source", "")))
 
-                try:
-                    instance.data.update({
-                        "name": str(collection),
-                        "family": families[0],
-                        "families": list(families),
-                        "subset": subset,
-                        "asset": data.get(
-                            "asset", api.Session.get("AVALON_ASSET")),
-                        "stagingDir": root,
-                        "files": [list(collection)],
-                        "startFrame": start,
-                        "endFrame": end,
-                        "fps": fps,
-                        "source": data.get('source', '')
-                    })
-                except Exception as e:
-                    print(e)
-                    raise
+                instance.data.update({
+                    "name": str(collection),
+                    "family": families[0],  # backwards compatibility / pyblish
+                    "families": list(families),
+                    "subset": subset,
+                    "asset": data.get("asset", api.Session["AVALON_ASSET"]),
+                    "stagingDir": root,
+                    "startFrame": start,
+                    "endFrame": end,
+                    "fps": fps,
+                    "source": data.get('source', '')
+                })
                 instance.append(collection)
+
+                representation = {
+                    'name': 'jpg',
+                    'ext': '.jpg',
+                    'files': [list(collection)],
+                    "stagingDir": root,
+                }
+                instance.data["representations"] = [representation]
 
                 if data.get('user'):
                     context.data["user"] = data['user']
