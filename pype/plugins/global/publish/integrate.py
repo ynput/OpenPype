@@ -1,6 +1,7 @@
 import os
 import logging
 import shutil
+import clique
 
 import errno
 import pyblish.api
@@ -24,25 +25,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
-    families = ["animation",
-                "camera",
-                "look",
-                "mayaAscii",
-                "model",
-                "pointcache",
-                "vdbcache",
-                "setdress",
+    families = ["look",
                 "assembly",
-                "layout",
-                "rig",
-                "vrayproxy",
                 "yetiRig",
-                "yeticache",
-                "nukescript",
-                "review",
-                "workfile",
-                "scene",
-                "ass"]
+                "yeticache"]
     exclude_families = ["clip"]
 
     def process(self, instance):
@@ -53,7 +39,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.register(instance)
 
         self.log.info("Integrating Asset in to the database ...")
-        self.integrate(instance)
+        if instance.data.get('transfer', True):
+            self.integrate(instance)
+
 
     def register(self, instance):
         # Required environment variables

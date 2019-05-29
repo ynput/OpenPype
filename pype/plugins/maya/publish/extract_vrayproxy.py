@@ -54,10 +54,16 @@ class ExtractVRayProxy(pype.api.Extractor):
                                  ignoreHiddenObjects=True,
                                  createProxyNode=False)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(file_name)
+        representation = {
+            'name': 'vrmesh',
+            'ext': '.vrmesh',
+            'files': file_name,
+            "stagingDir": staging_dir,
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '%s' to: %s"
                       % (instance.name, staging_dir))

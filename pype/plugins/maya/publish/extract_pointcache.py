@@ -79,9 +79,15 @@ class ExtractAlembic(pype.api.Extractor):
                                 endFrame=end,
                                 **options)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'abc',
+            'ext': '.abc',
+            'files': filename,
+            "stagingDir": dirname
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))

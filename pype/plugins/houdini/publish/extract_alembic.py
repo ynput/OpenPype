@@ -20,7 +20,7 @@ class ExtractAlembic(pype.api.Extractor):
         # Get the filename from the filename parameter
         output = ropnode.evalParm("filename")
         staging_dir = os.path.dirname(output)
-        instance.data["stagingDir"] = staging_dir
+        # instance.data["stagingDir"] = staging_dir
 
         file_name = os.path.basename(output)
 
@@ -37,7 +37,13 @@ class ExtractAlembic(pype.api.Extractor):
             traceback.print_exc()
             raise RuntimeError("Render failed: {0}".format(exc))
 
-        if "files" not in instance.data:
-            instance.data["files"] = []
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(file_name)
+        representation = {
+            'name': 'abc',
+            'ext': '.abc',
+            'files': file_name,
+            "stagingDir": staging_dir,
+        }
+        instance.data["representations"].append(representation)

@@ -179,13 +179,20 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     "subset": subset,
                     "asset": data.get("asset", api.Session["AVALON_ASSET"]),
                     "stagingDir": root,
-                    "files": [list(collection)],
                     "startFrame": start,
                     "endFrame": end,
                     "fps": fps,
                     "source": data.get('source', '')
                 })
                 instance.append(collection)
+
+                representation = {
+                    'name': 'jpg',
+                    'ext': '.jpg',
+                    'files': [list(collection)],
+                    "stagingDir": root,
+                }
+                instance.data["representations"] = [representation]
 
                 if data.get('user'):
                     context.data["user"] = data['user']

@@ -123,9 +123,21 @@ class ExtractQuicktime(pype.api.Extractor):
                 self.log.error(ffmpeg_error)
                 raise RuntimeError(ffmpeg_error)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
-        instance.data["files"].append(movieFile)
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        representation = {
+            'name': 'mov',
+            'ext': '.mov',
+            'files': movieFile,
+            "stagingDir": stagingdir,
+            'startFrame': start,
+            'endFrame': end,
+            'frameRate': fps,
+            'preview': True
+        }
+        instance.data["representations"].append(representation)
+
 
 
 @contextlib.contextmanager

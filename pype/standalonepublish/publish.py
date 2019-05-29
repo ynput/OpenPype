@@ -16,21 +16,21 @@ import pyblish.api
 
 
 # Registers Global pyblish plugins
-# pype.install()
+pype.install()
 # Registers Standalone pyblish plugins
-PUBLISH_PATH = os.path.sep.join(
-    [pype.PLUGINS_DIR, 'standalonepublish', 'publish']
-)
-pyblish.api.register_plugin_path(PUBLISH_PATH)
-
-# # Registers Standalone pyblish plugins
 # PUBLISH_PATH = os.path.sep.join(
-#     [pype.PLUGINS_DIR, 'ftrack', 'publish']
+#     [pype.PLUGINS_DIR, 'standalonepublish', 'publish']
 # )
 # pyblish.api.register_plugin_path(PUBLISH_PATH)
 
+# Registers Standalone pyblish plugins
+PUBLISH_PATH = os.path.sep.join(
+    [pype.PLUGINS_DIR, 'ftrack', 'publish']
+)
+pyblish.api.register_plugin_path(PUBLISH_PATH)
 
-def set_context(project, asset, app):
+
+def set_context(project, asset, task, app):
     ''' Sets context for pyblish (must be done before pyblish is launched)
     :param project: Name of `Project` where instance should be published
     :type project: str
@@ -41,6 +41,11 @@ def set_context(project, asset, app):
     io.Session["AVALON_PROJECT"] = project
     os.environ["AVALON_ASSET"] = asset
     io.Session["AVALON_ASSET"] = asset
+    if not task:
+        task = ''
+    os.environ["AVALON_TASK"] = task
+    io.Session["AVALON_TASK"] = task
+
 
     io.install()
 
