@@ -2,6 +2,7 @@ from pyblish import api
 import os
 import time
 
+
 class ExtractPlateCheck(api.ContextPlugin):
     """Collect all Track items selection."""
 
@@ -11,6 +12,7 @@ class ExtractPlateCheck(api.ContextPlugin):
     families = ["plates"]
 
     def process(self, context):
+
         plate_path = context.data.get("platesCheck", None)
 
         self.log.info("Chacking plate: `{}`".format(plate_path))
