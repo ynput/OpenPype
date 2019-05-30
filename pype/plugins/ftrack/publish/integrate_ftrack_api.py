@@ -29,7 +29,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         if sys.version_info[0] < 3:
             for key, value in data.iteritems():
                 if not isinstance(value, (basestring, int)):
-                    self.log.info(value)
+                    self.log.info("value: {}".format(value))
                     if "id" in value.keys():
                         queries.append(
                             "{0}.id is \"{1}\"".format(key, value["id"])
@@ -39,7 +39,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         else:
             for key, value in data.items():
                 if not isinstance(value, (str, int)):
-                    self.log.info(value)
+                    self.log.info("value: {}".format(value))
                     if "id" in value.keys():
                         queries.append(
                             "{0}.id is \"{1}\"".format(key, value["id"])
@@ -56,7 +56,22 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         session = instance.context.data["ftrackSession"]
-        task = instance.context.data["ftrackTask"]
+        if instance.data.get("ftrackTask"):
+            task = instance.data["ftrackTask"]
+            name = task
+            parent = task["parent"]
+        elif instance.data.get("ftrackEntity"):
+            task = None
+            name = instance.data.get("ftrackEntity")['name']
+            parent = instance.data.get("ftrackEntity")
+        elif instance.context.data.get("ftrackTask"):
+            task = instance.context.data["ftrackTask"]
+            name = task
+            parent = task["parent"]
+        elif instance.context.data.get("ftrackEntity"):
+            task = None
+            name = instance.context.data.get("ftrackEntity")['name']
+            parent = instance.context.data.get("ftrackEntity")
 
         info_msg = "Created new {entity_type} with data: {data}"
         info_msg += ", metadata: {metadata}."
@@ -68,6 +83,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Get existing entity.
             assettype_data = {"short": "upload"}
             assettype_data.update(data.get("assettype_data", {}))
+            self.log.debug("data: {}".format(data))
 
             assettype_entity = session.query(
                 self.query("AssetType", assettype_data)
@@ -83,9 +99,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Asset
             # Get existing entity.
             asset_data = {
-                "name": task["name"],
+                "name": name,
                 "type": assettype_entity,
-                "parent": task["parent"],
+                "parent": parent,
             }
             asset_data.update(data.get("asset_data", {}))
 
@@ -93,7 +109,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 self.query("Asset", asset_data)
             ).first()
 
-            self.log.info(asset_entity)
+            self.log.info("asset entity: {}".format(asset_entity))
 
             # Extracting metadata, and adding after entity creation. This is
             # due to a ftrack_api bug where you can't add metadata on creation.
@@ -120,8 +136,10 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             assetversion_data = {
                 "version": 0,
                 "asset": asset_entity,
-                "task": task
             }
+            if task:
+                assetversion_data['task'] = task
+
             assetversion_data.update(data.get("assetversion_data", {}))
 
             assetversion_entity = session.query(
