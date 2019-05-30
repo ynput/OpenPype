@@ -106,7 +106,7 @@ class SyncToAvalon(BaseAction):
             for entity in self.importable:
                 ftracklib.avalon_check_name(entity)
                 if entity['name'] in all_names:
-                    duplicates.append("'{}'".format(e['name']))
+                    duplicates.append("'{}'".format(entity['name']))
                 else:
                     all_names.append(entity['name'])
 
