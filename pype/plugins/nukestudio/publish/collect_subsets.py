@@ -1,6 +1,7 @@
 from pyblish import api
 from copy import deepcopy
 
+
 class CollectClipSubsets(api.InstancePlugin):
     """Collect Subsets from selected Clips, Tags, Preset."""
 
@@ -13,30 +14,32 @@ class CollectClipSubsets(api.InstancePlugin):
         context = instance.context
 
         asset_name = instance.data["asset"]
-        self.log.info("__ asset_name: {}".format(asset_name))
 
         # get all subsets from tags and match them with nks_presets >
         # > looks to rules for tasks, subsets, representations
         subsets_collection = self.get_subsets_from_presets(instance)
-        self.log.info("__ subsets_collection: {}".format(subsets_collection))
 
         # iterate trough subsets and create instances
         for subset, attrs in subsets_collection.items():
             self.log.info((subset, attrs))
-
             # create families
             family = instance.data["family"]
             families = attrs["families"] + [str(subset)]
             task = attrs["task"]
+            subset = "{0}{1}".format(
+                subset,
+                instance.data.get("subsetType") or "Default")
             instance_name = "{0}_{1}_{2}".format(asset_name, task, subset)
-            subset = "{0}{1}".format(subset, "Default")
-            self.log.info("__ instance_name: {}".format(instance_name))
+            self.log.info("Creating instance with name: {}".format(
+                instance_name))
 
             context.create_instance(
                 name=instance_name,
                 subset=subset,
                 asset=asset_name,
+                track=instance.data.get("track"),
                 item=instance.data["item"],
+                task=task,
                 family=family,
                 families=families,
                 startFrame=instance.data["startFrame"],
@@ -50,6 +53,8 @@ class CollectClipSubsets(api.InstancePlugin):
                 parents=instance.data.get("parents", None),
                 publish=True
             )
+
+        # removing original instance
         context.remove(instance)
 
     def get_subsets_from_presets(self, instance):
@@ -94,7 +99,7 @@ class CollectClipSubsets(api.InstancePlugin):
 
                 # initialise collection dictionary
                 subs_data = dict()
-                self.log.info("__ sub: {}".format(sub))
+
                 # gets subset properities
                 subs_data[sub] = None
                 subs_data[sub] = pr_subsets.get(sub, None)
@@ -104,7 +109,6 @@ class CollectClipSubsets(api.InstancePlugin):
                     "representation" in subs_data[sub].keys()
                 ):
                     repr_name = subs_data[sub]["representation"]
-                    self.log.info("__ repr_name: {}".format(repr_name))
 
                     # owerwrite representation key with values from preset
                     subs_data[sub]["representation"] = pr_representations[
