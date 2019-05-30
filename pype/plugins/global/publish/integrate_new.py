@@ -72,6 +72,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Required environment variables
         PROJECT = api.Session["AVALON_PROJECT"]
         ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
+        TASK = instance.data.get("task") or api.Session["AVALON_TASK"]
         LOCATION = api.Session["AVALON_LOCATION"]
 
         context = instance.context
@@ -184,7 +185,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
                          "silo": asset['silo'],
-                         "task": api.Session["AVALON_TASK"],
+                         "task": TASK,
                          "asset": ASSET,
                          "family": instance.data['family'],
                          "subset": subset["name"],
@@ -218,7 +219,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 stagingdir = repre['stagingDir']
             if repre.get('anatomy_template'):
                 template_name = repre['anatomy_template']
-            template = anatomy.templates[template_name]["path"]
+            template = os.path.normpath(
+                anatomy.templates[template_name]["path"])
 
             if isinstance(files, list):
                 src_collections, remainder = clique.assemble(files)
@@ -248,7 +250,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "_ anatomy_filled: {}".format(anatomy_filled))
 
                     test_dest_files.append(
-                        anatomy_filled[template_name]["path"])
+                        os.path.normpath(
+                            anatomy_filled[template_name]["path"])
+                    )
+
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
@@ -314,7 +319,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "root": root,
                     "project": {"name": PROJECT,
                                 "code": project['data']['code']},
-                    'task': api.Session["AVALON_TASK"],
+                    'task': TASK,
                     "silo": asset['silo'],
                     "asset": ASSET,
                     "family": instance.data['family'],
