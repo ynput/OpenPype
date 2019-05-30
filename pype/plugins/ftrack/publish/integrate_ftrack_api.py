@@ -56,22 +56,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         session = instance.context.data["ftrackSession"]
-        if instance.data.get("ftrackTask"):
-            task = instance.data["ftrackTask"]
-            name = task
-            parent = task["parent"]
-        elif instance.data.get("ftrackEntity"):
-            task = None
-            name = instance.data.get("ftrackEntity")['name']
-            parent = instance.data.get("ftrackEntity")
-        elif instance.context.data.get("ftrackTask"):
-            task = instance.context.data["ftrackTask"]
-            name = task
-            parent = task["parent"]
-        elif instance.context.data.get("ftrackEntity"):
-            task = None
-            name = instance.context.data.get("ftrackEntity")['name']
-            parent = instance.context.data.get("ftrackEntity")
+        task = instance.context.data["ftrackTask"]
 
         info_msg = "Created new {entity_type} with data: {data}"
         info_msg += ", metadata: {metadata}."
@@ -83,7 +68,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Get existing entity.
             assettype_data = {"short": "upload"}
             assettype_data.update(data.get("assettype_data", {}))
-            self.log.debug("data: {}".format(data))
 
             assettype_entity = session.query(
                 self.query("AssetType", assettype_data)
@@ -99,9 +83,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Asset
             # Get existing entity.
             asset_data = {
-                "name": name,
+                "name": task["name"],
                 "type": assettype_entity,
-                "parent": parent,
+                "parent": task["parent"],
             }
             asset_data.update(data.get("asset_data", {}))
 
@@ -136,10 +120,8 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             assetversion_data = {
                 "version": 0,
                 "asset": asset_entity,
+                "task": task
             }
-            if task:
-                assetversion_data['task'] = task
-
             assetversion_data.update(data.get("assetversion_data", {}))
 
             assetversion_entity = session.query(
