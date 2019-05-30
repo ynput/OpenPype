@@ -58,10 +58,17 @@ class CollectClipSubsets(api.InstancePlugin):
         context.remove(instance)
 
     def get_subsets_from_presets(self, instance):
+
+        family = instance.data["family"]
         # get presets and tags
         tag_tasks = instance.data["tasks"]
         presets = instance.context.data['presets']
         nks_presets = presets[instance.context.data['host']]
+        family_default_preset = nks_presets["asset_default"].get(family)
+
+        if family_default_preset:
+            frame_start = family_default_preset.get("fstart", 1)
+            instance.data["frameStart"] = int(frame_start)
 
         # get specific presets
         pr_host_tasks = deepcopy(

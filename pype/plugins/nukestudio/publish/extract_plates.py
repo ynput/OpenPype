@@ -43,17 +43,17 @@ class ExtractPlates(pype.api.Extractor):
         item = instance.data["item"]
 
         # get handles
-        handles = instance.data["handles"]
-        handle_start = instance.data["handleStart"] + handles
-        handle_end = instance.data["handleEnd"] + handles
+        handles = int(instance.data["handles"])
+        handle_start = int(instance.data["handleStart"] + handles)
+        handle_end = int(instance.data["handleEnd"] + handles)
 
         # get timeline frames
-        timeline_in = item.timelineIn()
-        timeline_out = item.timelineOut()
+        timeline_in = int(item.timelineIn())
+        timeline_out = int(item.timelineOut())
 
         # frame-ranges with handles
-        timeline_frame_start = int(timeline_in - handle_start)
-        timeline_frame_end = int(timeline_out + handle_end)
+        timeline_frame_start = timeline_in - handle_start
+        timeline_frame_end = timeline_out + handle_end
 
         # get colorspace
         colorspace = instance.context.data["colorspace"]
@@ -63,7 +63,7 @@ class ExtractPlates(pype.api.Extractor):
         fps = sequence.framerate()
 
         # TODO: need to get from avalon project or presets
-        frame_start = 1001
+        frame_start = instance.data["frameStart"]
         frame_end = frame_start + (timeline_frame_end - timeline_frame_start)
 
         # test output
@@ -164,10 +164,10 @@ class ExtractPlates(pype.api.Extractor):
             "handles": handles,
             "handleStart": handle_start,
             "handleEnd": handle_end,
-            "timelineIn": float(timeline_in),
-            "timelineOut": float(timeline_out),
+            "timelineIn": timeline_in,
+            "timelineOut": timeline_out,
             "timelineInHandles": timeline_frame_start,
-            "timelineOutHandles": timeline_frame_start,
+            "timelineOutHandles": timeline_frame_end,
             "compFrameIn": frame_start,
             "compFrameOut": frame_end,
             "fps": fps,
