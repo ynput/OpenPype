@@ -13,7 +13,6 @@ class CollectClips(api.ContextPlugin):
         version = context.data.get("version", "001")
         data = {}
         for item in context.data.get("selection", []):
-            self.log.debug("__ item: {}".format(item))
             # Skip audio track items
             # Try/Except is to handle items types, like EffectTrackItem
             try:
@@ -23,8 +22,11 @@ class CollectClips(api.ContextPlugin):
             except:
                 continue
 
-            data[item.name()] = {
+            track = item.parent()
+            instance_name = "{0}_{1}".format(track.name(), item.name())
+            data[instance_name] = {
                 "item": item,
+                "track": track.name(),
                 "startFrame": int(item.timelineIn()),
                 "endFrame": int(item.timelineOut())
             }
@@ -33,7 +35,6 @@ class CollectClips(api.ContextPlugin):
             family = "clip"
             context.create_instance(
                 name=key,
-                subset="{0}{1}".format(family, 'Default'),
                 asset=value["item"].name(),
                 item=value["item"],
                 family=family,
@@ -43,5 +44,6 @@ class CollectClips(api.ContextPlugin):
                 handles=projectdata['handles'],
                 handleStart=0,
                 handleEnd=0,
-                version=version
+                version=version,
+                track=value["track"]
             )
