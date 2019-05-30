@@ -231,37 +231,24 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 src_head = src_collection.format("{head}")
                 src_tail = ext = src_collection.format("{tail}")
 
-                self.log.debug(
-                    "_ src_head: {}".format(str(src_head)))
-
                 test_dest_files = list()
                 for i in [1, 2]:
                     template_data["representation"] = repre['ext']
-                    # test 1
-                    self.log.info(
-                        "_ src_collection: {}".format(str(src_collections)))
+
                     template_data["frame"] = src_collection.format(
                         "{padding}") % i
-                    self.log.info(
-                        "_ template_data[frame]: {}".format(template_data["frame"]))
-                    # test 2
+
                     anatomy_filled = anatomy.format(template_data)
-                    self.log.info(
-                        "_ anatomy_filled: {}".format(anatomy_filled))
 
                     test_dest_files.append(
                         os.path.normpath(
                             anatomy_filled[template_name]["path"])
                     )
 
-
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
                 dst_head = dst_collection.format("{head}")
                 dst_tail = dst_collection.format("{tail}")
-
-                self.log.debug(
-                    "_ dst_head: {}".format(str(dst_head)))
 
                 instance.data["representations"][idx]['published_path'] = dst_collection.format()
 
@@ -272,9 +259,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                     dst_padding = dst_collection.format("{padding}") % i
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
-
                     src = os.path.join(stagingdir, src_file_name)
-                    # src = src_file_name
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
@@ -350,7 +335,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         transfers = instance.data.get("transfers", list())
 
         for src, dest in transfers:
-            self.log.info("Copying file .. {} -> {}".format(src, dest))
+            self.log.debug("Copying file .. {} -> {}".format(src, dest))
             self.copy_file(src, dest)
 
         # Produce hardlinked copies
@@ -360,7 +345,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # to ensure publishes remain safe and non-edited.
         hardlinks = instance.data.get("hardlinks", list())
         for src, dest in hardlinks:
-            self.log.info("Hardlinking file .. {} -> {}".format(src, dest))
+            self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
             self.hardlink_file(src, dest)
 
     def copy_file(self, src, dst):
@@ -382,7 +367,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             else:
                 self.log.critical("An unexpected error occurred.")
                 raise
-
         shutil.copy(src, dst)
 
     def hardlink_file(self, src, dst):
