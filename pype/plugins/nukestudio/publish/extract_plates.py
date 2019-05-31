@@ -60,11 +60,12 @@ class ExtractPlates(pype.api.Extractor):
 
         # get sequence from context, and fps
         sequence = context.data["activeSequence"]
-        fps = sequence.framerate()
+        fps = int(str(sequence.framerate()))
 
-        # TODO: need to get from avalon project or presets
-        frame_start = instance.data["frameStart"]
+        frame_start = instance.data["frameStart"] - handle_start
         frame_end = frame_start + (timeline_frame_end - timeline_frame_start)
+        instance.data["startFrame"] = frame_start
+        instance.data["endFrame"] = frame_end
 
         # test output
         self.log.debug("__ handles: {}".format(handles))
@@ -175,13 +176,13 @@ class ExtractPlates(pype.api.Extractor):
             "nukeScriptFileName": nukescript_file,
             "nukeWriteFileName": output_file,
             "nukeWriteName": write_name,
-            "FnNsFrameServer.renderFrames._args": str(_args),
+            "FnNsFrameServer_renderFrames_args": str(_args),
             "family": family,
             "families": families,
             "asset": asset,
             "subset": name,
             "track": track,
-            "version": version
+            "version": int(version)
         })
 
         # adding representation for nukescript
