@@ -44,28 +44,26 @@ class ExtractPlates(pype.api.Extractor):
 
         # get handles
         handles = int(instance.data["handles"])
-        handle_start = int(instance.data["handleStart"] + handles)
-        handle_end = int(instance.data["handleEnd"] + handles)
+        handle_start = int(instance.data["handleStart"])
+        handle_end = int(instance.data["handleEnd"])
 
         # get timeline frames
-        timeline_in = int(item.timelineIn())
-        timeline_out = int(item.timelineOut())
+        timeline_in = int(instance.data["timelineIn"])
+        timeline_out = int(instance.data["timelineOut"])
 
         # frame-ranges with handles
-        timeline_frame_start = timeline_in - handle_start
-        timeline_frame_end = timeline_out + handle_end
+        timeline_frame_start = int(instance.data["timelineInHandles"])
+        timeline_frame_end = int(instance.data["timelineOutHandles"])
+
+        # creating comp frame range
+        frame_start = int(instance.data["startFrame"])
+        frame_end = int(instance.data["endFrame"])
 
         # get colorspace
         colorspace = instance.context.data["colorspace"]
 
         # get sequence from context, and fps
-        sequence = context.data["activeSequence"]
-        fps = int(str(sequence.framerate()))
-
-        frame_start = instance.data["frameStart"] - handle_start
-        frame_end = frame_start + (timeline_frame_end - timeline_frame_start)
-        instance.data["startFrame"] = frame_start
-        instance.data["endFrame"] = frame_end
+        fps = int(instance.data["fps"])
 
         # test output
         self.log.debug("__ handles: {}".format(handles))

@@ -23,6 +23,7 @@ class CollectClipSubsets(api.InstancePlugin):
         for subset, attrs in subsets_collection.items():
             self.log.info((subset, attrs))
             # create families
+            item = instance.data["item"]
             family = instance.data["family"]
             families = attrs["families"] + [str(subset)]
             task = attrs["task"]
@@ -33,21 +34,48 @@ class CollectClipSubsets(api.InstancePlugin):
             self.log.info("Creating instance with name: {}".format(
                 instance_name))
 
+            # get handles
+            handles = int(instance.data["handles"])
+            handle_start = int(instance.data["handleStart"] + handles)
+            handle_end = int(instance.data["handleEnd"] + handles)
+
+            # get timeline frames
+            timeline_in = int(item.timelineIn())
+            timeline_out = int(item.timelineOut())
+
+            # frame-ranges with handles
+            timeline_frame_start = timeline_in - handle_start
+            timeline_frame_end = timeline_out + handle_end
+
+            # creating comp frame range
+            frame_start = instance.data["frameStart"] - handle_start
+            frame_end = frame_start + \
+                (timeline_frame_end - timeline_frame_start)
+
+            # get sequence from context, and fps
+            sequence = context.data["activeSequence"]
+            fps = int(str(sequence.framerate()))
+
             context.create_instance(
                 name=instance_name,
                 subset=subset,
                 asset=asset_name,
                 track=instance.data.get("track"),
-                item=instance.data["item"],
+                item=item,
                 task=task,
                 family=family,
                 families=families,
-                frameStart=instance.data["frameStart"],
-                startFrame=instance.data["startFrame"],
-                endFrame=instance.data["endFrame"],
+                frameStart=frame_start,
+                startFrame=frame_start,
+                endFrame=frame_end,
+                timelineIn=timeline_in,
+                timelineOut=timeline_out,
+                timelineInHandles=timeline_frame_start,
+                timelineOutHandles=timeline_frame_end,
+                fps=fps,
                 handles=instance.data["handles"],
-                handleStart=instance.data["handleStart"],
-                handleEnd=instance.data["handleEnd"],
+                handleStart=handle_start,
+                handleEnd=handle_end,
                 attributes=attrs,
                 version=instance.data["version"],
                 hierarchy=instance.data.get("hierarchy", None),
