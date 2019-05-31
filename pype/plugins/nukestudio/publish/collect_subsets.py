@@ -42,6 +42,7 @@ class CollectClipSubsets(api.InstancePlugin):
                 task=task,
                 family=family,
                 families=families,
+                frameStart=instance.data["frameStart"],
                 startFrame=instance.data["startFrame"],
                 endFrame=instance.data["endFrame"],
                 handles=instance.data["handles"],
