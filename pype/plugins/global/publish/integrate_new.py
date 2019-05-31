@@ -152,13 +152,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
         version_data = self.create_version_data(context, instance)
+
+        repr_data = repres[-1].get('data')
+
+        if repr_data:
+            version_data.update(repr_data)
+
         version = self.create_version(subset=subset,
                                       version_number=next_version,
                                       locations=[LOCATION],
                                       data=version_data)
 
         self.log.debug("Creating version ...")
+
         version_id = io.insert_one(version).inserted_id
+
         instance.data['version'] = version['name']
 
         # Write to disk
@@ -202,7 +210,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
-        for idx, repre in enumerate(instance.data["representations"]):
+        for idx, repre in enumerate(repres):
 
             # Collection
             #   _______
@@ -250,7 +258,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_head = dst_collection.format("{head}")
                 dst_tail = dst_collection.format("{tail}")
 
-                instance.data["representations"][idx]['published_path'] = dst_collection.format()
+                repres[idx]['published_path'] = dst_collection.format()
 
                 for i in src_collection.indexes:
                     src_padding = src_collection.format("{padding}") % i
@@ -262,6 +270,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     src = os.path.join(stagingdir, src_file_name)
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
+                    hashes = '#' * len(dst_padding)
+                    dst = "{0}{1}{2}".format(dst_head, hashes, dst_tail)
 
             else:
                 # Single file
@@ -288,14 +298,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
                 # template = anatomy.templates["publish"]["path"]
-                instance.data["representations"][idx]['published_path'] = dst
+                repres[idx]['published_path'] = dst
+
+            data = {'path': dst, 'template': template}
 
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": repre['name'],
-                "data": {'path': dst, 'template': template},
+                "data": data,
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
@@ -319,9 +331,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data['destination_list'] = destination_list
             representations.append(representation)
 
-        self.log.info("Registering {} items".format(len(representations)))
-
         io.insert_many(representations)
+        self.log.debug("Representation: {}".format(representations))
+        self.log.info("Registered {} items".format(len(representations)))
 
     def integrate(self, instance):
         """Move the files
