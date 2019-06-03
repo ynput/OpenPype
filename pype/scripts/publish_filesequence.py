@@ -36,15 +36,23 @@ def __main__():
     print("Set pype root to: {}".format(pype_root))
     print("Paths: {}".format(kwargs.paths or [os.getcwd()]))
 
-    pype_command = "pype.bat"
+    paths = kwargs.paths or [os.getcwd()]
+    pype_command = "pype.ps1"
     if platform.system().lower() == "linux":
         pype_command = "pype"
 
-    paths = kwargs.paths or [os.getcwd()]
-    print("Pype command: {}".format(os.path.join(pype_root, pype_command)))
-    subprocess.call([os.path.join(pype_root, pype_command),
-                     "--ignore", "--publish", "--paths",
-                     " ".join(paths)], shell=True)
+    args = [os.path.join(pype_root, pype_command),
+            "--node", "--publish", "--paths", " ".join(paths)]
+
+    # if we are using windows, run powershell command directly to support
+    # UNC paths.
+    if platform.system().lower() == "windows":
+        args = ["powershell", "-NoProfile", "-noexit", "-nologo",
+                "-executionpolicy", "bypass", "-command",
+                '"{}; exit $LASTEXITCODE"'.format(" ".join(args))]
+
+    print("Pype command: {}".format(" ".join(args)))
+    subprocess.call(args, shell=True)
 
 
 if __name__ == '__main__':

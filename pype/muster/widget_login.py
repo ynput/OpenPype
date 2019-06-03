@@ -16,7 +16,6 @@ class MusterLogin(QtWidgets.QWidget):
 
         self.parent_widget = parent
         self.main_parent = main_parent
-        self.clockapi = parent.clockapi
 
         # Icon
         if hasattr(parent, 'icon'):
@@ -80,7 +79,7 @@ class MusterLogin(QtWidgets.QWidget):
         self.label_password.setTextFormat(QtCore.Qt.RichText)
 
         self.input_password = QtWidgets.QLineEdit()
-        self.input_password.setEchoMode(QtGui.QLineEdit.Password)
+        self.input_password.setEchoMode(QtWidgets.QLineEdit.Password)
         self.input_password.setEnabled(True)
         self.input_password.setFrame(True)
         self.input_password.setPlaceholderText(
@@ -132,6 +131,14 @@ class MusterLogin(QtWidgets.QWidget):
             self.setError("Username cannot be empty")
             self.invalid_input(self.input_username)
         self.save_credentials(username, password)
+        self._close_widget()
 
     def save_credentials(self, username, password):
         self.parent_widget.save_credentials(username, password)
+
+    def closeEvent(self, event):
+        event.ignore()
+        self._close_widget()
+
+    def _close_widget(self):
+        self.hide()

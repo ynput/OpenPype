@@ -19,11 +19,19 @@ def __main__():
         raise Exception("PYPE_ROOT is not set")
 
     # TODO: set correct path
-    pype_command = "pype.bat"
+    pype_command = "pype.ps1"
     if platform.system().lower() == "linux":
         pype_command = "pype"
+
     args = [os.path.join(pype_root, pype_command),
-            "--publish", "--paths", kwargs.paths]
+            "--node", "--publish", "--paths", kwargs.paths]
+
+    # if we are using windows, run powershell command directly to support
+    # UNC paths.
+    if platform.system().lower() == "windows":
+        args = ["powershell", "-NoProfile", "-noexit", "-nologo",
+                "-executionPolicy bypass", "-command",
+                '"{}; exit $LASTEXITCODE"'.format(" ".join(args))]
 
     print('>>> running pype ...')
     p = subprocess.call(args, shell=True)

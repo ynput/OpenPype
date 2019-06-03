@@ -12,7 +12,7 @@ class MusterModule:
     asking for user credentials for Muster if not already specified.
     """
     cred_folder_path = os.path.normpath(
-        appdirs.user_data_dir('pype-app', 'pype', 'muster')
+        appdirs.user_data_dir('pype-app', 'pype')
     )
     cred_filename = 'muster_cred.json'
 
@@ -24,7 +24,7 @@ class MusterModule:
         self.parent = parent
         self.widget_login = MusterLogin(main_parent, self)
 
-    def start_up(self):
+    def tray_start(self):
         """
         Show login dialog if credentials not found.
         """
@@ -52,7 +52,7 @@ class MusterModule:
         )
 
         self.menu.addAction(self.aShowLogin)
-        self.aShowLogin.triggered.connect(self.show_settings)
+        self.aShowLogin.triggered.connect(self.show_login)
 
         return self.menu
 
@@ -65,7 +65,7 @@ class MusterModule:
             file = open(self.cred_path, 'r')
             credentials = json.load(file)
         except Exception:
-            file = open(self.cred_path, 'w')
+            file = open(self.cred_path, 'w+')
         file.close()
 
         return credentials

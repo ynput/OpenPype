@@ -7,7 +7,9 @@ import pyblish.api
 import pype.maya.lib as lib
 import appdirs
 import platform
-from pypeapp.lib.config import get_presets
+# from pypeapp.lib.config import get_presets
+
+from pprint import pprint
 
 
 def get_renderer_variables(renderlayer=None):
@@ -112,16 +114,18 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         `MUSTER_PASSWORD`, `MUSTER_REST_URL` is loaded from presets.
         """
         app_dir = os.path.normpath(
-            appdirs.user_data_dir('pype-app', 'pype', 'muster')
+            appdirs.user_data_dir('pype-app', 'pype')
         )
         file_name = 'muster_cred.json'
         fpath = os.path.join(app_dir, file_name)
         file = open(fpath, 'r')
         muster_json = json.load(file)
-        self.MUSTER_USER = muster_json.get('user', None)
+        self.MUSTER_USER = muster_json.get('username', None)
         self.MUSTER_PASSWORD = muster_json.get('password', None)
         file.close()
-        self.MUSTER_REST_URL = get_presets()['tools']['muster']['url']
+        self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
+        if not self.MUSTER_REST_URL:
+            raise Exception("Muster REST API url not set")
 
     def _authenticate(self):
         """
@@ -173,7 +177,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             raise Exception('Muster server returned unexpected data')
 
         templates = {}
-        for t in response_templates.items():
+        for t in response_templates:
             templates[t.get("name")] = t.get("id")
 
         self._templates = templates
@@ -189,6 +193,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         :raises: Exception if template ID isn't found
         """
         try:
+            self.log.info("Trying to find template for [{}]".format(renderer))
             return self._templates.get(renderer)
         except ValueError:
             raise Exception('Unimplemented renderer {}'.format(renderer))
@@ -206,7 +211,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             "authToken": self._token,
             "name": "submit"
         }
-        api_entry = 'api/queue/actions'
+        api_entry = '/api/queue/actions'
         response = requests.post(
             self.MUSTER_REST_URL + api_entry, params=params, json=payload)
 
@@ -269,6 +274,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                                           padding=render_variables["padding"],
                                           ext=render_variables["ext"])
 
+        instance.data["outputDir"] = os.path.dirname(output_filename_0)
         # build path for metadata file
         metadata_filename = "{}_metadata.json".format(instance.data["subset"])
         output_dir = instance.data["outputDir"]
@@ -293,14 +299,82 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
 
         payload = {
             "RequestData": {
+                "platform": 0,
                 "job": {
                     "jobName": jobname,
                     "templateId": self._resolve_template(
                         instance.data["renderer"]),
+                    "camera": "",
+                    "chunksInterleave": 2,
+                    "chunksPriority": "0",
+                    "chunksTimeoutValue": 320,
+                    "department": "",
+                    "dependIds": [""],
+                    "dependLinkMode": 0,
+                    "dependMode": 0,
+                    "emergencyQueue": False,
+                    "excludedPools": [""],
+                    "exitCodesErrorCheckType": 0,
+                    "includedPools": [""],
+                    "logsErrorCheckType": 0,
+                    "mailNotificationsAtChunkLevelType": "1",
+                    "mailNotificationsAtJobLevelType": "1",
+                    "maximumInstances": 0,
+                    "mobileNotificationsAtChunkLevelType": "1",
+                    "mobileNotificationsAtJobLevelType": "1",
+                    "notificatorNotificationsAtChunkLevelType": "1",
+                    "notificatorNotificationsAtJobLevelType": "1",
+                    "overrideChunksTimeout": False,
+                    "overrideErrorExitCodes": False,
+                    "overrideErrorExitCodesValue": "",
+                    "overrideMailNotificationsAtChunkLevel": False,
+                    "overrideMailNotificationsAtJobLevel": False,
+                    "overrideMaximumChunksRequeue": False,
+                    "overrideMaximumChunksRequeueValue": 0,
+                    "overrideMinimumCores": False,
+                    "overrideMinimumCoresValue": 0,
+                    "overrideMinimumDiskSpace": False,
+                    "overrideMinimumDiskSpaceValue": 0,
+                    "overrideMinimumPhysical": False,
+                    "overrideMinimumPhysicalValue": 0,
+                    "overrideMinimumRam": False,
+                    "overrideMinimumRamValue": 0,
+                    "overrideMinimumSpeed": False,
+                    "overrideMinimumSpeedValue": 0,
+                    "overrideMinimumThreads": False,
+                    "overrideMinimumThreadsValue": 0,
+                    "overrideMobileNotificationsAtChunkLevel": False,
+                    "overrideMobileNotificationsAtJobLevel": False,
+                    "overrideNotificatorNotificationsAtChunkLevel": False,
+                    "overrideNotificatorNotificationsAtJobLevel": False,
+                    "overrideStartMailNotificationsAtChunkLevel": False,
+                    "overrideStartMailNotificationsAtJobLevel": False,
+                    "overrideStartMobileNotificationsAtChunkLevel": False,
+                    "overrideStartMobileNotificationsAtJobLevel": False,
+                    "overrideStartNotificatorNotificationsAtChunkLevel": False,
+                    "overrideStartNotificatorNotificationsAtJobLevel": False,
+                    "overrideValidExitCodes": False,
+                    "overrideValidExitCodesValue": "",
+                    "overrideWarningExitCodes": False,
+                    "overrideWarningExitCodesValue": "",
+                    "packetSize": 4,
+                    "packetType": 1,
+                    "priority": 1,
+                    "project": "test",
+                    "sequence": "",
+                    "shot": "",
+                    "startMailNotificationsAtChunkLevelType": "1",
+                    "startMailNotificationsAtJobLevelType": "1",
+                    "startMobileNotificationsAtChunkLevelType": "1",
+                    "startMobileNotificationsAtJobLevelType": "1",
+                    "startNotificatorNotificationsAtChunkLevelType": "1",
+                    "startNotificatorNotificationsAtJobLevelType": "1",
+                    "startOn": 0,
+                    "templateVersion": "",
+
                     "jobId": -1,
                     "startOn": 0,
                     "parentId": -1,
-                    "dependIds": [],
                     "dependMode": 0,
                     "packetSize": 4,
                     "packetType": 1,
@@ -308,10 +382,10 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "maximumInstances": 0,
                     "assignedInstances": 0,
                     "attributes": {
-                        "environmental_variables": {
-                            "value": ", ".join("{!s}={!r}".format(k, v)
-                                               for (k, v) in env.iteritems())
-                        },
+                        # "environmental_variables": {
+                        #     "value": ", ".join("{!s}={!r}".format(k, v)
+                        #                        for (k, v) in env.iteritems())
+                        # },
                         "memo": {
                             "value": comment,
                             "state": True,
@@ -338,6 +412,176 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                             "value": postjob_command,
                             "state": True,
                             "subst": True
+                        },
+                        "overridestatus": {
+                          "value": "0",
+                          "state": True,
+                          "subst": False
+                        },
+                        "frame_check": {
+                          "value": "0",
+                          "state": True,
+                          "subst": False
+                        },
+                        "fc_recursion": {
+                          "value": "1",
+                          "state": True,
+                          "subst": False
+                        },
+                        "fc_check_file": {
+                          "value": "1",
+                          "state": True,
+                          "subst": False
+                        },
+                        "fc_file_low": {
+                          "value": "0",
+                          "state": True,
+                          "subst": False
+                        },
+                        "fc_file_high": {
+                          "value": "0",
+                          "state": True,
+                          "subst": False
+                        },
+                        "fc_open_image": {
+                          "value": "1",
+                          "state": True,
+                          "subst": False
+                        },
+                        "fc_render_layer_mode": {
+                          "value": "0",
+                          "state": True,
+                          "subst": False
+                        },
+                        "fc_check_image_dimensions": {
+                          "value": "0",
+                          "state": True,
+                          "subst": False
+                        },
+                        "fc_image_width": {
+                          "value": "1920",
+                          "state": True,
+                          "subst": False
+                        },
+                        "fc_image_height": {
+                          "value": "1080",
+                          "state": True,
+                          "subst": False
+                        },
+                        "movie_assembler": {
+                          "value": "0",
+                          "state": True,
+                          "subst": False
+                        },
+                        "movie_assembler_output": {
+                          "value": "",
+                          "state": True,
+                          "subst": True
+                        },
+                        "movie_assembler_framerate": {
+                          "value": "30",
+                          "state": True,
+                          "subst": False
+                        },
+                        "movie_assembler_template": {
+                          "value": "48",
+                          "state": True,
+                          "subst": False
+                        },
+                        "movie_assembler_input_flags": {
+                          "value": "",
+                          "state": False,
+                          "subst": False
+                        },
+                        "movie_assembler_output_flags": {
+                          "value": "",
+                          "state": False,
+                          "subst": False
+                        },
+                        "pre_job_action": {
+                          "value": "",
+                          "state": False,
+                          "subst": True
+                        },
+                        "pre_job_action_check_retcode": {
+                          "value": 0,
+                          "state": False,
+                          "subst": False
+                        },
+                        "pre_job_action_timeout": {
+                          "value": 0,
+                          "state": False,
+                          "subst": False
+                        },
+                        "post_job_action_check_retcode": {
+                          "value": 0,
+                          "state": False,
+                          "subst": False
+                        },
+                        "post_job_action_timeout": {
+                          "value": 0,
+                          "state": False,
+                          "subst": False
+                        },
+                        "pre_chunk_action": {
+                          "value": "",
+                          "state": False,
+                          "subst": True
+                        },
+                        "pre_chunk_action_check_retcode": {
+                          "value": 0,
+                          "state": False,
+                          "subst": False
+                        },
+                        "pre_chunk_action_timeout": {
+                          "value": 0,
+                          "state": False,
+                          "subst": False
+                        },
+                        "post_chunk_action": {
+                          "value": "",
+                          "state": False,
+                          "subst": True
+                        },
+                        "post_chunk_action_check_retcode": {
+                          "value": 0,
+                          "state": False,
+                          "subst": False
+                        },
+                        "post_chunk_action_timeout": {
+                          "value": 0,
+                          "state": False,
+                          "subst": False
+                        },
+                        "ARNOLDMODE": {
+                          "value": "0",
+                          "state": True,
+                          "subst": False
+                        },
+                        "job_project": {
+                          "value": "D:\\D001_projectx\\maya\\work",
+                          "state": True,
+                          "subst": True
+                        },
+                        "MAYADIGITS": {
+                          "value": 1,
+                          "state": True,
+                          "subst": False
+                        },
+                        "ABORTRENDER": {
+                          "value": "0",
+                          "state": True,
+                          "subst": True
+                        },
+                        "ARNOLDLICENSE": {
+                          "value": "0",
+                          "state": False,
+                          "subst": False
+                        },
+                        "ADD_FLAGS": {
+                          "value": "",
+                          "state": True,
+                          "subst": True
                         }
                     }
                 }
@@ -355,7 +599,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             raise Exception(response.text)
 
         # Store output dir for unified publisher (filesequence)
-        instance.data["outputDir"] = os.path.dirname(output_filename_0)
+
         instance.data["musterSubmissionJob"] = response.json()
 
     def clean_environment(self):
