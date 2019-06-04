@@ -197,6 +197,36 @@ def example(input_path, output_path):
 
 
 def burnins_from_data(input_path, output_path, data, overwrite=True):
+    '''
+    This method adds burnins to video/image file based on presets setting.
+    Extension of output MUST be same as input. (mov -> mov, avi -> avi,...)
+
+    :param input_path: full path to input file where burnins should be add
+    :type input_path: str
+    :param output_path: full path to output file where output will be rendered
+    :type output_path: str
+    :param data: data required for burnin settings (more info below)
+    :type data: dict
+    :param overwrite: output will be overriden if already exists, defaults to True
+    :type overwrite: bool
+
+    Presets must be set separately. Should be dict with 2 keys:
+    - "options" - sets look of burnins - colors, opacity,...(more info: ModifiedBurnins doc)
+                - *OPTIONAL* default values are used when not included
+    - "burnins" - contains dictionary with burnins settings
+                - *OPTIONAL* burnins won't be added (easier is not to use this)
+        - each key of "burnins" represents Alignment, there are 6 possibilities:
+            TOP_LEFT        TOP_CENTERED        TOP_RIGHT
+            BOTTOM_LEFT     BOTTOM_CENTERED     BOTTOM_RIGHT
+        - value for each key is dict which should contain "function" which says
+            what kind of burnin is that:
+            "text", "timecode" or "frame_numbers"
+            - "text" key with content is also required when "text" function is used
+
+    Requirement of *data* keys is based on presets.
+    - "start_frame" - is required when "timecode" or "frame_numbers" function is used
+    - "start_frame_tc" - when "timecode" should start with different frame
+    - *keys for static text*
     presets = config.get_presets().get('tools', {}).get('burnins', {})
     options_init = presets.get('options')
 
