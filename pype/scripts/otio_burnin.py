@@ -196,7 +196,7 @@ def example(input_path, output_path):
     burnin.render(output_path, overwrite=True)
 
 
-def example_with_presets(input_path, output_path, data):
+def burnins_from_data(input_path, output_path, data, overwrite=True):
     presets = config.get_presets().get('tools', {}).get('burnins', {})
     options_init = presets.get('options')
 
