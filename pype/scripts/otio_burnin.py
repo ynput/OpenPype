@@ -227,6 +227,41 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
     - "start_frame" - is required when "timecode" or "frame_numbers" function is used
     - "start_frame_tc" - when "timecode" should start with different frame
     - *keys for static text*
+
+    EXAMPLE:
+    preset = {
+        "options": {*OPTIONS FOR LOOK*},
+        "burnins": {
+            "TOP_LEFT": {
+                "function": "text",
+                "text": "static_text"
+            },
+            "TOP_RIGHT": {
+                "function": "text",
+                "text": "{shot}"
+            },
+            "BOTTOM_LEFT": {
+                "function": "timecode"
+            },
+            "BOTTOM_RIGHT": {
+                "function": "frame_numbers"
+            }
+        }
+    }
+
+    For this preset we'll need at least this data:
+    data = {
+        "start_frame": 1001,
+        "shot": "sh0010"
+    }
+
+    When Timecode should start from 1 then data need:
+    data = {
+        "start_frame": 1001,
+        "start_frame_tc": 1,
+        "shot": "sh0010"
+    }
+    '''
     presets = config.get_presets().get('tools', {}).get('burnins', {})
     options_init = presets.get('options')
 
