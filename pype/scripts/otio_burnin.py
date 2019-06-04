@@ -203,6 +203,7 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
     burnin = ModifiedBurnins(input_path, options_init=options_init)
 
     start_frame = data.get("start_frame")
+    start_frame_tc = data.get('start_frame_tc', start_frame)
     for align_text, preset in presets.get('burnins', {}).items():
         align = None
         if align_text == 'TOP_LEFT':
@@ -239,8 +240,8 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
         if bi_func == 'frame_numbers':
             burnin.add_frame_numbers(align, start_frame=start_frame)
         elif bi_func == 'timecode':
-            burnin.add_timecode(align, start_frame=start_frame)
-        elif: bi_func == 'text':
+            burnin.add_timecode(align, start_frame=start_frame_tc)
+        elif bi_func == 'text':
             if not preset.get('text'):
                 log.error('Text is not set for text function burnin!')
                 return
@@ -252,7 +253,7 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
             )
             return
 
-    burnin.render(output_path, overwrite=True)
+    burnin.render(output_path, overwrite=overwrite)
 
 
 '''
