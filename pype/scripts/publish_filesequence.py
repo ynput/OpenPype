@@ -5,6 +5,7 @@ import sys
 import logging
 import subprocess
 import platform
+from pprint import pprint
 
 handler = logging.basicConfig()
 log = logging.getLogger("Publish Image Sequences")
@@ -40,6 +41,11 @@ def __main__():
     pype_command = "pype.ps1"
     if platform.system().lower() == "linux":
         pype_command = "pype"
+    elif platform.system().lower() == "windows":
+        pype_command = "pype.bat"
+
+    # no need for pype_root as pype should be in paths?
+    pype_root = ""
 
     args = [os.path.join(pype_root, pype_command),
             "--node", "--publish", "--paths", " ".join(paths)]
@@ -47,10 +53,14 @@ def __main__():
     # if we are using windows, run powershell command directly to support
     # UNC paths.
     if platform.system().lower() == "windows":
-        args = ["powershell", "-NoProfile", "-noexit", "-nologo",
-                "-executionpolicy", "bypass", "-command",
-                '"{}; exit $LASTEXITCODE"'.format(" ".join(args))]
+        # ps_path = r"c:\Windows\System32\WindowsPowerShell\v1.0\powershell"
+        # args = [ps_path, "-NoProfile", "-noexit", "-nologo",
+        #         "-executionpolicy", "bypass", "-command",
+        #         '"{}; exit $LASTEXITCODE"'.format(" ".join(args))]
+        # args = [r"\\cml\projects\pype\ng\pype.bat", "--node", "--paths"]
+        pass
 
+    # pprint(os.environ.get("PATH"))
     print("Pype command: {}".format(" ".join(args)))
     subprocess.call(args, shell=True)
 
