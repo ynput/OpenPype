@@ -1,6 +1,6 @@
-from hiero.core import *
-from hiero.ui import *
-import ft_utils
+import hiero.core
+import hiero.ui
+
 import re
 import os
 
@@ -11,31 +11,30 @@ def create_nk_script_clips(script_lst, seq=None):
     [{
         'path': 'P:/Jakub_testy_pipeline/test_v01.nk',
         'name': 'test',
-        'timeline_frame_in': 10,
         'handles': 10,
-        'source_start': 0,
-        'source_end': 54,
+        'handleStart': 15, # added asymetrically to handles
+        'handleEnd': 10, # added asymetrically to handles
+        'timelineIn': 16,
+        'startFrame': 991,
+        'endFrame': 1023,
         'task': 'Comp-tracking',
         'work_dir': 'VFX_PR',
         'shot': '00010'
     }]
     '''
-    env = ft_utils.Env()
-    proj = projects()[-1]
+
+    proj = hiero.core.projects()[-1]
     root = proj.clipsBin()
 
     if not seq:
-        seq = Sequence('NewSequences')
-        root.addItem(BinItem(seq))
+        seq = hiero.core.Sequence('NewSequences')
+        root.addItem(hiero.core.BinItem(seq))
     # todo will ned to define this better
     # track = seq[1]  # lazy example to get a destination#  track
     clips_lst = []
     for nk in script_lst:
-        task_short = env.task_codes[nk['task']]
-        script_file = task_short
         task_path = '/'.join([nk['work_dir'], nk['shot'], nk['task']])
         bin = create_bin_in_project(task_path, proj)
-        task_path += script_file
 
         if nk['task'] not in seq.videoTracks():
             track = hiero.core.VideoTrack(nk['task'])
@@ -44,33 +43,63 @@ def create_nk_script_clips(script_lst, seq=None):
             track = seq.tracks(nk['task'])
 
         # create slip media
-        print nk['path']
-        media = MediaSource(nk['path'])
-        print media
-        source = Clip(media)
-        print source
+        print("__ path: `{}`".format(nk['path']))
+
+        media = hiero.core.MediaSource(nk['path'])
+        media_in = int(media.startTime() or 0)
+        media_duration = int(media.duration() or 0)
+
+        handle_start = nk.get("handleStart") or nk['handles']
+        handle_end = nk.get("handleEnd") or nk['handles']
+
+        if media_in:
+            source_in = media_in + handle_start
+        else:
+            source_in = nk['startFrame'] + handle_start
+
+        if media_duration:
+            source_out = (media_in + media_duration - 1) - handle_end
+        else:
+            source_out = nk['endFrame'] - handle_end
+
+        print("__ media: `{}`".format(media))
+        print("__ media_in: `{}`".format(media_in))
+        print("__ media_duration : `{}`".format(media_duration))
+        print("__ source_in: `{}`".format(source_in))
+        print("__ source_out : `{}`".format(source_out))
+
+        source = hiero.core.Clip(media)
+        print("__ source : `{}`".format(source))
+        print("__ source.sourceIn(): `{}`".format(source.sourceIn()))
+
         name = os.path.basename(os.path.splitext(nk['path'])[0])
-        split_name = split_by_client_version(name, env)[0] or name
-        print split_name
-        # print source
+        split_name = split_by_client_version(name)[0] or name
+
+        print("__ split_name: `{}`".format(split_name))
+
         # add to bin as clip item
         items_in_bin = [b.name() for b in bin.items()]
         if split_name not in items_in_bin:
-            binItem = BinItem(source)
+            binItem = hiero.core.BinItem(source)
             bin.addItem(binItem)
-        print bin.items()
+
+        print("__ bin.items(): `{}`".format(bin.items()))
+
         new_source = [
             item for item in bin.items() if split_name in item.name()
         ][0].items()[0].item()
-        print new_source
+
+        print("__ new_source: `{}`".format(new_source))
+        print("__ new_source: `{}`".format(new_source))
+
         # add to track as clip item
-        trackItem = TrackItem(split_name, TrackItem.kVideo)
+        trackItem = hiero.core.TrackItem(split_name, hiero.core.TrackItem.kVideo)
         trackItem.setSource(new_source)
-        trackItem.setSourceIn(nk['source_start'] + nk['handles'])
-        trackItem.setSourceOut(nk['source_end'] - nk['handles'])
-        trackItem.setTimelineIn(nk['source_start'] + nk['timeline_frame_in'])
-        trackItem.setTimelineOut(
-            (nk['source_end'] - (nk['handles'] * 2)) + nk['timeline_frame_in'])
+        trackItem.setSourceIn(source_in)
+        trackItem.setSourceOut(source_out)
+        trackItem.setSourceIn(source_in)
+        trackItem.setTimelineIn(nk['timelineIn'])
+        trackItem.setTimelineOut(nk['timelineIn'] + (source_out - source_in))
         track.addTrackItem(trackItem)
         track.addTrackItem(trackItem)
         clips_lst.append(trackItem)
@@ -86,7 +115,7 @@ def create_bin_in_project(bin_name='', project=''):
 
     if not project:
         # get the first loaded project
-        project = projects()[0]
+        project = hiero.core.projects()[-1]
     if not bin_name:
         return None
     if '/' in bin_name:
@@ -103,7 +132,7 @@ def create_bin_in_project(bin_name='', project=''):
                 bin = [bin for bin in clipsBin.bins() if b in bin.name()][0]
                 done_bin_lst.append(bin)
             else:
-                create_bin = Bin(b)
+                create_bin = hiero.core.Bin(b)
                 clipsBin.addItem(create_bin)
                 done_bin_lst.append(create_bin)
 
@@ -115,7 +144,7 @@ def create_bin_in_project(bin_name='', project=''):
                 ][0]
                 done_bin_lst.append(bin)
             else:
-                create_bin = Bin(b)
+                create_bin = hiero.core.Bin(b)
                 done_bin_lst[i - 1].addItem(create_bin)
                 done_bin_lst.append(create_bin)
 
@@ -127,22 +156,33 @@ def create_bin_in_project(bin_name='', project=''):
                 ][0]
                 done_bin_lst.append(bin)
             else:
-                create_bin = Bin(b)
+                create_bin = hiero.core.Bin(b)
                 done_bin_lst[i - 1].addItem(create_bin)
                 done_bin_lst.append(create_bin)
     # print [bin.name() for bin in clipsBin.bins()]
     return done_bin_lst[-1]
 
 
-def split_by_client_version(string, env=None):
-    if not env:
-        env = ft_utils.Env()
-
-    client_letter, client_digits = env.get_version_type('client')
-    regex = "[/_.]" + client_letter + "\d+"
+def split_by_client_version(string):
+    regex = r"[/_.]v\d+"
     try:
         matches = re.findall(regex, string, re.IGNORECASE)
         return string.split(matches[0])
-    except Exception, e:
-        print e
+    except Exception as e:
+        print(e)
         return None
+
+
+script_lst = [{
+    'path': 'C:/Users/hubert/_PYPE_testing/projects/D001_projectx/episodes/ep120/ep120sq01/120sh020/publish/plates/platesMain/v023/prjx_120sh020_platesMain_v023.nk',
+    'name': '120sh020_platesMain',
+    'handles': 10,
+    'handleStart': 10,
+    'handleEnd': 10,
+    'timelineIn': 16,
+    'startFrame': 991,
+    'endFrame': 1023,
+    'task': 'platesMain',
+    'work_dir': 'shots',
+    'shot': '120sh020'
+}]
