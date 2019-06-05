@@ -1,6 +1,6 @@
 import functools
 import time
-from pype import api as pype
+from pypeapp import Logger
 from pype.vendor import ftrack_api
 from pype.vendor.ftrack_api import session as fa_session
 
@@ -31,7 +31,7 @@ class BaseHandler(object):
     def __init__(self, session):
         '''Expects a ftrack_api.Session instance'''
         self._session = session
-        self.log = pype.Logger().get_logger(self.__class__.__name__)
+        self.log = Logger().get_logger(self.__class__.__name__)
 
         # Using decorator
         self.register = self.register_decorator(self.register)

@@ -139,7 +139,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             }
             if task:
                 assetversion_data['task'] = task
-                
+
             assetversion_data.update(data.get("assetversion_data", {}))
 
             assetversion_entity = session.query(

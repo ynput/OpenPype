@@ -1,8 +1,9 @@
 import os
 import requests
-from Qt import QtCore, QtGui, QtWidgets
 from pypeapp import style
-from . import credentials, login_tools
+from pype.ftrack import credentials
+from . import login_tools
+from Qt import QtCore, QtGui, QtWidgets
 
 
 class Login_Dialog_ui(QtWidgets.QWidget):

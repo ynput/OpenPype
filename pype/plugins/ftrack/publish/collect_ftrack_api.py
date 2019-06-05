@@ -23,11 +23,19 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
         project = os.environ.get('AVALON_PROJECT', '')
         asset = os.environ.get('AVALON_ASSET', '')
-        task = os.environ.get('AVALON_TASK', '')
+        task = os.environ.get('AVALON_TASK', None)
+        self.log.debug(task)
 
-        result = session.query('Task where\
-            project.full_name is "{0}" and\
-            name is "{1}" and\
-            parent.name is "{2}"'.format(project, task, asset)).one()
+        if task:
+            result = session.query('Task where\
+                project.full_name is "{0}" and\
+                name is "{1}" and\
+                parent.name is "{2}"'.format(project, task, asset)).one()
+            context.data["ftrackTask"] = result
+        else:
+            result = session.query('TypedContext where\
+                project.full_name is "{0}" and\
+                name is "{1}"'.format(project, asset)).one()
+            context.data["ftrackEntity"] = result
 
-        context.data["ftrackTask"] = result
+        self.log.info(result)

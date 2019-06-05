@@ -33,7 +33,6 @@ class ExtractAssProxy(pype.api.Extractor):
             else:
                 yield
 
-
         # Define extract output file path
         stagingdir = self.staging_dir(instance)
         filename = "{0}.ma".format(instance.name)
@@ -64,10 +63,15 @@ class ExtractAssProxy(pype.api.Extractor):
                           expressions=False,
                           constructionHistory=False)
 
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
-
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'ma',
+            'ext': '.ma',
+            'files': filename,
+            "stagingDir": stagingdir
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))
