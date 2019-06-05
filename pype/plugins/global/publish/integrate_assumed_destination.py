@@ -13,14 +13,14 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        self.create_destination_template(instance)
+        anatomy = instance.context.data['anatomy']
+
+        self.create_destination_template(instance, anatomy)
 
         template_data = instance.data["assumedTemplateData"]
-        # template = instance.data["template"]
-
-        anatomy = instance.context.data['anatomy']
         # self.log.info(anatomy.templates)
         anatomy_filled = anatomy.format(template_data)
+
         # self.log.info(anatomy_filled)
         mock_template = anatomy_filled["publish"]["path"]
 
@@ -30,7 +30,7 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
                                         "resources")
 
         # Clean the path
-        mock_destination = os.path.abspath(os.path.normpath(mock_destination))
+        mock_destination = os.path.abspath(os.path.normpath(mock_destination)).replace("\\", "/")
 
         # Define resource destination and transfers
         resources = instance.data.get("resources", list())
@@ -38,7 +38,7 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         for resource in resources:
 
             # Add destination to the resource
-            source_filename = os.path.basename(resource["source"])
+            source_filename = os.path.basename(resource["source"]).replace("\\", "/")
             destination = os.path.join(mock_destination, source_filename)
 
             # Force forward slashes to fix issue with software unable
@@ -53,13 +53,13 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
             files = resource['files']
             for fsrc in files:
                 fname = os.path.basename(fsrc)
-                fdest = os.path.join(mock_destination, fname)
+                fdest = os.path.join(mock_destination, fname).replace("\\", "/")
                 transfers.append([fsrc, fdest])
 
         instance.data["resources"] = resources
         instance.data["transfers"] = transfers
 
-    def create_destination_template(self, instance):
+    def create_destination_template(self, instance, anatomy):
         """Create a filepath based on the current data available
 
         Example template:
@@ -77,12 +77,13 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         self.log.info(subset_name)
         asset_name = instance.data["asset"]
         project_name = api.Session["AVALON_PROJECT"]
+        a_template = anatomy.templates
 
         project = io.find_one({"type": "project",
                                "name": project_name},
                               projection={"config": True, "data": True})
 
-        template = project["config"]["template"]["publish"]
+        template = a_template['publish']['path']
         # anatomy = instance.context.data['anatomy']
 
         asset = io.find_one({"type": "asset",
@@ -112,10 +113,12 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         if instance.data.get('version'):
             version_number = int(instance.data.get('version'))
 
+        padding = int(a_template['render']['padding'])
+
         hierarchy = asset['data']['parents']
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = os.path.join(*hierarchy)
+            hierarchy = "/".join(hierarchy)
 
         template_data = {"root": api.Session["AVALON_PROJECTS"],
                          "project": {"name": project_name,
@@ -124,6 +127,7 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
                          "family": instance.data['family'],
                          "asset": asset_name,
                          "subset": subset_name,
+                         "frame": ('#' * padding),
                          "version": version_number,
                          "hierarchy": hierarchy,
                          "representation": "TEMP"}

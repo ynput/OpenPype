@@ -56,7 +56,15 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         session = instance.context.data["ftrackSession"]
-        if instance.context.data.get("ftrackTask"):
+        if instance.data.get("ftrackTask"):
+            task = instance.data["ftrackTask"]
+            name = task
+            parent = task["parent"]
+        elif instance.data.get("ftrackEntity"):
+            task = None
+            name = instance.data.get("ftrackEntity")['name']
+            parent = instance.data.get("ftrackEntity")
+        elif instance.context.data.get("ftrackTask"):
             task = instance.context.data["ftrackTask"]
             name = task
             parent = task["parent"]
