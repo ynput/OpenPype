@@ -39,6 +39,14 @@ class CollectClipSubsets(api.InstancePlugin):
             handle_start = int(instance.data["handleStart"] + handles)
             handle_end = int(instance.data["handleEnd"] + handles)
 
+            # get source frames
+            source_in = int(instance.data["sourceIn"])
+            source_out = int(instance.data["sourceOut"])
+
+            # frame-ranges with handles
+            source_in_h = source_in - handle_start
+            source_out_h = source_out + handle_end
+
             # get timeline frames
             timeline_in = int(item.timelineIn())
             timeline_out = int(item.timelineOut())
@@ -63,8 +71,13 @@ class CollectClipSubsets(api.InstancePlugin):
                 track=instance.data.get("track"),
                 item=item,
                 task=task,
+                sourcePath=instance.data.get("sourcePath"),
                 family=family,
                 families=families,
+                sourceIn=source_in,
+                sourceOut=source_out,
+                sourceInH=source_in_h,
+                sourceOutH=source_out_h,
                 frameStart=frame_start,
                 startFrame=frame_start,
                 endFrame=frame_end,
