@@ -60,7 +60,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "nukescript",
                 "render",
                 "write",
-                "plates"
+                "plates",
+                "rig"
                 ]
     exclude_families = ["clip"]
 
