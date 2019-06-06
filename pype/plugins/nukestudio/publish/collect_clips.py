@@ -4,7 +4,7 @@ from pyblish import api
 class CollectClips(api.ContextPlugin):
     """Collect all Track items selection."""
 
-    order = api.CollectorOrder
+    order = api.CollectorOrder + 0.01
     label = "Collect Clips"
     hosts = ["nukestudio"]
 
