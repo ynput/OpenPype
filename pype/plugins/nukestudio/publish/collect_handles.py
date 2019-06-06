@@ -1,6 +1,7 @@
 import json
 from pyblish import api
 
+
 class CollectClipHandles(api.InstancePlugin):
     """Collect Handles from selected track items."""
 

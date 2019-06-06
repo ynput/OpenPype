@@ -8,12 +8,10 @@ class CollectPlates(api.InstancePlugin):
     order = api.CollectorOrder + 0.49
     label = "Extract Plates"
     hosts = ["nukestudio"]
-    families = ["plates"]
+    families = ["plate"]
 
     def process(self, instance):
         import os
-        import hiero.core
-        # from hiero.ui.nuke_bridge import FnNsFrameServer
 
         # add to representations
         if not instance.data.get("representations"):
@@ -34,9 +32,8 @@ class CollectPlates(api.InstancePlugin):
         source_file = os.path.basename(source_path)
 
         # staging dir creation
-        staging_dir = instance.data['stagingDir'] = os.path.dirname(
+        staging_dir = os.path.dirname(
             source_path)
-
 
         item = instance.data["item"]
 
@@ -60,7 +57,6 @@ class CollectPlates(api.InstancePlugin):
         # frame-ranges with handles
         timeline_frame_start = int(instance.data["timelineInHandles"])
         timeline_frame_end = int(instance.data["timelineOutHandles"])
-
 
         # get colorspace
         colorspace = item.sourceMediaColourTransform()
@@ -87,6 +83,12 @@ class CollectPlates(api.InstancePlugin):
         self.log.debug("__ source_file: {}".format(source_file))
         self.log.debug("__ staging_dir: {}".format(staging_dir))
 
+        self.log.debug("__ before family: {}".format(family))
+        self.log.debug("__ before families: {}".format(families))
+        #
+        # this is just workaround because 'clip' family is filtered
+        instance.data["family"] = families[-1]
+        instance.data["families"].append(family)
 
         # add to data of representation
         version_data.update({
@@ -101,8 +103,7 @@ class CollectPlates(api.InstancePlugin):
             "timelineOutHandles": timeline_frame_end,
             "fps": fps,
             "colorspace": colorspace,
-            "family": family,
-            "families": families,
+            "families": [f for f in families if 'ftrack' not in f],
             "asset": asset,
             "subset": name,
             "track": track,
@@ -119,6 +120,8 @@ class CollectPlates(api.InstancePlugin):
                 padding=padding,
                 ext=ext
             )
+            start_frame = source_first_frame
+            end_frame = source_first_frame + source_out
             files = [file % i for i in range(
                 (source_first_frame + source_in_h),
                 ((source_first_frame + source_out_h) + 1), 1)]
@@ -127,7 +130,45 @@ class CollectPlates(api.InstancePlugin):
             head, ext = source_file.split('.')
             files = source_file
 
+        if isinstance(files, list):
+            mov_file = head + ".mov"
+            mov_path = os.path.normpath(os.path.join(staging_dir, mov_file))
+            if os.path.exists(mov_path):
+                # adding mov into the representations
+                self.log.debug("__ mov_path: {}".format(mov_path))
+                plates_mov_representation = {
+                    'files': mov_file,
+                    'stagingDir': staging_dir,
+                    'startFrame': start_frame,
+                    'endFrame': end_frame,
+                    'step': 1,
+                    'frameRate': fps,
+                    'preview': True,
+                    'thumbnail': False,
+                    'name': "preview",
+                    'ext': "mov",
+                }
+                instance.data["representations"].append(
+                    plates_mov_representation)
 
+        # thumb_file = head + ".png"
+        # thumb_path = os.path.join(staging_dir, thumb_file)
+        # self.log.debug("__ thumb_path: {}".format(thumb_path))
+        # thumbnail = item.thumbnail(timeline_in).save(
+        #     thumb_path,
+        #     format='png'
+        # )
+        # self.log.debug("__ thumbnail: {}".format(thumbnail))
+        #
+        # thumb_representation = {
+        #     'files': thumb_file,
+        #     'stagingDir': staging_dir,
+        #     'name': "thumbnail",
+        #     'thumbnail': True,
+        #     'ext': "png"
+        # }
+        # instance.data["representations"].append(
+        #     thumb_representation)
 
         # adding representation for plates
         plates_representation = {
@@ -137,11 +178,6 @@ class CollectPlates(api.InstancePlugin):
             'ext': ext,
         }
         instance.data["representations"].append(plates_representation)
-
-
-        # this is just workaround because 'clip' family is filtered
-        instance.data["family"] = families[-1]
-        instance.data["families"].append(family)
 
         # testing families
         family = instance.data["family"]
