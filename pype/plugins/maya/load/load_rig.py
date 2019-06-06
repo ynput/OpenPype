@@ -36,13 +36,7 @@ class RigLoader(pype.maya.plugin.ReferenceLoader):
                           groupReference=True,
                           groupName=groupName)
 
-        # Try/Except because grouping joints with skinning fails.
-        try:
-            cmds.makeIdentity(
-                groupName, apply=False, rotate=True, translate=True, scale=True
-            )
-        except RuntimeError:
-            pass
+        cmds.xform(groupName, pivots=(0, 0, 0))
 
         presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
         colors = presets['plugins']['maya']['load']['colors']
