@@ -35,18 +35,12 @@ class CollectClipHandles(api.InstancePlugin):
                     t_args = json.loads(t_args.replace("'", "\""))
                     # add in start
                     if 'start' in t_args['where']:
-                        hs = instance.data.get('handle_start')
-                        if not hs:
-                            instance.data['handle_start'] = 0
-                        instance.data['handle_start'] += t_value
+                        instance.data["handleStart"] += t_value
                         self.log.info("Collected Handle Start: `{}`".format(
-                            instance.data['handle_start']))
+                            instance.data["handleStart"]))
 
                     # add in end
                     if 'end' in t_args['where']:
-                        hs = instance.data.get('handle_end')
-                        if not hs:
-                            instance.data['handle_end'] = 0
-                        instance.data['handle_end'] += t_value
+                        instance.data["handleEnd"] += t_value
                         self.log.info("Collected Handle End: `{}`".format(
-                            instance.data['handle_end']))
+                            instance.data["handleEnd"]))

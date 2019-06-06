@@ -37,6 +37,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         clip = instance.data["item"]
         asset = instance.data.get("asset")
 
+        # create asset_names conversion table
+        if not context.data.get("assetsSharedHierarchy"):
+            context.data["assetsSharedHierarchy"] = dict()
+
         # build data for inner nukestudio project property
         data = {
             "sequence": context.data['activeSequence'].name().replace(' ', '_'),
@@ -65,17 +69,23 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
                 # if shot in template then remove it
                 if "shot" in template.lower():
-                    instance.data["asset"] = [t for t in template.split('/')][-1]
+                    instance.data["asset"] = [
+                        t for t in template.split('/')][-1]
                     template = "/".join([t for t in template.split('/')][0:-1])
 
                 # take template from Tag.note and break it into parts
+                template_split = template.split("/")
                 patern = re.compile(r"\{([a-z]*?)\}")
-                par_split = [patern.findall(t)[0]
+                par_split = [patern.findall(t)
                              for t in template.split("/")]
 
                 # format all {} in two layers
                 for k, v in t_metadata.items():
                     new_k = k.split(".")[1]
+
+                    # ignore all help strings
+                    if 'help' in k:
+                        continue
                     # self.log.info("__ new_k: `{}`".format(new_k))
                     try:
                         # first try all data and context data to
@@ -91,7 +101,8 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
                         # if any is matching then convert to entity_types
                         if p_match_i:
-                            parent = self.convert_to_entity(new_k, new_v)
+                            parent = self.convert_to_entity(
+                                new_k, template_split[p_match_i[0]])
                             parents.insert(p_match_i[0], parent)
                     except Exception:
                         d_metadata[new_k] = v
@@ -102,6 +113,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
                 # lastly fill those individual properties itno
                 # format the string with collected data
+                parents = [{"entityName": p["entityName"].format(
+                    **d_metadata), "entityType": p["entityType"]}
+                    for p in parents]
+
                 hierarchy = template.format(
                     **d_metadata)
 
@@ -111,12 +126,17 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 assert not hd, "Only one Hierarchy Tag is \
                             allowed. Clip: `{}`".format(asset)
 
+                assetsSharedHierarchy = {
+                    asset: {
+                        "asset": instance.data["asset"],
+                        "hierarchy": hierarchy,
+                        "parents": parents
+                    }}
                 # add formated hierarchy path into instance data
                 instance.data["hierarchy"] = hierarchy
                 instance.data["parents"] = parents
-                self.log.debug("__ hierarchy.format: {}".format(hierarchy))
-                self.log.debug("__ parents: {}".format(parents))
-                self.log.debug("__ d_metadata: {}".format(d_metadata))
+                context.data["assetsSharedHierarchy"].update(
+                    assetsSharedHierarchy)
 
 
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
@@ -132,21 +152,36 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             if key in new_dict and isinstance(ex_dict[key], dict):
                 new_dict[key] = self.update_dict(ex_dict[key], new_dict[key])
             else:
-                new_dict[key] = ex_dict[key]
+                if ex_dict.get(key) and new_dict.get(key):
+                    continue
+                else:
+                    new_dict[key] = ex_dict[key]
+
         return new_dict
 
     def process(self, context):
         instances = context[:]
         # create hierarchyContext attr if context has none
-        self.log.debug("__ instances: {}".format(context[:]))
 
         temp_context = {}
         for instance in instances:
             if 'projectfile' in instance.data.get('family', ''):
                 continue
 
-            in_info = {}
             name = instance.data["asset"]
+
+            # inject assetsSharedHierarchy to other plates types
+            assets_shared = context.data.get("assetsSharedHierarchy")
+
+            if assets_shared:
+                s_asset_data = assets_shared.get(name)
+                if s_asset_data:
+                    name = instance.data["asset"] = s_asset_data["asset"]
+                    instance.data["parents"] = s_asset_data["parents"]
+                    instance.data["hierarchy"] = s_asset_data["hierarchy"]
+
+
+            in_info = {}
             # suppose that all instances are Shots
             in_info['entity_type'] = 'Shot'
 
@@ -172,7 +207,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                 actual = next_dict
 
             temp_context = self.update_dict(temp_context, actual)
-            self.log.debug(temp_context)
 
         # TODO: 100% sure way of get project! Will be Name or Code?
         project_name = avalon.Session["AVALON_PROJECT"]

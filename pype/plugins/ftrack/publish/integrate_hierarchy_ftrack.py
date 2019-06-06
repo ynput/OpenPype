@@ -45,7 +45,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
     def import_to_ftrack(self, input_data, parent=None):
         for entity_name in input_data:
             entity_data = input_data[entity_name]
-            entity_type = entity_data['entity_type'].capitalize()
+            entity_type = entity_data['entity_type']
 
             if entity_type.lower() == 'project':
                 query = 'Project where full_name is "{}"'.format(entity_name)
@@ -85,8 +85,9 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     'Missing custom attribute')
 
                 entity['custom_attributes'][key] = custom_attributes[key]
+
                 for instance in instances:
-                    instance.data['ftrackShotId'] = entity['id']
+                    instance.data['ftrackEntity'] = entity
 
                 self.session.commit()
 
@@ -108,7 +109,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             for task in tasks_to_create:
                 self.create_task(
                     name=task,
-                    task_type=task.capitalize(),
+                    task_type=task,
                     parent=entity
                 )
                 self.session.commit()

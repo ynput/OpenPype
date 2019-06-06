@@ -98,17 +98,48 @@ def run_event_server(ftrack_url, username, api_key, event_paths):
 
 def main(argv):
     '''
-    Entered values through args have most priority!
-    - all values are overriden with entered values to args
+    There are 4 values neccessary for event server:
+    1.) Ftrack url - "studio.ftrackapp.com"
+    2.) Username - "my.username"
+    3.) API key - "apikey-long11223344-6665588-5565"
+    4.) Path/s to events - "X:/path/to/folder/with/events"
 
-    There is also possibility to set session with only Environments.
-    - Required for session: FTRACK_SERVER, FTRACK_API_USER, FTRACK_API_KEY
-    - Path to events to load should be set in: FTRACK_EVENTS_PATH
-    - "-noloadcred" must be set if want to use environment values!!!
+    All these values can be entered with arguments or environment variables.
+    - arguments:
+        "-ftrackurl {url}"
+        "-ftrackuser {username}"
+        "-ftrackapikey {api key}"
+        "-ftrackeventpaths {path to events}"
+    - environment variables:
+        FTRACK_SERVER
+        FTRACK_API_USER
+        FTRACK_API_KEY
+        FTRACK_EVENTS_PATH
 
-    "-storecred" will store currently set credentials for future use.
-    - it's handy to use on first launch
+    Credentials (Username & API key):
+    - Credentials can be stored for auto load on next start
+    - To *Store/Update* these values add argument "-storecred"
+        - They will be stored to appsdir file when login is successful
+    - To *Update/Override* values with enviromnet variables is also needed to:
+        - *don't enter argument for that value*
+        - add argument "-noloadcred" (currently stored credentials won't be loaded)
 
+    Order of getting values:
+        1.) Arguments are always used when entered.
+            - entered values through args have most priority! (in each case)
+        2.) Credentials are tried to load from appsdir file.
+            - skipped when credentials were entered through args or credentials
+                are not stored yet
+            - can be skipped with "-noloadcred" argument
+        3.) Environment variables are last source of values.
+            - will try to get not yet set values from environments
+
+    Best practice:
+    - set environment variables FTRACK_SERVER & FTRACK_EVENTS_PATH
+    - launch event_server_cli with args:
+    ~/event_server_cli.py -ftrackuser "{username}" -ftrackapikey "{API key}" -storecred
+    - next time launch event_server_cli.py only with set environment variables
+        FTRACK_SERVER & FTRACK_EVENTS_PATH
     '''
     parser = argparse.ArgumentParser(description='Ftrack event server')
     parser.add_argument(

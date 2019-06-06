@@ -37,11 +37,11 @@ def update_tag(tag, value):
     """
 
     tag.setNote(value['note'])
-    tag.setIcon(value['icon']['path'])
+    tag.setIcon(str(value['icon']['path']))
     mtd = tag.metadata()
     pres_mtd = value.get('metadata', None)
     if pres_mtd:
-        [mtd.setValue("tag.{}".format(k), v)
+        [mtd.setValue("tag.{}".format(str(k)), str(v))
          for k, v in pres_mtd.items()]
 
     return tag

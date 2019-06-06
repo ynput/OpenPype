@@ -7,7 +7,7 @@ class ExtractTasks(api.InstancePlugin):
     order = api.ExtractorOrder
     label = "Tasks"
     hosts = ["nukestudio"]
-    families = ["trackItem.task"]
+    families = ["clip"]
     optional = True
 
     def filelink(self, src, dst):

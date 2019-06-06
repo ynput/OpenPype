@@ -60,6 +60,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "nukescript",
                 "render",
                 "write",
+                "plates",
                 "rig"
                 ]
     exclude_families = ["clip"]
@@ -81,6 +82,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Required environment variables
         PROJECT = api.Session["AVALON_PROJECT"]
         ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
+        TASK = instance.data.get("task") or api.Session["AVALON_TASK"]
         LOCATION = api.Session["AVALON_LOCATION"]
 
         context = instance.context
@@ -160,6 +162,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
         version_data = self.create_version_data(context, instance)
+
+        version_data_instance = instance.data.get('versionData')
+
+        if version_data_instance:
+            version_data.update(version_data_instance)
+
         version = self.create_version(subset=subset,
                                       version_number=next_version,
                                       locations=[LOCATION],
@@ -193,7 +201,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
                          "silo": asset['silo'],
-                         "task": api.Session["AVALON_TASK"],
+                         "task": TASK,
                          "asset": ASSET,
                          "family": instance.data['family'],
                          "subset": subset["name"],
@@ -210,7 +218,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
-        for idx, repre in enumerate(instance.data["representations"]):
+        for idx, repre in enumerate(repres):
 
             # Collection
             #   _______
@@ -227,7 +235,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 stagingdir = repre['stagingDir']
             if repre.get('anatomy_template'):
                 template_name = repre['anatomy_template']
-            template = anatomy.templates[template_name]["path"]
+            template = os.path.normpath(
+                anatomy.templates[template_name]["path"])
+
 
             if isinstance(files, list):
                 src_collections, remainder = clique.assemble(files)
@@ -245,7 +255,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "{padding}") % i
                     anatomy_filled = anatomy.format(template_data)
                     test_dest_files.append(
-                        anatomy_filled[template_name]["path"])
+                        os.path.normpath(
+                            anatomy_filled[template_name]["path"])
+                    )
                     self.log.debug(
                         "test_dest_files: {}".format(str(test_dest_files)))
 
@@ -254,7 +266,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_head = dst_collection.format("{head}")
                 dst_tail = dst_collection.format("{tail}")
 
-                instance.data["representations"][idx]['published_path'] = dst_collection.format()
+                repres[idx]['published_path'] = dst_collection.format()
 
                 for i in src_collection.indexes:
                     src_padding = src_collection.format("{padding}") % i
@@ -265,9 +277,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
 
                     src = os.path.join(stagingdir, src_file_name)
-                    # src = src_file_name
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
+
+                # for imagesequence version data
+                hashes = '#' * len(dst_padding)
+                dst = "{0}{1}{2}".format(dst_head, hashes, dst_tail)
+
 
             else:
                 # Single file
@@ -293,7 +309,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst = anatomy_filled[template_name]["path"]
 
                 instance.data["transfers"].append([src, dst])
-                instance.data["representations"][idx]['published_path'] = dst
+                repres[idx]['published_path'] = dst
 
             representation = {
                 "schema": "pype:representation-2.0",
@@ -309,7 +325,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "root": root,
                     "project": {"name": PROJECT,
                                 "code": project['data']['code']},
-                    'task': api.Session["AVALON_TASK"],
+                    'task': TASK,
                     "silo": asset['silo'],
                     "asset": ASSET,
                     "family": instance.data['family'],
@@ -324,9 +340,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data['destination_list'] = destination_list
             representations.append(representation)
 
-        self.log.info("Registering {} items".format(len(representations)))
-
         io.insert_many(representations)
+        self.log.debug("Representation: {}".format(representations))
+        self.log.info("Registered {} items".format(len(representations)))
+
 
     def integrate(self, instance):
         """Move the files
@@ -340,7 +357,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         transfers = instance.data.get("transfers", list())
 
         for src, dest in transfers:
-            self.log.info("Copying file .. {} -> {}".format(src, dest))
+            self.log.debug("Copying file .. {} -> {}".format(src, dest))
             self.copy_file(src, dest)
 
         # Produce hardlinked copies
@@ -350,7 +367,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # to ensure publishes remain safe and non-edited.
         hardlinks = instance.data.get("hardlinks", list())
         for src, dest in hardlinks:
-            self.log.info("Hardlinking file .. {} -> {}".format(src, dest))
+            self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
             self.hardlink_file(src, dest)
 
     def copy_file(self, src, dst):
