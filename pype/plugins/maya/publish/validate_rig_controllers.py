@@ -163,6 +163,10 @@ class ValidateRigControllers(pyblish.api.InstancePlugin):
             if locked:
                 continue
 
+            # Ignore proxy connections.
+            if cmds.addAttr(plug, query=True, usedAsProxy=True):
+                continue
+
             # Check for incoming connections
             if cmds.listConnections(plug, source=True, destination=False):
                 invalid.append(plug)
