@@ -13,7 +13,7 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
     """
 
     label = "Collect Hierarchy Clip"
-    order = pyblish.api.CollectorOrder + 0.1
+    order = pyblish.api.CollectorOrder + 0.101
     families = ["clip"]
 
     def convert_to_entity(self, key, value):
@@ -38,8 +38,8 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         asset = instance.data.get("asset")
 
         # create asset_names conversion table
-        if not context.data.get("assetsSharedHierarchy"):
-            context.data["assetsSharedHierarchy"] = dict()
+        if not context.data.get("assetsShared"):
+            context.data["assetsShared"] = dict()
 
         # build data for inner nukestudio project property
         data = {
@@ -126,7 +126,7 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 assert not hd, "Only one Hierarchy Tag is \
                             allowed. Clip: `{}`".format(asset)
 
-                assetsSharedHierarchy = {
+                assetsShared = {
                     asset: {
                         "asset": instance.data["asset"],
                         "hierarchy": hierarchy,
@@ -135,8 +135,8 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # add formated hierarchy path into instance data
                 instance.data["hierarchy"] = hierarchy
                 instance.data["parents"] = parents
-                context.data["assetsSharedHierarchy"].update(
-                    assetsSharedHierarchy)
+                context.data["assetsShared"].update(
+                    assetsShared)
 
 
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
@@ -170,8 +170,23 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
             name = instance.data["asset"]
 
-            # inject assetsSharedHierarchy to other plates types
-            assets_shared = context.data.get("assetsSharedHierarchy")
+            # get handles
+            handles = int(instance.data["handles"])
+            handle_start = int(instance.data["handleStart"] + handles)
+            handle_end = int(instance.data["handleEnd"] + handles)
+
+            # get source frames
+            source_first = int(instance.data["sourceFirst"])
+            source_in = int(instance.data["sourceIn"])
+            source_out = int(instance.data["sourceOut"])
+
+            instance.data['startFrame'] = int(
+                source_first + source_in - handle_start)
+            instance.data['endFrame'] = int(
+                (source_first + source_out + handle_end))
+
+            # inject assetsShared to other plates types
+            assets_shared = context.data.get("assetsShared")
 
             if assets_shared:
                 s_asset_data = assets_shared.get(name)
@@ -180,6 +195,8 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
 
+            if "main" not in instance.data["name"]:
+                continue
 
             in_info = {}
             # suppose that all instances are Shots
@@ -187,10 +204,23 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
             # get custom attributes of the shot
             in_info['custom_attributes'] = {
-                'fend': instance.data['endFrame'],
-                'fstart': instance.data['startFrame'],
+                'handles': int(instance.data.get('handles')),
+                'fend': int(
+                    (source_first + source_out)),
+                'fstart': int(
+                    source_first + source_in),
                 'fps': context.data["framerate"]
             }
+
+            # handle_start = instance.data.get('handleStart')
+            # handle_end = instance.data.get('handleEnd')
+            # self.log.debug("__ handle_start: {}".format(handle_start))
+            # self.log.debug("__ handle_end: {}".format(handle_end))
+            # if handle_start and handle_end:
+            #     in_info['custom_attributes'].update({
+            #         "handle_start": handle_start,
+            #         "handle_end": handle_end
+            #     })
 
             in_info['tasks'] = instance.data['tasks']
 

@@ -6,6 +6,7 @@ class CollectCurrentFile(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder - 0.1
 
+
     def process(self, context):
         """Todo, inject the current working file"""
 

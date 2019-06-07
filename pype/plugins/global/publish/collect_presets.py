@@ -18,12 +18,14 @@ class CollectPresets(api.ContextPlugin):
             presets["colorspace"] = presets["colorspace"][p_init["colorspace"]]
             presets["dataflow"] = presets["dataflow"][p_init["dataflow"]]
         except KeyError:
-            log.warning("No projects custom preset available...")
+            self.log.warning("No projects custom preset available...")
             presets["colorspace"] = presets["colorspace"]["default"]
             presets["dataflow"] = presets["dataflow"]["default"]
-            log.info("Presets `colorspace` and `dataflow` loaded from `default`...")
+            self.log.info(
+                "Presets `colorspace` and `dataflow` loaded from `default`..."
+            )
 
         context.data["presets"] = presets
-        
+
         self.log.info(context.data["presets"])
         return
