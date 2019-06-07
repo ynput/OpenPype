@@ -7,7 +7,7 @@ class CollectProjectData(pyblish.api.ContextPlugin):
     """Collecting project data from avalon db"""
 
     label = "Collect Project Data"
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.1
 
     def process(self, context):
         # get project data from avalon db
