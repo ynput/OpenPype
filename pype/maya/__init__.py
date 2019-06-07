@@ -114,16 +114,7 @@ def on_init(_):
     )
     safe_deferred(override_component_mask_commands)
 
-    launch_workfiles = True
-    try:
-        presets = config.get_presets()
-        launch_workfiles = presets['tools']['workfiles']['start_on_app_launch']
-    except KeyError:
-        log.info(
-            "Workfiles app start on launch configuration was not found."
-            " Defaulting to False."
-        )
-        launch_workfiles = False
+    launch_workfiles = os.environ.get("WORKFILES_STARTUP")
 
     if launch_workfiles:
         safe_deferred(launch_workfiles_app)

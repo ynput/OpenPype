@@ -4,7 +4,7 @@ from pyblish import api
 class CollectClipTagTypes(api.InstancePlugin):
     """Collect Types from Tags of selected track items."""
 
-    order = api.CollectorOrder + 0.007
+    order = api.CollectorOrder + 0.012
     label = "Collect Plate Type from Tag"
     hosts = ["nukestudio"]
     families = ['clip']
