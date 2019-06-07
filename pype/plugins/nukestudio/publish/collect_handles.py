@@ -5,7 +5,7 @@ from pyblish import api
 class CollectClipHandles(api.ContextPlugin):
     """Collect Handles from all instanes and add to assetShared."""
 
-    order = api.CollectorOrder + 0.101
+    order = api.CollectorOrder + 0.1025
     label = "Collect Handles"
     hosts = ["nukestudio"]
     families = ['clip']

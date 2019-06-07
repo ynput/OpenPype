@@ -25,7 +25,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
     }
     """
 
-    order = pyblish.api.IntegratorOrder
+    order = pyblish.api.IntegratorOrder - 0.04
     label = 'Integrate Hierarchy To Ftrack'
     families = ["clip"]
     optional = False

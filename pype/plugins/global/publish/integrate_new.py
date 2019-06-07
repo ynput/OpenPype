@@ -281,7 +281,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 # for imagesequence version data
                 hashes = '#' * len(dst_padding)
-                dst = "{0}{1}{2}".format(dst_head, hashes, dst_tail)
+                dst =  os.path.normpath("{0}{1}{2}".format(dst_head, hashes, dst_tail))
 
             else:
                 # Single file
@@ -304,7 +304,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 src = os.path.join(stagingdir, fname)
                 # src = fname
                 anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled[template_name]["path"]
+                dst = os.path.normpath(
+                        anatomy_filled[template_name]["path"])
 
                 instance.data["transfers"].append([src, dst])
 
@@ -335,11 +336,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
-
+            self.log.debug("__ _representation: {}".format(representation))
             destination_list.append(dst)
+            self.log.debug("__ destination_list: {}".format(destination_list))
             instance.data['destination_list'] = destination_list
             representations.append(representation)
+            self.log.debug("__ representations: {}".format(representations))
 
+        self.log.debug("__ representations: {}".format(representations))
         for rep in instance.data["representations"]:
             self.log.debug("__ represNAME: {}".format(rep['name']))
             self.log.debug("__ represPATH: {}".format(rep['published_path']))

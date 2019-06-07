@@ -6,7 +6,7 @@ class CollectPlates(api.InstancePlugin):
     """Collect plates"""
 
     order = api.CollectorOrder + 0.49
-    label = "Extract Plates"
+    label = "Collect Plates"
     hosts = ["nukestudio"]
     families = ["plate"]
 
@@ -66,7 +66,7 @@ class CollectPlates(api.InstancePlugin):
         colorspace = item.sourceMediaColourTransform()
 
         # get sequence from context, and fps
-        fps = int(instance.data["fps"])
+        fps = float(str(instance.data["fps"]))
 
         # test output
         self.log.debug("__ handles: {}".format(handles))
@@ -141,6 +141,8 @@ class CollectPlates(api.InstancePlugin):
             self.log.debug("Exception in file: {}".format(e))
             head, ext = source_file.split('.')
             files = source_file
+            start_frame = source_in_h
+            end_frame = source_out_h
 
         if isinstance(files, list):
             mov_file = head + ".mov"
@@ -188,6 +190,8 @@ class CollectPlates(api.InstancePlugin):
             'stagingDir': staging_dir,
             'name': ext,
             'ext': ext,
+            'startFrame': start_frame,
+            'endFrame': end_frame,
         }
         instance.data["representations"].append(plates_representation)
 

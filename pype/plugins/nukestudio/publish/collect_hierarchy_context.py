@@ -110,15 +110,18 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # create new shot asset name
                 instance.data["asset"] = instance.data["asset"].format(
                     **d_metadata)
+                self.log.debug("__ instance.data[asset]: {}".format(instance.data["asset"]))
 
                 # lastly fill those individual properties itno
                 # format the string with collected data
                 parents = [{"entityName": p["entityName"].format(
                     **d_metadata), "entityType": p["entityType"]}
                     for p in parents]
+                self.log.debug("__ parents: {}".format(parents))
 
                 hierarchy = template.format(
                     **d_metadata)
+                self.log.debug("__ hierarchy: {}".format(hierarchy))
 
                 # check if hierarchy attribute is already created
                 # it should not be so return warning if it is
@@ -132,6 +135,7 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                         "hierarchy": hierarchy,
                         "parents": parents
                     }}
+                self.log.debug("__ assetsShared: {}".format(assetsShared))
                 # add formated hierarchy path into instance data
                 instance.data["hierarchy"] = hierarchy
                 instance.data["parents"] = parents
@@ -145,7 +149,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
     '''
 
     label = "Collect Hierarchy Context"
-    order = pyblish.api.CollectorOrder + 0.101
+    order = pyblish.api.CollectorOrder + 0.102
 
     def update_dict(self, ex_dict, new_dict):
         for key in ex_dict:
@@ -191,11 +195,15 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             if assets_shared:
                 s_asset_data = assets_shared.get(name)
                 if s_asset_data:
+                    self.log.debug("__ s_asset_data: {}".format(s_asset_data))
                     name = instance.data["asset"] = s_asset_data["asset"]
                     instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
 
-            if "main" not in instance.data["name"]:
+            self.log.debug("__ instance.data[parents]: {}".format(instance.data["parents"]))
+            self.log.debug("__ instance.data[hierarchy]: {}".format(instance.data["hierarchy"]))
+            self.log.debug("__ instance.data[name]: {}".format(instance.data["name"]))
+            if "main" not in instance.data["name"].lower():
                 continue
 
             in_info = {}
@@ -211,7 +219,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     source_first + source_in),
                 'fps': context.data["framerate"]
             }
-
+            
             # handle_start = instance.data.get('handleStart')
             # handle_end = instance.data.get('handleEnd')
             # self.log.debug("__ handle_start: {}".format(handle_start))
@@ -225,7 +233,8 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             in_info['tasks'] = instance.data['tasks']
 
             parents = instance.data.get('parents', [])
-
+            self.log.debug("__ in_info: {}".format(in_info))
+            
             actual = {name: in_info}
 
             for parent in reversed(parents):

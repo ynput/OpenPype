@@ -5,7 +5,7 @@ from copy import deepcopy
 class CollectClipSubsets(api.InstancePlugin):
     """Collect Subsets from selected Clips, Tags, Preset."""
 
-    order = api.CollectorOrder + 0.102
+    order = api.CollectorOrder + 0.103
     label = "Collect Subsets"
     hosts = ["nukestudio"]
     families = ['clip']
@@ -62,7 +62,7 @@ class CollectClipSubsets(api.InstancePlugin):
 
             # get sequence from context, and fps
             sequence = context.data["activeSequence"]
-            fps = int(str(sequence.framerate()))
+            fps = sequence.framerate()
 
             context.create_instance(
                 name=instance_name,
