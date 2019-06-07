@@ -47,6 +47,10 @@ class CollectPlates(api.InstancePlugin):
         source_out = int(instance.data["sourceOut"])
 
         # get source frames
+        frame_start = int(instance.data["startFrame"])
+        frame_end = int(instance.data["endFrame"])
+
+        # get source frames
         source_in_h = int(instance.data["sourceInH"])
         source_out_h = int(instance.data["sourceOutH"])
 
@@ -68,12 +72,18 @@ class CollectPlates(api.InstancePlugin):
         self.log.debug("__ handles: {}".format(handles))
         self.log.debug("__ handle_start: {}".format(handle_start))
         self.log.debug("__ handle_end: {}".format(handle_end))
+        self.log.debug("__ frame_start: {}".format(frame_start))
+        self.log.debug("__ frame_end: {}".format(frame_end))
+        self.log.debug("__ f duration: {}".format(frame_end - frame_start + 1))
         self.log.debug("__ source_in: {}".format(source_in))
         self.log.debug("__ source_out: {}".format(source_out))
+        self.log.debug("__ s duration: {}".format(source_out - source_in + 1))
         self.log.debug("__ source_in_h: {}".format(source_in_h))
         self.log.debug("__ source_out_h: {}".format(source_out_h))
+        self.log.debug("__ sh duration: {}".format(source_out_h - source_in_h + 1))
         self.log.debug("__ timeline_in: {}".format(timeline_in))
         self.log.debug("__ timeline_out: {}".format(timeline_out))
+        self.log.debug("__ t duration: {}".format(timeline_out - timeline_in + 1))
         self.log.debug("__ timeline_frame_start: {}".format(
             timeline_frame_start))
         self.log.debug("__ timeline_frame_end: {}".format(timeline_frame_end))
@@ -97,6 +107,8 @@ class CollectPlates(api.InstancePlugin):
             "handleEnd": handle_end,
             "sourceIn": source_in,
             "sourceOut": source_out,
+            "startFrame": frame_start,
+            "endFrame": frame_end,
             "timelineIn": timeline_in,
             "timelineOut": timeline_out,
             "timelineInHandles": timeline_frame_start,
@@ -139,8 +151,8 @@ class CollectPlates(api.InstancePlugin):
                 plates_mov_representation = {
                     'files': mov_file,
                     'stagingDir': staging_dir,
-                    'startFrame': start_frame,
-                    'endFrame': end_frame,
+                    'startFrame': 0,
+                    'endFrame': source_out - source_in + 1,
                     'step': 1,
                     'frameRate': fps,
                     'preview': True,
@@ -151,24 +163,24 @@ class CollectPlates(api.InstancePlugin):
                 instance.data["representations"].append(
                     plates_mov_representation)
 
-        # thumb_file = head + ".png"
-        # thumb_path = os.path.join(staging_dir, thumb_file)
-        # self.log.debug("__ thumb_path: {}".format(thumb_path))
-        # thumbnail = item.thumbnail(timeline_in).save(
-        #     thumb_path,
-        #     format='png'
-        # )
-        # self.log.debug("__ thumbnail: {}".format(thumbnail))
-        #
-        # thumb_representation = {
-        #     'files': thumb_file,
-        #     'stagingDir': staging_dir,
-        #     'name': "thumbnail",
-        #     'thumbnail': True,
-        #     'ext': "png"
-        # }
-        # instance.data["representations"].append(
-        #     thumb_representation)
+        thumb_file = head + ".png"
+        thumb_path = os.path.join(staging_dir, thumb_file)
+        self.log.debug("__ thumb_path: {}".format(thumb_path))
+        thumbnail = item.thumbnail(source_in).save(
+            thumb_path,
+            format='png'
+        )
+        self.log.debug("__ thumbnail: {}".format(thumbnail))
+
+        thumb_representation = {
+            'files': thumb_file,
+            'stagingDir': staging_dir,
+            'name': "thumbnail",
+            'thumbnail': True,
+            'ext': "png"
+        }
+        instance.data["representations"].append(
+            thumb_representation)
 
         # adding representation for plates
         plates_representation = {

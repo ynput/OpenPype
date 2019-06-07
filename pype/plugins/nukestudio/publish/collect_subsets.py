@@ -58,7 +58,7 @@ class CollectClipSubsets(api.InstancePlugin):
 
             # creating comp frame range
             frame_start = instance.data["frameStart"]
-            frame_end = frame_start + timeline_frame_end
+            frame_end = frame_start + (source_out - source_in)
 
             # get sequence from context, and fps
             sequence = context.data["activeSequence"]
