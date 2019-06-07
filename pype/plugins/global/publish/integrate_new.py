@@ -60,7 +60,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "nukescript",
                 "render",
                 "write",
-                "plates"
+                "plate"
                 ]
     exclude_families = ["clip"]
 
@@ -217,7 +217,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
-        for idx, repre in enumerate(repres):
+        for idx, repre in enumerate(instance.data["representations"]):
 
             # Collection
             #   _______
@@ -236,7 +236,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 template_name = repre['anatomy_template']
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
-
 
             if isinstance(files, list):
                 src_collections, remainder = clique.assemble(files)
@@ -265,7 +264,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_head = dst_collection.format("{head}")
                 dst_tail = dst_collection.format("{tail}")
 
-                repres[idx]['published_path'] = dst_collection.format()
+                repre['published_path'] = dst_collection.format()
 
                 for i in src_collection.indexes:
                     src_padding = src_collection.format("{padding}") % i
@@ -282,7 +281,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 # for imagesequence version data
                 hashes = '#' * len(dst_padding)
                 dst = "{0}{1}{2}".format(dst_head, hashes, dst_tail)
-
 
             else:
                 # Single file
@@ -308,7 +306,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst = anatomy_filled[template_name]["path"]
 
                 instance.data["transfers"].append([src, dst])
-                repres[idx]['published_path'] = dst
+
+                repre['published_path'] = dst
+                self.log.debug("__ dst: {}".format(dst))
 
             representation = {
                 "schema": "pype:representation-2.0",
@@ -339,8 +339,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data['destination_list'] = destination_list
             representations.append(representation)
 
+        for rep in instance.data["representations"]:
+            self.log.debug("__ represNAME: {}".format(rep['name']))
+            self.log.debug("__ represPATH: {}".format(rep['published_path']))
         io.insert_many(representations)
-        self.log.debug("Representation: {}".format(representations))
+        # self.log.debug("Representation: {}".format(representations))
         self.log.info("Registered {} items".format(len(representations)))
 
 
