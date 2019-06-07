@@ -38,8 +38,8 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         asset = instance.data.get("asset")
 
         # create asset_names conversion table
-        if not context.data.get("assetsSharedHierarchy"):
-            context.data["assetsSharedHierarchy"] = dict()
+        if not context.data.get("assetsShared"):
+            context.data["assetsShared"] = dict()
 
         # build data for inner nukestudio project property
         data = {
@@ -126,7 +126,7 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 assert not hd, "Only one Hierarchy Tag is \
                             allowed. Clip: `{}`".format(asset)
 
-                assetsSharedHierarchy = {
+                assetsShared = {
                     asset: {
                         "asset": instance.data["asset"],
                         "hierarchy": hierarchy,
@@ -135,8 +135,8 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # add formated hierarchy path into instance data
                 instance.data["hierarchy"] = hierarchy
                 instance.data["parents"] = parents
-                context.data["assetsSharedHierarchy"].update(
-                    assetsSharedHierarchy)
+                context.data["assetsShared"].update(
+                    assetsShared)
 
 
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
@@ -185,8 +185,8 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             instance.data['endFrame'] = int(
                 (source_first + source_out + handle_end))
 
-            # inject assetsSharedHierarchy to other plates types
-            assets_shared = context.data.get("assetsSharedHierarchy")
+            # inject assetsShared to other plates types
+            assets_shared = context.data.get("assetsShared")
 
             if assets_shared:
                 s_asset_data = assets_shared.get(name)
