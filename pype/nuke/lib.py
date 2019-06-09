@@ -203,7 +203,7 @@ def create_write_node(name, data):
     # adding dataflow template
     {_data.update({k: v})
      for k, v in nuke_dataflow_writes.items()
-     if k not in ["id", "previous"]}
+     if k not in ["_id", "_previous"]}
 
     # adding dataflow template
     {_data.update({k: v})
