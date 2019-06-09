@@ -94,6 +94,18 @@ class LoadSequence(api.Loader):
 
         first = version_data.get("startFrame", None)
         last = version_data.get("endFrame", None)
+        handles = version_data.get("handles", None)
+        handle_start = version_data.get("handleStart", None)
+        handle_end = version_data.get("handleEnd", None)
+
+        # fix handle start and end if none are available
+        if not handle_start and not handle_end:
+            handle_start = handles
+            handle_end = handles
+
+        # create handles offset
+        first -= handle_start
+        last += handle_end
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -117,25 +129,23 @@ class LoadSequence(api.Loader):
             if colorspace is not None:
                 r["colorspace"].setValue(str(colorspace))
 
-            # Set global in point to start frame (if in version.data)
-            start = context["version"]["data"].get("startFrame", None)
-            if start is not None:
-                loader_shift(r, start, relative=True)
-                r["origfirst"].setValue(first)
-                r["first"].setValue(first)
-                r["origlast"].setValue(last)
-                r["last"].setValue(last)
+            loader_shift(r, first, relative=True)
+            r["origfirst"].setValue(first)
+            r["first"].setValue(first)
+            r["origlast"].setValue(last)
+            r["last"].setValue(last)
 
             # add additional metadata from the version to imprint to Avalon knob
             add_keys = ["startFrame", "endFrame", "handles",
-                        "source", "colorspace", "author", "fps", "version"]
+                        "source", "colorspace", "author", "fps", "version",
+                        "handleStart", "handleEnd"]
 
             data_imprint = {}
             for k in add_keys:
                 if k is 'version':
                     data_imprint.update({k: context["version"]['name']})
                 else:
-                    data_imprint.update({k: context["version"]['data'][k]})
+                    data_imprint.update({k: context["version"]['data'].get(k, str(None))})
 
             data_imprint.update({"objectName": read_name})
 
@@ -186,12 +196,28 @@ class LoadSequence(api.Loader):
 
         max_version = max(versions)
 
-        start = version["data"].get("startFrame")
-        if start is None:
+        version_data = version.get("data", {})
+
+        first = version_data.get("startFrame", None)
+        last = version_data.get("endFrame", None)
+        handles = version_data.get("handles", 0)
+        handle_start = version_data.get("handleStart", 0)
+        handle_end = version_data.get("handleEnd", 0)
+
+        if first is None:
             log.warning("Missing start frame for updated version"
                         "assuming starts at frame 0 for: "
                         "{} ({})".format(node['name'].value(), representation))
-            start = 0
+            first = 0
+
+        # fix handle start and end if none are available
+        if not handle_start and not handle_end:
+            handle_start = handles
+            handle_end = handles
+
+        # create handles offset
+        first -= handle_start
+        last += handle_end
 
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
@@ -199,24 +225,26 @@ class LoadSequence(api.Loader):
             log.info("__ node['file']: {}".format(node["file"]))
 
         # Set the global in to the start frame of the sequence
-        global_in_changed = loader_shift(node, start, relative=False)
-        if global_in_changed:
-            # Log this change to the user
-            log.debug("Changed '{}' global in:"
-                      " {:d}".format(node['name'].value(), start))
+        loader_shift(node, first, relative=True)
+        node["origfirst"].setValue(first)
+        node["first"].setValue(first)
+        node["origlast"].setValue(last)
+        node["last"].setValue(last)
 
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "startFrame": start,
-            "endFrame": version["data"].get("endFrame"),
+            "startFrame": version_data.get("startFrame"),
+            "endFrame": version_data.get("endFrame"),
             "version": version.get("name"),
-            "colorspace": version["data"].get("colorspace"),
-            "source": version["data"].get("source"),
-            "handles": version["data"].get("handles"),
-            "fps": version["data"].get("fps"),
-            "author": version["data"].get("author"),
-            "outputDir": version["data"].get("outputDir"),
+            "colorspace": version_data.get("colorspace"),
+            "source": version_data.get("source"),
+            "handles": version_data.get("handles"),
+            "handleStart": version_data.get("handleStart"),
+            "handleEnd": version_data.get("handleEnd"),
+            "fps": version_data.get("fps"),
+            "author": version_data.get("author"),
+            "outputDir": version_data.get("outputDir"),
         })
 
         # change color of node
