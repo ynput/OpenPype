@@ -219,22 +219,23 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     source_first + source_in),
                 'fps': context.data["framerate"]
             }
+
+            handle_start = instance.data.get('handleStart')
+            handle_end = instance.data.get('handleEnd')
+            self.log.debug("__ handle_start: {}".format(handle_start))
+            self.log.debug("__ handle_end: {}".format(handle_end))
             
-            # handle_start = instance.data.get('handleStart')
-            # handle_end = instance.data.get('handleEnd')
-            # self.log.debug("__ handle_start: {}".format(handle_start))
-            # self.log.debug("__ handle_end: {}".format(handle_end))
-            # if handle_start and handle_end:
-            #     in_info['custom_attributes'].update({
-            #         "handle_start": handle_start,
-            #         "handle_end": handle_end
-            #     })
+            if handle_start and handle_end:
+                in_info['custom_attributes'].update({
+                    "handle_start": handle_start,
+                    "handle_end": handle_end
+                })
 
             in_info['tasks'] = instance.data['tasks']
 
             parents = instance.data.get('parents', [])
             self.log.debug("__ in_info: {}".format(in_info))
-            
+
             actual = {name: in_info}
 
             for parent in reversed(parents):
