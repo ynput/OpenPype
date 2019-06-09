@@ -351,7 +351,7 @@ def reset_frame_range_handles():
     data = asset["data"]
 
     missing_cols = []
-    check_cols = ["fstart", "fend"]
+    check_cols = ["fstart", "fend", "handle_start", "handle_end"]
 
     for col in check_cols:
         if col not in data:
@@ -367,6 +367,10 @@ def reset_frame_range_handles():
     # get handles values
     handles = avalon.nuke.get_handles(asset)
     handle_start, handle_end = pype.get_handle_irregular(asset)
+
+    log.info("__ handles: `{}`".format(handles))
+    log.info("__ handle_start: `{}`".format(handle_start))
+    log.info("__ handle_end: `{}`".format(handle_end))
 
     edit_in = int(asset["data"]["fstart"]) - handles - handle_start
     edit_out = int(asset["data"]["fend"]) + handles + handle_end
