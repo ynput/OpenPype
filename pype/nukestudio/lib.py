@@ -71,8 +71,11 @@ def reload_config():
     import importlib
 
     for module in (
+        "avalon",
         "avalon.lib",
         "avalon.pipeline",
+        "pyblish",
+        "pyblish_lite",
         "pypeapp",
         "{}.api".format(AVALON_CONFIG),
         "{}.templates".format(AVALON_CONFIG),
