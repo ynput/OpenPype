@@ -1,6 +1,5 @@
 import os
 import sys
-import os
 from collections import OrderedDict
 from pprint import pprint
 from avalon import api, io, lib
@@ -196,8 +195,13 @@ def create_write_node(name, data):
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))
 
+    fpath = str(anatomy_filled["render"]["path"]).replace("\\", "/")
+
+    # create directory
+    os.makedirs( os.path.dirname(fpath), 0766 )
+
     _data = OrderedDict({
-        "file": str(anatomy_filled["render"]["path"]).replace("\\", "/")
+        "file": fpath
     })
 
     # adding dataflow template
