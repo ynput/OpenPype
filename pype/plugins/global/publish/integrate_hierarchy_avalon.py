@@ -14,6 +14,7 @@ class IntegrateHierarchyToAvalon(pyblish.api.ContextPlugin):
 
     def process(self, context):
         if "hierarchyContext" not in context.data:
+            self.log.info('skipping IntegrateHierarchyToAvalon')
             return
 
         self.db = io

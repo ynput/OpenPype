@@ -5,7 +5,7 @@ from copy import deepcopy
 class CollectClipSubsets(api.InstancePlugin):
     """Collect Subsets from selected Clips, Tags, Preset."""
 
-    order = api.CollectorOrder + 0.102
+    order = api.CollectorOrder + 0.103
     label = "Collect Subsets"
     hosts = ["nukestudio"]
     families = ['clip']
@@ -39,6 +39,15 @@ class CollectClipSubsets(api.InstancePlugin):
             handle_start = int(instance.data["handleStart"] + handles)
             handle_end = int(instance.data["handleEnd"] + handles)
 
+            # get source frames
+            source_first = int(instance.data["sourceFirst"])
+            source_in = int(instance.data["sourceIn"])
+            source_out = int(instance.data["sourceOut"])
+
+            # frame-ranges with handles
+            source_in_h = source_in - handle_start
+            source_out_h = source_out + handle_end
+
             # get timeline frames
             timeline_in = int(item.timelineIn())
             timeline_out = int(item.timelineOut())
@@ -48,13 +57,12 @@ class CollectClipSubsets(api.InstancePlugin):
             timeline_frame_end = timeline_out + handle_end
 
             # creating comp frame range
-            frame_start = instance.data["frameStart"] - handle_start
-            frame_end = frame_start + \
-                (timeline_frame_end - timeline_frame_start)
+            frame_start = instance.data["frameStart"]
+            frame_end = frame_start + (source_out - source_in)
 
             # get sequence from context, and fps
             sequence = context.data["activeSequence"]
-            fps = int(str(sequence.framerate()))
+            fps = sequence.framerate()
 
             context.create_instance(
                 name=instance_name,
@@ -63,8 +71,14 @@ class CollectClipSubsets(api.InstancePlugin):
                 track=instance.data.get("track"),
                 item=item,
                 task=task,
+                sourcePath=instance.data.get("sourcePath"),
                 family=family,
                 families=families,
+                sourceFirst=source_first,
+                sourceIn=source_in,
+                sourceOut=source_out,
+                sourceInH=source_in_h,
+                sourceOutH=source_out_h,
                 frameStart=frame_start,
                 startFrame=frame_start,
                 endFrame=frame_end,
@@ -108,6 +122,7 @@ class CollectClipSubsets(api.InstancePlugin):
         subsets_collect = dict()
         # iterate tags and collect subset properities from presets
         for task in tag_tasks:
+            self.log.info("__ task: {}".format(task))
             try:
                 # get host for task
                 host = None
@@ -188,6 +203,7 @@ class CollectClipSubsets(api.InstancePlugin):
                         subs_data[sub]["nodes"][k].pop("presets")
 
                 # add all into dictionary
+                self.log.info("__ subs_data[sub]: {}".format(subs_data[sub]))
                 subs_data[sub]["task"] = task.lower()
                 subsets_collect.update(subs_data)
 

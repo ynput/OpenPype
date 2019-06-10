@@ -1,5 +1,6 @@
 import os
 import pyblish.api
+import logging
 
 try:
     import ftrack_api_old as ftrack_api
@@ -15,6 +16,8 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
+        ftrack_log = logging.getLogger('ftrack_api')
+        ftrack_log.setLevel(logging.WARNING)
         # Collect session
         session = ftrack_api.Session()
         context.data["ftrackSession"] = session

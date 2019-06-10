@@ -1,3 +1,4 @@
+import os
 from pyblish import api
 
 
@@ -23,10 +24,24 @@ class CollectClips(api.ContextPlugin):
                 continue
 
             track = item.parent()
+            source = item.source().mediaSource()
+            source_path = source.firstpath()
             instance_name = "{0}_{1}".format(track.name(), item.name())
+
+            try:
+                head, padding, ext = os.path.basename(source_path).split('.')
+                source_first_frame = int(padding)
+            except:
+                source_first_frame = 0
+
             data[instance_name] = {
                 "item": item,
+                "source": source,
+                "sourcePath": source_path,
                 "track": track.name(),
+                "sourceFirst": source_first_frame,
+                "sourceIn": int(item.sourceIn()),
+                "sourceOut": int(item.sourceOut()),
                 "startFrame": int(item.timelineIn()),
                 "endFrame": int(item.timelineOut())
             }
@@ -37,8 +52,13 @@ class CollectClips(api.ContextPlugin):
                 name=key,
                 asset=value["item"].name(),
                 item=value["item"],
+                source=value["source"],
+                sourcePath=value["sourcePath"],
                 family=family,
                 families=[],
+                sourceFirst=value["sourceFirst"],
+                sourceIn=value["sourceIn"],
+                sourceOut=value["sourceOut"],
                 startFrame=value["startFrame"],
                 endFrame=value["endFrame"],
                 handles=projectdata['handles'],

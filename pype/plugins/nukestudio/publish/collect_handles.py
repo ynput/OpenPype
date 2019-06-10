@@ -1,46 +1,44 @@
 import json
 from pyblish import api
 
-class CollectClipHandles(api.InstancePlugin):
-    """Collect Handles from selected track items."""
 
-    order = api.CollectorOrder + 0.006
+class CollectClipHandles(api.ContextPlugin):
+    """Collect Handles from all instanes and add to assetShared."""
+
+    order = api.CollectorOrder + 0.1025
     label = "Collect Handles"
     hosts = ["nukestudio"]
     families = ['clip']
 
-    def process(self, instance):
-        # gets tags
-        tags = instance.data["tags"]
+    def process(self, context):
+        assets_shared = context.data.get("assetsShared")
+        assert assets_shared, "Context data missing `assetsShared` key"
 
-        for t in tags:
-            t_metadata = dict(t["metadata"])
-            t_family = t_metadata.get("tag.family", "")
+        # find all main types instances and add its handles to asset shared
+        instances = context[:]
+        for instance in instances:
+            # get handles
+            handles = int(instance.data["handles"])
+            handle_start = int(instance.data["handleStart"])
+            handle_end = int(instance.data["handleEnd"])
 
-            # gets only task family tags and collect labels
-            if "handles" in t_family:
-                # gets value of handles
-                t_value = int(t_metadata.get("tag.value", ""))
+            if instance.data.get("main"):
+                name = instance.data["asset"]
+                if assets_shared.get(name):
+                    self.log.debug("Adding to shared assets: `{}`".format(
+                        instance.data["name"]))
+                    assets_shared[name].update({
+                        "handles": handles,
+                        "handleStart": handle_start,
+                        "handleEnd": handle_end
+                    })
 
-                # gets arguments if there are any
-                t_args = t_metadata.get("tag.args", "")
-
-                # distribute handles
-                if not t_args:
-                    # add handles to both sides
-                    instance.data['handles'] = t_value
-                    self.log.info("Collected Handles: `{}`".format(
-                        instance.data['handles']))
-                else:
-                    t_args = json.loads(t_args.replace("'", "\""))
-                    # add in start
-                    if 'start' in t_args['where']:
-                        instance.data["handleStart"] += t_value
-                        self.log.info("Collected Handle Start: `{}`".format(
-                            instance.data["handleStart"]))
-
-                    # add in end
-                    if 'end' in t_args['where']:
-                        instance.data["handleEnd"] += t_value
-                        self.log.info("Collected Handle End: `{}`".format(
-                            instance.data["handleEnd"]))
+        for instance in instances:
+            if not instance.data.get("main"):
+                self.log.debug("Synchronize handles on: `{}`".format(
+                    instance.data["name"]))
+                name = instance.data["asset"]
+                s_asset_data = assets_shared.get(name)
+                instance.data["handles"] = s_asset_data["handles"]
+                instance.data["handleStart"] = s_asset_data["handleStart"]
+                instance.data["handleEnd"] = s_asset_data["handleEnd"]

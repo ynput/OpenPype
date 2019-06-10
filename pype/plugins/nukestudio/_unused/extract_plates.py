@@ -8,18 +8,18 @@ class ExtractPlates(pype.api.Extractor):
     order = api.ExtractorOrder
     label = "Extract Plates"
     hosts = ["nukestudio"]
-    families = ["plates"]
+    families = ["encode"]
 
     def process(self, instance):
         import os
         import hiero.core
-        from hiero.ui.nuke_bridge import FnNsFrameServer
+        # from hiero.ui.nuke_bridge import FnNsFrameServer
 
         # add to representations
         if not instance.data.get("representations"):
             instance.data["representations"] = list()
 
-        repr_data = dict()
+        version_data = dict()
         context = instance.context
         anatomy = context.data.get("anatomy", None)
         padding = int(anatomy.templates['render']['padding'])
@@ -159,7 +159,7 @@ class ExtractPlates(pype.api.Extractor):
         ]
 
         # add to data of representation
-        repr_data.update({
+        version_data.update({
             "handles": handles,
             "handleStart": handle_start,
             "handleEnd": handle_end,
@@ -182,6 +182,7 @@ class ExtractPlates(pype.api.Extractor):
             "track": track,
             "version": int(version)
         })
+        instance.data["versionData"] = version_data
 
         # adding representation for nukescript
         nk_representation = {
@@ -189,7 +190,6 @@ class ExtractPlates(pype.api.Extractor):
             'stagingDir': staging_dir,
             'name': "nk",
             'ext': "nk",
-            "data": repr_data
         }
         instance.data["representations"].append(nk_representation)
 
@@ -200,7 +200,6 @@ class ExtractPlates(pype.api.Extractor):
             'stagingDir': staging_dir,
             'name': write_knobs["file_type"],
             'ext': write_knobs["file_type"],
-            "data": repr_data
         }
         instance.data["representations"].append(plates_representation)
 
@@ -227,13 +226,13 @@ class ExtractPlates(pype.api.Extractor):
         family = instance.data["family"]
         families = instance.data["families"]
 
-        # test prints repr_data
-        self.log.debug("__ repr_data: {}".format(repr_data))
+        # test prints version_data
+        self.log.debug("__ version_data: {}".format(version_data))
         self.log.debug("__ nk_representation: {}".format(nk_representation))
         self.log.debug("__ plates_representation: {}".format(
             plates_representation))
         self.log.debug("__ after family: {}".format(family))
         self.log.debug("__ after families: {}".format(families))
 
-        # this will do FnNsFrameServer
-        FnNsFrameServer.renderFrames(*_args)
+        # # this will do FnNsFrameServer
+        # FnNsFrameServer.renderFrames(*_args)

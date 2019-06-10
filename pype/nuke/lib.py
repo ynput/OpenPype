@@ -1,6 +1,5 @@
 import os
 import sys
-import os
 from collections import OrderedDict
 from pprint import pprint
 from avalon import api, io, lib
@@ -196,14 +195,19 @@ def create_write_node(name, data):
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))
 
+    fpath = str(anatomy_filled["render"]["path"]).replace("\\", "/")
+
+    # create directory
+    os.makedirs( os.path.dirname(fpath), 0766 )
+
     _data = OrderedDict({
-        "file": str(anatomy_filled["render"]["path"]).replace("\\", "/")
+        "file": fpath
     })
 
     # adding dataflow template
     {_data.update({k: v})
      for k, v in nuke_dataflow_writes.items()
-     if k not in ["id", "previous"]}
+     if k not in ["_id", "_previous"]}
 
     # adding dataflow template
     {_data.update({k: v})
@@ -351,7 +355,7 @@ def reset_frame_range_handles():
     data = asset["data"]
 
     missing_cols = []
-    check_cols = ["fstart", "fend"]
+    check_cols = ["fstart", "fend", "handle_start", "handle_end"]
 
     for col in check_cols:
         if col not in data:
@@ -367,6 +371,10 @@ def reset_frame_range_handles():
     # get handles values
     handles = avalon.nuke.get_handles(asset)
     handle_start, handle_end = pype.get_handle_irregular(asset)
+
+    log.info("__ handles: `{}`".format(handles))
+    log.info("__ handle_start: `{}`".format(handle_start))
+    log.info("__ handle_end: `{}`".format(handle_end))
 
     edit_in = int(asset["data"]["fstart"]) - handles - handle_start
     edit_out = int(asset["data"]["fend"]) + handles + handle_end

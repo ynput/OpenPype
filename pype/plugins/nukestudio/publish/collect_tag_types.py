@@ -26,6 +26,9 @@ class CollectClipTagTypes(api.InstancePlugin):
                     t_type.capitalize(), t_order)
                 subset_names.append(subset_type)
 
+                if "main" in t_type:
+                    instance.data["main"] = True
+
         if subset_names:
             instance.data["subsetType"] = subset_names[0]
 

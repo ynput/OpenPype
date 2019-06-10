@@ -25,7 +25,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
     }
     """
 
-    order = pyblish.api.IntegratorOrder
+    order = pyblish.api.IntegratorOrder - 0.04
     label = 'Integrate Hierarchy To Ftrack'
     families = ["clip"]
     optional = False
@@ -82,7 +82,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 i for i in self.context[:] if i.data['asset'] in entity['name']]
             for key in custom_attributes:
                 assert (key in entity['custom_attributes']), (
-                    'Missing custom attribute')
+                    'Missing custom attribute key: `{0}` in attrs: `{1}`'.format(key, entity['custom_attributes'].keys()))
 
                 entity['custom_attributes'][key] = custom_attributes[key]
 

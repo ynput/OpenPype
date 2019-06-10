@@ -13,7 +13,7 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
     """
 
     label = "Collect Hierarchy Clip"
-    order = pyblish.api.CollectorOrder + 0.1
+    order = pyblish.api.CollectorOrder + 0.101
     families = ["clip"]
 
     def convert_to_entity(self, key, value):
@@ -38,8 +38,8 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         asset = instance.data.get("asset")
 
         # create asset_names conversion table
-        if not context.data.get("assetsSharedHierarchy"):
-            context.data["assetsSharedHierarchy"] = dict()
+        if not context.data.get("assetsShared"):
+            context.data["assetsShared"] = dict()
 
         # build data for inner nukestudio project property
         data = {
@@ -110,15 +110,18 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # create new shot asset name
                 instance.data["asset"] = instance.data["asset"].format(
                     **d_metadata)
+                self.log.debug("__ instance.data[asset]: {}".format(instance.data["asset"]))
 
                 # lastly fill those individual properties itno
                 # format the string with collected data
                 parents = [{"entityName": p["entityName"].format(
                     **d_metadata), "entityType": p["entityType"]}
                     for p in parents]
+                self.log.debug("__ parents: {}".format(parents))
 
                 hierarchy = template.format(
                     **d_metadata)
+                self.log.debug("__ hierarchy: {}".format(hierarchy))
 
                 # check if hierarchy attribute is already created
                 # it should not be so return warning if it is
@@ -126,17 +129,18 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 assert not hd, "Only one Hierarchy Tag is \
                             allowed. Clip: `{}`".format(asset)
 
-                assetsSharedHierarchy = {
+                assetsShared = {
                     asset: {
                         "asset": instance.data["asset"],
                         "hierarchy": hierarchy,
                         "parents": parents
                     }}
+                self.log.debug("__ assetsShared: {}".format(assetsShared))
                 # add formated hierarchy path into instance data
                 instance.data["hierarchy"] = hierarchy
                 instance.data["parents"] = parents
-                context.data["assetsSharedHierarchy"].update(
-                    assetsSharedHierarchy)
+                context.data["assetsShared"].update(
+                    assetsShared)
 
 
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
@@ -145,7 +149,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
     '''
 
     label = "Collect Hierarchy Context"
-    order = pyblish.api.CollectorOrder + 0.101
+    order = pyblish.api.CollectorOrder + 0.102
 
     def update_dict(self, ex_dict, new_dict):
         for key in ex_dict:
@@ -170,16 +174,37 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
             name = instance.data["asset"]
 
-            # inject assetsSharedHierarchy to other plates types
-            assets_shared = context.data.get("assetsSharedHierarchy")
+            # get handles
+            handles = int(instance.data["handles"])
+            handle_start = int(instance.data["handleStart"] + handles)
+            handle_end = int(instance.data["handleEnd"] + handles)
+
+            # get source frames
+            source_first = int(instance.data["sourceFirst"])
+            source_in = int(instance.data["sourceIn"])
+            source_out = int(instance.data["sourceOut"])
+
+            instance.data['startFrame'] = int(
+                source_first + source_in - handle_start)
+            instance.data['endFrame'] = int(
+                (source_first + source_out + handle_end))
+
+            # inject assetsShared to other plates types
+            assets_shared = context.data.get("assetsShared")
 
             if assets_shared:
                 s_asset_data = assets_shared.get(name)
                 if s_asset_data:
+                    self.log.debug("__ s_asset_data: {}".format(s_asset_data))
                     name = instance.data["asset"] = s_asset_data["asset"]
                     instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
 
+            self.log.debug("__ instance.data[parents]: {}".format(instance.data["parents"]))
+            self.log.debug("__ instance.data[hierarchy]: {}".format(instance.data["hierarchy"]))
+            self.log.debug("__ instance.data[name]: {}".format(instance.data["name"]))
+            if "main" not in instance.data["name"].lower():
+                continue
 
             in_info = {}
             # suppose that all instances are Shots
@@ -187,14 +212,29 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
             # get custom attributes of the shot
             in_info['custom_attributes'] = {
-                'fend': instance.data['endFrame'],
-                'fstart': instance.data['startFrame'],
+                'handles': int(instance.data.get('handles')),
+                'fend': int(
+                    (source_first + source_out)),
+                'fstart': int(
+                    source_first + source_in),
                 'fps': context.data["framerate"]
             }
+
+            handle_start = instance.data.get('handleStart')
+            handle_end = instance.data.get('handleEnd')
+            self.log.debug("__ handle_start: {}".format(handle_start))
+            self.log.debug("__ handle_end: {}".format(handle_end))
+            
+            if handle_start and handle_end:
+                in_info['custom_attributes'].update({
+                    "handle_start": handle_start,
+                    "handle_end": handle_end
+                })
 
             in_info['tasks'] = instance.data['tasks']
 
             parents = instance.data.get('parents', [])
+            self.log.debug("__ in_info: {}".format(in_info))
 
             actual = {name: in_info}
 

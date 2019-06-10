@@ -9,7 +9,7 @@ class ExtractPlateCheck(api.ContextPlugin):
     order = api.ExtractorOrder + 0.01
     label = "Plates Export Waiting"
     hosts = ["nukestudio"]
-    families = ["plates"]
+    families = ["encode"]
 
     def process(self, context):
 
