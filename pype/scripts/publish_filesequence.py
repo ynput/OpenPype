@@ -1,11 +1,9 @@
 """This module is used for command line publishing of image sequences."""
 
 import os
-import sys
 import logging
 import subprocess
 import platform
-from pprint import pprint
 
 handler = logging.basicConfig()
 log = logging.getLogger("Publish Image Sequences")
@@ -28,12 +26,21 @@ def __main__():
                         action="store_true",
                         help="Whether to run Pyblish in GUI mode.")
 
+    parser.add_argument("--pype", help="Pype root")
+
     kwargs, args = parser.parse_known_args()
 
     print("Running pype ...")
-    pype_root = os.path.dirname(os.path.abspath(__file__))
-    pype_root = os.path.abspath(pype_root + "../../../../..")
-    pype_root = os.environ.get('PYPE_ROOT') or pype_root
+    auto_pype_root = os.path.dirname(os.path.abspath(__file__))
+    auto_pype_root = os.path.abspath(auto_pype_root + "../../../../..")
+    auto_pype_root = os.environ.get('PYPE_ROOT') or auto_pype_root
+
+    if kwargs.pype:
+        pype_root = kwargs.pype
+    else:
+        # if pype argument not specified, lets assume it is set in PATH
+        pype_root = ""
+
     print("Set pype root to: {}".format(pype_root))
     print("Paths: {}".format(kwargs.paths or [os.getcwd()]))
 
@@ -44,23 +51,9 @@ def __main__():
     elif platform.system().lower() == "windows":
         pype_command = "pype.bat"
 
-    # no need for pype_root as pype should be in paths?
-    pype_root = ""
-
     args = [os.path.join(pype_root, pype_command),
             "--node", "--publish", "--paths", " ".join(paths)]
 
-    # if we are using windows, run powershell command directly to support
-    # UNC paths.
-    if platform.system().lower() == "windows":
-        # ps_path = r"c:\Windows\System32\WindowsPowerShell\v1.0\powershell"
-        # args = [ps_path, "-NoProfile", "-noexit", "-nologo",
-        #         "-executionpolicy", "bypass", "-command",
-        #         '"{}; exit $LASTEXITCODE"'.format(" ".join(args))]
-        # args = [r"\\cml\projects\pype\ng\pype.bat", "--node", "--paths"]
-        pass
-
-    # pprint(os.environ.get("PATH"))
     print("Pype command: {}".format(" ".join(args)))
     subprocess.call(args, shell=True)
 

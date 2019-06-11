@@ -12,6 +12,30 @@ import platform
 from pprint import pprint
 
 
+# mapping between Maya rendere names and Muster template names
+muster_maya_mapping = {
+    "arnold": "Maya Arnold",
+    "mentalray": "Maya Mr",
+    "renderman": "Maya Renderman",
+    "redshift": "Maya Redshift"
+}
+
+
+def _get_script():
+    """Get path to the image sequence script"""
+    try:
+        from pype.scripts import publish_filesequence
+    except Exception:
+        raise RuntimeError("Expected module 'publish_deadline'"
+                           "to be available")
+
+    module_path = publish_filesequence.__file__
+    if module_path.endswith(".pyc"):
+        module_path = module_path[:-len(".pyc")] + ".py"
+
+    return module_path
+
+
 def get_renderer_variables(renderlayer=None):
     """Retrieve the extension which has been set in the VRay settings
 
@@ -125,7 +149,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         file.close()
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
         if not self.MUSTER_REST_URL:
-            raise Exception("Muster REST API url not set")
+            raise AttributeError("Muster REST API url not set")
 
     def _authenticate(self):
         """
@@ -194,7 +218,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         """
         try:
             self.log.info("Trying to find template for [{}]".format(renderer))
-            return self._templates.get(renderer)
+            mapped = muster_maya_mapping.get(renderer)
+            return self._templates.get(mapped)
         except ValueError:
             raise Exception('Unimplemented renderer {}'.format(renderer))
 
@@ -262,7 +287,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.data['subset']      # beauty
         renderlayer_globals = instance.data["renderGlobals"]
-        legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
+        # legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         # deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
 
@@ -280,14 +305,32 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         output_dir = instance.data["outputDir"]
         metadata_path = os.path.join(output_dir, metadata_filename)
 
-        # TODO: set correct path
-        pype_command = "pype.bat"
-        if platform.system().lower() == "linux":
-            pype_command = "pype"
-        postjob_command = "{} --publish --paths {}".format(
-            os.path.join(os.environ.get('PYPE_ROOT'), pype_command),
-            metadata_path
-            )
+        # replace path for UNC / network share paths, co PYPE is found
+        # over network. It assumes PYPE is located somewhere in
+        # PYPE_STUDIO_CORE_PATH
+        pype_root = os.environ["PYPE_ROOT"].replace(
+            os.path.normpath(
+                os.environ['PYPE_STUDIO_CORE_MOUNT']),  # noqa
+            os.path.normpath(
+                os.environ['PYPE_STUDIO_CORE_PATH']))   # noqa
+
+        # we must provide either full path to executable or use musters own
+        # python named MPython.exe, residing directly in muster bin
+        # directory.
+        if platform.system().lower() == "windows":
+            muster_python = "MPython.exe"
+        else:
+            muster_python = "mpython"
+
+        # build the path and argument. We are providing separate --pype
+        # argument with network path to pype as post job actions are run
+        # but dispatcher (Server) and not render clients. Render clients
+        # inherit environment from publisher including PATH, so there's
+        # no problem finding PYPE, but there is now way (as far as I know)
+        # to set environment dynamically for dispatcher. Therefor this hack.
+        args = [muster_python, _get_script(), "--paths", metadata_path,
+                "--pype", pype_root]
+        postjob_command = " ".join(args)
 
         try:
             # Ensure render folder exists
@@ -304,7 +347,6 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "jobName": jobname,
                     "templateId": self._resolve_template(
                         instance.data["renderer"]),
-                    "camera": "",
                     "chunksInterleave": 2,
                     "chunksPriority": "0",
                     "chunksTimeoutValue": 320,
@@ -314,67 +356,14 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "dependMode": 0,
                     "emergencyQueue": False,
                     "excludedPools": [""],
-                    "exitCodesErrorCheckType": 0,
                     "includedPools": [""],
-                    "logsErrorCheckType": 0,
-                    "mailNotificationsAtChunkLevelType": "1",
-                    "mailNotificationsAtJobLevelType": "1",
-                    "maximumInstances": 0,
-                    "mobileNotificationsAtChunkLevelType": "1",
-                    "mobileNotificationsAtJobLevelType": "1",
-                    "notificatorNotificationsAtChunkLevelType": "1",
-                    "notificatorNotificationsAtJobLevelType": "1",
-                    "overrideChunksTimeout": False,
-                    "overrideErrorExitCodes": False,
-                    "overrideErrorExitCodesValue": "",
-                    "overrideMailNotificationsAtChunkLevel": False,
-                    "overrideMailNotificationsAtJobLevel": False,
-                    "overrideMaximumChunksRequeue": False,
-                    "overrideMaximumChunksRequeueValue": 0,
-                    "overrideMinimumCores": False,
-                    "overrideMinimumCoresValue": 0,
-                    "overrideMinimumDiskSpace": False,
-                    "overrideMinimumDiskSpaceValue": 0,
-                    "overrideMinimumPhysical": False,
-                    "overrideMinimumPhysicalValue": 0,
-                    "overrideMinimumRam": False,
-                    "overrideMinimumRamValue": 0,
-                    "overrideMinimumSpeed": False,
-                    "overrideMinimumSpeedValue": 0,
-                    "overrideMinimumThreads": False,
-                    "overrideMinimumThreadsValue": 0,
-                    "overrideMobileNotificationsAtChunkLevel": False,
-                    "overrideMobileNotificationsAtJobLevel": False,
-                    "overrideNotificatorNotificationsAtChunkLevel": False,
-                    "overrideNotificatorNotificationsAtJobLevel": False,
-                    "overrideStartMailNotificationsAtChunkLevel": False,
-                    "overrideStartMailNotificationsAtJobLevel": False,
-                    "overrideStartMobileNotificationsAtChunkLevel": False,
-                    "overrideStartMobileNotificationsAtJobLevel": False,
-                    "overrideStartNotificatorNotificationsAtChunkLevel": False,
-                    "overrideStartNotificatorNotificationsAtJobLevel": False,
-                    "overrideValidExitCodes": False,
-                    "overrideValidExitCodesValue": "",
-                    "overrideWarningExitCodes": False,
-                    "overrideWarningExitCodesValue": "",
                     "packetSize": 4,
                     "packetType": 1,
                     "priority": 1,
-                    "project": "test",
-                    "sequence": "",
-                    "shot": "",
-                    "startMailNotificationsAtChunkLevelType": "1",
-                    "startMailNotificationsAtJobLevelType": "1",
-                    "startMobileNotificationsAtChunkLevelType": "1",
-                    "startMobileNotificationsAtJobLevelType": "1",
-                    "startNotificatorNotificationsAtChunkLevelType": "1",
-                    "startNotificatorNotificationsAtJobLevelType": "1",
-                    "startOn": 0,
-                    "templateVersion": "",
-
                     "jobId": -1,
                     "startOn": 0,
                     "parentId": -1,
+                    "project": scene,
                     "dependMode": 0,
                     "packetSize": 4,
                     "packetType": 1,
@@ -382,10 +371,13 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "maximumInstances": 0,
                     "assignedInstances": 0,
                     "attributes": {
-                        # "environmental_variables": {
-                        #     "value": ", ".join("{!s}={!r}".format(k, v)
-                        #                        for (k, v) in env.iteritems())
-                        # },
+                        "environmental_variables": {
+                            "value": ", ".join("{!s}={!r}".format(k, v)
+                                               for (k, v) in env.iteritems()),
+
+                            "state": True,
+                            "subst": False
+                         },
                         "memo": {
                             "value": comment,
                             "state": True,
@@ -403,6 +395,11 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                             "state": True,
                             "subst": True
                         },
+                        "job_project": {
+                            "value": workspace,
+                            "state": True,
+                            "subst": True
+                        },
                         "output_folder": {
                             "value": dirname.replace("\\", "/"),
                             "state": True,
@@ -413,158 +410,13 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                             "state": True,
                             "subst": True
                         },
-                        "overridestatus": {
-                          "value": "0",
+                        "MAYADIGITS": {
+                          "value": 1,
                           "state": True,
-                          "subst": False
-                        },
-                        "frame_check": {
-                          "value": "0",
-                          "state": True,
-                          "subst": False
-                        },
-                        "fc_recursion": {
-                          "value": "1",
-                          "state": True,
-                          "subst": False
-                        },
-                        "fc_check_file": {
-                          "value": "1",
-                          "state": True,
-                          "subst": False
-                        },
-                        "fc_file_low": {
-                          "value": "0",
-                          "state": True,
-                          "subst": False
-                        },
-                        "fc_file_high": {
-                          "value": "0",
-                          "state": True,
-                          "subst": False
-                        },
-                        "fc_open_image": {
-                          "value": "1",
-                          "state": True,
-                          "subst": False
-                        },
-                        "fc_render_layer_mode": {
-                          "value": "0",
-                          "state": True,
-                          "subst": False
-                        },
-                        "fc_check_image_dimensions": {
-                          "value": "0",
-                          "state": True,
-                          "subst": False
-                        },
-                        "fc_image_width": {
-                          "value": "1920",
-                          "state": True,
-                          "subst": False
-                        },
-                        "fc_image_height": {
-                          "value": "1080",
-                          "state": True,
-                          "subst": False
-                        },
-                        "movie_assembler": {
-                          "value": "0",
-                          "state": True,
-                          "subst": False
-                        },
-                        "movie_assembler_output": {
-                          "value": "",
-                          "state": True,
-                          "subst": True
-                        },
-                        "movie_assembler_framerate": {
-                          "value": "30",
-                          "state": True,
-                          "subst": False
-                        },
-                        "movie_assembler_template": {
-                          "value": "48",
-                          "state": True,
-                          "subst": False
-                        },
-                        "movie_assembler_input_flags": {
-                          "value": "",
-                          "state": False,
-                          "subst": False
-                        },
-                        "movie_assembler_output_flags": {
-                          "value": "",
-                          "state": False,
-                          "subst": False
-                        },
-                        "pre_job_action": {
-                          "value": "",
-                          "state": False,
-                          "subst": True
-                        },
-                        "pre_job_action_check_retcode": {
-                          "value": 0,
-                          "state": False,
-                          "subst": False
-                        },
-                        "pre_job_action_timeout": {
-                          "value": 0,
-                          "state": False,
-                          "subst": False
-                        },
-                        "post_job_action_check_retcode": {
-                          "value": 0,
-                          "state": False,
-                          "subst": False
-                        },
-                        "post_job_action_timeout": {
-                          "value": 0,
-                          "state": False,
-                          "subst": False
-                        },
-                        "pre_chunk_action": {
-                          "value": "",
-                          "state": False,
-                          "subst": True
-                        },
-                        "pre_chunk_action_check_retcode": {
-                          "value": 0,
-                          "state": False,
-                          "subst": False
-                        },
-                        "pre_chunk_action_timeout": {
-                          "value": 0,
-                          "state": False,
-                          "subst": False
-                        },
-                        "post_chunk_action": {
-                          "value": "",
-                          "state": False,
-                          "subst": True
-                        },
-                        "post_chunk_action_check_retcode": {
-                          "value": 0,
-                          "state": False,
-                          "subst": False
-                        },
-                        "post_chunk_action_timeout": {
-                          "value": 0,
-                          "state": False,
                           "subst": False
                         },
                         "ARNOLDMODE": {
                           "value": "0",
-                          "state": True,
-                          "subst": False
-                        },
-                        "job_project": {
-                          "value": "D:\\D001_projectx\\maya\\work",
-                          "state": True,
-                          "subst": True
-                        },
-                        "MAYADIGITS": {
-                          "value": 1,
                           "state": True,
                           "subst": False
                         },
@@ -603,7 +455,13 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         instance.data["musterSubmissionJob"] = response.json()
 
     def clean_environment(self):
-        # Include critical environment variables with submission
+        """
+        Clean and set environment variables for render job so render clients
+        work in more or less same environment as publishing machine.
+
+        .. warning:: This is not usable for **post job action** as this is
+           executed on dispatcher machine (server) and not render clients.
+        """
         keys = [
             # This will trigger `userSetup.py` on the slave
             # such that proper initialisation happens the same
@@ -666,8 +524,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     except UnicodeDecodeError:
                         print('path contains non UTF characters')
 
-            if key == "PYTHONPATH":
-                clean_path = clean_path.replace('python2', 'python3')
+            # this should replace paths so they are pointing to network share
             clean_path = clean_path.replace(
                 os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
                 os.path.normpath(environment['PYPE_STUDIO_CORE_PATH']))
