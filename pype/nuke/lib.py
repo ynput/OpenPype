@@ -408,10 +408,10 @@ def reset_resolution():
     asset = io.find_one({"name": asset, "type": "asset"})
 
     try:
-        width = asset["data"].get("resolution_width", 1920)
-        height = asset["data"].get("resolution_height", 1080)
-        pixel_aspect = asset["data"].get("pixel_aspect", 1)
-        bbox = asset["data"].get("crop", "0.0.1920.1080")
+        width = get_hierarchical_attr(asset, 'data.resolution_width', 1920)
+        height = get_hierarchical_attr(asset, 'data.resolution_height', 1080)
+        pixel_aspect = get_hierarchical_attr(asset, 'data.pixel_aspect', 1)
+        bbox = get_hierarchical_attr(asset, 'data.crop', "0.0.1920.1080")
 
         try:
             x, y, r, t = bbox.split(".")
