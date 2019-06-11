@@ -9,9 +9,11 @@ import pype.maya.lib as lib
 import pype.api
 import avalon.maya
 
+from pypeapp import config
 from maya import cmds, mel
 import pymel.core as pm
 from pype.vendor import ffmpeg
+# from pype.scripts import otio_burnin
 reload(ffmpeg)
 
 
@@ -51,9 +53,10 @@ class ExtractQuicktime(pype.api.Extractor):
 
         # get cameras
         camera = instance.data['review_camera']
-        capture_preset = ""
+        capture_preset = instance.context.data['presets']['maya']['capture']
+
         try:
-            preset = lib.load_capture_preset(capture_preset)
+            preset = lib.load_capture_preset(data=capture_preset)
         except:
             preset = {}
         self.log.info('using viewport preset: {}'.format(capture_preset))
@@ -106,7 +109,9 @@ class ExtractQuicktime(pype.api.Extractor):
         self.log.info("input {}".format(input_path))
 
         movieFile = filename + ".mov"
-        full_movie_path = os.path.join(stagingdir, movieFile)
+        # movieFileBurnin = filename + "Burn" + ".mov"
+
+        movieFilefull_movie_path = os.path.join(stagingdir, movieFile)
         self.log.info("output {}".format(full_movie_path))
         with avalon.maya.suspended_refresh():
             try:
@@ -123,12 +128,21 @@ class ExtractQuicktime(pype.api.Extractor):
                 self.log.error(ffmpeg_error)
                 raise RuntimeError(ffmpeg_error)
 
+        # burnin_data = {
+        #     "username": 'milan.kolar',
+        #     "shot": 'sh010',
+        #     "task": 'layout'
+        #     }
+        #
+        # full_burnin_path = os.path.join(stagingdir, movieFileBurnin)
+        # otio_burnin.burnins_from_data(full_movie_path, full_burnin_path, burnin_data)
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
             'name': 'mov',
-            'ext': '.mov',
+            'ext': 'mov',
             'files': movieFile,
             "stagingDir": stagingdir,
             'startFrame': start,
@@ -137,7 +151,6 @@ class ExtractQuicktime(pype.api.Extractor):
             'preview': True
         }
         instance.data["representations"].append(representation)
-
 
 
 @contextlib.contextmanager

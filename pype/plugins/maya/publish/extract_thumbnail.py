@@ -50,7 +50,6 @@ class ExtractThumbnail(pype.api.Extractor):
         members = instance.data['setMembers']
         camera = instance.data['review_camera']
 
-
         # project_code = ftrack_data['Project']['code']
         # task_type = ftrack_data['Task']['type']
         #
@@ -82,13 +81,14 @@ class ExtractThumbnail(pype.api.Extractor):
         #     preset_to_use = default_preset_path
 
         capture_preset = ""
+        capture_preset = instance.context.data['presets']['maya']['capture']
         try:
-            preset = lib.load_capture_preset(capture_preset)
+            preset = lib.load_capture_preset(data=capture_preset)
         except:
             preset = {}
         self.log.info('using viewport preset: {}'.format(capture_preset))
 
-        #preset["off_screen"] =  False
+        # preset["off_screen"] =  False
 
         preset['camera'] = camera
         preset['format'] = "image"
@@ -143,7 +143,6 @@ class ExtractThumbnail(pype.api.Extractor):
             "thumbnail": True
         }
         instance.data["representations"].append(representation)
-
 
 
 @contextlib.contextmanager
