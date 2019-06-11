@@ -2106,12 +2106,15 @@ def bake_to_world_space(nodes,
 
     return world_space_nodes
 
-def load_capture_preset(path):
+def load_capture_preset(path=None, data=None):
     import capture_gui
     import capture
 
-    path = path
-    preset = capture_gui.lib.load_json(path)
+    if data:
+        preset = data
+    else:
+        path = path
+        preset = capture_gui.lib.load_json(path)
     print preset
 
     options = dict()
@@ -2164,8 +2167,8 @@ def load_capture_preset(path):
     for key in preset[id]:
         if key == 'high_quality':
             temp_options2['multiSampleEnable'] = True
-            temp_options2['multiSampleCount'] = 4
-            temp_options2['textureMaxResolution'] = 512
+            temp_options2['multiSampleCount'] = 8
+            temp_options2['textureMaxResolution'] = 1024
             temp_options2['enableTextureMaxRes'] = True
 
         if key == 'alphaCut' :
