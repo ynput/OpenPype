@@ -408,10 +408,10 @@ def reset_resolution():
     asset = io.find_one({"name": asset, "type": "asset"})
 
     try:
-        width = asset["data"].get("resolution_width", 1920)
-        height = asset["data"].get("resolution_height", 1080)
-        pixel_aspect = asset["data"].get("pixel_aspect", 1)
-        bbox = asset["data"].get("crop", "0.0.1920.1080")
+        width = get_hierarchical_attr(asset, 'data.resolution_width', 1920)
+        height = get_hierarchical_attr(asset, 'data.resolution_height', 1080)
+        pixel_aspect = get_hierarchical_attr(asset, 'data.pixel_aspect', 1)
+        bbox = get_hierarchical_attr(asset, 'data.crop', "0.0.1920.1080")
 
         try:
             x, y, r, t = bbox.split(".")
@@ -503,6 +503,37 @@ def make_format(**args):
                    "{project_name}".format(**args))
     nuke.root()["format"].setValue("{project_name}".format(**args))
 
+
+def set_context_settings():
+    # replace reset resolution from avalon core to pype's
+    reset_resolution()
+    # replace reset resolution from avalon core to pype's
+    reset_frame_range_handles()
+    # add colorspace menu item
+    set_colorspace()
+
+
+def get_hierarchical_attr(entity, attr, default=None):
+    attr_parts = attr.split('.')
+    value = entity
+    for part in attr_parts:
+        value = value.get(part)
+        if not value:
+            break
+
+    if value or entity['type'].lower() == 'project':
+        return value
+
+    parent_id = entity['parent']
+    if (
+        entity['type'].lower() == 'asset' and
+        entity.get('data', {}).get('visualParent')
+    ):
+        parent_id = entity['data']['visualParent']
+
+    parent = io.find_one({'_id': parent_id})
+
+    return get_hierarchical_attr(parent, attr)
 
 # TODO: bellow functions are wip and needs to be check where they are used
 # ------------------------------------
