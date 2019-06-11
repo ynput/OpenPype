@@ -105,7 +105,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
-                                          "http://localhost:8082")
+                                           "http://localhost:8082")
         assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
         context = instance.context
@@ -245,13 +245,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         ]
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
-        #self.log.debug("enviro: {}".format(pprint(environment)))
+        # self.log.debug("enviro: {}".format(pprint(environment)))
         for path in os.environ:
             if path.lower().startswith('pype_'):
                 environment[path] = os.environ[path]
 
         environment["PATH"] = os.environ["PATH"]
-        self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
+        # self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
         clean_environment = {}
         for key in environment:
             clean_path = ""
@@ -279,8 +279,10 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             if key == "PYTHONPATH":
                 clean_path = clean_path.replace('python2', 'python3')
             clean_path = clean_path.replace(
-                                            os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
-                                            os.path.normpath(environment['PYPE_STUDIO_CORE_PATH']))
+                                            os.path.normpath(
+                                                environment['PYPE_STUDIO_CORE_MOUNT']),  # noqa
+                                            os.path.normpath(
+                                                environment['PYPE_STUDIO_CORE_PATH']))   # noqa
             clean_environment[key] = clean_path
 
         environment = clean_environment

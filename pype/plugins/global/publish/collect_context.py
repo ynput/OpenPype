@@ -16,7 +16,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
     label = "Collect Context - SA Publish"
     order = pyblish.api.CollectorOrder - 0.49
-    hosts = ["shell"]
+    hosts = ["standalonepublisher"]
 
     def process(self, context):
         # get json paths from os and load them

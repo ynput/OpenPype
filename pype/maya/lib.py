@@ -2205,6 +2205,7 @@ def load_capture_preset(path):
 
     return options
 
+
 def get_attr_in_layer(attr, layer):
     """Return attribute value in specified renderlayer.
 
@@ -2229,10 +2230,14 @@ def get_attr_in_layer(attr, layer):
 
     """
 
-    if cmds.mayaHasRenderSetup():
-        log.debug("lib.get_attr_in_layer is not optimized for render setup")
-        with renderlayer(layer):
-            return cmds.getAttr(attr)
+    try:
+        if cmds.mayaHasRenderSetup():
+            log.debug("lib.get_attr_in_layer is not "
+                      "optimized for render setup")
+            with renderlayer(layer):
+                return cmds.getAttr(attr)
+    except AttributeError:
+        pass
 
     # Ignore complex query if we're in the layer anyway
     current_layer = cmds.editRenderLayerGlobals(query=True,

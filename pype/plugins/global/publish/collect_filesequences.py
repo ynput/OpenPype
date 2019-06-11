@@ -2,7 +2,7 @@ import os
 import re
 import copy
 import json
-import pprint
+from pprint import pformat
 
 import pyblish.api
 from avalon import api
@@ -90,9 +90,9 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
     label = "File Sequences"
 
     def process(self, context):
-
-        if os.environ.get("FILESEQUENCE"):
-            paths = os.environ["FILESEQUENCE"].split(os.pathsep)
+        if os.environ.get("PYPE_PUBLISH_PATHS"):
+            paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
+            self.log.info("Collecting paths: {}".format(paths))
         else:
             cwd = context.get("workspaceDir", os.getcwd())
             paths = [cwd]
@@ -121,6 +121,13 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 else:
                     root = cwd
 
+                metadata = data.get("metadata")
+                if metadata:
+                    session = metadata.get("session")
+                    if session:
+                        self.log.info("setting session using metadata")
+                        api.Session.update(session)
+                        os.environ.update(session)
             else:
                 # Search in directory
                 data = dict()
@@ -172,6 +179,8 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 # root = os.path.normpath(root)
                 # self.log.info("Source: {}}".format(data.get("source", "")))
 
+                ext = list(collection)[0].split('.')[-1]
+
                 instance.data.update({
                     "name": str(collection),
                     "family": families[0],  # backwards compatibility / pyblish
@@ -185,17 +194,22 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     "source": data.get('source', '')
                 })
                 instance.append(collection)
+                instance.context.data['fps'] = fps
+
+                if "representations" not in instance.data:
+                    instance.data["representations"] = []
 
                 representation = {
-                    'name': 'jpg',
-                    'ext': '.jpg',
-                    'files': [list(collection)],
+                    'name': ext,
+                    'ext': '{}'.format(ext),
+                    'files': list(collection),
                     "stagingDir": root,
+                    "anatomy_template": "render"
                 }
-                instance.data["representations"] = [representation]
+                instance.data["representations"].append(representation)
 
                 if data.get('user'):
                     context.data["user"] = data['user']
 
                 self.log.debug("Collected instance:\n"
-                               "{}".format(pprint.pformat(instance.data)))
+                               "{}".format(pformat(instance.data)))

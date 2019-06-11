@@ -125,6 +125,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             "Instance 'files' must be a list, got: {0}".format(repres)
         )
 
+        # FIXME: io is not initialized at this point for shell host
+        io.install()
         project = io.find_one({"type": "project"})
 
         asset = io.find_one({"type": "asset",
@@ -241,7 +243,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if isinstance(files, list):
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
-                    "src_collections: {}".format(str(src_collections)))
+                    "src_tail_collections: {}".format(str(src_collections)))
                 src_collection = src_collections[0]
                 # Assert that each member has identical suffix
                 src_head = src_collection.format("{head}")
@@ -253,6 +255,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     template_data["frame"] = src_collection.format(
                         "{padding}") % i
                     anatomy_filled = anatomy.format(template_data)
+
                     test_dest_files.append(
                         os.path.normpath(
                             anatomy_filled[template_name]["path"])
@@ -274,14 +277,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                     dst_padding = dst_collection.format("{padding}") % i
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
-
+                    self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
                 # for imagesequence version data
                 hashes = '#' * len(dst_padding)
-                dst =  os.path.normpath("{0}{1}{2}".format(dst_head, hashes, dst_tail))
+                dst = os.path.normpath("{0}{1}{2}".format(
+                    dst_head, hashes, dst_tail))
 
             else:
                 # Single file
@@ -302,7 +306,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 template_data["representation"] = repre['ext']
 
                 src = os.path.join(stagingdir, fname)
-                # src = fname
                 anatomy_filled = anatomy.format(template_data)
                 dst = os.path.normpath(
                         anatomy_filled[template_name]["path"])
@@ -350,7 +353,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         io.insert_many(representations)
         # self.log.debug("Representation: {}".format(representations))
         self.log.info("Registered {} items".format(len(representations)))
-
 
     def integrate(self, instance):
         """Move the files

@@ -90,6 +90,8 @@ class CollectAssumedDestination(pyblish.api.ContextPlugin):
         asset_name = instance.data["asset"]
         project_name = api.Session["AVALON_PROJECT"]
 
+        # FIXME: io is not initialized at this point for shell host
+        io.install()
         project = io.find_one({"type": "project",
                                "name": project_name},
                               projection={"config": True, "data": True})
