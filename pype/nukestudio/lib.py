@@ -5,17 +5,16 @@ import sys
 # Pyblish libraries
 import pyblish.api
 
-# Host libraries
-import hiero
-
-from pypeapp import Logger
-log = Logger().get_logger(__name__, "nukestudio")
-
 import avalon.api as avalon
 import pype.api as pype
 
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 
+# Host libraries
+import hiero
+
+from pypeapp import Logger
+log = Logger().get_logger(__name__, "nukestudio")
 
 cached_process = None
 
@@ -72,8 +71,11 @@ def reload_config():
     import importlib
 
     for module in (
+        "avalon",
         "avalon.lib",
         "avalon.pipeline",
+        "pyblish",
+        "pyblish_lite",
         "pypeapp",
         "{}.api".format(AVALON_CONFIG),
         "{}.templates".format(AVALON_CONFIG),

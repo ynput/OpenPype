@@ -95,26 +95,26 @@ def install():
             'icon': QIcon('icons:Position.png')
         },
         "separator",
-        {
-            'action': QAction('Create...', None),
-            'function': creator.show,
-            'icon': QIcon('icons:ColorAdd.png')
-        },
-        {
-            'action': QAction('Load...', None),
-            'function': cbloader.show,
-            'icon': QIcon('icons:CopyRectangle.png')
-        },
+        # {
+        #     'action': QAction('Create...', None),
+        #     'function': creator.show,
+        #     'icon': QIcon('icons:ColorAdd.png')
+        # },
+        # {
+        #     'action': QAction('Load...', None),
+        #     'function': cbloader.show,
+        #     'icon': QIcon('icons:CopyRectangle.png')
+        # },
         {
             'action': QAction('Publish...', None),
             'function': publish.show,
             'icon': QIcon('icons:Output.png')
         },
-        {
-            'action': QAction('Manage...', None),
-            'function': cbsceneinventory.show,
-            'icon': QIcon('icons:ModifyMetaData.png')
-        },
+        # {
+        #     'action': QAction('Manage...', None),
+        #     'function': cbsceneinventory.show,
+        #     'icon': QIcon('icons:ModifyMetaData.png')
+        # },
         {
             'action': QAction('Library...', None),
             'function': libraryloader.show,

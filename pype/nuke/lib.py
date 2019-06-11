@@ -1,6 +1,5 @@
 import os
 import sys
-import os
 from collections import OrderedDict
 from pprint import pprint
 from avalon import api, io, lib
@@ -196,14 +195,19 @@ def create_write_node(name, data):
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))
 
+    fpath = str(anatomy_filled["render"]["path"]).replace("\\", "/")
+
+    # create directory
+    os.makedirs( os.path.dirname(fpath), 0766 )
+
     _data = OrderedDict({
-        "file": str(anatomy_filled["render"]["path"]).replace("\\", "/")
+        "file": fpath
     })
 
     # adding dataflow template
     {_data.update({k: v})
      for k, v in nuke_dataflow_writes.items()
-     if k not in ["id", "previous"]}
+     if k not in ["_id", "_previous"]}
 
     # adding dataflow template
     {_data.update({k: v})
@@ -335,6 +339,58 @@ def set_colorspace():
                   "contact your supervisor!")
 
 
+def reset_frame_range_handles():
+    """Set frame range to current asset"""
+
+    fps = float(api.Session.get("AVALON_FPS", 25))
+    nuke.root()["fps"].setValue(fps)
+    name = api.Session["AVALON_ASSET"]
+    asset = io.find_one({"name": name, "type": "asset"})
+
+    if "data" not in asset:
+        msg = "Asset {} don't have set any 'data'".format(name)
+        log.warning(msg)
+        nuke.message(msg)
+        return
+    data = asset["data"]
+
+    missing_cols = []
+    check_cols = ["fstart", "fend", "handle_start", "handle_end"]
+
+    for col in check_cols:
+        if col not in data:
+            missing_cols.append(col)
+
+    if len(missing_cols) > 0:
+        missing = ", ".join(missing_cols)
+        msg = "'{}' are not set for asset '{}'!".format(missing, name)
+        log.warning(msg)
+        nuke.message(msg)
+        return
+
+    # get handles values
+    handles = avalon.nuke.get_handles(asset)
+    handle_start, handle_end = pype.get_handle_irregular(asset)
+
+    log.info("__ handles: `{}`".format(handles))
+    log.info("__ handle_start: `{}`".format(handle_start))
+    log.info("__ handle_end: `{}`".format(handle_end))
+
+    edit_in = int(asset["data"]["fstart"]) - handles - handle_start
+    edit_out = int(asset["data"]["fend"]) + handles + handle_end
+
+    nuke.root()["first_frame"].setValue(edit_in)
+    nuke.root()["last_frame"].setValue(edit_out)
+
+    # setting active viewers
+    vv = nuke.activeViewer().node()
+    vv['frame_range_lock'].setValue(True)
+    vv['frame_range'].setValue('{0}-{1}'.format(
+        int(asset["data"]["fstart"]),
+        int(asset["data"]["fend"]))
+    )
+
+
 def get_avalon_knob_data(node):
     import toml
     try:
@@ -451,33 +507,33 @@ def make_format(**args):
 # TODO: bellow functions are wip and needs to be check where they are used
 # ------------------------------------
 
-
-def update_frame_range(start, end, root=None):
-    """Set Nuke script start and end frame range
-
-    Args:
-        start (float, int): start frame
-        end (float, int): end frame
-        root (object, Optional): root object from nuke's script
-
-    Returns:
-        None
-
-    """
-
-    knobs = {
-        "first_frame": start,
-        "last_frame": end
-    }
-
-    with avalon.nuke.viewer_update_and_undo_stop():
-        for key, value in knobs.items():
-            if root:
-                root[key].setValue(value)
-            else:
-                nuke.root()[key].setValue(value)
-
-# 
+#
+# def update_frame_range(start, end, root=None):
+#     """Set Nuke script start and end frame range
+#
+#     Args:
+#         start (float, int): start frame
+#         end (float, int): end frame
+#         root (object, Optional): root object from nuke's script
+#
+#     Returns:
+#         None
+#
+#     """
+#
+#     knobs = {
+#         "first_frame": start,
+#         "last_frame": end
+#     }
+#
+#     with avalon.nuke.viewer_update_and_undo_stop():
+#         for key, value in knobs.items():
+#             if root:
+#                 root[key].setValue(value)
+#             else:
+#                 nuke.root()[key].setValue(value)
+#
+# #
 # def get_additional_data(container):
 #     """Get Nuke's related data for the container
 #

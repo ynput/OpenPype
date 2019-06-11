@@ -2,27 +2,6 @@ import os
 import pyblish.api
 import logging
 
-if not os.environ.get("FTRACK_API_KEY"):
-    import appdirs
-    import json
-
-    config_path = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
-    action_file_name = 'ftrack_cred.json'
-    action_fpath = os.path.join(config_path, action_file_name)
-
-    validation = False
-    credentials = {}
-    try:
-        file = open(action_fpath, 'r')
-        credentials = json.load(file)
-    except Exception:
-        raise Exception("Ftrack credentials are missing ...")
-    else:
-        file.close()
-
-    os.environ['FTRACK_API_USER'] = credentials["username"]
-    os.environ['FTRACK_API_KEY'] = credentials["apiKey"]
-
 try:
     import ftrack_api_old as ftrack_api
 except Exception:
@@ -37,6 +16,8 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
+        ftrack_log = logging.getLogger('ftrack_api')
+        ftrack_log.setLevel(logging.WARNING)
         # Collect session
         session = ftrack_api.Session()
         context.data["ftrackSession"] = session

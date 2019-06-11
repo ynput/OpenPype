@@ -9,16 +9,18 @@ class CollectAssumedDestination(pyblish.api.ContextPlugin):
 
     label = "Collect Assumed Destination"
     order = pyblish.api.CollectorOrder + 0.498
-    exclude_families = ["clip"]
+    exclude_families = ["plate"]
 
     def process(self, context):
+
         for instance in context:
+            if [ef for ef in self.exclude_families
+                    if ef in instance.data["family"]]:
+                self.log.info("Ignoring instance: {}".format(instance))
+                return
             self.process_item(instance)
 
     def process_item(self, instance):
-        if [ef for ef in self.exclude_families
-                if instance.data["family"] in ef]:
-            return
 
         self.create_destination_template(instance)
 

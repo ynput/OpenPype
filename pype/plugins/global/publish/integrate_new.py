@@ -60,7 +60,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "nukescript",
                 "render",
                 "write",
-                "plates"
+                "rig",
+                "plate"
                 ]
     exclude_families = ["clip"]
 
@@ -163,6 +164,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
         version_data = self.create_version_data(context, instance)
+
+        version_data_instance = instance.data.get('versionData')
+
+        if version_data_instance:
+            version_data.update(version_data_instance)
+
         version = self.create_version(subset=subset,
                                       version_number=next_version,
                                       locations=[LOCATION],
@@ -253,13 +260,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         os.path.normpath(
                             anatomy_filled[template_name]["path"])
                     )
+                    self.log.debug(
+                        "test_dest_files: {}".format(str(test_dest_files)))
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
                 dst_head = dst_collection.format("{head}")
                 dst_tail = dst_collection.format("{tail}")
 
-                instance.data["representations"][idx]['published_path'] = dst_collection.format()  # noqa E01
+                repre['published_path'] = dst_collection.format()
 
                 for i in src_collection.indexes:
                     src_padding = src_collection.format("{padding}") % i
@@ -270,8 +279,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
-                    self.log.debug("source: `{}`".format(src))
+                    self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
+
+                # for imagesequence version data
+                hashes = '#' * len(dst_padding)
+                dst = os.path.normpath("{0}{1}{2}".format(
+                    dst_head, hashes, dst_tail))
 
             else:
                 # Single file
@@ -293,10 +307,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled[template_name]["path"]
+                dst = os.path.normpath(
+                        anatomy_filled[template_name]["path"])
 
                 instance.data["transfers"].append([src, dst])
-                instance.data["representations"][idx]['published_path'] = dst
+
+                repre['published_path'] = dst
+                self.log.debug("__ dst: {}".format(dst))
 
             representation = {
                 "schema": "pype:representation-2.0",
@@ -322,14 +339,20 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
-
+            self.log.debug("__ _representation: {}".format(representation))
             destination_list.append(dst)
+            self.log.debug("__ destination_list: {}".format(destination_list))
             instance.data['destination_list'] = destination_list
             representations.append(representation)
+            self.log.debug("__ representations: {}".format(representations))
 
-        self.log.info("Registering {} items".format(len(representations)))
-
+        self.log.debug("__ representations: {}".format(representations))
+        for rep in instance.data["representations"]:
+            self.log.debug("__ represNAME: {}".format(rep['name']))
+            self.log.debug("__ represPATH: {}".format(rep['published_path']))
         io.insert_many(representations)
+        # self.log.debug("Representation: {}".format(representations))
+        self.log.info("Registered {} items".format(len(representations)))
 
     def integrate(self, instance):
         """Move the files
@@ -343,7 +366,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         transfers = instance.data.get("transfers", list())
 
         for src, dest in transfers:
-            self.log.info("Copying file .. {} -> {}".format(src, dest))
+            self.log.debug("Copying file .. {} -> {}".format(src, dest))
             self.copy_file(src, dest)
 
         # Produce hardlinked copies
@@ -353,7 +376,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # to ensure publishes remain safe and non-edited.
         hardlinks = instance.data.get("hardlinks", list())
         for src, dest in hardlinks:
-            self.log.info("Hardlinking file .. {} -> {}".format(src, dest))
+            self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
             self.hardlink_file(src, dest)
 
     def copy_file(self, src, dst):
