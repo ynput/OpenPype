@@ -75,8 +75,9 @@ class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):
 
         representation = {
             'name': 'mov',
-            'ext': '.mov',
+            'ext': 'mov',
             'files': movFile,
             "stagingDir": stagingdir,
+            "preview": True
         }
         instance.data["representations"].append(representation)

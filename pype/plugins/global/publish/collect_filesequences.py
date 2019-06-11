@@ -194,13 +194,14 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     "source": data.get('source', '')
                 })
                 instance.append(collection)
+                instance.context.data['fps'] = fps
 
                 if "representations" not in instance.data:
                     instance.data["representations"] = []
 
                 representation = {
                     'name': ext,
-                    'ext': '.{}'.format(ext),
+                    'ext': '{}'.format(ext),
                     'files': list(collection),
                     "stagingDir": root,
                     "anatomy_template": "render"

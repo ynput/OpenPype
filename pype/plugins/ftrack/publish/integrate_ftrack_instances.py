@@ -26,7 +26,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'render': 'render',
                       'nukescript': 'comp',
                       'review': 'mov',
-                      'plate': 'img'
+                      'plates': 'img'
                       }
 
     def process(self, instance):
@@ -54,9 +54,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 }
             elif comp.get('preview'):
                 if not comp.get('startFrameReview'):
-                    comp['startFrameReview'] = comp['startFrame']
+                    comp['startFrameReview'] = instance.data['startFrame']
                 if not comp.get('endFrameReview'):
-                    comp['endFrameReview'] = comp['endFrame']
+                    comp['endFrameReview'] = instance.data['endFrame']
+                if not comp.get('frameRate'):
+                    comp['frameRate'] = instance.context.data['fps']
                 location = ft_session.query(
                     'Location where name is "ftrack.server"').one()
                 component_data = {
@@ -65,7 +67,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "metadata": {'ftr_meta': json.dumps({
                                  'frameIn': int(comp['startFrameReview']),
                                  'frameOut': int(comp['endFrameReview']),
-                                 'frameRate': comp['frameRate']})}
+                                 'frameRate': float(comp['frameRate'])})}
                 }
                 comp['thumbnail'] = False
             else:
