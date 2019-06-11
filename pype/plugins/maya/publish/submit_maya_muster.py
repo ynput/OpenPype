@@ -7,9 +7,6 @@ import pyblish.api
 import pype.maya.lib as lib
 import appdirs
 import platform
-# from pypeapp.lib.config import get_presets
-
-from pprint import pprint
 
 
 # mapping between Maya rendere names and Muster template names
@@ -286,7 +283,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.data['subset']      # beauty
-        renderlayer_globals = instance.data["renderGlobals"]
+        # renderlayer_globals = instance.data["renderGlobals"]
         # legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         # deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
