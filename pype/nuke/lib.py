@@ -504,6 +504,15 @@ def make_format(**args):
     nuke.root()["format"].setValue("{project_name}".format(**args))
 
 
+def set_context_settings():
+    # replace reset resolution from avalon core to pype's
+    reset_resolution()
+    # replace reset resolution from avalon core to pype's
+    reset_frame_range_handles()
+    # add colorspace menu item
+    set_colorspace()
+
+
 def get_hierarchical_attr(entity, attr, default=None):
     attr_parts = attr.split('.')
     value = entity
