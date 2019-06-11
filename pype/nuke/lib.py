@@ -504,6 +504,28 @@ def make_format(**args):
     nuke.root()["format"].setValue("{project_name}".format(**args))
 
 
+def get_hierarchical_attr(entity, attr, default=None):
+    attr_parts = attr.split('.')
+    value = entity
+    for part in attr_parts:
+        value = value.get(part)
+        if not value:
+            break
+
+    if value or entity['type'].lower() == 'project':
+        return value
+
+    parent_id = entity['parent']
+    if (
+        entity['type'].lower() == 'asset' and
+        entity.get('data', {}).get('visualParent')
+    ):
+        parent_id = entity['data']['visualParent']
+
+    parent = io.find_one({'_id': parent_id})
+
+    return get_hierarchical_attr(parent, attr)
+
 # TODO: bellow functions are wip and needs to be check where they are used
 # ------------------------------------
 
