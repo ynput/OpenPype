@@ -64,7 +64,7 @@ class ExtractQuicktime(pype.api.Extractor):
         preset['camera'] = camera
         preset['format'] = "image"
         # preset['compression'] = "qt"
-        preset['quality'] = 50
+        preset['quality'] = 95
         preset['compression'] = "jpg"
         preset['start_frame'] = start
         preset['end_frame'] = end
