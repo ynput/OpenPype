@@ -6,10 +6,10 @@ import capture_gui
 import clique
 
 import pype.maya.lib as lib
+reload(lib)
 import pype.api
 import avalon.maya
 
-from pypeapp import config
 from maya import cmds, mel
 import pymel.core as pm
 from pype.vendor import ffmpeg
@@ -59,7 +59,7 @@ class ExtractQuicktime(pype.api.Extractor):
             preset = lib.load_capture_preset(data=capture_preset)
         except:
             preset = {}
-        self.log.info('using viewport preset: {}'.format(capture_preset))
+        self.log.info('using viewport preset: {}'.format(preset))
 
         preset['camera'] = camera
         preset['format'] = "image"
@@ -111,7 +111,7 @@ class ExtractQuicktime(pype.api.Extractor):
         movieFile = filename + ".mov"
         # movieFileBurnin = filename + "Burn" + ".mov"
 
-        movieFilefull_movie_path = os.path.join(stagingdir, movieFile)
+        full_movie_path = os.path.join(stagingdir, movieFile)
         self.log.info("output {}".format(full_movie_path))
         with avalon.maya.suspended_refresh():
             try:

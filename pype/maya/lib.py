@@ -2171,11 +2171,14 @@ def load_capture_preset(path=None, data=None):
             temp_options2['textureMaxResolution'] = 1024
             temp_options2['enableTextureMaxRes'] = True
 
-        if key == 'alphaCut' :
+        if key == 'alphaCut':
             temp_options2['transparencyAlgorithm'] = 5
             temp_options2['transparencyQuality'] = 1
 
-        if key == 'headsUpDisplay' :
+        if key == 'ssaoEnable':
+            temp_options2['ssaoEnable'] = True
+
+        if key == 'headsUpDisplay':
             temp_options['headsUpDisplay'] = True
 
         if key == 'displayLights':
@@ -2183,7 +2186,10 @@ def load_capture_preset(path=None, data=None):
         else:
             temp_options[str(key)] = preset[id][key]
 
-    for key in ['override_viewport_options', 'high_quality', 'alphaCut']:
+    for key in ['override_viewport_options', 'high_quality', 'alphaCut', "gpuCacheDisplayFilter"]:
+        temp_options.pop(key, None)
+
+    for key in ['ssaoEnable']:
         temp_options.pop(key, None)
 
     options['viewport_options'] = temp_options
