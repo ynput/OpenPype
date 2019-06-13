@@ -1,9 +1,7 @@
 import os
 import sys
-import os
 from collections import OrderedDict
 from pprint import pprint
-from avalon.vendor.Qt import QtGui
 from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
@@ -20,6 +18,12 @@ self = sys.modules[__name__]
 self._project = None
 
 
+for path in sys.path:
+    log.info(os.path.normpath(path))
+    if "C:\\Users\\Public" in os.path.normpath(path):
+        log.info("_ removing from sys.path: `{}`".format(path))
+        sys.path.remove(path)
+
 def onScriptLoad():
     if nuke.env['LINUX']:
         nuke.tcl('load ffmpegReader')
@@ -27,6 +31,53 @@ def onScriptLoad():
     else:
         nuke.tcl('load movReader')
         nuke.tcl('load movWriter')
+
+
+def checkInventoryVersions():
+    """
+    Actiual version idetifier of Loaded containers
+
+    Any time this function is run it will check all nodes and filter only Loader nodes for its version. It will get all versions from database
+    and check if the node is having actual version. If not then it will color it to red.
+
+    """
+
+
+    # get all Loader nodes by avalon attribute metadata
+    for each in nuke.allNodes():
+        if each.Class() == 'Read':
+            container = avalon.nuke.parse_container(each)
+
+            if container:
+                node = container["_tool"]
+                avalon_knob_data = get_avalon_knob_data(node)
+
+                # get representation from io
+                representation = io.find_one({
+                    "type": "representation",
+                    "_id": io.ObjectId(avalon_knob_data["representation"])
+                })
+
+                # Get start frame from version data
+                version = io.find_one({
+                    "type": "version",
+                    "_id": representation["parent"]
+                })
+
+                # get all versions in list
+                versions = io.find({
+                    "type": "version",
+                    "parent": version["parent"]
+                }).distinct('name')
+
+                max_version = max(versions)
+
+                # check the available version and do match
+                # change color of node if not max verion
+                if version.get("name") not in [max_version]:
+                    node["tile_color"].setValue(int("0xd84f20ff", 16))
+                else:
+                    node["tile_color"].setValue(int("0x4ecd25ff", 16))
 
 
 def writes_version_sync():
@@ -144,14 +195,19 @@ def create_write_node(name, data):
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))
 
+    fpath = str(anatomy_filled["render"]["path"]).replace("\\", "/")
+
+    # create directory
+    os.makedirs( os.path.dirname(fpath), 0766 )
+
     _data = OrderedDict({
-        "file": str(anatomy_filled["render"]["path"]).replace("\\", "/")
+        "file": fpath
     })
 
     # adding dataflow template
     {_data.update({k: v})
      for k, v in nuke_dataflow_writes.items()
-     if k not in ["id", "previous"]}
+     if k not in ["_id", "_previous"]}
 
     # adding dataflow template
     {_data.update({k: v})
@@ -283,6 +339,58 @@ def set_colorspace():
                   "contact your supervisor!")
 
 
+def reset_frame_range_handles():
+    """Set frame range to current asset"""
+
+    fps = float(api.Session.get("AVALON_FPS", 25))
+    nuke.root()["fps"].setValue(fps)
+    name = api.Session["AVALON_ASSET"]
+    asset = io.find_one({"name": name, "type": "asset"})
+
+    if "data" not in asset:
+        msg = "Asset {} don't have set any 'data'".format(name)
+        log.warning(msg)
+        nuke.message(msg)
+        return
+    data = asset["data"]
+
+    missing_cols = []
+    check_cols = ["fstart", "fend", "handle_start", "handle_end"]
+
+    for col in check_cols:
+        if col not in data:
+            missing_cols.append(col)
+
+    if len(missing_cols) > 0:
+        missing = ", ".join(missing_cols)
+        msg = "'{}' are not set for asset '{}'!".format(missing, name)
+        log.warning(msg)
+        nuke.message(msg)
+        return
+
+    # get handles values
+    handles = avalon.nuke.get_handles(asset)
+    handle_start, handle_end = pype.get_handle_irregular(asset)
+
+    log.info("__ handles: `{}`".format(handles))
+    log.info("__ handle_start: `{}`".format(handle_start))
+    log.info("__ handle_end: `{}`".format(handle_end))
+
+    edit_in = int(asset["data"]["fstart"]) - handles - handle_start
+    edit_out = int(asset["data"]["fend"]) + handles + handle_end
+
+    nuke.root()["first_frame"].setValue(edit_in)
+    nuke.root()["last_frame"].setValue(edit_out)
+
+    # setting active viewers
+    vv = nuke.activeViewer().node()
+    vv['frame_range_lock'].setValue(True)
+    vv['frame_range'].setValue('{0}-{1}'.format(
+        int(asset["data"]["fstart"]),
+        int(asset["data"]["fend"]))
+    )
+
+
 def get_avalon_knob_data(node):
     import toml
     try:
@@ -300,10 +408,10 @@ def reset_resolution():
     asset = io.find_one({"name": asset, "type": "asset"})
 
     try:
-        width = asset["data"].get("resolution_width", 1920)
-        height = asset["data"].get("resolution_height", 1080)
-        pixel_aspect = asset["data"].get("pixel_aspect", 1)
-        bbox = asset["data"].get("crop", "0.0.1920.1080")
+        width = get_hierarchical_attr(asset, 'data.resolution_width', 1920)
+        height = get_hierarchical_attr(asset, 'data.resolution_height', 1080)
+        pixel_aspect = get_hierarchical_attr(asset, 'data.pixel_aspect', 1)
+        bbox = get_hierarchical_attr(asset, 'data.crop', "0.0.1920.1080")
 
         try:
             x, y, r, t = bbox.split(".")
@@ -396,59 +504,90 @@ def make_format(**args):
     nuke.root()["format"].setValue("{project_name}".format(**args))
 
 
+def set_context_settings():
+    # replace reset resolution from avalon core to pype's
+    reset_resolution()
+    # replace reset resolution from avalon core to pype's
+    reset_frame_range_handles()
+    # add colorspace menu item
+    set_colorspace()
+
+
+def get_hierarchical_attr(entity, attr, default=None):
+    attr_parts = attr.split('.')
+    value = entity
+    for part in attr_parts:
+        value = value.get(part)
+        if not value:
+            break
+
+    if value or entity['type'].lower() == 'project':
+        return value
+
+    parent_id = entity['parent']
+    if (
+        entity['type'].lower() == 'asset' and
+        entity.get('data', {}).get('visualParent')
+    ):
+        parent_id = entity['data']['visualParent']
+
+    parent = io.find_one({'_id': parent_id})
+
+    return get_hierarchical_attr(parent, attr)
+
 # TODO: bellow functions are wip and needs to be check where they are used
 # ------------------------------------
 
-
-def update_frame_range(start, end, root=None):
-    """Set Nuke script start and end frame range
-
-    Args:
-        start (float, int): start frame
-        end (float, int): end frame
-        root (object, Optional): root object from nuke's script
-
-    Returns:
-        None
-
-    """
-
-    knobs = {
-        "first_frame": start,
-        "last_frame": end
-    }
-
-    with avalon.nuke.viewer_update_and_undo_stop():
-        for key, value in knobs.items():
-            if root:
-                root[key].setValue(value)
-            else:
-                nuke.root()[key].setValue(value)
-
-
-def get_additional_data(container):
-    """Get Nuke's related data for the container
-
-    Args:
-        container(dict): the container found by the ls() function
-
-    Returns:
-        dict
-    """
-
-    node = container["_tool"]
-    tile_color = node['tile_color'].value()
-    if tile_color is None:
-        return {}
-
-    hex = '%08x' % tile_color
-    rgba = [
-        float(int(hex[0:2], 16)) / 255.0,
-        float(int(hex[2:4], 16)) / 255.0,
-        float(int(hex[4:6], 16)) / 255.0
-    ]
-
-    return {"color": QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
+#
+# def update_frame_range(start, end, root=None):
+#     """Set Nuke script start and end frame range
+#
+#     Args:
+#         start (float, int): start frame
+#         end (float, int): end frame
+#         root (object, Optional): root object from nuke's script
+#
+#     Returns:
+#         None
+#
+#     """
+#
+#     knobs = {
+#         "first_frame": start,
+#         "last_frame": end
+#     }
+#
+#     with avalon.nuke.viewer_update_and_undo_stop():
+#         for key, value in knobs.items():
+#             if root:
+#                 root[key].setValue(value)
+#             else:
+#                 nuke.root()[key].setValue(value)
+#
+# #
+# def get_additional_data(container):
+#     """Get Nuke's related data for the container
+#
+#     Args:
+#         container(dict): the container found by the ls() function
+#
+#     Returns:
+#         dict
+#     """
+#
+#     node = container["_tool"]
+#     tile_color = node['tile_color'].value()
+#     if tile_color is None:
+#         return {}
+#
+#     hex = '%08x' % tile_color
+#     rgba = [
+#         float(int(hex[0:2], 16)) / 255.0,
+#         float(int(hex[2:4], 16)) / 255.0,
+#         float(int(hex[4:6], 16)) / 255.0
+#     ]
+#
+#     return {"color": Qt.QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
 
 
 def get_write_node_template_attr(node):

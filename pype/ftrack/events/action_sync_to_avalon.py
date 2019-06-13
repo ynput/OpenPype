@@ -169,7 +169,10 @@ class Sync_To_Avalon(BaseAction):
             job['status'] = 'failed'
             session.commit()
             message = str(ve)
-            self.log.error('Error during syncToAvalon: {}'.format(message))
+            self.log.error(
+                'Error during syncToAvalon: {}'.format(message),
+                exc_info=True
+            )
 
         except Exception as e:
             job['status'] = 'failed'
@@ -180,7 +183,8 @@ class Sync_To_Avalon(BaseAction):
                 exc_type, fname, exc_tb.tb_lineno
             )
             self.log.error(
-                'Error during syncToAvalon: {}'.format(log_message)
+                'Error during syncToAvalon: {}'.format(log_message),
+                exc_info=True
             )
             message = (
                 'Unexpected Error'

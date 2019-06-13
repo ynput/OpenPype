@@ -5,11 +5,16 @@ import sys
 # Pyblish libraries
 import pyblish.api
 
+import avalon.api as avalon
+import pype.api as pype
+
+from avalon.vendor.Qt import (QtWidgets, QtGui)
+
 # Host libraries
 import hiero
 
-from PySide2 import (QtWidgets, QtGui)
-
+from pypeapp import Logger
+log = Logger().get_logger(__name__, "nukestudio")
 
 cached_process = None
 
@@ -18,6 +23,73 @@ self = sys.modules[__name__]
 self._has_been_setup = False
 self._has_menu = False
 self._registered_gui = None
+
+AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
+
+
+def set_workfiles():
+    ''' Wrapping function for workfiles launcher '''
+    from avalon.tools import workfiles
+    S = avalon.Session
+    active_project_root = os.path.normpath(
+        os.path.join(S['AVALON_PROJECTS'], S['AVALON_PROJECT'])
+    )
+    workdir = os.environ["AVALON_WORKDIR"]
+    workfiles.show(workdir)
+    project = hiero.core.projects()[-1]
+    project.setProjectRoot(active_project_root)
+
+    # get project data from avalon db
+    project_data = pype.get_project_data()
+
+    # get format and fps property from avalon db on project
+    width = project_data['resolution_width']
+    height = project_data['resolution_height']
+    pixel_aspect = project_data['pixel_aspect']
+    fps = project_data['fps']
+    format_name = project_data['code']
+
+    # create new format in hiero project
+    format = hiero.core.Format(width, height, pixel_aspect, format_name)
+    project.setOutputFormat(format)
+
+    # set fps to hiero project
+    project.setFramerate(fps)
+
+    log.info("Project property has been synchronised with Avalon db")
+
+
+
+
+def reload_config():
+    """Attempt to reload pipeline at run-time.
+
+    CAUTION: This is primarily for development and debugging purposes.
+
+    """
+
+    import importlib
+
+    for module in (
+        "avalon",
+        "avalon.lib",
+        "avalon.pipeline",
+        "pyblish",
+        "pyblish_lite",
+        "pypeapp",
+        "{}.api".format(AVALON_CONFIG),
+        "{}.templates".format(AVALON_CONFIG),
+        "{}.nukestudio.lib".format(AVALON_CONFIG),
+        "{}.nukestudio.menu".format(AVALON_CONFIG),
+        "{}.nukestudio.tags".format(AVALON_CONFIG)
+    ):
+        log.info("Reloading module: {}...".format(module))
+        try:
+            module = importlib.import_module(module)
+            reload(module)
+        except Exception as e:
+            log.warning("Cannot reload module: {}".format(e))
+            importlib.reload(module)
 
 
 def setup(console=False, port=None, menu=True):

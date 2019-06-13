@@ -14,6 +14,8 @@ class CleanUp(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 10
     label = "Clean Up"
     exclude_families = ["clip"]
+    optional = True
+    active = True
 
     def process(self, instance):
         if [ef for ef in self.exclude_families

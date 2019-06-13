@@ -117,7 +117,7 @@ class ComponentsWidget(QtWidgets.QWidget):
         try:
             data = self.parent_widget.collect_data()
             publish.set_context(
-                data['project'], data['asset'], 'standalonepublish'
+                data['project'], data['asset'], data['task'], 'standalonepublish'
             )
             result = publish.publish(data)
             # Clear widgets from components list if publishing was successful

@@ -1,5 +1,6 @@
 import os
 import pyblish.api
+import logging
 
 try:
     import ftrack_api_old as ftrack_api
@@ -15,6 +16,8 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
+        ftrack_log = logging.getLogger('ftrack_api')
+        ftrack_log.setLevel(logging.WARNING)
         # Collect session
         session = ftrack_api.Session()
         context.data["ftrackSession"] = session
@@ -23,11 +26,19 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
         project = os.environ.get('AVALON_PROJECT', '')
         asset = os.environ.get('AVALON_ASSET', '')
-        task = os.environ.get('AVALON_TASK', '')
+        task = os.environ.get('AVALON_TASK', None)
+        self.log.debug(task)
 
-        result = session.query('Task where\
-            project.full_name is "{0}" and\
-            name is "{1}" and\
-            parent.name is "{2}"'.format(project, task, asset)).one()
+        if task:
+            result = session.query('Task where\
+                project.full_name is "{0}" and\
+                name is "{1}" and\
+                parent.name is "{2}"'.format(project, task, asset)).one()
+            context.data["ftrackTask"] = result
+        else:
+            result = session.query('TypedContext where\
+                project.full_name is "{0}" and\
+                name is "{1}"'.format(project, asset)).one()
+            context.data["ftrackEntity"] = result
 
-        context.data["ftrackTask"] = result
+        self.log.info(result)

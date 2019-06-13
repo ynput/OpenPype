@@ -53,13 +53,13 @@ class CollectReview(pyblish.api.InstancePlugin):
                         data['families'] = ['review']
                     self.log.debug('adding review family to {}'.format(reviewable_subset))
                     data['review_camera'] = camera
-                    data["publish"] = False
+                    # data["publish"] = False
                     data['startFrameReview'] = instance.data['startFrame']
                     data['endFrameReview'] = instance.data['endFrame']
                     data['handles'] = instance.data['handles']
                     data['step'] = instance.data['step']
                     data['fps'] = instance.data['fps']
-                    cmds.setAttr(str(instance) + '.active', 0)
+                    cmds.setAttr(str(instance) + '.active', 1)
                     self.log.debug('data {}'.format(instance.context[i].data))
                     instance.context[i].data.update(data)
                     instance.data['remove'] = True

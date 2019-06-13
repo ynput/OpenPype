@@ -106,7 +106,7 @@ class SyncToAvalon(BaseAction):
             for entity in self.importable:
                 ftracklib.avalon_check_name(entity)
                 if entity['name'] in all_names:
-                    duplicates.append("'{}'".format(e['name']))
+                    duplicates.append("'{}'".format(entity['name']))
                 else:
                     all_names.append(entity['name'])
 
@@ -151,7 +151,10 @@ class SyncToAvalon(BaseAction):
         except ValueError as ve:
             job['status'] = 'failed'
             message = str(ve)
-            self.log.error('Error during syncToAvalon: {}'.format(message))
+            self.log.error(
+                'Error during syncToAvalon: {}'.format(message),
+                exc_info=True
+            )
 
         except Exception as e:
             job['status'] = 'failed'
@@ -161,7 +164,8 @@ class SyncToAvalon(BaseAction):
                 exc_type, fname, exc_tb.tb_lineno
             )
             self.log.error(
-                'Error during syncToAvalon: {}'.format(log_message)
+                'Error during syncToAvalon: {}'.format(log_message),
+                exc_info=True
             )
             message = (
                 'Unexpected Error'

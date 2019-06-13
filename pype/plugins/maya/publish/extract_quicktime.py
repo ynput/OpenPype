@@ -6,12 +6,14 @@ import capture_gui
 import clique
 
 import pype.maya.lib as lib
+reload(lib)
 import pype.api
 import avalon.maya
 
 from maya import cmds, mel
 import pymel.core as pm
 from pype.vendor import ffmpeg
+# from pype.scripts import otio_burnin
 reload(ffmpeg)
 
 
@@ -51,17 +53,18 @@ class ExtractQuicktime(pype.api.Extractor):
 
         # get cameras
         camera = instance.data['review_camera']
-        capture_preset = ""
+        capture_preset = instance.context.data['presets']['maya']['capture']
+
         try:
-            preset = lib.load_capture_preset(capture_preset)
+            preset = lib.load_capture_preset(data=capture_preset)
         except:
             preset = {}
-        self.log.info('using viewport preset: {}'.format(capture_preset))
+        self.log.info('using viewport preset: {}'.format(preset))
 
         preset['camera'] = camera
         preset['format'] = "image"
         # preset['compression'] = "qt"
-        preset['quality'] = 50
+        preset['quality'] = 95
         preset['compression'] = "jpg"
         preset['start_frame'] = start
         preset['end_frame'] = end
@@ -106,6 +109,8 @@ class ExtractQuicktime(pype.api.Extractor):
         self.log.info("input {}".format(input_path))
 
         movieFile = filename + ".mov"
+        # movieFileBurnin = filename + "Burn" + ".mov"
+
         full_movie_path = os.path.join(stagingdir, movieFile)
         self.log.info("output {}".format(full_movie_path))
         with avalon.maya.suspended_refresh():
@@ -123,9 +128,29 @@ class ExtractQuicktime(pype.api.Extractor):
                 self.log.error(ffmpeg_error)
                 raise RuntimeError(ffmpeg_error)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
-        instance.data["files"].append(movieFile)
+        # burnin_data = {
+        #     "username": 'milan.kolar',
+        #     "shot": 'sh010',
+        #     "task": 'layout'
+        #     }
+        #
+        # full_burnin_path = os.path.join(stagingdir, movieFileBurnin)
+        # otio_burnin.burnins_from_data(full_movie_path, full_burnin_path, burnin_data)
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        representation = {
+            'name': 'mov',
+            'ext': 'mov',
+            'files': movieFile,
+            "stagingDir": stagingdir,
+            'startFrame': start,
+            'endFrame': end,
+            'frameRate': fps,
+            'preview': True
+        }
+        instance.data["representations"].append(representation)
 
 
 @contextlib.contextmanager

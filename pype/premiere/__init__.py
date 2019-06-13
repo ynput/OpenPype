@@ -7,6 +7,8 @@ from pyblish import api as pyblish
 from pypeapp import Logger
 from .. import api
 
+from ..widgets.message_window import message
+
 import requests
 
 log = Logger().get_logger(__name__, "premiere")
@@ -42,7 +44,7 @@ def request_aport(url_path, data={}):
         return req
 
     except Exception as e:
-        api.message(title="Premiere Aport Server",
+        message(title="Premiere Aport Server",
                     message="Before you can run Premiere, start Aport Server. \n Error: {}".format(
                         e),
                     level="critical")
@@ -99,7 +101,7 @@ def install():
 
     # synchronize extensions
     extensions_sync()
-    api.message(title="pyblish_paths", message=str(reg_paths), level="info")
+    message(title="pyblish_paths", message=str(reg_paths), level="info")
 
 
 def uninstall():

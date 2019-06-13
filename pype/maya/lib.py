@@ -2106,12 +2106,15 @@ def bake_to_world_space(nodes,
 
     return world_space_nodes
 
-def load_capture_preset(path):
+def load_capture_preset(path=None, data=None):
     import capture_gui
     import capture
 
-    path = path
-    preset = capture_gui.lib.load_json(path)
+    if data:
+        preset = data
+    else:
+        path = path
+        preset = capture_gui.lib.load_json(path)
     print preset
 
     options = dict()
@@ -2164,15 +2167,18 @@ def load_capture_preset(path):
     for key in preset[id]:
         if key == 'high_quality':
             temp_options2['multiSampleEnable'] = True
-            temp_options2['multiSampleCount'] = 4
-            temp_options2['textureMaxResolution'] = 512
+            temp_options2['multiSampleCount'] = 8
+            temp_options2['textureMaxResolution'] = 1024
             temp_options2['enableTextureMaxRes'] = True
 
-        if key == 'alphaCut' :
+        if key == 'alphaCut':
             temp_options2['transparencyAlgorithm'] = 5
             temp_options2['transparencyQuality'] = 1
 
-        if key == 'headsUpDisplay' :
+        if key == 'ssaoEnable':
+            temp_options2['ssaoEnable'] = True
+
+        if key == 'headsUpDisplay':
             temp_options['headsUpDisplay'] = True
 
         if key == 'displayLights':
@@ -2180,7 +2186,10 @@ def load_capture_preset(path):
         else:
             temp_options[str(key)] = preset[id][key]
 
-    for key in ['override_viewport_options', 'high_quality', 'alphaCut']:
+    for key in ['override_viewport_options', 'high_quality', 'alphaCut', "gpuCacheDisplayFilter"]:
+        temp_options.pop(key, None)
+
+    for key in ['ssaoEnable']:
         temp_options.pop(key, None)
 
     options['viewport_options'] = temp_options
@@ -2204,6 +2213,7 @@ def load_capture_preset(path):
     # options['display_options'] = temp_options
 
     return options
+
 
 def get_attr_in_layer(attr, layer):
     """Return attribute value in specified renderlayer.
@@ -2229,10 +2239,14 @@ def get_attr_in_layer(attr, layer):
 
     """
 
-    if cmds.mayaHasRenderSetup():
-        log.debug("lib.get_attr_in_layer is not optimized for render setup")
-        with renderlayer(layer):
-            return cmds.getAttr(attr)
+    try:
+        if cmds.mayaHasRenderSetup():
+            log.debug("lib.get_attr_in_layer is not "
+                      "optimized for render setup")
+            with renderlayer(layer):
+                return cmds.getAttr(attr)
+    except AttributeError:
+        pass
 
     # Ignore complex query if we're in the layer anyway
     current_layer = cmds.editRenderLayerGlobals(query=True,

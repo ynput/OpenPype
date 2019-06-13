@@ -168,10 +168,16 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
 
                     massage_ma_file(path)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'ma',
+            'ext': '.ma',
+            'files': filename,
+            "stagingDir": dir_path,
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, path))

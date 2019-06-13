@@ -15,6 +15,13 @@ import avalon
 log = logging.getLogger(__name__)
 
 
+def get_handle_irregular(asset):
+    data = asset["data"]
+    handle_start = data.get("handle_start", 0)
+    handle_end = data.get("handle_end", 0)
+    return (handle_start, handle_end)
+
+
 def add_tool_to_environment(tools):
     """
     It is adding dynamic environment to os environment.

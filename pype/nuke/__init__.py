@@ -25,8 +25,6 @@ from pypeapp import Logger
 
 log = Logger().get_logger(__name__, "nuke")
 
-# log = api.Logger.getLogger(__name__, "nuke")
-
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
 PARENT_DIR = os.path.dirname(__file__)
@@ -38,9 +36,8 @@ LOAD_PATH = os.path.join(PLUGINS_DIR, "nuke", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "nuke", "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "nuke", "inventory")
 
-self = sys.modules[__name__]
-self.nLogger = None
 
+# registering pyblish gui regarding settings in presets
 if os.getenv("PYBLISH_GUI", None):
     pyblish.register_gui(os.getenv("PYBLISH_GUI", None))
 
@@ -66,6 +63,7 @@ class NukeHandler(logging.Handler):
             "fatal",
             "error"
         ]:
+            msg = self.format(record)
             nuke.message(msg)
 
 
@@ -76,9 +74,6 @@ if nuke_handler.get_name() \
             for handler in logging.root.handlers[:]]:
     logging.getLogger().addHandler(nuke_handler)
     logging.getLogger().setLevel(logging.INFO)
-
-if not self.nLogger:
-    self.nLogger = Logger
 
 
 def reload_config():
@@ -113,12 +108,6 @@ def install():
 
     # api.set_avalon_workdir()
     # reload_config()
-
-    # import sys
-
-    # for path in sys.path:
-    #     if path.startswith("C:\\Users\\Public"):
-    #         sys.path.remove(path)
 
     log.info("Registering Nuke plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
@@ -157,7 +146,7 @@ def uninstall():
 
 def on_pyblish_instance_toggled(instance, old_value, new_value):
     """Toggle node passthrough states on instance toggles."""
-    self.log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
+    log.info("instance toggle: {}, old_value: {}, new_value:{} ".format(
         instance, old_value, new_value))
 
     from avalon.nuke import (

@@ -63,14 +63,18 @@ def maketx(source, destination, *args):
     """
 
     cmd = [
-        "maketx",
-        "-v", # verbose
-        "-u", # update mode
-        # unpremultiply before conversion (recommended when alpha present)
-        "--unpremult",
-        # use oiio-optimized settings for tile-size, planarconfig, metadata
-        "--oiio"
-    ]
+            "maketx",
+            "-v",  # verbose
+            "-u",  # update mode
+            # unpremultiply before conversion (recommended when alpha present)
+            "--unpremult",
+            "--checknan",
+            # use oiio-optimized settings for tile-size, planarconfig, metadata
+            "--oiio",
+            "--colorconvert sRGB linear",
+            "--filter lanczos3"
+        ]
+
     cmd.extend(args)
     cmd.extend([
            "-o", destination,
@@ -85,8 +89,7 @@ def maketx(source, destination, *args):
             creationflags=CREATE_NO_WINDOW
         )
     except subprocess.CalledProcessError as exc:
-        print exc
-        print out
+        print(exc)
         import traceback
         traceback.print_exc()
         raise
@@ -169,16 +172,33 @@ class ExtractLook(pype.api.Extractor):
 
         # Collect all unique files used in the resources
         files = set()
+        files_metadata = dict()
         for resource in resources:
-            files.update(os.path.normpath(f) for f in resource["files"])
+            # Preserve color space values (force value after filepath change)
+            # This will also trigger in the same order at end of context to
+            # ensure after context it's still the original value.
+            color_space = resource.get('color_space')
+
+            for f in resource["files"]:
+
+                files_metadata[os.path.normpath(f)] = {'color_space': color_space}
+                # files.update(os.path.normpath(f))
 
         # Process the resource files
         transfers = list()
         hardlinks = list()
         hashes = dict()
-        for filepath in files:
+
+        self.log.info(files)
+        for filepath in files_metadata:
+
+            cspace = files_metadata[filepath]['color_space']
+            linearise = False
+            if cspace == 'sRGB':
+                linearise = True
+
             source, mode, hash = self._process_texture(
-                filepath, do_maketx, staging=dir_path
+                filepath, do_maketx, staging=dir_path, linearise=linearise
             )
             destination = self.resource_destination(
                 instance, source, do_maketx
@@ -204,15 +224,17 @@ class ExtractLook(pype.api.Extractor):
                     instance, source, do_maketx
                 )
 
-            # Remap file node filename to destination
-            attr = resource['attribute']
-            remap[attr] = destinations[source]
-
             # Preserve color space values (force value after filepath change)
             # This will also trigger in the same order at end of context to
             # ensure after context it's still the original value.
             color_space_attr = resource['node'] + ".colorSpace"
-            remap[color_space_attr] = cmds.getAttr(color_space_attr)
+            color_space = cmds.getAttr(color_space_attr)
+
+            # Remap file node filename to destination
+            attr = resource['attribute']
+            remap[attr] = destinations[source]
+
+            remap[color_space_attr] = color_space
 
         self.log.info("Finished remapping destinations ...")
 
@@ -285,7 +307,7 @@ class ExtractLook(pype.api.Extractor):
             basename + ext
         )
 
-    def _process_texture(self, filepath, do_maketx, staging):
+    def _process_texture(self, filepath, do_maketx, staging, linearise):
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
@@ -326,6 +348,11 @@ class ExtractLook(pype.api.Extractor):
                 fname + ".tx"
             )
 
+            if linearise:
+                colorconvert = "--colorconvert sRGB linear"
+            else:
+                colorconvert = ""
+
             # Ensure folder exists
             if not os.path.exists(os.path.dirname(converted)):
                 os.makedirs(os.path.dirname(converted))
@@ -333,7 +360,7 @@ class ExtractLook(pype.api.Extractor):
             self.log.info("Generating .tx file for %s .." % filepath)
             maketx(filepath, converted,
                    # Include `source-hash` as string metadata
-                   "-sattrib", "sourceHash", texture_hash)
+                   "-sattrib", "sourceHash", texture_hash, colorconvert)
 
             return converted, COPY, texture_hash
 

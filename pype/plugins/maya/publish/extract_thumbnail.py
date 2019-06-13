@@ -50,7 +50,6 @@ class ExtractThumbnail(pype.api.Extractor):
         members = instance.data['setMembers']
         camera = instance.data['review_camera']
 
-
         # project_code = ftrack_data['Project']['code']
         # task_type = ftrack_data['Task']['type']
         #
@@ -82,13 +81,14 @@ class ExtractThumbnail(pype.api.Extractor):
         #     preset_to_use = default_preset_path
 
         capture_preset = ""
+        capture_preset = instance.context.data['presets']['maya']['capture']
         try:
-            preset = lib.load_capture_preset(capture_preset)
+            preset = lib.load_capture_preset(data=capture_preset)
         except:
             preset = {}
         self.log.info('using viewport preset: {}'.format(capture_preset))
 
-        #preset["off_screen"] =  False
+        # preset["off_screen"] =  False
 
         preset['camera'] = camera
         preset['format'] = "image"
@@ -110,9 +110,9 @@ class ExtractThumbnail(pype.api.Extractor):
             "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),
         }
 
-        stagingdir = self.staging_dir(instance)
+        stagingDir = self.staging_dir(instance)
         filename = "{0}".format(instance.name)
-        path = os.path.join(stagingdir, filename)
+        path = os.path.join(stagingDir, filename)
 
         self.log.info("Outputting images to %s" % path)
 
@@ -131,51 +131,18 @@ class ExtractThumbnail(pype.api.Extractor):
         _, thumbnail = os.path.split(playblast)
 
         self.log.info("file list  {}".format(thumbnail))
-        # self.log.info("Calculating HUD data overlay")
 
-        # stagingdir = "C:/Users/milan.kolar/AppData/Local/Temp/pyblish_tmp_ucsymm"
-        # collected_frames = os.listdir(stagingdir)
-        # collections, remainder = clique.assemble(collected_frames)
-        # input_path = os.path.join(stagingdir, collections[0].format('{head}{padding}{tail}'))
-        # self.log.info("input {}".format(input_path))
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        # movieFile = filename + ".mov"
-        # full_movie_path = os.path.join(stagingdir, movieFile)
-        # self.log.info("output {}".format(full_movie_path))
-        # fls = [os.path.join(stagingdir, filename).replace("\\","/") for f in os.listdir( dir_path ) if f.endswith(preset['compression'])]
-        # self.log.info("file list  {}}".format(fls[0]))
-
-        # out, err = (
-        #     ffmpeg
-        #     .input(input_path, framerate=25)
-        #     .output(full_movie_path)
-        #     .run(overwrite_output=True)
-        # )
-
-        if "files" not in instance.data:
-            instance.data["files"] = list()
-        instance.data["files"].append(thumbnail)
-
-        # ftrackStrings = fStrings.annotationData()
-        # nData = ftrackStrings.niceData
-        # nData['version'] = instance.context.data('version')
-        # fFrame = int(pm.playbackOptions( q = True,  minTime = True))
-        # eFrame = int(pm.playbackOptions( q = True,  maxTime = True))
-        # nData['frame'] = [(str("{0:05d}".format(f))) for f in range(fFrame, eFrame + 1)]
-        # soundOfst = int(float(nData['oFStart'])) - int(float(nData['handle'])) - fFrame
-        # soundFile = mu.giveMePublishedAudio()
-        # self.log.info("SOUND offset  %s" % str(soundOfst))
-        # self.log.info("SOUND source video to %s" % str(soundFile))
-        # ann = dHUD.draftAnnotate()
-        # if soundFile:
-        #     ann.addAnotation(seqFls = fls, outputMoviePth = movieFullPth, annotateDataArr = nData, soundFile = soundFile, soundOffset = soundOfst)
-        # else:
-        #     ann.addAnotation(seqFls = fls, outputMoviePth = movieFullPth, annotateDataArr = nData)
-
-        # for f in fls:
-        #     os.remove(f)
-
-        # playblast = (ann.expPth).replace("\\","/")
+        representation = {
+            'name': 'thumbnail',
+            'ext': '.jpg',
+            'files': thumbnail,
+            "stagingDir": stagingDir,
+            "thumbnail": True
+        }
+        instance.data["representations"].append(representation)
 
 
 @contextlib.contextmanager

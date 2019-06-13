@@ -1,5 +1,6 @@
 import os
 import re
+import json
 import clique
 import subprocess
 from pypeapp import config
@@ -49,7 +50,7 @@ class DropDataFrame(QtWidgets.QFrame):
         else:
             # If path is in clipboard as string
             try:
-                path = ent.text()
+                path = os.path.normpath(ent.text())
                 if os.path.exists(path):
                     paths.append(path)
                 else:
@@ -170,6 +171,13 @@ class DropDataFrame(QtWidgets.QFrame):
         repr_name = file_ext.replace('.', '')
         range = collection.format('{ranges}')
 
+        # TODO: ranges must not be with missing frames!!!
+        # - this is goal implementation:
+        # startFrame, endFrame = range.split('-')
+        rngs = range.split(',')
+        startFrame = rngs[0].split('-')[0]
+        endFrame = rngs[-1].split('-')[-1]
+
         actions = []
 
         data = {
@@ -177,39 +185,15 @@ class DropDataFrame(QtWidgets.QFrame):
             'name': file_base,
             'ext': file_ext,
             'file_info': range,
+            'startFrame': startFrame,
+            'endFrame': endFrame,
             'representation': repr_name,
             'folder_path': folder_path,
             'is_sequence': True,
             'actions': actions
         }
-        self._process_data(data)
 
-    def _get_ranges(self, indexes):
-        if len(indexes) == 1:
-            return str(indexes[0])
-        ranges = []
-        first = None
-        last = None
-        for index in indexes:
-            if first is None:
-                first = index
-                last = index
-            elif (last+1) == index:
-                last = index
-            else:
-                if first == last:
-                    range = str(first)
-                else:
-                    range = '{}-{}'.format(first, last)
-                ranges.append(range)
-                first = index
-                last = index
-        if first == last:
-            range = str(first)
-        else:
-            range = '{}-{}'.format(first, last)
-        ranges.append(range)
-        return ', '.join(ranges)
+        self._process_data(data)
 
     def _process_remainder(self, remainder):
         filename = os.path.basename(remainder)
@@ -232,39 +216,76 @@ class DropDataFrame(QtWidgets.QFrame):
             'is_sequence': False,
             'actions': actions
         }
-        data['file_info'] = self.get_file_info(data)
 
         self._process_data(data)
 
-    def get_file_info(self, data):
-        output = None
-        if data['ext'] == '.mov':
-            try:
-                # ffProbe must be in PATH
-                filepath = data['files'][0]
-                args = ['ffprobe', '-show_streams', filepath]
-                p = subprocess.Popen(
-                    args,
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    shell=True
-                )
-                datalines=[]
-                for line in iter(p.stdout.readline, b''):
-                    line = line.decode("utf-8").replace('\r\n', '')
-                    datalines.append(line)
+    def load_data_with_probe(self, filepath):
+        args = [
+            'ffprobe',
+            '-v', 'quiet',
+            '-print_format', 'json',
+            '-show_format',
+            '-show_streams', filepath
+        ]
+        ffprobe_p = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            shell=True
+        )
+        ffprobe_output = ffprobe_p.communicate()[0]
+        if ffprobe_p.returncode != 0:
+            raise RuntimeError(
+                'Failed on ffprobe: check if ffprobe path is set in PATH env'
+            )
+        return json.loads(ffprobe_output)['streams'][0]
 
-                find_value = 'codec_name'
-                for line in datalines:
-                    if line.startswith(find_value):
-                        output = line.replace(find_value + '=', '')
-                        break
-            except Exception as e:
-                pass
+    def get_file_data(self, data):
+        filepath = data['files'][0]
+        ext = data['ext'].lower()
+        output = {}
+
+        file_info = None
+        if 'file_info' in data:
+            file_info = data['file_info']
+
+        if (
+            ext in self.presets['extensions']['image_file'] or
+            ext in self.presets['extensions']['video_file']
+        ):
+            probe_data = self.load_data_with_probe(filepath)
+            if 'frameRate' not in data:
+                # default value
+                frameRate = 25
+                frameRate_string = probe_data.get('r_frame_rate')
+                if frameRate_string:
+                    frameRate = int(frameRate_string.split('/')[0])
+
+                output['frameRate'] = frameRate
+
+            if 'startFrame' not in data or 'endFrame' not in data:
+                startFrame = endFrame = 1
+                endFrame_string = probe_data.get('nb_frames')
+
+                if endFrame_string:
+                    endFrame = int(endFrame_string)
+
+                output['startFrame'] = startFrame
+                output['endFrame'] = endFrame
+
+            if (ext == '.mov') and (not file_info):
+                file_info = probe_data.get('codec_name')
+
+        output['file_info'] = file_info
+
         return output
 
     def _process_data(self, data):
         ext = data['ext']
+        # load file data info
+        file_data = self.get_file_data(data)
+        for key, value in file_data.items():
+            data[key] = value
+
         icon = 'default'
         for ico, exts in self.presets['extensions'].items():
             if ext in exts:

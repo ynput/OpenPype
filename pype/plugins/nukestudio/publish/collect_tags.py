@@ -4,7 +4,7 @@ from pyblish import api
 class CollectClipTags(api.InstancePlugin):
     """Collect Tags from selected track items."""
 
-    order = api.CollectorOrder
+    order = api.CollectorOrder + 0.011
     label = "Collect Tags"
     hosts = ["nukestudio"]
     families = ['clip']

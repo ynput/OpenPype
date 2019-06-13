@@ -11,11 +11,31 @@ def install():
 
     # replace reset resolution from avalon core to pype's
     name = "Reset Resolution"
-    rm_item = [(i, item)
-               for i, item in enumerate(menu.items())
-               if name in item.name()][0]
+    new_name = "Set Resolution"
+    rm_item = [
+        (i, item) for i, item in enumerate(menu.items()) if name in item.name()
+    ][0]
     menu.removeItem(rm_item[1].name())
-    menu.addCommand(rm_item[1].name(), lib.reset_resolution, index=rm_item[0])
+    menu.addCommand(new_name, lib.reset_resolution, index=rm_item[0])
+
+    # replace reset frame range from avalon core to pype's
+    name = "Reset Frame Range"
+    new_name = "Set Frame Range"
+    rm_item = [
+        (i, item) for i, item in enumerate(menu.items()) if name in item.name()
+    ][0]
+    menu.removeItem(rm_item[1].name())
+    menu.addCommand(new_name, lib.reset_frame_range_handles, index=rm_item[0])
 
     # add colorspace menu item
-    menu.addCommand("Set colorspace...", lib.set_colorspace, index=rm_item[0]+1)
+    name = "Set colorspace"
+    menu.addCommand(
+        name, lib.set_colorspace,
+        index=(rm_item[0]+2)
+    )
+
+    # add item that applies all setting above
+    name = "Apply all settings"
+    menu.addCommand(
+        name, lib.set_context_settings, index=(rm_item[0]+3)
+    )

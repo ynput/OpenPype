@@ -39,14 +39,14 @@ from .templates import (
 )
 
 from .lib import (
+    get_handle_irregular,
     get_project_data,
     get_asset_data,
     modified_environ,
     add_tool_to_environment,
-    get_data_hierarchical_attr
+    get_data_hierarchical_attr,
+    get_avalon_project_template
 )
-
-from .widgets.message_window import message
 
 __all__ = [
     # plugin classes
@@ -68,6 +68,7 @@ __all__ = [
     "reset_data_from_templates",
 
     # get contextual data
+    "get_handle_irregular",
     "get_project_data",
     "get_asset_data",
     "get_project_name",
@@ -83,13 +84,11 @@ __all__ = [
     "set_hierarchy",
     "set_project_code",
     "get_data_hierarchical_attr",
+    "get_avalon_project_template",
 
     # preloaded templates
     "Anatomy",
     "Colorspace",
     "Dataflow",
-
-    # QtWidgets
-    "message"
 
 ]

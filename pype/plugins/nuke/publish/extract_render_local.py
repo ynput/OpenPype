@@ -49,18 +49,27 @@ class NukeRenderLocal(pype.api.Extractor):
         # swap path back to publish path
         path = node['file'].value()
         node['file'].setValue(path.replace(temp_dir, output_dir))
+        ext = node["file_type"].value()
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"] = [os.listdir(temp_dir)]
+        collected_frames = os.listdir(temp_dir)
+        repre = {
+            'name': ext,
+            'ext': ext,
+            'files': collected_frames,
+            "stagingDir": temp_dir,
+            "anatomy_template": "render"
+        }
+        instance.data["representations"].append(repre)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name,
-            output_dir
+            temp_dir
         ))
 
-        collections, remainder = clique.assemble(*instance.data['files'])
+        collections, remainder = clique.assemble(collected_frames)
         self.log.info('collections: {}'.format(str(collections)))
 
         if collections:
