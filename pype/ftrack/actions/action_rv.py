@@ -41,7 +41,7 @@ class RVAction(BaseAction):
             )
         else:
             # if not, fallback to config file location
-            self.config_data = config.get_presets()['djv_view']['config']
+            self.config_data = config.get_presets()['rv']['config']
             self.set_rv_path()
 
         if self.rv_path is None:
