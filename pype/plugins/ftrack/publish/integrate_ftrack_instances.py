@@ -53,10 +53,25 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "name": "thumbnail"  # Default component name is "main".
                 }
             elif comp.get('preview'):
-                if not comp.get('startFrameReview'):
-                    comp['startFrameReview'] = instance.data['startFrame']
-                if not comp.get('endFrameReview'):
-                    comp['endFrameReview'] = instance.data['endFrame']
+                '''
+                Ftrack bug requirement:
+                    - Start frame must be 0
+                    - End frame must be {duration}
+                EXAMPLE: When mov has 55 frames:
+                    - Start frame should be 0
+                    - End frame should be 55 (do not ask why please!)
+                '''
+                start_frame = 0
+                end_frame = 1
+                if 'endFrameReview' in comp and 'startFrameReview' in comp:
+                    end_frame += (
+                        comp['endFrameReview'] - comp['startFrameReview']
+                    )
+                else:
+                    end_frame += (
+                        instance.data['endFrame'] - instance.data['startFrame']
+                    )
+
                 if not comp.get('frameRate'):
                     comp['frameRate'] = instance.context.data['fps']
                 location = ft_session.query(
@@ -65,8 +80,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     # Default component name is "main".
                     "name": "ftrackreview-mp4",
                     "metadata": {'ftr_meta': json.dumps({
-                                 'frameIn': int(comp['startFrameReview']),
-                                 'frameOut': int(comp['endFrameReview']),
+                                 'frameIn': int(start_frame),
+                                 'frameOut': int(end_frame),
                                  'frameRate': float(comp['frameRate'])})}
                 }
                 comp['thumbnail'] = False
