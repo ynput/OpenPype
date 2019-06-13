@@ -281,6 +281,24 @@ class ExtractLook(pype.api.Extractor):
         instance.data["files"].append(maya_fname)
         instance.data["files"].append(json_fname)
 
+        instance.data["representations"] = []
+        instance.data["representations"].append(
+            {
+                "name": "ma",
+                "ext": '.ma',
+                "files": os.path.basename(maya_fname),
+                "stagingDir": os.path.dirname(maya_fname),
+            }
+        )
+        instance.data["representations"].append(
+            {
+                "name": "json",
+                "ext": '.json',
+                "files": os.path.basename(json_fname),
+                "stagingDir": os.path.dirname(json_fname),
+            }
+        )
+
         # Set up the resources transfers/links for the integrator
         instance.data["transfers"].extend(transfers)
         instance.data["hardlinks"].extend(hardlinks)
