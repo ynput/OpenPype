@@ -117,8 +117,9 @@ class BaseHandler(object):
                 'User where username is "{}"'.format(username)
             ).one()
             available = False
+            lowercase_rolelist = [x.lower() for x in self.role_list]
             for role in user['user_security_roles']:
-                if role['security_role']['name'] in self.role_list:
+                if role['security_role']['name'].lower() in lowercase_rolelist:
                     available = True
                     break
             if available is False:
