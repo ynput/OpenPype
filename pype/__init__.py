@@ -2,9 +2,7 @@ import os
 
 from pyblish import api as pyblish
 from avalon import api as avalon
-
-from .launcher_actions import register_launcher_actions
-from .lib import collect_container_metadata
+from Qt import QtWidgets
 
 import logging
 log = logging.getLogger(__name__)
@@ -26,6 +24,19 @@ def install():
     log.info("Registering global plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
+
+    # pyblish-qml settings.
+    try:
+        __import__("pyblish_qml")
+    except ImportError as e:
+        log.error("Could not load pyblish-qml: %s " % e)
+    else:
+        from pyblish_qml import settings
+        app = QtWidgets.QApplication.instance()
+        screen_resolution = app.desktop().screenGeometry()
+        width, height = screen_resolution.width(), screen_resolution.height()
+        settings.WindowSize = (width / 3, height * 0.75)
+        settings.WindowPosition = (0, 0)
 
 
 def uninstall():
