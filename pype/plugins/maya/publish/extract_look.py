@@ -285,7 +285,7 @@ class ExtractLook(pype.api.Extractor):
         instance.data["representations"].append(
             {
                 "name": "ma",
-                "ext": '.ma',
+                "ext": 'ma',
                 "files": os.path.basename(maya_fname),
                 "stagingDir": os.path.dirname(maya_fname),
             }
@@ -293,7 +293,7 @@ class ExtractLook(pype.api.Extractor):
         instance.data["representations"].append(
             {
                 "name": "json",
-                "ext": '.json',
+                "ext": 'json',
                 "files": os.path.basename(json_fname),
                 "stagingDir": os.path.dirname(json_fname),
             }
