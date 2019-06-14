@@ -61,7 +61,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "render",
                 "write",
                 "rig",
-                "plate"
+                "plate",
+                "look"
                 ]
     exclude_families = ["clip"]
 
