@@ -35,7 +35,7 @@ def install():
         app = QtWidgets.QApplication.instance()
         screen_resolution = app.desktop().screenGeometry()
         width, height = screen_resolution.width(), screen_resolution.height()
-        settings.WindowSize = (width / 2, height * 0.75)
+        settings.WindowSize = (width / 3, height * 0.75)
         settings.WindowPosition = (0, 0)
 
 
