@@ -281,7 +281,7 @@ def collect_animation_data():
     data = OrderedDict()
     data["startFrame"] = start
     data["endFrame"] = end
-    data["handles"] = 1
+    data["handles"] = 0
     data["step"] = 1.0
     data["fps"] = fps
 

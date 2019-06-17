@@ -1,12 +1,11 @@
 import os
 import subprocess
 import contextlib
-
+import json
 import capture_gui
 import clique
 
 import pype.maya.lib as lib
-reload(lib)
 import pype.api
 import avalon.maya
 
@@ -109,9 +108,10 @@ class ExtractQuicktime(pype.api.Extractor):
         self.log.info("input {}".format(input_path))
 
         movieFile = filename + ".mov"
-        # movieFileBurnin = filename + "Burn" + ".mov"
+        movieFileBurnin = filename + "Burn" + ".mov"
 
         full_movie_path = os.path.join(stagingdir, movieFile)
+        full_burnin_path = os.path.join(stagingdir, movieFileBurnin)
         self.log.info("output {}".format(full_movie_path))
         with avalon.maya.suspended_refresh():
             try:
@@ -128,14 +128,27 @@ class ExtractQuicktime(pype.api.Extractor):
                 self.log.error(ffmpeg_error)
                 raise RuntimeError(ffmpeg_error)
 
-        # burnin_data = {
-        #     "username": 'milan.kolar',
-        #     "shot": 'sh010',
-        #     "task": 'layout'
-        #     }
-        #
-        # full_burnin_path = os.path.join(stagingdir, movieFileBurnin)
-        # otio_burnin.burnins_from_data(full_movie_path, full_burnin_path, burnin_data)
+        version = instance.context.data['version']
+
+        burnin_data = {
+            "input": full_movie_path.replace("\\", "/"),
+            "output": full_burnin_path.replace("\\", "/"),
+            "burnin_data": {
+                            "username": instance.context.data['user'],
+                            "asset": os.environ['AVALON_ASSET'],
+                            "task": os.environ['AVALON_TASK'],
+                            "start_frame": int(instance.data['startFrame']),
+                            "version": "v" + str(version)
+                            }
+            }
+
+        json_data = json.dumps(burnin_data)
+        scriptpath = os.path.join(os.environ['PYPE_MODULE_ROOT'], "pype", "scripts", "otio_burnin.py")
+
+        p = subprocess.Popen(
+            ['python', scriptpath, json_data]
+        )
+        p.wait()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
@@ -143,7 +156,7 @@ class ExtractQuicktime(pype.api.Extractor):
         representation = {
             'name': 'mov',
             'ext': 'mov',
-            'files': movieFile,
+            'files': movieFileBurnin,
             "stagingDir": stagingdir,
             'startFrame': start,
             'endFrame': end,
