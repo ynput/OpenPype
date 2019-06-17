@@ -391,7 +391,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             None
         """
 
-        self.log.debug("Copying file .. {} -> {}".format(src, dest))
+        self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
         try:
             os.makedirs(dirname)
