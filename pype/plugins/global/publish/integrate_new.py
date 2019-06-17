@@ -368,8 +368,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         transfers = instance.data.get("transfers", list())
 
         for src, dest in transfers:
-            self.log.debug("Copying file .. {} -> {}".format(src, dest))
-            self.copy_file(src, dest)
+            if os.path.normpath(src) != os.path.normpath(dest):
+                self.copy_file(src, dest)
 
         # Produce hardlinked copies
         # Note: hardlink can only be produced between two files on the same
@@ -391,6 +391,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             None
         """
 
+        self.log.debug("Copying file .. {} -> {}".format(src, dest))
         dirname = os.path.dirname(dst)
         try:
             os.makedirs(dirname)
