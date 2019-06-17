@@ -198,7 +198,7 @@ def create_write_node(name, data):
     fpath = str(anatomy_filled["render"]["path"]).replace("\\", "/")
 
     # create directory
-    if not os.path.isdir(fpath):
+    if not os.path.isdir(os.path.dirname(fpath)):
         log.info("path does not exist")
         os.makedirs(os.path.dirname(fpath), 0766)
 
