@@ -114,7 +114,9 @@ class LoadMov(api.Loader):
         file = self.fname.replace("\\", "/")
         log.info("file: {}\n".format(self.fname))
 
-        read_name = "Read_" + context["representation"]["context"]["subset"]
+        read_name = "Read"
+        read_name += '_' + context["representation"]["context"]["subset"]
+        read_name += '_' + context["representation"]["name"]
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
