@@ -137,6 +137,8 @@ class LoadMov(api.Loader):
             read_node["first"].setValue(first)
             read_node["origlast"].setValue(last)
             read_node["last"].setValue(last)
+            read_node["frame_mode"].setValue("start at")
+            read_node["frame"].setValue(str(offset_frame))
             # add additional metadata from the version to imprint to Avalon knob
             add_keys = [
                 "startFrame", "endFrame", "handles", "source", "author",
@@ -207,8 +209,12 @@ class LoadMov(api.Loader):
 
         version_data = version.get("data", {})
 
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        orig_first = version_data.get("startFrame", None)
+        orig_last = version_data.get("endFrame", None)
+        diff = orig_first - 1
+        # set first to 1
+        first = orig_first - diff
+        last = orig_last - diff
         handles = version_data.get("handles", 0)
         handle_start = version_data.get("handleStart", 0)
         handle_end = version_data.get("handleEnd", 0)
@@ -224,9 +230,10 @@ class LoadMov(api.Loader):
             handle_start = handles
             handle_end = handles
 
-        # create handles offset
-        first -= handle_start
-        last += handle_end
+        # create handles offset (only to last, because of mov)
+        last += handle_start + handle_end
+        # offset should be with handles so it match orig frame range
+        offset_frame = orig_first + handle_start
 
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
@@ -239,6 +246,8 @@ class LoadMov(api.Loader):
         node["first"].setValue(first)
         node["origlast"].setValue(last)
         node["last"].setValue(last)
+        node["frame_mode"].setValue("start at")
+        node["frame"].setValue(str(offset_frame))
 
         updated_dict = {}
         updated_dict.update({
