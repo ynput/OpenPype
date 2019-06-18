@@ -84,7 +84,7 @@ def writes_version_sync():
     try:
         rootVersion = pype.get_version_from_path(nuke.root().name())
         padding = len(rootVersion)
-        new_version = str("{" + ":0>{}".format(padding) + "}").format(
+        new_version = "v" + str("{" + ":0>{}".format(padding) + "}").format(
             int(rootVersion)
         )
         log.info("new_version: {}".format(new_version))
@@ -103,7 +103,7 @@ def writes_version_sync():
                 node_file = each['file'].value()
                 log.info("node_file: {}".format(node_file))
 
-                node_version = pype.get_version_from_path(node_file)
+                node_version = "v" + pype.get_version_from_path(node_file)
                 log.info("node_version: {}".format(node_version))
 
                 node_new_file = node_file.replace(node_version, new_version)
