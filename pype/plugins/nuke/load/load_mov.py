@@ -126,44 +126,46 @@ class LoadMov(api.Loader):
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
             # TODO: it might be universal read to img/geo/camera
-            r = nuke.createNode(
+            read_node = nuke.createNode(
                 "Read",
-                "name {}".format(read_name))
-            r["file"].setValue(file)
+                "name {}".format(read_name)
+            )
+            read_node["file"].setValue(file)
 
-            # Set colorspace defined in version data
-            colorspace = context["version"]["data"].get("colorspace", None)
-            if colorspace is not None:
-                r["colorspace"].setValue(str(colorspace))
-
-            loader_shift(r, first, relative=True)
-            r["origfirst"].setValue(first)
-            r["first"].setValue(first)
-            r["origlast"].setValue(last)
-            r["last"].setValue(last)
-
+            loader_shift(read_node, first, relative=True)
+            read_node["origfirst"].setValue(first)
+            read_node["first"].setValue(first)
+            read_node["origlast"].setValue(last)
+            read_node["last"].setValue(last)
             # add additional metadata from the version to imprint to Avalon knob
-            add_keys = ["startFrame", "endFrame", "handles",
-                        "source", "colorspace", "author", "fps", "version",
-                        "handleStart", "handleEnd"]
+            add_keys = [
+                "startFrame", "endFrame", "handles", "source", "author",
+                "fps", "version", "handleStart", "handleEnd"
+            ]
 
             data_imprint = {}
-            for k in add_keys:
-                if k is 'version':
-                    data_imprint.update({k: context["version"]['name']})
+            for key in add_keys:
+                if key is 'version':
+                    data_imprint.update({
+                        key: context["version"]['name']
+                    })
                 else:
-                    data_imprint.update({k: context["version"]['data'].get(k, str(None))})
+                    data_imprint.update({
+                        key: context["version"]['data'].get(key, str(None))
+                    })
 
             data_imprint.update({"objectName": read_name})
 
-            r["tile_color"].setValue(int("0x4ecd25ff", 16))
+            read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
 
-            return containerise(r,
-                                name=name,
-                                namespace=namespace,
-                                context=context,
-                                loader=self.__class__.__name__,
-                                data=data_imprint)
+            return containerise(
+                read_node,
+                name=name,
+                namespace=namespace,
+                context=context,
+                loader=self.__class__.__name__,
+                data=data_imprint
+            )
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -244,7 +246,6 @@ class LoadMov(api.Loader):
             "startFrame": version_data.get("startFrame"),
             "endFrame": version_data.get("endFrame"),
             "version": version.get("name"),
-            "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
             "handles": version_data.get("handles"),
             "handleStart": version_data.get("handleStart"),
@@ -262,8 +263,7 @@ class LoadMov(api.Loader):
 
         # Update the imprinted representation
         update_container(
-            node,
-            updated_dict
+            node, updated_dict
         )
         log.info("udated to version: {}".format(version.get("name")))
 
