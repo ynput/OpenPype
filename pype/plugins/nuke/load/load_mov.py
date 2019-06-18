@@ -92,8 +92,12 @@ class LoadMov(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        orig_first = version_data.get("startFrame", None)
+        orig_last = version_data.get("endFrame", None)
+        diff = orig_first - 1
+        # set first to 1
+        first = orig_first - diff
+        last = orig_last - diff
         handles = version_data.get("handles", None)
         handle_start = version_data.get("handleStart", None)
         handle_end = version_data.get("handleEnd", None)
@@ -103,9 +107,10 @@ class LoadMov(api.Loader):
             handle_start = handles
             handle_end = handles
 
-        # create handles offset
-        first -= handle_start
-        last += handle_end
+        # create handles offset (only to last, because of mov)
+        last += handle_start + handle_end
+        # offset should be with handles so it match orig frame range
+        offset_frame = orig_first + handle_start
 
         # Fallback to asset name when namespace is None
         if namespace is None:
