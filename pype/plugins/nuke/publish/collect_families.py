@@ -1,5 +1,5 @@
 import pyblish.api
-
+import nuke
 
 @pyblish.api.log
 class CollectInstanceFamilies(pyblish.api.InstancePlugin):
@@ -12,9 +12,10 @@ class CollectInstanceFamilies(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
+        # node = nuke.toNode(instance.data["name"])
         node = instance[0]
 
-        self.log.info('processing {}'.format(node))
+        self.log.info('processing {}'.format(node["name"].value()))
 
         families = []
         if instance.data.get('families'):
@@ -24,10 +25,13 @@ class CollectInstanceFamilies(pyblish.api.InstancePlugin):
         # instance.data["families"] = ["ftrack"]
 
         if node["render"].value():
+            self.log.info("flagged for render")
             # dealing with local/farm rendering
             if node["render_farm"].value():
+                self.log.info("adding render farm family")
                 families.append("render.farm")
             else:
+                self.log.info("adding render to local")
                 families.append("render.local")
         else:
             families.append("render.frames")
