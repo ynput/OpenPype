@@ -251,7 +251,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # This assumes the output files start with subset name and ends with
         # a file extension. The "ext" key includes the dot with the extension.
         if "ext" in instance.data:
-            ext = re.escape(instance.data["ext"])
+            ext = r"\." + re.escape(instance.data["ext"])
         else:
             ext = r"\.\D+"
 
