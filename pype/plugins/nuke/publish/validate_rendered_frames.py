@@ -1,5 +1,6 @@
 import os
 import pyblish.api
+from pype.api import ValidationException
 import clique
 
 
@@ -20,21 +21,25 @@ class RepairCollectionAction(pyblish.api.Action):
         self.log.info("Rendering toggled ON")
 
 
-class ValidatePrerenderedFrames(pyblish.api.InstancePlugin):
+class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["render.frames", "still.frames", "prerender.frames"]
+    families = ["render.local"]
 
-    label = "Validate prerendered frame"
-    hosts = ["nuke"]
+    label = "Validate rendered frame"
+    hosts = ["nuke", "nukestudio"]
     actions = [RepairCollectionAction]
 
     def process(self, instance):
 
         for repre in instance.data.get('representations'):
 
-            assert repre.get('files'), "no frames were collected, you need to render them"
+            if not repre.get('files'):
+                msg = ("no frames were collected, "
+                       "you need to render them")
+                self.log.error(msg)
+                raise ValidationException(msg)
 
             collections, remainder = clique.assemble(repre["files"])
             self.log.info('collections: {}'.format(str(collections)))
@@ -45,10 +50,20 @@ class ValidatePrerenderedFrames(pyblish.api.InstancePlugin):
                 - instance.data["startFrame"] + 1
 
             if frame_length != 1:
-                assert len(collections) == 1, "There are multiple collections in the folder"
-                assert collection.is_contiguous(), "Some frames appear to be missing"
+                if len(collections) != 1:
+                    msg = "There are multiple collections in the folder"
+                    self.log.error(msg)
+                    raise ValidationException(msg)
 
-            assert remainder is not None, "There are some extra files in folder"
+                if not collection.is_contiguous():
+                    msg = "Some frames appear to be missing"
+                    self.log.error(msg)
+                    raise ValidationException(msg)
+
+                if remainder is not None:
+                    msg = "There are some extra files in folder"
+                    self.log.error(msg)
+                    raise ValidationException(msg)
 
             self.log.info('frame_length: {}'.format(frame_length))
             self.log.info('len(collection.indexes): {}'.format(
@@ -56,7 +71,7 @@ class ValidatePrerenderedFrames(pyblish.api.InstancePlugin):
 
             assert len(
                 collection.indexes
-            ) is frame_length, "{} missing frames. Use "
-            "repair to render all frames".format(__name__)
+            ) is frame_length, ("{} missing frames. Use "
+                                "repair to render all frames").format(__name__)
 
             instance.data['collection'] = collection

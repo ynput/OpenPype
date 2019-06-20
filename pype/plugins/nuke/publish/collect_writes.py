@@ -50,7 +50,7 @@ class CollectNukeWrites(pyblish.api.ContextPlugin):
             self.log.debug('output dir: {}'.format(output_dir))
 
             # get version
-            version = pype.get_version_from_path(path)
+            version = pype.get_version_from_path(nuke.root().name())
             instance.data['version'] = version
             self.log.debug('Write Version: %s' % instance.data('version'))
 

@@ -376,7 +376,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 rendered_logs.append(log)
 
         metadata["metadata"]["instance"]["_log"] = rendered_logs
-        pprint(metadata)
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4, sort_keys=True)
 

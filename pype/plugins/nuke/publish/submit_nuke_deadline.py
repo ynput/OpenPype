@@ -6,6 +6,7 @@ import nuke
 
 from avalon import api
 from avalon.vendor import requests
+import re
 
 import pyblish.api
 
@@ -51,6 +52,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, "renders")
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
+        ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
 
         try:
             # Ensure render folder exists
@@ -94,7 +96,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 # "OutputFilePrefix": render_variables["filename_prefix"],
 
                 # Mandatory for Deadline
-                "Version": context.data.get("hostVersion"),
+                "Version": ver.group(),
 
                 # Resolve relative references
                 "ProjectPath": workspace,
@@ -188,8 +190,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             raise Exception(response.text)
 
         # Store output dir for unified publisher (filesequence)
-        instance.data["outputDir"] = os.path.dirname(output_dir)
         instance.data["deadlineSubmissionJob"] = response.json()
+        instance.data["publishJobState"] = "Active"
 
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""

@@ -60,8 +60,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "nukescript",
                 "render",
                 "rendersetup",
-                "render.farm",
-                "write",
                 "rig",
                 "plate",
                 "look"
