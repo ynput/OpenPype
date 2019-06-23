@@ -19,7 +19,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                                   "name": api.Session["AVALON_ASSET"]})
 
         # add handles into context
-        context.data['handles'] = int(asset_data["data"].get("handles", 0))
+        context.data['handles'] = context.data['handles']
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []

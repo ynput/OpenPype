@@ -16,10 +16,6 @@ class CollectScript(pyblish.api.ContextPlugin):
     hosts = ['nuke']
 
     def process(self, context):
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]})
-        self.log.info("asset_data: {}".format(asset_data["data"]))
-
         root = nuke.root()
         add_avalon_tab_knob(root)
         add_publish_knob(root)
@@ -57,7 +53,7 @@ class CollectScript(pyblish.api.ContextPlugin):
             "publish": root.knob('publish').value(),
             "family": family,
             "representation": "nk",
-            "handles": int(asset_data["data"].get("handles", 0)),
+            "handles": context.data['handles'],
             "step": 1,
             "fps": int(root['fps'].value()),
         })
