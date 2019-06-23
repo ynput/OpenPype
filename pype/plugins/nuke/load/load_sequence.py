@@ -75,7 +75,7 @@ def loader_shift(node, frame, relative=True):
 class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
-    families = ["render", "source", "plate"]
+    families = ["write", "source", "plate", "render"]
     representations = ["exr", "dpx"]
 
     label = "Load sequence"
