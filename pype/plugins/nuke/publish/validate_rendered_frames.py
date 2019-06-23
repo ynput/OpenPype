@@ -25,7 +25,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["render.local"]
+    families = ["render"]
 
     label = "Validate rendered frame"
     hosts = ["nuke", "nukestudio"]
@@ -43,6 +43,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
 
             collections, remainder = clique.assemble(repre["files"])
             self.log.info('collections: {}'.format(str(collections)))
+            self.log.info('remainder: {}'.format(str(remainder)))
 
             collection = collections[0]
 
@@ -60,7 +61,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                     self.log.error(msg)
                     raise ValidationException(msg)
 
-                if remainder is not None:
+                if len(remainder) != 0:
                     msg = "There are some extra files in folder"
                     self.log.error(msg)
                     raise ValidationException(msg)
