@@ -61,10 +61,10 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                     self.log.error(msg)
                     raise ValidationException(msg)
 
-                if len(remainder) != 0:
-                    msg = "There are some extra files in folder"
-                    self.log.error(msg)
-                    raise ValidationException(msg)
+                # if len(remainder) != 0:
+                #     msg = "There are some extra files in folder"
+                #     self.log.error(msg)
+                #     raise ValidationException(msg)
 
             self.log.info('frame_length: {}'.format(frame_length))
             self.log.info('len(collection.indexes): {}'.format(

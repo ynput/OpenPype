@@ -9,17 +9,9 @@ class CollectReview(pyblish.api.InstancePlugin):
     family = "review"
     label = "Collect Review"
     hosts = ["nuke"]
-    families = ["write"]
-
-    family_targets = [".local", ".frames"]
+    families = ["render", "render.local"]
 
     def process(self, instance):
-        families = []
-        if "render.farm" not in instance.data["families"]:
-            families = [(f, search) for f in instance.data["families"]
-                        for search in self.family_targets
-                        if search in f][0]
-
-        if families:
-            instance.data["families"].append("render.review")
+        if instance.data["families"]:
+            instance.data["families"].append("review")
             self.log.info("Review collected: `{}`".format(instance))

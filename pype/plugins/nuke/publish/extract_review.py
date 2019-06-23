@@ -16,7 +16,7 @@ class ExtractDataForReview(pype.api.Extractor):
     label = "Extract Review"
     optional = True
 
-    families = ["render.review", "render.local"]
+    families = ["review"]
     hosts = ["nuke"]
 
     def process(self, instance):
@@ -79,7 +79,7 @@ class ExtractDataForReview(pype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'mov',
+            'name': 'review',
             'ext': 'mov',
             'files': file_name,
             "stagingDir": stagingDir,
@@ -100,7 +100,7 @@ class ExtractDataForReview(pype.api.Extractor):
 
         import nuke
         temporary_nodes = []
-        stagingDir = instance.data["stagingDir"].replace("\\", "/")
+        stagingDir = instance.data['representations'][0]["stagingDir"].replace("\\", "/")
         self.log.debug("StagingDir `{0}`...".format(stagingDir))
 
         collection = instance.data.get("collection", None)

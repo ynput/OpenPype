@@ -69,6 +69,7 @@ class NukeRenderLocal(pype.api.Extractor):
             temp_dir
         ))
 
+        instance.data['family'] = 'render'
         instance.data['families'].append('render')
 
         collections, remainder = clique.assemble(collected_frames)

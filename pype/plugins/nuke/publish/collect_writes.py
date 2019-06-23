@@ -63,6 +63,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         )
 
         if 'render' in instance.data['families']:
+            instance.data['families'].append('ftrack')
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
             try:
@@ -80,6 +81,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             except Exception:
                 self.log.debug("couldn't collect frames: {}".format(label))
 
+        if 'render.local' in instance.data['families']:
+            instance.data['families'].append('ftrack')
+
         instance.data.update({
             "path": path,
             "outputDir": output_dir,
@@ -91,5 +95,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
         })
+
 
         self.log.debug("instance.data: {}".format(instance.data))
