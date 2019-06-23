@@ -27,5 +27,5 @@ class CollectPresets(api.ContextPlugin):
 
         context.data["presets"] = presets
 
-        self.log.info(context.data["presets"])
+        # self.log.info(context.data["presets"])
         return

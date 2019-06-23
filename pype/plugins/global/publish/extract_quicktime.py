@@ -70,6 +70,9 @@ class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):
         sub_proc = subprocess.Popen(subprocess_mov)
         sub_proc.wait()
 
+        if not os.path.isfile(full_output_path):
+            raise("Quicktime wasn't created succesfully")
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
