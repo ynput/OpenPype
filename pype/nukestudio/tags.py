@@ -1,9 +1,12 @@
-import hiero
 import re
+
 from pypeapp import (
     config,
     Logger
 )
+from avalon import io
+
+import hiero
 
 log = Logger().get_logger(__name__, "nukestudio")
 
@@ -58,6 +61,21 @@ def add_tags_from_presets():
     # get nukestudio tag.json from presets
     nks_pres = presets['nukestudio']
     nks_pres_tags = nks_pres.get("tags", None)
+
+    # Get project task types.
+    tasks = io.find_one({"type": "project"})["config"]["tasks"]
+    nks_pres_tags["[Tasks]"] = {}
+    for task in tasks:
+        nks_pres_tags["[Tasks]"][task["name"]] = {
+            "editable": "1",
+            "note": "Tag note",
+            "icon": {
+                "path": ""
+            },
+            "metadata": {
+                "family": "task"
+            }
+        }
 
     # get project and root bin object
     project = hiero.core.projects()[-1]
