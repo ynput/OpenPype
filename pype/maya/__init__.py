@@ -124,12 +124,7 @@ def on_init(_):
 
 
 def launch_workfiles_app(*args):
-    workfiles.show(
-        os.path.join(
-            cmds.workspace(query=True, rootDirectory=True),
-            cmds.workspace(fileRuleEntry="scene")
-        )
-    )
+    workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
 def on_before_save(return_code, _):
