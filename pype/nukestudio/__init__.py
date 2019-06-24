@@ -1,16 +1,18 @@
 import os
-import sys
+
 from avalon import api as avalon
 from pyblish import api as pyblish
 
 from .. import api
-
 from .menu import (
     install as menu_install,
     _update_menu_task_label
 )
+from .tags import add_tags_from_presets
 
 from pypeapp import Logger
+
+import hiero
 
 log = Logger().get_logger(__name__, "nukestudio")
 
@@ -54,6 +56,15 @@ def install(config):
 
     # load data from templates
     api.load_data_from_templates()
+
+    # Add tags on project load.
+    hiero.core.events.registerInterest(
+        "kAfterProjectLoad", add_tags
+    )
+
+
+def add_tags(event):
+    add_tags_from_presets()
 
 
 def uninstall():
