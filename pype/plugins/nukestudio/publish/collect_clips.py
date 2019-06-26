@@ -50,26 +50,18 @@ class CollectClips(api.ContextPlugin):
             )
 
         for data in instances_data:
-            family = "clip"
-            instance = context.create_instance(
-                name=data["name"],
-                asset=data["item"].name(),
-                item=data["item"],
-                source=data["source"],
-                sourcePath=data["sourcePath"],
-                family=family,
-                families=[],
-                sourceFirst=data["sourceFirst"],
-                sourceIn=data["sourceIn"],
-                sourceOut=data["sourceOut"],
-                startFrame=data["startFrame"],
-                endFrame=data["endFrame"],
-                handles=projectdata["handles"],
-                handleStart=0,
-                handleEnd=0,
-                version=version,
-                track=data["track"]
+            data.update(
+                {
+                    "asset": data["item"].name(),
+                    "family": "clip",
+                    "families": [],
+                    "handles": projectdata["handles"],
+                    "handleStart": 0,
+                    "handleEnd": 0,
+                    "version": version
+                }
             )
+            instance = context.create_instance(**data)
             self.log.debug(
                 "Created instance with data: {}".format(instance.data)
             )
