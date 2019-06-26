@@ -47,8 +47,9 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
 
             collection = collections[0]
 
-            frame_length = instance.data["endFrame"] \
-                - instance.data["startFrame"] + 1
+            frame_length = int(
+                instance.data["endFrame"] - instance.data["startFrame"] + 1
+            )
 
             if frame_length != 1:
                 if len(collections) != 1:
@@ -66,13 +67,14 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                 #     self.log.error(msg)
                 #     raise ValidationException(msg)
 
+            collected_frames_len = int(len(collection.indexes))
             self.log.info('frame_length: {}'.format(frame_length))
-            self.log.info('len(collection.indexes): {}'.format(
-                len(collection.indexes)))
+            self.log.info(
+                'len(collection.indexes): {}'.format(collected_frames_len)
+            )
 
-            assert len(
-                collection.indexes
-            ) is frame_length, ("{} missing frames. Use "
-                                "repair to render all frames").format(__name__)
+            assert (collected_frames_len == frame_length), (
+                "{} missing frames. Use repair to render all frames"
+            ).format(__name__)
 
             instance.data['collection'] = collection
