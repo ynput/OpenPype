@@ -11,6 +11,18 @@ class CollectShot(api.InstancePlugin):
     families = ["clip"]
 
     def process(self, instance):
+        hierarchy_tagged = False
+        for tag in instance.data["tags"]:
+            if tag["name"].lower() == "hierarchy":
+                hierarchy_tagged = True
+
+        if not hierarchy_tagged:
+            self.log.debug(
+                "Skipping \"{}\" because its not tagged with "
+                "\"Hierarchy\"".format(instance)
+            )
+            return
+
         context = instance.context
 
         # Collect data.
