@@ -1,12 +1,99 @@
+import os
+
 from pyblish import api
-import pype
 
 
-class CollectPlates(api.InstancePlugin):
+class CollectPlates(api.ContextPlugin):
+    """Collect plates from tags.
+
+    Tag is expected to have metadata:
+        {
+            "family": "plate"
+            "subset": "main"
+        }
+    """
+
+    # Run just before CollectSubsets
+    order = api.CollectorOrder + 0.1025
+    label = "Collect Plates"
+    hosts = ["nukestudio"]
+
+    def process(self, context):
+        for instance in context[:]:
+            # Exclude non-tagged instances.
+            tagged = False
+            for tag in instance.data["tags"]:
+                family = dict(tag["metadata"]).get("tag.family", "")
+                if family.lower() == "plate":
+                    tagged = True
+
+            if not tagged:
+                self.log.debug(
+                    "Skipping \"{}\" because its not tagged with "
+                    "\"plate\"".format(instance)
+                )
+                continue
+
+            # Collect data.
+            data = {}
+            for key, value in instance.data.iteritems():
+                data[key] = value
+
+            data["family"] = "plate"
+            data["families"] = []
+            data["label"] += (
+                " ({})".format(os.path.splitext(data["sourcePath"])[1])
+            )
+            data["subset"] = dict(tag["metadata"])["tag.subset"]
+
+            # Timeline data.
+            handle_start = int(instance.data["handleStart"] + data["handles"])
+            handle_end = int(instance.data["handleEnd"] + data["handles"])
+
+            source_in_h = data["sourceIn"] - handle_start
+            source_out_h = data["sourceOut"] + handle_end
+
+            timeline_in = int(data["item"].timelineIn())
+            timeline_out = int(data["item"].timelineOut())
+
+            timeline_frame_start = timeline_in - handle_start
+            timeline_frame_end = timeline_out + handle_end
+
+            frame_start = 1
+            frame_end = frame_start + (data["sourceOut"] - data["sourceIn"])
+
+            sequence = context.data["activeSequence"]
+            fps = sequence.framerate()
+
+            data.update(
+                {
+                    "sourceFirst": data["sourceFirst"],
+                    "sourceIn": data["sourceIn"],
+                    "sourceOut": data["sourceOut"],
+                    "sourceInH": source_in_h,
+                    "sourceOutH": source_out_h,
+                    "frameStart": frame_start,
+                    "startFrame": frame_start,
+                    "endFrame": frame_end,
+                    "timelineIn": timeline_in,
+                    "timelineOut": timeline_out,
+                    "timelineInHandles": timeline_frame_start,
+                    "timelineOutHandles": timeline_frame_end,
+                    "fps": fps,
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end
+                }
+            )
+
+            self.log.debug("Creating instance with data: {}".format(data))
+            context.create_instance(**data)
+
+
+class CollectPlatesData(api.InstancePlugin):
     """Collect plates"""
 
-    order = api.CollectorOrder + 0.49
-    label = "Collect Plates"
+    order = api.CollectorOrder + 0.495
+    label = "Collect Plates Data"
     hosts = ["nukestudio"]
     families = ["plate"]
 
@@ -25,11 +112,16 @@ class CollectPlates(api.InstancePlugin):
         name = instance.data["subset"]
         asset = instance.data["asset"]
         track = instance.data["track"]
-        family = instance.data["family"]
-        families = instance.data["families"]
         version = instance.data["version"]
         source_path = instance.data["sourcePath"]
         source_file = os.path.basename(source_path)
+
+        # Filter out "clip" family.
+        families = instance.data["families"] + [instance.data["family"]]
+        families = list(set(families))
+        if "clip" in families:
+            families.remove("clip")
+        family = families[-1]
 
         # staging dir creation
         staging_dir = os.path.dirname(
@@ -95,10 +187,6 @@ class CollectPlates(api.InstancePlugin):
 
         self.log.debug("__ before family: {}".format(family))
         self.log.debug("__ before families: {}".format(families))
-        #
-        # this is just workaround because 'clip' family is filtered
-        instance.data["family"] = families[-1]
-        instance.data["families"].append(family)
 
         # add to data of representation
         version_data.update({
