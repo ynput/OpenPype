@@ -10,7 +10,7 @@ class IntegrateHierarchyToAvalon(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder - 0.1
     label = 'Integrate Hierarchy To Avalon'
-    families = ['clip']
+    families = ['clip', "shot"]
 
     def process(self, context):
         if "hierarchyContext" not in context.data:

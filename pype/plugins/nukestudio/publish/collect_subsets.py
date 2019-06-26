@@ -116,8 +116,6 @@ class CollectClipSubsets(api.InstancePlugin):
         # get specific presets
         pr_host_tasks = deepcopy(
             nks_presets["rules_tasks"]).get("hostTasks", None)
-        pr_host_subsets = deepcopy(
-            nks_presets["rules_tasks"]).get("hostSubsets", None)
 
         subsets_collect = dict()
         # iterate tags and collect subset properities from presets
@@ -134,7 +132,7 @@ class CollectClipSubsets(api.InstancePlugin):
             try:
                 # get subsets for task
                 subsets = None
-                subsets = pr_host_subsets[host]
+                #subsets = pr_host_subsets[host]
             except KeyError:
                 pass
 

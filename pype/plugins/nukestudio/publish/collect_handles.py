@@ -39,6 +39,8 @@ class CollectClipHandles(api.ContextPlugin):
                     instance.data["name"]))
                 name = instance.data["asset"]
                 s_asset_data = assets_shared.get(name)
-                instance.data["handles"] = s_asset_data["handles"]
-                instance.data["handleStart"] = s_asset_data["handleStart"]
-                instance.data["handleEnd"] = s_asset_data["handleEnd"]
+                instance.data["handles"] = s_asset_data.get("handles", 0)
+                instance.data["handleStart"] = s_asset_data.get(
+                    "handleStart", 0
+                )
+                instance.data["handleEnd"] = s_asset_data.get("handleEnd", 0)

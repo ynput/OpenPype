@@ -203,8 +203,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             self.log.debug("__ instance.data[parents]: {}".format(instance.data["parents"]))
             self.log.debug("__ instance.data[hierarchy]: {}".format(instance.data["hierarchy"]))
             self.log.debug("__ instance.data[name]: {}".format(instance.data["name"]))
-            if "main" not in instance.data["name"].lower():
-                continue
 
             in_info = {}
             # suppose that all instances are Shots
@@ -224,7 +222,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             handle_end = instance.data.get('handleEnd')
             self.log.debug("__ handle_start: {}".format(handle_start))
             self.log.debug("__ handle_end: {}".format(handle_end))
-            
+
             if handle_start and handle_end:
                 in_info['custom_attributes'].update({
                     "handle_start": handle_start,

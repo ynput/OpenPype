@@ -27,7 +27,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder - 0.04
     label = 'Integrate Hierarchy To Ftrack'
-    families = ["clip"]
+    families = ["clip", "shot"]
     optional = False
 
     def process(self, context):
@@ -46,6 +46,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         for entity_name in input_data:
             entity_data = input_data[entity_name]
             entity_type = entity_data['entity_type']
+            self.log.debug(entity_data)
+            self.log.debug(entity_type)
 
             if entity_type.lower() == 'project':
                 query = 'Project where full_name is "{}"'.format(entity_name)

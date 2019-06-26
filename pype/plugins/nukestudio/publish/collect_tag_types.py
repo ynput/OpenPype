@@ -31,6 +31,8 @@ class CollectClipTagTypes(api.InstancePlugin):
 
         if subset_names:
             instance.data["subsetType"] = subset_names[0]
+        else:
+            instance.data["subsetType"] = "main"
 
         self.log.info("Collected Plate Types from Tags: `{}`".format(
             instance.data["subsetType"]))
