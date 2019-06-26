@@ -40,11 +40,12 @@ class CollectPlates(api.ContextPlugin):
                 data[key] = value
 
             data["family"] = "plate"
-            data["families"] = []
+            data["families"] = ["ftrack"]
             data["label"] += (
                 " ({})".format(os.path.splitext(data["sourcePath"])[1])
             )
             data["subset"] = dict(tag["metadata"])["tag.subset"]
+            data["source"] = data["sourcePath"]
 
             # Timeline data.
             handle_start = int(instance.data["handleStart"] + data["handles"])
@@ -232,27 +233,6 @@ class CollectPlatesData(api.InstancePlugin):
             start_frame = source_in_h
             end_frame = source_out_h
 
-
-        mov_file = head + ".mov"
-        mov_path = os.path.normpath(os.path.join(staging_dir, mov_file))
-        if os.path.exists(mov_path):
-            # adding mov into the representations
-            self.log.debug("__ mov_path: {}".format(mov_path))
-            plates_mov_representation = {
-                'files': mov_file,
-                'stagingDir': staging_dir,
-                'startFrame': 0,
-                'endFrame': source_out - source_in + 1,
-                'step': 1,
-                'frameRate': fps,
-                'preview': True,
-                'thumbnail': False,
-                'name': "preview",
-                'ext': "mov",
-            }
-            instance.data["representations"].append(
-                plates_mov_representation)
-
         thumb_file = head + ".png"
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: {}".format(thumb_path))
@@ -293,6 +273,3 @@ class CollectPlatesData(api.InstancePlugin):
             plates_representation))
         self.log.debug("__ after family: {}".format(family))
         self.log.debug("__ after families: {}".format(families))
-
-        # # this will do FnNsFrameServer
-        # FnNsFrameServer.renderFrames(*_args)
