@@ -1,5 +1,8 @@
 import os
+
 from pyblish import api
+
+import nuke
 
 
 class CollectClips(api.ContextPlugin):
@@ -14,7 +17,6 @@ class CollectClips(api.ContextPlugin):
         version = context.data.get("version", "001")
         instances_data = []
         for item in context.data.get("selection", []):
-            self.log.debug(item)
             # Skip audio track items
             # Try/Except is to handle items types, like EffectTrackItem
             try:
@@ -27,6 +29,32 @@ class CollectClips(api.ContextPlugin):
             track = item.parent()
             source = item.source().mediaSource()
             source_path = source.firstpath()
+
+            # If source is *.nk its a comp effect and we need to fetch the
+            # write node output.
+            if source_path.endswith(".nk"):
+                nuke.scriptOpen(source_path)
+                # There should noly be one.
+                write_node = nuke.allNodes(filter="Write")[0]
+                path = nuke.filename(write_node)
+
+                if "%" in path:
+                    # Get start frame from Nuke script and use the item source
+                    # in/out, because you can have multiple shots covered with
+                    # one nuke script.
+                    start_frame = int(nuke.root()["first_frame"].getValue())
+                    if write_node["use_limit"].getValue():
+                        start_frame = int(write_node["first"].getValue())
+
+                    path = path % (start_frame + item.sourceIn())
+
+                source_path = path
+                self.log.debug(
+                    "Fetched source path \"{}\" from \"{}\" in "
+                    "\"{}\".".format(
+                        source_path, write_node.name(), source.firstpath()
+                    )
+                )
 
             try:
                 head, padding, ext = os.path.basename(source_path).split(".")

@@ -41,11 +41,18 @@ class CollectPlates(api.ContextPlugin):
 
             data["family"] = "plate"
             data["families"] = ["ftrack"]
-            data["label"] += (
-                " ({})".format(os.path.splitext(data["sourcePath"])[1])
-            )
-            data["subset"] = dict(tag["metadata"])["tag.subset"]
             data["source"] = data["sourcePath"]
+
+            subset = ""
+            for tag in instance.data["tags"]:
+                tag_data = dict(tag["metadata"])
+                if "tag.subset" in tag_data:
+                    subset = tag_data["tag.subset"]
+            data["subset"] = subset
+
+            data["label"] += " - {} - ({})".format(
+                subset, os.path.splitext(data["sourcePath"])[1]
+            )
 
             # Timeline data.
             handle_start = int(instance.data["handleStart"] + data["handles"])
@@ -173,10 +180,14 @@ class CollectPlatesData(api.InstancePlugin):
         self.log.debug("__ s duration: {}".format(source_out - source_in + 1))
         self.log.debug("__ source_in_h: {}".format(source_in_h))
         self.log.debug("__ source_out_h: {}".format(source_out_h))
-        self.log.debug("__ sh duration: {}".format(source_out_h - source_in_h + 1))
+        self.log.debug("__ sh duration: {}".format(
+            source_out_h - source_in_h + 1)
+        )
         self.log.debug("__ timeline_in: {}".format(timeline_in))
         self.log.debug("__ timeline_out: {}".format(timeline_out))
-        self.log.debug("__ t duration: {}".format(timeline_out - timeline_in + 1))
+        self.log.debug("__ t duration: {}".format(
+            timeline_out - timeline_in + 1)
+        )
         self.log.debug("__ timeline_frame_start: {}".format(
             timeline_frame_start))
         self.log.debug("__ timeline_frame_end: {}".format(timeline_frame_end))
