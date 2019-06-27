@@ -3,7 +3,7 @@ import os
 from pyblish import api
 
 
-class CollectPlates(api.ContextPlugin):
+class CollectPlates(api.InstancePlugin):
     """Collect plates from tags.
 
     Tag is expected to have metadata:
@@ -17,84 +17,84 @@ class CollectPlates(api.ContextPlugin):
     order = api.CollectorOrder + 0.1025
     label = "Collect Plates"
     hosts = ["nukestudio"]
+    families = ["clip"]
 
-    def process(self, context):
-        for instance in context[:]:
-            # Exclude non-tagged instances.
-            tagged = False
-            for tag in instance.data["tags"]:
-                family = dict(tag["metadata"]).get("tag.family", "")
-                if family.lower() == "plate":
-                    tagged = True
+    def process(self, instance):
+        # Exclude non-tagged instances.
+        tagged = False
+        for tag in instance.data["tags"]:
+            family = dict(tag["metadata"]).get("tag.family", "")
+            if family.lower() == "plate":
+                tagged = True
 
-            if not tagged:
-                self.log.debug(
-                    "Skipping \"{}\" because its not tagged with "
-                    "\"plate\"".format(instance)
-                )
-                continue
-
-            # Collect data.
-            data = {}
-            for key, value in instance.data.iteritems():
-                data[key] = value
-
-            data["family"] = "plate"
-            data["families"] = ["ftrack"]
-            data["source"] = data["sourcePath"]
-
-            subset = ""
-            for tag in instance.data["tags"]:
-                tag_data = dict(tag["metadata"])
-                if "tag.subset" in tag_data:
-                    subset = tag_data["tag.subset"]
-            data["subset"] = subset
-
-            data["label"] += " - {} - ({})".format(
-                subset, os.path.splitext(data["sourcePath"])[1]
+        if not tagged:
+            self.log.debug(
+                "Skipping \"{}\" because its not tagged with "
+                "\"plate\"".format(instance)
             )
+            return
 
-            # Timeline data.
-            handle_start = int(instance.data["handleStart"] + data["handles"])
-            handle_end = int(instance.data["handleEnd"] + data["handles"])
+        # Collect data.
+        data = {}
+        for key, value in instance.data.iteritems():
+            data[key] = value
 
-            source_in_h = data["sourceIn"] - handle_start
-            source_out_h = data["sourceOut"] + handle_end
+        data["family"] = "plate"
+        data["families"] = ["ftrack"]
+        data["source"] = data["sourcePath"]
 
-            timeline_in = int(data["item"].timelineIn())
-            timeline_out = int(data["item"].timelineOut())
+        subset = ""
+        for tag in instance.data["tags"]:
+            tag_data = dict(tag["metadata"])
+            if "tag.subset" in tag_data:
+                subset = tag_data["tag.subset"]
+        data["subset"] = subset
 
-            timeline_frame_start = timeline_in - handle_start
-            timeline_frame_end = timeline_out + handle_end
+        data["label"] += " - {} - ({})".format(
+            subset, os.path.splitext(data["sourcePath"])[1]
+        )
 
-            frame_start = 1
-            frame_end = frame_start + (data["sourceOut"] - data["sourceIn"])
+        # Timeline data.
+        handle_start = int(instance.data["handleStart"] + data["handles"])
+        handle_end = int(instance.data["handleEnd"] + data["handles"])
 
-            sequence = context.data["activeSequence"]
-            fps = sequence.framerate()
+        source_in_h = data["sourceIn"] - handle_start
+        source_out_h = data["sourceOut"] + handle_end
 
-            data.update(
-                {
-                    "sourceFirst": data["sourceFirst"],
-                    "sourceIn": data["sourceIn"],
-                    "sourceOut": data["sourceOut"],
-                    "sourceInH": source_in_h,
-                    "sourceOutH": source_out_h,
-                    "frameStart": frame_start,
-                    "startFrame": frame_start,
-                    "endFrame": frame_end,
-                    "timelineIn": timeline_in,
-                    "timelineOut": timeline_out,
-                    "timelineInHandles": timeline_frame_start,
-                    "timelineOutHandles": timeline_frame_end,
-                    "fps": fps,
-                    "handleStart": handle_start,
-                    "handleEnd": handle_end
-                }
-            )
+        timeline_in = int(data["item"].timelineIn())
+        timeline_out = int(data["item"].timelineOut())
 
-            self.log.debug("Creating instance with data: {}".format(data))
-            context.create_instance(**data)
+        timeline_frame_start = timeline_in - handle_start
+        timeline_frame_end = timeline_out + handle_end
+
+        frame_start = 1
+        frame_end = frame_start + (data["sourceOut"] - data["sourceIn"])
+
+        sequence = instance.context.data["activeSequence"]
+        fps = sequence.framerate()
+
+        data.update(
+            {
+                "sourceFirst": data["sourceFirst"],
+                "sourceIn": data["sourceIn"],
+                "sourceOut": data["sourceOut"],
+                "sourceInH": source_in_h,
+                "sourceOutH": source_out_h,
+                "frameStart": frame_start,
+                "startFrame": frame_start,
+                "endFrame": frame_end,
+                "timelineIn": timeline_in,
+                "timelineOut": timeline_out,
+                "timelineInHandles": timeline_frame_start,
+                "timelineOutHandles": timeline_frame_end,
+                "fps": fps,
+                "handleStart": handle_start,
+                "handleEnd": handle_end
+            }
+        )
+
+        self.log.debug("Creating instance with data: {}".format(data))
+        instance.context.create_instance(**data)
 
 
 class CollectPlatesData(api.InstancePlugin):
