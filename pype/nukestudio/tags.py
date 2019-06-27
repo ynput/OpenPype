@@ -70,7 +70,7 @@ def add_tags_from_presets():
             "editable": "1",
             "note": "",
             "icon": {
-                "path": ""
+                "path": "icons:TagGood.png"
             },
             "metadata": {
                 "family": "task"
@@ -86,7 +86,7 @@ def add_tags_from_presets():
                 "editable": "1",
                 "note": "",
                 "icon": {
-                    "path": ""
+                    "path": "icons:TagActor.png"
                 },
                 "metadata": {
                     "family": "asset"
