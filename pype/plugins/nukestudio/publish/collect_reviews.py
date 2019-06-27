@@ -38,6 +38,7 @@ class CollectReviews(api.InstancePlugin):
             data[key] = value
 
         data["family"] = "review"
+        data["ftrackFamily"] = "img"
         data["families"] = ["ftrack"]
 
         subset = ""
