@@ -25,7 +25,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'nukescript': 'comp',
                       'write': 'render',
                       'review': 'mov',
-                      'plate': 'img'
+                      'plate': 'img',
+                      'audio': 'audio'
                       }
 
     def process(self, instance):
