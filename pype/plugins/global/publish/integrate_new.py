@@ -98,6 +98,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #   \       /
         #    o   __/
         #
+        for result in context.data["results"]:
+            if not result["success"]:
+                self.log.debug(result)
         assert all(result["success"] for result in context.data["results"]), (
             "Atomicity not held, aborting.")
 
