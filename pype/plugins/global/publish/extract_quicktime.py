@@ -52,9 +52,9 @@ class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):
         # preset's input data
         input_args.extend(profile.get('input', []))
         # necessary input data
+        input_args.append("-start_number {}".format(start))
         input_args.append("-i {}".format(full_input_path))
         input_args.append("-framerate {}".format(fps))
-        input_args.append("-start_number {}".format(start))
 
         output_args = []
         # preset's output data
