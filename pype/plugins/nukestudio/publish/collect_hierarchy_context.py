@@ -213,11 +213,11 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             # get custom attributes of the shot
             in_info['custom_attributes'] = {
                 'handles': int(instance.data.get('handles')),
-                'fend': int(
-                    (source_first + source_out)),
-                'fstart': int(
-                    source_first + source_in),
-                'fps': context.data["framerate"]
+                'fstart': int(instance.data["startFrame"]),
+                'fend': int(instance.data["endFrame"]),
+                'fps': context.data["framerate"],
+                "edit_in": int(instance.data["startFrame"]),
+                "edit_out": int(instance.data["endFrame"])
             }
 
             handle_start = instance.data.get('handleStart')
