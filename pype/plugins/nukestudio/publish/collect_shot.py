@@ -34,7 +34,9 @@ class CollectShot(api.InstancePlugin):
         data["families"] = []
         data["frameStart"] = 1
 
-        data["label"] += " - tasks: {}".format(data["tasks"])
+        data["label"] += " - tasks: {} - assetbuilds: {}".format(
+            data["tasks"], [x["name"] for x in data["assetBuilds"]]
+        )
 
         # Get handles.
         data["handleStart"] = instance.data["handleStart"] + data["handles"]

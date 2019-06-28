@@ -8,7 +8,6 @@ class CollectClipHandles(api.ContextPlugin):
     order = api.CollectorOrder + 0.1025
     label = "Collect Handles"
     hosts = ["nukestudio"]
-    families = ['clip']
 
     def process(self, context):
         assets_shared = context.data.get("assetsShared")
@@ -16,7 +15,15 @@ class CollectClipHandles(api.ContextPlugin):
 
         # find all main types instances and add its handles to asset shared
         instances = context[:]
+        filtered_instances = []
         for instance in instances:
+            families = instance.data.get("families", [])
+            families += [instance.data["family"]]
+            if "clip" in families:
+                filtered_instances.append(instance)
+            else:
+                continue
+
             # get handles
             handles = int(instance.data["handles"])
             handle_start = int(instance.data["handleStart"])
@@ -33,7 +40,7 @@ class CollectClipHandles(api.ContextPlugin):
                         "handleEnd": handle_end
                     })
 
-        for instance in instances:
+        for instance in filtered_instances:
             if not instance.data.get("main"):
                 self.log.debug("Synchronize handles on: `{}`".format(
                     instance.data["name"]))

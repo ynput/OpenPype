@@ -79,17 +79,17 @@ def add_tags_from_presets():
 
     # Get project assets. Currently Ftrack specific to differentiate between
     # asset builds and shots.
-    nks_pres_tags["[Assets]"] = {}
+    nks_pres_tags["[AssetBuilds]"] = {}
     for asset in io.find({"type": "asset"}):
         if asset["data"]["entityType"] == "AssetBuild":
-            nks_pres_tags["[Assets]"][asset["name"]] = {
+            nks_pres_tags["[AssetBuilds]"][asset["name"]] = {
                 "editable": "1",
                 "note": "",
                 "icon": {
                     "path": "icons:TagActor.png"
                 },
                 "metadata": {
-                    "family": "asset"
+                    "family": "assetbuild"
                 }
             }
 

@@ -25,13 +25,15 @@ class IntegrateHierarchyToAvalon(pyblish.api.ContextPlugin):
         self.import_to_avalon(input_data)
 
     def import_to_avalon(self, input_data, parent=None):
-
         for name in input_data:
             self.log.info('input_data[name]: {}'.format(input_data[name]))
             entity_data = input_data[name]
             entity_type = entity_data['entity_type']
 
             data = {}
+
+            data["inputs"] = entity_data.get("inputs", [])
+
             # Process project
             if entity_type.lower() == 'project':
                 entity = self.db.find_one({'type': 'project'})
@@ -73,7 +75,9 @@ class IntegrateHierarchyToAvalon(pyblish.api.ContextPlugin):
                     data = input_data[name]
                     if self.av_project['_id'] != parent['_id']:
                         visualParent = parent['_id']
-                        parents.extend(parent.get('data', {}).get('parents', []))
+                        parents.extend(
+                            parent.get('data', {}).get('parents', [])
+                        )
                         parents.append(parent['name'])
                     data['visualParent'] = visualParent
                     data['parents'] = parents

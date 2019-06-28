@@ -43,7 +43,9 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
         # build data for inner nukestudio project property
         data = {
-            "sequence": context.data['activeSequence'].name().replace(' ', '_'),
+            "sequence": (
+                context.data['activeSequence'].name().replace(' ', '_')
+            ),
             "track": clip.parent().name().replace(' ', '_'),
             "clip": asset
         }
@@ -110,7 +112,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # create new shot asset name
                 instance.data["asset"] = instance.data["asset"].format(
                     **d_metadata)
-                self.log.debug("__ instance.data[asset]: {}".format(instance.data["asset"]))
+                self.log.debug(
+                    "__ instance.data[asset]: "
+                    "{}".format(instance.data["asset"])
+                )
 
                 # lastly fill those individual properties itno
                 # format the string with collected data
@@ -126,8 +131,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # check if hierarchy attribute is already created
                 # it should not be so return warning if it is
                 hd = instance.data.get("hierarchy")
-                assert not hd, "Only one Hierarchy Tag is \
-                            allowed. Clip: `{}`".format(asset)
+                assert not hd, (
+                    "Only one Hierarchy Tag is allowed. "
+                    "Clip: `{}`".format(asset)
+                )
 
                 assetsShared = {
                     asset: {
@@ -179,11 +186,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             handle_start = int(instance.data["handleStart"] + handles)
             handle_end = int(instance.data["handleEnd"] + handles)
 
-            # get source frames
-            source_first = int(instance.data["sourceFirst"])
-            source_in = int(instance.data["sourceIn"])
-            source_out = int(instance.data["sourceOut"])
-
             instance.data['startFrame'] = (
                 instance.data["item"].timelineIn() - handle_start
             )
@@ -217,6 +219,11 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             )
 
             in_info = {}
+
+            in_info["inputs"] = [
+                x["_id"] for x in instance.data["assetBuilds"]
+            ]
+
             # suppose that all instances are Shots
             in_info['entity_type'] = 'Shot'
 
