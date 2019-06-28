@@ -4,6 +4,8 @@ from pype.ftrack import BaseEvent, lib
 
 class Sync_to_Avalon(BaseEvent):
 
+    priority = 100
+
     ignore_entityType = [
         'assetversion', 'job', 'user', 'reviewsessionobject', 'timer',
         'socialfeed', 'socialnotification', 'timelog'
