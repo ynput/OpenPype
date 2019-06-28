@@ -490,18 +490,26 @@ def filter_pyblish_plugins(plugins):
     :type plugins: Dict
     """
     from pypeapp import config
+    from pyblish import api
+
+    host = api.current_host()
 
     # load plugins
     config_data = config.get_presets()['plugins']['config']
 
     # iterate over plugins
     for plugin in plugins[:]:
-        if config_data.get(plugin.__name__):
-            for option, value in config_data[plugin.__name__].items():
-                if hasattr(plugin, option):
-                    log.info('setting {}:{} on plugin {}'.format(
-                        option, value, plugin.__name__))
-                    setattr(plugin, option, value)
-                if option == "enabled":
-                    log.info('removing plugin {}'.format(plugin.__name__))
-                    plugins.remove(plugin)
+        try:
+            config_data = config.get_presets()['plugins'][host][plugin.__name__]  # noqa: E501
+        except KeyError:
+            continue
+
+        for option, value in config_data.items():
+            if option == "enabled" and value is False:
+                log.info('removing plugin {}'.format(plugin.__name__))
+                plugins.remove(plugin)
+            else:
+                log.info('setting {}:{} on plugin {}'.format(
+                    option, value, plugin.__name__))
+
+                setattr(plugin, option, value)
