@@ -132,13 +132,22 @@ def import_to_avalon(
             entity, session, custom_attributes
         )
 
+        cur_data = av_project.get('data') or {}
+
+        enter_data = {}
+        for k, v in cur_data.items():
+            enter_data[k] = v
+        for k, v in data.items():
+            enter_data[k] = v
+
         database[project_name].update_many(
             {'_id': ObjectId(projectId)},
             {'$set': {
                 'name': project_name,
                 'config': config,
-                'data': data,
-            }})
+                'data': data
+            }}
+        )
 
         entity['custom_attributes'][ca_mongoid] = str(projectId)
         session.commit()
@@ -292,6 +301,18 @@ def import_to_avalon(
     if len(errors) > 0:
         output['errors'] = errors
         return output
+
+    avalon_asset = database[project_name].find_one(
+        {'_id': ObjectId(mongo_id)}
+    )
+
+    cur_data = avalon_asset.get('data') or {}
+
+    enter_data = {}
+    for k, v in cur_data.items():
+        enter_data[k] = v
+    for k, v in data.items():
+        enter_data[k] = v
 
     database[project_name].update_many(
         {'_id': ObjectId(mongo_id)},
