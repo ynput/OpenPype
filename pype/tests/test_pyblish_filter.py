@@ -6,7 +6,7 @@ from pype.lib import filter_pyblish_plugins
 import os
 
 
-def test_pyblish_plugin_filter(printer, monkeypatch):
+def test_pyblish_plugin_filter_modifier(printer, monkeypatch):
     """
     Test if pyblish filter can filter and modify plugins on-the-fly.
     """
@@ -39,3 +39,22 @@ def test_pyblish_plugin_filter(printer, monkeypatch):
     assert plugins[0].optional is True
 
     lib.teardown()
+
+
+def test_pyblish_plugin_filter_removal(monkeypatch):
+    """ Test that plugin can be removed by filter """
+    lib.setup_empty()
+    monkeypatch.setitem(os.environ, 'PYBLISHPLUGINPATH', '')
+    plugins = pyblish.api.registered_plugins()
+
+    class MyTestRemovedPlugin(pyblish.api.InstancePlugin):
+        my_test_property = 1
+        label = "Collect Renderable Camera(s)"
+        hosts = ["test"]
+        families = ["default"]
+
+    pyblish.api.register_host("test")
+    pyblish.api.register_plugin(MyTestRemovedPlugin)
+    pyblish.api.register_discovery_filter(filter_pyblish_plugins)
+    plugins = pyblish.api.discover()
+    assert len(plugins) == 0
