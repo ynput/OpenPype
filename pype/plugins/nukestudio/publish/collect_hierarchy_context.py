@@ -202,9 +202,19 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
 
-            self.log.debug("__ instance.data[parents]: {}".format(instance.data["parents"]))
-            self.log.debug("__ instance.data[hierarchy]: {}".format(instance.data["hierarchy"]))
-            self.log.debug("__ instance.data[name]: {}".format(instance.data["name"]))
+            self.log.debug(
+                "__ instance.data[parents]: {}".format(
+                    instance.data["parents"]
+                )
+            )
+            self.log.debug(
+                "__ instance.data[hierarchy]: {}".format(
+                    instance.data["hierarchy"]
+                )
+            )
+            self.log.debug(
+                "__ instance.data[name]: {}".format(instance.data["name"])
+            )
 
             in_info = {}
             # suppose that all instances are Shots
