@@ -359,6 +359,10 @@ def get_data(entity, session, custom_attributes):
     data['entityType'] = entity_type
 
     for cust_attr in custom_attributes:
+        # skip hierarchical attributes
+        if cust_attr.get('is_hierarchical', False):
+            continue
+
         key = cust_attr['key']
         if cust_attr['entity_type'].lower() in ['asset']:
             data[key] = entity['custom_attributes'][key]
