@@ -184,10 +184,12 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             source_in = int(instance.data["sourceIn"])
             source_out = int(instance.data["sourceOut"])
 
-            instance.data['startFrame'] = int(
-                source_first + source_in - handle_start)
-            instance.data['endFrame'] = int(
-                (source_first + source_out + handle_end))
+            instance.data['startFrame'] = (
+                instance.data["item"].timelineIn() - handle_start
+            )
+            instance.data['endFrame'] = (
+                instance.data["item"].timelineOut() + handle_end
+            )
 
             # inject assetsShared to other plates types
             assets_shared = context.data.get("assetsShared")
