@@ -293,12 +293,18 @@ def import_to_avalon(
         output['errors'] = errors
         return output
 
+    # Update existing data rather than overwriting.
+    asset_data = database[project_name].find_one(
+        {"_id": ObjectId(mongo_id)}
+    )["data"]
+    asset_data.update(data)
+
     database[project_name].update_many(
         {'_id': ObjectId(mongo_id)},
         {'$set': {
             'name': name,
             'silo': silo,
-            'data': data,
+            'data': asset_data,
             'parent': ObjectId(projectId)
         }})
 
