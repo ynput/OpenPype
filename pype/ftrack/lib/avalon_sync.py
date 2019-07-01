@@ -380,7 +380,8 @@ def get_data(entity, session, custom_attributes):
             ent_obj_type_id = session.query(query).one()['id']
 
             if cust_attr['object_type_id'] == ent_obj_type_id:
-                data[key] = entity['custom_attributes'][key]
+                if key in entity['custom_attributes']:
+                    data[key] = entity['custom_attributes'][key]
 
     if entity_type in ['Project']:
         data['code'] = entity['name']
