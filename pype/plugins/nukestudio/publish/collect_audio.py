@@ -45,7 +45,7 @@ class CollectAudio(api.InstancePlugin):
             tag_data = dict(tag["metadata"])
             if "tag.subset" in tag_data:
                 subset = tag_data["tag.subset"]
-        data["subset"] = subset
+        data["subset"] = "audio" + subset.title()
 
         data["source"] = data["sourcePath"]
 
