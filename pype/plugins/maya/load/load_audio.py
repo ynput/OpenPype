@@ -17,6 +17,11 @@ class AudioLoader(api.Loader):
         sound_node = cmds.sound(
             file=context["representation"]["data"]["path"], offset=start_frame
         )
-        mel.eval("setSoundDisplay {} 1".format(sound_node))
+        cmds.timeControl(
+            mel.eval("$tmpVar=$gPlayBackSlider"),
+            edit=True,
+            sound=sound_node,
+            displaySound=True
+        )
 
         return [sound_node]
