@@ -15,7 +15,7 @@ class ImagePlaneLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
         new_nodes = []
-        image_plane_depth = 100
+        image_plane_depth = 1000
 
         # Getting camera from selection.
         selection = pc.ls(selection=True)
