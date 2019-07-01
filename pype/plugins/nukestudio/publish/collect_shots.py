@@ -1,16 +1,17 @@
 from pyblish import api
 
 
-class CollectShot(api.InstancePlugin):
+class CollectShots(api.InstancePlugin):
     """Collect Shot from Clip."""
 
-    # Run just before CollectSubsets
+    # Run just before CollectClipSubsets
     order = api.CollectorOrder + 0.1025
-    label = "Collect Shot"
+    label = "Collect Shots"
     hosts = ["nukestudio"]
     families = ["clip"]
 
     def process(self, instance):
+        # Exclude non-tagged instances.
         tagged = False
         for tag in instance.data["tags"]:
             if tag["name"].lower() == "hierarchy":
@@ -23,8 +24,6 @@ class CollectShot(api.InstancePlugin):
             )
             return
 
-        context = instance.context
-
         # Collect data.
         data = {}
         for key, value in instance.data.iteritems():
@@ -35,11 +34,12 @@ class CollectShot(api.InstancePlugin):
         data["frameStart"] = 1
 
         data["label"] += " - tasks: {} - assetbuilds: {}".format(
-            data["tasks"], [x["name"] for x in data["assetBuilds"]]
+            data["tasks"], [x["name"] for x in data["assetbuilds"]]
         )
 
         # Get handles.
-        data["handleStart"] = instance.data["handleStart"] + data["handles"]
+        data["handleStart"] = instance.data["handleStart"]
+        data["handleStart"] += data["handles"]
         data["handleEnd"] = instance.data["handleEnd"] + data["handles"]
 
         # Frame-ranges with handles.
@@ -51,8 +51,10 @@ class CollectShot(api.InstancePlugin):
         data["timelineOut"] = int(data["item"].timelineOut())
 
         # Frame-ranges with handles.
-        data["timelineInHandles"] = data["timelineIn"] - data["handleStart"]
-        data["timelineOutHandles"] = data["timelineOut"] + data["handleEnd"]
+        data["timelineInHandles"] = data["timelineIn"]
+        data["timelineInHandles"] -= data["handleStart"]
+        data["timelineOutHandles"] = data["timelineOut"]
+        data["timelineOutHandles"] += data["handleEnd"]
 
         # Creating comp frame range.
         data["endFrame"] = (
@@ -60,9 +62,9 @@ class CollectShot(api.InstancePlugin):
         )
 
         # Get fps.
-        sequence = context.data["activeSequence"]
+        sequence = instance.context.data["activeSequence"]
         data["fps"] = sequence.framerate()
 
         # Create instance.
         self.log.debug("Creating instance with: {}".format(data))
-        context.create_instance(**data)
+        instance.context.create_instance(**data)
