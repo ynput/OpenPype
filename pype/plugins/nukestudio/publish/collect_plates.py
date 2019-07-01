@@ -48,7 +48,7 @@ class CollectPlates(api.InstancePlugin):
             tag_data = dict(tag["metadata"])
             if "tag.subset" in tag_data:
                 subset = tag_data["tag.subset"]
-        data["subset"] = subset
+        data["subset"] = "plate" + subset.title()
 
         data["label"] += " - {} - ({})".format(
             subset, os.path.splitext(data["sourcePath"])[1]
