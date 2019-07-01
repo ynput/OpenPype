@@ -221,7 +221,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             in_info = {}
 
             in_info["inputs"] = [
-                x["_id"] for x in instance.data["assetBuilds"]
+                x["_id"] for x in instance.data.get("assetbuilds", [])
             ]
 
             # suppose that all instances are Shots
