@@ -1,7 +1,7 @@
 import os
 import sys
 
-from pype.ftrack.lib.custom_db_connector import DbConnector
+from avalon.tools.libraryloader.io_nonsingleton import DbConnector
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent, lib
@@ -11,11 +11,9 @@ from bson.objectid import ObjectId
 class SyncHierarchicalAttrs(BaseEvent):
     # After sync to avalon event!
     priority = 101
-    db_con = lib.custom_db_connector.DbConnector(
-        mongo_url=os.environ["AVALON_MONGO"],
-        database_name=os.environ["AVALON_DB"],
-        table_name=None
-    )
+    db_con = DbConnector()
+    ca_mongoid = lib.get_ca_mongoid()
+
     def launch(self, session, event):
         self.project_name = None
         # Filter entities and changed values if it makes sence to run script
@@ -60,40 +58,9 @@ class SyncHierarchicalAttrs(BaseEvent):
                         self.project_name = entity['project']['full_name']
                     if not self.project_name:
                         continue
-                    self.db_con.active_table = self.project_name
                     self.db_con.install()
-                # TODO rewrite?
-                # ------DRY is not here :/-------
-                ca_mongoid = lib.get_ca_mongoid()
-                custom_attributes = entity.get('custom_attributes')
-                if not custom_attributes:
-                    continue
+                    self.db_con.Session['AVALON_PROJECT'] = self.project_name
 
-                mongoid = custom_attributes.get(ca_mongoid)
-                if not mongoid:
-                    continue
-
-                try:
-                    mongoid = ObjectId(mongoid)
-                except Exception:
-                    continue
-
-                mongo_entity = self.db_con.find_one({'_id': mongoid})
-                if not mongo_entity:
-                    continue
-
-                data = mongo_entity.get('data') or {}
-                cur_value = data.get(key)
-                if cur_value:
-                    if cur_value == attr_value:
-                        continue
-
-                data[key] = attr_value
-                self.db_con.update_one(
-                    {'_id': mongoid},
-                    {'$set': {'data': data}}
-                )
-                # -------------
                 self.update_hierarchical_attribute(entity, key, attr_value)
 
         self.db_con.uninstall()
@@ -101,44 +68,37 @@ class SyncHierarchicalAttrs(BaseEvent):
         return True
 
     def update_hierarchical_attribute(self, entity, key, value):
-        ca_mongoid = lib.get_ca_mongoid()
+        custom_attributes = entity.get('custom_attributes')
+        if not custom_attributes:
+            return
+
+        mongoid = custom_attributes.get(self.ca_mongoid)
+        if not mongoid:
+            return
+
+        try:
+            mongoid = ObjectId(mongoid)
+        except Exception:
+            return
+
+        mongo_entity = self.db_con.find_one({'_id': mongoid})
+        if not mongo_entity:
+            return
+
+        data = mongo_entity.get('data') or {}
+        cur_value = data.get(key)
+        if cur_value:
+            if cur_value == attr_value:
+                return
+
+        data[key] = attr_value
+        self.db_con.update_one(
+            {'_id': mongoid},
+            {'$set': {'data': data}}
+        )
 
         for child in entity.get('children', []):
-            custom_attributes = child.get('custom_attributes')
-            if not custom_attributes:
-                continue
-
-            child_value = custom_attributes.get(key)
-
-            if child_value is not None:
-                if child_value != value:
-                    continue
-            mongoid = custom_attributes.get(ca_mongoid)
-            if not mongoid:
-                continue
-
-            try:
-                mongoid = ObjectId(mongoid)
-            except Exception:
-                continue
-
-            mongo_entity = self.db_con.find_one({'_id': mongoid})
-            if not mongo_entity:
-                continue
-
-            data = mongo_entity.get('data') or {}
-            cur_value = data.get(key)
-            if cur_value:
-                if cur_value == value:
-                    continue
-
-            data[key] = value
-            self.db_con.update_one(
-                {'_id': mongoid},
-                {'$set': {'data': data}}
-            )
-
-            self.update_hierarchical_attribute(child, key, value)
+            self.update_one_entity(child, key, value)
 
 
 def register(session, **kw):
