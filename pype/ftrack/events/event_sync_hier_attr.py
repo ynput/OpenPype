@@ -88,17 +88,17 @@ class SyncHierarchicalAttrs(BaseEvent):
         data = mongo_entity.get('data') or {}
         cur_value = data.get(key)
         if cur_value:
-            if cur_value == attr_value:
+            if cur_value == value:
                 return
 
-        data[key] = attr_value
-        self.db_con.update_one(
+        data[key] = value
+        self.db_con.update_many(
             {'_id': mongoid},
             {'$set': {'data': data}}
         )
 
         for child in entity.get('children', []):
-            self.update_one_entity(child, key, value)
+            self.update_hierarchical_attribute(child, key, value)
 
 
 def register(session, **kw):
