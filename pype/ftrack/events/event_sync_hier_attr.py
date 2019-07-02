@@ -15,16 +15,35 @@ class SyncHierarchicalAttrs(BaseEvent):
     ca_mongoid = lib.get_ca_mongoid()
 
     def launch(self, session, event):
-        self.project_name = None
         # Filter entities and changed values if it makes sence to run script
         processable = []
+        processable_ent = {}
         for ent in event['data']['entities']:
             keys = ent.get('keys')
             if not keys:
                 continue
+
+            entity = session.get(ent['entity_type'], ent['entityId'])
             processable.append(ent)
+            processable_ent[ent['entityId']] = entity
 
         if not processable:
+            return True
+
+        for entity in processable_ent.values():
+            try:
+                base_proj = entity['link'][0]
+            except Exception:
+                continue
+            ft_project = session.get(base_proj['type'], base_proj['id'])
+            break
+
+        # check if project is set to auto-sync
+        if (
+            ft_project is None or
+            'avalon_auto_sync' not in ft_project['custom_attributes'] or
+            ft_project['custom_attributes']['avalon_auto_sync'] is False
+        ):
             return True
 
         custom_attributes = {}
@@ -40,27 +59,16 @@ class SyncHierarchicalAttrs(BaseEvent):
         if not custom_attributes:
             return True
 
+        self.db_con.install()
+        self.db_con.Session['AVALON_PROJECT'] = ft_project['full_name']
+
         for ent in processable:
             for key in ent['keys']:
                 if key not in custom_attributes:
                     continue
 
-                entity_query = '{} where id is "{}"'.format(
-                    ent['entity_type'], ent['entityId']
-                )
-                entity = self.session.query(entity_query).one()
+                entity = processable_ent[ent['entityId']]
                 attr_value = entity['custom_attributes'][key]
-                if not self.project_name:
-                    # TODO this is not 100% sure way
-                    if entity.entity_type.lower() == 'project':
-                        self.project_name = entity['full_name']
-                    else:
-                        self.project_name = entity['project']['full_name']
-                    if not self.project_name:
-                        continue
-                    self.db_con.install()
-                    self.db_con.Session['AVALON_PROJECT'] = self.project_name
-
                 self.update_hierarchical_attribute(entity, key, attr_value)
 
         self.db_con.uninstall()
@@ -98,6 +106,11 @@ class SyncHierarchicalAttrs(BaseEvent):
         )
 
         for child in entity.get('children', []):
+            if key not in child.get('custom_attributes', {}):
+                continue
+            child_value = child['custom_attributes'][key]
+            if child_value is not None:
+                continue
             self.update_hierarchical_attribute(child, key, value)
 
 
