@@ -30,6 +30,7 @@ class SyncHierarchicalAttrs(BaseEvent):
         if not processable:
             return True
 
+        ft_project = None
         for entity in processable_ent.values():
             try:
                 base_proj = entity['link'][0]
