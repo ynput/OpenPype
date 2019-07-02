@@ -1,5 +1,7 @@
 import os
 import sys
+
+from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
 
@@ -11,6 +13,8 @@ from .menu import (
 )
 
 from pypeapp import Logger
+
+import hiero
 
 log = Logger().get_logger(__name__, "nukestudio")
 
@@ -54,6 +58,26 @@ def install(config):
 
     # load data from templates
     api.load_data_from_templates()
+
+    # Workfiles.
+    launch_workfiles = os.environ.get("WORKFILES_STARTUP")
+
+    if launch_workfiles:
+        hiero.core.events.registerInterest(
+            "kAfterNewProjectCreated", launch_workfiles_app
+        )
+
+
+def launch_workfiles_app(event):
+    workfiles.show(os.environ["AVALON_WORKDIR"])
+
+    # Closing the new project.
+    event.sender.close()
+
+    # Deregister interest as its a one-time launch.
+    hiero.core.events.unregisterInterest(
+        "kAfterNewProjectCreated", launch_workfiles_app
+    )
 
 
 def uninstall():
