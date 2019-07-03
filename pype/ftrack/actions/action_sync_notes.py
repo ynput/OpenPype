@@ -64,27 +64,34 @@ class SynchronizeNotes(BaseAction):
         self.db_con.install()
 
         missing_id_entities = []
+        to_sync_data = []
         for dst_entity in entities:
             # Ignore entities withoud stored id from second ftrack
             from_id = dst_entity['custom_attributes'].get(self.id_key_src)
             if not from_id:
-                missing_id_entities.append(dst_entity)
+                missing_id_entities.append(dst_entity.get('name', dst_entity))
                 continue
 
+            to_sync_data.append((dst_entity.entity_type, dst_entity['id']))
+
+        for dst_entity_data in to_sync_data:
             av_query = 'AssetVersion where id is "{}"'.format(from_id)
             src_entity = self.session_source.query(av_query).one()
             src_notes = src_entity['notes']
-            self.sync_notes(src_notes, dst_entity)
+            self.sync_notes(src_notes, dst_entity_data)
 
         self.db_con.uninstall()
 
-        print(missing_id_entities)
+        if missing_id_entities:
+            self.log.info('Entities without Avalon ID:')
+            self.log.info(missing_id_entities)
 
         return True
 
-    def sync_notes(self, src_notes, dst_entity):
+    def sync_notes(self, src_notes, dst_entity_data):
         # Sort notes by date time
         src_notes = sorted(src_notes, key=lambda note: note['date'])
+
         for src_note in src_notes:
             # Find if exists in DB
             db_note_entity = self.db_con.find_one({
@@ -94,11 +101,12 @@ class SynchronizeNotes(BaseAction):
 
             if db_note_entity is None:
                     # Create note if not found in DB
-                dst_note = self.create_note(dst_entity, src_note)
-                dst_id = dst_note['id']
+                dst_note_id = self.create_note(
+                    src_note, dst_entity_data
+                )
                 # Add references to DB for next sync
                 item = {
-                    self.id_key_dst: dst_id,
+                    self.id_key_dst: dst_note_id,
                     self.id_key_src: src_note['id'],
                     'content': src_note['content'],
                     'entity_type': 'Note',
@@ -106,40 +114,21 @@ class SynchronizeNotes(BaseAction):
                 }
                 self.db_con.insert_one(item)
             else:
-                dst_id = db_note_entity[self.id_key_dst]
-        # for src_note in src_notes:
+                dst_note_id = db_note_entity[self.id_key_dst]
+
             replies = src_note.get('replies')
             if not replies:
                 continue
-            # db_note_entity = self.db_con.find_one({
-            #     self.id_key_src: src_note['id']
-            # })
-            dst_note = self.session.query(
-                'Note where id is "{}"'.format(dst_id)
-            ).one()
-            self.sync_notes(replies, dst_note)
 
-    def create_note(self, dst_entity, src_note):
+            self.sync_notes(replies, ('Note', dst_note_id))
 
-        # dst_entity = self.session_for_components.query(
-        #     '{} where id is "{}"'.format(
-        #         dst_entity.entity_type, dst_entity['id']
-        #     )
-        # ).one()
+    def create_note(self, src_note, dst_entity_data):
+        # dst_entity_data - tuple(entity type, entity id)
+        dst_entity = self.session.query(
+            '{} where id is "{}"'.format(*dst_entity_data)
+        ).one()
 
-        note_key = 'notes'
-        if dst_entity.entity_type.lower() == 'note':
-            note_key = 'replies'
-
-        # TODO Which date? Source note date?
-        note_date = src_note['date']
-
-        note_data = {
-            'content': src_note['content'],
-            # 'date': note_date,
-            'author': self.user
-        }
-
+        is_reply = False
         if dst_entity.entity_type.lower() != 'note':
             # Category
             category = None
@@ -150,32 +139,33 @@ class SynchronizeNotes(BaseAction):
                     'NoteCategory where name is "{}"'.format(cat_name)
                 ).first()
 
-            if category:
-                note_data['category'] = category
-
-            # TODO Recipients? add assigned user?
-            # recipients = []
-
-            new_note = dst_entity.create_note(src_note['content'], self.user, category=category)
+            new_note = dst_entity.create_note(
+                src_note['content'], self.user, category=category
+            )
         else:
-            new_note = dst_entity.create_reply(src_note['content'], self.user)
-        self.session.commit()
-        # recipient = self.session.create('Recipient', {
-        #     'note_id': new_note['id'],
-        #     'recipient': self.user,
-        #     'user': self.user,
-        #     'resource_id': dst_entity['id']
-        # })
-        # new_note['recipients'] = [recipient,]
+            new_note = dst_entity.create_reply(
+                src_note['content'], self.user
+            )
+            is_reply = True
 
+        # TODO Should we change date to match source Ftrack?
+        # new_note['data'] = src_note['date']
+
+        self.session.commit()
+        new_note_id = new_note['id']
 
         # Components
         if src_note['note_components']:
-            self.reupload_components(src_note, new_note)
+            self.reupload_components(src_note, new_note_id)
 
-        return new_note
+        # Bug in ftrack_api, when reply is added session must be reset
+        if is_reply:
+            self.session.reset()
+            time.sleep(0.2)
 
-    def reupload_components(self, src_note, dst_note):
+        return new_note_id
+
+    def reupload_components(self, src_note, dst_note_id):
         # Download and collect source components
         src_server_location = self.session_source.query(
             'Location where name is "ftrack.server"'
@@ -217,7 +207,7 @@ class SynchronizeNotes(BaseAction):
             # Attach the component to the note.
             self.session_for_components.create(
                 'NoteComponent',
-                {'component_id': component['id'], 'note_id': dst_note['id']}
+                {'component_id': component['id'], 'note_id': dst_note_id}
             )
 
         self.session_for_components.commit()
