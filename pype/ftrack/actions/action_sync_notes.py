@@ -147,8 +147,8 @@ class SynchronizeNotes(BaseAction):
             )
             is_reply = True
 
-        # TODO Should we change date to match source Ftrack?
-        # new_note['data'] = src_note['date']
+        # QUESTION Should we change date to match source Ftrack?
+        new_note['date'] = src_note['date']
 
         self.session.commit()
         new_note_id = new_note['id']
