@@ -1,18 +1,13 @@
 import os
 import sys
+import time
 import datetime
-import argparse
-import logging
-import collections
-import json
-import re
 import requests
 import tempfile
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.custom_db_connector import DbConnector, ClientSession
-from avalon import io, inventory, schema
 
 
 class SynchronizeNotes(BaseAction):
