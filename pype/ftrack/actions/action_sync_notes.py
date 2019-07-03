@@ -22,8 +22,8 @@ class SynchronizeNotes(BaseAction):
 
     db_con = DbConnector(
         mongo_url=os.environ["AVALON_MONGO"],
-        database_name='customDatabase',
-        table_name='notesTable'
+        database_name='notes_database',
+        table_name='notes_table'
     )
 
     id_key_src = 'fridge_ftrackID'
