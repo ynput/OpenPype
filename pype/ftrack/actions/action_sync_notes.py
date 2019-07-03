@@ -46,13 +46,15 @@ class SynchronizeNotes(BaseAction):
         self.session_source = ftrack_api.Session(
             server_url='',
             api_key='',
-            api_user=''
+            api_user='',
+            auto_connect_event_hub=True
         )
 
         self.session_for_components = ftrack_api.Session(
             server_url=session.server_url,
             api_key=session.api_key,
-            api_user=session.api_user
+            api_user=session.api_user,
+            auto_connect_event_hub=True
         )
 
         self.user = self.session_for_components.query(
