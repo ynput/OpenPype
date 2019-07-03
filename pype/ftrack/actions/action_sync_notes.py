@@ -28,7 +28,6 @@ class SynchronizeNotes(BaseAction):
 
     id_key_src = 'fridge_ftrackID'
     id_key_dst = 'kredenc_ftrackID'
-    date_store_key = 'last_stored_asset_version'
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -97,8 +96,8 @@ class SynchronizeNotes(BaseAction):
             db_note_entity = self.db_con.find_one({
                 self.id_key_src: src_note['id']
             })
-            # WARNING: expr `if not db_note_entity:` does not work!
 
+            # WARNING: expr `if not db_note_entity:` does not work!
             if db_note_entity is None:
                     # Create note if not found in DB
                 dst_note_id = self.create_note(
