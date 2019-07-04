@@ -9,7 +9,7 @@ import pype.maya.lib as lib
 class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
     """Gather instances by active render layers"""
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder + 0.01
     hosts = ["maya"]
     label = "Render Layers"
 

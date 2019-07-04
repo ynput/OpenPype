@@ -132,13 +132,22 @@ def import_to_avalon(
             entity, session, custom_attributes
         )
 
+        cur_data = av_project.get('data') or {}
+
+        enter_data = {}
+        for k, v in cur_data.items():
+            enter_data[k] = v
+        for k, v in data.items():
+            enter_data[k] = v
+
         database[project_name].update_many(
             {'_id': ObjectId(projectId)},
             {'$set': {
                 'name': project_name,
                 'config': config,
-                'data': data,
-            }})
+                'data': data
+            }}
+        )
 
         entity['custom_attributes'][ca_mongoid] = str(projectId)
         session.commit()
@@ -195,7 +204,7 @@ def import_to_avalon(
     except Exception:
         mongo_id = ''
 
-    if mongo_id is not '':
+    if mongo_id != '':
         avalon_asset = database[project_name].find_one(
             {'_id': ObjectId(mongo_id)}
         )
@@ -293,18 +302,24 @@ def import_to_avalon(
         output['errors'] = errors
         return output
 
-    # Update existing data rather than overwriting.
-    asset_data = database[project_name].find_one(
-        {"_id": ObjectId(mongo_id)}
-    )["data"]
-    asset_data.update(data)
+    avalon_asset = database[project_name].find_one(
+        {'_id': ObjectId(mongo_id)}
+    )
+
+    cur_data = avalon_asset.get('data') or {}
+
+    enter_data = {}
+    for k, v in cur_data.items():
+        enter_data[k] = v
+    for k, v in data.items():
+        enter_data[k] = v
 
     database[project_name].update_many(
         {'_id': ObjectId(mongo_id)},
         {'$set': {
             'name': name,
             'silo': silo,
-            'data': asset_data,
+            'data': enter_data,
             'parent': ObjectId(projectId)
         }})
 
@@ -325,26 +340,26 @@ def get_avalon_attr(session):
 
 
 def changeability_check_childs(entity):
-        if (entity.entity_type.lower() != 'task' and 'children' not in entity):
-            return True
-        childs = entity['children']
-        for child in childs:
-            if child.entity_type.lower() == 'task':
-                config = get_config_data()
-                if 'sync_to_avalon' in config:
-                    config = config['sync_to_avalon']
-                if 'statuses_name_change' in config:
-                    available_statuses = config['statuses_name_change']
-                else:
-                    available_statuses = []
-                ent_status = child['status']['name'].lower()
-                if ent_status not in available_statuses:
-                    return False
-            # If not task go deeper
-            elif changeability_check_childs(child) is False:
-                return False
-        # If everything is allright
+    if (entity.entity_type.lower() != 'task' and 'children' not in entity):
         return True
+    childs = entity['children']
+    for child in childs:
+        if child.entity_type.lower() == 'task':
+            config = get_config_data()
+            if 'sync_to_avalon' in config:
+                config = config['sync_to_avalon']
+            if 'statuses_name_change' in config:
+                available_statuses = config['statuses_name_change']
+            else:
+                available_statuses = []
+            ent_status = child['status']['name'].lower()
+            if ent_status not in available_statuses:
+                return False
+        # If not task go deeper
+        elif changeability_check_childs(child) is False:
+            return False
+    # If everything is allright
+    return True
 
 
 def get_data(entity, session, custom_attributes):
@@ -365,6 +380,10 @@ def get_data(entity, session, custom_attributes):
     data['entityType'] = entity_type
 
     for cust_attr in custom_attributes:
+        # skip hierarchical attributes
+        if cust_attr.get('is_hierarchical', False):
+            continue
+
         key = cust_attr['key']
         if cust_attr['entity_type'].lower() in ['asset']:
             data[key] = entity['custom_attributes'][key]
@@ -386,7 +405,8 @@ def get_data(entity, session, custom_attributes):
             ent_obj_type_id = session.query(query).one()['id']
 
             if cust_attr['object_type_id'] == ent_obj_type_id:
-                data[key] = entity['custom_attributes'][key]
+                if key in entity['custom_attributes']:
+                    data[key] = entity['custom_attributes'][key]
 
     if entity_type in ['Project']:
         data['code'] = entity['name']
@@ -469,11 +489,11 @@ def get_project_config(entity):
 
     return config
 
+
 def get_tasks(project):
-    return [
-        {'name': task_type['name']} for task_type in project[
-        'project_schema']['_task_type_schema']['types']
-    ]
+    task_types = project['project_schema']['_task_type_schema']['types']
+    return [{'name': task_type['name']} for task_type in task_types]
+
 
 def get_project_apps(entity):
     """ Get apps from project
@@ -547,6 +567,7 @@ def get_config_data():
         log.warning("{} - {}".format(msg, str(e)))
 
     return data
+
 
 def show_errors(obj, event, errors):
     title = 'Hey You! You raised few Errors! (*look below*)'
