@@ -34,7 +34,7 @@ class CollectShots(api.InstancePlugin):
         data["frameStart"] = 1
 
         data["label"] += " - tasks: {} - assetbuilds: {}".format(
-            data["tasks"], [x["name"] for x in data["assetbuilds"]]
+            data["tasks"], [x["name"] for x in data.get("assetbuilds", [])]
         )
 
         # Get handles.
