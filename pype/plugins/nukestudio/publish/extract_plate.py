@@ -1,7 +1,9 @@
 import os
+import subprocess
+
+from hiero.exporters.FnExportUtil import writeSequenceAudioWithHandles
 
 import pype.api
-
 from pype.vendor import ffmpeg
 
 
@@ -27,7 +29,7 @@ class ExtractPlate(pype.api.Extractor):
             return
 
         staging_dir = self.staging_dir(instance)
-        filename = "{0}".format(instance.name) + ".mov"
+        filename = "{0}_without_sound".format(instance.name) + ".mov"
         output_path = os.path.join(staging_dir, filename)
         input_path = instance.data["sourcePath"]
 
@@ -65,6 +67,46 @@ class ExtractPlate(pype.api.Extractor):
             ffmpeg_error = "ffmpeg error: {}".format(e.stderr)
             self.log.error(ffmpeg_error)
             raise RuntimeError(ffmpeg_error)
+
+        # Extract audio.
+        filename = "{0}".format(instance.name) + ".wav"
+        audio_path = os.path.join(staging_dir, filename)
+        writeSequenceAudioWithHandles(
+            audio_path,
+            item.sequence(),
+            item.timelineIn(),
+            item.timelineOut(),
+            0,
+            0
+        )
+
+        input_path = output_path
+        filename = "{0}_with_sound".format(instance.name) + ".mov"
+        output_path = os.path.join(staging_dir, filename)
+
+        args = [
+            "ffmpeg",
+            "-i", input_path,
+            "-i", audio_path,
+            "-vcodec", "copy",
+            output_path
+        ]
+
+        self.log.debug(subprocess.list2cmdline(args))
+        p = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.PIPE,
+            cwd=os.path.dirname(args[-1])
+        )
+
+        output = p.communicate()[0]
+
+        if p.returncode != 0:
+            raise ValueError(output)
+
+        self.log.debug(output)
 
         # Adding representation.
         ext = os.path.splitext(output_path)[1][1:]
