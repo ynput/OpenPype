@@ -84,7 +84,7 @@ class CollectClips(api.ContextPlugin):
                     "asset": data["item"].name(),
                     "family": "clip",
                     "families": [],
-                    "handles": projectdata["handles"],
+                    "handles": projectdata.get("handles", 0),
                     "handleStart": 0,
                     "handleEnd": 0,
                     "version": version
