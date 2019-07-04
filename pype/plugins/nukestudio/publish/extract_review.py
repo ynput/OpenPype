@@ -79,11 +79,13 @@ class ExtractQuicktime(pype.api.Extractor):
         self.log.debug("Adding representation: {}".format(representation))
 
         # Adding thumbnail representation.
+        path = instance.data["sourcePath"].replace(".mov", ".png")
+        if not os.path.exists(path):
+            item.thumbnail(start_frame).save(path, format="png")
+
         representation = {
-            "files": os.path.basename(
-                instance.data["sourcePath"].replace(".mov", ".png")
-            ),
-            "stagingDir": os.path.dirname(instance.data["sourcePath"]),
+            "files": os.path.basename(path),
+            "stagingDir": os.path.dirname(path),
             "name": "thumbnail",
             "thumbnail": True,
             "ext": "png"
