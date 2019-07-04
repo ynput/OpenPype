@@ -31,7 +31,8 @@ class CollectClips(api.ContextPlugin):
             source_path = source.firstpath()
 
             # If source is *.nk its a comp effect and we need to fetch the
-            # write node output.
+            # write node output. This should be improved by parsing the script
+            # rather than opening it.
             if source_path.endswith(".nk"):
                 nuke.scriptOpen(source_path)
                 # There should noly be one.
