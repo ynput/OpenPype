@@ -124,7 +124,11 @@ class CollectPlates(api.InstancePlugin):
         instance.data["versionData"] = version_data
 
         try:
-            head, padding, ext = source_file.split('.')
+            basename, ext = os.path.splitext(source_file)
+            head, padding = os.path.splitext(basename)
+            ext = ext[1:]
+            padding = padding[1:]
+            # head, padding, ext = source_file.split('.')
             source_first_frame = int(padding)
             padding = len(padding)
             file = "{head}.%0{padding}d.{ext}".format(
@@ -139,7 +143,8 @@ class CollectPlates(api.InstancePlugin):
                 ((source_first_frame + source_out_h) + 1), 1)]
         except Exception as e:
             self.log.debug("Exception in file: {}".format(e))
-            head, ext = source_file.split('.')
+            head, ext = os.path.splitext(source_file)
+            ext = ext[1:]
             files = source_file
             start_frame = source_in_h
             end_frame = source_out_h
