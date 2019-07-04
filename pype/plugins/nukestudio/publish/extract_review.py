@@ -1,11 +1,12 @@
 import os
+import subprocess
+
+from hiero.exporters.FnExportUtil import writeSequenceAudioWithHandles
 
 import pype.api
 
-from pype.vendor import ffmpeg
 
-
-class ExtractQuicktime(pype.api.Extractor):
+class ExtractReview(pype.api.Extractor):
     """Extract Quicktime with optimized codec for reviewing."""
 
     label = "Review"
@@ -15,40 +16,83 @@ class ExtractQuicktime(pype.api.Extractor):
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)
-        filename = "{0}".format(instance.name) + ".mov"
+        filename = "{0}_without_sound".format(instance.name) + ".mov"
         output_path = os.path.join(staging_dir, filename)
         input_path = instance.data["sourcePath"]
-
-        self.log.info("Outputting movie to %s" % output_path)
+        item = instance.data["item"]
 
         # Has to be yuv420p for compatibility with older players and smooth
         # playback. This does come with a sacrifice of more visible banding
         # issues.
-        item = instance.data["item"]
         start_frame = item.mapTimelineToSource(item.timelineIn())
         end_frame = item.mapTimelineToSource(item.timelineOut())
-        output_options = {
-            "pix_fmt": "yuv420p",
-            "crf": "18",
-            "timecode": "00:00:00:01",
-            "vf": "scale=trunc(iw/2)*2:trunc(ih/2)*2",
-            "ss": start_frame / item.sequence().framerate().toFloat(),
-            "frames": int(end_frame - start_frame) + 1
-        }
+        args = [
+            "ffmpeg",
+            "-ss", str(start_frame / item.sequence().framerate().toFloat()),
+            "-i", input_path,
+            "-pix_fmt", "yuv420p",
+            "-crf", "18",
+            "-timecode", "00:00:00:01",
+            "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+            "-frames", str(int(end_frame - start_frame) + 1),
+            output_path
+        ]
 
-        try:
-            (
-                ffmpeg
-                .input(input_path)
-                .output(output_path, **output_options)
-                .run(overwrite_output=True,
-                     capture_stdout=True,
-                     capture_stderr=True)
-            )
-        except ffmpeg.Error as e:
-            ffmpeg_error = "ffmpeg error: {}".format(e.stderr)
-            self.log.error(ffmpeg_error)
-            raise RuntimeError(ffmpeg_error)
+        self.log.debug(subprocess.list2cmdline(args))
+        p = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.PIPE,
+            cwd=os.path.dirname(args[-1])
+        )
+
+        output = p.communicate()[0]
+
+        if p.returncode != 0:
+            raise ValueError(output)
+
+        self.log.debug(output)
+
+        # Extract audio.
+        filename = "{0}".format(instance.name) + ".wav"
+        audio_path = os.path.join(staging_dir, filename)
+        writeSequenceAudioWithHandles(
+            audio_path,
+            item.sequence(),
+            item.timelineIn(),
+            item.timelineOut(),
+            0,
+            0
+        )
+
+        input_path = output_path
+        filename = "{0}_with_sound".format(instance.name) + ".mov"
+        output_path = os.path.join(staging_dir, filename)
+
+        args = [
+            "ffmpeg",
+            "-i", input_path,
+            "-i", audio_path,
+            "-vcodec", "copy",
+            output_path
+        ]
+
+        self.log.debug(subprocess.list2cmdline(args))
+        p = subprocess.Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdin=subprocess.PIPE,
+            cwd=os.path.dirname(args[-1])
+        )
+
+        output = p.communicate()[0]
+
+        if p.returncode != 0:
+            raise ValueError(output)
+
+        self.log.debug(output)
 
         # Adding movie representation.
         start_frame = int(
