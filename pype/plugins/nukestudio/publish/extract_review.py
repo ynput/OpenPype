@@ -24,11 +24,16 @@ class ExtractQuicktime(pype.api.Extractor):
         # Has to be yuv420p for compatibility with older players and smooth
         # playback. This does come with a sacrifice of more visible banding
         # issues.
+        item = instance.data["item"]
+        start_frame = item.mapTimelineToSource(item.timelineIn())
+        end_frame = item.mapTimelineToSource(item.timelineOut())
         output_options = {
             "pix_fmt": "yuv420p",
             "crf": "18",
             "timecode": "00:00:00:01",
-            "vf": "scale=trunc(iw/2)*2:trunc(ih/2)*2"
+            "vf": "scale=trunc(iw/2)*2:trunc(ih/2)*2",
+            "ss": start_frame / item.sequence().framerate().toFloat(),
+            "frames": int(end_frame - start_frame) + 1
         }
 
         try:
