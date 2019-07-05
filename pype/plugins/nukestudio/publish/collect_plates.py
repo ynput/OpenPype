@@ -233,10 +233,9 @@ class CollectPlatesData(api.InstancePlugin):
                 ext=ext
             )
             start_frame = source_first_frame
-            end_frame = source_first_frame + source_out
-            files = [file % i for i in range(
-                (source_first_frame + source_in_h),
-                ((source_first_frame + source_out_h) + 1), 1)]
+            duration = source_out_h - source_in_h
+            end_frame = source_first_frame + duration
+            files = [file % i for i in range(start_frame, (end_frame + 1), 1)]
         except Exception as e:
             self.log.debug("Exception in file: {}".format(e))
             head, ext = source_file.split('.')
