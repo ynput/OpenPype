@@ -2,6 +2,8 @@ import os
 import logging
 import shutil
 import clique
+import traceback
+import sys
 
 import errno
 import pyblish.api
@@ -102,6 +104,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for result in context.data["results"]:
             if not result["success"]:
                 self.log.debug(result)
+                exc_type, exc_value, exc_traceback = result["error_info"]
+                extracted_traceback = traceback.extract_tb(exc_traceback)[-1]
+                self.log.debug(
+                    "Error at line {}: \"{}\"".format(
+                        extracted_traceback[1], result["error"]
+                    )
+                )
         assert all(result["success"] for result in context.data["results"]), (
             "Atomicity not held, aborting.")
 
