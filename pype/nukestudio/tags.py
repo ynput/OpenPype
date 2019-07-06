@@ -141,6 +141,8 @@ def add_tags_from_presets():
                 # check if Hierarchy in name
                 # update Tag if already exists
                 for _t in tags:
+                    if isinstance(_t, hiero.core.Bin):
+                        continue
                     if "hierarchy" in _t.name().lower():
                         continue
 
