@@ -37,10 +37,18 @@ def set_workfiles():
     workdir = os.environ["AVALON_WORKDIR"]
     workfiles.show(workdir)
     project = hiero.core.projects()[-1]
-    project.setProjectRoot(active_project_root)
+
+    # set project root with backward compatibility
+    try:
+        project.setProjectDirectory(active_project_root)
+    except Exception:
+        # old way of seting it
+        project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
     project_data = pype.get_project_data()
+
+    log.info("project_data: {}".format(project_data))
 
     # get format and fps property from avalon db on project
     width = project_data['resolution_width']
