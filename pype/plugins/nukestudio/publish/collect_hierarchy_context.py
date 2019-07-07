@@ -38,10 +38,6 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             clip = instance.data["item"]
             asset = instance.data.get("asset")
 
-            # create asset_names conversion table
-            if not context.data.get("assetsShared"):
-                context.data["assetsShared"] = dict()
-
             # build data for inner nukestudio project property
             data = {
                 "sequence": (
@@ -193,12 +189,12 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             handle_start = int(instance.data["handleStart"] + handles)
             handle_end = int(instance.data["handleEnd"] + handles)
 
-            instance.data['startFrame'] = (
-                instance.data["item"].timelineIn() - handle_start
-            )
-            instance.data['endFrame'] = (
-                instance.data["item"].timelineOut() + handle_end
-            )
+            # instance.data['startFrame'] = (
+            #     instance.data["item"].timelineIn() - handle_start
+            # )
+            # instance.data['endFrame'] = (
+            #     instance.data["item"].timelineOut() + handle_end
+            # )
 
             # inject assetsShared to other plates types
             assets_shared = context.data.get("assetsShared")
@@ -239,8 +235,10 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             # get custom attributes of the shot
             in_info['custom_attributes'] = {
                 'handles': int(instance.data.get('handles')),
-                'fstart': int(instance.data["startFrame"]),
-                'fend': int(instance.data["endFrame"]),
+                'handle_start': handle_start,
+                'handle_end': handle_end,
+                'fstart': int(instance.data["startFrame"] - handle_start),
+                'fend': int(instance.data["endFrame"] + handle_end),
                 'fps': context.data["framerate"],
                 "edit_in": int(instance.data["startFrame"]),
                 "edit_out": int(instance.data["endFrame"])

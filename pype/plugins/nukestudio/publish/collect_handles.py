@@ -5,18 +5,18 @@ from pyblish import api
 class CollectClipHandles(api.ContextPlugin):
     """Collect Handles from all instanes and add to assetShared."""
 
-    order = api.CollectorOrder + 0.1025
+    order = api.CollectorOrder + 0.0121
     label = "Collect Handles"
     hosts = ["nukestudio"]
 
     def process(self, context):
         assets_shared = context.data.get("assetsShared")
-        assert assets_shared, "Context data missing `assetsShared` key"
 
         # find all main types instances and add its handles to asset shared
         instances = context[:]
         filtered_instances = []
         for instance in instances:
+            self.log.debug("_ instance.name: `{}`".format(instance.data["name"]))
             families = instance.data.get("families", [])
             families += [instance.data["family"]]
             if "clip" in families:
@@ -28,6 +28,7 @@ class CollectClipHandles(api.ContextPlugin):
             handles = int(instance.data["handles"])
             handle_start = int(instance.data["handleStart"])
             handle_end = int(instance.data["handleEnd"])
+            self.log.debug("_ instance.name: `{}`".format(instance.data["name"]))
 
             if instance.data.get("main"):
                 name = instance.data["asset"]
@@ -51,3 +52,11 @@ class CollectClipHandles(api.ContextPlugin):
                     "handleStart", 0
                 )
                 instance.data["handleEnd"] = s_asset_data.get("handleEnd", 0)
+                self.log.debug("_ s_asset_data: `{}`".format(
+                    s_asset_data))
+                self.log.debug("_ instance.data[handles]: `{}`".format(
+                    instance.data["handles"]))
+                self.log.debug("_ instance.data[handleStart]: `{}`".format(
+                    instance.data["handleStart"]))
+                self.log.debug("_ instance.data[handleEnd]: `{}`".format(
+                    instance.data["handleEnd"]))
