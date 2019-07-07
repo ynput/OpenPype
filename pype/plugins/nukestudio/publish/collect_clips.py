@@ -13,6 +13,11 @@ class CollectClips(api.ContextPlugin):
     hosts = ["nukestudio"]
 
     def process(self, context):
+        # create asset_names conversion table
+        if not context.data.get("assetsShared"):
+            self.log.debug("Created `assetsShared` in context")
+            context.data["assetsShared"] = dict()
+
         projectdata = context.data["projectData"]
         version = context.data.get("version", "001")
         instances_data = []
@@ -94,3 +99,4 @@ class CollectClips(api.ContextPlugin):
             self.log.debug(
                 "Created instance with data: {}".format(instance.data)
             )
+            context.data["assetsShared"][data["asset"]] = dict()
