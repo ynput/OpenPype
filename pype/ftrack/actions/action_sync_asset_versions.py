@@ -24,10 +24,18 @@ class SyncAssetVersions(BaseAction):
     # Custom attribute storing ftrack id of destination server
     id_key_src = 'fridge_ftrackID'
     # Custom attribute storing ftrack id of source server
-    id_key_dst = 'fridge_ftrackID'#'kredenc_ftrackID'
+    id_key_dst = 'kredenc_ftrackID'
+
+    components_name = (
+        'ftrackreview-mp4_src',
+        'ftrackreview-image_src',
+        'thumbnail_src'
+    )
+
     # comp name mapping
     comp_name_mapping = {
         'ftrackreview-mp4_src': 'ftrackreview-mp4',
+        'ftrackreview-image_src': 'ftrackreview-image',
         'thumbnail_src': 'thumbnail'
     }
 
@@ -35,6 +43,8 @@ class SyncAssetVersions(BaseAction):
         'ftrack.server': [
             'ftrackreview-mp4',
             'ftrackreview-mp4_src',
+            'ftrackreview-image',
+            'ftrackreview-image_src',
             'thumbnail',
             'thumbnail_src'
         ],
@@ -120,7 +130,7 @@ class SyncAssetVersions(BaseAction):
                 self.log.warning(msg)
                 continue
 
-            component_list = self.prepare_data(entity)
+            component_list = self.prepare_data(entity['id'])
             id_stored = False
             for comp_data in component_list:
                 dst_asset_ver_id = self.asset_version_creation(
@@ -141,9 +151,11 @@ class SyncAssetVersions(BaseAction):
 
         return True
 
-    def prepare_data(self, asset_version):
+    def prepare_data(self, asset_version_id):
         components_list = []
-
+        asset_version = self.session_for_components.query(
+            'AssetVersion where id is "{}"'.format(asset_version_id)
+        ).one()
         # Asset data
         asset_type = asset_version['asset']['type'].get('short', 'upload')
         assettype_data = {'short': asset_type}
@@ -155,8 +167,7 @@ class SyncAssetVersions(BaseAction):
 
         # Component data
         components_of_interest = {}
-        components_name = ('ftrackreview-mp4_src', 'thumbnail_src')
-        for name in components_name:
+        for name in self.components_name:
             components_of_interest[name] = False
 
         for key in components_of_interest:
@@ -217,14 +228,18 @@ class SyncAssetVersions(BaseAction):
                 comp_name = self.comp_name_mapping[comp_name]
 
             is_thumbnail = False
-            for _comp in asset_version['components']
+            for _comp in asset_version['components']:
                 if _comp['name'] == comp_name:
                     if _comp['id'] == thumbnail_id:
                         is_thumbnail = True
                     break
 
-            location = comp['component_locations'][0]['location']
-            if location['name'] == 'ftrack.unmanaged':
+            locatiom_name = comp['component_locations'][0]['location']['name']
+            location = self.session_for_components.query(
+                'Location where name is "{}"'.format(locatiom_name)
+            ).one()
+            file_path = None
+            if locatiom_name == 'ftrack.unmanaged':
                 file_path = ''
                 try:
                     file_path = location.get_filesystem_path(comp)
@@ -245,11 +260,12 @@ class SyncAssetVersions(BaseAction):
                         )
                     )
                     continue
-            elif location['name'] == 'ftrack.unmanaged':
+
+            elif locatiom_name == 'ftrack.server':
                 download_url = location.get_url(comp)
 
                 file_name = '{}{}{}'.format(
-                    asset_version['asset']['name']
+                    asset_version['asset']['name'],
                     comp_name,
                     comp['file_type']
                 )
@@ -257,8 +273,18 @@ class SyncAssetVersions(BaseAction):
 
                 self.download_file(download_url, file_path)
 
-            # Default value is ftrack.unmanaged
+            if not file_path:
+                self.log.warning(
+                    'In component: "{}" is invalid file path'.format(
+                        comp['name']
+                    )
+                )
+                continue
+
+            # Default location name value is ftrack.unmanaged
             location_name = 'ftrack.unmanaged'
+
+            # Try to find location where component will be created
             for name, keys in self.comp_location_mapping.items():
                 if comp_name in keys:
                     location_name = name
@@ -419,7 +445,7 @@ class SyncAssetVersions(BaseAction):
         component_overwrite = data.get("component_overwrite", False)
 
         location = None
-        location_name = data.get("component_location")
+        location_name = data.get("component_location", {}).get('name')
         if location_name:
             location = self.dst_session.query(
                 'Location where name is "{}"'.format(location_name)
@@ -432,12 +458,12 @@ class SyncAssetVersions(BaseAction):
         if component_entity and component_overwrite:
 
             origin_location = self.dst_session.query(
-                "Location where name is \"ftrack.origin\""
+                'Location where name is "ftrack.origin"'
             ).one()
 
             # Removing existing members from location
             components = list(component_entity.get("members", []))
-            components += [component_entity]
+            components += [component_entity,]
             for component in components:
                 for loc in component["component_locations"]:
                     if location["id"] == loc["location_id"]:
@@ -527,16 +553,16 @@ class SyncAssetVersions(BaseAction):
                 location=location
             )
             data["component"] = component_entity
-            msg = "Created new Component with path: {0}, data: {1}"
-            msg += ", metadata: {2}, location: {3}"
-            self.log.info(
-                msg.format(
-                    data["component_path"],
-                    component_data,
-                    component_metadata,
-                    location
-                )
+            msg = (
+                "Created new Component with path: {}, data: {}"
+                ", metadata: {}, location: {}"
             )
+            self.log.info(msg.format(
+                data["component_path"],
+                component_data,
+                component_metadata,
+                location['name']
+            ))
             new_component = True
 
         # Adding metadata
