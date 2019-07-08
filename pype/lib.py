@@ -494,13 +494,10 @@ def filter_pyblish_plugins(plugins):
 
     host = api.current_host()
 
-    # load plugins
-    config_data = config.get_presets()['plugins']['config']
-
     # iterate over plugins
     for plugin in plugins[:]:
         try:
-            config_data = config.get_presets()['plugins'][host][plugin.__name__]  # noqa: E501
+            config_data = config.get_presets()['plugins'][host]["publish"][plugin.__name__]  # noqa: E501
         except KeyError:
             continue
 
