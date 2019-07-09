@@ -227,6 +227,8 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
             # get custom attributes of the shot
             if instance.data.get("main"):
+                start_frame = instance.data.get("frameStart", 0)
+
                 in_info['custom_attributes'] = {
                     'handles': int(instance.data.get('handles')),
                     'handle_start': handle_start,
@@ -237,7 +239,12 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     "edit_in": int(instance.data["startFrame"]),
                     "edit_out": int(instance.data["endFrame"])
                 }
-
+                if start_frame is not 0:
+                    in_info['custom_attributes'].update({
+                        'fstart': start_frame - handle_start,
+                        'fend': start_frame + (
+                            instance.data["endFrame"] - instance.data["startFrame"]) + handle_end
+                    })
                 # adding SourceResolution if Tag was present
                 s_res = instance.data.get("sourceResolution")
                 if s_res and instance.data.get("main"):

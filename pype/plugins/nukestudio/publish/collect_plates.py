@@ -73,7 +73,7 @@ class CollectPlates(api.InstancePlugin):
         timeline_frame_start = timeline_in - handle_start
         timeline_frame_end = timeline_out + handle_end
 
-        frame_start = 1
+        frame_start = instance.data.get("frameStart", 1)
         frame_end = frame_start + (data["sourceOut"] - data["sourceIn"])
 
         data.update(
@@ -186,7 +186,7 @@ class CollectPlatesData(api.InstancePlugin):
             "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
-            "sourceIn": source_in,  
+            "sourceIn": source_in,
             "sourceOut": source_out,
             "startFrame": frame_start,
             "endFrame": frame_end,
