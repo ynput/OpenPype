@@ -5,7 +5,8 @@ from .plugin import (
     ValidatePipelineOrder,
     ValidateContentsOrder,
     ValidateSceneOrder,
-    ValidateMeshOrder
+    ValidateMeshOrder,
+    ValidationException
 )
 
 # temporary fix, might
@@ -61,6 +62,8 @@ __all__ = [
     "RepairAction",
 
     "Logger",
+
+    "ValidationException",
 
     # contectual templates
     # get data to preloaded templates

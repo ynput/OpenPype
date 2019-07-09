@@ -4,6 +4,7 @@ import datetime
 import time
 
 import clique
+from pprint import pformat
 import pyblish.api
 
 
@@ -23,35 +24,18 @@ class ExtractJSON(pyblish.api.ContextPlugin):
             os.makedirs(workspace)
 
         context_data = context.data.copy()
-        out_data = dict(self.serialize(context_data))
+        unwrapped_instance = []
+        for i in context_data["instances"]:
+            unwrapped_instance.append(i.data)
 
-        instances_data = []
-        for instance in context:
-
-            data = {}
-            for key, value in instance.data.items():
-                if isinstance(value, clique.Collection):
-                    value = value.format()
-
-                try:
-                    json.dumps(value)
-                    data[key] = value
-                except KeyError:
-                    msg = "\"{0}\"".format(value)
-                    msg += " in instance.data[\"{0}\"]".format(key)
-                    msg += " could not be serialized."
-                    self.log.debug(msg)
-
-            instances_data.append(data)
-
-        out_data["instances"] = instances_data
+        context_data["instances"] = unwrapped_instance
 
         timestamp = datetime.datetime.fromtimestamp(
             time.time()).strftime("%Y%m%d-%H%M%S")
         filename = timestamp + "_instances.json"
 
         with open(os.path.join(workspace, filename), "w") as outfile:
-            outfile.write(json.dumps(out_data, indent=4, sort_keys=True))
+            outfile.write(pformat(context_data, depth=20))
 
     def serialize(self, data):
         """

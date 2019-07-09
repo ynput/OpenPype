@@ -132,13 +132,22 @@ def import_to_avalon(
             entity, session, custom_attributes
         )
 
+        cur_data = av_project.get('data') or {}
+
+        enter_data = {}
+        for k, v in cur_data.items():
+            enter_data[k] = v
+        for k, v in data.items():
+            enter_data[k] = v
+
         database[project_name].update_many(
             {'_id': ObjectId(projectId)},
             {'$set': {
                 'name': project_name,
                 'config': config,
-                'data': data,
-            }})
+                'data': data
+            }}
+        )
 
         entity['custom_attributes'][ca_mongoid] = str(projectId)
         session.commit()
@@ -293,6 +302,18 @@ def import_to_avalon(
         output['errors'] = errors
         return output
 
+    avalon_asset = database[project_name].find_one(
+        {'_id': ObjectId(mongo_id)}
+    )
+
+    cur_data = avalon_asset.get('data') or {}
+
+    enter_data = {}
+    for k, v in cur_data.items():
+        enter_data[k] = v
+    for k, v in data.items():
+        enter_data[k] = v
+
     database[project_name].update_many(
         {'_id': ObjectId(mongo_id)},
         {'$set': {
@@ -359,6 +380,10 @@ def get_data(entity, session, custom_attributes):
     data['entityType'] = entity_type
 
     for cust_attr in custom_attributes:
+        # skip hierarchical attributes
+        if cust_attr.get('is_hierarchical', False):
+            continue
+
         key = cust_attr['key']
         if cust_attr['entity_type'].lower() in ['asset']:
             data[key] = entity['custom_attributes'][key]
@@ -380,7 +405,8 @@ def get_data(entity, session, custom_attributes):
             ent_obj_type_id = session.query(query).one()['id']
 
             if cust_attr['object_type_id'] == ent_obj_type_id:
-                data[key] = entity['custom_attributes'][key]
+                if key in entity['custom_attributes']:
+                    data[key] = entity['custom_attributes'][key]
 
     if entity_type in ['Project']:
         data['code'] = entity['name']

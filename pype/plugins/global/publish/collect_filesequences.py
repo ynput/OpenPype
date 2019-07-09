@@ -204,7 +204,8 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     'ext': '{}'.format(ext),
                     'files': list(collection),
                     "stagingDir": root,
-                    "anatomy_template": "render"
+                    "anatomy_template": "render",
+                    "frameRate": fps
                 }
                 instance.data["representations"].append(representation)
 

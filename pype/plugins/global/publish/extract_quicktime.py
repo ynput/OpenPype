@@ -52,9 +52,9 @@ class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):
         # preset's input data
         input_args.extend(profile.get('input', []))
         # necessary input data
+        input_args.append("-start_number {}".format(start))
         input_args.append("-i {}".format(full_input_path))
         input_args.append("-framerate {}".format(fps))
-        input_args.append("-start_number {}".format(start))
 
         output_args = []
         # preset's output data
@@ -69,6 +69,9 @@ class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):
         subprocess_mov = " ".join(mov_args)
         sub_proc = subprocess.Popen(subprocess_mov)
         sub_proc.wait()
+
+        if not os.path.isfile(full_output_path):
+            raise("Quicktime wasn't created succesfully")
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

@@ -1,6 +1,8 @@
 import os
 import json
 import re
+from pprint import pprint
+import logging
 
 from avalon import api, io
 from avalon.vendor import requests, clique
@@ -215,7 +217,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         if not job:
             # No deadline job. Try Muster: musterSubmissionJob
-            job = instance.data.get("musterSubmissionJob")
+            job = data.pop("musterSubmissionJob")
             submission_type = "muster"
             if not job:
                 raise RuntimeError("Can't continue without valid Deadline "
@@ -249,7 +251,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # This assumes the output files start with subset name and ends with
         # a file extension. The "ext" key includes the dot with the extension.
         if "ext" in instance.data:
-            ext = re.escape(instance.data["ext"])
+            ext = r"\." + re.escape(instance.data["ext"])
         else:
             ext = r"\.\D+"
 
@@ -362,7 +364,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             metadata["metadata"]["instance"]["endFrame"] = updated_end
 
         metadata_filename = "{}_metadata.json".format(subset)
+
         metadata_path = os.path.join(output_dir, metadata_filename)
+        # convert log messages if they are `LogRecord` to their
+        # string format to allow serializing as JSON later on.
+        rendered_logs = []
+        for log in metadata["metadata"]["instance"].get("_log", []):
+            if isinstance(log, logging.LogRecord):
+                rendered_logs.append(log.getMessage())
+            else:
+                rendered_logs.append(log)
+
+        metadata["metadata"]["instance"]["_log"] = rendered_logs
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4, sort_keys=True)
 

@@ -24,6 +24,7 @@ for path in sys.path:
         log.info("_ removing from sys.path: `{}`".format(path))
         sys.path.remove(path)
 
+
 def onScriptLoad():
     if nuke.env['LINUX']:
         nuke.tcl('load ffmpegReader')
@@ -37,11 +38,11 @@ def checkInventoryVersions():
     """
     Actiual version idetifier of Loaded containers
 
-    Any time this function is run it will check all nodes and filter only Loader nodes for its version. It will get all versions from database
-    and check if the node is having actual version. If not then it will color it to red.
-
+    Any time this function is run it will check all nodes and filter only
+    Loader nodes for its version. It will get all versions from database
+    and check if the node is having actual version. If not then it will color
+    it to red.
     """
-
 
     # get all Loader nodes by avalon attribute metadata
     for each in nuke.allNodes():
@@ -195,12 +196,17 @@ def create_write_node(name, data):
     except Exception as e:
         log.error("problem with resolving anatomy tepmlate: {}".format(e))
 
-    fpath = str(anatomy_filled["render"]["path"]).replace("\\", "/")
+    # build file path to workfiles
+    fpath = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
+    fpath = '{work}/renders/v{version}/{subset}.{frame}.{ext}'.format(
+        work=fpath, version=data["version"], subset=data["subset"],
+        frame=data["frame"],
+        ext=data["nuke_dataflow_writes"]["file_type"])
 
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
         log.info("path does not exist")
-        os.makedirs(os.path.dirname(fpath), 0766)
+        os.makedirs(os.path.dirname(fpath), 0o766)
 
     _data = OrderedDict({
         "file": fpath

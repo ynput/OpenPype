@@ -72,13 +72,13 @@ def loader_shift(node, frame, relative=True):
     return int(script_start)
 
 
-class LoadSequence(api.Loader):
-    """Load image sequence into Nuke"""
+class LoadMov(api.Loader):
+    """Load mov file into Nuke"""
 
     families = ["write", "source", "plate", "render"]
-    representations = ["exr", "dpx"]
+    representations = ["mov", "preview", "review", "mp4"]
 
-    label = "Load sequence"
+    label = "Load mov"
     order = -10
     icon = "code-fork"
     color = "orange"
@@ -92,8 +92,12 @@ class LoadSequence(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        orig_first = version_data.get("startFrame", None)
+        orig_last = version_data.get("endFrame", None)
+        diff = orig_first - 1
+        # set first to 1
+        first = orig_first - diff
+        last = orig_last - diff
         handles = version_data.get("handles", None)
         handle_start = version_data.get("handleStart", None)
         handle_end = version_data.get("handleEnd", None)
@@ -103,9 +107,10 @@ class LoadSequence(api.Loader):
             handle_start = handles
             handle_end = handles
 
-        # create handles offset
-        first -= handle_start
-        last += handle_end
+        # create handles offset (only to last, because of mov)
+        last += handle_start + handle_end
+        # offset should be with handles so it match orig frame range
+        offset_frame = orig_first + handle_start
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -114,49 +119,55 @@ class LoadSequence(api.Loader):
         file = self.fname.replace("\\", "/")
         log.info("file: {}\n".format(self.fname))
 
-        read_name = "Read_" + context["representation"]["context"]["subset"]
+        read_name = "Read"
+        read_name += '_' + context["representation"]["context"]["subset"]
+        read_name += '_' + context["representation"]["name"]
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
             # TODO: it might be universal read to img/geo/camera
-            r = nuke.createNode(
+            read_node = nuke.createNode(
                 "Read",
-                "name {}".format(read_name))
-            r["file"].setValue(file)
+                "name {}".format(read_name)
+            )
+            read_node["file"].setValue(file)
 
-            # Set colorspace defined in version data
-            colorspace = context["version"]["data"].get("colorspace", None)
-            if colorspace is not None:
-                r["colorspace"].setValue(str(colorspace))
-
-            loader_shift(r, first, relative=True)
-            r["origfirst"].setValue(first)
-            r["first"].setValue(first)
-            r["origlast"].setValue(last)
-            r["last"].setValue(last)
-
+            loader_shift(read_node, first, relative=True)
+            read_node["origfirst"].setValue(first)
+            read_node["first"].setValue(first)
+            read_node["origlast"].setValue(last)
+            read_node["last"].setValue(last)
+            read_node["frame_mode"].setValue("start at")
+            read_node["frame"].setValue(str(offset_frame))
             # add additional metadata from the version to imprint to Avalon knob
-            add_keys = ["startFrame", "endFrame", "handles",
-                        "source", "colorspace", "author", "fps", "version",
-                        "handleStart", "handleEnd"]
+            add_keys = [
+                "startFrame", "endFrame", "handles", "source", "author",
+                "fps", "version", "handleStart", "handleEnd"
+            ]
 
             data_imprint = {}
-            for k in add_keys:
-                if k is 'version':
-                    data_imprint.update({k: context["version"]['name']})
+            for key in add_keys:
+                if key is 'version':
+                    data_imprint.update({
+                        key: context["version"]['name']
+                    })
                 else:
-                    data_imprint.update({k: context["version"]['data'].get(k, str(None))})
+                    data_imprint.update({
+                        key: context["version"]['data'].get(key, str(None))
+                    })
 
             data_imprint.update({"objectName": read_name})
 
-            r["tile_color"].setValue(int("0x4ecd25ff", 16))
+            read_node["tile_color"].setValue(int("0x4ecd25ff", 16))
 
-            return containerise(r,
-                                name=name,
-                                namespace=namespace,
-                                context=context,
-                                loader=self.__class__.__name__,
-                                data=data_imprint)
+            return containerise(
+                read_node,
+                name=name,
+                namespace=namespace,
+                context=context,
+                loader=self.__class__.__name__,
+                data=data_imprint
+            )
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -198,8 +209,12 @@ class LoadSequence(api.Loader):
 
         version_data = version.get("data", {})
 
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        orig_first = version_data.get("startFrame", None)
+        orig_last = version_data.get("endFrame", None)
+        diff = orig_first - 1
+        # set first to 1
+        first = orig_first - diff
+        last = orig_last - diff
         handles = version_data.get("handles", 0)
         handle_start = version_data.get("handleStart", 0)
         handle_end = version_data.get("handleEnd", 0)
@@ -215,9 +230,10 @@ class LoadSequence(api.Loader):
             handle_start = handles
             handle_end = handles
 
-        # create handles offset
-        first -= handle_start
-        last += handle_end
+        # create handles offset (only to last, because of mov)
+        last += handle_start + handle_end
+        # offset should be with handles so it match orig frame range
+        offset_frame = orig_first + handle_start
 
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
@@ -230,6 +246,8 @@ class LoadSequence(api.Loader):
         node["first"].setValue(first)
         node["origlast"].setValue(last)
         node["last"].setValue(last)
+        node["frame_mode"].setValue("start at")
+        node["frame"].setValue(str(offset_frame))
 
         updated_dict = {}
         updated_dict.update({
@@ -237,7 +255,6 @@ class LoadSequence(api.Loader):
             "startFrame": version_data.get("startFrame"),
             "endFrame": version_data.get("endFrame"),
             "version": version.get("name"),
-            "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
             "handles": version_data.get("handles"),
             "handleStart": version_data.get("handleStart"),
@@ -255,8 +272,7 @@ class LoadSequence(api.Loader):
 
         # Update the imprinted representation
         update_container(
-            node,
-            updated_dict
+            node, updated_dict
         )
         log.info("udated to version: {}".format(version.get("name")))
 

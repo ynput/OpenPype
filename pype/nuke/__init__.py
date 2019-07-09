@@ -1,6 +1,8 @@
 import os
 import sys
+
 from avalon import api as avalon
+from avalon.tools import workfiles
 from pyblish import api as pyblish
 
 from .. import api
@@ -23,6 +25,8 @@ from pypeapp import Logger
 #         Logger.logging.root.removeHandler(handler)
 
 
+self = sys.modules[__name__]
+self.workfiles_launched = False
 log = Logger().get_logger(__name__, "nuke")
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
@@ -130,6 +134,18 @@ def install():
 
     # load data from templates
     api.load_data_from_templates()
+
+    # Workfiles.
+    launch_workfiles = os.environ.get("WORKFILES_STARTUP")
+
+    if launch_workfiles:
+        nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+
+
+def launch_workfiles_app():
+    if not self.workfiles_launched:
+        self.workfiles_launched = True
+        workfiles.show(os.environ["AVALON_WORKDIR"])
 
 
 def uninstall():
