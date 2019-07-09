@@ -96,6 +96,18 @@ class CollectPlates(api.InstancePlugin):
             }
         )
 
+        # adding SourceResolution if Tag was present
+        if instance.data.get("sourceResolution") and instance.data.get("main"):
+            item = instance.data["item"]
+            width = int(item.source().mediaSource().width())
+            height = int(item.source().mediaSource().height())
+            self.log.info("Source Width and Height are: `{0} x {1}`".format(
+                width, height))
+            data.update({
+                "width": width,
+                "height": height
+            })
+
         self.log.debug("Creating instance with name: {}".format(data["name"]))
         instance.context.create_instance(**data)
 
@@ -202,6 +214,9 @@ class CollectPlatesData(api.InstancePlugin):
 
         self.log.debug("__ before family: {}".format(family))
         self.log.debug("__ before families: {}".format(families))
+
+        self.log.debug("__ width: {}".format(instance.data.get("width", None)))
+        self.log.debug("__ height: {}".format(instance.data.get("height", None)))
 
         # add to data of representation
         version_data.update({
