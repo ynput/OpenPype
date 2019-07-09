@@ -478,3 +478,35 @@ def get_presets_path():
     path_items = [templates, 'presets']
     filepath = os.path.sep.join(path_items)
     return filepath
+
+
+def filter_pyblish_plugins(plugins):
+    """
+    This servers as plugin filter / modifier for pyblish. It will load plugin
+    definitions from presets and filter those needed to be excluded.
+
+    :param plugins: Dictionary of plugins produced by :mod:`pyblish-base`
+                    `discover()` method.
+    :type plugins: Dict
+    """
+    from pypeapp import config
+    from pyblish import api
+
+    host = api.current_host()
+
+    # iterate over plugins
+    for plugin in plugins[:]:
+        try:
+            config_data = config.get_presets()['plugins'][host]["publish"][plugin.__name__]  # noqa: E501
+        except KeyError:
+            continue
+
+        for option, value in config_data.items():
+            if option == "enabled" and value is False:
+                log.info('removing plugin {}'.format(plugin.__name__))
+                plugins.remove(plugin)
+            else:
+                log.info('setting {}:{} on plugin {}'.format(
+                    option, value, plugin.__name__))
+
+                setattr(plugin, option, value)
