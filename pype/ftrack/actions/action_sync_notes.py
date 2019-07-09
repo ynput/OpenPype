@@ -5,6 +5,7 @@ import datetime
 import requests
 import tempfile
 
+from pypeapp import config
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.custom_db_connector import DbConnector, ClientSession
@@ -41,11 +42,14 @@ class SynchronizeNotes(BaseAction):
         return True
 
     def launch(self, session, entities, event):
+        source_credentials = config.get_presets()['ftrack'].get(
+            'partnership_ftrack', {}
+        )
 
         self.session_source = ftrack_api.Session(
-            server_url='',
-            api_key='',
-            api_user='',
+            server_url=source_credentials.get('server_url'),
+            api_key=source_credentials.get('api_key'),
+            api_user=source_credentials.get('api_user'),
             auto_connect_event_hub=True
         )
 
