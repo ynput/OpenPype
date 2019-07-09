@@ -93,7 +93,7 @@ class CollectReviews(api.InstancePlugin):
             # adding representation for review mov
             representation = {
                 "files": file,
-                "staging_dir": file_dir,
+                "stagingDir": file_dir,
                 "startFrame": rev_inst.data.get("sourceIn"),
                 "endFrame": rev_inst.data.get("sourceOut"),
                 "step": 1,
