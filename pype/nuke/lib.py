@@ -384,19 +384,26 @@ def reset_frame_range_handles():
     log.info("__ handle_start: `{}`".format(handle_start))
     log.info("__ handle_end: `{}`".format(handle_end))
 
-    edit_in = int(asset["data"]["fstart"]) - handles - handle_start
-    edit_out = int(asset["data"]["fend"]) + handles + handle_end
+    edit_in = int(asset["data"]["fstart"]) - handle_start
+    edit_out = int(asset["data"]["fend"]) + handle_end
 
     nuke.root()["first_frame"].setValue(edit_in)
     nuke.root()["last_frame"].setValue(edit_out)
 
     # setting active viewers
+    nuke.frame(int(asset["data"]["fstart"]))
+
     vv = nuke.activeViewer().node()
-    vv['frame_range_lock'].setValue(True)
-    vv['frame_range'].setValue('{0}-{1}'.format(
+
+    range = '{0}-{1}'.format(
         int(asset["data"]["fstart"]),
         int(asset["data"]["fend"]))
-    )
+
+    vv['frame_range'].setValue(range)
+    vv['frame_range_lock'].setValue(True)
+
+    log.info("_frameRange: {}".format(range))
+    log.info("frameRange: {}".format(vv['frame_range'].value()))
 
 
 def get_avalon_knob_data(node):
@@ -416,20 +423,24 @@ def reset_resolution():
     asset = io.find_one({"name": asset, "type": "asset"})
 
     try:
-        width = get_hierarchical_attr(asset, 'data.resolution_width', 1920)
-        height = get_hierarchical_attr(asset, 'data.resolution_height', 1080)
-        pixel_aspect = get_hierarchical_attr(asset, 'data.pixel_aspect', 1)
-        bbox = get_hierarchical_attr(asset, 'data.crop', "0.0.1920.1080")
+        width = asset.get('data', {}).get('resolution_width', 1920)
+        height = asset.get('data', {}).get('resolution_height', 1080)
+        pixel_aspect = asset.get('data', {}).get('pixel_aspect', 1)
+        bbox = asset.get('data', {}).get('crop', "0.0.1920.1080")
 
-        try:
-            x, y, r, t = bbox.split(".")
-        except Exception as e:
-            x = 0
-            y = 0
-            r = width
-            t = height
-            log.error("{}: {} \nFormat:Crop need to be set with dots, example: "
-                      "0.0.1920.1080, /nSetting to default".format(__name__, e))
+        if bbox not in "0.0.1920.1080":
+            try:
+                x, y, r, t = bbox.split(".")
+            except Exception as e:
+                x = 0
+                y = 0
+                r = width
+                t = height
+                bbox = None
+                log.error("{}: {} \nFormat:Crop need to be set with dots, example: "
+                          "0.0.1920.1080, /nSetting to default".format(__name__, e))
+        else:
+            bbox = None
 
     except KeyError:
         log.warning(
@@ -462,25 +473,31 @@ def reset_resolution():
         crnt_fmt_kargs = {
             "width": (check_format.width()),
             "height": (check_format.height()),
-            "x": int(check_format.x()),
-            "y": int(check_format.y()),
-            "r": int(check_format.r()),
-            "t": int(check_format.t()),
             "pixel_aspect": float(check_format.pixelAspect())
         }
+        if bbox:
+            crnt_fmt_kargs.update({
+                "x": int(check_format.x()),
+                "y": int(check_format.y()),
+                "r": int(check_format.r()),
+                "t": int(check_format.t()),
+            })
         crnt_fmt_str = make_format_string(**crnt_fmt_kargs)
         log.info("crnt_fmt_str: {}".format(crnt_fmt_str))
 
     new_fmt_kargs = {
         "width": int(width),
         "height": int(height),
-        "x": int(x),
-        "y": int(y),
-        "r": int(r),
-        "t": int(t),
         "pixel_aspect": float(pixel_aspect),
         "project_name": format_name
     }
+    if bbox:
+        new_fmt_kargs.update({
+            "x": int(x),
+            "y": int(y),
+            "r": int(r),
+            "t": int(t),
+        })
 
     new_fmt_str = make_format_string(**new_fmt_kargs)
     log.info("new_fmt_str: {}".format(new_fmt_str))
@@ -493,16 +510,22 @@ def reset_resolution():
 
 
 def make_format_string(**args):
-    format_str = (
-        "{width} "
-        "{height} "
-        "{x} "
-        "{y} "
-        "{r} "
-        "{t} "
-        "{pixel_aspect:.2f}".format(**args)
-    )
-    return format_str
+    if args.get("r"):
+        return (
+            "{width} "
+            "{height} "
+            "{x} "
+            "{y} "
+            "{r} "
+            "{t} "
+            "{pixel_aspect:.2f}".format(**args)
+        )
+    else:
+        return (
+            "{width} "
+            "{height} "
+            "{pixel_aspect:.2f}".format(**args)
+        )
 
 
 def make_format(**args):
