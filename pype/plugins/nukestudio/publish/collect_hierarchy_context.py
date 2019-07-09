@@ -49,7 +49,8 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             self.log.debug("__ data: {}".format(data))
 
             # checking if tags are available
-            self.log.debug("__ instance.data[name]: {}".format(instance.data["name"]))
+            self.log.debug("__ instance.data[name]: {}".format(
+                instance.data["name"]))
             self.log.debug("__ tags: {}".format(tags))
 
             if not tags:
@@ -253,6 +254,21 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                 in_info['custom_attributes'].update({
                     "handle_start": handle_start,
                     "handle_end": handle_end
+                })
+
+            # adding SourceResolution if Tag was present
+            s_res = instance.data.get("sourceResolution")
+            if s_res and instance.data.get("main"):
+                item = instance.data["item"]
+                self.log.debug("TrackItem: `{0}`".format(
+                    item))
+                width = int(item.source().mediaSource().width())
+                height = int(item.source().mediaSource().height())
+                self.log.info("Source Width and Height are: `{0} x {1}`".format(
+                    width, height))
+                in_info['custom_attributes'].update({
+                    "resolution_width": width,
+                    "resolution_height": height
                 })
 
             in_info['tasks'] = instance.data['tasks']
