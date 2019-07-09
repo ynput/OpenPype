@@ -27,9 +27,8 @@ class ExtractAudioFile(pype.api.Extractor):
         staging_dir = instance.data["stagingDir"]
 
         # get handles from context
-        handles = instance.data["handles"]
-        handle_start = instance.data["handleStart"] + handles
-        handle_end = instance.data["handleEnd"] + handles
+        handle_start = instance.data["handleStart"]
+        handle_end = instance.data["handleEnd"]
 
         # get sequence from context
         sequence = context.data["activeSequence"]

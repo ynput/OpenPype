@@ -57,9 +57,12 @@ class CollectPlates(api.InstancePlugin):
             data['asset'], data["subset"], os.path.splitext(data["sourcePath"])[1]
         )
 
+        # # Timeline data.
+        # handle_start = int(instance.data["handleStart"] + data["handles"])
+        # handle_end = int(instance.data["handleEnd"] + data["handles"])
         # Timeline data.
-        handle_start = int(instance.data["handleStart"] + data["handles"])
-        handle_end = int(instance.data["handleEnd"] + data["handles"])
+        handle_start = int(instance.data["handleStart"])
+        handle_end = int(instance.data["handleEnd"])
 
         source_in_h = data["sourceIn"] - handle_start
         source_out_h = data["sourceOut"] + handle_end
@@ -153,7 +156,6 @@ class CollectPlatesData(api.InstancePlugin):
         item = instance.data["item"]
 
         # get handles
-        handles = int(instance.data["handles"])
         handle_start = int(instance.data["handleStart"])
         handle_end = int(instance.data["handleEnd"])
 
@@ -184,7 +186,7 @@ class CollectPlatesData(api.InstancePlugin):
         fps = instance.data["fps"]
 
         # test output
-        self.log.debug("__ handles: {}".format(handles))
+        self.log.debug("__ handles: {}".format(handle_start))
         self.log.debug("__ handle_start: {}".format(handle_start))
         self.log.debug("__ handle_end: {}".format(handle_end))
         self.log.debug("__ frame_start: {}".format(frame_start))
@@ -220,7 +222,7 @@ class CollectPlatesData(api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "handles": handles,
+            "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
             "sourceIn": source_in,

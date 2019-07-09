@@ -186,10 +186,13 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             name = instance.data["asset"]
 
             # get handles
-            handles = int(instance.data["handles"])
-            handle_start = int(instance.data["handleStart"] + handles)
-            handle_end = int(instance.data["handleEnd"] + handles)
-
+            # handles = int(instance.data["handles"])
+            # handle_start = int(instance.data["handleStart"] + handles)
+            # handle_end = int(instance.data["handleEnd"] + handles)
+            # new way of dealing with handles (start/end)
+            handle_start = int(instance.data["handleStart"])
+            handle_end = int(instance.data["handleEnd"])
+            
             # instance.data['startFrame'] = (
             #     instance.data["item"].timelineIn() - handle_start
             # )

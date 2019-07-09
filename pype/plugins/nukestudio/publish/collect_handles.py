@@ -28,7 +28,6 @@ class CollectClipHandles(api.ContextPlugin):
             handles = int(instance.data["handles"])
             handle_start = int(instance.data["handleStart"])
             handle_end = int(instance.data["handleEnd"])
-            self.log.debug("_ instance.name: `{}`".format(instance.data["name"]))
 
             if instance.data.get("main"):
                 name = instance.data["asset"]
@@ -42,7 +41,7 @@ class CollectClipHandles(api.ContextPlugin):
                     })
 
         for instance in filtered_instances:
-            if not instance.data.get("main"):
+            if not instance.data.get("main") and not instance.data.get("handleTag"):
                 self.log.debug("Synchronize handles on: `{}`".format(
                     instance.data["name"]))
                 name = instance.data["asset"]

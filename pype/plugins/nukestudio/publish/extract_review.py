@@ -97,12 +97,12 @@ class ExtractReview(pype.api.Extractor):
         # Adding movie representation.
         start_frame = int(
             instance.data["sourceIn"] - (
-                instance.data["handleStart"] + instance.data["handles"]
+                instance.data["handleStart"]
             )
         )
         end_frame = int(
             instance.data["sourceOut"] + (
-                instance.data["handleEnd"] + instance.data["handles"]
+                instance.data["handleEnd"]
             )
         )
         representation = {

@@ -39,12 +39,12 @@ class ExtractPlate(pype.api.Extractor):
         item = instance.data["item"]
         start_frame = item.mapTimelineToSource(
             item.timelineIn() - (
-                instance.data["handleStart"] + instance.data["handles"]
+                instance.data["handleStart"]
             )
         )
         end_frame = item.mapTimelineToSource(
             item.timelineOut() + (
-                instance.data["handleEnd"] + instance.data["handles"]
+                instance.data["handleEnd"]
             )
         )
         framerate = item.sequence().framerate().toFloat()

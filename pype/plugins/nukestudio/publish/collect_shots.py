@@ -44,8 +44,7 @@ class CollectShots(api.ContextPlugin):
 
             # Get handles.
             data["handleStart"] = instance.data["handleStart"]
-            data["handleStart"] += data["handles"]
-            data["handleEnd"] = instance.data["handleEnd"] + data["handles"]
+            data["handleEnd"] = instance.data["handleEnd"]
 
             # Frame-ranges with handles.
             data["sourceInH"] = data["sourceIn"] - data["handleStart"]
