@@ -26,6 +26,7 @@ class CollectPlates(api.InstancePlugin):
             family = dict(tag["metadata"]).get("tag.family", "")
             if family.lower() == "plate":
                 tagged = True
+                break
 
         if not tagged:
             self.log.debug(
@@ -39,7 +40,7 @@ class CollectPlates(api.InstancePlugin):
         for key, value in instance.data.iteritems():
             data[key] = value
 
-        data["family"] = "plate"
+        data["family"] = family.lower()
         data["families"] = ["ftrack"]
         data["source"] = data["sourcePath"]
 
@@ -48,10 +49,12 @@ class CollectPlates(api.InstancePlugin):
             tag_data = dict(tag["metadata"])
             if "tag.subset" in tag_data:
                 subset = tag_data["tag.subset"]
-        data["subset"] = "plate" + subset.title()
+        data["subset"] = data["family"] + subset.title()
 
-        data["label"] += " - {} - ({})".format(
-            subset, os.path.splitext(data["sourcePath"])[1]
+        data["name"] = data["subset"] + "_" + data["asset"]
+
+        data["label"] = "{} - {} - ({})".format(
+            data['asset'], data["subset"], os.path.splitext(data["sourcePath"])[1]
         )
 
         # Timeline data.
@@ -93,7 +96,7 @@ class CollectPlates(api.InstancePlugin):
             }
         )
 
-        self.log.debug("Creating instance with data: {}".format(data))
+        self.log.debug("Creating instance with name: {}".format(data["name"]))
         instance.context.create_instance(**data)
 
 
@@ -166,7 +169,7 @@ class CollectPlatesData(api.InstancePlugin):
         colorspace = item.sourceMediaColourTransform()
 
         # get sequence from context, and fps
-        fps = float(str(instance.data["fps"]))
+        fps = instance.data["fps"]
 
         # test output
         self.log.debug("__ handles: {}".format(handles))

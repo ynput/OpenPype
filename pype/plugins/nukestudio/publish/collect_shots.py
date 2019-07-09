@@ -34,7 +34,11 @@ class CollectShots(api.ContextPlugin):
             data["families"] = []
             data["frameStart"] = instance.data.get("frameStart", 1)
 
-            data["label"] += " - tasks: {} - assetbuilds: {}".format(
+            data["subset"] = data["family"] + "Main"
+
+            data["name"] = data["subset"] + "_" + data["asset"]
+
+            data["label"] = data["asset"] + " - " + data["subset"] + " - tasks: {} - assetbuilds: {}".format(
                 data["tasks"], [x["name"] for x in data.get("assetbuilds", [])]
             )
 
@@ -67,5 +71,5 @@ class CollectShots(api.ContextPlugin):
             data["fps"] = sequence.framerate()
 
             # Create instance.
-            self.log.debug("Creating instance with: {}".format(data))
+            self.log.debug("Creating instance with: {}".format(data["name"]))
             instance.context.create_instance(**data)
