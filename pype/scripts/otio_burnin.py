@@ -294,7 +294,7 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
 
         if (
             bi_func in ['frame_numbers', 'timecode'] and
-            not start_frame
+            start_frame is None
         ):
             log.error(
                 'start_frame is not set in entered data!'
