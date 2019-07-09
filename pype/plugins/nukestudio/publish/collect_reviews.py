@@ -1,4 +1,5 @@
 from pyblish import api
+import os
 
 
 class CollectReviews(api.InstancePlugin):
@@ -7,7 +8,7 @@ class CollectReviews(api.InstancePlugin):
     Tag is expected to have metadata:
         {
             "family": "review"
-            "subset": "main"
+            "track": "trackName"
         }
     """
 
@@ -24,6 +25,8 @@ class CollectReviews(api.InstancePlugin):
             family = dict(tag["metadata"]).get("tag.family", "")
             if family.lower() == "review":
                 tagged = True
+                track = dict(tag["metadata"]).get("tag.track")
+                break
 
         if not tagged:
             self.log.debug(
@@ -32,23 +35,74 @@ class CollectReviews(api.InstancePlugin):
             )
             return
 
-        # Collect data.
-        data = {}
-        for key, value in instance.data.iteritems():
-            data[key] = value
+        if not track:
+            self.log.debug(
+                "Skipping \"{}\" because tag is not having `track` in metadata".format(instance)
+            )
+            return
 
-        data["family"] = "review"
-        data["ftrackFamily"] = "img"
-        data["families"] = ["ftrack"]
+        if track in instance.data["track"]:
+            self.log.debug("Track item on the track: {}".format(
+                instance.data["track"]))
+            # Collect data.
+            subset = ""
+            data = {}
+            for key, value in instance.data.iteritems():
+                data[key] = value
 
-        subset = ""
-        for tag in instance.data["tags"]:
-            tag_data = dict(tag["metadata"])
-            if "tag.subset" in tag_data:
-                subset = tag_data["tag.subset"]
-        data["subset"] = "review" + subset.title()
+            data["family"] = family.lower()
+            data["ftrackFamily"] = "img"
+            data["families"] = ["ftrack"]
 
-        data["source"] = data["sourcePath"]
+            data["subset"] = family.lower() + subset.title()
+            data["name"] = data["subset"] + "_" + data["asset"]
 
-        self.log.debug("Creating instance with data: {}".format(data))
-        instance.context.create_instance(**data)
+            data["label"] = "{} - {}".format(
+                data['asset'], data["subset"]
+            )
+
+            data["source"] = data["sourcePath"]
+
+            # self.log.debug("Creating instance with data: {}".format(data))
+            instance.context.create_instance(**data)
+
+        else:
+            self.log.debug("Track item on plateMain")
+            rev_inst = None
+            for inst in instance.context[:]:
+                if inst.data["track"] in track:
+                    rev_inst = inst
+                    self.log.debug("Instance review: {}".format(
+                        rev_inst.data["name"]))
+
+            if rev_inst is None:
+                raise RuntimeError(
+                    "TrackItem from track name `{}` has to be also selected".format(
+                        track)
+                )
+
+            # add to representations
+            if not instance.data.get("representations"):
+                instance.data["representations"] = list()
+
+            self.log.debug("Instance review: {}".format(rev_inst.data["name"]))
+
+            file_path = rev_inst.data.get("sourcePath")
+            file_dir = os.path.dirname(file_path)
+            file = os.path.basename(file_path)
+            # adding representation for review mov
+            representation = {
+                "files": file,
+                "staging_dir": file_dir,
+                "startFrame": rev_inst.data.get("sourceIn"),
+                "endFrame": rev_inst.data.get("sourceOut"),
+                "step": 1,
+                "frameRate": rev_inst.data.get("fps"),
+                "preview": True,
+                "thumbnail": False,
+                "name": "preview",
+                "ext": os.path.splitext(file)[-1][1:]
+            }
+            instance.data["representations"].append(representation)
+
+            self.log.debug("Added representation: {}".format(representation))
