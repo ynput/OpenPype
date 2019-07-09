@@ -9,6 +9,7 @@ import requests
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
+from pypeapp import config
 
 
 class SyncAssetVersions(BaseAction):
@@ -76,11 +77,13 @@ class SyncAssetVersions(BaseAction):
                 'message': msg
             }
 
-        # ENTER VALUES HERE
+        source_credentials = config.get_presets()['ftrack'].get(
+            'partnership_ftrack_cred', {}
+        )
         self.dst_session = ftrack_api.Session(
-            server_url='',
-            api_key='',
-            api_user='',
+            server_url=source_credentials.get('server_url'),
+            api_key=source_credentials.get('api_key'),
+            api_user=source_credentials.get('api_user'),
             auto_connect_event_hub=True
         )
 
