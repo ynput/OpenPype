@@ -1,10 +1,10 @@
 import os
+from os.path import getsize
 import logging
-import shutil
+import speedcopy
 import clique
 import traceback
 import sys
-
 import errno
 import pyblish.api
 from avalon import api, io
@@ -414,10 +414,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.critical("An unexpected error occurred.")
                 raise
 
-        shutil.copy(src, dst)
+        # copy file with speedcopy and check if size of files are simetrical
+        while True:
+            speedcopy.copyfile(src, dst)
+            if str(getsize(src)) in str(getsize(dst)):
+                break
 
     def hardlink_file(self, src, dst):
-
         dirname = os.path.dirname(dst)
         try:
             os.makedirs(dirname)
