@@ -315,7 +315,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 assert not os.path.isabs(fname), (
                     "Given file name is a full path"
                 )
-                _, ext = os.path.splitext(fname)
 
                 template_data["representation"] = repre['ext']
 
