@@ -80,7 +80,7 @@ class CollectClips(api.ContextPlugin):
                     "sourceOut": int(item.sourceOut()),
                     "startFrame": int(item.timelineIn()),
                     "endFrame": int(item.timelineOut()),
-                    "fps": item.sequence().framerate().toFloat()
+                    "fps": float(item.sequence().framerate().toFloat())
                 }
             )
 
