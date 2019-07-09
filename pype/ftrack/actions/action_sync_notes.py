@@ -18,7 +18,7 @@ class SynchronizeNotes(BaseAction):
     #: Action description.
     description = 'Synchronize notes from one Ftrack to another'
     #: roles that are allowed to register this action
-    role_list = ['Pypeclub']
+    role_list = ['Administrator', 'Project Manager', 'Pypeclub']
 
     db_con = DbConnector(
         mongo_url=os.environ["AVALON_MONGO"],
