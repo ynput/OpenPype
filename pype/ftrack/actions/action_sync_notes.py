@@ -43,7 +43,7 @@ class SynchronizeNotes(BaseAction):
 
     def launch(self, session, entities, event):
         source_credentials = config.get_presets()['ftrack'].get(
-            'partnership_ftrack', {}
+            'partnership_ftrack_cred', {}
         )
 
         self.session_source = ftrack_api.Session(
