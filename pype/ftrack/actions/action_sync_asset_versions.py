@@ -19,6 +19,8 @@ class SyncAssetVersions(BaseAction):
     label = 'Sync Asset Versions'
     #: Action description.
     description = 'Synchronize Asset versions to another Ftrack'
+    #: roles that are allowed to register this action
+    role_list = ['Administrator', 'Project Manager', 'Pypeclub']
 
     # ENTER VALUES HERE (change values based on keys)
     # Custom attribute storing ftrack id of destination server
