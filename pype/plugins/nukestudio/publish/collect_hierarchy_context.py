@@ -186,19 +186,8 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             name = instance.data["asset"]
 
             # get handles
-            # handles = int(instance.data["handles"])
-            # handle_start = int(instance.data["handleStart"] + handles)
-            # handle_end = int(instance.data["handleEnd"] + handles)
-            # new way of dealing with handles (start/end)
             handle_start = int(instance.data["handleStart"])
             handle_end = int(instance.data["handleEnd"])
-            
-            # instance.data['startFrame'] = (
-            #     instance.data["item"].timelineIn() - handle_start
-            # )
-            # instance.data['endFrame'] = (
-            #     instance.data["item"].timelineOut() + handle_end
-            # )
 
             # inject assetsShared to other plates types
             assets_shared = context.data.get("assetsShared")
@@ -237,42 +226,32 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             in_info['entity_type'] = 'Shot'
 
             # get custom attributes of the shot
-            in_info['custom_attributes'] = {
-                'handles': int(instance.data.get('handles')),
-                'handle_start': handle_start,
-                'handle_end': handle_end,
-                'fstart': int(instance.data["startFrame"] - handle_start),
-                'fend': int(instance.data["endFrame"] + handle_end),
-                'fps': context.data["framerate"],
-                "edit_in": int(instance.data["startFrame"]),
-                "edit_out": int(instance.data["endFrame"])
-            }
+            if instance.data.get("main"):
+                in_info['custom_attributes'] = {
+                    'handles': int(instance.data.get('handles')),
+                    'handle_start': handle_start,
+                    'handle_end': handle_end,
+                    'fstart': int(instance.data["startFrame"] - handle_start),
+                    'fend': int(instance.data["endFrame"] + handle_end),
+                    'fps': instance.data["fps"],
+                    "edit_in": int(instance.data["startFrame"]),
+                    "edit_out": int(instance.data["endFrame"])
+                }
 
-            handle_start = instance.data.get('handleStart')
-            handle_end = instance.data.get('handleEnd')
-            self.log.debug("__ handle_start: {}".format(handle_start))
-            self.log.debug("__ handle_end: {}".format(handle_end))
-
-            if handle_start and handle_end:
-                in_info['custom_attributes'].update({
-                    "handle_start": handle_start,
-                    "handle_end": handle_end
-                })
-
-            # adding SourceResolution if Tag was present
-            s_res = instance.data.get("sourceResolution")
-            if s_res and instance.data.get("main"):
-                item = instance.data["item"]
-                self.log.debug("TrackItem: `{0}`".format(
-                    item))
-                width = int(item.source().mediaSource().width())
-                height = int(item.source().mediaSource().height())
-                self.log.info("Source Width and Height are: `{0} x {1}`".format(
-                    width, height))
-                in_info['custom_attributes'].update({
-                    "resolution_width": width,
-                    "resolution_height": height
-                })
+                # adding SourceResolution if Tag was present
+                s_res = instance.data.get("sourceResolution")
+                if s_res and instance.data.get("main"):
+                    item = instance.data["item"]
+                    self.log.debug("TrackItem: `{0}`".format(
+                        item))
+                    width = int(item.source().mediaSource().width())
+                    height = int(item.source().mediaSource().height())
+                    self.log.info("Source Width and Height are: `{0} x {1}`".format(
+                        width, height))
+                    in_info['custom_attributes'].update({
+                        "resolution_width": width,
+                        "resolution_height": height
+                    })
 
             in_info['tasks'] = instance.data['tasks']
 
