@@ -1,13 +1,14 @@
-import hiero
 import re
+
 from pypeapp import (
     config,
     Logger
 )
+from avalon import io
+
+import hiero
 
 log = Logger().get_logger(__name__, "nukestudio")
-
-_hierarchy_orig = 'hierarchy_orig'
 
 
 def create_tag(key, value):
@@ -36,10 +37,10 @@ def update_tag(tag, value):
         value (dict): parameters of tag
     """
 
-    tag.setNote(value['note'])
-    tag.setIcon(str(value['icon']['path']))
+    tag.setNote(value["note"])
+    tag.setIcon(str(value["icon"]["path"]))
     mtd = tag.metadata()
-    pres_mtd = value.get('metadata', None)
+    pres_mtd = value.get("metadata", None)
     if pres_mtd:
         [mtd.setValue("tag.{}".format(str(k)), str(v))
          for k, v in pres_mtd.items()]
@@ -56,8 +57,39 @@ def add_tags_from_presets():
     presets = config.get_presets()
 
     # get nukestudio tag.json from presets
-    nks_pres = presets['nukestudio']
+    nks_pres = presets["nukestudio"]
     nks_pres_tags = nks_pres.get("tags", None)
+
+    # Get project task types.
+    tasks = io.find_one({"type": "project"})["config"]["tasks"]
+    nks_pres_tags["[Tasks]"] = {}
+    for task in tasks:
+        nks_pres_tags["[Tasks]"][task["name"]] = {
+            "editable": "1",
+            "note": "",
+            "icon": {
+                "path": "icons:TagGood.png"
+            },
+            "metadata": {
+                "family": "task"
+            }
+        }
+
+    # Get project assets. Currently Ftrack specific to differentiate between
+    # asset builds and shots.
+    nks_pres_tags["[AssetBuilds]"] = {}
+    for asset in io.find({"type": "asset"}):
+        if asset["data"]["entityType"] == "AssetBuild":
+            nks_pres_tags["[AssetBuilds]"][asset["name"]] = {
+                "editable": "1",
+                "note": "",
+                "icon": {
+                    "path": "icons:TagActor.png"
+                },
+                "metadata": {
+                    "family": "assetbuild"
+                }
+            }
 
     # get project and root bin object
     project = hiero.core.projects()[-1]
@@ -108,24 +140,12 @@ def add_tags_from_presets():
             else:
                 # check if Hierarchy in name
                 # update Tag if already exists
-                tag_names = [tg.name().lower() for tg in tags]
                 for _t in tags:
-                    if 'hierarchy' not in _t.name().lower():
-                        # update only non hierarchy tags
-                        # because hierarchy could be edited
-                        update_tag(_t, _val)
-                    elif _hierarchy_orig in _t.name().lower():
-                        # if hierarchy_orig already exists just
-                        # sync with preset
-                        update_tag(_t, _val)
-                    else:
-                        # if history tag already exist then create
-                        # backup synchronisable original Tag
-                        if (_hierarchy_orig not in tag_names):
-                            # create Tag obj
-                            tag = create_tag(
-                                _hierarchy_orig.capitalize(), _val
-                            )
+                    if isinstance(_t, hiero.core.Bin):
+                        continue
+                    if "hierarchy" in _t.name().lower():
+                        continue
 
-                            # adding Tag to Bin
-                            root_bin.addItem(tag)
+                    # update only non hierarchy tags
+                    # because hierarchy could be edited
+                    update_tag(_t, _val)

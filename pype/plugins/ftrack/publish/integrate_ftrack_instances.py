@@ -1,5 +1,4 @@
 import pyblish.api
-import os
 import json
 
 
@@ -26,7 +25,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'nukescript': 'comp',
                       'write': 'render',
                       'review': 'mov',
-                      'plate': 'img'
+                      'plate': 'img',
+                      'audio': 'audio'
                       }
 
     def process(self, instance):
@@ -39,7 +39,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         family = instance.data['family'].lower()
 
         asset_type = ''
-        asset_type = self.family_mapping[family]
+        asset_type = instance.data.get(
+            "ftrackFamily", self.family_mapping[family]
+        )
 
         componentList = []
         ft_session = instance.context.data["ftrackSession"]

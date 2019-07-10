@@ -5,18 +5,25 @@ from pyblish import api
 class CollectClipHandles(api.ContextPlugin):
     """Collect Handles from all instanes and add to assetShared."""
 
-    order = api.CollectorOrder + 0.1025
+    order = api.CollectorOrder + 0.0121
     label = "Collect Handles"
     hosts = ["nukestudio"]
-    families = ['clip']
 
     def process(self, context):
         assets_shared = context.data.get("assetsShared")
-        assert assets_shared, "Context data missing `assetsShared` key"
 
         # find all main types instances and add its handles to asset shared
         instances = context[:]
+        filtered_instances = []
         for instance in instances:
+            self.log.debug("_ instance.name: `{}`".format(instance.data["name"]))
+            families = instance.data.get("families", [])
+            families += [instance.data["family"]]
+            if "clip" in families:
+                filtered_instances.append(instance)
+            else:
+                continue
+
             # get handles
             handles = int(instance.data["handles"])
             handle_start = int(instance.data["handleStart"])
@@ -33,12 +40,22 @@ class CollectClipHandles(api.ContextPlugin):
                         "handleEnd": handle_end
                     })
 
-        for instance in instances:
-            if not instance.data.get("main"):
+        for instance in filtered_instances:
+            if not instance.data.get("main") and not instance.data.get("handleTag"):
                 self.log.debug("Synchronize handles on: `{}`".format(
                     instance.data["name"]))
                 name = instance.data["asset"]
                 s_asset_data = assets_shared.get(name)
-                instance.data["handles"] = s_asset_data["handles"]
-                instance.data["handleStart"] = s_asset_data["handleStart"]
-                instance.data["handleEnd"] = s_asset_data["handleEnd"]
+                instance.data["handles"] = s_asset_data.get("handles", 0)
+                instance.data["handleStart"] = s_asset_data.get(
+                    "handleStart", 0
+                )
+                instance.data["handleEnd"] = s_asset_data.get("handleEnd", 0)
+                self.log.debug("_ s_asset_data: `{}`".format(
+                    s_asset_data))
+                self.log.debug("_ instance.data[handles]: `{}`".format(
+                    instance.data["handles"]))
+                self.log.debug("_ instance.data[handleStart]: `{}`".format(
+                    instance.data["handleStart"]))
+                self.log.debug("_ instance.data[handleEnd]: `{}`".format(
+                    instance.data["handleEnd"]))

@@ -16,6 +16,7 @@ import maya.api.OpenMaya as om
 from avalon import api, maya, io, pipeline
 from avalon.vendor.six import string_types
 import avalon.maya.lib
+import avalon.maya.interactive
 
 from pype import lib
 
@@ -1872,6 +1873,9 @@ def set_context_settings():
     height = asset_data.get(height_key, project_data.get(height_key, 1080))
 
     set_scene_resolution(width, height)
+
+    # Set frame range.
+    avalon.maya.interactive.reset_frame_range()
 
 
 # Valid FPS

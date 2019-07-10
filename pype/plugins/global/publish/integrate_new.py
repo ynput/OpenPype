@@ -1,8 +1,10 @@
 import os
+from os.path import getsize
 import logging
-import shutil
+import speedcopy
 import clique
-
+import traceback
+import sys
 import errno
 import pyblish.api
 from avalon import api, io
@@ -62,7 +64,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "rendersetup",
                 "rig",
                 "plate",
-                "look"
+                "look",
+                "audio"
                 ]
     exclude_families = ["clip"]
 
@@ -98,6 +101,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #   \       /
         #    o   __/
         #
+        for result in context.data["results"]:
+            if not result["success"]:
+                self.log.debug(result)
+                exc_type, exc_value, exc_traceback = result["error_info"]
+                extracted_traceback = traceback.extract_tb(exc_traceback)[-1]
+                self.log.debug(
+                    "Error at line {}: \"{}\"".format(
+                        extracted_traceback[1], result["error"]
+                    )
+                )
         assert all(result["success"] for result in context.data["results"]), (
             "Atomicity not held, aborting.")
 
@@ -302,7 +315,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 assert not os.path.isabs(fname), (
                     "Given file name is a full path"
                 )
-                _, ext = os.path.splitext(fname)
 
                 template_data["representation"] = repre['ext']
 
@@ -401,10 +413,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.critical("An unexpected error occurred.")
                 raise
 
-        shutil.copy(src, dst)
+        # copy file with speedcopy and check if size of files are simetrical
+        while True:
+            speedcopy.copyfile(src, dst)
+            if str(getsize(src)) in str(getsize(dst)):
+                break
 
     def hardlink_file(self, src, dst):
-
         dirname = os.path.dirname(dst)
         try:
             os.makedirs(dirname)

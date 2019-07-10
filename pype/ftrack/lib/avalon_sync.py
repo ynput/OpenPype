@@ -204,7 +204,7 @@ def import_to_avalon(
     except Exception:
         mongo_id = ''
 
-    if mongo_id is not '':
+    if mongo_id != '':
         avalon_asset = database[project_name].find_one(
             {'_id': ObjectId(mongo_id)}
         )
@@ -319,7 +319,7 @@ def import_to_avalon(
         {'$set': {
             'name': name,
             'silo': silo,
-            'data': data,
+            'data': enter_data,
             'parent': ObjectId(projectId)
         }})
 
@@ -340,26 +340,26 @@ def get_avalon_attr(session):
 
 
 def changeability_check_childs(entity):
-        if (entity.entity_type.lower() != 'task' and 'children' not in entity):
-            return True
-        childs = entity['children']
-        for child in childs:
-            if child.entity_type.lower() == 'task':
-                config = get_config_data()
-                if 'sync_to_avalon' in config:
-                    config = config['sync_to_avalon']
-                if 'statuses_name_change' in config:
-                    available_statuses = config['statuses_name_change']
-                else:
-                    available_statuses = []
-                ent_status = child['status']['name'].lower()
-                if ent_status not in available_statuses:
-                    return False
-            # If not task go deeper
-            elif changeability_check_childs(child) is False:
-                return False
-        # If everything is allright
+    if (entity.entity_type.lower() != 'task' and 'children' not in entity):
         return True
+    childs = entity['children']
+    for child in childs:
+        if child.entity_type.lower() == 'task':
+            config = get_config_data()
+            if 'sync_to_avalon' in config:
+                config = config['sync_to_avalon']
+            if 'statuses_name_change' in config:
+                available_statuses = config['statuses_name_change']
+            else:
+                available_statuses = []
+            ent_status = child['status']['name'].lower()
+            if ent_status not in available_statuses:
+                return False
+        # If not task go deeper
+        elif changeability_check_childs(child) is False:
+            return False
+    # If everything is allright
+    return True
 
 
 def get_data(entity, session, custom_attributes):
@@ -489,11 +489,11 @@ def get_project_config(entity):
 
     return config
 
+
 def get_tasks(project):
-    return [
-        {'name': task_type['name']} for task_type in project[
-        'project_schema']['_task_type_schema']['types']
-    ]
+    task_types = project['project_schema']['_task_type_schema']['types']
+    return [{'name': task_type['name']} for task_type in task_types]
+
 
 def get_project_apps(entity):
     """ Get apps from project
@@ -567,6 +567,7 @@ def get_config_data():
         log.warning("{} - {}".format(msg, str(e)))
 
     return data
+
 
 def show_errors(obj, event, errors):
     title = 'Hey You! You raised few Errors! (*look below*)'

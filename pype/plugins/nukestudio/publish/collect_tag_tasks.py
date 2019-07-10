@@ -13,13 +13,6 @@ class CollectClipTagTasks(api.InstancePlugin):
         # gets tags
         tags = instance.data["tags"]
 
-        # gets presets for nukestudio
-        presets = instance.context.data['presets'][
-            instance.context.data['host']]
-
-        # find preset for default task
-        default_tasks = presets['rules_tasks']['defaultTasks']
-
         tasks = list()
         for t in tags:
             t_metadata = dict(t["metadata"])
@@ -30,11 +23,7 @@ class CollectClipTagTasks(api.InstancePlugin):
                 t_task = t_metadata.get("tag.label", "")
                 tasks.append(t_task)
 
-        if tasks:
-            instance.data["tasks"] = tasks
-        else:
-            # add tasks from presets if no task tag
-            instance.data["tasks"] = default_tasks
+        instance.data["tasks"] = tasks
 
         self.log.info("Collected Tasks from Tags: `{}`".format(
             instance.data["tasks"]))
