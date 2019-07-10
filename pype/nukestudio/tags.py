@@ -1,4 +1,5 @@
 import re
+import os
 
 from pypeapp import (
     config,
@@ -77,19 +78,20 @@ def add_tags_from_presets():
 
     # Get project assets. Currently Ftrack specific to differentiate between
     # asset builds and shots.
-    nks_pres_tags["[AssetBuilds]"] = {}
-    for asset in io.find({"type": "asset"}):
-        if asset["data"]["entityType"] == "AssetBuild":
-            nks_pres_tags["[AssetBuilds]"][asset["name"]] = {
-                "editable": "1",
-                "note": "",
-                "icon": {
-                    "path": "icons:TagActor.png"
-                },
-                "metadata": {
-                    "family": "assetbuild"
+    if int(os.getenv("TAG_ASSETBUILD_STARTUP", 0)) is 1:
+        nks_pres_tags["[AssetBuilds]"] = {}
+        for asset in io.find({"type": "asset"}):
+            if asset["data"]["entityType"] == "AssetBuild":
+                nks_pres_tags["[AssetBuilds]"][asset["name"]] = {
+                    "editable": "1",
+                    "note": "",
+                    "icon": {
+                        "path": "icons:TagActor.png"
+                    },
+                    "metadata": {
+                        "family": "assetbuild"
+                    }
                 }
-            }
 
     # get project and root bin object
     project = hiero.core.projects()[-1]
