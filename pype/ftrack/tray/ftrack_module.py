@@ -309,7 +309,12 @@ class FtrackEventsThread(QtCore.QThread):
     def ftrack_start_timer(self, input_data):
         if self.user is None:
             return
+
+        actual_timer = self.timer_session.query(
+            'Timer where user_id = "{0}"'.format(self.user['id'])
+        ).first()
         if (
+            actual_timer is not None and
             input_data['task_name'] == self.last_task['name'] and
             input_data['hierarchy'][-1] == self.last_task['parent']['name']
         ):
