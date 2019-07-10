@@ -37,8 +37,8 @@ class TimersManager(metaclass=Singleton):
     def set_signal_times(self):
         try:
             timer_info = get_presets()['services']['timers_manager']['timer']
-            full_time = int(timer_info['full_time'])*60
-            message_time = int(timer_info['message_time'])*60
+            full_time = int(float(timer_info['full_time'])*60)
+            message_time = int(float(timer_info['message_time'])*60)
             self.time_show_message = full_time - message_time
             self.time_stop_timer = full_time
             return True
