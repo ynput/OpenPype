@@ -1,12 +1,107 @@
+import os
+
 from pyblish import api
-import pype
 
 
 class CollectPlates(api.InstancePlugin):
+    """Collect plates from tags.
+
+    Tag is expected to have metadata:
+        {
+            "family": "plate"
+            "subset": "main"
+        }
+    """
+
+    # Run just before CollectSubsets
+    order = api.CollectorOrder + 0.1025
+    label = "Collect Plates"
+    hosts = ["nukestudio"]
+    families = ["clip"]
+
+    def process(self, instance):
+        # Exclude non-tagged instances.
+        tagged = False
+        for tag in instance.data["tags"]:
+            family = dict(tag["metadata"]).get("tag.family", "")
+            if family.lower() == "plate":
+                tagged = True
+
+        if not tagged:
+            self.log.debug(
+                "Skipping \"{}\" because its not tagged with "
+                "\"plate\"".format(instance)
+            )
+            return
+
+        # Collect data.
+        data = {}
+        for key, value in instance.data.iteritems():
+            data[key] = value
+
+        data["family"] = "plate"
+        data["families"] = ["ftrack"]
+        data["source"] = data["sourcePath"]
+
+        subset = ""
+        for tag in instance.data["tags"]:
+            tag_data = dict(tag["metadata"])
+            if "tag.subset" in tag_data:
+                subset = tag_data["tag.subset"]
+        data["subset"] = "plate" + subset.title()
+
+        data["label"] += " - {} - ({})".format(
+            subset, os.path.splitext(data["sourcePath"])[1]
+        )
+
+        # Timeline data.
+        handle_start = int(instance.data["handleStart"] + data["handles"])
+        handle_end = int(instance.data["handleEnd"] + data["handles"])
+
+        source_in_h = data["sourceIn"] - handle_start
+        source_out_h = data["sourceOut"] + handle_end
+
+        timeline_in = int(data["item"].timelineIn())
+        timeline_out = int(data["item"].timelineOut())
+
+        timeline_frame_start = timeline_in - handle_start
+        timeline_frame_end = timeline_out + handle_end
+
+        frame_start = 1
+        frame_end = frame_start + (data["sourceOut"] - data["sourceIn"])
+
+        sequence = instance.context.data["activeSequence"]
+        fps = sequence.framerate()
+
+        data.update(
+            {
+                "sourceFirst": data["sourceFirst"],
+                "sourceIn": data["sourceIn"],
+                "sourceOut": data["sourceOut"],
+                "sourceInH": source_in_h,
+                "sourceOutH": source_out_h,
+                "frameStart": frame_start,
+                "startFrame": frame_start,
+                "endFrame": frame_end,
+                "timelineIn": timeline_in,
+                "timelineOut": timeline_out,
+                "timelineInHandles": timeline_frame_start,
+                "timelineOutHandles": timeline_frame_end,
+                "fps": fps,
+                "handleStart": handle_start,
+                "handleEnd": handle_end
+            }
+        )
+
+        self.log.debug("Creating instance with data: {}".format(data))
+        instance.context.create_instance(**data)
+
+
+class CollectPlatesData(api.InstancePlugin):
     """Collect plates"""
 
-    order = api.CollectorOrder + 0.49
-    label = "Collect Plates"
+    order = api.CollectorOrder + 0.495
+    label = "Collect Plates Data"
     hosts = ["nukestudio"]
     families = ["plate"]
 
@@ -25,11 +120,16 @@ class CollectPlates(api.InstancePlugin):
         name = instance.data["subset"]
         asset = instance.data["asset"]
         track = instance.data["track"]
-        family = instance.data["family"]
-        families = instance.data["families"]
         version = instance.data["version"]
         source_path = instance.data["sourcePath"]
         source_file = os.path.basename(source_path)
+
+        # Filter out "clip" family.
+        families = instance.data["families"] + [instance.data["family"]]
+        families = list(set(families))
+        if "clip" in families:
+            families.remove("clip")
+        family = families[-1]
 
         # staging dir creation
         staging_dir = os.path.dirname(
@@ -80,10 +180,14 @@ class CollectPlates(api.InstancePlugin):
         self.log.debug("__ s duration: {}".format(source_out - source_in + 1))
         self.log.debug("__ source_in_h: {}".format(source_in_h))
         self.log.debug("__ source_out_h: {}".format(source_out_h))
-        self.log.debug("__ sh duration: {}".format(source_out_h - source_in_h + 1))
+        self.log.debug("__ sh duration: {}".format(
+            source_out_h - source_in_h + 1)
+        )
         self.log.debug("__ timeline_in: {}".format(timeline_in))
         self.log.debug("__ timeline_out: {}".format(timeline_out))
-        self.log.debug("__ t duration: {}".format(timeline_out - timeline_in + 1))
+        self.log.debug("__ t duration: {}".format(
+            timeline_out - timeline_in + 1)
+        )
         self.log.debug("__ timeline_frame_start: {}".format(
             timeline_frame_start))
         self.log.debug("__ timeline_frame_end: {}".format(timeline_frame_end))
@@ -95,10 +199,6 @@ class CollectPlates(api.InstancePlugin):
 
         self.log.debug("__ before family: {}".format(family))
         self.log.debug("__ before families: {}".format(families))
-        #
-        # this is just workaround because 'clip' family is filtered
-        instance.data["family"] = families[-1]
-        instance.data["families"].append(family)
 
         # add to data of representation
         version_data.update({
@@ -137,10 +237,9 @@ class CollectPlates(api.InstancePlugin):
                 ext=ext
             )
             start_frame = source_first_frame
-            end_frame = source_first_frame + source_out
-            files = [file % i for i in range(
-                (source_first_frame + source_in_h),
-                ((source_first_frame + source_out_h) + 1), 1)]
+            duration = source_out_h - source_in_h
+            end_frame = source_first_frame + duration
+            files = [file % i for i in range(start_frame, (end_frame + 1), 1)]
         except Exception as e:
             self.log.debug("Exception in file: {}".format(e))
             head, ext = os.path.splitext(source_file)
@@ -148,27 +247,6 @@ class CollectPlates(api.InstancePlugin):
             files = source_file
             start_frame = source_in_h
             end_frame = source_out_h
-
-
-        mov_file = head + ".mov"
-        mov_path = os.path.normpath(os.path.join(staging_dir, mov_file))
-        if os.path.exists(mov_path):
-            # adding mov into the representations
-            self.log.debug("__ mov_path: {}".format(mov_path))
-            plates_mov_representation = {
-                'files': mov_file,
-                'stagingDir': staging_dir,
-                'startFrame': 0,
-                'endFrame': source_out - source_in + 1,
-                'step': 1,
-                'frameRate': fps,
-                'preview': True,
-                'thumbnail': False,
-                'name': "preview",
-                'ext': "mov",
-            }
-            instance.data["representations"].append(
-                plates_mov_representation)
 
         thumb_file = head + ".png"
         thumb_path = os.path.join(staging_dir, thumb_file)
@@ -210,6 +288,3 @@ class CollectPlates(api.InstancePlugin):
             plates_representation))
         self.log.debug("__ after family: {}".format(family))
         self.log.debug("__ after families: {}".format(families))
-
-        # # this will do FnNsFrameServer
-        # FnNsFrameServer.renderFrames(*_args)

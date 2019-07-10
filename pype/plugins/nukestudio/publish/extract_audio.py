@@ -1,6 +1,7 @@
 from pyblish import api
 import pype
 
+
 class ExtractAudioFile(pype.api.Extractor):
     """Extracts audio subset file"""
 
@@ -53,10 +54,10 @@ class ExtractAudioFile(pype.api.Extractor):
             instance.data["representations"] = list()
 
         representation = {
-            'files': [audio_file],
+            'files': os.path.basename(audio_file),
             'stagingDir': staging_dir,
             'name': "wav",
-            'ext': ".wav"
+            'ext': "wav"
         }
 
         instance.data["representations"].append(representation)

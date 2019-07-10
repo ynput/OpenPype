@@ -9,7 +9,7 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
 
     label = "Integrate Assumed Destination"
     order = pyblish.api.IntegratorOrder - 0.05
-    families = ["clip",  "projectfile"]
+    families = ["clip",  "projectfile", "plate"]
 
     def process(self, instance):
 

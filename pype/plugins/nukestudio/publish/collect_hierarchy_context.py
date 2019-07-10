@@ -43,7 +43,9 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
 
         # build data for inner nukestudio project property
         data = {
-            "sequence": context.data['activeSequence'].name().replace(' ', '_'),
+            "sequence": (
+                context.data['activeSequence'].name().replace(' ', '_')
+            ),
             "track": clip.parent().name().replace(' ', '_'),
             "clip": asset
         }
@@ -110,7 +112,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # create new shot asset name
                 instance.data["asset"] = instance.data["asset"].format(
                     **d_metadata)
-                self.log.debug("__ instance.data[asset]: {}".format(instance.data["asset"]))
+                self.log.debug(
+                    "__ instance.data[asset]: "
+                    "{}".format(instance.data["asset"])
+                )
 
                 # lastly fill those individual properties itno
                 # format the string with collected data
@@ -126,8 +131,10 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
                 # check if hierarchy attribute is already created
                 # it should not be so return warning if it is
                 hd = instance.data.get("hierarchy")
-                assert not hd, "Only one Hierarchy Tag is \
-                            allowed. Clip: `{}`".format(asset)
+                assert not hd, (
+                    "Only one Hierarchy Tag is allowed. "
+                    "Clip: `{}`".format(asset)
+                )
 
                 assetsShared = {
                     asset: {
@@ -179,15 +186,12 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             handle_start = int(instance.data["handleStart"] + handles)
             handle_end = int(instance.data["handleEnd"] + handles)
 
-            # get source frames
-            source_first = int(instance.data["sourceFirst"])
-            source_in = int(instance.data["sourceIn"])
-            source_out = int(instance.data["sourceOut"])
-
-            instance.data['startFrame'] = int(
-                source_first + source_in - handle_start)
-            instance.data['endFrame'] = int(
-                (source_first + source_out + handle_end))
+            instance.data['startFrame'] = (
+                instance.data["item"].timelineIn() - handle_start
+            )
+            instance.data['endFrame'] = (
+                instance.data["item"].timelineOut() + handle_end
+            )
 
             # inject assetsShared to other plates types
             assets_shared = context.data.get("assetsShared")
@@ -200,31 +204,44 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
 
-            self.log.debug("__ instance.data[parents]: {}".format(instance.data["parents"]))
-            self.log.debug("__ instance.data[hierarchy]: {}".format(instance.data["hierarchy"]))
-            self.log.debug("__ instance.data[name]: {}".format(instance.data["name"]))
-            if "main" not in instance.data["name"].lower():
-                continue
+            self.log.debug(
+                "__ instance.data[parents]: {}".format(
+                    instance.data["parents"]
+                )
+            )
+            self.log.debug(
+                "__ instance.data[hierarchy]: {}".format(
+                    instance.data["hierarchy"]
+                )
+            )
+            self.log.debug(
+                "__ instance.data[name]: {}".format(instance.data["name"])
+            )
 
             in_info = {}
+
+            in_info["inputs"] = [
+                x["_id"] for x in instance.data.get("assetbuilds", [])
+            ]
+
             # suppose that all instances are Shots
             in_info['entity_type'] = 'Shot'
 
             # get custom attributes of the shot
             in_info['custom_attributes'] = {
                 'handles': int(instance.data.get('handles')),
-                'fend': int(
-                    (source_first + source_out)),
-                'fstart': int(
-                    source_first + source_in),
-                'fps': context.data["framerate"]
+                'fstart': int(instance.data["startFrame"]),
+                'fend': int(instance.data["endFrame"]),
+                'fps': context.data["framerate"],
+                "edit_in": int(instance.data["startFrame"]),
+                "edit_out": int(instance.data["endFrame"])
             }
 
             handle_start = instance.data.get('handleStart')
             handle_end = instance.data.get('handleEnd')
             self.log.debug("__ handle_start: {}".format(handle_start))
             self.log.debug("__ handle_end: {}".format(handle_end))
-            
+
             if handle_start and handle_end:
                 in_info['custom_attributes'].update({
                     "handle_start": handle_start,
