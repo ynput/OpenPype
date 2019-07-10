@@ -169,6 +169,12 @@ class RVAction(BaseAction):
                 except KeyError:
                     version_mapping[entity["version"]["version"]] = [entity]
 
+            # Sort same versions by date.
+            for version, entities in version_mapping.items():
+                version_mapping[version] = sorted(
+                    entities, key=lambda x: x["version"]["date"], reverse=True
+                )
+
             components[parent_name] = []
             for version in reversed(sorted(version_mapping.keys())):
                 components[parent_name].extend(version_mapping[version])
