@@ -214,6 +214,53 @@ class RVAction(BaseAction):
         if "values" not in event["data"]:
             return
 
+        user = session.query(
+            "User where username is '{0}'".format(
+                os.environ["FTRACK_API_USER"]
+            )
+        ).one()
+        job = session.create(
+            "Job",
+            {
+                "user": user,
+                "status": "running",
+                "data": json.dumps({
+                    "description": "RV: Collecting file paths."
+                })
+            }
+        )
+        # Commit to feedback to user.
+        session.commit()
+
+        paths = []
+        try:
+            paths = self.get_file_paths(session, event)
+        except Exception:
+            log.error(traceback.format_exc())
+            job["status"] = "failed"
+        else:
+            job["status"] = "done"
+
+        # Commit to end job.
+        session.commit()
+
+        args = [os.path.normpath(self.rv_path)]
+
+        fps = entities[0].get("custom_attributes", {}).get("fps", None)
+        if fps is not None:
+            args.extend(["-fps", str(fps)])
+
+        args.extend(paths)
+
+        log.info("Running rv: {}".format(args))
+
+        subprocess.Popen(args)
+
+        return True
+
+    def get_file_paths(self, session, event):
+        """Get file paths from selected components."""
+
         io.install()
 
         paths = []
@@ -253,19 +300,7 @@ class RVAction(BaseAction):
                 )
             paths.append(api.get_representation_path(representation))
 
-        args = [os.path.normpath(self.rv_path)]
-
-        fps = entities[0].get("custom_attributes", {}).get("fps", None)
-        if fps is not None:
-            args.extend(["-fps", str(fps)])
-
-        args.extend(paths)
-
-        log.info("Running rv: {}".format(args))
-
-        subprocess.Popen(args)
-
-        return True
+        return paths
 
 
 def register(session):
