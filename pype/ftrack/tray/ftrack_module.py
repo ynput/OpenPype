@@ -321,6 +321,9 @@ class FtrackEventsThread(QtCore.QThread):
             input_data['hierarchy'][-1] == self.last_task['parent']['name']
         ):
             return
+
+        input_data['entity_name'] = input_data['hierarchy'][-1]
+
         task_query = (
             'Task where name is "{task_name}"'
             ' and parent.name is "{entity_name}"'
