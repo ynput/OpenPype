@@ -299,12 +299,14 @@ class FtrackEventsThread(QtCore.QThread):
             self.signal_timer_stopped.emit()
 
     def ftrack_stop_timer(self):
-        try:
+        actual_timer = self.timer_session.query(
+            'Timer where user_id = "{0}"'.format(self.user['id'])
+        ).first()
+
+        if actual_timer is not None:
             self.user.stop_timer()
             self.timer_session.commit()
             self.signal_timer_stopped.emit()
-        except Exception as e:
-            log.debug("Timer stop had issues: {}".format(e))
 
     def ftrack_start_timer(self, input_data):
         if self.user is None:
