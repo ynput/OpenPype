@@ -30,6 +30,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       }
 
     def process(self, instance):
+        self.ftrack_locations = {}
         self.log.debug('instance {}'.format(instance))
 
         if instance.data.get('version'):
@@ -49,8 +50,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
             self.log.debug('component {}'.format(comp))
 
             if comp.get('thumbnail'):
-                location = ft_session.query(
-                    'Location where name is "ftrack.server"').one()
+                location = self.get_ftrack_location(
+                    'ftrack.server', ft_session
+                )
                 component_data = {
                     "name": "thumbnail"  # Default component name is "main".
                 }
@@ -76,8 +78,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
                 if not comp.get('frameRate'):
                     comp['frameRate'] = instance.context.data['fps']
-                location = ft_session.query(
-                    'Location where name is "ftrack.server"').one()
+                location = self.get_ftrack_location(
+                    'ftrack.server', ft_session
+                )
                 component_data = {
                     # Default component name is "main".
                     "name": "ftrackreview-mp4",
@@ -91,28 +94,70 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 component_data = {
                     "name": comp['name']
                 }
-                location = ft_session.query(
-                    'Location where name is "ftrack.unmanaged"').one()
+                location = self.get_ftrack_location(
+                    'ftrack.unmanaged', ft_session
+                )
                 comp['thumbnail'] = False
 
             self.log.debug('location {}'.format(location))
 
-            componentList.append({"assettype_data": {
-                "short": asset_type,
-            },
+            component_item = {
+                "assettype_data": {
+                    "short": asset_type,
+                },
                 "asset_data": {
-                "name": instance.data["subset"],
-            },
+                    "name": instance.data["subset"],
+                },
                 "assetversion_data": {
-                "version": version_number,
-            },
+                    "version": version_number,
+                },
                 "component_data": component_data,
                 "component_path": comp['published_path'],
                 'component_location': location,
                 "component_overwrite": False,
                 "thumbnail": comp['thumbnail']
             }
-            )
+
+            componentList.append(component_item)
+            # Create copy with ftrack.unmanaged location if thumb or prev
+            if comp.get('thumbnail') or comp.get('preview'):
+                unmanaged_loc = self.get_ftrack_location(
+                    'ftrack.unmanaged', ft_session
+                )
+
+                component_data_src = component_data.copy()
+                name = component_data['name'] + '_src'
+                component_data_src['name'] = name
+
+                component_item_src = {
+                    "assettype_data": {
+                        "short": asset_type,
+                    },
+                    "asset_data": {
+                        "name": instance.data["subset"],
+                    },
+                    "assetversion_data": {
+                        "version": version_number,
+                    },
+                    "component_data": component_data_src,
+                    "component_path": comp['published_path'],
+                    'component_location': unmanaged_loc,
+                    "component_overwrite": False,
+                    "thumbnail": False
+                }
+
+                componentList.append(component_item_src)
+
 
         self.log.debug('componentsList: {}'.format(str(componentList)))
         instance.data["ftrackComponentsList"] = componentList
+
+    def get_ftrack_location(self, name, session):
+        if name in self.ftrack_locations:
+            return self.ftrack_locations[name]
+
+        location = session.query(
+            'Location where name is "{}"'.format(name)
+        ).one()
+        self.ftrack_locations[name] = location
+        return location

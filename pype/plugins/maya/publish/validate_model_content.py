@@ -38,7 +38,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
         content_instance = list(set(content_instance + descendants))
 
         # Ensure only valid node types
-        allowed = ('mesh', 'transform', 'nurbsCurve', 'nurbsSurface')
+        allowed = ('mesh', 'transform', 'nurbsCurve', 'nurbsSurface', 'locator')
         nodes = cmds.ls(content_instance, long=True)
         valid = cmds.ls(content_instance, long=True, type=allowed)
         invalid = set(nodes) - set(valid)

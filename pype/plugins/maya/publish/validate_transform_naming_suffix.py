@@ -4,13 +4,6 @@ import pyblish.api
 import pype.api
 import pype.maya.action
 
-SUFFIX_NAMING_TABLE = {'mesh': ["_GEO", "_GES", "_GEP", "_OSD"],
-                       'nurbsCurve': ["_CRV"],
-                       'nurbsSurface': ["_NRB"],
-                       None: ['_GRP']}
-
-ALLOW_IF_NOT_IN_SUFFIX_TABLE = True
-
 
 class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     """Validates transform suffix based on the type of its children shapes.
@@ -23,6 +16,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
             _OSD (open subdiv smooth at rendertime)
         - nurbsCurve: _CRV
         - nurbsSurface: _NRB
+        - locator: _LOC
         - null/group: _GRP
 
     .. warning::
@@ -39,9 +33,16 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     version = (0, 1, 0)
     label = 'Suffix Naming Conventions'
     actions = [pype.maya.action.SelectInvalidAction]
+    SUFFIX_NAMING_TABLE = {'mesh': ["_GEO", "_GES", "_GEP", "_OSD"],
+                           'nurbsCurve': ["_CRV"],
+                           'nurbsSurface': ["_NRB"],
+                           'locator': ["_LOC"],
+                           None: ['_GRP']}
+
+    ALLOW_IF_NOT_IN_SUFFIX_TABLE = True
 
     @staticmethod
-    def is_valid_name(node_name, shape_type):
+    def is_valid_name(node_name, shape_type, SUFFIX_NAMING_TABLE, ALLOW_IF_NOT_IN_SUFFIX_TABLE):
         """Return whether node's name is correct.
 
         The correctness for a transform's suffix is dependent on what
@@ -62,7 +63,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
             return False
 
     @classmethod
-    def get_invalid(cls, instance):
+    def get_invalid(cls, instance, SUFFIX_NAMING_TABLE, ALLOW_IF_NOT_IN_SUFFIX_TABLE):
         transforms = cmds.ls(instance, type='transform', long=True)
 
         invalid = []
@@ -73,7 +74,7 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
                                         noIntermediate=True)
 
             shape_type = cmds.nodeType(shapes[0]) if shapes else None
-            if not cls.is_valid_name(transform, shape_type):
+            if not cls.is_valid_name(transform, shape_type, SUFFIX_NAMING_TABLE, ALLOW_IF_NOT_IN_SUFFIX_TABLE):
                 invalid.append(transform)
 
         return invalid
@@ -81,7 +82,8 @@ class ValidateTransformNamingSuffix(pyblish.api.InstancePlugin):
     def process(self, instance):
         """Process all the nodes in the instance"""
 
-        invalid = self.get_invalid(instance)
+
+        invalid = self.get_invalid(instance, self.SUFFIX_NAMING_TABLE, self.ALLOW_IF_NOT_IN_SUFFIX_TABLE)
         if invalid:
             raise ValueError("Incorrectly named geometry "
                              "transforms: {0}".format(invalid))
