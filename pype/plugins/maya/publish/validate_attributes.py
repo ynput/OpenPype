@@ -22,6 +22,10 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
     actions = [pype.api.RepairContextAction]
 
     def process(self, context):
+        # Check for preset existence.
+        if not context.data["presets"]["maya"].get("attributes"):
+            return
+
         invalid = self.get_invalid(context, compute=True)
         if invalid:
             raise RuntimeError(
