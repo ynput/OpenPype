@@ -138,6 +138,7 @@ class RVAction(BaseAction):
         # Commit to feedback to user.
         session.commit()
 
+        items = []
         try:
             items = self.get_interface_items(session, entities)
         except Exception:
