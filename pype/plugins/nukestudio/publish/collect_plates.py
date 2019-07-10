@@ -41,7 +41,7 @@ class CollectPlates(api.InstancePlugin):
             data[key] = value
 
         data["family"] = family.lower()
-        data["families"] = ["ftrack"]
+        data["families"] = ["ftrack"] + instance.data["families"][1:]
         data["source"] = data["sourcePath"]
 
         subset = ""
@@ -73,7 +73,7 @@ class CollectPlates(api.InstancePlugin):
         timeline_frame_start = timeline_in - handle_start
         timeline_frame_end = timeline_out + handle_end
 
-        frame_start = 1
+        frame_start = instance.data.get("frameStart", 1)
         frame_end = frame_start + (data["sourceOut"] - data["sourceIn"])
 
         data.update(
@@ -109,6 +109,9 @@ class CollectPlates(api.InstancePlugin):
 
         self.log.debug("Creating instance with name: {}".format(data["name"]))
         instance.context.create_instance(**data)
+
+        # # remove original instance
+        # instance.context.remove(instance)
 
 
 class CollectPlatesData(api.InstancePlugin):
@@ -186,7 +189,7 @@ class CollectPlatesData(api.InstancePlugin):
             "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
-            "sourceIn": source_in,  
+            "sourceIn": source_in,
             "sourceOut": source_out,
             "startFrame": frame_start,
             "endFrame": frame_end,
@@ -217,9 +220,11 @@ class CollectPlatesData(api.InstancePlugin):
                 padding=padding,
                 ext=ext
             )
-            start_frame = source_first_frame
+            self.log.debug("__ source_in_h: {}".format(source_in_h))
+            self.log.debug("__ source_out_h: {}".format(source_out_h))
+            start_frame = source_first_frame + source_in_h
             duration = source_out_h - source_in_h
-            end_frame = source_first_frame + duration
+            end_frame = start_frame + duration
             files = [file % i for i in range(start_frame, (end_frame + 1), 1)]
         except Exception as e:
             self.log.debug("Exception in file: {}".format(e))
@@ -276,8 +281,8 @@ class CollectPlatesData(api.InstancePlugin):
             'stagingDir': staging_dir,
             'name': ext,
             'ext': ext,
-            'startFrame': start_frame,
-            'endFrame': end_frame,
+            'startFrame': frame_start - handle_start,
+            'endFrame': frame_end + handle_end,
         }
         instance.data["representations"].append(plates_representation)
 

@@ -198,7 +198,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     self.log.debug("__ s_asset_data: {}".format(s_asset_data))
                     name = instance.data["asset"] = s_asset_data["asset"]
                     instance.data["parents"] = s_asset_data["parents"]
-                    instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
                     instance.data["tasks"] = s_asset_data["tasks"]
 
@@ -227,17 +226,24 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
             # get custom attributes of the shot
             if instance.data.get("main"):
+                start_frame = instance.data.get("frameStart", 0)
+
                 in_info['custom_attributes'] = {
                     'handles': int(instance.data.get('handles')),
                     'handle_start': handle_start,
                     'handle_end': handle_end,
-                    'fstart': int(instance.data["startFrame"] - handle_start),
-                    'fend': int(instance.data["endFrame"] + handle_end),
+                    'fstart': int(instance.data["startFrame"]),
+                    'fend': int(instance.data["endFrame"]),
                     'fps': instance.data["fps"],
                     "edit_in": int(instance.data["startFrame"]),
                     "edit_out": int(instance.data["endFrame"])
                 }
-
+                if start_frame is not 0:
+                    in_info['custom_attributes'].update({
+                        'fstart': start_frame,
+                        'fend': start_frame + (
+                            instance.data["endFrame"] - instance.data["startFrame"])
+                    })
                 # adding SourceResolution if Tag was present
                 s_res = instance.data.get("sourceResolution")
                 if s_res and instance.data.get("main"):

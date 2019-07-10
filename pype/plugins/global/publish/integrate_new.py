@@ -190,7 +190,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                       data=version_data)
 
         self.log.debug("Creating version ...")
-        version_id = io.insert_one(version).inserted_id
+        existing_version = io.find_one({
+            'type': 'version',
+            'parent': subset["_id"],
+            'name': next_version
+        })
+        if existing_version is None:
+            version_id = io.insert_one(version).inserted_id
+        else:
+            io.update_many({
+                'type': 'version',
+                'parent': subset["_id"],
+                'name': next_version
+            }, {'$set': version}
+            )
+            version_id = existing_version['_id']
         instance.data['version'] = version['name']
 
         # Write to disk
@@ -261,7 +275,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 src_collection = src_collections[0]
                 # Assert that each member has identical suffix
                 src_head = src_collection.format("{head}")
-                src_tail = ext = src_collection.format("{tail}")
+                src_tail = src_collection.format("{tail}")
 
                 test_dest_files = list()
                 for i in [1, 2]:
@@ -284,12 +298,24 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 repre['published_path'] = dst_collection.format()
 
+                index_frame_start = None
+                if repre.get('startFrame'):
+                    frame_start_padding = len(str(
+                        repre.get('endFrame')))
+                    index_frame_start = repre.get('startFrame')
+
                 for i in src_collection.indexes:
                     src_padding = src_collection.format("{padding}") % i
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
 
                     dst_padding = dst_collection.format("{padding}") % i
+
+                    if index_frame_start:
+                        dst_padding = "%0{}d".format(
+                            frame_start_padding) % index_frame_start
+                        index_frame_start += 1
+
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
@@ -321,7 +347,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 dst = os.path.normpath(
-                        anatomy_filled[template_name]["path"])
+                    anatomy_filled[template_name]["path"])
 
                 instance.data["transfers"].append([src, dst])
 
