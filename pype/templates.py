@@ -4,7 +4,7 @@ import sys
 from avalon import io, api as avalon, lib as avalonlib
 from . import lib
 # from pypeapp.api import (Templates, Logger, format)
-from pypeapp import Logger, config, Anatomy
+from pypeapp import Logger, Anatomy
 log = Logger().get_logger(__name__, os.getenv("AVALON_APP", "pype-config"))
 
 
@@ -15,63 +15,6 @@ self.SESSION = None
 def set_session():
     lib.set_io_database()
     self.SESSION = avalon.session
-
-
-def load_data_from_templates():
-    """
-    Load Presets and Anatomy `contextual` data as singleton object
-    [info](https://en.wikipedia.org/wiki/Singleton_pattern)
-
-    Returns:
-        singleton: adding data to sharable object variable
-
-    """
-
-    from . import api
-    if not any([
-        api.Dataflow,
-        api.Anatomy,
-        api.Colorspace
-    ]
-    ):
-        presets = config.get_presets()
-        anatomy = Anatomy()
-
-        try:
-            # try if it is not in projects custom directory
-            # `{PYPE_PROJECT_CONFIGS}/[PROJECT_NAME]/init.json`
-            # init.json define preset names to be used
-            p_init = presets["init"]
-            colorspace = presets["colorspace"][p_init["colorspace"]]
-            dataflow = presets["dataflow"][p_init["dataflow"]]
-        except KeyError:
-            log.warning("No projects custom preset available...")
-            colorspace = presets["colorspace"]["default"]
-            dataflow = presets["dataflow"]["default"]
-            log.info("Presets `colorspace` and `dataflow` loaded from `default`...")
-
-        api.Anatomy = anatomy
-        api.Dataflow = dataflow
-        api.Colorspace = colorspace
-
-        log.info("Data from templates were Loaded...")
-
-
-def reset_data_from_templates():
-    """
-    Clear Templates `contextual` data from singleton
-    object variable
-
-    Returns:
-        singleton: clearing data to None
-
-    """
-
-    from . import api
-    api.Dataflow = None
-    api.Anatomy = None
-    api.Colorspace = None
-    log.info("Data from templates were Unloaded...")
 
 
 def get_version_from_path(file):
@@ -265,7 +208,9 @@ def set_avalon_workdir(project=None,
     if self.SESSION is None:
         set_session()
 
-    awd = self.SESSION.get("AVALON_WORKDIR", None) or os.getenv("AVALON_WORKDIR", None)
+    awd = self.SESSION.get("AVALON_WORKDIR", None) or \
+        os.getenv("AVALON_WORKDIR", None)
+
     data = get_context_data(project, hierarchy, asset, task)
 
     if (not awd) or ("{" not in awd):
@@ -280,7 +225,7 @@ def set_avalon_workdir(project=None,
 
 def get_workdir_template(data=None):
     """
-    Obtain workdir templated path from api.Anatomy singleton
+    Obtain workdir templated path from Anatomy()
 
     Args:
         data (dict, optional): basic contextual data
@@ -288,12 +233,8 @@ def get_workdir_template(data=None):
     Returns:
         string: template path
     """
-    from . import api
 
-    """ Installs singleton data """
-    load_data_from_templates()
-
-    anatomy = api.Anatomy
+    anatomy = Anatomy()
     anatomy_filled = anatomy.format(data or get_context_data())
 
     try:

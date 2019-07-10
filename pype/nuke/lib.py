@@ -7,8 +7,9 @@ import avalon.nuke
 import pype.api as pype
 import nuke
 from .templates import (
-    get_dataflow,
-    get_colorspace
+    get_colorspace_preset,
+    get_node_dataflow_preset,
+    get_node_colorspace_preset
 )
 
 from pypeapp import Logger
@@ -129,8 +130,8 @@ def get_render_path(node):
         "preset": data['avalon']['families']
     }
 
-    nuke_dataflow_writes = get_dataflow(**data_preset)
-    nuke_colorspace_writes = get_colorspace(**data_preset)
+    nuke_dataflow_writes = get_node_dataflow_preset(**data_preset)
+    nuke_colorspace_writes = get_node_colorspace_preset(**data_preset)
 
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
     data.update({
@@ -180,8 +181,8 @@ def script_name():
 
 
 def create_write_node(name, data):
-    nuke_dataflow_writes = get_dataflow(**data)
-    nuke_colorspace_writes = get_colorspace(**data)
+    nuke_dataflow_writes = get_node_dataflow_preset(**data)
+    nuke_colorspace_writes = get_node_colorspace_preset(**data)
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
 
     try:
@@ -319,9 +320,8 @@ def set_writes_colorspace(write_dict):
 
 
 def set_colorspace():
-    from pype import api as pype
 
-    nuke_colorspace = pype.Colorspace.get("nuke", None)
+    nuke_colorspace = get_colorspace_preset().get("nuke", None)
 
     try:
         set_root_colorspace(nuke_colorspace["root"])
@@ -611,8 +611,8 @@ def get_write_node_template_attr(node):
     }
 
     # get template data
-    nuke_dataflow_writes = get_dataflow(**data_preset)
-    nuke_colorspace_writes = get_colorspace(**data_preset)
+    nuke_dataflow_writes = get_node_dataflow_preset(**data_preset)
+    nuke_colorspace_writes = get_node_colorspace_preset(**data_preset)
 
     # collecting correct data
     correct_data = OrderedDict({
