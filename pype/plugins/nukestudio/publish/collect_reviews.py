@@ -87,9 +87,15 @@ class CollectReviews(api.InstancePlugin):
 
             self.log.debug("Instance review: {}".format(rev_inst.data["name"]))
 
+            # getting file path parameters
             file_path = rev_inst.data.get("sourcePath")
             file_dir = os.path.dirname(file_path)
             file = os.path.basename(file_path)
+            ext = os.path.splitext(file)[-1][1:]
+
+            # adding annotation to lablel
+            instance.data["label"] += " + review (.{})".format(ext)
+            instance.data["families"].append("review")
             # adding representation for review mov
             representation = {
                 "files": file,
@@ -101,7 +107,7 @@ class CollectReviews(api.InstancePlugin):
                 "preview": True,
                 "thumbnail": False,
                 "name": "preview",
-                "ext": os.path.splitext(file)[-1][1:]
+                "ext": ext
             }
             instance.data["representations"].append(representation)
 

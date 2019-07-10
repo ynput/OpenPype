@@ -29,6 +29,7 @@ class CreateWriteRender(avalon.nuke.Creator):
     family = "{}_write".format(preset)
     families = preset
     icon = "sign-out"
+    defaults = ["Main", "Mask"]
 
     def __init__(self, *args, **kwargs):
         super(CreateWriteRender, self).__init__(*args, **kwargs)
@@ -72,6 +73,7 @@ class CreateWritePrerender(avalon.nuke.Creator):
     family = "{}_write".format(preset)
     families = preset
     icon = "sign-out"
+    defaults = ["Main", "Mask"]
 
     def __init__(self, *args, **kwargs):
         super(CreateWritePrerender, self).__init__(*args, **kwargs)

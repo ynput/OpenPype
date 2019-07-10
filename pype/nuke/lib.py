@@ -405,6 +405,9 @@ def reset_frame_range_handles():
     log.info("_frameRange: {}".format(range))
     log.info("frameRange: {}".format(vv['frame_range'].value()))
 
+    vv['frame_range'].setValue(range)
+    vv['frame_range_lock'].setValue(True)
+
 
 def get_avalon_knob_data(node):
     import toml

@@ -299,10 +299,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre['published_path'] = dst_collection.format()
 
                 index_frame_start = None
-                if instance.data.get("frameStart"):
+                if repre.get('startFrame'):
                     frame_start_padding = len(str(
-                        instance.data.get("frameStart")))
-                    index_frame_start = instance.data.get("frameStart")
+                        repre.get('endFrame')))
+                    index_frame_start = repre.get('startFrame')
 
                 for i in src_collection.indexes:
                     src_padding = src_collection.format("{padding}") % i
