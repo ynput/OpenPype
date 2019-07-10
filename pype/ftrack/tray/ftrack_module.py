@@ -299,21 +299,31 @@ class FtrackEventsThread(QtCore.QThread):
             self.signal_timer_stopped.emit()
 
     def ftrack_stop_timer(self):
-        try:
+        actual_timer = self.timer_session.query(
+            'Timer where user_id = "{0}"'.format(self.user['id'])
+        ).first()
+
+        if actual_timer is not None:
             self.user.stop_timer()
             self.timer_session.commit()
             self.signal_timer_stopped.emit()
-        except Exception as e:
-            log.debug("Timer stop had issues: {}".format(e))
 
     def ftrack_start_timer(self, input_data):
         if self.user is None:
             return
+
+        actual_timer = self.timer_session.query(
+            'Timer where user_id = "{0}"'.format(self.user['id'])
+        ).first()
         if (
+            actual_timer is not None and
             input_data['task_name'] == self.last_task['name'] and
             input_data['hierarchy'][-1] == self.last_task['parent']['name']
         ):
             return
+
+        input_data['entity_name'] = input_data['hierarchy'][-1]
+
         task_query = (
             'Task where name is "{task_name}"'
             ' and parent.name is "{entity_name}"'
