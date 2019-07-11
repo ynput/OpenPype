@@ -39,12 +39,14 @@ class LinkAsGroup(api.Loader):
 
         precomp_name = context["representation"]["context"]["subset"]
 
+        self.log.info("versionData: {}\n".format(context["version"]["data"]))
+
         # Set global in point to start frame (if in version.data)
         start = context["version"]["data"].get("startFrame", None)
+        self.log.info("start: {}\n".format(start))
 
         # add additional metadata from the version to imprint to Avalon knob
-        add_keys = ["startFrame", "endFrame", "handles",
-                    "source", "author", "fps"]
+        add_keys = ["startFrame", "endFrame", "handle_start", "handle_end", "source", "author", "fps"]
 
         data_imprint = {
                 "start_frame": start,
