@@ -342,8 +342,9 @@ def set_colorspace():
 def reset_frame_range_handles():
     """Set frame range to current asset"""
 
+    root = nuke.root()
     fps = float(api.Session.get("AVALON_FPS", 25))
-    nuke.root()["fps"].setValue(fps)
+    root["fps"].setValue(fps)
     name = api.Session["AVALON_ASSET"]
     asset = io.find_one({"name": name, "type": "asset"})
 
@@ -379,8 +380,8 @@ def reset_frame_range_handles():
     edit_in = int(asset["data"]["fstart"]) - handle_start
     edit_out = int(asset["data"]["fend"]) + handle_end
 
-    nuke.root()["first_frame"].setValue(edit_in)
-    nuke.root()["last_frame"].setValue(edit_out)
+    root["first_frame"].setValue(edit_in)
+    root["last_frame"].setValue(edit_out)
 
     # setting active viewers
     nuke.frame(int(asset["data"]["fstart"]))
@@ -399,6 +400,13 @@ def reset_frame_range_handles():
 
     vv['frame_range'].setValue(range)
     vv['frame_range_lock'].setValue(True)
+
+    # adding handle_start/end to root avalon knob
+    if not avalon.nuke.set_avalon_knob_data(root, {
+        "handle_start": handle_start,
+        "handle_end": handle_end
+    }):
+        log.warning("Cannot set Avalon knob to Root node!")
 
 
 def get_avalon_knob_data(node):
@@ -552,8 +560,8 @@ def get_hierarchical_attr(entity, attr, default=None):
 
     parent_id = entity['parent']
     if (
-        entity['type'].lower() == 'asset' and
-        entity.get('data', {}).get('visualParent')
+        entity['type'].lower() == 'asset'
+        and entity.get('data', {}).get('visualParent')
     ):
         parent_id = entity['data']['visualParent']
 

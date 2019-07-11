@@ -12,7 +12,7 @@ class ExtractScript(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder - 0.05
     optional = True
     hosts = ['nuke']
-    families = ["nukescript"]
+    families = ["workfile"]
 
     def process(self, instance):
         self.log.debug("instance extracting: {}".format(instance.data))
@@ -28,7 +28,7 @@ class ExtractScript(pype.api.Extractor):
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
-
+        
         representation = {
             'name': 'nk',
             'ext': '.nk',

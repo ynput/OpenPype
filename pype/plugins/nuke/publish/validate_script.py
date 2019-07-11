@@ -7,7 +7,7 @@ class ValidateScript(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["nukescript"]
+    families = ["workfile"]
     label = "Check script settings"
     hosts = ["nuke"]
 
@@ -24,11 +24,11 @@ class ValidateScript(pyblish.api.InstancePlugin):
         # These attributes will be checked
         attributes = [
             "fps", "fstart", "fend",
-            "resolution_width", "resolution_height", "pixel_aspect", "handles"
+            "resolution_width", "resolution_height", "pixel_aspect", "handle_start", "handle_end"
         ]
 
         # Value of these attributes can be found on parents
-        hierarchical_attributes = ["fps", "resolution_width", "resolution_height", "pixel_aspect", "handles"]
+        hierarchical_attributes = ["fps", "resolution_width", "resolution_height", "pixel_aspect", "handle_start", "handle_end"]
 
         missing_attributes = []
         asset_attributes = {}
@@ -58,17 +58,21 @@ class ValidateScript(pyblish.api.InstancePlugin):
             raise ValueError(message)
 
         # Get handles from database, Default is 0 (if not found)
-        handles = 0
-        if "handles" in asset_attributes:
-            handles = asset_attributes["handles"]
+        handle_start = 0
+        handle_end = 0
+        if "handle_start" in asset_attributes:
+            handle_start = asset_attributes["handle_start"]
+        if "handle_end" in asset_attributes:
+            handle_end = asset_attributes["handle_end"]
 
         # Set frame range with handles
-        asset_attributes["fstart"] -= handles
-        asset_attributes["fend"] += handles
+        asset_attributes["fstart"] -= handle_start
+        asset_attributes["fend"] += handle_end
 
         # Get values from nukescript
         script_attributes = {
-            "handles": handles,
+            "handle_start": instance_data["handle_start"],
+            "handle_end": instance_data["handle_end"],
             "fps": instance_data["fps"],
             "fstart": instance_data["startFrame"],
             "fend": instance_data["endFrame"],
@@ -87,7 +91,7 @@ class ValidateScript(pyblish.api.InstancePlugin):
 
         # Raise error if not matching
         if len(not_matching) > 0:
-            msg = "Attributes '{}' aro not set correctly"
+            msg = "Attributes '{}' are not set correctly"
             # Alert user that handles are set if Frame start/end not match
             if (
                 (("fstart" in not_matching) or ("fend" in not_matching)) and
