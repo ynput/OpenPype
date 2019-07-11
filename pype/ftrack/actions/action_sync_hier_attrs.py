@@ -33,7 +33,7 @@ class SyncHierarchicalAttrs(BaseAction):
         ''' Validation '''
         for entity in entities:
             if (
-                entity['context_type'].lower() in ('show', 'task') and
+                entity.get('context_type', '').lower() in ('show', 'task') and
                 entity.entity_type.lower() != 'task'
             ):
                 return True
