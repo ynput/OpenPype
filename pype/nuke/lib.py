@@ -17,14 +17,6 @@ log = Logger().get_logger(__name__, "nuke")
 self = sys.modules[__name__]
 self._project = None
 
-
-for path in sys.path:
-    log.info(os.path.normpath(path))
-    if "C:\\Users\\Public" in os.path.normpath(path):
-        log.info("_ removing from sys.path: `{}`".format(path))
-        sys.path.remove(path)
-
-
 def onScriptLoad():
     if nuke.env['LINUX']:
         nuke.tcl('load ffmpegReader')
