@@ -4,7 +4,6 @@ import logging
 import speedcopy
 import clique
 import traceback
-import sys
 import errno
 import pyblish.api
 from avalon import api, io
@@ -59,7 +58,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "render",
                 "imagesequence",
                 "review",
-                "nukescript",
                 "render",
                 "rendersetup",
                 "rig",
