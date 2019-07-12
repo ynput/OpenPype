@@ -155,7 +155,7 @@ class CustomAttributeDoctor(BaseAction):
                     if alt_key in all_keys:
                         self.log.debug((
                             'Custom attribute "{}" will use values from "{}"'
-                        ).format(alt_key))
+                        ).format(key, alt_key))
 
                         to_process[key] = alt_key
 
@@ -163,7 +163,7 @@ class CustomAttributeDoctor(BaseAction):
                         # if alt_key not in self.curent_default_values:
                         #     self.curent_default_values[alt_key] = obj['default']
                         obj['default'] = None
-                        self.sesion.commit()
+                        self.session.commit()
 
             else:
                 obj = all_keys[key]
@@ -181,9 +181,9 @@ class CustomAttributeDoctor(BaseAction):
                     to_process[key] = new_key
                     continue
 
-                default_value = obj['default']
-                if new_key not in self.curent_default_values:
-                    self.curent_default_values[new_key] = default_value
+                # default_value = obj['default']
+                # if new_key not in self.curent_default_values:
+                #     self.curent_default_values[new_key] = default_value
 
                 obj['key'] = new_key
                 obj['label'] = obj['label'] + '(old)'
@@ -216,7 +216,8 @@ class CustomAttributeDoctor(BaseAction):
             data['write_security_role'] = self.get_security_role(
                 self.write_roles
             )
-
+            from pprint import pprint
+            pprint(data)
             self.session.create('CustomAttributeConfiguration', data)
             self.session.commit()
 
