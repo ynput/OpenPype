@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import argparse
 import logging
 
@@ -34,19 +35,23 @@ class CustomAttributeDoctor(BaseAction):
     data_ca = {
         'handle_start': {
             'label': 'Frame handles start',
-            'type': 'number'
+            'type': 'number',
+            'config': json.dumps({'isdecimal': False})
         },
         'handle_end': {
             'label': 'Frame handles end',
-            'type': 'number'
+            'type': 'number',
+            'config': json.dumps({'isdecimal': False})
         },
         'fstart': {
             'label': 'Frame start',
-            'type': 'number'
+            'type': 'number',
+            'config': json.dumps({'isdecimal': False})
         },
         'fend': {
             'label': 'Frame end',
-            'type': 'number'
+            'type': 'number',
+            'config': json.dumps({'isdecimal': False})
         }
     }
 
