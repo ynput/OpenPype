@@ -210,14 +210,11 @@ class CustomAttributeDoctor(BaseAction):
             if avalon_group:
                 data['group'] = avalon_group
 
-            data['read_security_role'] = self.get_security_role(
-                self.read_roles
-            )
-            data['write_security_role'] = self.get_security_role(
-                self.write_roles
-            )
-            from pprint import pprint
-            pprint(data)
+            read_roles = self.get_security_role(self.read_roles)
+            write_roles = self.get_security_role(self.write_roles)
+            data['read_security_roles'] = read_roles
+            data['write_security_roles'] = write_roles
+
             self.session.create('CustomAttributeConfiguration', data)
             self.session.commit()
 
