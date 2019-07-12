@@ -203,6 +203,11 @@ class CustomAttributeDoctor(BaseAction):
                 'default': None
             }
             for _key, _value in self.data_ca.get(key, {}).items():
+                if _key == 'type':
+                    _value = self.session.query((
+                        'CustomAttributeType where name is "{}"'
+                    ).format(_value)).first()
+
                 data[_key] = _value
 
             avalon_group = self.session.query(
