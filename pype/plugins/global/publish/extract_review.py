@@ -6,14 +6,14 @@ from pypeapp import config
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
-    """Resolve any dependency issies
+    """Extracting Review mov file for Ftrack
 
-    This plug-in resolves any paths which, if not updated might break
-    the published file.
+    Compulsory attribute of representation is tags list with "review",
+    otherwise the representation is ignored.
 
-    The order of families is important, when working with lookdev you want to
-    first publish the texture, update the texture paths in the nodes and then
-    publish the shading network. Same goes for file dependent assets.
+    All new represetnations are created and encoded by ffmpeg following
+    presets found in `pype-config/presets/plugins/global/publish.json:ExtractReview:outputs`. To change the file extension
+    filter values use preset's attributes `ext_filter`
     """
 
     label = "Extract Review"
@@ -30,6 +30,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         fps = inst_data.get("fps")
         start_frame = inst_data.get("startFrame")
 
+        self.log.debug("Families In: `{}`".format(instance.data["families"]))
+
         # get representation and loop them
         representations = instance.data["representations"]
 
@@ -43,46 +45,50 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 if "review" in tags:
 
-                    repre_new = repre.copy()
-                    del(repre)
-
-                    staging_dir = repre_new["stagingDir"]
-
-                    if "mov" not in repre_new['ext']:
-                        # get output presets and loop them
-                        collected_frames = os.listdir(staging_dir)
-                        collections, remainder = clique.assemble(
-                            collected_frames)
-
-                        full_input_path = os.path.join(
-                            staging_dir, collections[0].format(
-                                '{head}{padding}{tail}')
-                        )
-
-                        filename = collections[0].format('{head}')
-                        if not filename.endswith('.'):
-                            filename += "."
-                        mov_file = filename + "mov"
-
-                    else:
-                        full_input_path = os.path.join(
-                            staging_dir, repre_new["files"])
-
-                        filename = repre_new["files"].split(".")[0]
-                        mov_file = filename + ".mov"
-                        # test if the file is not the input file
-                        if not os.path.isfile(os.path.join(
-                                staging_dir, mov_file)):
-                            mov_file = filename + "_.mov"
-
-                    full_output_path = os.path.join(staging_dir, mov_file)
-
-                    self.log.info("input {}".format(full_input_path))
-                    self.log.info("output {}".format(full_output_path))
+                    staging_dir = repre["stagingDir"]
 
                     for name, profile in output_profiles.items():
+                        if "mov" not in repre['ext']:
+                            # get output presets and loop them
+                            collections, remainder = clique.assemble(
+                                repre["files"])
+
+                            full_input_path = os.path.join(
+                                staging_dir, collections[0].format(
+                                    '{head}{padding}{tail}')
+                            )
+
+                            filename = collections[0].format('{head}')
+                            if filename.endswith('.'):
+                                filename = filename[:-1]
+                        else:
+                            full_input_path = os.path.join(
+                                staging_dir, repre["files"])
+                            filename = repre["files"].split(".")[0]
+
+                        mov_file = filename + "_{0}.{1}".format(name, "mov")
+
+                        full_output_path = os.path.join(staging_dir, mov_file)
+
+                        self.log.info("input {}".format(full_input_path))
+                        self.log.info("output {}".format(full_output_path))
+
+                        repre_new = repre.copy()
+
                         self.log.debug("Profile name: {}".format(name))
-                        new_tags = tags + profile.get('tags', [])
+
+                        new_tags = tags[:]
+                        p_tags = profile.get('tags', [])
+                        self.log.info("p_tags: `{}`".format(p_tags))
+                        # add families
+                        [instance.data["families"].append(t) for t in p_tags
+                         if t not in instance.data["families"]]
+                        # add to
+                        [new_tags.append(t) for t in p_tags
+                         if t not in new_tags]
+
+                        self.log.info("new_tags: `{}`".format(new_tags))
+
                         input_args = []
 
                         # overrides output file
@@ -126,16 +132,21 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             'name': name,
                             'ext': 'mov',
                             'files': mov_file,
-                            "thumbnail": False,
-                            "preview": True,
-                            "tags": new_tags
+                            "tags": new_tags,
+                            "outputName": name
                         })
+                        repre_new.pop("preview")
+                        repre_new.pop("thumbnail")
 
                         # adding representation
                         representations_new.append(repre_new)
                 else:
                     representations_new.append(repre)
+            else:
+                representations_new.append(repre)
 
         self.log.debug(
             "new representations: {}".format(representations_new))
         instance.data["representations"] = representations_new
+
+        self.log.debug("Families Out: `{}`".format(instance.data["families"]))
