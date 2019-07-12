@@ -123,18 +123,18 @@ class CustomAttributeDoctor(BaseAction):
 
         self.projects_data = {}
         for project in projects_to_update:
-            self.process_project_data(project)
+            self.process_data(project)
 
         return True
 
     def process_data(self, entity):
-        cust_attrs = project.get('custom_attributes')
+        cust_attrs = entity.get('custom_attributes')
         if not cust_attrs:
             return
         for dst_key, src_key in self.to_process.items():
             if src_key in cust_attrs:
                 value = cust_attrs[src_key]
-                project['custom_attributes'][dst_key] = value
+                entity['custom_attributes'][dst_key] = value
                 self.session.commit()
 
         for child in entity.get('children', []):
@@ -201,7 +201,7 @@ class CustomAttributeDoctor(BaseAction):
                 'is_hierarchical': True,
                 'default': None
             }
-            for _key, _value in data_ca.get(key, {}).items():
+            for _key, _value in self.data_ca.get(key, {}).items():
                 data[_key] = _value
 
             avalon_group = self.session.query(
