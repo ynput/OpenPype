@@ -11,7 +11,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.1
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
-    families = ["render.local", "render", "render.farm"]
+    families = ["render", "render.local", "render.farm"]
 
     def process(self, instance):
 
@@ -95,6 +95,5 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
         })
-
 
         self.log.debug("instance.data: {}".format(instance.data))
