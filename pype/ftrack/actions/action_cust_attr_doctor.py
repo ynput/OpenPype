@@ -198,6 +198,7 @@ class CustomAttributeDoctor(BaseAction):
         for key in to_create:
             data = {
                 'key': key,
+                'entity_type': 'show',
                 'is_hierarchical': True,
                 'default': None
             }
