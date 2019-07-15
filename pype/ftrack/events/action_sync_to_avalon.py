@@ -5,6 +5,7 @@ import logging
 import json
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, lib
+from pype.vendor.ftrack_api import session as fa_session
 
 
 class Sync_To_Avalon(BaseAction):
@@ -70,7 +71,7 @@ class Sync_To_Avalon(BaseAction):
         ''' Validation '''
         roleCheck = False
         discover = False
-        roleList = ['Administrator', 'Project Manager']
+        roleList = ['Pypeclub', 'Administrator', 'Project Manager']
         userId = event['source']['user']['id']
         user = session.query('User where id is ' + userId).one()
 
@@ -190,6 +191,24 @@ class Sync_To_Avalon(BaseAction):
                 'Unexpected Error'
                 ' - Please check Log for more information'
             )
+
+        finally:
+            if job['status'] in ['queued', 'running']:
+                job['status'] = 'failed'
+
+            session.commit()
+
+            event = fa_session.ftrack_api.event.base.Event(
+                topic='ftrack.action.launch',
+                data=dict(
+                    actionIdentifier='sync.hierarchical.attrs',
+                    selection=event['data']['selection']
+                ),
+                source=dict(
+                    user=event['source']['user']
+                )
+            )
+            session.event_hub.publish(event, on_error='ignore')
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)
