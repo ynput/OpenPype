@@ -19,7 +19,7 @@ class SyncHierarchicalAttrs(BaseAction):
     #: Action identifier.
     identifier = 'sync.hierarchical.attrs.local'
     #: Action label.
-    label = 'Sync hierarchical attributes - Local'
+    label = 'Sync HierAttrs - Local'
     #: Action description.
     description = 'Synchronize hierarchical attributes'
     #: Icon
