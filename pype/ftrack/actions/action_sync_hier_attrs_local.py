@@ -23,7 +23,7 @@ class SyncHierarchicalAttrs(BaseAction):
     #: Action description.
     description = 'Synchronize hierarchical attributes'
     #: Icon
-    icon = '{}/ftrack/action_icons/SyncHierarchicalAttrs.svg'.format(
+    icon = '{}/ftrack/action_icons/SyncHierarchicalAttrsLocal.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
