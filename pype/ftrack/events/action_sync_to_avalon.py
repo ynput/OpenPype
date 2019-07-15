@@ -3,6 +3,8 @@ import sys
 import argparse
 import logging
 import json
+
+from pypeapp import config
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, lib
 from pype.vendor.ftrack_api import session as fa_session
@@ -51,7 +53,14 @@ class Sync_To_Avalon(BaseAction):
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
     icon = '{}/ftrack/action_icons/SyncToAvalon.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
+        os.environ.get(
+            'PYPE_STATICS_SERVER',
+            'http://localhost:{}'.format(
+                config.get_presets().get('services', {}).get(
+                    'statics_server', {}
+                ).get('default_port', 8021)
+            )
+        )
     )
 
     def register(self):
