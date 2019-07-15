@@ -16,9 +16,9 @@ class SyncHierarchicalAttrs(BaseAction):
     ca_mongoid = lib.get_ca_mongoid()
 
     #: Action identifier.
-    identifier = 'sync.hierarchical.attrs'
+    identifier = 'sync.hierarchical.attrs.local'
     #: Action label.
-    label = 'Sync hierarchical attributes'
+    label = 'Sync hierarchical attributes - Local'
     #: Action description.
     description = 'Synchronize hierarchical attributes'
     #: Icon
