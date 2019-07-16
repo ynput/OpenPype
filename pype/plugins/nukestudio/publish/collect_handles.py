@@ -41,7 +41,7 @@ class CollectClipHandles(api.ContextPlugin):
                     })
 
         for instance in filtered_instances:
-            if not instance.data.get("main") or not instance.data.get("handleTag"):
+            if not instance.data.get("main") and not instance.data.get("handleTag"):
                 self.log.debug("Synchronize handles on: `{}`".format(
                     instance.data["name"]))
                 name = instance.data["asset"]
