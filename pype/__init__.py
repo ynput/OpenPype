@@ -7,11 +7,6 @@ from .lib import filter_pyblish_plugins
 import logging
 log = logging.getLogger(__name__)
 
-# # do not delete these are mandatory
-Anatomy = None
-Dataflow = None
-Colorspace = None
-
 PACKAGE_DIR = os.path.dirname(__file__)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
@@ -25,6 +20,7 @@ def install():
     pyblish.register_plugin_path(PUBLISH_PATH)
     pyblish.register_discovery_filter(filter_pyblish_plugins)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
+
 
 def uninstall():
     log.info("Deregistering global plug-ins..")
