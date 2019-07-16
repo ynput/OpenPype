@@ -40,6 +40,7 @@ from .templates import (
 )
 
 from .lib import (
+    version_up,
     get_handle_irregular,
     get_project_data,
     get_asset_data,
