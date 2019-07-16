@@ -28,9 +28,7 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
             nodes = cmds.file(self.fname,
                               namespace=namespace,
                               reference=True,
-                              returnNewNodes=True,
-                              groupReference=True,
-                              groupName=groupName)
+                              returnNewNodes=True)
 
             cmds.makeIdentity(groupName, apply=False, rotate=True,
                               translate=True, scale=True)
@@ -171,16 +169,24 @@ class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           sharedReferenceFile=False,
-                          groupReference=True,
-                          groupName=groupName,
                           reference=True,
                           returnNewNodes=True)
 
         namespace = cmds.referenceQuery(nodes[0], namespace=True)
-        groupName = "{}:{}".format(namespace, name)
 
-        cmds.makeIdentity(groupName, apply=False, rotate=True,
-                          translate=True, scale=True)
+        group = cmds.createNode("transform", name=groupName)
+
+        roots = set()
+        for node in nodes:
+            try:
+                roots.add(cmds.ls(node, long=True)[0].split('|')[1])
+            except:
+                pass
+
+        cmds.parent(roots, group)
+
+        # cmds.makeIdentity(groupName, apply=False, rotate=True,
+        #                   translate=True, scale=True)
 
         presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
         colors = presets['plugins']['maya']['load']['colors']

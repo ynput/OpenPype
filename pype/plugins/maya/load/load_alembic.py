@@ -28,13 +28,22 @@ class AbcLoader(pype.maya.plugin.ReferenceLoader):
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           sharedReferenceFile=False,
-                          groupReference=True,
-                          groupName="{}:{}".format(namespace, name),
                           reference=True,
                           returnNewNodes=True)
 
-        cmds.makeIdentity(groupName, apply=False, rotate=True,
-                          translate=True, scale=True)
+        group = cmds.createNode("transform", name=groupName)
+
+        roots = set()
+        for node in nodes:
+            try:
+                roots.add(cmds.ls(node, long=True)[0].split('|')[1])
+            except:
+                pass
+
+        cmds.parent(roots, group)
+
+        # cmds.makeIdentity(groupName, apply=False, rotate=True,
+        #                   translate=True, scale=True)
 
         presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
         colors = presets['plugins']['maya']['load']['colors']
