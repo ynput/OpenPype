@@ -27,11 +27,24 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
             groupName = "{}:{}".format(namespace, name)
             nodes = cmds.file(self.fname,
                               namespace=namespace,
+                              groupReference=True,
+                              groupName=groupName,
                               reference=True,
                               returnNewNodes=True)
 
+            nodes.pop(0)
+            roots = set()
+            for node in nodes:
+                try:
+                    roots.add(cmds.ls(node, long=True)[0].split('|')[2])
+                except:
+                    pass
+            cmds.parent(roots, world=True)
             cmds.makeIdentity(groupName, apply=False, rotate=True,
                               translate=True, scale=True)
+            cmds.parent(roots, groupName)
+
+            nodes.append(groupName)
 
             presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
             colors = presets['plugins']['maya']['load']['colors']
@@ -169,24 +182,26 @@ class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           sharedReferenceFile=False,
+                          groupReference=True,
+                          groupName="{}:{}".format(namespace, name),
                           reference=True,
                           returnNewNodes=True)
 
         namespace = cmds.referenceQuery(nodes[0], namespace=True)
 
-        group = cmds.createNode("transform", name=groupName)
-
+        nodes.pop(0)
         roots = set()
         for node in nodes:
             try:
-                roots.add(cmds.ls(node, long=True)[0].split('|')[1])
+                roots.add(cmds.ls(node, long=True)[0].split('|')[2])
             except:
                 pass
+        cmds.parent(roots, world=True)
+        cmds.makeIdentity(groupName, apply=False, rotate=True,
+                          translate=True, scale=True)
+        cmds.parent(roots, groupName)
 
-        cmds.parent(roots, group)
-
-        # cmds.makeIdentity(groupName, apply=False, rotate=True,
-        #                   translate=True, scale=True)
+        nodes.append(groupName)
 
         presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
         colors = presets['plugins']['maya']['load']['colors']
@@ -198,7 +213,7 @@ class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
 
         self[:] = nodes
 
-        return nodes
+        return roots
 
     def switch(self, container, representation):
         self.update(container, representation)
