@@ -40,7 +40,7 @@ class UserAssigmentEvent(BaseEvent):
 
     def error(self, *err):
         for e in err:
-            self.log.error(e, exc_info=True)
+            self.log.error(e)
 
     def _run_script(self, script, args):
         """
