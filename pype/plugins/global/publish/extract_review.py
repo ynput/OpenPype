@@ -48,6 +48,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     staging_dir = repre["stagingDir"]
 
                     for name, profile in output_profiles.items():
+                        ext = profile.get("ext", None)
+                        if not ext:
+                            ext = "mov"
+                            self.log.warning("`ext` attribute not in output profile. Setting to default ext: `mov`")
                         if "mov" not in repre['ext']:
                             # get output presets and loop them
                             collections, remainder = clique.assemble(
@@ -66,9 +70,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 staging_dir, repre["files"])
                             filename = repre["files"].split(".")[0]
 
-                        mov_file = filename + "_{0}.{1}".format(name, "mov")
+                        repr_file = filename + "_{0}.{1}".format(name, ext)
 
-                        full_output_path = os.path.join(staging_dir, mov_file)
+                        full_output_path = os.path.join(staging_dir, repr_file)
 
                         self.log.info("input {}".format(full_input_path))
                         self.log.info("output {}".format(full_output_path))
@@ -130,8 +134,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         # create representation data
                         repre_new.update({
                             'name': name,
-                            'ext': 'mov',
-                            'files': mov_file,
+                            'ext': ext,
+                            'files': repr_file,
                             "tags": new_tags,
                             "outputName": name
                         })

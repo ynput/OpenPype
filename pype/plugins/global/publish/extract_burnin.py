@@ -62,13 +62,16 @@ class ExtractBurnin(pype.api.Extractor):
                                       "scripts",
                                       "otio_burnin.py")
 
-            self.log.debug("__ scriptpath: {}".format(scriptpath))
+            self.log.debug("Burnin scriptpath: {}".format(scriptpath))
 
             try:
                 p = subprocess.Popen(
                     [os.getenv("PYPE_PYTHON_EXE"), scriptpath, json_data]
                 )
                 p.wait()
+                if not os.path.isfile(full_burnin_path):
+                    self.log.error(
+                        "Burnin file wasn't created succesfully")
             except Exception as e:
                 raise RuntimeError("Burnin script didn't work: `{}`".format(e))
 
