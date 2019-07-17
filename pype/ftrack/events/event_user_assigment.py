@@ -201,7 +201,7 @@ class UserAssigmentEvent(BaseEvent):
 
             data = self._get_template_data(task)
             # format directories to pass to shell script
-            anatomy = Anatomy()
+            anatomy = Anatomy(data["project"]["name"])
             # formatting work dir is easiest part as we can use whole path
             work_dir = anatomy.format(data)['avalon']['work']
             # we also need publish but not whole
