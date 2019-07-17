@@ -261,6 +261,12 @@ class RVAction(BaseAction):
     def get_file_paths(self, session, event):
         """Get file paths from selected components."""
 
+        link = session.get(
+            "Component", list(event["data"]["values"].values())[0]
+        )["version"]["asset"]["parent"]["link"][0]
+        project = session.get(link["type"], link["id"])
+        os.environ["AVALON_PROJECT"] = project["name"]
+        api.Session["AVALON_PROJECT"] = project["name"]
         io.install()
 
         paths = []
