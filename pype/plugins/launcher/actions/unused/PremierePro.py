@@ -44,10 +44,7 @@ class PremierePro(api.Action):
             env = acre.merge(env, current_env=dict(os.environ))
 
             if not env.get('AVALON_WORKDIR', None):
-                pype.load_data_from_templates()
-                os.environ["AVALON_WORKDIR"] = pype.get_workdir_template(
-                    pype.Anatomy)
-                pype.reset_data_from_templates()
+                os.environ["AVALON_WORKDIR"] = pype.get_workdir_template()
 
             env.update(dict(os.environ))
 
