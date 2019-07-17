@@ -84,7 +84,7 @@ class ExtractAlembic(pype.api.Extractor):
 
         representation = {
             'name': 'abc',
-            'ext': '.abc',
+            'ext': 'abc',
             'files': filename,
             "stagingDir": dirname
         }
