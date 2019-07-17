@@ -68,7 +68,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "avalonKnob": avalon_knob_data,
                 "publish": node.knob('publish').value(),
                 "step": 1,
-                "fps": int(nuke.root()['fps'].value())
+                "fps": nuke.root()['fps'].value()
 
             })
 

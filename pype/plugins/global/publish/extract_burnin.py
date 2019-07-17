@@ -2,6 +2,7 @@ import os
 import subprocess
 import pype.api
 import json
+import pyblish
 
 
 class ExtractBurnin(pype.api.Extractor):
@@ -14,7 +15,8 @@ class ExtractBurnin(pype.api.Extractor):
     """
 
     label = "Quicktime with burnins"
-    families = ["burnin"]
+    order = pyblish.api.ExtractorOrder + 0.03
+    families = ["review", "burnin"]
     optional = True
 
     def process(self, instance):
@@ -29,25 +31,30 @@ class ExtractBurnin(pype.api.Extractor):
             "start_frame": int(instance.data['startFrame']),
             "version": "v" + str(instance.context.data['version'])
         }
+        self.log.debug("__ burnin_data1: {}".format(burnin_data))
+        for i, repre in enumerate(instance.data["representations"]):
+            self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
 
-        for repre in instance.data["representations"]:
-            if (not repre.get("burnin", False) or
-                    "burnin" not in repre.get("tags", [])):
+            if "burnin" not in repre.get("tags", []):
                 continue
 
-            stagingdir = self.staging_dir(instance)
+            stagingdir = repre["stagingDir"]
             filename = "{0}".format(repre["files"])
 
-            movieFileBurnin = filename + "Burn" + ".mov"
+            name = "_burnin"
+            movieFileBurnin = filename.replace(".mov", "") + name + ".mov"
 
             full_movie_path = os.path.join(stagingdir, repre["files"])
             full_burnin_path = os.path.join(stagingdir, movieFileBurnin)
+            self.log.debug("__ full_burnin_path: {}".format(full_burnin_path))
 
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),
                 "output": full_burnin_path.replace("\\", "/"),
                 "burnin_data": burnin_data
-                }
+            }
+
+            self.log.debug("__ burnin_data2: {}".format(burnin_data))
 
             json_data = json.dumps(burnin_data)
             scriptpath = os.path.join(os.environ['PYPE_MODULE_ROOT'],
@@ -55,9 +62,22 @@ class ExtractBurnin(pype.api.Extractor):
                                       "scripts",
                                       "otio_burnin.py")
 
-            p = subprocess.Popen(
-                ['python', scriptpath, json_data]
-            )
-            p.wait()
+            self.log.debug("Burnin scriptpath: {}".format(scriptpath))
 
-            repre['files']: movieFileBurnin
+            try:
+                p = subprocess.Popen(
+                    [os.getenv("PYPE_PYTHON_EXE"), scriptpath, json_data]
+                )
+                p.wait()
+                if not os.path.isfile(full_burnin_path):
+                    self.log.error(
+                        "Burnin file wasn't created succesfully")
+            except Exception as e:
+                raise RuntimeError("Burnin script didn't work: `{}`".format(e))
+
+            if os.path.exists(full_burnin_path):
+                repre_update = {
+                    "files": movieFileBurnin,
+                    "name": repre["name"] + name
+                }
+                instance.data["representations"][i].update(repre_update)

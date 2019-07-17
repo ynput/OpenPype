@@ -2,10 +2,9 @@ import os
 import nuke
 import pyblish.api
 import pype
-from pype.vendor import ffmpeg
 
 
-class ExtractDataForReview(pype.api.Extractor):
+class ExtractReviewData(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -13,8 +12,7 @@ class ExtractDataForReview(pype.api.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder + 0.01
-    label = "Extract Review"
-    optional = True
+    label = "Extract Review Data"
 
     families = ["review"]
     hosts = ["nuke"]
@@ -35,62 +33,14 @@ class ExtractDataForReview(pype.api.Extractor):
         if "still" not in instance.data["families"]:
             self.render_review_representation(instance,
                                               representation="mov")
-            self.log.debug("review mov:")
-            self.transcode_mov(instance)
-            self.log.debug("instance.data: {}".format(instance.data))
             self.render_review_representation(instance,
                                               representation="jpeg")
         else:
-            self.log.debug("instance: {}".format(instance))
             self.render_review_representation(instance, representation="jpeg")
 
         # Restore selection
         [i["selected"].setValue(False) for i in nuke.allNodes()]
         [i["selected"].setValue(True) for i in selection]
-
-    def transcode_mov(self, instance):
-        collection = instance.data["collection"]
-        stagingDir = instance.data["stagingDir"].replace("\\", "/")
-        file_name = collection.format("{head}mov")
-
-        review_mov = os.path.join(stagingDir, file_name).replace("\\", "/")
-
-        self.log.info("transcoding review mov: {0}".format(review_mov))
-        if instance.data.get("baked_colorspace_movie"):
-            input_movie = instance.data["baked_colorspace_movie"]
-            out, err = (
-                ffmpeg
-                .input(input_movie)
-                .output(
-                    review_mov,
-                    pix_fmt='yuv420p',
-                    crf=18,
-                    timecode="00:00:00:01"
-                )
-                .overwrite_output()
-                .run()
-            )
-
-        self.log.debug("Removing `{0}`...".format(
-            instance.data["baked_colorspace_movie"]))
-        os.remove(instance.data["baked_colorspace_movie"])
-
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
-
-        representation = {
-            'name': 'review',
-            'ext': 'mov',
-            'files': file_name,
-            "stagingDir": stagingDir,
-            "anatomy_template": "render",
-            "thumbnail": False,
-            "preview": True,
-            'startFrameReview': instance.data['startFrame'],
-            'endFrameReview': instance.data['endFrame'],
-            'frameRate': instance.context.data["framerate"]
-        }
-        instance.data["representations"].append(representation)
 
     def render_review_representation(self,
                                      instance,
@@ -172,6 +122,7 @@ class ExtractDataForReview(pype.api.Extractor):
             temporary_nodes.append(write_node)
             thumbnail = False
             preview = True
+            tags = ["review"]
 
         elif representation in "jpeg":
             file = fhead + "jpeg"
@@ -184,28 +135,30 @@ class ExtractDataForReview(pype.api.Extractor):
             temporary_nodes.append(write_node)
             thumbnail = True
             preview = False
+            tags = ["thumbnail"]
 
             # retime for
             first_frame = int(last_frame) / 2
             last_frame = int(last_frame) / 2
-            # add into files for integration as representation
 
-            if "representations" not in instance.data:
-                instance.data["representations"] = []
-
-            repre = {
-                'name': representation,
-                'ext': representation,
-                'files': file,
-                "stagingDir": stagingDir,
-                "anatomy_template": "render",
-                "thumbnail": thumbnail,
-                "preview": preview
-            }
-            instance.data["representations"].append(repre)
+        repre = {
+            'name': representation,
+            'ext': representation,
+            'files': file,
+            "stagingDir": stagingDir,
+            "startFrame": first_frame,
+            "endFrame": last_frame,
+            "anatomy_template": "render",
+            "thumbnail": thumbnail,
+            "preview": preview,
+            "tags": tags
+        }
+        instance.data["representations"].append(repre)
 
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))
+
+        self.log.debug("representations: {}".format(instance.data["representations"]))
 
         # Clean up
         for node in temporary_nodes:

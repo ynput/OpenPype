@@ -1,10 +1,12 @@
 from pype import api as pype
+from pypeapp import Anatomy, config
+
 
 log = pype.Logger().get_logger(__name__, "aport")
 
 
 def get_anatomy(**kwarg):
-    return pype.Anatomy
+    return Anatomy()
 
 
 def get_dataflow(**kwarg):
@@ -15,7 +17,8 @@ def get_dataflow(**kwarg):
     assert any([host, cls]), log.error("aport.templates.get_dataflow():"
                                        "Missing mandatory kwargs `host`, `cls`")
 
-    aport_dataflow = getattr(pype.Dataflow, str(host), None)
+    presets = config.get_init_presets()
+    aport_dataflow = getattr(presets["dataflow"], str(host), None)
     aport_dataflow_node = getattr(aport_dataflow.nodes, str(cls), None)
     if preset:
         aport_dataflow_node = getattr(aport_dataflow_node, str(preset), None)
@@ -32,7 +35,8 @@ def get_colorspace(**kwarg):
     assert any([host, cls]), log.error("aport.templates.get_colorspace():"
                                        "Missing mandatory kwargs `host`, `cls`")
 
-    aport_colorspace = getattr(pype.Colorspace, str(host), None)
+    presets = config.get_init_presets()
+    aport_colorspace = getattr(presets["colorspace"], str(host), None)
     aport_colorspace_node = getattr(aport_colorspace, str(cls), None)
     if preset:
         aport_colorspace_node = getattr(aport_colorspace_node, str(preset), None)

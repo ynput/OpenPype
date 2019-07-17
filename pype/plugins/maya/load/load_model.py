@@ -9,7 +9,7 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
     """Load the model"""
 
     families = ["model"]
-    representations = ["ma"]
+    representations = ["ma", "abc"]
     tool_names = ["loader"]
 
     label = "Reference Model"
@@ -25,15 +25,30 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
         with maya.maintained_selection():
 
             groupName = "{}:{}".format(namespace, name)
+            cmds.loadPlugin("AbcImport.mll", quiet=True)
             nodes = cmds.file(self.fname,
                               namespace=namespace,
-                              reference=True,
-                              returnNewNodes=True,
+                              sharedReferenceFile=False,
                               groupReference=True,
-                              groupName=groupName)
+                              groupName="{}:{}".format(namespace, name),
+                              reference=True,
+                              returnNewNodes=True)
 
+            namespace = cmds.referenceQuery(nodes[0], namespace=True)
+
+            nodes.pop(1)
+            roots = set()
+            for node in nodes:
+                try:
+                    roots.add(cmds.ls(node, long=True)[0].split('|')[2])
+                except:
+                    pass
+            cmds.parent(roots, world=True)
             cmds.makeIdentity(groupName, apply=False, rotate=True,
                               translate=True, scale=True)
+            cmds.parent(roots, groupName)
+
+            nodes.append(groupName)
 
             presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
             colors = presets['plugins']['maya']['load']['colors']
@@ -43,9 +58,9 @@ class ModelLoader(pype.maya.plugin.ReferenceLoader):
                 cmds.setAttr(groupName + ".outlinerColor",
                              c[0], c[1], c[2])
 
-        self[:] = nodes
+            self[:] = nodes
 
-        return nodes
+            return nodes
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -150,49 +165,59 @@ class GpuCacheLoader(api.Loader):
             pass
 
 
-class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
-    """Specific loader of Alembic for the studio.animation family"""
-
-    families = ["model"]
-    representations = ["abc"]
-    tool_names = ["loader"]
-
-    label = "Reference Model"
-    order = -10
-    icon = "code-fork"
-    color = "orange"
-
-    def process_reference(self, context, name, namespace, data):
-
-        import maya.cmds as cmds
-
-        groupName = "{}:{}".format(namespace, name)
-        cmds.loadPlugin("AbcImport.mll", quiet=True)
-        nodes = cmds.file(self.fname,
-                          namespace=namespace,
-                          sharedReferenceFile=False,
-                          groupReference=True,
-                          groupName=groupName,
-                          reference=True,
-                          returnNewNodes=True)
-
-        namespace = cmds.referenceQuery(nodes[0], namespace=True)
-        groupName = "{}:{}".format(namespace, name)
-
-        cmds.makeIdentity(groupName, apply=False, rotate=True,
-                          translate=True, scale=True)
-
-        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
-        colors = presets['plugins']['maya']['load']['colors']
-        c = colors.get('model')
-        if c is not None:
-            cmds.setAttr(groupName + ".useOutlinerColor", 1)
-            cmds.setAttr(groupName + ".outlinerColor",
-                         c[0], c[1], c[2])
-
-        self[:] = nodes
-
-        return nodes
-
-    def switch(self, container, representation):
-        self.update(container, representation)
+# class AbcModelLoader(pype.maya.plugin.ReferenceLoader):
+#     """Specific loader of Alembic for the studio.animation family"""
+#
+#     families = ["model"]
+#     representations = ["abc"]
+#     tool_names = ["loader"]
+#
+#     label = "Reference Model"
+#     order = -10
+#     icon = "code-fork"
+#     color = "orange"
+#
+#     def process_reference(self, context, name, namespace, data):
+#
+#         import maya.cmds as cmds
+#
+#         groupName = "{}:{}".format(namespace, name)
+#         cmds.loadPlugin("AbcImport.mll", quiet=True)
+#         nodes = cmds.file(self.fname,
+#                           namespace=namespace,
+#                           sharedReferenceFile=False,
+#                           groupReference=True,
+#                           groupName="{}:{}".format(namespace, name),
+#                           reference=True,
+#                           returnNewNodes=True)
+#
+#         namespace = cmds.referenceQuery(nodes[0], namespace=True)
+#
+#         nodes.pop(0)
+#         roots = set()
+#         for node in nodes:
+#             try:
+#                 roots.add(cmds.ls(node, long=True)[0].split('|')[2])
+#             except:
+#                 pass
+#         cmds.parent(roots, world=True)
+#         cmds.makeIdentity(groupName, apply=False, rotate=True,
+#                           translate=True, scale=True)
+#         cmds.parent(roots, groupName)
+#
+#         nodes.append(groupName)
+#
+#         presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+#         colors = presets['plugins']['maya']['load']['colors']
+#         c = colors.get('model')
+#         if c is not None:
+#             cmds.setAttr(groupName + ".useOutlinerColor", 1)
+#             cmds.setAttr(groupName + ".outlinerColor",
+#                          c[0], c[1], c[2])
+#
+#         self[:] = nodes
+#
+#         return nodes
+#
+#     def switch(self, container, representation):
+#         self.update(container, representation)
