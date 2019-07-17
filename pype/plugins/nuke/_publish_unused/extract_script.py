@@ -27,8 +27,8 @@ class ExtractScript(pype.api.Extractor):
         shutil.copy(current_script, path)
 
         if "representations" not in instance.data:
-            instance.data["representations"] = []
-        
+            instance.data["representations"] = list()
+
         representation = {
             'name': 'nk',
             'ext': '.nk',

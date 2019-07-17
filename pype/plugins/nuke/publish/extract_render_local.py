@@ -21,7 +21,6 @@ class NukeRenderLocal(pype.api.Extractor):
 
     def process(self, instance):
         node = instance[0]
-        context = instance.context
 
         self.log.debug("instance collected: {}".format(instance.data))
 
