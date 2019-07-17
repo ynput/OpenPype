@@ -137,7 +137,7 @@ class ExtractQuicktime(pype.api.Extractor):
                             "username": instance.context.data['user'],
                             "asset": os.environ['AVALON_ASSET'],
                             "task": os.environ['AVALON_TASK'],
-                            "start_frame": int(instance.data['startFrame']),
+                            "start_frame": int(start),
                             "version": "v" + str(version)
                             }
             }

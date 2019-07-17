@@ -137,7 +137,7 @@ class ExtractThumbnail(pype.api.Extractor):
 
         representation = {
             'name': 'thumbnail',
-            'ext': '.jpg',
+            'ext': 'jpg',
             'files': thumbnail,
             "stagingDir": stagingDir,
             "thumbnail": True

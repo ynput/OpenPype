@@ -30,7 +30,7 @@ class ExtractRenderSetup(pype.api.Extractor):
 
         representation = {
             'name': 'json',
-            'ext': '.json',
+            'ext': 'json',
             'files': json_filename,
             "stagingDir": parent_dir,
         }

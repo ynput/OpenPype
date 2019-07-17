@@ -213,7 +213,7 @@ class ExtractFBX(pype.api.Extractor):
 
         representation = {
             'name': 'mov',
-            'ext': '.mov',
+            'ext': 'mov',
             'files': filename,
             "stagingDir": stagingDir,
         }

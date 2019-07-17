@@ -55,9 +55,6 @@ def install(config):
 
     menu_install()
 
-    # load data from templates
-    api.load_data_from_templates()
-
     # Workfiles.
     launch_workfiles = os.environ.get("WORKFILES_STARTUP")
 
@@ -94,9 +91,6 @@ def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
-
-    # reset data from templates
-    api.reset_data_from_templates()
 
 
 def _register_events():

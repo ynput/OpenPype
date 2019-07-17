@@ -50,9 +50,6 @@ def install():
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
 
-    # load data from templates
-    api.load_data_from_templates()
-
     # launch pico server
     pico_server_launch()
 

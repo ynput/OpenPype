@@ -75,7 +75,7 @@ class ExtractCameraAlembic(pype.api.Extractor):
 
         representation = {
             'name': 'abc',
-            'ext': '.abc',
+            'ext': 'abc',
             'files': filename,
             "stagingDir": dir_path,
         }
