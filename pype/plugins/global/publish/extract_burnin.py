@@ -75,6 +75,9 @@ class ExtractBurnin(pype.api.Extractor):
                     [os.getenv("PYPE_PYTHON_EXE"), scriptpath, json_data]
                 )
                 p.wait()
+                if not os.path.isfile(full_burnin_path):
+                    self.log.error(
+                        "Burnin file wasn't created succesfully")
             except Exception as e:
                 raise RuntimeError("Burnin script didn't work: `{}`".format(e))
 

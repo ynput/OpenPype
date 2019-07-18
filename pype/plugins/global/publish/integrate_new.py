@@ -286,8 +286,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         os.path.normpath(
                             anatomy_filled[template_name]["path"])
                     )
-                    self.log.debug(
-                        "test_dest_files: {}".format(str(test_dest_files)))
+                    
+                self.log.debug(
+                    "test_dest_files: {}".format(str(test_dest_files)))
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
