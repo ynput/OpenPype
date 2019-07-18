@@ -36,7 +36,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         representations = instance.data["representations"]
 
         # filter out mov and img sequences
-        representations_new = list()
+        representations_new = representations.copy()
         for repre in representations:
             if repre['ext'] in plugin_attrs["ext_filter"]:
                 tags = repre.get("tags", [])
@@ -44,106 +44,111 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 self.log.info("Try repre: {}".format(repre))
 
                 if "review" in tags:
-
                     staging_dir = repre["stagingDir"]
-
                     for name, profile in output_profiles.items():
-                        if "mov" not in repre['ext']:
-                            # get output presets and loop them
-                            collections, remainder = clique.assemble(
-                                repre["files"])
+                        if any(item in instance.data['families'] for item in profile['families']):
+                            if isinstance(repre["files"], list):
+                            # if "mov" not in repre['ext']:
+                                # get output presets and loop them
+                                collections, remainder = clique.assemble(
+                                    repre["files"])
 
-                            full_input_path = os.path.join(
-                                staging_dir, collections[0].format(
-                                    '{head}{padding}{tail}')
-                            )
+                                full_input_path = os.path.join(
+                                    staging_dir, collections[0].format(
+                                        '{head}{padding}{tail}')
+                                )
 
-                            filename = collections[0].format('{head}')
-                            if filename.endswith('.'):
-                                filename = filename[:-1]
-                        else:
-                            full_input_path = os.path.join(
-                                staging_dir, repre["files"])
-                            filename = repre["files"].split(".")[0]
+                                filename = collections[0].format('{head}')
+                                if filename.endswith('.'):
+                                    filename = filename[:-1]
+                            else:
+                                self.log.info("1: {}".format(full_input_path))
+                                full_input_path = os.path.join(
+                                    staging_dir, repre["files"])
+                                filename = repre["files"].split(".")[0]
 
-                        mov_file = filename + "_{0}.{1}".format(name, "mov")
+                            mov_file = filename + "_{0}.{1}".format(name, "mov")
 
-                        full_output_path = os.path.join(staging_dir, mov_file)
+                            full_output_path = os.path.join(staging_dir, mov_file)
 
-                        self.log.info("input {}".format(full_input_path))
-                        self.log.info("output {}".format(full_output_path))
+                            self.log.info("input {}".format(full_input_path))
+                            self.log.info("output {}".format(full_output_path))
 
-                        repre_new = repre.copy()
+                            repre_new = repre.copy()
 
-                        self.log.debug("Profile name: {}".format(name))
+                            self.log.debug("Profile name: {}".format(name))
 
-                        new_tags = tags[:]
-                        p_tags = profile.get('tags', [])
-                        self.log.info("p_tags: `{}`".format(p_tags))
-                        # add families
-                        [instance.data["families"].append(t) for t in p_tags
-                         if t not in instance.data["families"]]
-                        # add to
-                        [new_tags.append(t) for t in p_tags
-                         if t not in new_tags]
+                            new_tags = tags[:]
+                            p_tags = profile.get('tags', [])
+                            self.log.info("p_tags: `{}`".format(p_tags))
+                            # add families
+                            [instance.data["families"].append(t) for t in p_tags
+                             if t not in instance.data["families"]]
+                            # add to
+                            [new_tags.append(t) for t in p_tags
+                             if t not in new_tags]
 
-                        self.log.info("new_tags: `{}`".format(new_tags))
+                            self.log.info("new_tags: `{}`".format(new_tags))
 
-                        input_args = []
+                            input_args = []
 
-                        # overrides output file
-                        input_args.append("-y")
+                            # overrides output file
+                            input_args.append("-y")
 
-                        # preset's input data
-                        input_args.extend(profile.get('input', []))
+                            # preset's input data
+                            input_args.extend(profile.get('input', []))
 
-                        # necessary input data
-                        # adds start arg only if image sequence
-                        if "mov" not in repre_new['ext']:
-                            input_args.append("-start_number {}".format(
-                                start_frame))
+                            # necessary input data
+                            # adds start arg only if image sequence
+                            if "mov" not in repre_new['ext']:
+                                input_args.append("-start_number {}".format(
+                                    start_frame))
 
-                        input_args.append("-i {}".format(full_input_path))
-                        input_args.append("-framerate {}".format(fps))
+                            input_args.append("-i {}".format(full_input_path))
+                            input_args.append("-framerate {}".format(fps))
 
-                        output_args = []
-                        # preset's output data
-                        output_args.extend(profile.get('output', []))
+                            output_args = []
+                            # preset's output data
+                            output_args.extend(profile.get('output', []))
 
-                        # output filename
-                        output_args.append(full_output_path)
-                        mov_args = [
-                            "ffmpeg",
-                            " ".join(input_args),
-                            " ".join(output_args)
-                        ]
-                        subprocess_mov = " ".join(mov_args)
+                            # output filename
+                            output_args.append(full_output_path)
+                            mov_args = [
+                                "ffmpeg",
+                                " ".join(input_args),
+                                " ".join(output_args)
+                            ]
+                            subprocess_mov = " ".join(mov_args)
 
-                        # run subprocess
-                        sub_proc = subprocess.Popen(subprocess_mov)
-                        sub_proc.wait()
+                            # run subprocess
+                            sub_proc = subprocess.Popen(subprocess_mov)
+                            sub_proc.wait()
 
-                        if not os.path.isfile(full_output_path):
-                            self.log.error(
-                                "Quicktime wasn't created succesfully")
+                            if not os.path.isfile(full_output_path):
+                                self.log.error(
+                                    "Quicktime wasn't created succesfully")
 
-                        # create representation data
-                        repre_new.update({
-                            'name': name,
-                            'ext': 'mov',
-                            'files': mov_file,
-                            "tags": new_tags,
-                            "outputName": name
-                        })
-                        repre_new.pop("preview")
-                        repre_new.pop("thumbnail")
+                            # create representation data
+                            repre_new.update({
+                                'name': name,
+                                'ext': 'mov',
+                                'files': mov_file,
+                                "tags": new_tags,
+                                "outputName": name
+                            })
 
-                        # adding representation
-                        representations_new.append(repre_new)
+                            if repre_new.get('preview'):
+                                repre_new.pop("preview")
+                            if repre_new.get('thumbnail'):
+                                repre_new.pop("thumbnail")
+
+                            # adding representation
+                            representations_new.append(repre_new)
                 else:
-                    representations_new.append(repre)
+                    continue
             else:
-                representations_new.append(repre)
+                continue
+
 
         self.log.debug(
             "new representations: {}".format(representations_new))
