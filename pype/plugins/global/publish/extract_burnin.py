@@ -44,8 +44,8 @@ class ExtractBurnin(pype.api.Extractor):
             name = "_burnin"
             movieFileBurnin = filename.replace(".mov", "") + name + ".mov"
 
-            full_movie_path = os.path.join(stagingdir, repre["files"])
-            full_burnin_path = os.path.join(stagingdir, movieFileBurnin)
+            full_movie_path = os.path.join(os.path.normpath(stagingdir), repre["files"])
+            full_burnin_path = os.path.join(os.path.normpath(stagingdir), movieFileBurnin)
             self.log.debug("__ full_burnin_path: {}".format(full_burnin_path))
 
             burnin_data = {
@@ -57,12 +57,13 @@ class ExtractBurnin(pype.api.Extractor):
             self.log.debug("__ burnin_data2: {}".format(burnin_data))
 
             json_data = json.dumps(burnin_data)
-            scriptpath = os.path.join(os.environ['PYPE_MODULE_ROOT'],
+            scriptpath = os.path.normpath(os.path.join(os.environ['PYPE_MODULE_ROOT'],
                                       "pype",
                                       "scripts",
-                                      "otio_burnin.py")
+                                      "otio_burnin.py"))
 
             self.log.debug("__ scriptpath: {}".format(scriptpath))
+            self.log.debug("__ EXE: {}".format(os.getenv("PYPE_PYTHON_EXE")))
 
             try:
                 p = subprocess.Popen(
