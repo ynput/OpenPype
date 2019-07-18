@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import argparse
 import logging
 import collections
@@ -16,13 +17,13 @@ class SyncHierarchicalAttrs(BaseAction):
     ca_mongoid = lib.get_ca_mongoid()
 
     #: Action identifier.
-    identifier = 'sync.hierarchical.attrs'
+    identifier = 'sync.hierarchical.attrs.local'
     #: Action label.
-    label = 'Sync hierarchical attributes'
+    label = 'Sync HierAttrs - Local'
     #: Action description.
     description = 'Synchronize hierarchical attributes'
     #: Icon
-    icon = '{}/ftrack/action_icons/SyncHierarchicalAttrs.svg'.format(
+    icon = '{}/ftrack/action_icons/SyncHierarchicalAttrsLocal.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
@@ -40,67 +41,92 @@ class SyncHierarchicalAttrs(BaseAction):
         return False
 
     def launch(self, session, entities, event):
-        # Collect hierarchical attrs
-        custom_attributes = {}
-        all_avalon_attr = session.query(
-            'CustomAttributeGroup where name is "avalon"'
+        user = session.query(
+            'User where id is "{}"'.format(event['source']['user']['id'])
         ).one()
-        for cust_attr in all_avalon_attr['custom_attribute_configurations']:
-            if 'avalon_' in cust_attr['key']:
-                continue
 
-            if not cust_attr['is_hierarchical']:
-                continue
+        job = session.create('Job', {
+            'user': user,
+            'status': 'running',
+            'data': json.dumps({
+                'description': 'Sync Hierachical attributes'
+            })
+        })
+        session.commit()
 
-            if cust_attr['default']:
-                self.log.warning((
-                    'Custom attribute "{}" has set default value.'
-                    ' This attribute can\'t be synchronized'
-                ).format(cust_attr['label']))
-                continue
-
-            custom_attributes[cust_attr['key']] = cust_attr
-
-        if not custom_attributes:
-            msg = 'No hierarchical attributes to sync.'
-            self.log.debug(msg)
-            return {
-                'success': True,
-                'message': msg
-            }
-
-        entity = entities[0]
-        if entity.entity_type.lower() == 'project':
-            project_name = entity['full_name']
-        else:
-            project_name = entity['project']['full_name']
-
-        self.db_con.install()
-        self.db_con.Session['AVALON_PROJECT'] = project_name
-
-        for entity in entities:
-            for key in custom_attributes:
-                # check if entity has that attribute
-                if key not in entity['custom_attributes']:
-                    self.log.debug(
-                        'Hierachical attribute "{}" not found on "{}"'.format(
-                            key, entity.get('name', entity)
-                        )
-                    )
+        try:
+            # Collect hierarchical attrs
+            custom_attributes = {}
+            all_avalon_attr = session.query(
+                'CustomAttributeGroup where name is "avalon"'
+            ).one()
+            for cust_attr in all_avalon_attr['custom_attribute_configurations']:
+                if 'avalon_' in cust_attr['key']:
                     continue
 
-                value = self.get_hierarchical_value(key, entity)
-                if value is None:
-                    self.log.warning(
-                        'Hierarchical attribute "{}" not set on "{}"'.format(
-                            key, entity.get('name', entity)
-                        )
-                    )
+                if not cust_attr['is_hierarchical']:
                     continue
 
-                self.update_hierarchical_attribute(entity, key, value)
+                if cust_attr['default']:
+                    self.log.warning((
+                        'Custom attribute "{}" has set default value.'
+                        ' This attribute can\'t be synchronized'
+                    ).format(cust_attr['label']))
+                    continue
 
-        self.db_con.uninstall()
+                custom_attributes[cust_attr['key']] = cust_attr
+
+            if not custom_attributes:
+                msg = 'No hierarchical attributes to sync.'
+                self.log.debug(msg)
+                return {
+                    'success': True,
+                    'message': msg
+                }
+
+            entity = entities[0]
+            if entity.entity_type.lower() == 'project':
+                project_name = entity['full_name']
+            else:
+                project_name = entity['project']['full_name']
+
+            self.db_con.install()
+            self.db_con.Session['AVALON_PROJECT'] = project_name
+
+            for entity in entities:
+                for key in custom_attributes:
+                    # check if entity has that attribute
+                    if key not in entity['custom_attributes']:
+                        self.log.debug(
+                            'Hierachical attribute "{}" not found on "{}"'.format(
+                                key, entity.get('name', entity)
+                            )
+                        )
+                        continue
+
+                    value = self.get_hierarchical_value(key, entity)
+                    if value is None:
+                        self.log.warning(
+                            'Hierarchical attribute "{}" not set on "{}"'.format(
+                                key, entity.get('name', entity)
+                            )
+                        )
+                        continue
+
+                    self.update_hierarchical_attribute(entity, key, value)
+
+        except Exception:
+            self.log.error(
+                'Action "{}" failed'.format(self.label),
+                exc_info=True
+            )
+
+        finally:
+            self.db_con.uninstall()
+
+            if job['status'] in ('queued', 'running'):
+                job['status'] = 'failed'
+            session.commit()
 
         return True
 

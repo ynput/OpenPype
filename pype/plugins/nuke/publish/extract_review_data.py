@@ -95,7 +95,7 @@ class ExtractReviewData(pype.api.Extractor):
         previous_node = reformat_node
         temporary_nodes.append(reformat_node)
 
-        viewer_process_node = nuke.ViewerProcess.node()
+        viewer_process_node = instance.context.data.get("ViewerProcess")
         dag_node = None
         if viewer_process_node:
             dag_node = nuke.createNode(viewer_process_node.Class())
