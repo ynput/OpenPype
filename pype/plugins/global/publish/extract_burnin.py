@@ -28,15 +28,14 @@ class ExtractBurnin(pype.api.Extractor):
         if instance.context.data.get('version'):
             version = "v" + str(instance.context.data['version'])
 
-        burnin_data = {
+        prep_data = {
             "username": instance.context.data['user'],
             "asset": os.environ['AVALON_ASSET'],
             "task": os.environ['AVALON_TASK'],
             "start_frame": int(instance.data['startFrame']),
             "version": version
         }
-
-        self.log.debug("__ burnin_data1: {}".format(burnin_data))
+        self.log.debug("__ prep_data: {}".format(prep_data))
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
 
@@ -56,7 +55,7 @@ class ExtractBurnin(pype.api.Extractor):
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),
                 "output": full_burnin_path.replace("\\", "/"),
-                "burnin_data": burnin_data
+                "burnin_data": prep_data
             }
 
             self.log.debug("__ burnin_data2: {}".format(burnin_data))
@@ -76,14 +75,17 @@ class ExtractBurnin(pype.api.Extractor):
                 )
                 p.wait()
                 if not os.path.isfile(full_burnin_path):
-                    self.log.error(
-                        "Burnin file wasn't created succesfully")
+                    raise RuntimeError("File not existing: {}".format(full_burnin_path))
             except Exception as e:
                 raise RuntimeError("Burnin script didn't work: `{}`".format(e))
 
             if os.path.exists(full_burnin_path):
                 repre_update = {
                     "files": movieFileBurnin,
-                    "name": repre["name"] + name
+                    "name": repre["name"]
                 }
                 instance.data["representations"][i].update(repre_update)
+
+                # removing the source mov file
+                os.remove(full_movie_path)
+                self.log.debug("Removed: `{}`".format(full_movie_path))

@@ -28,12 +28,6 @@ class NukeRenderLocal(pype.api.Extractor):
         last_frame = instance.data.get("endFrame", None)
         node_subset_name = instance.data.get("name", None)
 
-        # swap path to stageDir
-        temp_dir = self.staging_dir(instance).replace("\\", "/")
-        output_dir = instance.data.get("outputDir")
-        path = node['file'].value()
-        node['file'].setValue(path.replace(output_dir, temp_dir))
-
         self.log.info("Starting render")
         self.log.info("Start frame: {}".format(first_frame))
         self.log.info("End frame: {}".format(last_frame))
@@ -45,27 +39,26 @@ class NukeRenderLocal(pype.api.Extractor):
             int(last_frame)
         )
 
-        # swap path back to publish path
         path = node['file'].value()
-        node['file'].setValue(path.replace(temp_dir, output_dir))
+        out_dir = os.path.dirname(path)
         ext = node["file_type"].value()
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
-        collected_frames = os.listdir(temp_dir)
+        collected_frames = os.listdir(out_dir)
         repre = {
             'name': ext,
             'ext': ext,
             'files': collected_frames,
-            "stagingDir": temp_dir,
+            "stagingDir": out_dir,
             "anatomy_template": "render"
         }
         instance.data["representations"].append(repre)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name,
-            temp_dir
+            out_dir
         ))
 
         instance.data['family'] = 'render'

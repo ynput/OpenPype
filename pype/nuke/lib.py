@@ -343,8 +343,6 @@ def reset_frame_range_handles():
     """Set frame range to current asset"""
 
     root = nuke.root()
-    fps = float(api.Session.get("AVALON_FPS", 25))
-    root["fps"].setValue(fps)
     name = api.Session["AVALON_ASSET"]
     asset = io.find_one({"name": name, "type": "asset"})
 
@@ -356,7 +354,7 @@ def reset_frame_range_handles():
     data = asset["data"]
 
     missing_cols = []
-    check_cols = ["fstart", "fend", "handle_start", "handle_end"]
+    check_cols = ["fps", "fstart", "fend", "handle_start", "handle_end"]
 
     for col in check_cols:
         if col not in data:
@@ -373,20 +371,29 @@ def reset_frame_range_handles():
     handles = avalon.nuke.get_handles(asset)
     handle_start, handle_end = pype.get_handle_irregular(asset)
 
-    log.info("__ handles: `{}`".format(handles))
-    log.info("__ handle_start: `{}`".format(handle_start))
-    log.info("__ handle_end: `{}`".format(handle_end))
-
+    fps = asset["data"]["fps"]
     edit_in = int(asset["data"]["fstart"]) - handle_start
     edit_out = int(asset["data"]["fend"]) + handle_end
 
+    root["fps"].setValue(fps)
     root["first_frame"].setValue(edit_in)
     root["last_frame"].setValue(edit_out)
+
+    log.info("__ handles: `{}`".format(handles))
+    log.info("__ handle_start: `{}`".format(handle_start))
+    log.info("__ handle_end: `{}`".format(handle_end))
+    log.info("__ edit_in: `{}`".format(edit_in))
+    log.info("__ edit_out: `{}`".format(edit_out))
+    log.info("__ fps: `{}`".format(fps))
 
     # setting active viewers
     nuke.frame(int(asset["data"]["fstart"]))
 
-    vv = nuke.activeViewer().node()
+    try:
+        vv = nuke.activeViewer().node()
+    except AttributeError:
+        log.error("No active viewer. Select any node and hit num `1`")
+        return
 
     range = '{0}-{1}'.format(
         int(asset["data"]["fstart"]),

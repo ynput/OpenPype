@@ -24,7 +24,7 @@ class ValidateScript(pyblish.api.InstancePlugin):
         # These attributes will be checked
         attributes = [
             "fps", "fstart", "fend",
-            "resolution_width", "resolution_height", "pixel_aspect", "handle_start", "handle_end"
+            "resolution_width", "resolution_height", "handle_start", "handle_end"
         ]
 
         # Value of these attributes can be found on parents

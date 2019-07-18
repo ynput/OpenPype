@@ -56,6 +56,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 component_data = {
                     "name": "thumbnail"  # Default component name is "main".
                 }
+                comp['thumbnail'] = True
             elif comp.get('preview') or ("preview" in comp.get('tags', [])):
                 '''
                 Ftrack bug requirement:

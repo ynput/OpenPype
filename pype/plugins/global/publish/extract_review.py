@@ -36,7 +36,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         representations = instance.data["representations"]
 
         # filter out mov and img sequences
-        representations_new = representations.copy()
+        representations_new = representations[:]
         for repre in representations:
             if repre['ext'] in plugin_attrs["ext_filter"]:
                 tags = repre.get("tags", [])
@@ -46,10 +46,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 if "review" in tags:
                     staging_dir = repre["stagingDir"]
                     for name, profile in output_profiles.items():
+                        self.log.debug("Profile name: {}".format(name))
+
+                        ext = profile.get("ext", None)
+                        if not ext:
+                            ext = "mov"
+                            self.log.warning(
+                                "`ext` attribute not in output profile. Setting to default ext: `mov`")
+                                
+                        self.log.debug("instance.families: {}".format(instance.data['families']))
+                        self.log.debug("profile.families: {}".format(profile['families']))
+
                         if any(item in instance.data['families'] for item in profile['families']):
                             if isinstance(repre["files"], list):
-                            # if "mov" not in repre['ext']:
-                                # get output presets and loop them
                                 collections, remainder = clique.assemble(
                                     repre["files"])
 
@@ -62,27 +71,26 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 if filename.endswith('.'):
                                     filename = filename[:-1]
                             else:
-                                self.log.info("1: {}".format(full_input_path))
                                 full_input_path = os.path.join(
                                     staging_dir, repre["files"])
                                 filename = repre["files"].split(".")[0]
 
-                            mov_file = filename + "_{0}.{1}".format(name, "mov")
+                            repr_file = filename + "_{0}.{1}".format(name, ext)
 
-                            full_output_path = os.path.join(staging_dir, mov_file)
+                            full_output_path = os.path.join(
+                                staging_dir, repr_file)
 
                             self.log.info("input {}".format(full_input_path))
                             self.log.info("output {}".format(full_output_path))
 
                             repre_new = repre.copy()
 
-                            self.log.debug("Profile name: {}".format(name))
-
                             new_tags = tags[:]
                             p_tags = profile.get('tags', [])
                             self.log.info("p_tags: `{}`".format(p_tags))
                             # add families
-                            [instance.data["families"].append(t) for t in p_tags
+                            [instance.data["families"].append(t)
+                            for t in p_tags
                              if t not in instance.data["families"]]
                             # add to
                             [new_tags.append(t) for t in p_tags
@@ -101,15 +109,21 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             # necessary input data
                             # adds start arg only if image sequence
                             if "mov" not in repre_new['ext']:
-                                input_args.append("-start_number {}".format(
-                                    start_frame))
+                                input_args.append("-start_number {0} -framerate {1}".format(
+                                    start_frame, fps))
 
                             input_args.append("-i {}".format(full_input_path))
-                            input_args.append("-framerate {}".format(fps))
 
                             output_args = []
                             # preset's output data
                             output_args.extend(profile.get('output', []))
+
+                            # letter_box
+                            # TODO: add to documentation
+                            lb = profile.get('letter_box', None)
+                            if lb:
+                                output_args.append(
+                                    "-filter:v drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{0})))/2):iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black".format(lb))
 
                             # output filename
                             output_args.append(full_output_path)
@@ -118,25 +132,25 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 " ".join(input_args),
                                 " ".join(output_args)
                             ]
-                            subprocess_mov = " ".join(mov_args)
+                            subprcs_cmd = " ".join(mov_args)
 
                             # run subprocess
-                            sub_proc = subprocess.Popen(subprocess_mov)
+                            self.log.debug("{}".format(subprcs_cmd))
+                            sub_proc = subprocess.Popen(subprcs_cmd)
                             sub_proc.wait()
 
                             if not os.path.isfile(full_output_path):
-                                self.log.error(
+                                raise FileExistsError(
                                     "Quicktime wasn't created succesfully")
 
                             # create representation data
                             repre_new.update({
                                 'name': name,
-                                'ext': 'mov',
-                                'files': mov_file,
+                                'ext': ext,
+                                'files': repr_file,
                                 "tags": new_tags,
                                 "outputName": name
                             })
-
                             if repre_new.get('preview'):
                                 repre_new.pop("preview")
                             if repre_new.get('thumbnail'):
@@ -144,11 +158,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # adding representation
                             representations_new.append(repre_new)
+                    # if "delete" in tags:
+                    #     if "mov" in full_input_path:
+                    #         os.remove(full_input_path)
+                    #         self.log.debug("Removed: `{}`".format(full_input_path))
                 else:
                     continue
             else:
                 continue
-
 
         self.log.debug(
             "new representations: {}".format(representations_new))
