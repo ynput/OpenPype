@@ -24,13 +24,18 @@ class ExtractBurnin(pype.api.Extractor):
             raise RuntimeError("Burnin needs already created mov to work on.")
 
         # TODO: expand burnin data list to include all usefull keys
+        version = ''
+        if instance.context.data.get('version'):
+            version = "v" + str(instance.context.data['version'])
+
         burnin_data = {
             "username": instance.context.data['user'],
             "asset": os.environ['AVALON_ASSET'],
             "task": os.environ['AVALON_TASK'],
             "start_frame": int(instance.data['startFrame']),
-            "version": "v" + str(instance.context.data['version'])
+            "version": version
         }
+
         self.log.debug("__ burnin_data1: {}".format(burnin_data))
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))

@@ -130,8 +130,6 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         api.Session.update(session)
                         os.environ.update(session)
 
-                version = data.get("version")
-                context.data['version'] = version
             else:
                 # Search in directory
                 data = dict()
@@ -196,8 +194,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     "startFrame": start,
                     "endFrame": end,
                     "fps": fps,
-                    "source": data.get('source', ''),
-                    "version": version
+                    "source": data.get('source', '')
                 })
                 instance.append(collection)
                 instance.context.data['fps'] = fps
