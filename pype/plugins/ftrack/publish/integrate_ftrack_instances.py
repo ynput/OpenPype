@@ -49,14 +49,15 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
         for comp in instance.data['representations']:
             self.log.debug('component {}'.format(comp))
 
-            if comp.get('thumbnail'):
+            if comp.get('thumbnail') or ("thumbnail" in comp.get('tags', [])):
                 location = self.get_ftrack_location(
                     'ftrack.server', ft_session
                 )
                 component_data = {
                     "name": "thumbnail"  # Default component name is "main".
                 }
-            elif comp.get('preview'):
+                comp['thumbnail'] = True
+            elif comp.get('preview') or ("preview" in comp.get('tags', [])):
                 '''
                 Ftrack bug requirement:
                     - Start frame must be 0
@@ -120,7 +121,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             componentList.append(component_item)
             # Create copy with ftrack.unmanaged location if thumb or prev
-            if comp.get('thumbnail') or comp.get('preview'):
+            if comp.get('thumbnail') or comp.get('preview') \
+                    or ("preview" in comp.get('tags', [])) \
+                    or ("thumbnail" in comp.get('tags', [])):
                 unmanaged_loc = self.get_ftrack_location(
                     'ftrack.unmanaged', ft_session
                 )
@@ -147,7 +150,6 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 }
 
                 componentList.append(component_item_src)
-
 
         self.log.debug('componentsList: {}'.format(str(componentList)))
         instance.data["ftrackComponentsList"] = componentList
