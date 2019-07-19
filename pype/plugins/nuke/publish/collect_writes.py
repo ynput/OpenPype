@@ -11,7 +11,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.1
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
-    families = ["render.local", "render", "render.farm"]
+    families = ["render", "render.local", "render.farm"]
 
     def process(self, instance):
 
@@ -66,19 +66,20 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             instance.data['families'].append('ftrack')
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
-            try:
-                collected_frames = os.listdir(output_dir)
 
                 representation = {
                     'name': ext,
                     'ext': ext,
-                    'files': collected_frames,
                     "stagingDir": output_dir,
                     "anatomy_template": "render"
                 }
-                instance.data["representations"].append(representation)
 
+            try:
+                collected_frames = os.listdir(output_dir)
+                representation['files'] = collected_frames
+                instance.data["representations"].append(representation)
             except Exception:
+                instance.data["representations"].append(representation)
                 self.log.debug("couldn't collect frames: {}".format(label))
 
         if 'render.local' in instance.data['families']:
@@ -95,6 +96,5 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
         })
-
 
         self.log.debug("instance.data: {}".format(instance.data))
