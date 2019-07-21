@@ -99,18 +99,18 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #   \       /
         #    o   __/
         #
-        for result in context.data["results"]:
-            if not result["success"]:
-                self.log.debug(result)
-                exc_type, exc_value, exc_traceback = result["error_info"]
-                extracted_traceback = traceback.extract_tb(exc_traceback)[-1]
-                self.log.debug(
-                    "Error at line {}: \"{}\"".format(
-                        extracted_traceback[1], result["error"]
-                    )
-                )
-        assert all(result["success"] for result in context.data["results"]), (
-            "Atomicity not held, aborting.")
+        # for result in context.data["results"]:
+        #     if not result["success"]:
+        #         self.log.debug(result)
+        #         exc_type, exc_value, exc_traceback = result["error_info"]
+        #         extracted_traceback = traceback.extract_tb(exc_traceback)[-1]
+        #         self.log.debug(
+        #             "Error at line {}: \"{}\"".format(
+        #                 extracted_traceback[1], result["error"]
+        #             )
+        #         )
+        # assert all(result["success"] for result in context.data["results"]), (
+        #     "Atomicity not held, aborting.")
 
         # Assemble
         #
@@ -225,17 +225,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*parents)
 
-        template_data = {"root": root,
-                         "project": {"name": PROJECT,
-                                     "code": project['data']['code']},
-                         "silo": asset['silo'],
-                         "task": TASK,
-                         "asset": ASSET,
-                         "family": instance.data['family'],
-                         "subset": subset["name"],
-                         "version": int(version["name"]),
-                         "hierarchy": hierarchy}
-
         anatomy = instance.context.data['anatomy']
 
         # Find the representations to transfer amongst the files
@@ -257,6 +246,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # |       ||
             # |_______|
             #
+            # create template data for Anatomy
+            template_data = {"root": root,
+                             "project": {"name": PROJECT,
+                                         "code": project['data']['code']},
+                             "silo": asset['silo'],
+                             "task": TASK,
+                             "asset": ASSET,
+                             "family": instance.data['family'],
+                             "subset": subset["name"],
+                             "version": int(version["name"]),
+                             "hierarchy": hierarchy}
 
             files = repre['files']
             if repre.get('stagingDir'):
@@ -286,8 +286,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         os.path.normpath(
                             anatomy_filled[template_name]["path"])
                     )
-                    self.log.debug(
-                        "test_dest_files: {}".format(str(test_dest_files)))
+
+                self.log.debug(
+                    "test_dest_files: {}".format(str(test_dest_files)))
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
@@ -341,6 +342,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 )
 
                 template_data["representation"] = repre['ext']
+
+                if repre.get("outputName"):
+                    template_data["output"] = repre['outputName']
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)

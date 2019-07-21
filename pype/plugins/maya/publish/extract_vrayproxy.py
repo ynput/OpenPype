@@ -59,7 +59,7 @@ class ExtractVRayProxy(pype.api.Extractor):
 
         representation = {
             'name': 'vrmesh',
-            'ext': '.vrmesh',
+            'ext': 'vrmesh',
             'files': file_name,
             "stagingDir": staging_dir,
         }

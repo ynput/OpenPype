@@ -6,6 +6,7 @@ from pprint import pformat
 
 import pyblish.api
 from avalon import api
+import pype.api as pype
 
 
 def collect(root,
@@ -64,7 +65,7 @@ def collect(root,
     return collections
 
 
-class CollectFileSequences(pyblish.api.ContextPlugin):
+class CollectRenderedFrames(pyblish.api.ContextPlugin):
     """Gather file sequences from working directory
 
     When "FILESEQUENCE" environment variable is set these paths (folders or
@@ -87,7 +88,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     targets = ["filesequence"]
-    label = "File Sequences"
+    label = "RenderedFrames"
 
     def process(self, context):
         if os.environ.get("PYPE_PUBLISH_PATHS"):
@@ -128,6 +129,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                         self.log.info("setting session using metadata")
                         api.Session.update(session)
                         os.environ.update(session)
+
             else:
                 # Search in directory
                 data = dict()
@@ -161,6 +163,7 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
             assert isinstance(families, (list, tuple)), "Must be iterable"
             assert families, "Must have at least a single family"
             families.append("ftrack")
+            families.append("review")
             for collection in collections:
                 instance = context.create_instance(str(collection))
                 self.log.info("Collection: %s" % list(collection))
@@ -205,7 +208,8 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     'files': list(collection),
                     "stagingDir": root,
                     "anatomy_template": "render",
-                    "frameRate": fps
+                    "frameRate": fps,
+                    "tags": ['review']
                 }
                 instance.data["representations"].append(representation)
 

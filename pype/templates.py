@@ -28,7 +28,7 @@ def get_version_from_path(file):
         v: version number in string ('001')
 
     """
-    pattern = re.compile(r"_v([0-9]*)")
+    pattern = re.compile(r"[\._]v([0-9]*)")
     try:
         v = pattern.findall(file)[0]
         return v
