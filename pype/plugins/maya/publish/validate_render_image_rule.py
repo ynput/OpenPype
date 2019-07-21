@@ -1,4 +1,5 @@
 import maya.mel as mel
+import pymel.core as pm
 
 import pyblish.api
 import pype.api
@@ -18,9 +19,15 @@ class ValidateRenderImageRule(pyblish.api.InstancePlugin):
     label = "Images File Rule (Workspace)"
     hosts = ["maya"]
     families = ["renderlayer"]
+    actions = [pype.api.RepairAction]
 
     def process(self, instance):
 
         assert get_file_rule("images") == "renders", (
             "Workspace's `images` file rule must be set to: renders"
         )
+
+    @classmethod
+    def repair(cls, instance):
+        pm.workspace.fileRules["images"] = "renders"
+        pm.system.Workspace.save()
