@@ -7,15 +7,30 @@ import pyblish.api
 import pype.maya.lib as lib
 import appdirs
 import platform
+from pypeapp import config
 
 
-# mapping between Maya rendere names and Muster template names
-muster_maya_mapping = {
-    "arnold": "Maya Arnold",
-    "mentalray": "Maya Mr",
-    "renderman": "Maya Renderman",
-    "redshift": "Maya Redshift"
-}
+# mapping between Maya rendere names and Muster template ids
+def _get_template_id(renderer):
+    """
+    Return muster template ID based on renderer name.
+
+    :param renderer: renderer name
+    :type renderer: str
+    :returns: muster template id
+    :rtype: int
+    """
+
+    templates = config.get_presets()["muster"]["templates_mapping"]
+    if not templates:
+        raise RuntimeError(("Muster template mapping missing in pype-config "
+                            "`presets/muster/templates_mapping.json`"))
+    try:
+        template_id = templates[renderer]
+    except KeyError:
+        raise RuntimeError("Unmapped renderer - missing template id")
+
+    return template_id
 
 
 def _get_script():
@@ -213,12 +228,9 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         :rtype: int
         :raises: Exception if template ID isn't found
         """
-        try:
-            self.log.info("Trying to find template for [{}]".format(renderer))
-            mapped = muster_maya_mapping.get(renderer)
-            return self._templates.get(mapped)
-        except ValueError:
-            raise Exception('Unimplemented renderer {}'.format(renderer))
+        self.log.info("Trying to find template for [{}]".format(renderer))
+        mapped = _get_template_id(renderer)
+        return self._templates.get(mapped)
 
     def _submit(self, payload):
         """
