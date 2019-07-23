@@ -61,19 +61,47 @@ class ExtractBurnin(pype.api.Extractor):
             self.log.debug("__ burnin_data2: {}".format(burnin_data))
 
             json_data = json.dumps(burnin_data)
-            scriptpath = os.path.normpath(os.path.join(os.environ['PYPE_MODULE_ROOT'],
-                                      "pype",
-                                      "scripts",
-                                      "otio_burnin.py"))
+
+            # Get script path.
+            module_path = os.environ['PYPE_MODULE_ROOT']
+
+            # There can be multiple paths in PYPE_MODULE_ROOT, in which case
+            # we just take first one.
+            if os.pathsep in module_path:
+                module_path = module_path.split(os.pathsep)[0]
+
+            scriptpath = os.path.normpath(
+                os.path.join(
+                    module_path,
+                    "pype",
+                    "scripts",
+                    "otio_burnin.py"
+                )
+            )
 
             self.log.debug("__ scriptpath: {}".format(scriptpath))
-            self.log.debug("__ EXE: {}".format(os.getenv("PYPE_PYTHON_EXE")))
+
+            # Get executable.
+            executable = os.getenv("PYPE_PYTHON_EXE")
+
+            # There can be multiple paths in PYPE_PYTHON_EXE, in which case
+            # we just take first one.
+            if os.pathsep in executable:
+                executable = executable.split(os.pathsep)[0]
+
+            self.log.debug("__ EXE: {}".format(executable))
+
+            self.log.debug(json.dumps(os.environ, indent=4))
 
             try:
-                p = subprocess.Popen(
-                    [os.getenv("PYPE_PYTHON_EXE"), scriptpath, json_data]
-                )
+                args = [executable, scriptpath, json_data]
+                self.log.debug("Executing: {}".format(args))
+
+                # Explicitly passing the environment, because there are cases
+                # where enviroment is not inherited.
+                p = subprocess.Popen(args, env=os.environ)
                 p.wait()
+
                 if not os.path.isfile(full_burnin_path):
                     raise RuntimeError("File not existing: {}".format(full_burnin_path))
             except Exception as e:
