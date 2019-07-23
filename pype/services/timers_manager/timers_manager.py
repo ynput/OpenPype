@@ -79,6 +79,14 @@ class TimersManager(metaclass=Singleton):
                 }
         '''
         self.last_task = data
+
+        if len(input_data['hierarchy']) < 1:
+            self.log.error((
+                'Timer has been launched on task which is child of Project.'
+                ' That is not allowed in Pype!'
+            ))
+            return
+
         for module in self.modules:
             module.start_timer_manager(data)
         self.is_running = True
