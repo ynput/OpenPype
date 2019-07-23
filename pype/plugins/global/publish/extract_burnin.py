@@ -91,8 +91,6 @@ class ExtractBurnin(pype.api.Extractor):
 
             self.log.debug("__ EXE: {}".format(executable))
 
-            self.log.debug(json.dumps(os.environ, indent=4))
-
             try:
                 args = [executable, scriptpath, json_data]
                 self.log.debug("Executing: {}".format(args))
