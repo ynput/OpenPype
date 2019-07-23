@@ -82,10 +82,19 @@ class ExtractBurnin(pype.api.Extractor):
             if os.path.exists(full_burnin_path):
                 repre_update = {
                     "files": movieFileBurnin,
-                    "name": repre["name"]
+                    "name": repre["name"],
+                    "tags": [x for x in repre["tags"] if x != "delete"]
                 }
                 instance.data["representations"][i].update(repre_update)
 
                 # removing the source mov file
                 os.remove(full_movie_path)
                 self.log.debug("Removed: `{}`".format(full_movie_path))
+
+        # Remove any representations tagged for deletion.
+        for repre in instance.data["representations"]:
+            if "delete" in repre.get("tags", []):
+                self.log.debug("Removing representation: {}".format(repre))
+                instance.data["representations"].remove(repre)
+
+        self.log.debug(instance.data["representations"])
