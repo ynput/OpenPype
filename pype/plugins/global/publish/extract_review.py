@@ -108,7 +108,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # necessary input data
                             # adds start arg only if image sequence
-                            if "mov" not in repre_new['ext']:
+                            if isinstance(repre["files"], list):
                                 input_args.append("-start_number {0} -framerate {1}".format(
                                     start_frame, fps))
 
