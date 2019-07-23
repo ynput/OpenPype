@@ -145,22 +145,27 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                     instance.data["parents"] = parents
 
                     # adding to asset shared dict
+                    self.log.debug("__ assets_shared: {}".format(assets_shared))
                     if assets_shared.get(asset):
                         self.log.debug("Adding to shared assets: `{}`".format(
-                            asset))
-                        assets_shared[asset].update({
-                            "asset": instance.data["asset"],
-                            "hierarchy": hierarchy,
-                            "parents": parents,
-                            "tasks":  instance.data["tasks"]
-                        })
+                            instance.data["name"]))
+                        asset_shared = assets_shared.get(asset)
+                    else:
+                        asset_shared = assets_shared[asset]
 
-                        # adding frame start if any on instance
-                        start_frame = instance.data.get("frameStart")
-                        if start_frame:
-                            assets_shared[asset].update({
-                                "frameStart": start_frame
-                            })
+                    asset_shared.update({
+                        "asset": instance.data["asset"],
+                        "hierarchy": hierarchy,
+                        "parents": parents,
+                        "tasks":  instance.data["tasks"]
+                    })
+
+                    # adding frame start if any on instance
+                    start_frame = instance.data.get("frameStart")
+                    if start_frame:
+                        asset_shared.update({
+                            "frameStart": start_frame
+                        })
 
 
 
