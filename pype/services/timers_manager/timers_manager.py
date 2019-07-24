@@ -78,7 +78,15 @@ class TimersManager(metaclass=Singleton):
                     'task_name': 'Lookdev BG'
                 }
         '''
+        if len(data['hierarchy']) < 1:
+            self.log.error((
+                'Not allowed action in Pype!!'
+                ' Timer has been launched on task which is child of Project.'
+            ))
+            return
+
         self.last_task = data
+
         for module in self.modules:
             module.start_timer_manager(data)
         self.is_running = True
