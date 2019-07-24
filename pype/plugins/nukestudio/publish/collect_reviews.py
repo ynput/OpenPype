@@ -50,7 +50,7 @@ class CollectReviews(api.InstancePlugin):
                 instance.data["subset"]))
 
             # change families
-            instance.data["family"] = "review"
+            instance.data["family"] = "plate"
             instance.data["families"] = ["review", "ftrack"]
 
             self.version_data(instance)
@@ -72,9 +72,6 @@ class CollectReviews(api.InstancePlugin):
                     "TrackItem from track name `{}` has to be also selected".format(
                         track)
                 )
-
-            # change families
-            instance.data["label"] += " + review (.{})".format(ext)
             instance.data["families"].append("review")
 
         file_path = rev_inst.data.get("sourcePath")
@@ -82,7 +79,10 @@ class CollectReviews(api.InstancePlugin):
         file = os.path.basename(file_path)
         ext = os.path.splitext(file)[-1][1:]
 
-        instance.data["label"] += " + review (.{})".format(ext)
+        # change label
+        instance.data["label"] = "{0} - {1} - ({2})".format(
+            instance.data['asset'], instance.data["subset"], ext
+        )
 
         self.log.debug("Instance review: {}".format(rev_inst.data["name"]))
 
@@ -178,7 +178,7 @@ class CollectReviews(api.InstancePlugin):
         timeline_frame_end = timeline_out + handle_end
 
         # get colorspace
-        colorspace = item.sourceMediaColourTransform()
+        colorspace = item.sourceMediaColourTransform()  
 
         # get sequence from context, and fps
         fps = instance.data["fps"]

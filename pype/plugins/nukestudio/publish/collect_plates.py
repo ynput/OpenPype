@@ -124,7 +124,13 @@ class CollectPlatesData(api.InstancePlugin):
 
     def process(self, instance):
         import os
-
+        if "review" in instance.data.get("track", ""):
+            self.log.debug(
+                "Skipping \"{}\" because its `review` track "
+                "\"plate\"".format(instance)
+            )
+            return
+            
         # add to representations
         if not instance.data.get("representations"):
             instance.data["representations"] = list()
