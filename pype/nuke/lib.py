@@ -191,7 +191,7 @@ def create_write_node(name, data):
 
     # build file path to workfiles
     fpath = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
-    fpath = '{work}/renders/v{version}/{subset}.{frame}.{ext}'.format(
+    fpath = '{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}'.format(
         work=fpath, version=data["version"], subset=data["subset"],
         frame=data["frame"],
         ext=data["nuke_dataflow_writes"]["file_type"])
