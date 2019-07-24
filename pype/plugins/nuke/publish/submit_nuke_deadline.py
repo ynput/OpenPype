@@ -100,6 +100,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Resolve relative references
                 "ProjectPath": workspace,
+
+                # Only the specific write node is rendered.
+                "WriteNode": instance[0].name()
             },
 
             # Mandatory for Deadline, may be empty
