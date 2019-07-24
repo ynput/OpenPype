@@ -75,7 +75,7 @@ def loader_shift(node, frame, relative=True):
 class LoadMov(api.Loader):
     """Load mov file into Nuke"""
 
-    families = ["write", "source", "plate", "render"]
+    families = ["write", "source", "plate", "render", "review"]
     representations = ["mov", "preview", "review", "mp4"]
 
     label = "Load mov"
