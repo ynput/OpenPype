@@ -130,10 +130,10 @@ class LoadSequence(api.Loader):
                 r["colorspace"].setValue(str(colorspace))
 
             loader_shift(r, first, relative=True)
-            r["origfirst"].setValue(first)
-            r["first"].setValue(first)
-            r["origlast"].setValue(last)
-            r["last"].setValue(last)
+            r["origfirst"].setValue(int(first))
+            r["first"].setValue(int(first))
+            r["origlast"].setValue(int(last))
+            r["last"].setValue(int(last))
 
             # add additional metadata from the version to imprint to Avalon knob
             add_keys = ["startFrame", "endFrame", "handles",
