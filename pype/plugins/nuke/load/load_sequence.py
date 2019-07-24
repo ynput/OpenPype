@@ -94,9 +94,9 @@ class LoadSequence(api.Loader):
 
         first = version_data.get("startFrame", None)
         last = version_data.get("endFrame", None)
-        handles = version_data.get("handles", None)
-        handle_start = version_data.get("handleStart", None)
-        handle_end = version_data.get("handleEnd", None)
+        handles = version_data.get("handles", 0)
+        handle_start = version_data.get("handleStart", 0)
+        handle_end = version_data.get("handleEnd", 0)
 
         # fix handle start and end if none are available
         if not handle_start and not handle_end:
