@@ -9,9 +9,9 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     """Validates the global render settings
 
     * File Name Prefix must be as followed:
-        * vray: <Scene>/<Layer>/<Layer>
-        * arnold: <Scene>/<RenderLayer>/<RenderLayer>
-        * default: <Scene>/<RenderLayer>/<RenderLayer>
+        * vray: maya/<Layer>/<Layer>
+        * arnold: maya/<RenderLayer>/<RenderLayer>
+        * default: maya/<RenderLayer>/<RenderLayer>
 
     * Frame Padding must be:
         * default: 4
@@ -34,8 +34,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     actions = [pype.api.RepairAction]
 
     DEFAULT_PADDING = 4
-    RENDERER_PREFIX = {"vray": "<Scene>/<Layer>/<Layer>"}
-    DEFAULT_PREFIX = "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>"
+    RENDERER_PREFIX = {"vray": "maya/<Layer>/<Layer>"}
+    DEFAULT_PREFIX = "maya/<RenderLayer>/<RenderLayer>_<RenderPass>"
 
     def process(self, instance):
 
