@@ -42,29 +42,32 @@ class CollectReviews(api.InstancePlugin):
             return
 
         if track in instance.data["track"]:
-            self.log.debug("Track item on the track: {}".format(
+
+            self.log.debug("Track item on the track: `{}`".format(
                 instance.data["track"]))
+            self.log.debug("Track item data: {}".format(
+                instance.data))
             # Collect data.
-            subset = ""
+            subset = instance.data.get("subset", "")
             data = {}
             for key, value in instance.data.iteritems():
                 data[key] = value
 
             data["family"] = family.lower()
             data["ftrackFamily"] = "img"
-            data["families"] = ["ftrack"]
+            data["families"] = ["review"]
 
-            data["subset"] = family.lower() + subset.title()
-            data["name"] = data["subset"] + "_" + data["asset"]
+            data["name"] = subset + "_" + data["asset"]
 
-            data["label"] = "{} - {}".format(
-                data['asset'], data["subset"]
+            data["label"] = "{} - {} - ({})".format(
+                data['asset'], subset, os.path.splitext(data["sourcePath"])[1]
             )
 
             data["source"] = data["sourcePath"]
 
-            # self.log.debug("Creating instance with data: {}".format(data))
-            instance.context.create_instance(**data)
+            self.log.debug("Creating instance with data: {}".format(data))
+            instance.data.update(data)
+            # instance.context.create_instance(**data)
 
         else:
             self.log.debug("Track item on plateMain")
