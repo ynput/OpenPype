@@ -269,11 +269,28 @@ class RVAction(BaseAction):
         api.Session["AVALON_PROJECT"] = project["name"]
         io.install()
 
+        location = ftrack_api.Session().pick_location()
+
         paths = []
         for parent_name in sorted(event["data"]["values"].keys()):
             component = session.get(
                 "Component", event["data"]["values"][parent_name]
             )
+
+            # Newer publishes have the source referenced in Ftrack.
+            online_source = False
+            for neighbour_component in component["version"]["components"]:
+                if neighbour_component["name"] != "ftrackreview-mp4_src":
+                    continue
+
+                paths.append(
+                    location.get_filesystem_path(neighbour_component)
+                )
+                online_source = True
+
+            if online_source:
+                continue
+
             asset = io.find_one({"type": "asset", "name": parent_name})
             subset = io.find_one(
                 {
