@@ -258,8 +258,8 @@ class CustomAttributes(BaseAction):
             ):
                 continue
 
-            if 'is_hierarchical' in data:
-                if data['is_hierarchical'] == attr['is_hierarchical']:
+            if data.get('is_hierarchical', False) is True:
+                if attr['is_hierarchical'] is True:
                     matching.append(attr)
             elif 'object_type_id' in data:
                 if (
@@ -453,6 +453,8 @@ class CustomAttributes(BaseAction):
     def get_default(self, attr):
         type = attr['type']
         default = attr['default']
+        if default is None:
+            return default
         err_msg = 'Default value is not'
         if type == 'number':
             if not isinstance(default, (float, int)):

@@ -4,7 +4,6 @@ import logging
 import speedcopy
 import clique
 import traceback
-import sys
 import errno
 import pyblish.api
 from avalon import api, io
@@ -59,7 +58,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "render",
                 "imagesequence",
                 "review",
-                "nukescript",
                 "render",
                 "rendersetup",
                 "rig",
@@ -101,18 +99,18 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #   \       /
         #    o   __/
         #
-        for result in context.data["results"]:
-            if not result["success"]:
-                self.log.debug(result)
-                exc_type, exc_value, exc_traceback = result["error_info"]
-                extracted_traceback = traceback.extract_tb(exc_traceback)[-1]
-                self.log.debug(
-                    "Error at line {}: \"{}\"".format(
-                        extracted_traceback[1], result["error"]
-                    )
-                )
-        assert all(result["success"] for result in context.data["results"]), (
-            "Atomicity not held, aborting.")
+        # for result in context.data["results"]:
+        #     if not result["success"]:
+        #         self.log.debug(result)
+        #         exc_type, exc_value, exc_traceback = result["error_info"]
+        #         extracted_traceback = traceback.extract_tb(exc_traceback)[-1]
+        #         self.log.debug(
+        #             "Error at line {}: \"{}\"".format(
+        #                 extracted_traceback[1], result["error"]
+        #             )
+        #         )
+        # assert all(result["success"] for result in context.data["results"]), (
+        #     "Atomicity not held, aborting.")
 
         # Assemble
         #
@@ -227,17 +225,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*parents)
 
-        template_data = {"root": root,
-                         "project": {"name": PROJECT,
-                                     "code": project['data']['code']},
-                         "silo": asset['silo'],
-                         "task": TASK,
-                         "asset": ASSET,
-                         "family": instance.data['family'],
-                         "subset": subset["name"],
-                         "version": int(version["name"]),
-                         "hierarchy": hierarchy}
-
         anatomy = instance.context.data['anatomy']
 
         # Find the representations to transfer amongst the files
@@ -259,6 +246,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # |       ||
             # |_______|
             #
+            # create template data for Anatomy
+            template_data = {"root": root,
+                             "project": {"name": PROJECT,
+                                         "code": project['data']['code']},
+                             "silo": asset['silo'],
+                             "task": TASK,
+                             "asset": ASSET,
+                             "family": instance.data['family'],
+                             "subset": subset["name"],
+                             "version": int(version["name"]),
+                             "hierarchy": hierarchy}
 
             files = repre['files']
             if repre.get('stagingDir'):
@@ -273,30 +271,34 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.debug(
                     "src_tail_collections: {}".format(str(src_collections)))
                 src_collection = src_collections[0]
+
                 # Assert that each member has identical suffix
                 src_head = src_collection.format("{head}")
                 src_tail = src_collection.format("{tail}")
 
+
+                # fix dst_padding
+                padd_len =  len(files[0].replace(src_head, "").replace(src_tail, ""))
+                src_padding_exp = "%0{}d".format(padd_len)
+
                 test_dest_files = list()
                 for i in [1, 2]:
                     template_data["representation"] = repre['ext']
-                    template_data["frame"] = src_collection.format(
-                        "{padding}") % i
+                    template_data["frame"] = src_padding_exp % i
                     anatomy_filled = anatomy.format(template_data)
 
                     test_dest_files.append(
                         os.path.normpath(
                             anatomy_filled[template_name]["path"])
                     )
-                    self.log.debug(
-                        "test_dest_files: {}".format(str(test_dest_files)))
+
+                self.log.debug(
+                    "test_dest_files: {}".format(str(test_dest_files)))
 
                 dst_collections, remainder = clique.assemble(test_dest_files)
                 dst_collection = dst_collections[0]
                 dst_head = dst_collection.format("{head}")
                 dst_tail = dst_collection.format("{tail}")
-
-                repre['published_path'] = dst_collection.format()
 
                 index_frame_start = None
                 if repre.get('startFrame'):
@@ -304,16 +306,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         repre.get('endFrame')))
                     index_frame_start = repre.get('startFrame')
 
+                dst_padding_exp = src_padding_exp
                 for i in src_collection.indexes:
-                    src_padding = src_collection.format("{padding}") % i
+                    src_padding = src_padding_exp % i
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
 
-                    dst_padding = dst_collection.format("{padding}") % i
+                    dst_padding = src_padding_exp % i
 
                     if index_frame_start:
-                        dst_padding = "%0{}d".format(
-                            frame_start_padding) % index_frame_start
+                        dst_padding_exp = "%0{}d".format(frame_start_padding)
+                        dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1
 
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
@@ -322,6 +325,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
+                repre['published_path'] = "{0}{1}{2}".format(dst_head, dst_padding_exp, dst_tail)
                 # for imagesequence version data
                 hashes = '#' * len(dst_padding)
                 dst = os.path.normpath("{0}{1}{2}".format(
@@ -343,6 +347,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 )
 
                 template_data["representation"] = repre['ext']
+
+                if repre.get("outputName"):
+                    template_data["output"] = repre['outputName']
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
@@ -378,7 +385,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
-            self.log.debug("__ _representation: {}".format(representation))
+            self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
             self.log.debug("__ destination_list: {}".format(destination_list))
             instance.data['destination_list'] = destination_list
@@ -541,7 +548,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Include optional data if present in
         optionals = [
-            "startFrame", "endFrame", "step", "handles", "sourceHashes"
+            "startFrame", "endFrame", "step", "handles",
+            "handle_end", "handle_start", "sourceHashes"
         ]
         for key in optionals:
             if key in instance.data:

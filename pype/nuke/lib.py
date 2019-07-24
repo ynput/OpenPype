@@ -7,8 +7,9 @@ import avalon.nuke
 import pype.api as pype
 import nuke
 from .templates import (
-    get_dataflow,
-    get_colorspace
+    get_colorspace_preset,
+    get_node_dataflow_preset,
+    get_node_colorspace_preset
 )
 
 from pypeapp import Logger
@@ -16,14 +17,6 @@ log = Logger().get_logger(__name__, "nuke")
 
 self = sys.modules[__name__]
 self._project = None
-
-
-for path in sys.path:
-    log.info(os.path.normpath(path))
-    if "C:\\Users\\Public" in os.path.normpath(path):
-        log.info("_ removing from sys.path: `{}`".format(path))
-        sys.path.remove(path)
-
 
 def onScriptLoad():
     if nuke.env['LINUX']:
@@ -129,8 +122,8 @@ def get_render_path(node):
         "preset": data['avalon']['families']
     }
 
-    nuke_dataflow_writes = get_dataflow(**data_preset)
-    nuke_colorspace_writes = get_colorspace(**data_preset)
+    nuke_dataflow_writes = get_node_dataflow_preset(**data_preset)
+    nuke_colorspace_writes = get_node_colorspace_preset(**data_preset)
 
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
     data.update({
@@ -180,8 +173,8 @@ def script_name():
 
 
 def create_write_node(name, data):
-    nuke_dataflow_writes = get_dataflow(**data)
-    nuke_colorspace_writes = get_colorspace(**data)
+    nuke_dataflow_writes = get_node_dataflow_preset(**data)
+    nuke_colorspace_writes = get_node_colorspace_preset(**data)
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
 
     try:
@@ -319,9 +312,8 @@ def set_writes_colorspace(write_dict):
 
 
 def set_colorspace():
-    from pype import api as pype
 
-    nuke_colorspace = pype.Colorspace.get("nuke", None)
+    nuke_colorspace = get_colorspace_preset().get("nuke", None)
 
     try:
         set_root_colorspace(nuke_colorspace["root"])
@@ -350,8 +342,7 @@ def set_colorspace():
 def reset_frame_range_handles():
     """Set frame range to current asset"""
 
-    fps = float(api.Session.get("AVALON_FPS", 25))
-    nuke.root()["fps"].setValue(fps)
+    root = nuke.root()
     name = api.Session["AVALON_ASSET"]
     asset = io.find_one({"name": name, "type": "asset"})
 
@@ -363,7 +354,7 @@ def reset_frame_range_handles():
     data = asset["data"]
 
     missing_cols = []
-    check_cols = ["fstart", "fend", "handle_start", "handle_end"]
+    check_cols = ["fps", "fstart", "fend", "handle_start", "handle_end"]
 
     for col in check_cols:
         if col not in data:
@@ -380,20 +371,29 @@ def reset_frame_range_handles():
     handles = avalon.nuke.get_handles(asset)
     handle_start, handle_end = pype.get_handle_irregular(asset)
 
-    log.info("__ handles: `{}`".format(handles))
-    log.info("__ handle_start: `{}`".format(handle_start))
-    log.info("__ handle_end: `{}`".format(handle_end))
-
+    fps = asset["data"]["fps"]
     edit_in = int(asset["data"]["fstart"]) - handle_start
     edit_out = int(asset["data"]["fend"]) + handle_end
 
-    nuke.root()["first_frame"].setValue(edit_in)
-    nuke.root()["last_frame"].setValue(edit_out)
+    root["fps"].setValue(fps)
+    root["first_frame"].setValue(edit_in)
+    root["last_frame"].setValue(edit_out)
+
+    log.info("__ handles: `{}`".format(handles))
+    log.info("__ handle_start: `{}`".format(handle_start))
+    log.info("__ handle_end: `{}`".format(handle_end))
+    log.info("__ edit_in: `{}`".format(edit_in))
+    log.info("__ edit_out: `{}`".format(edit_out))
+    log.info("__ fps: `{}`".format(fps))
 
     # setting active viewers
     nuke.frame(int(asset["data"]["fstart"]))
 
-    vv = nuke.activeViewer().node()
+    try:
+        vv = nuke.activeViewer().node()
+    except AttributeError:
+        log.error("No active viewer. Select any node and hit num `1`")
+        return
 
     range = '{0}-{1}'.format(
         int(asset["data"]["fstart"]),
@@ -407,6 +407,13 @@ def reset_frame_range_handles():
 
     vv['frame_range'].setValue(range)
     vv['frame_range_lock'].setValue(True)
+
+    # adding handle_start/end to root avalon knob
+    if not avalon.nuke.set_avalon_knob_data(root, {
+        "handle_start": handle_start,
+        "handle_end": handle_end
+    }):
+        log.warning("Cannot set Avalon knob to Root node!")
 
 
 def get_avalon_knob_data(node):
@@ -560,8 +567,8 @@ def get_hierarchical_attr(entity, attr, default=None):
 
     parent_id = entity['parent']
     if (
-        entity['type'].lower() == 'asset' and
-        entity.get('data', {}).get('visualParent')
+        entity['type'].lower() == 'asset'
+        and entity.get('data', {}).get('visualParent')
     ):
         parent_id = entity['data']['visualParent']
 
@@ -637,8 +644,8 @@ def get_write_node_template_attr(node):
     }
 
     # get template data
-    nuke_dataflow_writes = get_dataflow(**data_preset)
-    nuke_colorspace_writes = get_colorspace(**data_preset)
+    nuke_dataflow_writes = get_node_dataflow_preset(**data_preset)
+    nuke_colorspace_writes = get_node_colorspace_preset(**data_preset)
 
     # collecting correct data
     correct_data = OrderedDict({

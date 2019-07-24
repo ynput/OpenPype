@@ -39,7 +39,7 @@ class ExtractRig(pype.api.Extractor):
 
         representation = {
             'name': 'ma',
-            'ext': '.ma',
+            'ext': 'ma',
             'files': filename,
             "stagingDir": dir_path
         }

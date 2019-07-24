@@ -24,9 +24,3 @@ class CollectModelData(pyblish.api.InstancePlugin):
         frame = cmds.currentTime(query=True)
         instance.data['startFrame'] = frame
         instance.data['endFrame'] = frame
-
-        # make ftrack publishable
-        if instance.data.get('families'):
-            instance.data['families'].append('ftrack')
-        else:
-            instance.data['families'] = ['ftrack']

@@ -18,15 +18,8 @@ from .action import (
 
 from pypeapp import Logger
 
-from . import (
-    Anatomy,
-    Colorspace,
-    Dataflow
-)
 
 from .templates import (
-    load_data_from_templates,
-    reset_data_from_templates,
     get_project_name,
     get_project_code,
     get_hierarchy,
@@ -40,6 +33,7 @@ from .templates import (
 )
 
 from .lib import (
+    version_up,
     get_handle_irregular,
     get_project_data,
     get_asset_data,
@@ -65,11 +59,6 @@ __all__ = [
 
     "ValidationException",
 
-    # contectual templates
-    # get data to preloaded templates
-    "load_data_from_templates",
-    "reset_data_from_templates",
-
     # get contextual data
     "get_handle_irregular",
     "get_project_data",
@@ -88,10 +77,5 @@ __all__ = [
     "set_project_code",
     "get_data_hierarchical_attr",
     "get_avalon_project_template",
-
-    # preloaded templates
-    "Anatomy",
-    "Colorspace",
-    "Dataflow",
 
 ]
