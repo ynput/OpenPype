@@ -55,7 +55,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             self.log.debug("__ tags: {}".format(tags))
 
             if not tags:
-                return
+                continue
 
             # loop trough all tags
             for t in tags:
@@ -148,13 +148,13 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                     self.log.debug("__ assets_shared: {}".format(assets_shared))
                     if assets_shared.get(asset):
                         self.log.debug("Adding to shared assets: `{}`".format(
-                            instance.data["name"]))
+                            asset))
                         asset_shared = assets_shared.get(asset)
                     else:
                         asset_shared = assets_shared[asset]
 
                     asset_shared.update({
-                        "asset": instance.data["asset"],
+                        "asset": asset,
                         "hierarchy": hierarchy,
                         "parents": parents,
                         "tasks":  instance.data["tasks"]

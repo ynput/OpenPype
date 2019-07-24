@@ -259,6 +259,7 @@ class CollectPlatesData(api.InstancePlugin):
         thumb_file = head + ".png"
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: {}".format(thumb_path))
+        self.log.debug("__ source_in: {}".format(source_in))
         thumbnail = item.thumbnail(source_in).save(
             thumb_path,
             format='png'
