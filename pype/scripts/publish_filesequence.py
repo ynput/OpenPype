@@ -58,7 +58,9 @@ def __main__():
     ]
 
     print("Pype command: {}".format(" ".join(args)))
-    subprocess.call(args, shell=True)
+    exit_code = subprocess.call(args, shell=True)
+    if exit_code != 0:
+        raise ValueError("Publishing failed.")
 
 
 if __name__ == '__main__':
