@@ -276,9 +276,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 src_head = src_collection.format("{head}")
                 src_tail = src_collection.format("{tail}")
 
-
                 # fix dst_padding
-                padd_len =  len(files[0].replace(src_head, "").replace(src_tail, ""))
+                valid_files = [x for x in files if src_collection.match(x)]
+                padd_len = len(
+                    valid_files[0].replace(src_head, "").replace(src_tail, "")
+                )
                 src_padding_exp = "%0{}d".format(padd_len)
 
                 test_dest_files = list()
