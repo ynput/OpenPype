@@ -136,12 +136,21 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # run subprocess
                             self.log.debug("{}".format(subprcs_cmd))
-                            sub_proc = subprocess.Popen(subprcs_cmd)
-                            sub_proc.wait()
+                            sub_proc = subprocess.Popen(
+                                subprcs_cmd,
+                                stdout=subprocess.PIPE,
+                                stderr=subprocess.STDOUT,
+                                stdin=subprocess.PIPE,
+                                cwd=os.path.dirname(output_args[-1])
+                            )
+
+                            output = sub_proc.communicate()[0]
 
                             if not os.path.isfile(full_output_path):
-                                raise FileExistsError(
-                                    "Quicktime wasn't created succesfully")
+                                raise ValueError(
+                                    "Quicktime wasn't created succesfully: "
+                                    "{}".format(output)
+                                )
 
                             # create representation data
                             repre_new.update({
