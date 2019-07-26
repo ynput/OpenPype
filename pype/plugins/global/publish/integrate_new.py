@@ -403,19 +403,36 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.info("Registered {} items".format(len(representations)))
 
     def integrate(self, instance):
-        """Move the files
+        """ Move the files. If files are in render family, they will be
+            deleted after copy.
 
-        Through `instance.data["transfers"]`
+            Through `instance.data["transfers"]`
 
-        Args:
-            instance: the instance to integrate
+            Args:
+                instance: the instance to integrate
         """
 
         transfers = instance.data.get("transfers", list())
 
+        current_families = instance.data.get("families", list())
+        instance_family = instance.data.get("family", None)
+        dirnames = []
+
         for src, dest in transfers:
             if os.path.normpath(src) != os.path.normpath(dest):
                 self.copy_file(src, dest)
+                if instance_family == 'render' or 'render' in current_families:
+                    os.remove(src)
+                    dirnames.append(os.path.dirname(src))
+
+        # make unique set
+        cleanup_dirs = set(dirnames)
+        for dir in cleanup_dirs:
+            try:
+                os.rmdir(dir)
+            except OSError:
+                # directory is not empty, skipping
+                continue
 
         # Produce hardlinked copies
         # Note: hardlink can only be produced between two files on the same
