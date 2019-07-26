@@ -109,7 +109,7 @@ class Sync_to_Avalon(BaseEvent):
                 ' for more information.'
             )
             items = [
-                {'type': 'label', 'value':'# Fatal Error'},
+                {'type': 'label', 'value': '# Fatal Error'},
                 {'type': 'label', 'value': '<p>{}</p>'.format(ftrack_message)}
             ]
             self.show_interface(event, items, title)
