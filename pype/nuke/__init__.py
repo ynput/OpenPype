@@ -23,6 +23,7 @@ from pypeapp import Logger
 #                       for handler in Logger.logging.root.handlers[:]]:
 #     if "pype" not in str(name).lower():
 #         Logger.logging.root.removeHandler(handler)
+from . import lib
 
 
 self = sys.modules[__name__]
@@ -137,6 +138,9 @@ def install():
 
     if launch_workfiles:
         nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+
+    # Set context settings.
+    nuke.addOnCreate(lib.set_context_settings, nodeClass="Root")
 
 
 def launch_workfiles_app():
