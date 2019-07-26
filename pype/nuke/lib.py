@@ -392,8 +392,11 @@ def reset_frame_range_handles():
     try:
         vv = nuke.activeViewer().node()
     except AttributeError:
-        log.error("No active viewer. Select any node and hit num `1`")
-        return
+        viewer_nodes = nuke.allNodes(filter="Viewer")
+        if viewer_nodes:
+            vv = viewer_nodes[0]
+        else:
+            return
 
     range = '{0}-{1}'.format(
         int(asset["data"]["fstart"]),
