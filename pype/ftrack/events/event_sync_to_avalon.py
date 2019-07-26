@@ -16,7 +16,7 @@ class Sync_to_Avalon(BaseEvent):
         # If mongo_id textfield has changed: RETURN!
         # - infinite loop
         for ent in event['data']['entities']:
-            if 'keys' in ent:
+            if ent.get('keys') is not None:
                 if ca_mongoid in ent['keys']:
                     return
 
