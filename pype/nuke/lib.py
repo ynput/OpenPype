@@ -191,10 +191,19 @@ def create_write_node(name, data):
 
     # build file path to workfiles
     fpath = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
-    fpath = '{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}'.format(
-        work=fpath, version=data["version"], subset=data["subset"],
+    pattern = "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
+    # Workfile paths can be configured to have host name in file path.
+    # In this case we want to avoid duplicate folder names.
+    if "nuke" in fpath.lower():
+        pattern = pattern.replace("nuke/", "")
+
+    fpath = pattern.format(
+        work=fpath,
+        version=data["version"],
+        subset=data["subset"],
         frame=data["frame"],
-        ext=data["nuke_dataflow_writes"]["file_type"])
+        ext=data["nuke_dataflow_writes"]["file_type"]
+    )
 
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
