@@ -43,7 +43,7 @@ def checkInventoryVersions():
             container = avalon.nuke.parse_container(each)
 
             if container:
-                node = container["_tool"]
+                node = container["_node"]
                 avalon_knob_data = get_avalon_knob_data(node)
 
                 # get representation from io
@@ -403,8 +403,8 @@ def reset_frame_range_handles():
 
     # adding handle_start/end to root avalon knob
     if not avalon.nuke.set_avalon_knob_data(root, {
-        "handle_start": handle_start,
-        "handle_end": handle_end
+        "handle_start": int(handle_start),
+        "handle_end": int(handle_end)
     }):
         log.warning("Cannot set Avalon knob to Root node!")
 
@@ -425,33 +425,24 @@ def reset_resolution():
     asset = api.Session["AVALON_ASSET"]
     asset = io.find_one({"name": asset, "type": "asset"})
 
-    try:
-        width = asset.get('data', {}).get('resolution_width', 1920)
-        height = asset.get('data', {}).get('resolution_height', 1080)
-        pixel_aspect = asset.get('data', {}).get('pixel_aspect', 1)
-        bbox = asset.get('data', {}).get('crop', "0.0.1920.1080")
+    width = asset.get('data', {}).get('resolution_width')
+    height = asset.get('data', {}).get('resolution_height')
+    pixel_aspect = asset.get('data', {}).get('pixel_aspect')
 
-        if bbox not in "0.0.1920.1080":
-            try:
-                x, y, r, t = bbox.split(".")
-            except Exception as e:
-                x = 0
-                y = 0
-                r = width
-                t = height
-                bbox = None
-                log.error("{}: {} \nFormat:Crop need to be set with dots, example: "
-                          "0.0.1920.1080, /nSetting to default".format(__name__, e))
-        else:
-            bbox = None
-
-    except KeyError:
-        log.warning(
-            "No resolution information found for \"{0}\".".format(
-                project["name"]
-            )
-        )
+    log.info("pixel_aspect: {}".format(pixel_aspect))
+    if any(not x for x in [width, height, pixel_aspect]):
+        log.error("Missing set shot attributes in DB. \nContact your supervisor!. \n\nWidth: `{0}` \nHeight: `{1}` \nPixel Asspect: `{2}`".format(width, height, pixel_aspect))
         return
+
+    bbox = asset.get('data', {}).get('crop')
+
+    if bbox:
+        try:
+            x, y, r, t = bbox.split(".")
+        except Exception as e:
+            bbox = None
+            log.error("{}: {} \nFormat:Crop need to be set with dots, example: "
+                      "0.0.1920.1080, /nSetting to default".format(__name__, e))
 
     used_formats = list()
     for f in nuke.formats():
@@ -609,7 +600,7 @@ def get_hierarchical_attr(entity, attr, default=None):
 #         dict
 #     """
 #
-#     node = container["_tool"]
+#     node = container["_node"]
 #     tile_color = node['tile_color'].value()
 #     if tile_color is None:
 #         return {}
