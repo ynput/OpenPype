@@ -196,8 +196,8 @@ class LoadSequence(api.Loader):
             ls_img_sequence,
             update_container
         )
-        log.info("this i can see")
-        node = container["_tool"]
+
+        node = container["_node"]
         # TODO: prepare also for other readers img/geo/camera
         assert node.Class() == "Reader", "Must be Reader"
 
@@ -245,7 +245,7 @@ class LoadSequence(api.Loader):
 
         from avalon.nuke import viewer_update_and_undo_stop
 
-        node = container["_tool"]
+        node = container["_node"]
         assert node.Class() == "Reader", "Must be Reader"
 
         with viewer_update_and_undo_stop():
