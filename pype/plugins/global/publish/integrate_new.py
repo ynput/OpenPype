@@ -403,8 +403,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.info("Registered {} items".format(len(representations)))
 
     def integrate(self, instance):
-        """ Move the files. If files are in render family, they will be
-            deleted after copy.
+        """ Move the files.
 
             Through `instance.data["transfers"]`
 
