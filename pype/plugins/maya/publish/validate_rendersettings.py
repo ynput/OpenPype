@@ -1,6 +1,6 @@
 import os
 
-import maya.cmds as cmds
+from maya import cmds, mel
 import pymel.core as pm
 
 import pyblish.api
@@ -69,7 +69,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             cls.log.error("Animation needs to be enabled. Use the same "
                           "frame for start and end to render single frame")
 
-        fname_prefix = cls.get_prefix(cls, renderer)
+        fname_prefix = cls.get_prefix(renderer)
 
         if prefix != fname_prefix:
             invalid = True
@@ -86,8 +86,10 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     @classmethod
     def get_prefix(cls, renderer):
         prefix = cls.RENDERER_PREFIX.get(renderer, cls.DEFAULT_PREFIX)
+        # maya.cmds and pymel.core return only default project directory and
+        # not the current one but only default.
         output_path = os.path.join(
-            pm.workspace.getcwd(), pm.workspace.fileRules["images"]
+            mel.eval("workspace -q -rd;"), pm.workspace.fileRules["images"]
         )
         # Workfile paths can be configured to have host name in file path.
         # In this case we want to avoid duplicate folder names.
@@ -110,7 +112,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             node = render_attrs["node"]
             prefix_attr = render_attrs["prefix"]
 
-            fname_prefix = cls.get_prefix(cls, renderer)
+            fname_prefix = cls.get_prefix(renderer)
             cmds.setAttr("{}.{}".format(node, prefix_attr),
                          fname_prefix, type="string")
 
