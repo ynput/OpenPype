@@ -1,11 +1,8 @@
 from collections import OrderedDict
 import avalon.api
 import avalon.nuke
-from pype.nuke import (
-    create_write_node
-)
+from pype.nuke.lib import create_write_node
 from pype import api as pype
-# from pypeapp import Logger
 
 import nuke
 
