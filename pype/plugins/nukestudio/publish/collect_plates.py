@@ -57,6 +57,9 @@ class CollectPlates(api.InstancePlugin):
             data['asset'], data["subset"], os.path.splitext(data["sourcePath"])[1]
         )
 
+        if "review" in instance.data["families"]:
+            data["label"] += " - review"
+
         # adding SourceResolution if Tag was present
         if instance.data.get("sourceResolution") and instance.data.get("main"):
             item = instance.data["item"]
@@ -71,9 +74,6 @@ class CollectPlates(api.InstancePlugin):
 
         self.log.debug("Creating instance with name: {}".format(data["name"]))
         instance.context.create_instance(**data)
-
-        # # remove original instance
-        # instance.context.remove(instance)
 
 
 class CollectPlatesData(api.InstancePlugin):

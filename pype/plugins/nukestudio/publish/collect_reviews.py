@@ -80,7 +80,7 @@ class CollectReviews(api.InstancePlugin):
         ext = os.path.splitext(file)[-1][1:]
 
         # change label
-        instance.data["label"] = "{0} - {1} - ({2})".format(
+        instance.data["label"] = "{0} - {1} - ({2}) - review".format(
             instance.data['asset'], instance.data["subset"], ext
         )
 
@@ -101,15 +101,6 @@ class CollectReviews(api.InstancePlugin):
             "ext": ext
         }
         instance.data["representations"].append(representation)
-
-        self.log.debug("_ `family`: {}".format(
-            instance.data["family"]))
-        self.log.debug("_ `families`: {}".format(
-            instance.data["families"]))
-        self.log.debug("_ `instance.data`: {}".format(
-            instance.data))
-        self.log.debug("_ `representations`: {}".format(
-            instance.data["representations"]))
 
         self.log.debug("Added representation: {}".format(representation))
 
@@ -146,63 +137,24 @@ class CollectReviews(api.InstancePlugin):
             thumb_representation)
 
     def version_data(self, instance):
-        name = instance.data["subset"]
-        asset = instance.data["asset"]
-        track = instance.data["track"]
-        version = instance.data["version"]
         item = instance.data["item"]
 
-        # get handles
-        handle_start = int(instance.data["handleStart"])
-        handle_end = int(instance.data["handleEnd"])
-
-        # get source frames
-        source_in = int(instance.data["sourceIn"])
-        source_out = int(instance.data["sourceOut"])
-
-
-        # get source frames
-        frame_start = instance.data.get("frameStart", 1)
-        frame_end = frame_start + (source_out - source_in)
-
-        # get source frames
-        instance.data["sourceInH"] = source_in - handle_start
-        instance.data["sourceOutH"] = source_out + handle_end
-
-        # get timeline frames
-        timeline_in = int(item.timelineIn())
-        timeline_out = int(item.timelineOut())
-
-        # frame-ranges with handles
-        timeline_frame_start = timeline_in - handle_start
-        timeline_frame_end = timeline_out + handle_end
-
-        # get colorspace
-        colorspace = item.sourceMediaColourTransform()  
-
-        # get sequence from context, and fps
-        fps = instance.data["fps"]
+        transfer_data = [
+            "handleStart", "handleEnd", "sourceIn", "sourceOut", "startFrame", "endFrame", "sourceInH", "sourceOutH", "timelineIn", "timelineOut", "timelineInH", "timelineOutH", "asset", "track", "version"
+        ]
 
         version_data = dict()
+        # pass data to version
+        version_data.update({k: instance.data[k] for k in transfer_data})
+
+        # add to data of representation
         version_data.update({
-            "handles": handle_start,
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
-            "sourceIn": source_in,
-            "sourceOut": source_out,
-            "startFrame": frame_start,
-            "endFrame": frame_end,
-            "timelineIn": timeline_in,
-            "timelineOut": timeline_out,
-            "timelineInHandles": timeline_frame_start,
-            "timelineOutHandles": timeline_frame_end,
-            "fps": fps,
-            "colorspace": colorspace,
+            "handles": version_data['handleStart'],
+            "colorspace": item.sourceMediaColourTransform(),
             "families": instance.data["families"],
-            "asset": asset,
-            "subset": name,
-            "track": track,
-            "version": int(version)
+            "subset": instance.data["subset"],
+            "fps": instance.context.data["fps"]
         })
         instance.data["versionData"] = version_data
+
         instance.data["source"] = instance.data["sourcePath"]
