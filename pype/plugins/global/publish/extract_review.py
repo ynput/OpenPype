@@ -19,7 +19,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
-    hosts = ["nuke", "maya"]
+    hosts = ["nuke", "maya", "shell"]
 
     def process(self, instance):
         # adding plugin attributes from presets
