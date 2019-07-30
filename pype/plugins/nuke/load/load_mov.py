@@ -182,7 +182,6 @@ class LoadMov(api.Loader):
         """
 
         from avalon.nuke import (
-            ls_img_sequence,
             update_container
         )
 
@@ -190,8 +189,7 @@ class LoadMov(api.Loader):
         # TODO: prepare also for other Read img/geo/camera
         assert node.Class() == "Read", "Must be Read"
 
-        root = api.get_representation_path(representation)
-        file = ls_img_sequence(os.path.dirname(root), one=True)
+        file = api.get_representation_path(representation)
 
         # Get start frame from version data
         version = io.find_one({
@@ -238,7 +236,7 @@ class LoadMov(api.Loader):
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
             node["file"].setValue(file["path"])
-            log.info("__ node['file']: {}".format(node["file"]))
+            log.info("__ node['file']: {}".format(node["file"].value()))
 
         # Set the global in to the start frame of the sequence
         loader_shift(node, first, relative=True)
