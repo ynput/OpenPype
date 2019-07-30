@@ -1,6 +1,4 @@
 from pyblish import api
-from copy import deepcopy
-
 
 class CollectClipSubsets(api.InstancePlugin):
     """Collect Subsets from selected Clips, Tags, Preset."""
