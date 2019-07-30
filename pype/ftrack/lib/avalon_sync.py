@@ -1,15 +1,13 @@
 import os
 import re
 import json
-from pypeapp import config
-from pype import lib as pypelib
 from pype.lib import get_avalon_database
 from bson.objectid import ObjectId
 import avalon
 import avalon.api
 from avalon import schema
 from avalon.vendor import toml, jsonschema
-from pypeapp import Logger
+from pypeapp import Logger, Anatomy, config
 
 ValidationError = jsonschema.ValidationError
 
@@ -63,9 +61,8 @@ def import_to_avalon(
         ft_project_code = ft_project['name']
 
         if av_project is None:
-            project_schema = pypelib.get_avalon_project_template_schema()
             item = {
-                'schema': project_schema,
+                'schema': "avalon-core:project-2.0",
                 'type': type,
                 'name': project_name,
                 'data': dict(),
@@ -215,9 +212,8 @@ def import_to_avalon(
             {'type': 'asset', 'name': name}
         )
         if avalon_asset is None:
-            asset_schema = pypelib.get_avalon_asset_template_schema()
             item = {
-                'schema': asset_schema,
+                'schema': "avalon-core:asset-2.0",
                 'name': name,
                 'silo': silo,
                 'parent': ObjectId(projectId),
@@ -480,12 +476,26 @@ def get_avalon_project(ft_project):
     return avalon_project
 
 
+def get_avalon_project_template():
+    """Get avalon template
+
+    Returns:
+        dictionary with templates
+    """
+    templates = Anatomy().templates
+    return {
+        'workfile': templates["avalon"]["workfile"],
+        'work': templates["avalon"]["work"],
+        'publish': templates["avalon"]["publish"]
+    }
+
+
 def get_project_config(entity):
     proj_config = {}
-    proj_config['schema'] = pypelib.get_avalon_project_config_schema()
+    proj_config['schema'] = 'avalon-core:config-1.0'
     proj_config['tasks'] = get_tasks(entity)
     proj_config['apps'] = get_project_apps(entity)
-    proj_config['template'] = pypelib.get_avalon_project_template()
+    proj_config['template'] = get_avalon_project_template()
 
     return proj_config
 
@@ -539,7 +549,7 @@ def avalon_check_name(entity, inSchema=None):
     if entity.entity_type in ['Project']:
         # data['type'] = 'project'
         name = entity['full_name']
-        # schema = get_avalon_project_template_schema()
+        # schema = "avalon-core:project-2.0"
 
     data['silo'] = 'Film'
 

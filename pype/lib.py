@@ -377,38 +377,6 @@ def get_data_hierarchical_attr(entity, attr_name):
         return None
 
 
-def get_avalon_project_config_schema():
-    schema = 'avalon-core:config-1.0'
-    return schema
-
-
-def get_avalon_project_template_schema():
-    schema = "avalon-core:project-2.0"
-    return schema
-
-
-def get_avalon_project_template():
-    from pypeapp import Anatomy
-
-    """
-    Get avalon template
-
-    Returns:
-        dictionary with templates
-    """
-    templates = Anatomy().templates
-    proj_template = {}
-    proj_template['workfile'] = templates["avalon"]["workfile"]
-    proj_template['work'] = templates["avalon"]["work"]
-    proj_template['publish'] = templates["avalon"]["publish"]
-    return proj_template
-
-
-def get_avalon_asset_template_schema():
-    schema = "avalon-core:asset-2.0"
-    return schema
-
-
 def get_avalon_database():
     if io._database is None:
         set_io_database()

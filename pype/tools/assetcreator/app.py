@@ -394,7 +394,7 @@ class Window(QtWidgets.QDialog):
         new_asset_info = {
             'parent': av_project['_id'],
             'name': name,
-            'schema': pypelib.get_avalon_asset_template_schema(),
+            'schema': "avalon-core:asset-2.0",
             'silo': silo,
             'type': 'asset',
             'data': new_asset_data

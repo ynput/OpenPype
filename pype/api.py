@@ -39,8 +39,7 @@ from .lib import (
     get_asset_data,
     modified_environ,
     add_tool_to_environment,
-    get_data_hierarchical_attr,
-    get_avalon_project_template
+    get_data_hierarchical_attr
 )
 
 __all__ = [
@@ -75,7 +74,5 @@ __all__ = [
     "add_tool_to_environment",
     "set_hierarchy",
     "set_project_code",
-    "get_data_hierarchical_attr",
-    "get_avalon_project_template",
-
+    "get_data_hierarchical_attr"
 ]
