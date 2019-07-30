@@ -138,6 +138,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "imagesequence"
     ]
 
+    enviro_filter = [
+                     "PATH",
+                     "PYTHONPATH",
+                     "FTRACK_API_USER",
+                     "FTRACK_API_KEY",
+                     "FTRACK_SERVER",
+                     "PYPE_ROOT"
+                     ]
+
+
     def _submit_deadline_post_job(self, instance, job):
         """
         Deadline specific code separated from :meth:`process` for sake of
@@ -181,13 +191,22 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
+
+
         environment = job["Props"].get("Env", {})
-        payload["JobInfo"].update({
-            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
-                key=key,
-                value=environment[key]
-            ) for index, key in enumerate(environment)
-        })
+        i = 0
+        for index, key in enumerate(environment):
+            self.log.info("KEY: {}".format(key))
+            self.log.info("FILTER: {}".format(self.enviro_filter))
+
+            if key.upper() in self.enviro_filter:
+                payload["JobInfo"].update({
+                    "EnvironmentKeyValue%d" % i: "{key}={value}".format(
+                        key=key,
+                        value=environment[key]
+                    )
+                })
+                i += 1
 
         # Avoid copied pools and remove secondary pool
         payload["JobInfo"]["Pool"] = "none"
