@@ -51,11 +51,16 @@ def __main__():
     elif platform.system().lower() == "windows":
         pype_command = "pype.bat"
 
-    args = [os.path.join(pype_root, pype_command),
-            "--node", "--publish", "--paths", " ".join(paths)]
+    args = [
+        os.path.join(pype_root, pype_command),
+        "publish",
+        " ".join(paths)
+    ]
 
     print("Pype command: {}".format(" ".join(args)))
-    subprocess.call(args, shell=True)
+    exit_code = subprocess.call(args, shell=True)
+    if exit_code != 0:
+        raise ValueError("Publishing failed.")
 
 
 if __name__ == '__main__':

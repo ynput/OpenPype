@@ -507,11 +507,17 @@ def get_project_apps(entity):
     apps = []
     for app in entity['custom_attributes']['applications']:
         try:
-            app_config = {}
-            app_config['name'] = app
-            app_config['label'] = toml.load(avalon.lib.which_app(app))['label']
+            toml_path = avalon.lib.which_app(app)
+            if not toml_path:
+                log.warning((
+                    'Missing config file for application "{}"'
+                ).format(app))
+                continue
 
-            apps.append(app_config)
+            apps.append({
+                'name': app,
+                'label': toml.load(toml_path)['label']
+            })
 
         except Exception as e:
             log.warning('Error with application {0} - {1}'.format(app, e))

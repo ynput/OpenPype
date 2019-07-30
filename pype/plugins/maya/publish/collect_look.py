@@ -211,6 +211,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     families = ["look"]
     label = "Collect Look"
     hosts = ["maya"]
+    maketx = True
 
     def process(self, instance):
         """Collect the Look in the instance with the correct layer settings"""
@@ -219,8 +220,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.collect(instance)
 
         # make ftrack publishable
-        instance.data["families"] = ['ftrack']
-        instance.data['maketx'] = True
+        instance.data['maketx'] = self.maketx
+        self.log.info('maketx: {}'.format(self.maketx))
 
     def collect(self, instance):
 

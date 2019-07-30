@@ -94,9 +94,9 @@ class LoadSequence(api.Loader):
 
         first = version_data.get("startFrame", None)
         last = version_data.get("endFrame", None)
-        handles = version_data.get("handles", None)
-        handle_start = version_data.get("handleStart", None)
-        handle_end = version_data.get("handleEnd", None)
+        handles = version_data.get("handles", 0)
+        handle_start = version_data.get("handleStart", 0)
+        handle_end = version_data.get("handleEnd", 0)
 
         # fix handle start and end if none are available
         if not handle_start and not handle_end:
@@ -130,10 +130,10 @@ class LoadSequence(api.Loader):
                 r["colorspace"].setValue(str(colorspace))
 
             loader_shift(r, first, relative=True)
-            r["origfirst"].setValue(first)
-            r["first"].setValue(first)
-            r["origlast"].setValue(last)
-            r["last"].setValue(last)
+            r["origfirst"].setValue(int(first))
+            r["first"].setValue(int(first))
+            r["origlast"].setValue(int(last))
+            r["last"].setValue(int(last))
 
             # add additional metadata from the version to imprint to Avalon knob
             add_keys = ["startFrame", "endFrame", "handles",
