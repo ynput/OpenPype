@@ -389,24 +389,19 @@ def reset_frame_range_handles():
     # setting active viewers
     nuke.frame(int(asset["data"]["fstart"]))
 
-    try:
-        vv = nuke.activeViewer().node()
-    except AttributeError:
-        log.error("No active viewer. Select any node and hit num `1`")
-        return
-
     range = '{0}-{1}'.format(
         int(asset["data"]["fstart"]),
         int(asset["data"]["fend"]))
 
-    vv['frame_range'].setValue(range)
-    vv['frame_range_lock'].setValue(True)
+    for node in nuke.allNodes(filter="Viewer"):
+        node['frame_range'].setValue(range)
+        node['frame_range_lock'].setValue(True)
 
-    log.info("_frameRange: {}".format(range))
-    log.info("frameRange: {}".format(vv['frame_range'].value()))
+        log.info("_frameRange: {}".format(range))
+        log.info("frameRange: {}".format(node['frame_range'].value()))
 
-    vv['frame_range'].setValue(range)
-    vv['frame_range_lock'].setValue(True)
+        node['frame_range'].setValue(range)
+        node['frame_range_lock'].setValue(True)
 
     # adding handle_start/end to root avalon knob
     if not avalon.nuke.set_avalon_knob_data(root, {
