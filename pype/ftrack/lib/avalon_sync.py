@@ -1,6 +1,7 @@
 import os
 import re
 import json
+from pypeapp import config
 from pype import lib as pypelib
 from pype.lib import get_avalon_database
 from bson.objectid import ObjectId
@@ -53,8 +54,8 @@ def import_to_avalon(
     if entity_type in ['Project']:
         type = 'project'
 
-        config = get_project_config(entity)
-        schema.validate(config)
+        proj_config = get_project_config(entity)
+        schema.validate(proj_config)
 
         av_project_code = None
         if av_project is not None and 'code' in av_project['data']:
@@ -68,7 +69,7 @@ def import_to_avalon(
                 'type': type,
                 'name': project_name,
                 'data': dict(),
-                'config': config,
+                'config': proj_config,
                 'parent': None,
             }
             schema.validate(item)
@@ -345,13 +346,12 @@ def changeability_check_childs(entity):
     childs = entity['children']
     for child in childs:
         if child.entity_type.lower() == 'task':
-            config = get_config_data()
-            if 'sync_to_avalon' in config:
-                config = config['sync_to_avalon']
-            if 'statuses_name_change' in config:
-                available_statuses = config['statuses_name_change']
-            else:
-                available_statuses = []
+            available_statuses = config.get_presets().get(
+                "ftrack", {}).get(
+                "ftrack_config", {}).get(
+                "sync_to_avalon", {}).get(
+                "statuses_name_change", []
+            )
             ent_status = child['status']['name'].lower()
             if ent_status not in available_statuses:
                 return False
@@ -481,13 +481,13 @@ def get_avalon_project(ft_project):
 
 
 def get_project_config(entity):
-    config = {}
-    config['schema'] = pypelib.get_avalon_project_config_schema()
-    config['tasks'] = get_tasks(entity)
-    config['apps'] = get_project_apps(entity)
-    config['template'] = pypelib.get_avalon_project_template()
+    proj_config = {}
+    proj_config['schema'] = pypelib.get_avalon_project_config_schema()
+    proj_config['tasks'] = get_tasks(entity)
+    proj_config['apps'] = get_project_apps(entity)
+    proj_config['template'] = pypelib.get_avalon_project_template()
 
-    return config
+    return proj_config
 
 
 def get_tasks(project):
@@ -555,24 +555,6 @@ def avalon_check_name(entity, inSchema=None):
     if alright is False:
         msg = '"{}" includes unsupported symbols like "dash" or "space"'
         raise ValueError(msg.format(name))
-
-
-def get_config_data():
-    path_items = [pypelib.get_presets_path(), 'ftrack', 'ftrack_config.json']
-    filepath = os.path.sep.join(path_items)
-    data = dict()
-    try:
-        with open(filepath) as data_file:
-            data = json.load(data_file)
-
-    except Exception as e:
-        msg = (
-            'Loading "Ftrack Config file" Failed.'
-            ' Please check log for more information.'
-        )
-        log.warning("{} - {}".format(msg, str(e)))
-
-    return data
 
 
 def show_errors(obj, event, errors):

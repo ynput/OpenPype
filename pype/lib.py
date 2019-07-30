@@ -473,13 +473,6 @@ def get_all_avalon_projects():
     return projects
 
 
-def get_presets_path():
-    templates = os.environ['PYPE_CONFIG']
-    path_items = [templates, 'presets']
-    filepath = os.path.sep.join(path_items)
-    return filepath
-
-
 def filter_pyblish_plugins(plugins):
     """
     This servers as plugin filter / modifier for pyblish. It will load plugin
