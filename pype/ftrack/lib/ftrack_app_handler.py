@@ -94,6 +94,9 @@ class AppAction(BaseHandler):
         ):
             return False
 
+        if entities[0]['parent'].entity_type.lower() == 'project':
+            return False
+
         ft_project = entities[0]['project']
 
         database = pypelib.get_avalon_database()

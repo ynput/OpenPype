@@ -43,9 +43,20 @@ class BaseEvent(BaseHandler):
         self.session.rollback()
         self.session._local_cache.clear()
 
-        self.launch(
-            self.session, event
-        )
+        try:
+            self.launch(
+                self.session, event
+            )
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            log_message = "{}/{}/Line: {}".format(
+                exc_type, fname, exc_tb.tb_lineno
+            )
+            self.log.error(
+                'Error during syncToAvalon: {}'.format(log_message),
+                exc_info=True
+            )
 
         return
 

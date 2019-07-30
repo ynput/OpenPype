@@ -32,16 +32,21 @@ class CollectClipHandles(api.ContextPlugin):
             if instance.data.get("main"):
                 name = instance.data["asset"]
                 if assets_shared.get(name):
-                    self.log.debug("Adding to shared assets: `{}`".format(
-                        instance.data["name"]))
-                    assets_shared[name].update({
-                        "handles": handles,
-                        "handleStart": handle_start,
-                        "handleEnd": handle_end
-                    })
+                    asset_shared = assets_shared.get(name)
+                else:
+                    asset_shared = assets_shared[name]
+
+                self.log.debug("Adding to shared assets: `{}`".format(
+                    instance.data["name"]))
+                asset_shared.update({
+                    "handles": handles,
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end
+                })
+
 
         for instance in filtered_instances:
-            if not instance.data.get("main") or not instance.data.get("handleTag"):
+            if not instance.data.get("main") and not instance.data.get("handleTag"):
                 self.log.debug("Synchronize handles on: `{}`".format(
                     instance.data["name"]))
                 name = instance.data["asset"]

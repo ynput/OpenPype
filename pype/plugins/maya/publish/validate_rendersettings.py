@@ -35,7 +35,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     DEFAULT_PADDING = 4
     RENDERER_PREFIX = {"vray": "<Scene>/<Layer>/<Layer>"}
-    DEFAULT_PREFIX = "<Scene>/<RenderLayer>/<RenderLayer>"
+    DEFAULT_PREFIX = "<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>"
 
     def process(self, instance):
 

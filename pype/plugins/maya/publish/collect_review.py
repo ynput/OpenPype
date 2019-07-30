@@ -56,6 +56,8 @@ class CollectReview(pyblish.api.InstancePlugin):
                     # data["publish"] = False
                     data['startFrameReview'] = instance.data['startFrame']
                     data['endFrameReview'] = instance.data['endFrame']
+                    data['startFrame'] = instance.data['startFrame']
+                    data['endFrame'] = instance.data['endFrame']
                     data['handles'] = instance.data['handles']
                     data['step'] = instance.data['step']
                     data['fps'] = instance.data['fps']

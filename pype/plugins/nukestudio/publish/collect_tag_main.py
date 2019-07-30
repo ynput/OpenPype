@@ -5,7 +5,7 @@ class CollectClipTagTypes(api.InstancePlugin):
     """Collect Types from Tags of selected track items."""
 
     order = api.CollectorOrder + 0.012
-    label = "Collect Plate Type from Tag"
+    label = "Collect main flag"
     hosts = ["nukestudio"]
     families = ['clip']
 
@@ -25,7 +25,8 @@ class CollectClipTagTypes(api.InstancePlugin):
                     t_subset.capitalize())
 
                 if "plateMain" in subset_name:
-                    instance.data["main"] = True
+                    if not instance.data.get("main"):
+                        instance.data["main"] = True
                     self.log.info("`plateMain` found in instance.name: `{}`".format(
                         instance.data["name"]))
         return

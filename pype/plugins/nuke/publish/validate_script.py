@@ -23,12 +23,24 @@ class ValidateScript(pyblish.api.InstancePlugin):
 
         # These attributes will be checked
         attributes = [
-            "fps", "fstart", "fend",
-            "resolution_width", "resolution_height", "pixel_aspect", "handle_start", "handle_end"
+            "fps",
+            "fstart",
+            "fend",
+            "resolution_width",
+            "resolution_height",
+            "handle_start",
+            "handle_end"
         ]
 
         # Value of these attributes can be found on parents
-        hierarchical_attributes = ["fps", "resolution_width", "resolution_height", "pixel_aspect", "handle_start", "handle_end"]
+        hierarchical_attributes = [
+            "fps",
+            "resolution_width",
+            "resolution_height",
+            "pixel_aspect",
+            "handle_start",
+            "handle_end"
+        ]
 
         missing_attributes = []
         asset_attributes = {}
@@ -84,8 +96,9 @@ class ValidateScript(pyblish.api.InstancePlugin):
         # Compare asset's values Nukescript X Database
         not_matching = []
         for attr in attributes:
-            self.log.debug("asset vs script attribute: {0}, {1}".format(
-                asset_attributes[attr], script_attributes[attr]))
+            self.log.debug("asset vs script attribute \"{}\": {}, {}".format(
+                attr, asset_attributes[attr], script_attributes[attr])
+            )
             if asset_attributes[attr] != script_attributes[attr]:
                 not_matching.append(attr)
 
