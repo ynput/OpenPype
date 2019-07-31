@@ -90,6 +90,9 @@ class ImagePlaneLoader(api.Loader):
                 )
                 image_plane_shape.frameExtension.set(start_frame)
 
+            # Ensure OpenEXRLoader plugin is loaded.
+            pc.loadPlugin("OpenEXRLoader.mll", quiet=True)
+
         new_nodes.extend(
             [image_plane_transform.name(), image_plane_shape.name()]
         )

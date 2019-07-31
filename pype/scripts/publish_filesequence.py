@@ -58,7 +58,9 @@ def __main__():
     ]
 
     print("Pype command: {}".format(" ".join(args)))
-    exit_code = subprocess.call(args, shell=True)
+    # Forcing forwaring the environment because environment inheritance does
+    # not always work.
+    exit_code = subprocess.call(args, env=os.environ)
     if exit_code != 0:
         raise ValueError("Publishing failed.")
 

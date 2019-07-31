@@ -11,5 +11,5 @@ class CollectWorkfileVersion(pyblish.api.ContextPlugin):
 
         project = context.data('activeProject')
         path = project.path()
-        context.data["version"] = pype.get_version_from_path(path)
+        context.data["version"] = int(pype.get_version_from_path(path))
         self.log.info("version: {}".format(context.data["version"]))

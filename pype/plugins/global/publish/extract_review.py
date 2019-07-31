@@ -19,6 +19,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
+    hosts = ["nuke", "maya", "shell"]
 
     def process(self, instance):
         # adding plugin attributes from presets
@@ -53,7 +54,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             ext = "mov"
                             self.log.warning(
                                 "`ext` attribute not in output profile. Setting to default ext: `mov`")
-                                
+
                         self.log.debug("instance.families: {}".format(instance.data['families']))
                         self.log.debug("profile.families: {}".format(profile['families']))
 
@@ -108,11 +109,41 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # necessary input data
                             # adds start arg only if image sequence
-                            if "mov" not in repre_new['ext']:
+                            if isinstance(repre["files"], list):
                                 input_args.append("-start_number {0} -framerate {1}".format(
                                     start_frame, fps))
 
                             input_args.append("-i {}".format(full_input_path))
+
+                            for audio in instance.data.get("audio", []):
+                                offset_frames = (
+                                    instance.data.get("startFrameReview") -
+                                    audio["offset"]
+                                )
+                                offset_seconds = offset_frames / fps
+
+                                if offset_seconds > 0:
+                                    input_args.append("-ss")
+                                else:
+                                    input_args.append("-itsoffset")
+
+                                    input_args.append(str(abs(offset_seconds)))
+
+                                    input_args.extend(
+                                        ["-i", audio["filename"]]
+                                    )
+
+                                    # Need to merge audio if there are more
+                                    # than 1 input.
+                                    if len(instance.data["audio"]) > 1:
+                                        input_args.extend(
+                                            [
+                                                "-filter_complex",
+                                                "amerge",
+                                                "-ac",
+                                                "2"
+                                            ]
+                                        )
 
                             output_args = []
                             # preset's output data
@@ -124,6 +155,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             if lb:
                                 output_args.append(
                                     "-filter:v drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{0})))/2):iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black".format(lb))
+
+                            # In case audio is longer than video.
+                            output_args.append("-shortest")
 
                             # output filename
                             output_args.append(full_output_path)
