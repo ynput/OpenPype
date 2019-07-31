@@ -22,7 +22,8 @@ def get_handle_irregular(asset):
     return (handle_start, handle_end)
 
 
-def get_hierarchy():
+
+def get_hierarchy(asset_name=None):
     """
     Obtain asset hierarchy path string from mongo db
 
@@ -30,18 +31,26 @@ def get_hierarchy():
         string: asset hierarchy path
 
     """
-    parents = io.find_one({
+    if not asset_name:
+        asset_name = io.Session.get("AVALON_ASSET", os.environ["AVALON_ASSET"])
+
+    asset = io.find_one({
         "type": 'asset',
-        "name": get_asset()}
-    )['data']['parents']
+        "name": asset_name
+    })
 
-    hierarchy = ""
-    if parents and len(parents) > 0:
-        # hierarchy = os.path.sep.join(hierarchy)
-        hierarchy = os.path.join(*parents).replace("\\", "/")
-    return hierarchy
+    hierarchy_items = []
+    entity = asset
+    while True:
+        parent_id = entity.get("data", {}).get("visualParent")
+        if not parent_id:
+            break
+        entity = io.find_one({"_id": parent_id})
+        hierarchy_items.append(entity["name"])
 
-    
+    return "/".join(hierarchy_items)
+
+
 def add_tool_to_environment(tools):
     """
     It is adding dynamic environment to os environment.
