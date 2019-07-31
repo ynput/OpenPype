@@ -20,7 +20,6 @@ from pypeapp import Logger
 
 
 from .templates import (
-    get_project_name,
     get_hierarchy,
     get_asset,
     set_avalon_workdir,
@@ -60,7 +59,6 @@ __all__ = [
     "get_project_data",
     "get_asset_data",
     "get_project",
-    "get_project_name",
     "get_hierarchy",
     "get_asset",
     "set_avalon_workdir",

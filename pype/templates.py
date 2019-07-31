@@ -17,24 +17,6 @@ def set_session():
     self.SESSION = avalon.session
 
 
-def get_project_name():
-    """
-    Obtain project name from environment variable
-
-    Returns:
-        string: project name
-
-    """
-    if self.SESSION is None:
-        set_session()
-    project_name = self.SESSION.get("AVALON_PROJECT", None) \
-        or os.getenv("AVALON_PROJECT", None)
-    assert project_name, log.error("missing `AVALON_PROJECT`"
-                                   "in avalon session "
-                                   "or os.environ!")
-    return project_name
-
-
 def get_asset():
     """
     Obtain Asset string from session or environment variable
@@ -76,10 +58,9 @@ def get_hierarchy():
     return hierarchy
 
 
-def get_context_data(project=None,
-                     hierarchy=None,
-                     asset=None,
-                     task=None):
+def get_context_data(
+    project_name=None, hierarchy=None, asset=None, task_name=None
+):
     """
     Collect all main contextual data
 
