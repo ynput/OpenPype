@@ -43,6 +43,9 @@ from .lib import (
     get_avalon_project_template
 )
 
+# Special naming case for subprocess since its a built-in method.
+from .lib import _subprocess as subprocess
+
 __all__ = [
     # plugin classes
     "Extractor",
@@ -54,12 +57,14 @@ __all__ = [
     # action
     "get_errored_instances_from_context",
     "RepairAction",
+    "RepairContextAction",
 
     "Logger",
 
     "ValidationException",
 
     # get contextual data
+    "version_up",
     "get_handle_irregular",
     "get_project_data",
     "get_asset_data",
@@ -77,5 +82,6 @@ __all__ = [
     "set_project_code",
     "get_data_hierarchical_attr",
     "get_avalon_project_template",
+    "subprocess"
 
 ]

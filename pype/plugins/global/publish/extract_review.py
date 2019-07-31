@@ -1,7 +1,8 @@
 import os
+
 import pyblish.api
-import subprocess
 from pype.vendor import clique
+import pype.api
 from pypeapp import config
 
 
@@ -53,7 +54,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             ext = "mov"
                             self.log.warning(
                                 "`ext` attribute not in output profile. Setting to default ext: `mov`")
-                                
+
                         self.log.debug("instance.families: {}".format(instance.data['families']))
                         self.log.debug("profile.families: {}".format(profile['families']))
 
@@ -136,21 +137,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # run subprocess
                             self.log.debug("{}".format(subprcs_cmd))
-                            sub_proc = subprocess.Popen(
-                                subprcs_cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                stdin=subprocess.PIPE,
-                                cwd=os.path.dirname(output_args[-1])
-                            )
-
-                            output = sub_proc.communicate()[0]
-
-                            if not os.path.isfile(full_output_path):
-                                raise ValueError(
-                                    "Quicktime wasn't created succesfully: "
-                                    "{}".format(output)
-                                )
+                            pype.api.subprocess(subprcs_cmd)
 
                             # create representation data
                             repre_new.update({

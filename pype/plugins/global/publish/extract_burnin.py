@@ -1,7 +1,7 @@
 import os
-import subprocess
-import pype.api
 import json
+
+import pype.api
 import pyblish
 
 
@@ -67,25 +67,36 @@ class ExtractBurnin(pype.api.Extractor):
                                       "otio_burnin.py"))
 
             self.log.debug("__ scriptpath: {}".format(scriptpath))
-            self.log.debug("__ EXE: {}".format(os.getenv("PYPE_PYTHON_EXE")))
 
-            try:
-                p = subprocess.Popen(
-                    [os.getenv("PYPE_PYTHON_EXE"), scriptpath, json_data]
-                )
-                p.wait()
-                if not os.path.isfile(full_burnin_path):
-                    raise RuntimeError("File not existing: {}".format(full_burnin_path))
-            except Exception as e:
-                raise RuntimeError("Burnin script didn't work: `{}`".format(e))
+            # Get executable.
+            executable = os.getenv("PYPE_PYTHON_EXE")
 
-            if os.path.exists(full_burnin_path):
-                repre_update = {
-                    "files": movieFileBurnin,
-                    "name": repre["name"]
-                }
-                instance.data["representations"][i].update(repre_update)
+            # There can be multiple paths in PYPE_PYTHON_EXE, in which case
+            # we just take first one.
+            if os.pathsep in executable:
+                executable = executable.split(os.pathsep)[0]
 
-                # removing the source mov file
-                os.remove(full_movie_path)
-                self.log.debug("Removed: `{}`".format(full_movie_path))
+            self.log.debug("__ EXE: {}".format(executable))
+
+            args = [executable, scriptpath, json_data]
+            self.log.debug("Executing: {}".format(args))
+            pype.api.subprocess(args)
+
+            repre_update = {
+                "files": movieFileBurnin,
+                "name": repre["name"],
+                "tags": [x for x in repre["tags"] if x != "delete"]
+            }
+            instance.data["representations"][i].update(repre_update)
+
+            # removing the source mov file
+            os.remove(full_movie_path)
+            self.log.debug("Removed: `{}`".format(full_movie_path))
+
+        # Remove any representations tagged for deletion.
+        for repre in instance.data["representations"]:
+            if "delete" in repre.get("tags", []):
+                self.log.debug("Removing representation: {}".format(repre))
+                instance.data["representations"].remove(repre)
+
+        self.log.debug(instance.data["representations"])
