@@ -17,23 +17,6 @@ def set_session():
     self.SESSION = avalon.session
 
 
-def set_project_code(code):
-    """
-    Set project code into os.environ
-
-    Args:
-        code (string): project code
-
-    Returns:
-        os.environ[KEY]: project code
-        avalon.sesion[KEY]: project code
-    """
-    if self.SESSION is None:
-        set_session()
-    self.SESSION["AVALON_PROJECTCODE"] = code
-    os.environ["AVALON_PROJECTCODE"] = code
-
-
 def get_project_name():
     """
     Obtain project name from environment variable
@@ -73,26 +56,6 @@ def get_asset():
     return asset
 
 
-def get_task():
-    """
-    Obtain Task string from session or environment variable
-
-    Returns:
-        string: task name
-
-    Raises:
-        log: error
-    """
-    if self.SESSION is None:
-        set_session()
-    task = self.SESSION.get("AVALON_TASK", None) \
-        or os.getenv("AVALON_TASK", None)
-    assert task, log.error("missing `AVALON_TASK`"
-                           "in avalon session "
-                           "or os.environ!")
-    return task
-
-
 def get_hierarchy():
     """
     Obtain asset hierarchy path string from mongo db
@@ -130,13 +93,25 @@ def get_context_data(project=None,
         dict: contextual data
 
     """
+    if not task_name:
+        if self.SESSION is None:
+            set_session()
+        task_name = self.SESSION.get("AVALON_TASK", None) \
+            or os.getenv("AVALON_TASK", None)
+        assert task_name, log.error(
+            "missing `AVALON_TASK` in avalon session or os.environ!"
+        )
     application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
+
+    os.environ['AVALON_PROJECT'] = project_name
+    io.Session['AVALON_PROJECT'] = project_name
+
     project_doc = io.find_one({"type": "project"})
     data = {
-        "task": task or get_task(),
+        "task": task_name,
         "asset": asset or get_asset(),
         "project": {
-            "name": project or project_doc["name"],
+            "name": project_doc["name"],
             "code": project_doc["data"].get("code", '')
         },
         "hierarchy": hierarchy or get_hierarchy(),

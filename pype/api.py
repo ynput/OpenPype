@@ -23,10 +23,8 @@ from .templates import (
     get_project_name,
     get_hierarchy,
     get_asset,
-    get_task,
     set_avalon_workdir,
-    get_workdir_template,
-    set_project_code
+    get_workdir_template
 )
 
 from .lib import (
@@ -65,12 +63,10 @@ __all__ = [
     "get_project_name",
     "get_hierarchy",
     "get_asset",
-    "get_task",
     "set_avalon_workdir",
     "get_version_from_path",
     "get_workdir_template",
     "modified_environ",
     "add_tool_to_environment",
-    "set_project_code",
     "get_data_hierarchical_attr"
 ]
