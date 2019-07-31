@@ -369,7 +369,9 @@ def reset_frame_range_handles():
 
     # get handles values
     handles = avalon.nuke.get_handles(asset)
-    handle_start, handle_end = pype.get_handle_irregular(asset)
+    asset_entity = pype.get_asset(asset)
+    handle_start = asset_entity["data"]["handle_start"]
+    handle_end = asset_entity["data"]["handle_end"]
 
     fps = asset["data"]["fps"]
     edit_in = int(asset["data"]["fstart"]) - handle_start

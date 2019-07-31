@@ -22,14 +22,11 @@ from .lib import (
     version_up,
     get_handle_irregular,
     get_asset,
-    get_asset_data,
     get_project,
-    get_project_data,
     get_hierarchy,
     get_version_from_path,
     modified_environ,
-    add_tool_to_environment,
-    get_data_hierarchical_attr
+    add_tool_to_environment
 )
 
 __all__ = [
@@ -50,13 +47,10 @@ __all__ = [
 
     # get contextual data
     "get_handle_irregular",
-    "get_project_data",
-    "get_asset_data",
     "get_project",
     "get_hierarchy",
     "get_asset",
     "get_version_from_path"
     "modified_environ",
-    "add_tool_to_environment",
-    "get_data_hierarchical_attr"
+    "add_tool_to_environment"
 ]

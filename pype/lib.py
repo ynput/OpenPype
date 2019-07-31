@@ -15,14 +15,6 @@ import avalon
 log = logging.getLogger(__name__)
 
 
-def get_handle_irregular(asset):
-    data = asset["data"]
-    handle_start = data.get("handle_start", 0)
-    handle_end = data.get("handle_end", 0)
-    return (handle_start, handle_end)
-
-
-
 def get_hierarchy(asset_name=None):
     """
     Obtain asset hierarchy path string from mongo db
@@ -302,29 +294,6 @@ def _get_host_name():
     return _host.__name__.rsplit(".", 1)[-1]
 
 
-def get_project_data():
-    """Get the data of the current project
-
-    The data of the project can contain things like:
-        resolution
-        fps
-        renderer
-
-    Returns:
-        dict:
-
-    """
-
-    project_name = io.active_project()
-    project = io.find_one({"name": project_name,
-                           "type": "project"},
-                          projection={"data": True})
-
-    data = project.get("data", {})
-
-    return data
-
-
 def get_asset(asset_name=None):
     entity_data_keys_from_project_when_miss = [
         "fstart", "fend", "handle_start", "handle_end", "fps",
@@ -406,23 +375,6 @@ def get_project():
     return io.find_one({"type": "project"})
 
 
-def get_asset_data(asset=None):
-    """Get the data from the current asset
-
-    Args:
-        asset(str, Optional): name of the asset, eg:
-
-    Returns:
-        dict
-    """
-    asset_name = asset or avalon.api.Session["AVALON_ASSET"]
-    document = io.find_one({"name": asset_name,
-                            "type": "asset"})
-    data = document.get("data", {})
-
-    return data
-
-
 def get_version_from_path(file):
     """
     Finds version number in file path string
@@ -443,23 +395,6 @@ def get_version_from_path(file):
             "`{}` missing version string."
             "Example `v004`".format(file)
         )
-
-
-def get_data_hierarchical_attr(entity, attr_name):
-    vp_attr = 'visualParent'
-    data = entity['data']
-    value = data.get(attr_name, None)
-    if value is not None:
-        return value
-    elif vp_attr in data:
-        if data[vp_attr] is None:
-            parent_id = entity['parent']
-        else:
-            parent_id = data[vp_attr]
-        parent = io.find_one({"_id": parent_id})
-        return get_data_hierarchical_attr(parent, attr_name)
-    else:
-        return None
 
 
 def get_avalon_database():
