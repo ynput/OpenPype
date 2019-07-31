@@ -26,7 +26,6 @@ from .templates import (
     get_task,
     set_avalon_workdir,
     get_workdir_template,
-    set_hierarchy,
     set_project_code
 )
 
@@ -72,7 +71,6 @@ __all__ = [
     "get_workdir_template",
     "modified_environ",
     "add_tool_to_environment",
-    "set_hierarchy",
     "set_project_code",
     "get_data_hierarchical_attr"
 ]

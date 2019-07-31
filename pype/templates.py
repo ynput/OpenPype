@@ -113,19 +113,6 @@ def get_hierarchy():
     return hierarchy
 
 
-def set_hierarchy(hierarchy):
-    """
-    Updates os.environ and session with asset hierarchy
-
-    Args:
-        hierarchy (string): hierarchy path ("silo/folder/seq")
-    """
-    if self.SESSION is None:
-        set_session()
-    self.SESSION["AVALON_HIERARCHY"] = hierarchy
-    os.environ["AVALON_HIERARCHY"] = hierarchy
-
-
 def get_context_data(project=None,
                      hierarchy=None,
                      asset=None,

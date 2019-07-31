@@ -94,7 +94,9 @@ def context(project_name, asset, task, app):
     SESSION["AVALON_PROJECTCODE"] = project_code
 
     hierarchy = pype.get_hierarchy()
-    pype.set_hierarchy(hierarchy)
+    os.environ["AVALON_HIERARCHY"] = hierarchy
+    SESSION["AVALON_HIERARCHY"] = hierarchy
+
     fix_paths = {k: v.replace("\\", "/") for k, v in SESSION.items()
                  if isinstance(v, str)}
     SESSION.update(fix_paths)
