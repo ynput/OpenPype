@@ -17,27 +17,6 @@ def set_session():
     self.SESSION = avalon.session
 
 
-def get_version_from_path(file):
-    """
-    Finds version number in file path string
-
-    Args:
-        file (string): file path
-
-    Returns:
-        v: version number in string ('001')
-
-    """
-    pattern = re.compile(r"[\._]v([0-9]*)")
-    try:
-        v = pattern.findall(file)[0]
-        return v
-    except IndexError:
-        log.error("templates:get_version_from_workfile:"
-                  "`{}` missing version string."
-                  "Example `v004`".format(file))
-
-
 def get_project_code():
     """
     Obtain project code from database
