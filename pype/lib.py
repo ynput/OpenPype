@@ -302,30 +302,6 @@ def _get_host_name():
     return _host.__name__.rsplit(".", 1)[-1]
 
 
-def get_asset_fps():
-    """Returns project's FPS, if not found will return 25 by default
-
-    Returns:
-        int, float
-
-    """
-
-    key = "fps"
-
-    # FPS from asset data (if set)
-    asset_data = get_asset_data()
-    if key in asset_data:
-        return asset_data[key]
-
-    # FPS from project data (if set)
-    project_data = get_project_data()
-    if key in project_data:
-        return project_data[key]
-
-    # Fallback to 25 FPS
-    return 25.0
-
-
 def get_project_data():
     """Get the data of the current project
 

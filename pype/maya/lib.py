@@ -1887,7 +1887,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset_fps()
+    fps = lib.get_asset()["data"]["fps"]
     current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
 
     if current_fps != fps:
