@@ -4,6 +4,7 @@ import logging
 import importlib
 import itertools
 import contextlib
+import subprocess
 
 from .vendor import pather
 from .vendor.pather.error import ParseError
@@ -13,6 +14,24 @@ import avalon.api
 import avalon
 
 log = logging.getLogger(__name__)
+
+
+# Special naming case for subprocess since its a built-in method.
+def _subprocess(args):
+    """Convenience method for getting output errors for subprocess."""
+
+    proc = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        stdin=subprocess.PIPE,
+        env=os.environ
+    )
+
+    output = proc.communicate()[0]
+
+    if proc.returncode != 0:
+        raise ValueError("\"{}\" was not successful: {}".format(args, output))
 
 
 def get_handle_irregular(asset):
