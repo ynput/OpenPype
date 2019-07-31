@@ -320,6 +320,70 @@ def get_project_data():
     return data
 
 
+def get_asset(asset_name=None):
+    entity_data_keys_from_project_when_miss = [
+        "fstart", "fend", "handle_start", "handle_end", "fps",
+        "resolution_width", "resolution_height"
+    ]
+
+    entity_keys_from_project_when_miss = []
+
+    alternatives = {
+        "handle_start": "handles",
+        "handle_end": "handles"
+    }
+
+    if not asset_name:
+        asset_name = avalon.api.Session["AVALON_ASSET"]
+
+    asset_document = io.find_one({"name": asset_name, "type": "asset"})
+    if not asset_document:
+        raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
+
+    project_document = io.find_one({"type": "project"})
+
+    for key in entity_data_keys_from_project_when_miss:
+        if asset_document["data"].get(key):
+            continue
+
+        value = project_document["data"].get(key)
+        if value or key not in alternatives:
+            asset_document["data"][key] = value
+            continue
+
+        alt_key = alternatives[key]
+        value = asset_document["data"].get(alt_key)
+        if value:
+            asset_document["data"][key] = value
+            continue
+
+        value = project_document["data"].get(alt_key)
+        if value:
+            asset_document["data"][key] = value
+            continue
+
+    for key in entity_keys_from_project_when_miss:
+        if asset_document.get(key):
+            continue
+
+        value = project_document.get(key)
+        if value or key not in alternatives:
+            asset_document[key] = value
+            continue
+
+        alt_key = alternatives[key]
+        value = asset_document.get(alt_key)
+        if value:
+            asset_document[key] = value
+            continue
+
+        value = project_document.get(alt_key)
+        if value:
+            asset_document[key] = value
+            continue
+
+    return asset_document
+
 def get_project():
     io.install()
     return io.find_one({"type": "project"})
@@ -387,20 +451,16 @@ def get_avalon_database():
 
 
 def set_io_database():
-    project = os.environ.get('AVALON_PROJECT', '')
-    asset = os.environ.get('AVALON_ASSET', '')
-    silo = os.environ.get('AVALON_SILO', '')
-    os.environ['AVALON_PROJECT'] = project
-    os.environ['AVALON_ASSET'] = asset
-    os.environ['AVALON_SILO'] = silo
+    required_keys = ["AVALON_PROJECT", "AVALON_ASSET", "AVALON_SILO"]
+    for key in required_keys:
+        os.environ[key] = os.environ.get(key, "")
     io.install()
 
 
 def get_all_avalon_projects():
     db = get_avalon_database()
-    project_names = db.collection_names()
     projects = []
-    for name in project_names:
+    for name in db.collection_names():
         projects.append(db[name].find_one({'type': 'project'}))
     return projects
 
