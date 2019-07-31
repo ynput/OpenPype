@@ -160,10 +160,13 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
             # Get family from the data
             families = data.get("families", ["render"])
-            assert isinstance(families, (list, tuple)), "Must be iterable"
-            assert families, "Must have at least a single family"
-            families.append("ftrack")
-            families.append("review")
+            if "render" not in families:
+                families.append("render")
+            if "ftrack" not in families:
+                families.append("ftrack")
+            if "review" not in families:
+                families.append("review")
+
             for collection in collections:
                 instance = context.create_instance(str(collection))
                 self.log.info("Collection: %s" % list(collection))

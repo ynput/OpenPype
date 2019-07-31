@@ -250,8 +250,15 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         render publish job and submit job to farm.
         """
         # setup muster environment
-        self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL",
-                                              "https://localhost:9891")
+        self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
+
+        if self.MUSTER_REST_URL is None:
+            self.log.debug(
+                "\"MUSTER_REST_URL\" is not found. Skipping "
+                "\"{}\".".format(instance)
+            )
+            return
+
         self._load_credentials()
         self._authenticate()
         self._get_templates()

@@ -1,28 +1,15 @@
 import os
 import sys
+import logging
+
+import nuke
 
 from avalon import api as avalon
 from avalon.tools import workfiles
 from pyblish import api as pyblish
-
-from .. import api
-
 from pype.nuke import menu
-import logging
-
-from .lib import (
-    create_write_node
-)
-
-import nuke
-
 from pypeapp import Logger
-
-# #removing logger handler created in avalon_core
-# for name, handler in [(handler.get_name(), handler)
-#                       for handler in Logger.logging.root.handlers[:]]:
-#     if "pype" not in str(name).lower():
-#         Logger.logging.root.removeHandler(handler)
+from . import lib
 
 
 self = sys.modules[__name__]
@@ -137,6 +124,9 @@ def install():
 
     if launch_workfiles:
         nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
+
+    # Set context settings.
+    nuke.addOnCreate(lib.set_context_settings, nodeClass="Root")
 
 
 def launch_workfiles_app():

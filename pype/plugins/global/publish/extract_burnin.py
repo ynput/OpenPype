@@ -17,6 +17,7 @@ class ExtractBurnin(pype.api.Extractor):
     label = "Quicktime with burnins"
     order = pyblish.api.ExtractorOrder + 0.03
     families = ["review", "burnin"]
+    hosts = ["nuke", "maya", "shell"]
     optional = True
 
     def process(self, instance):
@@ -61,10 +62,23 @@ class ExtractBurnin(pype.api.Extractor):
             self.log.debug("__ burnin_data2: {}".format(burnin_data))
 
             json_data = json.dumps(burnin_data)
-            scriptpath = os.path.normpath(os.path.join(os.environ['PYPE_MODULE_ROOT'],
-                                      "pype",
-                                      "scripts",
-                                      "otio_burnin.py"))
+
+            # Get script path.
+            module_path = os.environ['PYPE_MODULE_ROOT']
+
+            # There can be multiple paths in PYPE_MODULE_ROOT, in which case
+            # we just take first one.
+            if os.pathsep in module_path:
+                module_path = module_path.split(os.pathsep)[0]
+
+            scriptpath = os.path.normpath(
+                os.path.join(
+                    module_path,
+                    "pype",
+                    "scripts",
+                    "otio_burnin.py"
+                )
+            )
 
             self.log.debug("__ scriptpath: {}".format(scriptpath))
 

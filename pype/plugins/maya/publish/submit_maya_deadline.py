@@ -51,7 +51,7 @@ def get_renderer_variables(renderlayer=None):
         # returns an index number.
         filename_base = os.path.basename(filename_0)
         extension = os.path.splitext(filename_base)[-1].strip(".")
-        filename_prefix = "<Scene>/<RenderLayer>/<RenderLayer>"
+        filename_prefix = cmds.getAttr("defaultRenderGlobals.imageFilePrefix")
 
     return {"ext": extension,
             "filename_prefix": filename_prefix,
@@ -77,8 +77,19 @@ def preview_fname(folder, scene, layer, padding, ext):
 
     """
 
-    # Following hardcoded "<Scene>/<Scene>_<Layer>/<Layer>"
-    output = "{scene}/{layer}/{layer}.{number}.{ext}".format(
+    fileprefix = cmds.getAttr("defaultRenderGlobals.imageFilePrefix")
+    output = fileprefix + ".{number}.{ext}"
+    # RenderPass is currently hardcoded to "beauty" because its not important
+    # for the deadline submission, but we will need something to replace
+    # "<RenderPass>".
+    mapping = {
+        "<Scene>": "{scene}",
+        "<RenderLayer>": "{layer}",
+        "RenderPass": "beauty"
+    }
+    for key, value in mapping.items():
+        output = output.replace(key, value)
+    output = output.format(
         scene=scene,
         layer=layer,
         number="#" * padding,

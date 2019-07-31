@@ -1,4 +1,4 @@
-from maya import cmds
+from maya import cmds, mel
 import pymel.core as pm
 
 import pyblish.api
@@ -76,3 +76,39 @@ class CollectReview(pyblish.api.InstancePlugin):
             instance.data["families"] = ['ftrack']
 
             cmds.setAttr(str(instance) + '.active', 1)
+
+            # Collect audio
+            playback_slider = mel.eval('$tmpVar=$gPlayBackSlider')
+            audio_name = cmds.timeControl(playback_slider, q=True, s=True)
+            display_sounds = cmds.timeControl(
+                playback_slider, q=True, displaySound=True
+            )
+
+            audio_nodes = []
+
+            if audio_name:
+                audio_nodes.append(pm.PyNode(audio_name))
+
+            if not audio_name and display_sounds:
+                start_frame = int(pm.playbackOptions(q=True, min=True))
+                end_frame = float(pm.playbackOptions(q=True, max=True))
+                frame_range = range(int(start_frame), int(end_frame))
+
+                for node in pm.ls(type="audio"):
+                    # Check if frame range and audio range intersections,
+                    # for whether to include this audio node or not.
+                    start_audio = node.offset.get()
+                    end_audio = node.offset.get() + node.duration.get()
+                    audio_range = range(int(start_audio), int(end_audio))
+
+                    if bool(set(frame_range).intersection(audio_range)):
+                        audio_nodes.append(node)
+
+            instance.data["audio"] = []
+            for node in audio_nodes:
+                instance.data["audio"].append(
+                    {
+                        "offset": node.offset.get(),
+                        "filename": node.filename.get()
+                    }
+                )

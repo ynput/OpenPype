@@ -118,7 +118,7 @@ class ExtractQuicktime(pype.api.Extractor):
             'endFrame': end,
             'frameRate': fps,
             'preview': True,
-            'tags': ['review']
+            'tags': ['review', 'delete']
         }
         instance.data["representations"].append(representation)
 
