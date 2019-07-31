@@ -223,7 +223,8 @@ def create_write_node(name, data, prenodes=None):
     fpath = data["fpath_template"].format(
         work=fpath, version=data["version"], subset=data["subset"],
         frame=data["frame"],
-        ext=data["nuke_dataflow_writes"]["file_type"])
+        ext=data["nuke_dataflow_writes"]["file_type"]
+    )
 
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):

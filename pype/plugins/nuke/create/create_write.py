@@ -68,7 +68,7 @@ class CreateWriteRender(avalon.nuke.Creator):
             else:
                 self.log.info("Adding template path from plugin")
                 write_data.update({
-                    "fpath_template": "{work}/renders/v{version}/{subset}.{frame}.{ext}"})
+                    "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"})
 
             create_write_node(self.data["subset"], write_data)
 

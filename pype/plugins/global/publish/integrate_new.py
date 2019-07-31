@@ -403,19 +403,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.info("Registered {} items".format(len(representations)))
 
     def integrate(self, instance):
-        """Move the files
+        """ Move the files.
 
-        Through `instance.data["transfers"]`
+            Through `instance.data["transfers"]`
 
-        Args:
-            instance: the instance to integrate
+            Args:
+                instance: the instance to integrate
         """
-
-        transfers = instance.data.get("transfers", list())
-
-        for src, dest in transfers:
-            if os.path.normpath(src) != os.path.normpath(dest):
-                self.copy_file(src, dest)
 
         # Produce hardlinked copies
         # Note: hardlink can only be produced between two files on the same
