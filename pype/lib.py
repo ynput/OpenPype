@@ -273,29 +273,6 @@ def _get_host_name():
     return _host.__name__.rsplit(".", 1)[-1]
 
 
-def collect_container_metadata(container):
-    """Add additional data based on the current host
-
-    If the host application's lib module does not have a function to inject
-    additional data it will return the input container
-
-    Args:
-        container (dict): collection if representation data in host
-
-    Returns:
-        generator
-    """
-    # TODO: Improve method of getting the host lib module
-    host_name = _get_host_name()
-    package_name = "pype.{}.lib".format(host_name)
-    hostlib = importlib.import_module(package_name)
-
-    if not hasattr(hostlib, "get_additional_data"):
-        return {}
-
-    return hostlib.get_additional_data(container)
-
-
 def get_asset_fps():
     """Returns project's FPS, if not found will return 25 by default
 
