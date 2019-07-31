@@ -76,11 +76,11 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     )
                 else:
                     end_frame += (
-                        instance.data['endFrame'] - instance.data['startFrame']
+                        instance.data["frameEnd"] - instance.data["frameStart"]
                     )
 
-                if not comp.get('frameRate'):
-                    comp['frameRate'] = instance.context.data['fps']
+                if not comp.get('fps'):
+                    comp['fps'] = instance.context.data['fps']
                 location = self.get_ftrack_location(
                     'ftrack.server', ft_session
                 )
@@ -90,7 +90,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "metadata": {'ftr_meta': json.dumps({
                                  'frameIn': int(start_frame),
                                  'frameOut': int(end_frame),
-                                 'frameRate': float(comp['frameRate'])})}
+                                 'frameRate': float(comp['fps'])})}
                 }
                 comp['thumbnail'] = False
             else:

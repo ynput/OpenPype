@@ -43,15 +43,15 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                               "type": "asset"})
 
         # get frame start > first try from asset data
-        frame_start = context.data["assetData"].get("fstart", None)
+        frame_start = context.data["assetData"].get("frameStart", None)
         if not frame_start:
             self.log.debug("frame_start not on assetData")
             # get frame start > second try from parent data
-            frame_start = pype.get_data_hierarchical_attr(entity, "fstart")
+            frame_start = pype.get_data_hierarchical_attr(entity, "frameStart")
             if not frame_start:
                 self.log.debug("frame_start not on any parent entity")
                 # get frame start > third try from parent data
-                frame_start = asset_default["fstart"]
+                frame_start = asset_default["frameStart"]
 
         assert frame_start, "No `frame_start` data found, "
         "please set `fstart` on asset"
@@ -129,7 +129,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                     instance.data.update({
                         "subset": subset_name,
                         "task": task,
-                        "fstart": frame_start,
+                        "frameStart": frame_start,
                         "handles": handles,
                         "host": host,
                         "asset": asset,

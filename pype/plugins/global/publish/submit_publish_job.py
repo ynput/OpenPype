@@ -121,7 +121,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         - publishJobState (str, Optional): "Active" or "Suspended"
             This defaults to "Suspended"
 
-    This requires a "startFrame" and "endFrame" to be present in instance.data
+    This requires a "frameStart" and "frameEnd" to be present in instance.data
     or in context.data.
 
     """
@@ -240,12 +240,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Get start/end frame from instance, if not available get from context
         context = instance.context
-        start = instance.data.get("startFrame")
+        start = instance.data.get("frameStart")
         if start is None:
-            start = context.data["startFrame"]
-        end = instance.data.get("endFrame")
+            start = context.data["frameStart"]
+        end = instance.data.get("frameEnd")
         if end is None:
-            end = context.data["endFrame"]
+            end = context.data["frameEnd"]
 
         # Add in regex for sequence filename
         # This assumes the output files start with subset name and ends with
@@ -270,8 +270,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         metadata = {
             "asset": asset,
             "regex": regex,
-            "startFrame": start,
-            "endFrame": end,
+            "frameStart": start,
+            "frameEnd": end,
             "fps": context.data.get("fps", None),
             "families": ["render"],
             "source": source,
@@ -319,8 +319,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
                 # Set prev start / end frames for comparison
                 if not prev_start and not prev_end:
-                    prev_start = version["data"]["startFrame"]
-                    prev_end = version["data"]["endFrame"]
+                    prev_start = version["data"]["frameStart"]
+                    prev_end = version["data"]["frameEnd"]
 
                 subset_resources = get_resources(version, _ext)
                 resource_files = get_resource_files(subset_resources,
@@ -356,12 +356,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # Please do so when fixing this.
 
             # Start frame
-            metadata["startFrame"] = updated_start
-            metadata["metadata"]["instance"]["startFrame"] = updated_start
+            metadata["frameStart"] = updated_start
+            metadata["metadata"]["instance"]["frameStart"] = updated_start
 
             # End frame
-            metadata["endFrame"] = updated_end
-            metadata["metadata"]["instance"]["endFrame"] = updated_end
+            metadata["frameEnd"] = updated_end
+            metadata["metadata"]["instance"]["frameEnd"] = updated_end
 
         metadata_filename = "{}_metadata.json".format(subset)
 

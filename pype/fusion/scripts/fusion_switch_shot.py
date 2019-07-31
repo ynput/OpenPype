@@ -138,8 +138,8 @@ def update_frame_range(comp, representations):
     versions = io.find({"type": "version", "_id": {"$in": version_ids}})
     versions = list(versions)
 
-    start = min(v["data"]["startFrame"] for v in versions)
-    end = max(v["data"]["endFrame"] for v in versions)
+    start = min(v["data"]["frameStart"] for v in versions)
+    end = max(v["data"]["frameEnd"] for v in versions)
 
     fusion_lib.update_frame_range(start, end, comp=comp)
 

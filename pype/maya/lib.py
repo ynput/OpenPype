@@ -280,8 +280,8 @@ def collect_animation_data():
 
     # build attributes
     data = OrderedDict()
-    data["startFrame"] = start
-    data["endFrame"] = end
+    data["frameStart"] = start
+    data["frameEnd"] = end
     data["handles"] = 0
     data["step"] = 1.0
     data["fps"] = fps
@@ -1866,8 +1866,8 @@ def set_context_settings():
     set_scene_fps(fps)
 
     # Set project resolution
-    width_key = "resolution_width"
-    height_key = "resolution_height"
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
 
     width = asset_data.get(width_key, project_data.get(width_key, 1920))
     height = asset_data.get(height_key, project_data.get(height_key, 1080))

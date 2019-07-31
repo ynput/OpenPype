@@ -17,8 +17,8 @@ log = logging.getLogger(__name__)
 
 def get_handle_irregular(asset):
     data = asset["data"]
-    handle_start = data.get("handle_start", 0)
-    handle_end = data.get("handle_end", 0)
+    handle_start = data.get("handleStart", 0)
+    handle_end = data.get("handleEnd", 0)
     return (handle_start, handle_end)
 
 

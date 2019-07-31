@@ -408,7 +408,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
                         "comment": context.data.get("comment")}
 
         # Include optional data if present in
-        optionals = ["startFrame", "endFrame", "step",
+        optionals = ["frameStart", "frameEnd", "step",
                      "handles", "colorspace", "fps", "outputDir"]
 
         for key in optionals:

@@ -54,7 +54,8 @@ class CollectPlates(api.InstancePlugin):
         data["name"] = data["subset"] + "_" + data["asset"]
 
         data["label"] = "{} - {} - ({})".format(
-            data['asset'], data["subset"], os.path.splitext(data["sourcePath"])[1]
+            data['asset'], data["subset"], os.path.splitext(data["sourcePath"])[
+                1]
         )
 
         if "review" in instance.data["families"]:
@@ -120,7 +121,9 @@ class CollectPlatesData(api.InstancePlugin):
         item = instance.data["item"]
 
         transfer_data = [
-            "handleStart", "handleEnd", "sourceIn", "sourceOut", "startFrame", "endFrame", "sourceInH", "sourceOutH", "timelineIn", "timelineOut", "timelineInH", "timelineOutH", "asset", "track", "version"
+            "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart",
+            "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut",
+            "clipInH", "clipOutH", "asset", "track", "version"
         ]
 
         # pass data to version
@@ -170,10 +173,10 @@ class CollectPlatesData(api.InstancePlugin):
             plates_mov_representation = {
                 'files': mov_file,
                 'stagingDir': staging_dir,
-                'startFrame': 0,
-                'endFrame': instance.data["sourceOut"] - instance.data["sourceIn"] + 1,
+                "frameStart": 0,
+                "frameEnd": instance.data["sourceOut"] - instance.data["sourceIn"] + 1,
                 'step': 1,
-                'frameRate': instance.context.data["fps"],
+                'fps': instance.context.data["fps"],
                 'preview': True,
                 'thumbnail': False,
                 'name': "preview",
@@ -209,8 +212,8 @@ class CollectPlatesData(api.InstancePlugin):
             'stagingDir': staging_dir,
             'name': ext,
             'ext': ext,
-            'startFrame': instance.data["startFrame"] - instance.data["handleStart"],
-            'endFrame': instance.data["endFrame"] + instance.data["handleEnd"],
+            "frameStart": instance.data["frameStart"] - instance.data["handleStart"],
+            "frameEnd": instance.data["frameEnd"] + instance.data["handleEnd"],
         }
         instance.data["representations"].append(plates_representation)
 

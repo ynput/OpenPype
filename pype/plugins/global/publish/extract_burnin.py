@@ -33,7 +33,7 @@ class ExtractBurnin(pype.api.Extractor):
             "username": instance.context.data['user'],
             "asset": os.environ['AVALON_ASSET'],
             "task": os.environ['AVALON_TASK'],
-            "start_frame": int(instance.data['startFrame']),
+            "start_frame": int(instance.data["frameStart"]),
             "version": version
         }
         self.log.debug("__ prep_data: {}".format(prep_data))
