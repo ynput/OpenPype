@@ -18,20 +18,14 @@ from .action import (
 
 from pypeapp import Logger
 
-
-from .templates import (
-    get_hierarchy,
-    get_asset,
-    set_avalon_workdir,
-    get_workdir_template
-)
-
 from .lib import (
     version_up,
     get_handle_irregular,
+    get_asset,
+    get_asset_data,
     get_project,
     get_project_data,
-    get_asset_data,
+    get_hierarchy,
     get_version_from_path,
     modified_environ,
     add_tool_to_environment,
@@ -61,9 +55,7 @@ __all__ = [
     "get_project",
     "get_hierarchy",
     "get_asset",
-    "set_avalon_workdir",
-    "get_version_from_path",
-    "get_workdir_template",
+    "get_version_from_path"
     "modified_environ",
     "add_tool_to_environment",
     "get_data_hierarchical_attr"

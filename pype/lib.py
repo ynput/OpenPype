@@ -22,6 +22,26 @@ def get_handle_irregular(asset):
     return (handle_start, handle_end)
 
 
+def get_hierarchy():
+    """
+    Obtain asset hierarchy path string from mongo db
+
+    Returns:
+        string: asset hierarchy path
+
+    """
+    parents = io.find_one({
+        "type": 'asset',
+        "name": get_asset()}
+    )['data']['parents']
+
+    hierarchy = ""
+    if parents and len(parents) > 0:
+        # hierarchy = os.path.sep.join(hierarchy)
+        hierarchy = os.path.join(*parents).replace("\\", "/")
+    return hierarchy
+
+    
 def add_tool_to_environment(tools):
     """
     It is adding dynamic environment to os environment.
