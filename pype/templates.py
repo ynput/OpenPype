@@ -17,17 +17,6 @@ def set_session():
     self.SESSION = avalon.session
 
 
-def get_project_code():
-    """
-    Obtain project code from database
-
-    Returns:
-        string: project code
-    """
-
-    return io.find_one({"type": "project"})["data"].get("code", '')
-
-
 def set_project_code(code):
     """
     Set project code into os.environ
@@ -155,11 +144,14 @@ def get_context_data(project=None,
 
     """
     application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
+    project_doc = io.find_one({"type": "project"})
     data = {
         "task": task or get_task(),
         "asset": asset or get_asset(),
-        "project": {"name": project or get_project_name(),
-                    "code": get_project_code()},
+        "project": {
+            "name": project or project_doc["name"],
+            "code": project_doc["data"].get("code", '')
+        },
         "hierarchy": hierarchy or get_hierarchy(),
         "app": application["application_dir"]
     }

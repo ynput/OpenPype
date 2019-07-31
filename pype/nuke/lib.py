@@ -149,15 +149,15 @@ def format_anatomy(data):
     if not version:
         file = script_name()
         data["version"] = pype.get_version_from_path(file)
-
+    project_document = pype.get_project()
     data.update({
         "root": api.Session["AVALON_PROJECTS"],
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
         "task": str(pype.get_task()).lower(),
         "family": data["avalon"]["family"],
-        "project": {"name": pype.get_project_name(),
-                    "code": pype.get_project_code()},
+        "project": {"name": project_document["name"],
+                    "code": project_document["data"].get("code", '')},
         "representation": data["nuke_dataflow_writes"]["file_type"],
         "app": data["application"]["application_dir"],
         "hierarchy": pype.get_hierarchy(),

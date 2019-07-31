@@ -320,6 +320,10 @@ def get_project_data():
     return data
 
 
+def get_project():
+    io.install()
+    return io.find_one({"type": "project"})
+
 def get_asset_data(asset=None):
     """Get the data from the current asset
 

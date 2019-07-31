@@ -82,11 +82,15 @@ def context(project, asset, task, app):
     # http://localhost:4242/pipeline/context?project=this&asset=shot01&task=comp
 
     os.environ["AVALON_PROJECT"] = project
+    SESSION["AVALON_PROJECT"] = project
 
     avalon.update_current_task(task, asset, app)
 
-    project_code = pype.get_project_code()
-    pype.set_project_code(project_code)
+    project_code = pype.get_project()["data"].get("code", '')
+
+    os.environ["AVALON_PROJECTCODE"] = project_code
+    SESSION["AVALON_PROJECTCODE"] = project_code
+
     hierarchy = pype.get_hierarchy()
     pype.set_hierarchy(hierarchy)
     fix_paths = {k: v.replace("\\", "/") for k, v in SESSION.items()

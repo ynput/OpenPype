@@ -80,15 +80,19 @@ def publish(json_data_path, gui):
 
 
 @pico.expose()
-def context(project, asset, task, app):
+def context(project_name, asset, task, app):
     # http://localhost:4242/pipeline/context?project=this&asset=shot01&task=comp
 
-    os.environ["AVALON_PROJECT"] = project
+    os.environ["AVALON_PROJECT"] = project_name
+    SESSION["AVALON_PROJECT"] = project_name
 
     avalon.update_current_task(task, asset, app)
 
-    project_code = pype.get_project_code()
-    pype.set_project_code(project_code)
+    project_code = pype.get_project()["data"].get("code", '')
+
+    os.environ["AVALON_PROJECTCODE"] = project_code
+    SESSION["AVALON_PROJECTCODE"] = project_code
+
     hierarchy = pype.get_hierarchy()
     pype.set_hierarchy(hierarchy)
     fix_paths = {k: v.replace("\\", "/") for k, v in SESSION.items()

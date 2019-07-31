@@ -21,7 +21,6 @@ from pypeapp import Logger
 
 from .templates import (
     get_project_name,
-    get_project_code,
     get_hierarchy,
     get_asset,
     get_task,
@@ -34,6 +33,7 @@ from .templates import (
 from .lib import (
     version_up,
     get_handle_irregular,
+    get_project,
     get_project_data,
     get_asset_data,
     get_version_from_path,
@@ -62,8 +62,8 @@ __all__ = [
     "get_handle_irregular",
     "get_project_data",
     "get_asset_data",
+    "get_project",
     "get_project_name",
-    "get_project_code",
     "get_hierarchy",
     "get_asset",
     "get_task",
