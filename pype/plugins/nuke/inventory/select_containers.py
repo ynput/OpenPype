@@ -11,7 +11,7 @@ class SelectContainers(api.InventoryAction):
 
         import avalon.nuke
 
-        nodes = [i["_tool"] for i in containers]
+        nodes = [i["_node"] for i in containers]
 
         with avalon.nuke.viewer_update_and_undo_stop():
             # clear previous_selection

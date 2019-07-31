@@ -18,6 +18,7 @@ log = Logger().get_logger(__name__, "nuke")
 self = sys.modules[__name__]
 self._project = None
 
+
 def onScriptLoad():
     if nuke.env['LINUX']:
         nuke.tcl('load ffmpegReader')
@@ -43,7 +44,7 @@ def checkInventoryVersions():
             container = avalon.nuke.parse_container(each)
 
             if container:
-                node = container["_tool"]
+                node = container["_node"]
                 avalon_knob_data = get_avalon_knob_data(node)
 
                 # get representation from io
@@ -102,6 +103,9 @@ def writes_version_sync():
 
                 node_new_file = node_file.replace(node_version, new_version)
                 each['file'].setValue(node_new_file)
+                if not os.path.isdir(os.path.dirname(node_new_file)):
+                    log.info("path does not exist")
+                    os.makedirs(os.path.dirname(node_new_file), 0o766)
             except Exception as e:
                 log.debug(
                     "Write node: `{}` has no version in path: {}".format(each.name(), e))
@@ -172,7 +176,32 @@ def script_name():
     return nuke.root().knob('name').value()
 
 
-def create_write_node(name, data):
+def create_write_node(name, data, prenodes=None):
+    '''Creating write node which is group node
+
+    Arguments:
+        name (str): name of node
+        data (dict): data to be imprinted
+        prenodes (list, optional): list of lists, definitions for nodes
+                                to be created before write
+
+    Example:
+        prenodes = [(
+            "NameNode",  # string
+            "NodeClass",  # string
+            (   # OrderDict: knob and values pairs
+                ("knobName", "knobValue"),
+                ("knobName", "knobValue")
+            ),
+            (   # list inputs
+                "firstPrevNodeName",
+                "secondPrevNodeName"
+            )
+        )
+        ]
+
+    '''
+
     nuke_dataflow_writes = get_node_dataflow_preset(**data)
     nuke_colorspace_writes = get_node_colorspace_preset(**data)
     application = lib.get_application(os.environ["AVALON_APP_NAME"])
@@ -191,16 +220,8 @@ def create_write_node(name, data):
 
     # build file path to workfiles
     fpath = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
-    pattern = "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"
-    # Workfile paths can be configured to have host name in file path.
-    # In this case we want to avoid duplicate folder names.
-    if "nuke" in fpath.lower():
-        pattern = pattern.replace("nuke/", "")
-
-    fpath = pattern.format(
-        work=fpath,
-        version=data["version"],
-        subset=data["subset"],
+    fpath = data["fpath_template"].format(
+        work=fpath, version=data["version"], subset=data["subset"],
         frame=data["frame"],
         ext=data["nuke_dataflow_writes"]["file_type"]
     )
@@ -228,14 +249,89 @@ def create_write_node(name, data):
     log.debug(_data)
 
     _data["frame_range"] = data.get("frame_range", None)
-    log.info("__ _data3: {}".format(_data))
-    instance = avalon.nuke.lib.add_write_node(
-        name,
-        **_data
-    )
-    instance = avalon.nuke.lib.imprint(instance, data["avalon"])
-    add_rendering_knobs(instance)
-    return instance
+
+    # todo: hange this to new way
+    GN = nuke.createNode("Group", "name {}".format(name))
+
+    prev_node = None
+    with GN:
+        # creating pre-write nodes `prenodes`
+        if prenodes:
+            for name, klass, properties, set_input_to in prenodes:
+                # create node
+                now_node = nuke.createNode(klass, "name {}".format(name))
+
+                # add data to knob
+                for k, v in properties:
+                    if k and v:
+                        now_node[k].serValue(str(v))
+
+                # connect to previous node
+                if set_input_to:
+                    if isinstance(set_input_to, (tuple or list)):
+                        for i, node_name in enumerate(set_input_to):
+                            input_node = nuke.toNode(node_name)
+                            now_node.setInput(1, input_node)
+                    elif isinstance(set_input_to, str):
+                        input_node = nuke.toNode(set_input_to)
+                        now_node.setInput(0, input_node)
+                else:
+                    now_node.setInput(0, prev_node)
+
+                # swith actual node to previous
+                prev_node = now_node
+        else:
+            prev_node = nuke.createNode("Input", "name rgba")
+
+
+        # creating write node
+        now_node = avalon.nuke.lib.add_write_node("inside_{}".format(name),
+                                                  **_data
+                                                  )
+        write_node = now_node
+        # connect to previous node
+        now_node.setInput(0, prev_node)
+
+        # swith actual node to previous
+        prev_node = now_node
+
+        now_node = nuke.createNode("Output", "name write")
+
+        # connect to previous node
+        now_node.setInput(0, prev_node)
+
+    # imprinting group node
+    GN = avalon.nuke.imprint(GN, data["avalon"])
+
+    divider = nuke.Text_Knob('')
+    GN.addKnob(divider)
+
+    add_rendering_knobs(GN)
+
+    divider = nuke.Text_Knob('')
+    GN.addKnob(divider)
+
+    # set tile color
+    tile_color = _data.get("tile_color", "0xff0000ff")
+    GN["tile_color"].setValue(tile_color)
+
+
+    # add render button
+    lnk = nuke.Link_Knob("Render")
+    lnk.makeLink(write_node.name(), "Render")
+    lnk.setName("Render")
+    GN.addKnob(lnk)
+
+    # linking knobs to group property panel
+    linking_knobs = ["first", "last", "use_limit"]
+    for k in linking_knobs:
+        lnk = nuke.Link_Knob(k)
+        lnk.makeLink(write_node.name(), k)
+        lnk.setName(k.replace('_', ' ').capitalize())
+        lnk.clearFlag(nuke.STARTLINE)
+        GN.addKnob(lnk)
+
+    return GN
 
 
 def add_rendering_knobs(node):
@@ -414,8 +510,8 @@ def reset_frame_range_handles():
 
     # adding handle_start/end to root avalon knob
     if not avalon.nuke.set_avalon_knob_data(root, {
-        "handle_start": handle_start,
-        "handle_end": handle_end
+        "handle_start": int(handle_start),
+        "handle_end": int(handle_end)
     }):
         log.warning("Cannot set Avalon knob to Root node!")
 
@@ -436,33 +532,25 @@ def reset_resolution():
     asset = api.Session["AVALON_ASSET"]
     asset = io.find_one({"name": asset, "type": "asset"})
 
-    try:
-        width = asset.get('data', {}).get('resolution_width', 1920)
-        height = asset.get('data', {}).get('resolution_height', 1080)
-        pixel_aspect = asset.get('data', {}).get('pixel_aspect', 1)
-        bbox = asset.get('data', {}).get('crop', "0.0.1920.1080")
+    width = asset.get('data', {}).get('resolution_width')
+    height = asset.get('data', {}).get('resolution_height')
+    pixel_aspect = asset.get('data', {}).get('pixel_aspect')
 
-        if bbox not in "0.0.1920.1080":
-            try:
-                x, y, r, t = bbox.split(".")
-            except Exception as e:
-                x = 0
-                y = 0
-                r = width
-                t = height
-                bbox = None
-                log.error("{}: {} \nFormat:Crop need to be set with dots, example: "
-                          "0.0.1920.1080, /nSetting to default".format(__name__, e))
-        else:
-            bbox = None
-
-    except KeyError:
-        log.warning(
-            "No resolution information found for \"{0}\".".format(
-                project["name"]
-            )
-        )
+    log.info("pixel_aspect: {}".format(pixel_aspect))
+    if any(not x for x in [width, height, pixel_aspect]):
+        log.error("Missing set shot attributes in DB. \nContact your supervisor!. \n\nWidth: `{0}` \nHeight: `{1}` \nPixel Asspect: `{2}`".format(
+            width, height, pixel_aspect))
         return
+
+    bbox = asset.get('data', {}).get('crop')
+
+    if bbox:
+        try:
+            x, y, r, t = bbox.split(".")
+        except Exception as e:
+            bbox = None
+            log.error("{}: {} \nFormat:Crop need to be set with dots, example: "
+                      "0.0.1920.1080, /nSetting to default".format(__name__, e))
 
     used_formats = list()
     for f in nuke.formats():
@@ -620,7 +708,7 @@ def get_hierarchical_attr(entity, attr, default=None):
 #         dict
 #     """
 #
-#     node = container["_tool"]
+#     node = container["_node"]
 #     tile_color = node['tile_color'].value()
 #     if tile_color is None:
 #         return {}
