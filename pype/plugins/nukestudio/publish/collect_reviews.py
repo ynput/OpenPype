@@ -13,7 +13,7 @@ class CollectReviews(api.InstancePlugin):
     """
 
     # Run just before CollectSubsets
-    order = api.CollectorOrder + 0.1025
+    order = api.CollectorOrder + 0.1022
     label = "Collect Reviews"
     hosts = ["nukestudio"]
     families = ["clip"]
@@ -41,30 +41,22 @@ class CollectReviews(api.InstancePlugin):
             )
             return
 
+        # add to representations
+        if not instance.data.get("representations"):
+            instance.data["representations"] = list()
+
         if track in instance.data["track"]:
-            self.log.debug("Track item on the track: {}".format(
-                instance.data["track"]))
-            # Collect data.
-            subset = ""
-            data = {}
-            for key, value in instance.data.iteritems():
-                data[key] = value
+            self.log.debug("Review will work on `subset`: {}".format(
+                instance.data["subset"]))
 
-            data["family"] = family.lower()
-            data["ftrackFamily"] = "img"
-            data["families"] = ["ftrack"]
+            # change families
+            instance.data["family"] = "plate"
+            instance.data["families"] = ["review", "ftrack"]
 
-            data["subset"] = family.lower() + subset.title()
-            data["name"] = data["subset"] + "_" + data["asset"]
+            self.version_data(instance)
+            self.create_thumbnail(instance)
 
-            data["label"] = "{} - {}".format(
-                data['asset'], data["subset"]
-            )
-
-            data["source"] = data["sourcePath"]
-
-            # self.log.debug("Creating instance with data: {}".format(data))
-            instance.context.create_instance(**data)
+            rev_inst = instance
 
         else:
             self.log.debug("Track item on plateMain")
@@ -80,35 +72,89 @@ class CollectReviews(api.InstancePlugin):
                     "TrackItem from track name `{}` has to be also selected".format(
                         track)
                 )
-
-            # add to representations
-            if not instance.data.get("representations"):
-                instance.data["representations"] = list()
-
-            self.log.debug("Instance review: {}".format(rev_inst.data["name"]))
-
-            # getting file path parameters
-            file_path = rev_inst.data.get("sourcePath")
-            file_dir = os.path.dirname(file_path)
-            file = os.path.basename(file_path)
-            ext = os.path.splitext(file)[-1][1:]
-
-            # adding annotation to lablel
-            instance.data["label"] += " + review (.{})".format(ext)
             instance.data["families"].append("review")
-            # adding representation for review mov
-            representation = {
-                "files": file,
-                "stagingDir": file_dir,
-                "startFrame": rev_inst.data.get("sourceIn"),
-                "endFrame": rev_inst.data.get("sourceOut"),
-                "step": 1,
-                "frameRate": rev_inst.data.get("fps"),
-                "preview": True,
-                "thumbnail": False,
-                "name": "preview",
-                "ext": ext
-            }
-            instance.data["representations"].append(representation)
 
-            self.log.debug("Added representation: {}".format(representation))
+        file_path = rev_inst.data.get("sourcePath")
+        file_dir = os.path.dirname(file_path)
+        file = os.path.basename(file_path)
+        ext = os.path.splitext(file)[-1][1:]
+
+        # change label
+        instance.data["label"] = "{0} - {1} - ({2}) - review".format(
+            instance.data['asset'], instance.data["subset"], ext
+        )
+
+        self.log.debug("Instance review: {}".format(rev_inst.data["name"]))
+
+
+        # adding representation for review mov
+        representation = {
+            "files": file,
+            "stagingDir": file_dir,
+            "startFrame": rev_inst.data.get("sourceIn"),
+            "endFrame": rev_inst.data.get("sourceOut"),
+            "step": 1,
+            "frameRate": rev_inst.data.get("fps"),
+            "preview": True,
+            "thumbnail": False,
+            "name": "preview",
+            "ext": ext
+        }
+        instance.data["representations"].append(representation)
+
+        self.log.debug("Added representation: {}".format(representation))
+
+    def create_thumbnail(self, instance):
+        item = instance.data["item"]
+        source_in = instance.data["sourceIn"]
+
+        source_path = instance.data["sourcePath"]
+        source_file = os.path.basename(source_path)
+        head, ext = os.path.splitext(source_file)
+
+        # staging dir creation
+        staging_dir = os.path.dirname(
+            source_path)
+
+        thumb_file = head + ".png"
+        thumb_path = os.path.join(staging_dir, thumb_file)
+        self.log.debug("__ thumb_path: {}".format(thumb_path))
+        self.log.debug("__ source_in: {}".format(source_in))
+        thumbnail = item.thumbnail(source_in).save(
+            thumb_path,
+            format='png'
+        )
+        self.log.debug("__ thumbnail: {}".format(thumbnail))
+
+        thumb_representation = {
+            'files': thumb_file,
+            'stagingDir': staging_dir,
+            'name': "thumbnail",
+            'thumbnail': True,
+            'ext': "png"
+        }
+        instance.data["representations"].append(
+            thumb_representation)
+
+    def version_data(self, instance):
+        item = instance.data["item"]
+
+        transfer_data = [
+            "handleStart", "handleEnd", "sourceIn", "sourceOut", "startFrame", "endFrame", "sourceInH", "sourceOutH", "timelineIn", "timelineOut", "timelineInH", "timelineOutH", "asset", "track", "version"
+        ]
+
+        version_data = dict()
+        # pass data to version
+        version_data.update({k: instance.data[k] for k in transfer_data})
+
+        # add to data of representation
+        version_data.update({
+            "handles": version_data['handleStart'],
+            "colorspace": item.sourceMediaColourTransform(),
+            "families": instance.data["families"],
+            "subset": instance.data["subset"],
+            "fps": instance.context.data["fps"]
+        })
+        instance.data["versionData"] = version_data
+
+        instance.data["source"] = instance.data["sourcePath"]

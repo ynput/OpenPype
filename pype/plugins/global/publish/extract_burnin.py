@@ -17,6 +17,7 @@ class ExtractBurnin(pype.api.Extractor):
     label = "Quicktime with burnins"
     order = pyblish.api.ExtractorOrder + 0.03
     families = ["review", "burnin"]
+    hosts = ["nuke", "maya", "shell"]
     optional = True
 
     def process(self, instance):

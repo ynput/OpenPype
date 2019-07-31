@@ -78,9 +78,8 @@ class CollectClips(api.ContextPlugin):
                     "sourceFirst": source_first_frame,
                     "sourceIn": int(item.sourceIn()),
                     "sourceOut": int(item.sourceOut()),
-                    "startFrame": int(item.timelineIn()),
-                    "endFrame": int(item.timelineOut()),
-                    "fps": float(item.sequence().framerate().toFloat())
+                    "timelineIn": int(item.timelineIn()),
+                    "timelineOut": int(item.timelineOut())
                 }
             )
 
@@ -93,7 +92,7 @@ class CollectClips(api.ContextPlugin):
                     "handles": 0,
                     "handleStart": projectdata.get("handles", 0),
                     "handleEnd": projectdata.get("handles", 0),
-                    "version": version
+                    "version": int(version)
                 }
             )
             instance = context.create_instance(**data)

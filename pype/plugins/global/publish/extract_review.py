@@ -19,6 +19,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
+    hosts = ["nuke", "maya", "shell"]
 
     def process(self, instance):
         # adding plugin attributes from presets
@@ -53,7 +54,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             ext = "mov"
                             self.log.warning(
                                 "`ext` attribute not in output profile. Setting to default ext: `mov`")
-                                
+
                         self.log.debug("instance.families: {}".format(instance.data['families']))
                         self.log.debug("profile.families: {}".format(profile['families']))
 
