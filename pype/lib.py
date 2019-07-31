@@ -362,6 +362,11 @@ def get_asset(asset_name=None):
         "handle_end": "handles"
     }
 
+    defaults = {
+        "handle_start": 0,
+        "handle_end": 0
+    }
+
     if not asset_name:
         asset_name = avalon.api.Session["AVALON_ASSET"]
 
@@ -391,6 +396,9 @@ def get_asset(asset_name=None):
             asset_document["data"][key] = value
             continue
 
+        if key in defaults:
+            asset_document["data"][key] = defaults[key]
+
     for key in entity_keys_from_project_when_miss:
         if asset_document.get(key):
             continue
@@ -411,11 +419,16 @@ def get_asset(asset_name=None):
             asset_document[key] = value
             continue
 
+        if key in defaults:
+            asset_document[key] = defaults[key]
+
     return asset_document
+
 
 def get_project():
     io.install()
     return io.find_one({"type": "project"})
+
 
 def get_asset_data(asset=None):
     """Get the data from the current asset
