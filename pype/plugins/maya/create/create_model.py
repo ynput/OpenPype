@@ -1,7 +1,7 @@
-import avalon.maya
+import pype.plugin
 
 
-class CreateModel(avalon.maya.Creator):
+class CreateModel(pype.plugin.PypeCreator):
     """Polygonal static geometry"""
 
     name = "modelMain"
