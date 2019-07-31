@@ -3,7 +3,7 @@ import os
 import nuke
 import pyblish.api
 from avalon import io, api
-from pype.nuke.lib import get_avalon_knob_data
+from avalon.nuke.lib import get_avalon_knob_data
 
 
 @pyblish.api.log
@@ -34,6 +34,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             # get data from avalon knob
             avalon_knob_data = get_avalon_knob_data(node)
+            self.log.debug("avalon_knob_data: {}".format(avalon_knob_data))
             if not avalon_knob_data:
                 continue
 
