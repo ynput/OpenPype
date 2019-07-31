@@ -57,43 +57,8 @@ class CollectPlates(api.InstancePlugin):
             data['asset'], data["subset"], os.path.splitext(data["sourcePath"])[1]
         )
 
-        # # Timeline data.
-        # handle_start = int(instance.data["handleStart"] + data["handles"])
-        # handle_end = int(instance.data["handleEnd"] + data["handles"])
-        # Timeline data.
-        handle_start = int(instance.data["handleStart"])
-        handle_end = int(instance.data["handleEnd"])
-
-        source_in_h = data["sourceIn"] - handle_start
-        source_out_h = data["sourceOut"] + handle_end
-
-        timeline_in = int(data["item"].timelineIn())
-        timeline_out = int(data["item"].timelineOut())
-
-        timeline_frame_start = timeline_in - handle_start
-        timeline_frame_end = timeline_out + handle_end
-
-        frame_start = instance.data.get("frameStart", 1)
-        frame_end = frame_start + (data["sourceOut"] - data["sourceIn"])
-
-        data.update(
-            {
-                "sourceFirst": data["sourceFirst"],
-                "sourceIn": data["sourceIn"],
-                "sourceOut": data["sourceOut"],
-                "sourceInH": source_in_h,
-                "sourceOutH": source_out_h,
-                "frameStart": frame_start,
-                "startFrame": frame_start,
-                "endFrame": frame_end,
-                "timelineIn": timeline_in,
-                "timelineOut": timeline_out,
-                "timelineInHandles": timeline_frame_start,
-                "timelineOutHandles": timeline_frame_end,
-                "handleStart": handle_start,
-                "handleEnd": handle_end
-            }
-        )
+        if "review" in instance.data["families"]:
+            data["label"] += " - review"
 
         # adding SourceResolution if Tag was present
         if instance.data.get("sourceResolution") and instance.data.get("main"):
@@ -110,9 +75,6 @@ class CollectPlates(api.InstancePlugin):
         self.log.debug("Creating instance with name: {}".format(data["name"]))
         instance.context.create_instance(**data)
 
-        # # remove original instance
-        # instance.context.remove(instance)
-
 
 class CollectPlatesData(api.InstancePlugin):
     """Collect plates"""
@@ -124,6 +86,12 @@ class CollectPlatesData(api.InstancePlugin):
 
     def process(self, instance):
         import os
+        if "review" in instance.data.get("track", ""):
+            self.log.debug(
+                "Skipping \"{}\" because its `review` track "
+                "\"plate\"".format(instance)
+            )
+            return
 
         # add to representations
         if not instance.data.get("representations"):
@@ -135,9 +103,6 @@ class CollectPlatesData(api.InstancePlugin):
         padding = int(anatomy.templates['render']['padding'])
 
         name = instance.data["subset"]
-        asset = instance.data["asset"]
-        track = instance.data["track"]
-        version = instance.data["version"]
         source_path = instance.data["sourcePath"]
         source_file = os.path.basename(source_path)
 
@@ -154,56 +119,20 @@ class CollectPlatesData(api.InstancePlugin):
 
         item = instance.data["item"]
 
-        # get handles
-        handle_start = int(instance.data["handleStart"])
-        handle_end = int(instance.data["handleEnd"])
+        transfer_data = [
+            "handleStart", "handleEnd", "sourceIn", "sourceOut", "startFrame", "endFrame", "sourceInH", "sourceOutH", "timelineIn", "timelineOut", "timelineInH", "timelineOutH", "asset", "track", "version"
+        ]
 
-        # get source frames
-        source_in = int(instance.data["sourceIn"])
-        source_out = int(instance.data["sourceOut"])
-
-        # get source frames
-        frame_start = int(instance.data["startFrame"])
-        frame_end = int(instance.data["endFrame"])
-
-        # get source frames
-        source_in_h = int(instance.data["sourceInH"])
-        source_out_h = int(instance.data["sourceOutH"])
-
-        # get timeline frames
-        timeline_in = int(instance.data["timelineIn"])
-        timeline_out = int(instance.data["timelineOut"])
-
-        # frame-ranges with handles
-        timeline_frame_start = int(instance.data["timelineInHandles"])
-        timeline_frame_end = int(instance.data["timelineOutHandles"])
-
-        # get colorspace
-        colorspace = item.sourceMediaColourTransform()
-
-        # get sequence from context, and fps
-        fps = instance.data["fps"]
+        # pass data to version
+        version_data.update({k: instance.data[k] for k in transfer_data})
 
         # add to data of representation
         version_data.update({
-            "handles": handle_start,
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
-            "sourceIn": source_in,
-            "sourceOut": source_out,
-            "startFrame": frame_start,
-            "endFrame": frame_end,
-            "timelineIn": timeline_in,
-            "timelineOut": timeline_out,
-            "timelineInHandles": timeline_frame_start,
-            "timelineOutHandles": timeline_frame_end,
-            "fps": fps,
-            "colorspace": colorspace,
+            "handles": version_data['handleStart'],
+            "colorspace": item.sourceMediaColourTransform(),
             "families": [f for f in families if 'ftrack' not in f],
-            "asset": asset,
             "subset": name,
-            "track": track,
-            "version": int(version)
+            "fps": instance.context.data["fps"]
         })
         instance.data["versionData"] = version_data
 
@@ -220,10 +149,9 @@ class CollectPlatesData(api.InstancePlugin):
                 padding=padding,
                 ext=ext
             )
-            self.log.debug("__ source_in_h: {}".format(source_in_h))
-            self.log.debug("__ source_out_h: {}".format(source_out_h))
-            start_frame = source_first_frame + source_in_h
-            duration = source_out_h - source_in_h
+
+            start_frame = source_first_frame + instance.data["sourceInH"]
+            duration = instance.data["sourceOutH"] - instance.data["sourceInH"]
             end_frame = start_frame + duration
             files = [file % i for i in range(start_frame, (end_frame + 1), 1)]
         except Exception as e:
@@ -231,8 +159,8 @@ class CollectPlatesData(api.InstancePlugin):
             head, ext = os.path.splitext(source_file)
             ext = ext[1:]
             files = source_file
-            start_frame = source_in_h
-            end_frame = source_out_h
+            start_frame = instance.data["sourceInH"]
+            end_frame = instance.data["sourceOutH"]
 
         mov_file = head + ".mov"
         mov_path = os.path.normpath(os.path.join(staging_dir, mov_file))
@@ -243,9 +171,9 @@ class CollectPlatesData(api.InstancePlugin):
                 'files': mov_file,
                 'stagingDir': staging_dir,
                 'startFrame': 0,
-                'endFrame': source_out - source_in + 1,
+                'endFrame': instance.data["sourceOut"] - instance.data["sourceIn"] + 1,
                 'step': 1,
-                'frameRate': fps,
+                'frameRate': instance.context.data["fps"],
                 'preview': True,
                 'thumbnail': False,
                 'name': "preview",
@@ -258,8 +186,8 @@ class CollectPlatesData(api.InstancePlugin):
 
         thumb_file = head + ".png"
         thumb_path = os.path.join(staging_dir, thumb_file)
-        self.log.debug("__ thumb_path: {}".format(thumb_path))
-        thumbnail = item.thumbnail(source_in).save(
+
+        thumbnail = item.thumbnail(instance.data["sourceIn"]).save(
             thumb_path,
             format='png'
         )
@@ -281,8 +209,8 @@ class CollectPlatesData(api.InstancePlugin):
             'stagingDir': staging_dir,
             'name': ext,
             'ext': ext,
-            'startFrame': frame_start - handle_start,
-            'endFrame': frame_end + handle_end,
+            'startFrame': instance.data["startFrame"] - instance.data["handleStart"],
+            'endFrame': instance.data["endFrame"] + instance.data["handleEnd"],
         }
         instance.data["representations"].append(plates_representation)
 
