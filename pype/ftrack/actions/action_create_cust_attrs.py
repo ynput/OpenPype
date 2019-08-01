@@ -7,6 +7,7 @@ import logging
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, get_ca_mongoid
 from pypeapp import config
+from ftrack_api.exception import NoResultFoundError
 
 """
 This action creates/updates custom attributes.
@@ -118,18 +119,11 @@ class CustomAttributes(BaseAction):
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
-    def __init__(self, session):
-        super().__init__(session)
-
-        self.types = {}
-        self.object_type_ids = {}
-        self.groups = {}
-        self.security_roles = {}
-        self.required_keys = ['key', 'label', 'type']
-        self.type_posibilities = [
-            'text', 'boolean', 'date', 'enumerator',
-            'dynamic enumerator', 'number'
-        ]
+    required_keys = ['key', 'label', 'type']
+    type_posibilities = [
+        'text', 'boolean', 'date', 'enumerator',
+        'dynamic enumerator', 'number'
+    ]
 
     def discover(self, session, entities, event):
         '''
@@ -139,8 +133,12 @@ class CustomAttributes(BaseAction):
         return True
 
     def launch(self, session, entities, event):
-        # JOB SETTINGS
+        self.types = {}
+        self.object_type_ids = {}
+        self.groups = {}
+        self.security_roles = {}
 
+        # JOB SETTINGS
         userId = event['source']['user']['id']
         user = session.query('User where id is ' + userId).one()
 
@@ -159,11 +157,14 @@ class CustomAttributes(BaseAction):
             job['status'] = 'done'
             session.commit()
 
-        except Exception as e:
+        except Exception as exc:
             session.rollback()
             job['status'] = 'failed'
             session.commit()
-            self.log.error('Creating custom attributes failed ({})'.format(e))
+            self.log.error(
+                'Creating custom attributes failed ({})'.format(exc),
+                exc_info=True
+            )
 
         return True
 
@@ -428,9 +429,10 @@ class CustomAttributes(BaseAction):
 
     def get_security_role(self, security_roles):
         roles = []
-        if len(security_roles) == 0 or security_roles[0] == 'ALL':
+        security_roles_lowered = [role.lower() for role in security_roles]
+        if len(security_roles) == 0 or 'all' in security_roles_lowered:
             roles = self.get_role_ALL()
-        elif security_roles[0] == 'except':
+        elif security_roles_lowered[0] == 'except':
             excepts = security_roles[1:]
             all = self.get_role_ALL()
             for role in all:
@@ -449,10 +451,10 @@ class CustomAttributes(BaseAction):
                     role = self.session.query(query).one()
                     self.security_roles[role_name] = role
                     roles.append(role)
-                except Exception:
-                    raise CustAttrException(
-                        'Securit role "{}" does not exist'.format(role_name)
-                    )
+                except NoResultFoundError:
+                    raise CustAttrException((
+                        'Securit role "{}" does not exist'
+                    ).format(role_name))
 
         return roles
 
