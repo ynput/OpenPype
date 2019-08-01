@@ -274,10 +274,10 @@ class Project_name_getUI(QtWidgets.QWidget):
         # update all values in resolution
         if self.resolution_w.text():
             self.projects[self.new_index]['custom_attributes'][
-                'resolution_width'] = int(self.resolution_w.text())
+                "resolutionWidth"] = int(self.resolution_w.text())
         if self.resolution_h.text():
             self.projects[self.new_index]['custom_attributes'][
-                'resolution_height'] = int(self.resolution_h.text())
+                "resolutionHeight"] = int(self.resolution_h.text())
 
     def _update_attributes_by_list_selection(self):
         # generate actual selection index
@@ -451,8 +451,8 @@ class Project_name_get(Project_name_getUI):
         #     int(self.projects[self.new_index]['custom_attributes']['fps']))
         # project.projectRoot()
         # print 'handles: {}'.format(self.projects[self.new_index]['custom_attributes']['handles'])
-        # print 'resolution_width: {}'.format(self.projects[self.new_index]['custom_attributes']['resolution_width'])
-        # print 'resolution_width: {}'.format(self.projects[self.new_index]['custom_attributes']['resolution_height'])
+        # print 'resolution_width: {}'.format(self.projects[self.new_index]['custom_attributes']["resolutionWidth"])
+        # print 'resolution_width: {}'.format(self.projects[self.new_index]['custom_attributes']["resolutionHeight"])
         # print "<< {}".format(self.projects[self.new_index])
 
         # get path for the hrox file

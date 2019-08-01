@@ -30,7 +30,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         inst_data = instance.data
         fps = inst_data.get("fps")
-        start_frame = inst_data.get("startFrame")
+        start_frame = inst_data.get("frameStart")
 
         self.log.debug("Families In: `{}`".format(instance.data["families"]))
 

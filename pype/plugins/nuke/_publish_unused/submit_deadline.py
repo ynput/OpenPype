@@ -78,8 +78,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(
-                    start=int(instance.data["startFrame"]),
-                    end=int(instance.data["endFrame"])
+                    start=int(instance.data["frameStart"]),
+                    end=int(instance.data["frameEnd"])
                 ),
 
                 "Comment": comment,

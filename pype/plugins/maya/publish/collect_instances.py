@@ -106,9 +106,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                                        data["asset"])
 
             # Append start frame and end frame to label if present
-            if "startFrame" and "endFrame" in data:
-                label += "  [{0}-{1}]".format(int(data["startFrame"]),
-                                              int(data["endFrame"]))
+            if "frameStart" and "frameEnd" in data:
+                label += "  [{0}-{1}]".format(int(data["frameStart"]),
+                                              int(data["frameEnd"]))
 
             instance.data["label"] = label
 

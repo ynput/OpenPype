@@ -25,8 +25,8 @@ class ExtractAlembic(pype.api.Extractor):
         nodes = instance[:]
 
         # Collect the start and end including handles
-        start = instance.data.get("startFrame", 1)
-        end = instance.data.get("endFrame", 1)
+        start = instance.data.get("frameStart", 1)
+        end = instance.data.get("frameEnd", 1)
         handles = instance.data.get("handles", 0)
         if handles:
             start -= handles

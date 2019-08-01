@@ -27,8 +27,8 @@ class LinkAsGroup(api.Loader):
         version_data = version.get("data", {})
 
         vname = version.get("name", None)
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        first = version_data.get("frameStart", None)
+        last = version_data.get("frameEnd", None)
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -41,17 +41,14 @@ class LinkAsGroup(api.Loader):
 
         self.log.info("versionData: {}\n".format(context["version"]["data"]))
 
-        # Set global in point to start frame (if in version.data)
-        start = context["version"]["data"].get("startFrame", None)
-        self.log.info("start: {}\n".format(start))
 
         # add additional metadata from the version to imprint to Avalon knob
-        add_keys = ["startFrame", "endFrame", "handle_start", "handle_end", "source", "author", "fps"]
+        add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd", "source", "author", "fps"]
 
         data_imprint = {
-                "start_frame": start,
-                "fstart": first,
-                "fend": last,
+                "start_frame": first,
+                "frameStart": first,
+                "frameEnd": last,
                 "version": vname
         }
         for k in add_keys:
@@ -138,7 +135,7 @@ class LinkAsGroup(api.Loader):
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "endFrame": version["data"].get("endFrame"),
+            "frameEnd": version["data"].get("frameEnd"),
             "version": version.get("name"),
             "colorspace": version["data"].get("colorspace"),
             "source": version["data"].get("source"),

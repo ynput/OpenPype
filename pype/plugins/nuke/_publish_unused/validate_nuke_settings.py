@@ -19,10 +19,10 @@ class ValidateSettingsNuke(pyblish.api.Validator):
         asset = io.find_one({"name": os.environ['AVALON_ASSET']})
         try:
             avalon_resolution = asset["data"].get("resolution", '')
-            avalon_pixel_aspect = asset["data"].get("pixel_aspect", '')
+            avalon_pixel_aspect = asset["data"].get("pixelAspect", '')
             avalon_fps = asset["data"].get("fps", '')
-            avalon_first = asset["data"].get("edit_in", '')
-            avalon_last = asset["data"].get("edit_out", '')
+            avalon_first = asset["data"].get("frameStart", '')
+            avalon_last = asset["data"].get("frameEnd", '')
             avalon_crop = asset["data"].get("crop", '')
         except KeyError:
             print(

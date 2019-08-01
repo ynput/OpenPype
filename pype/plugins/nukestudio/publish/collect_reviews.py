@@ -91,10 +91,10 @@ class CollectReviews(api.InstancePlugin):
         representation = {
             "files": file,
             "stagingDir": file_dir,
-            "startFrame": rev_inst.data.get("sourceIn"),
-            "endFrame": rev_inst.data.get("sourceOut"),
+            "frameStart": rev_inst.data.get("sourceIn"),
+            "frameEnd": rev_inst.data.get("sourceOut"),
             "step": 1,
-            "frameRate": rev_inst.data.get("fps"),
+            "fps": rev_inst.data.get("fps"),
             "preview": True,
             "thumbnail": False,
             "name": "preview",
@@ -140,7 +140,7 @@ class CollectReviews(api.InstancePlugin):
         item = instance.data["item"]
 
         transfer_data = [
-            "handleStart", "handleEnd", "sourceIn", "sourceOut", "startFrame", "endFrame", "sourceInH", "sourceOutH", "timelineIn", "timelineOut", "timelineInH", "timelineOutH", "asset", "track", "version"
+            "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart", "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut", "clipInH", "clipOutH", "asset", "track", "version"
         ]
 
         version_data = dict()
