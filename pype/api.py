@@ -20,7 +20,6 @@ from pypeapp import Logger
 
 from .lib import (
     version_up,
-    get_handle_irregular,
     get_asset,
     get_project,
     get_hierarchy,
@@ -51,7 +50,6 @@ __all__ = [
 
     # get contextual data
     "version_up",
-    "get_handle_irregular",
     "get_project",
     "get_hierarchy",
     "get_asset",

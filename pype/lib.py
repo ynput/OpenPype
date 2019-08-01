@@ -315,20 +315,20 @@ def _get_host_name():
 
 def get_asset(asset_name=None):
     entity_data_keys_from_project_when_miss = [
-        "fstart", "fend", "handle_start", "handle_end", "fps",
-        "resolution_width", "resolution_height"
+        "frameStart", "frameEnd", "handleStart", "handleEnd", "fps",
+        "resolutionWidth", "resolutionHeight"
     ]
 
     entity_keys_from_project_when_miss = []
 
     alternatives = {
-        "handle_start": "handles",
-        "handle_end": "handles"
+        "handleStart": "handles",
+        "handleEnd": "handles"
     }
 
     defaults = {
-        "handle_start": 0,
-        "handle_end": 0
+        "handleStart": 0,
+        "handleEnd": 0
     }
 
     if not asset_name:
