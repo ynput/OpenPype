@@ -188,14 +188,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # adding representation
                             representations_new.append(repre_new)
-                    # if "delete" in tags:
-                    #     if "mov" in full_input_path:
-                    #         os.remove(full_input_path)
-                    #         self.log.debug("Removed: `{}`".format(full_input_path))
+
+                            # Schedule old reprensetation for deletion.
+                            repre["tags"].append("delete")
                 else:
                     continue
             else:
                 continue
+
+        for repre in representations_new:
+            if "delete" in repre["tags"]:
+                representations_new.remove(repre)
 
         self.log.debug(
             "new representations: {}".format(representations_new))
