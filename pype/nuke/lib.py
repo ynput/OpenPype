@@ -153,15 +153,15 @@ def format_anatomy(data):
     if not version:
         file = script_name()
         data["version"] = pype.get_version_from_path(file)
-
+    project_document = pype.get_project()
     data.update({
         "root": api.Session["AVALON_PROJECTS"],
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
         "task": str(pype.get_task()).lower(),
         "family": data["avalon"]["family"],
-        "project": {"name": pype.get_project_name(),
-                    "code": pype.get_project_code()},
+        "project": {"name": project_document["name"],
+                    "code": project_document["data"].get("code", '')},
         "representation": data["nuke_dataflow_writes"]["file_type"],
         "app": data["application"]["application_dir"],
         "hierarchy": pype.get_hierarchy(),
@@ -474,7 +474,9 @@ def reset_frame_range_handles():
 
     # get handles values
     handles = avalon.nuke.get_handles(asset)
-    handle_start, handle_end = pype.get_handle_irregular(asset)
+    asset_entity = pype.get_asset(asset)
+    handle_start = asset_entity["data"]["handle_start"]
+    handle_end = asset_entity["data"]["handle_end"]
 
     fps = asset["data"]["fps"]
    frame_start= int(asset["data"]["frameStart"]) - handle_start

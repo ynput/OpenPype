@@ -46,7 +46,7 @@ def set_workfiles():
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
-    project_data = pype.get_project_data()
+    project_data = pype.get_project()["data"]
 
     log.info("project_data: {}".format(project_data))
 

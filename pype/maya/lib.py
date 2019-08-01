@@ -1858,8 +1858,8 @@ def set_context_settings():
 
     # Todo (Wijnand): apply renderer and resolution of project
 
-    project_data = lib.get_project_data()
-    asset_data = lib.get_asset_data()
+    project_data = lib.get_project()["data"]
+    asset_data = lib.get_asset()["data"]
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
@@ -1887,7 +1887,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset_fps()
+    fps = lib.get_asset()["data"]["fps"]
     current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
 
     if current_fps != fps:
