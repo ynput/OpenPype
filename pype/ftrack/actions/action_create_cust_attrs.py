@@ -226,24 +226,30 @@ class CustomAttributes(BaseAction):
     def custom_attributes_from_file(self, session, event):
         presets = config.get_presets()['ftrack']['ftrack_custom_attributes']
 
-        for cust_attr_name in presets:
+        for cust_attr_data in presets:
+            cust_attr_name = cust_attr_data.get(
+                'label',
+                cust_attr_data.get('key')
+            )
             try:
                 data = {}
-                cust_attr = presets[cust_attr_name]
                 # Get key, label, type
-                data.update(self.get_required(cust_attr))
+                data.update(self.get_required(cust_attr_data))
                 # Get hierachical/ entity_type/ object_id
-                data.update(self.get_entity_type(cust_attr))
+                data.update(self.get_entity_type(cust_attr_data))
                 # Get group, default, security roles
-                data.update(self.get_optional(cust_attr))
+                data.update(self.get_optional(cust_attr_data))
                 # Process data
                 self.process_attribute(data)
 
             except CustAttrException as cae:
-                msg = 'Custom attribute error "{}" - {}'.format(
-                    cust_attr_name, str(cae)
-                )
-                self.log.warning(msg)
+                if cust_attr_name:
+                    msg = 'Custom attribute error "{}" - {}'.format(
+                        cust_attr_name, str(cae)
+                    )
+                else:
+                    msg = 'Custom attribute error - {}'.format(str(cae))
+                self.log.warning(msg, exc_info=True)
                 self.show_message(event, msg)
 
         return True
