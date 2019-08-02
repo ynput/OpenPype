@@ -124,6 +124,9 @@ class SyncHierarchicalAttrs(BaseAction):
 
                     self.update_hierarchical_attribute(entity, key, value)
 
+            job['status'] = 'done'
+            session.commit()
+
         except Exception:
             self.log.error(
                 'Action "{}" failed'.format(self.label),
