@@ -225,7 +225,13 @@ class AppAction(BaseHandler):
                 self.log.exception(
                     "{0} Error in anatomy.format: {1}".format(__name__, e)
                 )
-        os.environ["AVALON_WORKDIR"] = os.path.normpath(work_template)
+
+        workdir = os.path.normpath(work_template)
+        os.environ["AVALON_WORKDIR"] = workdir
+        try:
+            os.makedirs(workdir)
+        except FileExistsError:
+            pass
 
         # collect all parents from the task
         parents = []
