@@ -61,7 +61,7 @@ class SyncHierarchicalAttrs(BaseAction):
             if role['security_role']['name'] in role_list:
                 role_check = True
                 break
-        print(self.icon)
+
         if role_check is True:
             for entity in entities:
                 context_type = entity.get('context_type', '').lower()
