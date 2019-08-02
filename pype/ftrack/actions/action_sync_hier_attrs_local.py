@@ -28,7 +28,7 @@ class SyncHierarchicalAttrs(BaseAction):
     )
 
     #: roles that are allowed to register this action
-    role_list = ['Administrator']
+    role_list = ['Pypeclub', 'Administrator', 'Project Manager']
 
     def discover(self, session, entities, event):
         ''' Validation '''
