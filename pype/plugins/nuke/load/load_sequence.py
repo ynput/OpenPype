@@ -92,8 +92,8 @@ class LoadSequence(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        first = version_data.get("frameStart", None)
+        last = version_data.get("frameEnd", None)
         handles = version_data.get("handles", 0)
         handle_start = version_data.get("handleStart", 0)
         handle_end = version_data.get("handleEnd", 0)
@@ -136,7 +136,7 @@ class LoadSequence(api.Loader):
             r["last"].setValue(int(last))
 
             # add additional metadata from the version to imprint to Avalon knob
-            add_keys = ["startFrame", "endFrame", "handles",
+            add_keys = ["frameStart", "frameEnd", "handles",
                         "source", "colorspace", "author", "fps", "version",
                         "handleStart", "handleEnd"]
 
@@ -198,8 +198,8 @@ class LoadSequence(api.Loader):
 
         version_data = version.get("data", {})
 
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        first = version_data.get("frameStart", None)
+        last = version_data.get("frameEnd", None)
         handles = version_data.get("handles", 0)
         handle_start = version_data.get("handleStart", 0)
         handle_end = version_data.get("handleEnd", 0)
@@ -234,8 +234,8 @@ class LoadSequence(api.Loader):
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "startFrame": version_data.get("startFrame"),
-            "endFrame": version_data.get("endFrame"),
+            "frameStart": version_data.get("frameStart"),
+            "frameEnd": version_data.get("frameEnd"),
             "version": version.get("name"),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),

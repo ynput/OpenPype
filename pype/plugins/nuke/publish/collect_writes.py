@@ -91,8 +91,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "ext": ext,
             "label": label,
             "handles": handles,
-            "startFrame": first_frame,
-            "endFrame": last_frame,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
         })

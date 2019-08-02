@@ -22,7 +22,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     families = ["imagesequence", "render", "write", "source"]
 
     def process(self, instance):
-        start = instance.data.get("startFrame")
+        start = instance.data.get("frameStart")
         stagingdir = os.path.normpath(instance.data.get("stagingDir"))
 
         collected_frames = os.listdir(stagingdir)

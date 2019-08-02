@@ -78,8 +78,8 @@ class CollectClips(api.ContextPlugin):
                     "sourceFirst": source_first_frame,
                     "sourceIn": int(item.sourceIn()),
                     "sourceOut": int(item.sourceOut()),
-                    "timelineIn": int(item.timelineIn()),
-                    "timelineOut": int(item.timelineOut())
+                    "clipIn": int(item.timelineIn()),
+                    "clipOut": int(item.timelineOut())
                 }
             )
 

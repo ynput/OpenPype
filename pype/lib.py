@@ -34,11 +34,32 @@ def _subprocess(args):
         raise ValueError("\"{}\" was not successful: {}".format(args, output))
 
 
-def get_handle_irregular(asset):
-    data = asset["data"]
-    handle_start = data.get("handle_start", 0)
-    handle_end = data.get("handle_end", 0)
-    return (handle_start, handle_end)
+def get_hierarchy(asset_name=None):
+    """
+    Obtain asset hierarchy path string from mongo db
+
+    Returns:
+        string: asset hierarchy path
+
+    """
+    if not asset_name:
+        asset_name = io.Session.get("AVALON_ASSET", os.environ["AVALON_ASSET"])
+
+    asset = io.find_one({
+        "type": 'asset',
+        "name": asset_name
+    })
+
+    hierarchy_items = []
+    entity = asset
+    while True:
+        parent_id = entity.get("data", {}).get("visualParent")
+        if not parent_id:
+            break
+        entity = io.find_one({"_id": parent_id})
+        hierarchy_items.append(entity["name"])
+
+    return "/".join(hierarchy_items)
 
 
 def add_tool_to_environment(tools):
@@ -155,45 +176,6 @@ def any_outdated():
 
         checked.add(representation)
     return False
-
-
-def update_task_from_path(path):
-    """Update the context using the current scene state.
-
-    When no changes to the context it will not trigger an update.
-    When the context for a file could not be parsed an error is logged but not
-    raised.
-
-    """
-    if not path:
-        log.warning("Can't update the current task. Scene is not saved.")
-        return
-
-    # Find the current context from the filename
-    project = io.find_one({"type": "project"},
-                          projection={"config.template.work": True})
-    template = project['config']['template']['work']
-    # Force to use the registered to root to avoid using wrong paths
-    template = pather.format(template, {"root": avalon.api.registered_root()})
-    try:
-        context = pather.parse(template, path)
-    except ParseError:
-        log.error("Can't update the current task. Unable to parse the "
-                  "task for: %s (pattern: %s)", path, template)
-        return
-
-    # Find the changes between current Session and the path's context.
-    current = {
-        "asset": avalon.api.Session["AVALON_ASSET"],
-        "task": avalon.api.Session["AVALON_TASK"]
-        # "app": avalon.api.Session["AVALON_APP"]
-    }
-    changes = {key: context[key] for key, current_value in current.items()
-               if context[key] != current_value}
-
-    if changes:
-        log.info("Updating work task to: %s", context)
-        avalon.api.update_current_task(**changes)
 
 
 def _rreplace(s, a, b, n=1):
@@ -331,140 +313,107 @@ def _get_host_name():
     return _host.__name__.rsplit(".", 1)[-1]
 
 
-def collect_container_metadata(container):
-    """Add additional data based on the current host
+def get_asset(asset_name=None):
+    entity_data_keys_from_project_when_miss = [
+        "frameStart", "frameEnd", "handleStart", "handleEnd", "fps",
+        "resolutionWidth", "resolutionHeight"
+    ]
 
-    If the host application's lib module does not have a function to inject
-    additional data it will return the input container
+    entity_keys_from_project_when_miss = []
+
+    alternatives = {
+        "handleStart": "handles",
+        "handleEnd": "handles"
+    }
+
+    defaults = {
+        "handleStart": 0,
+        "handleEnd": 0
+    }
+
+    if not asset_name:
+        asset_name = avalon.api.Session["AVALON_ASSET"]
+
+    asset_document = io.find_one({"name": asset_name, "type": "asset"})
+    if not asset_document:
+        raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
+
+    project_document = io.find_one({"type": "project"})
+
+    for key in entity_data_keys_from_project_when_miss:
+        if asset_document["data"].get(key):
+            continue
+
+        value = project_document["data"].get(key)
+        if value is not None or key not in alternatives:
+            asset_document["data"][key] = value
+            continue
+
+        alt_key = alternatives[key]
+        value = asset_document["data"].get(alt_key)
+        if value is not None:
+            asset_document["data"][key] = value
+            continue
+
+        value = project_document["data"].get(alt_key)
+        if value:
+            asset_document["data"][key] = value
+            continue
+
+        if key in defaults:
+            asset_document["data"][key] = defaults[key]
+
+    for key in entity_keys_from_project_when_miss:
+        if asset_document.get(key):
+            continue
+
+        value = project_document.get(key)
+        if value is not None or key not in alternatives:
+            asset_document[key] = value
+            continue
+
+        alt_key = alternatives[key]
+        value = asset_document.get(alt_key)
+        if value:
+            asset_document[key] = value
+            continue
+
+        value = project_document.get(alt_key)
+        if value:
+            asset_document[key] = value
+            continue
+
+        if key in defaults:
+            asset_document[key] = defaults[key]
+
+    return asset_document
+
+
+def get_project():
+    io.install()
+    return io.find_one({"type": "project"})
+
+
+def get_version_from_path(file):
+    """
+    Finds version number in file path string
 
     Args:
-        container (dict): collection if representation data in host
+        file (string): file path
 
     Returns:
-        generator
-    """
-    # TODO: Improve method of getting the host lib module
-    host_name = _get_host_name()
-    package_name = "pype.{}.lib".format(host_name)
-    hostlib = importlib.import_module(package_name)
-
-    if not hasattr(hostlib, "get_additional_data"):
-        return {}
-
-    return hostlib.get_additional_data(container)
-
-
-def get_asset_fps():
-    """Returns project's FPS, if not found will return 25 by default
-
-    Returns:
-        int, float
+        v: version number in string ('001')
 
     """
-
-    key = "fps"
-
-    # FPS from asset data (if set)
-    asset_data = get_asset_data()
-    if key in asset_data:
-        return asset_data[key]
-
-    # FPS from project data (if set)
-    project_data = get_project_data()
-    if key in project_data:
-        return project_data[key]
-
-    # Fallback to 25 FPS
-    return 25.0
-
-
-def get_project_data():
-    """Get the data of the current project
-
-    The data of the project can contain things like:
-        resolution
-        fps
-        renderer
-
-    Returns:
-        dict:
-
-    """
-
-    project_name = io.active_project()
-    project = io.find_one({"name": project_name,
-                           "type": "project"},
-                          projection={"data": True})
-
-    data = project.get("data", {})
-
-    return data
-
-
-def get_asset_data(asset=None):
-    """Get the data from the current asset
-
-    Args:
-        asset(str, Optional): name of the asset, eg:
-
-    Returns:
-        dict
-    """
-    asset_name = asset or avalon.api.Session["AVALON_ASSET"]
-    document = io.find_one({"name": asset_name,
-                            "type": "asset"})
-    data = document.get("data", {})
-
-    return data
-
-
-def get_data_hierarchical_attr(entity, attr_name):
-    vp_attr = 'visualParent'
-    data = entity['data']
-    value = data.get(attr_name, None)
-    if value is not None:
-        return value
-    elif vp_attr in data:
-        if data[vp_attr] is None:
-            parent_id = entity['parent']
-        else:
-            parent_id = data[vp_attr]
-        parent = io.find_one({"_id": parent_id})
-        return get_data_hierarchical_attr(parent, attr_name)
-    else:
-        return None
-
-
-def get_avalon_project_config_schema():
-    schema = 'avalon-core:config-1.0'
-    return schema
-
-
-def get_avalon_project_template_schema():
-    schema = "avalon-core:project-2.0"
-    return schema
-
-
-def get_avalon_project_template():
-    from pypeapp import Anatomy
-
-    """
-    Get avalon template
-
-    Returns:
-        dictionary with templates
-    """
-    templates = Anatomy().templates
-    proj_template = {}
-    proj_template['workfile'] = templates["avalon"]["workfile"]
-    proj_template['work'] = templates["avalon"]["work"]
-    proj_template['publish'] = templates["avalon"]["publish"]
-    return proj_template
-
-
-def get_avalon_asset_template_schema():
-    schema = "avalon-core:asset-2.0"
-    return schema
+    pattern = re.compile(r"[\._]v([0-9]*)")
+    try:
+        return pattern.findall(file)[0]
+    except IndexError:
+        log.error(
+            "templates:get_version_from_workfile:"
+            "`{}` missing version string."
+            "Example `v004`".format(file)
+        )
 
 
 def get_avalon_database():
@@ -474,29 +423,18 @@ def get_avalon_database():
 
 
 def set_io_database():
-    project = os.environ.get('AVALON_PROJECT', '')
-    asset = os.environ.get('AVALON_ASSET', '')
-    silo = os.environ.get('AVALON_SILO', '')
-    os.environ['AVALON_PROJECT'] = project
-    os.environ['AVALON_ASSET'] = asset
-    os.environ['AVALON_SILO'] = silo
+    required_keys = ["AVALON_PROJECT", "AVALON_ASSET", "AVALON_SILO"]
+    for key in required_keys:
+        os.environ[key] = os.environ.get(key, "")
     io.install()
 
 
 def get_all_avalon_projects():
     db = get_avalon_database()
-    project_names = db.collection_names()
     projects = []
-    for name in project_names:
+    for name in db.collection_names():
         projects.append(db[name].find_one({'type': 'project'}))
     return projects
-
-
-def get_presets_path():
-    templates = os.environ['PYPE_CONFIG']
-    path_items = [templates, 'presets']
-    filepath = os.path.sep.join(path_items)
-    return filepath
 
 
 def filter_pyblish_plugins(plugins):

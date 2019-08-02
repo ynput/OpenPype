@@ -161,10 +161,10 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                     })
 
                     # adding frame start if any on instance
-                    start_frame = instance.data.get("frameStart")
+                    start_frame = instance.data.get("startingFrame")
                     if start_frame:
                         asset_shared.update({
-                            "frameStart": start_frame
+                            "startingFrame": start_frame
                         })
 
 
@@ -218,12 +218,12 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     instance.data["tasks"] = s_asset_data["tasks"]
 
                     # adding frame start if any on instance
-                    start_frame = s_asset_data.get("frameStart")
+                    start_frame = s_asset_data.get("startingFrame")
                     if start_frame:
-                        instance.data["startFrame"] = start_frame
-                        instance.data["endFrame"] = start_frame + (
-                            instance.data["timelineOut"] -
-                            instance.data["timelineIn"])
+                        instance.data["frameStart"] = start_frame
+                        instance.data["frameEnd"] = start_frame + (
+                            instance.data["clipOut"] -
+                            instance.data["clipIn"])
 
 
 
@@ -254,13 +254,11 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             if instance.data.get("main"):
                 in_info['custom_attributes'] = {
                     'handles': int(instance.data.get('handles', 0)),
-                    'handle_start': handle_start,
-                    'handle_end': handle_end,
-                    'fstart': instance.data["startFrame"],
-                    'fend': instance.data["endFrame"],
-                    'fps': instance.context.data["fps"],
-                    "edit_in": instance.data["timelineIn"],
-                    "edit_out": instance.data["timelineOut"]
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end,
+                    "frameStart": instance.data["frameStart"],
+                    "frameEnd": instance.data["frameEnd"],
+                    'fps': instance.context.data["fps"]
                 }
 
                 # adding SourceResolution if Tag was present
@@ -272,9 +270,9 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                         width, height, pixel_aspect))
 
                     in_info['custom_attributes'].update({
-                        "resolution_width": width,
-                        "resolution_height": height,
-                        "pixel_aspect": pixel_aspect
+                        "resolutionWidth": width,
+                        "resolutionHeight": height,
+                        "pixelAspect": pixel_aspect
                     })
 
             in_info['tasks'] = instance.data['tasks']

@@ -185,8 +185,8 @@ class DropDataFrame(QtWidgets.QFrame):
             'name': file_base,
             'ext': file_ext,
             'file_info': range,
-            'startFrame': startFrame,
-            'endFrame': endFrame,
+            "frameStart": startFrame,
+            "frameEnd": endFrame,
             'representation': repr_name,
             'folder_path': folder_path,
             'is_sequence': True,
@@ -253,24 +253,24 @@ class DropDataFrame(QtWidgets.QFrame):
             ext in self.presets['extensions']['video_file']
         ):
             probe_data = self.load_data_with_probe(filepath)
-            if 'frameRate' not in data:
+            if 'fps' not in data:
                 # default value
-                frameRate = 25
-                frameRate_string = probe_data.get('r_frame_rate')
-                if frameRate_string:
-                    frameRate = int(frameRate_string.split('/')[0])
+                fps = 25
+                fps_string = probe_data.get('r_frame_rate')
+                if fps_string:
+                    fps = int(fps_string.split('/')[0])
 
-                output['frameRate'] = frameRate
+                output['fps'] = fps
 
-            if 'startFrame' not in data or 'endFrame' not in data:
+            if "frameStart" not in data or "frameEnd" not in data:
                 startFrame = endFrame = 1
                 endFrame_string = probe_data.get('nb_frames')
 
                 if endFrame_string:
                     endFrame = int(endFrame_string)
 
-                output['startFrame'] = startFrame
-                output['endFrame'] = endFrame
+                output["frameStart"] = startFrame
+                output["frameEnd"] = endFrame
 
             if (ext == '.mov') and (not file_info):
                 file_info = probe_data.get('codec_name')
