@@ -209,21 +209,21 @@ class BaseHandler(object):
             event
         ]
 
-    def _get_entities(self, event):
-        self.session._local_cache.clear()
-        selection = event['data'].get('selection', [])
+    def _get_entities(self, event, session=None):
+        if session is None:
+            session = self.session
+            session._local_cache.clear()
+        selection = event['data'].get('selection') or []
         _entities = []
         for entity in selection:
-            _entities.append(
-                self.session.get(
-                    self._get_entity_type(entity),
-                    entity.get('entityId')
-                )
-            )
+            _entities.append(session.get(
+                self._get_entity_type(entity, session),
+                entity.get('entityId')
+            ))
         event['data']['entities_object'] = _entities
         return _entities
 
-    def _get_entity_type(self, entity):
+    def _get_entity_type(self, entity, session=None):
         '''Return translated entity type tht can be used with API.'''
         # Get entity type and make sure it is lower cased. Most places except
         # the component tab in the Sidebar will use lower case notation.

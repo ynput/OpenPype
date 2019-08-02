@@ -88,10 +88,16 @@ class SyncHierarchicalAttrs(BaseAction):
         })
         session.commit()
 
+        process_session = ftrack_api.Session(
+            server_url=session.server_url,
+            api_key=session.api_key,
+            api_user=session.api_user,
+            auto_connect_event_hub=True
+        )
         try:
             # Collect hierarchical attrs
             custom_attributes = {}
-            all_avalon_attr = session.query(
+            all_avalon_attr = process_session.query(
                 'CustomAttributeGroup where name is "avalon"'
             ).one()
             for cust_attr in all_avalon_attr['custom_attribute_configurations']:
@@ -127,7 +133,9 @@ class SyncHierarchicalAttrs(BaseAction):
             self.db_con.install()
             self.db_con.Session['AVALON_PROJECT'] = project_name
 
-            for entity in entities:
+            _entities = self._get_entities(event, process_session)
+
+            for entity in _entities:
                 for key in custom_attributes:
                     # check if entity has that attribute
                     if key not in entity['custom_attributes']:
