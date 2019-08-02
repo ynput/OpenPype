@@ -260,7 +260,7 @@ class AttributesRemapper(BaseAction):
         for key, value in messages.items():
             if not value:
                 continue
-            subtitle = {'type': 'label', 'value':'# {}'.format(key)}
+            subtitle = {'type': 'label', 'value': '# {}'.format(key)}
             items.append(subtitle)
             if isinstance(value, list):
                 for item in value:
