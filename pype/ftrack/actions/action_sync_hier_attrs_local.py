@@ -53,6 +53,7 @@ class SyncHierarchicalAttrs(BaseAction):
             })
         })
         session.commit()
+        self.log.debug('Job with id "{}" created'.format(job['id']))
 
         process_session = ftrack_api.Session(
             server_url=session.server_url,
@@ -63,6 +64,7 @@ class SyncHierarchicalAttrs(BaseAction):
 
         try:
             # Collect hierarchical attrs
+            self.log.debug('Collecting Hierarchical custom attributes started')
             custom_attributes = {}
             all_avalon_attr = process_session.query(
                 'CustomAttributeGroup where name is "avalon"'
@@ -82,6 +84,10 @@ class SyncHierarchicalAttrs(BaseAction):
                     continue
 
                 custom_attributes[cust_attr['key']] = cust_attr
+
+            self.log.debug(
+                'Collecting Hierarchical custom attributes has finished'
+            )
 
             if not custom_attributes:
                 msg = 'No hierarchical attributes to sync.'
@@ -103,23 +109,38 @@ class SyncHierarchicalAttrs(BaseAction):
             _entities = self._get_entities(event, process_session)
 
             for entity in _entities:
+                self.log.debug(30*'-')
+                self.log.debug(
+                    'Processing entity "{}"'.format(entity.get('name', entity))
+                )
+
+                ent_name = entity.get('name', entity)
+                if entity.entity_type.lower() == 'project':
+                    ent_name = entity['full_name']
+
                 for key in custom_attributes:
+                    self.log.debug(30*'*')
+                    self.log.debug(
+                        'Processing Custom attribute key "{}"'.format(key)
+                    )
                     # check if entity has that attribute
                     if key not in entity['custom_attributes']:
-                        self.log.debug(
-                            'Hierachical attribute "{}" not found on "{}"'.format(
-                                key, entity.get('name', entity)
-                            )
+
                         )
+
+                        self.log.error((
+                            '- key "{}" not found on "{}"'
+                        ).format(key, ent_name))
                         continue
 
                     value = self.get_hierarchical_value(key, entity)
                     if value is None:
-                        self.log.warning(
-                            'Hierarchical attribute "{}" not set on "{}"'.format(
-                                key, entity.get('name', entity)
-                            )
+
                         )
+
+                        self.log.warning((
+                            '- key "{}" not set on "{}" or its parents'
+                        ).format(key, ent_name))
                         continue
 
                     self.update_hierarchical_attribute(entity, key, value)
@@ -158,6 +179,27 @@ class SyncHierarchicalAttrs(BaseAction):
             entity.entity_type.lower() == 'task'
         ):
             return
+
+        ent_name = entity.get('name', entity)
+        if entity.entity_type.lower() == 'project':
+            ent_name = entity['full_name']
+
+        hierarchy = '/'.join(
+            [a['name'] for a in entity.get('ancestors', [])]
+        )
+        if hierarchy:
+            hierarchy = '/'.join(
+                [entity['project']['full_name'], hierarchy, entity['name']]
+            )
+        elif entity.entity_type.lower() == 'project':
+            hierarchy = entity['full_name']
+        else:
+            hierarchy = '/'.join(
+                [entity['project']['full_name'], entity['name']]
+            )
+
+        self.log.debug('- updating entity "{}"'.format(hierarchy))
+
         # collect entity's custom attributes
         custom_attributes = entity.get('custom_attributes')
         if not custom_attributes:
@@ -165,24 +207,30 @@ class SyncHierarchicalAttrs(BaseAction):
 
         mongoid = custom_attributes.get(self.ca_mongoid)
         if not mongoid:
-            self.log.debug('Entity "{}" is not synchronized to avalon.'.format(
-                entity.get('name', entity)
-            ))
+
+            self.log.warning(
+                '-- entity "{}" is not synchronized to avalon. Skipping'.format(
+                    ent_name
+                )
+            )
             return
 
         try:
             mongoid = ObjectId(mongoid)
         except Exception:
-            self.log.warning('Entity "{}" has stored invalid MongoID.'.format(
-                entity.get('name', entity)
-            ))
+
+            self.log.warning(
+                '-- entity "{}" has stored invalid MongoID. Skipping'.format(
+                    ent_name
+                )
+            )
             return
         # Find entity in Mongo DB
         mongo_entity = self.db_con.find_one({'_id': mongoid})
         if not mongo_entity:
             self.log.warning(
-                'Entity "{}" is not synchronized to avalon.'.format(
-                    entity.get('name', entity)
+                '-- entity "{}" was not found in DB by id "{}". Skipping'.format(
+                    ent_name, str(mongoid)
                 )
             )
             return
@@ -198,6 +246,10 @@ class SyncHierarchicalAttrs(BaseAction):
         self.db_con.update_many(
             {'_id': mongoid},
             {'$set': {'data': data}}
+        )
+
+        self.log.debug(
+            '-- stored value "{}"'.format(value)
         )
 
         for child in entity.get('children', []):
