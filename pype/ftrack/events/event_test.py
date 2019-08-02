@@ -5,11 +5,10 @@ from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent
 
 
-ignore_me = True
-
-
 class Test_Event(BaseEvent):
 
+    ignore_me = True
+    
     priority = 10000
 
     def launch(self, session, event):

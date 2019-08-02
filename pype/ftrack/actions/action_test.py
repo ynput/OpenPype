@@ -11,12 +11,10 @@ from pype.ftrack import BaseAction
 from avalon import io, inventory, schema
 
 
-ignore_me = True
-
-
 class TestAction(BaseAction):
     '''Edit meta data action.'''
 
+    ignore_me = True
     #: Action identifier.
     identifier = 'test.action'
     #: Action label.
