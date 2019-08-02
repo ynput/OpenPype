@@ -33,6 +33,8 @@ class AttributesRemapper(BaseAction):
 
         "handle_start": "handleStart",
         "handle_end": "handleEnd",
+        "handles": ["handleEnd", "handleStart"],
+
         "frameRate": "fps",
         "framerate": "fps",
         "resolution_width": "resolutionWidth",
@@ -186,22 +188,42 @@ class AttributesRemapper(BaseAction):
 
                 for key_from, key_to in self.keys_to_change.items():
                     # continue if final key already exists
-                    if key_to in source_data:
-                        continue
+                    if type(key_to) == list:
+                        for key in key_to:
+                            # continue if final key was set in update_data
+                            if key in updating_data:
+                                continue
 
-                    # continue if final key was set in update_data
-                    if key_to in updating_data:
-                        continue
+                            # continue if source key not exist or value is None
+                            value = source_data.get(key_from)
+                            if value is None:
+                                continue
 
-                    # continue if source key not exist or value is None
-                    value = source_data.get(key_from)
-                    if not value:
-                        continue
+                            self.log.debug(
+                                "-- changing key {} to {}".format(
+                                    key_from,
+                                    key
+                                )
+                            )
 
-                    self.log.debug(
-                        "-- changing key {} to {}".format(key_from, key_to)
-                    )
-                    updating_data[key_to] = value
+                            updating_data[key] = value
+                    else:
+                        if key_to in source_data:
+                            continue
+
+                        # continue if final key was set in update_data
+                        if key_to in updating_data:
+                            continue
+
+                        # continue if source key not exist or value is None
+                        value = source_data.get(key_from)
+                        if value is None:
+                            continue
+
+                        self.log.debug(
+                            "-- changing key {} to {}".format(key_from, key_to)
+                        )
+                        updating_data[key_to] = value
 
                 # Pop out old keys from entity
                 is_obsolete = False

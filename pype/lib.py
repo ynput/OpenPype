@@ -345,13 +345,13 @@ def get_asset(asset_name=None):
             continue
 
         value = project_document["data"].get(key)
-        if value or key not in alternatives:
+        if value is not None or key not in alternatives:
             asset_document["data"][key] = value
             continue
 
         alt_key = alternatives[key]
         value = asset_document["data"].get(alt_key)
-        if value:
+        if value is not None:
             asset_document["data"][key] = value
             continue
 
@@ -368,7 +368,7 @@ def get_asset(asset_name=None):
             continue
 
         value = project_document.get(key)
-        if value or key not in alternatives:
+        if value is not None or key not in alternatives:
             asset_document[key] = value
             continue
 
