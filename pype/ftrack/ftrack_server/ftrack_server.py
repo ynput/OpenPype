@@ -80,23 +80,16 @@ class FtrackServer():
                     if '.pyc' in file or '.py' not in file:
                         continue
 
-                    ignore = 'ignore_me'
                     mod = importlib.import_module(os.path.splitext(file)[0])
                     importlib.reload(mod)
                     mod_functions = dict(
                         [
                             (name, function)
                             for name, function in mod.__dict__.items()
-                            if isinstance(function, types.FunctionType) or
-                            name == ignore
+                            if isinstance(function, types.FunctionType)
                         ]
                     )
-                    # Don't care about ignore_me files
-                    if (
-                        ignore in mod_functions and
-                        mod_functions[ignore] is True
-                    ):
-                        continue
+
                     # separate files by register function
                     if 'register' not in mod_functions:
                         msg = (
