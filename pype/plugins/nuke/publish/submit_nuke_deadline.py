@@ -29,7 +29,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         # root = nuke.root()
         # node_subset_name = instance.data.get("name", None)
-        node = instance[0]
+        node = instance[1]
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
                                            "http://localhost:8082")
