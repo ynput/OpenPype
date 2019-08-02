@@ -194,7 +194,6 @@ class BaseHandler(object):
     def _translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''
 
-        '''Return *event* translated structure to be used with the API.'''
         _entities = event['data'].get('entities_object', None)
         if (
             _entities is None or
@@ -430,12 +429,47 @@ class BaseHandler(object):
             on_error='ignore'
         )
 
-    def show_interface(self, event, items, title=''):
+    def show_interface(
+        self, items, title='',
+        event=None, user=None, username=None, user_id=None
+    ):
         """
-        Shows interface to user who triggered event
+        Shows interface to user
+        - to identify user must be entered one of args:
+            event, user, username, user_id
         - 'items' must be list containing Ftrack interface items
         """
-        user_id = event['source']['user']['id']
+        if not any([event, user, username, user_id]):
+            raise TypeError((
+                'Missing argument `show_interface` requires one of args:'
+                ' event (ftrack_api Event object),'
+                ' user (ftrack_api User object)'
+                ' username (string) or user_id (string)'
+            ))
+
+        if event:
+            user_id = event['source']['user']['id']
+        elif user:
+            user_id = user['id']
+        else:
+            if user_id:
+                key = 'id'
+                value = user_id
+            else:
+                key = 'username'
+                value = username
+
+            user = self.session.query(
+                'User where {} is "{}"'.format(key, value)
+            ).first()
+
+            if not user:
+                raise TypeError((
+                    'Ftrack user with {} "{}" was not found!'.format(key, value)
+                ))
+
+            user_id = user['id']
+
         target = (
             'applicationId=ftrack.client.web and user.id="{0}"'
         ).format(user_id)
@@ -452,3 +486,33 @@ class BaseHandler(object):
             ),
             on_error='ignore'
         )
+
+    def show_interface_from_dict(
+        self, messages, event=None, user=None, username=None, user_id=None
+    ):
+        if not messages:
+            self.log.debug("No messages to show! (messages dict is empty)")
+            return
+        items = []
+        title = 'Errors during mirroring'
+        splitter = {'type': 'label', 'value': '---'}
+        first = True
+        for key, value in messages.items():
+            if not first:
+                items.append(splitter)
+            else:
+                first = False
+
+            subtitle = {'type': 'label', 'value':'<h3>{}</h3>'.format(key)}
+            items.append(subtitle)
+            if isinstance(value, list):
+                for item in value:
+                    message = {
+                        'type': 'label', 'value': '<p>{}</p>'.format(item)
+                    }
+                    items.append(message)
+            else:
+                message = {'type': 'label', 'value': '<p>{}</p>'.format(value)}
+                items.append(message)
+
+        self.show_interface(items, title, event, user, username, user_id)

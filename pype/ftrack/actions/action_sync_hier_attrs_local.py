@@ -41,6 +41,7 @@ class SyncHierarchicalAttrs(BaseAction):
         return False
 
     def launch(self, session, entities, event):
+        self.interface_messages = {}
         user = session.query(
             'User where id is "{}"'.format(event['source']['user']['id'])
         ).one()
@@ -69,6 +70,11 @@ class SyncHierarchicalAttrs(BaseAction):
             all_avalon_attr = process_session.query(
                 'CustomAttributeGroup where name is "avalon"'
             ).one()
+
+            error_key = (
+                'Hierarchical attributes with set "default" value (not allowed)'
+            )
+
             for cust_attr in all_avalon_attr['custom_attribute_configurations']:
                 if 'avalon_' in cust_attr['key']:
                     continue
@@ -77,6 +83,12 @@ class SyncHierarchicalAttrs(BaseAction):
                     continue
 
                 if cust_attr['default']:
+                    if error_key not in self.interface_messages:
+                        self.interface_messages[error_key] = []
+                    self.interface_messages[error_key].append(
+                        cust_attr['label']
+                    )
+
                     self.log.warning((
                         'Custom attribute "{}" has set default value.'
                         ' This attribute can\'t be synchronized'
@@ -125,7 +137,12 @@ class SyncHierarchicalAttrs(BaseAction):
                     )
                     # check if entity has that attribute
                     if key not in entity['custom_attributes']:
+                        error_key = 'Missing key on entities'
+                        if error_key not in self.interface_messages:
+                            self.interface_messages[error_key] = []
 
+                        self.interface_messages[error_key].append(
+                            '- key: "{}" - entity: "{}"'.format(key, ent_name)
                         )
 
                         self.log.error((
@@ -135,7 +152,15 @@ class SyncHierarchicalAttrs(BaseAction):
 
                     value = self.get_hierarchical_value(key, entity)
                     if value is None:
+                        error_key = (
+                            'Missing value for key on entity'
+                            ' and its parents (synchronization was skipped)'
+                        )
+                        if error_key not in self.interface_messages:
+                            self.interface_messages[error_key] = []
 
+                        self.interface_messages[error_key].append(
+                            '- key: "{}" - entity: "{}"'.format(key, ent_name)
                         )
 
                         self.log.warning((
@@ -160,6 +185,8 @@ class SyncHierarchicalAttrs(BaseAction):
             if job['status'] in ('queued', 'running'):
                 job['status'] = 'failed'
             session.commit()
+            if self.interface_messages:
+                self.show_interface_from_dict(self.interface_messages, event)
 
         return True
 
@@ -207,6 +234,12 @@ class SyncHierarchicalAttrs(BaseAction):
 
         mongoid = custom_attributes.get(self.ca_mongoid)
         if not mongoid:
+            error_key = 'Missing MongoID on entities (try SyncToAvalon first)'
+            if error_key not in self.interface_messages:
+                self.interface_messages[error_key] = []
+
+            if ent_name not in self.interface_messages[error_key]:
+                self.interface_messages[error_key].append(ent_name)
 
             self.log.warning(
                 '-- entity "{}" is not synchronized to avalon. Skipping'.format(
@@ -218,6 +251,12 @@ class SyncHierarchicalAttrs(BaseAction):
         try:
             mongoid = ObjectId(mongoid)
         except Exception:
+            error_key = 'Invalid MongoID on entities (try SyncToAvalon)'
+            if error_key not in self.interface_messages:
+                self.interface_messages[error_key] = []
+
+            if ent_name not in self.interface_messages[error_key]:
+                self.interface_messages[error_key].append(ent_name)
 
             self.log.warning(
                 '-- entity "{}" has stored invalid MongoID. Skipping'.format(
@@ -228,6 +267,13 @@ class SyncHierarchicalAttrs(BaseAction):
         # Find entity in Mongo DB
         mongo_entity = self.db_con.find_one({'_id': mongoid})
         if not mongo_entity:
+            error_key = 'Entities not found in Avalon DB (try SyncToAvalon)'
+            if error_key not in self.interface_messages:
+                self.interface_messages[error_key] = []
+
+            if ent_name not in self.interface_messages[error_key]:
+                self.interface_messages[error_key].append(ent_name)
+
             self.log.warning(
                 '-- entity "{}" was not found in DB by id "{}". Skipping'.format(
                     ent_name, str(mongoid)
