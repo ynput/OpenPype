@@ -411,6 +411,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 instance: the instance to integrate
         """
 
+        transfers = instance.data.get("transfers", list())
+        for src, dest in transfers:
+            self.copy_file(src, dest)
+
         # Produce hardlinked copies
         # Note: hardlink can only be produced between two files on the same
         # server/disk and editing one of the two will edit both files at once.
