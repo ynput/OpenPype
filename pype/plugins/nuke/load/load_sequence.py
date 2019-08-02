@@ -226,10 +226,10 @@ class LoadSequence(api.Loader):
 
         # Set the global in to the start frame of the sequence
         loader_shift(node, first, relative=True)
-        node["origfirst"].setValue(first)
-        node["first"].setValue(first)
-        node["origlast"].setValue(last)
-        node["last"].setValue(last)
+        node["origfirst"].setValue(int(first))
+        node["first"].setValue(int(first))
+        node["origlast"].setValue(int(last))
+        node["last"].setValue(int(last))
 
         updated_dict = {}
         updated_dict.update({
