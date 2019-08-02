@@ -1,13 +1,15 @@
+import toml
+
 import nuke
 
 import pyblish.api
 
 
-class CollectWriteLegacy(pyblish.api.ContextPlugin):
-    """Collect legacy write nodes."""
+class CollectReadLegacy(pyblish.api.ContextPlugin):
+    """Collect legacy read nodes."""
 
     order = pyblish.api.CollectorOrder
-    label = "Collect Write Legacy"
+    label = "Collect Read Legacy"
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
@@ -18,6 +20,9 @@ class CollectWriteLegacy(pyblish.api.ContextPlugin):
 
             if "avalon" not in node.knobs().keys():
                 continue
+
+            if not toml.loads(node["avalon"].value()):
+                return
 
             instance = context.create_instance(
                 node.name(), family="read.legacy"
