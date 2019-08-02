@@ -46,7 +46,14 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             # Create instance
             instance = context.create_instance(subset)
-            instance.add(node)
+            instance.append(node)
+
+            # Add all nodes in group instances.
+            if node.Class() == "Group":
+                node.begin()
+                for i in nuke.allNodes():
+                    instance.append(i)
+                node.end()
 
             family = avalon_knob_data["families"]
             if node["render"].value():

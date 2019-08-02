@@ -15,12 +15,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        # if not instance.data["publish"]:
-        #     continue
+        node = None
+        for x in instance:
+            if x.Class() == "Write":
+                node = x
 
-        node = instance[0]
-
-        if node.Class() != "Write":
+        if node is None:
             return
 
         self.log.debug("checking instance: {}".format(instance))
