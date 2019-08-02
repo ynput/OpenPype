@@ -1,5 +1,6 @@
 import pyblish.api
 from avalon import io
+from pype import lib
 
 
 @pyblish.api.log
@@ -15,10 +16,12 @@ class ValidateScript(pyblish.api.InstancePlugin):
         ctx_data = instance.context.data
         asset_name = ctx_data["asset"]
 
-        asset = io.find_one({
-            "type": "asset",
-            "name": asset_name
-        })
+        # asset = io.find_one({
+        #     "type": "asset",
+        #     "name": asset_name
+        # })
+
+        asset = lib.get_asset(asset_name)
         asset_data = asset["data"]
 
         # These attributes will be checked
