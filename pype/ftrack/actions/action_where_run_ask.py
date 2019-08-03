@@ -1,6 +1,8 @@
+import os
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from pype.vendor.ftrack_api import session as fa_session
+
 
 class ActionAskWhereIRun(BaseAction):
     """ Sometimes user forget where pipeline with his credentials is running.
@@ -14,6 +16,10 @@ class ActionAskWhereIRun(BaseAction):
     label = 'Ask where I run'
     #: Action description.
     description = 'Triggers PC info where user have running Pype'
+    #: Action icon
+    icon = '{}/ftrack/action_icons/ActionAskWhereIRun.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
 
     def discover(self, session, entities, event):
         """ Hide by default - Should be enabled only if you want to run.
