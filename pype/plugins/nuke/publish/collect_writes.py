@@ -14,16 +14,23 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     families = ["render", "render.local", "render.farm"]
 
     def process(self, instance):
-
         # if not instance.data["publish"]:
         #     continue
 
-        node = instance[0]
+        group = instance[0]
 
-        if node.Class() != "Write":
+        if group.Class() != "Group":
             return
 
         self.log.debug("checking instance: {}".format(instance))
+
+        group.begin()
+
+        for n in nuke.allNodes():
+            if n.Class() != "Write":
+                continue
+            node = n
+        group.end()
 
         # Determine defined file type
         ext = node["file_type"].value()
@@ -34,7 +41,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             output_type = "mov"
 
         # Get frame range
-        handles = instance.context.data.get('handles', 0)
+        handles = instance.context.data['handles']
+        handle_start = instance.context.data["handleStart"]
+        handle_end = instance.context.data["handleEnd"]
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
 
@@ -85,7 +94,20 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         if 'render.local' in instance.data['families']:
             instance.data['families'].append('ftrack')
 
+        # Add version data to instance
+        version_data = {
+            "handles": handle_start,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
+            "version": int(version),
+            "colorspace":  node["colorspace"].value(),
+            "families": [instance.data["family"]],
+            "subset": instance.data["subset"],
+            "fps": instance.context.data["fps"]
+        }
+
         instance.data.update({
+            "versionData": version_data,
             "path": path,
             "outputDir": output_dir,
             "ext": ext,
@@ -96,5 +118,5 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
         })
-
+        instance[0] = node
         self.log.debug("instance.data: {}".format(instance.data))

@@ -19,3 +19,5 @@ class CollectAssetInfo(pyblish.api.ContextPlugin):
         self.log.info("asset_data: {}".format(asset_data))
 
         context.data['handles'] = int(asset_data["data"].get("handles", 0))
+        context.data["handleStart"] = int(asset_data["data"].get("handleStart", 0))
+        context.data["handleEnd"] = int(asset_data["data"].get("handleEnd", 0))
