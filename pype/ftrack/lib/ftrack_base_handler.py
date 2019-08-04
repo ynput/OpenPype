@@ -26,6 +26,7 @@ class BaseHandler(object):
     priority = 100
     # Type is just for logging purpose (e.g.: Action, Event, Application,...)
     type = 'No-type'
+    ignore_me = False
     preactions = []
 
     def __init__(self, session):
@@ -41,6 +42,8 @@ class BaseHandler(object):
     def register_decorator(self, func):
         @functools.wraps(func)
         def wrapper_register(*args, **kwargs):
+            if self.ignore_me:
+                return
             label = self.__class__.__name__
             if hasattr(self, 'label'):
                 if self.variant is None:
