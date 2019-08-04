@@ -321,16 +321,7 @@ def create_write_node(name, data, prenodes=None):
     lnk.makeLink(write_node.name(), "Render")
     lnk.setName("Render")
     GN.addKnob(lnk)
-
-    # linking knobs to group property panel
-    linking_knobs = ["first", "last", "use_limit"]
-    for k in linking_knobs:
-        lnk = nuke.Link_Knob(k)
-        lnk.makeLink(write_node.name(), k)
-        lnk.setName(k.replace('_', ' ').capitalize())
-        lnk.clearFlag(nuke.STARTLINE)
-        GN.addKnob(lnk)
-
+    
     return GN
 
 

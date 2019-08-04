@@ -92,6 +92,8 @@ class LoadSequence(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
+        log.info("version_data: {}\n".format(version_data))
+
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
         handles = version_data.get("handles", 0)
@@ -103,9 +105,9 @@ class LoadSequence(api.Loader):
             handle_start = handles
             handle_end = handles
 
-        # create handles offset
-        first -= handle_start
-        last += handle_end
+        # # create handles offset
+        # first -= handle_start
+        # last += handle_end
 
         # Fallback to asset name when namespace is None
         if namespace is None:

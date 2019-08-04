@@ -197,7 +197,7 @@ def version_up(filepath):
     dirname = os.path.dirname(filepath)
     basename, ext = os.path.splitext(os.path.basename(filepath))
 
-    regex = "[._]v\d+"
+    regex = r"[._]v\d+"
     matches = re.findall(regex, str(basename), re.IGNORECASE)
     if not matches:
         log.info("Creating version...")
@@ -205,7 +205,7 @@ def version_up(filepath):
         new_basename = "{}{}".format(basename, new_label)
     else:
         label = matches[-1]
-        version = re.search("\d+", label).group()
+        version = re.search(r"\d+", label).group()
         padding = len(version)
 
         new_version = int(version) + 1

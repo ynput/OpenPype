@@ -18,7 +18,10 @@ class CollectClipTagFrameStart(api.InstancePlugin):
             t_family = t_metadata.get("tag.family", "")
 
             # gets only task family tags and collect labels
-            if "startingFrame" in t_family:
+            if "frameStart" in t_family:
                 t_number = t_metadata.get("tag.number", "")
                 start_frame = int(t_number)
                 instance.data["startingFrame"] = start_frame
+                self.log.info("Start frame on `{0}` set to `{1}`".format(
+                    instance, start_frame
+                    ))
