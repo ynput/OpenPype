@@ -99,6 +99,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
             "version": int(version),
             "colorspace":  node["colorspace"].value(),
             "families": [instance.data["family"]],
@@ -118,5 +120,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
         })
+        
+        instance.insert(1, instance[0])
         instance[0] = node
         self.log.debug("instance.data: {}".format(instance.data))
