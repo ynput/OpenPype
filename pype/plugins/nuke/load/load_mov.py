@@ -76,7 +76,7 @@ class LoadMov(api.Loader):
     """Load mov file into Nuke"""
 
     families = ["write", "source", "plate", "render", "review"]
-    representations = ["mov", "preview", "review", "mp4"]
+    representations = ["wipmov", "h264", "mov", "preview", "review", "mp4"]
 
     label = "Load mov"
     order = -10
