@@ -227,6 +227,9 @@ class BaseHandler(object):
         # Get entity type and make sure it is lower cased. Most places except
         # the component tab in the Sidebar will use lower case notation.
         entity_type = entity.get('entityType').replace('_', '').lower()
+        
+        if session is None:
+            session = self.session
 
         for schema in self.session.schemas:
             alias_for = schema.get('alias_for')
