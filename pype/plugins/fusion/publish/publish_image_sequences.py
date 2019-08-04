@@ -53,8 +53,8 @@ class PublishImageSequence(pyblish.api.InstancePlugin):
         # The instance has most of the information already stored
         metadata = {
             "regex": regex,
-            "startFrame": instance.context.data["startFrame"],
-            "endFrame": instance.context.data["endFrame"],
+            "frameStart": instance.context.data["frameStart"],
+            "frameEnd": instance.context.data["frameEnd"],
             "families": ["imagesequence"],
         }
 

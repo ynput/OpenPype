@@ -13,8 +13,8 @@ class CreateVrayProxy(avalon.maya.Creator):
         super(CreateVrayProxy, self).__init__(*args, **kwargs)
 
         self.data["animation"] = False
-        self.data["startFrame"] = 1
-        self.data["endFrame"] = 1
+        self.data["frameStart"] = 1
+        self.data["frameEnd"] = 1
 
         # Write vertex colors
         self.data["vertexColors"] = False

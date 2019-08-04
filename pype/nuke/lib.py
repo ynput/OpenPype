@@ -45,7 +45,7 @@ def checkInventoryVersions():
 
             if container:
                 node = container["_node"]
-                avalon_knob_data = get_avalon_knob_data(node)
+                avalon_knob_data = avalon.nuke.get_avalon_knob_data(node)
 
                 # get representation from io
                 representation = io.find_one({
@@ -88,7 +88,7 @@ def writes_version_sync():
 
     for each in nuke.allNodes():
         if each.Class() == 'Write':
-            avalon_knob_data = get_avalon_knob_data(each)
+            avalon_knob_data = avalon.nuke.get_avalon_knob_data(each)
 
             try:
                 if avalon_knob_data['families'] not in ["render"]:
@@ -119,7 +119,7 @@ def version_up_script():
 def get_render_path(node):
 
     data = dict()
-    data['avalon'] = get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
 
     data_preset = {
         "class": data['avalon']['family'],
@@ -153,15 +153,15 @@ def format_anatomy(data):
     if not version:
         file = script_name()
         data["version"] = pype.get_version_from_path(file)
-
+    project_document = pype.get_project()
     data.update({
         "root": api.Session["AVALON_PROJECTS"],
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
-        "task": str(pype.get_task()).lower(),
+        "task": api.Session["AVALON_TASK"].lower(),
         "family": data["avalon"]["family"],
-        "project": {"name": pype.get_project_name(),
-                    "code": pype.get_project_code()},
+        "project": {"name": project_document["name"],
+                    "code": project_document["data"].get("code", '')},
         "representation": data["nuke_dataflow_writes"]["file_type"],
         "app": data["application"]["application_dir"],
         "hierarchy": pype.get_hierarchy(),
@@ -440,17 +440,17 @@ def reset_frame_range_handles():
 
     root = nuke.root()
     name = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": name, "type": "asset"})
+    asset_entity = pype.get_asset(name)
 
-    if "data" not in asset:
+    if "data" not in asset_entity:
         msg = "Asset {} don't have set any 'data'".format(name)
         log.warning(msg)
         nuke.message(msg)
         return
-    data = asset["data"]
+    data = asset_entity["data"]
 
     missing_cols = []
-    check_cols = ["fps", "fstart", "fend", "handle_start", "handle_end"]
+    check_cols = ["fps", "frameStart", "frameEnd", "handleStart", "handleEnd"]
 
     for col in check_cols:
         if col not in data:
@@ -464,30 +464,27 @@ def reset_frame_range_handles():
         return
 
     # get handles values
-    handles = avalon.nuke.get_handles(asset)
-    handle_start, handle_end = pype.get_handle_irregular(asset)
+    handle_start = asset_entity["data"]["handleStart"]
+    handle_end = asset_entity["data"]["handleEnd"]
 
-    fps = asset["data"]["fps"]
-    edit_in = int(asset["data"]["fstart"]) - handle_start
-    edit_out = int(asset["data"]["fend"]) + handle_end
+    fps = asset_entity["data"]["fps"]
+    frame_start = int(asset_entity["data"]["frameStart"]) - handle_start
+    frame_end = int(asset_entity["data"]["frameEnd"]) + handle_end
 
     root["fps"].setValue(fps)
-    root["first_frame"].setValue(edit_in)
-    root["last_frame"].setValue(edit_out)
+    root["first_frame"].setValue(frame_start)
+    root["last_frame"].setValue(frame_end)
 
-    log.info("__ handles: `{}`".format(handles))
     log.info("__ handle_start: `{}`".format(handle_start))
     log.info("__ handle_end: `{}`".format(handle_end))
-    log.info("__ edit_in: `{}`".format(edit_in))
-    log.info("__ edit_out: `{}`".format(edit_out))
     log.info("__ fps: `{}`".format(fps))
 
     # setting active viewers
-    nuke.frame(int(asset["data"]["fstart"]))
+    nuke.frame(int(asset_entity["data"]["frameStart"]))
 
     range = '{0}-{1}'.format(
-        int(asset["data"]["fstart"]),
-        int(asset["data"]["fend"]))
+        int(asset_entity["data"]["frameStart"]),
+        int(asset_entity["data"]["frameEnd"]))
 
     for node in nuke.allNodes(filter="Viewer"):
         node['frame_range'].setValue(range)
@@ -501,19 +498,10 @@ def reset_frame_range_handles():
 
     # adding handle_start/end to root avalon knob
     if not avalon.nuke.set_avalon_knob_data(root, {
-        "handle_start": int(handle_start),
-        "handle_end": int(handle_end)
+        "handleStart": int(handle_start),
+        "handleEnd": int(handle_end)
     }):
         log.warning("Cannot set Avalon knob to Root node!")
-
-
-def get_avalon_knob_data(node):
-    import toml
-    try:
-        data = toml.loads(node['avalon'].value())
-    except Exception:
-        return None
-    return data
 
 
 def reset_resolution():
@@ -523,9 +511,9 @@ def reset_resolution():
     asset = api.Session["AVALON_ASSET"]
     asset = io.find_one({"name": asset, "type": "asset"})
 
-    width = asset.get('data', {}).get('resolution_width')
-    height = asset.get('data', {}).get('resolution_height')
-    pixel_aspect = asset.get('data', {}).get('pixel_aspect')
+    width = asset.get('data', {}).get("resolutionWidth")
+    height = asset.get('data', {}).get("resolutionHeight")
+    pixel_aspect = asset.get('data', {}).get("pixelAspect")
 
     log.info("pixel_aspect: {}".format(pixel_aspect))
     if any(not x for x in [width, height, pixel_aspect]):
@@ -566,7 +554,7 @@ def reset_resolution():
         crnt_fmt_kargs = {
             "width": (check_format.width()),
             "height": (check_format.height()),
-            "pixel_aspect": float(check_format.pixelAspect())
+            "pixelAspect": float(check_format.pixelAspect())
         }
         if bbox:
             crnt_fmt_kargs.update({
@@ -581,7 +569,7 @@ def reset_resolution():
     new_fmt_kargs = {
         "width": int(width),
         "height": int(height),
-        "pixel_aspect": float(pixel_aspect),
+        "pixelAspect": float(pixel_aspect),
         "project_name": format_name
     }
     if bbox:
@@ -611,13 +599,13 @@ def make_format_string(**args):
             "{y} "
             "{r} "
             "{t} "
-            "{pixel_aspect:.2f}".format(**args)
+            "{pixelAspect:.2f}".format(**args)
         )
     else:
         return (
             "{width} "
             "{height} "
-            "{pixel_aspect:.2f}".format(**args)
+            "{pixelAspect:.2f}".format(**args)
         )
 
 
@@ -659,60 +647,6 @@ def get_hierarchical_attr(entity, attr, default=None):
 
     return get_hierarchical_attr(parent, attr)
 
-# TODO: bellow functions are wip and needs to be check where they are used
-# ------------------------------------
-
-#
-# def update_frame_range(start, end, root=None):
-#     """Set Nuke script start and end frame range
-#
-#     Args:
-#         start (float, int): start frame
-#         end (float, int): end frame
-#         root (object, Optional): root object from nuke's script
-#
-#     Returns:
-#         None
-#
-#     """
-#
-#     knobs = {
-#         "first_frame": start,
-#         "last_frame": end
-#     }
-#
-#     with avalon.nuke.viewer_update_and_undo_stop():
-#         for key, value in knobs.items():
-#             if root:
-#                 root[key].setValue(value)
-#             else:
-#                 nuke.root()[key].setValue(value)
-#
-# #
-# def get_additional_data(container):
-#     """Get Nuke's related data for the container
-#
-#     Args:
-#         container(dict): the container found by the ls() function
-#
-#     Returns:
-#         dict
-#     """
-#
-#     node = container["_node"]
-#     tile_color = node['tile_color'].value()
-#     if tile_color is None:
-#         return {}
-#
-#     hex = '%08x' % tile_color
-#     rgba = [
-#         float(int(hex[0:2], 16)) / 255.0,
-#         float(int(hex[2:4], 16)) / 255.0,
-#         float(int(hex[4:6], 16)) / 255.0
-#     ]
-#
-#     return {"color": Qt.QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
-
 
 def get_write_node_template_attr(node):
     ''' Gets all defined data from presets
@@ -720,7 +654,7 @@ def get_write_node_template_attr(node):
     '''
     # get avalon data from node
     data = dict()
-    data['avalon'] = get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
     data_preset = {
         "class": data['avalon']['family'],
         "preset": data['avalon']['families']
@@ -738,7 +672,7 @@ def get_write_node_template_attr(node):
     # adding dataflow template
     {correct_data.update({k: v})
      for k, v in nuke_dataflow_writes.items()
-     if k not in ["id", "previous"]}
+     if k not in ["_id", "_previous"]}
 
     # adding colorspace template
     {correct_data.update({k: v})

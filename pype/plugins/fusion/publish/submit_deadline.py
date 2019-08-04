@@ -79,8 +79,8 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": "Fusion",
                 "Frames": "{start}-{end}".format(
-                    start=int(context.data["startFrame"]),
-                    end=int(context.data["endFrame"])
+                    start=int(context.data["frameStart"]),
+                    end=int(context.data["frameEnd"])
                 ),
 
                 "Comment": comment,

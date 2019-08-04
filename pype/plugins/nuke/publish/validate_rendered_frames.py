@@ -11,16 +11,16 @@ class RepairCollectionAction(pyblish.api.Action):
     icon = "wrench"
 
     def process(self, context, plugin):
-        self.log.info(context[0])
+        self.log.info(context[0][1])
         files_remove = [os.path.join(context[0].data["outputDir"], f)
                         for r in context[0].data.get("representations", [])
                         for f in r.get("files", [])
                         ]
-        self.log.info(files_remove)
+        self.log.info("Files to be removed: {}".format(files_remove))
         for f in files_remove:
             os.remove(f)
             self.log.debug("removing file: {}".format(f))
-        context[0][0]["render"].setValue(True)
+        context[0][1]["render"].setValue(True)
         self.log.info("Rendering toggled ON")
 
 
@@ -51,7 +51,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             collection = collections[0]
 
             frame_length = int(
-                instance.data["endFrame"] - instance.data["startFrame"] + 1
+                instance.data["frameEnd"] - instance.data["frameStart"] + 1
             )
 
             if frame_length != 1:

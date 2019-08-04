@@ -74,8 +74,8 @@ class ValidateNukeWriteBoundingBox(pyblish.api.InstancePlugin):
     def check_bounding_box(self, instance):
         node = instance[0]
 
-        first_frame = instance.data["startFrame"]
-        last_frame = instance.data["endFrame"]
+        first_frame = instance.data["frameStart"]
+        last_frame = instance.data["frameEnd"]
 
         format_width = node.format().width()
         format_height = node.format().height()

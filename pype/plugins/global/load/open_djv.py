@@ -1,22 +1,15 @@
 import os
 import subprocess
 import json
-from pype import lib as pypelib
+from pypeapp import config
 from avalon import api
-
-
-def get_config_data():
-    path_items = [pypelib.get_presets_path(), 'djv_view', 'config.json']
-    filepath = os.path.sep.join(path_items)
-    data = dict()
-    with open(filepath) as data_file:
-        data = json.load(data_file)
-    return data
 
 
 def get_families():
     families = []
-    paths = get_config_data().get('djv_paths', [])
+    paths = config.get_presets().get("djv_view", {}).get("config", {}).get(
+        "djv_paths", []
+    )
     for path in paths:
         if os.path.exists(path):
             families.append("*")
@@ -25,13 +18,15 @@ def get_families():
 
 
 def get_representation():
-    return get_config_data().get('file_ext', [])
+    return config.get_presets().get("djv_view", {}).get("config", {}).get(
+        'file_ext', []
+    )
 
 
 class OpenInDJV(api.Loader):
     """Open Image Sequence with system default"""
 
-    config_data = get_config_data()
+    config_data = config.get_presets().get("djv_view", {}).get("config", {})
     families = get_families()
     representations = get_representation()
 
@@ -42,7 +37,9 @@ class OpenInDJV(api.Loader):
 
     def load(self, context, name, namespace, data):
         self.djv_path = None
-        paths = get_config_data().get('djv_paths', [])
+        paths = config.get_presets().get("djv_view", {}).get("config", {}).get(
+            "djv_paths", []
+        )
         for path in paths:
             if os.path.exists(path):
                 self.djv_path = path

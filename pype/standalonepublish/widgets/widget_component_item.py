@@ -301,11 +301,11 @@ class ComponentItem(QtWidgets.QFrame):
             'preview': self.is_preview()
         }
 
-        if ('startFrame' in self.in_data and 'endFrame' in self.in_data):
-            data['startFrame'] = self.in_data['startFrame']
-            data['endFrame'] = self.in_data['endFrame']
+        if ("frameStart" in self.in_data and "frameEnd" in self.in_data):
+            data["frameStart"] = self.in_data["frameStart"]
+            data["frameEnd"] = self.in_data["frameEnd"]
 
-        if 'frameRate' in self.in_data:
-            data['frameRate'] = self.in_data['frameRate']
+        if 'fps' in self.in_data:
+            data['fps'] = self.in_data['fps']
 
         return data

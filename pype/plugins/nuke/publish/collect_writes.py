@@ -42,8 +42,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         # Get frame range
         handles = instance.context.data['handles']
-        handle_start = instance.context.data['handle_start']
-        handle_end = instance.context.data['handle_end']
+        handle_start = instance.context.data["handleStart"]
+        handle_end = instance.context.data["handleEnd"]
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
 
@@ -99,6 +99,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
             "version": int(version),
             "colorspace":  node["colorspace"].value(),
             "families": [instance.data["family"]],
@@ -113,10 +115,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "ext": ext,
             "label": label,
             "handles": handles,
-            "startFrame": first_frame,
-            "endFrame": last_frame,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
         })
+        
+        instance.insert(1, instance[0])
         instance[0] = node
         self.log.debug("instance.data: {}".format(instance.data))

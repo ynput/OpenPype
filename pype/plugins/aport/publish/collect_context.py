@@ -87,13 +87,13 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
         context.data["currentFile"] = current_file
 
         # get project data from avalon
-        project_data = pype.get_project_data()
+        project_data = pype.get_project()["data"]
         assert project_data, "No `project_data` data in avalon db"
         context.data["projectData"] = project_data
         self.log.debug("project_data: {}".format(project_data))
 
         # get asset data from avalon and fix all paths
-        asset_data = pype.get_asset_data()
+        asset_data = pype.get_asset()["data"]
         assert asset_data, "No `asset_data` data in avalon db"
         asset_data = {k: v.replace("\\", "/") for k, v in asset_data.items()
                       if isinstance(v, str)}

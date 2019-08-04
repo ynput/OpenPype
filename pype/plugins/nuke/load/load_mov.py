@@ -76,7 +76,7 @@ class LoadMov(api.Loader):
     """Load mov file into Nuke"""
 
     families = ["write", "source", "plate", "render", "review"]
-    representations = ["mov", "preview", "review", "mp4"]
+    representations = ["wipmov", "h264", "mov", "preview", "review", "mp4"]
 
     label = "Load mov"
     order = -10
@@ -92,8 +92,8 @@ class LoadMov(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        orig_first = version_data.get("startFrame", None)
-        orig_last = version_data.get("endFrame", None)
+        orig_first = version_data.get("frameStart", None)
+        orig_last = version_data.get("frameEnd", None)
         diff = orig_first - 1
         # set first to 1
         first = orig_first - diff
@@ -141,7 +141,7 @@ class LoadMov(api.Loader):
             read_node["frame"].setValue(str(offset_frame))
             # add additional metadata from the version to imprint to Avalon knob
             add_keys = [
-                "startFrame", "endFrame", "handles", "source", "author",
+                "frameStart", "frameEnd", "handles", "source", "author",
                 "fps", "version", "handleStart", "handleEnd"
             ]
 
@@ -207,8 +207,8 @@ class LoadMov(api.Loader):
 
         version_data = version.get("data", {})
 
-        orig_first = version_data.get("startFrame", None)
-        orig_last = version_data.get("endFrame", None)
+        orig_first = version_data.get("frameStart", None)
+        orig_last = version_data.get("frameEnd", None)
         diff = orig_first - 1
         # set first to 1
         first = orig_first - diff
@@ -250,8 +250,8 @@ class LoadMov(api.Loader):
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "startFrame": version_data.get("startFrame"),
-            "endFrame": version_data.get("endFrame"),
+            "frameStart": version_data.get("frameStart"),
+            "frameEnd": version_data.get("frameEnd"),
             "version": version.get("name"),
             "source": version_data.get("source"),
             "handles": version_data.get("handles"),

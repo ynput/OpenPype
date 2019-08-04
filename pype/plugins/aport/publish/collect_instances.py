@@ -39,19 +39,18 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
         assert instances_data, "No `asset_default` data in json file"
 
         asset_name = a_session["AVALON_ASSET"]
-        entity = io.find_one({"name": asset_name,
-                              "type": "asset"})
+        entity = pype.get_asset(asset_name)
 
         # get frame start > first try from asset data
-        frame_start = context.data["assetData"].get("fstart", None)
+        frame_start = context.data["assetData"].get("frameStart", None)
         if not frame_start:
             self.log.debug("frame_start not on assetData")
             # get frame start > second try from parent data
-            frame_start = pype.get_data_hierarchical_attr(entity, "fstart")
+            frame_start = entity["data"]["frameStart"]
             if not frame_start:
                 self.log.debug("frame_start not on any parent entity")
                 # get frame start > third try from parent data
-                frame_start = asset_default["fstart"]
+                frame_start = asset_default["frameStart"]
 
         assert frame_start, "No `frame_start` data found, "
         "please set `fstart` on asset"
@@ -61,7 +60,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
         handles = context.data["assetData"].get("handles", None)
         if not handles:
             # get frame start > second try from parent data
-            handles = pype.get_data_hierarchical_attr(entity, "handles")
+            handles = entity["data"]["handles"]
             if not handles:
                 # get frame start > third try from parent data
                 handles = asset_default["handles"]
@@ -129,7 +128,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                     instance.data.update({
                         "subset": subset_name,
                         "task": task,
-                        "fstart": frame_start,
+                        "frameStart": frame_start,
                         "handles": handles,
                         "host": host,
                         "asset": asset,

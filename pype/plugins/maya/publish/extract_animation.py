@@ -35,8 +35,8 @@ class ExtractAnimation(pype.api.Extractor):
                                            fullPath=True) or []
 
         # Collect the start and end including handles
-        start = instance.data["startFrame"]
-        end = instance.data["endFrame"]
+        start = instance.data["frameStart"]
+        end = instance.data["frameEnd"]
         handles = instance.data.get("handles", 0)
         if handles:
             start -= handles
