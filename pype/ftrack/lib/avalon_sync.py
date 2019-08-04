@@ -588,4 +588,4 @@ def show_errors(obj, event, errors):
             obj.log.error(
                 '{}: {}'.format(key, message)
             )
-    obj.show_interface(event, items, title)
+    obj.show_interface(items, title, event=event)
