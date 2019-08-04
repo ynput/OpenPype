@@ -87,7 +87,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             repre_new = repre.copy()
 
-                            new_tags = tags[:]
+                            new_tags = [x for x in tags if x != "delete"]
                             p_tags = profile.get('tags', [])
                             self.log.info("p_tags: `{}`".format(p_tags))
                             # add families
@@ -187,15 +187,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 repre_new.pop("thumbnail")
 
                             # adding representation
+                            self.log.debug("Adding: {}".format(repre_new))
                             representations_new.append(repre_new)
-                    # if "delete" in tags:
-                    #     if "mov" in full_input_path:
-                    #         os.remove(full_input_path)
-                    #         self.log.debug("Removed: `{}`".format(full_input_path))
                 else:
                     continue
             else:
                 continue
+
+        for repre in representations_new:
+            if "delete" in repre.get("tags", []):
+                representations_new.remove(repre)
 
         self.log.debug(
             "new representations: {}".format(representations_new))
