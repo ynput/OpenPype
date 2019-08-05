@@ -221,10 +221,15 @@ class AppAction(BaseHandler):
                 anatomy = anatomy.format(data)
                 work_template = anatomy["work"]["folder"]
 
-            except Exception as e:
-                self.log.exception(
-                    "{0} Error in anatomy.format: {1}".format(__name__, e)
+            except Exception as exc:
+                msg = "{} Error in anatomy.format: {}".format(
+                    __name__, str(exc)
                 )
+                self.log.error(msg, exc_info=True)
+                return {
+                    'success': False,
+                    'message': msg
+                }
 
         workdir = os.path.normpath(work_template)
         os.environ["AVALON_WORKDIR"] = workdir
