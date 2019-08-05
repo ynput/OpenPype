@@ -4,7 +4,6 @@ import time
 from pype.ftrack import AppAction
 from avalon import lib
 from pypeapp import Logger
-from pype import lib as pypelib
 
 log = Logger().get_logger(__name__)
 
@@ -15,10 +14,7 @@ def registerApp(app, session):
     try:
         variant = app['name'].split("_")[1]
     except Exception:
-        log.warning((
-            '"{0}" - App "name" and "variant" is not separated by "_"'
-            ' (variant is not set)'
-        ).format(app['name']))
+        pass
 
     abspath = lib.which_app(app['name'])
     if abspath is None:
@@ -47,18 +43,24 @@ def registerApp(app, session):
         icon, description, preactions
     ).register()
 
+    if not variant:
+        log.info('- Variant is not set')
+
 
 def register(session):
-    projects = pypelib.get_all_avalon_projects()
-
     apps = []
-    appNames = []
-    # Get all application from all projects
-    for project in projects:
-        for app in project['config']['apps']:
-            if app['name'] not in appNames:
-                appNames.append(app['name'])
-                apps.append(app)
+
+    launchers_path = os.path.join(os.environ["PYPE_CONFIG"], "launchers")
+    for file in os.listdir(launchers_path):
+        filename, ext = os.path.splitext(file)
+        if ext.lower() != ".toml":
+            continue
+        loaded_data = toml.load(os.path.join(launchers_path, file))
+        app_data = {
+            "name": filename,
+            "label": loaded_data.get("label", filename)
+        }
+        apps.append(app_data)
 
     apps = sorted(apps, key=lambda x: x['name'])
     app_counter = 0
@@ -68,5 +70,8 @@ def register(session):
             if app_counter%5 == 0:
                 time.sleep(0.1)
             app_counter += 1
-        except Exception as e:
-            log.exception("'{0}' - not proper App ({1})".format(app['name'], e))
+        except Exception as exc:
+            log.exception(
+                "\"{}\" - not a proper App ({})".format(app['name'], str(exc)),
+                exc_info=True
+            )
