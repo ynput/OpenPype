@@ -4,7 +4,17 @@ from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
 
+from .workio import (
+    open,
+    save,
+    current_file,
+    has_unsaved_changes,
+    file_extensions,
+    work_root
+)
+
 from .. import api
+
 from .menu import (
     install as menu_install,
     _update_menu_task_label
@@ -16,6 +26,17 @@ from pypeapp import Logger
 import hiero
 
 log = Logger().get_logger(__name__, "nukestudio")
+
+__all__ = [
+    # Workfiles API
+    "open",
+    "save",
+    "current_file",
+    "has_unsaved_changes",
+    "file_extensions",
+    "work_root",
+    ]
+
 
 AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 
