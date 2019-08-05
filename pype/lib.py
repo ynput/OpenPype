@@ -45,13 +45,21 @@ def get_hierarchy(asset_name=None):
     if not asset_name:
         asset_name = io.Session.get("AVALON_ASSET", os.environ["AVALON_ASSET"])
 
-    asset = io.find_one({
+    asset_entity = io.find_one({
         "type": 'asset',
         "name": asset_name
     })
 
+    not_set = "PARENTS_NOT_SET"
+    entity_parents = entity.get("data", {}).get("parents", not_set)
+
+    # If entity already have parents then just return joined
+    if entity_parents != not_set:
+        return "/".join(entity_parents)
+
+    # Else query parents through visualParents and store result to entity
     hierarchy_items = []
-    entity = asset
+    entity = asset_entity
     while True:
         parent_id = entity.get("data", {}).get("visualParent")
         if not parent_id:
