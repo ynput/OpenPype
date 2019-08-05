@@ -14,23 +14,16 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     families = ["render", "render.local", "render.farm"]
 
     def process(self, instance):
-        # if not instance.data["publish"]:
-        #     continue
 
-        group = instance[0]
+        node = None
+        for x in instance:
+            if x.Class() == "Write":
+                node = x
 
-        if group.Class() != "Group":
+        if node is None:
             return
 
         self.log.debug("checking instance: {}".format(instance))
-
-        group.begin()
-
-        for n in nuke.allNodes():
-            if n.Class() != "Write":
-                continue
-            node = n
-        group.end()
 
         # Determine defined file type
         ext = node["file_type"].value()
@@ -120,7 +113,5 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
         })
-        
-        instance.insert(1, instance[0])
-        instance[0] = node
+
         self.log.debug("instance.data: {}".format(instance.data))
