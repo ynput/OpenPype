@@ -4,6 +4,7 @@ import time
 from pype.ftrack import AppAction
 from avalon import lib
 from pypeapp import Logger
+from pype.lib import get_all_avalon_projects
 
 log = Logger().get_logger(__name__)
 
@@ -48,6 +49,10 @@ def registerApp(app, session):
 
 
 def register(session):
+    # WARNING getting projects only helps to check connection to mongo
+    # - without will `discover` of ftrack apps actions take ages
+    result = get_all_avalon_projects()
+
     apps = []
 
     launchers_path = os.path.join(os.environ["PYPE_CONFIG"], "launchers")
