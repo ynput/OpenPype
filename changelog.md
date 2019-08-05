@@ -41,6 +41,7 @@ A large cleanup release. Most of the change are under the hood.
 - after publishing only refresh button is now available in pyblish UI
 - added context instance pyblish-lite so that artist knows if context plugin fails
 - _(avalon)_ allow opening selected files using enter key
+- _(avalon)_ core updated to v5.2.9 with our forked changes on top
 
 **fix**:
 - faster hierarchy retrieval from db
