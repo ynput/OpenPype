@@ -67,6 +67,14 @@ def get_hierarchy(asset_name=None):
         entity = io.find_one({"_id": parent_id})
         hierarchy_items.append(entity["name"])
 
+    # Add parents to entity data for next query
+    entity_data = asset_entity.get("data", {})
+    entity_data["parents"] = hierarchy_items
+    io.update_many(
+        {"_id": asset_entity["_id"]},
+        {"$set": {"data": entity_data}}
+    )
+
     return "/".join(hierarchy_items)
 
 
