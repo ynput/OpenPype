@@ -66,7 +66,7 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
                     )
 
             # Get invalid attributes.
-            nodes = [pm.PyNode(x) for x in instance]
+            nodes = pm.ls()
             for node in nodes:
                 name = node.name(stripNamespace=True)
                 if name not in attributes.keys():
