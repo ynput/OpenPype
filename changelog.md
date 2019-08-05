@@ -18,20 +18,38 @@ A large cleanup release. Most of the change are under the hood.
 - _(maya)_ Ability to load published sequences as image planes
 - _(system)_ Ftrack event that sets asset folder permissions based on task assignees in ftrack.
 - _(maya)_ Pyblish plugin that allow validation of maya attributes
+- _(system)_ added better startup logging to tray debug, including basic connection information
+- _(avalon)_ option to group published subsets to groups in the loader
+- _(avalon)_ loader family filters are working now
 
 **changed**:
 - change multiple key attributes to unify their behaviour across the pipeline
-- (nuke) write nodes are now created inside group with only some attributes editable by the artist
+- _(nuke)_ write nodes are now created inside group with only some attributes editable by the artist
 - rendered frames are now deleted from temporary location after their publishing is finished.
-- (ftrack) RV action can now be launched from any entity
+- _(ftrack)_ RV action can now be launched from any entity
+- after publishing only refresh button is now available in pyblish UI
+- added context instance pyblish-lite so that artist knows if context plugin fails
+- _(avalon)_ allow opening selected files using enter key
 
 **fix**:
 - faster hierarchy retrieval from db
-- (nuke) A lot of stability enhancements
-- (nuke studio) A lot of stability enhancements
-- (nuke) now only renders a single write node on farm
-- (ftrack) pype would crash when launcher project level task
+- _(nuke)_ A lot of stability enhancements
+- _(nuke studio)_ A lot of stability enhancements
+- _(nuke)_ now only renders a single write node on farm
+- _(ftrack)_ pype would crash when launcher project level task
+- work directory was sometimes not being created correctly
+- major pype.lib cleanup. Removing of unused functions, merging those that were doing the same and general house cleaning.
+- _(avalon)_ subsets in maya 2019 weren't behaving correctly in the outliner
 
 **deprecated**:
-- following attributes are considered deprecated as of 2.1 release
-  -
+- following attributes are considered deprecated because they have been remapped to a different name as of 2.1 release
+  - `frameRate` to `fps`
+  - `startFrame` to `frameStart`
+  - `endFrame` to `frameEnd`
+  - `fstart` to `frameStart`
+  - `fend` to `frameEnd`
+  - `handle_start` to `handleStart`
+  - `handle_end` to `handleEnd`
+  - `resolution_width` to `resolutionWidth`
+  - `resolution_height` to `resolutionHeight`
+  - `pixel_aspect` to `pixelAspect`
