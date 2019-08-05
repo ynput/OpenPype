@@ -34,7 +34,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             output_type = "mov"
 
         # Get frame range
-        handles = instance.context.data.get('handles', 0)
+        handles = instance.context.data['handles']
+        handle_start = instance.context.data["handleStart"]
+        handle_end = instance.context.data["handleEnd"]
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
 
@@ -85,14 +87,29 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         if 'render.local' in instance.data['families']:
             instance.data['families'].append('ftrack')
 
+        # Add version data to instance
+        version_data = {
+            "handles": handle_start,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
+            "version": int(version),
+            "colorspace":  node["colorspace"].value(),
+            "families": [instance.data["family"]],
+            "subset": instance.data["subset"],
+            "fps": instance.context.data["fps"]
+        }
+
         instance.data.update({
+            "versionData": version_data,
             "path": path,
             "outputDir": output_dir,
             "ext": ext,
             "label": label,
             "handles": handles,
-            "startFrame": first_frame,
-            "endFrame": last_frame,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
         })

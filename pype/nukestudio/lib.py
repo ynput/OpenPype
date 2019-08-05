@@ -46,14 +46,14 @@ def set_workfiles():
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
-    project_data = pype.get_project_data()
+    project_data = pype.get_project()["data"]
 
     log.info("project_data: {}".format(project_data))
 
     # get format and fps property from avalon db on project
-    width = project_data['resolution_width']
-    height = project_data['resolution_height']
-    pixel_aspect = project_data['pixel_aspect']
+    width = project_data["resolutionWidth"]
+    height = project_data["resolutionHeight"]
+    pixel_aspect = project_data["pixelAspect"]
     fps = project_data['fps']
     format_name = project_data['code']
 

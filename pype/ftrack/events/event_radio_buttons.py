@@ -2,10 +2,9 @@ from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent
 
 
-ignore_me = True
-
-
 class Radio_buttons(BaseEvent):
+
+    ignore_me = True
 
     def launch(self, session, event):
         '''Provides a readio button behaviour to any bolean attribute in
@@ -33,6 +32,7 @@ class Radio_buttons(BaseEvent):
                                     v['custom_attributes'][key] = 0
 
             session.commit()
+
 
 def register(session):
     '''Register plugin. Called when used as an plugin.'''

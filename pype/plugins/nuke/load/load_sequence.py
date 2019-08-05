@@ -92,8 +92,10 @@ class LoadSequence(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        log.info("version_data: {}\n".format(version_data))
+
+        first = version_data.get("frameStart", None)
+        last = version_data.get("frameEnd", None)
         handles = version_data.get("handles", 0)
         handle_start = version_data.get("handleStart", 0)
         handle_end = version_data.get("handleEnd", 0)
@@ -103,9 +105,9 @@ class LoadSequence(api.Loader):
             handle_start = handles
             handle_end = handles
 
-        # create handles offset
-        first -= handle_start
-        last += handle_end
+        # # create handles offset
+        # first -= handle_start
+        # last += handle_end
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -136,7 +138,7 @@ class LoadSequence(api.Loader):
             r["last"].setValue(int(last))
 
             # add additional metadata from the version to imprint to Avalon knob
-            add_keys = ["startFrame", "endFrame", "handles",
+            add_keys = ["frameStart", "frameEnd", "handles",
                         "source", "colorspace", "author", "fps", "version",
                         "handleStart", "handleEnd"]
 
@@ -198,8 +200,8 @@ class LoadSequence(api.Loader):
 
         version_data = version.get("data", {})
 
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        first = version_data.get("frameStart", None)
+        last = version_data.get("frameEnd", None)
         handles = version_data.get("handles", 0)
         handle_start = version_data.get("handleStart", 0)
         handle_end = version_data.get("handleEnd", 0)
@@ -226,16 +228,16 @@ class LoadSequence(api.Loader):
 
         # Set the global in to the start frame of the sequence
         loader_shift(node, first, relative=True)
-        node["origfirst"].setValue(first)
-        node["first"].setValue(first)
-        node["origlast"].setValue(last)
-        node["last"].setValue(last)
+        node["origfirst"].setValue(int(first))
+        node["first"].setValue(int(first))
+        node["origlast"].setValue(int(last))
+        node["last"].setValue(int(last))
 
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "startFrame": version_data.get("startFrame"),
-            "endFrame": version_data.get("endFrame"),
+            "frameStart": version_data.get("frameStart"),
+            "frameEnd": version_data.get("frameEnd"),
             "version": version.get("name"),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),

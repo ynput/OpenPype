@@ -29,7 +29,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         # root = nuke.root()
         # node_subset_name = instance.data.get("name", None)
-        node = instance[0]
+        node = instance[1]
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
                                            "http://localhost:8082")
@@ -77,8 +77,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(
-                    start=int(instance.data["startFrame"]),
-                    end=int(instance.data["endFrame"])
+                    start=int(instance.data["frameStart"]),
+                    end=int(instance.data["frameEnd"])
                 ),
 
                 "Comment": comment,
@@ -199,7 +199,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
 
-        for key in ("startFrame", "endFrame"):
+        for key in ("frameStart", "frameEnd"):
             value = instance.data[key]
 
             if int(value) == value:

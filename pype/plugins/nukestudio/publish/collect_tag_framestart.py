@@ -21,4 +21,7 @@ class CollectClipTagFrameStart(api.InstancePlugin):
             if "frameStart" in t_family:
                 t_number = t_metadata.get("tag.number", "")
                 start_frame = int(t_number)
-                instance.data["frameStart"] = start_frame
+                instance.data["startingFrame"] = start_frame
+                self.log.info("Start frame on `{0}` set to `{1}`".format(
+                    instance, start_frame
+                    ))

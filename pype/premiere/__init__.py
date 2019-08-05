@@ -6,6 +6,7 @@ from avalon import api as avalon
 from pyblish import api as pyblish
 from pypeapp import Logger
 from .. import api
+from pype.aport.lib import set_avalon_workdir
 
 from ..widgets.message_window import message
 
@@ -75,7 +76,7 @@ def extensions_sync():
 
 def install():
 
-    api.set_avalon_workdir()
+    set_avalon_workdir()
     log.info("Registering Premiera plug-ins..")
 
     reg_paths = request_aport("/api/register_plugin_path",

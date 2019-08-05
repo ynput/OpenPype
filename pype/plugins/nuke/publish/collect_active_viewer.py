@@ -12,3 +12,4 @@ class CollectActiveViewer(pyblish.api.ContextPlugin):
 
     def process(self, context):
         context.data["ViewerProcess"] = nuke.ViewerProcess.node()
+        context.data["ActiveViewer"] = nuke.activeViewer()

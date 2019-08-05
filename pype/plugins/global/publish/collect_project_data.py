@@ -12,6 +12,6 @@ class CollectProjectData(pyblish.api.ContextPlugin):
 
     def process(self, context):
         # get project data from avalon db
-        context.data["projectData"] = pype.get_project_data()
+        context.data["projectData"] = pype.get_project()["data"]
 
         return

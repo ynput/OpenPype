@@ -36,9 +36,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                             template from anatomy that should be used for
                             integrating this file. Only the first level can
                             be specified right now.
-        'startFrame'
-        'endFrame'
-        'framerate'
+        "frameStart"
+        "frameEnd"
+        'fps'
     """
 
     label = "Integrate Asset New"
@@ -303,10 +303,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_tail = dst_collection.format("{tail}")
 
                 index_frame_start = None
-                if repre.get('startFrame'):
+                if repre.get("frameStart"):
                     frame_start_padding = len(str(
-                        repre.get('endFrame')))
-                    index_frame_start = repre.get('startFrame')
+                        repre.get("frameEnd")))
+                    index_frame_start = repre.get("frameStart")
 
                 dst_padding_exp = src_padding_exp
                 for i in src_collection.indexes:
@@ -410,6 +410,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             Args:
                 instance: the instance to integrate
         """
+        transfers = instance.data.get("transfers", list())
+
+        for src, dest in transfers:
+            if os.path.normpath(src) != os.path.normpath(dest):
+                self.copy_file(src, dest)
+
+        transfers = instance.data.get("transfers", list())
+        for src, dest in transfers:
+            self.copy_file(src, dest)
 
         # Produce hardlinked copies
         # Note: hardlink can only be produced between two files on the same
@@ -544,8 +553,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Include optional data if present in
         optionals = [
-            "startFrame", "endFrame", "step", "handles",
-            "handle_end", "handle_start", "sourceHashes"
+            "frameStart", "frameEnd", "step", "handles",
+            "handleEnd", "handleStart", "sourceHashes"
         ]
         for key in optionals:
             if key in instance.data:

@@ -1,14 +1,13 @@
 import os
 import re
 import json
-from pype import lib as pypelib
 from pype.lib import get_avalon_database
 from bson.objectid import ObjectId
 import avalon
 import avalon.api
 from avalon import schema
 from avalon.vendor import toml, jsonschema
-from pypeapp import Logger
+from pypeapp import Logger, Anatomy, config
 
 ValidationError = jsonschema.ValidationError
 
@@ -53,8 +52,8 @@ def import_to_avalon(
     if entity_type in ['Project']:
         type = 'project'
 
-        config = get_project_config(entity)
-        schema.validate(config)
+        proj_config = get_project_config(entity)
+        schema.validate(proj_config)
 
         av_project_code = None
         if av_project is not None and 'code' in av_project['data']:
@@ -62,13 +61,12 @@ def import_to_avalon(
         ft_project_code = ft_project['name']
 
         if av_project is None:
-            project_schema = pypelib.get_avalon_project_template_schema()
             item = {
-                'schema': project_schema,
+                'schema': "avalon-core:project-2.0",
                 'type': type,
                 'name': project_name,
                 'data': dict(),
-                'config': config,
+                'config': proj_config,
                 'parent': None,
             }
             schema.validate(item)
@@ -214,9 +212,8 @@ def import_to_avalon(
             {'type': 'asset', 'name': name}
         )
         if avalon_asset is None:
-            asset_schema = pypelib.get_avalon_asset_template_schema()
             item = {
-                'schema': asset_schema,
+                'schema': "avalon-core:asset-2.0",
                 'name': name,
                 'silo': silo,
                 'parent': ObjectId(projectId),
@@ -345,13 +342,12 @@ def changeability_check_childs(entity):
     childs = entity['children']
     for child in childs:
         if child.entity_type.lower() == 'task':
-            config = get_config_data()
-            if 'sync_to_avalon' in config:
-                config = config['sync_to_avalon']
-            if 'statuses_name_change' in config:
-                available_statuses = config['statuses_name_change']
-            else:
-                available_statuses = []
+            available_statuses = config.get_presets().get(
+                "ftrack", {}).get(
+                "ftrack_config", {}).get(
+                "sync_to_avalon", {}).get(
+                "statuses_name_change", []
+            )
             ent_status = child['status']['name'].lower()
             if ent_status not in available_statuses:
                 return False
@@ -480,14 +476,28 @@ def get_avalon_project(ft_project):
     return avalon_project
 
 
-def get_project_config(entity):
-    config = {}
-    config['schema'] = pypelib.get_avalon_project_config_schema()
-    config['tasks'] = get_tasks(entity)
-    config['apps'] = get_project_apps(entity)
-    config['template'] = pypelib.get_avalon_project_template()
+def get_avalon_project_template():
+    """Get avalon template
 
-    return config
+    Returns:
+        dictionary with templates
+    """
+    templates = Anatomy().templates
+    return {
+        'workfile': templates["avalon"]["workfile"],
+        'work': templates["avalon"]["work"],
+        'publish': templates["avalon"]["publish"]
+    }
+
+
+def get_project_config(entity):
+    proj_config = {}
+    proj_config['schema'] = 'avalon-core:config-1.0'
+    proj_config['tasks'] = get_tasks(entity)
+    proj_config['apps'] = get_project_apps(entity)
+    proj_config['template'] = get_avalon_project_template()
+
+    return proj_config
 
 
 def get_tasks(project):
@@ -539,7 +549,7 @@ def avalon_check_name(entity, inSchema=None):
     if entity.entity_type in ['Project']:
         # data['type'] = 'project'
         name = entity['full_name']
-        # schema = get_avalon_project_template_schema()
+        # schema = "avalon-core:project-2.0"
 
     data['silo'] = 'Film'
 
@@ -555,24 +565,6 @@ def avalon_check_name(entity, inSchema=None):
     if alright is False:
         msg = '"{}" includes unsupported symbols like "dash" or "space"'
         raise ValueError(msg.format(name))
-
-
-def get_config_data():
-    path_items = [pypelib.get_presets_path(), 'ftrack', 'ftrack_config.json']
-    filepath = os.path.sep.join(path_items)
-    data = dict()
-    try:
-        with open(filepath) as data_file:
-            data = json.load(data_file)
-
-    except Exception as e:
-        msg = (
-            'Loading "Ftrack Config file" Failed.'
-            ' Please check log for more information.'
-        )
-        log.warning("{} - {}".format(msg, str(e)))
-
-    return data
 
 
 def show_errors(obj, event, errors):
@@ -596,4 +588,4 @@ def show_errors(obj, event, errors):
             obj.log.error(
                 '{}: {}'.format(key, message)
             )
-    obj.show_interface(event, items, title)
+    obj.show_interface(items, title, event=event)
