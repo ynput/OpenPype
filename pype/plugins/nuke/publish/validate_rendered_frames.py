@@ -11,7 +11,7 @@ class RepairCollectionAction(pyblish.api.Action):
     icon = "wrench"
 
     def process(self, context, plugin):
-        self.log.info(context[0][1])
+        self.log.info(context[0][0])
         files_remove = [os.path.join(context[0].data["outputDir"], f)
                         for r in context[0].data.get("representations", [])
                         for f in r.get("files", [])
@@ -20,7 +20,7 @@ class RepairCollectionAction(pyblish.api.Action):
         for f in files_remove:
             os.remove(f)
             self.log.debug("removing file: {}".format(f))
-        context[0][1]["render"].setValue(True)
+        context[0][0]["render"].setValue(True)
         self.log.info("Rendering toggled ON")
 
 
