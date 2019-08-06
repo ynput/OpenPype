@@ -75,7 +75,7 @@ class BaseHandler(object):
                     self.type, label)
                 )
             except Exception as e:
-                self.log.exception('{} "{}" - Registration failed ({})'.format(
+                self.log.error('{} "{}" - Registration failed ({})'.format(
                     self.type, label, str(e))
                 )
         return wrapper_register
@@ -84,25 +84,26 @@ class BaseHandler(object):
     def launch_log(self, func):
         @functools.wraps(func)
         def wrapper_launch(*args, **kwargs):
-            label = self.__class__.__name__
             if hasattr(self, 'label'):
-                if self.variant is None:
-                    label = self.label
-                else:
+                if hasattr(self, 'variant'):
                     label = '{} {}'.format(self.label, self.variant)
+                else:
+                    label = self.label
+            else:
+                label = self.__class__.__name__
 
+            self.log.info(('{} "{}": Launched').format(self.type, label))
             try:
-                self.log.info(('{} "{}": Launched').format(self.type, label))
-                result = func(*args, **kwargs)
-                self.log.info(('{} "{}": Finished').format(self.type, label))
-                return result
-            except Exception as e:
-                msg = '{} "{}": Failed ({})'.format(self.type, label, str(e))
-                self.log.exception(msg)
+                return func(*args, **kwargs)
+            except Exception as exc:
+                msg = '{} "{}": Failed ({})'.format(self.type, label, str(exc))
+                self.log.error(msg, exc_info=True)
                 return {
                     'success': False,
                     'message': msg
                 }
+            finally:
+                self.log.info(('{} "{}": Finished').format(self.type, label))
         return wrapper_launch
 
     @property
@@ -230,7 +231,7 @@ class BaseHandler(object):
         # Get entity type and make sure it is lower cased. Most places except
         # the component tab in the Sidebar will use lower case notation.
         entity_type = entity.get('entityType').replace('_', '').lower()
-        
+
         if session is None:
             session = self.session
 
