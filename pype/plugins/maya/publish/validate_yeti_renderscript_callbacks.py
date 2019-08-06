@@ -25,6 +25,17 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
     hosts = ["maya"]
     families = ["renderlayer"]
 
+    # Settings per renderer
+    callbacks = {
+        "vray": {
+            "pre": "catch(`pgYetiVRayPreRender`)",
+            "post": "catch(`pgYetiVRayPostRender`)"
+        },
+        "arnold": {
+            "pre": "pgYetiPreRender"
+        }
+    }
+
     def process(self, instance):
 
         invalid = self.get_invalid(instance)
@@ -35,14 +46,6 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
     @classmethod
     def get_invalid(cls, instance):
 
-        # lookup per render
-        render_scripts = {"vray":
-                              {"pre":  "catch(`pgYetiVRayPreRender`)",
-                               "post": "catch(`pgYetiVRayPostRender`)"},
-                          "arnold":
-                              {"pre": "pgYetiPreRender"}
-                          }
-
         yeti_loaded = cmds.pluginInfo("pgYetiMaya", query=True, loaded=True)
 
         renderer = instance.data["renderer"]
@@ -50,22 +53,29 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
             cls.log.info("Redshift ignores any pre and post render callbacks")
             return False
 
-        callback_lookup = render_scripts.get(renderer, {})
+        callback_lookup = cls.callbacks.get(renderer, {})
         if not callback_lookup:
             cls.log.warning("Renderer '%s' is not supported in this plugin"
                             % renderer)
             return False
 
-        pre_render_callback = cmds.getAttr("defaultRenderGlobals.preMel")
-        post_render_callback = cmds.getAttr("defaultRenderGlobals.postMel")
+        pre_mel = cmds.getAttr("defaultRenderGlobals.preMel") or ""
+        post_mel = cmds.getAttr("defaultRenderGlobals.postMel") or ""
 
-        pre_callbacks = pre_render_callback.split(";")
-        post_callbacks = post_render_callback.split(";")
+        if pre_mel.strip():
+            cls.log.debug("Found pre mel: `%s`" % pre_mel)
+
+        if post_mel.strip():
+            cls.log.debug("Found post mel: `%s`" % post_mel)
+
+        # Strip callbacks and turn into a set for quick lookup
+        pre_callbacks = {cmd.strip() for cmd in pre_mel.split(";")}
+        post_callbacks = {cmd.strip() for cmd in post_mel.split(";")}
 
         pre_script = callback_lookup.get("pre", "")
         post_script = callback_lookup.get("post", "")
 
-        # If not loaded
+        # If Yeti is not loaded
         invalid = False
         if not yeti_loaded:
             if pre_script and pre_script in pre_callbacks:
@@ -77,18 +87,19 @@ class ValidateYetiRenderScriptCallbacks(pyblish.api.InstancePlugin):
                 cls.log.error("Found post render callback '%s which is "
                               "not used!" % post_script)
                 invalid = True
-        else:
-            if pre_script:
-                if pre_script not in pre_callbacks:
-                    cls.log.error(
-                        "Could not find required pre render callback "
-                        "`%s`" % pre_script)
-                    invalid = True
 
-            if post_script:
-                if post_script not in post_callbacks:
-                    cls.log.error("Could not find required post render callback"
-                                  " `%s`" % post_script)
-                    invalid = True
+        # If Yeti is loaded
+        else:
+            if pre_script and pre_script not in pre_callbacks:
+                cls.log.error(
+                    "Could not find required pre render callback "
+                    "`%s`" % pre_script)
+                invalid = True
+
+            if post_script and post_script not in post_callbacks:
+                cls.log.error(
+                    "Could not find required post render callback"
+                    " `%s`" % post_script)
+                invalid = True
 
         return invalid

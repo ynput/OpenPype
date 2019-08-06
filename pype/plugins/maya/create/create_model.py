@@ -1,23 +1,24 @@
-from collections import OrderedDict
-
 import avalon.maya
 
 
 class CreateModel(avalon.maya.Creator):
     """Polygonal static geometry"""
 
-    name = "modelDefault"
+    name = "modelMain"
     label = "Model"
     family = "model"
     icon = "cube"
+    defaults = ["Main", "Proxy", "_MD", "_HD", "_LD"]
 
     def __init__(self, *args, **kwargs):
         super(CreateModel, self).__init__(*args, **kwargs)
 
-        # create an ordered dict with the existing data first
-        data = OrderedDict(**self.data)
+        # Vertex colors with the geometry
+        self.data["writeColorSets"] = False
 
-        # Write vertex colors with the geometry.
-        data["writeColorSets"] = True
+        # Include attributes by attribute name or prefix
+        self.data["attr"] = ""
+        self.data["attrPrefix"] = ""
 
-        self.data = data
+        # Whether to include parent hierarchy of nodes in the instance
+        self.data["includeParentHierarchy"] = False

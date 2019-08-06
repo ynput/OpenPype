@@ -2,7 +2,7 @@ import os
 import re
 import copy
 import json
-import pprint
+from pprint import pformat
 
 import pyblish.api
 from avalon import api
@@ -11,8 +11,8 @@ from avalon import api
 def collect(root,
             regex=None,
             exclude_regex=None,
-            startFrame=None,
-            endFrame=None):
+            frame_start=None,
+            frame_end=None):
     """Collect sequence collections in root"""
 
     from avalon.vendor import clique
@@ -51,10 +51,10 @@ def collect(root,
     # Exclude any frames outside start and end frame.
     for collection in collections:
         for index in list(collection.indexes):
-            if startFrame is not None and index < startFrame:
+            if frame_start is not None and index < frame_start:
                 collection.indexes.discard(index)
                 continue
-            if endFrame is not None and index > endFrame:
+            if frame_end is not None and index > frame_end:
                 collection.indexes.discard(index)
                 continue
 
@@ -64,7 +64,7 @@ def collect(root,
     return collections
 
 
-class CollectFileSequences(pyblish.api.ContextPlugin):
+class CollectRenderedFrames(pyblish.api.ContextPlugin):
     """Gather file sequences from working directory
 
     When "FILESEQUENCE" environment variable is set these paths (folders or
@@ -76,8 +76,8 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
             api.Session["AVALON_ASSET"]
         subset (str): The subset to publish to. If not provided the sequence's
             head (up to frame number) will be used.
-        startFrame (int): The start frame for the sequence
-        endFrame (int): The end frame for the sequence
+        frame_start (int): The start frame for the sequence
+        frame_end (int): The end frame for the sequence
         root (str): The path to collect from (can be relative to the .json)
         regex (str): A regex for the sequence filename
         exclude_regex (str): A regex for filename to exclude from collection
@@ -87,13 +87,12 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     targets = ["filesequence"]
-    label = "File Sequences"
-    hosts = ['maya']
+    label = "RenderedFrames"
 
     def process(self, context):
-
-        if os.environ.get("FILESEQUENCE"):
-            paths = os.environ["FILESEQUENCE"].split(os.pathsep)
+        if os.environ.get("PYPE_PUBLISH_PATHS"):
+            paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
+            self.log.info("Collecting paths: {}".format(paths))
         else:
             cwd = context.get("workspaceDir", os.getcwd())
             paths = [cwd]
@@ -122,6 +121,14 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                 else:
                     root = cwd
 
+                metadata = data.get("metadata")
+                if metadata:
+                    session = metadata.get("session")
+                    if session:
+                        self.log.info("setting session using metadata")
+                        api.Session.update(session)
+                        os.environ.update(session)
+
             else:
                 # Search in directory
                 data = dict()
@@ -135,8 +142,8 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
             collections = collect(root=root,
                                   regex=regex,
                                   exclude_regex=data.get("exclude_regex"),
-                                  startFrame=data.get("startFrame"),
-                                  endFrame=data.get("endFrame"))
+                                  frame_start=data.get("frameStart"),
+                                  frame_end=data.get("frameEnd"))
 
             self.log.info("Found collections: {}".format(collections))
 
@@ -148,10 +155,16 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                                    "found sequence")
                     raise RuntimeError("Invalid sequence")
 
+            fps = data.get("fps", 25)
+
             # Get family from the data
-            families = data.get("families", ["imagesequence"])
-            assert isinstance(families, (list, tuple)), "Must be iterable"
-            assert families, "Must have at least a single family"
+            families = data.get("families", ["render"])
+            if "render" not in families:
+                families.append("render")
+            if "ftrack" not in families:
+                families.append("ftrack")
+            if "review" not in families:
+                families.append("review")
 
             for collection in collections:
                 instance = context.create_instance(str(collection))
@@ -165,8 +178,13 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
 
                 # If no start or end frame provided, get it from collection
                 indices = list(collection.indexes)
-                start = data.get("startFrame", indices[0])
-                end = data.get("endFrame", indices[-1])
+                start = data.get("frameStart", indices[0])
+                end = data.get("frameEnd", indices[-1])
+
+                # root = os.path.normpath(root)
+                # self.log.info("Source: {}}".format(data.get("source", "")))
+
+                ext = list(collection)[0].split('.')[-1]
 
                 instance.data.update({
                     "name": str(collection),
@@ -175,11 +193,30 @@ class CollectFileSequences(pyblish.api.ContextPlugin):
                     "subset": subset,
                     "asset": data.get("asset", api.Session["AVALON_ASSET"]),
                     "stagingDir": root,
-                    "files": [list(collection)],
-                    "startFrame": start,
-                    "endFrame": end
+                    "frameStart": start,
+                    "frameEnd": end,
+                    "fps": fps,
+                    "source": data.get('source', '')
                 })
                 instance.append(collection)
+                instance.context.data['fps'] = fps
+
+                if "representations" not in instance.data:
+                    instance.data["representations"] = []
+
+                representation = {
+                    'name': ext,
+                    'ext': '{}'.format(ext),
+                    'files': list(collection),
+                    "stagingDir": root,
+                    "anatomy_template": "render",
+                    "fps": fps,
+                    "tags": ['review']
+                }
+                instance.data["representations"].append(representation)
+
+                if data.get('user'):
+                    context.data["user"] = data['user']
 
                 self.log.debug("Collected instance:\n"
-                               "{}".format(pprint.pformat(instance.data)))
+                               "{}".format(pformat(instance.data)))

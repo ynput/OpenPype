@@ -28,14 +28,14 @@ class ExtractVRayProxy(pype.api.Extractor):
         if not anim_on:
             # Remove animation information because it is not required for
             # non-animated subsets
-            instance.data.pop("startFrame", None)
-            instance.data.pop("endFrame", None)
+            instance.data.pop("frameStart", None)
+            instance.data.pop("frameEnd", None)
 
             start_frame = 1
             end_frame = 1
         else:
-            start_frame = instance.data["startFrame"]
-            end_frame = instance.data["endFrame"]
+            start_frame = instance.data["frameStart"]
+            end_frame = instance.data["frameEnd"]
 
         vertex_colors = instance.data.get("vertexColors", False)
 
@@ -54,10 +54,16 @@ class ExtractVRayProxy(pype.api.Extractor):
                                  ignoreHiddenObjects=True,
                                  createProxyNode=False)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(file_name)
+        representation = {
+            'name': 'vrmesh',
+            'ext': 'vrmesh',
+            'files': file_name,
+            "stagingDir": staging_dir,
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '%s' to: %s"
                       % (instance.name, staging_dir))

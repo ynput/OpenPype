@@ -3,6 +3,7 @@
 import maya.cmds as mc
 import maya.mel as mel
 from functools import partial
+import os
 import logging
 
 
@@ -17,7 +18,7 @@ def override_component_mask_commands():
     This implements special behavior for Maya's component
     mask menu items where a ctrl+click will instantly make
     it an isolated behavior disabling all others.
-    
+
     Tested in Maya 2016 and 2018
 
     """
@@ -64,3 +65,107 @@ def override_component_mask_commands():
         original = COMPONENT_MASK_ORIGINAL[btn]
         new_fn = partial(on_changed_callback, original)
         mc.iconTextCheckBox(btn, edit=True, cc=new_fn)
+
+
+def override_toolbox_ui():
+    """Add custom buttons in Toolbox as replacement for Maya web help icon."""
+
+    import pype
+    res = os.path.join(os.path.dirname(os.path.dirname(pype.__file__)),
+                       "res")
+    icons = os.path.join(res, "icons")
+
+    import avalon.tools.cbsceneinventory as inventory
+    import avalon.tools.cbloader as loader
+    from avalon.maya.pipeline import launch_workfiles_app
+    import mayalookassigner
+
+
+    # Ensure the maya web icon on toolbox exists
+    web_button = "ToolBox|MainToolboxLayout|mayaWebButton"
+    if not mc.iconTextButton(web_button, query=True, exists=True):
+        return
+
+    mc.iconTextButton(web_button, edit=True, visible=False)
+
+    # real = 32, but 36 with padding - according to toolbox mel script
+    icon_size = 36
+    parent = web_button.rsplit("|", 1)[0]
+
+    # Ensure the parent is a formLayout
+    if not mc.objectTypeUI(parent) == "formLayout":
+        return
+
+    # Create our controls
+    background_color = (0.267, 0.267, 0.267)
+    controls = []
+
+    control = mc.iconTextButton(
+        "pype_toolbox_lookmanager",
+        annotation="Look Manager",
+        label="Look Manager",
+        image=os.path.join(icons, "lookmanager.png"),
+        command=lambda: mayalookassigner.show(),
+        bgc=background_color,
+        width=icon_size,
+        height=icon_size,
+        parent=parent)
+    controls.append(control)
+
+    control = mc.iconTextButton(
+        "pype_toolbox_workfiles",
+        annotation="Work Files",
+        label="Work Files",
+        image=os.path.join(icons, "workfiles.png"),
+        command=lambda: launch_workfiles_app(),
+        bgc=background_color,
+        width=icon_size,
+        height=icon_size,
+        parent=parent)
+    controls.append(control)
+
+    control = mc.iconTextButton(
+        "pype_toolbox_loader",
+        annotation="Loader",
+        label="Loader",
+        image=os.path.join(icons, "loader.png"),
+        command=lambda: loader.show(use_context=True),
+        bgc=background_color,
+        width=icon_size,
+        height=icon_size,
+        parent=parent)
+    controls.append(control)
+
+    control = mc.iconTextButton(
+        "pype_toolbox_manager",
+        annotation="Inventory",
+        label="Inventory",
+        image=os.path.join(icons, "inventory.png"),
+        command=lambda: inventory.show(),
+        bgc=background_color,
+        width=icon_size,
+        height=icon_size,
+        parent=parent)
+    controls.append(control)
+
+    # control = mc.iconTextButton(
+    #     "pype_toolbox",
+    #     annotation="Kredenc",
+    #     label="Kredenc",
+    #     image=os.path.join(icons, "kredenc_logo.png"),
+    #     bgc=background_color,
+    #     width=icon_size,
+    #     height=icon_size,
+    #     parent=parent)
+    # controls.append(control)
+
+    # Add the buttons on the bottom and stack
+    # them above each other with side padding
+    controls.reverse()
+    for i, control in enumerate(controls):
+        previous = controls[i - 1] if i > 0 else web_button
+
+        mc.formLayout(parent, edit=True,
+                      attachControl=[control, "bottom", 0, previous],
+                      attachForm=([control, "left", 1],
+                                  [control, "right", 1]))

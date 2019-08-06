@@ -25,12 +25,19 @@ class ExtractAlembic(pype.api.Extractor):
         nodes = instance[:]
 
         # Collect the start and end including handles
-        start = instance.data.get("startFrame", 1)
-        end = instance.data.get("endFrame", 1)
+        start = instance.data.get("frameStart", 1)
+        end = instance.data.get("frameEnd", 1)
         handles = instance.data.get("handles", 0)
         if handles:
             start -= handles
             end += handles
+
+        attrs = instance.data.get("attr", "").split(";")
+        attrs = [value for value in attrs if value.strip()]
+        attrs += ["cbId"]
+
+        attr_prefixes = instance.data.get("attrPrefix", "").split(";")
+        attr_prefixes = [value for value in attr_prefixes if value.strip()]
 
         # Get extra export arguments
         writeColorSets = instance.data.get("writeColorSets", False)
@@ -44,13 +51,21 @@ class ExtractAlembic(pype.api.Extractor):
 
         options = {
             "step": instance.data.get("step", 1.0),
-            "attr": ["cbId"],
+            "attr": attrs,
+            "attrPrefix": attr_prefixes,
             "writeVisibility": True,
             "writeCreases": True,
             "writeColorSets": writeColorSets,
             "uvWrite": True,
-            "selection": True
+            "selection": True,
+            "worldSpace": instance.data.get("worldSpace", True)
         }
+
+        if not instance.data.get("includeParentHierarchy", True):
+            # Set the root nodes if we don't want to include parents
+            # The roots are to be considered the ones that are the actual
+            # direct members of the set
+            options["root"] = instance.data.get("setMembers")
 
         if int(cmds.about(version=True)) >= 2017:
             # Since Maya 2017 alembic supports multiple uv sets - write them.
@@ -64,9 +79,15 @@ class ExtractAlembic(pype.api.Extractor):
                                 endFrame=end,
                                 **options)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'abc',
+            'ext': 'abc',
+            'files': filename,
+            "stagingDir": dirname
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted {} to {}".format(instance, dirname))

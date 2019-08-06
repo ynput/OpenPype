@@ -18,7 +18,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["look']
+    families = ['look']
     hosts = ['maya']
     label = 'Look Data Contents'
     actions = [pype.maya.action.SelectInvalidAction]

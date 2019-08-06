@@ -3,19 +3,46 @@ import shutil
 import pyblish.api
 
 
+def clean_renders(instance):
+    transfers = instance.data.get("transfers", list())
+
+    current_families = instance.data.get("families", list())
+    instance_family = instance.data.get("family", None)
+    dirnames = []
+
+    for src, dest in transfers:
+        if os.path.normpath(src) != os.path.normpath(dest):
+            if instance_family == 'render' or 'render' in current_families:
+                os.remove(src)
+                dirnames.append(os.path.dirname(src))
+
+    # make unique set
+    cleanup_dirs = set(dirnames)
+    for dir in cleanup_dirs:
+        try:
+            os.rmdir(dir)
+        except OSError:
+            # directory is not empty, skipping
+            continue
+
+
 class CleanUp(pyblish.api.InstancePlugin):
     """Cleans up the staging directory after a successful publish.
 
-    The removal will only happen for staging directories which are inside the
-    temporary folder, otherwise the folder is ignored.
+    This will also clean published renders and delete their parent directories.
 
     """
 
     order = pyblish.api.IntegratorOrder + 10
     label = "Clean Up"
+    exclude_families = ["clip"]
+    optional = True
+    active = True
 
     def process(self, instance):
-
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
         import tempfile
 
         staging_dir = instance.data.get("stagingDir", None)
@@ -31,3 +58,5 @@ class CleanUp(pyblish.api.InstancePlugin):
 
         self.log.info("Removing temporary folder ...")
         shutil.rmtree(staging_dir)
+        self.log.info("Cleaning renders ...")
+        clean_renders(instance)

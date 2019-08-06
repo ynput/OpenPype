@@ -33,7 +33,7 @@ class ValidateShapeDefaultNames(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["model']
+    families = ['model']
     category = 'cleanup'
     optional = True
     version = (0, 1, 0)

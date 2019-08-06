@@ -16,6 +16,7 @@ import maya.api.OpenMaya as om
 from avalon import api, maya, io, pipeline
 from avalon.vendor.six import string_types
 import avalon.maya.lib
+import avalon.maya.interactive
 
 from pype import lib
 
@@ -275,13 +276,15 @@ def collect_animation_data():
     # get scene values as defaults
     start = cmds.playbackOptions(query=True, animationStartTime=True)
     end = cmds.playbackOptions(query=True, animationEndTime=True)
+    fps = mel.eval('currentTimeUnitToFPS()')
 
     # build attributes
     data = OrderedDict()
-    data["startFrame"] = start
-    data["endFrame"] = end
-    data["handles"] = 1
+    data["frameStart"] = start
+    data["frameEnd"] = end
+    data["handles"] = 0
     data["step"] = 1.0
+    data["fps"] = fps
 
     return data
 
@@ -519,11 +522,14 @@ def no_undo(flush=False):
         cmds.undoInfo(**{keyword: original})
 
 
-def get_shader_assignments_from_shapes(shapes):
+def get_shader_assignments_from_shapes(shapes, components=True):
     """Return the shape assignment per related shading engines.
 
     Returns a dictionary where the keys are shadingGroups and the values are
     lists of assigned shapes or shape-components.
+
+    Since `maya.cmds.sets` returns shader members on the shapes as components
+    on the transform we correct that in this method too.
 
     For the 'shapes' this will return a dictionary like:
         {
@@ -533,6 +539,7 @@ def get_shader_assignments_from_shapes(shapes):
 
     Args:
         shapes (list): The shapes to collect the assignments for.
+        components (bool): Whether to include the component assignments.
 
     Returns:
         dict: The {shadingEngine: shapes} relationships
@@ -541,7 +548,6 @@ def get_shader_assignments_from_shapes(shapes):
 
     shapes = cmds.ls(shapes,
                      long=True,
-                     selection=True,
                      shapes=True,
                      objectsOnly=True)
     if not shapes:
@@ -560,7 +566,37 @@ def get_shader_assignments_from_shapes(shapes):
                                               type="shadingEngine") or []
         shading_groups = list(set(shading_groups))
         for shading_group in shading_groups:
-            assignments[shading_group].add(shape)
+            assignments[shading_group].append(shape)
+
+    if components:
+        # Note: Components returned from maya.cmds.sets are "listed" as if
+        # being assigned to the transform like: pCube1.f[0] as opposed
+        # to pCubeShape1.f[0] so we correct that here too.
+
+        # Build a mapping from parent to shapes to include in lookup.
+        transforms = {shape.rsplit("|", 1)[0]: shape for shape in shapes}
+        lookup = set(shapes + transforms.keys())
+
+        component_assignments = defaultdict(list)
+        for shading_group in assignments.keys():
+            members = cmds.ls(cmds.sets(shading_group, query=True), long=True)
+            for member in members:
+
+                node = member.split(".", 1)[0]
+                if node not in lookup:
+                    continue
+
+                # Component
+                if "." in member:
+
+                    # Fix transform to shape as shaders are assigned to shapes
+                    if node in transforms:
+                        shape = transforms[node]
+                        component = member.split(".", 1)[1]
+                        member = "{0}.{1}".format(shape, component)
+
+                component_assignments[shading_group].append(member)
+        assignments = component_assignments
 
     return dict(assignments)
 
@@ -569,7 +605,7 @@ def get_shader_assignments_from_shapes(shapes):
 def shader(nodes, shadingEngine="initialShadingGroup"):
     """Assign a shader to nodes during the context"""
 
-    shapes = cmds.ls(nodes, dag=1, o=1, shapes=1, long=1)
+    shapes = cmds.ls(nodes, dag=1, objectsOnly=1, shapes=1, long=1)
     original = get_shader_assignments_from_shapes(shapes)
 
     try:
@@ -582,7 +618,7 @@ def shader(nodes, shadingEngine="initialShadingGroup"):
         # Assign original shaders
         for sg, members in original.items():
             if members:
-                cmds.sets(shapes, edit=True, forceElement=shadingEngine)
+                cmds.sets(members, edit=True, forceElement=sg)
 
 
 @contextlib.contextmanager
@@ -927,6 +963,18 @@ def extract_alembic(file,
             raise TypeError("Alembic option unsupported type: "
                             "{0} (expected {1})".format(value, valid_types))
 
+        # Ignore empty values, like an empty string, since they mess up how
+        # job arguments are built
+        if isinstance(value, (list, tuple)):
+            value = [x for x in value if x.strip()]
+
+            # Ignore option completely if no values remaining
+            if not value:
+                options.pop(key)
+                continue
+
+            options[key] = value
+
     # The `writeCreases` argument was changed to `autoSubd` in Maya 2018+
     maya_version = int(cmds.about(version=True))
     if maya_version >= 2018:
@@ -993,9 +1041,14 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
         nodes (set): list of filtered nodes
     """
 
+    lookup = None
     if nodes is None:
         # Consider all nodes
         nodes = cmds.ls()
+    else:
+        # Build a lookup for the only allowed nodes in output based
+        # on `nodes` input of the function (+ ensure long names)
+        lookup = set(cmds.ls(nodes, long=True))
 
     def _node_type_exists(node_type):
         try:
@@ -1004,8 +1057,8 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
         except RuntimeError:
             return False
 
-    # `readOnly` flag is obsolete as of Maya 2016 therefor we explicitly remove
-    # default nodes and reference nodes
+    # `readOnly` flag is obsolete as of Maya 2016 therefore we explicitly
+    # remove default nodes and reference nodes
     camera_shapes = ["frontShape", "sideShape", "topShape", "perspShape"]
 
     ignore = set()
@@ -1029,8 +1082,7 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
     if cmds.pluginInfo("pgYetiMaya",  query=True, loaded=True):
         types.append("pgYetiMaya")
 
-    # We *always* ignore intermediate shapes, so we filter them out
-    # directly
+    # We *always* ignore intermediate shapes, so we filter them out directly
     nodes = cmds.ls(nodes, type=types, long=True, noIntermediate=True)
 
     # The items which need to pass the id to their parent
@@ -1046,6 +1098,12 @@ def get_id_required_nodes(referenced_nodes=False, nodes=None):
     nodes -= ignore  # Remove the ignored nodes
     if not nodes:
         return nodes
+
+    # Ensure only nodes from the input `nodes` are returned when a
+    # filter was applied on function call because we also iterated
+    # to parents and alike
+    if lookup is not None:
+        nodes &= lookup
 
     # Avoid locked nodes
     nodes_list = list(nodes)
@@ -1702,6 +1760,14 @@ def set_scene_fps(fps, update=True):
 
     """
 
+    fps_mapping = {'15': 'game',
+                   '24': 'film',
+                   '25': 'pal',
+                   '30': 'ntsc',
+                   '48': 'show',
+                   '50': 'palf',
+                   '60': 'ntscf'}
+
     if fps in FLOAT_FPS:
         unit = "{}fps".format(fps)
 
@@ -1710,6 +1776,14 @@ def set_scene_fps(fps, update=True):
 
     else:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
+
+    # get maya version
+    version = int(cmds.about(version=True))
+    if version < 2018:
+        # pull from mapping
+        unit = fps_mapping.get(str(int(fps)), None)
+        if unit is None:
+            raise ValueError("Unsupported FPS value: `%s`" % fps)
 
     # Get time slider current state
     start_frame = cmds.playbackOptions(query=True, minTime=True)
@@ -1784,21 +1858,24 @@ def set_context_settings():
 
     # Todo (Wijnand): apply renderer and resolution of project
 
-    project_data = lib.get_project_data()
-    asset_data = lib.get_asset_data()
+    project_data = lib.get_project()["data"]
+    asset_data = lib.get_asset()["data"]
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
     set_scene_fps(fps)
 
     # Set project resolution
-    width_key = "resolution_width"
-    height_key = "resolution_height"
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
 
     width = asset_data.get(width_key, project_data.get(width_key, 1920))
     height = asset_data.get(height_key, project_data.get(height_key, 1080))
 
     set_scene_resolution(width, height)
+
+    # Set frame range.
+    avalon.maya.interactive.reset_frame_range()
 
 
 # Valid FPS
@@ -1810,7 +1887,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset_fps()
+    fps = lib.get_asset()["data"]["fps"]
     current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
 
     if current_fps != fps:
@@ -2032,3 +2109,288 @@ def bake_to_world_space(nodes,
              shape=shape)
 
     return world_space_nodes
+
+def load_capture_preset(path=None, data=None):
+    import capture_gui
+    import capture
+
+    if data:
+        preset = data
+    else:
+        path = path
+        preset = capture_gui.lib.load_json(path)
+    print preset
+
+    options = dict()
+
+    # CODEC
+    id = 'Codec'
+    for key in preset[id]:
+            options[str(key)]= preset[id][key]
+
+    # GENERIC
+    id = 'Generic'
+    for key in preset[id]:
+        if key.startswith('isolate'):
+            pass
+            # options['isolate'] = preset[id][key]
+        else:
+            options[str(key)] = preset[id][key]
+
+    # RESOLUTION
+    id = 'Resolution'
+    options['height'] = preset[id]['height']
+    options['width'] = preset[id]['width']
+
+
+    # DISPLAY OPTIONS
+    id = 'Display Options'
+    disp_options = {}
+    for key in preset['Display Options']:
+        if key.startswith('background'):
+            disp_options[key] = preset['Display Options'][key]
+        else:
+            disp_options['displayGradient'] = True
+
+    options['display_options'] = disp_options
+
+
+    # VIEWPORT OPTIONS
+    temp_options = {}
+    id = 'Renderer'
+    for key in preset[id]:
+        temp_options[str(key)] = preset[id][key]
+
+    temp_options2 = {}
+    id = 'Viewport Options'
+    light_options = {   0: "default",
+                        1: 'all',
+                        2: 'selected',
+                        3: 'flat',
+                        4: 'nolights'}
+    for key in preset[id]:
+        if key == 'high_quality':
+            temp_options2['multiSampleEnable'] = True
+            temp_options2['multiSampleCount'] = 8
+            temp_options2['textureMaxResolution'] = 1024
+            temp_options2['enableTextureMaxRes'] = True
+
+        if key == 'alphaCut':
+            temp_options2['transparencyAlgorithm'] = 5
+            temp_options2['transparencyQuality'] = 1
+
+        if key == 'ssaoEnable':
+            temp_options2['ssaoEnable'] = True
+
+        if key == 'headsUpDisplay':
+            temp_options['headsUpDisplay'] = True
+
+        if key == 'displayLights':
+            temp_options[str(key)] = light_options[preset[id][key]]
+        else:
+            temp_options[str(key)] = preset[id][key]
+
+    for key in ['override_viewport_options', 'high_quality', 'alphaCut', "gpuCacheDisplayFilter"]:
+        temp_options.pop(key, None)
+
+    for key in ['ssaoEnable']:
+        temp_options.pop(key, None)
+
+    options['viewport_options'] = temp_options
+    options['viewport2_options'] = temp_options2
+
+
+    # use active sound track
+    scene = capture.parse_active_scene()
+    options['sound'] = scene['sound']
+    cam_options = dict()
+    cam_options['overscan'] = 1.0
+    cam_options['displayFieldChart'] = False
+    cam_options['displayFilmGate'] = False
+    cam_options['displayFilmOrigin'] = False
+    cam_options['displayFilmPivot'] = False
+    cam_options['displayGateMask'] = False
+    cam_options['displayResolution'] = False
+    cam_options['displaySafeAction'] = False
+    cam_options['displaySafeTitle'] = False
+
+    # options['display_options'] = temp_options
+
+    return options
+
+
+def get_attr_in_layer(attr, layer):
+    """Return attribute value in specified renderlayer.
+
+    Same as cmds.getAttr but this gets the attribute's value in a
+    given render layer without having to switch to it.
+
+    Warning for parent attribute overrides:
+        Attributes that have render layer overrides to their parent attribute
+        are not captured correctly since they do not have a direct connection.
+        For example, an override to sphere.rotate when querying sphere.rotateX
+        will not return correctly!
+
+    Note: This is much faster for Maya's renderLayer system, yet the code
+        does no optimized query for render setup.
+
+    Args:
+        attr (str): attribute name, ex. "node.attribute"
+        layer (str): layer name
+
+    Returns:
+        The return value from `maya.cmds.getAttr`
+
+    """
+
+    try:
+        if cmds.mayaHasRenderSetup():
+            log.debug("lib.get_attr_in_layer is not "
+                      "optimized for render setup")
+            with renderlayer(layer):
+                return cmds.getAttr(attr)
+    except AttributeError:
+        pass
+
+    # Ignore complex query if we're in the layer anyway
+    current_layer = cmds.editRenderLayerGlobals(query=True,
+                                                currentRenderLayer=True)
+    if layer == current_layer:
+        return cmds.getAttr(attr)
+
+    connections = cmds.listConnections(attr,
+                                       plugs=True,
+                                       source=False,
+                                       destination=True,
+                                       type="renderLayer") or []
+    connections = filter(lambda x: x.endswith(".plug"), connections)
+    if not connections:
+        return cmds.getAttr(attr)
+
+    # Some value types perform a conversion when assigning
+    # TODO: See if there's a maya method to allow this conversion
+    # instead of computing it ourselves.
+    attr_type = cmds.getAttr(attr, type=True)
+    conversion = None
+    if attr_type == "time":
+        conversion = mel.eval('currentTimeUnitToFPS()')  # returns float
+    elif attr_type == "doubleAngle":
+        # Radians to Degrees: 180 / pi
+        # TODO: This will likely only be correct when Maya units are set
+        #       to degrees
+        conversion = 57.2957795131
+    elif attr_type == "doubleLinear":
+        raise NotImplementedError("doubleLinear conversion not implemented.")
+
+    for connection in connections:
+        if connection.startswith(layer + "."):
+            attr_split = connection.split(".")
+            if attr_split[0] == layer:
+                attr = ".".join(attr_split[0:-1])
+                value = cmds.getAttr("%s.value" % attr)
+                if conversion:
+                    value *= conversion
+                return value
+
+    else:
+        # When connections are present, but none
+        # to the specific renderlayer than the layer
+        # should have the "defaultRenderLayer"'s value
+        layer = "defaultRenderLayer"
+        for connection in connections:
+            if connection.startswith(layer):
+                attr_split = connection.split(".")
+                if attr_split[0] == "defaultRenderLayer":
+                    attr = ".".join(attr_split[0:-1])
+                    value = cmds.getAttr("%s.value" % attr)
+                    if conversion:
+                        value *= conversion
+                    return value
+
+    return cmds.getAttr(attr)
+
+
+def _null(*args):
+    pass
+
+
+class shelf():
+    '''A simple class to build shelves in maya. Since the build method is empty,
+    it should be extended by the derived class to build the necessary shelf
+    elements. By default it creates an empty shelf called "customShelf".'''
+
+    ###########################################################################
+    '''This is an example shelf.'''
+    # class customShelf(_shelf):
+    #     def build(self):
+    #         self.addButon(label="button1")
+    #         self.addButon("button2")
+    #         self.addButon("popup")
+    #         p = cmds.popupMenu(b=1)
+    #         self.addMenuItem(p, "popupMenuItem1")
+    #         self.addMenuItem(p, "popupMenuItem2")
+    #         sub = self.addSubMenu(p, "subMenuLevel1")
+    #         self.addMenuItem(sub, "subMenuLevel1Item1")
+    #         sub2 = self.addSubMenu(sub, "subMenuLevel2")
+    #         self.addMenuItem(sub2, "subMenuLevel2Item1")
+    #         self.addMenuItem(sub2, "subMenuLevel2Item2")
+    #         self.addMenuItem(sub, "subMenuLevel1Item2")
+    #         self.addMenuItem(p, "popupMenuItem3")
+    #         self.addButon("button3")
+    # customShelf()
+    ###########################################################################
+
+    def __init__(self, name="customShelf", iconPath="", preset={}):
+        self.name = name
+
+        self.iconPath = iconPath
+
+        self.labelBackground = (0, 0, 0, 0)
+        self.labelColour = (.9, .9, .9)
+
+        self.preset = preset
+
+        self._cleanOldShelf()
+        cmds.setParent(self.name)
+        self.build()
+
+    def build(self):
+        '''This method should be overwritten in derived classes to actually
+        build the shelf elements. Otherwise, nothing is added to the shelf.'''
+        for item in self.preset['items']:
+            if not item.get('command'):
+                item['command'] = self._null
+            if item['type'] == 'button':
+                self.addButon(item['name'], command=item['command'])
+            if item['type'] == 'menuItem':
+                self.addMenuItem(item['parent'], item['name'], command=item['command'])
+            if item['type'] == 'subMenu':
+                self.addMenuItem(item['parent'], item['name'], command=item['command'])
+
+    def addButon(self, label, icon="commandButton.png", command=_null, doubleCommand=_null):
+        '''Adds a shelf button with the specified label, command, double click command and image.'''
+        cmds.setParent(self.name)
+        if icon:
+            icon = self.iconPath + icon
+        cmds.shelfButton(width=37, height=37, image=icon, l=label, command=command, dcc=doubleCommand, imageOverlayLabel=label, olb=self.labelBackground, olc=self.labelColour)
+
+    def addMenuItem(self, parent, label, command=_null, icon=""):
+        '''Adds a shelf button with the specified label, command, double click command and image.'''
+        if icon:
+            icon = self.iconPath + icon
+        return cmds.menuItem(p=parent, l=label, c=command, i="")
+
+    def addSubMenu(self, parent, label, icon=None):
+        '''Adds a sub menu item with the specified label and icon to the specified parent popup menu.'''
+        if icon:
+            icon = self.iconPath + icon
+        return cmds.menuItem(p=parent, l=label, i=icon, subMenu=1)
+
+    def _cleanOldShelf(self):
+        '''Checks if the shelf exists and empties it if it does or creates it if it does not.'''
+        if cmds.shelfLayout(self.name, ex=1):
+            if cmds.shelfLayout(self.name, q=1, ca=1):
+                for each in cmds.shelfLayout(self.name, q=1, ca=1):
+                    cmds.deleteUI(each)
+        else:
+            cmds.shelfLayout(self.name, p="ShelfLayout")

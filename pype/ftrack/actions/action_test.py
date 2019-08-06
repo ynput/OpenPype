@@ -1,64 +1,41 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2017 ftrack
+import os
 import sys
 import argparse
 import logging
 import collections
-import os
 import json
 import re
 
-import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.vendor import ftrack_api
+from pype.ftrack import BaseAction
 from avalon import io, inventory, schema
-from avalon.vendor import toml
 
 
 class TestAction(BaseAction):
     '''Edit meta data action.'''
 
+    ignore_me = True
     #: Action identifier.
     identifier = 'test.action'
     #: Action label.
     label = 'Test action'
     #: Action description.
     description = 'Test action'
-
+    #: priority
+    priority = 10000
+    #: roles that are allowed to register this action
+    role_list = ['Pypeclub']
+    icon = '{}/ftrack/action_icons/TestAction.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
 
     def discover(self, session, entities, event):
         ''' Validation '''
 
         return True
 
-
     def launch(self, session, entities, event):
-        entity = entities[0]
-
-
-        entity_type = entity.entity_type
-        data = {}
-        """
-        custom_attributes = []
-
-        all_avalon_attr = session.query('CustomAttributeGroup where name is "avalon"').one()
-        for cust_attr in all_avalon_attr['custom_attribute_configurations']:
-            if 'avalon_' not in cust_attr['key']:
-                custom_attributes.append(cust_attr)
-        """
-        for cust_attr in custom_attributes:
-            if cust_attr['entity_type'].lower() in ['asset']:
-                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
-
-            elif cust_attr['entity_type'].lower() in ['show'] and entity_type.lower() == 'project':
-                data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
-
-            elif cust_attr['entity_type'].lower() in ['task'] and entity_type.lower() != 'project':
-                # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
-                entity_type = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
-                # Get object id of entity type
-                ent_obj_type_id = session.query('ObjectType where name is "{}"'.format(entity_type)).one()['id']
-                if cust_attr['type_id'] == ent_obj_type_id:
-                    data[cust_attr['key']] = entity['custom_attributes'][cust_attr['key']]
+        self.log.info(event)
 
         return True
 
@@ -69,8 +46,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = TestAction(session)
-    action_handler.register()
+    TestAction(session).register()
 
 
 def main(arguments=None):

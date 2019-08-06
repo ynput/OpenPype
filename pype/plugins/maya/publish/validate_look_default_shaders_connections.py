@@ -17,7 +17,7 @@ class ValidateLookDefaultShadersConnections(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["look']
+    families = ['look']
     hosts = ['maya']
     label = 'Look Default Shader Connections'
 

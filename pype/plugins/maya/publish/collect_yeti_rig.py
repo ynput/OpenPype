@@ -6,6 +6,7 @@ from maya import cmds
 import pyblish.api
 
 from pype.maya import lib
+from pype.lib import pairwise
 
 
 SETTINGS = {"renderDensity",
@@ -29,6 +30,27 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         assert "input_SET" in instance.data["setMembers"], (
             "Yeti Rig must have an input_SET")
 
+        input_connections = self.collect_input_connections(instance)
+
+        # Collect any textures if used
+        yeti_resources = []
+        yeti_nodes = cmds.ls(instance[:], type="pgYetiMaya", long=True)
+        for node in yeti_nodes:
+            # Get Yeti resources (textures)
+            resources = self.get_yeti_resources(node)
+            yeti_resources.extend(resources)
+
+        instance.data["rigsettings"] = {"inputs": input_connections}
+
+        instance.data["resources"] = yeti_resources
+
+        # Force frame range for export
+        instance.data["frameStart"] = 1
+        instance.data["frameEnd"] = 1
+
+    def collect_input_connections(self, instance):
+        """Collect the inputs for all nodes in the input_SET"""
+
         # Get the input meshes information
         input_content = cmds.ls(cmds.sets("input_SET", query=True), long=True)
 
@@ -39,44 +61,38 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
         # Ignore intermediate objects
         input_content = cmds.ls(input_content, long=True, noIntermediate=True)
+        if not input_content:
+            return []
 
         # Store all connections
         connections = cmds.listConnections(input_content,
                                            source=True,
                                            destination=False,
                                            connections=True,
+                                           # Only allow inputs from dagNodes
+                                           # (avoid display layers, etc.)
+                                           type="dagNode",
                                            plugs=True) or []
-
-        # Group per source, destination pair. We need to reverse the connection
-        # list as it comes in with the shape used to query first while that
-        # shape is the destination of the connection
-        grouped = [(connections[i+1], item) for i, item in
-                   enumerate(connections) if i % 2 == 0]
+        connections = cmds.ls(connections, long=True)      # Ensure long names
 
         inputs = []
-        for src, dest in grouped:
+        for dest, src in pairwise(connections):
             source_node, source_attr = src.split(".", 1)
             dest_node, dest_attr = dest.split(".", 1)
+
+            # Ensure the source of the connection is not included in the
+            # current instance's hierarchy. If so, we ignore that connection
+            # as we will want to preserve it even over a publish.
+            if source_node in instance:
+                self.log.debug("Ignoring input connection between nodes "
+                               "inside the instance: %s -> %s" % (src, dest))
+                continue
 
             inputs.append({"connections": [source_attr, dest_attr],
                            "sourceID": lib.get_id(source_node),
                            "destinationID": lib.get_id(dest_node)})
 
-        # Collect any textures if used
-        yeti_resources = []
-        yeti_nodes = cmds.ls(instance[:], type="pgYetiMaya", long=True)
-        for node in yeti_nodes:
-            # Get Yeti resources (textures)
-            resources = self.get_yeti_resources(node)
-            yeti_resources.extend(resources)
-
-        instance.data["rigsettings"] = {"inputs": inputs}
-
-        instance.data["resources"] = yeti_resources
-
-        # Force frame range for export
-        instance.data["startFrame"] = 1
-        instance.data["endFrame"] = 1
+        return inputs
 
     def get_yeti_resources(self, node):
         """Get all resource file paths
@@ -96,7 +112,13 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
             list
         """
         resources = []
-        image_search_path = cmds.getAttr("{}.imageSearchPath".format(node))
+
+        image_search_paths = cmds.getAttr("{}.imageSearchPath".format(node))
+
+        # TODO: Somehow this uses OS environment path separator, `:` vs `;`
+        # Later on check whether this is pipeline OS cross-compatible.
+        image_search_paths = [p for p in
+                              image_search_paths.split(os.path.pathsep) if p]
 
         # List all related textures
         texture_filenames = cmds.pgYetiCommand(node, listTextures=True)
@@ -108,35 +130,50 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                                            type="reference")
         self.log.info("Found %i reference node(s)" % len(reference_nodes))
 
-        if texture_filenames and not image_search_path:
+        if texture_filenames and not image_search_paths:
             raise ValueError("pgYetiMaya node '%s' is missing the path to the "
                              "files in the 'imageSearchPath "
                              "atttribute'" % node)
 
         # Collect all texture files
         for texture in texture_filenames:
-            item = {"files": [], "source": texture, "node": node}
-            texture_filepath = os.path.join(image_search_path, texture)
-            if len(texture.split(".")) > 2:
 
-                # For UDIM based textures (tiles)
-                if "<UDIM>" in texture:
-                    sequences = self.get_sequence(texture_filepath,
-                                                  pattern="<UDIM>")
-                    item["files"].extend(sequences)
-
-                # Based textures (animated masks f.e)
-                elif "%04d" in texture:
-                    sequences = self.get_sequence(texture_filepath,
-                                                  pattern="%04d")
-                    item["files"].extend(sequences)
-                # Assuming it is a fixed name
-                else:
-                    item["files"].append(texture_filepath)
+            files = []
+            if os.path.isabs(texture):
+                self.log.debug("Texture is absolute path, ignoring "
+                               "image search paths for: %s" % texture)
+                files = self.search_textures(texture)
             else:
-                item["files"].append(texture_filepath)
+                for root in image_search_paths:
+                    filepath = os.path.join(root, texture)
+                    files = self.search_textures(filepath)
+                    if files:
+                        # Break out on first match in search paths..
+                        break
+
+            if not files:
+                self.log.warning(
+                    "No texture found for: %s "
+                    "(searched: %s)" % (texture, image_search_paths))
+
+            item = {
+                "files": files,
+                "source": texture,
+                "node": node
+            }
 
             resources.append(item)
+
+        # For now validate that every texture has at least a single file
+        # resolved. Since a 'resource' does not have the requirement of having
+        # a `files` explicitly mapped it's not explicitly validated.
+        # TODO: Validate this as a validator
+        invalid_resources = []
+        for resource in resources:
+            if not resource['files']:
+                invalid_resources.append(resource)
+        if invalid_resources:
+            raise RuntimeError("Invalid resources")
 
         # Collect all referenced files
         for reference_node in reference_nodes:
@@ -145,35 +182,83 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                                         param="reference_file",
                                         getParamValue=True)
 
-            if not os.path.isfile(ref_file):
-                raise RuntimeError("Reference file must be a full file path!")
-
             # Create resource dict
-            item = {"files": [],
-                    "source": ref_file,
-                    "node": node,
-                    "graphnode": reference_node,
-                    "param": "reference_file"}
+            item = {
+                "source": ref_file,
+                "node": node,
+                "graphnode": reference_node,
+                "param": "reference_file",
+                "files": []
+            }
 
             ref_file_name = os.path.basename(ref_file)
             if "%04d" in ref_file_name:
-                ref_files = self.get_sequence(ref_file)
-                item["files"].extend(ref_files)
+                item["files"] = self.get_sequence(ref_file)
             else:
-                item["files"].append(ref_file)
+                if os.path.exists(ref_file) and os.path.isfile(ref_file):
+                    item["files"] = [ref_file]
+
+            if not item["files"]:
+                self.log.warning("Reference node '%s' has no valid file "
+                                 "path set: %s" % (reference_node, ref_file))
+                # TODO: This should allow to pass and fail in Validator instead
+                raise RuntimeError("Reference node  must be a full file path!")
 
             resources.append(item)
 
         return resources
 
-    def get_sequence(self, filename, pattern="%04d"):
-        """Get sequence from filename
+    def search_textures(self, filepath):
+        """Search all texture files on disk.
+
+        This also parses to full sequences for those with dynamic patterns
+        like <UDIM> and %04d in the filename.
+
+        Args:
+            filepath (str): The full path to the file, including any
+                dynamic patterns like <UDIM> or %04d
+
+        Returns:
+            list: The files found on disk
+
+        """
+        filename = os.path.basename(filepath)
+
+        # Collect full sequence if it matches a sequence pattern
+        if len(filename.split(".")) > 2:
+
+            # For UDIM based textures (tiles)
+            if "<UDIM>" in filename:
+                sequences = self.get_sequence(filepath,
+                                              pattern="<UDIM>")
+                if sequences:
+                    return sequences
+
+            # Frame/time - Based textures (animated masks f.e)
+            elif "%04d" in filename:
+                sequences = self.get_sequence(filepath,
+                                              pattern="%04d")
+                if sequences:
+                    return sequences
+
+        # Assuming it is a fixed name (single file)
+        if os.path.exists(filepath):
+            return [filepath]
+
+        return []
+
+    def get_sequence(self, filepath, pattern="%04d"):
+        """Get sequence from filename.
+
+        This will only return files if they exist on disk as it tries
+        to collect the sequence using the filename pattern and searching
+        for them on disk.
 
         Supports negative frame ranges like -001, 0000, 0001 and -0001,
         0000, 0001.
 
         Arguments:
-            filename (str): The full path to filename containing the given
+            filepath (str): The full path to filename containing the given
             pattern.
             pattern (str): The pattern to swap with the variable frame number.
 
@@ -183,10 +268,10 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         """
         from avalon.vendor import clique
 
-        escaped = re.escape(filename)
+        escaped = re.escape(filepath)
         re_pattern = escaped.replace(pattern, "-?[0-9]+")
 
-        source_dir = os.path.dirname(filename)
+        source_dir = os.path.dirname(filepath)
         files = [f for f in os.listdir(source_dir)
                  if re.match(re_pattern, f)]
 

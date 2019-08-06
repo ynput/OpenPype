@@ -44,15 +44,15 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
     """
     order = pyblish.api.ValidatorOrder
     label = 'Instancer Cache Frame Ranges'
-    families = ["instancer']
+    families = ['instancer']
 
     @classmethod
     def get_invalid(cls, instance):
 
         import pyseq
 
-        start_frame = instance.data.get("startFrame", 0)
-        end_frame = instance.data.get("endFrame", 0)
+        start_frame = instance.data.get("frameStart", 0)
+        end_frame = instance.data.get("frameEnd", 0)
         required = range(int(start_frame), int(end_frame) + 1)
 
         invalid = list()

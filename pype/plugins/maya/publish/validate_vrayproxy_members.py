@@ -12,7 +12,7 @@ class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
     order = pyblish.api.ValidatorOrder
     label = 'VRay Proxy Members'
     hosts = ['maya']
-    families = ["vrayproxy']
+    families = ['vrayproxy']
     actions = [pype.maya.action.SelectInvalidAction]
 
     def process(self, instance):
@@ -36,4 +36,3 @@ class ValidateVrayProxyMembers(pyblish.api.InstancePlugin):
 
             # Return the instance itself
             return [instance.name]
-

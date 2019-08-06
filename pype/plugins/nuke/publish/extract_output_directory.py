@@ -6,7 +6,7 @@ import pyblish.api
 class ExtractOutputDirectory(pyblish.api.InstancePlugin):
     """Extracts the output path for any collection or single output_path."""
 
-    order = pyblish.api.ExtractorOrder - 0.1
+    order = pyblish.api.ExtractorOrder - 0.05
     label = "Output Directory"
     optional = True
 
@@ -16,11 +16,8 @@ class ExtractOutputDirectory(pyblish.api.InstancePlugin):
 
         path = None
 
-        if "collection" in instance.data.keys():
-            path = instance.data["collection"].format()
-
         if "output_path" in instance.data.keys():
-            path = instance.data["output_path"]
+            path = instance.data["path"]
 
         if not path:
             return

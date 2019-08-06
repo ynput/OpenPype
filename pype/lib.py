@@ -3,14 +3,128 @@ import re
 import logging
 import importlib
 import itertools
+import contextlib
+import subprocess
 
 from .vendor import pather
 from .vendor.pather.error import ParseError
 
 import avalon.io as io
 import avalon.api
+import avalon
 
 log = logging.getLogger(__name__)
+
+
+# Special naming case for subprocess since its a built-in method.
+def _subprocess(args):
+    """Convenience method for getting output errors for subprocess."""
+
+    proc = subprocess.Popen(
+        args,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        stdin=subprocess.PIPE,
+        env=os.environ
+    )
+
+    output = proc.communicate()[0]
+
+    if proc.returncode != 0:
+        raise ValueError("\"{}\" was not successful: {}".format(args, output))
+
+
+def get_hierarchy(asset_name=None):
+    """
+    Obtain asset hierarchy path string from mongo db
+
+    Returns:
+        string: asset hierarchy path
+
+    """
+    if not asset_name:
+        asset_name = io.Session.get("AVALON_ASSET", os.environ["AVALON_ASSET"])
+
+    asset_entity = io.find_one({
+        "type": 'asset',
+        "name": asset_name
+    })
+
+    not_set = "PARENTS_NOT_SET"
+    entity_parents = asset_entity.get("data", {}).get("parents", not_set)
+
+    # If entity already have parents then just return joined
+    if entity_parents != not_set:
+        return "/".join(entity_parents)
+
+    # Else query parents through visualParents and store result to entity
+    hierarchy_items = []
+    entity = asset_entity
+    while True:
+        parent_id = entity.get("data", {}).get("visualParent")
+        if not parent_id:
+            break
+        entity = io.find_one({"_id": parent_id})
+        hierarchy_items.append(entity["name"])
+
+    # Add parents to entity data for next query
+    entity_data = asset_entity.get("data", {})
+    entity_data["parents"] = hierarchy_items
+    io.update_many(
+        {"_id": asset_entity["_id"]},
+        {"$set": {"data": entity_data}}
+    )
+
+    return "/".join(hierarchy_items)
+
+
+def add_tool_to_environment(tools):
+    """
+    It is adding dynamic environment to os environment.
+
+    Args:
+        tool (list, tuple): list of tools, name should corespond to json/toml
+
+    Returns:
+        os.environ[KEY]: adding to os.environ
+    """
+
+    import acre
+    tools_env = acre.get_tools(tools)
+    env = acre.compute(tools_env)
+    env = acre.merge(env, current_env=dict(os.environ))
+    os.environ.update(env)
+
+
+@contextlib.contextmanager
+def modified_environ(*remove, **update):
+    """
+    Temporarily updates the ``os.environ`` dictionary in-place.
+
+    The ``os.environ`` dictionary is updated in-place so that the modification
+    is sure to work in all situations.
+
+    :param remove: Environment variables to remove.
+    :param update: Dictionary of environment variables and values to add/update.
+    """
+    env = os.environ
+    update = update or {}
+    remove = remove or []
+
+    # List of environment variables being updated or removed.
+    stomped = (set(update.keys()) | set(remove)) & set(env.keys())
+    # Environment variables and values to restore on exit.
+    update_after = {k: env[k] for k in stomped}
+    # Environment variables and values to remove on exit.
+    remove_after = frozenset(k for k in update if k not in env)
+
+    try:
+        env.update(update)
+        [env.pop(k, None) for k in remove]
+        yield
+    finally:
+        env.update(update_after)
+        [env.pop(k) for k in remove_after]
 
 
 def pairwise(iterable):
@@ -80,45 +194,6 @@ def any_outdated():
     return False
 
 
-def update_task_from_path(path):
-    """Update the context using the current scene state.
-
-    When no changes to the context it will not trigger an update.
-    When the context for a file could not be parsed an error is logged but not
-    raised.
-
-    """
-    if not path:
-        log.warning("Can't update the current task. Scene is not saved.")
-        return
-
-    # Find the current context from the filename
-    project = io.find_one({"type": "project"},
-                          projection={"config.template.work": True})
-    template = project['config']['template']['work']
-    # Force to use the registered to root to avoid using wrong paths
-    template = pather.format(template, {"root": avalon.api.registered_root()})
-    try:
-        context = pather.parse(template, path)
-    except ParseError:
-        log.error("Can't update the current task. Unable to parse the "
-                  "task for: %s (pattern: %s)", path, template)
-        return
-
-    # Find the changes between current Session and the path's context.
-    current = {
-        "asset": avalon.api.Session["AVALON_ASSET"],
-        "task": avalon.api.Session["AVALON_TASK"],
-        "app": avalon.api.Session["AVALON_APP"]
-    }
-    changes = {key: context[key] for key, current_value in current.items()
-               if context[key] != current_value}
-
-    if changes:
-        log.info("Updating work task to: %s", context)
-        avalon.api.update_current_task(**changes)
-
-
 def _rreplace(s, a, b, n=1):
     """Replace a with b in string s from right side n times"""
     return b.join(s.rsplit(a, n))
@@ -138,7 +213,7 @@ def version_up(filepath):
     dirname = os.path.dirname(filepath)
     basename, ext = os.path.splitext(os.path.basename(filepath))
 
-    regex = "[._]v\d+"
+    regex = r"[._]v\d+"
     matches = re.findall(regex, str(basename), re.IGNORECASE)
     if not matches:
         log.info("Creating version...")
@@ -146,7 +221,7 @@ def version_up(filepath):
         new_basename = "{}{}".format(basename, new_label)
     else:
         label = matches[-1]
-        version = re.search("\d+", label).group()
+        version = re.search(r"\d+", label).group()
         padding = len(version)
 
         new_version = int(version) + 1
@@ -154,6 +229,11 @@ def version_up(filepath):
                                                      padding=padding)
         new_label = label.replace(version, new_version, 1)
         new_basename = _rreplace(basename, label, new_label)
+
+    if not new_basename.endswith(new_label):
+        index = (new_basename.find(new_label))
+        index += len(new_label)
+        new_basename = new_basename[:index]
 
     new_filename = "{}{}".format(new_basename, ext)
     new_filename = os.path.join(dirname, new_filename)
@@ -163,9 +243,10 @@ def version_up(filepath):
         raise RuntimeError("Created path is the same as current file,"
                            "this is a bug")
 
-    if os.path.exists(new_filename):
-        log.info("Skipping existing version %s" % new_label)
-        return version_up(new_filename)
+    for file in os.listdir(dirname):
+        if file.endswith(ext) and file.startswith(new_basename):
+            log.info("Skipping existing version %s" % new_label)
+            return version_up(new_filename)
 
     log.info("New version %s" % new_label)
     return new_filename
@@ -248,90 +329,157 @@ def _get_host_name():
     return _host.__name__.rsplit(".", 1)[-1]
 
 
-def collect_container_metadata(container):
-    """Add additional data based on the current host
+def get_asset(asset_name=None):
+    entity_data_keys_from_project_when_miss = [
+        "frameStart", "frameEnd", "handleStart", "handleEnd", "fps",
+        "resolutionWidth", "resolutionHeight"
+    ]
 
-    If the host application's lib module does not have a function to inject
-    additional data it will return the input container
+    entity_keys_from_project_when_miss = []
+
+    alternatives = {
+        "handleStart": "handles",
+        "handleEnd": "handles"
+    }
+
+    defaults = {
+        "handleStart": 0,
+        "handleEnd": 0
+    }
+
+    if not asset_name:
+        asset_name = avalon.api.Session["AVALON_ASSET"]
+
+    asset_document = io.find_one({"name": asset_name, "type": "asset"})
+    if not asset_document:
+        raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
+
+    project_document = io.find_one({"type": "project"})
+
+    for key in entity_data_keys_from_project_when_miss:
+        if asset_document["data"].get(key):
+            continue
+
+        value = project_document["data"].get(key)
+        if value is not None or key not in alternatives:
+            asset_document["data"][key] = value
+            continue
+
+        alt_key = alternatives[key]
+        value = asset_document["data"].get(alt_key)
+        if value is not None:
+            asset_document["data"][key] = value
+            continue
+
+        value = project_document["data"].get(alt_key)
+        if value:
+            asset_document["data"][key] = value
+            continue
+
+        if key in defaults:
+            asset_document["data"][key] = defaults[key]
+
+    for key in entity_keys_from_project_when_miss:
+        if asset_document.get(key):
+            continue
+
+        value = project_document.get(key)
+        if value is not None or key not in alternatives:
+            asset_document[key] = value
+            continue
+
+        alt_key = alternatives[key]
+        value = asset_document.get(alt_key)
+        if value:
+            asset_document[key] = value
+            continue
+
+        value = project_document.get(alt_key)
+        if value:
+            asset_document[key] = value
+            continue
+
+        if key in defaults:
+            asset_document[key] = defaults[key]
+
+    return asset_document
+
+
+def get_project():
+    io.install()
+    return io.find_one({"type": "project"})
+
+
+def get_version_from_path(file):
+    """
+    Finds version number in file path string
 
     Args:
-        container (dict): collection if representation data in host
+        file (string): file path
 
     Returns:
-        generator
-    """
-    # TODO: Improve method of getting the host lib module
-    host_name = _get_host_name()
-    package_name = "pype.{}.lib".format(host_name)
-    hostlib = importlib.import_module(package_name)
-
-    if not hasattr(hostlib, "get_additional_data"):
-        return {}
-
-    return hostlib.get_additional_data(container)
-
-
-def get_asset_fps():
-    """Returns project's FPS, if not found will return 25 by default
-
-    Returns:
-        int, float
+        v: version number in string ('001')
 
     """
-
-    key = "fps"
-
-    # FPS from asset data (if set)
-    asset_data = get_asset_data()
-    if key in asset_data:
-        return asset_data[key]
-
-    # FPS from project data (if set)
-    project_data = get_project_data()
-    if key in project_data:
-        return project_data[key]
-
-    # Fallback to 25 FPS
-    return 25.0
+    pattern = re.compile(r"[\._]v([0-9]*)")
+    try:
+        return pattern.findall(file)[0]
+    except IndexError:
+        log.error(
+            "templates:get_version_from_workfile:"
+            "`{}` missing version string."
+            "Example `v004`".format(file)
+        )
 
 
-def get_project_data():
-    """Get the data of the current project
+def get_avalon_database():
+    if io._database is None:
+        set_io_database()
+    return io._database
 
-    The data of the project can contain things like:
-        resolution
-        fps
-        renderer
 
-    Returns:
-        dict:
+def set_io_database():
+    required_keys = ["AVALON_PROJECT", "AVALON_ASSET", "AVALON_SILO"]
+    for key in required_keys:
+        os.environ[key] = os.environ.get(key, "")
+    io.install()
 
+
+def get_all_avalon_projects():
+    db = get_avalon_database()
+    projects = []
+    for name in db.collection_names():
+        projects.append(db[name].find_one({'type': 'project'}))
+    return projects
+
+
+def filter_pyblish_plugins(plugins):
     """
+    This servers as plugin filter / modifier for pyblish. It will load plugin
+    definitions from presets and filter those needed to be excluded.
 
-    project_name = io.active_project()
-    project = io.find_one({"name": project_name,
-                           "type": "project"},
-                          projection={"data": True})
-
-    data = project.get("data", {})
-
-    return data
-
-
-def get_asset_data(asset=None):
-    """Get the data from the current asset
-
-    Args:
-        asset(str, Optional): name of the asset, eg:
-
-    Returns:
-        dict
+    :param plugins: Dictionary of plugins produced by :mod:`pyblish-base`
+                    `discover()` method.
+    :type plugins: Dict
     """
+    from pypeapp import config
+    from pyblish import api
 
-    asset_name = asset or avalon.api.Session["AVALON_ASSET"]
-    document = io.find_one({"name": asset_name,
-                            "type": "asset"})
+    host = api.current_host()
 
-    data = document.get("data", {})
+    # iterate over plugins
+    for plugin in plugins[:]:
+        try:
+            config_data = config.get_presets()['plugins'][host]["publish"][plugin.__name__]  # noqa: E501
+        except KeyError:
+            continue
 
-    return data
+        for option, value in config_data.items():
+            if option == "enabled" and value is False:
+                log.info('removing plugin {}'.format(plugin.__name__))
+                plugins.remove(plugin)
+            else:
+                log.info('setting {}:{} on plugin {}'.format(
+                    option, value, plugin.__name__))
+
+                setattr(plugin, option, value)

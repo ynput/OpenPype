@@ -1,10 +1,12 @@
 import os
 import logging
 import shutil
+import clique
 
 import errno
 import pyblish.api
 from avalon import api, io
+from avalon.vendor import filelink
 
 
 log = logging.getLogger(__name__)
@@ -23,29 +25,24 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
-    families = ["animation",
-                "camera",
-                "imagesequence",
-                "look",
-                "mayaAscii",
-                "model",
-                "pointcache",
-                "vdbcache",
-                "setdress",
-                "rig",
-                "vrayproxy",
+    families = ["assembly",
                 "yetiRig",
                 "yeticache"]
+    exclude_families = ["clip"]
 
     def process(self, instance):
+        if [ef for ef in self.exclude_families
+                if instance.data["family"] in ef]:
+            return
 
         self.register(instance)
 
         self.log.info("Integrating Asset in to the database ...")
-        self.integrate(instance)
+        if instance.data.get('transfer', True):
+            self.integrate(instance)
+
 
     def register(self, instance):
-
         # Required environment variables
         PROJECT = api.Session["AVALON_PROJECT"]
         ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
@@ -82,8 +79,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         self.log.debug("Establishing staging directory @ %s" % stagingdir)
 
-        project = io.find_one({"type": "project"},
-                              projection={"config.template.publish": True})
+        # Ensure at least one file is set up for transfer in staging dir.
+        files = instance.data.get("files", [])
+        assert files, "Instance has no files to transfer"
+        assert isinstance(files, (list, tuple)), (
+            "Instance 'files' must be a list, got: {0}".format(files)
+        )
+
+        project = io.find_one({"type": "project"})
 
         asset = io.find_one({"type": "asset",
                              "name": ASSET,
@@ -136,25 +139,23 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         #     \|________|
         #
         root = api.registered_root()
-        # template_data = {"root": root,
-        #                  "project": PROJECT,
-        #                  "silo": asset['silo'],
-        #                  "asset": ASSET,
-        #                  "subset": subset["name"],
-        #                  "version": version["name"]}
-        hierarchy = io.find_one({"type":'asset', "name":ASSET})['data']['parents']
-        if hierarchy:
+        hierarchy = ""
+        parents = io.find_one({
+            "type": 'asset',
+            "name": ASSET
+        })['data']['parents']
+        if parents and len(parents) > 0:
             # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = os.path.join(*hierarchy)
+            hierarchy = os.path.join(*parents)
 
         template_data = {"root": root,
                          "project": {"name": PROJECT,
-                                     "code": "prjX"},
+                                     "code": project['data']['code']},
                          "silo": asset['silo'],
                          "asset": ASSET,
                          "family": instance.data['family'],
                          "subset": subset["name"],
-                         "VERSION": version["name"],
+                         "version": int(version["name"]),
                          "hierarchy": hierarchy}
 
         template_publish = project["config"]["template"]["publish"]
@@ -163,6 +164,9 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         # Find the representations to transfer amongst the files
         # Each should be a single representation (as such, a single extension)
         representations = []
+        destination_list = []
+        if 'transfers' not in instance.data:
+            instance.data['transfers'] = []
 
         for files in instance.data["files"]:
 
@@ -175,6 +179,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             # |       ||
             # |_______|
             #
+
             if isinstance(files, list):
                 collection = files
                 # Assert that each member has identical suffix
@@ -192,9 +197,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
                     src = os.path.join(stagingdir, fname)
                     anatomy_filled = anatomy.format(template_data)
-                    dst = anatomy_filled.publish.path
+                    dst = anatomy_filled["publish"]["path"]
 
                     instance.data["transfers"].append([src, dst])
+                    template = anatomy.templates["publish"]["path"]
 
             else:
                 # Single file
@@ -215,33 +221,38 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
-                dst = anatomy_filled.publish.path
+                dst = anatomy_filled["publish"]["path"]
 
                 instance.data["transfers"].append([src, dst])
+                template = anatomy.templates["publish"]["path"]
 
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
                 "name": ext[1:],
-                "data": {'path': dst},
+                "data": {'path': dst, 'template': template},
                 "dependencies": instance.data.get("dependencies", "").split(),
 
                 # Imprint shortcut to context
                 # for performance reasons.
                 "context": {
-                     "root": root,
-                     "project": PROJECT,
-                     "projectcode": "prjX",
-                     "silo": asset['silo'],
-                     "asset": ASSET,
-                     "family": instance.data['family'],
-                     "subset": subset["name"],
-                     "version": version["name"],
-                     "hierarchy": hierarchy,
-                     "representation": ext[1:]
+                    "root": root,
+                    "project": {"name": PROJECT,
+                                "code": project['data']['code']},
+                    'task': api.Session["AVALON_TASK"],
+                    "silo": asset['silo'],
+                    "asset": ASSET,
+                    "family": instance.data['family'],
+                    "subset": subset["name"],
+                    "version": version["name"],
+                    "hierarchy": hierarchy,
+                    "representation": ext[1:]
                 }
             }
+
+            destination_list.append(dst)
+            instance.data['destination_list'] = destination_list
             representations.append(representation)
 
         self.log.info("Registering {} items".format(len(representations)))
@@ -257,11 +268,21 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             instance: the instance to integrate
         """
 
-        transfers = instance.data["transfers"]
+        transfers = instance.data.get("transfers", list())
 
         for src, dest in transfers:
             self.log.info("Copying file .. {} -> {}".format(src, dest))
             self.copy_file(src, dest)
+
+        # Produce hardlinked copies
+        # Note: hardlink can only be produced between two files on the same
+        # server/disk and editing one of the two will edit both files at once.
+        # As such it is recommended to only make hardlinks between static files
+        # to ensure publishes remain safe and non-edited.
+        hardlinks = instance.data.get("hardlinks", list())
+        for src, dest in hardlinks:
+            self.log.info("Hardlinking file .. {} -> {}".format(src, dest))
+            self.hardlink_file(src, dest)
 
     def copy_file(self, src, dst):
         """ Copy given source to destination
@@ -285,6 +306,20 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         shutil.copy(src, dst)
 
+    def hardlink_file(self, src, dst):
+
+        dirname = os.path.dirname(dst)
+        try:
+            os.makedirs(dirname)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                self.log.critical("An unexpected error occurred.")
+                raise
+
+        filelink.create(src, dst, filelink.HARDLINK)
+
     def get_subset(self, asset, instance):
 
         subset = io.find_one({"type": "subset",
@@ -296,7 +331,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             self.log.info("Subset '%s' not found, creating.." % subset_name)
 
             _id = io.insert_one({
-                "schema": "pype:subset-2.0",
+                "schema": "avalon-core:subset-2.0",
                 "type": "subset",
                 "name": subset_name,
                 "data": {},
@@ -322,7 +357,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         version_locations = [location for location in locations if
                              location is not None]
 
-        return {"schema": "pype:version-2.0",
+        return {"schema": "avalon-core:version-2.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,
@@ -348,19 +383,29 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
             families.append(instance_family)
         families += current_families
 
+        self.log.debug("Registered root: {}".format(api.registered_root()))
         # create relative source path for DB
-        relative_path = os.path.relpath(context.data["currentFile"],
-                                        api.registered_root())
-        source = os.path.join("{root}", relative_path).replace("\\", "/")
+        try:
+            source = instance.data['source']
+        except KeyError:
+            source = context.data["currentFile"]
 
+            relative_path = os.path.relpath(source, api.registered_root())
+            source = os.path.join("{root}", relative_path).replace("\\", "/")
+
+        self.log.debug("Source: {}".format(source))
         version_data = {"families": families,
                         "time": context.data["time"],
                         "author": context.data["user"],
                         "source": source,
-                        "comment": context.data.get("comment")}
+                        "comment": context.data.get("comment"),
+                        "machine": context.data.get("machine"),
+                        "fps": context.data.get("fps")}
 
         # Include optional data if present in
-        optionals = ["startFrame", "endFrame", "step", "handles"]
+        optionals = [
+            "frameStart", "frameEnd", "step", "handles", "sourceHashes"
+        ]
         for key in optionals:
             if key in instance.data:
                 version_data[key] = instance.data[key]

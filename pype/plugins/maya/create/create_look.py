@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import avalon.maya
 from pype.maya import lib
 
@@ -10,11 +9,12 @@ class CreateLook(avalon.maya.Creator):
     label = "Look"
     family = "look"
     icon = "paint-brush"
+    defaults = ['Main']
 
     def __init__(self, *args, **kwargs):
         super(CreateLook, self).__init__(*args, **kwargs)
 
-        data = OrderedDict(**self.data)
-        data["renderlayer"] = lib.get_current_renderlayer()
+        self.data["renderlayer"] = lib.get_current_renderlayer()
 
-        self.data = data
+        # Whether to automatically convert the textures to .tx upon publish.
+        self.data["maketx"] = True

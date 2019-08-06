@@ -56,6 +56,3 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
                 invalid.append(node)
 
         return invalid
-
-
-

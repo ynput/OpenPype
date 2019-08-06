@@ -1,11 +1,9 @@
 import sys
 import argparse
 import logging
-import os
-import getpass
 
-import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.vendor import ftrack_api
+from pype.ftrack import BaseAction
 
 
 class ClientReviewSort(BaseAction):
@@ -17,7 +15,6 @@ class ClientReviewSort(BaseAction):
     #: Action label.
     label = 'Sort Review'
 
-
     def discover(self, session, entities, event):
         ''' Validation '''
 
@@ -25,7 +22,6 @@ class ClientReviewSort(BaseAction):
             return False
 
         return True
-
 
     def launch(self, session, entities, event):
 
@@ -40,7 +36,9 @@ class ClientReviewSort(BaseAction):
 
         # Sort criteria
         obj_list = sorted(obj_list, key=lambda k: k['version'])
-        obj_list = sorted(obj_list, key=lambda k: k['asset_version']['task']['name'])
+        obj_list = sorted(
+            obj_list, key=lambda k: k['asset_version']['task']['name']
+        )
         obj_list = sorted(obj_list, key=lambda k: k['name'])
 
         # Set 'sort order' to sorted list, so they are sorted in Ftrack also

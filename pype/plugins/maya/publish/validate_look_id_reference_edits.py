@@ -17,7 +17,7 @@ class ValidateLookIdReferenceEdits(pyblish.api.InstancePlugin):
     """
 
     order = pype.api.ValidateContentsOrder
-    families = ["look']
+    families = ['look']
     hosts = ['maya']
     label = 'Look Id Reference Edits'
     actions = [pype.maya.action.SelectInvalidAction,

@@ -34,9 +34,16 @@ class ExtractRig(pype.api.Extractor):
                       expressions=True,
                       constructionHistory=True)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'ma',
+            'ext': 'ma',
+            'files': filename,
+            "stagingDir": dir_path
+        }
+        instance.data["representations"].append(representation)
+
 
         self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))

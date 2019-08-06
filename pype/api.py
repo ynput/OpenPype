@@ -5,7 +5,8 @@ from .plugin import (
     ValidatePipelineOrder,
     ValidateContentsOrder,
     ValidateSceneOrder,
-    ValidateMeshOrder
+    ValidateMeshOrder,
+    ValidationException
 )
 
 # temporary fix, might
@@ -14,6 +15,21 @@ from .action import (
     RepairAction,
     RepairContextAction
 )
+
+from pypeapp import Logger
+
+from .lib import (
+    version_up,
+    get_asset,
+    get_project,
+    get_hierarchy,
+    get_version_from_path,
+    modified_environ,
+    add_tool_to_environment
+)
+
+# Special naming case for subprocess since its a built-in method.
+from .lib import _subprocess as subprocess
 
 __all__ = [
     # plugin classes
@@ -25,5 +41,21 @@ __all__ = [
     "ValidateMeshOrder",
     # action
     "get_errored_instances_from_context",
-    "RepairAction"
+    "RepairAction",
+    "RepairContextAction",
+
+    "Logger",
+
+    "ValidationException",
+
+    # get contextual data
+    "version_up",
+    "get_project",
+    "get_hierarchy",
+    "get_asset",
+    "get_version_from_path",
+    "modified_environ",
+    "add_tool_to_environment",
+
+    "subprocess"
 ]

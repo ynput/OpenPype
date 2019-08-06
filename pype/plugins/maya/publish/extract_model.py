@@ -69,9 +69,15 @@ class ExtractModel(pype.api.Extractor):
 
                         # Store reference for integration
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'ma',
+            'ext': 'ma',
+            'files': filename,
+            "stagingDir": stagingdir,
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '%s' to: %s" % (instance.name, path))

@@ -3,7 +3,6 @@ from maya import cmds
 import pyblish.api
 import pype.api
 import pype.maya.action
-import pype.maya.lib as lib
 
 
 class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
@@ -11,27 +10,21 @@ class ValidateRenderNoDefaultCameras(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["renderlayer']
+    families = ['renderlayer']
     label = "No Default Cameras Renderable"
     actions = [pype.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):
 
-        layer = instance.data["setMembers"]
+        renderable = set(instance.data["cameras"])
 
         # Collect default cameras
         cameras = cmds.ls(type='camera', long=True)
-        defaults = [cam for cam in cameras if
-                    cmds.camera(cam, query=True, startupCamera=True)]
+        defaults = set(cam for cam in cameras if
+                       cmds.camera(cam, query=True, startupCamera=True))
 
-        invalid = []
-        with lib.renderlayer(layer):
-            for cam in defaults:
-                if cmds.getAttr(cam + ".renderable"):
-                    invalid.append(cam)
-
-        return invalid
+        return [cam for cam in renderable if cam in defaults]
 
     def process(self, instance):
         """Process all the cameras in the instance"""

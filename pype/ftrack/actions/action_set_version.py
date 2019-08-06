@@ -1,9 +1,8 @@
 import sys
 import argparse
 import logging
-import getpass
-import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.vendor import ftrack_api
+from pype.ftrack import BaseAction
 
 
 class SetVersion(BaseAction):
@@ -11,10 +10,8 @@ class SetVersion(BaseAction):
 
     #: Action identifier.
     identifier = 'version.set'
-
     #: Action label.
     label = 'Version Set'
-
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -49,23 +46,24 @@ class SetVersion(BaseAction):
         # Do something with the values or return a new form.
         values = event['data'].get('values', {})
         # Default is action True
-        scs = True
-        msg = 'Version was changed to v{0}'.format(values['version_number'])
+        scs = False
 
         if not values['version_number']:
-            scs = False,
-            msg = "You didn't enter any version."
+            msg = 'You didn\'t enter any version.'
         elif int(values['version_number']) <= 0:
-            scs = False
             msg = 'Negative or zero version is not valid.'
         else:
-            entity['version'] = values['version_number']
-
-        try:
-            session.commit()
-        except:
-            session.rollback()
-            raise
+            try:
+                entity['version'] = values['version_number']
+                session.commit()
+                msg = 'Version was changed to v{0}'.format(
+                    values['version_number']
+                )
+                scs = True
+            except Exception as e:
+                msg = 'Unexpected error occurs during version set ({})'.format(
+                    str(e)
+                )
 
         return {
             'success': scs,
@@ -82,8 +80,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = SetVersion(session)
-    action_handler.register()
+    SetVersion(session).register()
 
 
 def main(arguments=None):

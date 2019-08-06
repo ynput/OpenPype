@@ -88,8 +88,8 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
     def process(self, instance):
 
         # get settings
-        framerange = [instance.data.get("startFrame", 1),
-                      instance.data.get("endFrame", 1)]
+        framerange = [instance.data.get("frameStart", 1),
+                      instance.data.get("frameEnd", 1)]
         handles = instance.data.get("handles", 0)
         step = instance.data.get("step", 1.0)
         bake_to_worldspace = instance.data("bakeToWorldSpace", True)
@@ -127,7 +127,7 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
         self.log.info("Performing camera bakes for: {0}".format(transform))
         with avalon.maya.maintained_selection():
             with lib.evaluation("off"):
-                with lib.no_refresh():
+                with avalon.maya.suspended_refresh():
                     baked = lib.bake_to_world_space(
                         transform,
                         frame_range=range_with_handles,
@@ -168,10 +168,16 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
 
                     massage_ma_file(path)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'ma',
+            'ext': 'ma',
+            'files': filename,
+            "stagingDir": dir_path,
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, path))

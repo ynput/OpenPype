@@ -1,4 +1,6 @@
 import pype.maya.plugin
+import os
+from pypeapp import config
 
 
 class YetiRigLoader(pype.maya.plugin.ReferenceLoader):
@@ -24,6 +26,16 @@ class YetiRigLoader(pype.maya.plugin.ReferenceLoader):
                               groupReference=True,
                               groupName="{}:{}".format(namespace, name))
 
+        groupName = "{}:{}".format(namespace, name)
+
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
+
+        c = colors.get('yetiRig')
+        if c is not None:
+            cmds.setAttr(groupName + ".useOutlinerColor", 1)
+            cmds.setAttr(groupName + ".outlinerColor",
+                         c[0], c[1], c[2])
         self[:] = nodes
 
         self.log.info("Yeti Rig Connection Manager will be available soon")

@@ -1,13 +1,11 @@
-# :coding: utf-8
-# :copyright: Copyright (c) 2015 Milan Kolar
-
+import os
 import sys
 import argparse
 import logging
-import getpass
 import json
-import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.vendor import ftrack_api
+from pype.ftrack import BaseAction
+
 
 class ThumbToParent(BaseAction):
     '''Custom action.'''
@@ -17,8 +15,9 @@ class ThumbToParent(BaseAction):
     # Action label
     label = 'Thumbnail to Parent'
     # Action icon
-    icon = "https://cdn3.iconfinder.com/data/icons/transfers/100/239419-upload_transfer-512.png"
-
+    icon = '{}/ftrack/action_icons/thumbToParent.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
 
     def discover(self, session, entities, event):
         '''Return action config if triggered on asset versions.'''
@@ -27,7 +26,6 @@ class ThumbToParent(BaseAction):
             return False
 
         return True
-
 
     def launch(self, session, entities, event):
         '''Callback method for action.'''
@@ -50,14 +48,19 @@ class ThumbToParent(BaseAction):
                 if entity.entity_type.lower() == 'assetversion':
                     try:
                         parent = entity['task']
-                    except:
+                    except Exception:
                         par_ent = entity['link'][-2]
                         parent = session.get(par_ent['type'], par_ent['id'])
                 else:
                     try:
                         parent = entity['parent']
-                    except:
-                        print("Durin Action 'Thumb to Parent' went something wrong")
+                    except Exception as e:
+                        msg = (
+                            "Durin Action 'Thumb to Parent'"
+                            " went something wrong"
+                        )
+                        self.log.error(msg)
+                        raise e
                 thumbid = entity['thumbnail_id']
 
                 if parent and thumbid:
@@ -69,10 +72,10 @@ class ThumbToParent(BaseAction):
             # inform the user that the job is done
             job['status'] = status or 'done'
 
-        except:
+        except Exception as e:
             # fail the job if something goes wrong
             job['status'] = 'failed'
-            raise
+            raise e
 
         finally:
             session.commit()
@@ -88,8 +91,8 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = ThumbToParent(session)
-    action_handler.register()
+    ThumbToParent(session).register()
+
 
 def main(arguments=None):
     '''Set up logging and register action.'''

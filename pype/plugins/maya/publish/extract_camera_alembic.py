@@ -23,8 +23,8 @@ class ExtractCameraAlembic(pype.api.Extractor):
     def process(self, instance):
 
         # get settings
-        framerange = [instance.data.get("startFrame", 1),
-                      instance.data.get("endFrame", 1)]
+        framerange = [instance.data.get("frameStart", 1),
+                      instance.data.get("frameEnd", 1)]
         handles = instance.data.get("handles", 0)
         step = instance.data.get("step", 1.0)
         bake_to_worldspace = instance.data("bakeToWorldSpace", True)
@@ -67,13 +67,19 @@ class ExtractCameraAlembic(pype.api.Extractor):
             job_str += ' -file "{0}"'.format(path)
 
             with lib.evaluation("off"):
-                with lib.no_refresh():
+                with avalon.maya.suspended_refresh():
                     cmds.AbcExport(j=job_str, verbose=False)
 
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'abc',
+            'ext': 'abc',
+            'files': filename,
+            "stagingDir": dir_path,
+        }
+        instance.data["representations"].append(representation)
 
         self.log.info("Extracted instance '{0}' to: {1}".format(
             instance.name, path))

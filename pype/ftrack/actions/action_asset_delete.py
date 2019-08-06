@@ -1,9 +1,8 @@
 import sys
 import argparse
 import logging
-import getpass
-import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.vendor import ftrack_api
+from pype.ftrack import BaseAction
 
 
 class AssetDelete(BaseAction):
@@ -14,16 +13,16 @@ class AssetDelete(BaseAction):
     #: Action label.
     label = 'Asset Delete'
 
-
     def discover(self, session, entities, event):
         ''' Validation '''
-        
-        if (len(entities) != 1 or entities[0].entity_type
-        not in ['Shot', 'Asset Build']):
+
+        if (
+            len(entities) != 1 or
+            entities[0].entity_type not in ['Shot', 'Asset Build']
+        ):
             return False
 
         return True
-
 
     def interface(self, session, entities, event):
 
@@ -38,10 +37,10 @@ class AssetDelete(BaseAction):
                     label = asset['name']
 
                 items.append({
-                    'label':label,
-                    'name':label,
-                    'value':False,
-                    'type':'boolean'
+                    'label': label,
+                    'name': label,
+                    'value': False,
+                    'type': 'boolean'
                 })
 
             if len(items) < 1:
@@ -69,7 +68,7 @@ class AssetDelete(BaseAction):
                     session.delete(asset)
         try:
             session.commit()
-        except:
+        except Exception:
             session.rollback()
             raise
 
@@ -88,8 +87,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = AssetDelete(session)
-    action_handler.register()
+    AssetDelete(session).register()
 
 
 def main(arguments=None):

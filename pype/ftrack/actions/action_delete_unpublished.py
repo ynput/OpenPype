@@ -1,9 +1,8 @@
 import sys
 import argparse
 import logging
-import getpass
-import ftrack_api
-from ftrack_action_handler import BaseAction
+from pype.vendor import ftrack_api
+from pype.ftrack import BaseAction
 
 
 class VersionsCleanup(BaseAction):
@@ -13,7 +12,6 @@ class VersionsCleanup(BaseAction):
     identifier = 'versions.cleanup'
     # Action label
     label = 'Versions cleanup'
-
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -34,13 +32,13 @@ class VersionsCleanup(BaseAction):
                 session.delete(version)
         try:
             session.commit()
-        except:
+        except Exception:
             session.rollback()
             raise
 
         return {
             'success': True,
-            'message': 'removed hidden versions'
+            'message': 'Hidden versions were removed'
         }
 
 
@@ -53,8 +51,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = VersionsCleanup(session)
-    action_handler.register()
+    VersionsCleanup(session).register()
 
 
 def main(arguments=None):

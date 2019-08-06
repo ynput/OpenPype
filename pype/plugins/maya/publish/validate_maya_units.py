@@ -21,7 +21,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         angularunits = context.data('angularUnits')
         fps = context.data['fps']
 
-        asset_fps = lib.get_asset_fps()
+        asset_fps = lib.get_asset()["data"]["fps"]
 
         self.log.info('Units (linear): {0}'.format(linearunits))
         self.log.info('Units (angular): {0}'.format(angularunits))
@@ -36,7 +36,7 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         assert fps and fps == asset_fps, "Scene must be %s FPS" % asset_fps
 
     @classmethod
-    def repair(cls):
+    def repair(cls, context):
         """Fix the current FPS setting of the scene, set to PAL(25.0 fps)"""
 
         cls.log.info("Setting angular unit to 'degrees'")
@@ -50,5 +50,5 @@ class ValidateMayaUnits(pyblish.api.ContextPlugin):
         cls.log.debug(current_linear)
 
         cls.log.info("Setting time unit to match project")
-        asset_fps = lib.get_asset_fps()
+        asset_fps = lib.get_asset()["data"]["fps"]
         mayalib.set_scene_fps(asset_fps)

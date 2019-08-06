@@ -4,3 +4,26 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Documentation
+###############
+/docs/build
+
+# Editor backup files #
+#######################
+*~
+
+# Unit test / coverage reports
+##############################
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+/coverage
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/

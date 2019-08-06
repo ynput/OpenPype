@@ -7,7 +7,7 @@ from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
-self._menu = "pype"
+self._menu = os.environ['PYPE_STUDIO_NAME']
 
 log = logging.getLogger(__name__)
 
@@ -29,7 +29,7 @@ def deferred():
         import scriptsmenu.launchformaya as launchformaya
         import scriptsmenu.scriptsmenu as scriptsmenu
     except ImportError:
-        log.warning("Skipping pype.menu install, because "
+        log.warning("Skipping studio.menu install, because "
                     "'scriptsmenu' module seems unavailable.")
         return
 
@@ -38,11 +38,11 @@ def deferred():
     config = scriptsmenu.load_configuration(config_path)
 
     # run the launcher for Maya menu
-    cb_menu = launchformaya.main(title=self._menu.title(),
+    studio_menu = launchformaya.main(title=self._menu.title(),
                                  objectName=self._menu)
 
     # apply configuration
-    cb_menu.build_from_configuration(cb_menu, config)
+    studio_menu.build_from_configuration(studio_menu, config)
 
 
 def uninstall():

@@ -14,4 +14,4 @@ class CollectFramerate(pyblish.api.ContextPlugin):
     ]
 
     def process(self, context):
-        context.data["framerate"] = nuke.root()["fps"].getValue()
+        context.data["fps"] = nuke.root()["fps"].getValue()

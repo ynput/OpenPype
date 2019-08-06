@@ -15,8 +15,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         id (str): "pyblish.avalon.instance
 
     Specific node:
-        The specific node is important because it dictates in which way the subset
-        is being exported.
+        The specific node is important because it dictates in which way the
+        subset is being exported.
 
         alembic: will export Alembic file which supports cascading attributes
                  like 'cbId' and 'path'
@@ -29,8 +29,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
     hosts = ["houdini"]
 
     def process(self, context):
-
-        instances = []
 
         nodes = hou.node("/out").children()
         for node in nodes:
@@ -55,11 +53,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             data.update(self.get_frame_data(node))
 
-            # Create nice name
-            # All nodes in the Outputs graph have the 'Valid Frame Range'
-            # attribute, we check here if any frames are set
+            # Create nice name if the instance has a frame range.
             label = data.get("name", node.name())
-            if "startFrame" in data:
+            if "frameStart" in data and "frameEnd" in data:
                 frames = "[{startFrame} - {endFrame}]".format(**data)
                 label = "{} {}".format(label, frames)
 
@@ -67,8 +63,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
             instance[:] = [node]
             instance.data.update(data)
-
-            instances.append(instance)
 
         def sort_by_family(instance):
             """Sort by family"""
@@ -97,8 +91,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
         if node.evalParm("trange") == 0:
             return data
 
-        data["startFrame"] = node.evalParm("f1")
-        data["endFrame"] = node.evalParm("f2")
+        data["frameStart"] = node.evalParm("f1")
+        data["frameEnd"] = node.evalParm("f2")
         data["steps"] = node.evalParm("f3")
 
         return data

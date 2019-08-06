@@ -1,6 +1,8 @@
 import os
 import json
 import re
+from pprint import pprint
+import logging
 
 from avalon import api, io
 from avalon.vendor import requests, clique
@@ -11,9 +13,9 @@ import pyblish.api
 def _get_script():
     """Get path to the image sequence script"""
     try:
-        from pype.fusion.scripts import publish_filesequence
-    except Exception as e:
-        raise RuntimeError("Expected module 'publish_imagesequence'"
+        from pype.scripts import publish_filesequence
+    except Exception:
+        raise RuntimeError("Expected module 'publish_deadline'"
                            "to be available")
 
     module_path = publish_filesequence.__file__
@@ -90,18 +92,23 @@ def get_resource_files(resources, frame_range, override=True):
     return list(res_collection)
 
 
-class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
-    """Submit image sequence publish jobs to Deadline.
+class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
+    """Process Job submitted on farm.
 
-    These jobs are dependent on a deadline job submission prior to this
-    plug-in.
+    These jobs are dependent on a deadline or muster job
+    submission prior to this plug-in.
 
-    Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable AVALON_DEADLINE
+    - In case of Deadline, it creates dependend job on farm publishing
+      rendered image sequence.
+
+    - In case of Muster, there is no need for such thing as dependend job,
+      post action will be executed and rendered sequence will be published.
 
     Options in instance.data:
-        - deadlineSubmission (dict, Required): The returned .json
-            data from the job submission to deadline.
+        - deadlineSubmissionJob (dict, Required): The returned .json
+          data from the job submission to deadline.
+
+        - musterSubmissionJob (dict, Required): same as deadline.
 
         - outputDir (str, Required): The output directory where the metadata
             file should be generated. It's assumed that this will also be
@@ -114,34 +121,39 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
         - publishJobState (str, Optional): "Active" or "Suspended"
             This defaults to "Suspended"
 
-    This requires a "startFrame" and "endFrame" to be present in instance.data
+    This requires a "frameStart" and "frameEnd" to be present in instance.data
     or in context.data.
 
     """
 
-    label = "Submit image sequence jobs to Deadline"
-    order = pyblish.api.IntegratorOrder + 0.1
+    label = "Submit image sequence jobs to Deadline or Muster"
+    order = pyblish.api.IntegratorOrder + 0.2
+    icon = "tractor"
 
     hosts = ["fusion", "maya", "nuke"]
 
     families = [
-        "saver.deadline",
+        "render.farm",
         "renderlayer",
         "imagesequence"
     ]
 
-    def process(self, instance):
+    enviro_filter = [
+                     "PATH",
+                     "PYTHONPATH",
+                     "FTRACK_API_USER",
+                     "FTRACK_API_KEY",
+                     "FTRACK_SERVER",
+                     "PYPE_ROOT"
+                     ]
 
-        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
-                                          "http://localhost:8082")
-        assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
 
-        # Get a submission job
-        job = instance.data.get("deadlineSubmissionJob")
-        if not job:
-            raise RuntimeError("Can't continue without valid deadline "
-                               "submission prior to this plug-in.")
-
+    def _submit_deadline_post_job(self, instance, job):
+        """
+        Deadline specific code separated from :meth:`process` for sake of
+        more universal code. Muster post job is sent directly by Muster
+        submitter, so this type of code isn't necessary for it.
+        """
         data = instance.data.copy()
         subset = data["subset"]
         state = data.get("publishJobState", "Suspended")
@@ -150,31 +162,140 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             subset=subset
         )
 
-        # Add in start/end frame
+        metadata_filename = "{}_metadata.json".format(subset)
+        output_dir = instance.data["outputDir"]
+        metadata_path = os.path.join(output_dir, metadata_filename)
+
+        # Generate the payload for Deadline submission
+        payload = {
+            "JobInfo": {
+                "Plugin": "Python",
+                "BatchName": job["Props"]["Batch"],
+                "Name": job_name,
+                "JobType": "Normal",
+                "JobDependency0": job["_id"],
+                "UserName": job["Props"]["User"],
+                "Comment": instance.context.data.get("comment", ""),
+                "InitialStatus": state
+            },
+            "PluginInfo": {
+                "Version": "3.6",
+                "ScriptFile": _get_script(),
+                "Arguments": '--paths "{}"'.format(metadata_path),
+                "SingleFrameOnly": "True"
+            },
+
+            # Mandatory for Deadline, may be empty
+            "AuxFiles": []
+        }
+
+        # Transfer the environment from the original job to this dependent
+        # job so they use the same environment
+
+
+        environment = job["Props"].get("Env", {})
+        i = 0
+        for index, key in enumerate(environment):
+            self.log.info("KEY: {}".format(key))
+            self.log.info("FILTER: {}".format(self.enviro_filter))
+
+            if key.upper() in self.enviro_filter:
+                payload["JobInfo"].update({
+                    "EnvironmentKeyValue%d" % i: "{key}={value}".format(
+                        key=key,
+                        value=environment[key]
+                    )
+                })
+                i += 1
+
+        # Avoid copied pools and remove secondary pool
+        payload["JobInfo"]["Pool"] = "none"
+        payload["JobInfo"].pop("SecondaryPool", None)
+
+        self.log.info("Submitting..")
+        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
+
+        url = "{}/api/jobs".format(self.DEADLINE_REST_URL)
+        response = requests.post(url, json=payload)
+        if not response.ok:
+            raise Exception(response.text)
+
+    def process(self, instance):
+        """
+        Detect type of renderfarm submission and create and post dependend job
+        in case of Deadline. It creates json file with metadata needed for
+        publishing in directory of render.
+
+        :param instance: Instance data
+        :type instance: dict
+        """
+        # Get a submission job
+        data = instance.data.copy()
+        job = instance.data.get("deadlineSubmissionJob")
+        submission_type = "deadline"
+
+        if not job:
+            # No deadline job. Try Muster: musterSubmissionJob
+            job = data.pop("musterSubmissionJob")
+            submission_type = "muster"
+            if not job:
+                raise RuntimeError("Can't continue without valid Deadline "
+                                   "or Muster submission prior to this "
+                                   "plug-in.")
+
+        if submission_type == "deadline":
+            render_job = data.pop("deadlineSubmissionJob")
+            self.DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
+                                                    "http://localhost:8082")
+            assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
+
+            self._submit_deadline_post_job(instance, job)
+
+        if submission_type == "muster":
+            render_job = data.pop("musterSubmissionJob")
+
+        asset = data.get("asset") or api.Session["AVALON_ASSET"]
+        subset = data["subset"]
+
+        # Get start/end frame from instance, if not available get from context
         context = instance.context
-        start = instance.data.get("startFrame", context.data["startFrame"])
-        end = instance.data.get("endFrame", context.data["endFrame"])
-        resources = []
+        start = instance.data.get("frameStart")
+        if start is None:
+            start = context.data["frameStart"]
+        end = instance.data.get("frameEnd")
+        if end is None:
+            end = context.data["frameEnd"]
 
         # Add in regex for sequence filename
         # This assumes the output files start with subset name and ends with
-        # a file extension.
+        # a file extension. The "ext" key includes the dot with the extension.
         if "ext" in instance.data:
-            ext = re.escape(instance.data["ext"])
+            ext = r"\." + re.escape(instance.data["ext"])
         else:
-            ext = "\.\D+"
+            ext = r"\.\D+"
 
-        regex = "^{subset}.*\d+{ext}$".format(subset=re.escape(subset),
-                                              ext=ext)
+        regex = r"^{subset}.*\d+{ext}$".format(subset=re.escape(subset),
+                                               ext=ext)
+
+        try:
+            source = data['source']
+        except KeyError:
+            source = context.data["currentFile"]
+
+        relative_path = os.path.relpath(source, api.registered_root())
+        source = os.path.join("{root}", relative_path).replace("\\", "/")
 
         # Write metadata for publish job
-        render_job = data.pop("deadlineSubmissionJob")
         metadata = {
+            "asset": asset,
             "regex": regex,
-            "startFrame": start,
-            "endFrame": end,
-            "families": ["imagesequence"],
-
+            "frameStart": start,
+            "frameEnd": end,
+            "fps": context.data.get("fps", None),
+            "families": ["render"],
+            "source": source,
+            "user": context.data["user"],
+            "version": context.data["version"],
             # Optional metadata (for debugging)
             "metadata": {
                 "instance": data,
@@ -190,7 +311,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
         if data.get("extendFrames", False):
 
-            family = "imagesequence"
+            family = "render"
             override = data["overrideExistingFrame"]
 
             # override = data.get("overrideExistingFrame", False)
@@ -209,7 +330,7 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             # Gather all the subset files (one subset per render pass!)
             subset_names = [data["subset"]]
             subset_names.extend(data.get("renderPasses", []))
-
+            resources = []
             for subset_name in subset_names:
                 version = get_latest_version(asset_name=data["asset"],
                                              subset_name=subset_name,
@@ -217,8 +338,8 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
                 # Set prev start / end frames for comparison
                 if not prev_start and not prev_end:
-                    prev_start = version["data"]["startFrame"]
-                    prev_end = version["data"]["endFrame"]
+                    prev_start = version["data"]["frameStart"]
+                    prev_end = version["data"]["frameEnd"]
 
                 subset_resources = get_resources(version, _ext)
                 resource_files = get_resource_files(subset_resources,
@@ -236,7 +357,8 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
 
             # TODO : Improve logic to get new frame range for the
             # publish job (publish_filesequence.py)
-            # The current approach is not following Pyblish logic which is based
+            # The current approach is not following Pyblish logic
+            # which is based
             # on Collect / Validate / Extract.
 
             # ---- Collect Plugins  ---
@@ -253,62 +375,28 @@ class SubmitDependentImageSequenceJobDeadline(pyblish.api.InstancePlugin):
             # Please do so when fixing this.
 
             # Start frame
-            metadata["startFrame"] = updated_start
-            metadata["metadata"]["instance"]["startFrame"] = updated_start
+            metadata["frameStart"] = updated_start
+            metadata["metadata"]["instance"]["frameStart"] = updated_start
 
             # End frame
-            metadata["endFrame"] = updated_end
-            metadata["metadata"]["instance"]["endFrame"] = updated_end
+            metadata["frameEnd"] = updated_end
+            metadata["metadata"]["instance"]["frameEnd"] = updated_end
 
         metadata_filename = "{}_metadata.json".format(subset)
+
         metadata_path = os.path.join(output_dir, metadata_filename)
+        # convert log messages if they are `LogRecord` to their
+        # string format to allow serializing as JSON later on.
+        rendered_logs = []
+        for log in metadata["metadata"]["instance"].get("_log", []):
+            if isinstance(log, logging.LogRecord):
+                rendered_logs.append(log.getMessage())
+            else:
+                rendered_logs.append(log)
+
+        metadata["metadata"]["instance"]["_log"] = rendered_logs
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=4, sort_keys=True)
-
-        # Generate the payload for Deadline submission
-        payload = {
-            "JobInfo": {
-                "Plugin": "Python",
-                "BatchName": job["Props"]["Batch"],
-                "Name": job_name,
-                "JobType": "Normal",
-                "JobDependency0": job["_id"],
-                "UserName": job["Props"]["User"],
-                "Comment": instance.context.data.get("comment", ""),
-                "InitialStatus": state
-            },
-            "PluginInfo": {
-                "Version": "3.6",
-                "ScriptFile": _get_script(),
-                "Arguments": '--path "{}"'.format(metadata_path),
-                "SingleFrameOnly": "True"
-            },
-
-            # Mandatory for Deadline, may be empty
-            "AuxFiles": []
-        }
-
-        # Transfer the environment from the original job to this dependent
-        # job so they use the same environment
-        environment = job["Props"].get("Env", {})
-        payload["JobInfo"].update({
-            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
-                key=key,
-                value=environment[key]
-            ) for index, key in enumerate(environment)
-        })
-
-        # Avoid copied pools and remove secondary pool
-        payload["JobInfo"]["Pool"] = "none"
-        payload["JobInfo"].pop("SecondaryPool", None)
-
-        self.log.info("Submitting..")
-        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
-
-        url = "{}/api/jobs".format(AVALON_DEADLINE)
-        response = requests.post(url, json=payload)
-        if not response.ok:
-            raise Exception(response.text)
 
         # Copy files from previous render if extendFrame is True
         if data.get("extendFrames", False):

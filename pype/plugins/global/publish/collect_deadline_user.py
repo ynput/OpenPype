@@ -2,6 +2,7 @@ import os
 import subprocess
 
 import pyblish.api
+from pype.plugin import contextplugin_should_run
 
 CREATE_NO_WINDOW = 0x08000000
 
@@ -34,22 +35,17 @@ class CollectDeadlineUser(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder + 0.499
     label = "Deadline User"
-
-    hosts = ['maya', 'fusion', 'nuke']
-    families = [
-        "renderlayer",
-        "saver.deadline",
-        "imagesequence"
-    ]
-
+    hosts = ['maya', 'fusion']
+    families = ["renderlayer", "saver.deadline"]
 
     def process(self, context):
         """Inject the current working file"""
-        user = None
-        try:
-            user = deadline_command("GetCurrentUserName").strip()
-        except:
-            self.log.warning("Deadline command seems not to be working")
+
+        # Workaround bug pyblish-base#250
+        if not contextplugin_should_run(self, context):
+            return
+
+        user = deadline_command("GetCurrentUserName").strip()
 
         if not user:
             self.log.warning("No Deadline user found. "
@@ -58,3 +54,4 @@ class CollectDeadlineUser(pyblish.api.ContextPlugin):
 
         self.log.info("Found Deadline user: {}".format(user))
         context.data['deadlineUser'] = user
+

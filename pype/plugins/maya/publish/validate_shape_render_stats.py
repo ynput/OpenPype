@@ -11,7 +11,7 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
 
     order = pype.api.ValidateMeshOrder
     hosts = ['maya']
-    families = ["model']
+    families = ['model']
     label = 'Shape Default Render Stats'
     actions = [pype.maya.action.SelectInvalidAction,
                pype.api.RepairAction]

@@ -4,15 +4,17 @@ from contextlib import contextmanager
 
 import hou
 
+from pype import lib
+
 from avalon import api, io
-from avalon.houdini import lib
+from avalon.houdini import lib as houdini
 
 
 def set_id(node, unique_id, overwrite=False):
 
     exists = node.parm("id")
     if not exists:
-        lib.imprint(node, {"id": unique_id})
+        houdini.imprint(node, {"id": unique_id})
 
     if not exists and overwrite:
         node.setParm("id", unique_id)
@@ -188,3 +190,45 @@ def attribute_values(node, data):
         pass
     finally:
         node.setParms(previous_attrs)
+
+
+def set_scene_fps(fps):
+    hou.setFps(fps)
+
+
+# Valid FPS
+def validate_fps():
+    """Validate current scene FPS and show pop-up when it is incorrect
+
+    Returns:
+        bool
+
+    """
+
+    fps = lib.get_asset()["data"]["fps"]
+    current_fps = hou.fps()  # returns float
+
+    if current_fps != fps:
+
+        from ..widgets import popup
+
+        # Find main window
+        parent = hou.ui.mainQtWindow()
+        if parent is None:
+            pass
+        else:
+            dialog = popup.Popup2(parent=parent)
+            dialog.setModal(True)
+            dialog.setWindowTitle("Maya scene not in line with project")
+            dialog.setMessage("The FPS is out of sync, please fix")
+
+            # Set new text for button (add optional argument for the popup?)
+            toggle = dialog.widgets["toggle"]
+            toggle.setEnabled(False)
+            dialog.on_show.connect(lambda: set_scene_fps(fps))
+
+            dialog.show()
+
+            return False
+
+    return True

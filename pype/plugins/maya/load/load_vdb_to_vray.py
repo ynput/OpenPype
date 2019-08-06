@@ -1,4 +1,6 @@
 from avalon import api
+from pypeapp import config
+import os
 
 
 class LoadVDBtoVRay(api.Loader):
@@ -15,6 +17,11 @@ class LoadVDBtoVRay(api.Loader):
         from maya import cmds
         import avalon.maya.lib as lib
         from avalon.maya.pipeline import containerise
+
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "vdbcache"
 
         # Check if viewport drawing engine is Open GL Core (compat)
         render_engine = None
@@ -40,6 +47,15 @@ class LoadVDBtoVRay(api.Loader):
         # Root group
         label = "{}:{}".format(namespace, name)
         root = cmds.group(name=label, empty=True)
+
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
+
+        c = colors.get(family)
+        if c is not None:
+            cmds.setAttr(root + ".useOutlinerColor", 1)
+            cmds.setAttr(root + ".outlinerColor",
+                         c[0], c[1], c[2])
 
         # Create VR
         grid_node = cmds.createNode("VRayVolumeGrid",

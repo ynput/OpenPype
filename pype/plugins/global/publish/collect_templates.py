@@ -1,7 +1,6 @@
 
-from app.api import (
-    Templates
-)
+import pype.api as pype
+from pypeapp import Anatomy
 
 import pyblish.api
 
@@ -13,11 +12,5 @@ class CollectTemplates(pyblish.api.ContextPlugin):
     label = "Collect Templates"
 
     def process(self, context):
-        """Inject the current working file"""
-        templates = Templates(
-            type=["anatomy"]
-        )
-        context.data['anatomy'] = templates.anatomy
-        for key in templates.anatomy:
-            self.log.info(str(key) + ": " + str(templates.anatomy[key]))
-        # return
+        context.data['anatomy'] = Anatomy()
+        self.log.info("Anatomy templates collected...")

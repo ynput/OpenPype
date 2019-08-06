@@ -12,7 +12,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
     """Submit current Comp to Deadline
 
     Renders are submitted to a Deadline Web Service as
-    supplied via the environment variable AVALON_DEADLINE
+    supplied via the environment variable DEADLINE_REST_URL
 
     """
 
@@ -33,9 +33,9 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
 
         from avalon.fusion.lib import get_frame_path
 
-        AVALON_DEADLINE = api.Session.get("AVALON_DEADLINE",
+        DEADLINE_REST_URL = api.Session.get("DEADLINE_REST_URL",
                                           "http://localhost:8082")
-        assert AVALON_DEADLINE, "Requires AVALON_DEADLINE"
+        assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
         # Collect all saver instances in context that are to be rendered
         saver_instances = []
@@ -79,8 +79,8 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": "Fusion",
                 "Frames": "{start}-{end}".format(
-                    start=int(context.data["startFrame"]),
-                    end=int(context.data["endFrame"])
+                    start=int(context.data["frameStart"]),
+                    end=int(context.data["frameEnd"])
                 ),
 
                 "Comment": comment,
@@ -139,7 +139,7 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         # E.g. http://192.168.0.1:8082/api/jobs
-        url = "{}/api/jobs".format(AVALON_DEADLINE)
+        url = "{}/api/jobs".format(DEADLINE_REST_URL)
         response = requests.post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)

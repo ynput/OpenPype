@@ -38,7 +38,7 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
         content_instance = list(set(content_instance + descendants))
 
         # Ensure only valid node types
-        allowed = ('mesh', 'transform', 'nurbsCurve', 'nurbsSurface')
+        allowed = ('mesh', 'transform', 'nurbsCurve', 'nurbsSurface', 'locator')
         nodes = cmds.ls(content_instance, long=True)
         valid = cmds.ls(content_instance, long=True, type=allowed)
         invalid = set(nodes) - set(valid)
@@ -63,7 +63,8 @@ class ValidateModelContent(pyblish.api.InstancePlugin):
             cls.log.error("Must have exactly one top group")
             if len(assemblies) == 0:
                 cls.log.warning("No top group found. "
-                                "(Are there objects in the instance?)")
+                                "(Are there objects in the instance?"
+                                " Or is it parented in another group?)")
             return assemblies or True
 
         def _is_visible(node):

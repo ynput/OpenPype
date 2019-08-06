@@ -4,28 +4,11 @@ import contextlib
 from avalon import api
 import avalon.io as io
 
-from avalon.nuke import log
+
 import nuke
 
-
-@contextlib.contextmanager
-def preserve_inputs(node, knobs):
-    """Preserve the node's inputs after context"""
-
-    values = {}
-    for name in knobs:
-        try:
-            knob_value = node[name].vaule()
-            values[name] = knob_value
-        except ValueError:
-            log.warning("missing knob {} in node {}"
-                        "{}".format(name, node['name'].value()))
-
-    try:
-        yield
-    finally:
-        for name, value in values.items():
-            node[name].setValue(value)
+from pype.api import Logger
+log = Logger().get_logger(__name__, "nuke")
 
 
 @contextlib.contextmanager
@@ -38,7 +21,7 @@ def preserve_trim(node):
 
     """
     # working script frame range
-    script_start = nuke.root()["start_frame"].value()
+    script_start = nuke.root()["first_frame"].value()
 
     start_at_frame = None
     offset_frame = None
@@ -53,13 +36,13 @@ def preserve_trim(node):
         if start_at_frame:
             node['frame_mode'].setValue("start at")
             node['frame'].setValue(str(script_start))
-            log.info("start frame of reader was set to"
+            log.info("start frame of Read was set to"
                      "{}".format(script_start))
 
         if offset_frame:
             node['frame_mode'].setValue("offset")
             node['frame'].setValue(str((script_start + offset_frame)))
-            log.info("start frame of reader was set to"
+            log.info("start frame of Read was set to"
                      "{}".format(script_start))
 
 
@@ -80,49 +63,20 @@ def loader_shift(node, frame, relative=True):
 
     """
     # working script frame range
-    script_start = nuke.root()["start_frame"].value()
-
-    if node['frame_mode'].value() == "start at":
-        start_at_frame = node['frame'].value()
-    if node['frame_mode'].value() is "offset":
-        offset_frame = node['frame'].value()
+    script_start = nuke.root()["first_frame"].value()
 
     if relative:
-        shift = frame
-    else:
-        if start_at_frame:
-            shift = frame
-        if offset_frame:
-            shift = frame + offset_frame
+        node['frame_mode'].setValue("start at")
+        node['frame'].setValue(str(frame))
 
-    # Shifting global in will try to automatically compensate for the change
-    # in the "ClipTimeStart" and "HoldFirstFrame" inputs, so we preserve those
-    # input values to "just shift" the clip
-    with preserve_inputs(node, knobs=["file",
-                                      "first",
-                                      "last",
-                                      "originfirst",
-                                      "originlast",
-                                      "frame_mode",
-                                      "frame"]):
-
-        # GlobalIn cannot be set past GlobalOut or vice versa
-        # so we must apply them in the order of the shift.
-        if start_at_frame:
-            node['frame_mode'].setValue("start at")
-            node['frame'].setValue(str(script_start + shift))
-        if offset_frame:
-            node['frame_mode'].setValue("offset")
-            node['frame'].setValue(str(shift))
-
-    return int(shift)
+    return int(script_start)
 
 
-class NukeLoadSequence(api.Loader):
+class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
-    families = ["imagesequence"]
-    representations = ["*"]
+    families = ["write", "source", "plate", "render"]
+    representations = ["exr", "dpx"]
 
     label = "Load sequence"
     order = -10
@@ -130,54 +84,81 @@ class NukeLoadSequence(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-
         from avalon.nuke import (
             containerise,
-            ls_img_sequence,
             viewer_update_and_undo_stop
         )
+
+        version = context['version']
+        version_data = version.get("data", {})
+
+        log.info("version_data: {}\n".format(version_data))
+
+        first = version_data.get("frameStart", None)
+        last = version_data.get("frameEnd", None)
+        handles = version_data.get("handles", 0)
+        handle_start = version_data.get("handleStart", 0)
+        handle_end = version_data.get("handleEnd", 0)
+
+        # fix handle start and end if none are available
+        if not handle_start and not handle_end:
+            handle_start = handles
+            handle_end = handles
+
+        # # create handles offset
+        # first -= handle_start
+        # last += handle_end
 
         # Fallback to asset name when namespace is None
         if namespace is None:
             namespace = context['asset']['name']
 
-        # Use the first file for now
-        # TODO: fix path fname
-        file = ls_img_sequence(os.path.dirname(self.fname), one=True)
+        file = self.fname.replace("\\", "/")
+        log.info("file: {}\n".format(self.fname))
+
+        read_name = "Read_" + context["representation"]["context"]["subset"]
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
             # TODO: it might be universal read to img/geo/camera
             r = nuke.createNode(
                 "Read",
-                "name {}".format(self.name))  # TODO: does self.name exist?
-            r["file"].setValue(file['path'])
-            if len(file['frames']) is 1:
-                first = file['frames'][0][0]
-                last = file['frames'][0][1]
-                r["originfirst"].setValue(first)
-                r["first"].setValue(first)
-                r["originlast"].setValue(last)
-                r["last"].setValue(last)
-            else:
-                first = file['frames'][0][0]
-                last = file['frames'][:-1][1]
-                r["originfirst"].setValue(first)
-                r["first"].setValue(first)
-                r["originlast"].setValue(last)
-                r["last"].setValue(last)
-                log.warning("Missing frames in image sequence")
+                "name {}".format(read_name))
+            r["file"].setValue(file)
 
-            # Set global in point to start frame (if in version.data)
-            start = context["version"]["data"].get("startFrame", None)
-            if start is not None:
-                loader_shift(r, start, relative=False)
+            # Set colorspace defined in version data
+            colorspace = context["version"]["data"].get("colorspace", None)
+            if colorspace is not None:
+                r["colorspace"].setValue(str(colorspace))
 
-            containerise(r,
-                         name=name,
-                         namespace=namespace,
-                         context=context,
-                         loader=self.__class__.__name__)
+            loader_shift(r, first, relative=True)
+            r["origfirst"].setValue(int(first))
+            r["first"].setValue(int(first))
+            r["origlast"].setValue(int(last))
+            r["last"].setValue(int(last))
+
+            # add additional metadata from the version to imprint to Avalon knob
+            add_keys = ["frameStart", "frameEnd", "handles",
+                        "source", "colorspace", "author", "fps", "version",
+                        "handleStart", "handleEnd"]
+
+            data_imprint = {}
+            for k in add_keys:
+                if k is 'version':
+                    data_imprint.update({k: context["version"]['name']})
+                else:
+                    data_imprint.update({k: context["version"]['data'].get(k, str(None))})
+
+            data_imprint.update({"objectName": read_name})
+
+            r["tile_color"].setValue(int("0x4ecd25ff", 16))
+
+            return containerise(r,
+                                name=name,
+                                namespace=namespace,
+                                context=context,
+                                loader=self.__class__.__name__,
+                                data=data_imprint)
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -185,68 +166,108 @@ class NukeLoadSequence(api.Loader):
     def update(self, container, representation):
         """Update the Loader's path
 
-        Fusion automatically tries to reset some variables when changing
+        Nuke automatically tries to reset some variables when changing
         the loader's path to a new file. These automatic changes are to its
         inputs:
 
         """
 
         from avalon.nuke import (
-            viewer_update_and_undo_stop,
             ls_img_sequence,
             update_container
         )
 
-        node = container["_tool"]
-        # TODO: prepare also for other readers img/geo/camera
-        assert node.Class() == "Reader", "Must be Reader"
+        node = nuke.toNode(container['objectName'])
+        # TODO: prepare also for other Read img/geo/camera
+        assert node.Class() == "Read", "Must be Read"
 
-        root = api.get_representation_path(representation)
-        file = ls_img_sequence(os.path.dirname(root), one=True)
+        path = api.get_representation_path(representation)
+        file = ls_img_sequence(path)
 
         # Get start frame from version data
-        version = io.find_one({"type": "version",
-                               "_id": representation["parent"]})
-        start = version["data"].get("startFrame")
-        if start is None:
+        version = io.find_one({
+            "type": "version",
+            "_id": representation["parent"]
+        })
+
+        # get all versions in list
+        versions = io.find({
+            "type": "version",
+            "parent": version["parent"]
+        }).distinct('name')
+
+        max_version = max(versions)
+
+        version_data = version.get("data", {})
+
+        first = version_data.get("frameStart", None)
+        last = version_data.get("frameEnd", None)
+        handles = version_data.get("handles", 0)
+        handle_start = version_data.get("handleStart", 0)
+        handle_end = version_data.get("handleEnd", 0)
+
+        if first is None:
             log.warning("Missing start frame for updated version"
                         "assuming starts at frame 0 for: "
                         "{} ({})".format(node['name'].value(), representation))
-            start = 0
+            first = 0
 
-        with viewer_update_and_undo_stop():
+        # fix handle start and end if none are available
+        if not handle_start and not handle_end:
+            handle_start = handles
+            handle_end = handles
 
-            # Update the loader's path whilst preserving some values
-            with preserve_trim(node):
-                with preserve_inputs(node,
-                                     knobs=["file",
-                                            "first",
-                                            "last",
-                                            "originfirst",
-                                            "originlast",
-                                            "frame_mode",
-                                            "frame"]):
-                    node["file"] = file["path"]
+        # create handles offset
+        first -= handle_start
+        last += handle_end
 
-            # Set the global in to the start frame of the sequence
-            global_in_changed = loader_shift(node, start, relative=False)
-            if global_in_changed:
-                # Log this change to the user
-                log.debug("Changed '{}' global in:"
-                          " {:d}".format(node['name'].value(), start))
+        # Update the loader's path whilst preserving some values
+        with preserve_trim(node):
+            node["file"].setValue(file["path"])
+            log.info("__ node['file']: {}".format(node["file"].value()))
 
-            # Update the imprinted representation
-            update_container(
-                node,
-                {"representation": str(representation["_id"])}
-            )
+        # Set the global in to the start frame of the sequence
+        loader_shift(node, first, relative=True)
+        node["origfirst"].setValue(int(first))
+        node["first"].setValue(int(first))
+        node["origlast"].setValue(int(last))
+        node["last"].setValue(int(last))
+
+        updated_dict = {}
+        updated_dict.update({
+            "representation": str(representation["_id"]),
+            "frameStart": version_data.get("frameStart"),
+            "frameEnd": version_data.get("frameEnd"),
+            "version": version.get("name"),
+            "colorspace": version_data.get("colorspace"),
+            "source": version_data.get("source"),
+            "handles": version_data.get("handles"),
+            "handleStart": version_data.get("handleStart"),
+            "handleEnd": version_data.get("handleEnd"),
+            "fps": version_data.get("fps"),
+            "author": version_data.get("author"),
+            "outputDir": version_data.get("outputDir"),
+        })
+
+        # change color of node
+        if version.get("name") not in [max_version]:
+            node["tile_color"].setValue(int("0xd84f20ff", 16))
+        else:
+            node["tile_color"].setValue(int("0x4ecd25ff", 16))
+
+        # Update the imprinted representation
+        update_container(
+            node,
+            updated_dict
+        )
+        log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
 
         from avalon.nuke import viewer_update_and_undo_stop
 
-        node = container["_tool"]
-        assert node.Class() == "Reader", "Must be Reader"
+        node = nuke.toNode(container['objectName'])
+        assert node.Class() == "Read", "Must be Read"
 
         with viewer_update_and_undo_stop():
             nuke.delete(node)

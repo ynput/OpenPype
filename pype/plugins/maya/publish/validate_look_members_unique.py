@@ -23,7 +23,7 @@ class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
     order = pype.api.ValidatePipelineOrder
     label = 'Look members unique'
     hosts = ['maya']
-    families = ["look']
+    families = ['look']
 
     actions = [pype.maya.action.SelectInvalidAction,
                pype.maya.action.GenerateUUIDsOnInvalidAction]

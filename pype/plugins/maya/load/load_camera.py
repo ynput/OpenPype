@@ -1,8 +1,10 @@
 import pype.maya.plugin
+import os
+from pypeapp import config
 
 
 class CameraLoader(pype.maya.plugin.ReferenceLoader):
-    """Specific loader of Alembic for the studio.camera family"""
+    """Specific loader of Alembic for the pype.camera family"""
 
     families = ["camera"]
     label = "Reference camera"
@@ -16,7 +18,13 @@ class CameraLoader(pype.maya.plugin.ReferenceLoader):
         import maya.cmds as cmds
         # Get family type from the context
 
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "camera"
+
         cmds.loadPlugin("AbcImport.mll", quiet=True)
+        groupName = "{}:{}".format(namespace, name)
         nodes = cmds.file(self.fname,
                           namespace=namespace,
                           sharedReferenceFile=False,
@@ -26,6 +34,15 @@ class CameraLoader(pype.maya.plugin.ReferenceLoader):
                           returnNewNodes=True)
 
         cameras = cmds.ls(nodes, type="camera")
+
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
+
+        c = colors.get(family)
+        if c is not None:
+            cmds.setAttr(groupName + ".useOutlinerColor", 1)
+            cmds.setAttr(groupName + ".outlinerColor",
+                         c[0], c[1], c[2])
 
         # Check the Maya version, lockTransform has been introduced since
         # Maya 2016.5 Ext 2

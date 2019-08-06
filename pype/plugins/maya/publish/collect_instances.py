@@ -12,29 +12,14 @@ class CollectInstances(pyblish.api.ContextPlugin):
     Identifier:
         id (str): "pyblish.avalon.instance"
 
-    Supported Families:
-        avalon.model: Geometric representation of artwork
-        avalon.rig: An articulated model for animators.
-            A rig may contain a series of sets in which to identify
-            its contents.
-
-            - cache_SEL: Should contain cachable polygonal meshes
-            - controls_SEL: Should contain animatable controllers for animators
-            - resources_SEL: Should contain nodes that reference external files
-
-            Limitations:
-                - Only Maya is supported
-                - One (1) rig per scene file
-                - Unmanaged history, it is up to the TD to ensure
-                    history is up to par.
-        avalon.animation: Pointcache of `avalon.rig`
-
     Limitations:
         - Does not take into account nodes connected to those
             within an objectSet. Extractors are assumed to export
             with history preserved, but this limits what they will
             be able to achieve and the amount of data available
-            to validators.
+            to validators. An additional collector could also
+            append this input data into the instance, as we do
+            for `pype.rig` with collect_history.
 
     """
 
@@ -46,6 +31,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         objectset = cmds.ls("*.id", long=True, type="objectSet",
                             recursive=True, objectsOnly=True)
+
+        context.data['objectsets'] = objectset
         for objset in objectset:
 
             if not cmds.attributeQuery("id", node=objset, exists=True):
@@ -99,7 +86,11 @@ class CollectInstances(pyblish.api.ContextPlugin):
                                           fullPath=True) or []
             children = cmds.ls(children, noIntermediate=True, long=True)
 
-            parents = self.get_all_parents(members)
+            parents = []
+            if data.get("includeParentHierarchy", True):
+                # If `includeParentHierarchy` then include the parents
+                # so they will also be picked up in the instance by validators
+                parents = self.get_all_parents(members)
             members_hierarchy = list(set(members + children + parents))
 
             # Create the instance
@@ -115,9 +106,9 @@ class CollectInstances(pyblish.api.ContextPlugin):
                                        data["asset"])
 
             # Append start frame and end frame to label if present
-            if "startFrame" and "endFrame" in data:
-                label += "  [{0}-{1}]".format(int(data["startFrame"]),
-                                              int(data["endFrame"]))
+            if "frameStart" and "frameEnd" in data:
+                label += "  [{0}-{1}]".format(int(data["frameStart"]),
+                                              int(data["frameEnd"]))
 
             instance.data["label"] = label
 

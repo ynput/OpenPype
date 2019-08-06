@@ -1,6 +1,7 @@
 from avalon.maya import lib
 from avalon import api
-
+from pypeapp import config
+import os
 import maya.cmds as cmds
 
 
@@ -19,6 +20,11 @@ class VRayProxyLoader(api.Loader):
 
         from avalon.maya.pipeline import containerise
         from pype.maya.lib import namespaced
+
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "vrayproxy"
 
         asset_name = context['asset']["name"]
         namespace = namespace or lib.unique_namespace(
@@ -39,6 +45,15 @@ class VRayProxyLoader(api.Loader):
         self[:] = nodes
         if not nodes:
             return
+
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
+
+        c = colors.get(family)
+        if c is not None:
+            cmds.setAttr("{0}_{1}.useOutlinerColor".format(name, "GRP"), 1)
+            cmds.setAttr("{0}_{1}.outlinerColor".format(name, "GRP"),
+                         c[0], c[1], c[2])
 
         return containerise(
             name=name,
@@ -101,7 +116,7 @@ class VRayProxyLoader(api.Loader):
         # Create nodes
         vray_mesh = cmds.createNode('VRayMesh', name="{}_VRMS".format(name))
         mesh_shape = cmds.createNode("mesh", name="{}_GEOShape".format(name))
-        vray_mat = cmds.shadingNode("VRayMeshMaterial", asShader=True, 
+        vray_mat = cmds.shadingNode("VRayMeshMaterial", asShader=True,
                                    name="{}_VRMM".format(name))
         vray_mat_sg = cmds.sets(name="{}_VRSG".format(name),
                                 empty=True,

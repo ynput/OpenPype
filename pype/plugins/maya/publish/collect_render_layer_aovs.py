@@ -6,10 +6,9 @@ import pype.maya.lib as lib
 
 
 class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
-    """Validate all render layer's AOVs / Render Elements are registered in
-    the database
+    """Collect all render layer's AOVs / Render Elements that will render.
 
-    This validator is important to be able to Extend Frames
+    This collector is important to be able to Extend Frames.
 
     Technical information:
     Each renderer uses different logic to work with render passes.
@@ -25,7 +24,7 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder + 0.01
+    order = pyblish.api.CollectorOrder + 0.02
     label = "Render Elements / AOVs"
     hosts = ["maya"]
     families = ["renderlayer"]
@@ -37,8 +36,7 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
             return
 
         # Get renderer
-        renderer = cmds.getAttr("defaultRenderGlobals.currentRenderer")
-
+        renderer = instance.data["renderer"]
         self.log.info("Renderer found: {}".format(renderer))
 
         rp_node_types = {"vray": ["VRayRenderElement", "VRayRenderElementSet"],
@@ -53,21 +51,20 @@ class CollectRenderLayerAOVS(pyblish.api.InstancePlugin):
 
         # Collect all AOVs / Render Elements
         layer = instance.data["setMembers"]
-        with lib.renderlayer(layer):
+        node_type = rp_node_types[renderer]
+        render_elements = cmds.ls(type=node_type)
 
-            node_type = rp_node_types[renderer]
-            render_elements = cmds.ls(type=node_type)
+        # Check if AOVs / Render Elements are enabled
+        for element in render_elements:
+            enabled = lib.get_attr_in_layer("{}.enabled".format(element),
+                                            layer=layer)
+            if not enabled:
+                continue
 
-            # Check if AOVs / Render Elements are enabled
-            for element in render_elements:
-                enabled = cmds.getAttr("{}.enabled".format(element))
-                if not enabled:
-                    continue
+            pass_name = self.get_pass_name(renderer, element)
+            render_pass = "%s.%s" % (instance.data["subset"], pass_name)
 
-                pass_name = self.get_pass_name(renderer, element)
-                render_pass = "%s.%s" % (instance.data["subset"], pass_name)
-
-                result.append(render_pass)
+            result.append(render_pass)
 
         self.log.info("Found {} render elements / AOVs for "
                       "'{}'".format(len(result), instance.data["subset"]))

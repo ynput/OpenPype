@@ -15,7 +15,7 @@ class ValidateNoDefaultCameras(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["camera']
+    families = ['camera']
     version = (0, 1, 0)
     label = "No Default Cameras"
     actions = [pype.maya.action.SelectInvalidAction]

@@ -9,6 +9,7 @@ from maya import cmds
 from avalon import api
 from avalon.maya import lib as avalon_lib, pipeline
 from pype.maya import lib
+from pypeapp import config
 
 
 class YetiCacheLoader(api.Loader):
@@ -22,6 +23,11 @@ class YetiCacheLoader(api.Loader):
     color = "orange"
 
     def load(self, context, name=None, namespace=None, data=None):
+
+        try:
+            family = context["representation"]["context"]["family"]
+        except ValueError:
+            family = "yeticache"
 
         # Build namespace
         asset = context["asset"]
@@ -49,6 +55,15 @@ class YetiCacheLoader(api.Loader):
 
         group_name = "{}:{}".format(namespace, name)
         group_node = cmds.group(nodes, name=group_name)
+
+        presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
+        colors = presets['plugins']['maya']['load']['colors']
+
+        c = colors.get(family)
+        if c is not None:
+            cmds.setAttr(group_name + ".useOutlinerColor", 1)
+            cmds.setAttr(group_name + ".outlinerColor",
+                         c[0], c[1], c[2])
 
         nodes.append(group_node)
 

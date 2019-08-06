@@ -18,7 +18,7 @@ class ValidateNoUnknownNodes(pyblish.api.InstancePlugin):
 
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
-    families = ["model', 'studio.rig']
+    families = ['model', 'rig']
     optional = True
     label = "Unknown Nodes"
     actions = [pype.maya.action.SelectInvalidAction]
