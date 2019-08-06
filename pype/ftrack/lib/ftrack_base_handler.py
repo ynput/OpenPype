@@ -495,13 +495,12 @@ class BaseHandler(object):
         )
 
     def show_interface_from_dict(
-        self, messages, event=None, user=None, username=None, user_id=None
+        self, messages, title="", event=None, user=None, username=None, user_id=None
     ):
         if not messages:
             self.log.debug("No messages to show! (messages dict is empty)")
             return
         items = []
-        title = 'Errors during mirroring'
         splitter = {'type': 'label', 'value': '---'}
         first = True
         for key, value in messages.items():
