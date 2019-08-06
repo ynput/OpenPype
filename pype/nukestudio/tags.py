@@ -1,13 +1,12 @@
 import re
 import os
+import hiero
 
 from pypeapp import (
     config,
     Logger
 )
 from avalon import io
-
-import hiero
 
 log = Logger().get_logger(__name__, "nukestudio")
 

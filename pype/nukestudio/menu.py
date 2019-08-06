@@ -1,16 +1,16 @@
 import os
 import sys
 import hiero.core
+from pypeapp import Logger
+from avalon.api import Session
+from hiero.ui import findMenuAction
 
+# this way we secure compatibility between nuke 10 and 11
 try:
     from PySide.QtGui import *
 except Exception:
     from PySide2.QtGui import *
     from PySide2.QtWidgets import *
-
-from hiero.ui import findMenuAction
-
-from avalon.api import Session
 
 from .tags import add_tags_from_presets
 
@@ -18,7 +18,6 @@ from .lib import (
     reload_config,
     set_workfiles
 )
-from pypeapp import Logger
 
 log = Logger().get_logger(__name__, "nukestudio")
 
@@ -45,6 +44,11 @@ def _update_menu_task_label(*args):
 
 
 def install():
+    """
+    Installing menu into Nukestudio
+
+    """
+
     # here is the best place to add menu
     from avalon.tools import (
         creator,
@@ -126,8 +130,6 @@ def install():
             'function': reload_config,
             'icon': QIcon('icons:ColorAdd.png')
         }]
-
-
 
     # Create menu items
     for a in actions:
