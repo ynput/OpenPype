@@ -212,7 +212,6 @@ def create_write_node(name, data, prenodes=None):
             "nuke_dataflow_writes": nuke_dataflow_writes,
             "nuke_colorspace_writes": nuke_colorspace_writes
         })
-
         anatomy_filled = format_anatomy(data)
 
     except Exception as e:
@@ -321,7 +320,7 @@ def create_write_node(name, data, prenodes=None):
     lnk.makeLink(write_node.name(), "Render")
     lnk.setName("Render")
     GN.addKnob(lnk)
-    
+
     return GN
 
 

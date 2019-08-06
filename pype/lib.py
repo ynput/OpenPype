@@ -51,7 +51,7 @@ def get_hierarchy(asset_name=None):
     })
 
     not_set = "PARENTS_NOT_SET"
-    entity_parents = entity.get("data", {}).get("parents", not_set)
+    entity_parents = asset_entity.get("data", {}).get("parents", not_set)
 
     # If entity already have parents then just return joined
     if entity_parents != not_set:
