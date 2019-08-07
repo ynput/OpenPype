@@ -7,6 +7,8 @@ from .lib import filter_pyblish_plugins
 import logging
 log = logging.getLogger(__name__)
 
+__version__ = "2.1.0"
+
 PACKAGE_DIR = os.path.dirname(__file__)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 

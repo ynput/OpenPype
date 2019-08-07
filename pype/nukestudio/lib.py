@@ -1,19 +1,13 @@
-# Standard library
 import os
 import sys
-
-# Pyblish libraries
-import pyblish.api
-
-import avalon.api as avalon
-import pype.api as pype
-
-from avalon.vendor.Qt import (QtWidgets, QtGui)
-
-# Host libraries
 import hiero
-
+import pyblish.api
+import avalon.api as avalon
+from avalon.vendor.Qt import (QtWidgets, QtGui)
+import pype.api as pype
 from pypeapp import Logger
+
+
 log = Logger().get_logger(__name__, "nukestudio")
 
 cached_process = None
@@ -30,12 +24,18 @@ AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 def set_workfiles():
     ''' Wrapping function for workfiles launcher '''
     from avalon.tools import workfiles
+
+    # import session to get project dir
     S = avalon.Session
     active_project_root = os.path.normpath(
         os.path.join(S['AVALON_PROJECTS'], S['AVALON_PROJECT'])
     )
     workdir = os.environ["AVALON_WORKDIR"]
+
+    # show workfile gui
     workfiles.show(workdir)
+
+    # getting project
     project = hiero.core.projects()[-1]
 
     # set project root with backward compatibility
@@ -64,9 +64,8 @@ def set_workfiles():
     # set fps to hiero project
     project.setFramerate(fps)
 
+    # TODO: add auto colorspace set from project drop
     log.info("Project property has been synchronised with Avalon db")
-
-
 
 
 def reload_config():
@@ -189,6 +188,10 @@ def add_submission():
 
 
 class PublishAction(QtWidgets.QAction):
+    """
+    Action with is showing as menu item 
+    """
+
     def __init__(self):
         QtWidgets.QAction.__init__(self, "Publish", None)
         self.triggered.connect(self.publish)
@@ -213,7 +216,8 @@ class PublishAction(QtWidgets.QAction):
 
 
 def _show_no_gui():
-    """Popup with information about how to register a new GUI
+    """
+    Popup with information about how to register a new GUI
     In the event of no GUI being registered or available,
     this information dialog will appear to guide the user
     through how to get set up with one.
