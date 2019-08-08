@@ -16,7 +16,6 @@ def subset_to_families(subset, family, families):
     new_subset = families + subset_sufx
     return "{}.{}".format(family, new_subset)
 
-
 class CreateWriteRender(avalon.nuke.Creator):
     # change this to template preset
     preset = "render"

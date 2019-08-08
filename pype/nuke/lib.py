@@ -195,6 +195,13 @@ def script_name():
     '''
     return nuke.root().knob('name').value()
 
+def add_button_write_to_read(node):
+    name = "createReadNode"
+    label = "Create Read"
+    value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
+    k = nuke.PyScript_Knob(name, label, value)
+    k.setFlag(0x1000)
+    node.addKnob(k)
 
 def create_write_node(name, data, prenodes=None):
     ''' Creating write node which is group node
@@ -324,11 +331,15 @@ def create_write_node(name, data, prenodes=None):
     # imprinting group node
     GN = avalon.nuke.imprint(GN, data["avalon"])
 
+
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
 
     add_rendering_knobs(GN)
 
+    # adding write to read button
+    add_button_write_to_read(GN)
+    
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
 
