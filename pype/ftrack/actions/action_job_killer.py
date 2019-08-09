@@ -117,7 +117,7 @@ class JobKiller(BaseAction):
         }
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -126,7 +126,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    JobKiller(session).register()
+    JobKiller(session, plugins_presets).register()
 
 
 def main(arguments=None):

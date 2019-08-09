@@ -29,7 +29,7 @@ class BaseHandler(object):
     ignore_me = False
     preactions = []
 
-    def __init__(self, session):
+    def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
         self._session = session
         self.log = Logger().get_logger(self.__class__.__name__)

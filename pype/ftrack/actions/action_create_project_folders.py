@@ -190,13 +190,13 @@ class CreateProjectFolders(BaseAction):
 
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    CreateProjectFolders(session).register()
+    CreateProjectFolders(session, plugins_presets).register()
 
 
 def main(arguments=None):

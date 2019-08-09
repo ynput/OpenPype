@@ -26,10 +26,10 @@ class AppAction(BaseHandler):
     preactions = ['start.timer']
 
     def __init__(
-        self, session, label, name, executable,
-        variant=None, icon=None, description=None, preactions=[]
+        self, session, label, name, executable, variant=None,
+        icon=None, description=None, preactions=[], plugins_presets={}
     ):
-        super().__init__(session)
+        super().__init__(session, plugins_presets)
         '''Expects a ftrack_api.Session instance'''
 
         if label is None:

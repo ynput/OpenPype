@@ -70,10 +70,10 @@ class StartTimer(BaseAction):
         self.log.info('Starting Clockify timer for task: ' + task['name'])
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    StartTimer(session).register()
+    StartTimer(session, plugins_presets).register()
