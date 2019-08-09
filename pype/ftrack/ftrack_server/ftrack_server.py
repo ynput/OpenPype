@@ -5,7 +5,9 @@ import importlib
 from pype.vendor import ftrack_api
 import time
 import logging
-from pypeapp import Logger
+import inspect
+from pypeapp import Logger, config
+
 
 log = Logger().get_logger(__name__)
 
@@ -67,7 +69,7 @@ class FtrackServer():
 
     def set_files(self, paths):
         # Iterate all paths
-        functions = []
+        register_functions_dict = []
         for path in paths:
             # add path to PYTHON PATH
             if path not in sys.path:
@@ -98,7 +100,7 @@ class FtrackServer():
                         log.warning(msg)
                         continue
 
-                    functions.append({
+                    register_functions_dict.append({
                         'name': file,
                         'register': mod_functions['register']
                     })
@@ -108,19 +110,32 @@ class FtrackServer():
                     )
                     log.warning(msg)
 
-        if len(functions) < 1:
+        if len(register_functions_dict) < 1:
             raise Exception
 
+        # Load presets for setting plugins
+        key = "user"
+        if self.type.lower() == "event":
+            key = "server"
+        plugins_presets = config.get_presets().get(
+            "ftrack", {}
+        ).get("plugins", {}).get(key, {})
+
         function_counter = 0
-        for function in functions:
+        for function_dict in register_functions_dict:
+            register = function_dict["register"]
             try:
-                function['register'](self.session)
+                if len(inspect.signature(register).parameters) == 1:
+                    register(self.session)
+                else:
+                    register(self.session, plugins_presets=plugins_presets)
+
                 if function_counter%7 == 0:
                     time.sleep(0.1)
                 function_counter += 1
-            except Exception as e:
+            except Exception as exc:
                 msg = '"{}" - register was not successful ({})'.format(
-                    function['name'], str(e)
+                    function_dict['name'], str(exc)
                 )
                 log.warning(msg)
 
