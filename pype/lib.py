@@ -473,6 +473,10 @@ def filter_pyblish_plugins(plugins):
 
     # iterate over plugins
     for plugin in plugins[:]:
+        # skip if there are no presets to process
+        if not presets:
+            continue
+
         try:
             config_data = presets[plugin.__name__]  # noqa: E501
         except KeyError:
