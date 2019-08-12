@@ -249,7 +249,9 @@ class AttributesRemapper(BaseAction):
 
         if interface_messages:
             self.show_interface_from_dict(
-                event, interface_messages, "Errors during remapping attributes"
+                messages=interface_messages,
+                title="Errors during remapping attributes",
+                event=event
             )
 
         return True

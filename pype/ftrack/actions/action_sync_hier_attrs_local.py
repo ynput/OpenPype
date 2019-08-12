@@ -186,7 +186,10 @@ class SyncHierarchicalAttrs(BaseAction):
                 job['status'] = 'failed'
             session.commit()
             if self.interface_messages:
-                self.show_interface_from_dict(self.interface_messages, event)
+                title = "Errors during SyncHierarchicalAttrs"
+                self.show_interface_from_dict(
+                    messages=self.interface_messages, title=title, event=event
+                )
 
         return True
 

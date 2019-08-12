@@ -137,7 +137,6 @@ class CollectPlatesData(api.InstancePlugin):
             "subset": name,
             "fps": instance.context.data["fps"]
         })
-        instance.data["versionData"] = version_data
 
         try:
             basename, ext = os.path.splitext(source_file)
@@ -156,9 +155,11 @@ class CollectPlatesData(api.InstancePlugin):
             start_frame = source_first_frame + instance.data["sourceInH"]
             duration = instance.data["sourceOutH"] - instance.data["sourceInH"]
             end_frame = start_frame + duration
+            self.log.debug("start_frame: `{}`".format(start_frame))
+            self.log.debug("end_frame: `{}`".format(end_frame))
             files = [file % i for i in range(start_frame, (end_frame + 1), 1)]
         except Exception as e:
-            self.log.debug("Exception in file: {}".format(e))
+            self.log.warning("Exception in file: {}".format(e))
             head, ext = os.path.splitext(source_file)
             ext = ext[1:]
             files = source_file
@@ -207,15 +208,40 @@ class CollectPlatesData(api.InstancePlugin):
             thumb_representation)
 
         # adding representation for plates
+        frame_start = instance.data["frameStart"] - \
+            instance.data["handleStart"]
+        frame_end = instance.data["frameEnd"] + instance.data["handleEnd"]
+
+        # exception for retimes
+        if instance.data.get("retime"):
+            source_in_h = instance.data["sourceInH"]
+            source_in = instance.data["sourceIn"]
+            source_handle_start = source_in_h - source_in
+            frame_start = instance.data["frameStart"] + source_handle_start
+            duration = instance.data["sourceOutH"] - instance.data["sourceInH"]
+            frame_end = frame_start + duration
+
         plates_representation = {
             'files': files,
             'stagingDir': staging_dir,
             'name': ext,
             'ext': ext,
-            "frameStart": instance.data["frameStart"] - instance.data["handleStart"],
-            "frameEnd": instance.data["frameEnd"] + instance.data["handleEnd"],
+            "frameStart": frame_start,
+            "frameEnd": frame_end,
         }
         instance.data["representations"].append(plates_representation)
+
+        # deal with retimed clip
+        if instance.data.get("retime"):
+            version_data.update({
+                "retime": True,
+                "speed": instance.data.get("speed", 1),
+                "timewarps": instance.data.get("timeWarpNodes", []),
+                "frameStart": frame_start,
+                "frameEnd": frame_end,
+            })
+
+        instance.data["versionData"] = version_data
 
         # testing families
         family = instance.data["family"]
