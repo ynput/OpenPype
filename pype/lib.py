@@ -491,3 +491,7 @@ def filter_pyblish_plugins(plugins):
                     option, value, plugin.__name__))
 
                 setattr(plugin, option, value)
+
+        # Remove already processed plugins from dictionary
+        # WARNING Requires plugins with unique names
+        presets.pop(plugin.__name__)
