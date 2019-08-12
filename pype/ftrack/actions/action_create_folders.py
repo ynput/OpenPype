@@ -322,13 +322,13 @@ class PartialDict(dict):
         return '{'+key+'}'
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    CreateFolders(session).register()
+    CreateFolders(session, plugins_presets).register()
 
 
 def main(arguments=None):

@@ -276,10 +276,10 @@ class AttributesRemapper(BaseAction):
 
         self.show_interface(event, items, title)
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    AttributesRemapper(session).register()
+    AttributesRemapper(session, plugins_presets).register()

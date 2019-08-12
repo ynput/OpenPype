@@ -29,7 +29,7 @@ class BaseHandler(object):
     ignore_me = False
     preactions = []
 
-    def __init__(self, session):
+    def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
         self._session = session
         self.log = Logger().get_logger(self.__class__.__name__)
@@ -37,13 +37,23 @@ class BaseHandler(object):
         # Using decorator
         self.register = self.register_decorator(self.register)
         self.launch = self.launch_log(self.launch)
+        self.plugins_presets = plugins_presets
 
     # Decorator
     def register_decorator(self, func):
         @functools.wraps(func)
         def wrapper_register(*args, **kwargs):
+
+            presets_data = self.plugins_presets.get(self.__class__.__name__)
+            if presets_data:
+                for key, value in presets_data.items():
+                    if not hasattr(self, key):
+                        continue
+                    setattr(self, key, value)
+
             if self.ignore_me:
                 return
+
             label = self.__class__.__name__
             if hasattr(self, 'label'):
                 if self.variant is None:

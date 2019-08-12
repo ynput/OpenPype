@@ -9,7 +9,7 @@ from pype.lib import get_all_avalon_projects
 log = Logger().get_logger(__name__)
 
 
-def registerApp(app, session):
+def registerApp(app, session, plugins_presets):
     name = app['name']
     variant = ""
     try:
@@ -41,14 +41,14 @@ def registerApp(app, session):
     # register action
     AppAction(
         session, label, name, executable, variant,
-        icon, description, preactions
+        icon, description, preactions, plugins_presets
     ).register()
 
     if not variant:
         log.info('- Variant is not set')
 
 
-def register(session):
+def register(session, plugins_presets={}):
     # WARNING getting projects only helps to check connection to mongo
     # - without will `discover` of ftrack apps actions take ages
     result = get_all_avalon_projects()
@@ -71,7 +71,7 @@ def register(session):
     app_counter = 0
     for app in apps:
         try:
-            registerApp(app, session)
+            registerApp(app, session, plugins_presets)
             if app_counter%5 == 0:
                 time.sleep(0.1)
             app_counter += 1

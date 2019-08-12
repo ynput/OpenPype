@@ -42,7 +42,7 @@ class VersionsCleanup(BaseAction):
         }
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register action. Called when used as an event plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -51,7 +51,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    VersionsCleanup(session).register()
+    VersionsCleanup(session, plugins_presets).register()
 
 
 def main(arguments=None):
