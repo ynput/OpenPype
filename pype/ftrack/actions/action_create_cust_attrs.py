@@ -7,6 +7,7 @@ import logging
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, get_ca_mongoid
 from pypeapp import config
+from ftrack_api.exception import NoResultFoundError
 
 """
 This action creates/updates custom attributes.
@@ -118,18 +119,11 @@ class CustomAttributes(BaseAction):
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
-    def __init__(self, session):
-        super().__init__(session)
-
-        self.types = {}
-        self.object_type_ids = {}
-        self.groups = {}
-        self.security_roles = {}
-        self.required_keys = ['key', 'label', 'type']
-        self.type_posibilities = [
-            'text', 'boolean', 'date', 'enumerator',
-            'dynamic enumerator', 'number'
-        ]
+    required_keys = ['key', 'label', 'type']
+    type_posibilities = [
+        'text', 'boolean', 'date', 'enumerator',
+        'dynamic enumerator', 'number'
+    ]
 
     def discover(self, session, entities, event):
         '''
@@ -139,8 +133,12 @@ class CustomAttributes(BaseAction):
         return True
 
     def launch(self, session, entities, event):
-        # JOB SETTINGS
+        self.types = {}
+        self.object_type_ids = {}
+        self.groups = {}
+        self.security_roles = {}
 
+        # JOB SETTINGS
         userId = event['source']['user']['id']
         user = session.query('User where id is ' + userId).one()
 
@@ -159,11 +157,14 @@ class CustomAttributes(BaseAction):
             job['status'] = 'done'
             session.commit()
 
-        except Exception as e:
+        except Exception as exc:
             session.rollback()
             job['status'] = 'failed'
             session.commit()
-            self.log.error('Creating custom attributes failed ({})'.format(e))
+            self.log.error(
+                'Creating custom attributes failed ({})'.format(exc),
+                exc_info=True
+            )
 
         return True
 
@@ -226,24 +227,30 @@ class CustomAttributes(BaseAction):
     def custom_attributes_from_file(self, session, event):
         presets = config.get_presets()['ftrack']['ftrack_custom_attributes']
 
-        for cust_attr_name in presets:
+        for cust_attr_data in presets:
+            cust_attr_name = cust_attr_data.get(
+                'label',
+                cust_attr_data.get('key')
+            )
             try:
                 data = {}
-                cust_attr = presets[cust_attr_name]
                 # Get key, label, type
-                data.update(self.get_required(cust_attr))
+                data.update(self.get_required(cust_attr_data))
                 # Get hierachical/ entity_type/ object_id
-                data.update(self.get_entity_type(cust_attr))
+                data.update(self.get_entity_type(cust_attr_data))
                 # Get group, default, security roles
-                data.update(self.get_optional(cust_attr))
+                data.update(self.get_optional(cust_attr_data))
                 # Process data
                 self.process_attribute(data)
 
             except CustAttrException as cae:
-                msg = 'Custom attribute error "{}" - {}'.format(
-                    cust_attr_name, str(cae)
-                )
-                self.log.warning(msg)
+                if cust_attr_name:
+                    msg = 'Custom attribute error "{}" - {}'.format(
+                        cust_attr_name, str(cae)
+                    )
+                else:
+                    msg = 'Custom attribute error - {}'.format(str(cae))
+                self.log.warning(msg, exc_info=True)
                 self.show_message(event, msg)
 
         return True
@@ -258,8 +265,8 @@ class CustomAttributes(BaseAction):
             ):
                 continue
 
-            if 'is_hierarchical' in data:
-                if data['is_hierarchical'] == attr['is_hierarchical']:
+            if data.get('is_hierarchical', False) is True:
+                if attr['is_hierarchical'] is True:
                     matching.append(attr)
             elif 'object_type_id' in data:
                 if (
@@ -422,9 +429,10 @@ class CustomAttributes(BaseAction):
 
     def get_security_role(self, security_roles):
         roles = []
-        if len(security_roles) == 0 or security_roles[0] == 'ALL':
+        security_roles_lowered = [role.lower() for role in security_roles]
+        if len(security_roles) == 0 or 'all' in security_roles_lowered:
             roles = self.get_role_ALL()
-        elif security_roles[0] == 'except':
+        elif security_roles_lowered[0] == 'except':
             excepts = security_roles[1:]
             all = self.get_role_ALL()
             for role in all:
@@ -443,16 +451,18 @@ class CustomAttributes(BaseAction):
                     role = self.session.query(query).one()
                     self.security_roles[role_name] = role
                     roles.append(role)
-                except Exception:
-                    raise CustAttrException(
-                        'Securit role "{}" does not exist'.format(role_name)
-                    )
+                except NoResultFoundError:
+                    raise CustAttrException((
+                        'Securit role "{}" does not exist'
+                    ).format(role_name))
 
         return roles
 
     def get_default(self, attr):
         type = attr['type']
         default = attr['default']
+        if default is None:
+            return default
         err_msg = 'Default value is not'
         if type == 'number':
             if not isinstance(default, (float, int)):
@@ -558,7 +568,7 @@ class CustomAttributes(BaseAction):
         }
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -567,7 +577,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    CustomAttributes(session).register()
+    CustomAttributes(session, plugins_presets).register()
 
 
 def main(arguments=None):

@@ -8,9 +8,10 @@ class CollectProjectData(pyblish.api.ContextPlugin):
 
     label = "Collect Project Data"
     order = pyblish.api.CollectorOrder - 0.1
+    hosts = ["nukestudio"]
 
     def process(self, context):
         # get project data from avalon db
-        context.data["projectData"] = pype.get_project_data()
+        context.data["projectData"] = pype.get_project()["data"]
 
         return

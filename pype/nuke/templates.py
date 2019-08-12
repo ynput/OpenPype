@@ -1,21 +1,35 @@
 from pype import api as pype
+from pypeapp import Anatomy, config
+
 
 log = pype.Logger().get_logger(__name__, "nuke")
 
 
 def get_anatomy(**kwarg):
-    return pype.Anatomy
+    return Anatomy()
 
 
-def get_dataflow(**kwarg):
+def get_dataflow_preset():
+    presets = config.get_init_presets()
+    return presets["dataflow"]
+
+
+def get_colorspace_preset():
+    presets = config.get_init_presets()
+    return presets["colorspace"]
+
+
+def get_node_dataflow_preset(**kwarg):
+    ''' Get preset data for dataflow (fileType, compression, bitDepth)
+    '''
     log.info(kwarg)
     host = kwarg.get("host", "nuke")
     cls = kwarg.get("class", None)
     preset = kwarg.get("preset", None)
-    assert any([host, cls]), log.error("nuke.templates.get_dataflow():"
-                                       "Missing mandatory kwargs `host`, `cls`")
+    assert any([host, cls]), log.error("nuke.templates.get_node_dataflow_preset(): \
+               Missing mandatory kwargs `host`, `cls`")
 
-    nuke_dataflow = pype.Dataflow.get(str(host), None)
+    nuke_dataflow = get_dataflow_preset().get(str(host), None)
     nuke_dataflow_nodes = nuke_dataflow.get('nodes', None)
     nuke_dataflow_node = nuke_dataflow_nodes.get(str(cls), None)
 
@@ -26,15 +40,17 @@ def get_dataflow(**kwarg):
     return nuke_dataflow_node
 
 
-def get_colorspace(**kwarg):
+def get_node_colorspace_preset(**kwarg):
+    ''' Get preset data for colorspace
+    '''
     log.info(kwarg)
     host = kwarg.get("host", "nuke")
     cls = kwarg.get("class", None)
     preset = kwarg.get("preset", None)
-    assert any([host, cls]), log.error("nuke.templates.get_colorspace():"
-                                       "Missing mandatory kwargs `host`, `cls`")
+    assert any([host, cls]), log.error("nuke.templates.get_node_colorspace_preset(): \
+               Missing mandatory kwargs `host`, `cls`")
 
-    nuke_colorspace = pype.Colorspace.get(str(host), None)
+    nuke_colorspace = get_colorspace_preset().get(str(host), None)
     nuke_colorspace_node = nuke_colorspace.get(str(cls), None)
     if preset:
         nuke_colorspace_node = nuke_colorspace_node.get(str(preset), None)

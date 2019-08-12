@@ -6,6 +6,7 @@ from pyblish import api as pyblish
 from pypeapp import execute, Logger
 
 from .. import api
+from .lib import set_avalon_workdir
 
 log = Logger().get_logger(__name__, "aport")
 
@@ -33,7 +34,7 @@ INVENTORY_PATH = os.path.join(PLUGINS_DIR, "aport", "inventory")
 
 
 def install():
-    api.set_avalon_workdir()
+    set_avalon_workdir()
 
     log.info("Registering Aport plug-ins..")
     pyblish.register_plugin_path(PUBLISH_PATH)
@@ -49,9 +50,6 @@ def install():
     ]
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
-
-    # load data from templates
-    api.load_data_from_templates()
 
     # launch pico server
     pico_server_launch()

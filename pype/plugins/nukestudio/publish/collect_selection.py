@@ -2,6 +2,7 @@ import pyblish.api
 
 import hiero
 
+
 class CollectSelection(pyblish.api.ContextPlugin):
     """Inject the selection in the context."""
 
@@ -9,7 +10,16 @@ class CollectSelection(pyblish.api.ContextPlugin):
     label = "Selection"
 
     def process(self, context):
-        selection = getattr(hiero, "selection")
+        selection = list(hiero.selection)
 
         self.log.debug("selection: {}".format(selection))
-        context.data["selection"] = hiero.selection
+
+        # if not selection:
+        #     self.log.debug(
+        #         "Nothing is selected. Collecting all items from sequence "
+        #         "\"{}\"".format(hiero.ui.activeSequence())
+        #     )
+        #     for track in hiero.ui.activeSequence().items():
+        #         selection.extend(track.items())
+
+        context.data["selection"] = selection

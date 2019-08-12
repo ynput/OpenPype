@@ -9,4 +9,4 @@ class CollectFramerate(api.ContextPlugin):
 
     def process(self, context):
         sequence = context.data["activeSequence"]
-        context.data["framerate"] = sequence.framerate().toFloat()
+        context.data["fps"] = sequence.framerate().toFloat()

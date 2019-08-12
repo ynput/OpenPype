@@ -20,7 +20,7 @@
 #
 #         # Get tool color
 #         first = containers[0]
-#         tool = first["_tool"]
+#         tool = first["_node"]
 #         color = tool.TileColor
 #
 #         if color is not None:
@@ -40,7 +40,7 @@
 #                 rgb_f_table = {"R": rgb_f[0], "G": rgb_f[1], "B": rgb_f[2]}
 #
 #                 # Update tool
-#                 tool = container["_tool"]
+#                 tool = container["_node"]
 #                 tool.TileColor = rgb_f_table
 #
 #                 result.append(container)

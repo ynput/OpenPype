@@ -3,7 +3,7 @@ import sys
 from pprint import pprint
 import acre
 
-from avalon import api, lib
+from avalon import api, lib, io
 import pype.api as pype
 
 
@@ -44,15 +44,42 @@ class PremierePro(api.Action):
             env = acre.merge(env, current_env=dict(os.environ))
 
             if not env.get('AVALON_WORKDIR', None):
-                pype.load_data_from_templates()
-                os.environ["AVALON_WORKDIR"] = pype.get_workdir_template(
-                    pype.Anatomy)
-                pype.reset_data_from_templates()
+                project_name = env.get("AVALON_PROJECT")
+                anatomy = Anatomy(project_name)
+                os.environ['AVALON_PROJECT'] = project_name
+                io.Session['AVALON_PROJECT'] = project_name
+
+                task_name = os.environ.get(
+                    "AVALON_TASK", io.Session["AVALON_TASK"]
+                )
+                asset_name = os.environ.get(
+                    "AVALON_ASSET", io.Session["AVALON_ASSET"]
+                )
+                application = lib.get_application(
+                    os.environ["AVALON_APP_NAME"]
+                )
+
+                project_doc = io.find_one({"type": "project"})
+                data = {
+                    "task": task_name,
+                    "asset": asset_name,
+                    "project": {
+                        "name": project_doc["name"],
+                        "code": project_doc["data"].get("code", '')
+                    },
+                    "hierarchy": pype.get_hierarchy(),
+                    "app": application["application_dir"]
+                }
+                anatomy_filled = anatomy.format(data)
+                workdir = anatomy_filled["work"]["folder"]
+
+                os.environ["AVALON_WORKDIR"] = workdir
 
             env.update(dict(os.environ))
 
-            lib.launch(executable=executable,
-                       args=arguments,
-                       environment=env
-                       )
+            lib.launch(
+                executable=executable,
+                args=arguments,
+                environment=env
+            )
             return

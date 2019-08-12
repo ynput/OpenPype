@@ -68,7 +68,7 @@ class ExtractAssProxy(pype.api.Extractor):
 
         representation = {
             'name': 'ma',
-            'ext': '.ma',
+            'ext': 'ma',
             'files': filename,
             "stagingDir": stagingdir
         }

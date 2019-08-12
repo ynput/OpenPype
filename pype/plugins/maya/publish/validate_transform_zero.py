@@ -49,6 +49,8 @@ class ValidateTransformZero(pyblish.api.Validator):
 
         invalid = []
         for transform in transforms:
+            if ('_LOC' in transform) or ('_loc' in transform):
+                continue
             mat = cmds.xform(transform, q=1, matrix=True, objectSpace=True)
             if not all(abs(x-y) < cls._tolerance
                        for x, y in zip(cls._identity, mat)):

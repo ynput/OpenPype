@@ -8,7 +8,7 @@ class CreateModel(avalon.maya.Creator):
     label = "Model"
     family = "model"
     icon = "cube"
-    defaults = ["Main", "Proxy"]
+    defaults = ["Main", "Proxy", "_MD", "_HD", "_LD"]
 
     def __init__(self, *args, **kwargs):
         super(CreateModel, self).__init__(*args, **kwargs)

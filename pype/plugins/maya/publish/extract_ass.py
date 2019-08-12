@@ -42,7 +42,7 @@ class ExtractAssStandin(pype.api.Extractor):
 
         representation = {
             'name': 'ass',
-            'ext': '.ass',
+            'ext': 'ass',
             'files': filename,
             "stagingDir": staging_dir
         }

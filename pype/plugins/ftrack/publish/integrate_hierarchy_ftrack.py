@@ -1,4 +1,5 @@
 import pyblish.api
+from avalon import io
 
 
 class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
@@ -27,13 +28,16 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
     order = pyblish.api.IntegratorOrder - 0.04
     label = 'Integrate Hierarchy To Ftrack'
-    families = ["clip"]
+    families = ["clip", "shot"]
     optional = False
 
     def process(self, context):
         self.context = context
         if "hierarchyContext" not in context.data:
             return
+
+        if not io.Session:
+            io.install()
 
         self.ft_project = None
         self.session = context.data["ftrackSession"]
@@ -46,6 +50,8 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         for entity_name in input_data:
             entity_data = input_data[entity_name]
             entity_type = entity_data['entity_type']
+            self.log.debug(entity_data)
+            self.log.debug(entity_type)
 
             if entity_type.lower() == 'project':
                 query = 'Project where full_name is "{}"'.format(entity_name)
@@ -79,10 +85,13 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             # CUSTOM ATTRIBUTES
             custom_attributes = entity_data.get('custom_attributes', [])
             instances = [
-                i for i in self.context[:] if i.data['asset'] in entity['name']]
+                i for i in self.context[:] if i.data['asset'] in entity['name']
+            ]
             for key in custom_attributes:
                 assert (key in entity['custom_attributes']), (
-                    'Missing custom attribute key: `{0}` in attrs: `{1}`'.format(key, entity['custom_attributes'].keys()))
+                    'Missing custom attribute key: `{0}` in attrs: '
+                    '`{1}`'.format(key, entity['custom_attributes'].keys())
+                )
 
                 entity['custom_attributes'][key] = custom_attributes[key]
 
@@ -114,9 +123,32 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 )
                 self.session.commit()
 
+            # Incoming links.
+            self.create_links(entity_data, entity)
+            self.session.commit()
+
             if 'childs' in entity_data:
                 self.import_to_ftrack(
                     entity_data['childs'], entity)
+
+    def create_links(self, entity_data, entity):
+        # Clear existing links.
+        for link in entity.get("incoming_links", []):
+            self.session.delete(link)
+            self.session.commit()
+
+        # Create new links.
+        for input in entity_data.get("inputs", []):
+            input_id = io.find_one({"_id": input})["data"]["ftrackId"]
+            assetbuild = self.session.get("AssetBuild", input_id)
+            self.log.debug(
+                "Creating link from {0} to {1}".format(
+                    assetbuild["name"], entity["name"]
+                )
+            )
+            self.session.create(
+                "TypedContextLink", {"from": assetbuild, "to": entity}
+            )
 
     def get_all_task_types(self, project):
         tasks = {}

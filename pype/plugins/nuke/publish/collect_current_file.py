@@ -1,10 +1,11 @@
 import pyblish.api
 
 
-class SelectCurrentFile(pyblish.api.ContextPlugin):
+class CollectCurrentFile(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
     order = pyblish.api.CollectorOrder - 0.5
+    label = "Collect Current File"
     hosts = ["nuke"]
 
     def process(self, context):

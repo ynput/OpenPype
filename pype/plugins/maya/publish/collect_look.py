@@ -211,6 +211,7 @@ class CollectLook(pyblish.api.InstancePlugin):
     families = ["look"]
     label = "Collect Look"
     hosts = ["maya"]
+    maketx = True
 
     def process(self, instance):
         """Collect the Look in the instance with the correct layer settings"""
@@ -219,8 +220,8 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.collect(instance)
 
         # make ftrack publishable
-        instance.data["families"] = ['ftrack']
-        instance.data['maketx'] = True
+        instance.data['maketx'] = self.maketx
+        self.log.info('maketx: {}'.format(self.maketx))
 
     def collect(self, instance):
 
@@ -389,7 +390,9 @@ class CollectLook(pyblish.api.InstancePlugin):
             # Collect changes to "custom" attributes
             node_attrs = get_look_attrs(node)
 
-            self.log.info(node_attrs)
+            self.log.info(
+                "Node \"{0}\" attributes: {1}".format(node, node_attrs)
+            )
 
             # Only include if there are any properties we care about
             if not node_attrs:

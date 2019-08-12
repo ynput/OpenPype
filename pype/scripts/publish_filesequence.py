@@ -1,65 +1,15 @@
 """This module is used for command line publishing of image sequences."""
 
 import os
-import sys
 import logging
+import subprocess
+import platform
 
 handler = logging.basicConfig()
 log = logging.getLogger("Publish Image Sequences")
 log.setLevel(logging.DEBUG)
 
 error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
-
-
-def publish(paths, gui=False):
-    """Publish rendered image sequences based on the job data
-
-    Args:
-        paths (list): a list of paths where to publish from
-        gui (bool, Optional): Choose to show Pyblish GUI, default is False
-
-    Returns:
-        None
-
-    """
-
-    assert isinstance(paths, (list, tuple)), "Must be list of paths"
-    log.info(paths)
-    assert any(paths), "No paths found in the list"
-    # Set the paths to publish for the collector if any provided
-    if paths:
-        os.environ["FILESEQUENCE"] = os.pathsep.join(paths)
-
-    # Install Avalon with shell as current host
-    from avalon import api, shell
-    api.install(shell)
-
-    # Register target and host
-    import pyblish.api
-    pyblish.api.register_target("filesequence")
-    pyblish.api.register_host("shell")
-
-    # Publish items
-    if gui:
-        import pyblish_qml
-        pyblish_qml.show(modal=True)
-    else:
-
-        import pyblish.util
-        context = pyblish.util.publish()
-
-        if not context:
-            log.warning("Nothing collected.")
-            sys.exit(1)
-
-        # Collect errors, {plugin name: error}
-        error_results = [r for r in context.data["results"] if r["error"]]
-
-        if error_results:
-            log.error(" Errors occurred ...")
-            for result in error_results:
-                log.error(error_format.format(**result))
-            sys.exit(2)
 
 
 def __main__():
@@ -76,11 +26,43 @@ def __main__():
                         action="store_true",
                         help="Whether to run Pyblish in GUI mode.")
 
+    parser.add_argument("--pype", help="Pype root")
+
     kwargs, args = parser.parse_known_args()
 
-    print("Running publish imagesequence...")
+    print("Running pype ...")
+    auto_pype_root = os.path.dirname(os.path.abspath(__file__))
+    auto_pype_root = os.path.abspath(auto_pype_root + "../../../../..")
+    auto_pype_root = os.environ.get('PYPE_ROOT') or auto_pype_root
+
+    if kwargs.pype:
+        pype_root = kwargs.pype
+    else:
+        # if pype argument not specified, lets assume it is set in PATH
+        pype_root = ""
+
+    print("Set pype root to: {}".format(pype_root))
     print("Paths: {}".format(kwargs.paths or [os.getcwd()]))
-    publish(kwargs.paths, gui=kwargs.gui)
+
+    paths = kwargs.paths or [os.getcwd()]
+    pype_command = "pype.ps1"
+    if platform.system().lower() == "linux":
+        pype_command = "pype"
+    elif platform.system().lower() == "windows":
+        pype_command = "pype.bat"
+
+    args = [
+        os.path.join(pype_root, pype_command),
+        "publish",
+        " ".join(paths)
+    ]
+
+    print("Pype command: {}".format(" ".join(args)))
+    # Forcing forwaring the environment because environment inheritance does
+    # not always work.
+    exit_code = subprocess.call(args, env=os.environ)
+    if exit_code != 0:
+        raise ValueError("Publishing failed.")
 
 
 if __name__ == '__main__':

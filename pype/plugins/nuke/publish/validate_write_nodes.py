@@ -14,7 +14,7 @@ class RepairNukeWriteNodeAction(pyblish.api.Action):
         instances = pype.utils.filter_instances(context, plugin)
 
         for instance in instances:
-            node = instance[0]
+            node = instance[1]
             correct_data = nukelib.get_write_node_template_attr(node)
             for k, v in correct_data.items():
                 node[k].setValue(v)
@@ -33,7 +33,7 @@ class ValidateNukeWriteNode(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        node = instance[0]
+        node = instance[1]
         correct_data = nukelib.get_write_node_template_attr(node)
 
         check = []

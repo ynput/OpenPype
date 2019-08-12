@@ -294,7 +294,7 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
 
         if (
             bi_func in ['frame_numbers', 'timecode'] and
-            not start_frame
+            start_frame is None
         ):
             log.error(
                 'start_frame is not set in entered data!'
@@ -321,18 +321,8 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
     burnin.render(output_path, overwrite=overwrite)
 
 
-'''
-# TODO: implement image sequence
-# Changes so OpenTimelineIo burnins is possible to render from image sequence.
-#
-# before input:
-# # -start_number is number of first frame / -r is fps
-# -start_number 375 -r 25
-# before output:
-# # -c: set output codec (h264, ...)
-# -c:v libx264
-#
-#
-# ffmpeg -loglevel panic -i image_sequence -vf "drawtext=text='Test':x=w/2-tw/2:y=0:fontcolor=white@1.0:fontsize=42:fontfile='C\:\\\WINDOWS\\\Fonts\\\arial.ttf':box=1:boxborderw=5:boxcolor=black@0.5,drawtext=text='%{eif\:n+1001\:d}':x=0:y=0:fontcolor=white@1.0:fontsize=42:fontfile='C\:\\\WINDOWS\\\Fonts\\\arial.ttf':box=1:boxborderw=5:boxcolor=black@0.5" C:\Users\jakub.trllo\Desktop\Tests\files\mov\render\test_output.mov'
-# ffmpeg -loglevel panic -start_number 375 -r 25 -i "C:\Users\jakub.trllo\Desktop\Tests\files\exr\int_c022_lighting_v001_main_AO.%04d.exr" -vf "drawtext=text='Test':x=w/2-tw/2:y=0:fontcolor=white@1.0:fontsize=42:fontfile='C\:\\\WINDOWS\\\Fonts\\\arial.ttf':box=1:boxborderw=5:boxcolor=black@0.5,drawtext=text='%{eif\:n+1001\:d}':x=0:y=0:fontcolor=white@1.0:fontsize=42:fontfile='C\:\\\WINDOWS\\\Fonts\\\arial.ttf':box=1:boxborderw=5:boxcolor=black@0.5,colormatrix=bt601:bt709" -c:v libx264 "output_path.mov"
-'''
+if __name__ == '__main__':
+    import sys
+    import json
+    data = json.loads(sys.argv[-1])
+    burnins_from_data(data['input'], data['output'], data['burnin_data'])

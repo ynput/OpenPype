@@ -82,8 +82,8 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
                 "subset": subset,
                 "setMembers": layer,
 
-                "startFrame": start_frame,
-                "endFrame": end_frame,
+                "frameStart": start_frame,
+                "frameEnd": end_frame,
                 "renderer": "vray",
                 "resolution": resolution,
                 "ext": ".{}".format(extension),

@@ -64,12 +64,12 @@ class ThumbToChildren(BaseAction):
         }
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register action. Called when used as an event plugin.'''
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    ThumbToChildren(session).register()
+    ThumbToChildren(session, plugins_presets).register()
 
 
 def main(arguments=None):

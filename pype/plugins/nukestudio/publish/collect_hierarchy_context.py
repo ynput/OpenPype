@@ -3,7 +3,7 @@ import avalon.api as avalon
 import re
 
 
-class CollectHierarchyInstance(pyblish.api.InstancePlugin):
+class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     """Collecting hierarchy context from `parents` and `hierarchy` data
     present in `clip` family instances coming from the request json data file
 
@@ -31,116 +31,142 @@ class CollectHierarchyInstance(pyblish.api.InstancePlugin):
         if entity_type:
             return {"entityType": entity_type, "entityName": value}
 
-    def process(self, instance):
-        context = instance.context
-        tags = instance.data.get("tags", None)
-        clip = instance.data["item"]
-        asset = instance.data.get("asset")
+    def process(self, context):
 
-        # create asset_names conversion table
-        if not context.data.get("assetsShared"):
-            context.data["assetsShared"] = dict()
+        for instance in context[:]:
+            assets_shared = context.data.get("assetsShared")
+            tags = instance.data.get("tags", None)
+            clip = instance.data["item"]
+            asset = instance.data.get("asset")
 
-        # build data for inner nukestudio project property
-        data = {
-            "sequence": context.data['activeSequence'].name().replace(' ', '_'),
-            "track": clip.parent().name().replace(' ', '_'),
-            "clip": asset
-        }
-        self.log.debug("__ data: {}".format(data))
+            # build data for inner nukestudio project property
+            data = {
+                "sequence": (
+                    context.data['activeSequence'].name().replace(' ', '_')
+                ),
+                "track": clip.parent().name().replace(' ', '_'),
+                "clip": asset
+            }
+            self.log.debug("__ data: {}".format(data))
 
-        # checking if tags are available
-        if not tags:
-            return
+            # checking if tags are available
+            self.log.debug("__ instance.data[name]: {}".format(
+                instance.data["name"]))
+            self.log.debug("__ tags: {}".format(tags))
 
-        # loop trough all tags
-        for t in tags:
-            t_metadata = dict(t["metadata"])
-            t_type = t_metadata.get("tag.label", "")
-            t_note = t_metadata.get("tag.note", "")
+            if not tags:
+                continue
 
-            # and finding only hierarchical tag
-            if "hierarchy" in t_type.lower():
-                d_metadata = dict()
-                parents = list()
+            # loop trough all tags
+            for t in tags:
+                t_metadata = dict(t["metadata"])
+                t_type = t_metadata.get("tag.label", "")
+                t_note = t_metadata.get("tag.note", "")
 
-                # main template from Tag.note
-                template = t_note
+                self.log.debug("__ t_type: {}".format(t_type))
 
-                # if shot in template then remove it
-                if "shot" in template.lower():
-                    instance.data["asset"] = [
-                        t for t in template.split('/')][-1]
-                    template = "/".join([t for t in template.split('/')][0:-1])
+                # and finding only hierarchical tag
+                if "hierarchy" in t_type.lower():
+                    d_metadata = dict()
+                    parents = list()
 
-                # take template from Tag.note and break it into parts
-                template_split = template.split("/")
-                patern = re.compile(r"\{([a-z]*?)\}")
-                par_split = [patern.findall(t)
-                             for t in template.split("/")]
+                    # main template from Tag.note
+                    template = t_note
 
-                # format all {} in two layers
-                for k, v in t_metadata.items():
-                    new_k = k.split(".")[1]
+                    # if shot in template then remove it
+                    if "shot" in template.lower():
+                        instance.data["asset"] = [
+                            t for t in template.split('/')][-1]
+                        template = "/".join([t for t in template.split('/')][0:-1])
 
-                    # ignore all help strings
-                    if 'help' in k:
-                        continue
-                    # self.log.info("__ new_k: `{}`".format(new_k))
-                    try:
-                        # first try all data and context data to
-                        # add to individual properties
-                        new_v = str(v).format(
-                            **dict(context.data, **data))
-                        d_metadata[new_k] = new_v
+                    # take template from Tag.note and break it into parts
+                    template_split = template.split("/")
+                    patern = re.compile(r"\{([a-z]*?)\}")
+                    par_split = [patern.findall(t)
+                                 for t in template.split("/")]
 
-                        # create parents
-                        # find matching index of order
-                        p_match_i = [i for i, p in enumerate(par_split)
-                                     if new_k in p]
+                    # format all {} in two layers
+                    for k, v in t_metadata.items():
+                        new_k = k.split(".")[1]
 
-                        # if any is matching then convert to entity_types
-                        if p_match_i:
-                            parent = self.convert_to_entity(
-                                new_k, template_split[p_match_i[0]])
-                            parents.insert(p_match_i[0], parent)
-                    except Exception:
-                        d_metadata[new_k] = v
+                        # ignore all help strings
+                        if 'help' in k:
+                            continue
+                        # self.log.info("__ new_k: `{}`".format(new_k))
+                        try:
+                            # first try all data and context data to
+                            # add to individual properties
+                            new_v = str(v).format(
+                                **dict(context.data, **data))
+                            d_metadata[new_k] = new_v
 
-                # create new shot asset name
-                instance.data["asset"] = instance.data["asset"].format(
-                    **d_metadata)
-                self.log.debug("__ instance.data[asset]: {}".format(instance.data["asset"]))
+                            # create parents
+                            # find matching index of order
+                            p_match_i = [i for i, p in enumerate(par_split)
+                                         if new_k in p]
 
-                # lastly fill those individual properties itno
-                # format the string with collected data
-                parents = [{"entityName": p["entityName"].format(
-                    **d_metadata), "entityType": p["entityType"]}
-                    for p in parents]
-                self.log.debug("__ parents: {}".format(parents))
+                            # if any is matching then convert to entity_types
+                            if p_match_i:
+                                parent = self.convert_to_entity(
+                                    new_k, template_split[p_match_i[0]])
+                                parents.insert(p_match_i[0], parent)
+                        except Exception:
+                            d_metadata[new_k] = v
 
-                hierarchy = template.format(
-                    **d_metadata)
-                self.log.debug("__ hierarchy: {}".format(hierarchy))
+                    # create new shot asset name
+                    instance.data["asset"] = instance.data["asset"].format(
+                        **d_metadata)
+                    self.log.debug(
+                        "__ instance.data[asset]: "
+                        "{}".format(instance.data["asset"])
+                    )
 
-                # check if hierarchy attribute is already created
-                # it should not be so return warning if it is
-                hd = instance.data.get("hierarchy")
-                assert not hd, "Only one Hierarchy Tag is \
-                            allowed. Clip: `{}`".format(asset)
+                    # lastly fill those individual properties itno
+                    # format the string with collected data
+                    parents = [{"entityName": p["entityName"].format(
+                        **d_metadata), "entityType": p["entityType"]}
+                        for p in parents]
+                    self.log.debug("__ parents: {}".format(parents))
 
-                assetsShared = {
-                    asset: {
-                        "asset": instance.data["asset"],
+                    hierarchy = template.format(
+                        **d_metadata)
+                    self.log.debug("__ hierarchy: {}".format(hierarchy))
+
+                    # check if hierarchy attribute is already created
+                    # it should not be so return warning if it is
+                    hd = instance.data.get("hierarchy")
+                    assert not hd, (
+                        "Only one Hierarchy Tag is allowed. "
+                        "Clip: `{}`".format(asset)
+                    )
+
+                    # add formated hierarchy path into instance data
+                    instance.data["hierarchy"] = hierarchy
+                    instance.data["parents"] = parents
+
+                    # adding to asset shared dict
+                    self.log.debug("__ assets_shared: {}".format(assets_shared))
+                    if assets_shared.get(asset):
+                        self.log.debug("Adding to shared assets: `{}`".format(
+                            asset))
+                        asset_shared = assets_shared.get(asset)
+                    else:
+                        asset_shared = assets_shared[asset]
+
+                    asset_shared.update({
+                        "asset": asset,
                         "hierarchy": hierarchy,
-                        "parents": parents
-                    }}
-                self.log.debug("__ assetsShared: {}".format(assetsShared))
-                # add formated hierarchy path into instance data
-                instance.data["hierarchy"] = hierarchy
-                instance.data["parents"] = parents
-                context.data["assetsShared"].update(
-                    assetsShared)
+                        "parents": parents,
+                        "tasks":  instance.data["tasks"]
+                    })
+
+                    # adding frame start if any on instance
+                    start_frame = instance.data.get("startingFrame")
+                    if start_frame:
+                        asset_shared.update({
+                            "startingFrame": start_frame
+                        })
+
 
 
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
@@ -165,6 +191,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
     def process(self, context):
         instances = context[:]
+        sequence = context.data['activeSequence']
         # create hierarchyContext attr if context has none
 
         temp_context = {}
@@ -175,19 +202,8 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             name = instance.data["asset"]
 
             # get handles
-            handles = int(instance.data["handles"])
-            handle_start = int(instance.data["handleStart"] + handles)
-            handle_end = int(instance.data["handleEnd"] + handles)
-
-            # get source frames
-            source_first = int(instance.data["sourceFirst"])
-            source_in = int(instance.data["sourceIn"])
-            source_out = int(instance.data["sourceOut"])
-
-            instance.data['startFrame'] = int(
-                source_first + source_in - handle_start)
-            instance.data['endFrame'] = int(
-                (source_first + source_out + handle_end))
+            handle_start = int(instance.data["handleStart"])
+            handle_end = int(instance.data["handleEnd"])
 
             # inject assetsShared to other plates types
             assets_shared = context.data.get("assetsShared")
@@ -199,37 +215,67 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     name = instance.data["asset"] = s_asset_data["asset"]
                     instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
+                    instance.data["tasks"] = s_asset_data["tasks"]
 
-            self.log.debug("__ instance.data[parents]: {}".format(instance.data["parents"]))
-            self.log.debug("__ instance.data[hierarchy]: {}".format(instance.data["hierarchy"]))
-            self.log.debug("__ instance.data[name]: {}".format(instance.data["name"]))
-            if "main" not in instance.data["name"].lower():
-                continue
+                    # adding frame start if any on instance
+                    start_frame = s_asset_data.get("startingFrame")
+                    if start_frame:
+                        instance.data["frameStart"] = start_frame
+                        instance.data["frameEnd"] = start_frame + (
+                            instance.data["clipOut"] -
+                            instance.data["clipIn"])
+
+
+
+            self.log.debug(
+                "__ instance.data[parents]: {}".format(
+                    instance.data["parents"]
+                )
+            )
+            self.log.debug(
+                "__ instance.data[hierarchy]: {}".format(
+                    instance.data["hierarchy"]
+                )
+            )
+            self.log.debug(
+                "__ instance.data[name]: {}".format(instance.data["name"])
+            )
 
             in_info = {}
+
+            in_info["inputs"] = [
+                x["_id"] for x in instance.data.get("assetbuilds", [])
+            ]
+
             # suppose that all instances are Shots
             in_info['entity_type'] = 'Shot'
 
             # get custom attributes of the shot
-            in_info['custom_attributes'] = {
-                'handles': int(instance.data.get('handles')),
-                'fend': int(
-                    (source_first + source_out)),
-                'fstart': int(
-                    source_first + source_in),
-                'fps': context.data["framerate"]
-            }
+            if instance.data.get("main"):
+                in_info['custom_attributes'] = {
+                    'handles': int(instance.data.get('handles', 0)),
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end,
+                    "frameStart": instance.data["frameStart"],
+                    "frameEnd": instance.data["frameEnd"],
+                    "clipIn": instance.data["clipIn"],
+                    "clipOut": instance.data["clipOut"],
+                    'fps': instance.context.data["fps"]
+                }
 
-            handle_start = instance.data.get('handleStart')
-            handle_end = instance.data.get('handleEnd')
-            self.log.debug("__ handle_start: {}".format(handle_start))
-            self.log.debug("__ handle_end: {}".format(handle_end))
-            
-            if handle_start and handle_end:
-                in_info['custom_attributes'].update({
-                    "handle_start": handle_start,
-                    "handle_end": handle_end
-                })
+                # adding SourceResolution if Tag was present
+                if instance.data.get("main"):
+                    width = int(sequence.format().width())
+                    height = int(sequence.format().height())
+                    pixel_aspect = sequence.format().pixelAspect()
+                    self.log.info("Sequence Width,Height,PixelAspect are: `{0},{1},{2}`".format(
+                        width, height, pixel_aspect))
+
+                    in_info['custom_attributes'].update({
+                        "resolutionWidth": width,
+                        "resolutionHeight": height,
+                        "pixelAspect": pixel_aspect
+                    })
 
             in_info['tasks'] = instance.data['tasks']
 

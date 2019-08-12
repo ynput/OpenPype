@@ -51,8 +51,8 @@ class ValidateInstancerFrameRanges(pyblish.api.InstancePlugin):
 
         import pyseq
 
-        start_frame = instance.data.get("startFrame", 0)
-        end_frame = instance.data.get("endFrame", 0)
+        start_frame = instance.data.get("frameStart", 0)
+        end_frame = instance.data.get("frameEnd", 0)
         required = range(int(start_frame), int(end_frame) + 1)
 
         invalid = list()

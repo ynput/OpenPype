@@ -23,8 +23,8 @@ class CollectFrames(pyblish.api.InstancePlugin):
         match = re.match("(\w+)\.(\d+)\.vdb", file_name)
         result = file_name
 
-        start_frame = instance.data.get("startFrame", None)
-        end_frame = instance.data.get("endFrame", None)
+        start_frame = instance.data.get("frameStart", None)
+        end_frame = instance.data.get("frameEnd", None)
 
         if match and start_frame is not None:
 

@@ -166,8 +166,8 @@ class ExtractFBX(pype.api.Extractor):
         self.log.info("Export options: {0}".format(options))
 
         # Collect the start and end including handles
-        start = instance.data["startFrame"]
-        end = instance.data["endFrame"]
+        start = instance.data["frameStart"]
+        end = instance.data["frameEnd"]
         handles = instance.data.get("handles", 0)
         if handles:
             start -= handles
@@ -213,7 +213,7 @@ class ExtractFBX(pype.api.Extractor):
 
         representation = {
             'name': 'mov',
-            'ext': '.mov',
+            'ext': 'mov',
             'files': filename,
             "stagingDir": stagingDir,
         }

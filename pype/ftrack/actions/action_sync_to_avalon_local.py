@@ -6,6 +6,7 @@ import json
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, lib as ftracklib
+from pype.vendor.ftrack_api import session as fa_session
 
 
 class SyncToAvalon(BaseAction):
@@ -151,7 +152,10 @@ class SyncToAvalon(BaseAction):
         except ValueError as ve:
             job['status'] = 'failed'
             message = str(ve)
-            self.log.error('Error during syncToAvalon: {}'.format(message))
+            self.log.error(
+                'Error during syncToAvalon: {}'.format(message),
+                exc_info=True
+            )
 
         except Exception as e:
             job['status'] = 'failed'
@@ -161,7 +165,8 @@ class SyncToAvalon(BaseAction):
                 exc_type, fname, exc_tb.tb_lineno
             )
             self.log.error(
-                'Error during syncToAvalon: {}'.format(log_message)
+                'Error during syncToAvalon: {}'.format(log_message),
+                exc_info=True
             )
             message = (
                 'Unexpected Error'
@@ -171,6 +176,18 @@ class SyncToAvalon(BaseAction):
             if job['status'] in ['queued', 'running']:
                 job['status'] = 'failed'
             session.commit()
+
+            event = fa_session.ftrack_api.event.base.Event(
+                topic='ftrack.action.launch',
+                data=dict(
+                    actionIdentifier='sync.hierarchical.attrs.local',
+                    selection=event['data']['selection']
+                ),
+                source=dict(
+                    user=event['source']['user']
+                )
+            )
+            session.event_hub.publish(event, on_error='ignore')
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)
@@ -195,7 +212,7 @@ class SyncToAvalon(BaseAction):
                     self.add_childs_to_importable(child)
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -204,7 +221,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    SyncToAvalon(session).register()
+    SyncToAvalon(session, plugins_presets).register()
 
 
 def main(arguments=None):

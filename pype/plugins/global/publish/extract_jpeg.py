@@ -1,7 +1,8 @@
 import os
+
 import pyblish.api
-import subprocess
 from pype.vendor import clique
+import pype.api
 
 
 class ExtractJpegEXR(pyblish.api.InstancePlugin):
@@ -20,9 +21,8 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder
     families = ["imagesequence", "render", "write", "source"]
 
-
     def process(self, instance):
-        start = instance.data.get("startFrame")
+        start = instance.data.get("frameStart")
         stagingdir = os.path.normpath(instance.data.get("stagingDir"))
 
         collected_frames = os.listdir(stagingdir)
@@ -59,16 +59,19 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         jpeg_items.append(full_output_path)
 
         subprocess_jpeg = " ".join(jpeg_items)
-        sub_proc = subprocess.Popen(subprocess_jpeg)
-        sub_proc.wait()
+
+        # run subprocess
+        self.log.debug("{}".format(subprocess_jpeg))
+        pype.api.subprocess(subprocess_jpeg)
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
             'name': 'jpg',
-            'ext': '.jpg',
+            'ext': 'jpg',
             'files': jpegFile,
             "stagingDir": stagingdir,
+            "thumbnail": True
         }
         instance.data["representations"].append(representation)

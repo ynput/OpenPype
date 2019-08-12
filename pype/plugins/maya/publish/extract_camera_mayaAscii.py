@@ -88,8 +88,8 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
     def process(self, instance):
 
         # get settings
-        framerange = [instance.data.get("startFrame", 1),
-                      instance.data.get("endFrame", 1)]
+        framerange = [instance.data.get("frameStart", 1),
+                      instance.data.get("frameEnd", 1)]
         handles = instance.data.get("handles", 0)
         step = instance.data.get("step", 1.0)
         bake_to_worldspace = instance.data("bakeToWorldSpace", True)
@@ -173,7 +173,7 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
 
         representation = {
             'name': 'ma',
-            'ext': '.ma',
+            'ext': 'ma',
             'files': filename,
             "stagingDir": dir_path,
         }

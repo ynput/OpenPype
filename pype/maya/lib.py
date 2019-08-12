@@ -16,6 +16,7 @@ import maya.api.OpenMaya as om
 from avalon import api, maya, io, pipeline
 from avalon.vendor.six import string_types
 import avalon.maya.lib
+import avalon.maya.interactive
 
 from pype import lib
 
@@ -279,9 +280,9 @@ def collect_animation_data():
 
     # build attributes
     data = OrderedDict()
-    data["startFrame"] = start
-    data["endFrame"] = end
-    data["handles"] = 1
+    data["frameStart"] = start
+    data["frameEnd"] = end
+    data["handles"] = 0
     data["step"] = 1.0
     data["fps"] = fps
 
@@ -1857,21 +1858,24 @@ def set_context_settings():
 
     # Todo (Wijnand): apply renderer and resolution of project
 
-    project_data = lib.get_project_data()
-    asset_data = lib.get_asset_data()
+    project_data = lib.get_project()["data"]
+    asset_data = lib.get_asset()["data"]
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
     set_scene_fps(fps)
 
     # Set project resolution
-    width_key = "resolution_width"
-    height_key = "resolution_height"
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
 
     width = asset_data.get(width_key, project_data.get(width_key, 1920))
     height = asset_data.get(height_key, project_data.get(height_key, 1080))
 
     set_scene_resolution(width, height)
+
+    # Set frame range.
+    avalon.maya.interactive.reset_frame_range()
 
 
 # Valid FPS
@@ -1883,7 +1887,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset_fps()
+    fps = lib.get_asset()["data"]["fps"]
     current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
 
     if current_fps != fps:
@@ -2106,12 +2110,15 @@ def bake_to_world_space(nodes,
 
     return world_space_nodes
 
-def load_capture_preset(path):
+def load_capture_preset(path=None, data=None):
     import capture_gui
     import capture
 
-    path = path
-    preset = capture_gui.lib.load_json(path)
+    if data:
+        preset = data
+    else:
+        path = path
+        preset = capture_gui.lib.load_json(path)
     print preset
 
     options = dict()
@@ -2164,15 +2171,18 @@ def load_capture_preset(path):
     for key in preset[id]:
         if key == 'high_quality':
             temp_options2['multiSampleEnable'] = True
-            temp_options2['multiSampleCount'] = 4
-            temp_options2['textureMaxResolution'] = 512
+            temp_options2['multiSampleCount'] = 8
+            temp_options2['textureMaxResolution'] = 1024
             temp_options2['enableTextureMaxRes'] = True
 
-        if key == 'alphaCut' :
+        if key == 'alphaCut':
             temp_options2['transparencyAlgorithm'] = 5
             temp_options2['transparencyQuality'] = 1
 
-        if key == 'headsUpDisplay' :
+        if key == 'ssaoEnable':
+            temp_options2['ssaoEnable'] = True
+
+        if key == 'headsUpDisplay':
             temp_options['headsUpDisplay'] = True
 
         if key == 'displayLights':
@@ -2180,7 +2190,10 @@ def load_capture_preset(path):
         else:
             temp_options[str(key)] = preset[id][key]
 
-    for key in ['override_viewport_options', 'high_quality', 'alphaCut']:
+    for key in ['override_viewport_options', 'high_quality', 'alphaCut', "gpuCacheDisplayFilter"]:
+        temp_options.pop(key, None)
+
+    for key in ['ssaoEnable']:
         temp_options.pop(key, None)
 
     options['viewport_options'] = temp_options
@@ -2204,6 +2217,7 @@ def load_capture_preset(path):
     # options['display_options'] = temp_options
 
     return options
+
 
 def get_attr_in_layer(attr, layer):
     """Return attribute value in specified renderlayer.
@@ -2229,10 +2243,14 @@ def get_attr_in_layer(attr, layer):
 
     """
 
-    if cmds.mayaHasRenderSetup():
-        log.debug("lib.get_attr_in_layer is not optimized for render setup")
-        with renderlayer(layer):
-            return cmds.getAttr(attr)
+    try:
+        if cmds.mayaHasRenderSetup():
+            log.debug("lib.get_attr_in_layer is not "
+                      "optimized for render setup")
+            with renderlayer(layer):
+                return cmds.getAttr(attr)
+    except AttributeError:
+        pass
 
     # Ignore complex query if we're in the layer anyway
     current_layer = cmds.editRenderLayerGlobals(query=True,
@@ -2290,3 +2308,89 @@ def get_attr_in_layer(attr, layer):
                     return value
 
     return cmds.getAttr(attr)
+
+
+def _null(*args):
+    pass
+
+
+class shelf():
+    '''A simple class to build shelves in maya. Since the build method is empty,
+    it should be extended by the derived class to build the necessary shelf
+    elements. By default it creates an empty shelf called "customShelf".'''
+
+    ###########################################################################
+    '''This is an example shelf.'''
+    # class customShelf(_shelf):
+    #     def build(self):
+    #         self.addButon(label="button1")
+    #         self.addButon("button2")
+    #         self.addButon("popup")
+    #         p = cmds.popupMenu(b=1)
+    #         self.addMenuItem(p, "popupMenuItem1")
+    #         self.addMenuItem(p, "popupMenuItem2")
+    #         sub = self.addSubMenu(p, "subMenuLevel1")
+    #         self.addMenuItem(sub, "subMenuLevel1Item1")
+    #         sub2 = self.addSubMenu(sub, "subMenuLevel2")
+    #         self.addMenuItem(sub2, "subMenuLevel2Item1")
+    #         self.addMenuItem(sub2, "subMenuLevel2Item2")
+    #         self.addMenuItem(sub, "subMenuLevel1Item2")
+    #         self.addMenuItem(p, "popupMenuItem3")
+    #         self.addButon("button3")
+    # customShelf()
+    ###########################################################################
+
+    def __init__(self, name="customShelf", iconPath="", preset={}):
+        self.name = name
+
+        self.iconPath = iconPath
+
+        self.labelBackground = (0, 0, 0, 0)
+        self.labelColour = (.9, .9, .9)
+
+        self.preset = preset
+
+        self._cleanOldShelf()
+        cmds.setParent(self.name)
+        self.build()
+
+    def build(self):
+        '''This method should be overwritten in derived classes to actually
+        build the shelf elements. Otherwise, nothing is added to the shelf.'''
+        for item in self.preset['items']:
+            if not item.get('command'):
+                item['command'] = self._null
+            if item['type'] == 'button':
+                self.addButon(item['name'], command=item['command'])
+            if item['type'] == 'menuItem':
+                self.addMenuItem(item['parent'], item['name'], command=item['command'])
+            if item['type'] == 'subMenu':
+                self.addMenuItem(item['parent'], item['name'], command=item['command'])
+
+    def addButon(self, label, icon="commandButton.png", command=_null, doubleCommand=_null):
+        '''Adds a shelf button with the specified label, command, double click command and image.'''
+        cmds.setParent(self.name)
+        if icon:
+            icon = self.iconPath + icon
+        cmds.shelfButton(width=37, height=37, image=icon, l=label, command=command, dcc=doubleCommand, imageOverlayLabel=label, olb=self.labelBackground, olc=self.labelColour)
+
+    def addMenuItem(self, parent, label, command=_null, icon=""):
+        '''Adds a shelf button with the specified label, command, double click command and image.'''
+        if icon:
+            icon = self.iconPath + icon
+        return cmds.menuItem(p=parent, l=label, c=command, i="")
+
+    def addSubMenu(self, parent, label, icon=None):
+        '''Adds a sub menu item with the specified label and icon to the specified parent popup menu.'''
+        if icon:
+            icon = self.iconPath + icon
+        return cmds.menuItem(p=parent, l=label, i=icon, subMenu=1)
+
+    def _cleanOldShelf(self):
+        '''Checks if the shelf exists and empties it if it does or creates it if it does not.'''
+        if cmds.shelfLayout(self.name, ex=1):
+            if cmds.shelfLayout(self.name, q=1, ca=1):
+                for each in cmds.shelfLayout(self.name, q=1, ca=1):
+                    cmds.deleteUI(each)
+        else:
+            cmds.shelfLayout(self.name, p="ShelfLayout")

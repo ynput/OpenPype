@@ -1,12 +1,11 @@
+from Qt import QtWidgets
 import sys
 import logging
-
-from avalon.vendor.Qt.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox
 
 log = logging.getLogger(__name__)
 
 
-class Window(QWidget):
+class Window(QtWidgets.QWidget):
     def __init__(self, parent, title, message, level):
         super().__init__()
         self.parent = parent
@@ -14,30 +13,30 @@ class Window(QWidget):
         self.message = message
         self.level = level
 
-        if self.level is "info":
+        if self.level == "info":
             self._info()
-        elif self.level is "warning":
+        elif self.level == "warning":
             self._warning()
-        elif self.level is "critical":
+        elif self.level == "critical":
             self._critical()
 
     def _info(self):
         self.setWindowTitle(self.title)
-        rc = QMessageBox.information(
+        rc = QtWidgets.QMessageBox.information(
             self, self.title, self.message)
         if rc:
             self.exit()
 
     def _warning(self):
         self.setWindowTitle(self.title)
-        rc = QMessageBox.warning(
+        rc = QtWidgets.QMessageBox.warning(
             self, self.title, self.message)
         if rc:
             self.exit()
 
     def _critical(self):
         self.setWindowTitle(self.title)
-        rc = QMessageBox.critical(
+        rc = QtWidgets.QMessageBox.critical(
             self, self.title, self.message)
         if rc:
             self.exit()
@@ -51,7 +50,7 @@ class Window(QWidget):
 
 def message(title=None, message=None, level="info"):
     global app
-    app = QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     ex = Window(app, title, message, level)
     ex.show()
     # sys.exit(app.exec_())

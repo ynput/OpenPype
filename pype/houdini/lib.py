@@ -205,7 +205,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset_fps()
+    fps = lib.get_asset()["data"]["fps"]
     current_fps = hou.fps()  # returns float
 
     if current_fps != fps:

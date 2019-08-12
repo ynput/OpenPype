@@ -7,7 +7,7 @@ class ValidateHierarchy(api.InstancePlugin):
     """
 
     order = api.ValidatorOrder
-    families = ["clip"]
+    families = ["clip", "shot"]
     label = "Validate Hierarchy"
     hosts = ["nukestudio"]
 
