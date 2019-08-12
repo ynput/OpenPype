@@ -13,9 +13,11 @@ class ThumbToParent(BaseAction):
     # Action identifier
     identifier = 'thumb.to.parent'
     # Action label
-    label = 'Thumbnail to Parent'
+    label = 'Thumbnail'
+    # Action variant
+    variant = " to Parent"
     # Action icon
-    icon = '{}/ftrack/action_icons/thumbToParent.svg'.format(
+    icon = '{}/ftrack/action_icons/Thumbnail.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
