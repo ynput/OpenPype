@@ -339,7 +339,7 @@ def create_write_node(name, data, prenodes=None):
 
     # adding write to read button
     add_button_write_to_read(GN)
-    
+
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
 
@@ -382,7 +382,7 @@ def set_viewers_colorspace(viewer):
     ''' Adds correct colorspace to viewer
 
     Arguments:
-        viewer (obj): nuke viewer node object to be fixed
+        viewer (dict): adjustments from presets
 
     '''
     assert isinstance(viewer, dict), log.error(
@@ -401,7 +401,7 @@ def set_viewers_colorspace(viewer):
             copy_inputs = v.dependencies()
             copy_knobs = {k: v[k].value() for k in v.knobs()
                           if k not in filter_knobs}
-            pprint(copy_knobs)
+
             # delete viewer with wrong settings
             erased_viewers.append(v['name'].value())
             nuke.delete(v)
@@ -431,7 +431,7 @@ def set_root_colorspace(root_dict):
     ''' Adds correct colorspace to root
 
     Arguments:
-        root_dict (dict): nuke root node as dictionary
+        root_dict (dict): adjustmensts from presets
 
     '''
     assert isinstance(root_dict, dict), log.error(
@@ -496,10 +496,12 @@ def set_colorspace():
                   "contact your supervisor!")
 
 
-def reset_frame_range_handles():
+def reset_frame_range_handles(root=None):
     """Set frame range to current asset"""
 
-    root = nuke.root()
+    if not root:
+        root = nuke.root()
+
     name = api.Session["AVALON_ASSET"]
     asset_entity = pype.get_asset(name)
 
