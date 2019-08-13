@@ -59,6 +59,18 @@ class ClockifyModule:
                 current += os.pathsep
             os.environ['AVALON_ACTIONS'] = current + actions_path
 
+        if 'TimersManager' in modules:
+            self.timer_manager = modules['TimersManager']
+            self.timer_manager.add_module(self)
+
+    def timer_started(self, data):
+        if hasattr(self, 'timer_manager'):
+            self.timer_manager.start_timers(data)
+
+    def timer_stopped(self):
+        if hasattr(self, 'timer_manager'):
+            self.timer_manager.stop_timers()
+
     def start_timer_check(self):
         self.bool_thread_check_running = True
         if self.thread_timer_check is None:
