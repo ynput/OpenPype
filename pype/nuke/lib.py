@@ -550,7 +550,7 @@ def reset_frame_range_handles():
         node['frame_range_lock'].setValue(True)
 
     # adding handle_start/end to root avalon knob
-    if not avalon.nuke.set_avalon_knob_data(root, {
+    if not avalon.nuke.imprint(root, {
         "handleStart": int(handle_start),
         "handleEnd": int(handle_end)
     }):
