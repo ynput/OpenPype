@@ -63,6 +63,12 @@ class ClockifyModule:
             self.timer_manager = modules['TimersManager']
             self.timer_manager.add_module(self)
 
+    def start_timer_manager(self, data):
+        self.start_timer(data)
+
+    def stop_timer_manager(self):
+        self.stop_timer()
+
     def timer_started(self, data):
         if hasattr(self, 'timer_manager'):
             self.timer_manager.start_timers(data)
@@ -89,11 +95,39 @@ class ClockifyModule:
     def check_running(self):
         import time
         while self.bool_thread_check_running is True:
+            bool_timer_run = False
             if self.clockapi.get_in_progress() is not None:
-                self.bool_timer_run = True
-            else:
-                self.bool_timer_run = False
-            self.set_menu_visibility()
+                bool_timer_run = True
+
+            if self.bool_timer_run != bool_timer_run:
+                if self.bool_timer_run is True:
+                    self.timer_stopped()
+                else:
+                    actual_timer = self.clockapi.get_in_progress()
+                    if not actual_timer:
+                        continue
+
+                    actual_project_id = actual_timer["projectId"]
+                    project = self.clockapi.get_project_by_id(
+                        actual_project_id
+                    )
+                    project_name = project["name"]
+
+                    actual_timer_hierarchy = actual_timer["description"]
+                    hierarchy_items = actual_timer_hierarchy.split("/")
+                    task_name = hierarchy_items[-1]
+                    hierarchy = hierarchy_items[:-1]
+
+                    data = {
+                        "task_name": task_name,
+                        "hierarchy": hierarchy,
+                        "project_name": project_name
+                    }
+
+                    self.timer_started(data)
+
+                self.bool_timer_run = bool_timer_run
+                self.set_menu_visibility()
             time.sleep(5)
 
     def stop_timer(self):
