@@ -134,6 +134,36 @@ class ClockifyModule:
         self.clockapi.finish_time_entry()
         self.bool_timer_run = False
 
+    def start_timer(self, input_data):
+        actual_timer = self.clockapi.get_in_progress()
+        actual_timer_hierarchy = None
+        actual_project_id = None
+        if actual_timer is not None:
+            actual_timer_hierarchy = actual_timer.get("description")
+            actual_project_id = actual_timer.get("projectId")
+
+        desc_items = [val for val in input_data.get("hierarchy", [])]
+        desc_items.append(input_data["task_name"])
+        description = "/".join(desc_items)
+
+        project_id = self.clockapi.get_project_id(input_data["project_name"])
+
+        if (
+            actual_timer is not None and
+            description == actual_timer_hierarchy and
+            project_id == actual_project_id
+        ):
+            return
+
+        tag_ids = []
+        task_tag_id = self.clockapi.get_tag_id(input_data["task_name"])
+        if task_tag_id is not None:
+            tag_ids.append(task_tag_id)
+
+        self.clockapi.start_time_entry(
+            description, project_id, tag_ids=tag_ids
+        )
+
     # Definition of Tray menu
     def tray_menu(self, parent_menu):
         # Menu for Tray App
