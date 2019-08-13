@@ -1,3 +1,4 @@
+import os
 import threading
 from pypeapp import style
 from Qt import QtWidgets
@@ -20,9 +21,10 @@ class ClockifyModule:
         self.bool_workspace_set = False
         self.bool_timer_run = False
 
-    def start_up(self):
         self.clockapi.set_master(self)
         self.bool_api_key_set = self.clockapi.set_api()
+
+    def tray_start(self):
         if self.bool_api_key_set is False:
             self.show_settings()
             return
@@ -41,7 +43,7 @@ class ClockifyModule:
                 os.path.dirname(__file__),
                 'ftrack_actions'
             ])
-            current = os.environ('FTRACK_ACTIONS_PATH', '')
+            current = os.environ.get('FTRACK_ACTIONS_PATH', '')
             if current:
                 current += os.pathsep
             os.environ['FTRACK_ACTIONS_PATH'] = current + actions_path
@@ -87,9 +89,9 @@ class ClockifyModule:
         self.bool_timer_run = False
 
     # Definition of Tray menu
-    def tray_menu(self, parent):
+    def tray_menu(self, parent_menu):
         # Menu for Tray App
-        self.menu = QtWidgets.QMenu('Clockify', parent)
+        self.menu = QtWidgets.QMenu('Clockify', parent_menu)
         self.menu.setProperty('submenu', 'on')
         self.menu.setStyleSheet(style.load_stylesheet())
 
@@ -109,7 +111,7 @@ class ClockifyModule:
 
         self.set_menu_visibility()
 
-        return self.menu
+        parent_menu.addMenu(self.menu)
 
     def show_settings(self):
         self.widget_settings.input_api_key.setText(self.clockapi.get_api_key())
