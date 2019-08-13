@@ -9,7 +9,7 @@ log = Logger().get_logger(__name__, "nuke")
 def install():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(Session["AVALON_LABEL"])
-
+    workfile_settings = lib.Workfile_settings()
     # replace reset resolution from avalon core to pype's
     name = "Reset Resolution"
     new_name = "Set Resolution"
@@ -20,7 +20,7 @@ def install():
     log.debug("Changing Item: {}".format(rm_item))
     # rm_item[1].setEnabled(False)
     menu.removeItem(rm_item[1].name())
-    menu.addCommand(new_name, lib.reset_resolution, index=(rm_item[0]))
+    menu.addCommand(new_name, workfile_settings.reset_resolution, index=(rm_item[0]))
 
     # replace reset frame range from avalon core to pype's
     name = "Reset Frame Range"
@@ -31,12 +31,12 @@ def install():
     log.debug("Changing Item: {}".format(rm_item))
     # rm_item[1].setEnabled(False)
     menu.removeItem(rm_item[1].name())
-    menu.addCommand(new_name, lib.reset_frame_range_handles, index=(rm_item[0]))
+    menu.addCommand(new_name, workfile_settings.reset_frame_range_handles, index=(rm_item[0]))
 
     # add colorspace menu item
     name = "Set colorspace"
     menu.addCommand(
-        name, lib.set_colorspace,
+        name, workfile_settings.set_colorspace,
         index=(rm_item[0]+2)
     )
     log.debug("Adding menu item: {}".format(name))
@@ -44,7 +44,7 @@ def install():
     # add item that applies all setting above
     name = "Apply all settings"
     menu.addCommand(
-        name, lib.set_context_settings, index=(rm_item[0]+3)
+        name, workfile_settings.set_context_settings, index=(rm_item[0]+3)
     )
     log.debug("Adding menu item: {}".format(name))
 

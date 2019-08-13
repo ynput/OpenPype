@@ -104,7 +104,7 @@ def install():
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
-
+    workfile_settings = lib.Workfile_settings()
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "write",
@@ -121,7 +121,7 @@ def install():
         nuke.addOnCreate(launch_workfiles_app, nodeClass="Root")
 
     # Set context settings.
-    nuke.addOnCreate(lib.set_context_settings, nodeClass="Root")
+    nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
 
     menu.install()
 
