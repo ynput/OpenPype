@@ -59,7 +59,7 @@ class SyncToAvalon(BaseAction):
     #: Action priority
     priority = 200
 
-    def __init__(self, session):
+    def __init__(self, session, plugins_presets):
         super(SyncToAvalon, self).__init__(session)
         # reload utils on initialize (in case of server restart)
 
