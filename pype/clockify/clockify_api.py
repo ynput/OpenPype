@@ -304,6 +304,9 @@ class ClockifyAPI(metaclass=Singleton):
         if workspace_id is None:
             workspace_id = self.workspace_id
         current = self.get_in_progress(workspace_id)
+        if current is None:
+            return
+
         current_id = current["id"]
         action_url = 'workspaces/{}/timeEntries/{}'.format(
             workspace_id, current_id
