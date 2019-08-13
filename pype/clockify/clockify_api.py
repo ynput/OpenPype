@@ -1,4 +1,5 @@
 import os
+import re
 import requests
 import json
 import datetime
@@ -22,6 +23,7 @@ class ClockifyAPI(metaclass=Singleton):
     app_dir = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
     file_name = 'clockify.json'
     fpath = os.path.join(app_dir, file_name)
+    admin_permission_names = ['WORKSPACE_OWN', 'WORKSPACE_ADMIN']
     master_parent = None
     workspace_id = None
 
@@ -55,30 +57,40 @@ class ClockifyAPI(metaclass=Singleton):
             return False
         return True
 
-    def validate_workspace_perm(self):
-        test_project = '__test__'
-        action_url = 'workspaces/{}/projects/'.format(self.workspace_id)
-        body = {
-            "name": test_project, "clientId": "", "isPublic": "false",
-            "estimate": {"type": "AUTO"},
-            "color": "#f44336", "billable": "true"
-        }
-        response = requests.post(
-            self.endpoint + action_url,
-            headers=self.headers, json=body
+    def validate_workspace_perm(self, workspace_id=None):
+        user_id = self.get_user_id()
+        if user_id is None:
+            return False
+        if workspace_id is None:
+            workspace_id = self.workspace_id
+        action_url = "/workspaces/{}/users/{}/permissions".format(
+            workspace_id, user_id
         )
-        if response.status_code == 201:
-            self.delete_project(self.get_project_id(test_project))
-            return True
-        else:
-            projects = self.get_projects()
-            if test_project in projects:
-                try:
-                    self.delete_project(self.get_project_id(test_project))
-                    return True
-                except json.decoder.JSONDecodeError:
-                    return False
+        response = requests.get(
+            self.endpoint + action_url,
+            headers=self.headers
+        )
+        user_permissions = response.json()
+        for perm in user_permissions:
+            if perm['name'] in self.admin_permission_names:
+                return True
         return False
+
+    def get_user_id(self):
+        action_url = 'v1/user/'
+        response = requests.get(
+            self.endpoint + action_url,
+            headers=self.headers
+        )
+        # this regex is neccessary: UNICODE strings are crashing
+        # during json serialization
+        id_regex ='\"{1}id\"{1}\:{1}\"{1}\w+\"{1}'
+        result = re.findall(id_regex, str(response.content))
+        if len(result) != 1:
+            # replace with log and better message?
+            print('User ID was not found (this is a BUG!!!)')
+            return None
+        return json.loads('{'+result[0]+'}')['id']
 
     def set_workspace(self, name=None):
         if name is None:
@@ -146,6 +158,19 @@ class ClockifyAPI(metaclass=Singleton):
         return {
             project["name"]: project["id"] for project in response.json()
         }
+
+    def get_project_by_id(self, project_id, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
+        action_url = 'workspaces/{}/projects/{}/'.format(
+            workspace_id, project_id
+        )
+        response = requests.get(
+            self.endpoint + action_url,
+            headers=self.headers
+        )
+
+        return response.json()
 
     def get_tags(self, workspace_id=None):
         if workspace_id is None:
@@ -279,6 +304,9 @@ class ClockifyAPI(metaclass=Singleton):
         if workspace_id is None:
             workspace_id = self.workspace_id
         current = self.get_in_progress(workspace_id)
+        if current is None:
+            return
+
         current_id = current["id"]
         action_url = 'workspaces/{}/timeEntries/{}'.format(
             workspace_id, current_id

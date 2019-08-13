@@ -7,3 +7,6 @@ __all__ = [
     'ClockifySettings',
     'ClockifyModule'
 ]
+    
+def tray_init(tray_widget, main_widget):
+    return ClockifyModule(main_widget, tray_widget)
