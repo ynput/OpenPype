@@ -159,6 +159,19 @@ class ClockifyAPI(metaclass=Singleton):
             project["name"]: project["id"] for project in response.json()
         }
 
+    def get_project_by_id(self, project_id, workspace_id=None):
+        if workspace_id is None:
+            workspace_id = self.workspace_id
+        action_url = 'workspaces/{}/projects/{}/'.format(
+            workspace_id, project_id
+        )
+        response = requests.get(
+            self.endpoint + action_url,
+            headers=self.headers
+        )
+
+        return response.json()
+
     def get_tags(self, workspace_id=None):
         if workspace_id is None:
             workspace_id = self.workspace_id
