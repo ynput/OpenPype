@@ -132,6 +132,8 @@ class ClockifyModule:
 
     def stop_timer(self):
         self.clockapi.finish_time_entry()
+        if self.bool_timer_run:
+            self.timer_stopped()
         self.bool_timer_run = False
 
     def start_timer(self, input_data):
