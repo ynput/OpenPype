@@ -189,7 +189,7 @@ def add_submission():
 
 class PublishAction(QtWidgets.QAction):
     """
-    Action with is showing as menu item 
+    Action with is showing as menu item
     """
 
     def __init__(self):
@@ -287,3 +287,113 @@ def _show_no_gui():
 
     messagebox.setStandardButtons(messagebox.Ok)
     messagebox.exec_()
+
+
+def create_nk(filepath, version, representations, nodes=None, to_timeline=False):
+    ''' Creating nuke workfile with particular version with given nodes
+    Also it is creating timeline track items as precomps.
+
+    Arguments:
+        filepath(str): path to workfile to be created
+        version(obj): entity avalon db
+        representations(list dict): entities from avalon db
+        nodes(list of dict): each key in dict is knob order is important
+        to_timeline(type): will build trackItem with metadata
+
+    Returns:
+        bool: True if done
+
+    Raises:
+        Exception: with traceback
+
+    '''
+    import hiero.core
+    from avalon.nuke import imprint
+    from pype.nuke import (
+        reset_frame_range_handles,
+        set_colorspace
+        )
+    # check if the file exists if does then Raise "File exists!"
+    if os.path.exists(filepath):
+        raise FileExistsError("File already exists: `{}`".format(filepath))
+
+    # if no representations matching then
+    #   Raise "no representations to be build"
+    if len(representations) == 0:
+        raise AttributeError("Missing list of `representations`")
+
+    # check nodes input
+    if len(nodes) == 0:
+        log.warning("Missing list of `nodes`")
+
+    # create temp nk file
+    nuke_script = hiero.core.nuke.ScriptWriter()
+
+    version_data = version.get("data", {})
+
+    if not "frameStart" not in version_data.keys():
+        raise AttributeError("Missing attribute of version: `frameStart`")
+
+    # editorial
+    first_frame = version_data.get("frameStart")
+    last_frame = version_data.get("frameEnd")
+    fps = version_data.get("fps")
+
+    # setting
+    colorspace = version_data.get("colorspaceScript")
+    widht = version_data.get("widht")
+    height = version_data.get("height")
+    pixel_aspect = version_data.get("pixelAspect")
+
+    # handles
+    handle_start = version_data.get("handleStart")
+    handle_end = version_data.get("handleEnd")
+
+    # create root node and save all metadata
+    root_node = hiero.core.nuke.RootNode(
+        first_frame,
+        last_frame,
+        fps=fps
+    )
+
+    # run set colorspace, set framerange, set format
+    # set colorspace from 'colorspaceScript'
+    # root_node.addProjectSettings(colorspace)
+
+    # add root knob AvalonTab and data + publish knob
+    # imprint(root_node, {
+    #     "handleStart": int(handle_start),
+    #     "handleEnd": int(handle_end)
+    #     })
+
+    nuke_script.addNode(root_node)
+
+    write_node = hiero.core.nuke.WriteNode(movie_path.replace("\\", "/"))
+    write_node.setKnob("file_type", "mov")
+    write_node.setKnob("mov32_audiofile", audio_file.replace("\\", "/"))
+    write_node.setKnob("mov32_fps", sequence.framerate())
+    nuke_script.addNode(write_node)
+
+    nuke_script.writeToDisk(nukescript_path)
+
+
+
+
+    # create read nodes with Loader plugin from matched representations
+
+    # create subsets in workfile
+    for repr in representations:
+        subset = repr.get("subset")
+        id = repr.get("id")
+        data = repr.get("data")
+
+        # check if all variables are filled
+        if subset and id and data:
+            # check if names from `representations` are in db
+            # set mov files for correct colorspace
+        else:
+            raise KeyError("Missing key in `representation`")
+
+
+
+    # Create and connect rendering write
