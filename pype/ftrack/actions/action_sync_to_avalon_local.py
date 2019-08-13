@@ -47,11 +47,12 @@ class SyncToAvalon(BaseAction):
     #: Action identifier.
     identifier = 'sync.to.avalon.local'
     #: Action label.
-    label = 'SyncToAvalon - Local'
+    label = "Pype Admin"
+    variant = '- Sync To Avalon (Local)'
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
-    icon = '{}/ftrack/action_icons/SyncToAvalon-local.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
     #: roles that are allowed to register this action

@@ -13,9 +13,9 @@ class CreateProjectFolders(BaseAction):
     '''Edit meta data action.'''
 
     #: Action identifier.
-    identifier = 'create.project.folders'
+    identifier = 'create.project.structure'
     #: Action label.
-    label = 'Create Project Folders'
+    label = 'Create Project Structure'
     #: Action description.
     description = 'Creates folder structure'
     #: roles that are allowed to register this action
@@ -31,6 +31,11 @@ class CreateProjectFolders(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
+        if len(entities) != 1:
+            return False
+
+        if entities[0].entity_type.lower() != "project":
+            return False
 
         return True
 

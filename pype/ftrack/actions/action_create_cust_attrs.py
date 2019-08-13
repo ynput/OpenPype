@@ -110,12 +110,13 @@ class CustomAttributes(BaseAction):
     #: Action identifier.
     identifier = 'create.update.attributes'
     #: Action label.
-    label = 'Create/Update Avalon Attributes'
+    label = "Pype Admin"
+    variant = '- Create/Update Avalon Attributes'
     #: Action description.
     description = 'Creates Avalon/Mongo ID for double check'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = '{}/ftrack/action_icons/CustomAttributes.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 

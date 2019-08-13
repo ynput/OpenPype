@@ -48,11 +48,12 @@ class Sync_To_Avalon(BaseAction):
     #: Action identifier.
     identifier = 'sync.to.avalon'
     #: Action label.
-    label = 'SyncToAvalon'
+    label = "Pype Admin"
+    variant = "- Sync To Avalon (Server)"
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
-    icon = '{}/ftrack/action_icons/SyncToAvalon.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get(
             'PYPE_STATICS_SERVER',
             'http://localhost:{}'.format(
