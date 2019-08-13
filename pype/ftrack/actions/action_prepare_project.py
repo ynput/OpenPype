@@ -76,8 +76,10 @@ class PrepareProject(BaseAction):
 
         title = "Set Attribute values"
         items = []
+        multiselect_enumerators = []
 
-        # This item will be last - sets value of auto synchronization
+        # This item will be last (before enumerators)
+        # - sets value of auto synchronization
         auto_sync_name = "avalon_auto_sync"
         auto_sync_item = {
             "name": auto_sync_name,
@@ -111,10 +113,9 @@ class PrepareProject(BaseAction):
                 attr_config_data = json.loads(attr_config["data"])
 
                 if attr_config["multiSelect"] is True:
-                    if items:
-                        items.append(item_splitter)
+                    multiselect_enumerators.append(item_splitter)
 
-                    items.append({
+                    multiselect_enumerators.append({
                         "type": "label",
                         "value": in_data["label"]
                     })
@@ -143,14 +144,13 @@ class PrepareProject(BaseAction):
                                 if name == default:
                                     item["value"] = True
 
-                        items.append(item)
+                        multiselect_enumerators.append(item)
 
-                    items.append({
+                    multiselect_enumerators.append({
                         "type": "hidden",
                         "name": "__hidden__{}".format(key),
                         "value": json.dumps(names)
                     })
-                    items.append(item_splitter)
                 else:
                     easy_type = True
                     item["data"] = attr_config_data
@@ -178,7 +178,12 @@ class PrepareProject(BaseAction):
 
                 items.append(item)
 
+        # Add autosync attribute
         items.append(auto_sync_item)
+
+        # Add enumerator items at the end
+        for item in multiselect_enumerators:
+            items.append(item)
 
         return {
             'items': items,
