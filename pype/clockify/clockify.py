@@ -13,6 +13,7 @@ class ClockifyModule:
         self.main_parent = main_parent
         self.parent = parent
         self.clockapi = ClockifyAPI()
+        self.message_widget = None
         self.widget_settings = ClockifySettings(main_parent, self)
         self.widget_settings_required = None
 
@@ -169,7 +170,25 @@ class ClockifyModule:
         desc_items.append(input_data["task_name"])
         description = "/".join(desc_items)
 
-        project_id = self.clockapi.get_project_id(input_data["project_name"])
+        project_name = input_data["project_name"]
+        project_id = self.clockapi.get_project_id(project_name)
+        if not project_id:
+            self.log.warning((
+                "Project \"{}\" was not found in Clockify. Timer won't start."
+            ).format(project_name))
+
+            msg = (
+                "Project <b>\"{}\"</b> is not in Clockify Workspace <b>\"{}\"</b>."
+                "<br><br>Please inform your Project Manager."
+            ).format(project_name, str(self.clockapi.workspace))
+
+            self.message_widget = MessageWidget(
+                self.main_parent, msg, "Clockify - Info Message"
+            )
+            self.message_widget.closed.connect(self.message_widget)
+            self.message_widget.show()
+
+            return
 
         if (
             actual_timer is not None and
@@ -186,6 +205,9 @@ class ClockifyModule:
         self.clockapi.start_time_entry(
             description, project_id, tag_ids=tag_ids
         )
+
+    def on_message_widget_close(self):
+        self.message_widget = None
 
     # Definition of Tray menu
     def tray_menu(self, parent_menu):
