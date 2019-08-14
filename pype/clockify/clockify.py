@@ -104,15 +104,19 @@ class ClockifyModule:
             if self.bool_timer_run != bool_timer_run:
                 if self.bool_timer_run is True:
                     self.timer_stopped()
-                else:
+                elif self.bool_timer_run is False:
                     actual_timer = self.clockapi.get_in_progress()
                     if not actual_timer:
                         continue
 
-                    actual_project_id = actual_timer["projectId"]
-                    project = self.clockapi.get_project_by_id(
-                        actual_project_id
-                    )
+                    actual_proj_id = actual_timer["projectId"]
+                    if not actual_proj_id:
+                        continue
+
+                    project = self.clockapi.get_project_by_id(actual_proj_id)
+                    if project and project.get("code") == 501:
+                        continue
+
                     project_name = project["name"]
 
                     actual_timer_hierarchy = actual_timer["description"]
