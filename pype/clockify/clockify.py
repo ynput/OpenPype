@@ -143,6 +143,10 @@ class ClockifyModule:
         self.bool_timer_run = False
 
     def start_timer(self, input_data):
+        # If not api key is not entered then skip
+        if not self.clockapi.get_api_key():
+            return
+
         actual_timer = self.clockapi.get_in_progress()
         actual_timer_hierarchy = None
         actual_project_id = None
