@@ -17,10 +17,8 @@ class SyncClocify(BaseAction):
     label = 'Sync To Clockify'
     #: Action description.
     description = 'Synchronise data to Clockify workspace'
-    #: priority
-    priority = 100
     #: roles that are allowed to register this action
-    role_list = ['Pypeclub', 'Administrator']
+    role_list = ["Pypeclub", "Administrator", "project Manager"]
     #: icon
     icon = '{}/app_icons/clockify-white.png'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
@@ -28,13 +26,12 @@ class SyncClocify(BaseAction):
     #: CLockifyApi
     clockapi = ClockifyAPI()
 
-    def register(self):
+    def preregister(self):
         if self.clockapi.workspace_id is None:
-            raise ValueError('Clockify Workspace or API key are not set!')
+            return "Clockify Workspace or API key are not set!"
 
         if self.clockapi.validate_workspace_perm() is False:
             raise MissingPermision('Clockify')
-        super().register()
 
     def discover(self, session, entities, event):
         ''' Validation '''
