@@ -25,6 +25,7 @@ class ClockifyAPI(metaclass=Singleton):
     fpath = os.path.join(app_dir, file_name)
     admin_permission_names = ['WORKSPACE_OWN', 'WORKSPACE_ADMIN']
     master_parent = None
+    workspace = None
     workspace_id = None
 
     def set_master(self, master_parent):
