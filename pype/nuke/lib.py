@@ -1,16 +1,23 @@
 import os
 import sys
+import getpass
 from collections import OrderedDict
 from pprint import pprint
 from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
+
 import nuke
 from .templates import (
     get_colorspace_preset,
     get_node_dataflow_preset,
     get_node_colorspace_preset
 )
+
+from .templates import (
+    get_anatomy
+)
+# TODO: remove get_anatomy and import directly Anatomy() here
 
 from pypeapp import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -158,11 +165,6 @@ def format_anatomy(data):
         path (str)
     '''
     # TODO: perhaps should be nonPublic
-
-    from .templates import (
-        get_anatomy
-    )
-    # TODO: remove get_anatomy and import directly Anatomy() here
 
     anatomy = get_anatomy()
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
@@ -392,11 +394,11 @@ class Workfile_settings(object):
         nodes_filter (list): filtering classes for nodes
 
     """
-    def __init__(self, root=None, nodes=None, nodes_filter=[]):
+    def __init__(self, asset=None, root_node=None, nodes=None, nodes_filter=[]):
         self._project = io.find_one({"type": "project"})
-        self._asset = api.Session["AVALON_ASSET"]
+        self._asset = asset or api.Session["AVALON_ASSET"]
         self._asset_entity = pype.get_asset(self._asset)
-        self._root = root or nuke.root()
+        self._root_node = root_node or nuke.root()
         self._nodes = nodes or []
         self._nodes_filter = nodes_filter
 
@@ -469,21 +471,21 @@ class Workfile_settings(object):
             "set_root_colorspace(): argument should be dictionary")
 
         # first set OCIO
-        if self._root["colorManagement"].value() \
+        if self._root_node["colorManagement"].value() \
                 not in str(root_dict["colorManagement"]):
-            self._root["colorManagement"].setValue(
+            self._root_node["colorManagement"].setValue(
                 str(root_dict["colorManagement"]))
 
         # second set ocio version
-        if self._root["OCIO_config"].value() \
+        if self._root_node["OCIO_config"].value() \
                 not in str(root_dict["OCIO_config"]):
-            self._root["OCIO_config"].setValue(
+            self._root_node["OCIO_config"].setValue(
                 str(root_dict["OCIO_config"]))
 
         # then set the rest
         for knob, value in root_dict.items():
-            if self._root[knob].value() not in value:
-                self._root[knob].setValue(str(value))
+            if self._root_node[knob].value() not in value:
+                self._root_node[knob].setValue(str(value))
                 log.debug("nuke.root()['{}'] changed to: {}".format(
                     knob, value))
 
@@ -571,9 +573,9 @@ class Workfile_settings(object):
         frame_start = int(data["frameStart"]) - handle_start
         frame_end = int(data["frameEnd"]) + handle_end
 
-        self._root["fps"].setValue(fps)
-        self._root["first_frame"].setValue(frame_start)
-        self._root["last_frame"].setValue(frame_end)
+        self._root_node["fps"].setValue(fps)
+        self._root_node["first_frame"].setValue(frame_start)
+        self._root_node["last_frame"].setValue(frame_end)
 
         # setting active viewers
         try:
@@ -592,7 +594,7 @@ class Workfile_settings(object):
             node['frame_range_lock'].setValue(True)
 
         # adding handle_start/end to root avalon knob
-        if not avalon.nuke.imprint(self._root, {
+        if not avalon.nuke.imprint(self._root_node, {
             "handleStart": int(handle_start),
             "handleEnd": int(handle_end)
         }):
@@ -702,7 +704,7 @@ class Workfile_settings(object):
         log.info("Format does't exist, will create: \n{}".format(args))
         nuke.addFormat("{frm_str} "
                        "{project_name}".format(**args))
-        self._root["format"].setValue("{project_name}".format(**args))
+        self._root_node["format"].setValue("{project_name}".format(**args))
 
     def set_context_settings(self):
         # replace reset resolution from avalon core to pype's
@@ -768,3 +770,40 @@ def get_write_node_template_attr(node):
 
     # fix badly encoded data
     return avalon.nuke.lib.fix_data_for_node_create(correct_data)
+
+
+class Build_Workfile(Workfile_settings):
+    def __init__(self, root=None, asset_name=None, task=None, hierarchy=None, version=1):
+        Workfile_settings.__init__(self, asset=asset_name)
+
+        ### create workfile path
+        # get project from database
+        project = self._project or io.find_one({"type": "project"})
+
+        # collect data for formating
+        data = {
+            "root": root or api.Session["AVALON_PROJECTS"],
+            "project": {"name": project["name"],
+                        "code": project["data"].get("code", '')},
+            "asset": asset_name or os.environ["AVALON_ASSET"],
+            "task": task or api.Session["AVALON_TASK"].lower(),
+            "hierarchy": hierarchy or pype.get_hierarchy(),
+            "version": version,
+            "user": getpass.getuser(),
+            "comment": "firstBuild"
+        }
+
+        # get presets from anatomy
+        anatomy = get_anatomy()
+        # format anatomy
+        anatomy_filled = anatomy.format(data)
+
+        # get dir and file for workfile
+        templ_work_dir = anatomy_filled["avalon"]["work"]
+        templ_work_file = anatomy_filled["avalon"]["workfile"] + ".nk"
+
+        # save script as
+        path = os.path.join(templ_work_dir, templ_work_file).replace("\\", "/")
+
+        
+        print(path)
