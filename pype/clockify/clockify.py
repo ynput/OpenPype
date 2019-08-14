@@ -2,7 +2,7 @@ import os
 import threading
 from pypeapp import style
 from Qt import QtWidgets
-from pype.clockify import ClockifySettings, ClockifyAPI
+from . import ClockifySettings, ClockifyAPI, MessageWidget
 
 
 class ClockifyModule:
