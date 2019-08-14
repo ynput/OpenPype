@@ -38,6 +38,11 @@ class SyncClocify(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
+        if len(entities) != 1:
+            return False
+
+        if entities[0].entity_type.lower() != "project":
+            return False
         return True
 
     def launch(self, session, entities, event):
