@@ -142,6 +142,17 @@ class ClockifyModule:
             self.timer_stopped()
         self.bool_timer_run = False
 
+    def signed_in(self):
+        if hasattr(self, 'timer_manager'):
+            if not self.timer_manager:
+                return
+
+            if not self.timer_manager.last_task:
+                return
+
+            if self.timer_manager.is_running:
+                self.start_timer_manager(self.timer_manager.last_task)
+
     def start_timer(self, input_data):
         # If not api key is not entered then skip
         if not self.clockapi.get_api_key():
