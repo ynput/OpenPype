@@ -94,13 +94,12 @@ class BaseHandler(object):
     def launch_log(self, func):
         @functools.wraps(func)
         def wrapper_launch(*args, **kwargs):
+            label = self.__class__.__name__
             if hasattr(self, 'label'):
+                label = self.label
                 if hasattr(self, 'variant'):
-                    label = '{} {}'.format(self.label, self.variant)
-                else:
-                    label = self.label
-            else:
-                label = self.__class__.__name__
+                    if self.variant is not None:
+                        label = '{} {}'.format(self.label, self.variant)
 
             self.log.info(('{} "{}": Launched').format(self.type, label))
             try:
