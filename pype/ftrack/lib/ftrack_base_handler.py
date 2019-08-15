@@ -141,6 +141,13 @@ class BaseHandler(object):
 
         # Custom validations
         result = self.preregister()
+        if result is None:
+            self.log.debug((
+                "\"{}\" 'preregister' method returned 'None'. Expected it"
+                " didn't fail and continue as preregister returned True."
+            ).format(self.__class__.__name__))
+            return
+
         if result is True:
             return
         msg = "Pre-register conditions were not met"
