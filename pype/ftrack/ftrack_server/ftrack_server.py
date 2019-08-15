@@ -29,8 +29,8 @@ PYTHONPATH # Path to ftrack_api and paths to all modules used in actions
 """
 
 
-class FtrackServer():
-    def __init__(self, type='action'):
+class FtrackServer:
+    def __init__(self, server_type='action'):
         """
             - 'type' is by default set to 'action' - Runs Action server
             - enter 'event' for Event server
@@ -45,21 +45,12 @@ class FtrackServer():
         ftrack_log = logging.getLogger("ftrack_api")
         ftrack_log.setLevel(logging.WARNING)
 
-        self.type = type
-        self.actionsAvailable = True
-        self.eventsAvailable = True
-        # Separate all paths
-        if "FTRACK_ACTIONS_PATH" in os.environ:
-            all_action_paths = os.environ["FTRACK_ACTIONS_PATH"]
-            self.actionsPaths = all_action_paths.split(os.pathsep)
-        else:
-            self.actionsAvailable = False
+        env_key = "FTRACK_ACTIONS_PATH"
+        if server_type.lower() == 'event':
+            env_key = "FTRACK_EVENTS_PATH"
 
-        if "FTRACK_EVENTS_PATH" in os.environ:
-            all_event_paths = os.environ["FTRACK_EVENTS_PATH"]
-            self.eventsPaths = all_event_paths.split(os.pathsep)
-        else:
-            self.eventsAvailable = False
+        self.server_type = server_type
+        self.env_key = env_key
 
     def stop_session(self):
         if self.session.event_hub.connected is True:
@@ -94,9 +85,7 @@ class FtrackServer():
 
                     # separate files by register function
                     if 'register' not in mod_functions:
-                        msg = (
-                            '"{0}" - Missing register method'
-                        ).format(file, self.type)
+                        msg = ('"{}" - Missing register method').format(file)
                         log.warning(msg)
                         continue
 
@@ -115,7 +104,7 @@ class FtrackServer():
 
         # Load presets for setting plugins
         key = "user"
-        if self.type.lower() == "event":
+        if self.server_type.lower() == "event":
             key = "server"
         plugins_presets = config.get_presets().get(
             "ftrack", {}
@@ -142,24 +131,15 @@ class FtrackServer():
     def run_server(self):
         self.session = ftrack_api.Session(auto_connect_event_hub=True,)
 
-        if self.type.lower() == 'event':
-            if self.eventsAvailable is False:
-                msg = (
-                    'FTRACK_EVENTS_PATH is not set'
-                    ', event server won\'t launch'
-                )
-                log.error(msg)
-                return
-            self.set_files(self.eventsPaths)
-        else:
-            if self.actionsAvailable is False:
-                msg = (
-                    'FTRACK_ACTIONS_PATH is not set'
-                    ', action server won\'t launch'
-                )
-                log.error(msg)
-                return
-            self.set_files(self.actionsPaths)
+        paths_str = os.environ.get(self.env_key)
+        if paths_str is None:
+            log.error((
+                "Env var \"{}\" is not set, \"{}\" server won\'t launch"
+            ).format(self.env_key, self.server_type))
+            return
+
+        paths = paths_str.split(os.pathsep)
+        self.set_files(paths)
 
         log.info(60*"*")
         log.info('Registration of actions/events has finished!')

@@ -12,14 +12,15 @@ class CustomAttributeDoctor(BaseAction):
     #: Action identifier.
     identifier = 'custom.attributes.doctor'
     #: Action label.
-    label = 'Custom Attributes Doctor'
+    label = "Pype Doctor"
+    variant = '- Custom Attributes Doctor'
     #: Action description.
     description = (
         'Fix hierarchical custom attributes mainly handles, fstart'
         ' and fend'
     )
 
-    icon = '{}/ftrack/action_icons/TestAction.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeDoctor.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
     hierarchical_ca = ['handle_start', 'handle_end', 'fstart', 'fend']
