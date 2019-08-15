@@ -41,9 +41,9 @@ class PrepareProject(BaseAction):
 
         self.log.debug("Loading custom attributes")
         cust_attrs, hier_cust_attrs = get_avalon_attr(session, True)
-        project_defaults = config.get_presets().get("ftrack", {}).get(
-            "project_defaults", {}
-        )
+        project_defaults = config.get_presets(
+            entities[0]["full_name"]
+        ).get("ftrack", {}).get("project_defaults", {})
 
         self.log.debug("Preparing data which will be shown")
         attributes_to_set = {}
