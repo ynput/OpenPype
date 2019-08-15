@@ -33,6 +33,8 @@ class SyncClocify(BaseAction):
         if self.clockapi.validate_workspace_perm() is False:
             raise MissingPermision('Clockify')
 
+        return True
+
     def discover(self, session, entities, event):
         ''' Validation '''
         if len(entities) != 1:
