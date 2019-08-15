@@ -6,6 +6,8 @@ from pype.ftrack import BaseAction
 from pypeapp import config
 from pype.ftrack.lib import get_avalon_attr
 
+from pype.vendor.ftrack_api import session as fa_session
+
 
 class PrepareProject(BaseAction):
     '''Edit meta data action.'''
@@ -21,6 +23,9 @@ class PrepareProject(BaseAction):
     icon = '{}/ftrack/action_icons/PrepareProject.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
+
+    # Key to store info about trigerring create folder structure
+    create_project_structure_key = "create_folder_structure"
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -74,8 +79,29 @@ class PrepareProject(BaseAction):
             str([key for key in attributes_to_set])
         ))
 
-        title = "Set Attribute values"
+        item_splitter = {'type': 'label', 'value': '---'}
+        title = "Prepare Project"
         items = []
+
+        # Ask if want to trigger Action Create Folder Structure
+        items.append({
+            "type": "label",
+            "value": "<h3>Want to create basic Folder Structure?</h3>"
+        })
+
+        items.append({
+            "name": self.create_project_structure_key,
+            "type": "boolean",
+            "value": False,
+            "label": "Check if Yes"
+        })
+
+        items.append(item_splitter)
+        items.append({
+            "type": "label",
+            "value": "<h3>Set basic Attributes:</h3>"
+        })
+
         multiselect_enumerators = []
 
         # This item will be last (before enumerators)
@@ -87,8 +113,6 @@ class PrepareProject(BaseAction):
             "value": project_defaults.get(auto_sync_name, False),
             "label": "AutoSync to Avalon"
         }
-
-        item_splitter = {'type': 'label', 'value': '---'}
 
         for key, in_data in attributes_to_set.items():
             attr = in_data["object"]
@@ -195,6 +219,10 @@ class PrepareProject(BaseAction):
             return
 
         in_data = event['data']['values']
+
+        # pop out info about creating project structure
+        create_proj_struct = in_data.pop(self.create_project_structure_key)
+
         # Find hidden items for multiselect enumerators
         keys_to_process = []
         for key in in_data:
@@ -227,6 +255,19 @@ class PrepareProject(BaseAction):
             self.log.debug("- Key \"{}\" set to \"{}\"".format(key, value))
 
         session.commit()
+
+        # Trigger Create Project Structure action
+        if create_proj_struct is True:
+            self.log.debug("Triggering Create Project Structure action")
+            event = fa_session.ftrack_api.event.base.Event(
+                topic="ftrack.action.launch",
+                data=dict(
+                    actionIdentifier="create.project.structure",
+                    selection=event["data"]["selection"]
+                ),
+                source=dict(user=event['source']['user'])
+            )
+            session.event_hub.publish(event, on_error='ignore')
 
         return True
 
