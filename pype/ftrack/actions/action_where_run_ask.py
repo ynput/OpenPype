@@ -36,9 +36,7 @@ class ActionAskWhereIRun(BaseAction):
                 selection=event["data"]["selection"],
                 event_hub_id=session.event_hub.id
             ),
-            source=dict(
-                user=dict(username=session.api_user)
-            )
+            source=dict(user=event['source']['user'])
         )
         session.event_hub.publish(event, on_error='ignore')
 
