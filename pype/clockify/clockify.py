@@ -123,6 +123,9 @@ class ClockifyModule:
 
                     actual_timer_hierarchy = actual_timer["description"]
                     hierarchy_items = actual_timer_hierarchy.split("/")
+                    # Each pype timer must have at least 2 items!
+                    if len(hierarchy_items) < 2:
+                        continue
                     task_name = hierarchy_items[-1]
                     hierarchy = hierarchy_items[:-1]
 
