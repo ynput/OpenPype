@@ -287,3 +287,58 @@ def _show_no_gui():
 
     messagebox.setStandardButtons(messagebox.Ok)
     messagebox.exec_()
+
+def CreateNukeWorkfile(nodes=None,
+                       to_timeline=False,
+                       **kwargs):
+    ''' Creating nuke workfile with particular version with given nodes
+    Also it is creating timeline track items as precomps.
+
+    Arguments:
+        nodes(list of dict): each key in dict is knob order is important
+        to_timeline(type): will build trackItem with metadata
+
+    Returns:
+        bool: True if done
+
+    Raises:
+        Exception: with traceback
+
+    '''
+    import hiero.core
+    from avalon.nuke import imprint
+    from pype.nuke import (
+        lib as nklib
+        )
+
+    # check if the file exists if does then Raise "File exists!"
+    if os.path.exists(filepath):
+        raise FileExistsError("File already exists: `{}`".format(filepath))
+
+    # if no representations matching then
+    #   Raise "no representations to be build"
+    if len(representations) == 0:
+        raise AttributeError("Missing list of `representations`")
+
+    # check nodes input
+    if len(nodes) == 0:
+        log.warning("Missing list of `nodes`")
+
+    # create temp nk file
+    nuke_script = hiero.core.nuke.ScriptWriter()
+
+    # create root node and save all metadata
+    root_node = hiero.core.nuke.RootNode()
+
+    root_path = os.environ["AVALON_PROJECTS"]
+
+    nuke_script.addNode(root_node)
+
+    # here to call pype.nuke.lib.BuildWorkfile
+    script_builder = nklib.BuildWorkfile(
+                                nuke_script=nuke_script,
+                                root_node=root_node,
+                                root_path=root_path,
+                                nodes=nodes,
+                                **kwargs
+                                )
