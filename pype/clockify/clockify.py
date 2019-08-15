@@ -129,10 +129,14 @@ class ClockifyModule:
                     task_name = hierarchy_items[-1]
                     hierarchy = hierarchy_items[:-1]
 
+                    task_type = None
+                    if len(actual_timer.get("tags", [])) > 0:
+                        task_type = actual_timer["tags"][0].get("name")
                     data = {
                         "task_name": task_name,
                         "hierarchy": hierarchy,
-                        "project_name": project_name
+                        "project_name": project_name,
+                        "task_type": task_type
                     }
 
                     self.timer_started(data)
