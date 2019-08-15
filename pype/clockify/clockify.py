@@ -198,7 +198,7 @@ class ClockifyModule:
             return
 
         tag_ids = []
-        task_tag_id = self.clockapi.get_tag_id(input_data["task_name"])
+        task_tag_id = self.clockapi.get_tag_id(input_data["task_type"])
         if task_tag_id is not None:
             tag_ids.append(task_tag_id)
 
