@@ -9,7 +9,7 @@ log = Logger().get_logger(__name__, "nuke")
 def install():
     menubar = nuke.menu("Nuke")
     menu = menubar.findItem(Session["AVALON_LABEL"])
-    workfile_settings = lib.Workfile_settings()
+    workfile_settings = lib.WorkfileSettings()
     # replace reset resolution from avalon core to pype's
     name = "Reset Resolution"
     new_name = "Set Resolution"
@@ -38,6 +38,14 @@ def install():
     menu.addCommand(
         name, workfile_settings.set_colorspace,
         index=(rm_item[0]+2)
+    )
+    log.debug("Adding menu item: {}".format(name))
+
+    # add workfile builder menu item
+    name = "Build First Workfile.."
+    menu.addCommand(
+        name, lib.BuildWorkfile().process,
+        index=(rm_item[0]+7)
     )
     log.debug("Adding menu item: {}".format(name))
 

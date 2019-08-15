@@ -104,7 +104,7 @@ def install():
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
 
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
-    workfile_settings = lib.Workfile_settings()
+    workfile_settings = lib.WorkfileSettings()
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "write",

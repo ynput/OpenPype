@@ -380,7 +380,7 @@ def add_rendering_knobs(node):
     return node
 
 
-class Workfile_settings(object):
+class WorkfileSettings(object):
     """
     All settings for workfile will be set
 
@@ -394,23 +394,39 @@ class Workfile_settings(object):
         nodes_filter (list): filtering classes for nodes
 
     """
-    def __init__(self, asset=None, root_node=None, nodes=None, nodes_filter=[]):
-        self._project = io.find_one({"type": "project"})
-        self._asset = asset or api.Session["AVALON_ASSET"]
+
+    def __init__(self,
+                 root_node=None,
+                 nodes=None,
+                 **kwargs):
+        self._project = kwargs.get(
+            "project") or io.find_one({"type": "project"})
+        self._asset = kwargs.get("asset_name") or api.Session["AVALON_ASSET"]
         self._asset_entity = pype.get_asset(self._asset)
         self._root_node = root_node or nuke.root()
-        self._nodes = nodes or []
-        self._nodes_filter = nodes_filter
+        self._nodes = self.get_nodes(nodes=nodes)
 
-    def get_nodes(self):
-        if (self._nodes is []) and (self._nodes_filter is not []):
-            for filter in self._nodes_filter:
-                self._nodes += nuke.allNodes(filter=filter)
-        elif (self._nodes is not []) and (self._nodes_filter is not []):
-            for filter in self._nodes_filter:
-                self._nodes += [n for n in self._nodes if filter in n.Class()]
-        elif (self._nodes is []) and (self._nodes_filter is []):
-            self._nodes += [n for n in nuke.allNodes()]
+        self.data = kwargs
+
+    def get_nodes(self, nodes=None, nodes_filter=None):
+        # filter out only dictionaries for node creation
+        #
+        # print("\n\n")
+        # pprint(self._nodes)
+        #
+
+        if not isinstance(nodes, list) and not isinstance(nodes_filter, list):
+            return [n for n in nuke.allNodes()]
+        elif not isinstance(nodes, list) and isinstance(nodes_filter, list):
+            nodes = list()
+            for filter in nodes_filter:
+                [nodes.append(n) for n in nuke.allNodes(filter=filter)]
+            return nodes
+        elif isinstance(nodes, list) and not isinstance(nodes_filter, list):
+            return [n for n in self._nodes]
+        elif isinstance(nodes, list) and isinstance(nodes_filter, list):
+            for filter in nodes_filter:
+                return [n for n in self._nodes if filter in n.Class()]
 
     def set_viewers_colorspace(self, viewer_dict):
         ''' Adds correct colorspace to viewer
@@ -428,7 +444,8 @@ class Workfile_settings(object):
         ]
 
         erased_viewers = []
-        for v in [n for n in self._nodes if "Viewer" in n.Class()]:
+        for v in [n for n in self._nodes
+                  if "Viewer" in n.Class()]:
             v['viewerProcess'].setValue(str(viewer_dict["viewerProcess"]))
             if str(viewer_dict["viewerProcess"]) \
                     not in v['viewerProcess'].value():
@@ -560,7 +577,7 @@ class Workfile_settings(object):
         if len(missing_cols) > 0:
             missing = ", ".join(missing_cols)
             msg = "'{}' are not set for asset '{}'!".format(
-                    missing, self._asset)
+                missing, self._asset)
             log.warning(msg)
             nuke.message(msg)
             return
@@ -612,7 +629,7 @@ class Workfile_settings(object):
             log.error("Missing set shot attributes in DB. \nContact"
                       "your supervisor!. \n\nWidth: `{0}` \nHeight: `{1}`"
                       "\nPixel Asspect: `{2}`".format(
-                            width, height, pixel_aspect))
+                          width, height, pixel_aspect))
             return
 
         bbox = self._asset_entity.get('data', {}).get('crop')
@@ -772,23 +789,72 @@ def get_write_node_template_attr(node):
     return avalon.nuke.lib.fix_data_for_node_create(correct_data)
 
 
-class Build_Workfile(Workfile_settings):
-    def __init__(self, root=None, asset_name=None, task=None, hierarchy=None, version=1):
-        Workfile_settings.__init__(self, asset=asset_name)
+class BuildWorkfile(WorkfileSettings):
+    """
+    Building first version of workfile.
 
-        ### create workfile path
-        # get project from database
-        project = self._project or io.find_one({"type": "project"})
+    Settings are taken from presets and db. It will add all subsets in last version for defined representaions
 
+    Arguments:
+        variable (type): description
+
+    """
+    xpos = 0
+    ypos = 0
+    xpos_size = 80
+    ypos_size = 90
+    xpos_gap = 50
+    ypos_gap = 50
+
+    def __init__(self,
+                 root_path=None,
+                 root_node=None,
+                 nodes=None,
+                 nodes_effects=None,
+                 **kwargs):
+        """
+        A short description.
+
+        A bit longer description.
+
+        Argumetns:
+            root_path (str): description
+            root_node (nuke.Node): description
+            nodes (list): list of nuke.Node
+            nodes_effects (dict): dictionary with subsets
+
+        Example:
+            nodes_effects = {
+                    "plateMain": {
+                        "nodes": [
+                               [("Class", "Reformat"),
+                               ("resize", "distort"),
+                               ("flip", True)],
+
+                               [("Class", "Grade"),
+                               ("blackpoint", 0.5),
+                               ("multiply", 0.4)]
+                            ]
+                        },
+                    }
+
+        """
+
+        WorkfileSettings.__init__(self,
+                                  root_node=root_node,
+                                  nodes=nodes,
+                                  **kwargs)
+
+        self._nodes_read_effects = nodes_effects or {}
         # collect data for formating
         data = {
-            "root": root or api.Session["AVALON_PROJECTS"],
-            "project": {"name": project["name"],
-                        "code": project["data"].get("code", '')},
-            "asset": asset_name or os.environ["AVALON_ASSET"],
-            "task": task or api.Session["AVALON_TASK"].lower(),
-            "hierarchy": hierarchy or pype.get_hierarchy(),
-            "version": version,
+            "root": root_path or api.Session["AVALON_PROJECTS"],
+            "project": {"name": self._project["name"],
+                        "code": self._project["data"].get("code", '')},
+            "asset": self._asset or os.environ["AVALON_ASSET"],
+            "task": kwargs.get("task") or api.Session["AVALON_TASK"].lower(),
+            "hierarchy": kwargs.get("hierarchy") or pype.get_hierarchy(),
+            "version": kwargs.get("version", {}).get("name", 1),
             "user": getpass.getuser(),
             "comment": "firstBuild"
         }
@@ -799,11 +865,168 @@ class Build_Workfile(Workfile_settings):
         anatomy_filled = anatomy.format(data)
 
         # get dir and file for workfile
-        templ_work_dir = anatomy_filled["avalon"]["work"]
-        templ_work_file = anatomy_filled["avalon"]["workfile"] + ".nk"
+        self.work_dir = anatomy_filled["avalon"]["work"]
+        self.work_file = anatomy_filled["avalon"]["workfile"] + ".nk"
 
-        # save script as
-        path = os.path.join(templ_work_dir, templ_work_file).replace("\\", "/")
+    def save_script_as(self, path=None):
+        # first clear anything in open window
+        nuke.scriptClear()
 
-        
-        print(path)
+        if not path:
+            dir = self.work_dir
+            path = os.path.join(
+                self.work_dir,
+                self.work_file).replace("\\", "/")
+        else:
+            dir = os.path.dirname(path)
+
+        # check if folder is created
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        # save script to path
+        nuke.scriptSaveAs(path)
+
+    def process(self,
+                regex_filter=None,
+                version="last",
+                representations=["exr", "dpx"]):
+        """
+        A short description.
+
+        A bit longer description.
+
+        Args:
+            variable (type): description
+
+        Returns:
+            type: description
+
+        Raises:
+            Exception: description
+
+        """
+
+        # save the script
+        self.save_script_as()
+
+        # create viewer and reset frame range
+        vn = nuke.createNode("Viewer")
+        vn["xpos"].setValue(self.xpos)
+        vn["ypos"].setValue(self.ypos)
+
+        # move position
+        self.position_up()
+
+        wn = self.write_create()
+        wn["xpos"].setValue(self.xpos)
+        wn["ypos"].setValue(self.ypos)
+        wn["render"].setValue(True)
+        vn.setInput(0, wn)
+
+        # move position
+        self.position_up()
+
+        # set frame range for new viewer
+        self.reset_frame_range_handles()
+
+        # get all available representations
+        subsets = pype.get_subsets(self._asset,
+                                   regex_filter=regex_filter,
+                                   version=version,
+                                   representations=representations)
+
+        for name, subset in subsets.items():
+            log.info("Building Loader to: `{}`".format(name))
+            version = subset["version"]
+            log.info("Version to: `{}`".format(version["name"]))
+            representations = subset["representaions"]
+            for repr in representations:
+                rn = self.read_loader(repr)
+                rn["xpos"].setValue(self.xpos)
+                rn["ypos"].setValue(self.ypos)
+                wn.setInput(0, rn)
+
+                # get editional nodes
+                nodes = self._nodes_read_effects.get(name, {}).get("nodes", [])
+
+                print("\n\n__________ nodes __________")
+                # create all editional nodes
+                for n in nodes:
+                    print(n)
+                    # create nodes
+                    klass, value = n[0]
+                    node = nuke.createNode(value)
+                    print(node.name())
+
+                    for k, v in n:
+                        if "Class" not in k:
+                            node[k].setValue(v)
+                    self._nodes.append(node)
+
+                # move position
+                self.position_right()
+
+    def read_loader(self, representation):
+        """
+        Gets Loader plugin for image sequence or mov
+
+        Arguments:
+            representation (dict): avalon db entity
+
+        """
+        context = representation["context"]
+        read_name = "Read_{0}_{1}_{2}".format(context["asset"],
+                                              context["subset"],
+                                              context["representation"])
+
+        loader_name = "LoadSequence"
+        if "mov" in context["representation"]:
+            loader_name = "LoadMov"
+
+        loader_plugin = None
+        for Loader in api.discover(api.Loader):
+            if Loader.__name__ != loader_name:
+                continue
+
+            loader_plugin = Loader
+
+        return api.load(Loader=loader_plugin,
+                        representation=representation["_id"])
+
+    def write_create(self):
+        """
+        Create render write
+
+        Arguments:
+            representation (dict): avalon db entity
+
+        """
+
+        Create_name = "CreateWriteRender"
+
+        creator_plugin = None
+        for Creator in api.discover(api.Creator):
+            if Creator.__name__ != Create_name:
+                continue
+
+            creator_plugin = Creator
+
+        # return api.create()
+        return creator_plugin("render_writeMain", self._asset).process()
+
+    def position_reset(self):
+        self.xpos = 0
+        self.ypos = 0
+
+    def position_right(self):
+        self.xpos += self.xpos_size + self.xpos_gap
+
+    def position_left(self):
+        self.xpos -= self.xpos_size + self.xpos_gap
+
+    def position_down(self):
+        self.ypos -= self.ypos_size + self.ypos_gap
+
+    def position_up(self):
+        self.ypos -= self.ypos_size + self.ypos_gap
