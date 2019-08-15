@@ -77,6 +77,7 @@ class ClockifyModule:
             self.timer_manager.start_timers(data)
 
     def timer_stopped(self):
+        self.bool_timer_run = False
         if hasattr(self, 'timer_manager'):
             self.timer_manager.stop_timers()
 
@@ -141,7 +142,6 @@ class ClockifyModule:
         self.clockapi.finish_time_entry()
         if self.bool_timer_run:
             self.timer_stopped()
-        self.bool_timer_run = False
 
     def signed_in(self):
         if hasattr(self, 'timer_manager'):
