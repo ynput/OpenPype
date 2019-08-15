@@ -1,6 +1,7 @@
 import os
 import json
 
+from ruamel import yaml
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from pypeapp import config
@@ -256,6 +257,9 @@ class PrepareProject(BaseAction):
 
         session.commit()
 
+        # Create project structure
+        self.create_project_specific_config(entities[0]["full_name"], in_data)
+
         # Trigger Create Project Structure action
         if create_proj_struct is True:
             self.log.debug("Triggering Create Project Structure action")
@@ -270,6 +274,108 @@ class PrepareProject(BaseAction):
             session.event_hub.publish(event, on_error='ignore')
 
         return True
+
+    def create_project_specific_config(self, project_name, json_data):
+        self.log.debug("*** Creating project specifig configs ***")
+
+        path_proj_configs = os.environ.get('PYPE_PROJECT_CONFIGS', "")
+
+        # Skip if PYPE_PROJECT_CONFIGS is not set
+        # TODO show user OS message
+        if not path_proj_configs:
+            self.log.warning((
+                "Environment variable \"PYPE_PROJECT_CONFIGS\" is not set."
+                " Project specific config can't be set."
+            ))
+            return
+
+        path_proj_configs = os.path.normpath(path_proj_configs)
+        # Skip if path does not exist
+        # TODO create if not exist?!!!
+        if not os.path.exists(path_proj_configs):
+            self.log.warning((
+                "Path set in Environment variable \"PYPE_PROJECT_CONFIGS\""
+                " Does not exist."
+            ))
+            return
+
+        project_specific_path = os.path.normpath(
+            os.path.join(path_proj_configs, project_name)
+        )
+        if not os.path.exists(project_specific_path):
+            os.makedirs(project_specific_path)
+            self.log.debug((
+                "Project specific config folder for project \"{}\" created."
+            ).format(project_name))
+
+        # Anatomy ####################################
+        self.log.debug("--- Processing Anatomy Begins: ---")
+
+        anatomy_dir = os.path.normpath(os.path.join(
+            project_specific_path, "anatomy"
+        ))
+        anatomy_path = os.path.normpath(os.path.join(
+            anatomy_dir, "default.yaml"
+        ))
+
+        anatomy = None
+        if os.path.exists(anatomy_path):
+            self.log.debug(
+                "Anatomy file already exist. Trying to read: \"{}\"".format(
+                    anatomy_path
+                )
+            )
+            # Try to load data
+            with open(anatomy_path, 'r') as file_stream:
+                try:
+                    anatomy = yaml.load(file_stream, Loader=yaml.loader.Loader)
+                    self.log.debug("Reading Anatomy file was successful")
+                except yaml.YAMLError as exc:
+                    self.log.warning(
+                        "Reading Yaml file failed: \"{}\"".format(anatomy_path),
+                        exc_info=True
+                    )
+
+        if not anatomy:
+            self.log.debug("Anatomy is not set. Duplicating default.")
+            # Create Anatomy folder
+            if not os.path.exists(anatomy_dir):
+                self.log.debug(
+                    "Creating Anatomy folder: \"{}\"".format(anatomy_dir)
+                )
+                os.makedirs(anatomy_dir)
+
+            source_items = [
+                os.environ["PYPE_CONFIG"], "anatomy", "default.yaml"
+            ]
+
+            source_path = os.path.normpath(os.path.join(*source_items))
+            with open(source_path, 'r') as file_stream:
+                source_data = file_stream.read()
+
+            with open(anatomy_path, 'w') as file_stream:
+                file_stream.write(source_data)
+
+        # Presets ####################################
+        self.log.debug("--- Processing Presets Begins: ---")
+
+        project_defaults_dir = os.path.normpath(os.path.join(*[
+            project_specific_path, "presets", "ftrack"
+        ]))
+        project_defaults_path = os.path.normpath(os.path.join(*[
+            project_defaults_dir, "project_defaults.json"
+        ]))
+        # Create folder if not exist
+        if not os.path.exists(project_defaults_dir):
+            self.log.debug("Creating Ftrack Presets folder: \"{}\"".format(
+                project_defaults_dir
+            ))
+            os.makedirs(project_defaults_dir)
+
+        with open(project_defaults_path, 'w') as file_stream:
+            json.dump(json_data, file_stream, indent=4)
+
+        self.log.debug("*** Creating project specifig configs Finished ***")
 
 
 def register(session, plugins_presets={}):
