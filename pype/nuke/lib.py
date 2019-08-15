@@ -889,7 +889,7 @@ class BuildWorkfile(WorkfileSettings):
 
     def process(self,
                 regex_filter=None,
-                version="last",
+                version=None,
                 representations=["exr", "dpx"]):
         """
         A short description.
@@ -897,7 +897,9 @@ class BuildWorkfile(WorkfileSettings):
         A bit longer description.
 
         Args:
-            variable (type): description
+            regex_filter (raw string): regex pattern to filter out subsets
+            version (int): define a particular version, None gets last
+            representations (list): 
 
         Returns:
             type: description

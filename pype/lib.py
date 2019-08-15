@@ -495,7 +495,7 @@ def filter_pyblish_plugins(plugins):
 
 def get_subsets(asset_name,
                 regex_filter=None,
-                version="last",
+                version=None,
                 representations=["exr", "dpx"]):
     """
     Query subsets with filter on name.
@@ -538,11 +538,12 @@ def get_subsets(asset_name,
     output_dict = {}
     # Process subsets
     for subset in subsets:
-        if "last" in str(version):
+        if not version:
             version_sel = io.find_one({"type": "version",
                                        "parent": subset["_id"]},
                                       sort=[("name", -1)])
         else:
+            assert isinstance(version, int), "version needs to be `int` type"
             version_sel = io.find_one({"type": "version",
                                        "parent": subset["_id"],
                                        "name": int(version)})
