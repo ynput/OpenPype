@@ -24,7 +24,7 @@ class StartTimer(BaseAction):
             "User where username is \"{}\"".format(self.session.api_user)
         ).one()
 
-        user.start_timer(task, force=True)
+        user.start_timer(entity, force=True)
         self.session.commit()
         
         self.log.info(
