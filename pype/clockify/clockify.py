@@ -173,10 +173,12 @@ class ClockifyModule:
             actual_timer_hierarchy = actual_timer.get("description")
             actual_project_id = actual_timer.get("projectId")
 
+        # Concatenate hierarchy and task to get description
         desc_items = [val for val in input_data.get("hierarchy", [])]
         desc_items.append(input_data["task_name"])
         description = "/".join(desc_items)
 
+        # Check project existence
         project_name = input_data["project_name"]
         project_id = self.clockapi.get_project_id(project_name)
         if not project_id:
