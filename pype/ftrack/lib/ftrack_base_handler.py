@@ -532,3 +532,59 @@ class BaseHandler(object):
                 items.append(message)
 
         self.show_interface(items, title, event, user, username, user_id)
+
+    def trigger_action(
+        self, action_name, event=None, session=None,
+        selection=None, user_data=None,
+        topic="ftrack.action.launch", additional_event_data={}
+    ):
+        self.log.debug("Triggering action \"{}\" Begins".format(action_name))
+
+        if not session:
+            session = self.session
+
+        # Getting selection and user data
+        _selection = None
+        _user_data = None
+
+        if event:
+            _selection = event.get("data", {}).get("selection")
+            _user_data = event.get("source", {}).get("user")
+
+        if selection is not None:
+            _selection = selection
+
+        if user_data is not None:
+            _user_data = user_data
+
+        # Without selection and user data skip triggering
+        msg = "Can't trigger \"{}\" action without {}."
+        if _selection is None:
+            self.log.error(msg.format(action_name, "selection"))
+            return
+
+        if _user_data is None:
+            self.log.error(msg.format(action_name, "user data"))
+            return
+
+        _event_data = {
+            "actionIdentifier": action_name,
+            "selection": _selection
+        }
+
+        # Add additional data
+        if additional_event_data:
+            _event_data.update(additional_event_data)
+
+        # Create and trigger event
+        session.event_hub.publish(
+            fa_session.ftrack_api.event.base.Event(
+                topic=topic,
+                data=_event_data,
+                source=dict(user=_user_data)
+            ),
+            on_error='ignore'
+        )
+        self.log.debug(
+            "Action \"{}\" Triggered successfully".format(action_name)
+        )
