@@ -189,7 +189,7 @@ def add_submission():
 
 class PublishAction(QtWidgets.QAction):
     """
-    Action with is showing as menu item 
+    Action with is showing as menu item
     """
 
     def __init__(self):
@@ -288,7 +288,9 @@ def _show_no_gui():
     messagebox.setStandardButtons(messagebox.Ok)
     messagebox.exec_()
 
+
 def CreateNukeWorkfile(nodes=None,
+                       nodes_effects=None,
                        to_timeline=False,
                        **kwargs):
     ''' Creating nuke workfile with particular version with given nodes
@@ -336,9 +338,8 @@ def CreateNukeWorkfile(nodes=None,
 
     # here to call pype.nuke.lib.BuildWorkfile
     script_builder = nklib.BuildWorkfile(
-                                nuke_script=nuke_script,
                                 root_node=root_node,
                                 root_path=root_path,
-                                nodes=nodes,
+                                nodes=nuke_script.getNodes(),
                                 **kwargs
                                 )
