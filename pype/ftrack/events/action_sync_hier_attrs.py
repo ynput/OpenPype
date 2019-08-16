@@ -20,11 +20,12 @@ class SyncHierarchicalAttrs(BaseAction):
     #: Action identifier.
     identifier = 'sync.hierarchical.attrs'
     #: Action label.
-    label = 'Sync HierAttrs'
+    label = "Pype Admin"
+    variant = '- Sync Hier Attrs (server)'
     #: Action description.
     description = 'Synchronize hierarchical attributes'
     #: Icon
-    icon = '{}/ftrack/action_icons/SyncHierarchicalAttrs.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get(
             'PYPE_STATICS_SERVER',
             'http://localhost:{}'.format(

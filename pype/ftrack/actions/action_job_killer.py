@@ -14,12 +14,13 @@ class JobKiller(BaseAction):
     #: Action identifier.
     identifier = 'job.killer'
     #: Action label.
-    label = 'Job Killer'
+    label = "Pype Admin"
+    variant = '- Job Killer'
     #: Action description.
     description = 'Killing selected running jobs'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = '{}/ftrack/action_icons/JobKiller.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 

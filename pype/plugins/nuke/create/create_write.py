@@ -69,9 +69,7 @@ class CreateWriteRender(avalon.nuke.Creator):
                 write_data.update({
                     "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"})
 
-            create_write_node(self.data["subset"], write_data)
-
-        return
+        return create_write_node(self.data["subset"], write_data)
 
 
 class CreateWritePrerender(avalon.nuke.Creator):

@@ -11,13 +11,14 @@ class AttributesRemapper(BaseAction):
     #: Action identifier.
     identifier = 'attributes.remapper'
     #: Action label.
-    label = 'Attributes Remapper'
+    label = "Pype Doctor"
+    variant = '- Attributes Remapper'
     #: Action description.
     description = 'Remaps attributes in avalon DB'
 
     #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator"]
-    icon = '{}/ftrack/action_icons/AttributesRemapper.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeDoctor.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 

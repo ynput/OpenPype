@@ -13,12 +13,13 @@ class AssetsRemover(BaseAction):
     #: Action identifier.
     identifier = 'remove.assets'
     #: Action label.
-    label = 'Delete Assets by Name'
+    label = "Pype Admin"
+    variant = '- Delete Assets by Name'
     #: Action description.
     description = 'Removes assets from Ftrack and Avalon db with all childs'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = '{}/ftrack/action_icons/AssetsRemover.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
     #: Db

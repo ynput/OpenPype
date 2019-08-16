@@ -326,13 +326,26 @@ def import_to_avalon(
     return output
 
 
-def get_avalon_attr(session):
+def get_avalon_attr(session, split_hierarchical=False):
     custom_attributes = []
+    hier_custom_attributes = []
     query = 'CustomAttributeGroup where name is "avalon"'
     all_avalon_attr = session.query(query).one()
     for cust_attr in all_avalon_attr['custom_attribute_configurations']:
-        if 'avalon_' not in cust_attr['key']:
-            custom_attributes.append(cust_attr)
+        if 'avalon_' in cust_attr['key']:
+            continue
+
+        if split_hierarchical:
+            if cust_attr["is_hierarchical"]:
+                hier_custom_attributes.append(cust_attr)
+                continue
+
+        custom_attributes.append(cust_attr)
+
+    if split_hierarchical:
+        # return tuple
+        return custom_attributes, hier_custom_attributes
+
     return custom_attributes
 
 
