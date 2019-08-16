@@ -2,15 +2,26 @@ import pyblish.api
 import hiero.core
 
 
-class CollectVideoTracksEffects(pyblish.api.ContextPlugin):
+class CollectVideoTracksEffects(pyblish.api.InstancePlugin):
     """Collect video tracks effects into context."""
 
-    order = pyblish.api.CollectorOrder + 0.1
+    order = pyblish.api.CollectorOrder + 0.1015
     label = "Effects from video tracks"
 
-    def process(self, context):
+    def process(self, instance):
+
+        self.log.debug("Finding soft effect for subset: `{}`".format(instance.data.get("subset")))
+
         # taking active sequence
-        sequence = context.data['activeSequence']
+        sequence = instance.context.data['activeSequence']
+        effects_on_tracks = instance.context.data.get("subTrackUsedTracks")
+        sub_track_items = instance.context.data.get("subTrackItems")
+        track = instance.data["track"]
+
+        timeline_in_h = instance.data["clipInH"]
+        timeline_out_h = instance.data["clipOutH"]
+        timeline_in = instance.data["clipIn"]
+        timeline_out = instance.data["clipOut"]
 
         # adding ignoring knob keys
         _ignoring_keys = ['invert_mask', 'help', 'mask',
@@ -21,31 +32,71 @@ class CollectVideoTracksEffects(pyblish.api.ContextPlugin):
                           'select_cccid', 'mix', 'version']
 
         # creating context attribute
-        context.data["effectTrackItems"] = effects = dict()
+        effects = dict()
 
-        # loop trough all videotracks
-        for track_index, video_track in enumerate(sequence.videoTracks()):
-            # loop trough all available subtracks
-            for subtrack_item in video_track.subTrackItems():
-                # ignore anything not EffectTrackItem
-                if isinstance(subtrack_item[0], hiero.core.EffectTrackItem):
-                    et_item = subtrack_item[0]
-                    # ignore item if not enabled
-                    if et_item.isEnabled():
-                        node = et_item.node()
-                        node_serialized = {}
-                        # loop trough all knobs and collect not ignored
-                        # and any with any value
-                        for knob in node.knobs().keys():
-                            if (knob not in _ignoring_keys) and node[knob].value():
-                                node_serialized[knob] = node[knob].value()
-                        # add it to the context attribute
-                        effects.update({et_item.name(): {
-                            "timelineIn": int(et_item.timelineIn()),
-                            "timelineOut": int(et_item.timelineOut()),
-                            "subTrackIndex": et_item.subTrackIndex(),
-                            "trackIndex": track_index,
-                            "node": node_serialized
-                        }})
 
-        self.log.debug("effects: {}".format(effects))
+        for subtrack_item in sub_track_items:
+            sub_track = subtrack_item.parentTrack().name()
+            # ignore anything not EffectTrackItem
+            if isinstance(subtrack_item, hiero.core.EffectTrackItem):
+                et_item = subtrack_item
+                # ignore item if not enabled
+                if et_item.isEnabled():
+                    node = et_item.node()
+                    node_serialized = {}
+                    # loop trough all knobs and collect not ignored
+                    # and any with any value
+                    for knob in node.knobs().keys():
+                        # skip nodes in ignore keys
+                        if knob in _ignoring_keys:
+                            continue
+
+                        # get animation if node is animated
+                        if node[knob].isAnimated():
+                            # grab animation including handles
+                            knob_anim = [node[knob].getValueAt(i)
+                                         for i in range(timeline_in_h, timeline_out_h + 1)]
+
+                            node_serialized[knob] = knob_anim
+                        else:
+                            node_serialized[knob] = node[knob].value()
+
+                    # pick track index from subTrackItem
+                    pick_sub_track = [indx for indx, vt in enumerate(sequence.videoTracks())
+                                  if vt.name() in sub_track]
+                    # pick track index from trackItem
+                    pick_track = [indx for indx, vt in enumerate(sequence.videoTracks())
+                                  if vt.name() in track]
+                    # collect timelineIn/Out
+                    effect_t_in = int(et_item.timelineIn())
+                    effect_t_out = int(et_item.timelineOut())
+
+                    # controle if parent track has video trackItems
+                    items_check = et_item.parent().items()
+
+                    # filter out all track items under any track with effects
+                    # also filter out track item bellow
+                    if (pick_track[0] in effects_on_tracks) and (pick_sub_track[0] >= pick_track[0]):
+                        if (effect_t_in == timeline_in) and (effect_t_out == timeline_out):
+                            effects.update({et_item.name(): {
+                                "timelineIn": effect_t_in,
+                                "timelineOut": effect_t_out,
+                                "subTrackIndex": et_item.subTrackIndex(),
+                                "trackIndex": pick_track[0],
+                                # "node": node_serialized
+                            }})
+                        # for subTrackItem on track without any trackItems
+                        elif len(items_check) == 0:
+                            effects.update({et_item.name(): {
+                                "timelineIn": effect_t_in,
+                                "timelineOut": effect_t_out,
+                                "subTrackIndex": et_item.subTrackIndex(),
+                                "trackIndex": pick_track[0],
+                                "node": node_serialized
+                            }})
+
+        instance.data["effectTrackItems"] = effects
+        if len(instance.data.get("effectTrackItems", {}).keys()) > 0:
+            instance.data["families"] += ["effects"]
+            self.log.debug("effects.keys: {}".format(instance.data.get("effectTrackItems", {}).keys()))
+            self.log.debug("effects: {}".format(instance.data.get("effectTrackItems", {})))
