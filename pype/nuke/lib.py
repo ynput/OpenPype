@@ -197,6 +197,7 @@ def script_name():
     '''
     return nuke.root().knob('name').value()
 
+
 def add_button_write_to_read(node):
     name = "createReadNode"
     label = "Create Read"
@@ -204,6 +205,7 @@ def add_button_write_to_read(node):
     k = nuke.PyScript_Knob(name, label, value)
     k.setFlag(0x1000)
     node.addKnob(k)
+
 
 def create_write_node(name, data, prenodes=None):
     ''' Creating write node which is group node
@@ -313,7 +315,6 @@ def create_write_node(name, data, prenodes=None):
         else:
             prev_node = nuke.createNode("Input", "name rgba")
 
-
         # creating write node
         now_node = avalon.nuke.lib.add_write_node("inside_{}".format(name),
                                                   **_data
@@ -333,7 +334,6 @@ def create_write_node(name, data, prenodes=None):
     # imprinting group node
     GN = avalon.nuke.imprint(GN, data["avalon"])
 
-
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
 
@@ -348,7 +348,6 @@ def create_write_node(name, data, prenodes=None):
     # set tile color
     tile_color = _data.get("tile_color", "0xff0000ff")
     GN["tile_color"].setValue(tile_color)
-
 
     # add render button
     lnk = nuke.Link_Knob("Render")
@@ -805,12 +804,13 @@ class BuildWorkfile(WorkfileSettings):
     ypos_size = 90
     xpos_gap = 50
     ypos_gap = 50
+    pos_layer = 10
 
     def __init__(self,
                  root_path=None,
                  root_node=None,
                  nodes=None,
-                 nodes_effects=None,
+                 to_script=None,
                  **kwargs):
         """
         A short description.
@@ -844,8 +844,7 @@ class BuildWorkfile(WorkfileSettings):
                                   root_node=root_node,
                                   nodes=nodes,
                                   **kwargs)
-
-        self._nodes_read_effects = nodes_effects or {}
+        self.to_script = to_script
         # collect data for formating
         data = {
             "root": root_path or api.Session["AVALON_PROJECTS"],
@@ -899,7 +898,7 @@ class BuildWorkfile(WorkfileSettings):
         Args:
             regex_filter (raw string): regex pattern to filter out subsets
             version (int): define a particular version, None gets last
-            representations (list): 
+            representations (list):
 
         Returns:
             type: description
@@ -909,13 +908,18 @@ class BuildWorkfile(WorkfileSettings):
 
         """
 
-        # save the script
-        self.save_script_as()
+        if not self.to_script:
+            # save the script
+            self.save_script_as()
 
         # create viewer and reset frame range
-        vn = nuke.createNode("Viewer")
-        vn["xpos"].setValue(self.xpos)
-        vn["ypos"].setValue(self.ypos)
+        viewer = self.get_nodes(nodes_filter=["Viewer"])
+        if not viewer:
+            vn = nuke.createNode("Viewer")
+            vn["xpos"].setValue(self.xpos)
+            vn["ypos"].setValue(self.ypos)
+        else:
+            vn = viewer[-1]
 
         # move position
         self.position_up()
@@ -926,8 +930,12 @@ class BuildWorkfile(WorkfileSettings):
         wn["render"].setValue(True)
         vn.setInput(0, wn)
 
+        bdn = self.create_backdrop(label="Render write \n\n\n\nOUTPUT",
+                                   color='0xcc1102ff', layer=-1,
+                                   nodes=[wn])
+
         # move position
-        self.position_up()
+        self.position_up(2)
 
         # set frame range for new viewer
         self.reset_frame_range_handles()
@@ -938,6 +946,7 @@ class BuildWorkfile(WorkfileSettings):
                                    version=version,
                                    representations=representations)
 
+        nodes_backdrop = list()
         for name, subset in subsets.items():
             log.info("Building Loader to: `{}`".format(name))
             version = subset["version"]
@@ -950,24 +959,30 @@ class BuildWorkfile(WorkfileSettings):
                 wn.setInput(0, rn)
 
                 # get editional nodes
-                nodes = self._nodes_read_effects.get(name, {}).get("nodes", [])
+                # # TODO: link it to nut Create and Load
 
                 print("\n\n__________ nodes __________")
-                # create all editional nodes
-                for n in nodes:
-                    print(n)
-                    # create nodes
-                    klass, value = n[0]
-                    node = nuke.createNode(value)
-                    print(node.name())
-
-                    for k, v in n:
-                        if "Class" not in k:
-                            node[k].setValue(v)
-                    self._nodes.append(node)
+                # # create all editional nodes
+                # for n in nodes:
+                #     print(n)
+                #     # create nodes
+                #     klass, value = n[0]
+                #     node = nuke.createNode(value)
+                #     print(node.name())
+                #
+                #     for k, v in n:
+                #         if "Class" not in k:
+                #             node[k].setValue(v)
+                #     self._nodes.append(node)
 
                 # move position
                 self.position_right()
+                nodes_backdrop.append(rn)
+
+
+            bdn = self.create_backdrop(label="Loaded Reads",
+                                       color='0x2d7702ff', layer=-1,
+                                       nodes=nodes_backdrop)
 
     def read_loader(self, representation):
         """
@@ -1017,18 +1032,63 @@ class BuildWorkfile(WorkfileSettings):
         # return api.create()
         return creator_plugin("render_writeMain", self._asset).process()
 
-    def position_reset(self):
-        self.xpos = 0
-        self.ypos = 0
+    def create_backdrop(self, label="", color=None, layer=0,
+                        nodes=None):
+        """
+        Create Backdrop node
 
-    def position_right(self):
-        self.xpos += self.xpos_size + self.xpos_gap
+        Arguments:
+            color (str): nuke compatible string with color code
+            layer (int): layer of node usually used (self.pos_layer - 1)
+            label (str): the message
+            nodes (list): list of nodes to be wrapped into backdrop
 
-    def position_left(self):
-        self.xpos -= self.xpos_size + self.xpos_gap
+        """
+        assert isinstance(nodes, list), "`nodes` should be a list of nodes"
 
-    def position_down(self):
-        self.ypos -= self.ypos_size + self.ypos_gap
+        # Calculate bounds for the backdrop node.
+        bdX = min([node.xpos() for node in nodes])
+        bdY = min([node.ypos() for node in nodes])
+        bdW = max([node.xpos() + node.screenWidth() for node in nodes]) - bdX
+        bdH = max([node.ypos() + node.screenHeight() for node in nodes]) - bdY
 
-    def position_up(self):
-        self.ypos -= self.ypos_size + self.ypos_gap
+        # Expand the bounds to leave a little border. Elements are offsets
+        # for left, top, right and bottom edges respectively
+        left, top, right, bottom = (-20, -65, 20, 60)
+        bdX += left
+        bdY += top
+        bdW += (right - left)
+        bdH += (bottom - top)
+
+        bdn = nuke.createNode("BackdropNode")
+        bdn["z_order"].setValue(self.pos_layer + layer)
+
+        if color:
+            bdn["tile_color"].setValue(int(color, 16))
+
+        bdn["xpos"].setValue(bdX)
+        bdn["ypos"].setValue(bdY)
+        bdn["bdwidth"].setValue(bdW)
+        bdn["bdheight"].setValue(bdH)
+
+        if label:
+            bdn["label"].setValue(label)
+
+        bdn["note_font_size"].setValue(20)
+        return bdn
+
+    def position_reset(self, xpos=0, ypos=0):
+        self.xpos = xpos
+        self.ypos = ypos
+
+    def position_right(self, multiply=1):
+        self.xpos += (self.xpos_size * multiply) + self.xpos_gap
+
+    def position_left(self, multiply=1):
+        self.xpos -= (self.xpos_size * multiply) + self.xpos_gap
+
+    def position_down(self, multiply=1):
+        self.ypos -= (self.ypos_size * multiply) + self.ypos_gap
+
+    def position_up(self, multiply=1):
+        self.ypos -= (self.ypos_size * multiply) + self.ypos_gap
