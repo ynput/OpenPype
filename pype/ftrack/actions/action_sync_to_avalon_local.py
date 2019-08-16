@@ -178,17 +178,7 @@ class SyncToAvalon(BaseAction):
                 job['status'] = 'failed'
             session.commit()
 
-            event = fa_session.ftrack_api.event.base.Event(
-                topic='ftrack.action.launch',
-                data=dict(
-                    actionIdentifier='sync.hierarchical.attrs.local',
-                    selection=event['data']['selection']
-                ),
-                source=dict(
-                    user=event['source']['user']
-                )
-            )
-            session.event_hub.publish(event, on_error='ignore')
+            self.trigger_action("sync.hierarchical.attrs.local", event)
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)

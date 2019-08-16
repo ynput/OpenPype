@@ -321,30 +321,13 @@ class BaseHandler(object):
 
         # Launch preactions
         for preaction in self.preactions:
-            event = fa_session.ftrack_api.event.base.Event(
-                topic='ftrack.action.launch',
-                data=dict(
-                    actionIdentifier=preaction,
-                    selection=selection
-                ),
-                source=dict(
-                    user=dict(username=session.api_user)
-                )
-            )
-            session.event_hub.publish(event, on_error='ignore')
+            self.trigger_action(preaction, event)
+
         # Relaunch this action
-        event = fa_session.ftrack_api.event.base.Event(
-            topic='ftrack.action.launch',
-            data=dict(
-                actionIdentifier=self.identifier,
-                selection=selection,
-                preactions_launched=True
-            ),
-            source=dict(
-                user=dict(username=session.api_user)
-            )
+        additional_data = {"preactions_launched": True}
+        self.trigger_action(
+            self.identifier, event, additional_event_data=additional_data
         )
-        session.event_hub.publish(event, on_error='ignore')
 
         return False
 
@@ -536,7 +519,8 @@ class BaseHandler(object):
     def trigger_action(
         self, action_name, event=None, session=None,
         selection=None, user_data=None,
-        topic="ftrack.action.launch", additional_event_data={}
+        topic="ftrack.action.launch", additional_event_data={},
+        on_error="ignore"
     ):
         self.log.debug("Triggering action \"{}\" Begins".format(action_name))
 
@@ -583,7 +567,7 @@ class BaseHandler(object):
                 data=_event_data,
                 source=dict(user=_user_data)
             ),
-            on_error='ignore'
+            on_error=on_error
         )
         self.log.debug(
             "Action \"{}\" Triggered successfully".format(action_name)

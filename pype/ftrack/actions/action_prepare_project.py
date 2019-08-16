@@ -262,16 +262,7 @@ class PrepareProject(BaseAction):
 
         # Trigger Create Project Structure action
         if create_proj_struct is True:
-            self.log.debug("Triggering Create Project Structure action")
-            event = fa_session.ftrack_api.event.base.Event(
-                topic="ftrack.action.launch",
-                data=dict(
-                    actionIdentifier="create.project.structure",
-                    selection=event["data"]["selection"]
-                ),
-                source=dict(user=event['source']['user'])
-            )
-            session.event_hub.publish(event, on_error='ignore')
+            self.trigger_action("create.project.structure", event)
 
         return True
 
