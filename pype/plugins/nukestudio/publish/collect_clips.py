@@ -20,7 +20,35 @@ class CollectClips(api.ContextPlugin):
 
         projectdata = context.data["projectData"]
         version = context.data.get("version", "001")
+        sequence = context.data.get("activeSequence")
         instances_data = []
+
+        # get all subTrackItems and add it to context
+        effects_on_tracks = []
+        sub_track_items = []
+        # looop trough all tracks and search for subtreacks
+        for track_index, video_track in enumerate(sequence.videoTracks()):
+            sub_items =  video_track.subTrackItems()
+            items = video_track.items()
+            if not sub_items:
+                continue
+            for si in sub_items:
+                selected_track = [(indx, vt) for indx, vt in enumerate(sequence.videoTracks())
+                                  if vt.name() in si[0].parentTrack().name()]
+
+                # if filtered track index is the same as \
+                # actual track there is match
+                if (selected_track[0][0] == track_index):
+                    sub_track_items += si
+                    if (track_index not in effects_on_tracks):
+                        effects_on_tracks.append(track_index)
+
+        # self.log.debug("_>_ effects_on_tracks `{}`".format(effects_on_tracks))
+        # self.log.debug("_|_ sub_track_items `{}`".format(sub_track_items))
+        # add it to context
+        context.data["subTrackUsedTracks"] = effects_on_tracks
+        context.data["subTrackItems"] = sub_track_items
+
         for item in context.data.get("selection", []):
             # Skip audio track items
             # Try/Except is to handle items types, like EffectTrackItem
