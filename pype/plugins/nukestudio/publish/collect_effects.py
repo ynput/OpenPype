@@ -1,6 +1,6 @@
 import pyblish.api
 import hiero.core
-
+import re
 
 class CollectVideoTracksLuts(pyblish.api.InstancePlugin):
     """Collect video tracks effects into context."""
@@ -81,11 +81,14 @@ class CollectVideoTracksLuts(pyblish.api.InstancePlugin):
             # controle if parent track has video trackItems
             items_check = et_item.parent().items()
 
+            node_name = et_item.name()
+            node_class = re.sub(r"\d+", "", node_name)
             # filter out all track items under any track with effects
             # also filter out track item bellow
             if (pick_track[0] in effects_on_tracks) and (pick_sub_track[0] >= pick_track[0]):
                 if (effect_t_in == timeline_in) and (effect_t_out == timeline_out):
-                    effects["effects"].update({et_item.name(): {
+                    effects["effects"].update({node_name: {
+                        "class": node_class,
                         "timelineIn": effect_t_in,
                         "timelineOut": effect_t_out,
                         "subTrackIndex": et_item.subTrackIndex(),
@@ -94,7 +97,8 @@ class CollectVideoTracksLuts(pyblish.api.InstancePlugin):
                     }})
                 # for subTrackItem on track without any trackItems
                 elif len(items_check) == 0:
-                    effects["effects"].update({et_item.name(): {
+                    effects["effects"].update({node_name: {
+                        "class": node_class,
                         "timelineIn": effect_t_in,
                         "timelineOut": effect_t_out,
                         "subTrackIndex": et_item.subTrackIndex(),
