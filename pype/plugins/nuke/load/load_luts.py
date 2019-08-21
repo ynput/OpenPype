@@ -83,12 +83,19 @@ class LoadLuts(api.Loader):
             for ef_name, ef_val in nodes_order.items():
                 node = nuke.createNode(ef_val["class"])
                 for k, v in ef_val["node"].items():
-                    if isinstance(v, list) and len(v) > 3:
+                    if isinstance(v, list) and len(v) > 4:
                         node[k].setAnimated()
                         for i, value in enumerate(v):
-                            node[k].setValueAt(
-                                value,
-                                (workfile_first_frame + i))
+                            if isinstance(value, list):
+                                for ci, cv in enumerate(value):
+                                    node[k].setValueAt(
+                                        cv,
+                                        (workfile_first_frame + i),
+                                        ci)
+                            else:
+                                node[k].setValueAt(
+                                    value,
+                                    (workfile_first_frame + i))
                     else:
                         node[k].setValue(v)
                 node.setInput(0, pre_node)
@@ -190,9 +197,16 @@ class LoadLuts(api.Loader):
                     if isinstance(v, list) and len(v) > 3:
                         node[k].setAnimated()
                         for i, value in enumerate(v):
-                            node[k].setValueAt(
-                                value,
-                                (workfile_first_frame + i))
+                            if isinstance(value, list):
+                                for ci, cv in enumerate(value):
+                                    node[k].setValueAt(
+                                        cv,
+                                        (workfile_first_frame + i),
+                                        ci)
+                            else:
+                                node[k].setValueAt(
+                                    value,
+                                    (workfile_first_frame + i))
                     else:
                         node[k].setValue(v)
                 node.setInput(0, pre_node)
