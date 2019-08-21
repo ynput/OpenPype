@@ -203,6 +203,11 @@ class ExtractLook(pype.api.Extractor):
             destination = self.resource_destination(
                 instance, source, do_maketx
             )
+
+            # Force copy is specified.
+            if instance.data.get("forceCopy", False):
+                mode = COPY
+
             if mode == COPY:
                 transfers.append((source, destination))
             elif mode == HARDLINK:
