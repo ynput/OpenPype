@@ -889,7 +889,7 @@ class BuildWorkfile(WorkfileSettings):
     def process(self,
                 regex_filter=None,
                 version=None,
-                representations=["exr", "dpx"]):
+                representations=["exr", "dpx", "lutJson"]):
         """
         A short description.
 
@@ -935,7 +935,7 @@ class BuildWorkfile(WorkfileSettings):
                                    nodes=[wn])
 
         # move position
-        self.position_up(2)
+        self.position_up(4)
 
         # set frame range for new viewer
         self.reset_frame_range_handles()
@@ -947,7 +947,10 @@ class BuildWorkfile(WorkfileSettings):
                                    representations=representations)
 
         nodes_backdrop = list()
+
         for name, subset in subsets.items():
+            if "lut" in name:
+                continue
             log.info("Building Loader to: `{}`".format(name))
             version = subset["version"]
             log.info("Version to: `{}`".format(version["name"]))
@@ -959,26 +962,20 @@ class BuildWorkfile(WorkfileSettings):
                 wn.setInput(0, rn)
 
                 # get editional nodes
-                # # TODO: link it to nut Create and Load
+                lut_subset = [s for n, s in subsets.items()
+                              if "lut{}".format(name.lower()) in n.lower()]
+                log.debug(">> lut_subset: `{}`".format(lut_subset))
 
-                print("\n\n__________ nodes __________")
-                # # create all editional nodes
-                # for n in nodes:
-                #     print(n)
-                #     # create nodes
-                #     klass, value = n[0]
-                #     node = nuke.createNode(value)
-                #     print(node.name())
-                #
-                #     for k, v in n:
-                #         if "Class" not in k:
-                #             node[k].setValue(v)
-                #     self._nodes.append(node)
+                if len(lut_subset) > 0:
+                    lsub = lut_subset[0]
+                    fxn = self.effect_loader(lsub["representaions"][-1])
+                    fxn_ypos = fxn["ypos"].value()
+                    fxn["ypos"].setValue(fxn_ypos - 100)
+                    nodes_backdrop.append(fxn)
 
+                nodes_backdrop.append(rn)
                 # move position
                 self.position_right()
-                nodes_backdrop.append(rn)
-
 
             bdn = self.create_backdrop(label="Loaded Reads",
                                        color='0x2d7702ff', layer=-1,
@@ -993,13 +990,32 @@ class BuildWorkfile(WorkfileSettings):
 
         """
         context = representation["context"]
-        read_name = "Read_{0}_{1}_{2}".format(context["asset"],
-                                              context["subset"],
-                                              context["representation"])
 
         loader_name = "LoadSequence"
         if "mov" in context["representation"]:
             loader_name = "LoadMov"
+
+        loader_plugin = None
+        for Loader in api.discover(api.Loader):
+            if Loader.__name__ != loader_name:
+                continue
+
+            loader_plugin = Loader
+
+        return api.load(Loader=loader_plugin,
+                        representation=representation["_id"])
+
+    def effect_loader(self, representation):
+        """
+        Gets Loader plugin for effects
+
+        Arguments:
+            representation (dict): avalon db entity
+
+        """
+        context = representation["context"]
+
+        loader_name = "LoadLuts"
 
         loader_plugin = None
         for Loader in api.discover(api.Loader):
