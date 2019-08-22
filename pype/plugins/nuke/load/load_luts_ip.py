@@ -107,6 +107,7 @@ class LoadLutsInputProcess(api.Loader):
         # try to place it under Viewer1
         if not self.connect_active_viewer(GN):
             nuke.delete(GN)
+            return
 
         GN["tile_color"].setValue(int("0x3469ffff", 16))
 
@@ -220,6 +221,7 @@ class LoadLutsInputProcess(api.Loader):
         # try to place it under Viewer1
         if not self.connect_active_viewer(GN):
             nuke.delete(GN)
+            return
 
         # get all versions in list
         versions = io.find({
