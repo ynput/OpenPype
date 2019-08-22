@@ -379,6 +379,52 @@ def add_rendering_knobs(node):
     return node
 
 
+def create_backdrop(label="", color=None, layer=0,
+                    nodes=None):
+    """
+    Create Backdrop node
+
+    Arguments:
+        color (str): nuke compatible string with color code
+        layer (int): layer of node usually used (self.pos_layer - 1)
+        label (str): the message
+        nodes (list): list of nodes to be wrapped into backdrop
+
+    """
+    assert isinstance(nodes, list), "`nodes` should be a list of nodes"
+
+    # Calculate bounds for the backdrop node.
+    bdX = min([node.xpos() for node in nodes])
+    bdY = min([node.ypos() for node in nodes])
+    bdW = max([node.xpos() + node.screenWidth() for node in nodes]) - bdX
+    bdH = max([node.ypos() + node.screenHeight() for node in nodes]) - bdY
+
+    # Expand the bounds to leave a little border. Elements are offsets
+    # for left, top, right and bottom edges respectively
+    left, top, right, bottom = (-20, -65, 20, 60)
+    bdX += left
+    bdY += top
+    bdW += (right - left)
+    bdH += (bottom - top)
+
+    bdn = nuke.createNode("BackdropNode")
+    bdn["z_order"].setValue(layer)
+
+    if color:
+        bdn["tile_color"].setValue(int(color, 16))
+
+    bdn["xpos"].setValue(bdX)
+    bdn["ypos"].setValue(bdY)
+    bdn["bdwidth"].setValue(bdW)
+    bdn["bdheight"].setValue(bdH)
+
+    if label:
+        bdn["label"].setValue(label)
+
+    bdn["note_font_size"].setValue(20)
+    return bdn
+
+
 class WorkfileSettings(object):
     """
     All settings for workfile will be set
@@ -1045,37 +1091,9 @@ class BuildWorkfile(WorkfileSettings):
 
         """
         assert isinstance(nodes, list), "`nodes` should be a list of nodes"
-
-        # Calculate bounds for the backdrop node.
-        bdX = min([node.xpos() for node in nodes])
-        bdY = min([node.ypos() for node in nodes])
-        bdW = max([node.xpos() + node.screenWidth() for node in nodes]) - bdX
-        bdH = max([node.ypos() + node.screenHeight() for node in nodes]) - bdY
-
-        # Expand the bounds to leave a little border. Elements are offsets
-        # for left, top, right and bottom edges respectively
-        left, top, right, bottom = (-20, -65, 20, 60)
-        bdX += left
-        bdY += top
-        bdW += (right - left)
-        bdH += (bottom - top)
-
-        bdn = nuke.createNode("BackdropNode")
-        bdn["z_order"].setValue(self.pos_layer + layer)
-
-        if color:
-            bdn["tile_color"].setValue(int(color, 16))
-
-        bdn["xpos"].setValue(bdX)
-        bdn["ypos"].setValue(bdY)
-        bdn["bdwidth"].setValue(bdW)
-        bdn["bdheight"].setValue(bdH)
-
-        if label:
-            bdn["label"].setValue(label)
-
-        bdn["note_font_size"].setValue(20)
-        return bdn
+        layer = self.pos_layer + layer
+        
+        create_backdrop(label=label, color=color, layer=layer, nodes=nodes)
 
     def position_reset(self, xpos=0, ypos=0):
         self.xpos = xpos
