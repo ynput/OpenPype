@@ -251,7 +251,7 @@ class LoadLuts(api.Loader):
         if len(node) > 0:
             rn = node[0]
         else:
-            None
+            rn = None
 
         # Parent read node has been found
         # solving connections
