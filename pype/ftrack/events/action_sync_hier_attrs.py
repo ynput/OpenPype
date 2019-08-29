@@ -20,11 +20,12 @@ class SyncHierarchicalAttrs(BaseAction):
     #: Action identifier.
     identifier = 'sync.hierarchical.attrs'
     #: Action label.
-    label = 'Sync HierAttrs'
+    label = "Pype Admin"
+    variant = '- Sync Hier Attrs (server)'
     #: Action description.
     description = 'Synchronize hierarchical attributes'
     #: Icon
-    icon = '{}/ftrack/action_icons/SyncHierarchicalAttrs.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get(
             'PYPE_STATICS_SERVER',
             'http://localhost:{}'.format(
@@ -333,13 +334,13 @@ class SyncHierarchicalAttrs(BaseAction):
             self.update_hierarchical_attribute(child, key, value)
 
 
-def register(session, **kw):
+def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    SyncHierarchicalAttrs(session).register()
+    SyncHierarchicalAttrs(session, plugins_presets).register()
 
 
 def main(arguments=None):

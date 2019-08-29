@@ -51,7 +51,7 @@ def get_hierarchy(asset_name=None):
     })
 
     not_set = "PARENTS_NOT_SET"
-    entity_parents = entity.get("data", {}).get("parents", not_set)
+    entity_parents = asset_entity.get("data", {}).get("parents", not_set)
 
     # If entity already have parents then just return joined
     if entity_parents != not_set:
@@ -467,10 +467,18 @@ def filter_pyblish_plugins(plugins):
 
     host = api.current_host()
 
+    presets = config.get_presets().get('plugins', {}).get(host, {}).get(
+        "publish", {}
+    )
+
     # iterate over plugins
     for plugin in plugins[:]:
+        # skip if there are no presets to process
+        if not presets:
+            continue
+
         try:
-            config_data = config.get_presets()['plugins'][host]["publish"][plugin.__name__]  # noqa: E501
+            config_data = presets[plugin.__name__]  # noqa: E501
         except KeyError:
             continue
 
@@ -483,3 +491,7 @@ def filter_pyblish_plugins(plugins):
                     option, value, plugin.__name__))
 
                 setattr(plugin, option, value)
+
+        # Remove already processed plugins from dictionary
+        # WARNING Requires plugins with unique names
+        presets.pop(plugin.__name__)

@@ -53,12 +53,12 @@ class ClientReviewSort(BaseAction):
         }
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register action. Called when used as an event plugin.'''
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    action_handler = ClientReviewSort(session)
+    action_handler = ClientReviewSort(session, plugins_presets)
     action_handler.register()
 
 

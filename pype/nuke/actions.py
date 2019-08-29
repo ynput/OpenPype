@@ -1,6 +1,3 @@
-# absolute_import is needed to counter the `module has no cmds error` in Maya
-from __future__ import absolute_import
-
 import pyblish.api
 
 from avalon.nuke.lib import (
@@ -12,7 +9,7 @@ from ..action import get_errored_instances_from_context
 
 
 class SelectInvalidAction(pyblish.api.Action):
-    """Select invalid nodes in Maya when plug-in failed.
+    """Select invalid nodes in Nuke when plug-in failed.
 
     To retrieve the invalid nodes this assumes a static `get_invalid()`
     method is available on the plugin.

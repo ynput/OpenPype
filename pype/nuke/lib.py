@@ -20,6 +20,8 @@ self._project = None
 
 
 def onScriptLoad():
+    ''' Callback for ffmpeg support
+    '''
     if nuke.env['LINUX']:
         nuke.tcl('load ffmpegReader')
         nuke.tcl('load ffmpegWriter')
@@ -37,6 +39,7 @@ def checkInventoryVersions():
     and check if the node is having actual version. If not then it will color
     it to red.
     """
+    # TODO: make it for all nodes not just Read (Loader
 
     # get all Loader nodes by avalon attribute metadata
     for each in nuke.allNodes():
@@ -76,13 +79,16 @@ def checkInventoryVersions():
 
 
 def writes_version_sync():
+    ''' Callback synchronizing version of publishable write nodes
+    '''
+    # TODO: make it work with new write node group
     try:
         rootVersion = pype.get_version_from_path(nuke.root().name())
         padding = len(rootVersion)
         new_version = "v" + str("{" + ":0>{}".format(padding) + "}").format(
             int(rootVersion)
         )
-        log.info("new_version: {}".format(new_version))
+        log.debug("new_version: {}".format(new_version))
     except Exception:
         return
 
@@ -92,32 +98,34 @@ def writes_version_sync():
 
             try:
                 if avalon_knob_data['families'] not in ["render"]:
-                    log.info(avalon_knob_data['families'])
+                    log.debug(avalon_knob_data['families'])
                     continue
 
                 node_file = each['file'].value()
-                log.info("node_file: {}".format(node_file))
 
                 node_version = "v" + pype.get_version_from_path(node_file)
-                log.info("node_version: {}".format(node_version))
+                log.debug("node_version: {}".format(node_version))
 
                 node_new_file = node_file.replace(node_version, new_version)
                 each['file'].setValue(node_new_file)
                 if not os.path.isdir(os.path.dirname(node_new_file)):
-                    log.info("path does not exist")
+                    log.warning("Path does not exist! I am creating it.")
                     os.makedirs(os.path.dirname(node_new_file), 0o766)
             except Exception as e:
-                log.debug(
+                log.warning(
                     "Write node: `{}` has no version in path: {}".format(each.name(), e))
 
 
 def version_up_script():
+    ''' Raising working script's version
+    '''
     import nukescripts
     nukescripts.script_and_write_nodes_version_up()
 
 
 def get_render_path(node):
-
+    ''' Generate Render path from presets regarding avalon knob data
+    '''
     data = dict()
     data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
 
@@ -141,12 +149,24 @@ def get_render_path(node):
 
 
 def format_anatomy(data):
+    ''' Helping function for formating of anatomy paths
+
+    Arguments:
+        data (dict): dictionary with attributes used for formating
+
+    Return:
+        path (str)
+    '''
+    # TODO: perhaps should be nonPublic
+
     from .templates import (
         get_anatomy
     )
+    # TODO: remove get_anatomy and import directly Anatomy() here
 
     anatomy = get_anatomy()
-    log.info("__ anatomy.templates: {}".format(anatomy.templates))
+    log.debug("__ anatomy.templates: {}".format(anatomy.templates))
+
     # TODO: perhaps should be in try!
     padding = int(anatomy.templates['render']['padding'])
     version = data.get("version", None)
@@ -167,17 +187,24 @@ def format_anatomy(data):
         "hierarchy": pype.get_hierarchy(),
         "frame": "#" * padding,
     })
-    log.info("__ data: {}".format(data))
-    log.info("__ format_anatomy: {}".format(anatomy.format(data)))
     return anatomy.format(data)
 
 
 def script_name():
+    ''' Returns nuke script path
+    '''
     return nuke.root().knob('name').value()
 
+def add_button_write_to_read(node):
+    name = "createReadNode"
+    label = "Create Read"
+    value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
+    k = nuke.PyScript_Knob(name, label, value)
+    k.setFlag(0x1000)
+    node.addKnob(k)
 
 def create_write_node(name, data, prenodes=None):
-    '''Creating write node which is group node
+    ''' Creating write node which is group node
 
     Arguments:
         name (str): name of node
@@ -200,6 +227,8 @@ def create_write_node(name, data, prenodes=None):
         )
         ]
 
+    Return:
+        node (obj): group node with avalon data as Knobs
     '''
 
     nuke_dataflow_writes = get_node_dataflow_preset(**data)
@@ -212,7 +241,6 @@ def create_write_node(name, data, prenodes=None):
             "nuke_dataflow_writes": nuke_dataflow_writes,
             "nuke_colorspace_writes": nuke_colorspace_writes
         })
-
         anatomy_filled = format_anatomy(data)
 
     except Exception as e:
@@ -228,7 +256,7 @@ def create_write_node(name, data, prenodes=None):
 
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
-        log.info("path does not exist")
+        log.warning("Path does not exist! I am creating it.")
         os.makedirs(os.path.dirname(fpath), 0o766)
 
     _data = OrderedDict({
@@ -303,11 +331,15 @@ def create_write_node(name, data, prenodes=None):
     # imprinting group node
     GN = avalon.nuke.imprint(GN, data["avalon"])
 
+
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
 
     add_rendering_knobs(GN)
 
+    # adding write to read button
+    add_button_write_to_read(GN)
+    
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
 
@@ -325,6 +357,14 @@ def create_write_node(name, data, prenodes=None):
 
 
 def add_rendering_knobs(node):
+    ''' Adds additional rendering knobs to given node
+
+    Arguments:
+        node (obj): nuke node object to be fixed
+
+    Return:
+        node (obj): with added knobs
+    '''
     if "render" not in node.knobs():
         knob = nuke.Boolean_Knob("render", "Render")
         knob.setFlag(0x1000)
@@ -338,6 +378,12 @@ def add_rendering_knobs(node):
 
 
 def set_viewers_colorspace(viewer):
+    ''' Adds correct colorspace to viewer
+
+    Arguments:
+        viewer (obj): nuke viewer node object to be fixed
+
+    '''
     assert isinstance(viewer, dict), log.error(
         "set_viewers_colorspace(): argument should be dictionary")
 
@@ -381,6 +427,12 @@ def set_viewers_colorspace(viewer):
 
 
 def set_root_colorspace(root_dict):
+    ''' Adds correct colorspace to root
+
+    Arguments:
+        root_dict (dict): nuke root node as dictionary
+
+    '''
     assert isinstance(root_dict, dict), log.error(
         "set_root_colorspace(): argument should be dictionary")
 
@@ -397,17 +449,26 @@ def set_root_colorspace(root_dict):
     for knob, value in root_dict.items():
         if nuke.root()[knob].value() not in value:
             nuke.root()[knob].setValue(str(value))
-            log.info("nuke.root()['{}'] changed to: {}".format(knob, value))
+            log.debug("nuke.root()['{}'] changed to: {}".format(knob, value))
 
 
 def set_writes_colorspace(write_dict):
+    ''' Adds correct colorspace to write node dict
+
+    Arguments:
+        write_dict (dict): nuke write node as dictionary
+
+    '''
+    # TODO: complete this function so any write node in scene will have fixed colorspace following presets for the project
     assert isinstance(write_dict, dict), log.error(
         "set_root_colorspace(): argument should be dictionary")
-    log.info("set_writes_colorspace(): {}".format(write_dict))
+
+    log.debug("__ set_writes_colorspace(): {}".format(write_dict))
 
 
 def set_colorspace():
-
+    ''' Setting colorpace following presets
+    '''
     nuke_colorspace = get_colorspace_preset().get("nuke", None)
 
     try:
@@ -428,7 +489,7 @@ def set_colorspace():
 
     try:
         for key in nuke_colorspace:
-            log.info("{}".format(key))
+            log.debug("Preset's colorspace key: {}".format(key))
     except TypeError:
         log.error("Nuke is not in templates! \n\n\n"
                   "contact your supervisor!")
@@ -474,10 +535,6 @@ def reset_frame_range_handles():
     root["first_frame"].setValue(frame_start)
     root["last_frame"].setValue(frame_end)
 
-    log.info("__ handle_start: `{}`".format(handle_start))
-    log.info("__ handle_end: `{}`".format(handle_end))
-    log.info("__ fps: `{}`".format(fps))
-
     # setting active viewers
     nuke.frame(int(asset_entity["data"]["frameStart"]))
 
@@ -488,15 +545,11 @@ def reset_frame_range_handles():
     for node in nuke.allNodes(filter="Viewer"):
         node['frame_range'].setValue(range)
         node['frame_range_lock'].setValue(True)
-
-        log.info("_frameRange: {}".format(range))
-        log.info("frameRange: {}".format(node['frame_range'].value()))
-
         node['frame_range'].setValue(range)
         node['frame_range_lock'].setValue(True)
 
     # adding handle_start/end to root avalon knob
-    if not avalon.nuke.set_avalon_knob_data(root, {
+    if not avalon.nuke.imprint(root, {
         "handleStart": int(handle_start),
         "handleEnd": int(handle_end)
     }):

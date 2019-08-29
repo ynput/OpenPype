@@ -76,7 +76,7 @@ class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
     families = ["write", "source", "plate", "render"]
-    representations = ["exr", "dpx"]
+    representations = ["exr", "dpx", "jpg", "jpeg"]
 
     label = "Load sequence"
     order = -10
@@ -94,20 +94,11 @@ class LoadSequence(api.Loader):
 
         log.info("version_data: {}\n".format(version_data))
 
+        self.first_frame = int(nuke.root()["first_frame"].getValue())
+        self.handle_start = version_data.get("handleStart", 0)
+
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
-        handles = version_data.get("handles", 0)
-        handle_start = version_data.get("handleStart", 0)
-        handle_end = version_data.get("handleEnd", 0)
-
-        # fix handle start and end if none are available
-        if not handle_start and not handle_end:
-            handle_start = handles
-            handle_end = handles
-
-        # # create handles offset
-        # first -= handle_start
-        # last += handle_end
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -138,7 +129,7 @@ class LoadSequence(api.Loader):
             r["last"].setValue(int(last))
 
             # add additional metadata from the version to imprint to Avalon knob
-            add_keys = ["frameStart", "frameEnd", "handles",
+            add_keys = ["frameStart", "frameEnd",
                         "source", "colorspace", "author", "fps", "version",
                         "handleStart", "handleEnd"]
 
@@ -147,11 +138,17 @@ class LoadSequence(api.Loader):
                 if k is 'version':
                     data_imprint.update({k: context["version"]['name']})
                 else:
-                    data_imprint.update({k: context["version"]['data'].get(k, str(None))})
+                    data_imprint.update(
+                        {k: context["version"]['data'].get(k, str(None))})
 
             data_imprint.update({"objectName": read_name})
 
             r["tile_color"].setValue(int("0x4ecd25ff", 16))
+
+            if version_data.get("retime", None):
+                speed = version_data.get("speed", 1)
+                time_warp_nodes = version_data.get("timewarps", [])
+                self.make_retimes(r, speed, time_warp_nodes)
 
             return containerise(r,
                                 name=name,
@@ -159,6 +156,34 @@ class LoadSequence(api.Loader):
                                 context=context,
                                 loader=self.__class__.__name__,
                                 data=data_imprint)
+
+    def make_retimes(self, node, speed, time_warp_nodes):
+        ''' Create all retime and timewarping nodes with coppied animation '''
+        if speed != 1:
+            rtn = nuke.createNode(
+                "Retime",
+                "speed {}".format(speed))
+            rtn["before"].setValue("continue")
+            rtn["after"].setValue("continue")
+            rtn["input.first_lock"].setValue(True)
+            rtn["input.first"].setValue(
+            self.handle_start + self.first_frame
+            )
+
+        if time_warp_nodes != []:
+            for timewarp in time_warp_nodes:
+                twn = nuke.createNode(timewarp["Class"],
+                                      "name {}".format(timewarp["name"]))
+                if isinstance(timewarp["lookup"], list):
+                    # if array for animation
+                    twn["lookup"].setAnimated()
+                    for i, value in enumerate(timewarp["lookup"]):
+                        twn["lookup"].setValueAt(
+                            (self.first_frame + i) + value,
+                            (self.first_frame + i))
+                else:
+                    # if static value `int`
+                    twn["lookup"].setValue(timewarp["lookup"])
 
     def switch(self, container, representation):
         self.update(container, representation)
@@ -200,26 +225,17 @@ class LoadSequence(api.Loader):
 
         version_data = version.get("data", {})
 
+        self.first_frame = int(nuke.root()["first_frame"].getValue())
+        self.handle_start = version_data.get("handleStart", 0)
+        
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
-        handles = version_data.get("handles", 0)
-        handle_start = version_data.get("handleStart", 0)
-        handle_end = version_data.get("handleEnd", 0)
 
         if first is None:
             log.warning("Missing start frame for updated version"
                         "assuming starts at frame 0 for: "
                         "{} ({})".format(node['name'].value(), representation))
             first = 0
-
-        # fix handle start and end if none are available
-        if not handle_start and not handle_end:
-            handle_start = handles
-            handle_end = handles
-
-        # create handles offset
-        first -= handle_start
-        last += handle_end
 
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
@@ -241,7 +257,6 @@ class LoadSequence(api.Loader):
             "version": version.get("name"),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
-            "handles": version_data.get("handles"),
             "handleStart": version_data.get("handleStart"),
             "handleEnd": version_data.get("handleEnd"),
             "fps": version_data.get("fps"),
@@ -254,6 +269,11 @@ class LoadSequence(api.Loader):
             node["tile_color"].setValue(int("0xd84f20ff", 16))
         else:
             node["tile_color"].setValue(int("0x4ecd25ff", 16))
+
+        if version_data.get("retime", None):
+            speed = version_data.get("speed", 1)
+            time_warp_nodes = version_data.get("timewarps", [])
+            self.make_retimes(node, speed, time_warp_nodes)
 
         # Update the imprinted representation
         update_container(

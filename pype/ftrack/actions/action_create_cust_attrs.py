@@ -110,12 +110,13 @@ class CustomAttributes(BaseAction):
     #: Action identifier.
     identifier = 'create.update.attributes'
     #: Action label.
-    label = 'Create/Update Avalon Attributes'
+    label = "Pype Admin"
+    variant = '- Create/Update Avalon Attributes'
     #: Action description.
     description = 'Creates Avalon/Mongo ID for double check'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = '{}/ftrack/action_icons/CustomAttributes.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
@@ -568,7 +569,7 @@ class CustomAttributes(BaseAction):
         }
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -577,7 +578,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    CustomAttributes(session).register()
+    CustomAttributes(session, plugins_presets).register()
 
 
 def main(arguments=None):

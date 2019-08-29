@@ -48,11 +48,12 @@ class Sync_To_Avalon(BaseAction):
     #: Action identifier.
     identifier = 'sync.to.avalon'
     #: Action label.
-    label = 'SyncToAvalon'
+    label = "Pype Admin"
+    variant = "- Sync To Avalon (Server)"
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
-    icon = '{}/ftrack/action_icons/SyncToAvalon.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get(
             'PYPE_STATICS_SERVER',
             'http://localhost:{}'.format(
@@ -242,7 +243,7 @@ class Sync_To_Avalon(BaseAction):
                     self.add_childs_to_importable(child)
 
 
-def register(session, **kw):
+def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -251,7 +252,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    Sync_To_Avalon(session).register()
+    SyncToAvalon(session, plugins_presets).register()
 
 
 def main(arguments=None):

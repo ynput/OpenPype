@@ -13,9 +13,11 @@ class ThumbToParent(BaseAction):
     # Action identifier
     identifier = 'thumb.to.parent'
     # Action label
-    label = 'Thumbnail to Parent'
+    label = 'Thumbnail'
+    # Action variant
+    variant = " to Parent"
     # Action icon
-    icon = '{}/ftrack/action_icons/thumbToParent.svg'.format(
+    icon = '{}/ftrack/action_icons/Thumbnail.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
@@ -86,12 +88,12 @@ class ThumbToParent(BaseAction):
         }
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register action. Called when used as an event plugin.'''
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    ThumbToParent(session).register()
+    ThumbToParent(session, plugins_presets).register()
 
 
 def main(arguments=None):

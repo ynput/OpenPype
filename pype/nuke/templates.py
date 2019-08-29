@@ -20,6 +20,8 @@ def get_colorspace_preset():
 
 
 def get_node_dataflow_preset(**kwarg):
+    ''' Get preset data for dataflow (fileType, compression, bitDepth)
+    '''
     log.info(kwarg)
     host = kwarg.get("host", "nuke")
     cls = kwarg.get("class", None)
@@ -39,6 +41,8 @@ def get_node_dataflow_preset(**kwarg):
 
 
 def get_node_colorspace_preset(**kwarg):
+    ''' Get preset data for colorspace
+    '''
     log.info(kwarg)
     host = kwarg.get("host", "nuke")
     cls = kwarg.get("class", None)
