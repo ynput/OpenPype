@@ -509,11 +509,18 @@ def reset_resolution():
     project = io.find_one({"type": "project"})
     asset = api.Session["AVALON_ASSET"]
     asset = io.find_one({"name": asset, "type": "asset"})
+    asset_data = asset.get('data', {})
 
     data = {
-        "width": int(asset.get('data', {}).get('resolution_width')),
-        "height": int(asset.get('data', {}).get('resolution_height')),
-        "pixel_aspect": asset.get('data', {}).get('pixel_aspect', 1),
+        "width": int(asset_data.get(
+            'resolutionWidth',
+            asset_data.get('resolution_width'))),
+        "height": int(asset_data.get(
+            'resolutionHeight',
+            asset_data.get('resolution_height'))),
+        "pixel_aspect": asset_data.get(
+            'pixelAspect',
+            asset_data.get('pixel_aspect', 1)),
         "name": project["name"]
     }
 
