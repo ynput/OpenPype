@@ -101,7 +101,8 @@ class LoadMov(api.Loader):
         handles = version_data.get("handles", None)
         handle_start = version_data.get("handleStart", None)
         handle_end = version_data.get("handleEnd", None)
-
+        repr_cont = context["representation"]["context"]
+        
         # fix handle start and end if none are available
         if not handle_start and not handle_end:
             handle_start = handles
@@ -119,9 +120,11 @@ class LoadMov(api.Loader):
         file = self.fname.replace("\\", "/")
         log.info("file: {}\n".format(self.fname))
 
-        read_name = "Read"
-        read_name += '_' + context["representation"]["context"]["subset"]
-        read_name += '_' + context["representation"]["name"]
+        read_name = "Read_{0}_{1}_{2}".format(
+            repr_cont["asset"],
+            repr_cont["subset"],
+            repr_cont["representation"])
+
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():

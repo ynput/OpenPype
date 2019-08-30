@@ -32,7 +32,8 @@ class CollectVideoTracksLuts(pyblish.api.InstancePlugin):
                 self.log.debug(">> sitem: `{}`".format(sitem))
                 self.add_effect(instance, t_index, sitem)
 
-        instance.data["effectTrackItems"] = self.effects
+        if self.effects["effects"]:
+            instance.data["effectTrackItems"] = self.effects
 
         if len(instance.data.get("effectTrackItems", {}).keys()) > 0:
             instance.data["families"] += ["lut"]

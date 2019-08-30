@@ -2,18 +2,18 @@ from avalon import api, style, io
 import nuke
 import json
 from collections import OrderedDict
+from pype.nuke import lib
 
-
-class LoadLuts(api.Loader):
+class LoadLutsInputProcess(api.Loader):
     """Loading colorspace soft effect exported from nukestudio"""
 
     representations = ["lutJson"]
     families = ["lut"]
 
-    label = "Load Luts - nodes"
+    label = "Load Luts - Input Process"
     order = 0
-    icon = "cc"
-    color = style.colors.light
+    icon = "eye"
+    color = style.colors.alert
 
     def load(self, context, name, namespace, data):
         """
@@ -104,8 +104,10 @@ class LoadLuts(api.Loader):
             output = nuke.createNode("Output")
             output.setInput(0, pre_node)
 
-        # try to find parent read node
-        self.connect_read_node(GN, namespace, json_f["assignTo"])
+        # try to place it under Viewer1
+        if not self.connect_active_viewer(GN):
+            nuke.delete(GN)
+            return
 
         GN["tile_color"].setValue(int("0x3469ffff", 16))
 
@@ -216,8 +218,10 @@ class LoadLuts(api.Loader):
             output = nuke.createNode("Output")
             output.setInput(0, pre_node)
 
-        # try to find parent read node
-        self.connect_read_node(GN, namespace, json_f["assignTo"])
+        # try to place it under Viewer1
+        if not self.connect_active_viewer(GN):
+            nuke.delete(GN)
+            return
 
         # get all versions in list
         versions = io.find({
@@ -235,35 +239,44 @@ class LoadLuts(api.Loader):
 
         self.log.info("udated to version: {}".format(version.get("name")))
 
-    def connect_read_node(self, group_node, asset, subset):
+    def connect_active_viewer(self, group_node):
         """
-        Finds read node and selects it
+        Finds Active viewer and
+        place the node under it, also adds
+        name of group into Input Process of the viewer
 
         Arguments:
-            asset (str): asset name
+            group_node (nuke node): nuke group node object
 
-        Returns:
-            nuke node: node is selected
-            None: if nothing found
         """
-        search_name = "{0}_{1}".format(asset, subset)
-        node = [n for n in nuke.allNodes() if search_name in n["name"].value()]
-        if len(node) > 0:
-            rn = node[0]
+        group_node_name = group_node["name"].value()
+
+        viewer = [n for n in nuke.allNodes() if "Viewer1" in n["name"].value()]
+        if len(viewer) > 0:
+            viewer = viewer[0]
         else:
-            rn = None
+            self.log.error("Please create Viewer node before you run this action again")
+            return None
 
-        # Parent read node has been found
-        # solving connections
-        if rn:
-            dep_nodes = rn.dependent()
+        # get coordinates of Viewer1
+        xpos = viewer["xpos"].value()
+        ypos = viewer["ypos"].value()
 
-            if len(dep_nodes) > 0:
-                for dn in dep_nodes:
-                    dn.setInput(0, group_node)
+        ypos += 150
 
-            group_node.setInput(0, rn)
-            group_node.autoplace()
+        viewer["ypos"].setValue(ypos)
+
+        # set coordinates to group node
+        group_node["xpos"].setValue(xpos)
+        group_node["ypos"].setValue(ypos + 50)
+
+        # add group node name to Viewer Input Process
+        viewer["input_process_node"].setValue(group_node_name)
+
+        # put backdrop under
+        lib.create_backdrop(label="Input Process", layer=2, nodes=[viewer, group_node], color="0x7c7faaff")
+
+        return True
 
     def reorder_nodes(self, data):
         new_order = OrderedDict()
