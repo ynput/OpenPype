@@ -66,11 +66,14 @@ class CollectPlates(api.InstancePlugin):
             item = instance.data["item"]
             width = int(item.source().mediaSource().width())
             height = int(item.source().mediaSource().height())
-            self.log.info("Source Width and Height are: `{0} x {1}`".format(
-                width, height))
+            pixel_aspect = int(item.source().mediaSource().pixelAspect())
+
+            self.log.info("Source Width and Height are: `{0} x {1} : {2}`".format(
+                width, height, pixel_aspect))
             data.update({
                 "width": width,
-                "height": height
+                "height": height,
+                "pixelAspect": pixel_aspect
             })
 
         self.log.debug("Creating instance with name: {}".format(data["name"]))
@@ -123,7 +126,7 @@ class CollectPlatesData(api.InstancePlugin):
         transfer_data = [
             "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart",
             "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut",
-            "clipInH", "clipOutH", "asset", "track", "version"
+            "clipInH", "clipOutH", "asset", "track", "version", "width", "height", "pixelAspect"
         ]
 
         # pass data to version
@@ -133,6 +136,7 @@ class CollectPlatesData(api.InstancePlugin):
         version_data.update({
             "handles": version_data['handleStart'],
             "colorspace": item.sourceMediaColourTransform(),
+            "colorspaceScript": instance.context.data["colorspace"],
             "families": [f for f in families if 'ftrack' not in f],
             "subset": name,
             "fps": instance.context.data["fps"]

@@ -2,11 +2,11 @@ import pyblish.api
 from avalon import io
 
 
-class IntegrateHierarchyToAvalon(pyblish.api.ContextPlugin):
+class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
     """Create entities in Avalon based on collected data."""
 
-    order = pyblish.api.IntegratorOrder - 0.1
-    label = "Integrate Hierarchy To Avalon"
+    order = pyblish.api.ExtractorOrder - 0.01
+    label = "Extract Hierarchy To Avalon"
     families = ["clip", "shot"]
 
     def process(self, context):
