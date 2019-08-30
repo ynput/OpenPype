@@ -562,17 +562,9 @@ class WorkfileSettings(object):
     def set_writes_colorspace(self, write_dict):
         ''' Adds correct colorspace to write node dict
 
-    if "data" not in asset_entity:
-        msg = "Asset {} don't have set any 'data'".format(name)
-        log.warning(msg)
-        nuke.message(msg)
-        return
-    data = asset_entity["data"]
         Arguments:
             write_dict (dict): nuke write node as dictionary
 
-    missing_cols = []
-    check_cols = ["fps", "frameStart", "frameEnd", "handleStart", "handleEnd"]
         '''
         # TODO: complete this function so any write node in
         # scene will have fixed colorspace following presets for the project
