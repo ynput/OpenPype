@@ -355,6 +355,9 @@ def create_write_node(name, data, prenodes=None):
     lnk.setName("Render")
     GN.addKnob(lnk)
 
+    # Deadline tab.
+    add_deadline_tab(GN)
+
     return GN
 
 
