@@ -378,6 +378,14 @@ def add_rendering_knobs(node):
     return node
 
 
+def add_deadline_tab(node):
+    node.addKnob(nuke.Tab_Knob("Deadline"))
+
+    knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
+    knob.setValue(1)
+    node.addKnob(knob)
+
+
 def set_viewers_colorspace(viewer):
     ''' Adds correct colorspace to viewer
 
