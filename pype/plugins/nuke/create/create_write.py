@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import avalon.api
 import avalon.nuke
-from pype.nuke.lib import create_write_node
+from pype.nuke.lib import create_write_node, add_deadline_tab
 from pype import api as pype
 from pypeapp import config
 
@@ -51,7 +51,7 @@ class CreateWriteRender(avalon.nuke.Creator):
         node = 'write'
 
         instance = nuke.toNode(self.data["subset"])
-
+        node = None
         if not instance:
             write_data = {
                 "class": node,
@@ -68,6 +68,9 @@ class CreateWriteRender(avalon.nuke.Creator):
                 self.log.info("Adding template path from plugin")
                 write_data.update({
                     "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"})
+
+        # Deadline tab.
+        add_deadline_tab(node)
 
         return create_write_node(self.data["subset"], write_data)
 

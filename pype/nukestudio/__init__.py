@@ -1,7 +1,6 @@
 import os
 from pypeapp import Logger
 import hiero
-from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
 

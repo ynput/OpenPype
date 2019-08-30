@@ -379,6 +379,14 @@ def add_rendering_knobs(node):
     return node
 
 
+def add_deadline_tab(node):
+    node.addKnob(nuke.Tab_Knob("Deadline"))
+
+    knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
+    knob.setValue(1)
+    node.addKnob(knob)
+
+
 def create_backdrop(label="", color=None, layer=0,
                     nodes=None):
     """
@@ -665,87 +673,80 @@ class WorkfileSettings(object):
     def reset_resolution(self):
         """Set resolution to project resolution."""
         log.info("Reseting resolution")
+        project = io.find_one({"type": "project"})
+        asset = api.Session["AVALON_ASSET"]
+        asset = io.find_one({"name": asset, "type": "asset"})
+        asset_data = asset.get('data', {})
 
-        width = self._asset_entity.get('data', {}).get("resolutionWidth")
-        height = self._asset_entity.get('data', {}).get("resolutionHeight")
-        pixel_aspect = self._asset_entity.get('data', {}).get("pixelAspect")
+        data = {
+            "width": int(asset_data.get(
+                'resolutionWidth',
+                asset_data.get('resolution_width'))),
+            "height": int(asset_data.get(
+                'resolutionHeight',
+                asset_data.get('resolution_height'))),
+            "pixel_aspect": asset_data.get(
+                'pixelAspect',
+                asset_data.get('pixel_aspect', 1)),
+            "name": project["name"]
+        }
 
-        if any(not x for x in [width, height, pixel_aspect]):
-            log.error("Missing set shot attributes in DB. \nContact"
-                      "your supervisor!. \n\nWidth: `{0}` \nHeight: `{1}`"
-                      "\nPixel Asspect: `{2}`".format(
-                          width, height, pixel_aspect))
-            return
+        if any(x for x in data.values() if x is None):
+            log.error(
+                "Missing set shot attributes in DB."
+                "\nContact your supervisor!."
+                "\n\nWidth: `{width}`"
+                "\nHeight: `{height}`"
+                "\nPixel Asspect: `{pixel_aspect}`".format(**data)
+            )
 
         bbox = self._asset_entity.get('data', {}).get('crop')
 
         if bbox:
             try:
                 x, y, r, t = bbox.split(".")
+                data.update(
+                    {
+                        "x": int(x),
+                        "y": int(y),
+                        "r": int(r),
+                        "t": int(t),
+                    }
+                )
             except Exception as e:
                 bbox = None
-                log.error("{}: {} \nFormat:Crop need to be set with dots,"
-                          " example: 0.0.1920.1080, /nSetting to"
-                          " default".format(__name__, e))
+                log.error(
+                    "{}: {} \nFormat:Crop need to be set with dots, example: "
+                    "0.0.1920.1080, /nSetting to default".format(__name__, e)
+                )
 
-        used_formats = list()
-        for f in nuke.formats():
-            if self._project["name"] in str(f.name()):
-                used_formats.append(f)
-            else:
-                format_name = self._project["name"] + "_1"
+        existing_format = None
+        for format in nuke.formats():
+            if data["name"] == format.name():
+                existing_format = format
+                break
 
-        crnt_fmt_str = ""
-        if used_formats:
-            check_format = used_formats[-1]
-            format_name = "{}_{}".format(
-                self._project["name"],
-                int(used_formats[-1].name()[-1]) + 1
-            )
-            log.info(
-                "Format exists: {}. "
-                "Will create new: {}...".format(
-                    used_formats[-1].name(),
-                    format_name)
-            )
-            crnt_fmt_kargs = {
-                "width": (check_format.width()),
-                "height": (check_format.height()),
-                "pixelAspect": float(check_format.pixelAspect())
-            }
+        if existing_format:
+            # Enforce existing format to be correct.
+            existing_format.setWidth(data["width"])
+            existing_format.setHeight(data["height"])
+            existing_format.setPixelAspect(data["pixel_aspect"])
+
             if bbox:
-                crnt_fmt_kargs.update({
-                    "x": int(check_format.x()),
-                    "y": int(check_format.y()),
-                    "r": int(check_format.r()),
-                    "t": int(check_format.t()),
-                })
-            crnt_fmt_str = self.make_format_string(**crnt_fmt_kargs)
+                existing_format.setX(data["x"])
+                existing_format.setY(data["y"])
+                existing_format.setR(data["r"])
+                existing_format.setT(data["t"])
+        else:
+            format_string = self.make_format_string(**data)
+            log.info("Creating new format: {}".format(format_string))
+            nuke.addFormat(format_string)
 
-        new_fmt_kargs = {
-            "width": int(width),
-            "height": int(height),
-            "pixelAspect": float(pixel_aspect),
-            "project_name": format_name
-        }
-        if bbox:
-            new_fmt_kargs.update({
-                "x": int(x),
-                "y": int(y),
-                "r": int(r),
-                "t": int(t),
-            })
+        nuke.root()["format"].setValue(data["name"])
+        log.info("Format is set.")
 
-        new_fmt_str = self.make_format_string(**new_fmt_kargs)
-
-        if new_fmt_str not in crnt_fmt_str:
-            self.make_format(frm_str=new_fmt_str,
-                             project_name=new_fmt_kargs["project_name"])
-
-            log.info("Format is set")
-
-    def make_format_string(self, **args):
-        if args.get("r"):
+    def make_format_string(self, **kwargs):
+        if kwargs.get("r"):
             return (
                 "{width} "
                 "{height} "
@@ -753,20 +754,16 @@ class WorkfileSettings(object):
                 "{y} "
                 "{r} "
                 "{t} "
-                "{pixelAspect:.2f}".format(**args)
+                "{pixel_aspect:.2f} "
+                "{name}".format(**kwargs)
             )
         else:
             return (
                 "{width} "
                 "{height} "
-                "{pixelAspect:.2f}".format(**args)
+                "{pixel_aspect:.2f} "
+                "{name}".format(**kwargs)
             )
-
-    def make_format(self, **args):
-        log.info("Format does't exist, will create: \n{}".format(args))
-        nuke.addFormat("{frm_str} "
-                       "{project_name}".format(**args))
-        self._root_node["format"].setValue("{project_name}".format(**args))
 
     def set_context_settings(self):
         # replace reset resolution from avalon core to pype's
@@ -1108,7 +1105,7 @@ class BuildWorkfile(WorkfileSettings):
         """
         assert isinstance(nodes, list), "`nodes` should be a list of nodes"
         layer = self.pos_layer + layer
-        
+
         create_backdrop(label=label, color=color, layer=layer, nodes=nodes)
 
     def position_reset(self, xpos=0, ypos=0):
