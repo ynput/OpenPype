@@ -94,13 +94,12 @@ class BaseHandler(object):
     def launch_log(self, func):
         @functools.wraps(func)
         def wrapper_launch(*args, **kwargs):
+            label = self.__class__.__name__
             if hasattr(self, 'label'):
+                label = self.label
                 if hasattr(self, 'variant'):
-                    label = '{} {}'.format(self.label, self.variant)
-                else:
-                    label = self.label
-            else:
-                label = self.__class__.__name__
+                    if self.variant is not None:
+                        label = '{} {}'.format(self.label, self.variant)
 
             self.log.info(('{} "{}": Launched').format(self.type, label))
             try:
@@ -141,6 +140,13 @@ class BaseHandler(object):
 
         # Custom validations
         result = self.preregister()
+        if result is None:
+            self.log.debug((
+                "\"{}\" 'preregister' method returned 'None'. Expected it"
+                " didn't fail and continue as preregister returned True."
+            ).format(self.__class__.__name__))
+            return
+
         if result is True:
             return
         msg = "Pre-register conditions were not met"

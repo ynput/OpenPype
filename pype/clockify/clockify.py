@@ -1,16 +1,19 @@
 import os
 import threading
-from pypeapp import style
+from pypeapp import style, Logger
 from Qt import QtWidgets
-from pype.clockify import ClockifySettings, ClockifyAPI
+from . import ClockifySettings, ClockifyAPI, MessageWidget
 
 
 class ClockifyModule:
 
     def __init__(self, main_parent=None, parent=None):
+        self.log = Logger().get_logger(self.__class__.__name__, "PypeTray")
+
         self.main_parent = main_parent
         self.parent = parent
         self.clockapi = ClockifyAPI()
+        self.message_widget = None
         self.widget_settings = ClockifySettings(main_parent, self)
         self.widget_settings_required = None
 
@@ -74,6 +77,7 @@ class ClockifyModule:
             self.timer_manager.start_timers(data)
 
     def timer_stopped(self):
+        self.bool_timer_run = False
         if hasattr(self, 'timer_manager'):
             self.timer_manager.stop_timers()
 
@@ -102,26 +106,37 @@ class ClockifyModule:
             if self.bool_timer_run != bool_timer_run:
                 if self.bool_timer_run is True:
                     self.timer_stopped()
-                else:
+                elif self.bool_timer_run is False:
                     actual_timer = self.clockapi.get_in_progress()
                     if not actual_timer:
                         continue
 
-                    actual_project_id = actual_timer["projectId"]
-                    project = self.clockapi.get_project_by_id(
-                        actual_project_id
-                    )
+                    actual_proj_id = actual_timer["projectId"]
+                    if not actual_proj_id:
+                        continue
+
+                    project = self.clockapi.get_project_by_id(actual_proj_id)
+                    if project and project.get("code") == 501:
+                        continue
+
                     project_name = project["name"]
 
                     actual_timer_hierarchy = actual_timer["description"]
                     hierarchy_items = actual_timer_hierarchy.split("/")
+                    # Each pype timer must have at least 2 items!
+                    if len(hierarchy_items) < 2:
+                        continue
                     task_name = hierarchy_items[-1]
                     hierarchy = hierarchy_items[:-1]
 
+                    task_type = None
+                    if len(actual_timer.get("tags", [])) > 0:
+                        task_type = actual_timer["tags"][0].get("name")
                     data = {
                         "task_name": task_name,
                         "hierarchy": hierarchy,
-                        "project_name": project_name
+                        "project_name": project_name,
+                        "task_type": task_type
                     }
 
                     self.timer_started(data)
@@ -134,9 +149,23 @@ class ClockifyModule:
         self.clockapi.finish_time_entry()
         if self.bool_timer_run:
             self.timer_stopped()
-        self.bool_timer_run = False
+
+    def signed_in(self):
+        if hasattr(self, 'timer_manager'):
+            if not self.timer_manager:
+                return
+
+            if not self.timer_manager.last_task:
+                return
+
+            if self.timer_manager.is_running:
+                self.start_timer_manager(self.timer_manager.last_task)
 
     def start_timer(self, input_data):
+        # If not api key is not entered then skip
+        if not self.clockapi.get_api_key():
+            return
+
         actual_timer = self.clockapi.get_in_progress()
         actual_timer_hierarchy = None
         actual_project_id = None
@@ -144,11 +173,31 @@ class ClockifyModule:
             actual_timer_hierarchy = actual_timer.get("description")
             actual_project_id = actual_timer.get("projectId")
 
+        # Concatenate hierarchy and task to get description
         desc_items = [val for val in input_data.get("hierarchy", [])]
         desc_items.append(input_data["task_name"])
         description = "/".join(desc_items)
 
-        project_id = self.clockapi.get_project_id(input_data["project_name"])
+        # Check project existence
+        project_name = input_data["project_name"]
+        project_id = self.clockapi.get_project_id(project_name)
+        if not project_id:
+            self.log.warning((
+                "Project \"{}\" was not found in Clockify. Timer won't start."
+            ).format(project_name))
+
+            msg = (
+                "Project <b>\"{}\"</b> is not in Clockify Workspace <b>\"{}\"</b>."
+                "<br><br>Please inform your Project Manager."
+            ).format(project_name, str(self.clockapi.workspace))
+
+            self.message_widget = MessageWidget(
+                self.main_parent, msg, "Clockify - Info Message"
+            )
+            self.message_widget.closed.connect(self.message_widget)
+            self.message_widget.show()
+
+            return
 
         if (
             actual_timer is not None and
@@ -158,13 +207,16 @@ class ClockifyModule:
             return
 
         tag_ids = []
-        task_tag_id = self.clockapi.get_tag_id(input_data["task_name"])
+        task_tag_id = self.clockapi.get_tag_id(input_data["task_type"])
         if task_tag_id is not None:
             tag_ids.append(task_tag_id)
 
         self.clockapi.start_time_entry(
             description, project_id, tag_ids=tag_ids
         )
+
+    def on_message_widget_close(self):
+        self.message_widget = None
 
     # Definition of Tray menu
     def tray_menu(self, parent_menu):
