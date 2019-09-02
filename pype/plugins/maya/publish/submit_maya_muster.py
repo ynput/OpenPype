@@ -10,7 +10,7 @@ import platform
 from pypeapp import config
 
 
-# mapping between Maya rendere names and Muster template ids
+# mapping between Maya renderer names and Muster template ids
 def _get_template_id(renderer):
     """
     Return muster template ID based on renderer name.
@@ -230,6 +230,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         """
         self.log.info("Trying to find template for [{}]".format(renderer))
         mapped = _get_template_id(renderer)
+        self.log.info("got id [{}]".format(mapped))
         return self._templates.get(mapped)
 
     def _submit(self, payload):
@@ -262,11 +263,18 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         render publish job and submit job to farm.
         """
         # setup muster environment
-        self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL",
-                                              "https://localhost:9891")
+        self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
+
+        if self.MUSTER_REST_URL is None:
+            self.log.error(
+                "\"MUSTER_REST_URL\" is not found. Skipping "
+                "[{}]".format(instance)
+            )
+            raise RuntimeError("MUSTER_REST_URL not set")
+
         self._load_credentials()
         self._authenticate()
-        self._get_templates()
+        # self._get_templates()
 
         context = instance.context
         workspace = context.data["workspaceDir"]
@@ -354,7 +362,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 "platform": 0,
                 "job": {
                     "jobName": jobname,
-                    "templateId": self._resolve_template(
+                    "templateId": self._get_template_id(
                         instance.data["renderer"]),
                     "chunksInterleave": 2,
                     "chunksPriority": "0",

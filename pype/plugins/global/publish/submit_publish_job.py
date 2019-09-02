@@ -212,28 +212,24 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         # Get a submission job
         data = instance.data.copy()
-        job = instance.data.get("deadlineSubmissionJob")
+        render_job = data.pop("deadlineSubmissionJob")
         submission_type = "deadline"
 
-        if not job:
+        if not render_job:
             # No deadline job. Try Muster: musterSubmissionJob
-            job = data.pop("musterSubmissionJob")
+            render_job = data.pop("musterSubmissionJob")
             submission_type = "muster"
-            if not job:
+            if not render_job:
                 raise RuntimeError("Can't continue without valid Deadline "
                                    "or Muster submission prior to this "
                                    "plug-in.")
 
         if submission_type == "deadline":
-            render_job = data.pop("deadlineSubmissionJob")
             self.DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
                                                     "http://localhost:8082")
             assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
-            self._submit_deadline_post_job(instance, job)
-
-        if submission_type == "muster":
-            render_job = data.pop("musterSubmissionJob")
+            self._submit_deadline_post_job(instance, render_job)
 
         asset = data.get("asset") or api.Session["AVALON_ASSET"]
         subset = data["subset"]
