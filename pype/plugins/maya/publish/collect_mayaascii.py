@@ -15,8 +15,8 @@ class CollectMayaAscii(pyblish.api.InstancePlugin):
     def process(self, instance):
         # Extract only current frame (override)
         frame = cmds.currentTime(query=True)
-        instance.data['startFrame'] = frame
-        instance.data['endFrame'] = frame
+        instance.data["frameStart"] = frame
+        instance.data["frameEnd"] = frame
 
         # make ftrack publishable
         if instance.data.get('families'):

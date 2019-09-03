@@ -67,8 +67,8 @@ class ExtractReviewData(pype.api.Extractor):
         else:
             fname = os.path.basename(instance.data.get("path", None))
             fhead = os.path.splitext(fname)[0] + "."
-            first_frame = instance.data.get("startFrame", None)
-            last_frame = instance.data.get("endFrame", None)
+            first_frame = instance.data.get("frameStart", None)
+            last_frame = instance.data.get("frameEnd", None)
 
         node = previous_node = nuke.createNode("Read")
 
@@ -149,8 +149,8 @@ class ExtractReviewData(pype.api.Extractor):
             'ext': representation,
             'files': file,
             "stagingDir": stagingDir,
-            "startFrame": first_frame,
-            "endFrame": last_frame,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
             "anatomy_template": "render",
             "tags": tags
         }

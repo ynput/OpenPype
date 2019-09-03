@@ -1,16 +1,23 @@
 import os
 import sys
+import getpass
 from collections import OrderedDict
 from pprint import pprint
 from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
+
 import nuke
 from .templates import (
     get_colorspace_preset,
     get_node_dataflow_preset,
     get_node_colorspace_preset
 )
+
+from .templates import (
+    get_anatomy
+)
+# TODO: remove get_anatomy and import directly Anatomy() here
 
 from pypeapp import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -20,6 +27,8 @@ self._project = None
 
 
 def onScriptLoad():
+    ''' Callback for ffmpeg support
+    '''
     if nuke.env['LINUX']:
         nuke.tcl('load ffmpegReader')
         nuke.tcl('load ffmpegWriter')
@@ -37,6 +46,7 @@ def checkInventoryVersions():
     and check if the node is having actual version. If not then it will color
     it to red.
     """
+    # TODO: make it for all nodes not just Read (Loader
 
     # get all Loader nodes by avalon attribute metadata
     for each in nuke.allNodes():
@@ -45,7 +55,7 @@ def checkInventoryVersions():
 
             if container:
                 node = container["_node"]
-                avalon_knob_data = get_avalon_knob_data(node)
+                avalon_knob_data = avalon.nuke.get_avalon_knob_data(node)
 
                 # get representation from io
                 representation = io.find_one({
@@ -76,50 +86,55 @@ def checkInventoryVersions():
 
 
 def writes_version_sync():
+    ''' Callback synchronizing version of publishable write nodes
+    '''
+    # TODO: make it work with new write node group
     try:
         rootVersion = pype.get_version_from_path(nuke.root().name())
         padding = len(rootVersion)
         new_version = "v" + str("{" + ":0>{}".format(padding) + "}").format(
             int(rootVersion)
         )
-        log.info("new_version: {}".format(new_version))
+        log.debug("new_version: {}".format(new_version))
     except Exception:
         return
 
     for each in nuke.allNodes():
         if each.Class() == 'Write':
-            avalon_knob_data = get_avalon_knob_data(each)
+            avalon_knob_data = avalon.nuke.get_avalon_knob_data(each)
 
             try:
                 if avalon_knob_data['families'] not in ["render"]:
-                    log.info(avalon_knob_data['families'])
+                    log.debug(avalon_knob_data['families'])
                     continue
 
                 node_file = each['file'].value()
-                log.info("node_file: {}".format(node_file))
 
                 node_version = "v" + pype.get_version_from_path(node_file)
-                log.info("node_version: {}".format(node_version))
+                log.debug("node_version: {}".format(node_version))
 
                 node_new_file = node_file.replace(node_version, new_version)
                 each['file'].setValue(node_new_file)
                 if not os.path.isdir(os.path.dirname(node_new_file)):
-                    log.info("path does not exist")
+                    log.warning("Path does not exist! I am creating it.")
                     os.makedirs(os.path.dirname(node_new_file), 0o766)
             except Exception as e:
-                log.debug(
+                log.warning(
                     "Write node: `{}` has no version in path: {}".format(each.name(), e))
 
 
 def version_up_script():
+    ''' Raising working script's version
+    '''
     import nukescripts
     nukescripts.script_and_write_nodes_version_up()
 
 
 def get_render_path(node):
-
+    ''' Generate Render path from presets regarding avalon knob data
+    '''
     data = dict()
-    data['avalon'] = get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
 
     data_preset = {
         "class": data['avalon']['family'],
@@ -141,43 +156,59 @@ def get_render_path(node):
 
 
 def format_anatomy(data):
-    from .templates import (
-        get_anatomy
-    )
+    ''' Helping function for formating of anatomy paths
+
+    Arguments:
+        data (dict): dictionary with attributes used for formating
+
+    Return:
+        path (str)
+    '''
+    # TODO: perhaps should be nonPublic
 
     anatomy = get_anatomy()
-    log.info("__ anatomy.templates: {}".format(anatomy.templates))
+    log.debug("__ anatomy.templates: {}".format(anatomy.templates))
+
     # TODO: perhaps should be in try!
     padding = int(anatomy.templates['render']['padding'])
     version = data.get("version", None)
     if not version:
         file = script_name()
         data["version"] = pype.get_version_from_path(file)
-
+    project_document = pype.get_project()
     data.update({
         "root": api.Session["AVALON_PROJECTS"],
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
-        "task": str(pype.get_task()).lower(),
+        "task": api.Session["AVALON_TASK"].lower(),
         "family": data["avalon"]["family"],
-        "project": {"name": pype.get_project_name(),
-                    "code": pype.get_project_code()},
+        "project": {"name": project_document["name"],
+                    "code": project_document["data"].get("code", '')},
         "representation": data["nuke_dataflow_writes"]["file_type"],
         "app": data["application"]["application_dir"],
         "hierarchy": pype.get_hierarchy(),
         "frame": "#" * padding,
     })
-    log.info("__ data: {}".format(data))
-    log.info("__ format_anatomy: {}".format(anatomy.format(data)))
     return anatomy.format(data)
 
 
 def script_name():
+    ''' Returns nuke script path
+    '''
     return nuke.root().knob('name').value()
 
 
+def add_button_write_to_read(node):
+    name = "createReadNode"
+    label = "Create Read"
+    value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
+    k = nuke.PyScript_Knob(name, label, value)
+    k.setFlag(0x1000)
+    node.addKnob(k)
+
+
 def create_write_node(name, data, prenodes=None):
-    '''Creating write node which is group node
+    ''' Creating write node which is group node
 
     Arguments:
         name (str): name of node
@@ -200,6 +231,8 @@ def create_write_node(name, data, prenodes=None):
         )
         ]
 
+    Return:
+        node (obj): group node with avalon data as Knobs
     '''
 
     nuke_dataflow_writes = get_node_dataflow_preset(**data)
@@ -212,7 +245,6 @@ def create_write_node(name, data, prenodes=None):
             "nuke_dataflow_writes": nuke_dataflow_writes,
             "nuke_colorspace_writes": nuke_colorspace_writes
         })
-
         anatomy_filled = format_anatomy(data)
 
     except Exception as e:
@@ -228,7 +260,7 @@ def create_write_node(name, data, prenodes=None):
 
     # create directory
     if not os.path.isdir(os.path.dirname(fpath)):
-        log.info("path does not exist")
+        log.warning("Path does not exist! I am creating it.")
         os.makedirs(os.path.dirname(fpath), 0o766)
 
     _data = OrderedDict({
@@ -283,7 +315,6 @@ def create_write_node(name, data, prenodes=None):
         else:
             prev_node = nuke.createNode("Input", "name rgba")
 
-
         # creating write node
         now_node = avalon.nuke.lib.add_write_node("inside_{}".format(name),
                                                   **_data
@@ -308,6 +339,9 @@ def create_write_node(name, data, prenodes=None):
 
     add_rendering_knobs(GN)
 
+    # adding write to read button
+    add_button_write_to_read(GN)
+
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
 
@@ -315,26 +349,27 @@ def create_write_node(name, data, prenodes=None):
     tile_color = _data.get("tile_color", "0xff0000ff")
     GN["tile_color"].setValue(tile_color)
 
-
     # add render button
     lnk = nuke.Link_Knob("Render")
     lnk.makeLink(write_node.name(), "Render")
     lnk.setName("Render")
     GN.addKnob(lnk)
 
-    # linking knobs to group property panel
-    linking_knobs = ["first", "last", "use_limit"]
-    for k in linking_knobs:
-        lnk = nuke.Link_Knob(k)
-        lnk.makeLink(write_node.name(), k)
-        lnk.setName(k.replace('_', ' ').capitalize())
-        lnk.clearFlag(nuke.STARTLINE)
-        GN.addKnob(lnk)
+    # Deadline tab.
+    add_deadline_tab(GN)
 
     return GN
 
 
 def add_rendering_knobs(node):
+    ''' Adds additional rendering knobs to given node
+
+    Arguments:
+        node (obj): nuke node object to be fixed
+
+    Return:
+        node (obj): with added knobs
+    '''
     if "render" not in node.knobs():
         knob = nuke.Boolean_Knob("render", "Render")
         knob.setFlag(0x1000)
@@ -347,303 +382,391 @@ def add_rendering_knobs(node):
     return node
 
 
-def set_viewers_colorspace(viewer):
-    assert isinstance(viewer, dict), log.error(
-        "set_viewers_colorspace(): argument should be dictionary")
+def add_deadline_tab(node):
+    node.addKnob(nuke.Tab_Knob("Deadline"))
 
-    filter_knobs = [
-        "viewerProcess",
-        "wipe_position"
-    ]
-    viewers = [n for n in nuke.allNodes() if n.Class() == 'Viewer']
-    erased_viewers = []
-
-    for v in viewers:
-        v['viewerProcess'].setValue(str(viewer["viewerProcess"]))
-        if str(viewer["viewerProcess"]) not in v['viewerProcess'].value():
-            copy_inputs = v.dependencies()
-            copy_knobs = {k: v[k].value() for k in v.knobs()
-                          if k not in filter_knobs}
-            pprint(copy_knobs)
-            # delete viewer with wrong settings
-            erased_viewers.append(v['name'].value())
-            nuke.delete(v)
-
-            # create new viewer
-            nv = nuke.createNode("Viewer")
-
-            # connect to original inputs
-            for i, n in enumerate(copy_inputs):
-                nv.setInput(i, n)
-
-            # set coppied knobs
-            for k, v in copy_knobs.items():
-                print(k, v)
-                nv[k].setValue(v)
-
-            # set viewerProcess
-            nv['viewerProcess'].setValue(str(viewer["viewerProcess"]))
-
-    if erased_viewers:
-        log.warning(
-            "Attention! Viewer nodes {} were erased."
-            "It had wrong color profile".format(erased_viewers))
+    knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
+    knob.setValue(1)
+    node.addKnob(knob)
 
 
-def set_root_colorspace(root_dict):
-    assert isinstance(root_dict, dict), log.error(
-        "set_root_colorspace(): argument should be dictionary")
+def create_backdrop(label="", color=None, layer=0,
+                    nodes=None):
+    """
+    Create Backdrop node
 
-    # first set OCIO
-    if nuke.root()["colorManagement"].value() not in str(root_dict["colorManagement"]):
-        nuke.root()["colorManagement"].setValue(
-            str(root_dict["colorManagement"]))
+    Arguments:
+        color (str): nuke compatible string with color code
+        layer (int): layer of node usually used (self.pos_layer - 1)
+        label (str): the message
+        nodes (list): list of nodes to be wrapped into backdrop
 
-    # second set ocio version
-    if nuke.root()["OCIO_config"].value() not in str(root_dict["OCIO_config"]):
-        nuke.root()["OCIO_config"].setValue(str(root_dict["OCIO_config"]))
+    """
+    assert isinstance(nodes, list), "`nodes` should be a list of nodes"
 
-    # then set the rest
-    for knob, value in root_dict.items():
-        if nuke.root()[knob].value() not in value:
-            nuke.root()[knob].setValue(str(value))
-            log.info("nuke.root()['{}'] changed to: {}".format(knob, value))
+    # Calculate bounds for the backdrop node.
+    bdX = min([node.xpos() for node in nodes])
+    bdY = min([node.ypos() for node in nodes])
+    bdW = max([node.xpos() + node.screenWidth() for node in nodes]) - bdX
+    bdH = max([node.ypos() + node.screenHeight() for node in nodes]) - bdY
 
+    # Expand the bounds to leave a little border. Elements are offsets
+    # for left, top, right and bottom edges respectively
+    left, top, right, bottom = (-20, -65, 20, 60)
+    bdX += left
+    bdY += top
+    bdW += (right - left)
+    bdH += (bottom - top)
 
-def set_writes_colorspace(write_dict):
-    assert isinstance(write_dict, dict), log.error(
-        "set_root_colorspace(): argument should be dictionary")
-    log.info("set_writes_colorspace(): {}".format(write_dict))
+    bdn = nuke.createNode("BackdropNode")
+    bdn["z_order"].setValue(layer)
 
+    if color:
+        bdn["tile_color"].setValue(int(color, 16))
 
-def set_colorspace():
+    bdn["xpos"].setValue(bdX)
+    bdn["ypos"].setValue(bdY)
+    bdn["bdwidth"].setValue(bdW)
+    bdn["bdheight"].setValue(bdH)
 
-    nuke_colorspace = get_colorspace_preset().get("nuke", None)
+    if label:
+        bdn["label"].setValue(label)
 
-    try:
-        set_root_colorspace(nuke_colorspace["root"])
-    except AttributeError:
-        log.error(
-            "set_colorspace(): missing `root` settings in template")
-    try:
-        set_viewers_colorspace(nuke_colorspace["viewer"])
-    except AttributeError:
-        log.error(
-            "set_colorspace(): missing `viewer` settings in template")
-    try:
-        set_writes_colorspace(nuke_colorspace["write"])
-    except AttributeError:
-        log.error(
-            "set_colorspace(): missing `write` settings in template")
-
-    try:
-        for key in nuke_colorspace:
-            log.info("{}".format(key))
-    except TypeError:
-        log.error("Nuke is not in templates! \n\n\n"
-                  "contact your supervisor!")
+    bdn["note_font_size"].setValue(20)
+    return bdn
 
 
-def reset_frame_range_handles():
-    """Set frame range to current asset"""
+class WorkfileSettings(object):
+    """
+    All settings for workfile will be set
 
-    root = nuke.root()
-    name = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": name, "type": "asset"})
+    This object is setting all possible root settings to the workfile.
+    Including Colorspace, Frame ranges, Resolution format. It can set it
+    to Root node or to any given node.
 
-    if "data" not in asset:
-        msg = "Asset {} don't have set any 'data'".format(name)
-        log.warning(msg)
-        nuke.message(msg)
-        return
-    data = asset["data"]
+    Arguments:
+        root (node): nuke's root node
+        nodes (list): list of nuke's nodes
+        nodes_filter (list): filtering classes for nodes
 
-    missing_cols = []
-    check_cols = ["fps", "fstart", "fend", "handle_start", "handle_end"]
+    """
 
-    for col in check_cols:
-        if col not in data:
-            missing_cols.append(col)
+    def __init__(self,
+                 root_node=None,
+                 nodes=None,
+                 **kwargs):
+        self._project = kwargs.get(
+            "project") or io.find_one({"type": "project"})
+        self._asset = kwargs.get("asset_name") or api.Session["AVALON_ASSET"]
+        self._asset_entity = pype.get_asset(self._asset)
+        self._root_node = root_node or nuke.root()
+        self._nodes = self.get_nodes(nodes=nodes)
 
-    if len(missing_cols) > 0:
-        missing = ", ".join(missing_cols)
-        msg = "'{}' are not set for asset '{}'!".format(missing, name)
-        log.warning(msg)
-        nuke.message(msg)
-        return
+        self.data = kwargs
 
-    # get handles values
-    handles = avalon.nuke.get_handles(asset)
-    handle_start, handle_end = pype.get_handle_irregular(asset)
+    def get_nodes(self, nodes=None, nodes_filter=None):
+        # filter out only dictionaries for node creation
+        #
+        # print("\n\n")
+        # pprint(self._nodes)
+        #
 
-    fps = asset["data"]["fps"]
-    edit_in = int(asset["data"]["fstart"]) - handle_start
-    edit_out = int(asset["data"]["fend"]) + handle_end
+        if not isinstance(nodes, list) and not isinstance(nodes_filter, list):
+            return [n for n in nuke.allNodes()]
+        elif not isinstance(nodes, list) and isinstance(nodes_filter, list):
+            nodes = list()
+            for filter in nodes_filter:
+                [nodes.append(n) for n in nuke.allNodes(filter=filter)]
+            return nodes
+        elif isinstance(nodes, list) and not isinstance(nodes_filter, list):
+            return [n for n in self._nodes]
+        elif isinstance(nodes, list) and isinstance(nodes_filter, list):
+            for filter in nodes_filter:
+                return [n for n in self._nodes if filter in n.Class()]
 
-    root["fps"].setValue(fps)
-    root["first_frame"].setValue(edit_in)
-    root["last_frame"].setValue(edit_out)
+    def set_viewers_colorspace(self, viewer_dict):
+        ''' Adds correct colorspace to viewer
 
-    log.info("__ handles: `{}`".format(handles))
-    log.info("__ handle_start: `{}`".format(handle_start))
-    log.info("__ handle_end: `{}`".format(handle_end))
-    log.info("__ edit_in: `{}`".format(edit_in))
-    log.info("__ edit_out: `{}`".format(edit_out))
-    log.info("__ fps: `{}`".format(fps))
+        Arguments:
+            viewer_dict (dict): adjustments from presets
 
-    # setting active viewers
-    nuke.frame(int(asset["data"]["fstart"]))
+        '''
+        assert isinstance(viewer_dict, dict), log.error(
+            "set_viewers_colorspace(): argument should be dictionary")
 
-    range = '{0}-{1}'.format(
-        int(asset["data"]["fstart"]),
-        int(asset["data"]["fend"]))
+        filter_knobs = [
+            "viewerProcess",
+            "wipe_position"
+        ]
 
-    for node in nuke.allNodes(filter="Viewer"):
-        node['frame_range'].setValue(range)
-        node['frame_range_lock'].setValue(True)
+        erased_viewers = []
+        for v in [n for n in self._nodes
+                  if "Viewer" in n.Class()]:
+            v['viewerProcess'].setValue(str(viewer_dict["viewerProcess"]))
+            if str(viewer_dict["viewerProcess"]) \
+                    not in v['viewerProcess'].value():
+                copy_inputs = v.dependencies()
+                copy_knobs = {k: v[k].value() for k in v.knobs()
+                              if k not in filter_knobs}
 
-        log.info("_frameRange: {}".format(range))
-        log.info("frameRange: {}".format(node['frame_range'].value()))
+                # delete viewer with wrong settings
+                erased_viewers.append(v['name'].value())
+                nuke.delete(v)
 
-        node['frame_range'].setValue(range)
-        node['frame_range_lock'].setValue(True)
+                # create new viewer
+                nv = nuke.createNode("Viewer")
 
-    # adding handle_start/end to root avalon knob
-    if not avalon.nuke.set_avalon_knob_data(root, {
-        "handle_start": int(handle_start),
-        "handle_end": int(handle_end)
-    }):
-        log.warning("Cannot set Avalon knob to Root node!")
+                # connect to original inputs
+                for i, n in enumerate(copy_inputs):
+                    nv.setInput(i, n)
 
+                # set coppied knobs
+                for k, v in copy_knobs.items():
+                    print(k, v)
+                    nv[k].setValue(v)
 
-def get_avalon_knob_data(node):
-    import toml
-    try:
-        data = toml.loads(node['avalon'].value())
-    except Exception:
-        return None
-    return data
+                # set viewerProcess
+                nv['viewerProcess'].setValue(str(viewer_dict["viewerProcess"]))
 
+        if erased_viewers:
+            log.warning(
+                "Attention! Viewer nodes {} were erased."
+                "It had wrong color profile".format(erased_viewers))
 
-def reset_resolution():
-    """Set resolution to project resolution."""
-    log.info("Reseting resolution")
-    project = io.find_one({"type": "project"})
-    asset = api.Session["AVALON_ASSET"]
-    asset = io.find_one({"name": asset, "type": "asset"})
+    def set_root_colorspace(self, root_dict):
+        ''' Adds correct colorspace to root
 
-    width = asset.get('data', {}).get('resolution_width')
-    height = asset.get('data', {}).get('resolution_height')
-    pixel_aspect = asset.get('data', {}).get('pixel_aspect')
+        Arguments:
+            root_dict (dict): adjustmensts from presets
 
-    log.info("pixel_aspect: {}".format(pixel_aspect))
-    if any(not x for x in [width, height, pixel_aspect]):
-        log.error("Missing set shot attributes in DB. \nContact your supervisor!. \n\nWidth: `{0}` \nHeight: `{1}` \nPixel Asspect: `{2}`".format(
-            width, height, pixel_aspect))
-        return
+        '''
+        assert isinstance(root_dict, dict), log.error(
+            "set_root_colorspace(): argument should be dictionary")
 
-    bbox = asset.get('data', {}).get('crop')
+        # first set OCIO
+        if self._root_node["colorManagement"].value() \
+                not in str(root_dict["colorManagement"]):
+            self._root_node["colorManagement"].setValue(
+                str(root_dict["colorManagement"]))
 
-    if bbox:
+        # second set ocio version
+        if self._root_node["OCIO_config"].value() \
+                not in str(root_dict["OCIO_config"]):
+            self._root_node["OCIO_config"].setValue(
+                str(root_dict["OCIO_config"]))
+
+        # then set the rest
+        for knob, value in root_dict.items():
+            if self._root_node[knob].value() not in value:
+                self._root_node[knob].setValue(str(value))
+                log.debug("nuke.root()['{}'] changed to: {}".format(
+                    knob, value))
+
+    def set_writes_colorspace(self, write_dict):
+        ''' Adds correct colorspace to write node dict
+
+        Arguments:
+            write_dict (dict): nuke write node as dictionary
+
+        '''
+        # TODO: complete this function so any write node in
+        # scene will have fixed colorspace following presets for the project
+        assert isinstance(write_dict, dict), log.error(
+            "set_root_colorspace(): argument should be dictionary")
+
+        log.debug("__ set_writes_colorspace(): {}".format(write_dict))
+
+    def set_colorspace(self):
+        ''' Setting colorpace following presets
+        '''
+        nuke_colorspace = get_colorspace_preset().get("nuke", None)
+
         try:
-            x, y, r, t = bbox.split(".")
+            self.set_root_colorspace(nuke_colorspace["root"])
+        except AttributeError:
+            log.error(
+                "set_colorspace(): missing `root` settings in template")
+        try:
+            self.set_viewers_colorspace(nuke_colorspace["viewer"])
+        except AttributeError:
+            log.error(
+                "set_colorspace(): missing `viewer` settings in template")
+        try:
+            self.set_writes_colorspace(nuke_colorspace["write"])
+        except AttributeError:
+            log.error(
+                "set_colorspace(): missing `write` settings in template")
+
+        try:
+            for key in nuke_colorspace:
+                log.debug("Preset's colorspace key: {}".format(key))
+        except TypeError:
+            log.error("Nuke is not in templates! \n\n\n"
+                      "contact your supervisor!")
+
+    def reset_frame_range_handles(self):
+        """Set frame range to current asset"""
+
+        if "data" not in self._asset_entity:
+            msg = "Asset {} don't have set any 'data'".format(self._asset)
+            log.warning(msg)
+            nuke.message(msg)
+            return
+        data = self._asset_entity["data"]
+
+        missing_cols = []
+        check_cols = ["fps", "frameStart", "frameEnd",
+                      "handleStart", "handleEnd"]
+
+        for col in check_cols:
+            if col not in data:
+                missing_cols.append(col)
+
+        if len(missing_cols) > 0:
+            missing = ", ".join(missing_cols)
+            msg = "'{}' are not set for asset '{}'!".format(
+                missing, self._asset)
+            log.warning(msg)
+            nuke.message(msg)
+            return
+
+        # get handles values
+        handle_start = data["handleStart"]
+        handle_end = data["handleEnd"]
+
+        fps = data["fps"]
+        frame_start = int(data["frameStart"]) - handle_start
+        frame_end = int(data["frameEnd"]) + handle_end
+
+        self._root_node["fps"].setValue(fps)
+        self._root_node["first_frame"].setValue(frame_start)
+        self._root_node["last_frame"].setValue(frame_end)
+
+        # setting active viewers
+        try:
+            nuke.frame(int(data["frameStart"]))
         except Exception as e:
-            bbox = None
-            log.error("{}: {} \nFormat:Crop need to be set with dots, example: "
-                      "0.0.1920.1080, /nSetting to default".format(__name__, e))
+            log.warning("no viewer in scene: `{}`".format(e))
 
-    used_formats = list()
-    for f in nuke.formats():
-        if project["name"] in str(f.name()):
-            used_formats.append(f)
-        else:
-            format_name = project["name"] + "_1"
+        range = '{0}-{1}'.format(
+            int(data["frameStart"]),
+            int(data["frameEnd"]))
 
-    crnt_fmt_str = ""
-    if used_formats:
-        check_format = used_formats[-1]
-        format_name = "{}_{}".format(
-            project["name"],
-            int(used_formats[-1].name()[-1]) + 1
-        )
-        log.info(
-            "Format exists: {}. "
-            "Will create new: {}...".format(
-                used_formats[-1].name(),
-                format_name)
-        )
-        crnt_fmt_kargs = {
-            "width": (check_format.width()),
-            "height": (check_format.height()),
-            "pixel_aspect": float(check_format.pixelAspect())
+        for node in nuke.allNodes(filter="Viewer"):
+            node['frame_range'].setValue(range)
+            node['frame_range_lock'].setValue(True)
+            node['frame_range'].setValue(range)
+            node['frame_range_lock'].setValue(True)
+
+        # adding handle_start/end to root avalon knob
+        if not avalon.nuke.imprint(self._root_node, {
+            "handleStart": int(handle_start),
+            "handleEnd": int(handle_end)
+        }):
+            log.warning("Cannot set Avalon knob to Root node!")
+
+    def reset_resolution(self):
+        """Set resolution to project resolution."""
+        log.info("Reseting resolution")
+        project = io.find_one({"type": "project"})
+        asset = api.Session["AVALON_ASSET"]
+        asset = io.find_one({"name": asset, "type": "asset"})
+        asset_data = asset.get('data', {})
+
+        data = {
+            "width": int(asset_data.get(
+                'resolutionWidth',
+                asset_data.get('resolution_width'))),
+            "height": int(asset_data.get(
+                'resolutionHeight',
+                asset_data.get('resolution_height'))),
+            "pixel_aspect": asset_data.get(
+                'pixelAspect',
+                asset_data.get('pixel_aspect', 1)),
+            "name": project["name"]
         }
+
+        if any(x for x in data.values() if x is None):
+            log.error(
+                "Missing set shot attributes in DB."
+                "\nContact your supervisor!."
+                "\n\nWidth: `{width}`"
+                "\nHeight: `{height}`"
+                "\nPixel Asspect: `{pixel_aspect}`".format(**data)
+            )
+
+        bbox = self._asset_entity.get('data', {}).get('crop')
+
         if bbox:
-            crnt_fmt_kargs.update({
-                "x": int(check_format.x()),
-                "y": int(check_format.y()),
-                "r": int(check_format.r()),
-                "t": int(check_format.t()),
-            })
-        crnt_fmt_str = make_format_string(**crnt_fmt_kargs)
-        log.info("crnt_fmt_str: {}".format(crnt_fmt_str))
+            try:
+                x, y, r, t = bbox.split(".")
+                data.update(
+                    {
+                        "x": int(x),
+                        "y": int(y),
+                        "r": int(r),
+                        "t": int(t),
+                    }
+                )
+            except Exception as e:
+                bbox = None
+                log.error(
+                    "{}: {} \nFormat:Crop need to be set with dots, example: "
+                    "0.0.1920.1080, /nSetting to default".format(__name__, e)
+                )
 
-    new_fmt_kargs = {
-        "width": int(width),
-        "height": int(height),
-        "pixel_aspect": float(pixel_aspect),
-        "project_name": format_name
-    }
-    if bbox:
-        new_fmt_kargs.update({
-            "x": int(x),
-            "y": int(y),
-            "r": int(r),
-            "t": int(t),
-        })
+        existing_format = None
+        for format in nuke.formats():
+            if data["name"] == format.name():
+                existing_format = format
+                break
 
-    new_fmt_str = make_format_string(**new_fmt_kargs)
-    log.info("new_fmt_str: {}".format(new_fmt_str))
+        if existing_format:
+            # Enforce existing format to be correct.
+            existing_format.setWidth(data["width"])
+            existing_format.setHeight(data["height"])
+            existing_format.setPixelAspect(data["pixel_aspect"])
 
-    if new_fmt_str not in crnt_fmt_str:
-        make_format(frm_str=new_fmt_str,
-                    project_name=new_fmt_kargs["project_name"])
+            if bbox:
+                existing_format.setX(data["x"])
+                existing_format.setY(data["y"])
+                existing_format.setR(data["r"])
+                existing_format.setT(data["t"])
+        else:
+            format_string = self.make_format_string(**data)
+            log.info("Creating new format: {}".format(format_string))
+            nuke.addFormat(format_string)
 
-        log.info("Format is set")
+        nuke.root()["format"].setValue(data["name"])
+        log.info("Format is set.")
 
+    def make_format_string(self, **kwargs):
+        if kwargs.get("r"):
+            return (
+                "{width} "
+                "{height} "
+                "{x} "
+                "{y} "
+                "{r} "
+                "{t} "
+                "{pixel_aspect:.2f} "
+                "{name}".format(**kwargs)
+            )
+        else:
+            return (
+                "{width} "
+                "{height} "
+                "{pixel_aspect:.2f} "
+                "{name}".format(**kwargs)
+            )
 
-def make_format_string(**args):
-    if args.get("r"):
-        return (
-            "{width} "
-            "{height} "
-            "{x} "
-            "{y} "
-            "{r} "
-            "{t} "
-            "{pixel_aspect:.2f}".format(**args)
-        )
-    else:
-        return (
-            "{width} "
-            "{height} "
-            "{pixel_aspect:.2f}".format(**args)
-        )
-
-
-def make_format(**args):
-    log.info("Format does't exist, will create: \n{}".format(args))
-    nuke.addFormat("{frm_str} "
-                   "{project_name}".format(**args))
-    nuke.root()["format"].setValue("{project_name}".format(**args))
-
-
-def set_context_settings():
-    # replace reset resolution from avalon core to pype's
-    reset_resolution()
-    # replace reset resolution from avalon core to pype's
-    reset_frame_range_handles()
-    # add colorspace menu item
-    set_colorspace()
+    def set_context_settings(self):
+        # replace reset resolution from avalon core to pype's
+        self.reset_resolution()
+        # replace reset resolution from avalon core to pype's
+        self.reset_frame_range_handles()
+        # add colorspace menu item
+        self.set_colorspace()
 
 
 def get_hierarchical_attr(entity, attr, default=None):
@@ -668,60 +791,6 @@ def get_hierarchical_attr(entity, attr, default=None):
 
     return get_hierarchical_attr(parent, attr)
 
-# TODO: bellow functions are wip and needs to be check where they are used
-# ------------------------------------
-
-#
-# def update_frame_range(start, end, root=None):
-#     """Set Nuke script start and end frame range
-#
-#     Args:
-#         start (float, int): start frame
-#         end (float, int): end frame
-#         root (object, Optional): root object from nuke's script
-#
-#     Returns:
-#         None
-#
-#     """
-#
-#     knobs = {
-#         "first_frame": start,
-#         "last_frame": end
-#     }
-#
-#     with avalon.nuke.viewer_update_and_undo_stop():
-#         for key, value in knobs.items():
-#             if root:
-#                 root[key].setValue(value)
-#             else:
-#                 nuke.root()[key].setValue(value)
-#
-# #
-# def get_additional_data(container):
-#     """Get Nuke's related data for the container
-#
-#     Args:
-#         container(dict): the container found by the ls() function
-#
-#     Returns:
-#         dict
-#     """
-#
-#     node = container["_node"]
-#     tile_color = node['tile_color'].value()
-#     if tile_color is None:
-#         return {}
-#
-#     hex = '%08x' % tile_color
-#     rgba = [
-#         float(int(hex[0:2], 16)) / 255.0,
-#         float(int(hex[2:4], 16)) / 255.0,
-#         float(int(hex[4:6], 16)) / 255.0
-#     ]
-#
-#     return {"color": Qt.QtGui.QColor().fromRgbF(rgba[0], rgba[1], rgba[2])}
-
 
 def get_write_node_template_attr(node):
     ''' Gets all defined data from presets
@@ -729,7 +798,7 @@ def get_write_node_template_attr(node):
     '''
     # get avalon data from node
     data = dict()
-    data['avalon'] = get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
     data_preset = {
         "class": data['avalon']['family'],
         "preset": data['avalon']['families']
@@ -747,7 +816,7 @@ def get_write_node_template_attr(node):
     # adding dataflow template
     {correct_data.update({k: v})
      for k, v in nuke_dataflow_writes.items()
-     if k not in ["id", "previous"]}
+     if k not in ["_id", "_previous"]}
 
     # adding colorspace template
     {correct_data.update({k: v})
@@ -755,3 +824,297 @@ def get_write_node_template_attr(node):
 
     # fix badly encoded data
     return avalon.nuke.lib.fix_data_for_node_create(correct_data)
+
+
+class BuildWorkfile(WorkfileSettings):
+    """
+    Building first version of workfile.
+
+    Settings are taken from presets and db. It will add all subsets in last version for defined representaions
+
+    Arguments:
+        variable (type): description
+
+    """
+    xpos = 0
+    ypos = 0
+    xpos_size = 80
+    ypos_size = 90
+    xpos_gap = 50
+    ypos_gap = 50
+    pos_layer = 10
+
+    def __init__(self,
+                 root_path=None,
+                 root_node=None,
+                 nodes=None,
+                 to_script=None,
+                 **kwargs):
+        """
+        A short description.
+
+        A bit longer description.
+
+        Argumetns:
+            root_path (str): description
+            root_node (nuke.Node): description
+            nodes (list): list of nuke.Node
+            nodes_effects (dict): dictionary with subsets
+
+        Example:
+            nodes_effects = {
+                    "plateMain": {
+                        "nodes": [
+                               [("Class", "Reformat"),
+                               ("resize", "distort"),
+                               ("flip", True)],
+
+                               [("Class", "Grade"),
+                               ("blackpoint", 0.5),
+                               ("multiply", 0.4)]
+                            ]
+                        },
+                    }
+
+        """
+
+        WorkfileSettings.__init__(self,
+                                  root_node=root_node,
+                                  nodes=nodes,
+                                  **kwargs)
+        self.to_script = to_script
+        # collect data for formating
+        data = {
+            "root": root_path or api.Session["AVALON_PROJECTS"],
+            "project": {"name": self._project["name"],
+                        "code": self._project["data"].get("code", '')},
+            "asset": self._asset or os.environ["AVALON_ASSET"],
+            "task": kwargs.get("task") or api.Session["AVALON_TASK"].lower(),
+            "hierarchy": kwargs.get("hierarchy") or pype.get_hierarchy(),
+            "version": kwargs.get("version", {}).get("name", 1),
+            "user": getpass.getuser(),
+            "comment": "firstBuild"
+        }
+
+        # get presets from anatomy
+        anatomy = get_anatomy()
+        # format anatomy
+        anatomy_filled = anatomy.format(data)
+
+        # get dir and file for workfile
+        self.work_dir = anatomy_filled["avalon"]["work"]
+        self.work_file = anatomy_filled["avalon"]["workfile"] + ".nk"
+
+    def save_script_as(self, path=None):
+        # first clear anything in open window
+        nuke.scriptClear()
+
+        if not path:
+            dir = self.work_dir
+            path = os.path.join(
+                self.work_dir,
+                self.work_file).replace("\\", "/")
+        else:
+            dir = os.path.dirname(path)
+
+        # check if folder is created
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        # save script to path
+        nuke.scriptSaveAs(path)
+
+    def process(self,
+                regex_filter=None,
+                version=None,
+                representations=["exr", "dpx", "lutJson"]):
+        """
+        A short description.
+
+        A bit longer description.
+
+        Args:
+            regex_filter (raw string): regex pattern to filter out subsets
+            version (int): define a particular version, None gets last
+            representations (list):
+
+        Returns:
+            type: description
+
+        Raises:
+            Exception: description
+
+        """
+
+        if not self.to_script:
+            # save the script
+            self.save_script_as()
+
+        # create viewer and reset frame range
+        viewer = self.get_nodes(nodes_filter=["Viewer"])
+        if not viewer:
+            vn = nuke.createNode("Viewer")
+            vn["xpos"].setValue(self.xpos)
+            vn["ypos"].setValue(self.ypos)
+        else:
+            vn = viewer[-1]
+
+        # move position
+        self.position_up()
+
+        wn = self.write_create()
+        wn["xpos"].setValue(self.xpos)
+        wn["ypos"].setValue(self.ypos)
+        wn["render"].setValue(True)
+        vn.setInput(0, wn)
+
+        bdn = self.create_backdrop(label="Render write \n\n\n\nOUTPUT",
+                                   color='0xcc1102ff', layer=-1,
+                                   nodes=[wn])
+
+        # move position
+        self.position_up(4)
+
+        # set frame range for new viewer
+        self.reset_frame_range_handles()
+
+        # get all available representations
+        subsets = pype.get_subsets(self._asset,
+                                   regex_filter=regex_filter,
+                                   version=version,
+                                   representations=representations)
+
+        nodes_backdrop = list()
+
+        for name, subset in subsets.items():
+            if "lut" in name:
+                continue
+            log.info("Building Loader to: `{}`".format(name))
+            version = subset["version"]
+            log.info("Version to: `{}`".format(version["name"]))
+            representations = subset["representaions"]
+            for repr in representations:
+                rn = self.read_loader(repr)
+                rn["xpos"].setValue(self.xpos)
+                rn["ypos"].setValue(self.ypos)
+                wn.setInput(0, rn)
+
+                # get editional nodes
+                lut_subset = [s for n, s in subsets.items()
+                              if "lut{}".format(name.lower()) in n.lower()]
+                log.debug(">> lut_subset: `{}`".format(lut_subset))
+
+                if len(lut_subset) > 0:
+                    lsub = lut_subset[0]
+                    fxn = self.effect_loader(lsub["representaions"][-1])
+                    fxn_ypos = fxn["ypos"].value()
+                    fxn["ypos"].setValue(fxn_ypos - 100)
+                    nodes_backdrop.append(fxn)
+
+                nodes_backdrop.append(rn)
+                # move position
+                self.position_right()
+
+            bdn = self.create_backdrop(label="Loaded Reads",
+                                       color='0x2d7702ff', layer=-1,
+                                       nodes=nodes_backdrop)
+
+    def read_loader(self, representation):
+        """
+        Gets Loader plugin for image sequence or mov
+
+        Arguments:
+            representation (dict): avalon db entity
+
+        """
+        context = representation["context"]
+
+        loader_name = "LoadSequence"
+        if "mov" in context["representation"]:
+            loader_name = "LoadMov"
+
+        loader_plugin = None
+        for Loader in api.discover(api.Loader):
+            if Loader.__name__ != loader_name:
+                continue
+
+            loader_plugin = Loader
+
+        return api.load(Loader=loader_plugin,
+                        representation=representation["_id"])
+
+    def effect_loader(self, representation):
+        """
+        Gets Loader plugin for effects
+
+        Arguments:
+            representation (dict): avalon db entity
+
+        """
+        context = representation["context"]
+
+        loader_name = "LoadLuts"
+
+        loader_plugin = None
+        for Loader in api.discover(api.Loader):
+            if Loader.__name__ != loader_name:
+                continue
+
+            loader_plugin = Loader
+
+        return api.load(Loader=loader_plugin,
+                        representation=representation["_id"])
+
+    def write_create(self):
+        """
+        Create render write
+
+        Arguments:
+            representation (dict): avalon db entity
+
+        """
+
+        Create_name = "CreateWriteRender"
+
+        creator_plugin = None
+        for Creator in api.discover(api.Creator):
+            if Creator.__name__ != Create_name:
+                continue
+
+            creator_plugin = Creator
+
+        # return api.create()
+        return creator_plugin("render_writeMain", self._asset).process()
+
+    def create_backdrop(self, label="", color=None, layer=0,
+                        nodes=None):
+        """
+        Create Backdrop node
+
+        Arguments:
+            color (str): nuke compatible string with color code
+            layer (int): layer of node usually used (self.pos_layer - 1)
+            label (str): the message
+            nodes (list): list of nodes to be wrapped into backdrop
+
+        """
+        assert isinstance(nodes, list), "`nodes` should be a list of nodes"
+        layer = self.pos_layer + layer
+
+        create_backdrop(label=label, color=color, layer=layer, nodes=nodes)
+
+    def position_reset(self, xpos=0, ypos=0):
+        self.xpos = xpos
+        self.ypos = ypos
+
+    def position_right(self, multiply=1):
+        self.xpos += (self.xpos_size * multiply) + self.xpos_gap
+
+    def position_left(self, multiply=1):
+        self.xpos -= (self.xpos_size * multiply) + self.xpos_gap
+
+    def position_down(self, multiply=1):
+        self.ypos -= (self.ypos_size * multiply) + self.ypos_gap
+
+    def position_up(self, multiply=1):
+        self.ypos -= (self.ypos_size * multiply) + self.ypos_gap

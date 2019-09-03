@@ -3,7 +3,7 @@ import os
 import nuke
 import pyblish.api
 from avalon import io, api
-from avalon.nuke.lib import get_avalon_knob_data
+from avalon.nuke import get_avalon_knob_data
 
 
 @pyblish.api.log
@@ -18,23 +18,26 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
         asset_data = io.find_one({"type": "asset",
                                   "name": api.Session["AVALON_ASSET"]})
 
-        # add handles into context
-        context.data['handles'] = context.data['handles']
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
         # creating instances per write node
-        for node in nuke.allNodes():
 
+        self.log.debug("nuke.allNodes(): {}".format(nuke.allNodes()))
+        for node in nuke.allNodes():
             try:
                 if node["disable"].value():
                     continue
-            except Exception:
+            except Exception as E:
+                self.log.warning(E)
                 continue
 
             # get data from avalon knob
+            self.log.debug("node[name]: {}".format(node['name'].value()))
             avalon_knob_data = get_avalon_knob_data(node)
+
             self.log.debug("avalon_knob_data: {}".format(avalon_knob_data))
+
             if not avalon_knob_data:
                 continue
 
@@ -46,7 +49,14 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             # Create instance
             instance = context.create_instance(subset)
-            instance.add(node)
+            instance.append(node)
+
+            # Add all nodes in group instances.
+            if node.Class() == "Group":
+                node.begin()
+                for i in nuke.allNodes():
+                    instance.append(i)
+                node.end()
 
             family = avalon_knob_data["families"]
             if node["render"].value():

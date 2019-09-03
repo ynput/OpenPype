@@ -38,6 +38,10 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             tags = instance.data.get("tags", None)
             clip = instance.data["item"]
             asset = instance.data.get("asset")
+            sequence = context.data['activeSequence']
+            width = int(sequence.format().width())
+            height = int(sequence.format().height())
+            pixel_aspect = sequence.format().pixelAspect()
 
             # build data for inner nukestudio project property
             data = {
@@ -157,14 +161,17 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                         "asset": asset,
                         "hierarchy": hierarchy,
                         "parents": parents,
+                        "width": width,
+                        "height": height,
+                        "pixelAspect": pixel_aspect,
                         "tasks":  instance.data["tasks"]
                     })
 
                     # adding frame start if any on instance
-                    start_frame = instance.data.get("frameStart")
+                    start_frame = instance.data.get("startingFrame")
                     if start_frame:
                         asset_shared.update({
-                            "frameStart": start_frame
+                            "startingFrame": start_frame
                         })
 
 
@@ -191,7 +198,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
     def process(self, context):
         instances = context[:]
-        sequence = context.data['activeSequence']
+
         # create hierarchyContext attr if context has none
 
         temp_context = {}
@@ -216,14 +223,17 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
                     instance.data["tasks"] = s_asset_data["tasks"]
+                    instance.data["width"] = s_asset_data["width"]
+                    instance.data["height"] = s_asset_data["height"]
+                    instance.data["pixelAspect"] = s_asset_data["pixelAspect"]
 
                     # adding frame start if any on instance
-                    start_frame = s_asset_data.get("frameStart")
+                    start_frame = s_asset_data.get("startingFrame")
                     if start_frame:
-                        instance.data["startFrame"] = start_frame
-                        instance.data["endFrame"] = start_frame + (
-                            instance.data["timelineOut"] -
-                            instance.data["timelineIn"])
+                        instance.data["frameStart"] = start_frame
+                        instance.data["frameEnd"] = start_frame + (
+                            instance.data["clipOut"] -
+                            instance.data["clipIn"])
 
 
 
@@ -254,27 +264,21 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             if instance.data.get("main"):
                 in_info['custom_attributes'] = {
                     'handles': int(instance.data.get('handles', 0)),
-                    'handle_start': handle_start,
-                    'handle_end': handle_end,
-                    'fstart': instance.data["startFrame"],
-                    'fend': instance.data["endFrame"],
-                    'fps': instance.context.data["fps"],
-                    "edit_in": instance.data["timelineIn"],
-                    "edit_out": instance.data["timelineOut"]
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end,
+                    "frameStart": instance.data["frameStart"],
+                    "frameEnd": instance.data["frameEnd"],
+                    "clipIn": instance.data["clipIn"],
+                    "clipOut": instance.data["clipOut"],
+                    'fps': instance.context.data["fps"]
                 }
 
                 # adding SourceResolution if Tag was present
                 if instance.data.get("main"):
-                    width = int(sequence.format().width())
-                    height = int(sequence.format().height())
-                    pixel_aspect = sequence.format().pixelAspect()
-                    self.log.info("Sequence Width,Height,PixelAspect are: `{0},{1},{2}`".format(
-                        width, height, pixel_aspect))
-
                     in_info['custom_attributes'].update({
-                        "resolution_width": width,
-                        "resolution_height": height,
-                        "pixel_aspect": pixel_aspect
+                        "resolutionWidth": instance.data["width"],
+                        "resolutionHeight": instance.data["height"],
+                        "pixelAspect": instance.data["pixelAspect"]
                     })
 
             in_info['tasks'] = instance.data['tasks']

@@ -1,7 +1,7 @@
 import os
-import subprocess
-import pype.api
 import json
+
+import pype.api
 import pyblish
 
 
@@ -33,7 +33,7 @@ class ExtractBurnin(pype.api.Extractor):
             "username": instance.context.data['user'],
             "asset": os.environ['AVALON_ASSET'],
             "task": os.environ['AVALON_TASK'],
-            "start_frame": int(instance.data['startFrame']),
+            "start_frame": int(instance.data["frameStart"]),
             "version": version
         }
         self.log.debug("__ prep_data: {}".format(prep_data))
@@ -92,27 +92,25 @@ class ExtractBurnin(pype.api.Extractor):
 
             self.log.debug("__ EXE: {}".format(executable))
 
-            try:
-                args = [executable, scriptpath, json_data]
-                self.log.debug("Executing: {}".format(args))
+            args = [executable, scriptpath, json_data]
+            self.log.debug("Executing: {}".format(args))
+            pype.api.subprocess(args)
 
-                # Explicitly passing the environment, because there are cases
-                # where enviroment is not inherited.
-                p = subprocess.Popen(args, env=os.environ)
-                p.wait()
+            repre_update = {
+                "files": movieFileBurnin,
+                "name": repre["name"],
+                "tags": [x for x in repre["tags"] if x != "delete"]
+            }
+            instance.data["representations"][i].update(repre_update)
 
-                if not os.path.isfile(full_burnin_path):
-                    raise RuntimeError("File not existing: {}".format(full_burnin_path))
-            except Exception as e:
-                raise RuntimeError("Burnin script didn't work: `{}`".format(e))
+            # removing the source mov file
+            os.remove(full_movie_path)
+            self.log.debug("Removed: `{}`".format(full_movie_path))
 
-            if os.path.exists(full_burnin_path):
-                repre_update = {
-                    "files": movieFileBurnin,
-                    "name": repre["name"]
-                }
-                instance.data["representations"][i].update(repre_update)
+        # Remove any representations tagged for deletion.
+        for repre in instance.data["representations"]:
+            if "delete" in repre.get("tags", []):
+                self.log.debug("Removing representation: {}".format(repre))
+                instance.data["representations"].remove(repre)
 
-                # removing the source mov file
-                os.remove(full_movie_path)
-                self.log.debug("Removed: `{}`".format(full_movie_path))
+        self.log.debug(instance.data["representations"])

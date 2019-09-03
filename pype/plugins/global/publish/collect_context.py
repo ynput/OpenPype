@@ -67,9 +67,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             if isinstance(component['files'], list):
                 collections, remainder = clique.assemble(component['files'])
                 self.log.debug("collecting sequence: {}".format(collections))
-                instance.data['startFrame'] = int(component['startFrame'])
-                instance.data['endFrame'] = int(component['endFrame'])
-                instance.data['frameRate'] = int(component['frameRate'])
+                instance.data["frameStart"] = int(component["frameStart"])
+                instance.data["frameEnd"] = int(component["frameEnd"])
+                instance.data['fps'] = int(component['fps'])
 
             instance.data["representations"].append(component)
 

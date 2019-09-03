@@ -1,22 +1,18 @@
 from avalon import api, style, io
-from pype.nuke.lib import get_avalon_knob_data
+from avalon.nuke import get_avalon_knob_data
 import nuke
-import os
-from pype.api import Logger
-log = Logger().get_logger(__name__, "nuke")
-
 
 
 class LinkAsGroup(api.Loader):
     """Copy the published file to be pasted at the desired location"""
 
     representations = ["nk"]
-    families = ["*"]
+    families = ["workfile"]
 
     label = "Load Precomp"
-    order = 10
+    order = 0
     icon = "file"
-    color = style.colors.dark
+    color = style.colors.alert
 
     def load(self, context, name, namespace, data):
 
@@ -27,8 +23,8 @@ class LinkAsGroup(api.Loader):
         version_data = version.get("data", {})
 
         vname = version.get("name", None)
-        first = version_data.get("startFrame", None)
-        last = version_data.get("endFrame", None)
+        first = version_data.get("frameStart", None)
+        last = version_data.get("frameEnd", None)
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -41,17 +37,14 @@ class LinkAsGroup(api.Loader):
 
         self.log.info("versionData: {}\n".format(context["version"]["data"]))
 
-        # Set global in point to start frame (if in version.data)
-        start = context["version"]["data"].get("startFrame", None)
-        self.log.info("start: {}\n".format(start))
-
         # add additional metadata from the version to imprint to Avalon knob
-        add_keys = ["startFrame", "endFrame", "handle_start", "handle_end", "source", "author", "fps"]
+        add_keys = ["frameStart", "frameEnd", "handleStart", "handleEnd",
+                    "source", "author", "fps"]
 
         data_imprint = {
-                "start_frame": start,
-                "fstart": first,
-                "fend": last,
+                "startingFrame": first,
+                "frameStart": first,
+                "frameEnd": last,
                 "version": vname
         }
         for k in add_keys:
@@ -70,7 +63,6 @@ class LinkAsGroup(api.Loader):
         colorspace = context["version"]["data"].get("colorspace", None)
         self.log.info("colorspace: {}\n".format(colorspace))
 
-
         # ['version', 'file', 'reading', 'output', 'useOutput']
 
         P["name"].setValue("{}_{}".format(name, namespace))
@@ -79,7 +71,7 @@ class LinkAsGroup(api.Loader):
         with P:
             # iterate trough all nodes in group node and find pype writes
             writes = [n.name() for n in nuke.allNodes()
-                      if n.Class() == "Write"
+                      if n.Class() == "Group"
                       if get_avalon_knob_data(n)]
 
             # create panel for selecting output
@@ -87,7 +79,7 @@ class LinkAsGroup(api.Loader):
             panel_label = "Select write node for output"
             p = nuke.Panel("Select Write Node")
             p.addEnumerationPulldown(
-            panel_label, panel_choices)
+                panel_label, panel_choices)
             p.show()
             P["output"].setValue(p.value(panel_label))
 
@@ -119,7 +111,7 @@ class LinkAsGroup(api.Loader):
 
         node = nuke.toNode(container['objectName'])
 
-        root = api.get_representation_path(representation).replace("\\","/")
+        root = api.get_representation_path(representation).replace("\\", "/")
 
         # Get start frame from version data
         version = io.find_one({
@@ -138,7 +130,7 @@ class LinkAsGroup(api.Loader):
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "endFrame": version["data"].get("endFrame"),
+            "frameEnd": version["data"].get("frameEnd"),
             "version": version.get("name"),
             "colorspace": version["data"].get("colorspace"),
             "source": version["data"].get("source"),
@@ -162,8 +154,7 @@ class LinkAsGroup(api.Loader):
         else:
             node["tile_color"].setValue(int("0xff0ff0ff", 16))
 
-        log.info("udated to version: {}".format(version.get("name")))
-
+        self.log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
         from avalon.nuke import viewer_update_and_undo_stop

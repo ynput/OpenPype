@@ -13,12 +13,13 @@ class AssetsRemover(BaseAction):
     #: Action identifier.
     identifier = 'remove.assets'
     #: Action label.
-    label = 'Delete Assets by Name'
+    label = "Pype Admin"
+    variant = '- Delete Assets by Name'
     #: Action description.
     description = 'Removes assets from Ftrack and Avalon db with all childs'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = '{}/ftrack/action_icons/AssetsRemover.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
     #: Db
@@ -131,7 +132,7 @@ class AssetsRemover(BaseAction):
         return assets
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -140,7 +141,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    AssetsRemover(session).register()
+    AssetsRemover(session, plugins_presets).register()
 
 
 def main(arguments=None):

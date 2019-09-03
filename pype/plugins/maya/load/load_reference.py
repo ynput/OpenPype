@@ -74,12 +74,14 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
 
 # for backwards compatibility
 class AbcLoader(ReferenceLoader):
+    label = "Deprecated loader (don't use)"
     families = ["pointcache", "animation"]
     representations = ["abc"]
     tool_names = []
 
 # for backwards compatibility
 class ModelLoader(ReferenceLoader):
+    label = "Deprecated loader (don't use)"
     families = ["model", "pointcache"]
     representations = ["abc"]
     tool_names = []
