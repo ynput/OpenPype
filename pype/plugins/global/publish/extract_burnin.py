@@ -94,7 +94,8 @@ class ExtractBurnin(pype.api.Extractor):
 
             args = [executable, scriptpath, json_data]
             self.log.debug("Executing: {}".format(args))
-            pype.api.subprocess(args)
+            output = pype.api.subprocess(args)
+            self.log.debug("Output: {}".format(output))
 
             repre_update = {
                 "files": movieFileBurnin,
