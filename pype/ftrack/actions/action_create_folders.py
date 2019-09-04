@@ -7,7 +7,7 @@ import re
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from avalon import lib as avalonlib
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pype.ftrack.lib.io_nonsingleton import DbConnector
 from pypeapp import config, Anatomy
 
 
