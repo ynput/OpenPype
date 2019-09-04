@@ -222,7 +222,11 @@ class SyncHierarchicalAttrs(BaseAction):
             session.commit()
             
             if self.interface_messages:
-                self.show_interface_from_dict(self.interface_messages, event)
+                self.show_interface_from_dict(
+                    messages=self.interface_messages,
+                    title="something went wrong",
+                    event=event
+                )
 
         return True
 
