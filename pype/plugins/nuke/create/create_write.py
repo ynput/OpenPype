@@ -1,11 +1,9 @@
 from collections import OrderedDict
 import avalon.api
 import avalon.nuke
-from pype.nuke import (
-    create_write_node
-)
+from pype.nuke.lib import create_write_node
 from pype import api as pype
-# from pypeapp import Logger
+from pypeapp import config
 
 import nuke
 
@@ -17,7 +15,6 @@ def subset_to_families(subset, family, families):
     subset_sufx = str(subset).replace(family, "")
     new_subset = families + subset_sufx
     return "{}.{}".format(family, new_subset)
-
 
 class CreateWriteRender(avalon.nuke.Creator):
     # change this to template preset
@@ -33,6 +30,11 @@ class CreateWriteRender(avalon.nuke.Creator):
 
     def __init__(self, *args, **kwargs):
         super(CreateWriteRender, self).__init__(*args, **kwargs)
+        self.presets = config.get_presets()['plugins']["nuke"]["create"].get(
+            self.__class__.__name__, {}
+        )
+
+        self.name = self.data["subset"]
 
         data = OrderedDict()
 
@@ -44,7 +46,6 @@ class CreateWriteRender(avalon.nuke.Creator):
         self.data = data
 
     def process(self):
-        self.name = self.data["subset"]
 
         family = self.family
         node = 'write'
@@ -58,9 +59,17 @@ class CreateWriteRender(avalon.nuke.Creator):
                 "avalon": self.data
             }
 
-            create_write_node(self.data["subset"], write_data)
+            if self.presets.get('fpath_template'):
+                self.log.info("Adding template path from preset")
+                write_data.update(
+                    {"fpath_template": self.presets["fpath_template"]}
+                )
+            else:
+                self.log.info("Adding template path from plugin")
+                write_data.update({
+                    "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"})
 
-        return
+        return create_write_node(self.data["subset"], write_data)
 
 
 class CreateWritePrerender(avalon.nuke.Creator):
@@ -77,6 +86,9 @@ class CreateWritePrerender(avalon.nuke.Creator):
 
     def __init__(self, *args, **kwargs):
         super(CreateWritePrerender, self).__init__(*args, **kwargs)
+        self.presets = config.get_presets()['plugins']["nuke"]["create"].get(
+            self.__class__.__name__, {}
+        )
 
         data = OrderedDict()
 
@@ -100,56 +112,34 @@ class CreateWritePrerender(avalon.nuke.Creator):
                 "avalon": self.data
             }
 
-            create_write_node(self.data["subset"], write_data)
+            if self.presets.get('fpath_template'):
+                self.log.info("Adding template path from preset")
+                write_data.update(
+                    {"fpath_template": self.presets["fpath_template"]}
+                )
+            else:
+                self.log.info("Adding template path from plugin")
+                write_data.update({
+                    "fpath_template": "{work}/prerenders/{subset}/{subset}.{frame}.{ext}"})
+
+            # get group node
+            group_node = create_write_node(self.data["subset"], write_data)
+
+            # open group node
+            group_node.begin()
+            for n in nuke.allNodes():
+                # get write node
+                if n.Class() in "Write":
+                    write_node = n
+            group_node.end()
+
+            # linking knobs to group property panel
+            linking_knobs = ["first", "last", "use_limit"]
+            for k in linking_knobs:
+                lnk = nuke.Link_Knob(k)
+                lnk.makeLink(write_node.name(), k)
+                lnk.setName(k.replace('_', ' ').capitalize())
+                lnk.clearFlag(nuke.STARTLINE)
+                group_node.addKnob(lnk)
 
         return
-
-
-"""
-class CrateWriteStill(avalon.nuke.Creator):
-    # change this to template preset
-    preset = "still"
-
-    name = "WriteStill"
-    label = "Create Write Still"
-    hosts = ["nuke"]
-    family = "{}_write".format(preset)
-    families = preset
-    icon = "image"
-
-    def __init__(self, *args, **kwargs):
-        super(CrateWriteStill, self).__init__(*args, **kwargs)
-
-        data = OrderedDict()
-
-        data["family"] = self.family.split("_")[-1]
-        data["families"] = self.families
-
-        {data.update({k: v}) for k, v in self.data.items()
-         if k not in data.keys()}
-        self.data = data
-
-    def process(self):
-        self.name = self.data["subset"]
-
-        node_name = self.data["subset"].replace(
-            "_", "_f{}_".format(nuke.frame()))
-        instance = nuke.toNode(self.data["subset"])
-        self.data["subset"] = node_name
-
-        family = self.family
-        node = 'write'
-
-        if not instance:
-            write_data = {
-                "frame_range": [nuke.frame(), nuke.frame()],
-                "class": node,
-                "preset": self.preset,
-                "avalon": self.data
-            }
-
-            nuke.createNode("FrameHold", "first_frame {}".format(nuke.frame()))
-            create_write_node(node_name, write_data)
-
-        return
-"""

@@ -402,8 +402,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                         },
                         "frames_range": {
                             "value": "{start}-{end}".format(
-                                start=int(instance.data["startFrame"]),
-                                end=int(instance.data["endFrame"])),
+                                start=int(instance.data["frameStart"]),
+                                end=int(instance.data["frameEnd"])),
                             "state": True,
                             "subst": False
                         },
@@ -552,7 +552,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
 
-        for key in ("startFrame", "endFrame", "byFrameStep"):
+        for key in ("frameStart", "frameEnd", "byFrameStep"):
             value = instance.data[key]
 
             if int(value) == value:

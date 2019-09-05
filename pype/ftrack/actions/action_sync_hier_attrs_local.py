@@ -19,16 +19,17 @@ class SyncHierarchicalAttrs(BaseAction):
     #: Action identifier.
     identifier = 'sync.hierarchical.attrs.local'
     #: Action label.
-    label = 'Sync HierAttrs - Local'
+    label = "Pype Admin"
+    variant = '- Sync Hier Attrs (Local)'
     #: Action description.
     description = 'Synchronize hierarchical attributes'
     #: Icon
-    icon = '{}/ftrack/action_icons/SyncHierarchicalAttrsLocal.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
     #: roles that are allowed to register this action
-    role_list = ['Administrator']
+    role_list = ['Pypeclub', 'Administrator', 'Project Manager']
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -41,6 +42,7 @@ class SyncHierarchicalAttrs(BaseAction):
         return False
 
     def launch(self, session, entities, event):
+        self.interface_messages = {}
         user = session.query(
             'User where id is "{}"'.format(event['source']['user']['id'])
         ).one()
@@ -53,13 +55,27 @@ class SyncHierarchicalAttrs(BaseAction):
             })
         })
         session.commit()
+        self.log.debug('Job with id "{}" created'.format(job['id']))
+
+        process_session = ftrack_api.Session(
+            server_url=session.server_url,
+            api_key=session.api_key,
+            api_user=session.api_user,
+            auto_connect_event_hub=True
+        )
 
         try:
             # Collect hierarchical attrs
+            self.log.debug('Collecting Hierarchical custom attributes started')
             custom_attributes = {}
-            all_avalon_attr = session.query(
+            all_avalon_attr = process_session.query(
                 'CustomAttributeGroup where name is "avalon"'
             ).one()
+
+            error_key = (
+                'Hierarchical attributes with set "default" value (not allowed)'
+            )
+
             for cust_attr in all_avalon_attr['custom_attribute_configurations']:
                 if 'avalon_' in cust_attr['key']:
                     continue
@@ -68,6 +84,12 @@ class SyncHierarchicalAttrs(BaseAction):
                     continue
 
                 if cust_attr['default']:
+                    if error_key not in self.interface_messages:
+                        self.interface_messages[error_key] = []
+                    self.interface_messages[error_key].append(
+                        cust_attr['label']
+                    )
+
                     self.log.warning((
                         'Custom attribute "{}" has set default value.'
                         ' This attribute can\'t be synchronized'
@@ -75,6 +97,10 @@ class SyncHierarchicalAttrs(BaseAction):
                     continue
 
                 custom_attributes[cust_attr['key']] = cust_attr
+
+            self.log.debug(
+                'Collecting Hierarchical custom attributes has finished'
+            )
 
             if not custom_attributes:
                 msg = 'No hierarchical attributes to sync.'
@@ -93,27 +119,60 @@ class SyncHierarchicalAttrs(BaseAction):
             self.db_con.install()
             self.db_con.Session['AVALON_PROJECT'] = project_name
 
-            for entity in entities:
+            _entities = self._get_entities(event, process_session)
+
+            for entity in _entities:
+                self.log.debug(30*'-')
+                self.log.debug(
+                    'Processing entity "{}"'.format(entity.get('name', entity))
+                )
+
+                ent_name = entity.get('name', entity)
+                if entity.entity_type.lower() == 'project':
+                    ent_name = entity['full_name']
+
                 for key in custom_attributes:
+                    self.log.debug(30*'*')
+                    self.log.debug(
+                        'Processing Custom attribute key "{}"'.format(key)
+                    )
                     # check if entity has that attribute
                     if key not in entity['custom_attributes']:
-                        self.log.debug(
-                            'Hierachical attribute "{}" not found on "{}"'.format(
-                                key, entity.get('name', entity)
-                            )
+                        error_key = 'Missing key on entities'
+                        if error_key not in self.interface_messages:
+                            self.interface_messages[error_key] = []
+
+                        self.interface_messages[error_key].append(
+                            '- key: "{}" - entity: "{}"'.format(key, ent_name)
                         )
+
+                        self.log.error((
+                            '- key "{}" not found on "{}"'
+                        ).format(key, ent_name))
                         continue
 
                     value = self.get_hierarchical_value(key, entity)
                     if value is None:
-                        self.log.warning(
-                            'Hierarchical attribute "{}" not set on "{}"'.format(
-                                key, entity.get('name', entity)
-                            )
+                        error_key = (
+                            'Missing value for key on entity'
+                            ' and its parents (synchronization was skipped)'
                         )
+                        if error_key not in self.interface_messages:
+                            self.interface_messages[error_key] = []
+
+                        self.interface_messages[error_key].append(
+                            '- key: "{}" - entity: "{}"'.format(key, ent_name)
+                        )
+
+                        self.log.warning((
+                            '- key "{}" not set on "{}" or its parents'
+                        ).format(key, ent_name))
                         continue
 
                     self.update_hierarchical_attribute(entity, key, value)
+
+            job['status'] = 'done'
+            session.commit()
 
         except Exception:
             self.log.error(
@@ -127,6 +186,11 @@ class SyncHierarchicalAttrs(BaseAction):
             if job['status'] in ('queued', 'running'):
                 job['status'] = 'failed'
             session.commit()
+            if self.interface_messages:
+                title = "Errors during SyncHierarchicalAttrs"
+                self.show_interface_from_dict(
+                    messages=self.interface_messages, title=title, event=event
+                )
 
         return True
 
@@ -146,6 +210,27 @@ class SyncHierarchicalAttrs(BaseAction):
             entity.entity_type.lower() == 'task'
         ):
             return
+
+        ent_name = entity.get('name', entity)
+        if entity.entity_type.lower() == 'project':
+            ent_name = entity['full_name']
+
+        hierarchy = '/'.join(
+            [a['name'] for a in entity.get('ancestors', [])]
+        )
+        if hierarchy:
+            hierarchy = '/'.join(
+                [entity['project']['full_name'], hierarchy, entity['name']]
+            )
+        elif entity.entity_type.lower() == 'project':
+            hierarchy = entity['full_name']
+        else:
+            hierarchy = '/'.join(
+                [entity['project']['full_name'], entity['name']]
+            )
+
+        self.log.debug('- updating entity "{}"'.format(hierarchy))
+
         # collect entity's custom attributes
         custom_attributes = entity.get('custom_attributes')
         if not custom_attributes:
@@ -153,24 +238,49 @@ class SyncHierarchicalAttrs(BaseAction):
 
         mongoid = custom_attributes.get(self.ca_mongoid)
         if not mongoid:
-            self.log.debug('Entity "{}" is not synchronized to avalon.'.format(
-                entity.get('name', entity)
-            ))
+            error_key = 'Missing MongoID on entities (try SyncToAvalon first)'
+            if error_key not in self.interface_messages:
+                self.interface_messages[error_key] = []
+
+            if ent_name not in self.interface_messages[error_key]:
+                self.interface_messages[error_key].append(ent_name)
+
+            self.log.warning(
+                '-- entity "{}" is not synchronized to avalon. Skipping'.format(
+                    ent_name
+                )
+            )
             return
 
         try:
             mongoid = ObjectId(mongoid)
         except Exception:
-            self.log.warning('Entity "{}" has stored invalid MongoID.'.format(
-                entity.get('name', entity)
-            ))
+            error_key = 'Invalid MongoID on entities (try SyncToAvalon)'
+            if error_key not in self.interface_messages:
+                self.interface_messages[error_key] = []
+
+            if ent_name not in self.interface_messages[error_key]:
+                self.interface_messages[error_key].append(ent_name)
+
+            self.log.warning(
+                '-- entity "{}" has stored invalid MongoID. Skipping'.format(
+                    ent_name
+                )
+            )
             return
         # Find entity in Mongo DB
         mongo_entity = self.db_con.find_one({'_id': mongoid})
         if not mongo_entity:
+            error_key = 'Entities not found in Avalon DB (try SyncToAvalon)'
+            if error_key not in self.interface_messages:
+                self.interface_messages[error_key] = []
+
+            if ent_name not in self.interface_messages[error_key]:
+                self.interface_messages[error_key].append(ent_name)
+
             self.log.warning(
-                'Entity "{}" is not synchronized to avalon.'.format(
-                    entity.get('name', entity)
+                '-- entity "{}" was not found in DB by id "{}". Skipping'.format(
+                    ent_name, str(mongoid)
                 )
             )
             return
@@ -188,17 +298,21 @@ class SyncHierarchicalAttrs(BaseAction):
             {'$set': {'data': data}}
         )
 
+        self.log.debug(
+            '-- stored value "{}"'.format(value)
+        )
+
         for child in entity.get('children', []):
             self.update_hierarchical_attribute(child, key, value)
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    SyncHierarchicalAttrs(session).register()
+    SyncHierarchicalAttrs(session, plugins_presets).register()
 
 
 def main(arguments=None):

@@ -88,9 +88,11 @@ class FtrackModule:
     def set_action_server(self):
         try:
             self.action_server.run_server()
-        except Exception:
-            msg = 'Ftrack Action server crashed! Please try to start again.'
-            log.error(msg)
+        except Exception as exc:
+            log.error(
+                "Ftrack Action server crashed! Please try to start again.",
+                exc_info=True
+            )
             # TODO show message to user
             self.bool_action_server = False
             self.set_menu_visibility()

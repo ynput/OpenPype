@@ -5,7 +5,9 @@ import importlib
 from pype.vendor import ftrack_api
 import time
 import logging
-from pypeapp import Logger
+import inspect
+from pypeapp import Logger, config
+
 
 log = Logger().get_logger(__name__)
 
@@ -27,8 +29,8 @@ PYTHONPATH # Path to ftrack_api and paths to all modules used in actions
 """
 
 
-class FtrackServer():
-    def __init__(self, type='action'):
+class FtrackServer:
+    def __init__(self, server_type='action'):
         """
             - 'type' is by default set to 'action' - Runs Action server
             - enter 'event' for Event server
@@ -43,21 +45,12 @@ class FtrackServer():
         ftrack_log = logging.getLogger("ftrack_api")
         ftrack_log.setLevel(logging.WARNING)
 
-        self.type = type
-        self.actionsAvailable = True
-        self.eventsAvailable = True
-        # Separate all paths
-        if "FTRACK_ACTIONS_PATH" in os.environ:
-            all_action_paths = os.environ["FTRACK_ACTIONS_PATH"]
-            self.actionsPaths = all_action_paths.split(os.pathsep)
-        else:
-            self.actionsAvailable = False
+        env_key = "FTRACK_ACTIONS_PATH"
+        if server_type.lower() == 'event':
+            env_key = "FTRACK_EVENTS_PATH"
 
-        if "FTRACK_EVENTS_PATH" in os.environ:
-            all_event_paths = os.environ["FTRACK_EVENTS_PATH"]
-            self.eventsPaths = all_event_paths.split(os.pathsep)
-        else:
-            self.eventsAvailable = False
+        self.server_type = server_type
+        self.env_key = env_key
 
     def stop_session(self):
         if self.session.event_hub.connected is True:
@@ -67,7 +60,7 @@ class FtrackServer():
 
     def set_files(self, paths):
         # Iterate all paths
-        functions = []
+        register_functions_dict = []
         for path in paths:
             # add path to PYTHON PATH
             if path not in sys.path:
@@ -80,32 +73,23 @@ class FtrackServer():
                     if '.pyc' in file or '.py' not in file:
                         continue
 
-                    ignore = 'ignore_me'
                     mod = importlib.import_module(os.path.splitext(file)[0])
                     importlib.reload(mod)
                     mod_functions = dict(
                         [
                             (name, function)
                             for name, function in mod.__dict__.items()
-                            if isinstance(function, types.FunctionType) or
-                            name == ignore
+                            if isinstance(function, types.FunctionType)
                         ]
                     )
-                    # Don't care about ignore_me files
-                    if (
-                        ignore in mod_functions and
-                        mod_functions[ignore] is True
-                    ):
-                        continue
+
                     # separate files by register function
                     if 'register' not in mod_functions:
-                        msg = (
-                            '"{0}" - Missing register method'
-                        ).format(file, self.type)
+                        msg = ('"{}" - Missing register method').format(file)
                         log.warning(msg)
                         continue
 
-                    functions.append({
+                    register_functions_dict.append({
                         'name': file,
                         'register': mod_functions['register']
                     })
@@ -115,43 +99,47 @@ class FtrackServer():
                     )
                     log.warning(msg)
 
-        if len(functions) < 1:
+        if len(register_functions_dict) < 1:
             raise Exception
 
+        # Load presets for setting plugins
+        key = "user"
+        if self.server_type.lower() == "event":
+            key = "server"
+        plugins_presets = config.get_presets().get(
+            "ftrack", {}
+        ).get("plugins", {}).get(key, {})
+
         function_counter = 0
-        for function in functions:
+        for function_dict in register_functions_dict:
+            register = function_dict["register"]
             try:
-                function['register'](self.session)
+                if len(inspect.signature(register).parameters) == 1:
+                    register(self.session)
+                else:
+                    register(self.session, plugins_presets=plugins_presets)
+
                 if function_counter%7 == 0:
                     time.sleep(0.1)
                 function_counter += 1
-            except Exception as e:
+            except Exception as exc:
                 msg = '"{}" - register was not successful ({})'.format(
-                    function['name'], str(e)
+                    function_dict['name'], str(exc)
                 )
                 log.warning(msg)
 
     def run_server(self):
         self.session = ftrack_api.Session(auto_connect_event_hub=True,)
 
-        if self.type.lower() == 'event':
-            if self.eventsAvailable is False:
-                msg = (
-                    'FTRACK_EVENTS_PATH is not set'
-                    ', event server won\'t launch'
-                )
-                log.error(msg)
-                return
-            self.set_files(self.eventsPaths)
-        else:
-            if self.actionsAvailable is False:
-                msg = (
-                    'FTRACK_ACTIONS_PATH is not set'
-                    ', action server won\'t launch'
-                )
-                log.error(msg)
-                return
-            self.set_files(self.actionsPaths)
+        paths_str = os.environ.get(self.env_key)
+        if paths_str is None:
+            log.error((
+                "Env var \"{}\" is not set, \"{}\" server won\'t launch"
+            ).format(self.env_key, self.server_type))
+            return
+
+        paths = paths_str.split(os.pathsep)
+        self.set_files(paths)
 
         log.info(60*"*")
         log.info('Registration of actions/events has finished!')

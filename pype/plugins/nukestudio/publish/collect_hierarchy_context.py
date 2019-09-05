@@ -34,9 +34,14 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
     def process(self, context):
 
         for instance in context[:]:
+            assets_shared = context.data.get("assetsShared")
             tags = instance.data.get("tags", None)
             clip = instance.data["item"]
             asset = instance.data.get("asset")
+            sequence = context.data['activeSequence']
+            width = int(sequence.format().width())
+            height = int(sequence.format().height())
+            pixel_aspect = sequence.format().pixelAspect()
 
             # build data for inner nukestudio project property
             data = {
@@ -54,7 +59,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             self.log.debug("__ tags: {}".format(tags))
 
             if not tags:
-                return
+                continue
 
             # loop trough all tags
             for t in tags:
@@ -139,19 +144,36 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                         "Clip: `{}`".format(asset)
                     )
 
-                    assetsShared = {
-                        asset: {
-                            "asset": instance.data["asset"],
-                            "hierarchy": hierarchy,
-                            "parents": parents,
-                            "tasks":  instance.data['tasks']
-                        }}
-                    self.log.debug("__ assetsShared: {}".format(assetsShared))
                     # add formated hierarchy path into instance data
                     instance.data["hierarchy"] = hierarchy
                     instance.data["parents"] = parents
-                    context.data["assetsShared"].update(
-                        assetsShared)
+
+                    # adding to asset shared dict
+                    self.log.debug("__ assets_shared: {}".format(assets_shared))
+                    if assets_shared.get(asset):
+                        self.log.debug("Adding to shared assets: `{}`".format(
+                            asset))
+                        asset_shared = assets_shared.get(asset)
+                    else:
+                        asset_shared = assets_shared[asset]
+
+                    asset_shared.update({
+                        "asset": asset,
+                        "hierarchy": hierarchy,
+                        "parents": parents,
+                        "width": width,
+                        "height": height,
+                        "pixelAspect": pixel_aspect,
+                        "tasks":  instance.data["tasks"]
+                    })
+
+                    # adding frame start if any on instance
+                    start_frame = instance.data.get("startingFrame")
+                    if start_frame:
+                        asset_shared.update({
+                            "startingFrame": start_frame
+                        })
+
 
 
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
@@ -176,6 +198,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
     def process(self, context):
         instances = context[:]
+
         # create hierarchyContext attr if context has none
 
         temp_context = {}
@@ -200,6 +223,19 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
                     instance.data["tasks"] = s_asset_data["tasks"]
+                    instance.data["width"] = s_asset_data["width"]
+                    instance.data["height"] = s_asset_data["height"]
+                    instance.data["pixelAspect"] = s_asset_data["pixelAspect"]
+
+                    # adding frame start if any on instance
+                    start_frame = s_asset_data.get("startingFrame")
+                    if start_frame:
+                        instance.data["frameStart"] = start_frame
+                        instance.data["frameEnd"] = start_frame + (
+                            instance.data["clipOut"] -
+                            instance.data["clipIn"])
+
+
 
             self.log.debug(
                 "__ instance.data[parents]: {}".format(
@@ -226,37 +262,23 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
 
             # get custom attributes of the shot
             if instance.data.get("main"):
-                start_frame = instance.data.get("frameStart", 0)
-
                 in_info['custom_attributes'] = {
-                    'handles': int(instance.data.get('handles')),
-                    'handle_start': handle_start,
-                    'handle_end': handle_end,
-                    'fstart': int(instance.data["startFrame"]),
-                    'fend': int(instance.data["endFrame"]),
-                    'fps': instance.data["fps"],
-                    "edit_in": int(instance.data["startFrame"]),
-                    "edit_out": int(instance.data["endFrame"])
+                    'handles': int(instance.data.get('handles', 0)),
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end,
+                    "frameStart": instance.data["frameStart"],
+                    "frameEnd": instance.data["frameEnd"],
+                    "clipIn": instance.data["clipIn"],
+                    "clipOut": instance.data["clipOut"],
+                    'fps': instance.context.data["fps"]
                 }
-                if start_frame is not 0:
-                    in_info['custom_attributes'].update({
-                        'fstart': start_frame,
-                        'fend': start_frame + (
-                            instance.data["endFrame"] - instance.data["startFrame"])
-                    })
+
                 # adding SourceResolution if Tag was present
-                s_res = instance.data.get("sourceResolution")
-                if s_res and instance.data.get("main"):
-                    item = instance.data["item"]
-                    self.log.debug("TrackItem: `{0}`".format(
-                        item))
-                    width = int(item.source().mediaSource().width())
-                    height = int(item.source().mediaSource().height())
-                    self.log.info("Source Width and Height are: `{0} x {1}`".format(
-                        width, height))
+                if instance.data.get("main"):
                     in_info['custom_attributes'].update({
-                        "resolution_width": width,
-                        "resolution_height": height
+                        "resolutionWidth": instance.data["width"],
+                        "resolutionHeight": instance.data["height"],
+                        "pixelAspect": instance.data["pixelAspect"]
                     })
 
             in_info['tasks'] = instance.data['tasks']

@@ -75,11 +75,11 @@ class ValidateLookSets(pyblish.api.InstancePlugin):
                 if missing_sets:
                     for set in missing_sets:
                         if '_SET' not in set:
-                        # A set of this node is not coming along, this is wrong!
-                        cls.log.error("Missing sets '{}' for node "
-                                      "'{}'".format(missing_sets, node))
-                        invalid.append(node)
-                        continue
+                            # A set of this node is not coming along, this is wrong!
+                            cls.log.error("Missing sets '{}' for node "
+                                          "'{}'".format(missing_sets, node))
+                            invalid.append(node)
+                            continue
 
                 # Ensure the node is in the sets that are collected
                 for shaderset, data in relationships.items():

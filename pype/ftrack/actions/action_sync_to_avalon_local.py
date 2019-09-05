@@ -47,11 +47,12 @@ class SyncToAvalon(BaseAction):
     #: Action identifier.
     identifier = 'sync.to.avalon.local'
     #: Action label.
-    label = 'SyncToAvalon - Local'
+    label = "Pype Admin"
+    variant = '- Sync To Avalon (Local)'
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
-    icon = '{}/ftrack/action_icons/SyncToAvalon-local.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
     #: roles that are allowed to register this action
@@ -59,7 +60,7 @@ class SyncToAvalon(BaseAction):
     #: Action priority
     priority = 200
 
-    def __init__(self, session):
+    def __init__(self, session, plugins_presets):
         super(SyncToAvalon, self).__init__(session)
         # reload utils on initialize (in case of server restart)
 
@@ -177,17 +178,7 @@ class SyncToAvalon(BaseAction):
                 job['status'] = 'failed'
             session.commit()
 
-            event = fa_session.ftrack_api.event.base.Event(
-                topic='ftrack.action.launch',
-                data=dict(
-                    actionIdentifier='sync.hierarchical.attrs.local',
-                    selection=event['data']['selection']
-                ),
-                source=dict(
-                    user=event['source']['user']
-                )
-            )
-            session.event_hub.publish(event, on_error='ignore')
+            self.trigger_action("sync.hierarchical.attrs.local", event)
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)
@@ -212,7 +203,7 @@ class SyncToAvalon(BaseAction):
                     self.add_childs_to_importable(child)
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -221,7 +212,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    SyncToAvalon(session).register()
+    SyncToAvalon(session, plugins_presets).register()
 
 
 def main(arguments=None):

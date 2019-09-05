@@ -36,9 +36,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                             template from anatomy that should be used for
                             integrating this file. Only the first level can
                             be specified right now.
-        'startFrame'
-        'endFrame'
-        'framerate'
+        "frameStart"
+        "frameEnd"
+        'fps'
     """
 
     label = "Integrate Asset New"
@@ -63,6 +63,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "rig",
                 "plate",
                 "look",
+                "lut",
                 "audio"
                 ]
     exclude_families = ["clip"]
@@ -271,15 +272,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.debug(
                     "src_tail_collections: {}".format(str(src_collections)))
                 src_collection = src_collections[0]
+
                 # Assert that each member has identical suffix
                 src_head = src_collection.format("{head}")
                 src_tail = src_collection.format("{tail}")
 
+                # fix dst_padding
+                valid_files = [x for x in files if src_collection.match(x)]
+                padd_len = len(
+                    valid_files[0].replace(src_head, "").replace(src_tail, "")
+                )
+                src_padding_exp = "%0{}d".format(padd_len)
+
                 test_dest_files = list()
                 for i in [1, 2]:
                     template_data["representation"] = repre['ext']
-                    template_data["frame"] = src_collection.format(
-                        "{padding}") % i
+                    template_data["frame"] = src_padding_exp % i
                     anatomy_filled = anatomy.format(template_data)
 
                     test_dest_files.append(
@@ -295,24 +303,23 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_head = dst_collection.format("{head}")
                 dst_tail = dst_collection.format("{tail}")
 
-                repre['published_path'] = dst_collection.format()
-
                 index_frame_start = None
-                if repre.get('startFrame'):
+                if repre.get("frameStart"):
                     frame_start_padding = len(str(
-                        repre.get('endFrame')))
-                    index_frame_start = repre.get('startFrame')
+                        repre.get("frameEnd")))
+                    index_frame_start = repre.get("frameStart")
 
+                dst_padding_exp = src_padding_exp
                 for i in src_collection.indexes:
-                    src_padding = src_collection.format("{padding}") % i
+                    src_padding = src_padding_exp % i
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
 
-                    dst_padding = dst_collection.format("{padding}") % i
+                    dst_padding = src_padding_exp % i
 
                     if index_frame_start:
-                        dst_padding = "%0{}d".format(
-                            frame_start_padding) % index_frame_start
+                        dst_padding_exp = "%0{}d".format(frame_start_padding)
+                        dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1
 
                     dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
@@ -321,6 +328,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
+                repre['published_path'] = "{0}{1}{2}".format(dst_head, dst_padding_exp, dst_tail)
                 # for imagesequence version data
                 hashes = '#' * len(dst_padding)
                 dst = os.path.normpath("{0}{1}{2}".format(
@@ -380,7 +388,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
-            self.log.debug("__ _representation: {}".format(representation))
+            self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
             self.log.debug("__ destination_list: {}".format(destination_list))
             instance.data['destination_list'] = destination_list
@@ -396,19 +404,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.info("Registered {} items".format(len(representations)))
 
     def integrate(self, instance):
-        """Move the files
+        """ Move the files.
 
-        Through `instance.data["transfers"]`
+            Through `instance.data["transfers"]`
 
-        Args:
-            instance: the instance to integrate
+            Args:
+                instance: the instance to integrate
         """
-
         transfers = instance.data.get("transfers", list())
 
         for src, dest in transfers:
             if os.path.normpath(src) != os.path.normpath(dest):
                 self.copy_file(src, dest)
+
+        transfers = instance.data.get("transfers", list())
+        for src, dest in transfers:
+            self.copy_file(src, dest)
 
         # Produce hardlinked copies
         # Note: hardlink can only be produced between two files on the same
@@ -543,8 +554,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # Include optional data if present in
         optionals = [
-            "startFrame", "endFrame", "step", "handles",
-            "handle_end", "handle_start", "sourceHashes"
+            "frameStart", "frameEnd", "step", "handles",
+            "handleEnd", "handleStart", "sourceHashes"
         ]
         for key in optionals:
             if key in instance.data:

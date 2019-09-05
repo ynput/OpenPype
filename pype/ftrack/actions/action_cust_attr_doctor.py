@@ -12,14 +12,15 @@ class CustomAttributeDoctor(BaseAction):
     #: Action identifier.
     identifier = 'custom.attributes.doctor'
     #: Action label.
-    label = 'Custom Attributes Doctor'
+    label = "Pype Doctor"
+    variant = '- Custom Attributes Doctor'
     #: Action description.
     description = (
         'Fix hierarchical custom attributes mainly handles, fstart'
         ' and fend'
     )
 
-    icon = '{}/ftrack/action_icons/TestAction.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeDoctor.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
     hierarchical_ca = ['handle_start', 'handle_end', 'fstart', 'fend']
@@ -286,13 +287,13 @@ class CustomAttributeDoctor(BaseAction):
         return all_roles
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    CustomAttributeDoctor(session).register()
+    CustomAttributeDoctor(session, plugins_presets).register()
 
 
 def main(arguments=None):

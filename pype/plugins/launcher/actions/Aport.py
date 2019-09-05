@@ -6,10 +6,9 @@ import acre
 
 from avalon import api, lib
 import pype.api as pype
+from pype.aport import lib as aportlib
 
-from pype.api import Logger
-
-log = Logger().get_logger(__name__, "aport")
+log = pype.Logger().get_logger(__name__, "aport")
 
 
 class Aport(api.Action):
@@ -50,15 +49,16 @@ class Aport(api.Action):
             env = acre.merge(env, current_env=dict(os.environ))
 
             if not env.get('AVALON_WORKDIR', None):
-                os.environ["AVALON_WORKDIR"] = pype.get_workdir_template()
+                os.environ["AVALON_WORKDIR"] = aportlib.get_workdir_template()
 
             env.update(dict(os.environ))
 
             try:
-                lib.launch(executable=executable,
-                           args=arguments,
-                           environment=env
-                           )
+                lib.launch(
+                    executable=executable,
+                    args=arguments,
+                    environment=env
+                )
             except Exception as e:
                 log.error(e)
             return

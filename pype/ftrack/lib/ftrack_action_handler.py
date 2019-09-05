@@ -21,9 +21,9 @@ class BaseAction(BaseHandler):
     icon = None
     type = 'Action'
 
-    def __init__(self, session):
+    def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
-        super().__init__(session)
+        super().__init__(session, plugins_presets)
 
         if self.label is None:
             raise ValueError(

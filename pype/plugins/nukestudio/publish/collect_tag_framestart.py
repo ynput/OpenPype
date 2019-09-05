@@ -1,5 +1,5 @@
 from pyblish import api
-
+import os
 
 class CollectClipTagFrameStart(api.InstancePlugin):
     """Collect FrameStart from Tags of selected track items."""
@@ -19,5 +19,22 @@ class CollectClipTagFrameStart(api.InstancePlugin):
 
             # gets only task family tags and collect labels
             if "frameStart" in t_family:
-                t_number = t_metadata.get("tag.number", "")
-                instance.data["frameStart"] = int(t_number)
+                t_value = t_metadata.get("tag.value", None)
+
+                # backward compatibility
+                t_number = t_metadata.get("tag.number", None)
+                start_frame = t_number or t_value
+
+                try:
+                    start_frame = int(start_frame)
+                except ValueError:
+                    if "source" in t_value:
+                        source_first = instance.data["sourceFirst"]
+                        source_in = instance.data["sourceIn"]
+                        handle_start = instance.data["handleStart"]
+                        start_frame = (source_first + source_in) - handle_start
+
+                instance.data["startingFrame"] = start_frame
+                self.log.info("Start frame on `{0}` set to `{1}`".format(
+                    instance, start_frame
+                    ))

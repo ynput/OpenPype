@@ -1,19 +1,13 @@
-# Standard library
 import os
 import sys
-
-# Pyblish libraries
-import pyblish.api
-
-import avalon.api as avalon
-import pype.api as pype
-
-from avalon.vendor.Qt import (QtWidgets, QtGui)
-
-# Host libraries
 import hiero
-
+import pyblish.api
+import avalon.api as avalon
+from avalon.vendor.Qt import (QtWidgets, QtGui)
+import pype.api as pype
 from pypeapp import Logger
+
+
 log = Logger().get_logger(__name__, "nukestudio")
 
 cached_process = None
@@ -30,12 +24,18 @@ AVALON_CONFIG = os.getenv("AVALON_CONFIG", "pype")
 def set_workfiles():
     ''' Wrapping function for workfiles launcher '''
     from avalon.tools import workfiles
+
+    # import session to get project dir
     S = avalon.Session
     active_project_root = os.path.normpath(
         os.path.join(S['AVALON_PROJECTS'], S['AVALON_PROJECT'])
     )
     workdir = os.environ["AVALON_WORKDIR"]
+
+    # show workfile gui
     workfiles.show(workdir)
+
+    # getting project
     project = hiero.core.projects()[-1]
 
     # set project root with backward compatibility
@@ -46,14 +46,14 @@ def set_workfiles():
         project.setProjectRoot(active_project_root)
 
     # get project data from avalon db
-    project_data = pype.get_project_data()
+    project_data = pype.get_project()["data"]
 
     log.info("project_data: {}".format(project_data))
 
     # get format and fps property from avalon db on project
-    width = project_data['resolution_width']
-    height = project_data['resolution_height']
-    pixel_aspect = project_data['pixel_aspect']
+    width = project_data["resolutionWidth"]
+    height = project_data["resolutionHeight"]
+    pixel_aspect = project_data["pixelAspect"]
     fps = project_data['fps']
     format_name = project_data['code']
 
@@ -64,9 +64,8 @@ def set_workfiles():
     # set fps to hiero project
     project.setFramerate(fps)
 
+    # TODO: add auto colorspace set from project drop
     log.info("Project property has been synchronised with Avalon db")
-
-
 
 
 def reload_config():
@@ -189,6 +188,10 @@ def add_submission():
 
 
 class PublishAction(QtWidgets.QAction):
+    """
+    Action with is showing as menu item
+    """
+
     def __init__(self):
         QtWidgets.QAction.__init__(self, "Publish", None)
         self.triggered.connect(self.publish)
@@ -213,7 +216,8 @@ class PublishAction(QtWidgets.QAction):
 
 
 def _show_no_gui():
-    """Popup with information about how to register a new GUI
+    """
+    Popup with information about how to register a new GUI
     In the event of no GUI being registered or available,
     this information dialog will appear to guide the user
     through how to get set up with one.
@@ -283,3 +287,59 @@ def _show_no_gui():
 
     messagebox.setStandardButtons(messagebox.Ok)
     messagebox.exec_()
+
+
+def CreateNukeWorkfile(nodes=None,
+                       nodes_effects=None,
+                       to_timeline=False,
+                       **kwargs):
+    ''' Creating nuke workfile with particular version with given nodes
+    Also it is creating timeline track items as precomps.
+
+    Arguments:
+        nodes(list of dict): each key in dict is knob order is important
+        to_timeline(type): will build trackItem with metadata
+
+    Returns:
+        bool: True if done
+
+    Raises:
+        Exception: with traceback
+
+    '''
+    import hiero.core
+    from avalon.nuke import imprint
+    from pype.nuke import (
+        lib as nklib
+        )
+
+    # check if the file exists if does then Raise "File exists!"
+    if os.path.exists(filepath):
+        raise FileExistsError("File already exists: `{}`".format(filepath))
+
+    # if no representations matching then
+    #   Raise "no representations to be build"
+    if len(representations) == 0:
+        raise AttributeError("Missing list of `representations`")
+
+    # check nodes input
+    if len(nodes) == 0:
+        log.warning("Missing list of `nodes`")
+
+    # create temp nk file
+    nuke_script = hiero.core.nuke.ScriptWriter()
+
+    # create root node and save all metadata
+    root_node = hiero.core.nuke.RootNode()
+
+    root_path = os.environ["AVALON_PROJECTS"]
+
+    nuke_script.addNode(root_node)
+
+    # here to call pype.nuke.lib.BuildWorkfile
+    script_builder = nklib.BuildWorkfile(
+                                root_node=root_node,
+                                root_path=root_path,
+                                nodes=nuke_script.getNodes(),
+                                **kwargs
+                                )

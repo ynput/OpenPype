@@ -114,11 +114,11 @@ class ExtractQuicktime(pype.api.Extractor):
             'ext': 'mov',
             'files': collected_frames,
             "stagingDir": stagingdir,
-            'startFrame': start,
-            'endFrame': end,
-            'frameRate': fps,
+            "frameStart": start,
+            "frameEnd": end,
+            'fps': fps,
             'preview': True,
-            'tags': ['review']
+            'tags': ['review', 'delete']
         }
         instance.data["representations"].append(representation)
 

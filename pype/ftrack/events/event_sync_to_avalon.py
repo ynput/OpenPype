@@ -16,7 +16,7 @@ class Sync_to_Avalon(BaseEvent):
         # If mongo_id textfield has changed: RETURN!
         # - infinite loop
         for ent in event['data']['entities']:
-            if 'keys' in ent:
+            if ent.get('keys') is not None:
                 if ca_mongoid in ent['keys']:
                     return
 
@@ -109,19 +109,19 @@ class Sync_to_Avalon(BaseEvent):
                 ' for more information.'
             )
             items = [
-                {'type': 'label', 'value':'# Fatal Error'},
+                {'type': 'label', 'value': '# Fatal Error'},
                 {'type': 'label', 'value': '<p>{}</p>'.format(ftrack_message)}
             ]
-            self.show_interface(event, items, title)
+            self.show_interface(items, title, event=event)
             self.log.error('Fatal error during sync: {}'.format(message))
 
         return
 
 
-def register(session, **kw):
+def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    Sync_to_Avalon(session).register()
+    Sync_to_Avalon(session, plugins_presets).register()

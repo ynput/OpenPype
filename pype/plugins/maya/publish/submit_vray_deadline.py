@@ -51,8 +51,8 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
                                                  filename,
                                                  vrscene_output)
 
-        start_frame = int(instance.data["startFrame"])
-        end_frame = int(instance.data["endFrame"])
+        start_frame = int(instance.data["frameStart"])
+        end_frame = int(instance.data["frameEnd"])
 
         # Primary job
         self.log.info("Submitting export job ..")
@@ -123,8 +123,8 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         self.log.info("Submitting render job ..")
 
-        start_frame = int(instance.data["startFrame"])
-        end_frame = int(instance.data["endFrame"])
+        start_frame = int(instance.data["frameStart"])
+        end_frame = int(instance.data["frameEnd"])
         ext = instance.data.get("ext",  "exr")
 
         # Create output directory for renders
@@ -215,8 +215,8 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         return cmd.format(project=instance.context.data["workspaceDir"],
                           cam=cammera,
-                          startFrame=instance.data["startFrame"],
-                          endFrame=instance.data["endFrame"],
+                          startFrame=instance.data["frameStart"],
+                          endFrame=instance.data["frameEnd"],
                           layer=instance.name)
 
     def build_jobinfo_environment(self, env):
@@ -266,7 +266,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         if dir:
             return output_path.replace("\\", "/")
 
-        start_frame = int(instance.data["startFrame"])
+        start_frame = int(instance.data["frameStart"])
         filename_zero = "{}_{:04d}.vrscene".format(output_path, start_frame)
 
         result = filename_zero.replace("\\", "/")
