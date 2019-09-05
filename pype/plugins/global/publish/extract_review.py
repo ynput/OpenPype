@@ -170,8 +170,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             subprcs_cmd = " ".join(mov_args)
 
                             # run subprocess
-                            self.log.debug("{}".format(subprcs_cmd))
-                            pype.api.subprocess(subprcs_cmd)
+                            self.log.debug("Executing: {}".format(subprcs_cmd))
+                            output = pype.api.subprocess(subprcs_cmd)
+                            self.log.debug("Output: {}".format(output))
 
                             # create representation data
                             repre_new.update({

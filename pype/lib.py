@@ -31,7 +31,9 @@ def _subprocess(args):
     output = proc.communicate()[0]
 
     if proc.returncode != 0:
+        log.error(output)
         raise ValueError("\"{}\" was not successful: {}".format(args, output))
+    return output
 
 
 def get_hierarchy(asset_name=None):
