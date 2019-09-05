@@ -10,7 +10,7 @@ from pype.ftrack import BaseAction, lib
 from pype.vendor.ftrack_api import session as fa_session
 
 
-class Sync_To_Avalon(BaseAction):
+class SyncToAvalon(BaseAction):
     '''
     Synchronizing data action - from Ftrack to Avalon DB
 
