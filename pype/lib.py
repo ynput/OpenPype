@@ -476,15 +476,12 @@ def filter_pyblish_plugins(plugins):
         if not presets:
             continue
 
-        file = os.path.normpath(inspect.getfile(plugin.__class__))
+        file = os.path.normpath(inspect.getsourcefile(plugin))
         file = os.path.normpath(file)
 
         # host determined from path
         host_from_file = file.split(os.path.sep)[-3:-2][0]
         plugin_kind = file.split(os.path.sep)[-2:-1][0]
-
-        print(host_from_file)
-        print(plugin_kind)
 
         try:
             config_data = presets[host]["publish"][plugin.__name__]
