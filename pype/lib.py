@@ -5,6 +5,7 @@ import importlib
 import itertools
 import contextlib
 import subprocess
+import inspect
 
 from .vendor import pather
 from .vendor.pather.error import ParseError
@@ -467,9 +468,7 @@ def filter_pyblish_plugins(plugins):
 
     host = api.current_host()
 
-    presets = config.get_presets().get('plugins', {}).get(host, {}).get(
-        "publish", {}
-    )
+    presets = config.get_presets().get('plugins', {})
 
     # iterate over plugins
     for plugin in plugins[:]:
@@ -477,10 +476,23 @@ def filter_pyblish_plugins(plugins):
         if not presets:
             continue
 
+        file = os.path.normpath(inspect.getfile(plugin.__class__))
+        file = os.path.normpath(file)
+
+        # host determined from path
+        host_from_file = file.split(os.path.sep)[-3:-2][0]
+        plugin_kind = file.split(os.path.sep)[-2:-1][0]
+
+        print(host_from_file)
+        print(plugin_kind)
+
         try:
-            config_data = presets[plugin.__name__]  # noqa: E501
+            config_data = presets[host]["publish"][plugin.__name__]
         except KeyError:
-            continue
+            try:
+                config_data = presets[host_from_file][plugin_kind][plugin.__name__]  # noqa: E501
+            except KeyError:
+                continue
 
         for option, value in config_data.items():
             if option == "enabled" and value is False:
