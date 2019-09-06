@@ -1,7 +1,29 @@
 # Pype changelog #
 Welcome to pype changelog
 
-## 2.1 ##
+## 2.2.0 ##
+
+**new**:
+- _(pype)_ add customisable workflow for creating quicktimes from renders or playblasts
+- _(nuke)_ option to choose deadline chunk size on write nodes
+- _(nukestudio)_ added option to publish soft effects (subTrackItems) from NukeStudio as subsets including LUT files. these can then be loaded in nuke or NukeStudio
+- _(nuke)_ option to build nuke script from previously published latest versions of plate and render subsets.
+- _(nuke)_ nuke writes now have deadline tab.
+- _(ftrack)_ Prepare Project action can now be used for creating the base folder structure on disk and in ftrack, setting up all the initial project attributes and it automatically prepares `pype_project_config` folder for the given project.
+- _(clockify)_ Added support for time tracking in clockify. This currently in addition to ftrack time logs, but does not completely replace them.
+- _(pype)_ any attributes in Creator and Loader plugins can now be customised using pype preset system
+
+**changed**:
+- nukestudio now uses workio API for workfiles
+- _(maya)_ `FIX FPS` prompt in maya now appears in the middle of the screen
+- _(muster)_ can now be configured with custom templates
+
+
+**fix**:
+- wrong version retrieval from path in certain scenarios
+- nuke reset resolution wasn't working in certain scenarios
+
+## 2.1.0 ##
 
 A large cleanup release. Most of the change are under the hood.
 
