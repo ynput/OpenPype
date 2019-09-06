@@ -2,6 +2,7 @@
 Welcome to pype changelog
 
 ## 2.2.0 ##
+_release date: 8 Sept 2019_
 
 **new**:
 - _(pype)_ add customisable workflow for creating quicktimes from renders or playblasts
@@ -15,8 +16,9 @@ Welcome to pype changelog
 
 **changed**:
 - nukestudio now uses workio API for workfiles
-- _(maya)_ `FIX FPS` prompt in maya now appears in the middle of the screen
+- _(maya)_ "FIX FPS" prompt in maya now appears in the middle of the screen
 - _(muster)_ can now be configured with custom templates
+- _(pype)_ global publishing plugins can now be configured using presets as well as host specific ones
 
 
 **fix**:
@@ -24,6 +26,7 @@ Welcome to pype changelog
 - nuke reset resolution wasn't working in certain scenarios
 
 ## 2.1.0 ##
+_release date: 6 Aug 2019_
 
 A large cleanup release. Most of the change are under the hood.
 
