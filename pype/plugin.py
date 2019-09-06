@@ -1,8 +1,6 @@
 import tempfile
 import os
 import pyblish.api
-import avalon.api
-from pprint import pprint
 
 from pypeapp import config
 import inspect
@@ -20,19 +18,11 @@ def imprint_attributes(plugin):
     :param plugin: plugin instance
     :type plugin: instance
     """
-    print("-" * 50)
-    print("imprinting")
     file = inspect.getfile(plugin.__class__)
     file = os.path.normpath(file)
     plugin_kind = file.split(os.path.sep)[-2:-1][0]
     plugin_host = file.split(os.path.sep)[-3:-2][0]
     plugin_name = type(plugin).__name__
-    print(file)
-    print(plugin_kind)
-    print(plugin_host)
-    print(plugin_name)
-
-    pprint(config.get_presets()['plugins'])
     try:
         config_data = config.get_presets()['plugins'][plugin_host][plugin_kind][plugin_name]  # noqa: E501
     except KeyError:
@@ -45,54 +35,18 @@ def imprint_attributes(plugin):
         else:
             setattr(plugin, option, value)
             print("setting {}: {} on {}".format(option, value, plugin_name))
-    print("-" * 50)
 
 
-def add_init_presets(source_class):
-    orig_init = source_class.__init__
-
-    def __init__(self, *args, **kwargs):
-        imprint_attributes(self)
-        print("overriding init")
-        orig_init(self, *args, **kwargs)
-
-    source_class.__init__ = __init__
-    return source_class
-
-
-def add_process_presets(source_class):
-    orig_process = source_class.__init__
-
-    def process(self, *args, **kwargs):
-        imprint_attributes(self)
-        orig_process(self, *args, **kwargs)
-
-    source_class.__init__ = process
-    return source_class
-
-
-@add_process_presets
 class ContextPlugin(pyblish.api.ContextPlugin):
-    pass
+    def process(cls, *args, **kwargs):
+        imprint_attributes(cls)
+        super(ContextPlugin, cls).process(cls, *args, **kwargs)
 
 
-@add_process_presets
 class InstancePlugin(pyblish.api.InstancePlugin):
-    pass
-
-
-
-class PypeLoader(avalon.api.Loader):
-    pass
-
-
-@add_init_presets
-class PypeCreator(avalon.api.Creator):
-    pass
-
-
-avalon.api.Creator = PypeCreator
-
+    def process(cls, *args, **kwargs):
+        imprint_attributes(cls)
+        super(ContextPlugin, cls).process(cls, *args, **kwargs)
 
 
 class Extractor(InstancePlugin):
