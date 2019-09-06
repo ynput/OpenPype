@@ -194,7 +194,7 @@ class ClockifyModule:
             self.message_widget = MessageWidget(
                 self.main_parent, msg, "Clockify - Info Message"
             )
-            self.message_widget.closed.connect(self.message_widget)
+            self.message_widget.closed.connect(self.on_message_widget_close)
             self.message_widget.show()
 
             return
