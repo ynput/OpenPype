@@ -1,6 +1,6 @@
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent, lib
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pype.ftrack.lib.io_nonsingleton import DbConnector
 from bson.objectid import ObjectId
 from pypeapp import config
 from pypeapp import Anatomy
@@ -229,11 +229,11 @@ class UserAssigmentEvent(BaseEvent):
         return True
 
 
-def register(session, **kw):
+def register(session, plugins_presets):
     """
     Register plugin. Called when used as an plugin.
     """
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    UserAssigmentEvent(session).register()
+    UserAssigmentEvent(session, plugins_presets).register()

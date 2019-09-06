@@ -23,13 +23,13 @@ class RVAction(BaseAction):
     )
     type = 'Application'
 
-    def __init__(self, session):
+    def __init__(self, session, plugins_presets):
         """ Constructor
 
             :param session: ftrack Session
             :type session: :class:`ftrack_api.Session`
         """
-        super().__init__(session)
+        super().__init__(session, plugins_presets)
         self.rv_path = None
         self.config_data = None
 
@@ -326,12 +326,12 @@ class RVAction(BaseAction):
         return paths
 
 
-def register(session):
+def register(session, plugins_presets={}):
     """Register hooks."""
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    RVAction(session).register()
+    RVAction(session, plugins_presets).register()
 
 
 def main(arguments=None):

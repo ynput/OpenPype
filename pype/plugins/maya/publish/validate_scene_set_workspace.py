@@ -12,7 +12,7 @@ def is_subdir(path, root_dir):
     root_dir = os.path.realpath(root_dir)
 
     # If not on same drive
-    if os.path.splitdrive(path)[0] != os.path.splitdrive(root_dir)[0]:
+    if os.path.splitdrive(path)[0].lower() != os.path.splitdrive(root_dir)[0].lower():  # noqa: E501
         return False
 
     # Get 'relative path' (can contain ../ which means going up)

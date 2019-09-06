@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 import argparse
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pype.ftrack.lib.io_nonsingleton import DbConnector
 
 
 class DeleteAsset(BaseAction):
@@ -311,7 +311,7 @@ class DeleteAsset(BaseAction):
         return assets
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -320,7 +320,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    DeleteAsset(session).register()
+    DeleteAsset(session, plugins_presets).register()
 
 
 def main(arguments=None):

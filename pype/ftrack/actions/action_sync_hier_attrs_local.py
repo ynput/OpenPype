@@ -7,7 +7,7 @@ import collections
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, lib
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pype.ftrack.lib.io_nonsingleton import DbConnector
 from bson.objectid import ObjectId
 
 
@@ -19,11 +19,12 @@ class SyncHierarchicalAttrs(BaseAction):
     #: Action identifier.
     identifier = 'sync.hierarchical.attrs.local'
     #: Action label.
-    label = 'Sync HierAttrs - Local'
+    label = "Pype Admin"
+    variant = '- Sync Hier Attrs (Local)'
     #: Action description.
     description = 'Synchronize hierarchical attributes'
     #: Icon
-    icon = '{}/ftrack/action_icons/SyncHierarchicalAttrsLocal.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
@@ -305,13 +306,13 @@ class SyncHierarchicalAttrs(BaseAction):
             self.update_hierarchical_attribute(child, key, value)
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    SyncHierarchicalAttrs(session).register()
+    SyncHierarchicalAttrs(session, plugins_presets).register()
 
 
 def main(arguments=None):

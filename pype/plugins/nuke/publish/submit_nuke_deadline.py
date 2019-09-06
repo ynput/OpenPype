@@ -27,9 +27,13 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        # root = nuke.root()
-        # node_subset_name = instance.data.get("name", None)
-        node = instance[1]
+        node = None
+        for x in instance:
+            if x.Class() == "Write":
+                node = x
+
+        if node is None:
+            return
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
                                            "http://localhost:8082")
@@ -80,6 +84,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                     start=int(instance.data["frameStart"]),
                     end=int(instance.data["frameEnd"])
                 ),
+                "ChunkSize": instance.data["deadlineChunkSize"],
 
                 "Comment": comment,
 

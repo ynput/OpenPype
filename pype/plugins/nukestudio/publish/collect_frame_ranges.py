@@ -1,5 +1,6 @@
 import pyblish.api
 
+
 class CollectClipFrameRanges(pyblish.api.InstancePlugin):
     """Collect all frame range data: source(In,Out), timeline(In,Out), edit_(in, out), f(start, end)"""
 
@@ -15,8 +16,10 @@ class CollectClipFrameRanges(pyblish.api.InstancePlugin):
         handle_start = instance.data["handleStart"]
         handle_end = instance.data["handleEnd"]
 
-        source_in_h = instance.data["sourceIn"] - handle_start
-        source_out_h = instance.data["sourceOut"] + handle_end
+        source_in_h = instance.data("sourceInH",
+                                    instance.data("sourceIn") - handle_start)
+        source_out_h = instance.data("sourceOutH",
+                                     instance.data("sourceOut") + handle_end)
 
         timeline_in = instance.data["clipIn"]
         timeline_out = instance.data["clipOut"]

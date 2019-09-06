@@ -21,9 +21,9 @@ class DJVViewAction(BaseAction):
     )
     type = 'Application'
 
-    def __init__(self, session):
+    def __init__(self, session, plugins_presets):
         '''Expects a ftrack_api.Session instance'''
-        super().__init__(session)
+        super().__init__(session, plugins_presets)
         self.djv_path = None
 
         self.config_data = config.get_presets()['djv_view']['config']
@@ -218,12 +218,12 @@ class DJVViewAction(BaseAction):
         return True
 
 
-def register(session):
+def register(session, plugins_presets={}):
     """Register hooks."""
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    DJVViewAction(session).register()
+    DJVViewAction(session, plugins_presets).register()
 
 
 def main(arguments=None):

@@ -1,7 +1,7 @@
 import os
 import sys
 
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pype.ftrack.lib.io_nonsingleton import DbConnector
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent, lib
@@ -23,7 +23,10 @@ class SyncHierarchicalAttrs(BaseEvent):
             if not keys:
                 continue
 
-            entity = session.get(ent['entity_type'], ent['entityId'])
+            if not ent['entityType'] in ['task', 'show']:
+                continue
+
+            entity = session.get(self._get_entity_type(ent), ent['entityId'])
             processable.append(ent)
             processable_ent[ent['entityId']] = entity
 
@@ -115,9 +118,9 @@ class SyncHierarchicalAttrs(BaseEvent):
             self.update_hierarchical_attribute(child, key, value)
 
 
-def register(session, **kw):
+def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    SyncHierarchicalAttrs(session).register()
+    SyncHierarchicalAttrs(session, plugins_presets).register()

@@ -16,7 +16,6 @@ def subset_to_families(subset, family, families):
     new_subset = families + subset_sufx
     return "{}.{}".format(family, new_subset)
 
-
 class CreateWriteRender(avalon.nuke.Creator):
     # change this to template preset
     preset = "render"
@@ -70,9 +69,7 @@ class CreateWriteRender(avalon.nuke.Creator):
                 write_data.update({
                     "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"})
 
-            create_write_node(self.data["subset"], write_data)
-
-        return
+        return create_write_node(self.data["subset"], write_data)
 
 
 class CreateWritePrerender(avalon.nuke.Creator):

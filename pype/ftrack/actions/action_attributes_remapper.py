@@ -2,7 +2,7 @@ import os
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pype.ftrack.lib.io_nonsingleton import DbConnector
 
 
 class AttributesRemapper(BaseAction):
@@ -11,13 +11,14 @@ class AttributesRemapper(BaseAction):
     #: Action identifier.
     identifier = 'attributes.remapper'
     #: Action label.
-    label = 'Attributes Remapper'
+    label = "Pype Doctor"
+    variant = '- Attributes Remapper'
     #: Action description.
     description = 'Remaps attributes in avalon DB'
 
     #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator"]
-    icon = '{}/ftrack/action_icons/AttributesRemapper.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeDoctor.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
@@ -274,12 +275,12 @@ class AttributesRemapper(BaseAction):
                 message = {'type': 'label', 'value': '<p>{}</p>'.format(value)}
                 items.append(message)
 
-        self.show_interface(event, items, title)
+        self.show_interface(items=items, title=title, event=event)
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    AttributesRemapper(session).register()
+    AttributesRemapper(session, plugins_presets).register()

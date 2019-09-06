@@ -14,12 +14,4 @@ class CollectSelection(pyblish.api.ContextPlugin):
 
         self.log.debug("selection: {}".format(selection))
 
-        # if not selection:
-        #     self.log.debug(
-        #         "Nothing is selected. Collecting all items from sequence "
-        #         "\"{}\"".format(hiero.ui.activeSequence())
-        #     )
-        #     for track in hiero.ui.activeSequence().items():
-        #         selection.extend(track.items())
-
         context.data["selection"] = selection

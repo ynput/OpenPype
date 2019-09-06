@@ -20,6 +20,7 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
     label = "Attributes"
     hosts = ["maya"]
     actions = [pype.api.RepairContextAction]
+    optional = True
 
     def process(self, context):
         # Check for preset existence.
@@ -74,8 +75,12 @@ class ValidateAttributes(pyblish.api.ContextPlugin):
 
                 presets_to_validate = attributes[name]
                 for attribute in node.listAttr():
-                    if attribute.attrName() in presets_to_validate:
-                        expected = presets_to_validate[attribute.attrName()]
+                    names = [attribute.shortName(), attribute.longName()]
+                    attribute_name = list(
+                        set(names) & set(presets_to_validate.keys())
+                    )
+                    if attribute_name:
+                        expected = presets_to_validate[attribute_name[0]]
                         if attribute.get() != expected:
                             invalid_attributes.append(
                                 {
