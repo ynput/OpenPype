@@ -14,7 +14,11 @@ class CollectVideoTracksLuts(pyblish.api.InstancePlugin):
         self.log.debug("Finding soft effect for subset: `{}`".format(instance.data.get("subset")))
 
         # taking active sequence
-        subset = instance.data["subset"]
+        subset = instance.data.get("subset")
+
+        if not subset:
+            return
+
         track_effects = instance.context.data.get("trackEffects", {})
         track_index = instance.data["trackIndex"]
         effects = instance.data["effects"]

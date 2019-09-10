@@ -175,6 +175,8 @@ class CollectPlatesData(api.InstancePlugin):
         if os.path.exists(mov_path):
             # adding mov into the representations
             self.log.debug("__ mov_path: {}".format(mov_path))
+            instance.data["label"] += " - review"
+
             plates_mov_representation = {
                 'files': mov_file,
                 'stagingDir': staging_dir,
