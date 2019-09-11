@@ -7,5 +7,5 @@ class CreateAssembly(avalon.maya.Creator):
     name = "assembly"
     label = "Assembly"
     family = "assembly"
-    icon = "boxes"
+    icon = "cubes"
     defaults = ['Main']
