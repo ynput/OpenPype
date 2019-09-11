@@ -5,6 +5,7 @@ import importlib
 import itertools
 import contextlib
 import subprocess
+import inspect
 
 from .vendor import pather
 from .vendor.pather.error import ParseError
@@ -31,7 +32,9 @@ def _subprocess(args):
     output = proc.communicate()[0]
 
     if proc.returncode != 0:
+        log.error(output)
         raise ValueError("\"{}\" was not successful: {}".format(args, output))
+    return output
 
 
 def get_hierarchy(asset_name=None):
@@ -467,9 +470,7 @@ def filter_pyblish_plugins(plugins):
 
     host = api.current_host()
 
-    presets = config.get_presets().get('plugins', {}).get(host, {}).get(
-        "publish", {}
-    )
+    presets = config.get_presets().get('plugins', {})
 
     # iterate over plugins
     for plugin in plugins[:]:
@@ -477,10 +478,20 @@ def filter_pyblish_plugins(plugins):
         if not presets:
             continue
 
+        file = os.path.normpath(inspect.getsourcefile(plugin))
+        file = os.path.normpath(file)
+
+        # host determined from path
+        host_from_file = file.split(os.path.sep)[-3:-2][0]
+        plugin_kind = file.split(os.path.sep)[-2:-1][0]
+
         try:
-            config_data = presets[plugin.__name__]  # noqa: E501
+            config_data = presets[host]["publish"][plugin.__name__]
         except KeyError:
-            continue
+            try:
+                config_data = presets[host_from_file][plugin_kind][plugin.__name__]  # noqa: E501
+            except KeyError:
+                continue
 
         for option, value in config_data.items():
             if option == "enabled" and value is False:
@@ -492,6 +503,72 @@ def filter_pyblish_plugins(plugins):
 
                 setattr(plugin, option, value)
 
-        # Remove already processed plugins from dictionary
-        # WARNING Requires plugins with unique names
-        presets.pop(plugin.__name__)
+
+def get_subsets(asset_name,
+                regex_filter=None,
+                version=None,
+                representations=["exr", "dpx"]):
+    """
+    Query subsets with filter on name.
+
+    The method will return all found subsets and its defined version and subsets. Version could be specified with number. Representation can be filtered.
+
+    Arguments:
+        asset_name (str): asset (shot) name
+        regex_filter (raw): raw string with filter pattern
+        version (str or int): `last` or number of version
+        representations (list): list for all representations
+
+    Returns:
+        dict: subsets with version and representaions in keys
+    """
+    from avalon import io
+
+    # query asset from db
+    asset_io = io.find_one({"type": "asset",
+                            "name": asset_name})
+
+    # check if anything returned
+    assert asset_io, "Asset not existing. \
+                      Check correct name: `{}`".format(asset_name)
+
+    # create subsets query filter
+    filter_query = {"type": "subset", "parent": asset_io["_id"]}
+
+    # add reggex filter string into query filter
+    if regex_filter:
+        filter_query.update({"name": {"$regex": r"{}".format(regex_filter)}})
+    else:
+        filter_query.update({"name": {"$regex": r'.*'}})
+
+    # query all assets
+    subsets = [s for s in io.find(filter_query)]
+
+    assert subsets, "No subsets found. Check correct filter. Try this for start `r'.*'`: asset: `{}`".format(asset_name)
+
+    output_dict = {}
+    # Process subsets
+    for subset in subsets:
+        if not version:
+            version_sel = io.find_one({"type": "version",
+                                       "parent": subset["_id"]},
+                                      sort=[("name", -1)])
+        else:
+            assert isinstance(version, int), "version needs to be `int` type"
+            version_sel = io.find_one({"type": "version",
+                                       "parent": subset["_id"],
+                                       "name": int(version)})
+
+        find_dict = {"type": "representation",
+                     "parent": version_sel["_id"]}
+
+        filter_repr = {"$or": [{"name": repr} for repr in representations]}
+
+        find_dict.update(filter_repr)
+        repres_out = [i for i in io.find(find_dict)]
+
+        if len(repres_out) > 0:
+            output_dict[subset["name"]] = {"version": version_sel,
+                                           "representaions": repres_out}
+
+    return output_dict

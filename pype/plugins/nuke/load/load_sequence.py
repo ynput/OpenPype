@@ -96,6 +96,8 @@ class LoadSequence(api.Loader):
 
         self.first_frame = int(nuke.root()["first_frame"].getValue())
         self.handle_start = version_data.get("handleStart", 0)
+        self.handle_start = version_data.get("handleStart", 0)
+        self.handle_end = version_data.get("handleEnd", 0)
 
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
@@ -104,10 +106,17 @@ class LoadSequence(api.Loader):
         if namespace is None:
             namespace = context['asset']['name']
 
+        first -= self.handle_start
+        last += self.handle_end
+
         file = self.fname.replace("\\", "/")
         log.info("file: {}\n".format(self.fname))
 
-        read_name = "Read_" + context["representation"]["context"]["subset"]
+        repr_cont = context["representation"]["context"]
+        read_name = "Read_{0}_{1}_{2}".format(
+                                        repr_cont["asset"],
+                                        repr_cont["subset"],
+                                        repr_cont["representation"])
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
@@ -227,7 +236,8 @@ class LoadSequence(api.Loader):
 
         self.first_frame = int(nuke.root()["first_frame"].getValue())
         self.handle_start = version_data.get("handleStart", 0)
-        
+        self.handle_end = version_data.get("handleEnd", 0)
+
         first = version_data.get("frameStart", None)
         last = version_data.get("frameEnd", None)
 
@@ -236,6 +246,9 @@ class LoadSequence(api.Loader):
                         "assuming starts at frame 0 for: "
                         "{} ({})".format(node['name'].value(), representation))
             first = 0
+
+        first -= self.handle_start
+        last += self.handle_end
 
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):

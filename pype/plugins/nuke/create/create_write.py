@@ -1,7 +1,7 @@
 from collections import OrderedDict
 import avalon.api
 import avalon.nuke
-from pype.nuke.lib import create_write_node, add_deadline_tab
+from pype.nuke.lib import create_write_node
 from pype import api as pype
 from pypeapp import config
 
@@ -51,7 +51,7 @@ class CreateWriteRender(avalon.nuke.Creator):
         node = 'write'
 
         instance = nuke.toNode(self.data["subset"])
-        node = None
+
         if not instance:
             write_data = {
                 "class": node,
@@ -69,10 +69,7 @@ class CreateWriteRender(avalon.nuke.Creator):
                 write_data.update({
                     "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"})
 
-            node = create_write_node(self.data["subset"], write_data)
-
-        # Deadline tab.
-        add_deadline_tab(node)
+        return create_write_node(self.data["subset"], write_data)
 
 
 class CreateWritePrerender(avalon.nuke.Creator):

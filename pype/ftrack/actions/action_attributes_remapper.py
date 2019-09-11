@@ -2,7 +2,7 @@ import os
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pype.ftrack.lib.io_nonsingleton import DbConnector
 
 
 class AttributesRemapper(BaseAction):
@@ -275,7 +275,7 @@ class AttributesRemapper(BaseAction):
                 message = {'type': 'label', 'value': '<p>{}</p>'.format(value)}
                 items.append(message)
 
-        self.show_interface(event, items, title)
+        self.show_interface(items=items, title=title, event=event)
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''

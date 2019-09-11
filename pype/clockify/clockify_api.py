@@ -25,6 +25,7 @@ class ClockifyAPI(metaclass=Singleton):
     fpath = os.path.join(app_dir, file_name)
     admin_permission_names = ['WORKSPACE_OWN', 'WORKSPACE_ADMIN']
     master_parent = None
+    workspace = None
     workspace_id = None
 
     def set_master(self, master_parent):
@@ -43,6 +44,8 @@ class ClockifyAPI(metaclass=Singleton):
         if api_key is not None and self.validate_api_key(api_key) is True:
             self.headers["X-Api-Key"] = api_key
             self.set_workspace()
+            if self.master_parent:
+                self.master_parent.signed_in()
             return True
         return False
 

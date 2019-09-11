@@ -97,7 +97,7 @@ class FtrackServer:
                     msg = 'Loading of file "{}" failed ({})'.format(
                         file, str(e)
                     )
-                    log.warning(msg)
+                    log.warning(msg, exc_info=e)
 
         if len(register_functions_dict) < 1:
             raise Exception

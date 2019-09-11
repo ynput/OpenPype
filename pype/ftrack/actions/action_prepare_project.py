@@ -1,10 +1,13 @@
 import os
 import json
 
+from ruamel import yaml
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from pypeapp import config
 from pype.ftrack.lib import get_avalon_attr
+
+from pype.vendor.ftrack_api import session as fa_session
 
 
 class PrepareProject(BaseAction):
@@ -21,6 +24,9 @@ class PrepareProject(BaseAction):
     icon = '{}/ftrack/action_icons/PrepareProject.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
+
+    # Key to store info about trigerring create folder structure
+    create_project_structure_key = "create_folder_structure"
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -41,9 +47,9 @@ class PrepareProject(BaseAction):
 
         self.log.debug("Loading custom attributes")
         cust_attrs, hier_cust_attrs = get_avalon_attr(session, True)
-        project_defaults = config.get_presets().get("ftrack", {}).get(
-            "project_defaults", {}
-        )
+        project_defaults = config.get_presets(
+            entities[0]["full_name"]
+        ).get("ftrack", {}).get("project_defaults", {})
 
         self.log.debug("Preparing data which will be shown")
         attributes_to_set = {}
@@ -74,8 +80,29 @@ class PrepareProject(BaseAction):
             str([key for key in attributes_to_set])
         ))
 
-        title = "Set Attribute values"
+        item_splitter = {'type': 'label', 'value': '---'}
+        title = "Prepare Project"
         items = []
+
+        # Ask if want to trigger Action Create Folder Structure
+        items.append({
+            "type": "label",
+            "value": "<h3>Want to create basic Folder Structure?</h3>"
+        })
+
+        items.append({
+            "name": self.create_project_structure_key,
+            "type": "boolean",
+            "value": False,
+            "label": "Check if Yes"
+        })
+
+        items.append(item_splitter)
+        items.append({
+            "type": "label",
+            "value": "<h3>Set basic Attributes:</h3>"
+        })
+
         multiselect_enumerators = []
 
         # This item will be last (before enumerators)
@@ -87,8 +114,6 @@ class PrepareProject(BaseAction):
             "value": project_defaults.get(auto_sync_name, False),
             "label": "AutoSync to Avalon"
         }
-
-        item_splitter = {'type': 'label', 'value': '---'}
 
         for key, in_data in attributes_to_set.items():
             attr = in_data["object"]
@@ -195,6 +220,10 @@ class PrepareProject(BaseAction):
             return
 
         in_data = event['data']['values']
+
+        # pop out info about creating project structure
+        create_proj_struct = in_data.pop(self.create_project_structure_key)
+
         # Find hidden items for multiselect enumerators
         keys_to_process = []
         for key in in_data:
@@ -228,7 +257,116 @@ class PrepareProject(BaseAction):
 
         session.commit()
 
+        # Create project structure
+        self.create_project_specific_config(entities[0]["full_name"], in_data)
+
+        # Trigger Create Project Structure action
+        if create_proj_struct is True:
+            self.trigger_action("create.project.structure", event)
+
         return True
+
+    def create_project_specific_config(self, project_name, json_data):
+        self.log.debug("*** Creating project specifig configs ***")
+
+        path_proj_configs = os.environ.get('PYPE_PROJECT_CONFIGS', "")
+
+        # Skip if PYPE_PROJECT_CONFIGS is not set
+        # TODO show user OS message
+        if not path_proj_configs:
+            self.log.warning((
+                "Environment variable \"PYPE_PROJECT_CONFIGS\" is not set."
+                " Project specific config can't be set."
+            ))
+            return
+
+        path_proj_configs = os.path.normpath(path_proj_configs)
+        # Skip if path does not exist
+        # TODO create if not exist?!!!
+        if not os.path.exists(path_proj_configs):
+            self.log.warning((
+                "Path set in Environment variable \"PYPE_PROJECT_CONFIGS\""
+                " Does not exist."
+            ))
+            return
+
+        project_specific_path = os.path.normpath(
+            os.path.join(path_proj_configs, project_name)
+        )
+        if not os.path.exists(project_specific_path):
+            os.makedirs(project_specific_path)
+            self.log.debug((
+                "Project specific config folder for project \"{}\" created."
+            ).format(project_name))
+
+        # Anatomy ####################################
+        self.log.debug("--- Processing Anatomy Begins: ---")
+
+        anatomy_dir = os.path.normpath(os.path.join(
+            project_specific_path, "anatomy"
+        ))
+        anatomy_path = os.path.normpath(os.path.join(
+            anatomy_dir, "default.yaml"
+        ))
+
+        anatomy = None
+        if os.path.exists(anatomy_path):
+            self.log.debug(
+                "Anatomy file already exist. Trying to read: \"{}\"".format(
+                    anatomy_path
+                )
+            )
+            # Try to load data
+            with open(anatomy_path, 'r') as file_stream:
+                try:
+                    anatomy = yaml.load(file_stream, Loader=yaml.loader.Loader)
+                    self.log.debug("Reading Anatomy file was successful")
+                except yaml.YAMLError as exc:
+                    self.log.warning(
+                        "Reading Yaml file failed: \"{}\"".format(anatomy_path),
+                        exc_info=True
+                    )
+
+        if not anatomy:
+            self.log.debug("Anatomy is not set. Duplicating default.")
+            # Create Anatomy folder
+            if not os.path.exists(anatomy_dir):
+                self.log.debug(
+                    "Creating Anatomy folder: \"{}\"".format(anatomy_dir)
+                )
+                os.makedirs(anatomy_dir)
+
+            source_items = [
+                os.environ["PYPE_CONFIG"], "anatomy", "default.yaml"
+            ]
+
+            source_path = os.path.normpath(os.path.join(*source_items))
+            with open(source_path, 'r') as file_stream:
+                source_data = file_stream.read()
+
+            with open(anatomy_path, 'w') as file_stream:
+                file_stream.write(source_data)
+
+        # Presets ####################################
+        self.log.debug("--- Processing Presets Begins: ---")
+
+        project_defaults_dir = os.path.normpath(os.path.join(*[
+            project_specific_path, "presets", "ftrack"
+        ]))
+        project_defaults_path = os.path.normpath(os.path.join(*[
+            project_defaults_dir, "project_defaults.json"
+        ]))
+        # Create folder if not exist
+        if not os.path.exists(project_defaults_dir):
+            self.log.debug("Creating Ftrack Presets folder: \"{}\"".format(
+                project_defaults_dir
+            ))
+            os.makedirs(project_defaults_dir)
+
+        with open(project_defaults_path, 'w') as file_stream:
+            json.dump(json_data, file_stream, indent=4)
+
+        self.log.debug("*** Creating project specifig configs Finished ***")
 
 
 def register(session, plugins_presets={}):
