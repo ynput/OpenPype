@@ -78,7 +78,7 @@ class CollectVideoTracksLuts(pyblish.api.InstancePlugin):
                           'channels', 'maskChannelMask', 'maskChannelInput',
                           'note_font', 'note_font_size', 'unpremult',
                           'postage_stamp_frame', 'maskChannel', 'export_cc',
-                          'select_cccid', 'mix', 'version']
+                          'select_cccid', 'mix', 'version', 'matrix']
 
         # loop trough all knobs and collect not ignored
         # and any with any value
