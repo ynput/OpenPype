@@ -35,6 +35,8 @@ def patched_discover(superclass):
     plugins = _original_discover(superclass)
 
     # determine host application to use for finding presets
+    if avalon.registered_host() is None:
+        return plugins
     host = avalon.registered_host().__name__.split(".")[-1]
 
     # map plugin superclass to preset json. Currenly suppoted is load and
