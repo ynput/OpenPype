@@ -1,6 +1,8 @@
-"""Host API required Work Files tool"""
 import os
+
 import hiero
+
+from avalon import api
 
 
 def file_extensions():
@@ -8,12 +10,13 @@ def file_extensions():
 
 
 def has_unsaved_changes():
-    return hiero.core.projects()[-1]
+    # There are no methods for querying unsaved changes to a project, so
+    # enforcing to always save.
+    return True
 
 
 def save(filepath):
     project = hiero.core.projects()[-1]
-
     if project:
         project.saveAs(filepath)
     else:
@@ -22,40 +25,20 @@ def save(filepath):
 
 
 def open(filepath):
-    try:
-        hiero.core.openProject(filepath)
-        return True
-    except Exception as e:
-        try:
-            from PySide.QtGui import *
-            from PySide.QtCore import *
-        except:
-            from PySide2.QtGui import *
-            from PySide2.QtWidgets import *
-            from PySide2.QtCore import *
-
-        prompt = "Cannot open the selected file: `{}`".format(e)
-        hiero.core.log.error(prompt)
-        dialog = QMessageBox.critical(
-            hiero.ui.mainWindow(), "Error", unicode(prompt))
+    hiero.core.openProject(filepath)
+    return True
 
 
 def current_file():
-    import os
-    import hiero
-
     current_file = hiero.core.projects()[-1].path()
     normalised = os.path.normpath(current_file)
 
     # Unsaved current file
-    if normalised is '':
-        return "NOT SAVED"
+    if normalised == "":
+        return None
 
     return normalised
 
 
-
 def work_root():
-    from avalon import api
-
     return os.path.normpath(api.Session["AVALON_WORKDIR"]).replace("\\", "/")

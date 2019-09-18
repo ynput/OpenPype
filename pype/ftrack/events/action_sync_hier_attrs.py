@@ -8,7 +8,7 @@ import collections
 from pypeapp import config
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, lib
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pype.ftrack.lib.io_nonsingleton import DbConnector
 from bson.objectid import ObjectId
 
 
@@ -222,7 +222,11 @@ class SyncHierarchicalAttrs(BaseAction):
             session.commit()
             
             if self.interface_messages:
-                self.show_interface_from_dict(self.interface_messages, event)
+                self.show_interface_from_dict(
+                    messages=self.interface_messages,
+                    title="something went wrong",
+                    event=event
+                )
 
         return True
 

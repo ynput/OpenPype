@@ -1,7 +1,7 @@
 import os
 import sys
 
-from avalon.tools.libraryloader.io_nonsingleton import DbConnector
+from pype.ftrack.lib.io_nonsingleton import DbConnector
 
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent, lib
@@ -23,7 +23,10 @@ class SyncHierarchicalAttrs(BaseEvent):
             if not keys:
                 continue
 
-            entity = session.get(ent['entity_type'], ent['entityId'])
+            if not ent['entityType'] in ['task', 'show']:
+                continue
+
+            entity = session.get(self._get_entity_type(ent), ent['entityId'])
             processable.append(ent)
             processable_ent[ent['entityId']] = entity
 

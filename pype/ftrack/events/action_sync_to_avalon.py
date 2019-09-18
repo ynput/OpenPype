@@ -10,7 +10,7 @@ from pype.ftrack import BaseAction, lib
 from pype.vendor.ftrack_api import session as fa_session
 
 
-class Sync_To_Avalon(BaseAction):
+class SyncToAvalon(BaseAction):
     '''
     Synchronizing data action - from Ftrack to Avalon DB
 
@@ -207,18 +207,8 @@ class Sync_To_Avalon(BaseAction):
                 job['status'] = 'failed'
 
             session.commit()
-
-            event = fa_session.ftrack_api.event.base.Event(
-                topic='ftrack.action.launch',
-                data=dict(
-                    actionIdentifier='sync.hierarchical.attrs',
-                    selection=event['data']['selection']
-                ),
-                source=dict(
-                    user=event['source']['user']
-                )
-            )
-            session.event_hub.publish(event, on_error='ignore')
+            
+            self.trigger_action("sync.hierarchical.attrs", event)
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)

@@ -18,7 +18,7 @@ def test_pyblish_plugin_filter_modifier(printer, monkeypatch):
     assert len(plugins) == 0
     paths = pyblish.api.registered_paths()
     printer("Test if we have no registered plugin paths")
-    print(paths)
+    assert len(paths) == 0
 
     class MyTestPlugin(pyblish.api.InstancePlugin):
         my_test_property = 1

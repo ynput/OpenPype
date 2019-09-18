@@ -29,18 +29,10 @@ class ActionAskWhereIRun(BaseAction):
         return True
 
     def launch(self, session, entities, event):
-        event = fa_session.ftrack_api.event.base.Event(
-            topic='ftrack.action.launch',
-            data=dict(
-                actionIdentifier="show.where.i.run",
-                selection=event["data"]["selection"],
-                event_hub_id=session.event_hub.id
-            ),
-            source=dict(
-                user=dict(username=session.api_user)
-            )
+        more_data = {"event_hub_id": session.event_hub.id}
+        self.trigger_action(
+            "show.where.i.run", event, additional_event_data=more_data
         )
-        session.event_hub.publish(event, on_error='ignore')
 
         return True
 
