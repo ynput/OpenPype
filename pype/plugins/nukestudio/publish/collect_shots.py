@@ -32,24 +32,6 @@ class CollectShots(api.InstancePlugin):
         for key, value in instance.data.iteritems():
             data[key] = value
 
-        # Collect comments.
-        data["comments"] = []
-
-        # Exclude non-tagged instances.
-        for tag in instance.data["tags"]:
-            if tag["name"].lower() == "comment":
-                data["comments"].append(
-                    tag.metadata().dict()["tag.note"]
-                )
-
-        # Find tags on the source clip.
-        tags = instance.data["item"].source().tags()
-        for tag in tags:
-            if tag.name().lower() == "comment":
-                data["comments"].append(
-                    tag.metadata().dict()["tag.note"]
-                )
-
         data["family"] = "shot"
         data["families"] = []
 
@@ -58,12 +40,11 @@ class CollectShots(api.InstancePlugin):
         data["name"] = data["subset"] + "_" + data["asset"]
 
         data["label"] = (
-            "{} - {} - tasks:{} - assetbuilds:{} - comments:{}".format(
+            "{} - {} - tasks:{} - assetbuilds:{}".format(
                 data["asset"],
                 data["subset"],
                 data["tasks"],
-                [x["name"] for x in data.get("assetbuilds", [])],
-                len(data["comments"])
+                [x["name"] for x in data.get("assetbuilds", [])]
             )
         )
 
