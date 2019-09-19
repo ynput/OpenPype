@@ -7,15 +7,30 @@ import pyblish.api
 import pype.maya.lib as lib
 import appdirs
 import platform
+from pypeapp import config
 
 
-# mapping between Maya rendere names and Muster template names
-muster_maya_mapping = {
-    "arnold": "Maya Arnold",
-    "mentalray": "Maya Mr",
-    "renderman": "Maya Renderman",
-    "redshift": "Maya Redshift"
-}
+# mapping between Maya renderer names and Muster template ids
+def _get_template_id(renderer):
+    """
+    Return muster template ID based on renderer name.
+
+    :param renderer: renderer name
+    :type renderer: str
+    :returns: muster template id
+    :rtype: int
+    """
+
+    templates = config.get_presets()["muster"]["templates_mapping"]
+    if not templates:
+        raise RuntimeError(("Muster template mapping missing in pype-config "
+                            "`presets/muster/templates_mapping.json`"))
+    try:
+        template_id = templates[renderer]
+    except KeyError:
+        raise RuntimeError("Unmapped renderer - missing template id")
+
+    return template_id
 
 
 def _get_script():
@@ -213,12 +228,10 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         :rtype: int
         :raises: Exception if template ID isn't found
         """
-        try:
-            self.log.info("Trying to find template for [{}]".format(renderer))
-            mapped = muster_maya_mapping.get(renderer)
-            return self._templates.get(mapped)
-        except ValueError:
-            raise Exception('Unimplemented renderer {}'.format(renderer))
+        self.log.info("Trying to find template for [{}]".format(renderer))
+        mapped = _get_template_id(renderer)
+        self.log.info("got id [{}]".format(mapped))
+        return self._templates.get(mapped)
 
     def _submit(self, payload):
         """
@@ -253,15 +266,15 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
 
         if self.MUSTER_REST_URL is None:
-            self.log.debug(
+            self.log.error(
                 "\"MUSTER_REST_URL\" is not found. Skipping "
-                "\"{}\".".format(instance)
+                "[{}]".format(instance)
             )
-            return
+            raise RuntimeError("MUSTER_REST_URL not set")
 
         self._load_credentials()
         self._authenticate()
-        self._get_templates()
+        # self._get_templates()
 
         context = instance.context
         workspace = context.data["workspaceDir"]
@@ -349,7 +362,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 "platform": 0,
                 "job": {
                     "jobName": jobname,
-                    "templateId": self._resolve_template(
+                    "templateId": self._get_template_id(
                         instance.data["renderer"]),
                     "chunksInterleave": 2,
                     "chunksPriority": "0",
@@ -389,8 +402,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                         },
                         "frames_range": {
                             "value": "{start}-{end}".format(
-                                start=int(instance.data["startFrame"]),
-                                end=int(instance.data["endFrame"])),
+                                start=int(instance.data["frameStart"]),
+                                end=int(instance.data["frameEnd"])),
                             "state": True,
                             "subst": False
                         },
@@ -539,7 +552,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
 
-        for key in ("startFrame", "endFrame", "byFrameStep"):
+        for key in ("frameStart", "frameEnd", "byFrameStep"):
             value = instance.data[key]
 
             if int(value) == value:

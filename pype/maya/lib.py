@@ -280,8 +280,8 @@ def collect_animation_data():
 
     # build attributes
     data = OrderedDict()
-    data["startFrame"] = start
-    data["endFrame"] = end
+    data["frameStart"] = start
+    data["frameEnd"] = end
     data["handles"] = 0
     data["step"] = 1.0
     data["fps"] = fps
@@ -1858,16 +1858,16 @@ def set_context_settings():
 
     # Todo (Wijnand): apply renderer and resolution of project
 
-    project_data = lib.get_project_data()
-    asset_data = lib.get_asset_data()
+    project_data = lib.get_project()["data"]
+    asset_data = lib.get_asset()["data"]
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
     set_scene_fps(fps)
 
     # Set project resolution
-    width_key = "resolution_width"
-    height_key = "resolution_height"
+    width_key = "resolutionWidth"
+    height_key = "resolutionHeight"
 
     width = asset_data.get(width_key, project_data.get(width_key, 1920))
     height = asset_data.get(height_key, project_data.get(height_key, 1080))
@@ -1887,7 +1887,7 @@ def validate_fps():
 
     """
 
-    fps = lib.get_asset_fps()
+    fps = lib.get_asset()["data"]["fps"]
     current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
 
     if current_fps != fps:

@@ -16,7 +16,6 @@ def subset_to_families(subset, family, families):
     new_subset = families + subset_sufx
     return "{}.{}".format(family, new_subset)
 
-
 class CreateWriteRender(avalon.nuke.Creator):
     # change this to template preset
     preset = "render"
@@ -70,9 +69,7 @@ class CreateWriteRender(avalon.nuke.Creator):
                 write_data.update({
                     "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"})
 
-            create_write_node(self.data["subset"], write_data)
-
-        return
+        return create_write_node(self.data["subset"], write_data)
 
 
 class CreateWritePrerender(avalon.nuke.Creator):
@@ -125,6 +122,24 @@ class CreateWritePrerender(avalon.nuke.Creator):
                 write_data.update({
                     "fpath_template": "{work}/prerenders/{subset}/{subset}.{frame}.{ext}"})
 
-            create_write_node(self.data["subset"], write_data)
+            # get group node
+            group_node = create_write_node(self.data["subset"], write_data)
+
+            # open group node
+            group_node.begin()
+            for n in nuke.allNodes():
+                # get write node
+                if n.Class() in "Write":
+                    write_node = n
+            group_node.end()
+
+            # linking knobs to group property panel
+            linking_knobs = ["first", "last", "use_limit"]
+            for k in linking_knobs:
+                lnk = nuke.Link_Knob(k)
+                lnk.makeLink(write_node.name(), k)
+                lnk.setName(k.replace('_', ' ').capitalize())
+                lnk.clearFlag(nuke.STARTLINE)
+                group_node.addKnob(lnk)
 
         return

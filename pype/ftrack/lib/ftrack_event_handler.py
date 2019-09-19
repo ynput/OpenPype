@@ -15,9 +15,9 @@ class BaseEvent(BaseHandler):
 
     type = 'Event'
 
-    def __init__(self, session):
+    def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
-        super().__init__(session)
+        super().__init__(session, plugins_presets)
 
     # Decorator
     def launch_log(self, func):
@@ -25,9 +25,12 @@ class BaseEvent(BaseHandler):
         def wrapper_launch(*args, **kwargs):
             try:
                 func(*args, **kwargs)
-            except Exception as e:
-                self.log.info('{} Failed ({})'.format(
-                    self.__class__.__name__, str(e))
+            except Exception as exc:
+                self.log.error(
+                    'Event "{}" Failed: {}'.format(
+                        self.__class__.__name__, str(exc)
+                    ),
+                    exc_info=True
                 )
         return wrapper_launch
 
@@ -43,22 +46,7 @@ class BaseEvent(BaseHandler):
         self.session.rollback()
         self.session._local_cache.clear()
 
-        try:
-            self.launch(
-                self.session, event
-            )
-        except Exception as e:
-            exc_type, exc_obj, exc_tb = sys.exc_info()
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            log_message = "{}/{}/Line: {}".format(
-                exc_type, fname, exc_tb.tb_lineno
-            )
-            self.log.error(
-                'Error during syncToAvalon: {}'.format(log_message),
-                exc_info=True
-            )
-
-        return
+        self.launch(self.session, event)
 
     def _translate_event(self, session, event):
         '''Return *event* translated structure to be used with the API.'''

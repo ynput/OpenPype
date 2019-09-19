@@ -1,4 +1,3 @@
-import json
 from pyblish import api
 
 
@@ -56,6 +55,8 @@ class CollectClipHandles(api.ContextPlugin):
                     "handleStart", 0
                 )
                 instance.data["handleEnd"] = s_asset_data.get("handleEnd", 0)
+
+                # debug printing
                 self.log.debug("_ s_asset_data: `{}`".format(
                     s_asset_data))
                 self.log.debug("_ instance.data[handles]: `{}`".format(

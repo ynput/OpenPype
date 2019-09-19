@@ -6,6 +6,7 @@ try:
     import ftrack_api_old as ftrack_api
 except Exception:
     import ftrack_api
+from pypeapp import config
 from pype import lib as pypelib
 from avalon.vendor.Qt import QtWidgets, QtCore
 from avalon import io, api, style, schema
@@ -194,18 +195,15 @@ class Window(QtWidgets.QDialog):
         ft_project = session.query(project_query).one()
         schema_name = ft_project['project_schema']['name']
         # Load config
-        preset_path = pypelib.get_presets_path()
-        schemas_items = [preset_path, 'ftrack', 'project_schemas']
-        schema_dir = os.path.sep.join(schemas_items)
+        schemas_items = config.get_presets().get('ftrack', {}).get(
+            'project_schemas', {}
+        )
 
-        config_file = 'default.json'
-        for filename in os.listdir(schema_dir):
-            if filename.startswith(schema_name):
-                config_file = filename
-                break
-        config_file = os.path.sep.join([schema_dir, config_file])
-        with open(config_file) as data_file:
-            self.config_data = json.load(data_file)
+        key = "default"
+        if schema_name in schemas_items:
+            key = schema_name
+
+        self.config_data = schemas_items[key]
 
         # set outlink
         input_outlink = self.data['inputs']['outlink']
@@ -396,7 +394,7 @@ class Window(QtWidgets.QDialog):
         new_asset_info = {
             'parent': av_project['_id'],
             'name': name,
-            'schema': pypelib.get_avalon_asset_template_schema(),
+            'schema': "avalon-core:asset-2.0",
             'silo': silo,
             'type': 'asset',
             'data': new_asset_data

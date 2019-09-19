@@ -25,8 +25,8 @@ class SetFrameRangeLoader(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        start = version_data.get("startFrame", None)
-        end = version_data.get("endFrame", None)
+        start = version_data.get("frameStart", None)
+        end = version_data.get("frameEnd", None)
 
         if start is None or end is None:
             print("Skipping setting frame range because start or "
@@ -59,8 +59,8 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        start = version_data.get("startFrame", None)
-        end = version_data.get("endFrame", None)
+        start = version_data.get("frameStart", None)
+        end = version_data.get("frameEnd", None)
 
         if start is None or end is None:
             print("Skipping setting frame range because start or "

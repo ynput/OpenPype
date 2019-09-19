@@ -45,8 +45,8 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         instance.data["resources"] = yeti_resources
 
         # Force frame range for export
-        instance.data["startFrame"] = 1
-        instance.data["endFrame"] = 1
+        instance.data["frameStart"] = 1
+        instance.data["frameEnd"] = 1
 
     def collect_input_connections(self, instance):
         """Collect the inputs for all nodes in the input_SET"""

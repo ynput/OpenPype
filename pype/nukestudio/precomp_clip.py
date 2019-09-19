@@ -14,9 +14,9 @@ def create_nk_script_clips(script_lst, seq=None):
         'handles': 10,
         'handleStart': 15, # added asymetrically to handles
         'handleEnd': 10, # added asymetrically to handles
-        'timelineIn': 16,
-        'startFrame': 991,
-        'endFrame': 1023,
+        "clipIn": 16,
+        "frameStart": 991,
+        "frameEnd": 1023,
         'task': 'Comp-tracking',
         'work_dir': 'VFX_PR',
         'shot': '00010'
@@ -55,12 +55,12 @@ def create_nk_script_clips(script_lst, seq=None):
         if media_in:
             source_in = media_in + handle_start
         else:
-            source_in = nk['startFrame'] + handle_start
+            source_in = nk["frameStart"] + handle_start
 
         if media_duration:
             source_out = (media_in + media_duration - 1) - handle_end
         else:
-            source_out = nk['endFrame'] - handle_end
+            source_out = nk["frameEnd"] - handle_end
 
         print("__ media: `{}`".format(media))
         print("__ media_in: `{}`".format(media_in))
@@ -98,8 +98,8 @@ def create_nk_script_clips(script_lst, seq=None):
         trackItem.setSourceIn(source_in)
         trackItem.setSourceOut(source_out)
         trackItem.setSourceIn(source_in)
-        trackItem.setTimelineIn(nk['timelineIn'])
-        trackItem.setTimelineOut(nk['timelineIn'] + (source_out - source_in))
+        trackItem.setTimelineIn(nk["clipIn"])
+        trackItem.setTimelineOut(nk["clipIn"] + (source_out - source_in))
         track.addTrackItem(trackItem)
         track.addTrackItem(trackItem)
         clips_lst.append(trackItem)
@@ -179,9 +179,9 @@ script_lst = [{
     'handles': 10,
     'handleStart': 10,
     'handleEnd': 10,
-    'timelineIn': 16,
-    'startFrame': 991,
-    'endFrame': 1023,
+    "clipIn": 16,
+    "frameStart": 991,
+    "frameEnd": 1023,
     'task': 'platesMain',
     'work_dir': 'shots',
     'shot': '120sh020'

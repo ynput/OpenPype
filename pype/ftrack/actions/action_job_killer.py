@@ -14,12 +14,13 @@ class JobKiller(BaseAction):
     #: Action identifier.
     identifier = 'job.killer'
     #: Action label.
-    label = 'Job Killer'
+    label = "Pype Admin"
+    variant = '- Job Killer'
     #: Action description.
     description = 'Killing selected running jobs'
     #: roles that are allowed to register this action
     role_list = ['Pypeclub', 'Administrator']
-    icon = '{}/ftrack/action_icons/JobKiller.svg'.format(
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
@@ -117,7 +118,7 @@ class JobKiller(BaseAction):
         }
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -126,7 +127,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    JobKiller(session).register()
+    JobKiller(session, plugins_presets).register()
 
 
 def main(arguments=None):

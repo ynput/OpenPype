@@ -5,7 +5,7 @@ from avalon import lib as avalonlib
 import acre
 from pype import api as pype
 from pype import lib as pypelib
-from .avalon_sync import get_config_data
+from pypeapp import config
 from .ftrack_base_handler import BaseHandler
 
 from pypeapp import Anatomy
@@ -26,10 +26,10 @@ class AppAction(BaseHandler):
     preactions = ['start.timer']
 
     def __init__(
-        self, session, label, name, executable,
-        variant=None, icon=None, description=None, preactions=[]
+        self, session, label, name, executable, variant=None,
+        icon=None, description=None, preactions=[], plugins_presets={}
     ):
-        super().__init__(session)
+        super().__init__(session, plugins_presets)
         '''Expects a ftrack_api.Session instance'''
 
         if label is None:
@@ -221,11 +221,22 @@ class AppAction(BaseHandler):
                 anatomy = anatomy.format(data)
                 work_template = anatomy["work"]["folder"]
 
-            except Exception as e:
-                self.log.exception(
-                    "{0} Error in anatomy.format: {1}".format(__name__, e)
+            except Exception as exc:
+                msg = "{} Error in anatomy.format: {}".format(
+                    __name__, str(exc)
                 )
-        os.environ["AVALON_WORKDIR"] = os.path.normpath(work_template)
+                self.log.error(msg, exc_info=True)
+                return {
+                    'success': False,
+                    'message': msg
+                }
+
+        workdir = os.path.normpath(work_template)
+        os.environ["AVALON_WORKDIR"] = workdir
+        try:
+            os.makedirs(workdir)
+        except FileExistsError:
+            pass
 
         # collect all parents from the task
         parents = []
@@ -328,10 +339,10 @@ class AppAction(BaseHandler):
                 pass
 
         # Change status of task to In progress
-        config = get_config_data()
+        presets = config.get_presets()["ftrack"]["ftrack_config"]
 
-        if 'status_update' in config:
-            statuses = config['status_update']
+        if 'status_update' in presets:
+            statuses = presets['status_update']
 
             actual_status = entity['status']['name'].lower()
             next_status_name = None
@@ -351,7 +362,7 @@ class AppAction(BaseHandler):
                     session.commit()
                 except Exception:
                     msg = (
-                        'Status "{}" in config wasn\'t found on Ftrack'
+                        'Status "{}" in presets wasn\'t found on Ftrack'
                     ).format(next_status_name)
                     self.log.warning(msg)
 

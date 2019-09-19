@@ -2,13 +2,54 @@ import tempfile
 import os
 import pyblish.api
 
+from pypeapp import config
+import inspect
+
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05
 ValidateContentsOrder = pyblish.api.ValidatorOrder + 0.1
 ValidateSceneOrder = pyblish.api.ValidatorOrder + 0.2
 ValidateMeshOrder = pyblish.api.ValidatorOrder + 0.3
 
 
-class Extractor(pyblish.api.InstancePlugin):
+def imprint_attributes(plugin):
+    """
+    Load presets by class and set them as attributes (if found)
+
+    :param plugin: plugin instance
+    :type plugin: instance
+    """
+    file = inspect.getfile(plugin.__class__)
+    file = os.path.normpath(file)
+    plugin_kind = file.split(os.path.sep)[-2:-1][0]
+    plugin_host = file.split(os.path.sep)[-3:-2][0]
+    plugin_name = type(plugin).__name__
+    try:
+        config_data = config.get_presets()['plugins'][plugin_host][plugin_kind][plugin_name]  # noqa: E501
+    except KeyError:
+        print("preset not found")
+        return
+
+    for option, value in config_data.items():
+        if option == "enabled" and value is False:
+            setattr(plugin, "active", False)
+        else:
+            setattr(plugin, option, value)
+            print("setting {}: {} on {}".format(option, value, plugin_name))
+
+
+class ContextPlugin(pyblish.api.ContextPlugin):
+    def process(cls, *args, **kwargs):
+        imprint_attributes(cls)
+        super(ContextPlugin, cls).process(cls, *args, **kwargs)
+
+
+class InstancePlugin(pyblish.api.InstancePlugin):
+    def process(cls, *args, **kwargs):
+        imprint_attributes(cls)
+        super(ContextPlugin, cls).process(cls, *args, **kwargs)
+
+
+class Extractor(InstancePlugin):
     """Extractor base class.
 
     The extractor base class implements a "staging_dir" function used to

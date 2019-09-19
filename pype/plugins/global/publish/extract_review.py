@@ -1,7 +1,8 @@
 import os
+
 import pyblish.api
-import subprocess
 from pype.vendor import clique
+import pype.api
 from pypeapp import config
 
 
@@ -29,7 +30,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         inst_data = instance.data
         fps = inst_data.get("fps")
-        start_frame = inst_data.get("startFrame")
+        start_frame = inst_data.get("frameStart")
 
         self.log.debug("Families In: `{}`".format(instance.data["families"]))
 
@@ -86,7 +87,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             repre_new = repre.copy()
 
-                            new_tags = tags[:]
+                            new_tags = [x for x in tags if x != "delete"]
                             p_tags = profile.get('tags', [])
                             self.log.info("p_tags: `{}`".format(p_tags))
                             # add families
@@ -169,22 +170,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             subprcs_cmd = " ".join(mov_args)
 
                             # run subprocess
-                            self.log.debug("{}".format(subprcs_cmd))
-                            sub_proc = subprocess.Popen(
-                                subprcs_cmd,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                stdin=subprocess.PIPE,
-                                cwd=os.path.dirname(output_args[-1])
-                            )
-
-                            output = sub_proc.communicate()[0]
-
-                            if not os.path.isfile(full_output_path):
-                                raise ValueError(
-                                    "Quicktime wasn't created succesfully: "
-                                    "{}".format(output)
-                                )
+                            self.log.debug("Executing: {}".format(subprcs_cmd))
+                            output = pype.api.subprocess(subprcs_cmd)
+                            self.log.debug("Output: {}".format(output))
 
                             # create representation data
                             repre_new.update({
@@ -200,15 +188,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 repre_new.pop("thumbnail")
 
                             # adding representation
+                            self.log.debug("Adding: {}".format(repre_new))
                             representations_new.append(repre_new)
-                    # if "delete" in tags:
-                    #     if "mov" in full_input_path:
-                    #         os.remove(full_input_path)
-                    #         self.log.debug("Removed: `{}`".format(full_input_path))
                 else:
                     continue
             else:
                 continue
+
+        for repre in representations_new:
+            if "delete" in repre.get("tags", []):
+                representations_new.remove(repre)
 
         self.log.debug(
             "new representations: {}".format(representations_new))

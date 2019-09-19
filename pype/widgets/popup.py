@@ -124,6 +124,26 @@ class Popup2(Popup):
         fix = self.widgets["show"]
         fix.setText("Fix")
 
+    def calculate_window_geometry(self):
+        """Respond to status changes
+
+        On creation, align window with screen bottom right.
+
+        """
+        parent_widget = self.parent()
+
+        app = QtWidgets.QApplication.instance()
+        if parent_widget:
+            screen = app.desktop().screenNumber(parent_widget)
+        else:
+            screen = app.desktop().screenNumber(app.desktop().cursor().pos())
+        center_point = app.desktop().screenGeometry(screen).center()
+
+        frame_geo = self.frameGeometry()
+        frame_geo.moveCenter(center_point)
+
+        return frame_geo
+
 
 @contextlib.contextmanager
 def application():
