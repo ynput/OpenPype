@@ -178,11 +178,6 @@ def import_to_avalon(
         entity, session, custom_attributes
     )
 
-    # 1. hierarchical entity have silo set to None
-    silo = None
-    if len(data['parents']) > 0:
-        silo = data['parents'][0]
-
     name = entity['name']
 
     avalon_asset = None
@@ -213,9 +208,8 @@ def import_to_avalon(
         )
         if avalon_asset is None:
             item = {
-                'schema': "avalon-core:asset-2.0",
+                'schema': "avalon-core:asset-3.0",
                 'name': name,
-                'silo': silo,
                 'parent': ObjectId(projectId),
                 'type': 'asset',
                 'data': data
@@ -224,10 +218,7 @@ def import_to_avalon(
             mongo_id = database[project_name].insert_one(item).inserted_id
 
         # Raise error if it seems to be different ent. with same name
-        elif (
-            avalon_asset['data']['parents'] != data['parents'] or
-            avalon_asset['silo'] != silo
-        ):
+        elif avalon_asset['data']['parents'] != data['parents']:
             msg = (
                 'In Avalon DB already exists entity with name "{0}"'
             ).format(name)
@@ -240,7 +231,7 @@ def import_to_avalon(
             mongo_id = avalon_asset['_id']
     else:
         if avalon_asset['name'] != entity['name']:
-            if silo is None or changeability_check_childs(entity) is False:
+            if changeability_check_childs(entity) is False:
                 msg = (
                     'You can\'t change name {} to {}'
                     ', avalon wouldn\'t work properly!'
@@ -251,10 +242,7 @@ def import_to_avalon(
                 session.commit()
                 errors.append({'Changed name error': msg})
 
-        if (
-            avalon_asset['silo'] != silo or
-            avalon_asset['data']['parents'] != data['parents']
-        ):
+        if avalon_asset['data']['parents'] != data['parents']:
             old_path = '/'.join(avalon_asset['data']['parents'])
             new_path = '/'.join(data['parents'])
 
@@ -266,10 +254,7 @@ def import_to_avalon(
 
             moved_back = False
             if 'visualParent' in avalon_asset['data']:
-                if silo is None:
-                    asset_parent_id = avalon_asset['parent']
-                else:
-                    asset_parent_id = avalon_asset['data']['visualParent']
+                asset_parent_id = avalon_asset['data']['visualParent'] or avalon_asset['parent']
 
                 asset_parent = database[project_name].find_one(
                     {'_id': ObjectId(asset_parent_id)}
@@ -315,7 +300,6 @@ def import_to_avalon(
         {'_id': ObjectId(mongo_id)},
         {'$set': {
             'name': name,
-            'silo': silo,
             'data': enter_data,
             'parent': ObjectId(projectId)
         }})
@@ -557,14 +541,12 @@ def avalon_check_name(entity, inSchema=None):
     data = {}
     data['data'] = {}
     data['type'] = 'asset'
-    schema = "avalon-core:asset-2.0"
+    schema = "avalon-core:asset-3.0"
     # TODO have project any REGEX check?
     if entity.entity_type in ['Project']:
         # data['type'] = 'project'
         name = entity['full_name']
         # schema = "avalon-core:project-2.0"
-
-    data['silo'] = 'Film'
 
     if inSchema is not None:
         schema = inSchema
