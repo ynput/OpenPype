@@ -39,19 +39,17 @@ SHAPE_ATTRS = {"castsShadows",
                "doubleSided",
                "opposite"}
 
-RENDER_ATTRS = {"vray":
-                    {
+RENDER_ATTRS = {"vray": {
                         "node": "vraySettings",
                         "prefix": "fileNamePrefix",
                         "padding": "fileNamePadding",
                         "ext": "imageFormatStr"
-                    },
-                "default":
-                    {
+                        },
+                "default": {
                         "node": "defaultRenderGlobals",
                         "prefix": "imageFilePrefix",
                         "padding": "extensionPadding"
-                    }
+                        }
                 }
 
 
@@ -339,19 +337,6 @@ def undo_chunk():
         yield
     finally:
         cmds.undoInfo(closeChunk=True)
-
-
-@contextlib.contextmanager
-def renderlayer(layer):
-    """Set the renderlayer during the context"""
-
-    original = cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
-
-    try:
-        cmds.editRenderLayerGlobals(currentRenderLayer=layer)
-        yield
-    finally:
-        cmds.editRenderLayerGlobals(currentRenderLayer=original)
 
 
 @contextlib.contextmanager
@@ -832,7 +817,8 @@ def is_visible(node,
         # Display layers set overrideEnabled and overrideVisibility on members
         if cmds.attributeQuery('overrideEnabled', node=node, exists=True):
             override_enabled = cmds.getAttr('{}.overrideEnabled'.format(node))
-            override_visibility = cmds.getAttr('{}.overrideVisibility'.format(node))
+            override_visibility = cmds.getAttr('{}.overrideVisibility'.format(
+                node))
             if override_enabled and override_visibility:
                 return False
 
@@ -854,8 +840,8 @@ def extract_alembic(file,
                     startFrame=None,
                     endFrame=None,
                     selection=True,
-                    uvWrite= True,
-                    eulerFilter= True,
+                    uvWrite=True,
+                    eulerFilter=True,
                     dataFormat="ogawa",
                     verbose=False,
                     **kwargs):
@@ -1470,8 +1456,8 @@ def apply_shaders(relationships, shadernodes, nodes):
         member_uuids = [member["uuid"] for member in data["members"]]
 
         filtered_nodes = list()
-        for uuid in member_uuids:
-            filtered_nodes.extend(nodes_by_id[uuid])
+        for m_uuid in member_uuids:
+            filtered_nodes.extend(nodes_by_id[m_uuid])
 
         id_shading_engines = shading_engines_by_id[shader_uuid]
         if not id_shading_engines:
@@ -2110,6 +2096,7 @@ def bake_to_world_space(nodes,
 
     return world_space_nodes
 
+
 def load_capture_preset(path=None, data=None):
     import capture_gui
     import capture
@@ -2119,14 +2106,14 @@ def load_capture_preset(path=None, data=None):
     else:
         path = path
         preset = capture_gui.lib.load_json(path)
-    print preset
+    print(preset)
 
     options = dict()
 
     # CODEC
     id = 'Codec'
     for key in preset[id]:
-            options[str(key)]= preset[id][key]
+        options[str(key)] = preset[id][key]
 
     # GENERIC
     id = 'Generic'
@@ -2142,7 +2129,6 @@ def load_capture_preset(path=None, data=None):
     options['height'] = preset[id]['height']
     options['width'] = preset[id]['width']
 
-
     # DISPLAY OPTIONS
     id = 'Display Options'
     disp_options = {}
@@ -2154,7 +2140,6 @@ def load_capture_preset(path=None, data=None):
 
     options['display_options'] = disp_options
 
-
     # VIEWPORT OPTIONS
     temp_options = {}
     id = 'Renderer'
@@ -2163,11 +2148,12 @@ def load_capture_preset(path=None, data=None):
 
     temp_options2 = {}
     id = 'Viewport Options'
-    light_options = {   0: "default",
-                        1: 'all',
-                        2: 'selected',
-                        3: 'flat',
-                        4: 'nolights'}
+    light_options = {
+        0: "default",
+        1: 'all',
+        2: 'selected',
+        3: 'flat',
+        4: 'nolights'}
     for key in preset[id]:
         if key == 'high_quality':
             temp_options2['multiSampleEnable'] = True
@@ -2190,7 +2176,10 @@ def load_capture_preset(path=None, data=None):
         else:
             temp_options[str(key)] = preset[id][key]
 
-    for key in ['override_viewport_options', 'high_quality', 'alphaCut', "gpuCacheDisplayFilter"]:
+    for key in ['override_viewport_options',
+                'high_quality',
+                'alphaCut',
+                'gpuCacheDisplayFilter']:
         temp_options.pop(key, None)
 
     for key in ['ssaoEnable']:
@@ -2198,7 +2187,6 @@ def load_capture_preset(path=None, data=None):
 
     options['viewport_options'] = temp_options
     options['viewport2_options'] = temp_options2
-
 
     # use active sound track
     scene = capture.parse_active_scene()
@@ -2363,31 +2351,51 @@ class shelf():
             if item['type'] == 'button':
                 self.addButon(item['name'], command=item['command'])
             if item['type'] == 'menuItem':
-                self.addMenuItem(item['parent'], item['name'], command=item['command'])
+                self.addMenuItem(item['parent'],
+                                 item['name'],
+                                 command=item['command'])
             if item['type'] == 'subMenu':
-                self.addMenuItem(item['parent'], item['name'], command=item['command'])
+                self.addMenuItem(item['parent'],
+                                 item['name'],
+                                 command=item['command'])
 
-    def addButon(self, label, icon="commandButton.png", command=_null, doubleCommand=_null):
-        '''Adds a shelf button with the specified label, command, double click command and image.'''
+    def addButon(self, label, icon="commandButton.png",
+                 command=_null, doubleCommand=_null):
+        '''
+            Adds a shelf button with the specified label, command,
+            double click command and image.
+        '''
         cmds.setParent(self.name)
         if icon:
             icon = self.iconPath + icon
-        cmds.shelfButton(width=37, height=37, image=icon, l=label, command=command, dcc=doubleCommand, imageOverlayLabel=label, olb=self.labelBackground, olc=self.labelColour)
+        cmds.shelfButton(width=37, height=37, image=icon, label=label,
+                         command=command, dcc=doubleCommand,
+                         imageOverlayLabel=label, olb=self.labelBackground,
+                         olc=self.labelColour)
 
     def addMenuItem(self, parent, label, command=_null, icon=""):
-        '''Adds a shelf button with the specified label, command, double click command and image.'''
+        '''
+            Adds a shelf button with the specified label, command,
+            double click command and image.
+        '''
         if icon:
             icon = self.iconPath + icon
-        return cmds.menuItem(p=parent, l=label, c=command, i="")
+        return cmds.menuItem(p=parent, label=label, c=command, i="")
 
     def addSubMenu(self, parent, label, icon=None):
-        '''Adds a sub menu item with the specified label and icon to the specified parent popup menu.'''
+        '''
+            Adds a sub menu item with the specified label and icon to
+            the specified parent popup menu.
+        '''
         if icon:
             icon = self.iconPath + icon
-        return cmds.menuItem(p=parent, l=label, i=icon, subMenu=1)
+        return cmds.menuItem(p=parent, label=label, i=icon, subMenu=1)
 
     def _cleanOldShelf(self):
-        '''Checks if the shelf exists and empties it if it does or creates it if it does not.'''
+        '''
+            Checks if the shelf exists and empties it if it does
+            or creates it if it does not.
+        '''
         if cmds.shelfLayout(self.name, ex=1):
             if cmds.shelfLayout(self.name, q=1, ca=1):
                 for each in cmds.shelfLayout(self.name, q=1, ca=1):
