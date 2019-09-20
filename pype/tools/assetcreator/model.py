@@ -3,26 +3,26 @@ import logging
 import collections
 
 from avalon.vendor.Qt import QtCore, QtWidgets
-from avalon.vendor import qtawesome as awesome
+from avalon.vendor import qtawesome
 from avalon import io
 from avalon import style
 
 log = logging.getLogger(__name__)
 
 
-class Node(dict):
-    """A node that can be represented in a tree view.
+class Item(dict):
+    """An item that can be represented in a tree view using `TreeModel`.
 
-    The node can store data just like a dictionary.
+    The item can store data just like a regular dictionary.
 
     >>> data = {"name": "John", "score": 10}
-    >>> node = Node(data)
-    >>> assert node["name"] == "John"
+    >>> item = Item(data)
+    >>> assert item["name"] == "John"
 
     """
 
     def __init__(self, data=None):
-        super(Node, self).__init__()
+        super(Item, self).__init__()
 
         self._children = list()
         self._parent = None
@@ -51,36 +51,36 @@ class Node(dict):
     def row(self):
         """
         Returns:
-             int: Index of this node under parent"""
+             int: Index of this item under parent"""
         if self._parent is not None:
             siblings = self.parent().children()
             return siblings.index(self)
 
     def add_child(self, child):
-        """Add a child to this node"""
+        """Add a child to this item"""
         child._parent = self
         self._children.append(child)
 
 
 class TreeModel(QtCore.QAbstractItemModel):
 
-    COLUMNS = list()
-    NodeRole = QtCore.Qt.UserRole + 1
+    Columns = list()
+    ItemRole = QtCore.Qt.UserRole + 1
 
     def __init__(self, parent=None):
         super(TreeModel, self).__init__(parent)
-        self._root_node = Node()
+        self._root_item = Item()
 
     def rowCount(self, parent):
         if parent.isValid():
-            node = parent.internalPointer()
+            item = parent.internalPointer()
         else:
-            node = self._root_node
+            item = self._root_item
 
-        return node.childCount()
+        return item.childCount()
 
     def columnCount(self, parent):
-        return len(self.COLUMNS)
+        return len(self.Columns)
 
     def data(self, index, role):
 
@@ -89,17 +89,17 @@ class TreeModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
 
-            node = index.internalPointer()
+            item = index.internalPointer()
             column = index.column()
 
-            key = self.COLUMNS[column]
-            return node.get(key, None)
+            key = self.Columns[column]
+            return item.get(key, None)
 
-        if role == self.NodeRole:
+        if role == self.ItemRole:
             return index.internalPointer()
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):
-        """Change the data on the nodes.
+        """Change the data on the items.
 
         Returns:
             bool: Whether the edit was successful
@@ -108,10 +108,10 @@ class TreeModel(QtCore.QAbstractItemModel):
         if index.isValid():
             if role == QtCore.Qt.EditRole:
 
-                node = index.internalPointer()
+                item = index.internalPointer()
                 column = index.column()
-                key = self.COLUMNS[column]
-                node[key] = value
+                key = self.Columns[column]
+                item[key] = value
 
                 # passing `list()` for PyQt5 (see PYSIDE-462)
                 self.dataChanged.emit(index, index, list())
@@ -123,77 +123,95 @@ class TreeModel(QtCore.QAbstractItemModel):
 
     def setColumns(self, keys):
         assert isinstance(keys, (list, tuple))
-        self.COLUMNS = keys
+        self.Columns = keys
 
     def headerData(self, section, orientation, role):
 
         if role == QtCore.Qt.DisplayRole:
-            if section < len(self.COLUMNS):
-                return self.COLUMNS[section]
+            if section < len(self.Columns):
+                return self.Columns[section]
 
         super(TreeModel, self).headerData(section, orientation, role)
 
     def flags(self, index):
-        return (
-            QtCore.Qt.ItemIsEnabled |
-            QtCore.Qt.ItemIsSelectable
-        )
+        flags = QtCore.Qt.ItemIsEnabled
+
+        item = index.internalPointer()
+        if item.get("enabled", True):
+            flags |= QtCore.Qt.ItemIsSelectable
+
+        return flags
 
     def parent(self, index):
 
-        node = index.internalPointer()
-        parent_node = node.parent()
+        item = index.internalPointer()
+        parent_item = item.parent()
 
         # If it has no parents we return invalid
-        if parent_node == self._root_node or not parent_node:
+        if parent_item == self._root_item or not parent_item:
             return QtCore.QModelIndex()
 
-        return self.createIndex(parent_node.row(), 0, parent_node)
+        return self.createIndex(parent_item.row(), 0, parent_item)
 
     def index(self, row, column, parent):
         """Return index for row/column under parent"""
 
         if not parent.isValid():
-            parentNode = self._root_node
+            parent_item = self._root_item
         else:
-            parentNode = parent.internalPointer()
+            parent_item = parent.internalPointer()
 
-        childItem = parentNode.child(row)
-        if childItem:
-            return self.createIndex(row, column, childItem)
+        child_item = parent_item.child(row)
+        if child_item:
+            return self.createIndex(row, column, child_item)
         else:
             return QtCore.QModelIndex()
 
-    def add_child(self, node, parent=None):
+    def add_child(self, item, parent=None):
         if parent is None:
-            parent = self._root_node
+            parent = self._root_item
 
-        parent.add_child(node)
+        parent.add_child(item)
 
     def column_name(self, column):
         """Return column key by index"""
 
-        if column < len(self.COLUMNS):
-            return self.COLUMNS[column]
+        if column < len(self.Columns):
+            return self.Columns[column]
 
     def clear(self):
         self.beginResetModel()
-        self._root_node = Node()
+        self._root_item = Item()
         self.endResetModel()
 
 
-class TasksTemplateModel(TreeModel):
+class TasksModel(TreeModel):
     """A model listing the tasks combined for a list of assets"""
 
-    COLUMNS = ["Tasks"]
+    Columns = ["Tasks"]
 
     def __init__(self):
-        super(TasksTemplateModel, self).__init__()
-        self.selectable = False
+        super(TasksModel, self).__init__()
+        self._num_assets = 0
         self._icons = {
-            "__default__": awesome.icon("fa.folder-o",
-                                        color=style.colors.default)
+            "__default__": qtawesome.icon("fa.male",
+                                          color=style.colors.default),
+            "__no_task__": qtawesome.icon("fa.exclamation-circle",
+                                          color=style.colors.mid)
         }
+
+        self._get_task_icons()
+
+    def _get_task_icons(self):
+        # Get the project configured icons from database
+        project = io.find_one({"type": "project"})
+        tasks = project["config"].get("tasks", [])
+        for task in tasks:
+            icon_name = task.get("icon", None)
+            if icon_name:
+                icon = qtawesome.icon("fa.{}".format(icon_name),
+                                      color=style.colors.default)
+                self._icons[task["name"]] = icon
 
     def set_tasks(self, tasks):
         """Set assets to track by their database id
@@ -213,23 +231,28 @@ class TasksTemplateModel(TreeModel):
 
         icon = self._icons["__default__"]
         for task in tasks:
-            node = Node({
+            item = Item({
                 "Tasks": task,
                 "icon": icon
             })
 
-            self.add_child(node)
+            self.add_child(item)
 
         self.endResetModel()
 
     def flags(self, index):
-        if self.selectable is False:
-            return QtCore.Qt.ItemIsEnabled
-        else:
-            return (
-                QtCore.Qt.ItemIsEnabled |
-                QtCore.Qt.ItemIsSelectable
-            )
+        return QtCore.Qt.ItemIsEnabled
+
+    def headerData(self, section, orientation, role):
+
+        # Override header for count column to show amount of assets
+        # it is listing the tasks for
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
+                if section == 1:  # count column
+                    return "count ({0})".format(self._num_assets)
+
+        return super(TasksModel, self).headerData(section, orientation, role)
 
     def data(self, index, role):
 
@@ -239,9 +262,9 @@ class TasksTemplateModel(TreeModel):
         # Add icon to the first column
         if role == QtCore.Qt.DecorationRole:
             if index.column() == 0:
-                return index.internalPointer()['icon']
+                return index.internalPointer()["icon"]
 
-        return super(TasksTemplateModel, self).data(index, role)
+        return super(TasksModel, self).data(index, role)
 
 
 class DeselectableTreeView(QtWidgets.QTreeView):
@@ -257,33 +280,6 @@ class DeselectableTreeView(QtWidgets.QTreeView):
             self.setCurrentIndex(QtCore.QModelIndex())
 
         QtWidgets.QTreeView.mousePressEvent(self, event)
-
-
-class ExactMatchesFilterProxyModel(QtCore.QSortFilterProxyModel):
-    """Filter model to where key column's value is in the filtered tags"""
-
-    def __init__(self, *args, **kwargs):
-        super(ExactMatchesFilterProxyModel, self).__init__(*args, **kwargs)
-        self._filters = set()
-
-    def setFilters(self, filters):
-        self._filters = set(filters)
-
-    def filterAcceptsRow(self, source_row, source_parent):
-
-        # No filter
-        if not self._filters:
-            return True
-
-        else:
-            model = self.sourceModel()
-            column = self.filterKeyColumn()
-            idx = model.index(source_row, column, source_parent)
-            data = model.data(idx, self.filterRole())
-            if data in self._filters:
-                return True
-            else:
-                return False
 
 
 class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):
