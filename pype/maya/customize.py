@@ -75,8 +75,8 @@ def override_toolbox_ui():
                        "res")
     icons = os.path.join(res, "icons")
 
-    import avalon.tools.cbsceneinventory as inventory
-    import avalon.tools.cbloader as loader
+    import avalon.tools.sceneinventory as inventory
+    import avalon.tools.loader as loader
     from avalon.maya.pipeline import launch_workfiles_app
     import mayalookassigner
 
