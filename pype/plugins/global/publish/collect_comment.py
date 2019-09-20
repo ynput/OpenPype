@@ -1,3 +1,10 @@
+"""
+Requires:
+    None
+Provides:
+    context -> comment (str)
+"""
+
 import pyblish.api
 
 

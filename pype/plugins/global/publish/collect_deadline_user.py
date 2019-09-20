@@ -1,3 +1,11 @@
+"""
+Requires:
+    environment -> DEADLINE_PATH
+
+Provides:
+    context     -> deadlineUser (str)
+"""
+
 import os
 import subprocess
 
@@ -54,4 +62,3 @@ class CollectDeadlineUser(pyblish.api.ContextPlugin):
 
         self.log.info("Found Deadline user: {}".format(user))
         context.data['deadlineUser'] = user
-
