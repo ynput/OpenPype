@@ -201,6 +201,8 @@ class Window(QtWidgets.QDialog):
         )
         # Get info if it is silo project
         self.silos = io.distinct("silo")
+        if self.silos and None in self.silos:
+            self.silos = None
 
         key = "default"
         if schema_name in schemas_items:

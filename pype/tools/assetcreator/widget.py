@@ -228,6 +228,9 @@ class AssetModel(TreeModel):
         # Get all assets in current silo sorted by name
         db_assets = io.find({"type": "asset"}).sort("name", 1)
         silos = db_assets.distinct("silo") or None
+        # if any silo is set to None then it's expected it should not be used
+        if silos and None in silos:
+            silos = None
 
         # Group the assets by their visual parent's id
         assets_by_parent = collections.defaultdict(list)
