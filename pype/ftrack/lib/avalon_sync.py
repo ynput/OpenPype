@@ -39,13 +39,7 @@ def import_to_avalon(
         return output
 
     # Validate if entity name match REGEX in schema
-    try:
-        avalon_check_name(entity)
-    except ValidationError:
-        msg = '"{}" includes unsupported symbols like "dash" or "space"'
-        errors.append({'Unsupported character': msg})
-        output['errors'] = errors
-        return output
+    avalon_check_name(entity)
 
     entity_type = entity.entity_type
     # Project ////////////////////////////////////////////////////////////////
@@ -531,34 +525,24 @@ def get_project_apps(entity):
     return apps
 
 
-def avalon_check_name(entity, inSchema=None):
-    ValidationError = jsonschema.ValidationError
-    alright = True
-    name = entity['name']
-    if " " in name:
-        alright = False
+def avalon_check_name(entity, in_schema=None):
+    default_pattern = "^[a-zA-Z0-9_.]*$"
 
-    data = {}
-    data['data'] = {}
-    data['type'] = 'asset'
-    schema = "avalon-core:asset-3.0"
-    # TODO have project any REGEX check?
-    if entity.entity_type in ['Project']:
-        # data['type'] = 'project'
-        name = entity['full_name']
-        # schema = "avalon-core:project-2.0"
+    name = entity["name"]
+    schema_name = "asset-3.0"
 
-    if inSchema is not None:
-        schema = inSchema
-    data['schema'] = schema
-    data['name'] = name
-    try:
-        avalon.schema.validate(data)
-    except ValidationError:
-        alright = False
+    if in_schema:
+        schema_name = in_schema
+    elif entity.entity_type.lower() == "project":
+        name = entity["full_name"]
+        schema_name = "project-2.0"
 
-    if alright is False:
-        msg = '"{}" includes unsupported symbols like "dash" or "space"'
+    schema_obj = avalon.schema._cache.get(schema_name + ".json")
+    name_pattern = schema_obj.get("properties", {}).get("name", {}).get(
+        "pattern", default_pattern
+    )
+    if not re.match(name_pattern, name):
+        msg = "\"{}\" includes unsupported symbols like \"dash\" or \"space\""
         raise ValueError(msg.format(name))
 
 
