@@ -1,7 +1,8 @@
 import logging
+import collections
 from . import QtCore, QtGui
 from . import TreeModel, Node
-from . import style, awesome
+from . import style, qtawesome
 
 
 log = logging.getLogger(__name__)
@@ -44,64 +45,102 @@ class AssetModel(TreeModel):
     DocumentRole = QtCore.Qt.UserRole + 2
     ObjectIdRole = QtCore.Qt.UserRole + 3
 
-    def __init__(self, parent):
+    def __init__(self, dbcon, parent=None):
         super(AssetModel, self).__init__(parent=parent)
-        self.parent_widget = parent
+        self.dbcon = dbcon
         self.refresh()
 
-    @property
-    def db(self):
-        return self.parent_widget.db
+    def _add_hierarchy(self, assets, parent=None, silos=None):
+        """Add the assets that are related to the parent as children items.
 
-    def _add_hierarchy(self, parent=None):
+        This method does *not* query the database. These instead are queried
+        in a single batch upfront as an optimization to reduce database
+        queries. Resulting in up to 10x speed increase.
 
-        # Find the assets under the parent
-        find_data = {
-            "type": "asset"
-        }
-        if parent is None:
-            find_data['$or'] = [
-                {'data.visualParent': {'$exists': False}},
-                {'data.visualParent': None}
-            ]
-        else:
-            find_data["data.visualParent"] = parent['_id']
+        Args:
+            assets (dict): All assets in the currently active silo stored
+                by key/value
 
-        assets = self.db.find(find_data).sort('name', 1)
-        for asset in assets:
+        Returns:
+            None
+
+        """
+        if silos:
+            # WARNING: Silo item "_id" is set to silo value
+            # mainly because GUI issue with perserve selection and expanded row
+            # and because of easier hierarchy parenting (in "assets")
+            for silo in silos:
+                node = Node({
+                    "_id": silo,
+                    "name": silo,
+                    "label": silo,
+                    "type": "silo"
+                })
+                self.add_child(node, parent=parent)
+                self._add_hierarchy(assets, parent=node)
+
+        parent_id = parent["_id"] if parent else None
+        current_assets = assets.get(parent_id, list())
+
+        for asset in current_assets:
             # get label from data, otherwise use name
             data = asset.get("data", {})
-            label = data.get("label", asset['name'])
+            label = data.get("label", asset["name"])
             tags = data.get("tags", [])
 
             # store for the asset for optimization
             deprecated = "deprecated" in tags
 
             node = Node({
-                "_id": asset['_id'],
+                "_id": asset["_id"],
                 "name": asset["name"],
                 "label": label,
-                "type": asset['type'],
+                "type": asset["type"],
                 "tags": ", ".join(tags),
                 "deprecated": deprecated,
                 "_document": asset
             })
             self.add_child(node, parent=parent)
 
-            # Add asset's children recursively
-            self._add_hierarchy(node)
+            # Add asset's children recursively if it has children
+            if asset["_id"] in assets:
+                self._add_hierarchy(assets, parent=node)
 
     def refresh(self):
         """Refresh the data for the model."""
 
         self.clear()
         if (
-            self.db.active_project() is None or
-            self.db.active_project() == ''
+            self.dbcon.active_project() is None or
+            self.dbcon.active_project() == ''
         ):
             return
+
         self.beginResetModel()
-        self._add_hierarchy(parent=None)
+
+        # Get all assets in current silo sorted by name
+        db_assets = self.dbcon.find({"type": "asset"}).sort("name", 1)
+        silos = db_assets.distinct("silo") or None
+        # if any silo is set to None then it's expected it should not be used
+        if silos and None in silos:
+            silos = None
+
+        # Group the assets by their visual parent's id
+        assets_by_parent = collections.defaultdict(list)
+        for asset in db_assets:
+            parent_id = (
+                asset.get("data", {}).get("visualParent") or
+                asset.get("silo")
+            )
+            assets_by_parent[parent_id].append(asset)
+
+        # Build the hierarchical tree items recursively
+        self._add_hierarchy(
+            assets_by_parent,
+            parent=None,
+            silos=silos
+        )
+
         self.endResetModel()
 
     def flags(self, index):
@@ -119,8 +158,10 @@ class AssetModel(TreeModel):
             if column == self.Name:
 
                 # Allow a custom icon and custom icon color to be defined
-                data = node["_document"]["data"]
+                data = node.get("_document", {}).get("data", {})
                 icon = data.get("icon", None)
+                if icon is None and node.get("type") == "silo":
+                    icon = "database"
                 color = data.get("color", style.colors.default)
 
                 if icon is None:
@@ -136,7 +177,7 @@ class AssetModel(TreeModel):
 
                 try:
                     key = "fa.{0}".format(icon)  # font-awesome key
-                    icon = awesome.icon(key, color=color)
+                    icon = qtawesome.icon(key, color=color)
                     return icon
                 except Exception as exception:
                     # Log an error message instead of erroring out completely
