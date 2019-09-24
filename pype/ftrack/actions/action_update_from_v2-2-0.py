@@ -12,8 +12,9 @@ from avalon import io, inventory, schema
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 
 
-class RemoveSilosDoctor(BaseAction):
-    """This action is to remove silo field from database
+class PypeUpdateFromV2_2_0(BaseAction):
+    """This action is to remove silo field from database and changes asset
+    schema to newer version
 
     WARNING: it is NOT for situations when you want to switch from avalon-core
     to Pype's avalon-core!!!
@@ -22,16 +23,14 @@ class RemoveSilosDoctor(BaseAction):
     #: Action identifier.
     identifier = "silos.doctor"
     #: Action label.
-    label = "Pype Doctor"
-    variant = "- Pype update from v2.2.0 to v2.3.0 or higher"
+    label = "Pype Update"
+    variant = "- v2.2.0 to v2.3.0 or higher"
     #: Action description.
-    description = (
-        "Use when Pype was updated from v2.2.0 to v2.3.0 or higher"
-        " (Remove silos from Avalon Database)"
-    )
+    description = "Use when Pype was updated from v2.2.0 to v2.3.0 or higher"
+
     #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator"]
-    icon = "{}/ftrack/action_icons/PypeDoctor.svg".format(
+    icon = "{}/ftrack/action_icons/PypeUpdate.svg".format(
         os.environ.get("PYPE_STATICS_SERVER", "")
     )
     # connector to MongoDB (Avalon mongo)
@@ -53,7 +52,7 @@ class RemoveSilosDoctor(BaseAction):
 
         items = []
         item_splitter = {'type': 'label', 'value': '---'}
-        title = "Updated Pype from v 2.2.0 to v2.3.0 or higher (remove silos)"
+        title = "Updated Pype from v 2.2.0 to v2.3.0 or higher"
 
         items.append({
             "type": "label",
@@ -187,4 +186,4 @@ def register(session, plugins_presets={}):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    RemoveSilosDoctor(session, plugins_presets).register()
+    PypeUpdateFromV2_2_0(session, plugins_presets).register()
