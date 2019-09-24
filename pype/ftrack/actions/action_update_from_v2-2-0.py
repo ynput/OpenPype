@@ -174,9 +174,20 @@ class PypeUpdateFromV2_2_0(BaseAction):
 
         self.db_con.install()
         for project in projects_to_process:
-            self.log.debug("Unsetting silo for project \"{}\"".format(project))
+            self.log.debug("Processing project \"{}\"".format(project))
             self.db_con.Session["AVALON_PROJECT"] = project
-            self.db_con.update_many({"type": "asset"}, {"$unset": {"silo": ""}})
+
+            self.log.debug("- Unsetting silos on assets")
+            self.db_con.update_many(
+                {"type": "asset"},
+                {"$unset": {"silo": ""}}
+            )
+            
+            self.log.debug("- setting schema of assets to v.3")
+            self.db_con.update_many(
+                {"type": "asset"},
+                {"$set": {"schema": "avalon-core:asset-3.0"}}
+            )
 
         return True
 
