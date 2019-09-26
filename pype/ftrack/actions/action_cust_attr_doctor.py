@@ -9,6 +9,8 @@ from pype.ftrack import BaseAction
 
 
 class CustomAttributeDoctor(BaseAction):
+    
+    ignore_me = True
     #: Action identifier.
     identifier = 'custom.attributes.doctor'
     #: Action label.

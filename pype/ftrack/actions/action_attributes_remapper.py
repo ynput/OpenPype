@@ -8,6 +8,7 @@ from pype.ftrack.lib.io_nonsingleton import DbConnector
 class AttributesRemapper(BaseAction):
     '''Edit meta data action.'''
 
+    ignore_me = True
     #: Action identifier.
     identifier = 'attributes.remapper'
     #: Action label.
