@@ -28,7 +28,9 @@ class CustomAttributeDoctor(BaseAction):
     hierarchical_ca = ['handleStart', 'handleEnd', 'frameStart', 'frameEnd']
     hierarchical_alternatives = {
         'handleStart': 'handles',
-        'handleEnd': 'handles'
+        'handleEnd': 'handles',
+        "frameStart": "fstart",
+        "frameEnd": "fend"
     }
 
     # Roles for new custom attributes
