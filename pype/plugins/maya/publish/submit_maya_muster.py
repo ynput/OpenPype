@@ -290,7 +290,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.data['subset']      # beauty
-        # renderlayer_globals = instance.data["renderGlobals"]
+        renderglobals = instance.data["renderGlobals"]
         # legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         # deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
@@ -360,7 +360,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "dependMode": 0,
                     "emergencyQueue": False,
                     "excludedPools": [""],
-                    "includedPools": [""],
+                    "includedPools": renderglobals["primaryPool"],
                     "packetSize": 4,
                     "packetType": 1,
                     "priority": 1,
