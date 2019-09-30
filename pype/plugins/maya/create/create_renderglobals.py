@@ -31,6 +31,10 @@ class CreateRenderGlobals(avalon.maya.Creator):
 
         deadline_url = os.environ.get('DEADLINE_REST_URL', None)
         muster_url = os.environ.get('MUSTER_REST_URL', None)
+        if deadline_url and muster_url:
+            self.log.error("Both Deadline and Muster are enabled. "
+                           "Cannot support both.")
+            raise RuntimeError("Both Deadline and Muster are enabled")
 
         if deadline_url is None:
             self.log.warning("Deadline REST API url not found.")
@@ -49,11 +53,15 @@ class CreateRenderGlobals(avalon.maya.Creator):
         if muster_url is None:
             self.log.warning("Muster REST API url not found.")
         else:
+            self.log.info(">>> Loading Muster credentials ...")
             self._load_credentials()
+            self.log.info(">>> Logging in Muster ...")
             self._authenticate()
+            self.log.info(">>> Getting pools ...")
             pools = self._get_muster_pools()
             pool_names = []
             for pool in pools:
+                self.log.info("  - pool: {}".format(pool['name']))
                 pool_names.append(pool['name'])
 
             self.data["primaryPool"] = pool_names
@@ -137,8 +145,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
         Get render pools from muster
         """
         params = {
-                'authToken': self._token,
-                '$filter': 'name:ALL'
+                'authToken': self._token
             }
         api_entry = '/api/pools/list'
         response = requests.post(

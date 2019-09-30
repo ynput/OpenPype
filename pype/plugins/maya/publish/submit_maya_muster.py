@@ -362,7 +362,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 "platform": 0,
                 "job": {
                     "jobName": jobname,
-                    "templateId": self._get_template_id(
+                    "templateId": _get_template_id(
                         instance.data["renderer"]),
                     "chunksInterleave": 2,
                     "chunksPriority": "0",
@@ -373,7 +373,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "dependMode": 0,
                     "emergencyQueue": False,
                     "excludedPools": [""],
-                    "includedPools": renderglobals["primaryPool"],
+                    "includedPools": [renderglobals["Pool"]],
                     "packetSize": 4,
                     "packetType": 1,
                     "priority": 1,

@@ -1,7 +1,6 @@
 import os
 import json
 import re
-from pprint import pprint
 import logging
 
 from avalon import api, io
@@ -147,7 +146,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                      "PYPE_ROOT"
                      ]
 
-
     def _submit_deadline_post_job(self, instance, job):
         """
         Deadline specific code separated from :meth:`process` for sake of
@@ -192,7 +190,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
 
-
         environment = job["Props"].get("Env", {})
         i = 0
         for index, key in enumerate(environment):
@@ -231,12 +228,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         # Get a submission job
         data = instance.data.copy()
-        render_job = data.pop("deadlineSubmissionJob")
+        render_job = data.pop("deadlineSubmissionJob", None)
         submission_type = "deadline"
 
         if not render_job:
             # No deadline job. Try Muster: musterSubmissionJob
-            render_job = data.pop("musterSubmissionJob")
+            render_job = data.pop("musterSubmissionJob", None)
             submission_type = "muster"
             if not render_job:
                 raise RuntimeError("Can't continue without valid Deadline "
@@ -295,7 +292,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # Optional metadata (for debugging)
             "metadata": {
                 "instance": data,
-                "job": job,
+                "job": render_job,
                 "session": api.Session.copy()
             }
         }
