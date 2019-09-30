@@ -63,10 +63,29 @@ class ExtractYetiCache(pype.api.Extractor):
             with open(data_file, "w") as fp:
                 json.dump(settings, fp, ensure_ascii=False)
 
-        # Ensure files can be stored
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        # build representations
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].extend([cache_files, "yeti.fursettings"])
+        self.log.info("cache files: {}".format(cache_files[0]))
+        instance.data["representations"].append(
+            {
+                'name': cache_files[0].split(".")[0],
+                'ext': 'fur',
+                'files': cache_files,
+                'stagingDir': dirname,
+                'anatomy_template': 'publish'
+            }
+        )
+
+        instance.data["representations"].append(
+            {
+                'name': os.path.basename(data_file),
+                'ext': 'fursettings',
+                'files': os.path.basename(data_file),
+                'stagingDir': dirname,
+                'anatomy_template': 'publish'
+            }
+        )
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
