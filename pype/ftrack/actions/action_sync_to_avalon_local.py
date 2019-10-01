@@ -88,6 +88,7 @@ class SyncToAvalon(BaseAction):
         })
         session.commit()
         try:
+            self.log.debug("Preparing entities for synchronization")
             self.importable = []
 
             # get from top entity in hierarchy all parent entities
