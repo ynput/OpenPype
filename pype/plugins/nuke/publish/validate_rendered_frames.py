@@ -11,9 +11,12 @@ class RepairCollectionAction(pyblish.api.Action):
     icon = "wrench"
 
     def process(self, context, plugin):
-
+        self.log.info(context[0][0])
         files_remove = [os.path.join(context[0].data["outputDir"], f)
-                        for f in context[0].data["files"]]
+                        for r in context[0].data.get("representations", [])
+                        for f in r.get("files", [])
+                        ]
+        self.log.info("Files to be removed: {}".format(files_remove))
         for f in files_remove:
             os.remove(f)
             self.log.debug("removing file: {}".format(f))
@@ -38,7 +41,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             if not repre.get('files'):
                 msg = ("no frames were collected, "
                        "you need to render them")
-                self.log.error(msg)
+                self.log.warning(msg)
                 raise ValidationException(msg)
 
             collections, remainder = clique.assemble(repre["files"])
@@ -48,7 +51,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             collection = collections[0]
 
             frame_length = int(
-                instance.data["endFrame"] - instance.data["startFrame"] + 1
+                instance.data["frameEnd"] - instance.data["frameStart"] + 1
             )
 
             if frame_length != 1:

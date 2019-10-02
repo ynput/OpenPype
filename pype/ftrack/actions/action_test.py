@@ -11,12 +11,10 @@ from pype.ftrack import BaseAction
 from avalon import io, inventory, schema
 
 
-ignore_me = True
-
-
 class TestAction(BaseAction):
     '''Edit meta data action.'''
 
+    ignore_me = True
     #: Action identifier.
     identifier = 'test.action'
     #: Action label.
@@ -42,13 +40,13 @@ class TestAction(BaseAction):
         return True
 
 
-def register(session, **kw):
+def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    TestAction(session).register()
+    TestAction(session, plugins_presets).register()
 
 
 def main(arguments=None):

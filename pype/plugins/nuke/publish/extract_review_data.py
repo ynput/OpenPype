@@ -67,8 +67,8 @@ class ExtractReviewData(pype.api.Extractor):
         else:
             fname = os.path.basename(instance.data.get("path", None))
             fhead = os.path.splitext(fname)[0] + "."
-            first_frame = instance.data.get("startFrame", None)
-            last_frame = instance.data.get("endFrame", None)
+            first_frame = instance.data.get("frameStart", None)
+            last_frame = instance.data.get("frameEnd", None)
 
         node = previous_node = nuke.createNode("Read")
 
@@ -82,15 +82,20 @@ class ExtractReviewData(pype.api.Extractor):
         temporary_nodes.append(node)
 
         reformat_node = nuke.createNode("Reformat")
-        reformat_node["format"].setValue("HD_1080")
-        reformat_node["resize"].setValue("fit")
-        reformat_node["filter"].setValue("Lanczos6")
-        reformat_node["black_outside"].setValue(True)
+
+        ref_node = self.nodes.get("Reformat", None)
+        if ref_node:
+            for k, v in ref_node:
+                self.log.debug("k,v: {0}:{1}".format(k,v))
+                if isinstance(v, unicode):
+                    v = str(v)
+                reformat_node[k].setValue(v)
+
         reformat_node.setInput(0, previous_node)
         previous_node = reformat_node
         temporary_nodes.append(reformat_node)
 
-        viewer_process_node = nuke.ViewerProcess.node()
+        viewer_process_node = instance.context.data.get("ViewerProcess")
         dag_node = None
         if viewer_process_node:
             dag_node = nuke.createNode(viewer_process_node.Class())
@@ -112,6 +117,7 @@ class ExtractReviewData(pype.api.Extractor):
 
         if representation in "mov":
             file = fhead + "baked.mov"
+            name = "baked"
             path = os.path.join(stagingDir, file).replace("\\", "/")
             self.log.debug("Path: {}".format(path))
             instance.data["baked_colorspace_movie"] = path
@@ -120,12 +126,11 @@ class ExtractReviewData(pype.api.Extractor):
             write_node["raw"].setValue(1)
             write_node.setInput(0, previous_node)
             temporary_nodes.append(write_node)
-            thumbnail = False
-            preview = True
-            tags = ["review"]
+            tags = ["review", "delete"]
 
         elif representation in "jpeg":
             file = fhead + "jpeg"
+            name = "thumbnail"
             path = os.path.join(stagingDir, file).replace("\\", "/")
             instance.data["thumbnail"] = path
             write_node["file"].setValue(path)
@@ -133,8 +138,6 @@ class ExtractReviewData(pype.api.Extractor):
             write_node["raw"].setValue(1)
             write_node.setInput(0, previous_node)
             temporary_nodes.append(write_node)
-            thumbnail = True
-            preview = False
             tags = ["thumbnail"]
 
             # retime for
@@ -142,15 +145,13 @@ class ExtractReviewData(pype.api.Extractor):
             last_frame = int(last_frame) / 2
 
         repre = {
-            'name': representation,
+            'name': name,
             'ext': representation,
             'files': file,
             "stagingDir": stagingDir,
-            "startFrame": first_frame,
-            "endFrame": last_frame,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
             "anatomy_template": "render",
-            "thumbnail": thumbnail,
-            "preview": preview,
             "tags": tags
         }
         instance.data["representations"].append(repre)

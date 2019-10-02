@@ -42,7 +42,7 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
 
         data['representations'] = [{
             'name': 'ma',
-            'ext': '.ma',
+            'ext': 'ma',
             'files': file,
             "stagingDir": folder,
         }]

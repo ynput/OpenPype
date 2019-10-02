@@ -7,5 +7,5 @@ class CreateLayout(avalon.maya.Creator):
     name = "layoutMain"
     label = "Layout"
     family = "layout"
-    icon = "boxes"
+    icon = "cubes"
     defaults = ["Main"]

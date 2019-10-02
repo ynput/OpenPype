@@ -121,7 +121,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         - publishJobState (str, Optional): "Active" or "Suspended"
             This defaults to "Suspended"
 
-    This requires a "startFrame" and "endFrame" to be present in instance.data
+    This requires a "frameStart" and "frameEnd" to be present in instance.data
     or in context.data.
 
     """
@@ -137,6 +137,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "renderlayer",
         "imagesequence"
     ]
+
+    enviro_filter = [
+                     "PATH",
+                     "PYTHONPATH",
+                     "FTRACK_API_USER",
+                     "FTRACK_API_KEY",
+                     "FTRACK_SERVER",
+                     "PYPE_ROOT"
+                     ]
+
 
     def _submit_deadline_post_job(self, instance, job):
         """
@@ -181,13 +191,22 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
+
+
         environment = job["Props"].get("Env", {})
-        payload["JobInfo"].update({
-            "EnvironmentKeyValue%d" % index: "{key}={value}".format(
-                key=key,
-                value=environment[key]
-            ) for index, key in enumerate(environment)
-        })
+        i = 0
+        for index, key in enumerate(environment):
+            self.log.info("KEY: {}".format(key))
+            self.log.info("FILTER: {}".format(self.enviro_filter))
+
+            if key.upper() in self.enviro_filter:
+                payload["JobInfo"].update({
+                    "EnvironmentKeyValue%d" % i: "{key}={value}".format(
+                        key=key,
+                        value=environment[key]
+                    )
+                })
+                i += 1
 
         # Avoid copied pools and remove secondary pool
         payload["JobInfo"]["Pool"] = "none"
@@ -212,40 +231,36 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         # Get a submission job
         data = instance.data.copy()
-        job = instance.data.get("deadlineSubmissionJob")
+        render_job = data.pop("deadlineSubmissionJob")
         submission_type = "deadline"
 
-        if not job:
+        if not render_job:
             # No deadline job. Try Muster: musterSubmissionJob
-            job = data.pop("musterSubmissionJob")
+            render_job = data.pop("musterSubmissionJob")
             submission_type = "muster"
-            if not job:
+            if not render_job:
                 raise RuntimeError("Can't continue without valid Deadline "
                                    "or Muster submission prior to this "
                                    "plug-in.")
 
         if submission_type == "deadline":
-            render_job = data.pop("deadlineSubmissionJob")
             self.DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
                                                     "http://localhost:8082")
             assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
-            self._submit_deadline_post_job(instance, job)
-
-        if submission_type == "muster":
-            render_job = data.pop("musterSubmissionJob")
+            self._submit_deadline_post_job(instance, render_job)
 
         asset = data.get("asset") or api.Session["AVALON_ASSET"]
         subset = data["subset"]
 
         # Get start/end frame from instance, if not available get from context
         context = instance.context
-        start = instance.data.get("startFrame")
+        start = instance.data.get("frameStart")
         if start is None:
-            start = context.data["startFrame"]
-        end = instance.data.get("endFrame")
+            start = context.data["frameStart"]
+        end = instance.data.get("frameEnd")
         if end is None:
-            end = context.data["endFrame"]
+            end = context.data["frameEnd"]
 
         # Add in regex for sequence filename
         # This assumes the output files start with subset name and ends with
@@ -270,13 +285,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         metadata = {
             "asset": asset,
             "regex": regex,
-            "startFrame": start,
-            "endFrame": end,
+            "frameStart": start,
+            "frameEnd": end,
             "fps": context.data.get("fps", None),
             "families": ["render"],
             "source": source,
             "user": context.data["user"],
-
+            "version": context.data["version"],
             # Optional metadata (for debugging)
             "metadata": {
                 "instance": data,
@@ -319,8 +334,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
                 # Set prev start / end frames for comparison
                 if not prev_start and not prev_end:
-                    prev_start = version["data"]["startFrame"]
-                    prev_end = version["data"]["endFrame"]
+                    prev_start = version["data"]["frameStart"]
+                    prev_end = version["data"]["frameEnd"]
 
                 subset_resources = get_resources(version, _ext)
                 resource_files = get_resource_files(subset_resources,
@@ -356,12 +371,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # Please do so when fixing this.
 
             # Start frame
-            metadata["startFrame"] = updated_start
-            metadata["metadata"]["instance"]["startFrame"] = updated_start
+            metadata["frameStart"] = updated_start
+            metadata["metadata"]["instance"]["frameStart"] = updated_start
 
             # End frame
-            metadata["endFrame"] = updated_end
-            metadata["metadata"]["instance"]["endFrame"] = updated_end
+            metadata["frameEnd"] = updated_end
+            metadata["metadata"]["instance"]["frameEnd"] = updated_end
 
         metadata_filename = "{}_metadata.json".format(subset)
 

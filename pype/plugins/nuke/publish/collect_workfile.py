@@ -38,8 +38,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         first_frame = int(root["first_frame"].getValue())
         last_frame = int(root["last_frame"].getValue())
 
-        handle_start = int(knob_data.get("handle_start", 0))
-        handle_end = int(knob_data.get("handle_end", 0))
+        handle_start = int(knob_data.get("handleStart", 0))
+        handle_end = int(knob_data.get("handleEnd", 0))
 
         # Get format
         format = root['format'].value()
@@ -54,17 +54,17 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         script_data = {
             "asset": os.getenv("AVALON_ASSET", None),
             "version": version,
-            "startFrame": first_frame + handle_start,
-            "endFrame": last_frame - handle_end,
-            "resolution_width": resolution_width,
-            "resolution_height": resolution_height,
-            "pixel_aspect": pixel_aspect,
+            "frameStart": first_frame + handle_start,
+            "frameEnd": last_frame - handle_end,
+            "resolutionWidth": resolution_width,
+            "resolutionHeight": resolution_height,
+            "pixelAspect": pixel_aspect,
 
             # backward compatibility
             "handles": handle_start,
 
-            "handle_start": handle_start,
-            "handle_end": handle_end,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
             "step": 1,
             "fps": root['fps'].value(),
         }

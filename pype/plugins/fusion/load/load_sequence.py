@@ -145,7 +145,7 @@ class FusionLoadSequence(api.Loader):
             tool["Clip"] = path
 
             # Set global in point to start frame (if in version.data)
-            start = context["version"]["data"].get("startFrame", None)
+            start = context["version"]["data"].get("frameStart", None)
             if start is not None:
                 loader_shift(tool, start, relative=False)
 
@@ -175,7 +175,7 @@ class FusionLoadSequence(api.Loader):
                 been set.
 
             - GlobalIn: Fusion reset to comp's global in if duration changes
-              - We change it to the "startFrame"
+              - We change it to the "frameStart"
 
             - GlobalEnd: Fusion resets to globalIn + length if duration changes
               - We do the same like Fusion - allow fusion to take control.
@@ -212,7 +212,7 @@ class FusionLoadSequence(api.Loader):
         # Get start frame from version data
         version = io.find_one({"type": "version",
                                "_id": representation["parent"]})
-        start = version["data"].get("startFrame")
+        start = version["data"].get("frameStart")
         if start is None:
             self.log.warning("Missing start frame for updated version"
                              "assuming starts at frame 0 for: "

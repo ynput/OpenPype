@@ -8,7 +8,8 @@ from pype.maya import lib
 class CollectRenderableCamera(pyblish.api.InstancePlugin):
     """Collect the renderable camera(s) for the render layer"""
 
-    order = pyblish.api.CollectorOrder + 0.01
+    # Offset to be after renderlayer collection.
+    order = pyblish.api.CollectorOrder + 0.02
     label = "Collect Renderable Camera(s)"
     hosts = ["maya"]
     families = ["vrayscene",

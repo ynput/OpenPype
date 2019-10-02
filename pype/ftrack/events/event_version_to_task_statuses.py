@@ -69,9 +69,9 @@ class VersionToTaskStatus(BaseEvent):
                             path, task_status['name']))
 
 
-def register(session, **kw):
+def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    VersionToTaskStatus(session).register()
+    VersionToTaskStatus(session, plugins_presets).register()

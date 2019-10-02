@@ -22,8 +22,8 @@ class ValidateSequenceFrames(pyblish.api.InstancePlugin):
         frames = list(collection.indexes)
 
         current_range = (frames[0], frames[-1])
-        required_range = (instance.data["startFrame"],
-                          instance.data["endFrame"])
+        required_range = (instance.data["frameStart"],
+                          instance.data["frameEnd"])
 
         if current_range != required_range:
             raise ValueError("Invalid frame range: {0} - "

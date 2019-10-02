@@ -7,9 +7,9 @@ from Qt import QtWidgets
 class ImagePlaneLoader(api.Loader):
     """Specific loader of plate for image planes on selected camera."""
 
-    families = ["plate"]
+    families = ["plate", "render"]
     label = "Create imagePlane on selected camera."
-    representations = ["mov"]
+    representations = ["mov", "exr"]
     icon = "image"
     color = "orange"
 
@@ -58,12 +58,10 @@ class ImagePlaneLoader(api.Loader):
             camera=camera, showInAllViews=False
         )
         image_plane_shape.depth.set(image_plane_depth)
-        # Need to get "type" by string, because its a method as well.
-        pc.Attribute(image_plane_shape + ".type").set(2)
+
         image_plane_shape.imageName.set(
             context["representation"]["data"]["path"]
         )
-        image_plane_shape.useFrameExtension.set(1)
 
         start_frame = pc.playbackOptions(q=True, min=True)
         end_frame = pc.playbackOptions(q=True, max=True)
@@ -71,6 +69,29 @@ class ImagePlaneLoader(api.Loader):
         image_plane_shape.frameOffset.set(1 - start_frame)
         image_plane_shape.frameIn.set(start_frame)
         image_plane_shape.frameOut.set(end_frame)
+        image_plane_shape.useFrameExtension.set(1)
+
+        if context["representation"]["name"] == "mov":
+            # Need to get "type" by string, because its a method as well.
+            pc.Attribute(image_plane_shape + ".type").set(2)
+
+        # Ask user whether to use sequence or still image.
+        if context["representation"]["name"] == "exr":
+            reply = QtWidgets.QMessageBox.information(
+                None,
+                "Frame Hold.",
+                "Hold image sequence on first frame?",
+                QtWidgets.QMessageBox.Ok,
+                QtWidgets.QMessageBox.Cancel
+            )
+            if reply == QtWidgets.QMessageBox.Ok:
+                pc.delete(
+                    image_plane_shape.listConnections(type="expression")[0]
+                )
+                image_plane_shape.frameExtension.set(start_frame)
+
+            # Ensure OpenEXRLoader plugin is loaded.
+            pc.loadPlugin("OpenEXRLoader.mll", quiet=True)
 
         new_nodes.extend(
             [image_plane_transform.name(), image_plane_shape.name()]

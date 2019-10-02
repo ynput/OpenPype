@@ -25,8 +25,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        start = instance.data.get("startFrame", None)
-        end = instance.data.get("endFrame", None)
+        start = instance.data.get("frameStart", None)
+        end = instance.data.get("frameEnd", None)
         handles = instance.data.get("handles", None)
 
         # Check if any of the values are present

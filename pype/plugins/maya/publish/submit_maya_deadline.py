@@ -51,7 +51,7 @@ def get_renderer_variables(renderlayer=None):
         # returns an index number.
         filename_base = os.path.basename(filename_0)
         extension = os.path.splitext(filename_base)[-1].strip(".")
-        filename_prefix = "<Scene>/<RenderLayer>/<RenderLayer>"
+        filename_prefix = cmds.getAttr("defaultRenderGlobals.imageFilePrefix")
 
     return {"ext": extension,
             "filename_prefix": filename_prefix,
@@ -77,8 +77,19 @@ def preview_fname(folder, scene, layer, padding, ext):
 
     """
 
-    # Following hardcoded "<Scene>/<Scene>_<Layer>/<Layer>"
-    output = "{scene}/{layer}/{layer}.{number}.{ext}".format(
+    fileprefix = cmds.getAttr("defaultRenderGlobals.imageFilePrefix")
+    output = fileprefix + ".{number}.{ext}"
+    # RenderPass is currently hardcoded to "beauty" because its not important
+    # for the deadline submission, but we will need something to replace
+    # "<RenderPass>".
+    mapping = {
+        "<Scene>": "{scene}",
+        "<RenderLayer>": "{layer}",
+        "RenderPass": "beauty"
+    }
+    for key, value in mapping.items():
+        output = output.replace(key, value)
+    output = output.format(
         scene=scene,
         layer=layer,
         number="#" * padding,
@@ -171,8 +182,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": instance.data.get("mayaRenderPlugin", "MayaBatch"),
                 "Frames": "{start}-{end}x{step}".format(
-                    start=int(instance.data["startFrame"]),
-                    end=int(instance.data["endFrame"]),
+                    start=int(instance.data["frameStart"]),
+                    end=int(instance.data["frameEnd"]),
                     step=int(instance.data["byFrameStep"]),
                 ),
 
@@ -319,7 +330,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
 
-        for key in ("startFrame", "endFrame", "byFrameStep"):
+        for key in ("frameStart", "frameEnd", "byFrameStep"):
             value = instance.data[key]
 
             if int(value) == value:

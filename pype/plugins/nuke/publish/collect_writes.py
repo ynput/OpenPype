@@ -15,12 +15,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        # if not instance.data["publish"]:
-        #     continue
+        node = None
+        for x in instance:
+            if x.Class() == "Write":
+                node = x
 
-        node = instance[0]
-
-        if node.Class() != "Write":
+        if node is None:
             return
 
         self.log.debug("checking instance: {}".format(instance))
@@ -34,7 +34,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             output_type = "mov"
 
         # Get frame range
-        handles = instance.context.data.get('handles', 0)
+        handles = instance.context.data['handles']
+        handle_start = instance.context.data["handleStart"]
+        handle_end = instance.context.data["handleEnd"]
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
 
@@ -66,34 +68,56 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             instance.data['families'].append('ftrack')
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
-            try:
-                collected_frames = os.listdir(output_dir)
 
                 representation = {
                     'name': ext,
                     'ext': ext,
-                    'files': collected_frames,
                     "stagingDir": output_dir,
                     "anatomy_template": "render"
                 }
-                instance.data["representations"].append(representation)
 
+            try:
+                collected_frames = os.listdir(output_dir)
+                representation['files'] = collected_frames
+                instance.data["representations"].append(representation)
             except Exception:
+                instance.data["representations"].append(representation)
                 self.log.debug("couldn't collect frames: {}".format(label))
 
         if 'render.local' in instance.data['families']:
             instance.data['families'].append('ftrack')
 
+        # Add version data to instance
+        version_data = {
+            "handles": handle_start,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
+            "version": int(version),
+            "colorspace":  node["colorspace"].value(),
+            "families": [instance.data["family"]],
+            "subset": instance.data["subset"],
+            "fps": instance.context.data["fps"]
+        }
+
+        group_node = [x for x in instance if x.Class() == "Group"][0]
+        deadlineChunkSize = 1
+        if "deadlineChunkSize" in group_node.knobs():
+            deadlineChunkSize = group_node["deadlineChunkSize"].value()
+
         instance.data.update({
+            "versionData": version_data,
             "path": path,
             "outputDir": output_dir,
             "ext": ext,
             "label": label,
             "handles": handles,
-            "startFrame": first_frame,
-            "endFrame": last_frame,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
+            "deadlineChunkSize": deadlineChunkSize
         })
 
         self.log.debug("instance.data: {}".format(instance.data))

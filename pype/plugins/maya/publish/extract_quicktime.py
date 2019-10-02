@@ -99,7 +99,6 @@ class ExtractQuicktime(pype.api.Extractor):
             playblast = capture_gui.lib.capture_scene(preset)
 
         self.log.info("file list  {}".format(playblast))
-        # self.log.info("Calculating HUD data overlay")
 
         collected_frames = os.listdir(stagingdir)
         collections, remainder = clique.assemble(collected_frames)
@@ -107,61 +106,19 @@ class ExtractQuicktime(pype.api.Extractor):
             stagingdir, collections[0].format('{head}{padding}{tail}'))
         self.log.info("input {}".format(input_path))
 
-        movieFile = filename + ".mov"
-        movieFileBurnin = filename + "Burn" + ".mov"
-
-        full_movie_path = os.path.join(stagingdir, movieFile)
-        full_burnin_path = os.path.join(stagingdir, movieFileBurnin)
-        self.log.info("output {}".format(full_movie_path))
-        with avalon.maya.suspended_refresh():
-            try:
-                (
-                    ffmpeg
-                    .input(input_path, framerate=fps, start_number=int(start))
-                    .output(full_movie_path)
-                    .run(overwrite_output=True,
-                         capture_stdout=True,
-                         capture_stderr=True)
-                )
-            except ffmpeg.Error as e:
-                ffmpeg_error = 'ffmpeg error: {}'.format(e.stderr)
-                self.log.error(ffmpeg_error)
-                raise RuntimeError(ffmpeg_error)
-
-        version = instance.context.data['version']
-
-        burnin_data = {
-            "input": full_movie_path.replace("\\", "/"),
-            "output": full_burnin_path.replace("\\", "/"),
-            "burnin_data": {
-                            "username": instance.context.data['user'],
-                            "asset": os.environ['AVALON_ASSET'],
-                            "task": os.environ['AVALON_TASK'],
-                            "start_frame": int(start),
-                            "version": "v" + str(version)
-                            }
-            }
-
-        json_data = json.dumps(burnin_data)
-        scriptpath = os.path.join(os.environ['PYPE_MODULE_ROOT'], "pype", "scripts", "otio_burnin.py")
-
-        p = subprocess.Popen(
-            ['python', scriptpath, json_data]
-        )
-        p.wait()
-
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
         representation = {
             'name': 'mov',
             'ext': 'mov',
-            'files': movieFileBurnin,
+            'files': collected_frames,
             "stagingDir": stagingdir,
-            'startFrame': start,
-            'endFrame': end,
-            'frameRate': fps,
-            'preview': True
+            "frameStart": start,
+            "frameEnd": end,
+            'fps': fps,
+            'preview': True,
+            'tags': ['review', 'delete']
         }
         instance.data["representations"].append(representation)
 

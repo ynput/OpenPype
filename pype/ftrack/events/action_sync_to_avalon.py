@@ -3,11 +3,14 @@ import sys
 import argparse
 import logging
 import json
+
+from pypeapp import config
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction, lib
+from pype.vendor.ftrack_api import session as fa_session
 
 
-class Sync_To_Avalon(BaseAction):
+class SyncToAvalon(BaseAction):
     '''
     Synchronizing data action - from Ftrack to Avalon DB
 
@@ -45,12 +48,20 @@ class Sync_To_Avalon(BaseAction):
     #: Action identifier.
     identifier = 'sync.to.avalon'
     #: Action label.
-    label = 'SyncToAvalon'
+    label = "Pype Admin"
+    variant = "- Sync To Avalon (Server)"
     #: Action description.
     description = 'Send data from Ftrack to Avalon'
     #: Action icon.
-    icon = '{}/ftrack/action_icons/SyncToAvalon.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
+        os.environ.get(
+            'PYPE_STATICS_SERVER',
+            'http://localhost:{}'.format(
+                config.get_presets().get('services', {}).get(
+                    'statics_server', {}
+                ).get('default_port', 8021)
+            )
+        )
     )
 
     def register(self):
@@ -70,7 +81,7 @@ class Sync_To_Avalon(BaseAction):
         ''' Validation '''
         roleCheck = False
         discover = False
-        roleList = ['Administrator', 'Project Manager']
+        roleList = ['Pypeclub', 'Administrator', 'Project Manager']
         userId = event['source']['user']['id']
         user = session.query('User where id is ' + userId).one()
 
@@ -191,6 +202,14 @@ class Sync_To_Avalon(BaseAction):
                 ' - Please check Log for more information'
             )
 
+        finally:
+            if job['status'] in ['queued', 'running']:
+                job['status'] = 'failed'
+
+            session.commit()
+            
+            self.trigger_action("sync.hierarchical.attrs", event)
+
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)
             return {
@@ -214,7 +233,7 @@ class Sync_To_Avalon(BaseAction):
                     self.add_childs_to_importable(child)
 
 
-def register(session, **kw):
+def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
 
     # Validate that session is an instance of ftrack_api.Session. If not,
@@ -223,7 +242,7 @@ def register(session, **kw):
     if not isinstance(session, ftrack_api.session.Session):
         return
 
-    Sync_To_Avalon(session).register()
+    SyncToAvalon(session, plugins_presets).register()
 
 
 def main(arguments=None):

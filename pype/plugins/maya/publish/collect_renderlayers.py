@@ -64,9 +64,9 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
                 "subset": layername,
                 "setMembers": layer,
                 "publish": True,
-                "startFrame": self.get_render_attribute("startFrame",
+                "frameStart": self.get_render_attribute("startFrame",
                                                         layer=layer),
-                "endFrame": self.get_render_attribute("endFrame",
+                "frameEnd": self.get_render_attribute("endFrame",
                                                       layer=layer),
                 "byFrameStep": self.get_render_attribute("byFrameStep",
                                                          layer=layer),
@@ -106,8 +106,8 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
 
             # Define nice label
             label = "{0} ({1})".format(layername, data["asset"])
-            label += "  [{0}-{1}]".format(int(data["startFrame"]),
-                                          int(data["endFrame"]))
+            label += "  [{0}-{1}]".format(int(data["frameStart"]),
+                                          int(data["frameEnd"]))
 
             instance = context.create_instance(layername)
             instance.data["label"] = label
