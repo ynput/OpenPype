@@ -380,9 +380,13 @@ def import_to_avalon(
 def get_avalon_attr(session, split_hierarchical=False):
     custom_attributes = []
     hier_custom_attributes = []
-    query = 'CustomAttributeGroup where name is "avalon"'
-    all_avalon_attr = session.query(query).one()
-    for cust_attr in all_avalon_attr['custom_attribute_configurations']:
+    cust_attrs_query = (
+        "select id, entity_type, object_type_id, is_hierarchical"
+        " from CustomAttributeConfiguration"
+        " where group.name = \"avalon\""
+    )
+    all_avalon_attr = session.query(cust_attrs_query).all()
+    for cust_attr in all_avalon_attr:
         if 'avalon_' in cust_attr['key']:
             continue
 
