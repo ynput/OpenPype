@@ -16,3 +16,9 @@ class ValidateActiveViewer(pyblish.api.ContextPlugin):
         assert viewer_process_node, (
             "Missing active viewer process! Please click on output write node and push key number 1-9"
         )
+        active_viewer = context.data["ActiveViewer"]
+        active_input = active_viewer.activeInput()
+
+        assert active_input is not None, (
+            "Missing active viewer input! Please click on output write node and push key number 1-9"
+        )
