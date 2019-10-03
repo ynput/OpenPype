@@ -56,7 +56,11 @@ class CreateRenderGlobals(avalon.maya.Creator):
             self.log.info(">>> Loading Muster credentials ...")
             self._load_credentials()
             self.log.info(">>> Logging in Muster ...")
-            self._authenticate()
+            try:
+                self._authenticate()
+            except requests.exceptions.ConnectionError:
+                self.log.error("Cannot connect to Muster API endpoint.")
+                raise RuntimeError("Cannot connect to {}".format(muster_url))
             self.log.info(">>> Getting pools ...")
             pools = self._get_muster_pools()
             pool_names = []
