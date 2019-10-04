@@ -307,7 +307,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 if repre.get("frameStart"):
                     frame_start_padding = len(str(
                         repre.get("frameEnd")))
-                    index_frame_start = repre.get("frameStart")
+                    index_frame_start = int(repre.get("frameStart"))
 
                 dst_padding_exp = src_padding_exp
                 for i in src_collection.indexes:
