@@ -2,7 +2,6 @@ import os
 import nuke
 import pyblish.api
 import pype
-import copy
 
 class ExtractReviewData(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
