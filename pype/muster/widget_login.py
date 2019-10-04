@@ -134,7 +134,7 @@ class MusterLogin(QtWidgets.QWidget):
         self._close_widget()
 
     def save_credentials(self, username, password):
-        self.parent_widget.save_credentials(username, password)
+        self.parent_widget.get_auth_token(username, password)
 
     def closeEvent(self, event):
         event.ignore()

@@ -55,14 +55,12 @@ class CreateRenderGlobals(avalon.maya.Creator):
         else:
             self.log.info(">>> Loading Muster credentials ...")
             self._load_credentials()
-            self.log.info(">>> Logging in Muster ...")
+            self.log.info(">>> Getting pools ...")
             try:
-                self._authenticate()
+                pools = self._get_muster_pools()
             except requests.exceptions.ConnectionError:
                 self.log.error("Cannot connect to Muster API endpoint.")
                 raise RuntimeError("Cannot connect to {}".format(muster_url))
-            self.log.info(">>> Getting pools ...")
-            pools = self._get_muster_pools()
             pool_names = []
             for pool in pools:
                 self.log.info("  - pool: {}".format(pool['name']))
@@ -105,6 +103,10 @@ class CreateRenderGlobals(avalon.maya.Creator):
         """
         Load Muster credentials from file and set `MUSTER_USER`,
         `MUSTER_PASSWORD`, `MUSTER_REST_URL` is loaded from presets.
+
+        .. todo::
+
+           Show login dialog if access token is invalid or missing.
         """
         app_dir = os.path.normpath(
             appdirs.user_data_dir('pype-app', 'pype')
@@ -113,36 +115,13 @@ class CreateRenderGlobals(avalon.maya.Creator):
         fpath = os.path.join(app_dir, file_name)
         file = open(fpath, 'r')
         muster_json = json.load(file)
-        self.MUSTER_USER = muster_json.get('username', None)
-        self.MUSTER_PASSWORD = muster_json.get('password', None)
+        self._token = muster_json.get('token', None)
+        if not self._token:
+            raise RuntimeError("Invalid access token for Muster")
         file.close()
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
         if not self.MUSTER_REST_URL:
             raise AttributeError("Muster REST API url not set")
-
-    def _authenticate(self):
-        """
-        Authenticate user with Muster and get authToken from server.
-        """
-        params = {
-                    'username': self.MUSTER_USER,
-                    'password': self.MUSTER_PASSWORD
-               }
-        api_entry = '/api/login'
-        response = requests.post(
-            self.MUSTER_REST_URL + api_entry, params=params)
-        if response.status_code != 200:
-            self.log.error(
-                'Cannot log into Muster: {}'.format(response.status_code))
-            raise Exception('Cannot login into Muster.')
-
-        try:
-            self._token = response.json()['ResponseData']['authToken']
-        except ValueError as e:
-            self.log.error('Invalid response from Muster server {}'.format(e))
-            raise Exception('Invalid response from Muster while logging in.')
-
-        return self._token
 
     def _get_muster_pools(self):
         """
