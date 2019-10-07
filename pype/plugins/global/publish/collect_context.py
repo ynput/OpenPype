@@ -1,3 +1,18 @@
+"""
+Requires:
+    environment     -> SAPUBLISH_INPATH
+    environment     -> SAPUBLISH_OUTPATH
+
+Provides:
+    context         -> returnJsonPath (str)
+    context         -> project
+    context         -> asset
+    instance        -> destination_list (list)
+    instance        -> representations (list)
+    instance        -> source (list)
+    instance        -> representations
+"""
+
 import os
 import pyblish.api
 from avalon import io

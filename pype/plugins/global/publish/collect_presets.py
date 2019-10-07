@@ -1,3 +1,12 @@
+"""
+Requires:
+    config_data -> colorspace.default
+    config_data -> dataflow.default
+
+Provides:
+    context     -> presets
+"""
+
 from pyblish import api
 from pypeapp import config
 

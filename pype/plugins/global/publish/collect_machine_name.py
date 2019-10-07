@@ -1,3 +1,11 @@
+"""
+Requires:
+    none
+
+Provides:
+    context     -> machine (str)
+"""
+
 import pyblish.api
 
 

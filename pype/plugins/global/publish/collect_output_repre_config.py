@@ -1,5 +1,11 @@
-import os
-import json
+"""
+Requires:
+    config_data -> ftrack.output_representation
+
+Provides:
+    context     -> output_repre_config (str)
+"""
+
 import pyblish.api
 from pypeapp import config
 
