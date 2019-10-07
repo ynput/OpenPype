@@ -13,6 +13,8 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
     label = 'Collect Version'
 
     def process(self, context):
+        if "standalonepublisher" in context.data.get("host"):
+            return
 
         filename = os.path.basename(context.data.get('currentFile'))
 

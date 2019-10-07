@@ -220,15 +220,21 @@ class DropDataFrame(QtWidgets.QFrame):
         self._process_data(data)
 
     def load_data_with_probe(self, filepath):
+        ffprobe_path = os.getenv("FFMPEG_PATH", "")
+        if ffprobe_path:
+            ffprobe_path += '/ffprobe'
+        else:
+            ffprobe_path = 'ffprobe'
+
         args = [
-            'ffprobe',
+            ffprobe_path,
             '-v', 'quiet',
             '-print_format', 'json',
             '-show_format',
             '-show_streams', filepath
         ]
         ffprobe_p = subprocess.Popen(
-            args,
+            ' '.join(args),
             stdout=subprocess.PIPE,
             shell=True
         )

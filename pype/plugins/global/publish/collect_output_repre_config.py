@@ -15,7 +15,7 @@ class CollectOutputRepreConfig(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Collect Config for representation"
-    hosts = ["shell"]
+    hosts = ["shell", "standalonepublisher"]
 
     def process(self, context):
         config_data = config.get_presets()["ftrack"]["output_representation"]
