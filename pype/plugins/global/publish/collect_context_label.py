@@ -1,3 +1,10 @@
+"""
+Requires:
+    context     -> currentFile (str)
+Provides:
+    context     -> label (str)
+"""
+
 import os
 import pyblish.api
 

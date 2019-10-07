@@ -1,3 +1,18 @@
+"""
+Requires:
+    environment     -> SAPUBLISH_INPATH
+    environment     -> SAPUBLISH_OUTPATH
+
+Provides:
+    context         -> returnJsonPath (str)
+    context         -> project
+    context         -> asset
+    instance        -> destination_list (list)
+    instance        -> representations (list)
+    instance        -> source (list)
+    instance        -> representations
+"""
+
 import os
 import pyblish.api
 from avalon import io
@@ -31,8 +46,24 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             in_data = json.load(f)
 
         asset_name = in_data['asset']
+        family_preset_key = in_data.get('family_preset_key', '')
         family = in_data['family']
         subset = in_data['subset']
+
+        # Load presets
+        presets = context.data.get("presets")
+        if not presets:
+            from pypeapp import config
+            presets = config.get_presets()
+
+        # Get from presets anatomy key that will be used for getting template
+        # - default integrate new is used if not set
+        anatomy_key = presets.get(
+            "standalone_publish", {}).get(
+            "families", {}).get(
+            family_preset_key, {}).get(
+            "anatomy_template"
+        )
 
         project = io.find_one({'type': 'project'})
         asset = io.find_one({
@@ -50,6 +81,8 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             "label": subset,
             "name": subset,
             "family": family,
+            "frameStart": in_data.get("representations", [None])[0].get("frameStart", None),
+            "frameEnd": in_data.get("representations", [None])[0].get("frameEnd", None),
             "families": [family, 'ftrack'],
         })
         self.log.info("collected instance: {}".format(instance.data))
@@ -63,7 +96,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
 
             component['destination'] = component['files']
             component['stagingDir'] = component['stagingDir']
-            component['anatomy_template'] = 'render'
+            # Do not set anatomy_template if not specified
+            if anatomy_key:
+                component['anatomy_template'] = anatomy_key
             if isinstance(component['files'], list):
                 collections, remainder = clique.assemble(component['files'])
                 self.log.debug("collecting sequence: {}".format(collections))
