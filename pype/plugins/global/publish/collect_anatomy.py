@@ -9,11 +9,11 @@ from pypeapp import Anatomy
 import pyblish.api
 
 
-class CollectTemplates(pyblish.api.ContextPlugin):
+class CollectAnatomy(pyblish.api.ContextPlugin):
     """Collect Anatomy into Context"""
 
     order = pyblish.api.CollectorOrder
-    label = "Collect Templates"
+    label = "Collect Anatomy"
 
     def process(self, context):
         context.data['anatomy'] = Anatomy()

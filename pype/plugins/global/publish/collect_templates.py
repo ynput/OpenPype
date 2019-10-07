@@ -82,5 +82,5 @@ class CollectTemplates(pyblish.api.InstancePlugin):
 
         # We take the parent folder of representation 'filepath'
         instance.data["assumedDestination"] = os.path.dirname(
-            (anatomy.format(template_data)).publish.path
+            (anatomy.format(template_data))["publish"]["path"]
         )
