@@ -59,11 +59,13 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         """Because processing is technically the same for now so it is used
         the same way
         """
-        content_length = int(self.headers["Content-Length"])
-        in_data_str = self.rfile.read(content_length)
         in_data = None
-        if in_data_str:
-            in_data = json.loads(in_data_str)
+        cont_len = self.headers.get("Content-Length")
+        if cont_len:
+            content_length = int(cont_len)
+            in_data_str = self.rfile.read(content_length)
+            if in_data_str:
+                in_data = json.loads(in_data_str)
 
         registered_callbacks = self.server.registered_callbacks[rest_method]
 
