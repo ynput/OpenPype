@@ -70,54 +70,90 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         registered_callbacks = self.server.registered_callbacks[rest_method]
 
         path_items = [part.lower() for part in self.path.split("/") if part]
+        request_path = "/".join(path_items)
+        callback = registered_callbacks.get(request_path)
+        result = None
+        if callback:
+            log.debug(
+                "Triggering callbacks for path \"{}\"".format(request_path)
+            )
+            try:
+                params = signature(callback).parameters
+                if len(params) > 0 and in_data:
+                    result = callback(in_data)
+                else:
+                    result = callback()
 
-        results = []
-        for check_path, callbacks in registered_callbacks.items():
-            check_path_items = check_path.split("/")
-            if check_path_items == path_items:
-                log.debug(
-                    "Triggering callbacks for path \"{}\"".format(check_path)
-                )
-                for callback in callbacks:
-                    try:
-                        params = signature(callback).parameters
-                        if len(params) > 0 and in_data:
-                            result = callback(in_data)
-                        else:
-                            result = callback()
+                self.send_response(HTTPStatus.OK)
 
-                        if result:
-                            results.append(result)
-                    except Exception:
-                        log.error(
-                            "Callback on path \"{}\" failed".format(check_path),
-                            exc_info=True
+                if result in [None, True] or isinstance(result, (str, int)):
+                    message = str(result)
+                    if result in [None, True]:
+                        message = "{} request for \"{}\" passed".format(
+                            rest_method, self.path
                         )
 
-        any_result = len(results) > 0
-        self.send_response(HTTPStatus.OK)
-        if any_result:
-            self.send_header("Content-type", "application/json")
+                    self.handle_result(rest_method, message=message)
+
+                    return
+
+                if isinstance(result, (dict, list)):
+                    message = json.dumps(result).encode()
+                    self.handle_result(rest_method, final_output=message)
+
+                    return
+
+            except Exception:
+                message = "{} request for \"{}\" failed".format(
+                    rest_method, self.path
+                )
+                log.error(message, exc_info=True)
+
+                self.send_response(HTTPStatus.BAD_REQUEST)
+                self.handle_result(rest_method, message=message, success=False)
+
+                return
+
+            self.handle_result(rest_method)
+
+        else:
+            message = (
+            "{} request for \"{}\" don't have registered callback"
+            ).format(rest_method, self.path)
+            log.debug(message)
+
+            self.send_response(HTTPStatus.NOT_FOUND)
+            self.handle_result(rest_method, message=message, success=False)
+
+    def handle_result(
+        self, rest_method, final_output=None, message=None, success=True,
+        content_type="application/json"
+    ):
+        self.send_header("Content-type", content_type)
+        if final_output:
+            output = final_output
+        else:
+            if not message:
+                output = json.dumps({
+                    "success": False,
+                    "message": (
+                        "{} request for \"{}\" has unexpected result"
+                    ).format(rest_method, self.path)
+                }).encode()
+
+            else:
+                output = json.dumps({
+                    "success": success, "message": message
+                }).encode()
+
+
+        if isinstance(output, str):
+            self.send_header("Content-Length", len(output))
+
         self.end_headers()
 
-        if not any_result:
-            return
-
-        if len(results) == 1:
-            json_message = str(results[0])
-        else:
-            index = 1
-            messages = {}
-            for result in results:
-                if isinstance(result, str):
-                    value = result
-                else:
-                    value = json.dumps(result)
-                messages["callback{}".format(str(index))] = value
-
-            json_message = json.dumps(messages)
-
-        self.wfile.write(json_message.encode())
+        if output:
+            self.wfile.write(output)
 
 
 class AdditionalArgsTCPServer(socketserver.TCPServer):
@@ -172,14 +208,17 @@ class RestApiServer(QtCore.QThread):
             rest_method = str(rest_method).upper()
 
         if path in self.registered_callbacks[rest_method]:
-            log.warning(
+            log.error(
                 "Path \"{}\" has already registered callback.".format(path)
             )
-        else:
-            log.debug(
-                "Registering callback for path \"{}\"".format(path)
-            )
-        self.registered_callbacks[rest_method][path].append(callback)
+            return False
+
+        log.debug(
+            "Registering callback for path \"{}\"".format(path)
+        )
+        self.registered_callbacks[rest_method][path] = callback
+
+        return True
 
     def tray_start(self):
         self.start()
