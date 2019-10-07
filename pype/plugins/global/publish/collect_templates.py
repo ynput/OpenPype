@@ -23,6 +23,7 @@ class CollectTemplates(pyblish.api.InstancePlugin):
 
     order = pyblish.api.CollectorOrder + 0.1
     label = "Collect and fill Templates"
+    hosts = ["maya", "nuke", "standalonepublisher"]
 
     def process(self, instance):
         # get all the stuff from the database
