@@ -322,7 +322,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1
 
-                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
+                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail).replace("..", ".")
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
                     self.log.debug("source: {}".format(src))
@@ -357,7 +357,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 dst = os.path.normpath(
-                    anatomy_filled[template_name]["path"])
+                    anatomy_filled[template_name]["path"]).replace("..", ".")
 
                 instance.data["transfers"].append([src, dst])
 
