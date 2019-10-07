@@ -91,7 +91,7 @@ _alembic_options = {
 }
 
 INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
-FLOAT_FPS = {23.976, 29.97, 47.952, 59.94}
+FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 
 def _get_mel_global(name):
@@ -1757,24 +1757,20 @@ def set_scene_fps(fps, update=True):
                    '30': 'ntsc',
                    '48': 'show',
                    '50': 'palf',
-                   '60': 'ntscf'}
+                   '60': 'ntscf',
+                   '23.98': '23.976fps',
+                   '23.976': '23.976fps',
+                   '29.97': '29.97fps',
+                   '47.952': '47.952fps',
+                   '47.95': '47.952fps',
+                   '59.94': '59.94fps',
+                   '44100': '44100fps',
+                   '48000': '48000fps'}
 
-    if fps in FLOAT_FPS:
-        unit = "{}fps".format(fps)
-
-    elif fps in INT_FPS:
-        unit = "{}fps".format(int(fps))
-
-    else:
+    # pull from mapping
+    unit = fps_mapping.get(str(fps), None)
+    if unit is None:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
-
-    # get maya version
-    version = int(cmds.about(version=True))
-    if version < 2018:
-        # pull from mapping
-        unit = fps_mapping.get(str(int(fps)), None)
-        if unit is None:
-            raise ValueError("Unsupported FPS value: `%s`" % fps)
 
     # Get time slider current state
     start_frame = cmds.playbackOptions(query=True, minTime=True)
