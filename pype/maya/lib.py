@@ -9,6 +9,7 @@ import json
 import logging
 import contextlib
 from collections import OrderedDict, defaultdict
+from math import ceil
 
 from maya import cmds, mel
 import maya.api.OpenMaya as om
@@ -114,6 +115,10 @@ def matrix_equals(a, b, tolerance=1e-10):
     if not all(abs(x - y) < tolerance for x, y in zip(a, b)):
         return False
     return True
+
+
+def float_round(num, places=0, direction=ceil):
+    return direction(num * (10**places)) / float(10**places)
 
 
 def unique(name):
@@ -1874,7 +1879,12 @@ def validate_fps():
     """
 
     fps = lib.get_asset()["data"]["fps"]
-    current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
+    # TODO(antirotor): This is hack as for framerates having multiple
+    # decimal places. FTrack is ceiling decimal values on
+    # fps to two decimal places but Maya 2019+ is reporting those fps
+    # with much higher resolution. As we currently cannot fix Ftrack
+    # rounding, we have to round those numbers coming from Maya.
+    current_fps = float_round(mel.eval('currentTimeUnitToFPS()'), 2)
 
     if current_fps != fps:
 
