@@ -66,6 +66,8 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             "label": subset,
             "name": subset,
             "family": family,
+            "frameStart": in_data.get("representations", [None])[0].get("frameStart", None),
+            "frameEnd": in_data.get("representations", [None])[0].get("frameEnd", None),
             "families": [family, 'ftrack'],
         })
         self.log.info("collected instance: {}".format(instance.data))
