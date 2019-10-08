@@ -1,12 +1,10 @@
-from maya import cmds
-
-import pype.maya.lib as lib
-
-from avalon.vendor import requests
-import avalon.maya
 import os
 import json
 import appdirs
+import requests
+from maya import cmds
+import pype.maya.lib as lib
+import avalon.maya
 
 
 class CreateRenderGlobals(avalon.maya.Creator):
@@ -51,13 +49,17 @@ class CreateRenderGlobals(avalon.maya.Creator):
                 self.data["secondaryPool"] = ["-"] + pools
 
         if muster_url is None:
-            self.log.warning("Muster REST API url not found.")
+            self.log.warning("Muster REST API URL not found.")
         else:
             self.log.info(">>> Loading Muster credentials ...")
             self._load_credentials()
             self.log.info(">>> Getting pools ...")
             try:
                 pools = self._get_muster_pools()
+            except requests.exceptions.HTTPError as e:
+                print(e)
+                if e.startswith('401'):
+                    self.log.warning('access token expired')
             except requests.exceptions.ConnectionError:
                 self.log.error("Cannot connect to Muster API endpoint.")
                 raise RuntimeError("Cannot connect to {}".format(muster_url))
@@ -131,13 +133,25 @@ class CreateRenderGlobals(avalon.maya.Creator):
                 'authToken': self._token
             }
         api_entry = '/api/pools/list'
-        response = requests.post(
+        response = requests.get(
             self.MUSTER_REST_URL + api_entry, params=params)
         if response.status_code != 200:
-            self.log.error(
-                'Cannot get pools from Muster: {}'.format(
-                    response.status_code))
-            raise Exception('Cannot get pools from Muster')
+            if response.status_code == 401:
+                self.log.warning('Authentication token expired.')
+                # authentication token expired so we need to login to Muster
+                # again to get it. We use Pype API call to show login window.
+                api_url = "{}/muster/show_login".format(
+                    os.environ["PYPE_REST_API_URL"])
+                self.log.debug(api_url)
+                login_response = requests.post(api_url, timeout=1)
+                if login_response.status_code != 200:
+                    self.log.error('Cannot show login form to Muster')
+                    raise Exception('Cannot show login form to Muster')
+            else:
+                self.log.error(
+                    'Cannot get pools from Muster: {}'.format(
+                        response.status_code))
+                raise Exception('Cannot get pools from Muster')
         try:
             pools = response.json()['ResponseData']['pools']
         except ValueError as e:

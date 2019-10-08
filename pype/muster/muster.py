@@ -38,9 +38,13 @@ class MusterModule:
             pass
 
     def process_modules(self, modules):
+
+        def api_callback():
+            self.aShowLogin.trigger()
+
         if "RestApiServer" in modules:
             modules["RestApiServer"].register_callback(
-                "muster/show_login", self.show_login, "post"
+                "muster/show_login", api_callback, "post"
             )
 
     # Definition of Tray menu
@@ -61,7 +65,7 @@ class MusterModule:
         self.menu.addAction(self.aShowLogin)
         self.aShowLogin.triggered.connect(self.show_login)
 
-        return self.menu
+        parent.addMenu(self.menu)
 
     def load_credentials(self):
         """
