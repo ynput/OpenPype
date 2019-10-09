@@ -5,7 +5,7 @@ from pypeapp import style, resources
 
 class UserWidget(QtWidgets.QWidget):
 
-    WIDTH = 300
+    MIN_WIDTH = 300
 
     def __init__(self, module):
 
@@ -13,25 +13,23 @@ class UserWidget(QtWidgets.QWidget):
 
         self.module = module
 
-        # Icon
+        # Style
         icon = QtGui.QIcon(resources.get_resource("icon.png"))
         self.setWindowIcon(icon)
+        self.setWindowTitle("Username Settings")
+        self.setMinimumWidth(self.MIN_WIDTH)
+        self.setStyleSheet(style.load_stylesheet())
 
         self.setWindowFlags(
             QtCore.Qt.WindowCloseButtonHint |
             QtCore.Qt.WindowMinimizeButtonHint
         )
 
-        # Size setting
-        self.setMinimumWidth(self.WIDTH)
-        self.setStyleSheet(style.load_stylesheet())
-
         self.setLayout(self._main())
-        self.setWindowTitle('Username Settings')
 
     def show(self, *args, **kwargs):
         super().show(*args, **kwargs)
-        # Move widget to center of active screen
+        # Move widget to center of active screen on show
         screen = QtWidgets.QApplication.desktop().screen()
         screen_center = lambda self: (
             screen.rect().center() - self.rect().center()
