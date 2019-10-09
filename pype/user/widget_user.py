@@ -1,12 +1,12 @@
 import os
 from Qt import QtCore, QtGui, QtWidgets
-from pypeapp import style
+from pypeapp import style, resources
 
 
 class UserWidget(QtWidgets.QWidget):
 
-    # loginSignal = QtCore.Signal(object, object, object)
     WIDTH = 300
+
     def __init__(self, module):
 
         super(UserWidget, self).__init__()
@@ -14,18 +14,7 @@ class UserWidget(QtWidgets.QWidget):
         self.module = module
 
         # Icon
-        try:
-            icon = module.icon
-        except AttributeError:
-            try:
-                icon = module.parent.icon
-            except AttributeError:
-                pype_setup = os.getenv('PYPE_ROOT')
-                fname = os.path.sep.join(
-                    [pype_setup, "app", "resources", "icon.png"]
-                )
-                icon = QtGui.QIcon(fname)
-
+        icon = QtGui.QIcon(resources.get_resource("icon.png"))
         self.setWindowIcon(icon)
 
         self.setWindowFlags(
