@@ -20,6 +20,8 @@ import requests
 import pymongo
 from pymongo.client_session import ClientSession
 
+class NotActiveTable(Exception): pass
+
 def auto_reconnect(func):
     """Handling auto reconnect in 3 retry times"""
     @functools.wraps(func)
@@ -37,12 +39,23 @@ def auto_reconnect(func):
     return decorated
 
 
+def check_active_table(func):
+    """Handling auto reconnect in 3 retry times"""
+    @functools.wraps(func)
+    def decorated(obj, *args, **kwargs):
+        if not obj.active_table:
+            raise NotActiveTable("Active table is not set. (This is bug)")
+        return func(obj, *args, **kwargs)
+
+    return decorated
+
+
 class DbConnector:
 
     log = logging.getLogger(__name__)
     timeout = 1000
 
-    def __init__(self, mongo_url, database_name, table_name):
+    def __init__(self, mongo_url, database_name, table_name=None):
         self._mongo_client = None
         self._sentry_client = None
         self._sentry_logging_handler = None
@@ -52,6 +65,9 @@ class DbConnector:
         self._database_name = database_name
 
         self.active_table = table_name
+
+    def __getitem__(self, key):
+        return self._database[key]
 
     def install(self):
         """Establish a persistent connection to the database"""
@@ -100,6 +116,15 @@ class DbConnector:
         self._database = None
         self._is_installed = False
 
+    def create_table(self, name, **options):
+        if self.exist_table(name):
+            return
+
+        return self._database.create_collection(name, **options)
+
+    def exist_table(self, table_name):
+        return table_name in self.tables()
+
     def tables(self):
         """List available tables
         Returns:
@@ -115,6 +140,7 @@ class DbConnector:
     def collections(self):
         return self._database.collection_names()
 
+    @check_active_table
     @auto_reconnect
     def insert_one(self, item, session=None):
         assert isinstance(item, dict), "item must be of type <dict>"
@@ -123,6 +149,7 @@ class DbConnector:
             session=session
         )
 
+    @check_active_table
     @auto_reconnect
     def insert_many(self, items, ordered=True, session=None):
         # check if all items are valid
@@ -136,6 +163,7 @@ class DbConnector:
             session=session
         )
 
+    @check_active_table
     @auto_reconnect
     def find(self, filter, projection=None, sort=None, session=None):
         return self._database[self.active_table].find(
@@ -145,6 +173,7 @@ class DbConnector:
             session=session
         )
 
+    @check_active_table
     @auto_reconnect
     def find_one(self, filter, projection=None, sort=None, session=None):
         assert isinstance(filter, dict), "filter must be <dict>"
@@ -156,13 +185,14 @@ class DbConnector:
             session=session
         )
 
+    @check_active_table
     @auto_reconnect
-    def replace_one(self, filter, replacement, session=None):
+    def replace_one(self, filter, replacement, **kw):
         return self._database[self.active_table].replace_one(
-            filter, replacement,
-            session=session
+            filter, replacement, **kw
         )
 
+    @check_active_table
     @auto_reconnect
     def update_one(self, filter, update, session=None):
         return self._database[self.active_table].update_one(
@@ -170,6 +200,7 @@ class DbConnector:
             session=session
         )
 
+    @check_active_table
     @auto_reconnect
     def update_many(self, filter, update, session=None):
         return self._database[self.active_table].update_many(
@@ -177,12 +208,14 @@ class DbConnector:
             session=session
         )
 
+    @check_active_table
     @auto_reconnect
     def distinct(self, *args, **kwargs):
         return self._database[self.active_table].distinct(
             *args, **kwargs
         )
 
+    @check_active_table
     @auto_reconnect
     def drop_collection(self, name_or_collection, session=None):
         return self._database[self.active_table].drop(
@@ -190,16 +223,18 @@ class DbConnector:
             session=session
         )
 
+    @check_active_table
     @auto_reconnect
-    def delete_one(filter, collation=None, session=None):
+    def delete_one(self, filter, collation=None, session=None):
         return self._database[self.active_table].delete_one(
             filter,
             collation=collation,
             session=session
         )
 
+    @check_active_table
     @auto_reconnect
-    def delete_many(filter, collation=None, session=None):
+    def delete_many(self, filter, collation=None, session=None):
         return self._database[self.active_table].delete_many(
             filter,
             collation=collation,
