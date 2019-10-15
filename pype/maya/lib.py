@@ -296,7 +296,13 @@ def attribute_values(attr_values):
 
     """
 
-    original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
+    # NOTE(antirotor): this didn't work for some reason for Yeti attributes
+    # original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
+    original = []
+    for attr in attr_values:
+        type = cmds.getAttr(attr, type=True)
+        value = cmds.getAttr(attr)
+        original.append((attr, str(value) if type == "string" else value))
     try:
         for attr, value in attr_values.items():
             if isinstance(value, string_types):

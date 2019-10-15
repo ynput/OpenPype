@@ -162,19 +162,19 @@ class ExtractYetiRig(pype.api.Extractor):
         self.log.info("rig file: {}".format("yeti_rig.ma"))
         instance.data["representations"].append(
             {
-                'name': "yeti_rig",
+                'name': "ma",
                 'ext': 'ma',
                 'files': "yeti_rig.ma",
                 'stagingDir': dirname,
                 'anatomy_template': 'publish'
             }
         )
-        self.log.info("setting file: {}".format("yeti_rig.ma"))
+        self.log.info("settings file: {}".format("yeti.rigsettings"))
         instance.data["representations"].append(
             {
-                'name': 'yeti.rigsettings',
+                'name': 'rigsettings',
                 'ext': 'rigsettings',
-                'files': 'rigsettings',
+                'files': 'yeti.rigsettings',
                 'stagingDir': dirname,
                 'anatomy_template': 'publish'
             }

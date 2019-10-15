@@ -42,7 +42,8 @@ class ExtractYetiCache(pype.api.Extractor):
         else:
             kwargs.update({"samples": samples})
 
-        self.log.info("Writing out cache")
+        self.log.info(
+            "Writing out cache {} - {}".format(start_frame, end_frame))
         # Start writing the files for snap shot
         # <NAME> will be replace by the Yeti node name
         path = os.path.join(dirname, "<NAME>.%04d.fur")
@@ -70,7 +71,7 @@ class ExtractYetiCache(pype.api.Extractor):
             {
                 'name': cache_files[0].split(".")[0],
                 'ext': 'fur',
-                'files': cache_files,
+                'files': cache_files[0] if len(cache_files) == 1 else cache_files,
                 'stagingDir': dirname,
                 'anatomy_template': 'publish'
             }
@@ -78,7 +79,7 @@ class ExtractYetiCache(pype.api.Extractor):
 
         instance.data["representations"].append(
             {
-                'name': os.path.basename(data_file),
+                'name': 'fursettings',
                 'ext': 'fursettings',
                 'files': os.path.basename(data_file),
                 'stagingDir': dirname,
