@@ -81,3 +81,5 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             ).format(__name__)
 
             instance.data['collection'] = collection
+
+            return

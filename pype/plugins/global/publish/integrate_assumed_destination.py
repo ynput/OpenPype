@@ -30,7 +30,8 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
                                         "resources")
 
         # Clean the path
-        mock_destination = os.path.abspath(os.path.normpath(mock_destination)).replace("\\", "/")
+        mock_destination = os.path.abspath(
+            os.path.normpath(mock_destination)).replace("\\", "/")
 
         # Define resource destination and transfers
         resources = instance.data.get("resources", list())
@@ -38,7 +39,8 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         for resource in resources:
 
             # Add destination to the resource
-            source_filename = os.path.basename(resource["source"]).replace("\\", "/")
+            source_filename = os.path.basename(
+                resource["source"]).replace("\\", "/")
             destination = os.path.join(mock_destination, source_filename)
 
             # Force forward slashes to fix issue with software unable
@@ -53,7 +55,8 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
             files = resource['files']
             for fsrc in files:
                 fname = os.path.basename(fsrc)
-                fdest = os.path.join(mock_destination, fname).replace("\\", "/")
+                fdest = os.path.join(
+                    mock_destination, fname).replace("\\", "/")
                 transfers.append([fsrc, fdest])
 
         instance.data["resources"] = resources

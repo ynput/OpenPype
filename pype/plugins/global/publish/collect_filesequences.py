@@ -1,3 +1,13 @@
+"""
+Requires:
+    environment -> PYPE_PUBLISH_PATHS
+    context     -> workspaceDir
+
+Provides:
+    context     -> user (str)
+    instance    -> new instance
+"""
+
 import os
 import re
 import copy

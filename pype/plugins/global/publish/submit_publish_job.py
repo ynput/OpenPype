@@ -1,7 +1,6 @@
 import os
 import json
 import re
-from pprint import pprint
 import logging
 
 from avalon import api, io
@@ -147,7 +146,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                      "PYPE_ROOT"
                      ]
 
-
     def _submit_deadline_post_job(self, instance, job):
         """
         Deadline specific code separated from :meth:`process` for sake of
@@ -191,7 +189,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
-
 
         environment = job["Props"].get("Env", {})
         i = 0
@@ -295,7 +292,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # Optional metadata (for debugging)
             "metadata": {
                 "instance": data,
-                "job": job,
+                "job": render_job,
                 "session": api.Session.copy()
             }
         }

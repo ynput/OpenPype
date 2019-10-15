@@ -103,7 +103,7 @@ def avalon_api_publish(data, gui=True):
         "-pp", os.pathsep.join(pyblish.api.registered_paths())
     ]
 
-    os.environ["PYBLISH_HOSTS"] = "shell"
+    os.environ["PYBLISH_HOSTS"] = "standalonepublisher"
     os.environ["SAPUBLISH_INPATH"] = json_data_path
 
     if gui:
@@ -139,7 +139,7 @@ def cli_publish(data, gui=True):
     if gui:
         args += ["gui"]
 
-    os.environ["PYBLISH_HOSTS"] = "shell"
+    os.environ["PYBLISH_HOSTS"] = "standalonepublisher"
     os.environ["SAPUBLISH_INPATH"] = json_data_path
     os.environ["SAPUBLISH_OUTPATH"] = return_data_path
 

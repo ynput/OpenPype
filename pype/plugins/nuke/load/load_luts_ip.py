@@ -14,6 +14,7 @@ class LoadLutsInputProcess(api.Loader):
     order = 0
     icon = "eye"
     color = style.colors.alert
+    ignore_attr = ["useLifetime"]
 
     def load(self, context, name, namespace, data):
         """
@@ -83,6 +84,8 @@ class LoadLutsInputProcess(api.Loader):
             for ef_name, ef_val in nodes_order.items():
                 node = nuke.createNode(ef_val["class"])
                 for k, v in ef_val["node"].items():
+                    if k in self.ignore_attr:
+                        continue
                     if isinstance(v, list) and len(v) > 4:
                         node[k].setAnimated()
                         for i, value in enumerate(v):
@@ -196,6 +199,8 @@ class LoadLutsInputProcess(api.Loader):
             for ef_name, ef_val in nodes_order.items():
                 node = nuke.createNode(ef_val["class"])
                 for k, v in ef_val["node"].items():
+                    if k in self.ignore_attr:
+                        continue
                     if isinstance(v, list) and len(v) > 3:
                         node[k].setAnimated()
                         for i, value in enumerate(v):
