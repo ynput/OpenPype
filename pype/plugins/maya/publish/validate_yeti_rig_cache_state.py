@@ -1,9 +1,6 @@
 import pyblish.api
-
 import pype.action
-
 import maya.cmds as cmds
-
 import pype.maya.action
 
 
@@ -60,4 +57,3 @@ class ValidateYetiRigCacheState(pyblish.api.InstancePlugin):
         for node in invalid:
             cmds.setAttr("%s.fileMode" % node, 0)
             cmds.setAttr("%s.cacheFileName" % node, "", type="string")
-

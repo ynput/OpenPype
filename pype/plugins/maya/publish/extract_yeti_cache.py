@@ -7,11 +7,9 @@ import pype.api
 
 
 class ExtractYetiCache(pype.api.Extractor):
-    """Produce an alembic of just point positions and normals.
+    """Producing Yeti cache files using scene time range.
 
-    Positions and normals are preserved, but nothing more,
-    for plain and predictable point caches.
-
+    This will extract Yeti cache file sequence and fur settings.
     """
 
     label = "Extract Yeti Cache"
