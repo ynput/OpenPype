@@ -57,9 +57,10 @@ class CreateRenderGlobals(avalon.maya.Creator):
             try:
                 pools = self._get_muster_pools()
             except requests.exceptions.HTTPError as e:
-                print(e)
                 if e.startswith('401'):
                     self.log.warning('access token expired')
+                    self._show_login()
+                    raise RuntimeError("Access token expired")
             except requests.exceptions.ConnectionError:
                 self.log.error("Cannot connect to Muster API endpoint.")
                 raise RuntimeError("Cannot connect to {}".format(muster_url))
@@ -119,6 +120,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
         muster_json = json.load(file)
         self._token = muster_json.get('token', None)
         if not self._token:
+            self._show_login()
             raise RuntimeError("Invalid access token for Muster")
         file.close()
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
@@ -138,15 +140,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
         if response.status_code != 200:
             if response.status_code == 401:
                 self.log.warning('Authentication token expired.')
-                # authentication token expired so we need to login to Muster
-                # again to get it. We use Pype API call to show login window.
-                api_url = "{}/muster/show_login".format(
-                    os.environ["PYPE_REST_API_URL"])
-                self.log.debug(api_url)
-                login_response = requests.post(api_url, timeout=1)
-                if login_response.status_code != 200:
-                    self.log.error('Cannot show login form to Muster')
-                    raise Exception('Cannot show login form to Muster')
+                self._show_login()
             else:
                 self.log.error(
                     'Cannot get pools from Muster: {}'.format(
@@ -159,3 +153,14 @@ class CreateRenderGlobals(avalon.maya.Creator):
             raise Exception('Invalid response from Muster server')
 
         return pools
+
+    def _show_login(self):
+        # authentication token expired so we need to login to Muster
+        # again to get it. We use Pype API call to show login window.
+        api_url = "{}/muster/show_login".format(
+            os.environ["PYPE_REST_API_URL"])
+        self.log.debug(api_url)
+        login_response = requests.post(api_url, timeout=1)
+        if login_response.status_code != 200:
+            self.log.error('Cannot show login form to Muster')
+            raise Exception('Cannot show login form to Muster')
