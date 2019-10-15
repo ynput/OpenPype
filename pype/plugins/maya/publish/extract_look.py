@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import tempfile
 import contextlib
@@ -82,12 +83,15 @@ def maketx(source, destination, *args):
     ])
 
     CREATE_NO_WINDOW = 0x08000000
+    kwargs = dict(
+        args=cmd,
+        stderr=subprocess.STDOUT
+    )
+    
+    if sys.platform == "win32":
+        kwargs["creationflags"] = CREATE_NO_WIDOW
     try:
-        out = subprocess.check_output(
-            cmd,
-            stderr=subprocess.STDOUT,
-            creationflags=CREATE_NO_WINDOW
-        )
+        out = subprocess.check_output(**kwargs)
     except subprocess.CalledProcessError as exc:
         print(exc)
         import traceback
