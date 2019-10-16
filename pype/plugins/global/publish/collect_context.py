@@ -106,6 +106,12 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
                 instance.data["frameEnd"] = int(component["frameEnd"])
                 instance.data['fps'] = int(component['fps'])
 
+            if component["preview"]:
+                instance.data["families"].append("review")
+                instance.data["repreProfiles"] = ["h264"]
+                component["tags"] = ["review", "delete"]
+                self.log.debug("Adding review family")
+
             instance.data["representations"].append(component)
 
         self.log.info(in_data)

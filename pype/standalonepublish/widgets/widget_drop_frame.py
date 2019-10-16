@@ -297,18 +297,23 @@ class DropDataFrame(QtWidgets.QFrame):
             if ext in exts:
                 icon = ico
                 break
+
+        new_is_seq = data['is_sequence']
         # Add 's' to icon_name if is sequence (image -> images)
-        if data['is_sequence']:
+        if new_is_seq:
             icon += 's'
         data['icon'] = icon
         data['thumb'] = (
             ext in self.presets['extensions']['image_file'] or
             ext in self.presets['extensions']['video_file']
         )
-        data['prev'] = ext in self.presets['extensions']['video_file']
+        data['prev'] = (
+            ext in self.presets['extensions']['video_file'] or
+            (new_is_seq and ext in self.presets['extensions']['image_file'])
+        )
 
         actions = []
-        new_is_seq = data['is_sequence']
+
 
         found = False
         for item in self.components_list.widgets():
