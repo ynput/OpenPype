@@ -21,7 +21,7 @@ class SyncHierarchicalAttrs(BaseAction):
     identifier = 'sync.hierarchical.attrs'
     #: Action label.
     label = "Pype Admin"
-    variant = '- Sync Hier Attrs (server)'
+    variant = '- Sync Hier Attrs (Server)'
     #: Action description.
     description = 'Synchronize hierarchical attributes'
     #: Icon

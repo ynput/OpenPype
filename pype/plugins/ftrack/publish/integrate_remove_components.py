@@ -17,6 +17,9 @@ class IntegrateCleanComponentData(pyblish.api.InstancePlugin):
 
         for comp in instance.data['representations']:
             self.log.debug('component {}'.format(comp))
+            
+            if "%" in comp['published_path'] or "#" in comp['published_path']:
+                continue
 
             if comp.get('thumbnail') or ("thumbnail" in comp.get('tags', [])):
                 os.remove(comp['published_path'])
