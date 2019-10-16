@@ -69,7 +69,7 @@ class ExtractYetiCache(pype.api.Extractor):
         self.log.info("cache files: {}".format(cache_files[0]))
         instance.data["representations"].append(
             {
-                'name': cache_files[0].split(".")[0],
+                'name': 'fur',
                 'ext': 'fur',
                 'files': cache_files[0] if len(cache_files) == 1 else cache_files,
                 'stagingDir': dirname,
