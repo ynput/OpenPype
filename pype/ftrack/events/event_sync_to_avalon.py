@@ -113,7 +113,9 @@ class Sync_to_Avalon(BaseEvent):
                 {'type': 'label', 'value': '<p>{}</p>'.format(ftrack_message)}
             ]
             self.show_interface(items, title, event=event)
-            self.log.error('Fatal error during sync: {}'.format(message))
+            self.log.error(
+                'Fatal error during sync: {}'.format(message), exc_info=True
+            )
 
         return
 
