@@ -20,7 +20,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
-    hosts = ["nuke", "maya", "shell", "standalonepublisher"]
+    hosts = ["nuke", "maya", "shell"]
 
     def process(self, instance):
         # adding plugin attributes from presets
@@ -37,15 +37,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # get representation and loop them
         representations = instance.data["representations"]
 
-        # get specific profile if was defined
-        specific_profiles = instance.data.get("repreProfiles")
-
         # filter out mov and img sequences
         representations_new = representations[:]
         for repre in representations:
-            # remove dot if extension has
-            repre_ext = repre['ext'].replace(".", "")
-            if repre_ext not in plugin_attrs["ext_filter"]:
+            if repre['ext'] in plugin_attrs["ext_filter"]:
                 tags = repre.get("tags", [])
 
                 self.log.info("Try repre: {}".format(repre))
@@ -54,10 +49,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     staging_dir = repre["stagingDir"]
                     for name, profile in output_profiles.items():
                         self.log.debug("Profile name: {}".format(name))
-
-                        # filter profiles if were set specific profiles
-                        if specific_profile and name not in specific_profiles:
-                            continue
 
                         ext = profile.get("ext", None)
                         if not ext:
