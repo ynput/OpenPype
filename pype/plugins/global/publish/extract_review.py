@@ -40,7 +40,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # filter out mov and img sequences
         representations_new = representations[:]
         for repre in representations:
-            if repre['ext'] in plugin_attrs["ext_filter"]:
+            # remove dot if extension has
+            repre_ext = repre['ext'].replace(".", "")
+            if repre_ext not in plugin_attrs["ext_filter"]:
                 tags = repre.get("tags", [])
 
                 self.log.info("Try repre: {}".format(repre))
