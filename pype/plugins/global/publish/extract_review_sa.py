@@ -75,7 +75,6 @@ class ExtractReviewSaP(pyblish.api.InstancePlugin):
                         staging_dir,
                         collections[0].format("{head}{padding}{tail}")
                     )
-
                     filename = collections[0].format('{head}')
                     if filename.endswith("."):
                         filename = filename[:-1]
@@ -113,17 +112,21 @@ class ExtractReviewSaP(pyblish.api.InstancePlugin):
                 # necessary input data
                 # adds start arg only if image sequence
                 if isinstance(repre["files"], list):
-                    input_args.append("-start_number {0} -framerate {1}".format(
-                        start_frame, fps))
+                    input_args.extend([
+                        "-start_number {}".format(start_frame),
+                        "-framerate {}".format(fps)
+                    ])
 
                 input_args.append("-i {}".format(full_input_path))
 
                 output_args = []
                 # preset's output data
                 output_args.extend(profile.get("output", []))
+                
+                # set length of video by len of inserted files
+                output_args.append("-frames {}".format(len(repre["files"])))
 
                 # letter_box
-                # TODO: add to documentation
                 lb_string = (
                     "-filter:v "
                     "drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black,"
@@ -133,9 +136,6 @@ class ExtractReviewSaP(pyblish.api.InstancePlugin):
                 letter_box = profile.get("letter_box", None)
                 if letter_box:
                     output_args.append(lb_string.format(letter_box))
-
-                # In case audio is longer than video.
-                output_args.append("-shortest")
 
                 # output filename
                 output_args.append(full_output_path)
