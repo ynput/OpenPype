@@ -37,6 +37,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # get representation and loop them
         representations = instance.data["representations"]
 
+        # get specific profile if was defined
+        specific_profiles = instance.data.get("repreProfiles")
+
         # filter out mov and img sequences
         representations_new = representations[:]
         for repre in representations:
@@ -51,6 +54,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     staging_dir = repre["stagingDir"]
                     for name, profile in output_profiles.items():
                         self.log.debug("Profile name: {}".format(name))
+
+                        # filter profiles if were set specific profiles
+                        if specific_profile and name not in specific_profiles:
+                            continue
 
                         ext = profile.get("ext", None)
                         if not ext:
