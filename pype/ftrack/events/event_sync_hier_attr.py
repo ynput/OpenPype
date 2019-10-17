@@ -103,6 +103,12 @@ class SyncHierarchicalAttrs(BaseEvent):
             for key, attr_value in processed_keys.items():
                 self.update_hierarchical_attribute(entity, key, attr_value)
 
+            self.log.debug(
+                "Updated hierarchical attributes for entity \"{}\": {}".format(
+                    ent_path, str(processed_keys.keys())
+                )
+            )
+
         self.db_con.uninstall()
 
         return True
