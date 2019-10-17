@@ -1,11 +1,14 @@
 import os
 import sys
+import time
 import argparse
 import logging
 import json
+import collections
 
 from pype.vendor import ftrack_api
-from pype.ftrack import BaseAction, lib as ftracklib
+from pype.ftrack import BaseAction
+from pype.ftrack.lib import avalon_sync as ftracklib
 from pype.vendor.ftrack_api import session as fa_session
 
 
@@ -60,6 +63,20 @@ class SyncToAvalon(BaseAction):
     #: Action priority
     priority = 200
 
+    project_query = (
+        "select full_name, name, custom_attributes"
+        ", project_schema._task_type_schema.types.name"
+        " from Project where full_name is \"{}\""
+    )
+
+    entities_query = (
+        "select id, name, parent_id, link, custom_attributes"
+        " from TypedContext where project.full_name is \"{}\""
+    )
+
+    # Entity type names(lowered) that won't be synchronized with their children
+    ignore_entity_types = ["task", "milestone"]
+
     def __init__(self, session, plugins_presets):
         super(SyncToAvalon, self).__init__(session)
         # reload utils on initialize (in case of server restart)
@@ -73,6 +90,7 @@ class SyncToAvalon(BaseAction):
         return False
 
     def launch(self, session, entities, event):
+        time_start = time.time()
         message = ""
 
         # JOB SETTINGS
@@ -89,43 +107,82 @@ class SyncToAvalon(BaseAction):
         session.commit()
         try:
             self.log.debug("Preparing entities for synchronization")
-            self.importable = []
 
-            # get from top entity in hierarchy all parent entities
-            top_entity = entities[0]['link']
-            if len(top_entity) > 1:
-                for e in top_entity:
-                    parent_entity = session.get(e['type'], e['id'])
-                    self.importable.append(parent_entity)
+            if entities[0].entity_type.lower() == "project":
+                ft_project_name = entities[0]["full_name"]
+            else:
+                ft_project_name = entities[0]["project"]["full_name"]
 
-            # get all child entities separately/unique
-            for entity in entities:
-                self.add_childs_to_importable(entity)
+            project_entities = session.query(
+                self.entities_query.format(ft_project_name)
+            ).all()
+
+            ft_project = session.query(
+                self.project_query.format(ft_project_name)
+            ).one()
+
+            entities_by_id = {}
+            entities_by_parent = collections.defaultdict(list)
+
+            entities_by_id[ft_project["id"]] = ft_project
+            for ent in project_entities:
+                entities_by_id[ent["id"]] = ent
+                entities_by_parent[ent["parent_id"]].append(ent)
+
+            importable = []
+            for ent_info in event["data"]["selection"]:
+                ent = entities_by_id[ent_info["entityId"]]
+                for link_ent_info in ent["link"]:
+                    link_ent = entities_by_id[link_ent_info["id"]]
+                    if (
+                        ent.entity_type.lower() in self.ignore_entity_types or
+                        link_ent in importable
+                    ):
+                        continue
+
+                    importable.append(link_ent)
+
+            def add_children(parent_id):
+                ents = entities_by_parent[parent_id]
+                for ent in ents:
+                    if ent.entity_type.lower() in self.ignore_entity_types:
+                        continue
+
+                    if ent not in importable:
+                        importable.append(ent)
+
+                    add_children(ent["id"])
+
+            # add children of selection to importable
+            for ent_info in event["data"]["selection"]:
+                add_children(ent_info["entityId"])
 
             # Check names: REGEX in schema/duplicates - raise error if found
             all_names = []
             duplicates = []
 
-            for entity in self.importable:
+            for entity in importable:
                 ftracklib.avalon_check_name(entity)
+                if entity.entity_type.lower() == "project":
+                    continue
+
                 if entity['name'] in all_names:
                     duplicates.append("'{}'".format(entity['name']))
                 else:
                     all_names.append(entity['name'])
 
             if len(duplicates) > 0:
+                # TODO Show information to user and return False
                 raise ValueError(
                     "Entity name duplication: {}".format(", ".join(duplicates))
                 )
 
             # ----- PROJECT ------
-            # store Ftrack project- self.importable[0] must be project entity!!
-            ft_project = self.importable[0]
             avalon_project = ftracklib.get_avalon_project(ft_project)
             custom_attributes = ftracklib.get_avalon_attr(session)
 
             # Import all entities to Avalon DB
-            for entity in self.importable:
+            for entity in importable:
                 result = ftracklib.import_to_avalon(
                     session=session,
                     entity=entity,
@@ -133,7 +190,8 @@ class SyncToAvalon(BaseAction):
                     av_project=avalon_project,
                     custom_attributes=custom_attributes
                 )
-
+                # TODO better error handling
+                # maybe split into critical, warnings and messages?
                 if 'errors' in result and len(result['errors']) > 0:
                     job['status'] = 'failed'
                     session.commit()
@@ -152,6 +210,7 @@ class SyncToAvalon(BaseAction):
             job['status'] = 'done'
 
         except ValueError as ve:
+            # TODO remove this part!!!!
             job['status'] = 'failed'
             message = str(ve)
             self.log.error(
@@ -170,6 +229,7 @@ class SyncToAvalon(BaseAction):
                 'Error during syncToAvalon: {}'.format(log_message),
                 exc_info=True
             )
+            # TODO add traceback to message and show to user
             message = (
                 'Unexpected Error'
                 ' - Please check Log for more information'
@@ -179,7 +239,14 @@ class SyncToAvalon(BaseAction):
                 job['status'] = 'failed'
             session.commit()
 
-            self.trigger_action("sync.hierarchical.attrs.local", event)
+            time_end = time.time()
+            self.log.debug("Synchronization took \"{}\"".format(
+                str(time_end - time_start)
+            ))
+
+            if job["status"] != "failed":
+                self.log.debug("Triggering Sync hierarchical attributes")
+                self.trigger_action("sync.hierarchical.attrs.local", event)
 
         if len(message) > 0:
             message = "Unable to sync: {}".format(message)
@@ -193,16 +260,6 @@ class SyncToAvalon(BaseAction):
             'message': "Synchronization was successfull"
         }
 
-    def add_childs_to_importable(self, entity):
-        if not (entity.entity_type in ['Task']):
-            if entity not in self.importable:
-                self.importable.append(entity)
-
-            if entity['children']:
-                childrens = entity['children']
-                for child in childrens:
-                    self.add_childs_to_importable(child)
-
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
@@ -214,42 +271,3 @@ def register(session, plugins_presets={}):
         return
 
     SyncToAvalon(session, plugins_presets).register()
-
-
-def main(arguments=None):
-    '''Set up logging and register action.'''
-    if arguments is None:
-        arguments = []
-
-    parser = argparse.ArgumentParser()
-    # Allow setting of logging level from arguments.
-    loggingLevels = {}
-    for level in (
-        logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING,
-        logging.ERROR, logging.CRITICAL
-    ):
-        loggingLevels[logging.getLevelName(level).lower()] = level
-
-    parser.add_argument(
-        '-v', '--verbosity',
-        help='Set the logging output verbosity.',
-        choices=loggingLevels.keys(),
-        default='info'
-    )
-    namespace = parser.parse_args(arguments)
-
-    # Set up basic logging
-    logging.basicConfig(level=loggingLevels[namespace.verbosity])
-
-    session = ftrack_api.Session()
-    register(session)
-
-    # Wait for events
-    logging.info(
-        'Registered actions and listening for events. Use Ctrl-C to abort.'
-    )
-    session.event_hub.wait()
-
-
-if __name__ == '__main__':
-    raise SystemExit(main(sys.argv[1:]))
