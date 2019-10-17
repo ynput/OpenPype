@@ -20,14 +20,26 @@ def prepare_fullpath(path, prefix):
     :rtype: str
     """
 
+    if isinstance(path, (list, tuple)):
+        path_items = path
+    else:
+        path_items = [part for part in path.split("/") if part]
+
+    fullpath = "/"
     if path and prefix:
-        fullpath = "{}/{}".format(prefix, path).replace("//", "/")
+        items = [part for part in prefix.split("/") if part]
+        items.extend(path_items)
+        fullpath = "/".join(items)
+        if path.endswith("/"):
+            fullpath += "/"
+
     elif path:
-        fullpath = path
+        fullpath = "/".join(path_items)
+        if path.endswith("/"):
+            fullpath += "/"
+
     elif prefix:
         fullpath = prefix
-    else:
-        fullpath = "/"
 
     if not fullpath.startswith("/"):
         fullpath = "/{}".format(fullpath)
@@ -85,6 +97,9 @@ def prepare_prefix(url_prefix):
 
     if not url_prefix:
         return None
+
+    while url_prefix.endswith("/"):
+        url_prefix = url_prefix[:-1]
 
     if not url_prefix.startswith("/"):
         url_prefix = "/{}".format(url_prefix)
@@ -161,9 +176,7 @@ def prepare_callback_info(callback):
     callback_args_len = 0
     if callback_args:
         callback_args_len = len(callback_args)
-        if (
-            type(callback).__name__ == "method"
-        ):
+        if type(callback).__name__ == "method":
             callback_args_len -= 1
 
     defaults = callback_info.defaults
