@@ -135,6 +135,9 @@ class RequestInfo:
             "handler": self.handler
         }
 
+    def items(self):
+        return dict(self).items()
+
 
 class CallbackResult:
     _data = {}
