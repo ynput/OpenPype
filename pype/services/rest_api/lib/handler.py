@@ -6,17 +6,13 @@ import http.server
 from http import HTTPStatus
 from urllib.parse import urlparse
 
-from .lib import (
-    RestMethods, CallbackResult,
-    UrlData, RequestData, Query, Fragment, Params
-)
+from .lib import RestMethods, CallbackResult, RequestInfo
 from .exceptions import AbortException
-from . import RestApiFactory, CustomNone, Splitter
+from . import RestApiFactory, Splitter
 
 from pypeapp import Logger
 
 log = Logger().get_logger("RestApiHandler")
-NotSet = CustomNone("NotSet")
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -115,7 +111,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         try:
             log.debug("Triggering callback for path \"{}\"".format(path))
 
-            result = self._handle_callback(matching_item, parsed_url)
+            result = self._handle_callback(
+                matching_item, parsed_url, rest_method
+            )
 
             return self._handle_callback_result(result, rest_method)
 
@@ -208,7 +206,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body.encode())
         return body
 
-    def _handle_callback(self, item, parsed_url):
+    def _handle_callback(self, item, parsed_url, rest_method):
 
         regex = item["regex"]
         regex_keys = item["regex_keys"]
@@ -228,11 +226,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             if in_data_str:
                 in_data = json.loads(in_data_str)
 
-        url_data = UrlData(url_data)
-        request_data = RequestData(in_data)
-        query = Query(parsed_url.query)
-        params = Params(parsed_url.params)
-        fragment = Fragment(parsed_url.fragment)
+        request_info = RequestInfo(
+            url_data=url_data,
+            request_data=in_data,
+            query=parsed_url.query,
+            fragment=parsed_url.fragment,
+            params=parsed_url.params,
+            method=rest_method,
+            handler=self
+        )
 
         callback = item["callback"]
         callback_info = item["callback_info"]
@@ -240,110 +242,20 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         _args = callback_info["args"]
         _args_len = callback_info["args_len"]
         _defaults = callback_info["defaults"]
-        _defaults_len = callback_info["defaults_len"]
         _has_args = callback_info["hasargs"]
         _has_kwargs = callback_info["haskwargs"]
 
-        _annotations = callback_info["annotations"]
-
-        arg_index = 0
-        if type(callback).__name__ == "method":
-            arg_index = 1
-
-        _kwargs = {arg: NotSet for arg in _args[arg_index:]}
-        _available_kwargs = {
-            "url_data": url_data,
-            "request_data": request_data,
-            "query": query,
-            "params": params,
-            "fragment": fragment,
-            "handler": self
-        }
-        if not regex:
-            _available_kwargs.pop("url_data")
-
-        available_len = len(_available_kwargs)
-        if available_len < (_args_len - _defaults_len):
-            raise Exception((
-                "Callback expects {} required positional arguments but {} are"
-                " available {}<{}>"
-            ).format(
-                _args_len, available_len, callback.__qualname__,
-                callback.__globals__.get("__file__", "unknown file")
-            ))
-        elif available_len < _args_len:
-            log.warning((
-                "Handler \"{}\" will never fill all args of callback {}<{}>"
-            ).format(
-                self.__class__.__name__,
-                callback.__qualname__,
-                callback.__globals__.get("__file__", "unknown file")
-            ))
-
+        args = []
+        kwargs = {}
         if _args_len == 0:
             if _has_args:
-                return callback(*_available_kwargs.values())
-            if _has_kwargs:
-                return callback(**_available_kwargs)
-            else:
-                return callback()
+                args.append(request_info)
+            elif _has_kwargs:
+                kwargs["request_info"] = request_info
+        else:
+            args.append(request_info)
 
-        if _annotations:
-            for arg, argtype in _annotations.items():
-                if argtype == Query:
-                    key = "query"
-                elif argtype == Params:
-                    key = "params"
-                elif argtype == Fragment:
-                    key = "fragment"
-                elif argtype == Handler:
-                    key = "handler"
-                elif argtype == UrlData:
-                    key = "url_data"
-                elif argtype == RequestData:
-                    key = "request_data"
-                else:
-                    continue
-
-                _kwargs[arg] = _available_kwargs[key]
-                _available_kwargs[key] = NotSet
-
-        for key1, value1 in _kwargs.items():
-            if value1 is not NotSet:
-                continue
-            has_values = False
-            for key2, value2 in _available_kwargs.items():
-                if value2 is NotSet:
-                    continue
-                has_values = True
-                _kwargs[key1] = value2
-                _available_kwargs[key2] = NotSet
-                break
-
-            if not has_values:
-                break
-
-        _args = []
-        kw_keys = [key for key in _kwargs.keys()]
-        for key in kw_keys:
-            value = _kwargs.pop(key)
-            if value is not NotSet:
-                _args.append(value)
-                continue
-
-        if _has_args:
-            for key, value in _available_kwargs.items():
-                if value is NotSet:
-                    continue
-                _args.append(value)
-
-        elif _has_kwargs:
-            for key, value in _available_kwargs.items():
-                if value is NotSet:
-                    continue
-                _kwargs[key] = value
-
-        return callback(*_args, **_kwargs)
+        return callback(*args, **kwargs)
 
     def _handle_statics(self, dirpath, path):
         path = os.path.normpath(dirpath + path)

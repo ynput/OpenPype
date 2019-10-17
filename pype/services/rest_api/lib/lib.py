@@ -109,6 +109,32 @@ class Fragment(HandlerDict):
             )
         return "&".join(items)
 
+class RequestInfo:
+    def __init__(
+        self, url_data, request_data, query, fragment, params, method, handler
+    ):
+        self.url_data = UrlData(url_data)
+        self.request_data = RequestData(request_data)
+        self.query = Query(query)
+        self.fragment = Fragment(fragment)
+        self.params = Params(params)
+        self.method = method
+        self.handler = handler
+
+    def __getitem__(self, key):
+        return self.__getattribute__(key)
+
+    def __hash__(self):
+        return {
+            "url_data": self.url_data,
+            "request_data": self. request_data,
+            "query": self.query,
+            "fragment": self.fragment,
+            "params": self.params,
+            "method": self.method,
+            "handler": self.handler
+        }
+
 
 class CallbackResult:
     _data = {}

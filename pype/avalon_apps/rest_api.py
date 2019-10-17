@@ -3,7 +3,7 @@ import re
 import json
 import bson
 import bson.json_util
-from pype.services.rest_api import RestApi, abort, CallbackResult, Query
+from pype.services.rest_api import RestApi, abort, CallbackResult
 from pype.ftrack.lib.custom_db_connector import DbConnector
 
 
@@ -18,8 +18,8 @@ class AvalonRestApi(RestApi):
         self.dbcon.install()
 
     @RestApi.route("/projects/<project_name>", url_prefix="/avalon", methods="GET")
-    def get_project(self, url_data):
-        project_name = url_data["project_name"]
+    def get_project(self, request):
+        project_name = request.url_data["project_name"]
         if not project_name:
             output = {}
             for project_name in self.dbcon.tables():
@@ -38,9 +38,9 @@ class AvalonRestApi(RestApi):
         ))
 
     @RestApi.route("/projects/<project_name>/assets/<asset>", url_prefix="/avalon", methods="GET")
-    def get_assets(self, url_data, query:Query):
-        _project_name = url_data["project_name"]
-        _asset = url_data["asset"]
+    def get_assets(self, request):
+        _project_name = request.url_data["project_name"]
+        _asset = request.url_data["asset"]
 
         if not self.dbcon.exist_table(_project_name):
             abort(404, "Project \"{}\" was not found in database".format(
@@ -52,7 +52,7 @@ class AvalonRestApi(RestApi):
             output = self.result_to_json(assets)
             return CallbackResult(data=output)
 
-        identificator = query.get("identificator", "name")
+        identificator = request.query.get("identificator", "name")
 
         asset = self.dbcon[_project_name].find_one({
             "type": "asset",
