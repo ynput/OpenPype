@@ -10,21 +10,9 @@ from .lib import (
 
 def route(path, url_prefix="", methods=[]):
     def decorator(callback):
-        @wraps(callback)
-        def wrapper(*args, **kwargs):
-            return callback(*args, **kwargs)
-
-        func = wrapper
-        func.restapi = True
-        func.path = path
-        func.methods = methods
-        func.url_prefix = url_prefix
-        if hasattr(callback, "__self__"):
-            func.__self__ = callback.__self__
-        func.callback = callback
-
-        RestApiFactory.register_route(func)
-        return func
+        RestApiFactory.register_route(path, callback, url_prefix, methods)
+        callback.restapi = True
+        return callback
     return decorator
 
 

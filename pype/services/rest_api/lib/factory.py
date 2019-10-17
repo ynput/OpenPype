@@ -112,8 +112,7 @@ def prepare_methods(methods, callback=None):
 
     return _methods
 
-def prepare_callback_info(_callback):
-    callback = _callback.callback
+def prepare_callback_info(callback):
     callback_info = inspect.getfullargspec(callback)
 
     callback_args = callback_info.args
@@ -121,7 +120,7 @@ def prepare_callback_info(_callback):
     if callback_args:
         callback_args_len = len(callback_args)
         if (
-            type(_callback).__name__ == "method"
+            type(callback).__name__ == "method"
         ):
             callback_args_len -= 1
 
@@ -158,9 +157,9 @@ class _RestApiFactory:
     def has_handlers(self):
         return (self.has_routes or self.prepared_statics)
 
-    def _process_route(self, callback):
+    def _process_route(self, route):
         return self.unprocessed_routes.pop(
-            self.unprocessed_routes.index(callback)
+            self.unprocessed_routes.index(route)
         )
 
     def _process_statics(self, item):
@@ -168,11 +167,17 @@ class _RestApiFactory:
             self.unprocessed_statics.index(item)
         )
 
-    def register_route(self, item):
+    def register_route(self, path, callback, url_prefix, methods):
         log.debug("Registering callback for item \"{}\"".format(
-            item.__qualname__
+            callback.__qualname__
         ))
-        self.unprocessed_routes.append(item)
+        route = {
+            "path": path,
+            "callback": callback,
+            "url_prefix": url_prefix,
+            "methods": methods
+        }
+        self.unprocessed_routes.append(route)
 
     def register_obj(self, obj):
         self.registered_objs.append(obj)
@@ -181,10 +186,11 @@ class _RestApiFactory:
         log.debug("Registering statics path \"{}\"".format(item))
         self.unprocessed_statics.append(item)
 
-    def _prepare_route(self, callback):
-        methods = prepare_methods(callback.methods, callback)
-        url_prefix = prepare_prefix(callback.url_prefix)
-        fullpath = prepare_fullpath(callback.path, url_prefix)
+    def _prepare_route(self, route):
+        callback = route["callback"]
+        methods = prepare_methods(route["methods"], callback)
+        url_prefix = prepare_prefix(route["url_prefix"])
+        fullpath = prepare_fullpath(route["path"], url_prefix)
         regex, regex_keys = prepare_regex_from_path(fullpath)
         callback_info = prepare_callback_info(callback)
 
@@ -217,8 +223,14 @@ class _RestApiFactory:
             ]
             for method_name in method_names:
                 method = obj.__getattribute__(method_name)
+                if not hasattr(method, "restapi"):
+                    continue
 
-                for callback in self.unprocessed_routes:
+                if not method.restapi:
+                    continue
+
+                for route in self.unprocessed_routes:
+                    callback = route["callback"]
                     if not (
                         callback.__qualname__ == method.__qualname__ and
                         callback.__module__ == method.__module__ and
@@ -226,18 +238,13 @@ class _RestApiFactory:
                     ):
                         continue
 
-                    self._process_route(callback)
-
-                    if not hasattr(method, "restapi"):
-                        continue
-
-                    if not method.restapi:
-                        continue
-
-                    self._prepare_route(method)
+                    route["callback"] = method
+                    self._process_route(route)
+                    self._prepare_route(route)
                     break
 
-        for callback in self.unprocessed_routes:
+        for route in self.unprocessed_routes:
+            callback = route["callback"]
             is_class_method = len(callback.__qualname__.split(".")) != 1
             if is_class_method:
                 missing_self = True
@@ -260,7 +267,7 @@ class _RestApiFactory:
                     ))
                     continue
 
-                self._prepare_route(callback)
+                self._prepare_route(route)
                 continue
 
-            self._prepare_route(callback)
+            self._prepare_route(route)

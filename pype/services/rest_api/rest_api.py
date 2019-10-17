@@ -39,7 +39,9 @@ class RestApiServer:
         self.failed_icon = failed_icon
 
     def register_callback(self, path, callback, url_prefix="", methods=[]):
-        route(path, url_prefix, methods)(callback)
+        callback.restapi = True
+        RestApiFactory.register_route(path, callback, url_prefix, methods)
+        # route(path, url_prefix, methods)(callback)
 
     def register_statics(self, url_prefix, dir_path):
         register_statics(url_prefix, dir_path)
