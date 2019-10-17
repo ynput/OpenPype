@@ -48,8 +48,15 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return self._handle_request(RestMethods.PATCH)
 
     def _handle_request(self, rest_method):
-        """Because processing is technically the same for now so it is used
-        the same way
+        """Handle request by registered callbacks and statics.
+
+        Statics are only for GET method request. `_handle_statics` is called
+        when path is matching registered statics prefix. Callbacks are filtered
+        by method and their prefixes. When path is matching `_handle_callback`
+        is called.
+
+        If any registered callback or statics match requested path 400 status
+        is responsed. And 500 when unexpected error happens.
         """
         parsed_url = urlparse(self.path)
         path = parsed_url.path
@@ -151,6 +158,18 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
 
     def _handle_callback_result(self, result, rest_method):
+        """Send response to request based on result of callback.
+        :param result: Result returned by callback.
+        :type result: None, bool, dict, list, CallbackResult
+        :param rest_method: Rest api method (GET, POST, etc.).
+        :type rest_method: RestMethods
+
+        Response is based on result type:
+        - None, True - It is expected everything was OK, status 200.
+        - False - It is expected callback was not successful, status 400
+        - dict, list - Result is send under "data" key of body, status 200
+        - CallbackResult - object specify status and data
+        """
         content_type = "application/json"
         status = HTTPStatus.OK
         success = True
@@ -207,8 +226,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return body
 
     def _handle_callback(self, item, parsed_url, rest_method):
+        """Prepare data from request and trigger callback.
 
-        regex = item["regex"]
+        Data are loaded from body of request if there are any.
+
+        :param item: Item stored during callback registration with all info.
+        :type item: dict
+        :param parsed_url: Url parsed with urllib (separated path, query, etc.).
+        :type parsed_url: ParseResult
+        :param rest_method: Rest api method (GET, POST, etc.).
+        :type rest_method: RestMethods
+        """
         regex_keys = item["regex_keys"]
 
         url_data = None
@@ -258,6 +286,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return callback(*args, **kwargs)
 
     def _handle_statics(self, dirpath, path):
+        """Return static file in response when file exist in registered destination."""
         path = os.path.normpath(dirpath + path)
 
         ctype = self.guess_type(path)

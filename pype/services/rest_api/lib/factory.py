@@ -10,6 +10,16 @@ log = Logger().get_logger("RestApiFactory")
 
 
 def prepare_fullpath(path, prefix):
+    """Concatenate registered path and prefix with right form.
+
+    :param path: Registered url path for registered callback.
+    :type path: str, list
+    :param prefix: Registered and prepared url prefix.
+    :type prefix: str, None
+    :return: concatenated prefix and path in right form
+    :rtype: str
+    """
+
     if path and prefix:
         fullpath = "{}/{}".format(prefix, path).replace("//", "/")
     elif path:
@@ -26,6 +36,16 @@ def prepare_fullpath(path, prefix):
 
 
 def prepare_regex_from_path(full_path):
+    """Prepare regex based on set path.
+
+    When registered path do not contain dynamic keys regex is not set.
+    Dynamic keys are specified with "<" and ">" ("<{dynamic key}>").
+
+    :param full_path: Full url path (prefix + path) for registered callback.
+    :type full_path: str, list, None
+    :return: regex and keys of all groups in regex
+    :rtype: tuple(SRE_Pattern, list), tuple(None, None)
+    """
     get_indexes_regex = "<[^< >]+>"
     all_founded_keys = re.findall(get_indexes_regex, full_path)
     if not all_founded_keys:
@@ -46,8 +66,17 @@ def prepare_regex_from_path(full_path):
 
 
 def prepare_prefix(url_prefix):
-    if url_prefix is None:
-        url_prefix = ""
+    """Check if the url_prefix is set and is in correct form.
+
+    Output is None when prefix is empty or "/".
+
+    :param url_prefix: Registered prefix of registered callback.
+    :type url_prefix: str, list, None
+    :return: Url prefix of registered callback
+    :rtype: str, None
+    """
+    if url_prefix is None or url_prefix.strip() == "/":
+        return None
     elif isinstance(url_prefix, (list, tuple)):
         url_prefix = "/".join(url_prefix)
     else:
@@ -64,6 +93,18 @@ def prepare_prefix(url_prefix):
 
 
 def prepare_methods(methods, callback=None):
+    """Check and convert entered methods.
+
+    String `methods` is converted to list. All values are converted to
+    `RestMethods` enum object. Invalid methods are ignored and printed out.
+
+    :param methods: Contain rest api methods, when callback is called.
+    :type methods: str, list
+    :param callback: Registered callback, helps to identify where is invalid method.
+    :type callback: function, method, optional
+    :return: Valid methods
+    :rtype: list
+    """
     invalid_methods = collections.defaultdict(list)
 
     if not methods:
@@ -113,6 +154,7 @@ def prepare_methods(methods, callback=None):
     return _methods
 
 def prepare_callback_info(callback):
+    """Prepare data for callback handling when should be triggered."""
     callback_info = inspect.getfullargspec(callback)
 
     callback_args = callback_info.args
@@ -143,6 +185,11 @@ def prepare_callback_info(callback):
 
 
 class _RestApiFactory:
+    """Factory is used to store and prepare callbacks for requests.
+
+    Should be created only one object used for all registered callbacks when
+    it is expected to run only one http server.
+    """
     registered_objs = []
     unprocessed_routes = []
     unprocessed_statics = []
@@ -180,6 +227,7 @@ class _RestApiFactory:
         self.unprocessed_routes.append(route)
 
     def register_obj(self, obj):
+        """Register object for decorated methods in class definition"""
         self.registered_objs.append(obj)
 
     def register_statics(self, item):
@@ -187,6 +235,14 @@ class _RestApiFactory:
         self.unprocessed_statics.append(item)
 
     def _prepare_route(self, route):
+        """Prepare data of registered callbacks for routes.
+
+        Registration info are prepared to easy filter during handling
+        of requests.
+
+        :param route: Contain all necessary info for filtering and handling callback for registered route.
+        :type route: dict
+        """
         callback = route["callback"]
         methods = prepare_methods(route["methods"], callback)
         url_prefix = prepare_prefix(route["url_prefix"])
@@ -205,6 +261,13 @@ class _RestApiFactory:
             })
 
     def prepare_registered(self):
+        """Iterate through all registered callbacks and statics and prepare them
+
+        First are processed callbacks registered with decorators in classes by
+        registered objects. Remaining callbacks are filtered, it is checked if
+        methods has `__self__` or are defined in <locals> (it is expeted they
+        do not requise access to object)
+        """
         for url_prefix, dir_path in self.unprocessed_statics:
             self._process_statics((url_prefix, dir_path))
             dir_path = os.path.normpath(dir_path)

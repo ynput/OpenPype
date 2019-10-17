@@ -14,6 +14,70 @@ log = Logger().get_logger("RestApiServer")
 
 
 class RestApiServer:
+    """Rest Api allows to access statics or callbacks with http requests.
+
+    To register statics use `register_statics`.
+
+    To register callback use `register_callback` method or use `route` decorator.
+    `route` decorator should be used with not-class functions, it is possible
+    to use within class when inherits `RestApi` (defined in `base_class.py`)
+    or created object, with used decorator, is registered with `register_obj`.
+
+    .. code-block:: python
+        @route("/username", url_prefix="/api", methods=["get"])
+        def get_username():
+            return {"username": getpass.getuser()}
+
+    In that case response to `localhost:{port}/api/username` will be status
+    `200` with body including `{"data": {"username": getpass.getuser()}}`
+
+    Callback may expect one argument which will be filled with request
+    info. Data object has attributes: `request_data`, `query`,
+    `fragment`, `params`, `method`, `handler`, `url_data`.
+    request_data - Data from request body if there are any.
+    query - query from url path (?identificator=name)
+    fragment - fragment from url path (#reset_credentials)
+    params - params from url path
+    method - request method (GET, POST, PUT, etc.)
+    handler - Handler object of HttpServer Handler
+    url_data - dynamic url keys from registered path with their values
+
+    Dynamic url keys may be set with path argument.
+    .. code-block:: python
+        from rest_api import route
+
+        all_projects = {
+            "Proj1": {"proj_data": []},
+            "Proj2": {"proj_data": []},
+        }
+
+        @route("/projects/<project_name>", url_prefix="/api", methods=["get"])
+        def get_projects(request_info):
+            project_name = request_info.url_data["project_name"]
+            if not project_name:
+                return all_projects
+            return all_projects.get(project_name)
+
+    This example should end with status 404 if project is not found. In that
+    case is best to use `abort` method.
+
+    .. code-block:: python
+        from rest_api import abort
+
+        @route("/projects/<project_name>", url_prefix="/api", methods=["get"])
+        def get_projects(request_info):
+            project_name = request_info.url_data["project_name"]
+            if not project_name:
+                return all_projects
+
+            project = all_projects.get(project_name)
+            if not project:
+                abort(404, "Project \"{}\".format(project_name) was not found")
+            return project
+
+    Callback may return many types. For more information read docstring of
+    `_handle_callback_result` defined in handler.
+    """
     def __init__(self):
         self.qaction = None
         self.failed_icon = None
@@ -91,7 +155,7 @@ class RestApiThread(QtCore.QThread):
     """ Listener for REST requests.
 
     It is possible to register callbacks for url paths.
-    Be careful about crossreferencing to different QThreads it is not allowed.
+    Be careful about crossreferencing to different Threads it is not allowed.
     """
 
     def __init__(self, module, port):
