@@ -267,9 +267,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         callback = item["callback"]
         callback_info = item["callback_info"]
 
-        _args = callback_info["args"]
         _args_len = callback_info["args_len"]
-        _defaults = callback_info["defaults"]
         _has_args = callback_info["hasargs"]
         _has_kwargs = callback_info["haskwargs"]
 
