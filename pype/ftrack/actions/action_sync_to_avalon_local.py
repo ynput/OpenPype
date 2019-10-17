@@ -7,9 +7,8 @@ import json
 import collections
 
 from pype.vendor import ftrack_api
-# from pype.ftrack import BaseAction, lib as ftracklib
 from pype.ftrack import BaseAction
-from pype.ftrack.lib import avalon_sync1 as ftracklib
+from pype.ftrack.lib import avalon_sync as ftracklib
 from pype.vendor.ftrack_api import session as fa_session
 
 
