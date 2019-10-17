@@ -36,6 +36,12 @@ class MusterModule:
             # nothing to do
             pass
 
+    def process_modules(self, modules):
+        if "RestApiServer" in modules:
+            modules["RestApiServer"].register_callback(
+                "muster/show_login", self.show_login, "post"
+            )
+
     # Definition of Tray menu
     def tray_menu(self, parent):
         """
