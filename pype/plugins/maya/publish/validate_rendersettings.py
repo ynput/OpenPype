@@ -13,8 +13,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     * File Name Prefix must be as followed:
         * vray: maya/<Layer>/<Layer>
-        * arnold: maya/<RenderLayer>/<RenderLayer>
-        * default: maya/<RenderLayer>/<RenderLayer>
+        * default: maya/<RenderLayer>/<RenderLayer>_<RenderPass>
 
     * Frame Padding must be:
         * default: 4

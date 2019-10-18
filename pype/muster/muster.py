@@ -4,6 +4,7 @@ from Qt import QtWidgets
 import os
 import json
 from .widget_login import MusterLogin
+from avalon.vendor import requests
 
 
 class MusterModule:
@@ -37,9 +38,13 @@ class MusterModule:
             pass
 
     def process_modules(self, modules):
+
+        def api_callback():
+            self.aShowLogin.trigger()
+
         if "RestApiServer" in modules:
             modules["RestApiServer"].register_callback(
-                "muster/show_login", self.show_login, "post"
+                "muster/show_login", api_callback, "post"
             )
 
     # Definition of Tray menu
@@ -60,7 +65,7 @@ class MusterModule:
         self.menu.addAction(self.aShowLogin)
         self.aShowLogin.triggered.connect(self.show_login)
 
-        return self.menu
+        parent.addMenu(self.menu)
 
     def load_credentials(self):
         """
@@ -76,13 +81,39 @@ class MusterModule:
 
         return credentials
 
-    def save_credentials(self, username, password):
+    def get_auth_token(self, username, password):
+        """
+        Authenticate user with Muster and get authToken from server.
+        """
+        MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
+        if not MUSTER_REST_URL:
+            raise AttributeError("Muster REST API url not set")
+        params = {
+                    'username': username,
+                    'password': password
+               }
+        api_entry = '/api/login'
+        response = requests.post(
+            MUSTER_REST_URL + api_entry, params=params)
+        if response.status_code != 200:
+            self.log.error(
+                'Cannot log into Muster: {}'.format(response.status_code))
+            raise Exception('Cannot login into Muster.')
+
+        try:
+            token = response.json()['ResponseData']['authToken']
+        except ValueError as e:
+            self.log.error('Invalid response from Muster server {}'.format(e))
+            raise Exception('Invalid response from Muster while logging in.')
+
+        self.save_credentials(token)
+
+    def save_credentials(self, token):
         """
         Save credentials to JSON file
         """
         data = {
-            'username': username,
-            'password': password
+            'token': token
         }
 
         file = open(self.cred_path, 'w')

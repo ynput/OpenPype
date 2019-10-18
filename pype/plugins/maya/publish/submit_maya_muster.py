@@ -141,13 +141,15 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
     icon = "satellite-dish"
 
     _token = None
-    _user = None
-    _password = None
 
     def _load_credentials(self):
         """
         Load Muster credentials from file and set `MUSTER_USER`,
         `MUSTER_PASSWORD`, `MUSTER_REST_URL` is loaded from presets.
+
+        .. todo::
+
+           Show login dialog if access token is invalid or missing.
         """
         app_dir = os.path.normpath(
             appdirs.user_data_dir('pype-app', 'pype')
@@ -156,36 +158,13 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         fpath = os.path.join(app_dir, file_name)
         file = open(fpath, 'r')
         muster_json = json.load(file)
-        self.MUSTER_USER = muster_json.get('username', None)
-        self.MUSTER_PASSWORD = muster_json.get('password', None)
+        self._token = muster_json.get('token', None)
+        if not self._token:
+            raise RuntimeError("Invalid access token for Muster")
         file.close()
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
         if not self.MUSTER_REST_URL:
             raise AttributeError("Muster REST API url not set")
-
-    def _authenticate(self):
-        """
-        Authenticate user with Muster and get authToken from server.
-        """
-        params = {
-                    'username': self.MUSTER_USER,
-                    'password': self.MUSTER_PASSWORD
-               }
-        api_entry = '/api/login'
-        response = requests.post(
-            self.MUSTER_REST_URL + api_entry, params=params)
-        if response.status_code != 200:
-            self.log.error(
-                'Cannot log into Muster: {}'.format(response.status_code))
-            raise Exception('Cannot login into Muster.')
-
-        try:
-            self._token = response.json()['ResponseData']['authToken']
-        except ValueError as e:
-            self.log.error('Invalid response from Muster server {}'.format(e))
-            raise Exception('Invalid response from Muster while logging in.')
-
-        return self._token
 
     def _get_templates(self):
         """
@@ -273,7 +252,6 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             raise RuntimeError("MUSTER_REST_URL not set")
 
         self._load_credentials()
-        self._authenticate()
         # self._get_templates()
 
         context = instance.context
@@ -303,7 +281,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.data['subset']      # beauty
-        # renderlayer_globals = instance.data["renderGlobals"]
+        renderglobals = instance.data["renderGlobals"]
         # legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         # deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
@@ -362,7 +340,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 "platform": 0,
                 "job": {
                     "jobName": jobname,
-                    "templateId": self._get_template_id(
+                    "templateId": _get_template_id(
                         instance.data["renderer"]),
                     "chunksInterleave": 2,
                     "chunksPriority": "0",
@@ -373,7 +351,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "dependMode": 0,
                     "emergencyQueue": False,
                     "excludedPools": [""],
-                    "includedPools": [""],
+                    "includedPools": [renderglobals["Pool"]],
                     "packetSize": 4,
                     "packetType": 1,
                     "priority": 1,

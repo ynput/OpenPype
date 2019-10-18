@@ -228,12 +228,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         # Get a submission job
         data = instance.data.copy()
-        render_job = data.pop("deadlineSubmissionJob")
+        render_job = data.pop("deadlineSubmissionJob", None)
         submission_type = "deadline"
 
         if not render_job:
             # No deadline job. Try Muster: musterSubmissionJob
-            render_job = data.pop("musterSubmissionJob")
+            render_job = data.pop("musterSubmissionJob", None)
             submission_type = "muster"
             if not render_job:
                 raise RuntimeError("Can't continue without valid Deadline "
