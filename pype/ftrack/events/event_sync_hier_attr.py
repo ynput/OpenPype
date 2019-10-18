@@ -19,24 +19,38 @@ class SyncHierarchicalAttrs(BaseEvent):
         processable = []
         processable_ent = {}
         for ent in event['data']['entities']:
-            keys = ent.get('keys')
-            if not keys:
+            # Ignore entities that are not tasks or projects
+            if ent['entityType'].lower() not in ['task', 'show']:
                 continue
 
-            if not ent['entityType'] in ['task', 'show']:
+            action = ent.get("action")
+            # skip if remove (Entity does not exist in Ftrack)
+            if action == "remove":
                 continue
+
+            # When entity was add we don't care about keys
+            if action != "add":
+                keys = ent.get('keys')
+                if not keys:
+                    continue
 
             entity = session.get(self._get_entity_type(ent), ent['entityId'])
             processable.append(ent)
-            processable_ent[ent['entityId']] = entity
+
+            processable_ent[ent['entityId']] = {
+                "entity": entity,
+                "action": action,
+                "link": entity["link"]
+            }
 
         if not processable:
             return True
 
+        # Find project of entities
         ft_project = None
-        for entity in processable_ent.values():
+        for entity_dict in processable_ent.values():
             try:
-                base_proj = entity['link'][0]
+                base_proj = entity_dict['link'][0]
             except Exception:
                 continue
             ft_project = session.get(base_proj['type'], base_proj['id'])
@@ -50,6 +64,7 @@ class SyncHierarchicalAttrs(BaseEvent):
         ):
             return True
 
+        # Get hierarchical custom attributes from "avalon" group
         custom_attributes = {}
         query = 'CustomAttributeGroup where name is "avalon"'
         all_avalon_attr = session.query(query).one()
@@ -67,19 +82,39 @@ class SyncHierarchicalAttrs(BaseEvent):
         self.db_con.Session['AVALON_PROJECT'] = ft_project['full_name']
 
         for ent in processable:
-            for key in ent['keys']:
-                if key not in custom_attributes:
-                    continue
+            entity_dict = processable_ent[ent['entityId']]
 
-                entity = processable_ent[ent['entityId']]
-                attr_value = entity['custom_attributes'][key]
+            entity = entity_dict["entity"]
+            ent_path = "/".join([ent["name"] for ent in entity_dict['link']])
+            action = entity_dict["action"]
+
+            processed_keys = {}
+            if action == "add":
+                # Store all custom attributes when entity was added
+                for key in custom_attributes:
+                    processed_keys[key] = entity['custom_attributes'][key]
+            else:
+                # Update only updated keys
+                for key in ent['keys']:
+                    if key in custom_attributes:
+                        processed_keys[key] = entity['custom_attributes'][key]
+
+            # Do the processing of values
+            for key, attr_value in processed_keys.items():
                 self.update_hierarchical_attribute(entity, key, attr_value)
+
+            self.log.debug(
+                "Updated hierarchical attributes for entity \"{}\": {}".format(
+                    ent_path, str(processed_keys.keys())
+                )
+            )
 
         self.db_con.uninstall()
 
         return True
 
     def update_hierarchical_attribute(self, entity, key, value):
+        # TODO store all keys at once for entity
         custom_attributes = entity.get('custom_attributes')
         if not custom_attributes:
             return
