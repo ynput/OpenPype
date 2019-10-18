@@ -20,7 +20,13 @@ import requests
 import pymongo
 from pymongo.client_session import ClientSession
 
-class NotActiveTable(Exception): pass
+class NotActiveTable(Exception):
+    def __init__(self, *args, **kwargs):
+        msg = "Active table is not set. (This is bug)"
+        if not (args or kwargs):
+            args = (default_message,)
+        super().__init__(*args, **kwargs)
+
 
 def auto_reconnect(func):
     """Handling auto reconnect in 3 retry times"""
@@ -35,12 +41,11 @@ def auto_reconnect(func):
                 time.sleep(0.1)
         else:
             raise
-
     return decorated
 
 
 def check_active_table(func):
-    """Handling auto reconnect in 3 retry times"""
+    """Check if DbConnector has active table before db method is called"""
     @functools.wraps(func)
     def decorated(obj, *args, **kwargs):
         if not obj.active_table:
