@@ -27,7 +27,7 @@ class ThumbnailEvents(BaseEvent):
             #         entity['action'] == 'encoded'):
             if (
                 entity['entityType'] == 'assetversion'
-                and 'thumbid' in entity.get('keys', [])
+                and 'thumbid' in (entity.get('keys') or [])
             ):
 
                 version = session.get('AssetVersion', entity['entityId'])
