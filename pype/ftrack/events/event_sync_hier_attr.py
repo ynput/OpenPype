@@ -88,32 +88,67 @@ class SyncHierarchicalAttrs(BaseEvent):
             ent_path = "/".join([ent["name"] for ent in entity_dict['link']])
             action = entity_dict["action"]
 
-            processed_keys = {}
+            keys_to_process = {}
             if action == "add":
                 # Store all custom attributes when entity was added
                 for key in custom_attributes:
-                    processed_keys[key] = entity['custom_attributes'][key]
+                    keys_to_process[key] = entity['custom_attributes'][key]
             else:
                 # Update only updated keys
                 for key in ent['keys']:
                     if key in custom_attributes:
-                        processed_keys[key] = entity['custom_attributes'][key]
+                        keys_to_process[key] = entity['custom_attributes'][key]
 
-            # Do the processing of values
-            for key, attr_value in processed_keys.items():
-                self.update_hierarchical_attribute(entity, key, attr_value)
-
-            self.log.debug(
-                "Updated hierarchical attributes for entity \"{}\": {}".format(
-                    ent_path, str(processed_keys.keys())
-                )
+            processed_keys = self.get_hierarchical_values(
+                keys_to_process, entity
             )
+            # Do the processing of values
+            self.update_hierarchical_attribute(entity, processed_keys, ent_path)
 
         self.db_con.uninstall()
 
         return True
 
-    def update_hierarchical_attribute(self, entity, key, value):
+    def get_hierarchical_values(self, keys_dict, entity):
+        # check already set values
+        _set_keys = []
+        for key, value in keys_dict.items():
+            if value is not None:
+                _set_keys.append(key)
+
+        # pop set values from keys_dict
+        set_keys = {}
+        for key in _set_keys:
+            set_keys[key] = keys_dict.pop(key)
+
+        # find if entity has set values and pop them out
+        keys_to_pop = []
+        for key in keys_dict.keys():
+            _val = entity["custom_attributes"][key]
+            if _val:
+                keys_to_pop.append(key)
+                set_keys[key] = _val
+
+        for key in keys_to_pop:
+            keys_dict.pop(key)
+
+        # if there are not keys to find value return found
+        if not keys_dict:
+            return set_keys
+
+        # end recursion if entity is project
+        if entity.entity_type.lower() == "project":
+            for key, value in keys_dict.items():
+                set_keys[key] = value
+
+        else:
+            result = self.get_hierarchical_values(keys_dict, entity["parent"])
+            for key, value in result.items():
+                set_keys[key] = value
+
+        return set_keys
+
+    def update_hierarchical_attribute(self, entity, keys_dict, ent_path):
         # TODO store all keys at once for entity
         custom_attributes = entity.get('custom_attributes')
         if not custom_attributes:
@@ -132,25 +167,44 @@ class SyncHierarchicalAttrs(BaseEvent):
         if not mongo_entity:
             return
 
+        changed_keys = {}
         data = mongo_entity.get('data') or {}
-        cur_value = data.get(key)
-        if cur_value:
-            if cur_value == value:
-                return
+        for key, value in keys_dict.items():
+            cur_value = data.get(key)
+            if cur_value:
+                if cur_value == value:
+                    continue
+            changed_keys[key] = value
+            data[key] = value
 
-        data[key] = value
+        if not changed_keys:
+            return
+
+        self.log.debug(
+            "{} - updated hierarchical attributes: {}".format(
+                ent_path, str(changed_keys)
+            )
+        )
+
         self.db_con.update_many(
             {'_id': mongoid},
             {'$set': {'data': data}}
         )
 
         for child in entity.get('children', []):
-            if key not in child.get('custom_attributes', {}):
+            _keys_dict = {}
+            for key, value in keys_dict.items():
+                if key not in child.get('custom_attributes', {}):
+                    continue
+                child_value = child['custom_attributes'][key]
+                if child_value is not None:
+                    continue
+                _keys_dict[key] = value
+
+            if not _keys_dict:
                 continue
-            child_value = child['custom_attributes'][key]
-            if child_value is not None:
-                continue
-            self.update_hierarchical_attribute(child, key, value)
+            child_path = "/".join([ent["name"] for ent in child['link']])
+            self.update_hierarchical_attribute(child, _keys_dict, child_path)
 
 
 def register(session, plugins_presets):
