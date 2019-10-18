@@ -47,7 +47,7 @@ class NextTaskUpdate(BaseEvent):
             statusid_changes = changes.get('statusid', {})
             if (
                 entity['entityType'] != 'task' or
-                'statusid' not in entity['keys'] or
+                'statusid' not in (entity.get('keys') or []) or
                 statusid_changes.get('new', None) is None or
                 statusid_changes.get('old', None) is None
             ):
