@@ -49,14 +49,12 @@ def check_active_table(func):
     @functools.wraps(func)
     def decorated(obj, *args, **kwargs):
         if not obj.active_table:
-            raise NotActiveTable("Active table is not set. (This is bug)")
+            raise NotActiveTable()
         return func(obj, *args, **kwargs)
-
     return decorated
 
 
 class DbConnector:
-
     log = logging.getLogger(__name__)
     timeout = 1000
 
@@ -72,7 +70,18 @@ class DbConnector:
         self.active_table = table_name
 
     def __getitem__(self, key):
+        # gives direct access to collection withou setting `active_table`
         return self._database[key]
+
+    def __getattribute__(self, attr):
+        # not all methods of PyMongo database are implemented with this it is
+        # possible to use them too
+        try:
+            return super(DbConnector, self).__getattribute__(attr)
+        except AttributeError:
+            if self.active_table is None:
+                raise NotActiveTable()
+            return self._database[self.active_table].__getattribute__(attr)
 
     def install(self):
         """Establish a persistent connection to the database"""
