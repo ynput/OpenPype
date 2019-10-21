@@ -52,6 +52,7 @@ class AvalonRestApi(RestApi):
             output = self.result_to_json(assets)
             return CallbackResult(data=output)
 
+        # identificator can be specified with url query (default is `name`)
         identificator = request.query.get("identificator", "name")
 
         asset = self.dbcon[_project_name].find_one({
@@ -68,6 +69,12 @@ class AvalonRestApi(RestApi):
         ))
 
     def result_to_json(self, result):
+        """ Converts result of MongoDB query to dict without $oid (ObjectId)
+        keys with help of regex matching.
+
+        ..note:
+            This will convert object type entries similar to ObjectId.
+        """
         bson_json = bson.json_util.dumps(result)
         # Replace "{$oid: "{entity id}"}" with "{entity id}"
         regex1 = '(?P<id>{\"\$oid\": \"[^\"]+\"})'
