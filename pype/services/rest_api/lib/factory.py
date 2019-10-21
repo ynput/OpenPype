@@ -47,7 +47,7 @@ def prepare_fullpath(path, prefix):
     return fullpath
 
 
-def prepare_regex_from_path(full_path):
+def prepare_regex_from_path(full_path, strict_match):
     """Prepare regex based on set path.
 
     When registered path do not contain dynamic keys regex is not set.
@@ -68,8 +68,9 @@ def prepare_regex_from_path(full_path):
     for key in all_founded_keys:
         replacement = "(?P{}\w+)".format(key)
         keys.append(key.replace("<", "").replace(">", ""))
-        if full_path.endswith(key):
-            replacement = "?{}?".format(replacement)
+        if not strict_match:
+            if full_path.endswith(key):
+                replacement = "?{}?".format(replacement)
         regex_path = regex_path.replace(key, replacement)
 
     regex_path = "^{}$".format(regex_path)
@@ -227,7 +228,7 @@ class _RestApiFactory:
             self.unprocessed_statics.index(item)
         )
 
-    def register_route(self, path, callback, url_prefix, methods):
+    def register_route(self, path, callback, url_prefix, methods, strict_match):
         log.debug("Registering callback for item \"{}\"".format(
             callback.__qualname__
         ))
@@ -235,7 +236,8 @@ class _RestApiFactory:
             "path": path,
             "callback": callback,
             "url_prefix": url_prefix,
-            "methods": methods
+            "methods": methods,
+            "strict_match": strict_match
         }
         self.unprocessed_routes.append(route)
 
@@ -260,7 +262,9 @@ class _RestApiFactory:
         methods = prepare_methods(route["methods"], callback)
         url_prefix = prepare_prefix(route["url_prefix"])
         fullpath = prepare_fullpath(route["path"], url_prefix)
-        regex, regex_keys = prepare_regex_from_path(fullpath)
+        regex, regex_keys = prepare_regex_from_path(
+            fullpath, route["strict_match"]
+        )
         callback_info = prepare_callback_info(callback)
 
         for method in methods:

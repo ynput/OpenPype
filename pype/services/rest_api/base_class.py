@@ -7,7 +7,7 @@ from .lib import (
 )
 
 
-def route(path, url_prefix="", methods=[]):
+def route(path, url_prefix="", methods=[], strict_match=False):
     """Decorator that register callback and all its attributes.
     Callback is registered to Singleton RestApiFactory.
 
@@ -15,8 +15,10 @@ def route(path, url_prefix="", methods=[]):
     :type path: str
     :param url_prefix: Specify prefix of path, defaults to "/".
     :type url_prefix: str, list, optional
-    :param methods: Specify request method (GET, POST, PUT, UPDATE, DELETE) when callback will be triggered, defaults to ["GET"]
+    :param methods: Specify request method (GET, POST, PUT, etc.) when callback will be triggered, defaults to ["GET"]
     :type methods: list, str, optional
+    :param strict_match: Decides if callback can handle both single and multiple entities (~/projects/<project_name> && ~/projects/), defaults to False.
+    :type strict_match: bool
 
     `path` may include dynamic keys that will be stored to object which can
     be obtained in callback.
@@ -35,7 +37,9 @@ def route(path, url_prefix="", methods=[]):
     callback.
     """
     def decorator(callback):
-        RestApiFactory.register_route(path, callback, url_prefix, methods)
+        RestApiFactory.register_route(
+            path, callback, url_prefix, methods, strict_match
+        )
         callback.restapi = True
         return callback
     return decorator
@@ -84,12 +88,14 @@ class RestApi:
     It is possible to use decorators in another class only when object, of class
     where decorators are, is registered to RestApiFactory.
     """
-    def route(path, url_prefix="", methods=[]):
-        return route(path, url_prefix, methods)
+    def route(path, url_prefix="", methods=[], strict_match=False):
+        return route(path, url_prefix, methods, strict_match)
 
     @classmethod
-    def register_route(cls, callback, path, url_prefix="", methods=[]):
-        return route(path, methods, url_prefix)(callback)
+    def register_route(
+        cls, callback, path, url_prefix="", methods=[], strict_match=False
+    ):
+        return route(path, methods, url_prefix, strict_match)(callback)
 
     @classmethod
     def register_statics(cls, url_prefix, dir_path):

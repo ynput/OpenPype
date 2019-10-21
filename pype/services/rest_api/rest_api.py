@@ -24,7 +24,7 @@ class RestApiServer:
     or created object, with used decorator, is registered with `register_obj`.
 
     .. code-block:: python
-        @route("/username", url_prefix="/api", methods=["get"])
+        @route("/username", url_prefix="/api", methods=["get"], strict_match=False)
         def get_username():
             return {"username": getpass.getuser()}
 
@@ -51,7 +51,7 @@ class RestApiServer:
             "Proj2": {"proj_data": []},
         }
 
-        @route("/projects/<project_name>", url_prefix="/api", methods=["get"])
+        @route("/projects/<project_name>", url_prefix="/api", methods=["get"], strict_match=False)
         def get_projects(request_info):
             project_name = request_info.url_data["project_name"]
             if not project_name:
@@ -64,7 +64,7 @@ class RestApiServer:
     .. code-block:: python
         from rest_api import abort
 
-        @route("/projects/<project_name>", url_prefix="/api", methods=["get"])
+        @route("/projects/<project_name>", url_prefix="/api", methods=["get"], strict_match=False)
         def get_projects(request_info):
             project_name = request_info.url_data["project_name"]
             if not project_name:
@@ -74,6 +74,11 @@ class RestApiServer:
             if not project:
                 abort(404, "Project \"{}\".format(project_name) was not found")
             return project
+
+    `strict_match` allows to handle not only specific entity but all entity types.
+    E.g. "/projects/<project_name>" with set `strict_match` to False will handle also
+    "/projects" or "/projects/" path. It is necessary to set `strict_match` to
+    True when should handle only single entity.
 
     Callback may return many types. For more information read docstring of
     `_handle_callback_result` defined in handler.
@@ -102,8 +107,12 @@ class RestApiServer:
         self.qaction = qaction
         self.failed_icon = failed_icon
 
-    def register_callback(self, path, callback, url_prefix="", methods=[]):
-        RestApiFactory.register_route(path, callback, url_prefix, methods)
+    def register_callback(
+        self, path, callback, url_prefix="", methods=[], strict_match=False
+    ):
+        RestApiFactory.register_route(
+            path, callback, url_prefix, methods, strict_match
+        )
         # route(path, url_prefix, methods)(callback)
 
     def register_statics(self, url_prefix, dir_path):
