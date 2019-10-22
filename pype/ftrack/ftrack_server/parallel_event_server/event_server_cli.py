@@ -10,15 +10,12 @@ import requests
 from pype.vendor import ftrack_api
 from pype.ftrack.lib import credentials
 from pype.ftrack.ftrack_server import FtrackServer
-from pypeapp import Logger
 import socket_thread
-
-log = Logger().get_logger('Ftrack event server', "ftrack-event-server-cli")
 
 
 def check_ftrack_url(url, log_errors=True):
     if not url:
-        log.error('Ftrack URL is not set!')
+        print('ERROR: Ftrack URL is not set!')
         return None
 
     url = url.strip('/ ')
@@ -32,15 +29,15 @@ def check_ftrack_url(url, log_errors=True):
         result = requests.get(url, allow_redirects=False)
     except requests.exceptions.RequestException:
         if log_errors:
-            log.error('Entered Ftrack URL is not accesible!')
+            print('ERROR: Entered Ftrack URL is not accesible!')
         return False
 
     if (result.status_code != 200 or 'FTRACK_VERSION' not in result.headers):
         if log_errors:
-            log.error('Entered Ftrack URL is not accesible!')
+            print('ERROR: Entered Ftrack URL is not accesible!')
         return False
 
-    log.debug('Ftrack server {} is accessible.'.format(url))
+    print('DEBUG: Ftrack server {} is accessible.'.format(url))
 
     return url
 
@@ -67,10 +64,10 @@ def check_mongo_url(host, port, log_error=False):
 def validate_credentials(url, user, api):
     first_validation = True
     if not user:
-        log.error('Ftrack Username is not set! Exiting.')
+        print('ERROR: Ftrack Username is not set! Exiting.')
         first_validation = False
     if not api:
-        log.error('Ftrack API key is not set! Exiting.')
+        print('ERROR: Ftrack API key is not set! Exiting.')
         first_validation = False
     if not first_validation:
         return False
@@ -83,21 +80,21 @@ def validate_credentials(url, user, api):
         )
         session.close()
     except Exception as e:
-        log.error(
-            'Can\'t log into Ftrack with used credentials:'
+        print(
+            'ERROR: Can\'t log into Ftrack with used credentials:'
             ' Ftrack server: "{}" // Username: {} // API key: {}'.format(
             url, user, api
         ))
         return False
 
-    log.debug('Credentials Username: "{}", API key: "{}" are valid.'.format(
+    print('DEBUG: Credentials Username: "{}", API key: "{}" are valid.'.format(
         user, api
     ))
     return True
 
 
 def process_event_paths(event_paths):
-    log.debug('Processing event paths: {}.'.format(str(event_paths)))
+    print('DEBUG: Processing event paths: {}.'.format(str(event_paths)))
     return_paths = []
     not_found = []
     if not event_paths:
@@ -150,80 +147,64 @@ def main_loop(ftrack_url, username, api_key, event_paths):
     processor_path = "{}/sub_event_processor.py".format(file_path)
     processor_thread = None
 
-    backup_name = "BackupThread"
-    backup_port = 10007
-    backup_path = "{}/sub_event_backup.py".format(file_path)
-    backup_thread = None
-
     ftrack_accessible = False
     mongo_accessible = False
+
+    printed_ftrack_error = False
+    printed_mongo_error = False
 
     # Main loop
     while True:
         # Check if accessible Ftrack and Mongo url
-        if not ftrack_accessible or not mongo_accessible:
-            if not ftrack_accessible:
-                ftrack_accessible = check_ftrack_url(ftrack_url)
+        if not ftrack_accessible:
+            ftrack_accessible = check_ftrack_url(ftrack_url)
 
-            if not mongo_accessible:
-                mongo_accessible = check_mongo_url(mongo_hostname, mongo_port)
+        if not mongo_accessible:
+            mongo_accessible = check_mongo_url(mongo_hostname, mongo_port)
 
         # Run threads only if Ftrack is accessible
-        if not ftrack_accessible:
+        if not ftrack_accessible or not mongo_accessible:
+            if not mongo_accessible and not printed_mongo_error:
+                print("Can't access Mongo {}".format(mongo_url))
+
+            if not ftrack_accessible and not printed_ftrack_error:
+                print("Can't access Ftrack {}".format(ftrack_url))
+
+            printed_ftrack_error = True
+            printed_mongo_error = True
+
             time.sleep(1)
             continue
 
+        printed_ftrack_error = False
+        printed_mongo_error = False
+
         # Run backup thread which does not requeire mongo to work
-        if not mongo_accessible:
-            if storer_thread is not None:
-                storer_thread.stop()
-                storer_thread.join()
-                storer_thread = None
+        if storer_thread is None:
+            storer_thread = socket_thread.SocketThread(
+                storer_name, storer_port, storer_path
+            )
+            storer_thread.start()
 
-            if processor_thread is not None:
-                processor_thread.stop()
-                processor_thread.join()
-                processor_thread = None
+        # If thread failed test Ftrack and Mongo connection
+        elif not storer_thread.isAlive():
+            storer_thread.join()
+            storer_thread = None
+            ftrack_accessible = False
+            mongo_accessible = False
 
-            if backup_thread is None:
-                backup_thread = socket_thread.SocketThread(
-                    backup_name, backup_port, backup_path
-                )
-                backup_thread.start()
+        if processor_thread is None:
+            processor_thread = socket_thread.SocketThread(
+                processor_name, processor_port, processor_path
+            )
+            processor_thread.start()
 
-        else:
-            if backup_thread is not None:
-                if backup_thread.finished:
-                    backup_thread.join()
-                    backup_thread = None
-                else:
-                    backup_thread.process_to_die()
-
-            if storer_thread is None:
-                storer_thread = socket_thread.SocketThread(
-                    storer_name, storer_port, storer_path
-                )
-                storer_thread.start()
-
-            # If thread failed test Ftrack and Mongo connection
-            elif not storer_thread.isAlive():
-                storer_thread.join()
-                storer_thread = None
-                ftrack_accessible = False
-                mongo_accessible = False
-
-            if processor_thread is None:
-                processor_thread = socket_thread.SocketThread(
-                    processor_name, processor_port, processor_path
-                )
-                processor_thread.start()
-
-            # If thread failed test Ftrack and Mongo connection
-            elif processor_thread.isAlive():
-                processor_thread.join()
-                processor_thread = None
-                ftrack_accessible = False
-                mongo_accessible = False
+        # If thread failed test Ftrack and Mongo connection
+        elif processor_thread.isAlive():
+            processor_thread.join()
+            processor_thread = None
+            ftrack_accessible = False
+            mongo_accessible = False
 
         time.sleep(1)
 
@@ -353,14 +334,14 @@ def main(argv):
     # Process events path
     event_paths, not_found = process_event_paths(event_paths)
     if not_found:
-        log.warning(
-            'These paths were not found: {}'.format(str(not_found))
+        print(
+            'WARNING: These paths were not found: {}'.format(str(not_found))
         )
     if not event_paths:
         if not_found:
-            log.error('Any of entered paths is valid or can be accesible.')
+            print('ERROR: Any of entered paths is valid or can be accesible.')
         else:
-            log.error('Paths to events are not set. Exiting.')
+            print('ERROR: Paths to events are not set. Exiting.')
         return 1
 
     if kwargs.storecred:
