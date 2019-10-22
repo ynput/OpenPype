@@ -296,9 +296,6 @@ def register(session, plugins_presets):
     # Validate that session is an instance of ftrack_api.Session. If not,
     # assume that register is being called from an old or incompatible API and
     # return without doing anything.
-    if not isinstance(session, ftrack_api.session.Session):
-        return
-
     SyncToAvalon(session, plugins_presets).register()
 
 

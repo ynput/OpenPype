@@ -220,8 +220,6 @@ class DJVViewAction(BaseAction):
 
 def register(session, plugins_presets={}):
     """Register hooks."""
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     DJVViewAction(session, plugins_presets).register()
 

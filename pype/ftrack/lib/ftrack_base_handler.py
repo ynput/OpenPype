@@ -31,8 +31,21 @@ class BaseHandler(object):
 
     def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
-        self._session = session
         self.log = Logger().get_logger(self.__class__.__name__)
+        if not isinstance(session, ftrack_api.session.Session):
+            self.log.warning((
+                "Session object entered with args is instance of \"{}\""
+                " but expected instance is \"{}\"."
+            ).format(
+                str(type(session)),
+                str(ftrack_api.session.Session.__qualname__)
+            ))
+            self.register = self.register_without_session
+            self._session = None
+
+            return
+
+        self._session = session
 
         # Using decorator
         self.register = self.register_decorator(self.register)
