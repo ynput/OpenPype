@@ -126,7 +126,7 @@ class FtrackServer:
                 msg = '"{}" - register was not successful ({})'.format(
                     function_dict['name'], str(exc)
                 )
-                log.warning(msg)
+                log.warning(msg, exc_info=True)
 
     def run_server(self):
         self.session = ftrack_api.Session(auto_connect_event_hub=True,)
