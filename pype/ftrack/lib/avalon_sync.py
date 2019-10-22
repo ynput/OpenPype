@@ -380,9 +380,13 @@ def import_to_avalon(
 def get_avalon_attr(session, split_hierarchical=False):
     custom_attributes = []
     hier_custom_attributes = []
-    query = 'CustomAttributeGroup where name is "avalon"'
-    all_avalon_attr = session.query(query).one()
-    for cust_attr in all_avalon_attr['custom_attribute_configurations']:
+    cust_attrs_query = (
+        "select id, entity_type, object_type_id, is_hierarchical"
+        " from CustomAttributeConfiguration"
+        " where group.name = \"avalon\""
+    )
+    all_avalon_attr = session.query(cust_attrs_query).all()
+    for cust_attr in all_avalon_attr:
         if 'avalon_' in cust_attr['key']:
             continue
 
@@ -439,6 +443,12 @@ def get_data(entity, session, custom_attributes):
     data['ftrackId'] = entity['id']
     data['entityType'] = entity_type
 
+    ent_types_query = "select id, name from ObjectType"
+    ent_types = session.query(ent_types_query).all()
+    ent_types_by_name = {
+        ent_type["name"]: ent_type["id"] for ent_type in ent_types
+    }
+
     for cust_attr in custom_attributes:
         # skip hierarchical attributes
         if cust_attr.get('is_hierarchical', False):
@@ -461,8 +471,14 @@ def get_data(entity, session, custom_attributes):
             # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
             entity_type_full = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
             # Get object id of entity type
-            query = 'ObjectType where name is "{}"'.format(entity_type_full)
-            ent_obj_type_id = session.query(query).one()['id']
+            ent_obj_type_id = ent_types_by_name.get(entity_type_full)
+
+            # Backup soluction when id is not found by prequeried objects
+            if not ent_obj_type_id:
+                query = 'ObjectType where name is "{}"'.format(
+                    entity_type_full
+                )
+                ent_obj_type_id = session.query(query).one()['id']
 
             if cust_attr['object_type_id'] == ent_obj_type_id:
                 if key in entity['custom_attributes']:

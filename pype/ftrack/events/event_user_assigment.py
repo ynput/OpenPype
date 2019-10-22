@@ -183,7 +183,7 @@ class UserAssigmentEvent(BaseEvent):
 
     def launch(self, session, event):
         # load shell scripts presets
-        presets = config.get_presets()['ftrack']["user_assigment_event"]
+        presets = config.get_presets()['ftrack'].get("user_assigment_event")
         if not presets:
             return
         for entity in event.get('data', {}).get('entities', []):
