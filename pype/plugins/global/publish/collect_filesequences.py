@@ -131,6 +131,12 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 else:
                     root = cwd
 
+                if data.get("ftrack"):
+                    f = data.get("ftrack")
+                    os.environ["FTRACK_API_USER"] = f["FTRACK_API_USER"]
+                    os.environ["FTRACK_API_KEY"] = f["FTRACK_API_KEY"]
+                    os.environ["FTRACK_SERVER"] = f["FTRACK_SERVER"]
+
                 metadata = data.get("metadata")
                 if metadata:
                     session = metadata.get("session")
