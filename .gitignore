@@ -32,3 +32,4 @@ coverage.xml
 # Node JS packages
 ##################
 node_modules/
+package-lock.json
