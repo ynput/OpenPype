@@ -68,7 +68,7 @@ class SocketThread(threading.Thread):
                 if (time.time() - time_socket) > self.MAX_TIMEOUT:
                     self.log.error("Connection timeout passed. Terminating.")
                     self._is_running = False
-                    os.kill(self.subproc.pid, signal.SIGINT)
+                    self.subproc.terminate()
                     break
                 continue
 
@@ -89,7 +89,7 @@ class SocketThread(threading.Thread):
                                     "Connection timeout passed. Terminating."
                                 )
                                 self._is_running = False
-                                os.kill(self.subproc.pid, signal.SIGINT)
+                                self.subproc.terminate()
                                 break
                             continue
 
@@ -109,6 +109,6 @@ class SocketThread(threading.Thread):
                 # Clean up the connection
                 connection.close()
                 if self.subproc.poll() is None:
-                    os.kill(self.subproc.pid, signal.SIGINT)
+                    self.subproc.terminate()
 
                 self.finished = True
