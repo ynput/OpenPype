@@ -13,6 +13,7 @@ import logging
 import tempfile
 import functools
 import contextlib
+import atexit
 
 import requests
 
@@ -71,7 +72,7 @@ class DbConnector:
         """Establish a persistent connection to the database"""
         if self._is_installed:
             return
-
+        atexit.register(self.uninstall)
         logging.basicConfig()
 
         self._mongo_client = pymongo.MongoClient(
@@ -113,6 +114,7 @@ class DbConnector:
         self._mongo_client = None
         self._database = None
         self._is_installed = False
+        atexit.unregister(self.uninstall)
 
     def tables(self):
         """List available tables
