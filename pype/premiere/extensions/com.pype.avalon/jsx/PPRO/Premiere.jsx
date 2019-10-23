@@ -11,7 +11,7 @@
  * then your use, modification, or distribution of it requires the prior
  * written permission of Adobe.
  **************************************************************************/
-//include "PPro_API_Constants.jsx"
+#include "PPro_API_Constants.jsx"
 
 $._PPP_ = {
 
@@ -46,6 +46,10 @@ $._PPP_ = {
     return userName;
   },
 
+  keepPanelLoaded: function () {
+    app.setExtensionPersistent("com.pype.RenameDialog", 0); // 0, while testing (to enable rapid reload); 1 for "Never unload me, even when not visible."
+  },
+
   updateGrowingFile: function () {
     var numItems = app.project.rootItem.children.numItems;
     for (var i = 0; i < numItems; i++) {
@@ -75,10 +79,10 @@ $._PPP_ = {
       // Create a file name based on timecode of frame.
       var time = activeSequence.CTI.timecode; // CTI = Current Time Indicator.
       var removeThese = /:|;/ig; // Why? Because Windows chokes on colons.
-      time = time.replace(removeThese, '_');
+      var time_nice = time.replace(removeThese, '_');
       var outputPath = new File("~/Desktop");
-      var outputFileName = outputPath.fsName + $._PPP_.getSep() + time + '___' + activeSequence.name;
-      activeSequence.exportFramePNG(time, outputFileName);
+      var outputFileName = outputPath.fsName + $._PPP_.getSep() + time_nice + '___' + activeSequence.name;
+      var expPNG = activeSequence.exportFramePNG(time, outputFileName);
     } else {
       $._PPP_.updateEventPanel("No active sequence.");
     }
@@ -653,7 +657,7 @@ $._PPP_ = {
             var jobID = app.encoder.encodeSequence(app.project.activeSequence,
               fullPathToFile,
               outPreset.fsName,
-              app.encoder.ENCODE_WORKAREA,
+              app.encoder.ENCODE_IN_TO_OUT,
               1); // Remove from queue upon successful completion?
             $._PPP_.updateEventPanel('jobID = ' + jobID);
             outPreset.close();
