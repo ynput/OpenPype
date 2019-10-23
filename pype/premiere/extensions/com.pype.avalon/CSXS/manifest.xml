@@ -23,9 +23,10 @@ accordance with the terms of the Adobe license agreement accompanying * it. If y
 			<DispatchInfo >
 				<Resources>
 					<MainPath>./index_remote.html</MainPath>
-					<ScriptPath>./jsx/pypeAvalon.jsx</ScriptPath>
+					<ScriptPath>./pypeAvalon.jsx</ScriptPath>
 					<CEFCommandLine>
 						<Parameter>--enable-nodejs</Parameter>
+						<Parameter>--mixed-context</Parameter>
 						<Parameter>--disable-application-cache</Parameter>
 					</CEFCommandLine>
 				</Resources>
@@ -37,8 +38,8 @@ accordance with the terms of the Adobe license agreement accompanying * it. If y
 					<Menu>Avalon</Menu>
 					<Geometry>
 						<Size>
-							<Height>300</Height>
-							<Width>400</Width>
+							<Width>600</Width>
+							<Height>850</Height>
 						</Size>
 					</Geometry>
 					<Icons>
