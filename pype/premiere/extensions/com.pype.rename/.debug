@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ExtensionList>
-    <Extension Id="com.pype.RenameDialog">
+    <Extension Id="com.pype.rename">
         <HostList>
             <Host Name="PPRO" Port="7776"/>
         </HostList>
