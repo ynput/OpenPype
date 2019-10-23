@@ -9,7 +9,7 @@ from pype.ftrack.ftrack_server import FtrackServer
 from session_processor import ProcessSession
 from pypeapp import Logger
 
-log = Logger().get_logger("Event storer")
+log = Logger().get_logger("Event processor")
 
 
 def main(args):

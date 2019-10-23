@@ -170,6 +170,16 @@ def main_loop(ftrack_url, username, api_key, event_paths):
             if not ftrack_accessible and not printed_ftrack_error:
                 print("Can't access Ftrack {}".format(ftrack_url))
 
+            if storer_thread is not None:
+                storer_thread.stop()
+                storer_thread.join()
+                storer_thread = None
+
+            if processor_thread is not None:
+                processor_thread.stop()
+                processor_thread.join()
+                processor_thread = None
+
             printed_ftrack_error = True
             printed_mongo_error = True
 

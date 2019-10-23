@@ -24,7 +24,6 @@ class SocketThread(threading.Thread):
 
     def stop(self):
         self._is_running = False
-        super().stop()
 
     def process_to_die(self):
         if not self.connection:
@@ -40,9 +39,15 @@ class SocketThread(threading.Thread):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock = sock
 
-        # Bind the socket to the port
-        server_address = ("localhost", self.port)
-        sock.bind(server_address)
+        # Bind the socket to the port - skip already used ports
+        while True:
+            try:
+                server_address = ("localhost", self.port)
+                sock.bind(server_address)
+                break
+            except OSError:
+                self.port += 1
+
         self.log.debug(
             "Running Socked thread on {}:{}".format(*server_address)
         )
