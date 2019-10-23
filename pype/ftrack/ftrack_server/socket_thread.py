@@ -25,13 +25,6 @@ class SocketThread(threading.Thread):
     def stop(self):
         self._is_running = False
 
-    def process_to_die(self):
-        if not self.connection:
-            self.stop()
-            return
-
-        self.connection.sendall(b"ptd")
-
     def run(self):
         self._is_running = True
         time_socket = time.time()
