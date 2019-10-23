@@ -23,9 +23,12 @@ table_name = "ftrack_events"
 ignore_topics = []
 
 def install_db():
-    dbcon.install()
-    dbcon.create_table(table_name, capped=False)
-    dbcon.active_table = table_name
+    try:
+        dbcon.install()
+        dbcon.create_table(table_name, capped=False)
+        dbcon.active_table = table_name
+    except pymongo.errors.AutoReconnect:
+        sys.exit(0)
 
 def launch(event):
     if event.get("topic") in ignore_topics:
@@ -46,6 +49,9 @@ def launch(event):
 
     except pymongo.errors.DuplicateKeyError:
         log.debug("Event: {} already exists".format(event_id))
+
+    except pymongo.errors.AutoReconnect:
+        sys.exit(0)
 
     except Exception as exc:
         log.error(
@@ -76,7 +82,6 @@ def main(args):
         session = StorerSession(auto_connect_event_hub=True, sock=sock)
         register(session)
         server = FtrackServer("event")
-        log.info(os.environ["FTRACK_EVENTS_PATH"])
         log.debug("Launched Ftrack Event storer")
         server.run_server(session, load_files=False)
 

@@ -31,11 +31,14 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
         super(ProcessEventHub, self).__init__(*args, **kwargs)
 
     def prepare_dbcon(self):
-        self.dbcon.install()
-        if not self.is_table_created:
-            self.dbcon.create_table(self.table_name, capped=False)
-            self.dbcon.active_table = self.table_name
-            self.is_table_created = True
+        try:
+            self.dbcon.install()
+            if not self.is_table_created:
+                self.dbcon.create_table(self.table_name, capped=False)
+                self.dbcon.active_table = self.table_name
+                self.is_table_created = True
+        except pymongo.errors.AutoReconnect:
+            sys.exit(0)
 
     def wait(self, duration=None):
         '''Wait for events and handle as they arrive.
@@ -46,7 +49,6 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
 
         '''
         started = time.time()
-
         self.prepare_dbcon()
         while True:
             try:
@@ -55,11 +57,14 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
                 if not self.load_events():
                     time.sleep(0.5)
             else:
-                self._handle(event)
-                self.dbcon.update_one(
-                    {"id": event["id"]},
-                    {"$set": {"pype_data.is_processed": True}}
-                )
+                try:
+                    self._handle(event)
+                    self.dbcon.update_one(
+                        {"id": event["id"]},
+                        {"$set": {"pype_data.is_processed": True}}
+                    )
+                except pymongo.errors.AutoReconnect:
+                    sys.exit(0)
                 # Additional special processing of events.
                 if event['topic'] == 'ftrack.meta.disconnected':
                     break
@@ -78,7 +83,6 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
             }
             try:
                 event = ftrack_api.event.base.Event(**new_event_data)
-                print(event)
             except Exception:
                 self.logger.exception(L(
                     'Failed to convert payload into event: {0}',
