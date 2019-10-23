@@ -15,6 +15,7 @@ import socket_thread
 
 
 def check_ftrack_url(url, log_errors=True):
+    """Checks if Ftrack server is responding"""
     if not url:
         print('ERROR: Ftrack URL is not set!')
         return None
@@ -44,6 +45,7 @@ def check_ftrack_url(url, log_errors=True):
 
 
 def check_mongo_url(host, port, log_error=False):
+    """Checks if mongo server is responding"""
     sock = None
     try:
         sock = socket.create_connection(
@@ -114,6 +116,15 @@ def process_event_paths(event_paths):
 
 
 def main_loop(ftrack_url, username, api_key, event_paths):
+    """ This is main loop of event handling.
+
+    Loop is handling threads which handles subprocesses of event storer and
+    processor. When one of threads is stopped it is tested to connect to
+    ftrack and mongo server. Threads are not started when ftrack or mongo
+    server is not accessible. When threads are started it is checked for socket
+    signals as heartbeat. Heartbeat must become at least once per 30sec
+    otherwise thread will be killed.
+    """
     # Set Ftrack environments
     os.environ["FTRACK_SERVER"] = ftrack_url
     os.environ["FTRACK_API_USER"] = username
@@ -154,6 +165,7 @@ def main_loop(ftrack_url, username, api_key, event_paths):
     printed_ftrack_error = False
     printed_mongo_error = False
 
+    # stop threads on exit
     def on_exit():
         if processor_thread is not None:
             processor_thread.stop()

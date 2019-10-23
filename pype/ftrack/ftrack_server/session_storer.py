@@ -20,7 +20,7 @@ class StorerEventHub(ftrack_api.event.hub.EventHub):
         super(StorerEventHub, self).__init__(*args, **kwargs)
 
     def _handle_packet(self, code, packet_identifier, path, data):
-        '''Handle packet received from server.'''
+        """Override `_handle_packet` which extend heartbeat"""
         if self._code_name_mapping[code] == "heartbeat":
             # Reply with heartbeat.
             self.sock.sendall(b"storer")

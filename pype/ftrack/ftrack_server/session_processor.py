@@ -48,13 +48,11 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
             sys.exit(0)
 
     def wait(self, duration=None):
-        '''Wait for events and handle as they arrive.
+        """Overriden wait
 
-        If *duration* is specified, then only process events until duration is
-        reached. *duration* is in seconds though float values can be used for
-        smaller values.
-
-        '''
+        Event are loaded from Mongo DB when queue is empty. Handled event is
+        set as processed in Mongo DB.
+        """
         started = time.time()
         self.prepare_dbcon()
         while True:
@@ -84,6 +82,7 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
                     break
 
     def load_events(self):
+        """Load not processed events sorted by stored date"""
         not_processed_events = self.dbcon.find(
             {"pype_data.is_processed": False}
         ).sort(
@@ -110,8 +109,7 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
         return found
 
     def _handle_packet(self, code, packet_identifier, path, data):
-        '''Handle packet received from server.'''
-        # if self.is_waiting:
+        """Override `_handle_packet` which skip events and extend heartbeat"""
         code_name = self._code_name_mapping[code]
         if code_name == "event":
             return
