@@ -105,4 +105,4 @@ if __name__ == "__main__":
     if hasattr(signal, "SIGKILL"):
         signal.signal(signal.SIGKILL, signal_handler)
 
-    main(sys.argv)
+    sys.exit(main(sys.argv))

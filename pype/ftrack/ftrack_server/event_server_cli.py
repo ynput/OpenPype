@@ -3,6 +3,7 @@ import sys
 import signal
 import socket
 import argparse
+import atexit
 import time
 from urllib.parse import urlparse
 
@@ -153,6 +154,18 @@ def main_loop(ftrack_url, username, api_key, event_paths):
     printed_ftrack_error = False
     printed_mongo_error = False
 
+    def on_exit():
+        if processor_thread is not None:
+            processor_thread.stop()
+            processor_thread.join()
+            processor_thread = None
+
+        if storer_thread is not None:
+            storer_thread.stop()
+            storer_thread.join()
+            storer_thread = None
+
+    atexit.register(on_exit)
     # Main loop
     while True:
         # Check if accessible Ftrack and Mongo url
