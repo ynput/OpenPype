@@ -1,6 +1,7 @@
 import logging
 import os
 import atexit
+import datetime
 import tempfile
 import threading
 import time
@@ -83,6 +84,12 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
 
     def load_events(self):
         """Load not processed events sorted by stored date"""
+        ago_date = datetime.datetime.now() - datetime.timedelta(days=3)
+        result = self.dbcon.delete_many({
+            "pype_data.stored": {"$lte": ago_date},
+            "pype_data.is_processed": True
+        })
+
         not_processed_events = self.dbcon.find(
             {"pype_data.is_processed": False}
         ).sort(
