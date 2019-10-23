@@ -138,12 +138,12 @@ def main_loop(ftrack_url, username, api_key, event_paths):
 
     # Threads data
     storer_name = "StorerThread"
-    storer_port = 10005
+    storer_port = 10001
     storer_path = "{}/sub_event_storer.py".format(file_path)
     storer_thread = None
 
     processor_name = "ProcessorThread"
-    processor_port = 10006
+    processor_port = 10011
     processor_path = "{}/sub_event_processor.py".format(file_path)
     processor_thread = None
 
