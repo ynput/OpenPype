@@ -28,6 +28,9 @@ def install_db():
         dbcon.create_table(table_name, capped=False)
         dbcon.active_table = table_name
     except pymongo.errors.AutoReconnect:
+        log.error("Mongo server \"{}\" is not responding, exiting.".format(
+            os.environ["AVALON_MONGO"]
+        ))
         sys.exit(0)
 
 def launch(event):
@@ -48,6 +51,9 @@ def launch(event):
         log.debug("Event: {} stored".format(event_id))
 
     except pymongo.errors.AutoReconnect:
+        log.error("Mongo server \"{}\" is not responding, exiting.".format(
+            os.environ["AVALON_MONGO"]
+        ))
         sys.exit(0)
 
     except Exception as exc:

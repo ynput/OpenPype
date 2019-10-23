@@ -17,6 +17,9 @@ import ftrack_api.event
 from ftrack_api.logging import LazyLogMessage as L
 
 from pype.ftrack.lib.custom_db_connector import DbConnector
+from pypeapp import Logger
+
+log = Logger().get_logger("Session processor")
 
 
 class ProcessEventHub(ftrack_api.event.hub.EventHub):
@@ -39,6 +42,9 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
                 self.dbcon.active_table = self.table_name
                 self.is_table_created = True
         except pymongo.errors.AutoReconnect:
+            log.error("Mongo server \"{}\" is not responding, exiting.".format(
+                os.environ["AVALON_MONGO"]
+            ))
             sys.exit(0)
 
     def wait(self, duration=None):
@@ -65,6 +71,9 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
                         {"$set": {"pype_data.is_processed": True}}
                     )
                 except pymongo.errors.AutoReconnect:
+                    log.error((
+                        "Mongo server \"{}\" is not responding, exiting."
+                    ).format(os.environ["AVALON_MONGO"]))
                     sys.exit(0)
                 # Additional special processing of events.
                 if event['topic'] == 'ftrack.meta.disconnected':
