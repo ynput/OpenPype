@@ -6,6 +6,7 @@ import threading
 import time
 import requests
 import queue
+import pymongo
 
 import ftrack_api
 import ftrack_api.session
@@ -74,7 +75,12 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
                     break
 
     def load_events(self):
-        not_processed_events = self.dbcon.find({"pype_data.is_processed": False})
+        not_processed_events = self.dbcon.find(
+            {"pype_data.is_processed": False}
+        ).sort(
+            [("pype_data.stored", pymongo.ASCENDING)]
+        )
+
         found = False
         for event_data in not_processed_events:
             new_event_data = {
