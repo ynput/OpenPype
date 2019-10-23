@@ -329,7 +329,7 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
                 return
             text = preset['text'].format(**data)
             burnin.add_text(text, align)
-        elif bi_fun == "datetime":
+        elif bi_func == "datetime":
             date_format = preset["format"]
             burnin.add_datetime(date_format, align)
 
