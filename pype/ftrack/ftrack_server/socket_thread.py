@@ -8,8 +8,8 @@ from pypeapp import Logger
 
 
 class SocketThread(threading.Thread):
-    MAX_TIMEOUT = 30
     """Thread that checks suprocess of storer of processor of events"""
+    MAX_TIMEOUT = 35
     def __init__(self, name, port, filepath):
         super(SocketThread, self).__init__()
         self.log = Logger().get_logger("SocketThread", "Event Thread")
