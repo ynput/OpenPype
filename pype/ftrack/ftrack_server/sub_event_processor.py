@@ -5,8 +5,8 @@ import signal
 import socket
 import pymongo
 
-from pype.ftrack.ftrack_server import FtrackServer
-from session_processor import ProcessSession
+from ftrack_server import FtrackServer
+import session_processor
 from pypeapp import Logger
 
 log = Logger().get_logger("Event processor")
@@ -24,7 +24,7 @@ def main(args):
 
     sock.sendall(b"CreatedProcess")
     try:
-        session = ProcessSession(auto_connect_event_hub=True, sock=sock)
+        session = session_processor.ProcessSession(auto_connect_event_hub=True, sock=sock)
         server = FtrackServer('event')
         log.debug("Launched Ftrack Event processor")
         server.run_server(session)

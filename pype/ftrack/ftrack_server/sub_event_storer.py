@@ -5,9 +5,9 @@ import signal
 import socket
 import pymongo
 
-from pype.ftrack.ftrack_server import FtrackServer
+from ftrack_server import FtrackServer
 from pype.ftrack.lib.custom_db_connector import DbConnector
-from pype.ftrack.ftrack_server.parallel_event_server.session_storer import StorerSession
+from session_storer import StorerSession
 from pypeapp import Logger
 
 log = Logger().get_logger("Event storer")
@@ -46,9 +46,6 @@ def launch(event):
         # dbcon.insert_one(event_data)
         dbcon.update({"id": event_id}, event_data, upsert=True)
         log.debug("Event: {} stored".format(event_id))
-
-    except pymongo.errors.DuplicateKeyError:
-        log.debug("Event: {} already exists".format(event_id))
 
     except pymongo.errors.AutoReconnect:
         sys.exit(0)

@@ -3,6 +3,7 @@ import time
 from pypeapp import Logger
 from pype.vendor import ftrack_api
 from pype.vendor.ftrack_api import session as fa_session
+from pype.ftrack.ftrack_server import session_processor
 
 
 class MissingPermision(Exception):
@@ -34,7 +35,7 @@ class BaseHandler(object):
         self.log = Logger().get_logger(self.__class__.__name__)
         if not(
             isinstance(session, ftrack_api.session.Session) or
-            isinstance(session, ProcessSession)
+            isinstance(session, session_processor.ProcessSession)
         ):
             raise Exception((
                 "Session object entered with args is instance of \"{}\""
@@ -42,7 +43,7 @@ class BaseHandler(object):
             ).format(
                 str(type(session)),
                 str(ftrack_api.session.Session),
-                str(ProcessSession)
+                str(session_processor.ProcessSession)
             ))
 
         self._session = session
