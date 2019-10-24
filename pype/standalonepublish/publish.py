@@ -18,14 +18,8 @@ import pyblish.api
 # Registers Global pyblish plugins
 pype.install()
 # Registers Standalone pyblish plugins
-# PUBLISH_PATH = os.path.sep.join(
-#     [pype.PLUGINS_DIR, 'standalonepublish', 'publish']
-# )
-# pyblish.api.register_plugin_path(PUBLISH_PATH)
-
-# Registers Standalone pyblish plugins
 PUBLISH_PATH = os.path.sep.join(
-    [pype.PLUGINS_DIR, 'ftrack', 'publish']
+    [pype.PLUGINS_DIR, 'standalonepublisher', 'publish']
 )
 pyblish.api.register_plugin_path(PUBLISH_PATH)
 
