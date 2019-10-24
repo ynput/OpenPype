@@ -26,4 +26,6 @@ class CollectContextLabel(pyblish.api.ContextPlugin):
 
         # Set label
         label = "{host} - {scene}".format(host=host.title(), scene=base)
+        if host == "standalonepublisher":
+            label = host.title()
         context.data["label"] = label
