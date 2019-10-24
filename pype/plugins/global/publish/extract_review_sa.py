@@ -170,7 +170,9 @@ class ExtractReviewSaP(pyblish.api.InstancePlugin):
                     "ext": ext,
                     "files": repr_file,
                     "tags": new_tags,
-                    "outputName": name
+                    "outputName": name,
+                    "startFrameReview": 1,
+                    "endFrameReview": video_len
                 })
                 if repre_new.get("preview"):
                     repre_new.pop("preview")
