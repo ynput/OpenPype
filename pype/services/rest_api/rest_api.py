@@ -102,6 +102,9 @@ class RestApiServer:
 
         statics_dir = os.path.sep.join([os.environ["PYPE_MODULE_ROOT"], "res"])
         self.register_statics("/res", statics_dir)
+        os.environ["PYPE_STATICS_SERVER"] = "{}/res".format(
+            os.environ["PYPE_REST_API_URL"]
+        )
 
     def set_qaction(self, qaction, failed_icon):
         self.qaction = qaction
@@ -113,7 +116,6 @@ class RestApiServer:
         RestApiFactory.register_route(
             path, callback, url_prefix, methods, strict_match
         )
-        # route(path, url_prefix, methods)(callback)
 
     def register_statics(self, url_prefix, dir_path):
         register_statics(url_prefix, dir_path)
