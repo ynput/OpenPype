@@ -142,6 +142,7 @@ def cli_publish(data, gui=True):
     os.environ["PYBLISH_HOSTS"] = "standalonepublisher"
     os.environ["SAPUBLISH_INPATH"] = json_data_path
     os.environ["SAPUBLISH_OUTPATH"] = return_data_path
+    os.environ["PYBLISH_GUI"] = "pyblish_lite"
 
     returncode = execute([
         sys.executable, "-u", "-m", "pyblish"
