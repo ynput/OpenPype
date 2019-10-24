@@ -122,9 +122,15 @@ class ExtractReviewSaP(pyblish.api.InstancePlugin):
                 output_args = []
                 # preset's output data
                 output_args.extend(profile.get("output", []))
-                
-                # set length of video by len of inserted files
-                output_args.append("-frames {}".format(len(repre["files"])))
+
+                if isinstance(repre["files"], list):
+                    # set length of video by len of inserted files
+                    video_len = len(repre["files"])
+                else:
+                    video_len = repre["frameEnd"] - repre["frameStart"] + 1
+                output_args.append(
+                    "-frames {}".format(video_len)
+                )
 
                 # letter_box
                 lb_string = (
