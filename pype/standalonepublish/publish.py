@@ -15,21 +15,6 @@ from pypeapp import execute
 import pyblish.api
 
 
-# Registers Global pyblish plugins
-pype.install()
-# Registers Standalone pyblish plugins
-# PUBLISH_PATH = os.path.sep.join(
-#     [pype.PLUGINS_DIR, 'standalonepublish', 'publish']
-# )
-# pyblish.api.register_plugin_path(PUBLISH_PATH)
-
-# Registers Standalone pyblish plugins
-PUBLISH_PATH = os.path.sep.join(
-    [pype.PLUGINS_DIR, 'ftrack', 'publish']
-)
-pyblish.api.register_plugin_path(PUBLISH_PATH)
-
-
 def set_context(project, asset, task, app):
     ''' Sets context for pyblish (must be done before pyblish is launched)
     :param project: Name of `Project` where instance should be published
@@ -103,15 +88,16 @@ def avalon_api_publish(data, gui=True):
         "-pp", os.pathsep.join(pyblish.api.registered_paths())
     ]
 
-    os.environ["PYBLISH_HOSTS"] = "standalonepublisher"
-    os.environ["SAPUBLISH_INPATH"] = json_data_path
+    envcopy = os.environ.copy()
+    envcopy["PYBLISH_HOSTS"] = "standalonepublisher"
+    envcopy["SAPUBLISH_INPATH"] = json_data_path
 
     if gui:
         av_publish.show()
     else:
         returncode = execute([
             sys.executable, "-u", "-m", "pyblish"
-        ] + args, env=os.environ)
+        ] + args, env=envcopy)
 
     io.uninstall()
 
@@ -139,13 +125,15 @@ def cli_publish(data, gui=True):
     if gui:
         args += ["gui"]
 
-    os.environ["PYBLISH_HOSTS"] = "standalonepublisher"
-    os.environ["SAPUBLISH_INPATH"] = json_data_path
-    os.environ["SAPUBLISH_OUTPATH"] = return_data_path
+    envcopy = os.environ.copy()
+    envcopy["PYBLISH_HOSTS"] = "standalonepublisher"
+    envcopy["SAPUBLISH_INPATH"] = json_data_path
+    envcopy["SAPUBLISH_OUTPATH"] = return_data_path
+    envcopy["PYBLISH_GUI"] = "pyblish_lite"
 
     returncode = execute([
         sys.executable, "-u", "-m", "pyblish"
-    ] + args, env=os.environ)
+    ] + args, env=envcopy)
 
     result = {}
     if os.path.exists(json_data_path):

@@ -5,7 +5,7 @@ import pyblish.api
 import pype.api
 
 
-class ExtractThumbnail(pyblish.api.InstancePlugin):
+class ExtractThumbnailSP(pyblish.api.InstancePlugin):
     """Extract jpeg thumbnail from component input from standalone publisher
 
     Uses jpeg file from component if possible (when single or multiple jpegs
@@ -13,7 +13,7 @@ class ExtractThumbnail(pyblish.api.InstancePlugin):
     input file/s single jpeg to temp.
     """
 
-    label = "Extract Thumbnail"
+    label = "Extract Thumbnail SP"
     hosts = ["standalonepublisher"]
     order = pyblish.api.ExtractorOrder
 
