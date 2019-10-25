@@ -11,6 +11,7 @@ import requests
 from pype.vendor import ftrack_api
 from pype.ftrack.lib import credentials
 from pype.ftrack.ftrack_server import FtrackServer
+from pype.ftrack.ftrack_server.lib import ftrack_events_mongo_settings
 import socket_thread
 
 
@@ -132,18 +133,9 @@ def main_loop(ftrack_url, username, api_key, event_paths):
     os.environ["FTRACK_EVENTS_PATH"] = event_paths
 
     # Get mongo hostname and port for testing mongo connection
-    mongo_url = os.environ["AVALON_MONGO"].strip('/ ')
-    result = urlparse(mongo_url)
-    url_items = result.netloc.split("@")
-    mongo_url = url_items[0]
-    if len(url_items) == 2:
-        mongo_url = url_items[1]
-
-    mongo_url = "://".join([result.scheme, mongo_url])
-    result = urlparse(mongo_url)
-
-    mongo_hostname = result.hostname
-    mongo_port = result.port
+    mongo_list = ftrack_events_mongo_settings()
+    mongo_hostname = mongo_list[0]
+    mongo_port = mongo_list[1]
 
     # Current file
     file_path = os.path.dirname(os.path.realpath(__file__))
