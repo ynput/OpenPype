@@ -1,6 +1,7 @@
 import os
 import sys
 import signal
+import datetime
 import socket
 import argparse
 import atexit
@@ -140,16 +141,24 @@ def main_loop(ftrack_url, username, api_key, event_paths):
     # Current file
     file_path = os.path.dirname(os.path.realpath(__file__))
 
+    min_fail_seconds = 5
+    max_fail_count = 3
+    wait_time_after_max_fail = 10
+
     # Threads data
     storer_name = "StorerThread"
     storer_port = 10001
     storer_path = "{}/sub_event_storer.py".format(file_path)
     storer_thread = None
+    storer_last_failed = datetime.datetime.now()
+    storer_failed_count = 0
 
     processor_name = "ProcessorThread"
     processor_port = 10011
     processor_path = "{}/sub_event_processor.py".format(file_path)
     processor_thread = None
+    processor_last_failed = datetime.datetime.now()
+    processor_failed_count = 0
 
     ftrack_accessible = False
     mongo_accessible = False
@@ -210,10 +219,20 @@ def main_loop(ftrack_url, username, api_key, event_paths):
 
         # Run backup thread which does not requeire mongo to work
         if storer_thread is None:
-            storer_thread = socket_thread.SocketThread(
-                storer_name, storer_port, storer_path
-            )
-            storer_thread.start()
+            if storer_failed_count < max_fail_count:
+                storer_thread = socket_thread.SocketThread(
+                    storer_name, storer_port, storer_path
+                )
+                storer_thread.start()
+            elif storer_failed_count == max_fail_count:
+                print((
+                    "Storer failed {}times I'll try to run again {}s later"
+                ).format(str(max_fail_count), str(wait_time_after_max_fail)))
+                storer_failed_count += 1
+            elif ((
+                    datetime.datetime.now() - storer_last_failed
+                ).seconds > wait_time_after_max_fail):
+                    storer_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
         elif not storer_thread.isAlive():
@@ -226,11 +245,32 @@ def main_loop(ftrack_url, username, api_key, event_paths):
             ftrack_accessible = False
             mongo_accessible = False
 
+            _storer_last_failed = datetime.datetime.now()
+            delta_time = (_storer_last_failed - storer_last_failed).seconds
+            if delta_time < min_fail_seconds:
+                storer_failed_count += 1
+            else:
+                storer_failed_count = 0
+            storer_last_failed = _storer_last_failed
+
         if processor_thread is None:
-            processor_thread = socket_thread.SocketThread(
-                processor_name, processor_port, processor_path
-            )
-            processor_thread.start()
+            if processor_failed_count < max_fail_count:
+                processor_thread = socket_thread.SocketThread(
+                    processor_name, processor_port, processor_path
+                )
+                processor_thread.start()
+
+            elif processor_failed_count == max_fail_count:
+                print((
+                    "Processor failed {}times in row"
+                    " I'll try to run again {}s later"
+                ).format(str(max_fail_count), str(wait_time_after_max_fail)))
+                processor_failed_count += 1
+
+            elif ((
+                    datetime.datetime.now() - processor_last_failed
+                ).seconds > wait_time_after_max_fail):
+                    processor_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
         elif not processor_thread.isAlive():
@@ -242,6 +282,17 @@ def main_loop(ftrack_url, username, api_key, event_paths):
             processor_thread = None
             ftrack_accessible = False
             mongo_accessible = False
+
+            _processor_last_failed = datetime.datetime.now()
+            delta_time = (
+                _processor_last_failed - processor_last_failed
+            ).seconds
+
+            if delta_time < min_fail_seconds:
+                processor_failed_count += 1
+            else:
+                processor_failed_count = 0
+            processor_last_failed = _processor_last_failed
 
         time.sleep(1)
 
