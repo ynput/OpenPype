@@ -15,13 +15,6 @@ from pypeapp import execute
 import pyblish.api
 
 
-# Registers Global pyblish plugins
-pype.install()
-# Registers Standalone pyblish plugins
-PUBLISH_PATH = os.path.sep.join(
-    [pype.PLUGINS_DIR, 'standalonepublisher', 'publish']
-)
-pyblish.api.register_plugin_path(PUBLISH_PATH)
 
 
 def set_context(project, asset, task, app):
