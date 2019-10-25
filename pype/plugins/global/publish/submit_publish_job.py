@@ -297,6 +297,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             }
         }
 
+        if submission_type == "muster":
+            ftrack = {
+                "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
+                "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
+                "FTRACK_SERVER": os.environ.get("FTRACK_SERVER")
+            }
+            metadata.update({"ftrack": ftrack})
+
         # Ensure output dir exists
         output_dir = instance.data["outputDir"]
         if not os.path.isdir(output_dir):
