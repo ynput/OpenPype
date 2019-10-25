@@ -29,6 +29,10 @@ def main(args):
         log.debug("Launched Ftrack Event processor")
         server.run_server(session)
 
+    except Exception as exc:
+        import traceback
+        traceback.print_tb(exc.__traceback__)
+
     finally:
         log.debug("First closing socket")
         sock.close()
