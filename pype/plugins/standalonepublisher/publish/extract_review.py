@@ -122,9 +122,15 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                 output_args = []
                 # preset's output data
                 output_args.extend(profile.get("output", []))
-                
-                # set length of video by len of inserted files
-                output_args.append("-frames {}".format(len(repre["files"])))
+
+                if isinstance(repre["files"], list):
+                    # set length of video by len of inserted files
+                    video_len = len(repre["files"])
+                else:
+                    video_len = repre["frameEnd"] - repre["frameStart"] + 1
+                output_args.append(
+                    "-frames {}".format(video_len)
+                )
 
                 # letter_box
                 lb_string = (
@@ -164,7 +170,9 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                     "ext": ext,
                     "files": repr_file,
                     "tags": new_tags,
-                    "outputName": name
+                    "outputName": name,
+                    "startFrameReview": 1,
+                    "endFrameReview": video_len
                 })
                 if repre_new.get("preview"):
                     repre_new.pop("preview")
