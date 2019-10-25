@@ -5,7 +5,7 @@ from pype.vendor import clique
 import pype.api
 
 
-class ExtractReviewSaP(pyblish.api.InstancePlugin):
+class ExtractReviewSP(pyblish.api.InstancePlugin):
     """Extracting Review mov file for Ftrack
 
     Compulsory attribute of representation is tags list with "review",
@@ -16,7 +16,7 @@ class ExtractReviewSaP(pyblish.api.InstancePlugin):
     filter values use preset's attributes `ext_filter`
     """
 
-    label = "Extract Review SaP"
+    label = "Extract Review SP"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
     hosts = ["standalonepublisher"]
@@ -24,8 +24,8 @@ class ExtractReviewSaP(pyblish.api.InstancePlugin):
     def process(self, instance):
         # adding plugin attributes from presets
         presets = instance.context.data["presets"]
-        publish_presets = presets["plugins"]["global"]["publish"]
         try:
+            publish_presets = presets["plugins"]["standalonepublisher"]["publish"]
             plugin_attrs = publish_presets[self.__class__.__name__]
         except KeyError:
             raise KeyError("Preset for plugin \"{}\" are not set".format(
