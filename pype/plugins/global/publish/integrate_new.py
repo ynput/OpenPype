@@ -252,7 +252,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             template_data = {"root": root,
                              "project": {"name": PROJECT,
                                          "code": project['data']['code']},
-                             "silo": asset['silo'],
+                             "silo": asset.get('silo'),
                              "task": TASK,
                              "asset": ASSET,
                              "family": instance.data['family'],
@@ -382,7 +382,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "project": {"name": PROJECT,
                                 "code": project['data']['code']},
                     'task': TASK,
-                    "silo": asset['silo'],
+                    "silo": asset.get('silo'),
                     "asset": ASSET,
                     "family": instance.data['family'],
                     "subset": subset["name"],
@@ -487,9 +487,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.info("Subset '%s' not found, creating.." % subset_name)
 
             _id = io.insert_one({
-                "schema": "avalon-core:subset-2.0",
+                "schema": "pype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
+                "families": instance.data.get('families'),
                 "data": {},
                 "parent": asset["_id"]
             }).inserted_id
@@ -513,7 +514,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         version_locations = [location for location in locations if
                              location is not None]
 
-        return {"schema": "avalon-core:version-2.0",
+        return {"schema": "pype:version-3.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,
