@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import signal
 import socket
@@ -22,6 +23,8 @@ class SocketThread(threading.Thread):
         self.connection = None
         self._is_running = False
         self.finished = False
+
+        self.mongo_error = False
 
     def stop(self):
         self._is_running = False
@@ -97,6 +100,8 @@ class SocketThread(threading.Thread):
                             break
 
                         if data:
+                            if data == b"MongoError":
+                                self.mongo_error = True
                             connection.sendall(data)
 
                     except Exception as exc:
@@ -110,4 +115,9 @@ class SocketThread(threading.Thread):
                 if self.subproc.poll() is None:
                     self.subproc.terminate()
 
+                lines = self.subproc.stdout.readlines()
+                if lines:
+                    print("*** Socked Thread stdout ***")
+                    for line in lines:
+                        os.write(1, line)
                 self.finished = True
