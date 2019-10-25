@@ -88,7 +88,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
 
     def create_avalon_asset(self, name, silo, data):
         item = {
-            "schema": "avalon-core:asset-2.0",
+            "schema": "avalon-core:asset-3.0",
             "name": name,
             "silo": silo,
             "parent": self.project["_id"],

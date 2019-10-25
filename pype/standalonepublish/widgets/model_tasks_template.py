@@ -1,6 +1,6 @@
 from . import QtCore, TreeModel
 from . import Node
-from . import awesome, style
+from . import qtawesome, style
 
 
 class TasksTemplateModel(TreeModel):
@@ -11,7 +11,7 @@ class TasksTemplateModel(TreeModel):
     def __init__(self, selectable=True):
         super(TasksTemplateModel, self).__init__()
         self.selectable = selectable
-        self.icon = awesome.icon(
+        self.icon = qtawesome.icon(
             'fa.calendar-check-o',
             color=style.colors.default
         )

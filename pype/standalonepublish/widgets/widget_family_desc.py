@@ -5,7 +5,7 @@ import json
 
 from . import QtWidgets, QtCore, QtGui
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole
-from . import awesome
+from . import qtawesome
 from pype.vendor import six
 from pype import lib as pypelib
 
@@ -87,7 +87,7 @@ class FamilyDescriptionWidget(QtWidgets.QWidget):
         plugin = item.data(PluginRole)
         icon = getattr(plugin, "icon", "info-circle")
         assert isinstance(icon, six.string_types)
-        icon = awesome.icon("fa.{}".format(icon), color="white")
+        icon = qtawesome.icon("fa.{}".format(icon), color="white")
         pixmap = icon.pixmap(self.SIZE, self.SIZE)
         pixmap = pixmap.scaled(self.SIZE, self.SIZE)
 

@@ -45,18 +45,7 @@ def import_to_avalon(
         return output
 
     # Validate if entity name match REGEX in schema
-    try:
-        avalon_check_name(entity)
-    except ValidationError:
-        msg = (
-            "{} - name \"{}\" includes unsupported symbols"
-            " like \"dash\" or \"space\""
-        ).format(ent_path, name)
-
-        log.error(msg)
-        errors.append({'Unsupported character': msg})
-        output['errors'] = errors
-        return output
+    avalon_check_name(entity)
 
     entity_type = entity.entity_type
     # Project ////////////////////////////////////////////////////////////////
@@ -212,11 +201,6 @@ def import_to_avalon(
         entity, session, custom_attributes
     )
 
-    # 1. hierarchical entity have silo set to None
-    silo = None
-    if len(data['parents']) > 0:
-        silo = data['parents'][0]
-
     name = entity['name']
 
     avalon_asset = None
@@ -250,9 +234,8 @@ def import_to_avalon(
         )
         if avalon_asset is None:
             item = {
-                'schema': "avalon-core:asset-2.0",
+                'schema': "avalon-core:asset-3.0",
                 'name': name,
-                'silo': silo,
                 'parent': ObjectId(projectId),
                 'type': 'asset',
                 'data': data
@@ -263,14 +246,7 @@ def import_to_avalon(
                 ent_path, project_name
             ))
         # Raise error if it seems to be different ent. with same name
-        elif (
-            avalon_asset['data']['parents'] != data['parents'] or
-            avalon_asset['silo'] != silo
-        ):
-            db_asset_path_items = [project_name,]
-            db_asset_path_items.extend(avalon_asset['data']['parents'])
-            db_asset_path_items.append(name)
-
+        elif avalon_asset['data']['parents'] != data['parents']:
             msg = (
                 "{} - In Avalon DB already exists entity with name \"{}\""
                 "\n- \"{}\""
@@ -285,7 +261,7 @@ def import_to_avalon(
             mongo_id = avalon_asset['_id']
     else:
         if avalon_asset['name'] != entity['name']:
-            if silo is None or changeability_check_childs(entity) is False:
+            if changeability_check_childs(entity) is False:
                 msg = (
                     '{} - You can\'t change name "{}" to "{}"'
                     ', avalon wouldn\'t work properly!'
@@ -298,10 +274,7 @@ def import_to_avalon(
                 session.commit()
                 errors.append({'Changed name error': msg})
 
-        if (
-            avalon_asset['silo'] != silo or
-            avalon_asset['data']['parents'] != data['parents']
-        ):
+        if avalon_asset['data']['parents'] != data['parents']:
             old_path = '/'.join(avalon_asset['data']['parents'])
             new_path = '/'.join(data['parents'])
 
@@ -313,10 +286,7 @@ def import_to_avalon(
 
             moved_back = False
             if 'visualParent' in avalon_asset['data']:
-                if silo is None:
-                    asset_parent_id = avalon_asset['parent']
-                else:
-                    asset_parent_id = avalon_asset['data']['visualParent']
+                asset_parent_id = avalon_asset['data']['visualParent'] or avalon_asset['parent']
 
                 asset_parent = database[project_name].find_one(
                     {'_id': ObjectId(asset_parent_id)}
@@ -364,7 +334,6 @@ def import_to_avalon(
         {'_id': ObjectId(mongo_id)},
         {'$set': {
             'name': name,
-            'silo': silo,
             'data': enter_data,
             'parent': ObjectId(projectId)
         }})
@@ -614,36 +583,24 @@ def get_project_apps(entity):
     return apps
 
 
-def avalon_check_name(entity, inSchema=None):
-    ValidationError = jsonschema.ValidationError
-    alright = True
-    name = entity['name']
-    if " " in name:
-        alright = False
+def avalon_check_name(entity, in_schema=None):
+    default_pattern = "^[a-zA-Z0-9_.]*$"
 
-    data = {}
-    data['data'] = {}
-    data['type'] = 'asset'
-    schema = "avalon-core:asset-2.0"
-    # TODO have project any REGEX check?
-    if entity.entity_type in ['Project']:
-        # data['type'] = 'project'
-        name = entity['full_name']
-        # schema = "avalon-core:project-2.0"
+    name = entity["name"]
+    schema_name = "asset-3.0"
 
-    data['silo'] = 'Film'
+    if in_schema:
+        schema_name = in_schema
+    elif entity.entity_type.lower() == "project":
+        name = entity["full_name"]
+        schema_name = "project-2.0"
 
-    if inSchema is not None:
-        schema = inSchema
-    data['schema'] = schema
-    data['name'] = name
-    try:
-        avalon.schema.validate(data)
-    except ValidationError:
-        alright = False
-
-    if alright is False:
-        msg = '"{}" includes unsupported symbols like "dash" or "space"'
+    schema_obj = avalon.schema._cache.get(schema_name + ".json")
+    name_pattern = schema_obj.get("properties", {}).get("name", {}).get(
+        "pattern", default_pattern
+    )
+    if not re.match(name_pattern, name):
+        msg = "\"{}\" includes unsupported symbols like \"dash\" or \"space\""
         raise ValueError(msg.format(name))
 
 

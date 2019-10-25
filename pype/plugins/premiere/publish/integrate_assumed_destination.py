@@ -90,7 +90,7 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
 
         assert asset, ("No asset found by the name '{}' "
                        "in project '{}'".format(asset_name, project_name))
-        silo = asset['silo']
+        silo = asset.get('silo')
 
         subset = io.find_one({"type": "subset",
                               "name": subset_name,

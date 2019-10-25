@@ -56,7 +56,7 @@ class TextureCopy:
         template_data = {"root": root,
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
-                         "silo": asset['silo'],
+                         "silo": asset.get('silo'),
                          "asset": asset['name'],
                          "family": 'texture',
                          "subset": 'Main',

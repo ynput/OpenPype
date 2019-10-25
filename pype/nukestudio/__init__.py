@@ -5,8 +5,8 @@ from avalon import api as avalon
 from pyblish import api as pyblish
 
 from .workio import (
-    open,
-    save,
+    open_file,
+    save_file,
     current_file,
     has_unsaved_changes,
     file_extensions,
@@ -21,8 +21,8 @@ from .tags import add_tags_from_presets
 
 __all__ = [
     # Workfiles API
-    "open",
-    "save",
+    "open_file",
+    "save_file",
     "current_file",
     "has_unsaved_changes",
     "file_extensions",
