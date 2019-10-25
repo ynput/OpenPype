@@ -18,34 +18,43 @@ import ftrack_api.event
 from ftrack_api.logging import LazyLogMessage as L
 
 from pype.ftrack.lib.custom_db_connector import DbConnector
+from pype.ftrack.ftrack_server.lib import get_ftrack_event_mongo_info
 from pypeapp import Logger
 
 log = Logger().get_logger("Session processor")
 
 
 class ProcessEventHub(ftrack_api.event.hub.EventHub):
-    dbcon = DbConnector(
-        mongo_url=os.environ["AVALON_MONGO"],
-        database_name="pype"
-    )
-    table_name = "ftrack_events"
+    url, database, table_name = get_ftrack_event_mongo_info()
+
     is_table_created = False
 
     def __init__(self, *args, **kwargs):
+        self.dbcon = DbConnector(
+            mongo_url=self.url,
+            database_name=self.database,
+            table_name=self.table_name
+        )
         self.sock = kwargs.pop("sock")
         super(ProcessEventHub, self).__init__(*args, **kwargs)
 
     def prepare_dbcon(self):
         try:
             self.dbcon.install()
-            if not self.is_table_created:
-                self.dbcon.create_table(self.table_name, capped=False)
-                self.dbcon.active_table = self.table_name
-                self.is_table_created = True
+            dbcon._database.collection_names()
         except pymongo.errors.AutoReconnect:
             log.error("Mongo server \"{}\" is not responding, exiting.".format(
                 os.environ["AVALON_MONGO"]
             ))
+            sys.exit(0)
+
+        except pymongo.errors.OperationFailure:
+            log.error((
+                "Error with Mongo access, probably permissions."
+                "Check if exist database with name \"{}\""
+                " and collection \"{}\" inside."
+            ).format(self.database, self.table_name))
+            self.sock.sendall(b"MongoError")
             sys.exit(0)
 
     def wait(self, duration=None):

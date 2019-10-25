@@ -6,18 +6,20 @@ import socket
 import pymongo
 
 from ftrack_server import FtrackServer
+from pype.ftrack.ftrack_server.lib import get_ftrack_event_mongo_info
 from pype.ftrack.lib.custom_db_connector import DbConnector
 from session_storer import StorerSession
 from pypeapp import Logger
 
 log = Logger().get_logger("Event storer")
 
+url, database, table_name = get_ftrack_event_mongo_info()
 
 dbcon = DbConnector(
-    mongo_url=os.environ["AVALON_MONGO"],
-    database_name="pype"
+    mongo_url=url,
+    database_name=database,
+    table_name=table_name
 )
-table_name = "ftrack_events"
 
 # ignore_topics = ["ftrack.meta.connected"]
 ignore_topics = []
@@ -25,13 +27,13 @@ ignore_topics = []
 def install_db():
     try:
         dbcon.install()
-        dbcon.create_table(table_name, capped=False)
-        dbcon.active_table = table_name
+        dbcon._database.collection_names()
     except pymongo.errors.AutoReconnect:
         log.error("Mongo server \"{}\" is not responding, exiting.".format(
             os.environ["AVALON_MONGO"]
         ))
         sys.exit(0)
+
 
 def launch(event):
     if event.get("topic") in ignore_topics:
@@ -87,6 +89,14 @@ def main(args):
         server = FtrackServer("event")
         log.debug("Launched Ftrack Event storer")
         server.run_server(session, load_files=False)
+
+    except pymongo.errors.OperationFailure:
+        log.error((
+            "Error with Mongo access, probably permissions."
+            "Check if exist database with name \"{}\""
+            " and collection \"{}\" inside."
+        ).format(database, table_name))
+        sock.sendall(b"MongoError")
 
     finally:
         log.debug("First closing socket")
