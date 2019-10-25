@@ -1,4 +1,4 @@
-from avalon import api
+
 import pype.maya.plugin
 import os
 from pypeapp import config
@@ -58,6 +58,9 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             for root in roots:
                 root.setParent(groupNode)
 
+            cmds.setAttr(groupName + ".displayHandle", 1)
+            groupNode
+
             presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
             colors = presets['plugins']['maya']['load']['colors']
             c = colors.get(family)
@@ -67,10 +70,29 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
 
             self[:] = nodes
 
+            cmds.setAttr(groupName + ".displayHandle", 1)
+            # get bounding box
+            bbox = cmds.exactWorldBoundingBox(groupName)
+            # get pivot position on world space
+            pivot = cmds.xform(groupName, q=True, sp=True, ws=True)
+            # center of bounding box
+            cx = (bbox[0] + bbox[3]) / 2
+            cy = (bbox[1] + bbox[4]) / 2
+            cz = (bbox[2] + bbox[5]) / 2
+            # add pivot position to calculate offset
+            cx = cx + pivot[0]
+            cy = cy + pivot[1]
+            cz = cz + pivot[2]
+            # set selection handle offset to center of bounding box
+            cmds.setAttr(groupName + ".selectHandleX", cx)
+            cmds.setAttr(groupName + ".selectHandleY", cy)
+            cmds.setAttr(groupName + ".selectHandleZ", cz)
+
             return nodes
 
     def switch(self, container, representation):
         self.update(container, representation)
+
 
 # for backwards compatibility
 class AbcLoader(ReferenceLoader):
@@ -78,6 +100,7 @@ class AbcLoader(ReferenceLoader):
     families = ["pointcache", "animation"]
     representations = ["abc"]
     tool_names = []
+
 
 # for backwards compatibility
 class ModelLoader(ReferenceLoader):

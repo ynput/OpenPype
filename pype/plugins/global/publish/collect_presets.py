@@ -1,3 +1,12 @@
+"""
+Requires:
+    config_data -> colorspace.default
+    config_data -> dataflow.default
+
+Provides:
+    context     -> presets
+"""
+
 from pyblish import api
 from pypeapp import config
 
@@ -5,7 +14,7 @@ from pypeapp import config
 class CollectPresets(api.ContextPlugin):
     """Collect Presets."""
 
-    order = api.CollectorOrder
+    order = api.CollectorOrder - 0.491
     label = "Collect Presets"
 
     def process(self, context):

@@ -3,7 +3,6 @@ from os.path import getsize
 import logging
 import speedcopy
 import clique
-import traceback
 import errno
 import pyblish.api
 from avalon import api, io
@@ -64,7 +63,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "plate",
                 "look",
                 "lut",
-                "audio"
+                "audio",
+                "yetiRig",
+                "yeticache"
                 ]
     exclude_families = ["clip"]
 
@@ -110,7 +111,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #                 extracted_traceback[1], result["error"]
         #             )
         #         )
-        # assert all(result["success"] for result in context.data["results"]), (
+        # assert all(result["success"] for result in context.data["results"]),(
         #     "Atomicity not held, aborting.")
 
         # Assemble
@@ -307,7 +308,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 if repre.get("frameStart"):
                     frame_start_padding = len(str(
                         repre.get("frameEnd")))
-                    index_frame_start = repre.get("frameStart")
+                    index_frame_start = int(repre.get("frameStart"))
 
                 dst_padding_exp = src_padding_exp
                 for i in src_collection.indexes:
@@ -322,13 +323,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1
 
-                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
+                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail).replace("..", ".")
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
-                repre['published_path'] = "{0}{1}{2}".format(dst_head, dst_padding_exp, dst_tail)
+                repre['published_path'] = "{0}{1}{2}".format(dst_head,
+                                                             dst_padding_exp,
+                                                             dst_tail)
                 # for imagesequence version data
                 hashes = '#' * len(dst_padding)
                 dst = os.path.normpath("{0}{1}{2}".format(
@@ -357,7 +360,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 dst = os.path.normpath(
-                    anatomy_filled[template_name]["path"])
+                    anatomy_filled[template_name]["path"]).replace("..", ".")
 
                 instance.data["transfers"].append([src, dst])
 
@@ -440,6 +443,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             None
         """
+        src = os.path.normpath(src)
+        dst = os.path.normpath(dst)
 
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)

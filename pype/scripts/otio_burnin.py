@@ -1,4 +1,5 @@
 import os
+import datetime
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from pypeapp.lib import config
 from pype import api as pype
@@ -74,6 +75,20 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         """
         if not options:
             options = ffmpeg_burnins.TextOptions(**self.options_init)
+        self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
+
+    def add_datetime(self, date_format, align, options=None):
+        """
+        Adding date text to a filter. Using pythons datetime module.
+
+        :param str date_format: format of date (e.g. `%d.%m.%Y`)
+        :param enum align: alignment, must use provided enum flags
+        :param dict options: recommended to use TextOptions
+        """
+        if not options:
+            options = ffmpeg_burnins.TextOptions(**self.options_init)
+        today = datetime.datetime.today()
+        text = today.strftime(date_format)
         self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
 
     def add_frame_numbers(self, align, options=None, start_frame=None):
@@ -188,6 +203,8 @@ def example(input_path, output_path):
     burnin = ModifiedBurnins(input_path, options_init=options_init)
     # Static text
     burnin.add_text('My Text', ModifiedBurnins.TOP_CENTERED)
+    # Datetime
+    burnin.add_text('%d-%m-%y', ModifiedBurnins.TOP_RIGHT)
     # Frame number
     burnin.add_frame_numbers(ModifiedBurnins.TOP_RIGHT, start_frame=start_frame)
     # Timecode
@@ -312,6 +329,10 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
                 return
             text = preset['text'].format(**data)
             burnin.add_text(text, align)
+        elif bi_func == "datetime":
+            date_format = preset["format"]
+            burnin.add_datetime(date_format, align)
+
         else:
             log.error(
                 'Unknown function for burnins {}'.format(bi_func)

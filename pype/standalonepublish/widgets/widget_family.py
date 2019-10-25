@@ -5,7 +5,7 @@ import json
 from collections import namedtuple
 
 from . import QtWidgets, QtCore
-from . import HelpRole, FamilyRole, ExistsRole, PluginRole
+from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget
 
 from pypeapp import config
@@ -116,8 +116,10 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def collect_data(self):
         plugin = self.list_families.currentItem().data(PluginRole)
+        key = self.list_families.currentItem().data(PluginKeyRole)
         family = plugin.family.rsplit(".", 1)[-1]
         data = {
+            'family_preset_key': key,
             'family': family,
             'subset': self.input_result.text(),
             'version': self.version_spinbox.value()
@@ -313,7 +315,7 @@ class FamilyWidget(QtWidgets.QWidget):
         has_families = False
         presets = config.get_presets().get('standalone_publish', {})
 
-        for creator in presets.get('families', {}).values():
+        for key, creator in presets.get('families', {}).items():
             creator = namedtuple("Creator", creator.keys())(*creator.values())
 
             label = creator.label or creator.family
@@ -322,6 +324,7 @@ class FamilyWidget(QtWidgets.QWidget):
             item.setData(HelpRole, creator.help or "")
             item.setData(FamilyRole, creator.family)
             item.setData(PluginRole, creator)
+            item.setData(PluginKeyRole, key)
             item.setData(ExistsRole, False)
             self.list_families.addItem(item)
 

@@ -114,7 +114,7 @@ def preview_fname(folder, scene, layer, padding, ext):
     """
 
     # Following hardcoded "<Scene>/<Scene>_<Layer>/<Layer>"
-    output = "{scene}/{layer}/{layer}.{number}.{ext}".format(
+    output = "maya/{scene}/{layer}/{layer}.{number}.{ext}".format(
         scene=scene,
         layer=layer,
         number="#" * padding,
@@ -141,13 +141,15 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
     icon = "satellite-dish"
 
     _token = None
-    _user = None
-    _password = None
 
     def _load_credentials(self):
         """
         Load Muster credentials from file and set `MUSTER_USER`,
         `MUSTER_PASSWORD`, `MUSTER_REST_URL` is loaded from presets.
+
+        .. todo::
+
+           Show login dialog if access token is invalid or missing.
         """
         app_dir = os.path.normpath(
             appdirs.user_data_dir('pype-app', 'pype')
@@ -156,36 +158,13 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         fpath = os.path.join(app_dir, file_name)
         file = open(fpath, 'r')
         muster_json = json.load(file)
-        self.MUSTER_USER = muster_json.get('username', None)
-        self.MUSTER_PASSWORD = muster_json.get('password', None)
+        self._token = muster_json.get('token', None)
+        if not self._token:
+            raise RuntimeError("Invalid access token for Muster")
         file.close()
         self.MUSTER_REST_URL = os.environ.get("MUSTER_REST_URL")
         if not self.MUSTER_REST_URL:
             raise AttributeError("Muster REST API url not set")
-
-    def _authenticate(self):
-        """
-        Authenticate user with Muster and get authToken from server.
-        """
-        params = {
-                    'username': self.MUSTER_USER,
-                    'password': self.MUSTER_PASSWORD
-               }
-        api_entry = '/api/login'
-        response = requests.post(
-            self.MUSTER_REST_URL + api_entry, params=params)
-        if response.status_code != 200:
-            self.log.error(
-                'Cannot log into Muster: {}'.format(response.status_code))
-            raise Exception('Cannot login into Muster.')
-
-        try:
-            self._token = response.json()['ResponseData']['authToken']
-        except ValueError as e:
-            self.log.error('Invalid response from Muster server {}'.format(e))
-            raise Exception('Invalid response from Muster while logging in.')
-
-        return self._token
 
     def _get_templates(self):
         """
@@ -273,7 +252,6 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             raise RuntimeError("MUSTER_REST_URL not set")
 
         self._load_credentials()
-        self._authenticate()
         # self._get_templates()
 
         context = instance.context
@@ -303,7 +281,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.data['subset']      # beauty
-        # renderlayer_globals = instance.data["renderGlobals"]
+        renderglobals = instance.data["renderGlobals"]
         # legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         # deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
@@ -317,6 +295,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                                           ext=render_variables["ext"])
 
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
+        self.log.debug("output: {}".format(filepath))
         # build path for metadata file
         metadata_filename = "{}_metadata.json".format(instance.data["subset"])
         output_dir = instance.data["outputDir"]
@@ -335,9 +314,11 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         # python named MPython.exe, residing directly in muster bin
         # directory.
         if platform.system().lower() == "windows":
-            muster_python = "MPython.exe"
+            # for muster, those backslashes must be escaped twice
+            muster_python = ("\"C:\\\\Program Files\\\\Virtual Vertex\\\\"
+                             "Muster 9\\\\MPython.exe\"")
         else:
-            muster_python = "mpython"
+            muster_python = "/usr/local/muster9/mpython"
 
         # build the path and argument. We are providing separate --pype
         # argument with network path to pype as post job actions are run
@@ -345,8 +326,13 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         # inherit environment from publisher including PATH, so there's
         # no problem finding PYPE, but there is now way (as far as I know)
         # to set environment dynamically for dispatcher. Therefor this hack.
-        args = [muster_python, _get_script(), "--paths", metadata_path,
-                "--pype", pype_root]
+        args = [muster_python,
+                _get_script().replace('\\', '\\\\'),
+                "--paths",
+                metadata_path.replace('\\', '\\\\'),
+                "--pype",
+                pype_root.replace('\\', '\\\\')]
+
         postjob_command = " ".join(args)
 
         try:
@@ -362,7 +348,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 "platform": 0,
                 "job": {
                     "jobName": jobname,
-                    "templateId": self._get_template_id(
+                    "templateId": _get_template_id(
                         instance.data["renderer"]),
                     "chunksInterleave": 2,
                     "chunksPriority": "0",
@@ -373,14 +359,16 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "dependMode": 0,
                     "emergencyQueue": False,
                     "excludedPools": [""],
-                    "includedPools": [""],
+                    "includedPools": [renderglobals["Pool"]],
                     "packetSize": 4,
                     "packetType": 1,
                     "priority": 1,
                     "jobId": -1,
                     "startOn": 0,
                     "parentId": -1,
-                    "project": scene,
+                    "project": os.environ.get('AVALON_PROJECT') or scene,
+                    "shot": os.environ.get('AVALON_ASSET') or scene,
+                    "camera": instance.data.get("cameras")[0],
                     "dependMode": 0,
                     "packetSize": 4,
                     "packetType": 1,
@@ -448,7 +436,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                           "subst": False
                         },
                         "ADD_FLAGS": {
-                          "value": "",
+                          "value": "-rl {}".format(renderlayer),
                           "state": True,
                           "subst": True
                         }

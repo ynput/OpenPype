@@ -107,7 +107,7 @@ class JobKiller(BaseAction):
                     'Changing Job ({}) status: {} -> failed'
                 ).format(job['id'], job['status']))
             except Exception:
-                self.warning.debug((
+                self.log.warning.debug((
                     'Changing Job ({}) has failed'
                 ).format(job['id']))
 

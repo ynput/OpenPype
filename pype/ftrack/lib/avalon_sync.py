@@ -27,6 +27,11 @@ def import_to_avalon(
     output = {}
     errors = []
 
+    entity_type = entity.entity_type
+    ent_path = "/".join([ent["name"] for ent in entity['link']])
+
+    log.debug("{} [{}] - Processing".format(ent_path, entity_type))
+
     ca_mongoid = get_ca_mongoid()
     # Validate if entity has custom attribute avalon_mongo_id
     if ca_mongoid not in entity['custom_attributes']:
@@ -34,6 +39,7 @@ def import_to_avalon(
             'Custom attribute "{}" for "{}" is not created'
             ' or don\'t have set permissions for API'
         ).format(ca_mongoid, entity['name'])
+        log.error(msg)
         errors.append({'Custom attribute error': msg})
         output['errors'] = errors
         return output
@@ -55,6 +61,7 @@ def import_to_avalon(
         ft_project_code = ft_project['name']
 
         if av_project is None:
+            log.debug("{} - Creating project".format(project_name))
             item = {
                 'schema': "avalon-core:project-2.0",
                 'type': type,
@@ -90,10 +97,20 @@ def import_to_avalon(
                         'Project name', av_project['name'], project_name
                     )}
                 )
+
             if (
                 av_project_code is not None and
                 av_project_code != ft_project_code
             ):
+                log.warning((
+                    "{0} - Project code"
+                    " is different in Avalon (\"{1}\")"
+                    " that in Ftrack (\"{2}\")!"
+                    " Trying to change it back in Ftrack to \"{1}\"."
+                ).format(
+                    ent_path, str(av_project_code), str(ft_project_code)
+                ))
+
                 entity['name'] = av_project_code
                 errors.append(
                     {'Changed name error': msg.format(
@@ -101,7 +118,18 @@ def import_to_avalon(
                     )}
                 )
 
-            session.commit()
+            try:
+                session.commit()
+                log.info((
+                    "{} - Project code was changed back to \"{}\""
+                ).format(ent_path, str(av_project_code)))
+            except Exception:
+                log.error(
+                    (
+                        "{} - Couldn't change project code back to \"{}\"."
+                    ).format(ent_path, str(av_project_code)),
+                    exc_info=True
+                )
 
             output['errors'] = errors
             return output
@@ -132,6 +160,7 @@ def import_to_avalon(
         for k, v in data.items():
             enter_data[k] = v
 
+        log.debug("{} - Updating data".format(ent_path))
         database[project_name].update_many(
             {'_id': ObjectId(projectId)},
             {'$set': {
@@ -177,10 +206,13 @@ def import_to_avalon(
     avalon_asset = None
     # existence of this custom attr is already checked
     if ca_mongoid not in entity['custom_attributes']:
-        msg = '"{}" don\'t have "{}" custom attribute'
-        errors.append({'Missing Custom attribute': msg.format(
-            entity_type, ca_mongoid
-        )})
+        msg = (
+            "Entity type \"{}\" don't have created custom attribute \"{}\""
+            " or user \"{}\" don't have permissions to read or change it."
+        ).format(entity_type, ca_mongoid, session.api_user)
+
+        log.error(msg)
+        errors.append({'Missing Custom attribute': msg})
         output['errors'] = errors
         return output
 
@@ -210,12 +242,16 @@ def import_to_avalon(
             }
             schema.validate(item)
             mongo_id = database[project_name].insert_one(item).inserted_id
-
+            log.debug("{} - Created in project \"{}\"".format(
+                ent_path, project_name
+            ))
         # Raise error if it seems to be different ent. with same name
         elif avalon_asset['data']['parents'] != data['parents']:
             msg = (
-                'In Avalon DB already exists entity with name "{0}"'
-            ).format(name)
+                "{} - In Avalon DB already exists entity with name \"{}\""
+                "\n- \"{}\""
+            ).format(ent_path, name, "/".join(db_asset_path_items))
+            log.error(msg)
             errors.append({'Entity name duplication': msg})
             output['errors'] = errors
             return output
@@ -227,11 +263,13 @@ def import_to_avalon(
         if avalon_asset['name'] != entity['name']:
             if changeability_check_childs(entity) is False:
                 msg = (
-                    'You can\'t change name {} to {}'
+                    '{} - You can\'t change name "{}" to "{}"'
                     ', avalon wouldn\'t work properly!'
                     '\n\nName was changed back!'
                     '\n\nCreate new entity if you want to change name.'
-                ).format(avalon_asset['name'], entity['name'])
+                ).format(ent_path, avalon_asset['name'], entity['name'])
+
+                log.warning(msg)
                 entity['name'] = avalon_asset['name']
                 session.commit()
                 errors.append({'Changed name error': msg})
@@ -261,6 +299,7 @@ def import_to_avalon(
                         avalon_asset['name'], old_path, new_path,
                         'entity was moved back'
                     )
+                    log.warning(msg)
                     moved_back = True
 
                 except Exception:
@@ -271,6 +310,7 @@ def import_to_avalon(
                     avalon_asset['name'], old_path, new_path,
                     'please move it back'
                 )
+                log.error(msg)
 
             errors.append({'Hierarchy change error': msg})
 
@@ -297,7 +337,9 @@ def import_to_avalon(
             'data': enter_data,
             'parent': ObjectId(projectId)
         }})
-
+    log.debug("{} - Updated data (in project \"{}\")".format(
+        ent_path, project_name
+    ))
     entity['custom_attributes'][ca_mongoid] = str(mongo_id)
     session.commit()
 
@@ -307,9 +349,13 @@ def import_to_avalon(
 def get_avalon_attr(session, split_hierarchical=False):
     custom_attributes = []
     hier_custom_attributes = []
-    query = 'CustomAttributeGroup where name is "avalon"'
-    all_avalon_attr = session.query(query).one()
-    for cust_attr in all_avalon_attr['custom_attribute_configurations']:
+    cust_attrs_query = (
+        "select id, entity_type, object_type_id, is_hierarchical"
+        " from CustomAttributeConfiguration"
+        " where group.name = \"avalon\""
+    )
+    all_avalon_attr = session.query(cust_attrs_query).all()
+    for cust_attr in all_avalon_attr:
         if 'avalon_' in cust_attr['key']:
             continue
 
@@ -366,6 +412,12 @@ def get_data(entity, session, custom_attributes):
     data['ftrackId'] = entity['id']
     data['entityType'] = entity_type
 
+    ent_types_query = "select id, name from ObjectType"
+    ent_types = session.query(ent_types_query).all()
+    ent_types_by_name = {
+        ent_type["name"]: ent_type["id"] for ent_type in ent_types
+    }
+
     for cust_attr in custom_attributes:
         # skip hierarchical attributes
         if cust_attr.get('is_hierarchical', False):
@@ -388,8 +440,14 @@ def get_data(entity, session, custom_attributes):
             # Put space between capitals (e.g. 'AssetBuild' -> 'Asset Build')
             entity_type_full = re.sub(r"(\w)([A-Z])", r"\1 \2", entity_type)
             # Get object id of entity type
-            query = 'ObjectType where name is "{}"'.format(entity_type_full)
-            ent_obj_type_id = session.query(query).one()['id']
+            ent_obj_type_id = ent_types_by_name.get(entity_type_full)
+
+            # Backup soluction when id is not found by prequeried objects
+            if not ent_obj_type_id:
+                query = 'ObjectType where name is "{}"'.format(
+                    entity_type_full
+                )
+                ent_obj_type_id = session.query(query).one()['id']
 
             if cust_attr['object_type_id'] == ent_obj_type_id:
                 if key in entity['custom_attributes']:

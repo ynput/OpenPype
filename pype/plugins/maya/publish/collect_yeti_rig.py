@@ -45,8 +45,10 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         instance.data["resources"] = yeti_resources
 
         # Force frame range for export
-        instance.data["frameStart"] = 1
-        instance.data["frameEnd"] = 1
+        instance.data["frameStart"] = cmds.playbackOptions(
+                                        query=True, animationStartTime=True)
+        instance.data["frameEnd"] = cmds.playbackOptions(
+                                        query=True, animationStartTime=True)
 
     def collect_input_connections(self, instance):
         """Collect the inputs for all nodes in the input_SET"""
@@ -114,15 +116,17 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         resources = []
 
         image_search_paths = cmds.getAttr("{}.imageSearchPath".format(node))
+        texture_filenames = []
+        if image_search_paths:
 
-        # TODO: Somehow this uses OS environment path separator, `:` vs `;`
-        # Later on check whether this is pipeline OS cross-compatible.
-        image_search_paths = [p for p in
-                              image_search_paths.split(os.path.pathsep) if p]
+            # TODO: Somehow this uses OS environment path separator, `:` vs `;`
+            # Later on check whether this is pipeline OS cross-compatible.
+            image_search_paths = [p for p in
+                                  image_search_paths.split(os.path.pathsep) if p]
 
-        # List all related textures
-        texture_filenames = cmds.pgYetiCommand(node, listTextures=True)
-        self.log.info("Found %i texture(s)" % len(texture_filenames))
+            # List all related textures
+            texture_filenames = cmds.pgYetiCommand(node, listTextures=True)
+            self.log.info("Found %i texture(s)" % len(texture_filenames))
 
         # Get all reference nodes
         reference_nodes = cmds.pgYetiGraph(node,
