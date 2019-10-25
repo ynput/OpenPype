@@ -225,6 +225,10 @@ def main_loop(ftrack_url, username, api_key, event_paths):
 
         # If thread failed test Ftrack and Mongo connection
         elif not storer_thread.isAlive():
+            if storer_thread.mongo_error:
+                raise Exception(
+                    "Exiting because have issue with acces to MongoDB"
+                )
             storer_thread.join()
             storer_thread = None
             ftrack_accessible = False
@@ -237,7 +241,11 @@ def main_loop(ftrack_url, username, api_key, event_paths):
             processor_thread.start()
 
         # If thread failed test Ftrack and Mongo connection
-        elif processor_thread.isAlive():
+        elif not processor_thread.isAlive():
+            if storer_thread.mongo_error:
+                raise Exception(
+                    "Exiting because have issue with acces to MongoDB"
+                )
             processor_thread.join()
             processor_thread = None
             ftrack_accessible = False
