@@ -1,7 +1,6 @@
 import os
 import logging
 import shutil
-import clique
 
 import errno
 import pyblish.api
@@ -25,9 +24,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
-    families = ["assembly",
-                "yetiRig",
-                "yeticache"]
+    families = ["assembly"]
     exclude_families = ["clip"]
 
     def process(self, instance):
@@ -40,7 +37,6 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         self.log.info("Integrating Asset in to the database ...")
         if instance.data.get('transfer', True):
             self.integrate(instance)
-
 
     def register(self, instance):
         # Required environment variables
@@ -158,7 +154,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
                          "version": int(version["name"]),
                          "hierarchy": hierarchy}
 
-        template_publish = project["config"]["template"]["publish"]
+        # template_publish = project["config"]["template"]["publish"]
         anatomy = instance.context.data['anatomy']
 
         # Find the representations to transfer amongst the files
