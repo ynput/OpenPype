@@ -166,7 +166,7 @@ def main_loop(ftrack_url, username, api_key, event_paths):
     printed_mongo_error = False
 
     # stop threads on exit
-    def on_exit():
+    def on_exit(processor_thread, storer_thread):
         if processor_thread is not None:
             processor_thread.stop()
             processor_thread.join()
@@ -177,7 +177,9 @@ def main_loop(ftrack_url, username, api_key, event_paths):
             storer_thread.join()
             storer_thread = None
 
-    atexit.register(on_exit)
+    atexit.register(
+        on_exit, processor_thread=processor_thread, storer_thread=storer_thread
+    )
     # Main loop
     while True:
         # Check if accessible Ftrack and Mongo url
