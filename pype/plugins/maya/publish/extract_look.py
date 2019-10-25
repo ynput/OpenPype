@@ -72,7 +72,6 @@ def maketx(source, destination, *args):
             "--checknan",
             # use oiio-optimized settings for tile-size, planarconfig, metadata
             "--oiio",
-            "--colorconvert sRGB linear",
             "--filter lanczos3"
         ]
 
@@ -375,6 +374,7 @@ class ExtractLook(pype.api.Extractor):
             )
 
             if linearise:
+                self.log.info("tx: converting sRGB -> linear")
                 colorconvert = "--colorconvert sRGB linear"
             else:
                 colorconvert = ""
