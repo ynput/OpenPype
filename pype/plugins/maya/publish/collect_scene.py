@@ -37,6 +37,7 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
             "label": subset,
             "publish": False,
             "family": 'workfile',
+            "families": ['workfile'],
             "setMembers": [current_file]
         })
 
