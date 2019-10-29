@@ -485,13 +485,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if subset is None:
             subset_name = instance.data["subset"]
             self.log.info("Subset '%s' not found, creating.." % subset_name)
+            self.log.debug("families.  %s" % instance.data.get('families'))
+            self.log.debug("families.  %s" % type(instance.data.get('families')))
 
             _id = io.insert_one({
                 "schema": "pype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
-                "families": instance.data.get('families'),
-                "data": {},
+                "data": {
+                    "families": instance.data.get('families')
+                    },
                 "parent": asset["_id"]
             }).inserted_id
 
