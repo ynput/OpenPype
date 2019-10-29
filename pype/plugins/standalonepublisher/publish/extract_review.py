@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import pyblish.api
 from pype.vendor import clique
@@ -82,9 +83,10 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                     full_input_path = os.path.join(staging_dir, repre["files"])
                     filename = repre["files"].split(".")[0]
 
+                # prepare output file
                 repr_file = filename + "_{0}.{1}".format(name, ext)
-
-                full_output_path = os.path.join(staging_dir, repr_file)
+                out_stagigng_dir = tempfile.mkdtemp(prefix="extract_review_")
+                full_output_path = os.path.join(out_stagigng_dir, repr_file)
 
                 self.log.info("input {}".format(full_input_path))
                 self.log.info("output {}".format(full_output_path))
@@ -169,6 +171,7 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                     "name": name,
                     "ext": ext,
                     "files": repr_file,
+                    "stagingDir": out_stagigng_dir,
                     "tags": new_tags,
                     "outputName": name,
                     "startFrameReview": 1,
