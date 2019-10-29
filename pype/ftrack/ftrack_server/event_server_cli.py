@@ -2,6 +2,7 @@ import os
 import sys
 import signal
 import datetime
+import subprocess
 import socket
 import argparse
 import atexit
@@ -125,7 +126,77 @@ def process_event_paths(event_paths):
     return os.pathsep.join(return_paths), not_found
 
 
-def main_loop(ftrack_url, username, api_key, event_paths):
+def old_way_server(ftrack_url):
+    # Current file
+    file_path = os.path.dirname(os.path.realpath(__file__))
+
+    min_fail_seconds = 5
+    max_fail_count = 3
+    wait_time_after_max_fail = 10
+
+    subproc = None
+    subproc_path = "{}/sub_old_way.py".format(file_path)
+    subproc_last_failed = datetime.datetime.now()
+    subproc_failed_count = 0
+
+    ftrack_accessible = False
+    printed_ftrack_error = False
+
+    while True:
+        if not ftrack_accessible:
+            ftrack_accessible = check_ftrack_url(ftrack_url)
+
+        # Run threads only if Ftrack is accessible
+        if not ftrack_accessible and not printed_ftrack_error:
+            print("Can't access Ftrack {} <{}>".format(
+                ftrack_url, str(datetime.datetime.now())
+            ))
+            if subproc is not None:
+                if subproc.poll() is None:
+                    subproc.terminate()
+
+                subproc = None
+
+            printed_ftrack_error = True
+
+            time.sleep(1)
+            continue
+
+        printed_ftrack_error = False
+
+        if subproc is None:
+            if subproc_failed_count < max_fail_count:
+                subproc = subprocess.Popen(
+                    ["python", subproc_path],
+                    stdout=subprocess.PIPE
+                )
+            elif subproc_failed_count == max_fail_count:
+                print((
+                    "Storer failed {}times I'll try to run again {}s later"
+                ).format(str(max_fail_count), str(wait_time_after_max_fail)))
+                subproc_failed_count += 1
+            elif ((
+                    datetime.datetime.now() - subproc_last_failed
+                ).seconds > wait_time_after_max_fail):
+                    subproc_failed_count = 0
+
+        # If thread failed test Ftrack and Mongo connection
+        elif subproc.poll() is not None:
+            subproc = None
+            ftrack_accessible = False
+
+            _subproc_last_failed = datetime.datetime.now()
+            delta_time = (_subproc_last_failed - subproc_last_failed).seconds
+            if delta_time < min_fail_seconds:
+                subproc_failed_count += 1
+            else:
+                subproc_failed_count = 0
+            subproc_last_failed = _subproc_last_failed
+
+        time.sleep(1)
+
+
+def main_loop(ftrack_url):
     """ This is main loop of event handling.
 
     Loop is handling threads which handles subprocesses of event storer and
