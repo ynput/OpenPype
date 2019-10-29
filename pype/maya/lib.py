@@ -1774,6 +1774,11 @@ def set_scene_fps(fps, update=True):
                    '48000': '48000fps'}
 
     # pull from mapping
+    # this should convert float string to float and int to int
+    # so 25.0 is converted to 25, but 23.98 will be still float.
+    decimals = int(str(fps-int(fps))[2:])
+    if decimals == 0:
+        fps = int(fps)
     unit = fps_mapping.get(str(fps), None)
     if unit is None:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
