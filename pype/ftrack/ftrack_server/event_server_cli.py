@@ -16,6 +16,14 @@ from pype.ftrack.ftrack_server.lib import ftrack_events_mongo_settings
 import socket_thread
 
 
+class MongoPermissionsError(Exception):
+    """Is used when is created multiple objects of same RestApi class."""
+    def __init__(self, message=None):
+        if not message:
+            message = "Exiting because have issue with acces to MongoDB"
+        super().__init__(message)
+
+
 def check_ftrack_url(url, log_errors=True):
     """Checks if Ftrack server is responding"""
     if not url:
@@ -162,6 +170,7 @@ def main_loop(ftrack_url, username, api_key, event_paths):
     printed_mongo_error = False
 
     # stop threads on exit
+    # TODO check if works and args have thread objects!
     def on_exit(processor_thread, storer_thread):
         if processor_thread is not None:
             processor_thread.stop()
@@ -232,9 +241,7 @@ def main_loop(ftrack_url, username, api_key, event_paths):
         # If thread failed test Ftrack and Mongo connection
         elif not storer_thread.isAlive():
             if storer_thread.mongo_error:
-                raise Exception(
-                    "Exiting because have issue with acces to MongoDB"
-                )
+                raise MongoPermissionsError()
             storer_thread.join()
             storer_thread = None
             ftrack_accessible = False
