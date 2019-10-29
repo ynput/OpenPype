@@ -127,11 +127,6 @@ def main_loop(ftrack_url, username, api_key, event_paths):
     signals as heartbeat. Heartbeat must become at least once per 30sec
     otherwise thread will be killed.
     """
-    # Set Ftrack environments
-    os.environ["FTRACK_SERVER"] = ftrack_url
-    os.environ["FTRACK_API_USER"] = username
-    os.environ["FTRACK_API_KEY"] = api_key
-    os.environ["FTRACK_EVENTS_PATH"] = event_paths
 
     # Get mongo hostname and port for testing mongo connection
     mongo_list = ftrack_events_mongo_settings()
@@ -385,7 +380,11 @@ def main(argv):
         help="Load creadentials from apps dir",
         action="store_true"
     )
-
+    parser.add_argument(
+        '-oldway',
+        help="Load creadentials from apps dir",
+        action="store_true"
+    )
     ftrack_url = os.environ.get('FTRACK_SERVER')
     username = os.environ.get('FTRACK_API_USER')
     api_key = os.environ.get('FTRACK_API_KEY')
@@ -410,6 +409,7 @@ def main(argv):
     if kwargs.ftrackapikey:
         api_key = kwargs.ftrackapikey
 
+    oldway = kwargs.oldway
     # Check url regex and accessibility
     ftrack_url = check_ftrack_url(ftrack_url)
     if not ftrack_url:
@@ -435,7 +435,16 @@ def main(argv):
     if kwargs.storecred:
         credentials._save_credentials(username, api_key, True)
 
-    main_loop(ftrack_url, username, api_key, event_paths)
+    # Set Ftrack environments
+    os.environ["FTRACK_SERVER"] = ftrack_url
+    os.environ["FTRACK_API_USER"] = username
+    os.environ["FTRACK_API_KEY"] = api_key
+    os.environ["FTRACK_EVENTS_PATH"] = event_paths
+
+    if oldway:
+        return old_way_server(ftrack_url)
+
+    return main_loop(ftrack_url)
 
 
 if __name__ == "__main__":
