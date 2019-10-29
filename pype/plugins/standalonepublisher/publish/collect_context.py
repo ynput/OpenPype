@@ -109,7 +109,7 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             if component["preview"]:
                 instance.data["families"].append("review")
                 instance.data["repreProfiles"] = ["h264"]
-                component["tags"] = ["review", "delete"]
+                component["tags"] = ["review"]
                 self.log.debug("Adding review family")
 
             instance.data["representations"].append(component)
