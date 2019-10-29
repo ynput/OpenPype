@@ -167,6 +167,8 @@ class Window(QtWidgets.QDialog):
         '''
         if self.shadow_widget.isVisible():
             self.shadow_widget.setVisible(False)
+        # Refresh version
+        self.widget_family.on_version_refresh()
 
     def set_valid_family(self, valid):
         ''' Sets `valid_family` attribute for validation
