@@ -219,6 +219,10 @@ class AssetWidget(QtWidgets.QWidget):
         return data
 
     def get_parents(self, entity):
+        ent_parents = entity.get("data", {}).get("parents")
+        if ent_parents is not None and isinstance(ent_parents, list):
+            return ent_parents
+
         output = []
         if entity.get('data', {}).get('visualParent', None) is None:
             return output
