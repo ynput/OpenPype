@@ -201,7 +201,7 @@ class AssetWidget(QtWidgets.QWidget):
 
     def collect_data(self):
         project = self.dbcon.find_one({'type': 'project'})
-        asset = self.dbcon.find_one({'_id': self.get_active_asset()})
+        asset = self.get_active_asset()
 
         try:
             index = self.task_view.selectedIndexes()[0]
