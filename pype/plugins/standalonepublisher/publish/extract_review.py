@@ -177,13 +177,19 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                     "startFrameReview": 1,
                     "endFrameReview": video_len
                 })
-                if repre_new.get("preview"):
-                    repre_new.pop("preview")
+                # cleanup thumbnail from new repre
                 if repre_new.get("thumbnail"):
                     repre_new.pop("thumbnail")
+                if "thumbnail" in repre_new["tags"]:
+                    repre_new["tags"].remove("thumbnail")
 
                 # adding representation
                 self.log.debug("Adding: {}".format(repre_new))
+                # cleanup repre from preview
+                if "preview" in repre:
+                    repre.pop("preview")
+                if "preview" in repre["tags"]:
+                    repre["tags"].remove("preview")
                 new_repres.append(repre_new)
 
         for repre in instance.data["representations"]:
