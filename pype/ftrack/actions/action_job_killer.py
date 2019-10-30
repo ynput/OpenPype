@@ -101,13 +101,14 @@ class JobKiller(BaseAction):
         # Update all the queried jobs, setting the status to failed.
         for job in jobs:
             try:
+                origin_status = job["status"]
                 job['status'] = 'failed'
                 session.commit()
                 self.log.debug((
                     'Changing Job ({}) status: {} -> failed'
-                ).format(job['id'], job['status']))
+                ).format(job['id'], origin_status))
             except Exception:
-                self.log.warning.debug((
+                self.log.warning((
                     'Changing Job ({}) has failed'
                 ).format(job['id']))
 
