@@ -70,12 +70,22 @@ class IdleManager(QtCore.QThread):
 
         if self.qaction and self.failed_icon:
             self.qaction.setIcon(self.failed_icon)
-        thread_mouse.signal_stop.emit()
-        thread_mouse.terminate()
-        thread_mouse.wait()
-        thread_keyboard.signal_stop.emit()
-        thread_keyboard.terminate()
-        thread_keyboard.wait()
+
+        # Threads don't have their attrs when Qt application already finished
+        try:
+            thread_mouse.signal_stop.emit()
+            thread_mouse.terminate()
+            thread_mouse.wait()
+        except AttributeError:
+            pass
+
+        try:
+            thread_keyboard.signal_stop.emit()
+            thread_keyboard.terminate()
+            thread_keyboard.wait()
+        except AttributeError:
+            pass
+
         self._is_running = False
         self.log.info('IdleManager has stopped')
 
