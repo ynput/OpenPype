@@ -1,4 +1,5 @@
 import time
+import collections
 from Qt import QtCore, QtGui, QtWidgets
 from pype.vendor.pynput import mouse, keyboard
 from pypeapp import Logger
@@ -9,7 +10,7 @@ class IdleManager(QtCore.QThread):
     Idle time resets on keyboard/mouse input.
     Is able to emit signals at specific time idle.
     """
-    time_signals = {}
+    time_signals = collections.defaultdict(list)
     idle_time = 0
     signal_reset_timer = QtCore.Signal()
 
@@ -35,8 +36,6 @@ class IdleManager(QtCore.QThread):
         :param signal: signal that will be emitted (without objects)
         :type signal: QtCore.Signal
         """
-        if emit_time not in self.time_signals:
-            self.time_signals[emit_time] = []
         self.time_signals[emit_time].append(signal)
 
     @property
