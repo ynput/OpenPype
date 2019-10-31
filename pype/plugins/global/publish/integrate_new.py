@@ -305,6 +305,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_tail = dst_collection.format("{tail}")
 
                 index_frame_start = None
+
                 if repre.get("frameStart"):
                     frame_start_padding = len(str(
                         repre.get("frameEnd")))
@@ -391,6 +392,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
+
+            if frame_start_padding:
+                representation['context']['frame'] = repre.get("frameStart")
+
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
             self.log.debug("__ destination_list: {}".format(destination_list))
