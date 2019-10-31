@@ -268,7 +268,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
-            if isinstance(files, list):
+            sequence_repre = isinstance(files, list)
+
+            if sequence_repre:
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
                     "src_tail_collections: {}".format(str(src_collections)))
@@ -393,7 +395,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 }
             }
 
-            if repre.get("frameStart"):
+            if sequence_repre and repre.get("frameStart"):
                 representation['context']['frame'] = repre.get("frameStart")
 
             self.log.debug("__ representation: {}".format(representation))
