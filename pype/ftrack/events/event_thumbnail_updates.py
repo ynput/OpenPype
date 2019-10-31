@@ -27,7 +27,7 @@ class ThumbnailEvents(BaseEvent):
             #         entity['action'] == 'encoded'):
             if (
                 entity['entityType'] == 'assetversion'
-                and 'thumbid' in entity['keys']
+                and 'thumbid' in (entity.get('keys') or [])
             ):
 
                 version = session.get('AssetVersion', entity['entityId'])
@@ -47,7 +47,5 @@ class ThumbnailEvents(BaseEvent):
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     ThumbnailEvents(session, plugins_presets).register()

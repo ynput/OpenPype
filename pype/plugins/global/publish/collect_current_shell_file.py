@@ -1,3 +1,11 @@
+"""
+Requires:
+    None
+
+Provides:
+    context         -> currentFile (str)
+"""
+
 import os
 import pyblish.api
 

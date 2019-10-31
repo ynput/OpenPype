@@ -15,7 +15,7 @@ def has_unsaved_changes():
     return True
 
 
-def save(filepath):
+def save_file(filepath):
     project = hiero.core.projects()[-1]
     if project:
         project.saveAs(filepath)
@@ -24,7 +24,7 @@ def save(filepath):
         project.saveAs(filepath)
 
 
-def open(filepath):
+def open_file(filepath):
     hiero.core.openProject(filepath)
     return True
 

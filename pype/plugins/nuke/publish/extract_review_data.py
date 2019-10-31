@@ -166,6 +166,7 @@ class ExtractReviewData(pype.api.Extractor):
         if nuke.selectedNodes():
             [n.setSelected(False) for n in nuke.selectedNodes()]
 
+        ipn_orig = None
         for v in [n for n in nuke.allNodes()
                   if "Viewer" in n.Class()]:
             ip = v['input_process'].getValue()

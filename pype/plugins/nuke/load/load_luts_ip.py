@@ -4,6 +4,7 @@ import json
 from collections import OrderedDict
 from pype.nuke import lib
 
+
 class LoadLutsInputProcess(api.Loader):
     """Loading colorspace soft effect exported from nukestudio"""
 
@@ -86,6 +87,13 @@ class LoadLutsInputProcess(api.Loader):
                 for k, v in ef_val["node"].items():
                     if k in self.ignore_attr:
                         continue
+
+                    try:
+                        node[k].value()
+                    except NameError as e:
+                        self.log.warning(e)
+                        continue
+
                     if isinstance(v, list) and len(v) > 4:
                         node[k].setAnimated()
                         for i, value in enumerate(v):
@@ -101,6 +109,7 @@ class LoadLutsInputProcess(api.Loader):
                                     (workfile_first_frame + i))
                     else:
                         node[k].setValue(v)
+
                 node.setInput(0, pre_node)
                 pre_node = node
 
@@ -201,6 +210,13 @@ class LoadLutsInputProcess(api.Loader):
                 for k, v in ef_val["node"].items():
                     if k in self.ignore_attr:
                         continue
+
+                    try:
+                        node[k].value()
+                    except NameError as e:
+                        self.log.warning(e)
+                        continue
+
                     if isinstance(v, list) and len(v) > 3:
                         node[k].setAnimated()
                         for i, value in enumerate(v):

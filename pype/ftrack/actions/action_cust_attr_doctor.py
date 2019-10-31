@@ -9,6 +9,8 @@ from pype.ftrack import BaseAction
 
 
 class CustomAttributeDoctor(BaseAction):
+
+    ignore_me = True
     #: Action identifier.
     identifier = 'custom.attributes.doctor'
     #: Action label.
@@ -26,7 +28,9 @@ class CustomAttributeDoctor(BaseAction):
     hierarchical_ca = ['handleStart', 'handleEnd', 'frameStart', 'frameEnd']
     hierarchical_alternatives = {
         'handleStart': 'handles',
-        'handleEnd': 'handles'
+        'handleEnd': 'handles',
+        "frameStart": "fstart",
+        "frameEnd": "fend"
     }
 
     # Roles for new custom attributes
@@ -289,9 +293,6 @@ class CustomAttributeDoctor(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     CustomAttributeDoctor(session, plugins_presets).register()
 

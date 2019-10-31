@@ -90,8 +90,6 @@ class ThumbToParent(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register action. Called when used as an event plugin.'''
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     ThumbToParent(session, plugins_presets).register()
 

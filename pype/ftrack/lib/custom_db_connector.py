@@ -13,6 +13,7 @@ import logging
 import tempfile
 import functools
 import contextlib
+import atexit
 
 import requests
 
@@ -54,6 +55,17 @@ def check_active_table(func):
     return decorated
 
 
+def check_active_table(func):
+    """Handling auto reconnect in 3 retry times"""
+    @functools.wraps(func)
+    def decorated(obj, *args, **kwargs):
+        if not obj.active_table:
+            raise NotActiveTable("Active table is not set. (This is bug)")
+        return func(obj, *args, **kwargs)
+
+    return decorated
+
+
 class DbConnector:
     log = logging.getLogger(__name__)
     timeout = 1000
@@ -87,7 +99,7 @@ class DbConnector:
         """Establish a persistent connection to the database"""
         if self._is_installed:
             return
-
+        atexit.register(self.uninstall)
         logging.basicConfig()
 
         self._mongo_client = pymongo.MongoClient(
@@ -129,6 +141,16 @@ class DbConnector:
         self._mongo_client = None
         self._database = None
         self._is_installed = False
+        atexit.unregister(self.uninstall)
+
+    def create_table(self, name, **options):
+        if self.exist_table(name):
+            return
+
+        return self._database.create_collection(name, **options)
+
+    def exist_table(self, table_name):
+        return table_name in self.tables()
 
     def create_table(self, name, **options):
         if self.exist_table(name):
@@ -158,10 +180,7 @@ class DbConnector:
     @auto_reconnect
     def insert_one(self, item, **options):
         assert isinstance(item, dict), "item must be of type <dict>"
-        return self._database[self.active_table].insert_one(
-            item,
-            session=session
-        )
+        return self._database[self.active_table].insert_one(item, **options)
 
     @check_active_table
     @auto_reconnect

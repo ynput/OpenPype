@@ -220,15 +220,21 @@ class DropDataFrame(QtWidgets.QFrame):
         self._process_data(data)
 
     def load_data_with_probe(self, filepath):
+        ffprobe_path = os.getenv("FFMPEG_PATH", "")
+        if ffprobe_path:
+            ffprobe_path += '/ffprobe'
+        else:
+            ffprobe_path = 'ffprobe'
+
         args = [
-            'ffprobe',
+            ffprobe_path,
             '-v', 'quiet',
             '-print_format', 'json',
             '-show_format',
             '-show_streams', filepath
         ]
         ffprobe_p = subprocess.Popen(
-            args,
+            ' '.join(args),
             stdout=subprocess.PIPE,
             shell=True
         )
@@ -291,18 +297,23 @@ class DropDataFrame(QtWidgets.QFrame):
             if ext in exts:
                 icon = ico
                 break
+
+        new_is_seq = data['is_sequence']
         # Add 's' to icon_name if is sequence (image -> images)
-        if data['is_sequence']:
+        if new_is_seq:
             icon += 's'
         data['icon'] = icon
         data['thumb'] = (
             ext in self.presets['extensions']['image_file'] or
             ext in self.presets['extensions']['video_file']
         )
-        data['prev'] = ext in self.presets['extensions']['video_file']
+        data['prev'] = (
+            ext in self.presets['extensions']['video_file'] or
+            (new_is_seq and ext in self.presets['extensions']['image_file'])
+        )
 
         actions = []
-        new_is_seq = data['is_sequence']
+
 
         found = False
         for item in self.components_list.widgets():

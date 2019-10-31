@@ -47,12 +47,18 @@ class RigLoader(pype.maya.plugin.ReferenceLoader):
             cmds.setAttr(groupName + ".outlinerColor",
                          c[0], c[1], c[2])
 
+        shapes = cmds.ls(nodes, shapes=True, long=True)
+        print(shapes)
+
+        newNodes = (list(set(nodes) - set(shapes)))
+        print(newNodes)
+
         # Store for post-process
-        self[:] = nodes
+        self[:] = newNodes
         if data.get("post_process", True):
             self._post_process(name, namespace, context, data)
 
-        return nodes
+        return newNodes
 
     def _post_process(self, name, namespace, context, data):
 

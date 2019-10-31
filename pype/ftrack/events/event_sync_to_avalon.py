@@ -113,15 +113,13 @@ class Sync_to_Avalon(BaseEvent):
                 {'type': 'label', 'value': '<p>{}</p>'.format(ftrack_message)}
             ]
             self.show_interface(items, title, event=event)
-            self.log.error('Fatal error during sync: {}'.format(message))
+            self.log.error(
+                'Fatal error during sync: {}'.format(message), exc_info=True
+            )
 
         return
 
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
-
     Sync_to_Avalon(session, plugins_presets).register()

@@ -152,7 +152,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         template_data = {"root": root,
                          "project": {"name": PROJECT,
                                      "code": project['data']['code']},
-                         "silo": asset['silo'],
+                         "silo": asset.get('silo'),
                          "task": api.Session["AVALON_TASK"],
                          "asset": ASSET,
                          "family": instance.data['family'],

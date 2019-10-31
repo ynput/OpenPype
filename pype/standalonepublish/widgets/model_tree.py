@@ -5,7 +5,7 @@ from . import Node
 class TreeModel(QtCore.QAbstractItemModel):
 
     COLUMNS = list()
-    NodeRole = QtCore.Qt.UserRole + 1
+    ItemRole = QtCore.Qt.UserRole + 1
 
     def __init__(self, parent=None):
         super(TreeModel, self).__init__(parent)
@@ -35,7 +35,7 @@ class TreeModel(QtCore.QAbstractItemModel):
             key = self.COLUMNS[column]
             return node.get(key, None)
 
-        if role == self.NodeRole:
+        if role == self.ItemRole:
             return index.internalPointer()
 
     def setData(self, index, value, role=QtCore.Qt.EditRole):

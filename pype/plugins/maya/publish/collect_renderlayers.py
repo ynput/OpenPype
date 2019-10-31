@@ -182,9 +182,11 @@ class CollectMayaRenderlayers(pyblish.api.ContextPlugin):
         pool_b = None
 
         # Check for specific pools
+        pool_b = []
         if "primaryPool" in attributes:
             pool_a = attributes["primaryPool"]
-            pool_b = attributes["secondaryPool"]
+            if "secondaryPool" in attributes:
+                pool_b = attributes["secondaryPool"]
 
         else:
             # Backwards compatibility
