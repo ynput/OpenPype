@@ -114,7 +114,7 @@ def preview_fname(folder, scene, layer, padding, ext):
     """
 
     # Following hardcoded "<Scene>/<Scene>_<Layer>/<Layer>"
-    output = "{scene}/{layer}/{layer}.{number}.{ext}".format(
+    output = "maya/{scene}/{layer}/{layer}.{number}.{ext}".format(
         scene=scene,
         layer=layer,
         number="#" * padding,
@@ -295,6 +295,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                                           ext=render_variables["ext"])
 
         instance.data["outputDir"] = os.path.dirname(output_filename_0)
+        self.log.debug("output: {}".format(filepath))
         # build path for metadata file
         metadata_filename = "{}_metadata.json".format(instance.data["subset"])
         output_dir = instance.data["outputDir"]
@@ -313,9 +314,11 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         # python named MPython.exe, residing directly in muster bin
         # directory.
         if platform.system().lower() == "windows":
-            muster_python = "MPython.exe"
+            # for muster, those backslashes must be escaped twice
+            muster_python = ("\"C:\\\\Program Files\\\\Virtual Vertex\\\\"
+                             "Muster 9\\\\MPython.exe\"")
         else:
-            muster_python = "mpython"
+            muster_python = "/usr/local/muster9/mpython"
 
         # build the path and argument. We are providing separate --pype
         # argument with network path to pype as post job actions are run
@@ -323,8 +326,13 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         # inherit environment from publisher including PATH, so there's
         # no problem finding PYPE, but there is now way (as far as I know)
         # to set environment dynamically for dispatcher. Therefor this hack.
-        args = [muster_python, _get_script(), "--paths", metadata_path,
-                "--pype", pype_root]
+        args = [muster_python,
+                _get_script().replace('\\', '\\\\'),
+                "--paths",
+                metadata_path.replace('\\', '\\\\'),
+                "--pype",
+                pype_root.replace('\\', '\\\\')]
+
         postjob_command = " ".join(args)
 
         try:
@@ -358,7 +366,9 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                     "jobId": -1,
                     "startOn": 0,
                     "parentId": -1,
-                    "project": scene,
+                    "project": os.environ.get('AVALON_PROJECT') or scene,
+                    "shot": os.environ.get('AVALON_ASSET') or scene,
+                    "camera": instance.data.get("cameras")[0],
                     "dependMode": 0,
                     "packetSize": 4,
                     "packetType": 1,
@@ -426,7 +436,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                           "subst": False
                         },
                         "ADD_FLAGS": {
-                          "value": "",
+                          "value": "-rl {}".format(renderlayer),
                           "state": True,
                           "subst": True
                         }

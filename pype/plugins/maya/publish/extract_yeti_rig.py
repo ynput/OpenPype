@@ -155,10 +155,30 @@ class ExtractYetiRig(pype.api.Extractor):
                               shader=False)
 
         # Ensure files can be stored
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        # build representations
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].extend(["yeti_rig.ma", "yeti.rigsettings"])
+        self.log.info("rig file: {}".format("yeti_rig.ma"))
+        instance.data["representations"].append(
+            {
+                'name': "ma",
+                'ext': 'ma',
+                'files': "yeti_rig.ma",
+                'stagingDir': dirname,
+                'anatomy_template': 'publish'
+            }
+        )
+        self.log.info("settings file: {}".format("yeti.rigsettings"))
+        instance.data["representations"].append(
+            {
+                'name': 'rigsettings',
+                'ext': 'rigsettings',
+                'files': 'yeti.rigsettings',
+                'stagingDir': dirname,
+                'anatomy_template': 'publish'
+            }
+        )
 
         self.log.info("Extracted {} to {}".format(instance, dirname))
 

@@ -7,11 +7,9 @@ import pype.api
 
 
 class ExtractYetiCache(pype.api.Extractor):
-    """Produce an alembic of just point positions and normals.
+    """Producing Yeti cache files using scene time range.
 
-    Positions and normals are preserved, but nothing more,
-    for plain and predictable point caches.
-
+    This will extract Yeti cache file sequence and fur settings.
     """
 
     label = "Extract Yeti Cache"
@@ -44,7 +42,8 @@ class ExtractYetiCache(pype.api.Extractor):
         else:
             kwargs.update({"samples": samples})
 
-        self.log.info("Writing out cache")
+        self.log.info(
+            "Writing out cache {} - {}".format(start_frame, end_frame))
         # Start writing the files for snap shot
         # <NAME> will be replace by the Yeti node name
         path = os.path.join(dirname, "<NAME>.%04d.fur")
@@ -63,10 +62,31 @@ class ExtractYetiCache(pype.api.Extractor):
             with open(data_file, "w") as fp:
                 json.dump(settings, fp, ensure_ascii=False)
 
-        # Ensure files can be stored
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        # build representations
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].extend([cache_files, "yeti.fursettings"])
+        self.log.info("cache files: {}".format(cache_files[0]))
+        instance.data["representations"].append(
+            {
+                'name': 'fur',
+                'ext': 'fur',
+                'files': cache_files[0] if len(cache_files) == 1 else cache_files,
+                'stagingDir': dirname,
+                'anatomy_template': 'publish',
+                'frameStart': int(start_frame),
+                'frameEnd': int(end_frame)
+            }
+        )
+
+        instance.data["representations"].append(
+            {
+                'name': 'fursettings',
+                'ext': 'fursettings',
+                'files': os.path.basename(data_file),
+                'stagingDir': dirname,
+                'anatomy_template': 'publish'
+            }
+        )
 
         self.log.info("Extracted {} to {}".format(instance, dirname))

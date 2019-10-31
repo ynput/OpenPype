@@ -301,7 +301,13 @@ def attribute_values(attr_values):
 
     """
 
-    original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
+    # NOTE(antirotor): this didn't work for some reason for Yeti attributes
+    # original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
+    original = []
+    for attr in attr_values:
+        type = cmds.getAttr(attr, type=True)
+        value = cmds.getAttr(attr)
+        original.append((attr, str(value) if type == "string" else value))
     try:
         for attr, value in attr_values.items():
             if isinstance(value, string_types):
@@ -1768,6 +1774,11 @@ def set_scene_fps(fps, update=True):
                    '48000': '48000fps'}
 
     # pull from mapping
+    # this should convert float string to float and int to int
+    # so 25.0 is converted to 25, but 23.98 will be still float.
+    decimals = int(str(fps-int(fps))[2:])
+    if decimals == 0:
+        fps = int(fps)
     unit = fps_mapping.get(str(fps), None)
     if unit is None:
         raise ValueError("Unsupported FPS value: `%s`" % fps)

@@ -77,7 +77,7 @@ def on_open(*args):
 
             # Show outdated pop-up
             def _on_show_inventory():
-                import avalon.tools.cbsceneinventory as tool
+                import avalon.tools.sceneinventory as tool
                 tool.show(parent=parent)
 
             dialog = popup.Popup(parent=parent)

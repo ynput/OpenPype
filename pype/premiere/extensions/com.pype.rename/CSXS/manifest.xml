@@ -1,24 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-/*************************************************************************
-* ADOBE CONFIDENTIAL
-* ___________________
-*
-* Copyright 2014 Adobe
-* All Rights Reserved.
-*
-* NOTICE: Adobe permits you to use, modify, and distribute this file in
-* accordance with the terms of the Adobe license agreement accompanying
-* it. If you have received this file from a source other than Adobe,
-* then your use, modification, or distribution of it requires the prior
-* written permission of Adobe.
-**************************************************************************/
+
+   -. ==  [ part 0f PyPE CluB ] == .-
+_______________.___._____________________
+\______   \__  |   |\______   \_   _____/
+ |     ___//   |   | |     ___/|    __)_
+ |    |    \____   | |    |    |        \
+ |____|    / ______| |____|   /_______  /
+           \/                         \/
+        .. __/ CliP R3N4M3R \__ ..
+
 -->
-<ExtensionManifest Version="5.0" ExtensionBundleId="com.pype.RenameDialog" ExtensionBundleVersion="11.1"
+<ExtensionManifest Version="5.0" ExtensionBundleId="com.pype.rename" ExtensionBundleVersion="0.1.0"
 ExtensionBundleName="Pype Rename dialog"
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<ExtensionList>
-		<Extension Id="com.pype.RenameDialog" Version="10.3.0" />
+		<Extension Id="com.pype.rename" Version="0.1.0" />
 	</ExtensionList>
 	<ExecutionEnvironment>
 		<HostList>
@@ -33,26 +30,27 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	</ExecutionEnvironment>
 
 	<DispatchInfoList>
-		<Extension Id="com.pype.RenameDialog">
+		<Extension Id="com.pype.rename">
 			<DispatchInfo >
 				<Resources>
 					<MainPath>./index.html</MainPath>
-					<ScriptPath>./PypeRename.jsx</ScriptPath>
+					<ScriptPath>./jsx/PypeRename.jsx</ScriptPath>
 					<CEFCommandLine>
 						<Parameter>--allow-file-access</Parameter>
 						<Parameter>--allow-file-access-from-files</Parameter>
+            <Parameter>--mixed-context</Parameter>
 					</CEFCommandLine>
 				</Resources>
 				<Lifecycle>
 					<AutoVisible>true</AutoVisible>
 				</Lifecycle>
 				<UI>
-					<Type>ModalDialog</Type>
+					<Type>Panel</Type>
 					<Menu>Pype Rename</Menu>
 					<Geometry>
 						<Size>
-							<Height>300</Height>
-							<Width>180</Width>
+							<Height>550</Height>
+							<Width>400</Width>
 						</Size>
 					</Geometry>
 				</UI>

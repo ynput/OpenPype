@@ -4,7 +4,8 @@ import os
 from pypeapp import config
 import pymel.core as pm
 reload(config)
-
+import pype.maya.plugin
+reload(pype.maya.plugin)
 
 class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
     """Load the model"""
@@ -42,11 +43,17 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
 
             namespace = cmds.referenceQuery(nodes[0], namespace=True)
 
+            shapes = cmds.ls(nodes, shapes=True, long=True)
+            print(shapes)
+
+            newNodes = (list(set(nodes) - set(shapes)))
+            print(newNodes)
+
             groupNode = pm.PyNode(groupName)
             roots = set()
             print(nodes)
 
-            for node in nodes:
+            for node in newNodes:
                 try:
                     roots.add(pm.PyNode(node).getAllParents()[-2])
                 except:
@@ -59,7 +66,6 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
                 root.setParent(groupNode)
 
             cmds.setAttr(groupName + ".displayHandle", 1)
-            groupNode
 
             presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
             colors = presets['plugins']['maya']['load']['colors']
@@ -68,7 +74,7 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
                 groupNode.useOutlinerColor.set(1)
                 groupNode.outlinerColor.set(c[0], c[1], c[2])
 
-            self[:] = nodes
+            self[:] = newNodes
 
             cmds.setAttr(groupName + ".displayHandle", 1)
             # get bounding box
@@ -88,7 +94,7 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             cmds.setAttr(groupName + ".selectHandleY", cy)
             cmds.setAttr(groupName + ".selectHandleZ", cz)
 
-            return nodes
+            return newNodes
 
     def switch(self, container, representation):
         self.update(container, representation)

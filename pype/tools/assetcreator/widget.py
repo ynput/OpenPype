@@ -1,14 +1,15 @@
 import logging
 import contextlib
+import collections
 
-from avalon.vendor import qtawesome as awesome
+from avalon.vendor import qtawesome
 from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
 from avalon import io
 from avalon import style
 
 from .model import (
     TreeModel,
-    Node,
+    Item,
     RecursiveSortFilterProxyModel,
     DeselectableTreeView
 )
@@ -150,7 +151,7 @@ class AssetModel(TreeModel):
 
     """
 
-    COLUMNS = ["label"]
+    Columns = ["label"]
     Name = 0
     Deprecated = 2
     ObjectId = 3
@@ -162,50 +163,91 @@ class AssetModel(TreeModel):
         super(AssetModel, self).__init__(parent=parent)
         self.refresh()
 
-    def _add_hierarchy(self, parent=None):
+    def _add_hierarchy(self, assets, parent=None, silos=None):
+        """Add the assets that are related to the parent as children items.
 
-        # Find the assets under the parent
-        find_data = {
-            "type": "asset"
-        }
-        if parent is None:
-            find_data['$or'] = [
-                {'data.visualParent': {'$exists': False}},
-                {'data.visualParent': None}
-            ]
-        else:
-            find_data["data.visualParent"] = parent['_id']
+        This method does *not* query the database. These instead are queried
+        in a single batch upfront as an optimization to reduce database
+        queries. Resulting in up to 10x speed increase.
 
-        assets = io.find(find_data).sort('name', 1)
-        for asset in assets:
+        Args:
+            assets (dict): All assets in the currently active silo stored
+                by key/value
+
+        Returns:
+            None
+
+        """
+        if silos:
+            # WARNING: Silo item "_id" is set to silo value
+            # mainly because GUI issue with perserve selection and expanded row
+            # and because of easier hierarchy parenting (in "assets")
+            for silo in silos:
+                item = Item({
+                    "_id": silo,
+                    "name": silo,
+                    "label": silo,
+                    "type": "silo"
+                })
+                self.add_child(item, parent=parent)
+                self._add_hierarchy(assets, parent=item)
+
+        parent_id = parent["_id"] if parent else None
+        current_assets = assets.get(parent_id, list())
+
+        for asset in current_assets:
             # get label from data, otherwise use name
             data = asset.get("data", {})
-            label = data.get("label", asset['name'])
+            label = data.get("label", asset["name"])
             tags = data.get("tags", [])
 
             # store for the asset for optimization
             deprecated = "deprecated" in tags
 
-            node = Node({
-                "_id": asset['_id'],
+            item = Item({
+                "_id": asset["_id"],
                 "name": asset["name"],
                 "label": label,
-                "type": asset['type'],
+                "type": asset["type"],
                 "tags": ", ".join(tags),
                 "deprecated": deprecated,
                 "_document": asset
             })
-            self.add_child(node, parent=parent)
+            self.add_child(item, parent=parent)
 
-            # Add asset's children recursively
-            self._add_hierarchy(node)
+            # Add asset's children recursively if it has children
+            if asset["_id"] in assets:
+                self._add_hierarchy(assets, parent=item)
 
     def refresh(self):
         """Refresh the data for the model."""
 
         self.clear()
         self.beginResetModel()
-        self._add_hierarchy(parent=None)
+
+        # Get all assets in current silo sorted by name
+        db_assets = io.find({"type": "asset"}).sort("name", 1)
+        silos = db_assets.distinct("silo") or None
+        # if any silo is set to None then it's expected it should not be used
+        if silos and None in silos:
+            silos = None
+
+        # Group the assets by their visual parent's id
+        assets_by_parent = collections.defaultdict(list)
+        for asset in db_assets:
+            parent_id = (
+                asset.get("data", {}).get("visualParent") or
+                asset.get("silo")
+            )
+            assets_by_parent[parent_id].append(asset)
+
+        # Build the hierarchical tree items recursively
+        self._add_hierarchy(
+            assets_by_parent,
+            parent=None,
+            silos=silos
+        )
+
         self.endResetModel()
 
     def flags(self, index):
@@ -216,15 +258,17 @@ class AssetModel(TreeModel):
         if not index.isValid():
             return
 
-        node = index.internalPointer()
+        item = index.internalPointer()
         if role == QtCore.Qt.DecorationRole:        # icon
 
             column = index.column()
             if column == self.Name:
 
                 # Allow a custom icon and custom icon color to be defined
-                data = node["_document"]["data"]
+                data = item.get("_document", {}).get("data", {})
                 icon = data.get("icon", None)
+                if icon is None and item.get("type") == "silo":
+                    icon = "database"
                 color = data.get("color", style.colors.default)
 
                 if icon is None:
@@ -235,12 +279,12 @@ class AssetModel(TreeModel):
                     icon = "folder" if has_children else "folder-o"
 
                 # Make the color darker when the asset is deprecated
-                if node.get("deprecated", False):
+                if item.get("deprecated", False):
                     color = QtGui.QColor(color).darker(250)
 
                 try:
                     key = "fa.{0}".format(icon)  # font-awesome key
-                    icon = awesome.icon(key, color=color)
+                    icon = qtawesome.icon(key, color=color)
                     return icon
                 except Exception as exception:
                     # Log an error message instead of erroring out completely
@@ -250,30 +294,16 @@ class AssetModel(TreeModel):
                 return
 
         if role == QtCore.Qt.ForegroundRole:        # font color
-            if "deprecated" in node.get("tags", []):
+            if "deprecated" in item.get("tags", []):
                 return QtGui.QColor(style.colors.light).darker(250)
 
         if role == self.ObjectIdRole:
-            return node.get("_id", None)
+            return item.get("_id", None)
 
         if role == self.DocumentRole:
-            return node.get("_document", None)
+            return item.get("_document", None)
 
         return super(AssetModel, self).data(index, role)
-
-
-class AssetView(DeselectableTreeView):
-    """Item view.
-
-    This implements a context menu.
-
-    """
-
-    def __init__(self):
-        super(AssetView, self).__init__()
-        self.setIndentation(15)
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.setHeaderHidden(True)
 
 
 class AssetWidget(QtWidgets.QWidget):
@@ -286,7 +316,6 @@ class AssetWidget(QtWidgets.QWidget):
 
     """
 
-    silo_changed = QtCore.Signal(str)    # on silo combobox change
     assets_refreshed = QtCore.Signal()   # on model refresh
     selection_changed = QtCore.Signal()  # on view selection change
     current_changed = QtCore.Signal()    # on view current index change
@@ -300,17 +329,21 @@ class AssetWidget(QtWidgets.QWidget):
         layout.setSpacing(4)
 
         # Tree View
-        model = AssetModel()
+        model = AssetModel(self)
         proxy = RecursiveSortFilterProxyModel()
         proxy.setSourceModel(model)
         proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        view = AssetView()
+
+        view = DeselectableTreeView()
+        view.setIndentation(15)
+        view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        view.setHeaderHidden(True)
         view.setModel(proxy)
 
         # Header
         header = QtWidgets.QHBoxLayout()
 
-        icon = awesome.icon("fa.refresh", color=style.colors.light)
+        icon = qtawesome.icon("fa.refresh", color=style.colors.light)
         refresh = QtWidgets.QPushButton(icon, "")
         refresh.setToolTip("Refresh items")
 
@@ -337,7 +370,14 @@ class AssetWidget(QtWidgets.QWidget):
         self.view = view
 
     def _refresh_model(self):
-        self.model.refresh()
+        with preserve_expanded_rows(
+            self.view, column=0, role=self.model.ObjectIdRole
+        ):
+            with preserve_selection(
+                self.view, column=0, role=self.model.ObjectIdRole
+            ):
+                self.model.refresh()
+
         self.assets_refreshed.emit()
 
     def refresh(self):
@@ -346,7 +386,7 @@ class AssetWidget(QtWidgets.QWidget):
     def get_active_asset(self):
         """Return the asset id the current asset."""
         current = self.view.currentIndex()
-        return current.data(self.model.ObjectIdRole)
+        return current.data(self.model.ItemRole)
 
     def get_active_index(self):
         return self.view.currentIndex()
@@ -357,7 +397,7 @@ class AssetWidget(QtWidgets.QWidget):
         rows = selection.selectedRows()
         return [row.data(self.model.ObjectIdRole) for row in rows]
 
-    def select_assets(self, assets, expand=True):
+    def select_assets(self, assets, expand=True, key="name"):
         """Select assets by name.
 
         Args:
@@ -370,8 +410,14 @@ class AssetWidget(QtWidgets.QWidget):
         """
         # TODO: Instead of individual selection optimize for many assets
 
-        assert isinstance(assets,
-                          (tuple, list)), "Assets must be list or tuple"
+        if not isinstance(assets, (tuple, list)):
+            assets = [assets]
+        assert isinstance(
+            assets, (tuple, list)
+        ), "Assets must be list or tuple"
+
+        # convert to list - tuple cant be modified
+        assets = list(assets)
 
         # Clear selection
         selection_model = self.view.selectionModel()
@@ -379,16 +425,25 @@ class AssetWidget(QtWidgets.QWidget):
 
         # Select
         mode = selection_model.Select | selection_model.Rows
-        for index in _iter_model_rows(self.proxy,
-                                      column=0,
-                                      include_root=False):
-            data = index.data(self.model.NodeRole)
-            name = data['name']
-            if name in assets:
-                selection_model.select(index, mode)
+        for index in iter_model_rows(
+            self.proxy, column=0, include_root=False
+        ):
+            # stop iteration if there are no assets to process
+            if not assets:
+                break
 
-                if expand:
-                    self.view.expand(index)
+            value = index.data(self.model.ItemRole).get(key)
+            if value not in assets:
+                continue
 
-                # Set the currently active index
-                self.view.setCurrentIndex(index)
+            # Remove processed asset
+            assets.pop(assets.index(value))
+
+            selection_model.select(index, mode)
+
+            if expand:
+                # Expand parent index
+                self.view.expand(self.proxy.parent(index))
+
+            # Set the currently active index
+            self.view.setCurrentIndex(index)

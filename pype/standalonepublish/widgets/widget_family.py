@@ -19,11 +19,11 @@ class FamilyWidget(QtWidgets.QWidget):
     Separator = "---separator---"
     NOT_SELECTED = '< Nothing is selected >'
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, dbcon, parent=None):
+        super(FamilyWidget, self).__init__(parent=parent)
         # Store internal states in here
         self.state = {"valid": False}
-        self.parent_widget = parent
+        self.dbcon = dbcon
         self.asset_name = self.NOT_SELECTED
 
         body = QtWidgets.QWidget()
@@ -67,7 +67,7 @@ class FamilyWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(container)
 
-        header = FamilyDescriptionWidget(self)
+        header = FamilyDescriptionWidget(parent=self)
         layout.addWidget(header)
 
         layout.addWidget(QtWidgets.QLabel("Family"))
@@ -126,10 +126,6 @@ class FamilyWidget(QtWidgets.QWidget):
         }
         return data
 
-    @property
-    def db(self):
-        return self.parent_widget.db
-
     def change_asset(self, name):
         if name is None:
             name = self.NOT_SELECTED
@@ -138,7 +134,6 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def _on_state_changed(self, state):
         self.state['valid'] = state
-        self.parent_widget.set_valid_family(state)
 
     def _build_menu(self, default_names):
         """Create optional predefined subset names
@@ -185,7 +180,7 @@ class FamilyWidget(QtWidgets.QWidget):
         assets = None
         if asset_name != self.NOT_SELECTED:
             # Get the assets from the database which match with the name
-            assets_db = self.db.find(
+            assets_db = self.dbcon.find(
                 filter={"type": "asset"},
                 projection={"name": 1}
             )
@@ -208,7 +203,7 @@ class FamilyWidget(QtWidgets.QWidget):
         if assets:
             # Get all subsets of the current asset
             asset_ids = [asset["_id"] for asset in assets]
-            subsets = self.db.find(filter={"type": "subset",
+            subsets = self.dbcon.find(filter={"type": "subset",
                                       "name": {"$regex": "{}*".format(family),
                                                "$options": "i"},
                                       "parent": {"$in": asset_ids}}) or []
@@ -261,17 +256,17 @@ class FamilyWidget(QtWidgets.QWidget):
             asset_name != self.NOT_SELECTED and
             subset_name.strip() != ''
         ):
-            asset = self.db.find_one({
+            asset = self.dbcon.find_one({
                 'type': 'asset',
                 'name': asset_name
             })
-            subset = self.db.find_one({
+            subset = self.dbcon.find_one({
                 'type': 'subset',
                 'parent': asset['_id'],
                 'name': subset_name
             })
             if subset:
-                versions = self.db.find({
+                versions = self.dbcon.find({
                     'type': 'version',
                     'parent': subset['_id']
                 })

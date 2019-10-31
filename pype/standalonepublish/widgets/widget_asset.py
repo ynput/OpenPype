@@ -1,9 +1,9 @@
 import contextlib
 from . import QtWidgets, QtCore
-from . import RecursiveSortFilterProxyModel, AssetModel, AssetView
-from . import awesome, style
+from . import RecursiveSortFilterProxyModel, AssetModel
+from . import qtawesome, style
 from . import TasksTemplateModel, DeselectableTreeView
-
+from . import _iter_model_rows
 
 @contextlib.contextmanager
 def preserve_expanded_rows(tree_view,
@@ -124,11 +124,11 @@ class AssetWidget(QtWidgets.QWidget):
     selection_changed = QtCore.Signal()  # on view selection change
     current_changed = QtCore.Signal()    # on view current index change
 
-    def __init__(self, parent):
+    def __init__(self, dbcon, parent=None):
         super(AssetWidget, self).__init__(parent=parent)
         self.setContentsMargins(0, 0, 0, 0)
 
-        self.parent_widget = parent
+        self.dbcon = dbcon
 
         layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -139,17 +139,21 @@ class AssetWidget(QtWidgets.QWidget):
         self._set_projects()
         self.combo_projects.currentTextChanged.connect(self.on_project_change)
         # Tree View
-        model = AssetModel(self)
+        model = AssetModel(dbcon=self.dbcon, parent=self)
         proxy = RecursiveSortFilterProxyModel()
         proxy.setSourceModel(model)
         proxy.setFilterCaseSensitivity(QtCore.Qt.CaseInsensitive)
-        view = AssetView()
+
+        view = DeselectableTreeView()
+        view.setIndentation(15)
+        view.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        view.setHeaderHidden(True)
         view.setModel(proxy)
 
         # Header
         header = QtWidgets.QHBoxLayout()
 
-        icon = awesome.icon("fa.refresh", color=style.colors.light)
+        icon = qtawesome.icon("fa.refresh", color=style.colors.light)
         refresh = QtWidgets.QPushButton(icon, "")
         refresh.setToolTip("Refresh items")
 
@@ -195,13 +199,9 @@ class AssetWidget(QtWidgets.QWidget):
         self.proxy = proxy
         self.view = view
 
-    @property
-    def db(self):
-        return self.parent_widget.db
-
     def collect_data(self):
-        project = self.db.find_one({'type': 'project'})
-        asset = self.db.find_one({'_id': self.get_active_asset()})
+        project = self.dbcon.find_one({'type': 'project'})
+        asset = self.get_active_asset()
 
         try:
             index = self.task_view.selectedIndexes()[0]
@@ -211,41 +211,54 @@ class AssetWidget(QtWidgets.QWidget):
         data = {
             'project': project['name'],
             'asset': asset['name'],
+            'silo': asset.get("silo"),
             'parents': self.get_parents(asset),
             'task': task
         }
+
         return data
 
     def get_parents(self, entity):
+        ent_parents = entity.get("data", {}).get("parents")
+        if ent_parents is not None and isinstance(ent_parents, list):
+            return ent_parents
+
         output = []
         if entity.get('data', {}).get('visualParent', None) is None:
             return output
-        parent = self.db.find_one({'_id': entity['data']['visualParent']})
+        parent = self.dbcon.find_one({'_id': entity['data']['visualParent']})
         output.append(parent['name'])
         output.extend(self.get_parents(parent))
         return output
 
     def _set_projects(self):
         projects = list()
-        for project in self.db.projects():
+        for project in self.dbcon.projects():
             projects.append(project['name'])
 
         self.combo_projects.clear()
         if len(projects) > 0:
             self.combo_projects.addItems(projects)
-            self.db.activate_project(projects[0])
+            self.dbcon.activate_project(projects[0])
 
     def on_project_change(self):
         projects = list()
-        for project in self.db.projects():
+        for project in self.dbcon.projects():
             projects.append(project['name'])
         project_name = self.combo_projects.currentText()
         if project_name in projects:
-            self.db.activate_project(project_name)
+            self.dbcon.activate_project(project_name)
         self.refresh()
 
     def _refresh_model(self):
-        self.model.refresh()
+        with preserve_expanded_rows(
+            self.view, column=0, role=self.model.ObjectIdRole
+        ):
+            with preserve_selection(
+                self.view, column=0, role=self.model.ObjectIdRole
+            ):
+                self.model.refresh()
+
         self.assets_refreshed.emit()
 
     def refresh(self):
@@ -255,7 +268,7 @@ class AssetWidget(QtWidgets.QWidget):
         tasks = []
         selected = self.get_selected_assets()
         if len(selected) == 1:
-            asset = self.db.find_one({
+            asset = self.dbcon.find_one({
                 "_id": selected[0], "type": "asset"
             })
             if asset:
@@ -266,7 +279,7 @@ class AssetWidget(QtWidgets.QWidget):
     def get_active_asset(self):
         """Return the asset id the current asset."""
         current = self.view.currentIndex()
-        return current.data(self.model.ObjectIdRole)
+        return current.data(self.model.ItemRole)
 
     def get_active_index(self):
         return self.view.currentIndex()
@@ -277,7 +290,7 @@ class AssetWidget(QtWidgets.QWidget):
         rows = selection.selectedRows()
         return [row.data(self.model.ObjectIdRole) for row in rows]
 
-    def select_assets(self, assets, expand=True):
+    def select_assets(self, assets, expand=True, key="name"):
         """Select assets by name.
 
         Args:
@@ -290,8 +303,14 @@ class AssetWidget(QtWidgets.QWidget):
         """
         # TODO: Instead of individual selection optimize for many assets
 
-        assert isinstance(assets,
-                          (tuple, list)), "Assets must be list or tuple"
+        if not isinstance(assets, (tuple, list)):
+            assets = [assets]
+        assert isinstance(
+            assets, (tuple, list)
+        ), "Assets must be list or tuple"
+
+        # convert to list - tuple cant be modified
+        assets = list(assets)
 
         # Clear selection
         selection_model = self.view.selectionModel()
@@ -299,16 +318,25 @@ class AssetWidget(QtWidgets.QWidget):
 
         # Select
         mode = selection_model.Select | selection_model.Rows
-        for index in _iter_model_rows(self.proxy,
-                                      column=0,
-                                      include_root=False):
-            data = index.data(self.model.NodeRole)
-            name = data['name']
-            if name in assets:
-                selection_model.select(index, mode)
+        for index in lib.iter_model_rows(
+            self.proxy, column=0, include_root=False
+        ):
+            # stop iteration if there are no assets to process
+            if not assets:
+                break
 
-                if expand:
-                    self.view.expand(index)
+            value = index.data(self.model.ItemRole).get(key)
+            if value not in assets:
+                continue
 
-                # Set the currently active index
-                self.view.setCurrentIndex(index)
+            # Remove processed asset
+            assets.pop(assets.index(value))
+
+            selection_model.select(index, mode)
+
+            if expand:
+                # Expand parent index
+                self.view.expand(self.proxy.parent(index))
+
+            # Set the currently active index
+            self.view.setCurrentIndex(index)
