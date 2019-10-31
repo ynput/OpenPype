@@ -10,7 +10,7 @@ from pype.vendor import ftrack_api
 from pype.vendor.ftrack_api.event.hub import EventHub
 from pypeapp import Logger
 
-log = Logger().get_logger("Event Server Old")
+log = Logger().get_logger("Event Server Legacy")
 
 
 class TimerChecker(threading.Thread):
@@ -67,7 +67,7 @@ def main(args):
         check_thread = TimerChecker(server, session)
         check_thread.start()
 
-        log.debug("Launching Ftrack Event Old Way Server")
+        log.debug("Launching Ftrack Event Legacy Server")
         server.run_server(session)
 
     except Exception as exc:

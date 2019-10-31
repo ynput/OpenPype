@@ -126,7 +126,7 @@ def process_event_paths(event_paths):
     return os.pathsep.join(return_paths), not_found
 
 
-def old_way_server(ftrack_url):
+def legacy_server(ftrack_url):
     # Current file
     file_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -135,7 +135,7 @@ def old_way_server(ftrack_url):
     wait_time_after_max_fail = 10
 
     subproc = None
-    subproc_path = "{}/sub_old_way.py".format(file_path)
+    subproc_path = "{}/sub_legacy_server.py".format(file_path)
     subproc_last_failed = datetime.datetime.now()
     subproc_failed_count = 0
 
@@ -459,7 +459,7 @@ def main(argv):
         action="store_true"
     )
     parser.add_argument(
-        '-oldway',
+        '-legacy',
         help="Load creadentials from apps dir",
         action="store_true"
     )
@@ -487,7 +487,7 @@ def main(argv):
     if kwargs.ftrackapikey:
         api_key = kwargs.ftrackapikey
 
-    oldway = kwargs.oldway
+    legacy = kwargs.legacy
     # Check url regex and accessibility
     ftrack_url = check_ftrack_url(ftrack_url)
     if not ftrack_url:
@@ -519,8 +519,8 @@ def main(argv):
     os.environ["FTRACK_API_KEY"] = api_key
     os.environ["FTRACK_EVENTS_PATH"] = event_paths
 
-    if oldway:
-        return old_way_server(ftrack_url)
+    if legacy:
+        return legacy_server(ftrack_url)
 
     return main_loop(ftrack_url)
 
