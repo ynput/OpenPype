@@ -26,7 +26,7 @@ class StartTimer(BaseAction):
 
         user.start_timer(entity, force=True)
         self.session.commit()
-        
+
         self.log.info(
             "Starting Ftrack timer for task: {}".format(entity['name'])
         )
@@ -36,8 +36,5 @@ class StartTimer(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     StartTimer(session, plugins_presets).register()

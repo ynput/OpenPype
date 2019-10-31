@@ -122,8 +122,4 @@ class Sync_to_Avalon(BaseEvent):
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
-
     Sync_to_Avalon(session, plugins_presets).register()

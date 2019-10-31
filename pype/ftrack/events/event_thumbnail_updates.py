@@ -47,7 +47,5 @@ class ThumbnailEvents(BaseEvent):
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     ThumbnailEvents(session, plugins_presets).register()
