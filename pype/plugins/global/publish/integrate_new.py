@@ -393,7 +393,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 }
             }
 
-            if frame_start_padding:
+            if repre.get("frameStart"):
                 representation['context']['frame'] = repre.get("frameStart")
 
             self.log.debug("__ representation: {}".format(representation))
