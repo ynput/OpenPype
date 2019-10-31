@@ -37,7 +37,7 @@ _release date: 1 Oct 2019_
 - _(pype)_ problems with avalon db sync
 - _(maya)_ ftrack was rounding FPS making it inconsistent
 - _(pype)_ wrong icon names in Creator
-- _(avalon)_ updated to  
+- _(maya)_ scene inventory wasn't showing anything if representation was removed from database after it's been loaded to the scene
 
 ## 2.2.0 ##
 _release date: 8 Sept 2019_
