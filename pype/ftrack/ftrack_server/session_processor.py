@@ -41,7 +41,7 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
     def prepare_dbcon(self):
         try:
             self.dbcon.install()
-            dbcon._database.collection_names()
+            self.dbcon._database.collection_names()
         except pymongo.errors.AutoReconnect:
             log.error("Mongo server \"{}\" is not responding, exiting.".format(
                 os.environ["AVALON_MONGO"]
