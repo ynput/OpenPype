@@ -66,7 +66,7 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         """Create a filepath based on the current data available
 
         Example template:
-            {root}/{project}/{silo}/{asset}/publish/{subset}/v{version:0>3}/
+            {root}/{project}/{asset}/publish/{subset}/v{version:0>3}/
             {subset}.{representation}
         Args:
             instance: the instance to publish
@@ -95,7 +95,6 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
 
         assert asset, ("No asset found by the name '{}' "
                        "in project '{}'".format(asset_name, project_name))
-        silo = asset['silo']
 
         subset = io.find_one({"type": "subset",
                               "name": subset_name,
@@ -126,7 +125,6 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         template_data = {"root": api.Session["AVALON_PROJECTS"],
                          "project": {"name": project_name,
                                      "code": project['data']['code']},
-                         "silo": silo,
                          "family": instance.data['family'],
                          "asset": asset_name,
                          "subset": subset_name,
