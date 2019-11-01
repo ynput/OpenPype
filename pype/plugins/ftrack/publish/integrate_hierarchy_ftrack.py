@@ -44,7 +44,15 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         input_data = context.data["hierarchyContext"]
 
-        self.import_to_ftrack(input_data)
+        # self.import_to_ftrack(input_data)
+
+        try:
+            self.import_to_ftrack(input_data)
+        except Exception as exc:
+            import sys
+            import traceback
+            self.log.info(traceback.format_exc(sys.exc_info()))
+            raise Exception("failed")
 
     def import_to_ftrack(self, input_data, parent=None):
         for entity_name in input_data:
@@ -66,9 +74,9 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
             # try to find if entity already exists
             else:
-                query = '{} where name is "{}" and parent_id is "{}"'.format(
-                    entity_type, entity_name, parent['id']
-                )
+                query = 'TypedContext where name is "{0}" and project.full_name is "{1}"'.format(
+                            entity_name, self.ft_project["full_name"]
+                        )
                 try:
                     entity = self.session.query(query).one()
                 except Exception:
