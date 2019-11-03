@@ -94,4 +94,8 @@ class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
     def repair(cls, instance):
         invalid = cls.get_invalid(instance)
         for data in invalid:
+            if isinstance(data["expected"], unicode):
+                data["knob"].setValue(str(data["expected"]))
+                continue
+
             data["knob"].setValue(data["expected"])
