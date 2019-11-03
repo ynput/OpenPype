@@ -64,7 +64,16 @@ class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
                     knobs.update({preset: presets[family][preset]})
 
             # Get invalid knobs.
-            nodes = nuke.allNodes()
+            nodes = []
+
+            for node in nuke.allNodes():
+                nodes.append(node)
+                if node.Class() == "Group":
+                    node.begin()
+                    for i in nuke.allNodes():
+                        nodes.append(i)
+                    node.end()
+
             for node in nodes:
                 for knob in node.knobs():
                     if knob in knobs.keys():
