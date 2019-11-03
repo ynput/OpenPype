@@ -174,7 +174,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
-                "InitialStatus": state
+                "InitialStatus": state,
+                "Priority": job["Props"]["Pri"]
             },
             "PluginInfo": {
                 "Version": "3.6",

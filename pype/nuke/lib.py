@@ -389,6 +389,14 @@ def add_deadline_tab(node):
     knob.setValue(1)
     node.addKnob(knob)
 
+    knob = nuke.Int_Knob("deadlinePriority", "Priority")
+    knob.setValue(50)
+    node.addKnob(knob)
+
+
+def get_deadline_knob_names():
+    return ["Deadline", "deadlineChunkSize", "deadlinePriority"]
+
 
 def create_backdrop(label="", color=None, layer=0,
                     nodes=None):

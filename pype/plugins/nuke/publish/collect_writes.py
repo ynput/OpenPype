@@ -106,6 +106,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         if "deadlineChunkSize" in group_node.knobs():
             deadlineChunkSize = group_node["deadlineChunkSize"].value()
 
+        deadlinePriority = 50
+        if "deadlinePriority" in group_node.knobs():
+            deadlinePriority = group_node["deadlinePriority"].value()
+
         instance.data.update({
             "versionData": version_data,
             "path": path,
@@ -117,7 +121,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameEnd": last_frame,
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
-            "deadlineChunkSize": deadlineChunkSize
+            "deadlineChunkSize": deadlineChunkSize,
+            "deadlinePriority": deadlinePriority
         })
 
         self.log.debug("instance.data: {}".format(instance.data))

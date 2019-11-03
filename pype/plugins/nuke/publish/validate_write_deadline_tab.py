@@ -22,6 +22,13 @@ class RepairNukeWriteDeadlineTab(pyblish.api.Action):
 
         for instance in instances:
             group_node = [x for x in instance if x.Class() == "Group"][0]
+
+            # Remove exising knobs.
+            knob_names = pype.nuke.lib.get_deadline_knob_names()
+            for name, knob in group_node.knobs().iteritems():
+                if name in knob_names:
+                    group_node.removeKnob(knob)
+
             pype.nuke.lib.add_deadline_tab(group_node)
 
 
@@ -38,5 +45,9 @@ class ValidateNukeWriteDeadlineTab(pyblish.api.InstancePlugin):
     def process(self, instance):
         group_node = [x for x in instance if x.Class() == "Group"][0]
 
-        msg = "Deadline tab missing on \"{}\"".format(group_node.name())
-        assert "Deadline" in group_node.knobs(), msg
+        knob_names = pype.nuke.lib.get_deadline_knob_names()
+        missing_knobs = []
+        for name in knob_names:
+            if name not in group_node.knobs().keys():
+                missing_knobs.append(name)
+        assert not missing_knobs, "Missing knobs: {}".format(missing_knobs)
