@@ -551,17 +551,34 @@ class WorkfileSettings(object):
         assert isinstance(root_dict, dict), log.error(
             "set_root_colorspace(): argument should be dictionary")
 
+        log.debug(">> root_dict: {}".format(root_dict))
+
         # first set OCIO
         if self._root_node["colorManagement"].value() \
                 not in str(root_dict["colorManagement"]):
             self._root_node["colorManagement"].setValue(
                 str(root_dict["colorManagement"]))
+            log.debug("nuke.root()['{0}'] changed to: {1}".format(
+                "colorManagement", root_dict["colorManagement"]))
+            root_dict.pop("colorManagement")
 
         # second set ocio version
         if self._root_node["OCIO_config"].value() \
                 not in str(root_dict["OCIO_config"]):
             self._root_node["OCIO_config"].setValue(
                 str(root_dict["OCIO_config"]))
+            log.debug("nuke.root()['{0}'] changed to: {1}".format(
+                "OCIO_config", root_dict["OCIO_config"]))
+            root_dict.pop("OCIO_config")
+
+        # third set ocio custom path
+        if root_dict.get("customOCIOConfigPath"):
+            self._root_node["customOCIOConfigPath"].setValue(
+                str(root_dict["customOCIOConfigPath"]).format(**os.environ)
+                )
+            log.debug("nuke.root()['{}'] changed to: {}".format(
+                "customOCIOConfigPath", root_dict["customOCIOConfigPath"]))
+            root_dict.pop("customOCIOConfigPath")
 
         # then set the rest
         for knob, value in root_dict.items():
