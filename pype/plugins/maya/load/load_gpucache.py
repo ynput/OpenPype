@@ -2,7 +2,6 @@ from avalon import api
 import pype.maya.plugin
 import os
 from pypeapp import config
-import pymel.core as pm
 reload(config)
 
 
