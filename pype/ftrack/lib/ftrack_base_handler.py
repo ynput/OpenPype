@@ -13,6 +13,13 @@ class MissingPermision(Exception):
         super().__init__(message)
 
 
+class PreregisterException(Exception):
+    def __init__(self, message=None):
+        if not message:
+            message = "Pre-registration conditions were not met"
+        super().__init__(message)
+
+
 class BaseHandler(object):
     '''Custom Action base class
 
@@ -95,9 +102,11 @@ class BaseHandler(object):
             except NotImplementedError:
                 self.log.error((
                     '{} "{}" - Register method is not implemented'
-                ).format(
-                    self.type, label)
-                )
+                ).format(self.type, label))
+            except PreregisterException as exc:
+                self.log.info((
+                    '{} "{}" - {}'
+                ).format(self.type, label, str(exc)))
             except Exception as e:
                 self.log.error('{} "{}" - Registration failed ({})'.format(
                     self.type, label, str(e))
@@ -163,10 +172,10 @@ class BaseHandler(object):
 
         if result is True:
             return
-        msg = "Pre-register conditions were not met"
+        msg = None
         if isinstance(result, str):
             msg = result
-        raise Exception(msg)
+        raise PreregisterException(msg)
 
     def preregister(self):
         '''
