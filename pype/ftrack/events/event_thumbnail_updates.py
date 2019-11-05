@@ -44,7 +44,7 @@ class ThumbnailEvents(BaseEvent):
                     msg = '>>> Updating thumbnail for shot [ {} ]'.format(name)
 
                     if task:
-                        task['thumbnail_id'] = asset_version['thumbnail_id']
+                        task['thumbnail_id'] = version['thumbnail_id']
                         msg += " and task [ {} ]".format(task["name"]))
 
                     self.log.info(msg)
