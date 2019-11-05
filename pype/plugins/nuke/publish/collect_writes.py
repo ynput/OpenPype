@@ -65,7 +65,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         )
 
         if 'render' in instance.data['families']:
-            instance.data['families'].append('ftrack')
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
 
@@ -78,14 +77,14 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
             try:
                 collected_frames = os.listdir(output_dir)
+                if collected_frames:
+                    representation['frameStart'] = "%0{}d".format(
+                        len(str(last_frame))) % first_frame
                 representation['files'] = collected_frames
                 instance.data["representations"].append(representation)
             except Exception:
                 instance.data["representations"].append(representation)
                 self.log.debug("couldn't collect frames: {}".format(label))
-
-        if 'render.local' in instance.data['families']:
-            instance.data['families'].append('ftrack')
 
         # Add version data to instance
         version_data = {

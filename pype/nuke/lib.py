@@ -379,6 +379,10 @@ def add_rendering_knobs(node):
         knob = nuke.Boolean_Knob("render_farm", "Render on Farm")
         knob.setValue(False)
         node.addKnob(knob)
+    if "review" not in node.knobs():
+        knob = nuke.Boolean_Knob("review", "Review")
+        knob.setValue(True)
+        node.addKnob(knob)
     return node
 
 
