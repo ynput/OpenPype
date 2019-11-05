@@ -562,7 +562,7 @@ def get_subsets(asset_name,
         find_dict = {"type": "representation",
                      "parent": version_sel["_id"]}
 
-        filter_repr = {"$or": [{"name": repr} for repr in representations]}
+        filter_repr = {"name": {"$in": representations}}
 
         find_dict.update(filter_repr)
         repres_out = [i for i in io.find(find_dict)]

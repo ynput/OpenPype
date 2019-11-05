@@ -277,10 +277,7 @@ class DeleteAsset(BaseAction):
                 'message': 'No entities to delete in avalon'
             }
 
-        or_subquery = []
-        for id in all_ids:
-            or_subquery.append({'_id': id})
-        delete_query = {'$or': or_subquery}
+        delete_query = {'_id': {'$in': all_ids}}
         self.db.delete_many(delete_query)
 
         return {
