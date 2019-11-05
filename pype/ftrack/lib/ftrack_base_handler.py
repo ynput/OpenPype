@@ -96,7 +96,7 @@ class BaseHandler(object):
                     '!{} "{}" - You\'re missing required {} permissions'
                 ).format(self.type, label, str(MPE)))
             except AssertionError as ae:
-                self.log.info((
+                self.log.warning((
                     '!{} "{}" - {}'
                 ).format(self.type, label, str(ae)))
             except NotImplementedError:
@@ -104,7 +104,7 @@ class BaseHandler(object):
                     '{} "{}" - Register method is not implemented'
                 ).format(self.type, label))
             except PreregisterException as exc:
-                self.log.info((
+                self.log.warning((
                     '{} "{}" - {}'
                 ).format(self.type, label, str(exc)))
             except Exception as e:
