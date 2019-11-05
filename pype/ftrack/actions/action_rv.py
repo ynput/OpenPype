@@ -61,12 +61,12 @@ class RVAction(BaseAction):
     def set_rv_path(self):
         self.rv_path = self.config_data.get("rv_path")
 
-    def register(self):
-        assert (self.rv_path is not None), (
-            'RV is not installed'
-            ' or paths in presets are not set correctly'
-        )
-        super().register()
+    def preregister(self):
+        if self.rv_path is None:
+            return (
+                'RV is not installed or paths in presets are not set correctly'
+            )
+        return True
 
     def get_components_from_entity(self, session, entity, components):
         """Get components from various entity types.
