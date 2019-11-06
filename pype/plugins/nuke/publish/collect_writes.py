@@ -65,7 +65,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         )
 
         if 'render' in instance.data['families']:
-            instance.data['families'].append('ftrack')
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
 
@@ -78,22 +77,22 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
             try:
                 collected_frames = os.listdir(output_dir)
+                if collected_frames:
+                    representation['frameStart'] = "%0{}d".format(
+                        len(str(last_frame))) % first_frame
                 representation['files'] = collected_frames
                 instance.data["representations"].append(representation)
             except Exception:
                 instance.data["representations"].append(representation)
                 self.log.debug("couldn't collect frames: {}".format(label))
 
-        if 'render.local' in instance.data['families']:
-            instance.data['families'].append('ftrack')
-
         # Add version data to instance
         version_data = {
             "handles": handle_start,
             "handleStart": handle_start,
             "handleEnd": handle_end,
-            "frameStart": first_frame,
-            "frameEnd": last_frame,
+            "frameStart": first_frame + handle_start,
+            "frameEnd": last_frame - handle_end,
             "version": int(version),
             "colorspace":  node["colorspace"].value(),
             "families": [instance.data["family"]],
@@ -106,6 +105,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         if "deadlineChunkSize" in group_node.knobs():
             deadlineChunkSize = group_node["deadlineChunkSize"].value()
 
+        deadlinePriority = 50
+        if "deadlinePriority" in group_node.knobs():
+            deadlinePriority = group_node["deadlinePriority"].value()
+
         instance.data.update({
             "versionData": version_data,
             "path": path,
@@ -117,7 +120,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameEnd": last_frame,
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
-            "deadlineChunkSize": deadlineChunkSize
+            "deadlineChunkSize": deadlineChunkSize,
+            "deadlinePriority": deadlinePriority
         })
 
         self.log.debug("instance.data: {}".format(instance.data))

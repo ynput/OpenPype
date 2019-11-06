@@ -46,7 +46,8 @@ class ValidateFtrackAttributes(pyblish.api.InstancePlugin):
                         "Missing FTrack Task entity in context")
 
         host = pyblish.api.current_host()
-        to_check = context.data["presets"][host].get("ftrack_attributes")
+        to_check = context.data["presets"].get(
+            host, {}).get("ftrack_attributes")
         if not to_check:
             self.log.warning("ftrack_attributes preset not found")
             return

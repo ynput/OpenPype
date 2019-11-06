@@ -314,8 +314,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     index_frame_start = int(repre.get("frameStart"))
 
                 dst_padding_exp = src_padding_exp
+                dst_start_frame = None
                 for i in src_collection.indexes:
                     src_padding = src_padding_exp % i
+
+                    # for adding first frame into db
+                    if not dst_start_frame:
+                        dst_start_frame = src_padding
+
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
 
@@ -326,19 +332,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1
 
-                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail).replace("..", ".")
+                    dst = "{0}{1}{2}".format(
+                            dst_head,
+                            dst_padding,
+                            dst_tail).replace("..", ".")
+
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
+
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
-                repre['published_path'] = "{0}{1}{2}".format(dst_head,
-                                                             dst_padding_exp,
-                                                             dst_tail)
-                # for imagesequence version data
-                hashes = '#' * len(dst_padding)
-                dst = os.path.normpath("{0}{1}{2}".format(
-                    dst_head, hashes, dst_tail))
+                dst = "{0}{1}{2}".format(
+                    dst_head,
+                    dst_start_frame,
+                    dst_tail).replace("..", ".")
+                repre['published_path'] = dst
 
             else:
                 # Single file
