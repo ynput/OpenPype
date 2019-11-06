@@ -268,7 +268,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
-            if isinstance(files, list):
+            sequence_repre = isinstance(files, list)
+
+            if sequence_repre:
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
                     "src_tail_collections: {}".format(str(src_collections)))
@@ -305,14 +307,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_tail = dst_collection.format("{tail}")
 
                 index_frame_start = None
+
                 if repre.get("frameStart"):
                     frame_start_padding = len(str(
                         repre.get("frameEnd")))
                     index_frame_start = int(repre.get("frameStart"))
 
                 dst_padding_exp = src_padding_exp
+                dst_start_frame = None
                 for i in src_collection.indexes:
                     src_padding = src_padding_exp % i
+
+                    # for adding first frame into db
+                    if not dst_start_frame:
+                        dst_start_frame = src_padding
+
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
 
@@ -323,19 +332,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1
 
-                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail).replace("..", ".")
+                    dst = "{0}{1}{2}".format(
+                            dst_head,
+                            dst_padding,
+                            dst_tail).replace("..", ".")
+
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
+
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
-                repre['published_path'] = "{0}{1}{2}".format(dst_head,
-                                                             dst_padding_exp,
-                                                             dst_tail)
-                # for imagesequence version data
-                hashes = '#' * len(dst_padding)
-                dst = os.path.normpath("{0}{1}{2}".format(
-                    dst_head, hashes, dst_tail))
+                dst = "{0}{1}{2}".format(
+                    dst_head,
+                    dst_start_frame,
+                    dst_tail).replace("..", ".")
+                repre['published_path'] = dst
 
             else:
                 # Single file
@@ -391,6 +403,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
+
+            if sequence_repre and repre.get("frameStart"):
+                representation['context']['frame'] = repre.get("frameStart")
+
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
             self.log.debug("__ destination_list: {}".format(destination_list))

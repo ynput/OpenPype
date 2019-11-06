@@ -15,6 +15,7 @@ log = Logger().get_logger(__name__)
 
 class RVAction(BaseAction):
     """ Launch RV action """
+    ignore_me = "rv" not in config.get_presets()
     identifier = "rv.launch.action"
     label = "rv"
     description = "rv Launcher"
@@ -42,8 +43,9 @@ class RVAction(BaseAction):
             )
         else:
             # if not, fallback to config file location
-            self.config_data = config.get_presets()['rv']['config']
-            self.set_rv_path()
+            if "rv" in config.get_presets():
+                self.config_data = config.get_presets()['rv']['config']
+                self.set_rv_path()
 
         if self.rv_path is None:
             return
@@ -328,8 +330,6 @@ class RVAction(BaseAction):
 
 def register(session, plugins_presets={}):
     """Register hooks."""
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     RVAction(session, plugins_presets).register()
 

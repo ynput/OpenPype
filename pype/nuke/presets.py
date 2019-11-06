@@ -25,16 +25,22 @@ def get_node_dataflow_preset(**kwarg):
     log.info(kwarg)
     host = kwarg.get("host", "nuke")
     cls = kwarg.get("class", None)
-    preset = kwarg.get("preset", None)
-    assert any([host, cls]), log.error("nuke.templates.get_node_dataflow_preset(): \
-               Missing mandatory kwargs `host`, `cls`")
+    families = kwarg.get("families", [])
+    preset = kwarg.get("preset", None)  # omit < 2.0.0v
+
+    assert any([host, cls]), log.error(
+        "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
     nuke_dataflow = get_dataflow_preset().get(str(host), None)
     nuke_dataflow_nodes = nuke_dataflow.get('nodes', None)
     nuke_dataflow_node = nuke_dataflow_nodes.get(str(cls), None)
 
-    if preset:
+    if preset:  # omit < 2.0.0v
         nuke_dataflow_node = nuke_dataflow_node.get(str(preset), None)
+        # omit < 2.0.0v
+
+    for family in families:
+        nuke_dataflow_node = nuke_dataflow_node.get(str(family), None)
 
     log.info("Dataflow: {}".format(nuke_dataflow_node))
     return nuke_dataflow_node
@@ -47,8 +53,8 @@ def get_node_colorspace_preset(**kwarg):
     host = kwarg.get("host", "nuke")
     cls = kwarg.get("class", None)
     preset = kwarg.get("preset", None)
-    assert any([host, cls]), log.error("nuke.templates.get_node_colorspace_preset(): \
-               Missing mandatory kwargs `host`, `cls`")
+    assert any([host, cls]), log.error(
+            "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
     nuke_colorspace = get_colorspace_preset().get(str(host), None)
     nuke_colorspace_node = nuke_colorspace.get(str(cls), None)

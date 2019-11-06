@@ -220,7 +220,7 @@ class SyncHierarchicalAttrs(BaseAction):
             if job['status'] in ('queued', 'running'):
                 job['status'] = 'failed'
             session.commit()
-            
+
             if self.interface_messages:
                 self.show_interface_from_dict(
                     messages=self.interface_messages,
@@ -340,9 +340,6 @@ class SyncHierarchicalAttrs(BaseAction):
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     SyncHierarchicalAttrs(session, plugins_presets).register()
 

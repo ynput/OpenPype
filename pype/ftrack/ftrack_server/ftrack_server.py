@@ -126,23 +126,27 @@ class FtrackServer:
                 msg = '"{}" - register was not successful ({})'.format(
                     function_dict['name'], str(exc)
                 )
-                log.warning(msg)
+                log.warning(msg, exc_info=True)
 
-    def run_server(self):
-        self.session = ftrack_api.Session(auto_connect_event_hub=True,)
+    def run_server(self, session=None, load_files=True):
+        if not session:
+            session = ftrack_api.Session(auto_connect_event_hub=True)
 
-        paths_str = os.environ.get(self.env_key)
-        if paths_str is None:
-            log.error((
-                "Env var \"{}\" is not set, \"{}\" server won\'t launch"
-            ).format(self.env_key, self.server_type))
-            return
+        self.session = session
 
-        paths = paths_str.split(os.pathsep)
-        self.set_files(paths)
+        if load_files:
+            paths_str = os.environ.get(self.env_key)
+            if paths_str is None:
+                log.error((
+                    "Env var \"{}\" is not set, \"{}\" server won\'t launch"
+                ).format(self.env_key, self.server_type))
+                return
 
-        log.info(60*"*")
-        log.info('Registration of actions/events has finished!')
+            paths = paths_str.split(os.pathsep)
+            self.set_files(paths)
+
+            log.info(60*"*")
+            log.info('Registration of actions/events has finished!')
 
         # keep event_hub on session running
         self.session.event_hub.wait()

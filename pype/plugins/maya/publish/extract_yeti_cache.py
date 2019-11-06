@@ -73,7 +73,9 @@ class ExtractYetiCache(pype.api.Extractor):
                 'ext': 'fur',
                 'files': cache_files[0] if len(cache_files) == 1 else cache_files,
                 'stagingDir': dirname,
-                'anatomy_template': 'publish'
+                'anatomy_template': 'publish',
+                'frameStart': int(start_frame),
+                'frameEnd': int(end_frame)
             }
         )
 
