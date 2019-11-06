@@ -292,7 +292,6 @@ def create_write_node(name, data, prenodes=None):
 
     _data["frame_range"] = data.get("frame_range", None)
 
-    # todo: hange this to new way
     GN = nuke.createNode("Group", "name {}".format(name))
 
     prev_node = None
