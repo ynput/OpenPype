@@ -1,8 +1,6 @@
-
 import pype.maya.plugin
 import os
 from pypeapp import config
-import pymel.core as pm
 reload(config)
 import pype.maya.plugin
 reload(pype.maya.plugin)
@@ -20,9 +18,10 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
     color = "orange"
 
     def process_reference(self, context, name, namespace, data):
-
         import maya.cmds as cmds
         from avalon import maya
+        import pymel.core as pm
+
 
         try:
             family = context["representation"]["context"]["family"]

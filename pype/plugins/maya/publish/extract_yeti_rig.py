@@ -126,6 +126,18 @@ class ExtractYetiRig(pype.api.Extractor):
             with open(settings_path, "w") as fp:
                 json.dump(settings, fp, ensure_ascii=False)
 
+        # add textures to transfers
+        if 'transfers' not in instance.data:
+            instance.data['transfers'] = []
+
+        for resource in instance.data.get('resources', []):
+            for file in resource['files']:
+                src = file
+                dst = os.path.join(image_search_path, os.path.basename(file))
+                instance.data['transfers'].append([src, dst])
+
+                self.log.info("adding transfer {} -> {}". format(src, dst))
+
         # Ensure the imageSearchPath is being remapped to the publish folder
         attr_value = {"%s.imageSearchPath" % n: str(image_search_path) for
                       n in yeti_nodes}

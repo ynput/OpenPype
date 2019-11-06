@@ -101,6 +101,8 @@ class Sync_to_Avalon(BaseEvent):
                         avalon_project = result['project']
 
         except Exception as e:
+            session.reset() # reset session to clear it
+
             message = str(e)
             title = 'Hey You! Unknown Error has been raised! (*look below*)'
             ftrack_message = (

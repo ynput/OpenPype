@@ -1,7 +1,6 @@
 from avalon import api
 import pype.maya.plugin
 import os
-import pymel.core as pm
 from pypeapp import config
 
 
@@ -70,6 +69,7 @@ class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
 
         import os
         from maya import cmds
+        import pymel.core as pm
 
         node = container["objectName"]
 

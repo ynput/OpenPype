@@ -963,7 +963,7 @@ class BuildWorkfile(WorkfileSettings):
     def process(self,
                 regex_filter=None,
                 version=None,
-                representations=["exr", "dpx", "lutJson"]):
+                representations=["exr", "dpx", "lutJson", "mov", "preview"]):
         """
         A short description.
 
@@ -1019,6 +1019,8 @@ class BuildWorkfile(WorkfileSettings):
                                    regex_filter=regex_filter,
                                    version=version,
                                    representations=representations)
+
+        log.info("__ subsets: `{}`".format(subsets))
 
         nodes_backdrop = list()
 
