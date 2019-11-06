@@ -174,8 +174,13 @@ def format_anatomy(data):
     anatomy = get_anatomy()
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
-    # TODO: perhaps should be in try!
-    padding = int(anatomy.templates['render']['padding'])
+    try:
+        padding = int(anatomy.templates['render']['padding'])
+    except KeyError as e:
+        log.error("`padding` key is not in `render` "
+                  "Anatomy template. Please, add it there and restart "
+                  "the pipeline (padding: \"4\"): `{}`".format(e))
+
     version = data.get("version", None)
     if not version:
         file = script_name()
