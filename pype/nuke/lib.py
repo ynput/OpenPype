@@ -57,7 +57,8 @@ def checkInventoryVersions():
 
             if container:
                 node = container["_node"]
-                avalon_knob_data = avalon.nuke.get_avalon_knob_data(node)
+                avalon_knob_data = avalon.nuke.get_avalon_knob_data(
+                    node, ['avalon:', 'ak:'])
 
                 # get representation from io
                 representation = io.find_one({
@@ -103,7 +104,8 @@ def writes_version_sync():
 
     for each in nuke.allNodes():
         if each.Class() == 'Write':
-            avalon_knob_data = avalon.nuke.get_avalon_knob_data(each)
+            avalon_knob_data = avalon.nuke.get_avalon_knob_data(
+                each, ['avalon:', 'ak:'])
 
             try:
                 if avalon_knob_data['families'] not in ["render"]:
@@ -136,7 +138,8 @@ def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
     data = dict()
-    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(
+        node, ['avalon:', 'ak:'])
 
     data_preset = {
         "class": data['avalon']['family'],
@@ -829,10 +832,12 @@ def get_write_node_template_attr(node):
     '''
     # get avalon data from node
     data = dict()
-    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(
+        node, ['avalon:', 'ak:'])
     data_preset = {
         "class": data['avalon']['family'],
-        "preset": data['avalon']['families']
+        "families": data['avalon']['families'],
+        "preset": data['avalon']['families']  # omit < 2.0.0v
     }
 
     # get template data
