@@ -45,7 +45,7 @@ class ThumbnailEvents(BaseEvent):
 
                     if task:
                         task['thumbnail_id'] = version['thumbnail_id']
-                        msg += " and task [ {} ]".format(task["name"]))
+                        msg += " and task [ {} ]".format(task["name"])
 
                     self.log.info(msg)
 
