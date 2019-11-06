@@ -2,7 +2,7 @@
 Welcome to pype changelog
 
 ## 2.3.0 ##
-_release date: 1 Oct 2019_
+_release date: 6 Oct 2019_
 
 **new**:
 - _(maya)_ support for yeti rigs and yeti caches
@@ -16,9 +16,10 @@ _release date: 1 Oct 2019_
 - _(nuke)_ nuke can now bake input process into mov
 - _(maya)_ imported models now have selection handle displayed by defaulting
 - _(avalon)_ it's is now possible to load multiple assets at once using loader
+- _(maya)_ added ability to automatically connect yeti rig to a mesh upon loading
 
 **changed**:
-- _(ftrack)_ event server now runs two paraller processes and is able to keep queue of events to process.
+- _(ftrack)_ event server now runs two parallel processes and is able to keep queue of events to process.
 - _(nuke)_ task name is now added to all rendered subsets
 - _(pype)_ adding more families to standalone publisher
 - _(pype)_ standalone publisher now uses pyblish-lite
@@ -38,6 +39,8 @@ _release date: 1 Oct 2019_
 - _(maya)_ ftrack was rounding FPS making it inconsistent
 - _(pype)_ wrong icon names in Creator
 - _(maya)_ scene inventory wasn't showing anything if representation was removed from database after it's been loaded to the scene
+- _(nukestudio)_ multiple bugs squashed
+- _(loader)_ loader was taking long time to show all the loading action when first launcher in maya
 
 ## 2.2.0 ##
 _release date: 8 Sept 2019_
