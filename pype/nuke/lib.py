@@ -16,7 +16,7 @@ from .presets import (
     get_node_colorspace_preset
 )
 
-from .templates import (
+from .presets import (
     get_anatomy
 )
 # TODO: remove get_anatomy and import directly Anatomy() here

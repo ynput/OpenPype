@@ -80,7 +80,7 @@ def reload_config():
     for module in (
         "{}.api".format(AVALON_CONFIG),
         "{}.nuke.actions".format(AVALON_CONFIG),
-        "{}.nuke.templates".format(AVALON_CONFIG),
+        "{}.nuke.presets".format(AVALON_CONFIG),
         "{}.nuke.menu".format(AVALON_CONFIG),
         "{}.nuke.plugin".format(AVALON_CONFIG),
         "{}.nuke.lib".format(AVALON_CONFIG),
