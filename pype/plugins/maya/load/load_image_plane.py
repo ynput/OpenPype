@@ -1,5 +1,3 @@
-import pymel.core as pc
-
 from avalon import api
 from Qt import QtWidgets
 
@@ -14,6 +12,8 @@ class ImagePlaneLoader(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
+        import pymel.core as pc
+
         new_nodes = []
         image_plane_depth = 1000
 
