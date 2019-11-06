@@ -116,6 +116,7 @@ class ImportMayaLoader(api.Loader):
         with maya.maintained_selection():
             cmds.file(self.fname,
                       i=True,
+                      preserveReferences=True,
                       namespace=namespace,
                       returnNewNodes=True,
                       groupReference=True,

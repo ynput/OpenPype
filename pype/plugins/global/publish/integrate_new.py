@@ -3,7 +3,6 @@ from os.path import getsize
 import logging
 import speedcopy
 import clique
-import traceback
 import errno
 import pyblish.api
 from avalon import api, io
@@ -64,7 +63,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "plate",
                 "look",
                 "lut",
-                "audio"
+                "audio",
+                "yetiRig",
+                "yeticache"
                 ]
     exclude_families = ["clip"]
 
@@ -110,7 +111,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #                 extracted_traceback[1], result["error"]
         #             )
         #         )
-        # assert all(result["success"] for result in context.data["results"]), (
+        # assert all(result["success"] for result in context.data["results"]),(
         #     "Atomicity not held, aborting.")
 
         # Assemble
@@ -251,7 +252,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             template_data = {"root": root,
                              "project": {"name": PROJECT,
                                          "code": project['data']['code']},
-                             "silo": asset['silo'],
+                             "silo": asset.get('silo'),
                              "task": TASK,
                              "asset": ASSET,
                              "family": instance.data['family'],
@@ -267,7 +268,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
-            if isinstance(files, list):
+            sequence_repre = isinstance(files, list)
+
+            if sequence_repre:
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
                     "src_tail_collections: {}".format(str(src_collections)))
@@ -304,14 +307,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_tail = dst_collection.format("{tail}")
 
                 index_frame_start = None
+
                 if repre.get("frameStart"):
                     frame_start_padding = len(str(
                         repre.get("frameEnd")))
-                    index_frame_start = repre.get("frameStart")
+                    index_frame_start = int(repre.get("frameStart"))
 
                 dst_padding_exp = src_padding_exp
+                dst_start_frame = None
                 for i in src_collection.indexes:
                     src_padding = src_padding_exp % i
+
+                    # for adding first frame into db
+                    if not dst_start_frame:
+                        dst_start_frame = src_padding
+
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
 
@@ -322,17 +332,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1
 
-                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail)
+                    dst = "{0}{1}{2}".format(
+                            dst_head,
+                            dst_padding,
+                            dst_tail).replace("..", ".")
+
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
+
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
-                repre['published_path'] = "{0}{1}{2}".format(dst_head, dst_padding_exp, dst_tail)
-                # for imagesequence version data
-                hashes = '#' * len(dst_padding)
-                dst = os.path.normpath("{0}{1}{2}".format(
-                    dst_head, hashes, dst_tail))
+                dst = "{0}{1}{2}".format(
+                    dst_head,
+                    dst_start_frame,
+                    dst_tail).replace("..", ".")
+                repre['published_path'] = dst
 
             else:
                 # Single file
@@ -357,7 +372,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 dst = os.path.normpath(
-                    anatomy_filled[template_name]["path"])
+                    anatomy_filled[template_name]["path"]).replace("..", ".")
 
                 instance.data["transfers"].append([src, dst])
 
@@ -379,7 +394,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "project": {"name": PROJECT,
                                 "code": project['data']['code']},
                     'task': TASK,
-                    "silo": asset['silo'],
+                    "silo": asset.get('silo'),
                     "asset": ASSET,
                     "family": instance.data['family'],
                     "subset": subset["name"],
@@ -388,6 +403,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
+
+            if sequence_repre and repre.get("frameStart"):
+                representation['context']['frame'] = repre.get("frameStart")
+
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
             self.log.debug("__ destination_list: {}".format(destination_list))
@@ -440,6 +459,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             None
         """
+        src = os.path.normpath(src)
+        dst = os.path.normpath(dst)
 
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
@@ -480,12 +501,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if subset is None:
             subset_name = instance.data["subset"]
             self.log.info("Subset '%s' not found, creating.." % subset_name)
+            self.log.debug("families.  %s" % instance.data.get('families'))
+            self.log.debug("families.  %s" % type(instance.data.get('families')))
 
             _id = io.insert_one({
-                "schema": "avalon-core:subset-2.0",
+                "schema": "pype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
-                "data": {},
+                "data": {
+                    "families": instance.data.get('families')
+                    },
                 "parent": asset["_id"]
             }).inserted_id
 
@@ -508,7 +533,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         version_locations = [location for location in locations if
                              location is not None]
 
-        return {"schema": "avalon-core:version-2.0",
+        return {"schema": "pype:version-3.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,

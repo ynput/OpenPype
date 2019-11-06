@@ -30,7 +30,8 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
                                         "resources")
 
         # Clean the path
-        mock_destination = os.path.abspath(os.path.normpath(mock_destination)).replace("\\", "/")
+        mock_destination = os.path.abspath(
+            os.path.normpath(mock_destination)).replace("\\", "/")
 
         # Define resource destination and transfers
         resources = instance.data.get("resources", list())
@@ -38,7 +39,8 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         for resource in resources:
 
             # Add destination to the resource
-            source_filename = os.path.basename(resource["source"]).replace("\\", "/")
+            source_filename = os.path.basename(
+                resource["source"]).replace("\\", "/")
             destination = os.path.join(mock_destination, source_filename)
 
             # Force forward slashes to fix issue with software unable
@@ -53,7 +55,8 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
             files = resource['files']
             for fsrc in files:
                 fname = os.path.basename(fsrc)
-                fdest = os.path.join(mock_destination, fname).replace("\\", "/")
+                fdest = os.path.join(
+                    mock_destination, fname).replace("\\", "/")
                 transfers.append([fsrc, fdest])
 
         instance.data["resources"] = resources
@@ -63,7 +66,7 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         """Create a filepath based on the current data available
 
         Example template:
-            {root}/{project}/{silo}/{asset}/publish/{subset}/v{version:0>3}/
+            {root}/{project}/{asset}/publish/{subset}/v{version:0>3}/
             {subset}.{representation}
         Args:
             instance: the instance to publish
@@ -92,7 +95,6 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
 
         assert asset, ("No asset found by the name '{}' "
                        "in project '{}'".format(asset_name, project_name))
-        silo = asset['silo']
 
         subset = io.find_one({"type": "subset",
                               "name": subset_name,
@@ -123,7 +125,6 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         template_data = {"root": api.Session["AVALON_PROJECTS"],
                          "project": {"name": project_name,
                                      "code": project['data']['code']},
-                         "silo": silo,
                          "family": instance.data['family'],
                          "asset": asset_name,
                          "subset": subset_name,

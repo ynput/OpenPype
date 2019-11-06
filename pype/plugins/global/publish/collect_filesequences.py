@@ -1,3 +1,13 @@
+"""
+Requires:
+    environment -> PYPE_PUBLISH_PATHS
+    context     -> workspaceDir
+
+Provides:
+    context     -> user (str)
+    instance    -> new instance
+"""
+
 import os
 import re
 import copy
@@ -120,6 +130,12 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         root = os.path.join(cwd, root_override)
                 else:
                     root = cwd
+
+                if data.get("ftrack"):
+                    f = data.get("ftrack")
+                    os.environ["FTRACK_API_USER"] = f["FTRACK_API_USER"]
+                    os.environ["FTRACK_API_KEY"] = f["FTRACK_API_KEY"]
+                    os.environ["FTRACK_SERVER"] = f["FTRACK_SERVER"]
 
                 metadata = data.get("metadata")
                 if metadata:

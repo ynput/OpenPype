@@ -5,7 +5,7 @@ import json
 from collections import namedtuple
 
 from . import QtWidgets, QtCore
-from . import HelpRole, FamilyRole, ExistsRole, PluginRole
+from . import HelpRole, FamilyRole, ExistsRole, PluginRole, PluginKeyRole
 from . import FamilyDescriptionWidget
 
 from pypeapp import config
@@ -19,11 +19,11 @@ class FamilyWidget(QtWidgets.QWidget):
     Separator = "---separator---"
     NOT_SELECTED = '< Nothing is selected >'
 
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self, dbcon, parent=None):
+        super(FamilyWidget, self).__init__(parent=parent)
         # Store internal states in here
         self.state = {"valid": False}
-        self.parent_widget = parent
+        self.dbcon = dbcon
         self.asset_name = self.NOT_SELECTED
 
         body = QtWidgets.QWidget()
@@ -67,7 +67,7 @@ class FamilyWidget(QtWidgets.QWidget):
 
         layout = QtWidgets.QVBoxLayout(container)
 
-        header = FamilyDescriptionWidget(self)
+        header = FamilyDescriptionWidget(parent=self)
         layout.addWidget(header)
 
         layout.addWidget(QtWidgets.QLabel("Family"))
@@ -116,17 +116,15 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def collect_data(self):
         plugin = self.list_families.currentItem().data(PluginRole)
+        key = self.list_families.currentItem().data(PluginKeyRole)
         family = plugin.family.rsplit(".", 1)[-1]
         data = {
+            'family_preset_key': key,
             'family': family,
             'subset': self.input_result.text(),
             'version': self.version_spinbox.value()
         }
         return data
-
-    @property
-    def db(self):
-        return self.parent_widget.db
 
     def change_asset(self, name):
         if name is None:
@@ -136,7 +134,6 @@ class FamilyWidget(QtWidgets.QWidget):
 
     def _on_state_changed(self, state):
         self.state['valid'] = state
-        self.parent_widget.set_valid_family(state)
 
     def _build_menu(self, default_names):
         """Create optional predefined subset names
@@ -183,7 +180,7 @@ class FamilyWidget(QtWidgets.QWidget):
         assets = None
         if asset_name != self.NOT_SELECTED:
             # Get the assets from the database which match with the name
-            assets_db = self.db.find(
+            assets_db = self.dbcon.find(
                 filter={"type": "asset"},
                 projection={"name": 1}
             )
@@ -206,7 +203,7 @@ class FamilyWidget(QtWidgets.QWidget):
         if assets:
             # Get all subsets of the current asset
             asset_ids = [asset["_id"] for asset in assets]
-            subsets = self.db.find(filter={"type": "subset",
+            subsets = self.dbcon.find(filter={"type": "subset",
                                       "name": {"$regex": "{}*".format(family),
                                                "$options": "i"},
                                       "parent": {"$in": asset_ids}}) or []
@@ -259,17 +256,17 @@ class FamilyWidget(QtWidgets.QWidget):
             asset_name != self.NOT_SELECTED and
             subset_name.strip() != ''
         ):
-            asset = self.db.find_one({
+            asset = self.dbcon.find_one({
                 'type': 'asset',
                 'name': asset_name
             })
-            subset = self.db.find_one({
+            subset = self.dbcon.find_one({
                 'type': 'subset',
                 'parent': asset['_id'],
                 'name': subset_name
             })
             if subset:
-                versions = self.db.find({
+                versions = self.dbcon.find({
                     'type': 'version',
                     'parent': subset['_id']
                 })
@@ -318,7 +315,7 @@ class FamilyWidget(QtWidgets.QWidget):
         has_families = False
         presets = config.get_presets().get('standalone_publish', {})
 
-        for creator in presets.get('families', {}).values():
+        for key, creator in presets.get('families', {}).items():
             creator = namedtuple("Creator", creator.keys())(*creator.values())
 
             label = creator.label or creator.family
@@ -327,6 +324,7 @@ class FamilyWidget(QtWidgets.QWidget):
             item.setData(HelpRole, creator.help or "")
             item.setData(FamilyRole, creator.family)
             item.setData(PluginRole, creator)
+            item.setData(PluginKeyRole, key)
             item.setData(ExistsRole, False)
             self.list_families.addItem(item)
 

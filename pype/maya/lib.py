@@ -9,6 +9,7 @@ import json
 import logging
 import contextlib
 from collections import OrderedDict, defaultdict
+from math import ceil
 
 from maya import cmds, mel
 import maya.api.OpenMaya as om
@@ -39,19 +40,17 @@ SHAPE_ATTRS = {"castsShadows",
                "doubleSided",
                "opposite"}
 
-RENDER_ATTRS = {"vray":
-                    {
+RENDER_ATTRS = {"vray": {
                         "node": "vraySettings",
                         "prefix": "fileNamePrefix",
                         "padding": "fileNamePadding",
                         "ext": "imageFormatStr"
-                    },
-                "default":
-                    {
+                        },
+                "default": {
                         "node": "defaultRenderGlobals",
                         "prefix": "imageFilePrefix",
                         "padding": "extensionPadding"
-                    }
+                        }
                 }
 
 
@@ -92,7 +91,7 @@ _alembic_options = {
 }
 
 INT_FPS = {15, 24, 25, 30, 48, 50, 60, 44100, 48000}
-FLOAT_FPS = {23.976, 29.97, 47.952, 59.94}
+FLOAT_FPS = {23.98, 23.976, 29.97, 47.952, 59.94}
 
 
 def _get_mel_global(name):
@@ -116,6 +115,10 @@ def matrix_equals(a, b, tolerance=1e-10):
     if not all(abs(x - y) < tolerance for x, y in zip(a, b)):
         return False
     return True
+
+
+def float_round(num, places=0, direction=ceil):
+    return direction(num * (10**places)) / float(10**places)
 
 
 def unique(name):
@@ -298,7 +301,13 @@ def attribute_values(attr_values):
 
     """
 
-    original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
+    # NOTE(antirotor): this didn't work for some reason for Yeti attributes
+    # original = [(attr, cmds.getAttr(attr)) for attr in attr_values]
+    original = []
+    for attr in attr_values:
+        type = cmds.getAttr(attr, type=True)
+        value = cmds.getAttr(attr)
+        original.append((attr, str(value) if type == "string" else value))
     try:
         for attr, value in attr_values.items():
             if isinstance(value, string_types):
@@ -339,19 +348,6 @@ def undo_chunk():
         yield
     finally:
         cmds.undoInfo(closeChunk=True)
-
-
-@contextlib.contextmanager
-def renderlayer(layer):
-    """Set the renderlayer during the context"""
-
-    original = cmds.editRenderLayerGlobals(query=True, currentRenderLayer=True)
-
-    try:
-        cmds.editRenderLayerGlobals(currentRenderLayer=layer)
-        yield
-    finally:
-        cmds.editRenderLayerGlobals(currentRenderLayer=original)
 
 
 @contextlib.contextmanager
@@ -832,7 +828,8 @@ def is_visible(node,
         # Display layers set overrideEnabled and overrideVisibility on members
         if cmds.attributeQuery('overrideEnabled', node=node, exists=True):
             override_enabled = cmds.getAttr('{}.overrideEnabled'.format(node))
-            override_visibility = cmds.getAttr('{}.overrideVisibility'.format(node))
+            override_visibility = cmds.getAttr('{}.overrideVisibility'.format(
+                node))
             if override_enabled and override_visibility:
                 return False
 
@@ -854,8 +851,8 @@ def extract_alembic(file,
                     startFrame=None,
                     endFrame=None,
                     selection=True,
-                    uvWrite= True,
-                    eulerFilter= True,
+                    uvWrite=True,
+                    eulerFilter=True,
                     dataFormat="ogawa",
                     verbose=False,
                     **kwargs):
@@ -1470,8 +1467,8 @@ def apply_shaders(relationships, shadernodes, nodes):
         member_uuids = [member["uuid"] for member in data["members"]]
 
         filtered_nodes = list()
-        for uuid in member_uuids:
-            filtered_nodes.extend(nodes_by_id[uuid])
+        for m_uuid in member_uuids:
+            filtered_nodes.extend(nodes_by_id[m_uuid])
 
         id_shading_engines = shading_engines_by_id[shader_uuid]
         if not id_shading_engines:
@@ -1766,24 +1763,25 @@ def set_scene_fps(fps, update=True):
                    '30': 'ntsc',
                    '48': 'show',
                    '50': 'palf',
-                   '60': 'ntscf'}
+                   '60': 'ntscf',
+                   '23.98': '23.976fps',
+                   '23.976': '23.976fps',
+                   '29.97': '29.97fps',
+                   '47.952': '47.952fps',
+                   '47.95': '47.952fps',
+                   '59.94': '59.94fps',
+                   '44100': '44100fps',
+                   '48000': '48000fps'}
 
-    if fps in FLOAT_FPS:
-        unit = "{}fps".format(fps)
-
-    elif fps in INT_FPS:
-        unit = "{}fps".format(int(fps))
-
-    else:
+    # pull from mapping
+    # this should convert float string to float and int to int
+    # so 25.0 is converted to 25, but 23.98 will be still float.
+    decimals = int(str(fps-int(fps))[2:])
+    if decimals == 0:
+        fps = int(fps)
+    unit = fps_mapping.get(str(fps), None)
+    if unit is None:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
-
-    # get maya version
-    version = int(cmds.about(version=True))
-    if version < 2018:
-        # pull from mapping
-        unit = fps_mapping.get(str(int(fps)), None)
-        if unit is None:
-            raise ValueError("Unsupported FPS value: `%s`" % fps)
 
     # Get time slider current state
     start_frame = cmds.playbackOptions(query=True, minTime=True)
@@ -1888,7 +1886,12 @@ def validate_fps():
     """
 
     fps = lib.get_asset()["data"]["fps"]
-    current_fps = mel.eval('currentTimeUnitToFPS()')  # returns float
+    # TODO(antirotor): This is hack as for framerates having multiple
+    # decimal places. FTrack is ceiling decimal values on
+    # fps to two decimal places but Maya 2019+ is reporting those fps
+    # with much higher resolution. As we currently cannot fix Ftrack
+    # rounding, we have to round those numbers coming from Maya.
+    current_fps = float_round(mel.eval('currentTimeUnitToFPS()'), 2)
 
     if current_fps != fps:
 
@@ -2110,6 +2113,7 @@ def bake_to_world_space(nodes,
 
     return world_space_nodes
 
+
 def load_capture_preset(path=None, data=None):
     import capture_gui
     import capture
@@ -2119,14 +2123,14 @@ def load_capture_preset(path=None, data=None):
     else:
         path = path
         preset = capture_gui.lib.load_json(path)
-    print preset
+    print(preset)
 
     options = dict()
 
     # CODEC
     id = 'Codec'
     for key in preset[id]:
-            options[str(key)]= preset[id][key]
+        options[str(key)] = preset[id][key]
 
     # GENERIC
     id = 'Generic'
@@ -2142,7 +2146,6 @@ def load_capture_preset(path=None, data=None):
     options['height'] = preset[id]['height']
     options['width'] = preset[id]['width']
 
-
     # DISPLAY OPTIONS
     id = 'Display Options'
     disp_options = {}
@@ -2154,7 +2157,6 @@ def load_capture_preset(path=None, data=None):
 
     options['display_options'] = disp_options
 
-
     # VIEWPORT OPTIONS
     temp_options = {}
     id = 'Renderer'
@@ -2163,11 +2165,12 @@ def load_capture_preset(path=None, data=None):
 
     temp_options2 = {}
     id = 'Viewport Options'
-    light_options = {   0: "default",
-                        1: 'all',
-                        2: 'selected',
-                        3: 'flat',
-                        4: 'nolights'}
+    light_options = {
+        0: "default",
+        1: 'all',
+        2: 'selected',
+        3: 'flat',
+        4: 'nolights'}
     for key in preset[id]:
         if key == 'high_quality':
             temp_options2['multiSampleEnable'] = True
@@ -2190,7 +2193,10 @@ def load_capture_preset(path=None, data=None):
         else:
             temp_options[str(key)] = preset[id][key]
 
-    for key in ['override_viewport_options', 'high_quality', 'alphaCut', "gpuCacheDisplayFilter"]:
+    for key in ['override_viewport_options',
+                'high_quality',
+                'alphaCut',
+                'gpuCacheDisplayFilter']:
         temp_options.pop(key, None)
 
     for key in ['ssaoEnable']:
@@ -2198,7 +2204,6 @@ def load_capture_preset(path=None, data=None):
 
     options['viewport_options'] = temp_options
     options['viewport2_options'] = temp_options2
-
 
     # use active sound track
     scene = capture.parse_active_scene()
@@ -2363,31 +2368,51 @@ class shelf():
             if item['type'] == 'button':
                 self.addButon(item['name'], command=item['command'])
             if item['type'] == 'menuItem':
-                self.addMenuItem(item['parent'], item['name'], command=item['command'])
+                self.addMenuItem(item['parent'],
+                                 item['name'],
+                                 command=item['command'])
             if item['type'] == 'subMenu':
-                self.addMenuItem(item['parent'], item['name'], command=item['command'])
+                self.addMenuItem(item['parent'],
+                                 item['name'],
+                                 command=item['command'])
 
-    def addButon(self, label, icon="commandButton.png", command=_null, doubleCommand=_null):
-        '''Adds a shelf button with the specified label, command, double click command and image.'''
+    def addButon(self, label, icon="commandButton.png",
+                 command=_null, doubleCommand=_null):
+        '''
+            Adds a shelf button with the specified label, command,
+            double click command and image.
+        '''
         cmds.setParent(self.name)
         if icon:
             icon = self.iconPath + icon
-        cmds.shelfButton(width=37, height=37, image=icon, l=label, command=command, dcc=doubleCommand, imageOverlayLabel=label, olb=self.labelBackground, olc=self.labelColour)
+        cmds.shelfButton(width=37, height=37, image=icon, label=label,
+                         command=command, dcc=doubleCommand,
+                         imageOverlayLabel=label, olb=self.labelBackground,
+                         olc=self.labelColour)
 
     def addMenuItem(self, parent, label, command=_null, icon=""):
-        '''Adds a shelf button with the specified label, command, double click command and image.'''
+        '''
+            Adds a shelf button with the specified label, command,
+            double click command and image.
+        '''
         if icon:
             icon = self.iconPath + icon
-        return cmds.menuItem(p=parent, l=label, c=command, i="")
+        return cmds.menuItem(p=parent, label=label, c=command, i="")
 
     def addSubMenu(self, parent, label, icon=None):
-        '''Adds a sub menu item with the specified label and icon to the specified parent popup menu.'''
+        '''
+            Adds a sub menu item with the specified label and icon to
+            the specified parent popup menu.
+        '''
         if icon:
             icon = self.iconPath + icon
-        return cmds.menuItem(p=parent, l=label, i=icon, subMenu=1)
+        return cmds.menuItem(p=parent, label=label, i=icon, subMenu=1)
 
     def _cleanOldShelf(self):
-        '''Checks if the shelf exists and empties it if it does or creates it if it does not.'''
+        '''
+            Checks if the shelf exists and empties it if it does
+            or creates it if it does not.
+        '''
         if cmds.shelfLayout(self.name, ex=1):
             if cmds.shelfLayout(self.name, q=1, ca=1):
                 for each in cmds.shelfLayout(self.name, q=1, ca=1):

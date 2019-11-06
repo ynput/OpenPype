@@ -192,7 +192,7 @@ class DbConnector(object):
             ) if os.getenv(item[0], item[1]) is not None
         }
 
-        Session["schema"] = "avalon-core:session-1.0"
+        Session["schema"] = "avalon-core:session-2.0"
         try:
             schema.validate(Session)
         except schema.ValidationError as e:

@@ -9,7 +9,7 @@ from pypeapp import config
 import logging
 log = logging.getLogger(__name__)
 
-__version__ = "2.1.0"
+__version__ = "2.3.0"
 
 PACKAGE_DIR = os.path.dirname(__file__)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
@@ -35,6 +35,8 @@ def patched_discover(superclass):
     plugins = _original_discover(superclass)
 
     # determine host application to use for finding presets
+    if avalon.registered_host() is None:
+        return plugins
     host = avalon.registered_host().__name__.split(".")[-1]
 
     # map plugin superclass to preset json. Currenly suppoted is load and

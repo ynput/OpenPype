@@ -72,13 +72,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 entity = io.find_one({"type": "asset", "name": name})
                 # Create entity if doesn"t exist
                 if entity is None:
-                    if self.project["_id"] == parent["_id"]:
-                        silo = None
-                    elif parent["silo"] is None:
-                        silo = parent["name"]
-                    else:
-                        silo = parent["silo"]
-                    entity = self.create_avalon_asset(name, silo, data)
+                    entity = self.create_avalon_asset(name, data)
 
             # Update entity data with input data
             io.update_many({"_id": entity["_id"]}, {"$set": {"data": data}})
@@ -86,11 +80,10 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             if "childs" in entity_data:
                 self.import_to_avalon(entity_data["childs"], entity)
 
-    def create_avalon_asset(self, name, silo, data):
+    def create_avalon_asset(self, name, data):
         item = {
-            "schema": "avalon-core:asset-2.0",
+            "schema": "avalon-core:asset-3.0",
             "name": name,
-            "silo": silo,
             "parent": self.project["_id"],
             "type": "asset",
             "data": data

@@ -8,6 +8,7 @@ from pype.ftrack.lib.io_nonsingleton import DbConnector
 class AttributesRemapper(BaseAction):
     '''Edit meta data action.'''
 
+    ignore_me = True
     #: Action identifier.
     identifier = 'attributes.remapper'
     #: Action label.
@@ -279,8 +280,5 @@ class AttributesRemapper(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     AttributesRemapper(session, plugins_presets).register()

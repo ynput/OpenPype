@@ -15,21 +15,17 @@ class CreateOutputNode(pyblish.api.ContextPlugin):
     def process(self, context):
         # capture selection state
         with maintained_selection():
-            # deselect all allNodes
-            self.log.info(context.data["ActiveViewer"])
+            active_node = [node for inst in context[:]
+                           for node in inst[:]
+                           if "ak:family" in node.knobs()]
 
-            active_viewer = context.data["ActiveViewer"]
-            active_input = active_viewer.activeInput()
-            active_node = active_viewer.node()
-
-
-            last_viewer_node = active_node.input(active_input)
-
-            name = last_viewer_node.name()
-            self.log.info("Node name: {}".format(name))
+            if active_node:
+                self.log.info(active_node)
+                active_node = active_node[0]
+                self.log.info(active_node)
+                active_node['selected'].setValue(True)
 
             # select only instance render node
-            last_viewer_node['selected'].setValue(True)
             output_node = nuke.createNode("Output")
 
             # deselect all and select the original selection

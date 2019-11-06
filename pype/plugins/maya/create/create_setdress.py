@@ -7,5 +7,5 @@ class CreateSetDress(avalon.maya.Creator):
     name = "setdressMain"
     label = "Set Dress"
     family = "setdress"
-    icon = "boxes"
+    icon = "cubes"
     defaults = ["Main", "Anim"]

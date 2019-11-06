@@ -106,7 +106,6 @@ class CollectReviews(api.InstancePlugin):
 
     def create_thumbnail(self, instance):
         item = instance.data["item"]
-        source_in = instance.data["sourceIn"]
 
         source_path = instance.data["sourcePath"]
         source_file = os.path.basename(source_path)
@@ -119,11 +118,17 @@ class CollectReviews(api.InstancePlugin):
         thumb_file = head + ".png"
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: {}".format(thumb_path))
-        self.log.debug("__ source_in: {}".format(source_in))
-        thumbnail = item.thumbnail(source_in).save(
+
+        thumb_frame = instance.data["sourceIn"] + ((instance.data["sourceOut"] - instance.data["sourceIn"])/2)
+
+        thumbnail = item.thumbnail(thumb_frame).save(
             thumb_path,
             format='png'
         )
+        
+        self.log.debug("__ sourceIn: `{}`".format(instance.data["sourceIn"]))
+        self.log.debug("__ thumbnail: `{}`, frame: `{}`".format(thumbnail, thumb_frame))
+
         self.log.debug("__ thumbnail: {}".format(thumbnail))
 
         thumb_representation = {

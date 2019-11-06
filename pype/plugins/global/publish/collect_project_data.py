@@ -1,6 +1,13 @@
+"""
+Requires:
+    None
+
+Provides:
+    context     -> projectData
+"""
+
 import pyblish.api
 import pype.api as pype
-
 
 
 class CollectProjectData(pyblish.api.ContextPlugin):

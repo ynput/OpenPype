@@ -1,3 +1,10 @@
+"""
+Requires:
+    context     -> currentFile (str)
+Provides:
+    context     -> label (str)
+"""
+
 import os
 import pyblish.api
 
@@ -19,4 +26,6 @@ class CollectContextLabel(pyblish.api.ContextPlugin):
 
         # Set label
         label = "{host} - {scene}".format(host=host.title(), scene=base)
+        if host == "standalonepublisher":
+            label = host.title()
         context.data["label"] = label

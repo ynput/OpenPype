@@ -6,6 +6,7 @@ from avalon import (
 )
 from pype import api as pype
 import json
+from pathlib import Path
 
 
 class CollectContextDataFromAport(pyblish.api.ContextPlugin):
@@ -26,27 +27,26 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
     def process(self, context):
 
         # get json paths from data
-        rqst_json_data_path = context.data['rqst_json_data_path']
-        post_json_data_path = context.data['post_json_data_path']
+        rqst_json_data_path = Path(context.data['rqst_json_data_path'])
+        post_json_data_path = Path(context.data['post_json_data_path'])
 
         # get avalon session data and convert \ to /
         session = avalon.session
-        fix_paths = {k: v.replace("\\", "/") for k, v in session.items()
-                     if isinstance(v, str)}
-        session.update(fix_paths)
+        self.log.info(os.environ['AVALON_PROJECTS'])
+        projects = Path(session['AVALON_PROJECTS']).resolve()
+        wd = Path(session['AVALON_WORKDIR']).resolve()
+        session['AVALON_PROJECTS'] = str(projects)
+        session['AVALON_WORKDIR'] = str(wd)
+
         context.data["avalonSession"] = session
+        self.log.debug("avalonSession: {}".format(session))
 
         # get stagin directory from recieved path to json
-        context.data["stagingDir"] = \
-            staging_dir = os.path.dirname(
-            post_json_data_path).replace("\\", "/")
-
-        if not os.path.exists(staging_dir):
-            os.makedirs(staging_dir)
+        context.data["stagingDir"] = staging_dir = post_json_data_path.parent
 
         # get data from json file recieved
-        with open(rqst_json_data_path) as f:
-            context.data['json_data'] = json_data = json.load(f)
+        with rqst_json_data_path.open(mode='r') as f:
+            context.data['jsonData'] = json_data = json.load(f)
         assert json_data, "No `data` in json file"
 
         # get and check host type
@@ -63,12 +63,13 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
         pyblish.api.register_host(host)
 
         # get path to studio templates
-        templates_dir = os.getenv("PYPE_CONFIG", None)
-        assert templates_dir, "Missing `PYPE_CONFIG` in os.environ"
+        templates_dir = os.getenv("PYPE_STUDIO_TEMPLATES", None)
+        assert templates_dir, "Missing `PYPE_STUDIO_TEMPLATES` in os.environ"
 
         # get presets for host
         presets_dir = os.path.join(templates_dir, "presets", host)
-        assert os.path.exists(presets_dir), "Required path `{}` doesn't exist".format(presets_dir)
+        assert os.path.exists(
+            presets_dir), "Required path `{}` doesn't exist".format(presets_dir)
 
         # load all available preset json files
         preset_data = dict()
@@ -84,16 +85,16 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
         # get current file
         current_file = json_data.get("currentFile", None)
         assert current_file, "No `currentFile` data in json file"
-        context.data["currentFile"] = current_file
+        context.data["currentFile"] = Path(current_file).resolve()
 
         # get project data from avalon
-        project_data = pype.get_project()["data"]
+        project_data = pype.get_project_data()
         assert project_data, "No `project_data` data in avalon db"
         context.data["projectData"] = project_data
         self.log.debug("project_data: {}".format(project_data))
 
         # get asset data from avalon and fix all paths
-        asset_data = pype.get_asset()["data"]
+        asset_data = pype.get_asset_data()
         assert asset_data, "No `asset_data` data in avalon db"
         asset_data = {k: v.replace("\\", "/") for k, v in asset_data.items()
                       if isinstance(v, str)}

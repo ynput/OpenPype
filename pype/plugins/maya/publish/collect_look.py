@@ -220,6 +220,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             self.collect(instance)
 
         # make ftrack publishable
+        self.maketx = instance.data.get('maketx', True)
         instance.data['maketx'] = self.maketx
         self.log.info('maketx: {}'.format(self.maketx))
 

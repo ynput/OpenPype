@@ -2,6 +2,7 @@ import os
 import sys
 import json
 from subprocess import Popen
+from bson.objectid import ObjectId
 from pype import lib as pypelib
 from avalon.vendor.Qt import QtWidgets, QtCore
 from avalon import api, style, schema
@@ -40,13 +41,13 @@ class Window(QtWidgets.QDialog):
         self.valid_parent = False
 
         # assets widget
-        widget_assets = AssetWidget(self)
+        widget_assets = AssetWidget(dbcon=self._db, parent=self)
 
         # family widget
-        widget_family = FamilyWidget(self)
+        widget_family = FamilyWidget(dbcon=self._db, parent=self)
 
         # components widget
-        widget_components = ComponentsWidget(self)
+        widget_components = ComponentsWidget(parent=self)
 
         # Body
         body = QtWidgets.QSplitter()
@@ -70,6 +71,7 @@ class Window(QtWidgets.QDialog):
 
         # signals
         widget_assets.selection_changed.connect(self.on_asset_changed)
+        widget_family.stateChanged.connect(self.set_valid_family)
 
         self.widget_assets = widget_assets
         self.widget_family = widget_family
@@ -123,7 +125,10 @@ class Window(QtWidgets.QDialog):
         Updates the task view.
 
         '''
-        selected = self.widget_assets.get_selected_assets()
+        selected = [
+            asset_id for asset_id in self.widget_assets.get_selected_assets()
+            if isinstance(asset_id, ObjectId)
+        ]
         if len(selected) == 1:
             self.valid_parent = True
             asset = self.db.find_one({"_id": selected[0], "type": "asset"})
@@ -162,6 +167,8 @@ class Window(QtWidgets.QDialog):
         '''
         if self.shadow_widget.isVisible():
             self.shadow_widget.setVisible(False)
+        # Refresh version
+        self.widget_family.on_version_refresh()
 
     def set_valid_family(self, valid):
         ''' Sets `valid_family` attribute for validation

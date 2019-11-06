@@ -50,13 +50,13 @@ class Window(QtWidgets.QDialog):
         input_outlink.setStyleSheet("background-color: #333333;")
         checkbox_outlink = QtWidgets.QCheckBox("Use outlink")
         # Parent
-        label_parent = QtWidgets.QLabel("Parent:")
+        label_parent = QtWidgets.QLabel("*Parent:")
         input_parent = QtWidgets.QLineEdit()
         input_parent.setReadOnly(True)
         input_parent.setStyleSheet("background-color: #333333;")
 
         # Name
-        label_name = QtWidgets.QLabel("Name:")
+        label_name = QtWidgets.QLabel("*Name:")
         input_name = QtWidgets.QLineEdit()
         input_name.setPlaceholderText("<asset name>")
 
@@ -103,7 +103,7 @@ class Window(QtWidgets.QDialog):
 
         task_view = QtWidgets.QTreeView()
         task_view.setIndentation(0)
-        task_model = model.TasksTemplateModel()
+        task_model = model.TasksModel()
         task_view.setModel(task_model)
 
         info_layout.addWidget(inputs_widget)
@@ -162,6 +162,7 @@ class Window(QtWidgets.QDialog):
         # signals
         btn_create_asset.clicked.connect(self.create_asset)
         assets.selection_changed.connect(self.on_asset_changed)
+        input_name.textChanged.connect(self.on_asset_name_change)
         checkbox_outlink.toggled.connect(self.on_outlink_checkbox_change)
         combo_task_template.currentTextChanged.connect(
             self.on_task_template_changed
@@ -198,6 +199,10 @@ class Window(QtWidgets.QDialog):
         schemas_items = config.get_presets().get('ftrack', {}).get(
             'project_schemas', {}
         )
+        # Get info if it is silo project
+        self.silos = io.distinct("silo")
+        if self.silos and None in self.silos:
+            self.silos = None
 
         key = "default"
         if schema_name in schemas_items:
@@ -374,9 +379,6 @@ class Window(QtWidgets.QDialog):
             session.create('Task', task_data)
 
         av_project = io.find_one({'type': 'project'})
-        silo = parent['silo']
-        if silo is None:
-            silo = parent['name']
 
         hiearchy_items = []
         hiearchy_items.extend(self.get_avalon_parent(parent))
@@ -394,11 +396,15 @@ class Window(QtWidgets.QDialog):
         new_asset_info = {
             'parent': av_project['_id'],
             'name': name,
-            'schema': "avalon-core:asset-2.0",
-            'silo': silo,
+            'schema': "avalon-core:asset-3.0",
             'type': 'asset',
             'data': new_asset_data
         }
+
+        # Backwards compatibility (add silo from parent if is silo project)
+        if self.silos:
+            new_asset_info["silo"] = parent["silo"]
+
         try:
             schema.validate(new_asset_info)
         except Exception:
@@ -576,16 +582,34 @@ class Window(QtWidgets.QDialog):
         assets_model = self.data["model"]["assets"]
         parent_input = self.data['inputs']['parent']
         selected = assets_model.get_selected_assets()
+
+        self.valid_parent = False
         if len(selected) > 1:
-            self.valid_parent = False
             parent_input.setText('< Please select only one asset! >')
         elif len(selected) == 1:
-            self.valid_parent = True
-            asset = io.find_one({"_id": selected[0], "type": "asset"})
-            parent_input.setText(asset['name'])
+            if isinstance(selected[0], io.ObjectId):
+                self.valid_parent = True
+                asset = io.find_one({"_id": selected[0], "type": "asset"})
+                parent_input.setText(asset['name'])
+            else:
+                parent_input.setText('< Selected invalid parent(silo) >')
         else:
-            self.valid_parent = False
             parent_input.setText('< Nothing is selected >')
+
+        self.creatability_check()
+
+    def on_asset_name_change(self):
+        self.creatability_check()
+
+    def creatability_check(self):
+        name_input = self.data['inputs']['name']
+        name = str(name_input.text()).strip()
+        creatable = False
+        if name and self.valid_parent:
+            creatable = True
+
+        self.data["buttons"]["create_asset"].setEnabled(creatable)
+
 
 
 def show(parent=None, debug=False, context=None):

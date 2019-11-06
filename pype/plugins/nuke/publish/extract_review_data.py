@@ -3,7 +3,6 @@ import nuke
 import pyblish.api
 import pype
 
-
 class ExtractReviewData(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
@@ -48,9 +47,9 @@ class ExtractReviewData(pype.api.Extractor):
 
         assert instance.data['representations'][0]['files'], "Instance data files should't be empty!"
 
-        import nuke
         temporary_nodes = []
-        stagingDir = instance.data['representations'][0]["stagingDir"].replace("\\", "/")
+        stagingDir = instance.data[
+            'representations'][0]["stagingDir"].replace("\\", "/")
         self.log.debug("StagingDir `{0}`...".format(stagingDir))
 
         collection = instance.data.get("collection", None)
@@ -70,16 +69,24 @@ class ExtractReviewData(pype.api.Extractor):
             first_frame = instance.data.get("frameStart", None)
             last_frame = instance.data.get("frameEnd", None)
 
-        node = previous_node = nuke.createNode("Read")
+        rnode = nuke.createNode("Read")
 
-        node["file"].setValue(
+        rnode["file"].setValue(
             os.path.join(stagingDir, fname).replace("\\", "/"))
 
-        node["first"].setValue(first_frame)
-        node["origfirst"].setValue(first_frame)
-        node["last"].setValue(last_frame)
-        node["origlast"].setValue(last_frame)
-        temporary_nodes.append(node)
+        rnode["first"].setValue(first_frame)
+        rnode["origfirst"].setValue(first_frame)
+        rnode["last"].setValue(last_frame)
+        rnode["origlast"].setValue(last_frame)
+        temporary_nodes.append(rnode)
+        previous_node = rnode
+
+        # get input process and connect it to baking
+        ipn = self.get_view_process_node()
+        if ipn is not None:
+            ipn.setInput(0, previous_node)
+            previous_node = ipn
+            temporary_nodes.append(ipn)
 
         reformat_node = nuke.createNode("Reformat")
 
@@ -95,22 +102,10 @@ class ExtractReviewData(pype.api.Extractor):
         previous_node = reformat_node
         temporary_nodes.append(reformat_node)
 
-        viewer_process_node = instance.context.data.get("ViewerProcess")
-        dag_node = None
-        if viewer_process_node:
-            dag_node = nuke.createNode(viewer_process_node.Class())
-            dag_node.setInput(0, previous_node)
-            previous_node = dag_node
-            temporary_nodes.append(dag_node)
-            # Copy viewer process values
-            excludedKnobs = ["name", "xpos", "ypos"]
-            for item in viewer_process_node.knobs().keys():
-                if item not in excludedKnobs and item in dag_node.knobs():
-                    x1 = viewer_process_node[item]
-                    x2 = dag_node[item]
-                    x2.fromScript(x1.toScript(False))
-        else:
-            self.log.warning("No viewer node found.")
+        dag_node = nuke.createNode("OCIODisplay")
+        dag_node.setInput(0, previous_node)
+        previous_node = dag_node
+        temporary_nodes.append(dag_node)
 
         # create write node
         write_node = nuke.createNode("Write")
@@ -164,3 +159,29 @@ class ExtractReviewData(pype.api.Extractor):
         # Clean up
         for node in temporary_nodes:
             nuke.delete(node)
+
+    def get_view_process_node(self):
+
+        # Select only the target node
+        if nuke.selectedNodes():
+            [n.setSelected(False) for n in nuke.selectedNodes()]
+
+        ipn_orig = None
+        for v in [n for n in nuke.allNodes()
+                  if "Viewer" in n.Class()]:
+            ip = v['input_process'].getValue()
+            ipn = v['input_process_node'].getValue()
+            if "VIEWER_INPUT" not in ipn and ip:
+                ipn_orig = nuke.toNode(ipn)
+                ipn_orig.setSelected(True)
+
+        if ipn_orig:
+            nuke.nodeCopy('%clipboard%')
+
+            [n.setSelected(False) for n in nuke.selectedNodes()] # Deselect all
+
+            nuke.nodePaste('%clipboard%')
+
+            ipn = nuke.selectedNode()
+
+            return ipn

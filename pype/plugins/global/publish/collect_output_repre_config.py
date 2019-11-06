@@ -1,5 +1,11 @@
-import os
-import json
+"""
+Requires:
+    config_data -> ftrack.output_representation
+
+Provides:
+    context     -> output_repre_config (str)
+"""
+
 import pyblish.api
 from pypeapp import config
 
@@ -9,7 +15,7 @@ class CollectOutputRepreConfig(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Collect Config for representation"
-    hosts = ["shell"]
+    hosts = ["shell", "standalonepublisher"]
 
     def process(self, context):
         config_data = config.get_presets()["ftrack"]["output_representation"]

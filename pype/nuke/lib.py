@@ -8,7 +8,9 @@ import avalon.nuke
 import pype.api as pype
 
 import nuke
-from .templates import (
+
+
+from .presets import (
     get_colorspace_preset,
     get_node_dataflow_preset,
     get_node_colorspace_preset
@@ -55,7 +57,8 @@ def checkInventoryVersions():
 
             if container:
                 node = container["_node"]
-                avalon_knob_data = avalon.nuke.get_avalon_knob_data(node)
+                avalon_knob_data = avalon.nuke.get_avalon_knob_data(
+                    node, ['avalon:', 'ak:'])
 
                 # get representation from io
                 representation = io.find_one({
@@ -101,7 +104,8 @@ def writes_version_sync():
 
     for each in nuke.allNodes():
         if each.Class() == 'Write':
-            avalon_knob_data = avalon.nuke.get_avalon_knob_data(each)
+            avalon_knob_data = avalon.nuke.get_avalon_knob_data(
+                each, ['avalon:', 'ak:'])
 
             try:
                 if avalon_knob_data['families'] not in ["render"]:
@@ -134,7 +138,8 @@ def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
     data = dict()
-    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(
+        node, ['avalon:', 'ak:'])
 
     data_preset = {
         "class": data['avalon']['family'],
@@ -379,6 +384,10 @@ def add_rendering_knobs(node):
         knob = nuke.Boolean_Knob("render_farm", "Render on Farm")
         knob.setValue(False)
         node.addKnob(knob)
+    if "review" not in node.knobs():
+        knob = nuke.Boolean_Knob("review", "Review")
+        knob.setValue(True)
+        node.addKnob(knob)
     return node
 
 
@@ -388,6 +397,14 @@ def add_deadline_tab(node):
     knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
     knob.setValue(1)
     node.addKnob(knob)
+
+    knob = nuke.Int_Knob("deadlinePriority", "Priority")
+    knob.setValue(50)
+    node.addKnob(knob)
+
+
+def get_deadline_knob_names():
+    return ["Deadline", "deadlineChunkSize", "deadlinePriority"]
 
 
 def create_backdrop(label="", color=None, layer=0,
@@ -543,17 +560,34 @@ class WorkfileSettings(object):
         assert isinstance(root_dict, dict), log.error(
             "set_root_colorspace(): argument should be dictionary")
 
+        log.debug(">> root_dict: {}".format(root_dict))
+
         # first set OCIO
         if self._root_node["colorManagement"].value() \
                 not in str(root_dict["colorManagement"]):
             self._root_node["colorManagement"].setValue(
                 str(root_dict["colorManagement"]))
+            log.debug("nuke.root()['{0}'] changed to: {1}".format(
+                "colorManagement", root_dict["colorManagement"]))
+            root_dict.pop("colorManagement")
 
         # second set ocio version
         if self._root_node["OCIO_config"].value() \
                 not in str(root_dict["OCIO_config"]):
             self._root_node["OCIO_config"].setValue(
                 str(root_dict["OCIO_config"]))
+            log.debug("nuke.root()['{0}'] changed to: {1}".format(
+                "OCIO_config", root_dict["OCIO_config"]))
+            root_dict.pop("OCIO_config")
+
+        # third set ocio custom path
+        if root_dict.get("customOCIOConfigPath"):
+            self._root_node["customOCIOConfigPath"].setValue(
+                str(root_dict["customOCIOConfigPath"]).format(**os.environ)
+                )
+            log.debug("nuke.root()['{}'] changed to: {}".format(
+                "customOCIOConfigPath", root_dict["customOCIOConfigPath"]))
+            root_dict.pop("customOCIOConfigPath")
 
         # then set the rest
         for knob, value in root_dict.items():
@@ -798,10 +832,12 @@ def get_write_node_template_attr(node):
     '''
     # get avalon data from node
     data = dict()
-    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(
+        node, ['avalon:', 'ak:'])
     data_preset = {
         "class": data['avalon']['family'],
-        "preset": data['avalon']['families']
+        "families": data['avalon']['families'],
+        "preset": data['avalon']['families']  # omit < 2.0.0v
     }
 
     # get template data
@@ -927,7 +963,7 @@ class BuildWorkfile(WorkfileSettings):
     def process(self,
                 regex_filter=None,
                 version=None,
-                representations=["exr", "dpx", "lutJson"]):
+                representations=["exr", "dpx", "lutJson", "mov", "preview"]):
         """
         A short description.
 
@@ -983,6 +1019,8 @@ class BuildWorkfile(WorkfileSettings):
                                    regex_filter=regex_filter,
                                    version=version,
                                    representations=representations)
+
+        log.info("__ subsets: `{}`".format(subsets))
 
         nodes_backdrop = list()
 

@@ -88,8 +88,7 @@ class MusterLogin(QtWidgets.QWidget):
 
         self.error_label = QtWidgets.QLabel("")
         self.error_label.setFont(self.font)
-        self.error_label.setTextFormat(QtCore.Qt.RichText)
-        self.error_label.setObjectName("error_label")
+        self.error_label.setStyleSheet('color: #FC6000')
         self.error_label.setWordWrap(True)
         self.error_label.hide()
 
@@ -105,6 +104,9 @@ class MusterLogin(QtWidgets.QWidget):
         self.btn_ok.clicked.connect(self.click_ok)
 
         self.btn_cancel = QtWidgets.QPushButton("Cancel")
+        QtWidgets.QShortcut(
+            QtGui.QKeySequence(
+                QtCore.Qt.Key_Escape), self).activated.connect(self.close)
         self.btn_cancel.clicked.connect(self.close)
 
         self.btn_group.addWidget(self.btn_ok)
@@ -115,7 +117,21 @@ class MusterLogin(QtWidgets.QWidget):
 
         return self.main
 
+    def keyPressEvent(self, key_event):
+        if key_event.key() == QtCore.Qt.Key_Return:
+            if self.input_username.hasFocus():
+                self.input_password.setFocus()
+
+            elif self.input_password.hasFocus() or self.btn_ok.hasFocus():
+                self.click_ok()
+
+            elif self.btn_cancel.hasFocus():
+                self.close()
+        else:
+            super().keyPressEvent(key_event)
+
     def setError(self, msg):
+
         self.error_label.setText(msg)
         self.error_label.show()
 
@@ -130,11 +146,16 @@ class MusterLogin(QtWidgets.QWidget):
         if not username:
             self.setError("Username cannot be empty")
             self.invalid_input(self.input_username)
-        self.save_credentials(username, password)
-        self._close_widget()
+        try:
+            self.save_credentials(username, password)
+        except Exception as e:
+            self.setError(
+                "<b>Cannot get auth token:</b>\n<code>{}</code>".format(e))
+        else:
+            self._close_widget()
 
     def save_credentials(self, username, password):
-        self.parent_widget.save_credentials(username, password)
+        self.parent_widget.get_auth_token(username, password)
 
     def closeEvent(self, event):
         event.ignore()

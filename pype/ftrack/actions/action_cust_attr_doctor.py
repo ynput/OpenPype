@@ -9,6 +9,8 @@ from pype.ftrack import BaseAction
 
 
 class CustomAttributeDoctor(BaseAction):
+
+    ignore_me = True
     #: Action identifier.
     identifier = 'custom.attributes.doctor'
     #: Action label.
@@ -23,10 +25,12 @@ class CustomAttributeDoctor(BaseAction):
     icon = '{}/ftrack/action_icons/PypeDoctor.svg'.format(
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
-    hierarchical_ca = ['handle_start', 'handle_end', 'fstart', 'fend']
+    hierarchical_ca = ['handleStart', 'handleEnd', 'frameStart', 'frameEnd']
     hierarchical_alternatives = {
-        'handle_start': 'handles',
-        'handle_end': 'handles'
+        'handleStart': 'handles',
+        'handleEnd': 'handles',
+        "frameStart": "fstart",
+        "frameEnd": "fend"
     }
 
     # Roles for new custom attributes
@@ -34,22 +38,22 @@ class CustomAttributeDoctor(BaseAction):
     write_roles = ['ALL',]
 
     data_ca = {
-        'handle_start': {
+        'handleStart': {
             'label': 'Frame handles start',
             'type': 'number',
             'config': json.dumps({'isdecimal': False})
         },
-        'handle_end': {
+        'handleEnd': {
             'label': 'Frame handles end',
             'type': 'number',
             'config': json.dumps({'isdecimal': False})
         },
-        'fstart': {
+        'frameStart': {
             'label': 'Frame start',
             'type': 'number',
             'config': json.dumps({'isdecimal': False})
         },
-        'fend': {
+        'frameEnd': {
             'label': 'Frame end',
             'type': 'number',
             'config': json.dumps({'isdecimal': False})
@@ -289,9 +293,6 @@ class CustomAttributeDoctor(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     CustomAttributeDoctor(session, plugins_presets).register()
 
