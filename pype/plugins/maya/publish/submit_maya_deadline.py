@@ -111,7 +111,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
     families = ["renderlayer"]
-    optional = True
+    if not os.environ.get("DEADLINE_REST_URL"):
+        optional = False
+        active = False
+    else:
+        optional = True
 
     def process(self, instance):
 
@@ -319,7 +323,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         # E.g. http://192.168.0.1:8082/api/jobs
         url = "{}/api/jobs".format(DEADLINE_REST_URL)
-        response = requests.post(url, json=payload)
+        response = self._requests_post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)
 
@@ -340,3 +344,31 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
+
+    def _requests_post(self, *args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.post(*args, **kwargs)
+
+    def _requests_get(self, *args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.get(*args, **kwargs)
