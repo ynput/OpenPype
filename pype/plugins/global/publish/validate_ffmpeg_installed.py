@@ -1,6 +1,10 @@
 import pyblish.api
 import os
 import subprocess
+try:
+    import os.errno as errno
+except ImportError:
+    import errno
 
 
 class ValidateFfmpegInstallef(pyblish.api.Validator):
@@ -18,7 +22,7 @@ class ValidateFfmpegInstallef(pyblish.api.Validator):
                 [name], stdout=devnull, stderr=devnull
             ).communicate()
         except OSError as e:
-            if e.errno == os.errno.ENOENT:
+            if e.errno == errno.ENOENT:
                 return False
         return True
 
