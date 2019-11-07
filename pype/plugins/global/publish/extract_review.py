@@ -163,7 +163,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             # output filename
                             output_args.append(full_output_path)
                             mov_args = [
-                                "ffmpeg",
+                                os.path.join(
+                                    os.environ.get(
+                                        "FFMPEG_PATH",
+                                        ""), "ffmpeg"),
                                 " ".join(input_args),
                                 " ".join(output_args)
                             ]
