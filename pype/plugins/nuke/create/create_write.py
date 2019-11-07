@@ -92,17 +92,13 @@ class CreateWriteRender(plugin.PypeCreator):
             write_data,
             input=selected_node)
 
-        self.log.info("### write_node: {}".format(write_node.name()))
-
         # relinking to collected connections
         for i, input in enumerate(inputs):
-            self.log.info("### i, input: {}, {}".format(i, input.name()))
             write_node.setInput(i, input)
 
         write_node.autoplace()
 
         for output in outputs:
-            self.log.info("### output: {}".format(output.name()))
             output.setInput(0, write_node)
 
         return True
