@@ -565,6 +565,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             source = instance.data['source']
         except KeyError:
             source = context.data["currentFile"]
+            source = source.replace(os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"),
+                                    api.registered_root())
             relative_path = os.path.relpath(source, api.registered_root())
             source = os.path.join("{root}", relative_path).replace("\\", "/")
 
