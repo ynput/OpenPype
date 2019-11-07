@@ -1,7 +1,6 @@
 from collections import OrderedDict
 import avalon.api
 import avalon.nuke
-from pype.nuke.lib import create_write_node
 from pype import api as pype
 from pype.nuke import plugin
 from pypeapp import config
@@ -11,13 +10,13 @@ import nuke
 
 log = pype.Logger().get_logger(__name__, "nuke")
 
+
 class CreateWriteRender(plugin.PypeCreator):
     # change this to template preset
-    preset = "write"
-
     name = "WriteRender"
     label = "Create Write Render"
     hosts = ["nuke"]
+    nClass = "write"
     family = "render"
     icon = "sign-out"
     defaults = ["Main", "Mask"]
@@ -29,22 +28,25 @@ class CreateWriteRender(plugin.PypeCreator):
 
         data = OrderedDict()
 
-        data["family"] = self.family
+        data["family"] = self.nClass
+        data["families"] = self.family
 
         for k, v in self.data.items():
             if k not in data.keys():
                 data.update({k: v})
 
         self.data = data
+        self.log.info("_>>_ self.data: '{}'".format(self.data))
 
     def process(self):
-
+        from pype.nuke import lib as pnlib
+        reload(pnlib)
         instance = nuke.toNode(self.data["subset"])
 
         if not instance:
             write_data = {
-                "class": 'write',
-                "preset": self.family,
+                "class": self.nClass,
+                "families": [self.family],
                 "avalon": self.data
             }
 
@@ -57,8 +59,14 @@ class CreateWriteRender(plugin.PypeCreator):
                 self.log.info("Adding template path from plugin")
                 write_data.update({
                     "fpath_template": "{work}/renders/nuke/{subset}/{subset}.{frame}.{ext}"})
+        else:
+            # collect input / outputs
+            # remove old one
+            # recreate new
+            # relinking to collected connections
+            return
 
-        return create_write_node(self.data["subset"], write_data)
+        return pnlib.create_write_node(self.data["subset"], write_data)
 
 
 class CreateWritePrerender(avalon.nuke.Creator):
