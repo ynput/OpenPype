@@ -46,7 +46,7 @@ class ContextPlugin(pyblish.api.ContextPlugin):
 class InstancePlugin(pyblish.api.InstancePlugin):
     def process(cls, *args, **kwargs):
         imprint_attributes(cls)
-        super(ContextPlugin, cls).process(cls, *args, **kwargs)
+        super(InstancePlugin, cls).process(cls, *args, **kwargs)
 
 
 class Extractor(InstancePlugin):

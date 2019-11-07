@@ -1,12 +1,16 @@
 import os
 import json
-from maya import cmds
-from avalon import api
-from avalon.vendor import requests
-import pyblish.api
-import pype.maya.lib as lib
+import getpass
 import appdirs
 import platform
+
+from maya import cmds
+
+from avalon import api
+from avalon.vendor import requests
+
+import pyblish.api
+import pype.maya.lib as lib
 from pypeapp import config
 
 
@@ -137,8 +141,12 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
     families = ["renderlayer"]
-    optional = True
     icon = "satellite-dish"
+    if not os.environ.get("MUSTER_REST_URL"):
+        optional = False
+        active = False
+    else:
+        optional = True
 
     _token = None
 
@@ -175,7 +183,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             "select": "name"
         }
         api_entry = '/api/templates/list'
-        response = requests.post(
+        response = self._requests_post(
             self.MUSTER_REST_URL + api_entry, params=params)
         if response.status_code != 200:
             self.log.error(
@@ -226,7 +234,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             "name": "submit"
         }
         api_entry = '/api/queue/actions'
-        response = requests.post(
+        response = self._requests_post(
             self.MUSTER_REST_URL + api_entry, params=params, json=payload)
 
         if response.status_code != 200:
@@ -318,7 +326,10 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             muster_python = ("\"C:\\\\Program Files\\\\Virtual Vertex\\\\"
                              "Muster 9\\\\MPython.exe\"")
         else:
-            muster_python = "/usr/local/muster9/mpython"
+            # we need to run pype as different user then Muster dispatcher
+            # service is running (usually root).
+            muster_python = ("/usr/sbin/runuser -u {}"
+                             " -- /usr/bin/python3".format(getpass.getuser()))
 
         # build the path and argument. We are providing separate --pype
         # argument with network path to pype as post job actions are run
@@ -550,3 +561,17 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
+
+    def _requests_post(self, *args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.post(*args, **kwargs)
