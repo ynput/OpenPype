@@ -38,7 +38,7 @@ def evaluate_filepath_new(k_value, k_eval, project_dir, first_frame):
         filepath = os.path.abspath(filepath)
     except Exception as E:
         log.error("Cannot create Read node. Perhaps it needs to be rendered first :) Error: `{}`".format(E))
-        return
+        return None
 
     filepath = filepath.replace('\\', '/')
     current_frame = re.findall(r'\d+', filepath)[-1]
@@ -114,12 +114,16 @@ def write_to_read(gn):
             n = group_writes[0]
 
             if n.knob('file') is not None:
-                myfiletranslated, firstFrame, lastFrame = evaluate_filepath_new(
+                file_path_new = evaluate_filepath_new(
                     n.knob('file').getValue(),
                     n.knob('file').evaluate(),
                     project_dir,
                     comp_start
                 )
+                if not file_path_new:
+                    return
+                    
+                myfiletranslated, firstFrame, lastFrame = file_path_new
                 # get node data
                 ndata = {
                     'filepath': myfiletranslated,
