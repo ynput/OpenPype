@@ -78,10 +78,10 @@ def check_mongo_url(host, port, log_error=False):
 def validate_credentials(url, user, api):
     first_validation = True
     if not user:
-        print('ERROR: Ftrack Username is not set! Exiting.')
+        print('- Ftrack Username is not set')
         first_validation = False
     if not api:
-        print('ERROR: Ftrack API key is not set! Exiting.')
+        print('- Ftrack API key is not set')
         first_validation = False
     if not first_validation:
         return False
@@ -491,10 +491,12 @@ def main(argv):
     # Check url regex and accessibility
     ftrack_url = check_ftrack_url(ftrack_url)
     if not ftrack_url:
+        print('Exiting! < Please enter Ftrack server url >')
         return 1
 
     # Validate entered credentials
     if not validate_credentials(ftrack_url, username, api_key):
+        print('Exiting! < Please enter valid credentials >')
         return 1
 
     # Process events path
@@ -534,8 +536,4 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
 
-    try:
-        signal.signal(signal.SIGKILL, signal_handler)
-    except OSError:
-        pass
     sys.exit(main(sys.argv))
