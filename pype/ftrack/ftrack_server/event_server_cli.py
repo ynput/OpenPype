@@ -268,6 +268,7 @@ def main_loop(ftrack_url):
         # Run threads only if Ftrack is accessible
         if not ftrack_accessible or not mongo_accessible:
             if not mongo_accessible and not printed_mongo_error:
+                mongo_url = mongo_hostname + ":" + mongo_port
                 print("Can't access Mongo {}".format(mongo_url))
 
             if not ftrack_accessible and not printed_ftrack_error:
