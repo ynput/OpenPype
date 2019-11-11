@@ -80,17 +80,21 @@ def reload_config():
     for module in (
         "{}.api".format(AVALON_CONFIG),
         "{}.nuke.actions".format(AVALON_CONFIG),
-        "{}.nuke.templates".format(AVALON_CONFIG),
+        "{}.nuke.presets".format(AVALON_CONFIG),
         "{}.nuke.menu".format(AVALON_CONFIG),
+        "{}.nuke.plugin".format(AVALON_CONFIG),
         "{}.nuke.lib".format(AVALON_CONFIG),
     ):
         log.info("Reloading module: {}...".format(module))
+
+        module = importlib.import_module(module)
+
         try:
-            module = importlib.import_module(module)
-            reload(module)
-        except Exception as e:
-            log.warning("Cannot reload module: {}".format(e))
             importlib.reload(module)
+        except AttributeError as e:
+            log.warning("Cannot reload module: {}".format(e))
+            reload(module)
+
 
 
 def install():
