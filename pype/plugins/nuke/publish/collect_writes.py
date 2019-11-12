@@ -121,7 +121,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputType": output_type,
             "colorspace": node["colorspace"].value(),
             "deadlineChunkSize": deadlineChunkSize,
-            "deadlinePriority": deadlinePriority
+            "deadlinePriority": deadlinePriority,
+            "subsetGroup": "render"
         })
 
         self.log.debug("instance.data: {}".format(instance.data))
