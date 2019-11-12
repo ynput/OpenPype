@@ -1,8 +1,9 @@
 import os
+import re
 import sys
 import getpass
 from collections import OrderedDict
-from pprint import pprint
+
 from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
@@ -949,7 +950,7 @@ class BuildWorkfile(WorkfileSettings):
                                   **kwargs)
         self.to_script = to_script
         # collect data for formating
-        data = {
+        self.data_tmp = {
             "root": root_path or api.Session["AVALON_PROJECTS"],
             "project": {"name": self._project["name"],
                         "code": self._project["data"].get("code", '')},
@@ -964,7 +965,7 @@ class BuildWorkfile(WorkfileSettings):
         # get presets from anatomy
         anatomy = get_anatomy()
         # format anatomy
-        anatomy_filled = anatomy.format(data)
+        anatomy_filled = anatomy.format(self.data_tmp)
 
         # get dir and file for workfile
         self.work_dir = anatomy_filled["avalon"]["work"]
@@ -1140,6 +1141,10 @@ class BuildWorkfile(WorkfileSettings):
             representation (dict): avalon db entity
 
         """
+        task = self.data_tmp["task"]
+        sanitized_task = re.sub('[^0-9a-zA-Z]+', '', task)
+        subset_name = "render{}Main".format(
+            sanitized_task.capitalize())
 
         Create_name = "CreateWriteRender"
 
@@ -1151,7 +1156,7 @@ class BuildWorkfile(WorkfileSettings):
             creator_plugin = Creator
 
         # return api.create()
-        return creator_plugin("render_writeMain", self._asset).process()
+        return creator_plugin(subset_name, self._asset).process()
 
     def create_backdrop(self, label="", color=None, layer=0,
                         nodes=None):
