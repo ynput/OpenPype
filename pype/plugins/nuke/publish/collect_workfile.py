@@ -77,6 +77,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "name": base_name,
             "publish": root.knob('publish').value(),
             "family": family,
+            "families": [family],
             "representations": list()
         })
 
