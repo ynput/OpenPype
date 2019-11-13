@@ -95,7 +95,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameEnd": last_frame - handle_end,
             "version": int(version),
             "colorspace":  node["colorspace"].value(),
-            "families": [instance.data["family"]],
+            "families": [instance.data["family"]] + instance.data["families"],
             "subset": instance.data["subset"],
             "fps": instance.context.data["fps"]
         }
@@ -122,7 +122,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "colorspace": node["colorspace"].value(),
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority,
-            "subsetGroup": "render"
+            "subsetGroup": "renders"
         })
 
         self.log.debug("instance.data: {}".format(instance.data))
