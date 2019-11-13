@@ -8,7 +8,12 @@ reload(pype.maya.plugin)
 class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
     """Load the model"""
 
-    families = ["model", "pointcache", "animation"]
+    families = ["model",
+                "pointcache",
+                "animation",
+                "mayaAscii",
+                "setdress",
+                "layout"]
     representations = ["ma", "abc"]
     tool_names = ["loader"]
 
