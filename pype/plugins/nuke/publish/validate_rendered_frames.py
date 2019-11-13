@@ -28,7 +28,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["render"]
+    families = ["render.no"]
 
     label = "Validate rendered frame"
     hosts = ["nuke", "nukestudio"]

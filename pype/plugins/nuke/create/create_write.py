@@ -28,8 +28,8 @@ class CreateWriteRender(plugin.PypeCreator):
 
         data = OrderedDict()
 
-        data["family"] = self.nClass
-        data["families"] = self.family
+        data["family"] = self.family
+        data["families"] = self.nClass
 
         for k, v in self.data.items():
             if k not in data.keys():

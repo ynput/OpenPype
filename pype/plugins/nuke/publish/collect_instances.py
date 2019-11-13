@@ -58,7 +58,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     instance.append(i)
                 node.end()
 
-            family = avalon_knob_data["families"]
+            family = avalon_knob_data["family"]
             if node["render"].value():
                 self.log.info("flagged for render")
                 family = "render.local"
@@ -67,6 +67,8 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     self.log.info("adding render farm family")
                     family = "render.farm"
                     instance.data['transfer'] = False
+            else:
+                family = "render.no"
 
             instance.data.update({
                 "subset": subset,
@@ -75,7 +77,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "name": node.name(),
                 "subset": subset,
                 "family": avalon_knob_data["family"],
-                "families": [avalon_knob_data["family"], family],
+                "families": [avalon_knob_data["families"], family],
                 "avalonKnob": avalon_knob_data,
                 "publish": node.knob('publish').value(),
                 "step": 1,

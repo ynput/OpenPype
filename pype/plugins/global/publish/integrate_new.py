@@ -493,7 +493,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         filelink.create(src, dst, filelink.HARDLINK)
 
     def get_subset(self, asset, instance):
-
         subset = io.find_one({"type": "subset",
                               "parent": asset["_id"],
                               "name": instance.data["subset"]})
@@ -515,6 +514,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }).inserted_id
 
             subset = io.find_one({"_id": _id})
+
+        # add group if available
+        if instance.data.get("subsetGroup"):
+            subset["data"].update(
+                {"subsetGroup": instance.data.get("subsetGroup")}
+            )
+            io.update_many({
+                'type': 'subset',
+                '_id': io.ObjectId(subset["_id"])
+            }, {'$set': subset["data"]}
+            )
 
         return subset
 

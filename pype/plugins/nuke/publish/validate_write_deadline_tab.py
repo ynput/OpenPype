@@ -39,7 +39,7 @@ class ValidateNukeWriteDeadlineTab(pyblish.api.InstancePlugin):
     label = "Deadline Tab"
     hosts = ["nuke"]
     optional = True
-    families = ["write"]
+    families = ["render"]
     actions = [RepairNukeWriteDeadlineTab]
 
     def process(self, instance):
