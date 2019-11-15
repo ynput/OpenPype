@@ -103,7 +103,7 @@ class FtrackModule:
                 self.set_menu_visibility()
                 self.action_server.run_server()
                 if self.bool_action_thread_running:
-                    self.log.debug("Ftrack action server has stopped")
+                    log.debug("Ftrack action server has stopped")
             except Exception:
                 log.warning(
                     "Ftrack Action server crashed. Trying to connect again",
