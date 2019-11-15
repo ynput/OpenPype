@@ -2335,6 +2335,16 @@ class SyncToAvalonServer(BaseAction):
 
             return {"success": True, "message": msg}
 
+        finally:
+            try:
+                entities_factory.dbcon.uninstall()
+            except Exception:
+                pass
+
+            try:
+                entities_factory.session.close()
+            except Exception:
+                pass
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
