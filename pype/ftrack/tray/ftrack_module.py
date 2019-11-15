@@ -77,6 +77,12 @@ class FtrackModule:
     def start_action_server(self):
         self.bool_action_thread_running = True
         self.set_menu_visibility()
+        if (
+            self.thread_action_server is not None and
+            self.bool_action_thread_running is False
+        ):
+            self.stop_action_server()
+
         if self.thread_action_server is None:
             self.thread_action_server = threading.Thread(
                 target=self.set_action_server
