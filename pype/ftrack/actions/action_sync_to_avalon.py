@@ -2184,7 +2184,7 @@ class SyncToAvalonLocal(BaseAction):
 
     def discover(self, session, entities, event):
         ''' Validation '''
-        for ent in event["data"]["entities"]:
+        for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
             if ent["entityType"].lower() in ["show", "task"]:
                 return True

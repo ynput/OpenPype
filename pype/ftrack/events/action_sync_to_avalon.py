@@ -2188,8 +2188,34 @@ class SyncToAvalonServer(BaseAction):
     role_list = ["Pypeclub"]
 
     def discover(self, session, entities, event):
-        ''' Validation '''
-        return True
+        """ Validation """
+        # Check if selection is valid
+        valid_selection = False
+        for ent in event["data"]["selection"]:
+            # Ignore entities that are not tasks or projects
+            if ent["entityType"].lower() in ["show", "task"]:
+                valid_selection = True
+                break
+
+        if not valid_selection:
+            return False
+
+        # Get user and check his roles
+        user_id = event.get("source", {}).get("user", {}).get("id")
+        if not user_id:
+            return False
+
+        user = session.query("User where id is \"{}\"".format(user_id)).first()
+        if not user:
+            return False
+
+        role_list = ["Pypeclub", "Administrator", "Project Manager"]
+        for role in user["user_security_roles"]:
+            if role["security_role"]["name"] in role_list:
+                return True
+                break
+
+        return False
 
     def launch(self, session, in_entities, event):
         time_start = time.time()
