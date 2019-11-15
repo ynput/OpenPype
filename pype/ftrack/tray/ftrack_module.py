@@ -199,7 +199,7 @@ class FtrackModule:
             return
 
         self.aRunActionS.setVisible(not self.bool_action_thread_running)
-        self.aResetActionS.setVisible(self.bool_action_server_running)
+        self.aResetActionS.setVisible(self.bool_action_thread_running)
         self.aStopActionS.setVisible(self.bool_action_thread_running)
 
         if self.bool_timer_event is False:
