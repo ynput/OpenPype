@@ -15,7 +15,7 @@ from pype.ftrack import BaseAction
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 from pype.vendor import ftrack_api
 from pype.vendor.ftrack_api import session as fa_session
-from pypeapp import Anatomy, config
+from pypeapp import Anatomy
 
 
 class SyncEntitiesFactory:
@@ -1808,7 +1808,6 @@ class SyncEntitiesFactory:
         return changes
 
     def merge_dicts(self, dict_new, dict_old):
-        # _ignore_keys may be used for keys nested dict like"data.visualParent"
         for key, value in dict_new.items():
             if key not in dict_old:
                 dict_old[key] = value
@@ -2142,7 +2141,7 @@ class SyncEntitiesFactory:
         }
 
 
-class SyncToAvalonServer(BaseAction):
+class SyncToAvalonLocal(BaseAction):
     """
     Synchronizing data action - from Ftrack to Avalon DB
 
@@ -2166,30 +2165,30 @@ class SyncToAvalonServer(BaseAction):
         - run 'Create Custom Attributes' action
         - or do it manually (Not recommended)
     """
+
     #: Action identifier.
-    identifier = "sync.to.avalon.server"
+    identifier = "sync.to.avalon.local"
     #: Action label.
     label = "Pype Admin"
-    variant = "- Sync To Avalon (Server)"
+    #: Action variant
+    variant = "- Sync To Avalon (Local)"
     #: Action description.
     description = "Send data from Ftrack to Avalon"
-    #: Action icon.
-    icon = "{}/ftrack/action_icons/PypeAdmin.svg".format(
-        os.environ.get(
-            "PYPE_STATICS_SERVER",
-            "http://localhost:{}".format(
-                config.get_presets().get("services", {}).get(
-                    "statics_server", {}
-                ).get("default_port", 8021)
-            )
-        )
-    )
+    #: priority
+    priority = 200
     #: roles that are allowed to register this action
     role_list = ["Pypeclub"]
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
 
     def discover(self, session, entities, event):
         ''' Validation '''
-        return True
+        for ent in event["data"]["entities"]:
+            # Ignore entities that are not tasks or projects
+            if ent["entityType"].lower() in ["show", "task"]:
+                return True
+        return False
 
     def launch(self, session, in_entities, event):
         time_start = time.time()
@@ -2313,4 +2312,4 @@ class SyncToAvalonServer(BaseAction):
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
-    SyncToAvalonServer(session, plugins_presets).register()
+    SyncToAvalonLocal(session, plugins_presets).register()
