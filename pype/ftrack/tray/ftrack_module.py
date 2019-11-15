@@ -187,8 +187,6 @@ class FtrackModule:
         self.validate()
 
     def tray_exit(self):
-        self.bool_action_thread_running = False
-        self.bool_action_server_running = False
         self.stop_action_server()
 
     # Definition of visibility of each menu actions
