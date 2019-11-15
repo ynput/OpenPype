@@ -87,7 +87,6 @@ class FtrackModule:
             self.thread_action_server = threading.Thread(
                 target=self.set_action_server
             )
-            self.thread_action_server.daemon = True
             self.thread_action_server.start()
 
     def set_action_server(self):
