@@ -1,5 +1,6 @@
 import os
 import sys
+import six
 import pyblish.api
 import clique
 
@@ -125,6 +126,12 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                         metadata=asset_metadata
                     )
                 )
+                try:
+                    session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    session.rollback()
+                    six.reraise(tp, value, tb)
 
             # Adding metadata
             existing_asset_metadata = asset_entity["metadata"]
@@ -162,6 +169,12 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                         metadata=assetversion_metadata
                     )
                 )
+                try:
+                    session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    session.rollback()
+                    six.reraise(tp, value, tb)
 
             # Adding metadata
             existing_assetversion_metadata = assetversion_entity["metadata"]
@@ -170,7 +183,12 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
 
             # Have to commit the version and asset, because location can't
             # determine the final location without.
-            session.commit()
+            try:
+                session.commit()
+            except Exception:
+                tp, value, tb = sys.exc_info()
+                session.rollback()
+                six.reraise(tp, value, tb)
 
             # Component
             # Get existing entity.
@@ -209,7 +227,12 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                     session.delete(member)
                     del(member)
 
-                session.commit()
+                try:
+                    session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    session.rollback()
+                    six.reraise(tp, value, tb)
 
                 # Reset members in memory
                 if "members" in component_entity.keys():
@@ -320,4 +343,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 )
             else:
                 # Commit changes.
-                session.commit()
+                try:
+                    session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    session.rollback()
+                    six.reraise(tp, value, tb)

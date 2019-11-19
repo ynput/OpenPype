@@ -1,4 +1,6 @@
+import sys
 import pyblish.api
+import six
 
 
 class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
@@ -91,7 +93,12 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 for instance in instances:
                     instance.data['ftrackShotId'] = entity['id']
 
-                self.session.commit()
+                try:
+                    self.session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    self.session.rollback()
+                    six.reraise(tp, value, tb)
 
             # TASKS
             tasks = entity_data.get('tasks', [])
@@ -114,7 +121,6 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     task_type=ftrack_types[task],
                     parent=entity
                 )
-                self.session.commit()
 
             if 'childs' in entity_data:
                 self.import_to_ftrack(
@@ -141,7 +147,12 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         self.log.info(self.task_types)
         task['type'] = self.task_types[task_type]
 
-        self.session.commit()
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            six.reraise(tp, value, tb)
 
         return task
 
@@ -150,6 +161,11 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             'name': name,
             'parent': parent
         })
-        self.session.commit()
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            six.reraise(tp, value, tb)
 
         return entity

@@ -1,4 +1,6 @@
+import sys
 import pyblish.api
+import six
 
 
 class IntegrateFtrackComments(pyblish.api.InstancePlugin):
@@ -21,4 +23,9 @@ class IntegrateFtrackComments(pyblish.api.InstancePlugin):
 
         entity["notes"].extend(notes)
 
-        session.commit()
+        try:
+            session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            session.rollback()
+            six.reraise(tp, value, tb)
