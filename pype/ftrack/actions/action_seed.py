@@ -1,3 +1,4 @@
+import os
 from operator import itemgetter
 from pype.ftrack import BaseAction
 
@@ -15,9 +16,9 @@ class SeedDebugProject(BaseAction):
     priority = 100
     #: roles that are allowed to register this action
     role_list = ["Pypeclub"]
-    # icon = "{}/ftrack/action_icons/TestAction.svg".format(
-    #     os.environ.get("PYPE_STATICS_SERVER", "")
-    # )
+    icon = "{}/ftrack/action_icons/SeedProject.svg".format(
+        os.environ.get("PYPE_STATICS_SERVER", "")
+    )
 
     # Asset names which will be created in `Assets` entity
     assets = [
