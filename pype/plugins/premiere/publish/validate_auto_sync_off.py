@@ -1,6 +1,8 @@
+import sys
 import pyblish.api
 import pype.api
 import avalon.api
+import six
 
 
 class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
@@ -48,4 +50,9 @@ class ValidateAutoSyncOff(pyblish.api.ContextPlugin):
         session = context.data["ftrackSession"]
         invalid = cls.get_invalid(context)
         invalid['custom_attributes']['avalon_auto_sync'] = False
-        session.commit()
+        try:
+            session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            session.rollback()
+            six.reraise(tp, value, tb)
