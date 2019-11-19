@@ -38,7 +38,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
             self.log.warning("Deadline REST API url not found.")
         else:
             argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
-            response = requests.get(argument)
+            response = self._requests_get(argument)
             if not response.ok:
                 self.log.warning("No pools retrieved")
             else:
@@ -135,7 +135,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
                 'authToken': self._token
             }
         api_entry = '/api/pools/list'
-        response = requests.get(
+        response = self._requests_get(
             self.MUSTER_REST_URL + api_entry, params=params)
         if response.status_code != 200:
             if response.status_code == 401:
