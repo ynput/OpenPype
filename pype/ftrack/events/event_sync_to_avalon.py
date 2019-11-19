@@ -2,7 +2,7 @@ from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent, lib
 
 
-class Sync_to_Avalon(BaseEvent):
+class SyncToAvalon(BaseEvent):
 
     priority = 100
 
@@ -124,4 +124,4 @@ class Sync_to_Avalon(BaseEvent):
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-    Sync_to_Avalon(session, plugins_presets).register()
+    SyncToAvalon(session, plugins_presets).register()
