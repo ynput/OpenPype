@@ -36,12 +36,13 @@ class DJVViewAction(BaseAction):
             'file_ext', ["img", "mov", "exr"]
         )
 
-    def register(self):
-        assert (self.djv_path is not None), (
-            'DJV View is not installed'
-            ' or paths in presets are not set correctly'
-        )
-        super().register()
+    def preregister(self):
+        if self.djv_path is None:
+            return (
+                'DJV View is not installed'
+                ' or paths in presets are not set correctly'
+            )
+        return True
 
     def discover(self, session, entities, event):
         """Return available actions based on *event*. """
