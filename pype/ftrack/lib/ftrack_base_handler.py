@@ -128,6 +128,7 @@ class BaseHandler(object):
             try:
                 return func(*args, **kwargs)
             except Exception as exc:
+                self.session.rollback()
                 msg = '{} "{}": Failed ({})'.format(self.type, label, str(exc))
                 self.log.error(msg, exc_info=True)
                 return {
