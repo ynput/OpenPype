@@ -14,6 +14,11 @@ class AvalonApps:
         self.parent = parent
         self.app_launcher = None
 
+    def process_modules(self, modules):
+        if "RestApiServer" in modules:
+            from .rest_api import AvalonRestApi
+            self.rest_api_obj = AvalonRestApi()
+
     # Definition of Tray menu
     def tray_menu(self, parent_menu=None):
         # Actions

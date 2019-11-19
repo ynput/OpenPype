@@ -1,260 +1,127 @@
 import os
-import json
-import enum
+import re
 import collections
 import threading
-from inspect import signature
 import socket
-import http.server
-from http import HTTPStatus
 import socketserver
-
 from Qt import QtCore
 
+from .lib import RestApiFactory, Handler
+from .base_class import route, register_statics
 from pypeapp import config, Logger
 
 log = Logger().get_logger("RestApiServer")
 
 
-class RestMethods(enum.Enum):
-    GET = "GET"
-    POST = "POST"
-    PUT = "PUT"
-    PATCH = "PATCH"
-    DELETE = "DELETE"
+class RestApiServer:
+    """Rest Api allows to access statics or callbacks with http requests.
 
-    def __repr__(self):
-        return str(self.value)
+    To register statics use `register_statics`.
 
-    def __eq__(self, other):
-        if isinstance(other, str):
-            return self.value == other
-        return self == other
+    To register callback use `register_callback` method or use `route` decorator.
+    `route` decorator should be used with not-class functions, it is possible
+    to use within class when inherits `RestApi` (defined in `base_class.py`)
+    or created object, with used decorator, is registered with `register_obj`.
 
-    def __hash__(self):
-        return enum.Enum.__hash__(self)
+    .. code-block:: python
+        @route("/username", url_prefix="/api", methods=["get"], strict_match=False)
+        def get_username():
+            return {"username": getpass.getuser()}
 
-    def __str__(self):
-        return str(self.value)
+    In that case response to `localhost:{port}/api/username` will be status
+    `200` with body including `{"data": {"username": getpass.getuser()}}`
 
+    Callback may expect one argument which will be filled with request
+    info. Data object has attributes: `request_data`, `query`,
+    `fragment`, `params`, `method`, `handler`, `url_data`.
+    request_data - Data from request body if there are any.
+    query - query from url path (?identificator=name)
+    fragment - fragment from url path (#reset_credentials)
+    params - params from url path
+    method - request method (GET, POST, PUT, etc.)
+    handler - Handler object of HttpServer Handler
+    url_data - dynamic url keys from registered path with their values
 
-class Handler(http.server.SimpleHTTPRequestHandler):
+    Dynamic url keys may be set with path argument.
+    .. code-block:: python
+        from rest_api import route
 
-    def do_GET(self):
-        self.process_request(RestMethods.GET)
-
-    def do_POST(self):
-        """Common code for POST.
-
-        This trigger callbacks on specific paths.
-
-        If request contain data and callback func has arg data are sent to
-        callback too.
-
-        Send back return values of callbacks.
-        """
-        self.process_request(RestMethods.POST)
-
-    def process_request(self, rest_method):
-        """Because processing is technically the same for now so it is used
-        the same way
-        """
-        in_data = None
-        cont_len = self.headers.get("Content-Length")
-        if cont_len:
-            content_length = int(cont_len)
-            in_data_str = self.rfile.read(content_length)
-            if in_data_str:
-                in_data = json.loads(in_data_str)
-
-        registered_callbacks = self.server.registered_callbacks[rest_method]
-
-        path_items = [part.lower() for part in self.path.split("/") if part]
-        request_path = "/".join(path_items)
-        callback = registered_callbacks.get(request_path)
-        result = None
-        if callback:
-            log.debug(
-                "Triggering callbacks for path \"{}\"".format(request_path)
-            )
-            try:
-                params = signature(callback).parameters
-                if len(params) > 0 and in_data:
-                    result = callback(in_data)
-                else:
-                    result = callback()
-
-                self.send_response(HTTPStatus.OK)
-
-                if result in [None, True] or isinstance(result, (str, int)):
-                    message = str(result)
-                    if result in [None, True]:
-                        message = "{} request for \"{}\" passed".format(
-                            rest_method, self.path
-                        )
-
-                    self.handle_result(rest_method, message=message)
-
-                    return
-
-                if isinstance(result, (dict, list)):
-                    message = json.dumps(result).encode()
-                    self.handle_result(rest_method, final_output=message)
-
-                    return
-
-            except Exception:
-                message = "{} request for \"{}\" failed".format(
-                    rest_method, self.path
-                )
-                log.error(message, exc_info=True)
-
-                self.send_response(HTTPStatus.BAD_REQUEST)
-                self.handle_result(rest_method, message=message, success=False)
-
-                return
-
-            self.handle_result(rest_method)
-
-        else:
-            message = (
-            "{} request for \"{}\" don't have registered callback"
-            ).format(rest_method, self.path)
-            log.debug(message)
-
-            self.send_response(HTTPStatus.NOT_FOUND)
-            self.handle_result(rest_method, message=message, success=False)
-
-    def handle_result(
-        self, rest_method, final_output=None, message=None, success=True,
-        content_type="application/json"
-    ):
-        self.send_header("Content-type", content_type)
-        if final_output:
-            output = final_output
-        else:
-            if not message:
-                output = json.dumps({
-                    "success": False,
-                    "message": (
-                        "{} request for \"{}\" has unexpected result"
-                    ).format(rest_method, self.path)
-                }).encode()
-
-            else:
-                output = json.dumps({
-                    "success": success, "message": message
-                }).encode()
-
-
-        if isinstance(output, str):
-            self.send_header("Content-Length", len(output))
-
-        self.end_headers()
-
-        if output:
-            self.wfile.write(output)
-
-
-class AdditionalArgsTCPServer(socketserver.TCPServer):
-    def __init__(self, registered_callbacks, *args, **kwargs):
-        self.registered_callbacks = registered_callbacks
-        super(AdditionalArgsTCPServer, self).__init__(*args, **kwargs)
-
-
-class RestApiServer(QtCore.QThread):
-    """ Listener for REST requests.
-
-    It is possible to register callbacks for url paths.
-    Be careful about crossreferencing to different QThreads it is not allowed.
-    """
-
-    def __init__(self):
-        super(RestApiServer, self).__init__()
-        self.registered_callbacks = {
-            RestMethods.GET: collections.defaultdict(list),
-            RestMethods.POST: collections.defaultdict(list),
-            RestMethods.PUT: collections.defaultdict(list),
-            RestMethods.PATCH: collections.defaultdict(list),
-            RestMethods.DELETE: collections.defaultdict(list)
+        all_projects = {
+            "Proj1": {"proj_data": []},
+            "Proj2": {"proj_data": []},
         }
 
+        @route("/projects/<project_name>", url_prefix="/api", methods=["get"], strict_match=False)
+        def get_projects(request_info):
+            project_name = request_info.url_data["project_name"]
+            if not project_name:
+                return all_projects
+            return all_projects.get(project_name)
+
+    This example should end with status 404 if project is not found. In that
+    case is best to use `abort` method.
+
+    .. code-block:: python
+        from rest_api import abort
+
+        @route("/projects/<project_name>", url_prefix="/api", methods=["get"], strict_match=False)
+        def get_projects(request_info):
+            project_name = request_info.url_data["project_name"]
+            if not project_name:
+                return all_projects
+
+            project = all_projects.get(project_name)
+            if not project:
+                abort(404, "Project \"{}\".format(project_name) was not found")
+            return project
+
+    `strict_match` allows to handle not only specific entity but all entity types.
+    E.g. "/projects/<project_name>" with set `strict_match` to False will handle also
+    "/projects" or "/projects/" path. It is necessary to set `strict_match` to
+    True when should handle only single entity.
+
+    Callback may return many types. For more information read docstring of
+    `_handle_callback_result` defined in handler.
+    """
+    def __init__(self):
         self.qaction = None
         self.failed_icon = None
         self._is_running = False
+
         try:
-            self.presets = config.get_presets().get(
-                "services", {}).get(
-                "rest_api", {}
-            )
+            self.presets = config.get_presets()["services"]["rest_api"]
         except Exception:
             self.presets = {"default_port": 8011, "exclude_ports": []}
+            log.debug((
+                "There are not set presets for RestApiModule."
+                " Using defaults \"{}\""
+            ).format(str(self.presets)))
 
-        self.port = self.find_port()
+        port = self.find_port()
+        self.rest_api_thread = RestApiThread(self, port)
+
+        statics_dir = os.path.sep.join([os.environ["PYPE_MODULE_ROOT"], "res"])
+        self.register_statics("/res", statics_dir)
+        os.environ["PYPE_STATICS_SERVER"] = "{}/res".format(
+            os.environ["PYPE_REST_API_URL"]
+        )
 
     def set_qaction(self, qaction, failed_icon):
         self.qaction = qaction
         self.failed_icon = failed_icon
 
-    def register_callback(self, path, callback, rest_method=RestMethods.POST):
-        if isinstance(path, (list, set)):
-            path = "/".join([part.lower() for part in path])
-        elif isinstance(path, str):
-            path = "/".join(
-                [part.lower() for part in str(path).split("/") if part]
-            )
-
-        if isinstance(rest_method, str):
-            rest_method = str(rest_method).upper()
-
-        if path in self.registered_callbacks[rest_method]:
-            log.error(
-                "Path \"{}\" has already registered callback.".format(path)
-            )
-            return False
-
-        log.debug(
-            "Registering callback for path \"{}\"".format(path)
+    def register_callback(
+        self, path, callback, url_prefix="", methods=[], strict_match=False
+    ):
+        RestApiFactory.register_route(
+            path, callback, url_prefix, methods, strict_match
         )
-        self.registered_callbacks[rest_method][path] = callback
 
-        return True
+    def register_statics(self, url_prefix, dir_path):
+        register_statics(url_prefix, dir_path)
 
-    def tray_start(self):
-        self.start()
-
-    @property
-    def is_running(self):
-        return self._is_running
-
-    def stop(self):
-        self._is_running = False
-
-    def run(self):
-        self._is_running = True
-        if not self.registered_callbacks:
-            log.info("Any registered callbacks for Rest Api server.")
-            return
-
-        try:
-            log.debug(
-                "Running Rest Api server on URL:"
-                " \"http://localhost:{}\"".format(self.port)
-            )
-            with AdditionalArgsTCPServer(
-                self.registered_callbacks,
-                ("", self.port),
-                Handler
-            ) as httpd:
-                while self._is_running:
-                    httpd.handle_request()
-        except Exception:
-            log.warning(
-                "Rest Api Server service has failed", exc_info=True
-            )
-        self._is_running = False
-        if self.qaction and self.failed_icon:
-            self.qaction.setIcon(self.failed_icon)
+    def register_obj(self, obj):
+        RestApiFactory.register_obj(obj)
 
     def find_port(self):
         start_port = self.presets["default_port"]
@@ -276,3 +143,53 @@ class RestApiServer(QtCore.QThread):
             found_port
         )
         return found_port
+
+    def tray_start(self):
+        RestApiFactory.prepare_registered()
+        if not RestApiFactory.has_handlers():
+            log.debug("There are not registered any handlers for RestApi")
+            return
+        self.rest_api_thread.start()
+
+    @property
+    def is_running(self):
+        return self.rest_api_thread.is_running
+
+    def stop(self):
+        self.rest_api_thread.is_running = False
+
+    def thread_stopped(self):
+        self._is_running = False
+
+
+class RestApiThread(QtCore.QThread):
+    """ Listener for REST requests.
+
+    It is possible to register callbacks for url paths.
+    Be careful about crossreferencing to different Threads it is not allowed.
+    """
+
+    def __init__(self, module, port):
+        super(RestApiThread, self).__init__()
+        self.is_running = False
+        self.module = module
+        self.port = port
+
+    def run(self):
+        self.is_running = True
+
+        try:
+            log.debug(
+                "Running Rest Api server on URL:"
+                " \"http://localhost:{}\"".format(self.port)
+            )
+            with socketserver.TCPServer(("", self.port), Handler) as httpd:
+                while self.is_running:
+                    httpd.handle_request()
+        except Exception:
+            log.warning(
+                "Rest Api Server service has failed", exc_info=True
+            )
+
+        self.is_running = False
+        self.module.thread_stopped()
