@@ -50,13 +50,10 @@ class SeedDebugProject(BaseAction):
         "Animation", "Lighting", "Compositing", "FX"
     ]
 
-    # Define how much assets will be created(each will be created once if None)
-    # - you can enter more or less then assets mentioned in assets
-    asset_count = None
     # Define how much sequences will be created
-    seq_count = 5
+    default_seq_count = 5
     # Define how much shots will be created for each sequence
-    shots_count = 10
+    default_shots_count = 10
 
     existing_projects = None
     new_project_item = "< New Project >"
@@ -107,6 +104,26 @@ class SeedDebugProject(BaseAction):
             "value": self.new_project_item
         }
         items.append(projects_item)
+        items.append(item_splitter)
+
+        items.append({
+            "label": "Number of assets",
+            "type": "number",
+            "name": "asset_count",
+            "value": len(self.assets)
+        })
+        items.append({
+            "label": "Number of sequences",
+            "type": "number",
+            "name": "seq_count",
+            "value": self.default_seq_count
+        })
+        items.append({
+            "label": "Number of shots",
+            "type": "number",
+            "name": "shots_count",
+            "value": self.default_shots_count
+        })
         items.append(item_splitter)
 
         note_label = {
@@ -214,17 +231,17 @@ class SeedDebugProject(BaseAction):
                 task_types[_type["name"]] = _type
         self.task_types = task_types
 
-        self.create_assets(project)
-        self.create_shots(project)
+        asset_count = values.get("asset_count") or len(self.assets)
+        seq_count = values.get("seq_count") or self.default_seq_count
+        shots_count = values.get("shots_count") or self.default_shots_count
+
+        self.create_assets(project, asset_count)
+        self.create_shots(project, seq_count, shots_count)
 
         return True
 
-    def create_assets(self, project):
+    def create_assets(self, project, asset_count):
         self.log.debug("*** Creating assets:")
-
-        asset_count = self.asset_count
-        if asset_count is None:
-            asset_count = len(self.assets)
 
         main_entity = self.session.create("Folder", {
             "name": "Assets",
@@ -264,7 +281,7 @@ class SeedDebugProject(BaseAction):
         self.log.debug("*** Commiting Assets")
         self.session.commit()
 
-    def create_shots(self, project):
+    def create_shots(self, project, seq_count, shots_count):
         self.log.debug("*** Creating shots:")
         main_entity = self.session.create("Folder", {
             "name": "Shots",
@@ -272,7 +289,7 @@ class SeedDebugProject(BaseAction):
         })
         self.log.debug("- Shots")
 
-        for seq_num in range(1, self.seq_count+1):
+        for seq_num in range(1, seq_count+1):
             seq_name = "sq%03d" % seq_num
             seq = self.session.create("Sequence", {
                 "name": seq_name,
@@ -280,7 +297,7 @@ class SeedDebugProject(BaseAction):
             })
             self.log.debug("- Shots/{}".format(seq_name))
 
-            for shot_num in range(1, self.shots_count+1):
+            for shot_num in range(1, shots_count+1):
                 shot_name = "%ssh%04d" % (seq_name, (shot_num*10))
                 shot = self.session.create("Shot", {
                     "name": shot_name,
