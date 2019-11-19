@@ -15,7 +15,7 @@ from pype.ftrack import BaseAction
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 from pype.vendor import ftrack_api
 from pype.vendor.ftrack_api import session as fa_session
-from pypeapp import Anatomy, config
+from pypeapp import Anatomy
 
 
 class SyncEntitiesFactory:
@@ -352,8 +352,8 @@ class SyncEntitiesFactory:
 
     def filter_by_duplicate_regex(self):
         filter_queue = queue.Queue()
-        failed_regex_msg = "{} - Entity has invalid symbol/s in name"
-        duplicate_msg = "Multiple entities have name \"{}\":"
+        failed_regex_msg = "{} - Entity has invalid symbols in the name"
+        duplicate_msg = "There are multiple entities with the name: \"{}\":"
 
         for ids in self.failed_regex.values():
             for id in ids:
@@ -779,8 +779,8 @@ class SyncEntitiesFactory:
 
         if not_set_ids:
             self.log.debug((
-                "- Debug information: Filtering bug, in entities dict are "
-                "empty dicts (function should not affect) <{}>"
+                "- Debug information: Filtering bug, there are empty dicts"
+                "in entities dict (functionality should not be affected) <{}>"
             ).format("| ".join(not_set_ids)))
             for id in not_set_ids:
                 self.entities_dict.pop(id)
@@ -970,7 +970,7 @@ class SyncEntitiesFactory:
         self.deleted_entities = deleted_entities
 
         self.log.debug((
-            "Ftrack -> Avalon comparation: New <{}> "
+            "Ftrack -> Avalon comparison: New <{}> "
             "| Existing <{}> | Deleted <{}>"
         ).format(
             len(create_ftrack_ids),
@@ -1103,9 +1103,9 @@ class SyncEntitiesFactory:
                 ))
                 self._ent_pats_by_ftrack_id.pop(ftrack_id, None)
                 msg = (
-                    "<Entity renamed back> It is not allowed to change"
-                    " name of entity or it's parents"
-                    " that already has published context"
+                    "<Entity renamed back> It is not possible to change"
+                    " the name of an entity or it's parents, "
+                    " if it already contained published data."
                 )
                 self.report_items["warning"][msg].append(ent_path)
 
@@ -1125,14 +1125,14 @@ class SyncEntitiesFactory:
                 # TODO logging
                 ent_path = self.get_ent_path(ftrack_id)
                 msg = (
-                    "<Entity moved back in hierachy> It is not allowed"
-                    " to change hierarchy of entity or it's parents"
-                    " that already has published context"
+                    "<Entity moved back in hierachy> It is not possible"
+                    " to change the hierarchy of an entity or it's parents,"
+                    " if it already contained published data."
                 )
                 self.report_items["warning"][msg].append(ent_path)
                 self.log.warning((
-                    "Entity has published context so was moved"
-                    " back in hierarchy <{}>"
+                    " Entity contains published data so it was moved"
+                    " back to it's original hierarchy <{}>"
                 ).format(ent_path))
                 self.entities_dict[ftrack_id]["entity"]["parent_id"] = (
                     old_ftrack_parent_id
@@ -1173,14 +1173,14 @@ class SyncEntitiesFactory:
                     # TODO logging
                     # TODO report (turn off auto-sync?)
                     self.log.error((
-                        "Entity has published context but was moved in"
-                        " hierarchy and previous parent was not found so it is"
-                        " not possible to solve this programmatically <{}>"
+                        "The entity contains published data but it was moved to"
+                        " a different place in the hierarchy and it's previous"
+                        " parent cannot be found."
+                        " It's impossible to solve this programmatically <{}>"
                     ).format(ent_path))
                     msg = (
-                        "<Entity not synchronizable> Parent of entity can't be"
-                        " changed due to published context and previous parent"
-                        " was not found"
+                        "<Entity can't be synchronised> Hierarchy of an entity" " can't be changed due to published data and missing"
+                        " previous parent"
                     )
                     self.report_items["error"][msg].append(ent_path)
                     self.filter_with_children(ftrack_id)
@@ -1200,14 +1200,15 @@ class SyncEntitiesFactory:
                 ):
                     ent_path = self.get_ent_path(ftrack_id)
                     self.log.error((
-                        "Entity has published context but was moved in"
-                        " hierarchy and previous parents were moved too it is"
-                        " not possible to solve this programmatically <{}>"
+                        "The entity contains published data but it was moved to"
+                        " a different place in the hierarchy and it's previous"
+                        " parents were moved too."
+                        " It's impossible to solve this programmatically <{}>"
                     ).format(ent_path))
                     msg = (
-                        "<Entity not synchronizable> Parent of entity can't be"
-                        " changed due to published context but whole hierarchy"
-                        " was scrambled"
+                        "<Entity not synchronizable> Hierarchy of an entity"
+                        " can't be changed due to published data and scrambled"
+                        "hierarchy"
                     )
                     continue
 
@@ -1217,8 +1218,8 @@ class SyncEntitiesFactory:
             entities_to_create = []
             # TODO logging
             self.log.warning(
-                "Ftrack entities must be recreated because have"
-                " published context but were removed"
+                "Ftrack entities must be recreated because they were deleted,"
+                " but they contain published data."
             )
 
             _avalon_ent = old_parent_ent
@@ -1235,13 +1236,13 @@ class SyncEntitiesFactory:
                     # TODO report
                     # TODO logging
                     self.log.error((
-                        "Can't recreate entity in Ftrack because entity with"
-                        " same name already exists in different hierarchy <{}>"
+                        "Can't recreate the entity in Ftrack because an entity" " with the same name already exists in a different"
+                        " place in the hierarchy <{}>"
                     ).format(av_ent_path))
                     msg = (
-                        "<Entity not synchronizable> Parent of entity can't be"
-                        " changed due to published context but previous parent"
-                        " had name that exist in different hierarchy level"
+                        "<Entity not synchronizable> Hierarchy of an entity"
+                        " can't be changed. I contains published data and it's" " previous parent had a name, that is duplicated at a "
+                        " different hierarchy level"
                     )
                     self.report_items["error"][msg].append(av_ent_path)
                     self.filter_with_children(ftrack_id)
@@ -1593,7 +1594,7 @@ class SyncEntitiesFactory:
                 else:
                     # TODO logging - What is happening here?
                     self.log.warning((
-                        "In avalon are entities without valid parents that"
+                        "Avalon contains entities without valid parents that"
                         " lead to Project (should not cause errors)"
                         " - MongoId <{}>"
                     ).format(str(entity_id)))
@@ -1755,7 +1756,7 @@ class SyncEntitiesFactory:
                 "Project code was changed back to \"{}\"".format(avalon_code)
             )
             msg = (
-                "It is not allowed to change"
+                "It is not possible to change"
                 " project code after synchronization"
             )
             self.report_items["warning"][msg] = sub_msg
@@ -1808,7 +1809,6 @@ class SyncEntitiesFactory:
         return changes
 
     def merge_dicts(self, dict_new, dict_old):
-        # _ignore_keys may be used for keys nested dict like"data.visualParent"
         for key, value in dict_new.items():
             if key not in dict_old:
                 dict_old[key] = value
@@ -1981,8 +1981,8 @@ class SyncEntitiesFactory:
 
         ent_path = self.get_ent_path(new_entity_id)
         msg = (
-            "Deleted entity was recreated because had (or his children)"
-            " published context"
+            "Deleted entity was recreated because it or its children"
+            " contain published data"
         )
 
         self.report_items["info"][msg].append(ent_path)
@@ -1992,7 +1992,7 @@ class SyncEntitiesFactory:
     def regex_duplicate_interface(self):
         items = []
         if self.failed_regex or self.tasks_failed_regex:
-            subtitle = "Not allowed symbols in entity names:"
+            subtitle = "Entity names contain prohibited symbols:"
             items.append({
                 "type": "label",
                 "value": "# {}".format(subtitle)
@@ -2000,7 +2000,7 @@ class SyncEntitiesFactory:
             items.append({
                 "type": "label",
                 "value": (
-                    "<p><i>NOTE: Allowed symbols are Letters( a-Z ),"
+                    "<p><i>NOTE: You can use Letters( a-Z ),"
                     " Numbers( 0-9 ) and Underscore( _ )</i></p>"
                 )
             })
@@ -2053,8 +2053,8 @@ class SyncEntitiesFactory:
             items.append({
                 "type": "label",
                 "value": (
-                    "<p><i>NOTE: It is not allowed to have same name"
-                    " for multiple entities in one project</i></p>"
+                    "<p><i>NOTE: It is not allowed to use the same name"
+                    " for multiple entities in the same project</i></p>"
                 )
             })
             log_msgs = []
@@ -2142,7 +2142,7 @@ class SyncEntitiesFactory:
         }
 
 
-class SyncToAvalonServer(BaseAction):
+class SyncToAvalonLocal(BaseAction):
     """
     Synchronizing data action - from Ftrack to Avalon DB
 
@@ -2166,55 +2166,29 @@ class SyncToAvalonServer(BaseAction):
         - run 'Create Custom Attributes' action
         - or do it manually (Not recommended)
     """
+
     #: Action identifier.
-    identifier = "sync.to.avalon.server"
+    identifier = "sync.to.avalon.local"
     #: Action label.
     label = "Pype Admin"
-    variant = "- Sync To Avalon (Server)"
+    #: Action variant
+    variant = "- Sync To Avalon (Local)"
     #: Action description.
     description = "Send data from Ftrack to Avalon"
-    #: Action icon.
-    icon = "{}/ftrack/action_icons/PypeAdmin.svg".format(
-        os.environ.get(
-            "PYPE_STATICS_SERVER",
-            "http://localhost:{}".format(
-                config.get_presets().get("services", {}).get(
-                    "statics_server", {}
-                ).get("default_port", 8021)
-            )
-        )
-    )
+    #: priority
+    priority = 200
     #: roles that are allowed to register this action
     role_list = ["Pypeclub"]
+    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
 
     def discover(self, session, entities, event):
-        """ Validation """
-        # Check if selection is valid
-        valid_selection = False
+        ''' Validation '''
         for ent in event["data"]["selection"]:
             # Ignore entities that are not tasks or projects
             if ent["entityType"].lower() in ["show", "task"]:
-                valid_selection = True
-                break
-
-        if not valid_selection:
-            return False
-
-        # Get user and check his roles
-        user_id = event.get("source", {}).get("user", {}).get("id")
-        if not user_id:
-            return False
-
-        user = session.query("User where id is \"{}\"".format(user_id)).first()
-        if not user:
-            return False
-
-        role_list = ["Pypeclub", "Administrator", "Project Manager"]
-        for role in user["user_security_roles"]:
-            if role["security_role"]["name"] in role_list:
                 return True
-                break
-
         return False
 
     def launch(self, session, in_entities, event):
@@ -2299,7 +2273,7 @@ class SyncToAvalonServer(BaseAction):
             self.log.error(
                 "Synchronization failed due to code error", exc_info=True
             )
-            msg = "An error has happened during synchronization"
+            msg = "An error occurred during synchronization"
             title = "Synchronization report ({}):".format(ft_project_name)
             items = []
             items.append({
@@ -2346,7 +2320,8 @@ class SyncToAvalonServer(BaseAction):
             except Exception:
                 pass
 
+
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
-    SyncToAvalonServer(session, plugins_presets).register()
+    SyncToAvalonLocal(session, plugins_presets).register()
