@@ -6,7 +6,7 @@ from Qt import QtCore, QtGui, QtWidgets
 
 from pype.vendor import ftrack_api
 from pypeapp import style
-from pype.ftrack import FtrackServer, credentials
+from pype.ftrack import FtrackServer, check_ftrack_url, credentials
 from . import login_dialog
 
 from pype import api as pype
@@ -24,7 +24,8 @@ class FtrackModule:
         self.thread_timer = None
 
         self.bool_logged = False
-        self.bool_action_server = False
+        self.bool_action_server_running = False
+        self.bool_action_thread_running = False
         self.bool_timer_event = False
 
     def show_login_widget(self):
@@ -74,28 +75,50 @@ class FtrackModule:
 
     # Actions part
     def start_action_server(self):
+        self.bool_action_thread_running = True
+        self.set_menu_visibility()
+        if (
+            self.thread_action_server is not None and
+            self.bool_action_thread_running is False
+        ):
+            self.stop_action_server()
+
         if self.thread_action_server is None:
             self.thread_action_server = threading.Thread(
                 target=self.set_action_server
             )
-            self.thread_action_server.daemon = True
             self.thread_action_server.start()
 
-        log.info("Ftrack action server launched")
-        self.bool_action_server = True
-        self.set_menu_visibility()
-
     def set_action_server(self):
-        try:
-            self.action_server.run_server()
-        except Exception as exc:
-            log.error(
-                "Ftrack Action server crashed! Please try to start again.",
-                exc_info=True
+        first_check = True
+        while self.bool_action_thread_running is True:
+            if not check_ftrack_url(os.environ['FTRACK_SERVER']):
+                if first_check:
+                    log.warning(
+                        "Could not connect to Ftrack server"
+                    )
+                    first_check = False
+                time.sleep(1)
+                continue
+            log.info(
+                "Connected to Ftrack server. Running actions session"
             )
-            # TODO show message to user
-            self.bool_action_server = False
+            try:
+                self.bool_action_server_running = True
+                self.set_menu_visibility()
+                self.action_server.run_server()
+                if self.bool_action_thread_running:
+                    log.debug("Ftrack action server has stopped")
+            except Exception:
+                log.warning(
+                    "Ftrack Action server crashed. Trying to connect again",
+                    exc_info=True
+                )
+            self.bool_action_server_running = False
             self.set_menu_visibility()
+            first_check = True
+
+        self.bool_action_thread_running = False
 
     def reset_action_server(self):
         self.stop_action_server()
@@ -103,16 +126,21 @@ class FtrackModule:
 
     def stop_action_server(self):
         try:
+            self.bool_action_thread_running = False
             self.action_server.stop_session()
             if self.thread_action_server is not None:
                 self.thread_action_server.join()
                 self.thread_action_server = None
 
-            log.info("Ftrack action server stopped")
-            self.bool_action_server = False
+            log.info("Ftrack action server was forced to stop")
+
+            self.bool_action_server_running = False
             self.set_menu_visibility()
-        except Exception as e:
-            log.error("During Killing action server: {0}".format(e))
+        except Exception:
+            log.warning(
+                "Error has happened during Killing action server",
+                exc_info=True
+            )
 
     # Definition of Tray menu
     def tray_menu(self, parent_menu):
@@ -158,6 +186,9 @@ class FtrackModule:
     def tray_start(self):
         self.validate()
 
+    def tray_exit(self):
+        self.stop_action_server()
+
     # Definition of visibility of each menu actions
     def set_menu_visibility(self):
 
@@ -170,9 +201,9 @@ class FtrackModule:
                 self.stop_timer_thread()
             return
 
-        self.aRunActionS.setVisible(not self.bool_action_server)
-        self.aResetActionS.setVisible(self.bool_action_server)
-        self.aStopActionS.setVisible(self.bool_action_server)
+        self.aRunActionS.setVisible(not self.bool_action_thread_running)
+        self.aResetActionS.setVisible(self.bool_action_thread_running)
+        self.aStopActionS.setVisible(self.bool_action_thread_running)
 
         if self.bool_timer_event is False:
             self.start_timer_thread()
