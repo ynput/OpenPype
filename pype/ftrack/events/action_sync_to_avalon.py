@@ -3,19 +3,17 @@ import collections
 import re
 import queue
 import time
-import toml
 import traceback
 
 from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from pymongo import UpdateOne
 
-import avalon
 from pype.ftrack import BaseAction
+from pype.ftrack.lib import avalon_sync
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 from pype.vendor import ftrack_api
 from pype.vendor.ftrack_api import session as fa_session
-from pypeapp import Anatomy, config
 
 
 class SyncEntitiesFactory:
@@ -31,13 +29,8 @@ class SyncEntitiesFactory:
         " from TypedContext where project_id is \"{}\""
     )
     ignore_custom_attr_key = "avalon_ignore_sync"
-    id_cust_attr = "avalon_mongo_id"
+    id_cust_attr = avalon_sync.cust_attr_id_key
 
-    entity_schemas = {
-        "project": "avalon-core:project-2.0",
-        "asset": "avalon-core:asset-3.0",
-        "config": "avalon-core:config-1.0"
-    }
 
     report_splitter = {"type": "label", "value": "---"}
 
@@ -50,9 +43,6 @@ class SyncEntitiesFactory:
             auto_connect_event_hub=True
         )
 
-        self.cancel_auto_sync = False
-
-        self.schema_patterns = {}
         self.duplicates = {}
         self.failed_regex = {}
         self.tasks_failed_regex = collections.defaultdict(list)
@@ -63,7 +53,6 @@ class SyncEntitiesFactory:
         }
 
         self.create_list = []
-        self.recreated_ftrack_ents = {}
         self.updates = collections.defaultdict(dict)
 
         self._avalon_ents_by_id = None
@@ -80,11 +69,10 @@ class SyncEntitiesFactory:
         self._changeability_by_mongo_id = None
 
         self.all_filtered_entities = {}
-        # self.all_filtered_ids = []
         self.filtered_ids = []
         self.not_selected_ids = []
 
-        self._ent_pats_by_ftrack_id = {}
+        self._ent_paths_by_ftrack_id = {}
 
         # Get Ftrack project
         ft_project = self.session.query(
@@ -291,6 +279,7 @@ class SyncEntitiesFactory:
         duplicates = []
         failed_regex = []
         task_names = {}
+        _schema_patterns = {}
         for ftrack_id, entity_dict in self.entities_dict.items():
             regex_check = True
             name = entity_dict["name"]
@@ -299,7 +288,9 @@ class SyncEntitiesFactory:
             for task_name in entity_dict["tasks"]:
                 passed = task_names.get(task_name)
                 if passed is None:
-                    passed = self.check_regex(task_name, "task")
+                    passed = avalon_sync.check_regex(
+                        task_name, "task", schema_patterns=_schema_patterns
+                    )
                     task_names[task_name] = passed
 
                 if not passed:
@@ -309,7 +300,9 @@ class SyncEntitiesFactory:
                 duplicates.append(name)
             else:
                 entity_ids_by_name[name] = []
-                regex_check = self.check_regex(name, entity_type)
+                regex_check = avalon_sync.check_regex(
+                    name, entity_type, schema_patterns=_schema_patterns
+                )
 
             entity_ids_by_name[name].append(ftrack_id)
             if not regex_check:
@@ -322,33 +315,6 @@ class SyncEntitiesFactory:
             self.duplicates[name] = entity_ids_by_name[name]
 
         self.filter_by_duplicate_regex()
-
-    def check_regex(self, name, entity_type, in_schema=None):
-        schema_name = "asset-3.0"
-        if in_schema:
-            schema_name = in_schema
-        elif entity_type == "project":
-            schema_name = "project-2.0"
-        elif entity_type == "task":
-            schema_name = "task"
-
-        name_pattern = self.schema_patterns.get(schema_name)
-        if not name_pattern:
-            default_pattern = "^[a-zA-Z0-9_.]*$"
-            schema_obj = avalon.schema._cache.get(schema_name + ".json")
-            if not schema_obj:
-                name_pattern = default_pattern
-            else:
-                name_pattern = schema_obj.get(
-                    "properties", {}).get(
-                    "name", {}).get(
-                    "pattern", default_pattern
-                )
-            self.schema_patterns[schema_name] = name_pattern
-
-        if re.match(name_pattern, name):
-            return True
-        return False
 
     def filter_by_duplicate_regex(self):
         filter_queue = queue.Queue()
@@ -387,8 +353,6 @@ class SyncEntitiesFactory:
             filtered_ids.append(ftrack_id)
             for child_id in entity_dict.get("children", []):
                 filter_queue.put(child_id)
-
-        # self.all_filtered_ids.extend(filtered_ids)
 
         for name, ids in self.tasks_failed_regex.items():
             for id in ids:
@@ -430,8 +394,6 @@ class SyncEntitiesFactory:
                         )
                         _remove = True
                 self.filter_queue.put((child_id, _remove))
-
-        # self.all_filtered_ids.extend(self.filtered_ids)
 
     def filter_by_selection(self, event):
         # BUGGY!!!! cause that entities are in deleted list
@@ -491,7 +453,7 @@ class SyncEntitiesFactory:
     def set_cutom_attributes(self):
         self.log.debug("* Preparing custom attributes")
         # Get custom attributes and values
-        custom_attrs, hier_attrs = self.get_avalon_attr(True)
+        custom_attrs, hier_attrs = avalon_sync.get_avalon_attr(self.session)
         ent_types = self.session.query("select id, name from ObjectType").all()
         ent_types_by_name = {
             ent_type["name"]: ent_type["id"] for ent_type in ent_types
@@ -759,9 +721,17 @@ class SyncEntitiesFactory:
 
                 proj_schema = entity["project_schema"]
                 task_types = proj_schema["_task_type_schema"]["types"]
+                proj_apps, warnings = avalon_sync.get_project_apps(
+                    (data.get("applications") or [])
+                )
+                for msg, items in warnings.items():
+                    if not msg or not items:
+                        continue
+                    self.report_items["warning"][msg] = items
+
                 self.entities_dict[id]["final_entity"]["config"] = {
                     "tasks": [{"name": tt["name"]} for tt in task_types],
-                    "apps": self.get_project_apps(data)
+                    "apps": proj_apps
                 }
                 continue
 
@@ -785,41 +755,14 @@ class SyncEntitiesFactory:
             for id in not_set_ids:
                 self.entities_dict.pop(id)
 
-    def get_project_apps(self, proj_data):
-        apps = []
-        missing_toml_msg = "Missing config file for application"
-        error_msg = (
-            "Unexpected error happend during preparation of application"
-        )
-        for app in proj_data.get("applications"):
-            try:
-                toml_path = avalon.lib.which_app(app)
-                # TODO report
-                if not toml_path:
-                    self.log.warning(missing_toml_msg + '"{}"'.format(app))
-                    self.report_items["warning"][missing_toml_msg].append(app)
-                    continue
-
-                apps.append({
-                    "name": app,
-                    "label": toml.load(toml_path)["label"]
-                })
-            except Exception:
-                # TODO report
-                self.report_items["warning"][error_msg].append(app)
-                self.log.warning((
-                    "Error has happened during preparing application \"{}\""
-                ).format(app), exc_info=True)
-        return apps
-
     def get_ent_path(self, ftrack_id):
-        ent_path = self._ent_pats_by_ftrack_id.get(ftrack_id)
+        ent_path = self._ent_paths_by_ftrack_id.get(ftrack_id)
         if not ent_path:
             entity = self.entities_dict[ftrack_id]["entity"]
             ent_path = "/".join(
                 [ent["name"] for ent in entity["link"]]
             )
-            self._ent_pats_by_ftrack_id[ftrack_id] = ent_path
+            self._ent_paths_by_ftrack_id[ftrack_id] = ent_path
 
         return ent_path
 
@@ -1101,7 +1044,7 @@ class SyncEntitiesFactory:
                 self.log.warning("Name was changed back to {} <{}>".format(
                     avalon_name, ent_path
                 ))
-                self._ent_pats_by_ftrack_id.pop(ftrack_id, None)
+                self._ent_paths_by_ftrack_id.pop(ftrack_id, None)
                 msg = (
                     "<Entity renamed back> It is not allowed to change"
                     " name of entity or it's parents"
@@ -1393,7 +1336,7 @@ class SyncEntitiesFactory:
 
         item["_id"] = new_id
         item["parent"] = self.avalon_project_id
-        item["schema"] = self.entity_schemas["asset"]
+        item["schema"] = avalon_sync.entity_schemas["asset"]
         item["data"]["visualParent"] = avalon_parent
 
         new_id_str = str(new_id)
@@ -1525,11 +1468,14 @@ class SyncEntitiesFactory:
         except InvalidId:
             new_id = ObjectId()
 
+        project_name = self.entities_dict[self.ft_project_id]["name"]
         project_item["_id"] = new_id
         project_item["parent"] = None
-        project_item["schema"] = self.entity_schemas["project"]
-        project_item["config"]["schema"] = self.entity_schemas["config"]
-        project_item["config"]["template"] = self.get_avalon_project_template()
+        project_item["schema"] = avalon_sync.entity_schemas["project"]
+        project_item["config"]["schema"] = avalon_sync.entity_schemas["config"]
+        project_item["config"]["template"] = (
+            avalon_sync.get_avalon_project_template(project_name)
+        )
 
         self.ftrack_avalon_mapper[self.ft_project_id] = new_id
         self.avalon_ftrack_mapper[new_id] = self.ft_project_id
@@ -1545,19 +1491,6 @@ class SyncEntitiesFactory:
         # store mongo id to ftrack entity
         entity = self.entities_dict[self.ft_project_id]["entity"]
         entity["custom_attributes"][self.id_cust_attr] = str(new_id)
-
-    def get_avalon_project_template(self):
-        """Get avalon template
-        Returns:
-            dictionary with templates
-        """
-        project_name = self.entities_dict[self.ft_project_id]["name"]
-        templates = Anatomy(project_name).templates
-        return {
-            "workfile": templates["avalon"]["workfile"],
-            "work": templates["avalon"]["work"],
-            "publish": templates["avalon"]["publish"]
-        }
 
     def _bubble_changeability(self, unchangeable_ids):
         unchangeable_queue = queue.Queue()
@@ -1672,31 +1605,13 @@ class SyncEntitiesFactory:
         mongo_changes_bulk = []
         for mongo_id, changes in self.updates.items():
             filter = {"_id": ObjectId(mongo_id)}
-            change_data = self.from_dict_to_set(changes)
+            change_data = avalon_sync.from_dict_to_set(changes)
             mongo_changes_bulk.append(UpdateOne(filter, change_data))
 
         if not mongo_changes_bulk:
             # TODO LOG
             return
         self.dbcon.bulk_write(mongo_changes_bulk)
-
-    def from_dict_to_set(self, data):
-        result = {"$set": {}}
-        dict_queue = queue.Queue()
-        dict_queue.put((None, data))
-
-        while not dict_queue.empty():
-            _key, _data = dict_queue.get()
-            for key, value in _data.items():
-                new_key = key
-                if _key is not None:
-                    new_key = "{}.{}".format(_key, key)
-
-                if not isinstance(value, dict):
-                    result["$set"][new_key] = value
-                    continue
-                dict_queue.put((new_key, value))
-        return result
 
     def reload_parents(self, hierarchy_changing_ids):
         parents_queue = queue.Queue()
@@ -1808,7 +1723,6 @@ class SyncEntitiesFactory:
         return changes
 
     def merge_dicts(self, dict_new, dict_old):
-        # _ignore_keys may be used for keys nested dict like"data.visualParent"
         for key, value in dict_new.items():
             if key not in dict_old:
                 dict_old[key] = value
@@ -1956,7 +1870,7 @@ class SyncEntitiesFactory:
         if new_entity_id not in p_chilren:
             self.entities_dict[parent_id]["children"].append(new_entity_id)
 
-        cust_attr, hier_attrs = self.get_avalon_attr()
+        cust_attr, hier_attrs = avalon_sync.get_avalon_attr(self.session)
         for _attr in cust_attr:
             key = _attr["key"]
             if key not in av_entity["data"]:
@@ -2079,28 +1993,6 @@ class SyncEntitiesFactory:
             self.log.warning("{}{}".format(subtitle, ", ".join(log_msgs)))
 
         return items
-
-    def get_avalon_attr(self, split_hierarchical=True):
-        custom_attributes = []
-        hier_custom_attributes = []
-        cust_attrs_query = (
-            "select id, entity_type, object_type_id, is_hierarchical, default"
-            " from CustomAttributeConfiguration"
-            " where group.name = \"avalon\""
-        )
-        all_avalon_attr = self.session.query(cust_attrs_query).all()
-        for cust_attr in all_avalon_attr:
-            if split_hierarchical and cust_attr["is_hierarchical"]:
-                hier_custom_attributes.append(cust_attr)
-                continue
-
-            custom_attributes.append(cust_attr)
-
-        if split_hierarchical:
-            # return tuple
-            return custom_attributes, hier_custom_attributes
-
-        return custom_attributes
 
     def report(self):
         items = []
@@ -2346,7 +2238,7 @@ class SyncToAvalonServer(BaseAction):
             except Exception:
                 pass
 
+
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
     SyncToAvalonServer(session, plugins_presets).register()
