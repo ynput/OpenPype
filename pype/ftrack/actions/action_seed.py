@@ -57,6 +57,7 @@ class SeedDebugProject(BaseAction):
 
     existing_projects = None
     new_project_item = "< New Project >"
+    current_project_item = "< Current Project >"
 
     def discover(self, session, entities, event):
         ''' Validation '''
@@ -91,6 +92,12 @@ class SeedDebugProject(BaseAction):
             "label": self.new_project_item,
             "value": self.new_project_item
         })
+
+        data_items.append({
+            "label": self.current_project_item,
+            "value": self.current_project_item
+        })
+
         data_items.extend(sorted(
             projects_items,
             key=itemgetter("label"),
@@ -101,7 +108,7 @@ class SeedDebugProject(BaseAction):
             "type": "enumerator",
             "name": "project_name",
             "data": data_items,
-            "value": self.new_project_item
+            "value": self.current_project_item
         }
         items.append(projects_item)
         items.append(item_splitter)
@@ -213,6 +220,21 @@ class SeedDebugProject(BaseAction):
             })
             session.commit()
 
+        elif selected_project == self.current_project_item:
+            entity = in_entities[0]
+            if entity.entity_type.lower() == "project":
+                project = entity
+            else:
+                if "project" in entity:
+                    project = entity["project"]
+                else:
+                    project = entity["parent"]["project"]
+            project_schema = project["project_schema"]
+            self.log.debug((
+                "*** Using Project: name <{}>, code <{}>, schema <{}>"
+            ).format(
+                project["full_name"], project["name"], project_schema["name"]
+            ))
         else:
             project = session.query("Project where full_name is \"{}\"".format(
                 selected_project
