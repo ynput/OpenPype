@@ -40,9 +40,9 @@ class ThumbToParent(BaseAction):
             'status': 'running',
             'data': json.dumps({
                 'description': 'Push thumbnails to parents'
-                })
             })
-
+        })
+        session.commit()
         try:
             for entity in entities:
                 parent = None
@@ -74,10 +74,11 @@ class ThumbToParent(BaseAction):
             # inform the user that the job is done
             job['status'] = status or 'done'
 
-        except Exception as e:
+        except Exception as exc:
+            session.rollback()
             # fail the job if something goes wrong
             job['status'] = 'failed'
-            raise e
+            raise exc
 
         finally:
             session.commit()

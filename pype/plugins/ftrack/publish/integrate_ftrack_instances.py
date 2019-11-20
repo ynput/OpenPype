@@ -37,6 +37,8 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
         if instance.data.get('version'):
             version_number = int(instance.data.get('version'))
+        else:
+            raise ValueError("Instance version not set")
 
         family = instance.data['family'].lower()
 

@@ -62,6 +62,7 @@ class VersionToTaskStatus(BaseEvent):
                         task['status'] = task_status
                         session.commit()
                     except Exception as e:
+                        session.rollback()
                         self.log.warning('!!! [ {} ] status couldnt be set:\
                             [ {} ]'.format(path, e))
                     else:

@@ -2,7 +2,7 @@ from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent, lib
 
 
-class Sync_to_Avalon(BaseEvent):
+class SyncToAvalon(BaseEvent):
 
     priority = 100
 
@@ -101,7 +101,7 @@ class Sync_to_Avalon(BaseEvent):
                         avalon_project = result['project']
 
         except Exception as e:
-            session.reset() # reset session to clear it
+            session.rollback() # reset session to clear it
 
             message = str(e)
             title = 'Hey You! Unknown Error has been raised! (*look below*)'
@@ -124,4 +124,4 @@ class Sync_to_Avalon(BaseEvent):
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-    Sync_to_Avalon(session, plugins_presets).register()
+    SyncToAvalon(session, plugins_presets).register()

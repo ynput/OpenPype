@@ -80,10 +80,10 @@ class NextTaskUpdate(BaseEvent):
                             '>>> [ {} ] updated to [ Ready ]'
                         ).format(path))
                     except Exception as e:
+                        session.rollback()
                         self.log.warning((
                             '!!! [ {} ] status couldnt be set: [ {} ]'
-                        ).format(path, e))
-                        session.rollback()
+                        ).format(path, str(e)), exc_info=True)
 
 
 def register(session, plugins_presets):

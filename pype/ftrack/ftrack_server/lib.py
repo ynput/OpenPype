@@ -1,4 +1,5 @@
 import os
+import requests
 try:
     from urllib.parse import urlparse, parse_qs
 except ImportError:
@@ -66,3 +67,33 @@ def get_ftrack_event_mongo_info():
     url = "mongodb://{}{}{}{}".format(user_pass, socket_path, dab, auth)
 
     return url, database, collection
+
+
+def check_ftrack_url(url, log_errors=True):
+    """Checks if Ftrack server is responding"""
+    if not url:
+        print('ERROR: Ftrack URL is not set!')
+        return None
+
+    url = url.strip('/ ')
+
+    if 'http' not in url:
+        if url.endswith('ftrackapp.com'):
+            url = 'https://' + url
+        else:
+            url = 'https://{0}.ftrackapp.com'.format(url)
+    try:
+        result = requests.get(url, allow_redirects=False)
+    except requests.exceptions.RequestException:
+        if log_errors:
+            print('ERROR: Entered Ftrack URL is not accesible!')
+        return False
+
+    if (result.status_code != 200 or 'FTRACK_VERSION' not in result.headers):
+        if log_errors:
+            print('ERROR: Entered Ftrack URL is not accesible!')
+        return False
+
+    print('DEBUG: Ftrack server {} is accessible.'.format(url))
+
+    return url
