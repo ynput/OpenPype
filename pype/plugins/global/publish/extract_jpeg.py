@@ -69,7 +69,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'jpg',
+            'name': 'thumbnail',
             'ext': 'jpg',
             'files': jpegFile,
             "stagingDir": stagingdir,
