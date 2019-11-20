@@ -40,6 +40,15 @@ class CleanUp(pyblish.api.InstancePlugin):
     active = True
 
     def process(self, instance):
+        # Get the errored instances
+        failed = []
+        for result in instance.context.data["results"]:
+            if (result["error"] is not None and result["instance"] is not None
+               and result["instance"] not in failed):
+                failed.append(result["instance"])
+        assert instance not in failed, ("Result of '{}' instance "
+            "were not success".format(instance.data["name"]))
+
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
             return
