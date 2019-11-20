@@ -384,6 +384,65 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre['published_path'] = dst
                 self.log.debug("__ dst: {}".format(dst))
 
+                thumbnail_data = {}
+                if 'thumbnail' in repre.get('tags', []):
+                    self.log.debug((
+                        "Looking for scaled thumbnails in <{}>"
+                    ).format(repre["name"]))
+                    # prepare template for thumbnails
+                    # - same as anatomy but keys in basename are replaced with
+                    #   one single key `thumb_file_name`
+                    # - template is same for all thumbnails
+                    template_base_name = os.path.basename(template)
+                    thumb_template = template.replace(
+                        template_base_name, "{thumb_file_name}"
+                    )
+                    self.log.debug(
+                        "Thumbnail template: {}".format(thumb_template)
+                    )
+                    # get orig thumbnail filename
+                    repre_basename = os.path.basename(dst)
+                    repre_file, repre_ext = os.path.splitext(repre_basename)
+                    # get thumbnail data from reresentation (if there are any)
+                    _thumbnail_data = repre.pop("thumbnail_data", {})
+                    if _thumbnail_data:
+                        thumbnail_data["template"] = thumb_template
+
+                    for thumb_type, thumb_info in _thumbnail_data.items():
+                        _src = thumb_info["path"]
+
+                        # get filename appending "like `S` for small thumb"
+                        filename_append = thumb_info["filename_append"]
+                        thumb_file_name = "{}_{}{}".format(
+                            repre_file, filename_append, repre_ext
+                        )
+                        _template_data = template_data.copy()
+                        _template_data["thumb_file_name"] = thumb_file_name
+                        # fill thumbnail template with prepared data
+                        self.log.debug(
+                            "Thumbnail <{}> template data: {}".format(
+                                thumb_type, _template_data
+                            )
+                        )
+                        template_filled = thumb_template.format(
+                            **_template_data
+                        )
+                        _dst = os.path.normpath(
+                            template_filled
+                        ).replace("..", ".")
+                        self.log.debug(
+                            "Thumbnail <{}> src: {} || dst: {}".format(
+                                thumb_type, _src, _dst
+                            )
+                        )
+                        # add to transfers
+                        instance.data["transfers"].append([_src, _dst])
+                        # store full path and additional context data
+                        thumbnail_data[thumb_type] = {
+                            "path": _dst,
+                            "context": {"thumb_file_name": thumb_file_name}
+                        }
+
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
@@ -408,6 +467,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
+
+            if thumbnail_data:
+                representation["data"]["thumbnail_data"] = thumbnail_data
 
             if sequence_repre and repre.get("frameStart"):
                 representation['context']['frame'] = repre.get("frameStart")
