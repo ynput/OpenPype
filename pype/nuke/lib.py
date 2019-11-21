@@ -105,6 +105,10 @@ def writes_version_sync():
 
     for each in nuke.allNodes():
         if each.Class() == 'Write':
+            # check if the node is avalon tracked
+            if "AvalonTab" not in each.knobs():
+                continue
+                
             avalon_knob_data = avalon.nuke.get_avalon_knob_data(
                 each, ['avalon:', 'ak:'])
 
