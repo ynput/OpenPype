@@ -585,7 +585,7 @@ class SyncEntitiesFactory:
         ])
 
         cust_attr_query = (
-            "select value, entity_id from CustomAttributeValue "
+            "select value, entity_id from ContextCustomAttributeValue "
             "where entity_id in ({}) and configuration.key in ({})"
         )
         [values] = self.session._call([{
@@ -649,7 +649,7 @@ class SyncEntitiesFactory:
         [values] = self.session._call([{
             "action": "query",
             "expression": (
-                "select value, entity_id from CustomAttributeValue "
+                "select value, entity_id from ContextCustomAttributeValue "
                 "where entity_id in ({}) and configuration.key in ({})"
             ).format(entity_ids_joined, attributes_joined)
         }])
