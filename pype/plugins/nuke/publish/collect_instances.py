@@ -23,15 +23,13 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
         instances = []
         # creating instances per write node
 
-        self.log.debug("nuke.allNodes(): {}".format(nuke.allNodes()))
-        for node in nuke.allNodes():
-            try:
-                if node["disable"].value():
-                    continue
-            except Exception as E:
-                self.log.warning(E)
-                continue
+        # gets only nodes with subset knob
+        nodes = [n for n in nuke.allNodes()
+                 if get_avalon_knob_data(n,
+                 ["avalon:", "ak:"]).get("subset")]
 
+        # creating instances per write node
+        for node in nodes:
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
             avalon_knob_data = get_avalon_knob_data(node)
