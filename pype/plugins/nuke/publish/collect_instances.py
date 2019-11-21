@@ -62,13 +62,13 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             families = [avalon_knob_data["families"]]
             if node["render"].value():
                 self.log.info("flagged for render")
-                add_femily = "render.local"
+                add_family = "render.local"
                 # dealing with local/farm rendering
                 if node["render_farm"].value():
                     self.log.info("adding render farm family")
-                    add_femily = "render.farm"
+                    add_family = "render.farm"
                     instance.data["transfer"] = False
-                families.append(add_femily)
+                families.append(add_family)
             else:
                 # add family into families
                 families.insert(0, family)
