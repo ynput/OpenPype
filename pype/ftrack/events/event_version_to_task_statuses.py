@@ -6,7 +6,6 @@ class VersionToTaskStatus(BaseEvent):
 
     def launch(self, session, event):
         '''Propagates status from version to task when changed'''
-        session.commit()
 
         # start of event procedure ----------------------------------
         for entity in event['data'].get('entities', []):
@@ -65,6 +64,7 @@ class VersionToTaskStatus(BaseEvent):
                         session.rollback()
                         self.log.warning('!!! [ {} ] status couldnt be set:\
                             [ {} ]'.format(path, e))
+                        session.rollback()
                     else:
                         self.log.info('>>> [ {} ] updated to [ {} ]'.format(
                             path, task_status['name']))
