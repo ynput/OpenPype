@@ -18,10 +18,8 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
         asset_data = io.find_one({"type": "asset",
                                   "name": api.Session["AVALON_ASSET"]})
 
-
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
-        # creating instances per write node
 
         # gets only nodes with subset knob
         nodes = [n for n in nuke.allNodes()
