@@ -24,8 +24,6 @@ class CreateWriteRender(plugin.PypeCreator):
     def __init__(self, *args, **kwargs):
         super(CreateWriteRender, self).__init__(*args, **kwargs)
 
-        self.name = self.data["subset"]
-
         data = OrderedDict()
 
         data["family"] = self.family
