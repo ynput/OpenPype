@@ -4,7 +4,7 @@ import threading
 import time
 from Qt import QtCore, QtGui, QtWidgets
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pypeapp import style
 from pype.ftrack import FtrackServer, check_ftrack_url, credentials
 from . import login_dialog

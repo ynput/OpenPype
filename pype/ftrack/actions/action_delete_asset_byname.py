@@ -2,7 +2,7 @@ import os
 import sys
 import logging
 import argparse
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 

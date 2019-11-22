@@ -4,7 +4,7 @@ import argparse
 import json
 import arrow
 import logging
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction, get_ca_mongoid
 from pypeapp import config
 from ftrack_api.exception import NoResultFoundError

@@ -1,4 +1,4 @@
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseEvent, get_ca_mongoid
 from pype.ftrack.events.event_sync_to_avalon import Sync_to_Avalon
 

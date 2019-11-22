@@ -1,8 +1,8 @@
 import functools
 import time
 from pypeapp import Logger
-from pype.vendor import ftrack_api
-from pype.vendor.ftrack_api import session as fa_session
+import ftrack_api
+from ftrack_api import session as fa_session
 from pype.ftrack.ftrack_server import session_processor
 
 

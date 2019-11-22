@@ -6,7 +6,7 @@ import collections
 import json
 import re
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 from avalon import io, inventory, schema
 

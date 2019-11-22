@@ -7,8 +7,6 @@ import contextlib
 import subprocess
 import inspect
 
-from .vendor import pather
-from .vendor.pather.error import ParseError
 
 import avalon.io as io
 import avalon.api

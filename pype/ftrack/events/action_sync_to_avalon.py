@@ -13,8 +13,8 @@ from pymongo import UpdateOne
 import avalon
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.io_nonsingleton import DbConnector
-from pype.vendor import ftrack_api
-from pype.vendor.ftrack_api import session as fa_session
+import ftrack_api
+from ftrack_api import session as fa_session
 from pypeapp import Anatomy, config
 
 
