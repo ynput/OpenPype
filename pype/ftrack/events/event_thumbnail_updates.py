@@ -49,7 +49,10 @@ class ThumbnailEvents(BaseEvent):
 
                     self.log.info(msg)
 
-            session.commit()
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
 
 
 def register(session, plugins_presets):
