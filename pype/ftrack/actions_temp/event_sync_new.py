@@ -38,9 +38,12 @@ class SyncToAvalonEvent(BaseEvent):
     )
 
     entities_query_by_id = (
-        "select id, name, parent_id, link, custom_attributes"
-        " from TypedContext where project_id is \"{}\" and "
-        "entity_id in ({})"
+        "select id, name, parent_id, link, custom_attributes from TypedContext"
+        " where project_id is \"{}\" and entity_id in ({})"
+    )
+    entities_name_query_by_name = (
+        "select id, name from TypedContext"
+        " where project_id is \"{}\" and name in ({})"
     )
     created_entities = []
 
@@ -91,8 +94,9 @@ class SyncToAvalonEvent(BaseEvent):
     def avalon_ents_by_name(self):
         if self._avalon_ents_by_name is None:
             self._avalon_ents_by_name = {}
+            # TODO Do we need this split?
+            # - project should not be in avalon_ent_by_name
             proj, ents = self.avalon_entities
-            self._avalon_ents_by_name[proj["name"]] = proj
             for ent in ents:
                 self._avalon_ents_by_name[ent["name"]] = ent
         return self._avalon_ents_by_name
@@ -157,6 +161,93 @@ class SyncToAvalonEvent(BaseEvent):
 
         return self._changeability_by_mongo_id
 
+    def remove_cached_by_key(sekf, key="_id", values):
+        if self._avalon_ents is None:
+            return
+
+        if not isinstance(values):
+            values = [values]
+
+        def get_found_data(entity):
+            if not entity:
+                return None
+            return {
+                "ftrack_id": entity["data"]["ftrackId"],
+                "parent_id": entity["data"]["visualParent"],
+                "_id": entity["_id"],
+                "name": entity["name"],
+                "entity": entity
+            }
+
+        if key == "id":
+            key = "_id"
+        elif key == "ftrack_id":
+            key = "data.ftrackId"
+
+        found_data = {}
+        project, entities = self._avalon_ents
+        key_items = key.split(".")
+        for value in values:
+            # TODO add more keys (if possible)
+            # - this way not allow parent_id
+            ent = None
+            if key == "_id":
+                if self._avalon_ents_by_id is not None:
+                    ent = self._avalon_ents_by_id.get(value)
+
+            elif key == "name":
+                if self._avalon_ents_by_name is not None:
+                    ent = self._avalon_ents_by_name.get(value)
+
+            elif key == "data.ftrackId":
+                if self._avalon_ents_by_ftrack_id is not None:
+                    ent = self._avalon_ents_by_ftrack_id.get(value)
+
+            if ent is None:
+                for _ent in entities:
+                    _temp = _ent
+                    for item in key_items:
+                        _temp = _temp[item]
+
+                    if _temp == value:
+                        ent = _ent
+                        break
+
+            found_data[value] = get_found_data(ent)
+
+        for value in values:
+            data = found_data[value]
+            if not data:
+                # TODO logging
+                self.log.warning(
+                    "Didn't found entity by key/value \"{}\" / \"{}\"".format(
+                        key, value
+                    )
+                )
+                continue
+
+            ftrack_id = data["ftrack_id"]
+            parent_id = data["parent_id"]
+            mongo_id = data["_id"]
+            name = data["name"]
+            entity = data["entity"]
+
+            self._avalon_ents.remove(entity)
+            if self._avalon_ents_by_ftrack_id is not None:
+                self._avalon_ents_by_ftrack_id.pop(ftrack_id, None)
+
+            if self._avalon_ents_by_parent_id is not None:
+                self._avalon_ents_by_parent_id[parent_id].remove(entity)
+
+            if self._avalon_ents_by_id is not None:
+                self._avalon_ents_by_id.pop(mongo_id, None)
+
+            if self._avalon_ents_by_name is not None:
+                self._avalon_ents_by_name.pop(name, None)
+
+            if mongo_id in self.task_changes_by_avalon_id:
+                self.task_changes_by_avalon_id.pop(mongo_id)
+
     def _bubble_changeability(self, unchangeable_ids):
         unchangeable_queue = queue.Queue()
         for entity_id in unchangeable_ids:
@@ -212,7 +303,6 @@ class SyncToAvalonEvent(BaseEvent):
     def reset_variables(self):
         """Reset variables so each event callback has clear env."""
         self._cur_project = None
-        self._cur_event = None
 
         self._avalon_cust_attrs = None
 
@@ -224,6 +314,18 @@ class SyncToAvalonEvent(BaseEvent):
         self._avalon_subsets_by_parents = None
         self._changeability_by_mongo_id = None
 
+        self.task_changes_by_avalon_id = {}
+
+        self.ftrack_ents_by_id = {}
+
+        self.ftrack_added = {}
+        self.ftrack_moved = {}
+        self.ftrack_renamed = {}
+        self.ftrack_updated = {}
+        self.ftrack_removed = {}
+        self.hierarchy_update = []
+
+        self.regex_schemas = {}
         self.updates = collections.defaultdict(dict)
 
     def set_process_session(self, session):
@@ -283,6 +385,17 @@ class SyncToAvalonEvent(BaseEvent):
 
         return filtered_updates
 
+    def get_ent_path(self, ftrack_id):
+        entity = self.ftrack_ents_by_id.get(ftrack_id)
+        if not entity:
+            entity = self.process_session.query(
+                self.entities_query_by_id.format(
+                    self.cur_project["id"], ftrack_id
+                )
+            )
+            self.ftrack_ents_by_id[ftrack_id] = entity
+        return "/".join([ent["name"] for ent in entity["link"]])
+
     def launch(self, session, event):
         return True
         # Try to commit and if any error happen then recreate session
@@ -290,6 +403,7 @@ class SyncToAvalonEvent(BaseEvent):
             self.process_session.commit()
         except Exception:
             self.set_process_session(session)
+
         # Reset object values for each launch
         self.reset_variables()
         self._cur_event = event
@@ -343,26 +457,28 @@ class SyncToAvalonEvent(BaseEvent):
                 continue
 
             changes = ent_info["changes"]
-            if cust_attr_auto_sync in changes:
-                auto_sync = changes[cust_attr_auto_sync]["new"]
-                if auto_sync == "1":
-                    # Trigger sync to avalon action if auto sync was turned on
-                    ft_project = self.cur_project
-                    self.log.debug((
-                        "Auto sync was turned on for project <{}>."
-                        " Triggering syncToAvalon action."
-                    ).format(ft_project["full_name"]))
-                    selection = [{
-                        "entityId": ft_project["id"],
-                        "entityType": "show"
-                    }]
-                    self.trigger_action(
-                        action_name="sync.to.avalon.server",
-                        event=event,
-                        selection=selection
-                    )
-                # Exit for both cases
-                return True
+            if cust_attr_auto_sync not in changes:
+                continue
+
+            auto_sync = changes[cust_attr_auto_sync]["new"]
+            if auto_sync == "1":
+                # Trigger sync to avalon action if auto sync was turned on
+                ft_project = self.cur_project
+                self.log.debug((
+                    "Auto sync was turned on for project <{}>."
+                    " Triggering syncToAvalon action."
+                ).format(ft_project["full_name"]))
+                selection = [{
+                    "entityId": ft_project["id"],
+                    "entityType": "show"
+                }]
+                self.trigger_action(
+                    action_name="sync.to.avalon.server",
+                    event=event,
+                    selection=selection
+                )
+            # Exit for both cases
+            return True
 
         # Filter updated data by changed keys
         updated = self.filter_updates(updated)
@@ -371,7 +487,7 @@ class SyncToAvalonEvent(BaseEvent):
         if (
             len(found_actions) == 1 and
             found_actions[0] == "update" and
-            not updates
+            not updated
         ):
             return True
 
@@ -391,8 +507,29 @@ class SyncToAvalonEvent(BaseEvent):
         if auto_sync != "1":
             return True
 
+        # Get ftrack entities - find all ftrack ids first
+        ftrack_ids = []
+        for ent_info in updated:
+            ftrack_ids.append(ent_info["entityId"])
+
+        for action, ent_infos in entities_by_action.items():
+            # skip updated (already prepared) and removed (not exist in ftrack)
+            if action in ["update", "remove"]:
+                continue
+
+            for ent_info in ent_infos:
+                ftrack_id = ent_info["entityId"]
+                if ftrack_id not in ftrack_ids:
+                    ftrack_ids.append(ftrack_id)
+
+        joined_ids = ", ".join(["\"{}\"".format(id) for id in ftrack_ids])
+        ftrack_entities = self.process_session.query(
+            self.entities_query_by_id.format(ft_project["id"], joined_ids)
+        ).all()
+        for entity in ftrack_entities:
+            self.ftrack_ents_by_id[entity["id"]] = entity
+
         # Filter updates where name is changing
-        name_updates = {}
         for ftrack_id, ent_info in updated.items():
             ent_keys = ent_info["keys"]
             # Seprate update info from rename
@@ -407,23 +544,27 @@ class SyncToAvalonEvent(BaseEvent):
                 else:
                     _ent_info["changes"].pop(ent_key, None)
                     _ent_info["keys"].remove(ent_key)
-            name_updates[ftrack_id] = _ent_info
+            self.ftrack_renamed[ftrack_id] = _ent_info
 
-        # 1.) Process removed (removed from ftrack database)
-        self.process_removed(entities_by_action["remove"])
-        self.process_hiearchy_changes(
-            entities_by_action["move"], name_updates
-        )
-        # 2.) Process added
-        self.process_added(entities_by_action["add"])
-        # 3.) Process moved (changed parent_id)
-        self.process_moved(entities_by_action["move"])
-        # 4.) Process updated
-        self.process_updated(updated)
+        self.ftrack_removed = entities_by_action["remove"]
+        self.ftrack_moved = entities_by_action["move"]
+        self.ftrack_added = entities_by_action["add"]
+        self.ftrack_updated = updated
+
+        # 1.) Process removed - may affect all other actions
+        self.process_removed()
+        # 2.) Process renamed - may affect added
+        self.process_renamed()
+        # 3.) Process added - moved entity may be moved to new entity
+        self.process_added()
+        # 4.) Process moved
+        self.process_moved()
+        # 5.) Process updated
+        self.process_updated()
 
         return True
 
-    def process_removed(self, ent_infos):
+    def process_removed(self):
         remove_data = {
             'action': 'remove',
             'changes': {
@@ -460,25 +601,35 @@ class SyncToAvalonEvent(BaseEvent):
                 {'entityId': '83f56510-0638-11ea-9d25-3e41ec9bc0d6', 'entityType': 'task', 'parentId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6'}
             ]
         }
-        if not ent_infos:
+        if not self.ftrack_removed:
             return
+        ent_infos = self.ftrack_removed
         removable_ids = []
         recreate_ents = []
         removed_mapping = {}
+        removed_names = []
         for ftrack_id, removed in ent_infos:
             entity_type = removed["entity_type"]
             parent_id = removed["parentId"]
-            removed_name = removed["changes"]["name"]
+            removed_name = removed["changes"]["name"]["old"]
             if entity_type == "Task":
                 avalon_ent = self.avalon_ents_by_ftrack_id.get(parent_id)
                 if not avalon_ent:
-                    # TODO Find avalon_ent
-                    pass
+                    self.log.debug((
+                        "Parent entity of task was not found in avalon <{}>"
+                    ).format(self.get_ent_path(ftrack_id)))
+                    continue
 
                 mongo_id = avalon_ent["_id"]
-                tasks = avalon_ent["data"]["tasks"]
-                if removed_name not in tasks:
-                    continue
+                if mongo_id not in self.task_changes_by_avalon_id:
+                    self.task_changes_by_avalon_id[mongo_id] = (
+                        avalon_ent["data"]["tasks"]
+                    )
+
+                if removed_name in self.task_changes_by_avalon_id[mongo_id]:
+                    self.task_changes_by_avalon_id[mongo_id].remove(
+                        removed_name
+                    )
 
                 continue
 
@@ -488,6 +639,7 @@ class SyncToAvalonEvent(BaseEvent):
             mongo_id = avalon_ent["_id"]
             if self.changeability_by_mongo_id[mongo_id]:
                 removable_ids.append(mongo_id)
+                removed_names.append(removed_name)
             else:
                 recreate_ents.append(avalon_ent)
 
@@ -496,6 +648,7 @@ class SyncToAvalonEvent(BaseEvent):
                 {"_id": {"$in": removable_ids}, "type": "asset"},
                 {"$set": {"type": "archived_asset"}}
             )
+            self.remove_cached_by_key("id", removable_ids)
 
         if recreate_ents:
             # sort removed entities by parents len
@@ -510,69 +663,263 @@ class SyncToAvalonEvent(BaseEvent):
             # remove mapping is for mapping removed and new entities
             removed_mapping["removed_ftrack_id"] = "new_ftrack_id"
 
-    def process_hiearchy_changes(self, moved, name_changes):
-        if not moved and not name_changes:
+        if not removed_names:
             return
 
-        self.process_moved(moved)
-
-
-    def process_moved(self, ent_infos):
-        if not ent_infos:
+        joined_passed_names = ", ".join(
+            ["\"{}\"".format(name) for name in removed_names]
+        )
+        same_name_entities = self.process_session.query(
+            self.entities_name_query_by_name.format(joined_passed_names)
+        ).all()
+        if not same_name_entities:
             return
 
-        found = {}
+        entities_by_name = collections.defaultdict(list)
+        for entity in same_name_entities:
+            entities_by_name[entity["name"]].append(entity)
+
+        synchronizable_ents = []
+        for name, ents in entities_by_name.items():
+            if len(ents) != 1:
+                continue
+            # TODO try to sync that entity!!!
+
+    # def process_hiearchy_changes(self):
+    #     if not self.ftrack_moved and not self.ftrack_renamed:
+    #         return
+    #
+    #     self.process_moved()
+
+    def process_renamed(self):
+        if not self.ftrack_renamed:
+            return
+        ent_infos = self.ftrack_renamed
+        renamed_tasks = {}
         not_found = {}
-        for ent_info in ent_infos:
-            ftrack_id = ent_info["entityId"]
-            avalon_ent = self.avalon_ents_by_ftrack_id.get("ftrack_id")
-            if avalon_ent:
-                found[ftrack_id] = {
-                    "avalon_ent": avalon_ent,
+        updates = {}
+        changeable_queue = queue.Queue()
+        for ftrack_id, ent_info in ent_infos.items():
+            entity_type = ent_info["entity_type"]
+            new_name = ent_info["changes"]["name"]["new"]
+            old_name = ent_info["changes"]["name"]["old"]
+            if entity_type == "Task":
+                parent_id = ent_info["parentId"]
+                renamed_tasks[parent_id] = {
+                    "new": new_name,
+                    "old": old_name,
                     "ent_info": ent_info
                 }
                 continue
 
-            not_found[ftrack_id] = ent_info
+            avalon_ent = self.avalon_ents_by_ftrack_id.get(ftrack_id)
+            if not avalon_ent:
+                not_found[ftrack_id] = ent_info
+                continue
 
-        if not_found:
-            joined_ids = ", ".join([
-                "\"{}\"".format(id) for id in not_found.keys()
-            ])
-            ftrack_entities = self.process_session.query(
-                self.entities_query_by_id.format(
-                    self.cur_project["id"], joined_ids
-                )
-            ).all()
-            for entity in ftrack_entities:
-                # TODO find avalon entity
-                pass
-
-        updates = {}
-        for ftrack_id, ent_dict in found.items():
-            avalon_ent = ent_dict["avalon_ent"]
-            ent_info = ent_dict["ent_info"]
-            new_parent_id = ent_info["changes"]["parent_id"]["new"]
-            old_parent_id = ent_info["changes"]["parent_id"]["old"]
+            if new_name == avalon_ent["name"]:
+                continue
 
             mongo_id = avalon_ent["_id"]
             if self.changeability_by_mongo_id[mongo_id]:
-                # TODO implement
-                updates[mongo_id] = {"data.visualParent": "asdasd"}
+                changeable_queue.put((ftrack_id, avalon_ent, new_name))
+            else:
+                ftrack_ent = self.ftrack_ents_by_id[ftrack_id]
+                ftrack_ent["name"] = avalon_ent["name"]
+                try:
+                    self.process_session.commit()
+                except Exception:
+                    self.process_session.rollback()
+                    # TODO report
+                    # TODO logging
 
-    def process_added(self, ent_infos):
+        while not changeable_queue.empty():
+            ftrack_id, avalon_ent, new_name = changeable_queue.get()
+            mongo_id = avalon_ent["_id"]
+            old_name = avalon_ent["name"]
+
+            _entity_type = "asset"
+            if entity_type == "Project":
+                _entity_type = "project"
+
+            passed_regex = avalon_sync.check_regex(
+                new_name, _entity_type, schema_patterns=self.regex_schemas
+            )
+            if not passed_regex:
+                # TODO report
+                # TODO logging
+                # new name does not match regex (letters numbers and _)
+                ent_path = self.get_ent_path(ftrack_id)
+                # TODO move this to special report method
+                self.log.warning(
+                    "Entity name contain invalid symbols <{}>".format(ent_path)
+                )
+                continue
+
+            # if avalon does not have same name then can be changed
+            same_name_avalon_ent = self.avalon_ents_by_name.get(new_name)
+            if not same_name_avalon_ent:
+                old_val = self._avalon_ents_by_name.pop(old_name)
+                old_val["name"] = new_name
+                self._avalon_ents_by_name[new_name] = old_val
+                updates[mongo_id] = {"name": new_name}
+                # TODO report
+                # TODO logging
+                # TODO go through children to change parents
+                self.log.debug(
+                    "Name of entity will be changed to \"{}\" <{}>".format(
+                        new_name, ent_path
+                    )
+                )
+                continue
+
+            # Check if same name is in changable_queue
+            # - it's name may be changed in next iteration
+            same_name_ftrack_id = same_name_avalon_ent["data"]["ftrackId"]
+            same_is_unprocessed = False
+            for item in list(changeable_queue.queue):
+                if same_name_ftrack_id == item[0]:
+                    same_is_unprocessed = True
+                    break
+
+            if same_is_unprocessed:
+                changeable_queue.put((ftrack_id, avalon_ent, new_name))
+                continue
+
+            # TODO report
+            # TODO logging
+            # Duplicated entity name
+            # TODO move this to special report method
+            self.log.warning(
+                "Entity name is duplicated in the project <{}>".format(
+                    ent_path
+                )
+            )
+
+        for parent_id, task_change in renamed_tasks.items():
+            avalon_ent = self.avalon_ents_by_ftrack_id.get(parent_id)
+            ent_info = task_change["ent_info"]
+            if not avalon_ent:
+                not_found[ent_info["entityId"]] = ent_info
+                continue
+
+            mongo_id = avalon_ent["_id"]
+            if mongo_id not in self.task_changes_by_avalon_id:
+                self.task_changes_by_avalon_id[mongo_id] = (
+                    avalon_ent["data"]["tasks"]
+                )
+
+            new_name = task_change["new"]
+            old_name = task_change["old"]
+            passed_regex = avalon_sync.check_regex(
+                new_name, "task", schema_patterns=self.regex_schemas
+            )
+            if not passed_regex:
+                ftrack_id = ent_info["enityId"]
+                entity = self.ftrack_ents_by_id[ftrack_id]
+                entity["name"] = old_name
+                try:
+                    self.process_session.commit()
+                    # TODO report
+                    # TODO logging
+                except Exception:
+                    self.process_session.rollback()
+                    # TODO report
+                    # TODO logging
+
+                continue
+
+            if old_name in self.task_changes_by_avalon_id[mongo_id]:
+                self.task_changes_by_avalon_id[mongo_id].remove(old_name)
+
+            if new_name not in self.task_changes_by_avalon_id[mongo_id]:
+                self.task_changes_by_avalon_id[mongo_id].append(new_name)
+
+        # TODO process not_found
+
+    def process_added(self):
+        ent_infos = self.ftrack_added
         if not ent_infos:
             return
 
-        # Skip if already exit in avalon db
+        # Skip if already exit in avalon db or tasks entities
         # - happen when was created by any sync event/action
-        already_exist = []
+        pop_out_ents = []
+        new_tasks_by_parent = collections.defaultdict(list)
+        _new_ent_infos = {}
         for ftrack_id, ent_info in ent_infos.items():
             if self.avalon_ents_by_ftrack_id.get(ftrack_id):
-                already_exist.append(ftrack_id)
+                pop_out_ents.append(ftrack_id)
+                continue
 
-        for ftrack_id in already_exist:
+            if ent_info["entity_type"] == "Task":
+                parent_id = ent_info["parentId"]
+                new_tasks_by_parent[parent_id].append(ent_info)
+                pop_out_ents.append(ftrack_id)
+
+        for ftrack_id in pop_out_ents:
             ent_infos.pop(ftrack_id)
+
+        # sort by parents length (same as by hierarchy level)
+        _ent_infos = sorted(
+            ent_infos.values(),
+            key=(lambda ent_info: len(ent_info.get("parents", [])))
+        )
+        to_create_by_id = collections.OrderedDict()
+        for ent_info in _ent_infos:
+            ft_id = ent_info["entityId"]
+            to_create_by_id[ft_id] = self.ftrack_ents_by_id[ft_id]
+
+        # cache regex success (for tasks)
+        not_found_parents = {}
+        duplicated = []
+        _regex_failed = []
+        for ftrack_id, entity in to_create_by_id.items():
+            if entity.entity_type == "Project":
+                raise Exception((
+                    "Project can't be created with event handler!"
+                    "This is a bug"
+                ))
+            parent_id = entity["parent_id"]
+            parent_avalon = self.avalon_ents_by_ftrack_id.get(parent_id)
+            if not parent_avalon:
+                not_found_parents.append(ftrack_id)
+                continue
+
+            
+            name = entity["name"]
+            if name in self.avalon_ents_by_name:
+                duplicated.append(ftrack_id)
+
+            passed_regex = avalon_sync.check_regex(
+                name, "asset", schema_patterns=self.regex_schemas
+            )
+            if not passed_regex:
+                _regex_failed.append(ftrack_id)
+
+            all_passed_names.append(name)
+
+        regex_failed = {}
+        for ftrack_id in _regex_failed
+            regex_failed[ftrack_id] = to_create_by_id.pop(ftrack_id)
+
+
+        # joined_passed_names = ", ".join(
+        #     ["\"{}\"".format(name) for name in all_passed_names]
+        # )
+        # name_ftrack_ents = self.process_session.query(
+        #     self.entities_name_query_by_name.format(
+        #         self.cur_project["id"], joined_passed_names
+        #     )
+        # ).all()
+        #
+        # ents_by_name = collections.defaultdict(list)
+        # for entity in name_ftrack_ents:
+        #     ftrack_id = entity["id"]
+        #     if ftrack_id not in self.ftrack_ents_by_id:
+        #         self.ftrack_ents_by_id[ftrack_id] = entity
+        #     ents_by_name[entity["name"]].append(entity)
+
 
         add_data = {
             'action': 'add',
@@ -607,56 +954,43 @@ class SyncToAvalonEvent(BaseEvent):
                 {'entityId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6', 'entityType': 'show', 'parentId': None}
             ]
         }
-        # sort by parents length (same as by hierarchy level)
-        _ent_infos = sorted(
-            ent_infos.values(),
-            key=(lambda ent_info: len(ent_info.get("parents", [])))
-        )
-        ent_infos = {}
-        for ent_info in _ent_infos:
-            ftrack_id = ent_info["entityId"]
-            ent_infos[ftrack_id] = ent_info
 
-        duplicated = []
-        _regex_success = {}
-        _schema_patterns = {}
-        failed_ids = []
-        all_new_by_name = collections.defaultdict(list)
-        tasks_by_parent_id = collections.defaultdict(list)
-        for ent_info in ent_infos:
-            name = ent_info["changes"]["name"]["new"]
-            if name in all_new_names:
-                duplicated.append(name)
-            all_new_by_name[name].append(ent_info)
-            entity_type = ent_info["entity_type"]
-
-            passed_regex = _regex_success.get(name)
-            if passed_regex is None:
-                _entity_type = "asset"
-                if entity_type == "Project":
-                    _entity_type = "project"
-                elif entity_type == "Task":
-                    _entity_type = "task"
-
-                passed_regex = avalon_sync.check_regex(
-                    name, _entity_type, schema_patterns=_schema_patterns
-                )
-                _regex_success[name] = passed_regex
-
-            if entity_type == "Task":
-                if passed_regex:
-                    tasks_by_parent_id[ent_info["parentId"]].append(name)
+    def process_moved(self):
+        if not self.ftrack_moved:
+            return
+        found = {}
+        not_found = {}
+        for ftrack_id, ent_info in self.ftrack_moved.items():
+            avalon_ent = self.avalon_ents_by_ftrack_id.get(ftrack_id)
+            if avalon_ent:
+                found[ftrack_id] = {
+                    "avalon_ent": avalon_ent,
+                    "ent_info": ent_info,
+                    "renamed": ftrack_id in self.ftrack_renamed
+                }
                 continue
 
-            if not passed_regex:
-                failed_ids.append(ent_info["entityId"])
+            not_found[ftrack_id] = ent_info
 
-        ignore_ids = []
+        # TODO process not_found (not synchronized)
 
-        for ent_info in ent_infos:
-            ftrack_id = ent_info["entityId"]
-            entity_type = ent_info["entity_type"]
-            parent_id = ent_info["parent_id"]
+        for ftrack_id, ent_dict in found.items():
+            updates = {}
+            avalon_ent = ent_dict["avalon_ent"]
+            ent_info = ent_dict["ent_info"]
+            renamed = ent_dict["renamed"]
+
+            new_parent_id = ent_info["changes"]["parent_id"]["new"]
+            old_parent_id = ent_info["changes"]["parent_id"]["old"]
+
+            mongo_id = avalon_ent["_id"]
+            if self.changeability_by_mongo_id[mongo_id]:
+                # TODO implement
+                par_av_ent = self.avalon_ents_by_ftrack_id.get(new_parent_id)
+                # THIS MUST HAPPEND AFTER CREATING NEW ENTITIES !!!!
+                updates["data.visualParent"] = par_av_ent["_id"]
+                if renamed:
+                    pass
 
     def process_updated(self, ent_infos):
         # Only custom attributes changes should get here
