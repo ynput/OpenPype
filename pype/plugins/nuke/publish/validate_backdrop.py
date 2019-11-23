@@ -58,7 +58,12 @@ class ValidateBackdrop(pyblish.api.InstancePlugin):
     actions = [SelectCenterInNodeGraph]
 
     def process(self, instance):
+        connections_out = instance.data["connections_out"]
 
-        msg = "No content on backdrop node: \"{}\"".format(
+        msg_multiple_outputs = "Only one outcoming connection from \"{}\" is allowed".format(
             instance.data["name"])
-        assert len(instance) > 1, msg
+        assert len(connections_out.keys()) <= 1, msg_multiple_outputs
+
+        msg_no_content = "No content on backdrop node: \"{}\"".format(
+            instance.data["name"])
+        assert len(instance) > 1, msg_no_content

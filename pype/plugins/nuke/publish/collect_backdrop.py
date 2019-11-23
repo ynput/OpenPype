@@ -1,6 +1,7 @@
 import pyblish.api
+import pype.api as pype
+from pype.nuke import lib as pnlib
 import nuke
-
 
 @pyblish.api.log
 class CollectBackdrops(pyblish.api.InstancePlugin):
@@ -38,8 +39,46 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
                 # add contained nodes to instance's node list
                 instance.append(node)
 
+        # get all connections from outside of backdrop
+        nodes = instance[1:]
+        connections_in, connections_out = pnlib.get_dependent_nodes(nodes)
+        instance.data["connections_in"] = connections_in
+        instance.data["connections_out"] = connections_out
+
+        # make label nicer
         instance.data["label"] = "{0} ({1} nodes)".format(
             bckn.name(), len(instance)-1)
 
+        instance.data["families"].append(instance.data["family"])
+
+        # Get frame range
+        handle_start = instance.context.data["handleStart"]
+        handle_end = instance.context.data["handleEnd"]
+        first_frame = int(nuke.root()["first_frame"].getValue())
+        last_frame = int(nuke.root()["last_frame"].getValue())
+
+        # get version
+        version = pype.get_version_from_path(nuke.root().name())
+        instance.data['version'] = version
+
+        # Add version data to instance
+        version_data = {
+            "handles": handle_start,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
+            "frameStart": first_frame + handle_start,
+            "frameEnd": last_frame - handle_end,
+            "version": int(version),
+            "families": [instance.data["family"]] + instance.data["families"],
+            "subset": instance.data["subset"],
+            "fps": instance.context.data["fps"]
+        }
+
+        instance.data.update({
+            "versionData": version_data,
+            "frameStart": first_frame,
+            "frameEnd": last_frame,
+            "subsetGroup": "backdrops"
+        })
         self.log.info("Backdrop content collected: `{}`".format(instance[:]))
         self.log.info("Backdrop instance collected: `{}`".format(instance))
