@@ -7,14 +7,14 @@ def get_node_outputs(node):
     '''
     Return a dictionary of the nodes and pipes that are connected to node
     '''
-    depDict = {}
+    dep_dict = {}
     dependencies = node.dependent(nuke.INPUTS | nuke.HIDDEN_INPUTS)
     for d in dependencies:
-        depDict[d] = []
+        dep_dict[d] = []
         for i in range(d.inputs()):
             if d.input(i) == node:
-                depDict[d].append(i)
-    return depDict
+                dep_dict[d].append(i)
+    return dep_dict
 
 
 def is_node_gizmo(node):
@@ -26,9 +26,9 @@ def is_node_gizmo(node):
 
 def gizmo_is_nuke_default(gizmo):
     '''Check if gizmo is in default install path'''
-    plugDir = os.path.join(os.path.dirname(
+    plug_dir = os.path.join(os.path.dirname(
         nuke.env['ExecutablePath']), 'plugins')
-    return gizmo.filename().startswith(plugDir)
+    return gizmo.filename().startswith(plug_dir)
 
 
 def bake_gizmos_recursively(in_group=nuke.Root()):
