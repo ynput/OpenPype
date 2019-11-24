@@ -112,7 +112,8 @@ def install():
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "write",
-        "review"
+        "review",
+        "gizmo"
     ]
 
     avalon.data["familiesStateDefault"] = False
