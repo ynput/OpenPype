@@ -31,27 +31,6 @@ class RestMethods(enum.Enum):
         return default
 
 
-class CustomNone:
-    """Created object can be used as custom None (not equal to None)"""
-    def __init__(self, name):
-        self._name = name
-
-    def __bool__(self):
-        return False
-
-    def __eq__(self, other):
-        if type(other) == type(self):
-            if other._name == self._name:
-                return True
-        return False
-
-    def __str__(self):
-        return self._name
-
-    def __repr__(self):
-        return self._name
-
-
 class HandlerDict(dict):
     def __init__(self, data=None, *args, **kwargs):
         if not data:
