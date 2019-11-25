@@ -40,6 +40,7 @@ class CollectGizmo(pyblish.api.InstancePlugin):
             "handleEnd": handle_end,
             "frameStart": first_frame + handle_start,
             "frameEnd": last_frame - handle_end,
+            "colorspace": nuke.root().knob('workingSpaceLUT').value(),
             "version": int(version),
             "families": [instance.data["family"]] + instance.data["families"],
             "subset": instance.data["subset"],
