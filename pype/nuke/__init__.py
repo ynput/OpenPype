@@ -113,6 +113,7 @@ def install():
     family_states = [
         "write",
         "review",
+        "nukenodes" 
         "gizmo"
     ]
 

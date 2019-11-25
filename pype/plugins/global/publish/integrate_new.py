@@ -71,6 +71,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "audio",
                 "yetiRig",
                 "yeticache",
+                "nukenodes"
                 "gizmo"
                 ]
     exclude_families = ["clip"]
