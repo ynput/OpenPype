@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import datetime
 import traceback
 import http.server
 from http import HTTPStatus
@@ -144,7 +145,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         except Exception as exc:
             log_message = "Unexpected Exception was raised (this is bug!)"
             log.error(log_message, exc_info=True)
-            replace_helper = 0
             items = [log_message]
             items += traceback.extract_tb(exc.__traceback__).format()
             message = "\n".join(items)

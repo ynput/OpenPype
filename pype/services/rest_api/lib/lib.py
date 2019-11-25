@@ -1,12 +1,8 @@
-import os
-import re
 import enum
 from http import HTTPStatus
 from urllib.parse import urlencode, parse_qs
 
-from pypeapp import Logger
-
-log = Logger().get_logger("RestApiServer")
+Splitter = "__splitter__"
 
 
 class RestMethods(enum.Enum):
