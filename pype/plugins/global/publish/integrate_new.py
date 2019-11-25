@@ -62,7 +62,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "render",
                 "imagesequence",
                 "review",
-                "render",
                 "rendersetup",
                 "rig",
                 "plate",
@@ -71,7 +70,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "audio",
                 "yetiRig",
                 "yeticache",
-                "nukenodes"
+                "nukenodes",
                 "gizmo"
                 ]
     exclude_families = ["clip"]
@@ -528,10 +527,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             subset["data"].update(
                 {"subsetGroup": instance.data.get("subsetGroup")}
             )
+            self.log.info("__ subset.data: {}".format(subset["data"]))
             io.update_many({
                 'type': 'subset',
                 '_id': io.ObjectId(subset["_id"])
-            }, {'$set': subset["data"]}
+            }, {'$set': {'data': subset["data"]}}
             )
 
         return subset
