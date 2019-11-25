@@ -11,8 +11,12 @@ from bson.objectid import ObjectId
 from bson.errors import InvalidId
 from pymongo import UpdateOne
 
+from avalon import schema
+
 from pype.ftrack.lib import avalon_sync
-from pype.ftrack.lib.avalon_sync import cust_attr_id_key, cust_attr_auto_sync
+from pype.ftrack.lib.avalon_sync import (
+    cust_attr_id_key, cust_attr_auto_sync, entity_schemas
+)
 from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent
 
@@ -140,7 +144,9 @@ class SyncToAvalonEvent(BaseEvent):
         if self._avalon_subsets_by_parents is None:
             self._avalon_subsets_by_parents = collections.defaultdict(list)
             self.dbcon.install()
-            self.dbcon.Session["AVALON_PROJECT"] = self.cur_project["full_name"]
+            self.dbcon.Session["AVALON_PROJECT"] = (
+                self.cur_project["full_name"]
+            )
             for subset in self.dbcon.find({"type": "subset"}):
                 self._avalon_subsets_by_parents[subset["parent"]].append(
                     subset
@@ -161,7 +167,16 @@ class SyncToAvalonEvent(BaseEvent):
 
         return self._changeability_by_mongo_id
 
-    def remove_cached_by_key(sekf, key="_id", values):
+    @property
+    def avalon_custom_attributes(self):
+        """Return info about changeability of entity and it's parents."""
+        if self._avalon_custom_attributes is None:
+            self._avalon_custom_attributes = avalon_sync.get_avalon_attr(
+                self.process_session
+            )
+        return self._avalon_custom_attributes
+
+    def remove_cached_by_key(self, key, values):
         if self._avalon_ents is None:
             return
 
@@ -316,7 +331,11 @@ class SyncToAvalonEvent(BaseEvent):
 
         self.task_changes_by_avalon_id = {}
 
+        self._avalon_custom_attributes = None
+        self._ent_types_by_name = None
+
         self.ftrack_ents_by_id = {}
+        self.obj_id_ent_type_map = {}
 
         self.ftrack_added = {}
         self.ftrack_moved = {}
@@ -324,6 +343,11 @@ class SyncToAvalonEvent(BaseEvent):
         self.ftrack_updated = {}
         self.ftrack_removed = {}
         self.hierarchy_update = []
+
+        self.renamed_in_avalon = []
+
+        self.duplicated = []
+        self.regex_fail = []
 
         self.regex_schemas = {}
         self.updates = collections.defaultdict(dict)
@@ -341,7 +365,7 @@ class SyncToAvalonEvent(BaseEvent):
         )
         atexit.register(lambda: self.process_session.close())
 
-    def filter_updates(self, updates):
+    def filter_updated(self, updates):
         filtered_updates = {}
         for ftrack_id, ent_info in updates.items():
             changed_keys = [k for k in (ent_info.get("keys") or [])]
@@ -392,7 +416,7 @@ class SyncToAvalonEvent(BaseEvent):
                 self.entities_query_by_id.format(
                     self.cur_project["id"], ftrack_id
                 )
-            )
+            ).one()
             self.ftrack_ents_by_id[ftrack_id] = entity
         return "/".join([ent["name"] for ent in entity["link"]])
 
@@ -481,7 +505,7 @@ class SyncToAvalonEvent(BaseEvent):
             return True
 
         # Filter updated data by changed keys
-        updated = self.filter_updates(updated)
+        updated = self.filter_updated(updated)
 
         # skip most of events where nothing has changed for avalon
         if (
@@ -565,42 +589,6 @@ class SyncToAvalonEvent(BaseEvent):
         return True
 
     def process_removed(self):
-        remove_data = {
-            'action': 'remove',
-            'changes': {
-                'bid': {'new': None, 'old': 0.0},
-                'context_type': {'new': None, 'old': 'task'},
-                'description': {'new': None, 'old': ''},
-                'enddate': {'new': None, 'old': None},
-                'id': {'new': None, 'old': 'dd784a4a-06e6-11ea-a504-3e41ec9bc0d6'},
-                'isopen': {'new': None, 'old': False},
-                'isrequirecomment': {'new': None, 'old': False},
-                'name': {'new': None, 'old': 'compositing'},
-                'object_typeid': {'new': None, 'old': '11c137c0-ee7e-4f9c-91c5-8c77cec22b2c'},
-                'parent_id': {'new': None, 'old': 'dd562c80-06e6-11ea-a504-3e41ec9bc0d6'},
-                'priorityid': {'new': None, 'old': '9661b320-3a0c-11e2-81c1-0800200c9a66'},
-                'showid': {'new': None, 'old': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6'},
-                'sort': {'new': None, 'old': 0.0},
-                'startdate': {'new': None, 'old': None},
-                'statusid': {'new': None, 'old': '44dd9fb2-4164-11df-9218-0019bb4983d8'},
-                'taskid': {'new': None, 'old': 'dd784a4a-06e6-11ea-a504-3e41ec9bc0d6'},
-                'thumbid': {'new': None, 'old': None},
-                'typeid': {'new': None, 'old': '44dd23b6-4164-11df-9218-0019bb4983d8'}
-            },
-            'entityId': 'dd784a4a-06e6-11ea-a504-3e41ec9bc0d6',
-            'entityType': 'task',
-            'entity_type': 'Task',
-            'keys': ['id', 'taskid', 'thumbid', 'context_type', 'name', 'parent_id', 'bid', 'description', 'startdate', 'enddate', 'statusid', 'typeid', 'priorityid', 'isopen', 'isrequirecomment', 'object_typeid', 'showid', 'sort'],
-            'objectTypeId': '11c137c0-ee7e-4f9c-91c5-8c77cec22b2c',
-            'parentId': 'dd562c80-06e6-11ea-a504-3e41ec9bc0d6',
-            'parents': [
-                {'entityId': 'dd784a4a-06e6-11ea-a504-3e41ec9bc0d6', 'entityType': 'task', 'parentId': 'dd562c80-06e6-11ea-a504-3e41ec9bc0d6'},
-                {'entityId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6', 'entityType': 'show', 'parentId': None},
-                {'entityId': 'dd562c80-06e6-11ea-a504-3e41ec9bc0d6', 'entityType': 'task', 'parentId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6'},
-                {'entityId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6', 'entityType': 'task', 'parentId': '83f56510-0638-11ea-9d25-3e41ec9bc0d6'},
-                {'entityId': '83f56510-0638-11ea-9d25-3e41ec9bc0d6', 'entityType': 'task', 'parentId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6'}
-            ]
-        }
         if not self.ftrack_removed:
             return
         ent_infos = self.ftrack_removed
@@ -663,6 +651,7 @@ class SyncToAvalonEvent(BaseEvent):
             # remove mapping is for mapping removed and new entities
             removed_mapping["removed_ftrack_id"] = "new_ftrack_id"
 
+        # Check if entities with same name can be synchronized
         if not removed_names:
             return
 
@@ -680,24 +669,182 @@ class SyncToAvalonEvent(BaseEvent):
             entities_by_name[entity["name"]].append(entity)
 
         synchronizable_ents = []
+        self.log.debug((
+            "Deleting of entities should allow to synchronize another entities"
+            " with same name."
+        ))
         for name, ents in entities_by_name.items():
             if len(ents) != 1:
+                self.log.debug((
+                    "Name \"{}\" still have more than one entity <{}>"
+                ).format(
+                    name, "| ".join([self.get_ent_path(ent) for ent in ents])
+                ))
                 continue
-            # TODO try to sync that entity!!!
 
-    # def process_hiearchy_changes(self):
-    #     if not self.ftrack_moved and not self.ftrack_renamed:
-    #         return
-    #
-    #     self.process_moved()
+            entity = ents[0]
+            self.log.debug("Checking if can synchronize entity <{}>".format(
+                self.get_ent_path(entity)
+            ))
+            # skip if already synchronized
+            ftrack_id = entity["id"]
+            if ftrack_id in self.avalon_ents_by_ftrack_id:
+                self.log.debug("Entity is already synchronized")
+                continue
+
+            parent_id = entity["parent_id"]
+            if parent_id not in self.avalon_ents_by_ftrack_id:
+                self.log.debug(
+                    "Entity's parent entity doesn't seems to be synchronized."
+                )
+                continue
+
+            synchronizable_ents.append(entity)
+
+        if not synchronizable_ents:
+            return
+
+        synchronizable_ents = sorted(
+            synchronizable_ents,
+            key=(lambda entity: len(entity["link"]))
+        )
+
+        for entity in synchronizable_ents:
+            parent_avalon_ent = self.avalon_ents_by_ftrack_id[
+                entity["parent_id"]
+            ]
+            self.create_entity_in_avalon(entity, parent_avalon_ent)
+            for child in entity["children"]:
+                if child.entity_type.lower() == "task":
+                    continue
+                # TODO create children and children of children and children of children of children
+
+    def create_entity_in_avalon(self, ftrack_ent, parent_avalon):
+        proj, ents = self.avalon_entities
+
+        # Parents, Hierarchy
+        ent_path_items = [ent["name"] for ent in ftrack_ent["link"]]
+        parents = ent_path_items[1:len(ent_path_items)-1:]
+        hierarchy = ""
+        if len(parents) > 0:
+            hierarchy = os.path.sep.join(parents)
+
+        # Tasks
+        tasks = []
+        for child in ftrack_ent["children"]:
+            if child.entity_type.lower() != "task":
+                continue
+            tasks.append(child["name"])
+
+        # Visual Parent
+        vis_par = None
+        if parent_avalon["type"].lower() != "project":
+            vis_par = parent_avalon["_id"]
+
+        mongo_id = ObjectId()
+        final_entity = {
+            "_id": mongo_id,
+            "name": ftrack_ent["name"],
+            "type": "asset",
+            "schema": entity_schemas["asset"],
+            "parent": proj["_id"],
+            "data": {
+                "ftrackId": ftrack_ent["id"],
+                "entityType": ftrack_ent.entity_type,
+                "parents": parents,
+                "hierarchy": hierarchy,
+                "tasks": tasks,
+                "visualParent": vis_par
+            }
+        }
+        cust_attrs = self.get_cust_attr_values(ftrack_ent)
+        for key, val in cust_attrs:
+            final_entity["data"][key] = val
+
+        schema.validate(final_entity)
+        self.dbcon.insert_one(final_entity)
+
+        # Skip if self._avalon_ents is not set(maybe never happen)
+        if self._avalon_ents is None:
+            return final_entity
+
+        if self._avalon_ents is not None:
+            self._avalon_ents.append(final_entity)
+
+        if self._avalon_ents_by_id is not None:
+            self._avalon_ents_by_id[mongo_id] = final_entity
+
+        if self._avalon_ents_by_parent_id is not None:
+            self._avalon_ents_by_parent_id[vis_par].append(final_entity)
+
+        if self._avalon_ents_by_ftrack_id is not None:
+            self._avalon_ents_by_ftrack_id[ftrack_ent["id"]] = final_entity
+
+        if self._avalon_ents_by_name is not None:
+            self._avalon_ents_by_name[ftrack_ent["name"]] = final_entity
+
+        return final_entity
+
+    def get_cust_attr_values(self, entity, keys=None):
+        output = {}
+        custom_attrs, hier_attrs = self.avalon_custom_attributes
+        not_processed_keys = True
+        if keys:
+            not_processed_keys = [k for k in keys]
+        # Notmal custom attributes
+        processed_keys = []
+        for attr in custom_attrs:
+            if not not_processed_keys:
+                break
+            key = attr["key"]
+            if key in processed_keys:
+                continue
+            if key.startswith("avalon_"):
+                continue
+
+            if key not in entity["custom_attributes"]:
+                continue
+
+            if keys:
+                if key not in keys:
+                    continue
+                else:
+                    not_processed_keys.remove(key)
+
+            output[key] = entity["custom_attributes"][key]
+            processed_keys.append(key)
+
+        if not not_processed_keys:
+            return output
+
+        # Hierarchical cust attrs
+        hier_keys = []
+        defaults = {}
+        for attr in hier_attrs:
+            key = attr["key"]
+            if key.startswith("avalon_"):
+                continue
+
+            if keys and key not in keys:
+                continue
+            hier_keys.append(key)
+            defaults[key] = attr["default"]
+
+        hier_values = avalon_sync.get_hierarchical_attributes(
+            self.processing_session, entity, hier_keys, defaults
+        )
+        for key, val in hier_values.items():
+            output[key] = val
+
+        return output
 
     def process_renamed(self):
         if not self.ftrack_renamed:
             return
+
         ent_infos = self.ftrack_renamed
         renamed_tasks = {}
         not_found = {}
-        updates = {}
         changeable_queue = queue.Queue()
         for ftrack_id, ent_info in ent_infos.items():
             entity_type = ent_info["entity_type"]
@@ -733,6 +880,7 @@ class SyncToAvalonEvent(BaseEvent):
                     # TODO report
                     # TODO logging
 
+        # Process renaming in Avalon DB
         while not changeable_queue.empty():
             ftrack_id, avalon_ent, new_name = changeable_queue.get()
             mongo_id = avalon_ent["_id"]
@@ -762,7 +910,8 @@ class SyncToAvalonEvent(BaseEvent):
                 old_val = self._avalon_ents_by_name.pop(old_name)
                 old_val["name"] = new_name
                 self._avalon_ents_by_name[new_name] = old_val
-                updates[mongo_id] = {"name": new_name}
+                self.updates[mongo_id] = {"name": new_name}
+                self.renamed_in_avalon.append(ftrack_id)
                 # TODO report
                 # TODO logging
                 # TODO go through children to change parents
@@ -865,17 +1014,17 @@ class SyncToAvalonEvent(BaseEvent):
             ent_infos.values(),
             key=(lambda ent_info: len(ent_info.get("parents", [])))
         )
-        to_create_by_id = collections.OrderedDict()
+        to_sync_by_id = collections.OrderedDict()
         for ent_info in _ent_infos:
             ft_id = ent_info["entityId"]
-            to_create_by_id[ft_id] = self.ftrack_ents_by_id[ft_id]
+            to_sync_by_id[ft_id] = self.ftrack_ents_by_id[ft_id]
 
         # cache regex success (for tasks)
-        not_found_parents = {}
+        not_found_parents = []
         duplicated = []
-        _regex_failed = []
-        for ftrack_id, entity in to_create_by_id.items():
-            if entity.entity_type == "Project":
+        regex_failed = []
+        for ftrack_id, entity in to_sync_by_id.items():
+            if entity.entity_type.lower() == "project":
                 raise Exception((
                     "Project can't be created with event handler!"
                     "This is a bug"
@@ -883,25 +1032,41 @@ class SyncToAvalonEvent(BaseEvent):
             parent_id = entity["parent_id"]
             parent_avalon = self.avalon_ents_by_ftrack_id.get(parent_id)
             if not parent_avalon:
-                not_found_parents.append(ftrack_id)
-                continue
+                parent_avalon = self.process_parent_nonexistence(parent_id)
+                if not parent_avalon:
+                    not_found_parents.append(ftrack_id)
+                    continue
 
-            
             name = entity["name"]
-            if name in self.avalon_ents_by_name:
-                duplicated.append(ftrack_id)
-
             passed_regex = avalon_sync.check_regex(
                 name, "asset", schema_patterns=self.regex_schemas
             )
             if not passed_regex:
-                _regex_failed.append(ftrack_id)
+                regex_failed.append(ftrack_id)
 
-            all_passed_names.append(name)
+            if name in self.avalon_ents_by_name:
+                duplicated.append(ftrack_id)
 
-        regex_failed = {}
-        for ftrack_id in _regex_failed
-            regex_failed[ftrack_id] = to_create_by_id.pop(ftrack_id)
+        ids_to_pop = list(set(regex_failed).union(set(duplicated)))
+
+        # TODO go through not found parents
+        parent_already_exist = []
+        for ftrack_id in not_found_parents:
+            if ftrack_id in ids_to_pop:
+                continue
+            entity = self.ftrack_ents_by_id[ftrack_id]
+            parent_id = entity["parent_id"]
+            result = self.process_parent_nonexistence(parent_id)
+            if not result:
+                ids_to_pop.append(ftrack_id)
+                continue
+
+            parent_already_exist.append(ftrack_id)
+
+        ignored_entities = {}
+        for ftrack_id in ids_to_pop:
+            ignored_entities[ftrack_id] = to_sync_by_id.pop(ftrack_id)
+
 
 
         # joined_passed_names = ", ".join(
@@ -921,56 +1086,23 @@ class SyncToAvalonEvent(BaseEvent):
         #     ents_by_name[entity["name"]].append(entity)
 
 
-        add_data = {
-            'action': 'add',
-            'changes': {
-                'bid': {'new': 0.0, 'old': None},
-                'context_type': {'new': 'task', 'old': None},
-                'description': {'new': '', 'old': None},
-                'enddate': {'new': None, 'old': None},
-                'id': {'new': '872e0a9c-06e8-11ea-b67a-3e41ec9bc0d6', 'old': None},
-                'isopen': {'new': False, 'old': None},
-                'isrequirecomment': {'new': False, 'old': None},
-                'name': {'new': 's001_ep_02_shot_0080', 'old': None},
-                'object_typeid': {'new': 'bad911de-3bd6-47b9-8b46-3476e237cb36', 'old': None},
-                'parent_id': {'new': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6', 'old': None},
-                'priorityid': {'new': '9661b320-3a0c-11e2-81c1-0800200c9a66', 'old': None},
-                'showid': {'new': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6', 'old': None},
-                'startdate': {'new': None, 'old': None},
-                'statusid': {'new': 'a0bbf0b4-15e2-11e1-b21a-0019bb4983d8', 'old': None},
-                'taskid': {'new': '872e0a9c-06e8-11ea-b67a-3e41ec9bc0d6', 'old': None},
-                'typeid': {'new': None, 'old': None}
-            },
-            'entityId': '872e0a9c-06e8-11ea-b67a-3e41ec9bc0d6',
-            'entityType': 'task',
-            'entity_type': 'Shot',
-            'keys': ['startdate', 'showid', 'typeid', 'enddate', 'name', 'isopen', 'parent_id', 'context_type', 'bid', 'priorityid', 'statusid', 'isrequirecomment', 'object_typeid', 'taskid', 'id', 'description' ],
-            'objectTypeId': 'bad911de-3bd6-47b9-8b46-3476e237cb36',
-            'parentId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6',
-            'parents': [
-                {'entityId': '872e0a9c-06e8-11ea-b67a-3e41ec9bc0d6', 'entityType': 'task', 'parentId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6' },
-                {'entityId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6', 'entityType': 'task', 'parentId': '83f56510-0638-11ea-9d25-3e41ec9bc0d6'},
-                {'entityId': '83f56510-0638-11ea-9d25-3e41ec9bc0d6', 'entityType': 'task', 'parentId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6'},
-                {'entityId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6', 'entityType': 'show', 'parentId': None}
-            ]
-        }
-
     def process_moved(self):
         if not self.ftrack_moved:
             return
+
         found = {}
         not_found = {}
         for ftrack_id, ent_info in self.ftrack_moved.items():
             avalon_ent = self.avalon_ents_by_ftrack_id.get(ftrack_id)
-            if avalon_ent:
-                found[ftrack_id] = {
-                    "avalon_ent": avalon_ent,
-                    "ent_info": ent_info,
-                    "renamed": ftrack_id in self.ftrack_renamed
-                }
+            if not avalon_ent:
+                not_found[ftrack_id] = ent_info
                 continue
 
-            not_found[ftrack_id] = ent_info
+            found[ftrack_id] = {
+                "avalon_ent": avalon_ent,
+                "ent_info": ent_info,
+                "renamed": ftrack_id in self.ftrack_renamed
+            }
 
         # TODO process not_found (not synchronized)
 
@@ -1060,6 +1192,77 @@ def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
     SyncToAvalonEvent(session, plugins_presets).register()
 
+
+removed_example = {
+    'action': 'remove',
+    'changes': {
+        'bid': {'new': None, 'old': 0.0},
+        'context_type': {'new': None, 'old': 'task'},
+        'description': {'new': None, 'old': ''},
+        'enddate': {'new': None, 'old': None},
+        'id': {'new': None, 'old': 'dd784a4a-06e6-11ea-a504-3e41ec9bc0d6'},
+        'isopen': {'new': None, 'old': False},
+        'isrequirecomment': {'new': None, 'old': False},
+        'name': {'new': None, 'old': 'compositing'},
+        'object_typeid': {'new': None, 'old': '11c137c0-ee7e-4f9c-91c5-8c77cec22b2c'},
+        'parent_id': {'new': None, 'old': 'dd562c80-06e6-11ea-a504-3e41ec9bc0d6'},
+        'priorityid': {'new': None, 'old': '9661b320-3a0c-11e2-81c1-0800200c9a66'},
+        'showid': {'new': None, 'old': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6'},
+        'sort': {'new': None, 'old': 0.0},
+        'startdate': {'new': None, 'old': None},
+        'statusid': {'new': None, 'old': '44dd9fb2-4164-11df-9218-0019bb4983d8'},
+        'taskid': {'new': None, 'old': 'dd784a4a-06e6-11ea-a504-3e41ec9bc0d6'},
+        'thumbid': {'new': None, 'old': None},
+        'typeid': {'new': None, 'old': '44dd23b6-4164-11df-9218-0019bb4983d8'}
+    },
+    'entityId': 'dd784a4a-06e6-11ea-a504-3e41ec9bc0d6',
+    'entityType': 'task',
+    'entity_type': 'Task',
+    'keys': ['id', 'taskid', 'thumbid', 'context_type', 'name', 'parent_id', 'bid', 'description', 'startdate', 'enddate', 'statusid', 'typeid', 'priorityid', 'isopen', 'isrequirecomment', 'object_typeid', 'showid', 'sort'],
+    'objectTypeId': '11c137c0-ee7e-4f9c-91c5-8c77cec22b2c',
+    'parentId': 'dd562c80-06e6-11ea-a504-3e41ec9bc0d6',
+    'parents': [
+        {'entityId': 'dd784a4a-06e6-11ea-a504-3e41ec9bc0d6', 'entityType': 'task', 'parentId': 'dd562c80-06e6-11ea-a504-3e41ec9bc0d6'},
+        {'entityId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6', 'entityType': 'show', 'parentId': None},
+        {'entityId': 'dd562c80-06e6-11ea-a504-3e41ec9bc0d6', 'entityType': 'task', 'parentId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6'},
+        {'entityId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6', 'entityType': 'task', 'parentId': '83f56510-0638-11ea-9d25-3e41ec9bc0d6'},
+        {'entityId': '83f56510-0638-11ea-9d25-3e41ec9bc0d6', 'entityType': 'task', 'parentId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6'}
+    ]
+}
+
+add_example = {
+    'action': 'add',
+    'changes': {
+        'bid': {'new': 0.0, 'old': None},
+        'context_type': {'new': 'task', 'old': None},
+        'description': {'new': '', 'old': None},
+        'enddate': {'new': None, 'old': None},
+        'id': {'new': '872e0a9c-06e8-11ea-b67a-3e41ec9bc0d6', 'old': None},
+        'isopen': {'new': False, 'old': None},
+        'isrequirecomment': {'new': False, 'old': None},
+        'name': {'new': 's001_ep_02_shot_0080', 'old': None},
+        'object_typeid': {'new': 'bad911de-3bd6-47b9-8b46-3476e237cb36', 'old': None},
+        'parent_id': {'new': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6', 'old': None},
+        'priorityid': {'new': '9661b320-3a0c-11e2-81c1-0800200c9a66', 'old': None},
+        'showid': {'new': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6', 'old': None},
+        'startdate': {'new': None, 'old': None},
+        'statusid': {'new': 'a0bbf0b4-15e2-11e1-b21a-0019bb4983d8', 'old': None},
+        'taskid': {'new': '872e0a9c-06e8-11ea-b67a-3e41ec9bc0d6', 'old': None},
+        'typeid': {'new': None, 'old': None}
+    },
+    'entityId': '872e0a9c-06e8-11ea-b67a-3e41ec9bc0d6',
+    'entityType': 'task',
+    'entity_type': 'Shot',
+    'keys': ['startdate', 'showid', 'typeid', 'enddate', 'name', 'isopen', 'parent_id', 'context_type', 'bid', 'priorityid', 'statusid', 'isrequirecomment', 'object_typeid', 'taskid', 'id', 'description' ],
+    'objectTypeId': 'bad911de-3bd6-47b9-8b46-3476e237cb36',
+    'parentId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6',
+    'parents': [
+        {'entityId': '872e0a9c-06e8-11ea-b67a-3e41ec9bc0d6', 'entityType': 'task', 'parentId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6' },
+        {'entityId': 'f935a8b4-fafb-11e9-9faa-3e41ec9bc0d6', 'entityType': 'task', 'parentId': '83f56510-0638-11ea-9d25-3e41ec9bc0d6'},
+        {'entityId': '83f56510-0638-11ea-9d25-3e41ec9bc0d6', 'entityType': 'task', 'parentId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6'},
+        {'entityId': '24b76ed8-fafb-11e9-9a47-3e41ec9bc0d6', 'entityType': 'show', 'parentId': None}
+    ]
+}
 
 event_data = {
     '_data': {
