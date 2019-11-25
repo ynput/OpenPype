@@ -65,12 +65,22 @@ class HandlerDict(dict):
     def __repr__(self):
         return "<{}> {}".format(self.__class__.__name__, str(dict(self)))
 
-class Params(HandlerDict): pass
-class UrlData(HandlerDict): pass
-class RequestData(HandlerDict): pass
+
+class Params(HandlerDict):
+    pass
+
+
+class UrlData(HandlerDict):
+    pass
+
+
+class RequestData(HandlerDict):
+    pass
+
 
 class Query(HandlerDict):
-    """Class for url query convert to dict and string"""
+    """Class for url query convert to dict and string."""
+
     def __init__(self, query):
         if isinstance(query, dict):
             pass
@@ -81,8 +91,10 @@ class Query(HandlerDict):
     def get_string(self):
         return urlencode(dict(self), doseq=True)
 
+
 class Fragment(HandlerDict):
-    """Class for url fragment convert to dict and string"""
+    """Class for url fragment convert to dict and string."""
+
     def __init__(self, fragment):
         if isinstance(fragment, dict):
             _fragment = fragment
@@ -112,13 +124,15 @@ class Fragment(HandlerDict):
             )
         return "&".join(items)
 
+
 class RequestInfo:
     """Object that can be passed to callback as argument.
 
     Contain necessary data for handling request.
     Object is created to single use and can be used similar to dict.
 
-    :param url_data: Data collected from path when path with dynamic keys is matching.
+    :param url_data: Data collected from path when path with dynamic keys
+        is matching.
     :type url_data: dict, None
     :param request_data: Data of body from request.
     :type request_data: dict, None
@@ -166,14 +180,15 @@ class CallbackResult:
     """Can be used as return value of callback.
 
     It is possible to specify status code, success boolean, message and data
-    for specify head and body of request response. `abort` should be rather used
-    when result is error.
+    for specify head and body of request response. `abort` should be rather
+    used when result is error.
 
     :param status_code: Status code of result.
     :type status_code: int
     :param success: Success is key in body, may be used for handling response.
     :type success: bool
-    :param message: Similar to success, message is key in body and may be used for handling response.
+    :param message: Similar to success, message is key in body and may
+        be used for handling response.
     :type message: str, None
     :param data: Data is also key for body in response.
     :type data: dict, None
