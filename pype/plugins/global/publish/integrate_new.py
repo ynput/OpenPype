@@ -524,14 +524,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # add group if available
         if instance.data.get("subsetGroup"):
-            subset["data"].update(
-                {"subsetGroup": instance.data.get("subsetGroup")}
-            )
-            self.log.info("__ subset.data: {}".format(subset["data"]))
             io.update_many({
                 'type': 'subset',
                 '_id': io.ObjectId(subset["_id"])
-            }, {'$set': {'data': subset["data"]}}
+            }, {'$set': {'data.subsetGroup':
+                instance.data.get('subsetGroup')}}
             )
 
         return subset
