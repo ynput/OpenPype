@@ -62,7 +62,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "render",
                 "imagesequence",
                 "review",
-                "render",
                 "rendersetup",
                 "rig",
                 "plate",
