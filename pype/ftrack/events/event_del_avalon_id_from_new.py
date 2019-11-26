@@ -1,6 +1,6 @@
 import ftrack_api
 from pype.ftrack import BaseEvent, get_ca_mongoid
-from pype.ftrack.events.event_sync_to_avalon import Sync_to_Avalon
+from pype.ftrack.events.event_sync_to_avalon import SyncToAvalon
 
 
 class DelAvalonIdFromNew(BaseEvent):
@@ -11,7 +11,7 @@ class DelAvalonIdFromNew(BaseEvent):
 
     Priority of this event must be less than SyncToAvalon event
     '''
-    priority = Sync_to_Avalon.priority - 1
+    priority = SyncToAvalon.priority - 1
 
     def launch(self, session, event):
         created = []
