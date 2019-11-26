@@ -31,6 +31,42 @@ class SyncToAvalon(BaseEvent):
             ft_project = session.get(base_proj['type'], base_proj['id'])
             break
 
+        for ent_info in event['data']['entities']:
+            # filter project
+            if ent_info.get("entityType") != "show":
+                continue
+
+            if ent_info.get("action") != "update":
+                continue
+
+            changes = ent_info.get("changes") or {}
+            if 'avalon_auto_sync' not in changes:
+                continue
+
+            auto_sync = changes['avalon_auto_sync']["new"]
+            if auto_sync == "1":
+                # Trigger sync to avalon action if auto sync was turned on
+                self.log.debug((
+                    "Auto sync was turned on for project <{}>."
+                    " Triggering syncToAvalon action."
+                ).format(ft_project["full_name"]))
+                selection = [{
+                    "entityId": ft_project["id"],
+                    "entityType": "show"
+                }]
+                # Stop event so sync hierarchical won't be affected
+                # - other event should not be affected since auto-sync
+                #   is in all cases single data event
+                event.stop()
+                # Trigger action
+                self.trigger_action(
+                    action_name="sync.to.avalon.server",
+                    event=event,
+                    selection=selection
+                )
+            # Exit for both cases
+            return True
+
         # check if project is set to auto-sync
         if (
             ft_project is None or
@@ -101,7 +137,8 @@ class SyncToAvalon(BaseEvent):
                         avalon_project = result['project']
 
         except Exception as e:
-            session.rollback() # reset session to clear it
+            # reset session to clear it
+            session.rollback()
 
             message = str(e)
             title = 'Hey You! Unknown Error has been raised! (*look below*)'
