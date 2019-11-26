@@ -4,7 +4,7 @@ import datetime
 import time
 
 import pyblish.api
-from pype.vendor import clique
+import clique
 
 
 class ExtractJSON(pyblish.api.ContextPlugin):

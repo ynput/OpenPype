@@ -2,7 +2,7 @@ import os
 import sys
 import types
 import importlib
-from pype.vendor import ftrack_api
+import ftrack_api
 import time
 import logging
 import inspect

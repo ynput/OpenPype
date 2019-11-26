@@ -144,8 +144,6 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 "version": 0,
                 "asset": asset_entity,
             }
-            if task:
-                assetversion_data['task'] = task
 
             assetversion_data.update(data.get("assetversion_data", {}))
 
@@ -156,6 +154,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Extracting metadata, and adding after entity creation. This is
             # due to a ftrack_api bug where you can't add metadata on creation.
             assetversion_metadata = assetversion_data.pop("metadata", {})
+
+            if task:
+                assetversion_data['task'] = task
 
             # Create a new entity if none exits.
             if not assetversion_entity:

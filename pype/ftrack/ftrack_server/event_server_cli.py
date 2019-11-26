@@ -9,7 +9,7 @@ import atexit
 import time
 from urllib.parse import urlparse
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack.lib import credentials
 from pype.ftrack.ftrack_server import FtrackServer
 from pype.ftrack.ftrack_server.lib import (

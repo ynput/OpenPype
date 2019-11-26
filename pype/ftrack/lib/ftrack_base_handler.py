@@ -1,8 +1,8 @@
 import functools
 import time
 from pypeapp import Logger
-from pype.vendor import ftrack_api
-from pype.vendor.ftrack_api import session as fa_session
+import ftrack_api
+from ftrack_api import session as fa_session
 from pype.ftrack.ftrack_server import session_processor
 
 
@@ -603,3 +603,24 @@ class BaseHandler(object):
         self.log.debug(
             "Action \"{}\" Triggered successfully".format(action_name)
         )
+
+    def trigger_event(
+        self, topic, event_data={}, session=None, source=None,
+        event=None, on_error="ignore"
+    ):
+        if session is None:
+            session = self.session
+
+        if not source and event:
+            source = event.get("source")
+        # Create and trigger event
+        event = fa_session.ftrack_api.event.base.Event(
+            topic=topic,
+            data=event_data,
+            source=source
+        )
+        session.event_hub.publish(event, on_error=on_error)
+
+        self.log.debug((
+            "Publishing event: {}"
+        ).format(str(event.__dict__)))

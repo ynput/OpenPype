@@ -13,8 +13,8 @@ from pymongo import UpdateOne
 import avalon
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.io_nonsingleton import DbConnector
-from pype.vendor import ftrack_api
-from pype.vendor.ftrack_api import session as fa_session
+import ftrack_api
+from ftrack_api import session as fa_session
 from pypeapp import Anatomy
 
 
@@ -585,15 +585,19 @@ class SyncEntitiesFactory:
         ])
 
         cust_attr_query = (
-            "select value, entity_id from CustomAttributeValue "
+            "select value, entity_id from ContextCustomAttributeValue "
             "where entity_id in ({}) and configuration.key in ({})"
         )
-        [values] = self.session._call([{
+        call_expr = [{
             "action": "query",
             "expression": cust_attr_query.format(
                 entity_ids_joined, attributes_joined
             )
-        }])
+        }]
+        if hasattr(self.session, "_call"):
+            [values] = self.session._call(call_expr)
+        else:
+            [values] = self.session.call(call_expr)
 
         for value in values["data"]:
             entity_id = value["entity_id"]
@@ -646,13 +650,17 @@ class SyncEntitiesFactory:
         attributes_joined = ", ".join([
             "\"{}\"".format(name) for name in attribute_names
         ])
-        [values] = self.session._call([{
+        call_expr = [{
             "action": "query",
             "expression": (
-                "select value, entity_id from CustomAttributeValue "
+                "select value, entity_id from ContextCustomAttributeValue "
                 "where entity_id in ({}) and configuration.key in ({})"
             ).format(entity_ids_joined, attributes_joined)
-        }])
+        }]
+        if hasattr(self.session, "_call"):
+            [values] = self.session._call(call_expr)
+        else:
+            [values] = self.session.call(call_expr)
 
         avalon_hier = []
         for value in values["data"]:

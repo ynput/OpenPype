@@ -116,7 +116,8 @@ def prepare_methods(methods, callback=None):
 
     :param methods: Contain rest api methods, when callback is called.
     :type methods: str, list
-    :param callback: Registered callback, helps to identify where is invalid method.
+    :param callback: Registered callback, helps to identify where is
+        invalid method.
     :type callback: function, method, optional
     :return: Valid methods
     :rtype: list
@@ -138,7 +139,7 @@ def prepare_methods(methods, callback=None):
         for method in methods:
             found = False
             _method = RestMethods.get(method)
-            if _method == None:
+            if _method is None:
                 invalid_methods[methods].append(callback)
                 continue
 
@@ -168,6 +169,7 @@ def prepare_methods(methods, callback=None):
         )
 
     return _methods
+
 
 def prepare_callback_info(callback):
     """Prepare data for callback handling when should be triggered."""
@@ -228,7 +230,9 @@ class _RestApiFactory:
             self.unprocessed_statics.index(item)
         )
 
-    def register_route(self, path, callback, url_prefix, methods, strict_match):
+    def register_route(
+        self, path, callback, url_prefix, methods, strict_match
+    ):
         log.debug("Registering callback for item \"{}\"".format(
             callback.__qualname__
         ))
@@ -242,7 +246,7 @@ class _RestApiFactory:
         self.unprocessed_routes.append(route)
 
     def register_obj(self, obj):
-        """Register object for decorated methods in class definition"""
+        """Register object for decorated methods in class definition."""
         self.registered_objs.append(obj)
 
     def register_statics(self, item):
@@ -255,7 +259,8 @@ class _RestApiFactory:
         Registration info are prepared to easy filter during handling
         of requests.
 
-        :param route: Contain all necessary info for filtering and handling callback for registered route.
+        :param route: Contain all necessary info for filtering and
+            handling callback for registered route.
         :type route: dict
         """
         callback = route["callback"]
@@ -278,7 +283,7 @@ class _RestApiFactory:
             })
 
     def prepare_registered(self):
-        """Iterate through all registered callbacks and statics and prepare them
+        """Iter through all registered callbacks and statics to prepare them.
 
         First are processed callbacks registered with decorators in classes by
         registered objects. Remaining callbacks are filtered, it is checked if
@@ -314,7 +319,9 @@ class _RestApiFactory:
                     if not (
                         callback.__qualname__ == method.__qualname__ and
                         callback.__module__ == method.__module__ and
-                        callback.__globals__["__file__"] == method.__globals__["__file__"]
+                        callback.__globals__["__file__"] == (
+                            method.__globals__["__file__"]
+                        )
                     ):
                         continue
 

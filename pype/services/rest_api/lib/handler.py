@@ -1,6 +1,7 @@
 import os
 import re
 import json
+import datetime
 import traceback
 import http.server
 from http import HTTPStatus
@@ -32,6 +33,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             "NO_CONTENT": 204
         }
     }
+
     def do_GET(self):
         return self._handle_request(RestMethods.GET)
 
@@ -143,7 +145,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         except Exception as exc:
             log_message = "Unexpected Exception was raised (this is bug!)"
             log.error(log_message, exc_info=True)
-            replace_helper = 0
             items = [log_message]
             items += traceback.extract_tb(exc.__traceback__).format()
             message = "\n".join(items)
@@ -155,7 +156,6 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
             self.wfile.write(message.encode())
             return message
-
 
     def _handle_callback_result(self, result, rest_method):
         """Send response to request based on result of callback.
@@ -232,7 +232,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
 
         :param item: Item stored during callback registration with all info.
         :type item: dict
-        :param parsed_url: Url parsed with urllib (separated path, query, etc.).
+        :param parsed_url: Url parsed with urllib (separated path, query, etc).
         :type parsed_url: ParseResult
         :param rest_method: Rest api method (GET, POST, etc.).
         :type rest_method: RestMethods
@@ -284,7 +284,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         return callback(*args, **kwargs)
 
     def _handle_statics(self, dirpath, path):
-        """Return static file in response when file exist in registered destination."""
+        """Return static file in response when file exist in destination."""
         path = os.path.normpath(dirpath + path)
 
         ctype = self.guess_type(path)
@@ -327,12 +327,17 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-type", ctype)
             self.send_header("Content-Length", str(file_stat[6]))
-            self.send_header("Last-Modified",
-            self.date_time_string(file_stat.st_mtime))
+            self.send_header(
+                "Last-Modified",
+                self.date_time_string(file_stat.st_mtime)
+            )
             self.end_headers()
             self.wfile.write(file_obj.read())
             return file_obj
-        except:
-            self.log.error("Failed to read data from file \"{}\"".format(path))
+        except Exception:
+            log.error(
+                "Failed to read data from file \"{}\"".format(path),
+                exc_info=True
+            )
         finally:
             file_obj.close()

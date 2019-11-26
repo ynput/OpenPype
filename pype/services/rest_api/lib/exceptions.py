@@ -8,4 +8,5 @@ class ObjAlreadyExist(Exception):
         super().__init__(message)
 
 
-class AbortException(Exception): pass
+class AbortException(Exception):
+    pass

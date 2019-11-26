@@ -11,7 +11,7 @@ import avalon.maya
 
 from maya import cmds, mel
 import pymel.core as pm
-from pype.vendor import ffmpeg
+import ffmpeg
 # from pype.scripts import otio_burnin
 reload(ffmpeg)
 
