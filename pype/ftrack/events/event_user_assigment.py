@@ -1,5 +1,6 @@
 from pype.vendor import ftrack_api
-from pype.ftrack import BaseEvent, lib
+from pype.ftrack import BaseEvent
+from pype.ftrack.lib import avalon_sync
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 from bson.objectid import ObjectId
 from pypeapp import config
@@ -36,7 +37,7 @@ class UserAssigmentEvent(BaseEvent):
     """
 
     db_con = DbConnector()
-    ca_mongoid = lib.get_ca_mongoid()
+    ca_mongoid = avalon_sync.cust_attr_id_key
 
     def error(self, *err):
         for e in err:

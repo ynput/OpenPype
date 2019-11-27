@@ -1,6 +1,7 @@
 from pype.vendor import ftrack_api
-from pype.ftrack import BaseEvent, get_ca_mongoid
-from pype.ftrack.events.event_sync_to_avalon import Sync_to_Avalon
+from pype.ftrack import BaseEvent
+from pype.ftrack.lib import avalon_sync
+from pype.ftrack.events.event_sync_to_avalon import SyncToAvalonEvent
 
 
 class DelAvalonIdFromNew(BaseEvent):
@@ -11,7 +12,7 @@ class DelAvalonIdFromNew(BaseEvent):
 
     Priority of this event must be less than SyncToAvalon event
     '''
-    priority = Sync_to_Avalon.priority - 1
+    priority = SyncToAvalonEvent.priority - 1
 
     def launch(self, session, event):
         created = []
@@ -28,7 +29,7 @@ class DelAvalonIdFromNew(BaseEvent):
 
                 elif (
                     entity.get('action', None) == 'update' and
-                    get_ca_mongoid() in entity['keys'] and
+                    avalon_sync.cust_attr_id_key in entity['keys'] and
                     entity_id in created
                 ):
                     ftrack_entity = session.get(
@@ -37,12 +38,12 @@ class DelAvalonIdFromNew(BaseEvent):
                     )
 
                     cust_attr = ftrack_entity['custom_attributes'][
-                        get_ca_mongoid()
+                        avalon_sync.cust_attr_id_key
                     ]
 
                     if cust_attr != '':
                         ftrack_entity['custom_attributes'][
-                            get_ca_mongoid()
+                            avalon_sync.cust_attr_id_key
                         ] = ''
                         session.commit()
 
