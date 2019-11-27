@@ -2067,18 +2067,39 @@ class SyncToAvalonServer(BaseAction):
     #: Action description.
     description = "Send data from Ftrack to Avalon"
     #: Action icon.
+
     icon = "{}/ftrack/action_icons/PypeAdmin.svg".format(
         os.environ.get(
             "PYPE_STATICS_SERVER",
             "http://localhost:{}".format(
                 config.get_presets().get("services", {}).get(
-                    "statics_server", {}
+                    "rest_api", {}
                 ).get("default_port", 8021)
             )
         )
     )
     #: roles that are allowed to register this action
     role_list = ["Pypeclub"]
+
+    def register(self):
+        '''
+        Registers the action, subscribing the the discover and launch topics.
+        - highest priority event will show last
+        '''
+        self.session.event_hub.subscribe(
+            'topic=ftrack.action.discover',
+            self._discover,
+            priority=self.priority
+        )
+
+        launch_subscription = (
+            'topic=ftrack.action.launch'
+            ' and data.actionIdentifier={0}'
+        ).format(self.identifier)
+        self.session.event_hub.subscribe(
+            launch_subscription,
+            self._launch
+        )
 
     def discover(self, session, entities, event):
         """ Validation """
