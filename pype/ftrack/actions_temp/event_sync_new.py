@@ -410,7 +410,7 @@ class SyncToAvalonEvent(BaseEvent):
             if entity_type == "Task":
                 if "name" in changed_keys:
                     ent_info["keys"] = ["name"]
-                    ent_info["changes"] = changes.pop("name")
+                    ent_info["changes"] = {"name": changes.pop("name")}
                     filtered_updates[ftrack_id] = ent_info
                 continue
 
@@ -505,8 +505,6 @@ class SyncToAvalonEvent(BaseEvent):
         found_actions = list(found_actions)
         if not found_actions:
             self.log.debug("There are not actions to do")
-            from pprint import pprint
-            pprint(event.__dict__)
             return True
 
         # Check if auto sync was turned on/off
@@ -1494,8 +1492,6 @@ class SyncToAvalonEvent(BaseEvent):
         # Tasks preparation ****
         for mongo_id, tasks in self.task_changes_by_avalon_id.items():
             avalon_ent = self.avalon_ents_by_id[mongo_id]
-            if avalon_ent["data"].get("tasks") == tasks:
-                continue
             if "data" not in self.updates[mongo_id]:
                 self.updates[mongo_id]["data"] = {}
 
