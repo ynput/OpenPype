@@ -27,7 +27,7 @@ ignore_topics = []
 def install_db():
     try:
         dbcon.install()
-        dbcon._database.collection_names()
+        dbcon._database.list_collection_names()
     except pymongo.errors.AutoReconnect:
         log.error("Mongo server \"{}\" is not responding, exiting.".format(
             os.environ["AVALON_MONGO"]
@@ -49,7 +49,7 @@ def launch(event):
 
     try:
         # dbcon.insert_one(event_data)
-        dbcon.update({"id": event_id}, event_data, upsert=True)
+        dbcon.replace_one({"id": event_id}, event_data, upsert=True)
         log.debug("Event: {} stored".format(event_id))
 
     except pymongo.errors.AutoReconnect:
