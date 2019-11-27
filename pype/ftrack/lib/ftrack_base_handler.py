@@ -485,8 +485,8 @@ class BaseHandler(object):
 
             if not user:
                 raise TypeError((
-                    'Ftrack user with {} "{}" was not found!'.format(key, value)
-                ))
+                    'Ftrack user with {} "{}" was not found!'
+                ).format(key, value))
 
             user_id = user['id']
 
@@ -523,7 +523,7 @@ class BaseHandler(object):
             else:
                 first = False
 
-            subtitle = {'type': 'label', 'value':'<h3>{}</h3>'.format(key)}
+            subtitle = {'type': 'label', 'value': '<h3>{}</h3>'.format(key)}
             items.append(subtitle)
             if isinstance(value, list):
                 for item in value:
