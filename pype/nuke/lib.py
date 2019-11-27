@@ -1,20 +1,23 @@
 import os
+import re
 import sys
 import getpass
 from collections import OrderedDict
-from pprint import pprint
+
 from avalon import api, io, lib
 import avalon.nuke
 import pype.api as pype
 
 import nuke
-from .templates import (
+
+
+from .presets import (
     get_colorspace_preset,
     get_node_dataflow_preset,
     get_node_colorspace_preset
 )
 
-from .templates import (
+from .presets import (
     get_anatomy
 )
 # TODO: remove get_anatomy and import directly Anatomy() here
@@ -55,7 +58,8 @@ def checkInventoryVersions():
 
             if container:
                 node = container["_node"]
-                avalon_knob_data = avalon.nuke.get_avalon_knob_data(node)
+                avalon_knob_data = avalon.nuke.get_avalon_knob_data(
+                    node, ['avalon:', 'ak:'])
 
                 # get representation from io
                 representation = io.find_one({
@@ -101,7 +105,8 @@ def writes_version_sync():
 
     for each in nuke.allNodes():
         if each.Class() == 'Write':
-            avalon_knob_data = avalon.nuke.get_avalon_knob_data(each)
+            avalon_knob_data = avalon.nuke.get_avalon_knob_data(
+                each, ['avalon:', 'ak:'])
 
             try:
                 if avalon_knob_data['families'] not in ["render"]:
@@ -134,7 +139,8 @@ def get_render_path(node):
     ''' Generate Render path from presets regarding avalon knob data
     '''
     data = dict()
-    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(
+        node, ['avalon:', 'ak:'])
 
     data_preset = {
         "class": data['avalon']['family'],
@@ -169,8 +175,13 @@ def format_anatomy(data):
     anatomy = get_anatomy()
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
-    # TODO: perhaps should be in try!
-    padding = int(anatomy.templates['render']['padding'])
+    try:
+        padding = int(anatomy.templates['render']['padding'])
+    except KeyError as e:
+        log.error("`padding` key is not in `render` "
+                  "Anatomy template. Please, add it there and restart "
+                  "the pipeline (padding: \"4\"): `{}`".format(e))
+
     version = data.get("version", None)
     if not version:
         file = script_name()
@@ -207,12 +218,13 @@ def add_button_write_to_read(node):
     node.addKnob(k)
 
 
-def create_write_node(name, data, prenodes=None):
+def create_write_node(name, data, input=None, prenodes=None):
     ''' Creating write node which is group node
 
     Arguments:
         name (str): name of node
         data (dict): data to be imprinted
+        input (node): selected node to connect to
         prenodes (list, optional): list of lists, definitions for nodes
                                 to be created before write
 
@@ -224,9 +236,9 @@ def create_write_node(name, data, prenodes=None):
                 ("knobName", "knobValue"),
                 ("knobName", "knobValue")
             ),
-            (   # list inputs
-                "firstPrevNodeName",
-                "secondPrevNodeName"
+            (   # list outputs
+                "firstPostNodeName",
+                "secondPostNodeName"
             )
         )
         ]
@@ -268,28 +280,44 @@ def create_write_node(name, data, prenodes=None):
     })
 
     # adding dataflow template
+    log.debug("nuke_dataflow_writes: `{}`".format(nuke_dataflow_writes))
     {_data.update({k: v})
      for k, v in nuke_dataflow_writes.items()
      if k not in ["_id", "_previous"]}
 
-    # adding dataflow template
+    # adding colorspace template
+    log.debug("nuke_colorspace_writes: `{}`".format(nuke_colorspace_writes))
     {_data.update({k: v})
      for k, v in nuke_colorspace_writes.items()}
 
     _data = avalon.nuke.lib.fix_data_for_node_create(_data)
 
-    log.debug(_data)
+    log.debug("_data: `{}`".format(_data))
 
-    _data["frame_range"] = data.get("frame_range", None)
+    if "frame_range" in data.keys():
+        _data["frame_range"] = data.get("frame_range", None)
+        log.debug("_data[frame_range]: `{}`".format(_data["frame_range"]))
 
-    # todo: hange this to new way
     GN = nuke.createNode("Group", "name {}".format(name))
 
     prev_node = None
     with GN:
+        connections = list()
+        if input:
+            # if connected input node was defined
+            connections.append({
+                "node":  input,
+                "inputName": input.name()})
+            prev_node = nuke.createNode(
+                "Input", "name {}".format(input.name()))
+        else:
+            # generic input node connected to nothing
+            prev_node = nuke.createNode(
+                "Input", "name {}".format("rgba"))
+
         # creating pre-write nodes `prenodes`
         if prenodes:
-            for name, klass, properties, set_input_to in prenodes:
+            for name, klass, properties, set_output_to in prenodes:
                 # create node
                 now_node = nuke.createNode(klass, "name {}".format(name))
 
@@ -299,34 +327,41 @@ def create_write_node(name, data, prenodes=None):
                         now_node[k].serValue(str(v))
 
                 # connect to previous node
-                if set_input_to:
-                    if isinstance(set_input_to, (tuple or list)):
-                        for i, node_name in enumerate(set_input_to):
-                            input_node = nuke.toNode(node_name)
+                if set_output_to:
+                    if isinstance(set_output_to, (tuple or list)):
+                        for i, node_name in enumerate(set_output_to):
+                            input_node = nuke.createNode(
+                                "Input", "name {}".format(node_name))
+                            connections.append({
+                                "node":  nuke.toNode(node_name),
+                                "inputName": node_name})
                             now_node.setInput(1, input_node)
-                    elif isinstance(set_input_to, str):
-                        input_node = nuke.toNode(set_input_to)
+                    elif isinstance(set_output_to, str):
+                        input_node = nuke.createNode(
+                            "Input", "name {}".format(node_name))
+                        connections.append({
+                            "node":  nuke.toNode(set_output_to),
+                            "inputName": set_output_to})
                         now_node.setInput(0, input_node)
                 else:
                     now_node.setInput(0, prev_node)
 
                 # swith actual node to previous
                 prev_node = now_node
-        else:
-            prev_node = nuke.createNode("Input", "name rgba")
 
         # creating write node
-        now_node = avalon.nuke.lib.add_write_node("inside_{}".format(name),
-                                                  **_data
-                                                  )
-        write_node = now_node
+        write_node = now_node = avalon.nuke.lib.add_write_node(
+            "inside_{}".format(name),
+            **_data
+            )
+
         # connect to previous node
         now_node.setInput(0, prev_node)
 
         # swith actual node to previous
         prev_node = now_node
 
-        now_node = nuke.createNode("Output", "name write")
+        now_node = nuke.createNode("Output", "name Output1")
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -379,6 +414,10 @@ def add_rendering_knobs(node):
         knob = nuke.Boolean_Knob("render_farm", "Render on Farm")
         knob.setValue(False)
         node.addKnob(knob)
+    if "review" not in node.knobs():
+        knob = nuke.Boolean_Knob("review", "Review")
+        knob.setValue(True)
+        node.addKnob(knob)
     return node
 
 
@@ -388,6 +427,14 @@ def add_deadline_tab(node):
     knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
     knob.setValue(1)
     node.addKnob(knob)
+
+    knob = nuke.Int_Knob("deadlinePriority", "Priority")
+    knob.setValue(50)
+    node.addKnob(knob)
+
+
+def get_deadline_knob_names():
+    return ["Deadline", "deadlineChunkSize", "deadlinePriority"]
 
 
 def create_backdrop(label="", color=None, layer=0,
@@ -543,17 +590,34 @@ class WorkfileSettings(object):
         assert isinstance(root_dict, dict), log.error(
             "set_root_colorspace(): argument should be dictionary")
 
+        log.debug(">> root_dict: {}".format(root_dict))
+
         # first set OCIO
         if self._root_node["colorManagement"].value() \
                 not in str(root_dict["colorManagement"]):
             self._root_node["colorManagement"].setValue(
                 str(root_dict["colorManagement"]))
+            log.debug("nuke.root()['{0}'] changed to: {1}".format(
+                "colorManagement", root_dict["colorManagement"]))
+            root_dict.pop("colorManagement")
 
         # second set ocio version
         if self._root_node["OCIO_config"].value() \
                 not in str(root_dict["OCIO_config"]):
             self._root_node["OCIO_config"].setValue(
                 str(root_dict["OCIO_config"]))
+            log.debug("nuke.root()['{0}'] changed to: {1}".format(
+                "OCIO_config", root_dict["OCIO_config"]))
+            root_dict.pop("OCIO_config")
+
+        # third set ocio custom path
+        if root_dict.get("customOCIOConfigPath"):
+            self._root_node["customOCIOConfigPath"].setValue(
+                str(root_dict["customOCIOConfigPath"]).format(**os.environ)
+                )
+            log.debug("nuke.root()['{}'] changed to: {}".format(
+                "customOCIOConfigPath", root_dict["customOCIOConfigPath"]))
+            root_dict.pop("customOCIOConfigPath")
 
         # then set the rest
         for knob, value in root_dict.items():
@@ -798,10 +862,12 @@ def get_write_node_template_attr(node):
     '''
     # get avalon data from node
     data = dict()
-    data['avalon'] = avalon.nuke.get_avalon_knob_data(node)
+    data['avalon'] = avalon.nuke.get_avalon_knob_data(
+        node, ['avalon:', 'ak:'])
     data_preset = {
         "class": data['avalon']['family'],
-        "preset": data['avalon']['families']
+        "families": data['avalon']['families'],
+        "preset": data['avalon']['families']  # omit < 2.0.0v
     }
 
     # get template data
@@ -884,7 +950,7 @@ class BuildWorkfile(WorkfileSettings):
                                   **kwargs)
         self.to_script = to_script
         # collect data for formating
-        data = {
+        self.data_tmp = {
             "root": root_path or api.Session["AVALON_PROJECTS"],
             "project": {"name": self._project["name"],
                         "code": self._project["data"].get("code", '')},
@@ -899,7 +965,7 @@ class BuildWorkfile(WorkfileSettings):
         # get presets from anatomy
         anatomy = get_anatomy()
         # format anatomy
-        anatomy_filled = anatomy.format(data)
+        anatomy_filled = anatomy.format(self.data_tmp)
 
         # get dir and file for workfile
         self.work_dir = anatomy_filled["avalon"]["work"]
@@ -927,7 +993,7 @@ class BuildWorkfile(WorkfileSettings):
     def process(self,
                 regex_filter=None,
                 version=None,
-                representations=["exr", "dpx", "lutJson"]):
+                representations=["exr", "dpx", "lutJson", "mov", "preview"]):
         """
         A short description.
 
@@ -983,6 +1049,8 @@ class BuildWorkfile(WorkfileSettings):
                                    regex_filter=regex_filter,
                                    version=version,
                                    representations=representations)
+
+        log.info("__ subsets: `{}`".format(subsets))
 
         nodes_backdrop = list()
 
@@ -1073,6 +1141,10 @@ class BuildWorkfile(WorkfileSettings):
             representation (dict): avalon db entity
 
         """
+        task = self.data_tmp["task"]
+        sanitized_task = re.sub('[^0-9a-zA-Z]+', '', task)
+        subset_name = "render{}Main".format(
+            sanitized_task.capitalize())
 
         Create_name = "CreateWriteRender"
 
@@ -1084,7 +1156,7 @@ class BuildWorkfile(WorkfileSettings):
             creator_plugin = Creator
 
         # return api.create()
-        return creator_plugin("render_writeMain", self._asset).process()
+        return creator_plugin(subset_name, self._asset).process()
 
     def create_backdrop(self, label="", color=None, layer=0,
                         nodes=None):

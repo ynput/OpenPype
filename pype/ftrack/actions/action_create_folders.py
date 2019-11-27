@@ -4,7 +4,7 @@ import logging
 import argparse
 import re
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 from avalon import lib as avalonlib
 from pype.ftrack.lib.io_nonsingleton import DbConnector
@@ -326,9 +326,6 @@ class PartialDict(dict):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     CreateFolders(session, plugins_presets).register()
 

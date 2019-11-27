@@ -1,4 +1,4 @@
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseEvent
 
 
@@ -20,7 +20,8 @@ class ThumbnailEvents(BaseEvent):
                 if parent.get('thumbnail') and not task.get('thumbnail'):
                     task['thumbnail'] = parent['thumbnail']
                     self.log.info('>>> Updated thumbnail on [ %s/%s ]'.format(
-                        parent['name'], task['name']))
+                        parent['name'], task['name']
+                    ))
 
             # Update task thumbnail from published version
             # if (entity['entityType'] == 'assetversion' and
@@ -32,22 +33,29 @@ class ThumbnailEvents(BaseEvent):
 
                 version = session.get('AssetVersion', entity['entityId'])
                 thumbnail = version.get('thumbnail')
-                task = version['task']
-
                 if thumbnail:
-                    task['thumbnail'] = thumbnail
-                    task['parent']['thumbnail'] = thumbnail
-                    self.log.info('>>> Updating thumbnail for task and shot\
-                        [ {} ]'.format(task['name']))
+                    parent = version['asset']['parent']
+                    task = version['task']
+                    parent['thumbnail_id'] = version['thumbnail_id']
+                    if parent.entity_type.lower() == "project":
+                        name = parent["full_name"]
+                    else:
+                        name = parent["name"]
+                    msg = '>>> Updating thumbnail for shot [ {} ]'.format(name)
 
-            session.commit()
+                    if task:
+                        task['thumbnail_id'] = version['thumbnail_id']
+                        msg += " and task [ {} ]".format(task["name"])
 
-        pass
+                    self.log.info(msg)
+
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
 
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     ThumbnailEvents(session, plugins_presets).register()

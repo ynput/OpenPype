@@ -3,7 +3,7 @@ import sys
 import logging
 from bson.objectid import ObjectId
 import argparse
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 
@@ -85,7 +85,7 @@ class DeleteAsset(BaseAction):
                 'type': 'asset',
                 'name': entity['name']
             })
-            
+
             if av_entity is None:
                 return {
                     'success': False,
@@ -277,10 +277,7 @@ class DeleteAsset(BaseAction):
                 'message': 'No entities to delete in avalon'
             }
 
-        or_subquery = []
-        for id in all_ids:
-            or_subquery.append({'_id': id})
-        delete_query = {'$or': or_subquery}
+        delete_query = {'_id': {'$in': all_ids}}
         self.db.delete_many(delete_query)
 
         return {
@@ -313,12 +310,6 @@ class DeleteAsset(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    # Validate that session is an instance of ftrack_api.Session. If not,
-    # assume that register is being called from an old or incompatible API and
-    # return without doing anything.
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     DeleteAsset(session, plugins_presets).register()
 

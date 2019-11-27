@@ -110,6 +110,7 @@ class LoadSequence(api.Loader):
         last += self.handle_end
 
         file = self.fname.replace("\\", "/")
+
         log.info("file: {}\n".format(self.fname))
 
         repr_cont = context["representation"]["context"]
@@ -117,6 +118,11 @@ class LoadSequence(api.Loader):
                                         repr_cont["asset"],
                                         repr_cont["subset"],
                                         repr_cont["representation"])
+
+        if "#" not in file:
+            frame = repr_cont.get("frame")
+            padding = len(frame)
+            file = file.replace(frame, "#"*padding)
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():

@@ -4,12 +4,12 @@ import json
 import argparse
 import logging
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 
 
 class CustomAttributeDoctor(BaseAction):
-    
+
     ignore_me = True
     #: Action identifier.
     identifier = 'custom.attributes.doctor'
@@ -293,9 +293,6 @@ class CustomAttributeDoctor(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     CustomAttributeDoctor(session, plugins_presets).register()
 

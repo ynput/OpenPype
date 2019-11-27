@@ -43,8 +43,10 @@ class MusterModule:
             self.aShowLogin.trigger()
 
         if "RestApiServer" in modules:
+            def api_show_login():
+                self.aShowLogin.trigger()
             modules["RestApiServer"].register_callback(
-                "muster/show_login", api_callback, "post"
+                "/show_login", api_show_login, "muster", "post"
             )
 
     # Definition of Tray menu
@@ -93,7 +95,7 @@ class MusterModule:
                     'password': password
                }
         api_entry = '/api/login'
-        response = requests.post(
+        response = self._requests_post(
             MUSTER_REST_URL + api_entry, params=params)
         if response.status_code != 200:
             self.log.error(
@@ -125,3 +127,17 @@ class MusterModule:
         Show dialog to enter credentials
         """
         self.widget_login.show()
+
+    def _requests_post(self, *args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.post(*args, **kwargs)

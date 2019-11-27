@@ -3,7 +3,7 @@ import sys
 
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseEvent, lib
 from bson.objectid import ObjectId
 
@@ -209,7 +209,5 @@ class SyncHierarchicalAttrs(BaseEvent):
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     SyncHierarchicalAttrs(session, plugins_presets).register()

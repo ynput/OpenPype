@@ -1,4 +1,4 @@
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseEvent
 
 
@@ -6,7 +6,6 @@ class VersionToTaskStatus(BaseEvent):
 
     def launch(self, session, event):
         '''Propagates status from version to task when changed'''
-        session.commit()
 
         # start of event procedure ----------------------------------
         for entity in event['data'].get('entities', []):
@@ -62,8 +61,10 @@ class VersionToTaskStatus(BaseEvent):
                         task['status'] = task_status
                         session.commit()
                     except Exception as e:
+                        session.rollback()
                         self.log.warning('!!! [ {} ] status couldnt be set:\
                             [ {} ]'.format(path, e))
+                        session.rollback()
                     else:
                         self.log.info('>>> [ {} ] updated to [ {} ]'.format(
                             path, task_status['name']))
@@ -71,7 +72,5 @@ class VersionToTaskStatus(BaseEvent):
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     VersionToTaskStatus(session, plugins_presets).register()

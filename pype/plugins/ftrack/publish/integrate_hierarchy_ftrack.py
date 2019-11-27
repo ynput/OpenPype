@@ -1,3 +1,6 @@
+import sys
+
+import six
 import pyblish.api
 from avalon import io
 
@@ -66,9 +69,10 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
             # try to find if entity already exists
             else:
-                query = '{} where name is "{}" and parent_id is "{}"'.format(
-                    entity_type, entity_name, parent['id']
-                )
+                query = (
+                    'TypedContext where name is "{0}" and '
+                    'project_id is "{1}"'
+                ).format(entity_name, self.ft_project["id"])
                 try:
                     entity = self.session.query(query).one()
                 except Exception:
@@ -98,7 +102,12 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                 for instance in instances:
                     instance.data['ftrackEntity'] = entity
 
-                self.session.commit()
+                try:
+                    self.session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    self.session.rollback()
+                    six.reraise(tp, value, tb)
 
             # TASKS
             tasks = entity_data.get('tasks', [])
@@ -121,11 +130,21 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     task_type=task,
                     parent=entity
                 )
-                self.session.commit()
+                try:
+                    self.session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    self.session.rollback()
+                    six.reraise(tp, value, tb)
 
             # Incoming links.
             self.create_links(entity_data, entity)
-            self.session.commit()
+            try:
+                self.session.commit()
+            except Exception:
+                tp, value, tb = sys.exc_info()
+                self.session.rollback()
+                six.reraise(tp, value, tb)
 
             if 'childs' in entity_data:
                 self.import_to_ftrack(
@@ -135,7 +154,12 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         # Clear existing links.
         for link in entity.get("incoming_links", []):
             self.session.delete(link)
-            self.session.commit()
+            try:
+                self.session.commit()
+            except Exception:
+                tp, value, tb = sys.exc_info()
+                self.session.rollback()
+                six.reraise(tp, value, tb)
 
         # Create new links.
         for input in entity_data.get("inputs", []):
@@ -171,7 +195,12 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
         self.log.info(self.task_types)
         task['type'] = self.task_types[task_type]
 
-        self.session.commit()
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            six.reraise(tp, value, tb)
 
         return task
 
@@ -180,6 +209,11 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             'name': name,
             'parent': parent
         })
-        self.session.commit()
+        try:
+            self.session.commit()
+        except Exception:
+            tp, value, tb = sys.exc_info()
+            self.session.rollback()
+            six.reraise(tp, value, tb)
 
         return entity

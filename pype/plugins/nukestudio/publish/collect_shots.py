@@ -39,8 +39,13 @@ class CollectShots(api.InstancePlugin):
 
         data["name"] = data["subset"] + "_" + data["asset"]
 
-        data["label"] = data["asset"] + " - " + data["subset"] + " - tasks: {} - assetbuilds: {}".format(
-            data["tasks"], [x["name"] for x in data.get("assetbuilds", [])]
+        data["label"] = (
+            "{} - {} - tasks:{} - assetbuilds:{}".format(
+                data["asset"],
+                data["subset"],
+                data["tasks"],
+                [x["name"] for x in data.get("assetbuilds", [])]
+            )
         )
 
         # Create instance.

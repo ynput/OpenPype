@@ -25,6 +25,11 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
     families = ["vrayscene"]
+    if not os.environ.get("DEADLINE_REST_URL"):
+        optional = False
+        active = False
+    else:
+        optional = True
 
     def process(self, instance):
 
@@ -109,7 +114,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         self.log.info("Job Data:\n{}".format(json.dumps(payload)))
 
-        response = requests.post(url=deadline_url, json=payload)
+        response = self._requests_post(url=deadline_url, json=payload)
         if not response.ok:
             raise RuntimeError(response.text)
 
@@ -188,7 +193,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info(json.dumps(payload_b))
 
         # Post job to deadline
-        response_b = requests.post(url=deadline_url, json=payload_b)
+        response_b = self._requests_post(url=deadline_url, json=payload_b)
         if not response_b.ok:
             raise RuntimeError(response_b.text)
 
@@ -272,3 +277,17 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
         result = filename_zero.replace("\\", "/")
 
         return result
+
+    def _requests_post(self, *args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.post(*args, **kwargs)

@@ -4,7 +4,7 @@ import argparse
 import json
 import arrow
 import logging
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction, get_ca_mongoid
 from pypeapp import config
 from ftrack_api.exception import NoResultFoundError
@@ -571,12 +571,6 @@ class CustomAttributes(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    # Validate that session is an instance of ftrack_api.Session. If not,
-    # assume that register is being called from an old or incompatible API and
-    # return without doing anything.
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     CustomAttributes(session, plugins_presets).register()
 

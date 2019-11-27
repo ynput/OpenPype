@@ -18,3 +18,6 @@ class CreateLook(avalon.maya.Creator):
 
         # Whether to automatically convert the textures to .tx upon publish.
         self.data["maketx"] = True
+
+        # Enable users to force a copy.
+        self.data["forceCopy"] = False

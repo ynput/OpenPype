@@ -111,7 +111,11 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["maya"]
     families = ["renderlayer"]
-    optional = True
+    if not os.environ.get("DEADLINE_REST_URL"):
+        optional = False
+        active = False
+    else:
+        optional = True
 
     def process(self, instance):
 
@@ -267,20 +271,21 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         for key in environment:
             clean_path = ""
             self.log.debug("key: {}".format(key))
-            to_process = environment[key]
+            self.log.debug("value: {}".format(environment[key]))
+            to_process = str(environment[key])
             if key == "PYPE_STUDIO_CORE_MOUNT":
-                clean_path = environment[key]
-            elif "://" in environment[key]:
-                clean_path = environment[key]
-            elif os.pathsep not in to_process:
+                clean_path = to_process
+            elif "://" in to_process:
+                clean_path = to_process
+            elif os.pathsep not in str(to_process):
                 try:
-                    path = environment[key]
+                    path = to_process
                     path.decode('UTF-8', 'strict')
                     clean_path = os.path.normpath(path)
                 except UnicodeDecodeError:
                     print('path contains non UTF characters')
             else:
-                for path in environment[key].split(os.pathsep):
+                for path in to_process.split(os.pathsep):
                     try:
                         path.decode('UTF-8', 'strict')
                         clean_path += os.path.normpath(path) + os.pathsep
@@ -319,7 +324,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         # E.g. http://192.168.0.1:8082/api/jobs
         url = "{}/api/jobs".format(DEADLINE_REST_URL)
-        response = requests.post(url, json=payload)
+        response = self._requests_post(url, json=payload)
         if not response.ok:
             raise Exception(response.text)
 
@@ -340,3 +345,31 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
+
+    def _requests_post(self, *args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.post(*args, **kwargs)
+
+    def _requests_get(self, *args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.get(*args, **kwargs)

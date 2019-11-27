@@ -1,7 +1,7 @@
 import platform
 import socket
 import getpass
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 
 
@@ -79,8 +79,5 @@ class ActionShowWhereIRun(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     ActionShowWhereIRun(session, plugins_presets).register()

@@ -2,7 +2,7 @@ import os
 import sys
 import types
 import importlib
-from pype.vendor import ftrack_api
+import ftrack_api
 import time
 import logging
 import inspect
@@ -100,7 +100,10 @@ class FtrackServer:
                     log.warning(msg, exc_info=e)
 
         if len(register_functions_dict) < 1:
-            raise Exception
+            raise Exception((
+                "There are no events with register function."
+                " Registered paths: \"{}\""
+            ).format("| ".join(paths)))
 
         # Load presets for setting plugins
         key = "user"
@@ -126,23 +129,27 @@ class FtrackServer:
                 msg = '"{}" - register was not successful ({})'.format(
                     function_dict['name'], str(exc)
                 )
-                log.warning(msg)
+                log.warning(msg, exc_info=True)
 
-    def run_server(self):
-        self.session = ftrack_api.Session(auto_connect_event_hub=True,)
+    def run_server(self, session=None, load_files=True):
+        if not session:
+            session = ftrack_api.Session(auto_connect_event_hub=True)
 
-        paths_str = os.environ.get(self.env_key)
-        if paths_str is None:
-            log.error((
-                "Env var \"{}\" is not set, \"{}\" server won\'t launch"
-            ).format(self.env_key, self.server_type))
-            return
+        self.session = session
 
-        paths = paths_str.split(os.pathsep)
-        self.set_files(paths)
+        if load_files:
+            paths_str = os.environ.get(self.env_key)
+            if paths_str is None:
+                log.error((
+                    "Env var \"{}\" is not set, \"{}\" server won\'t launch"
+                ).format(self.env_key, self.server_type))
+                return
 
-        log.info(60*"*")
-        log.info('Registration of actions/events has finished!')
+            paths = paths_str.split(os.pathsep)
+            self.set_files(paths)
+
+            log.info(60*"*")
+            log.info('Registration of actions/events has finished!')
 
         # keep event_hub on session running
         self.session.event_hub.wait()

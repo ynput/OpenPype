@@ -2,7 +2,7 @@ import os
 import sys
 import argparse
 import logging
-from pype.vendor import ftrack_api
+import ftrack_api
 
 from pype.ftrack import BaseAction
 
@@ -114,9 +114,6 @@ class MultipleNotes(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     MultipleNotes(session, plugins_presets).register()
 

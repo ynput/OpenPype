@@ -85,6 +85,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                     end=int(instance.data["frameEnd"])
                 ),
                 "ChunkSize": instance.data["deadlineChunkSize"],
+                "Priority": instance.data["deadlinePriority"],
 
                 "Comment": comment,
 

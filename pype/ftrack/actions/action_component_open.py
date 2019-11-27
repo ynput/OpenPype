@@ -3,7 +3,7 @@ import sys
 import argparse
 import logging
 import subprocess
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 
 
@@ -67,12 +67,6 @@ class ComponentOpen(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register action. Called when used as an event plugin.'''
-
-    # Validate that session is an instance of ftrack_api.Session. If not,
-    # assume that register is being called from an old or incompatible API and
-    # return without doing anything.
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     ComponentOpen(session, plugins_presets).register()
 

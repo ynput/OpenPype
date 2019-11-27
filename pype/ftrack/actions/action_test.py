@@ -6,7 +6,7 @@ import collections
 import json
 import re
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 from avalon import io, inventory, schema
 
@@ -42,9 +42,6 @@ class TestAction(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     TestAction(session, plugins_presets).register()
 

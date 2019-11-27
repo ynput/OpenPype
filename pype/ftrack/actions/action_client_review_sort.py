@@ -2,7 +2,7 @@ import sys
 import argparse
 import logging
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 
 
@@ -55,11 +55,8 @@ class ClientReviewSort(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register action. Called when used as an event plugin.'''
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
-    action_handler = ClientReviewSort(session, plugins_presets)
-    action_handler.register()
+    ClientReviewSort(session, plugins_presets).register()
 
 
 def main(arguments=None):

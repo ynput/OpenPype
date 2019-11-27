@@ -174,7 +174,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
-                "InitialStatus": state
+                "InitialStatus": state,
+                "Priority": job["Props"]["Pri"]
             },
             "PluginInfo": {
                 "Version": "3.6",
@@ -274,6 +275,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             source = data['source']
         except KeyError:
             source = context.data["currentFile"]
+
+        source = source.replace(os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"),
+                                api.registered_root())
 
         relative_path = os.path.relpath(source, api.registered_root())
         source = os.path.join("{root}", relative_path).replace("\\", "/")

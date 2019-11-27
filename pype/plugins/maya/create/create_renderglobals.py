@@ -38,7 +38,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
             self.log.warning("Deadline REST API url not found.")
         else:
             argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
-            response = requests.get(argument)
+            response = self._requests_get(argument)
             if not response.ok:
                 self.log.warning("No pools retrieved")
             else:
@@ -135,7 +135,7 @@ class CreateRenderGlobals(avalon.maya.Creator):
                 'authToken': self._token
             }
         api_entry = '/api/pools/list'
-        response = requests.get(
+        response = self._requests_get(
             self.MUSTER_REST_URL + api_entry, params=params)
         if response.status_code != 200:
             if response.status_code == 401:
@@ -160,7 +160,35 @@ class CreateRenderGlobals(avalon.maya.Creator):
         api_url = "{}/muster/show_login".format(
             os.environ["PYPE_REST_API_URL"])
         self.log.debug(api_url)
-        login_response = requests.post(api_url, timeout=1)
+        login_response = self._requests_post(api_url, timeout=1)
         if login_response.status_code != 200:
             self.log.error('Cannot show login form to Muster')
             raise Exception('Cannot show login form to Muster')
+
+    def _requests_post(self, *args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.post(*args, **kwargs)
+
+    def _requests_get(self, *args, **kwargs):
+        """ Wrapper for requests, disabling SSL certificate validation if
+            DONT_VERIFY_SSL environment variable is found. This is useful when
+            Deadline or Muster server are running with self-signed certificates
+            and their certificate is not added to trusted certificates on
+            client machines.
+
+            WARNING: disabling SSL certificate validation is defeating one line
+            of defense SSL is providing and it is not recommended.
+        """
+        if 'verify' not in kwargs:
+            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        return requests.get(*args, **kwargs)

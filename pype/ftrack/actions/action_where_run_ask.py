@@ -1,7 +1,7 @@
 import os
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
-from pype.vendor.ftrack_api import session as fa_session
+from ftrack_api import session as fa_session
 
 
 class ActionAskWhereIRun(BaseAction):
@@ -39,8 +39,5 @@ class ActionAskWhereIRun(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     ActionAskWhereIRun(session, plugins_presets).register()

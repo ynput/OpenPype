@@ -1,18 +1,23 @@
 import os
 from os.path import getsize
 import logging
-import speedcopy
+import sys
 import clique
 import errno
 import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
+# this is needed until speedcopy for linux is fixed
+if sys.platform == "win32":
+    from speedcopy import copyfile
+else:
+    from shutil import copyfile
 
 log = logging.getLogger(__name__)
 
 
 class IntegrateAssetNew(pyblish.api.InstancePlugin):
-    """Resolve any dependency issius
+    """Resolve any dependency issues
 
     This plug-in resolves any paths which, if not updated might break
     the published file.
@@ -57,7 +62,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "render",
                 "imagesequence",
                 "review",
-                "render",
                 "rendersetup",
                 "rig",
                 "plate",
@@ -268,7 +272,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
-            if isinstance(files, list):
+            sequence_repre = isinstance(files, list)
+
+            if sequence_repre:
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
                     "src_tail_collections: {}".format(str(src_collections)))
@@ -305,14 +311,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_tail = dst_collection.format("{tail}")
 
                 index_frame_start = None
+
                 if repre.get("frameStart"):
                     frame_start_padding = len(str(
                         repre.get("frameEnd")))
                     index_frame_start = int(repre.get("frameStart"))
 
                 dst_padding_exp = src_padding_exp
+                dst_start_frame = None
                 for i in src_collection.indexes:
                     src_padding = src_padding_exp % i
+
+                    # for adding first frame into db
+                    if not dst_start_frame:
+                        dst_start_frame = src_padding
+
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
 
@@ -323,19 +336,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         dst_padding = dst_padding_exp % index_frame_start
                         index_frame_start += 1
 
-                    dst = "{0}{1}{2}".format(dst_head, dst_padding, dst_tail).replace("..", ".")
+                    dst = "{0}{1}{2}".format(
+                            dst_head,
+                            dst_padding,
+                            dst_tail).replace("..", ".")
+
                     self.log.debug("destination: `{}`".format(dst))
                     src = os.path.join(stagingdir, src_file_name)
+
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
-                repre['published_path'] = "{0}{1}{2}".format(dst_head,
-                                                             dst_padding_exp,
-                                                             dst_tail)
-                # for imagesequence version data
-                hashes = '#' * len(dst_padding)
-                dst = os.path.normpath("{0}{1}{2}".format(
-                    dst_head, hashes, dst_tail))
+                dst = "{0}{1}{2}".format(
+                    dst_head,
+                    dst_start_frame,
+                    dst_tail).replace("..", ".")
+                repre['published_path'] = dst
 
             else:
                 # Single file
@@ -391,6 +407,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
+
+            if sequence_repre and repre.get("frameStart"):
+                representation['context']['frame'] = repre.get("frameStart")
+
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
             self.log.debug("__ destination_list: {}".format(destination_list))
@@ -459,7 +479,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
-            speedcopy.copyfile(src, dst)
+            copyfile(src, dst)
             if str(getsize(src)) in str(getsize(dst)):
                 break
 
@@ -477,7 +497,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         filelink.create(src, dst, filelink.HARDLINK)
 
     def get_subset(self, asset, instance):
-
         subset = io.find_one({"type": "subset",
                               "parent": asset["_id"],
                               "name": instance.data["subset"]})
@@ -485,17 +504,32 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if subset is None:
             subset_name = instance.data["subset"]
             self.log.info("Subset '%s' not found, creating.." % subset_name)
+            self.log.debug("families.  %s" % instance.data.get('families'))
+            self.log.debug(
+                "families.  %s" % type(instance.data.get('families')))
 
             _id = io.insert_one({
                 "schema": "pype:subset-3.0",
                 "type": "subset",
                 "name": subset_name,
-                "families": instance.data.get('families'),
-                "data": {},
+                "data": {
+                    "families": instance.data.get('families')
+                    },
                 "parent": asset["_id"]
             }).inserted_id
 
             subset = io.find_one({"_id": _id})
+
+        # add group if available
+        if instance.data.get("subsetGroup"):
+            subset["data"].update(
+                {"subsetGroup": instance.data.get("subsetGroup")}
+            )
+            io.update_many({
+                'type': 'subset',
+                '_id': io.ObjectId(subset["_id"])
+            }, {'$set': subset["data"]}
+            )
 
         return subset
 
@@ -546,6 +580,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             source = instance.data['source']
         except KeyError:
             source = context.data["currentFile"]
+            source = source.replace(os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"),
+                                    api.registered_root())
             relative_path = os.path.relpath(source, api.registered_root())
             source = os.path.join("{root}", relative_path).replace("\\", "/")
 

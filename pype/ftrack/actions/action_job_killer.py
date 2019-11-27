@@ -4,7 +4,7 @@ import argparse
 import logging
 import json
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 
 
@@ -101,13 +101,15 @@ class JobKiller(BaseAction):
         # Update all the queried jobs, setting the status to failed.
         for job in jobs:
             try:
+                origin_status = job["status"]
                 job['status'] = 'failed'
                 session.commit()
                 self.log.debug((
                     'Changing Job ({}) status: {} -> failed'
-                ).format(job['id'], job['status']))
+                ).format(job['id'], origin_status))
             except Exception:
-                self.log.warning.debug((
+                session.rollback()
+                self.log.warning((
                     'Changing Job ({}) has failed'
                 ).format(job['id']))
 
@@ -120,12 +122,6 @@ class JobKiller(BaseAction):
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
-
-    # Validate that session is an instance of ftrack_api.Session. If not,
-    # assume that register is being called from an old or incompatible API and
-    # return without doing anything.
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     JobKiller(session, plugins_presets).register()
 
