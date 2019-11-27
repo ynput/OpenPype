@@ -39,7 +39,6 @@ class SyncToAvalonServer(BaseAction):
     #: Action description.
     description = "Send data from Ftrack to Avalon"
     #: Action icon.
-
     icon = "{}/ftrack/action_icons/PypeAdmin.svg".format(
         os.environ.get(
             "PYPE_STATICS_SERVER",
@@ -50,28 +49,22 @@ class SyncToAvalonServer(BaseAction):
             )
         )
     )
-    #: roles that are allowed to register this action
-    role_list = ["Pypeclub"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.entities_factory = SyncEntitiesFactory(self.log, self.session)
 
     def register(self):
-        '''
-        Registers the action, subscribing the the discover and launch topics.
-        - highest priority event will show last
-        '''
         self.session.event_hub.subscribe(
-            'topic=ftrack.action.discover',
+            "topic=ftrack.action.discover",
             self._discover,
             priority=self.priority
         )
 
         launch_subscription = (
-            'topic=ftrack.action.launch'
-            ' and data.actionIdentifier={0}'
+            "topic=ftrack.action.launch and data.actionIdentifier={0}"
         ).format(self.identifier)
-        self.session.event_hub.subscribe(
-            launch_subscription,
-            self._launch
-        )
+        self.session.event_hub.subscribe(launch_subscription, self._launch)
 
     def discover(self, session, entities, event):
         """ Validation """
@@ -99,8 +92,6 @@ class SyncToAvalonServer(BaseAction):
         for role in user["user_security_roles"]:
             if role["security_role"]["name"] in role_list:
                 return True
-                break
-
         return False
 
     def launch(self, session, in_entities, event):
@@ -114,28 +105,26 @@ class SyncToAvalonServer(BaseAction):
             ft_project_name = in_entities[0]["project"]["full_name"]
 
         try:
-            entities_factory = SyncEntitiesFactory(
-                self.log, session, ft_project_name
-            )
+            self.entities_factory.launch_setup(ft_project_name)
             time_1 = time.time()
 
-            entities_factory.set_cutom_attributes()
+            self.entities_factory.set_cutom_attributes()
             time_2 = time.time()
 
             # This must happen before all filtering!!!
-            entities_factory.prepare_avalon_entities(ft_project_name)
+            self.entities_factory.prepare_avalon_entities(ft_project_name)
             time_3 = time.time()
 
-            entities_factory.filter_by_ignore_sync()
+            self.entities_factory.filter_by_ignore_sync()
             time_4 = time.time()
 
-            entities_factory.duplicity_regex_check()
+            self.entities_factory.duplicity_regex_check()
             time_5 = time.time()
 
-            entities_factory.prepare_ftrack_ent_data()
+            self.entities_factory.prepare_ftrack_ent_data()
             time_6 = time.time()
 
-            entities_factory.synchronize()
+            self.entities_factory.synchronize()
             time_7 = time.time()
 
             self.log.debug(
@@ -166,7 +155,7 @@ class SyncToAvalonServer(BaseAction):
                 "* Total time: {}".format(time_7 - time_start)
             )
 
-            report = entities_factory.report()
+            report = self.entities_factory.report()
             if report and report.get("items"):
                 default_title = "Synchronization report ({}):".format(
                     ft_project_name
@@ -208,13 +197,13 @@ class SyncToAvalonServer(BaseAction):
 
             report = {"items": []}
             try:
-                report = entities_factory.report()
+                report = self.entities_factory.report()
             except Exception:
                 pass
 
             _items = report.get("items", [])
             if _items:
-                items.append(entities_factory.report_splitter)
+                items.append(self.entities_factory.report_splitter)
                 items.extend(_items)
 
             self.show_interface(items, title, event)
@@ -223,12 +212,12 @@ class SyncToAvalonServer(BaseAction):
 
         finally:
             try:
-                entities_factory.dbcon.uninstall()
+                self.entities_factory.dbcon.uninstall()
             except Exception:
                 pass
 
             try:
-                entities_factory.session.close()
+                self.entities_factory.session.close()
             except Exception:
                 pass
 

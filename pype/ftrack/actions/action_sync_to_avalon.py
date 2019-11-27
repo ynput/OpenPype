@@ -47,6 +47,10 @@ class SyncToAvalonLocal(BaseAction):
         os.environ.get('PYPE_STATICS_SERVER', '')
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.entities_factory = SyncEntitiesFactory(self.log, self.session)
+
     def discover(self, session, entities, event):
         ''' Validation '''
         for ent in event["data"]["selection"]:
@@ -66,28 +70,26 @@ class SyncToAvalonLocal(BaseAction):
             ft_project_name = in_entities[0]["project"]["full_name"]
 
         try:
-            entities_factory = SyncEntitiesFactory(
-                self.log, session, ft_project_name
-            )
+            self.entities_factory.launch_setup(ft_project_name)
             time_1 = time.time()
 
-            entities_factory.set_cutom_attributes()
+            self.entities_factory.set_cutom_attributes()
             time_2 = time.time()
 
             # This must happen before all filtering!!!
-            entities_factory.prepare_avalon_entities(ft_project_name)
+            self.entities_factory.prepare_avalon_entities(ft_project_name)
             time_3 = time.time()
 
-            entities_factory.filter_by_ignore_sync()
+            self.entities_factory.filter_by_ignore_sync()
             time_4 = time.time()
 
-            entities_factory.duplicity_regex_check()
+            self.entities_factory.duplicity_regex_check()
             time_5 = time.time()
 
-            entities_factory.prepare_ftrack_ent_data()
+            self.entities_factory.prepare_ftrack_ent_data()
             time_6 = time.time()
 
-            entities_factory.synchronize()
+            self.entities_factory.synchronize()
             time_7 = time.time()
 
             self.log.debug(
@@ -118,7 +120,7 @@ class SyncToAvalonLocal(BaseAction):
                 "* Total time: {}".format(time_7 - time_start)
             )
 
-            report = entities_factory.report()
+            report = self.entities_factory.report()
             if report and report.get("items"):
                 default_title = "Synchronization report ({}):".format(
                     ft_project_name
@@ -160,13 +162,13 @@ class SyncToAvalonLocal(BaseAction):
 
             report = {"items": []}
             try:
-                report = entities_factory.report()
+                report = self.entities_factory.report()
             except Exception:
                 pass
 
             _items = report.get("items", [])
             if _items:
-                items.append(entities_factory.report_splitter)
+                items.append(self.entities_factory.report_splitter)
                 items.extend(_items)
 
             self.show_interface(items, title, event)
@@ -175,12 +177,12 @@ class SyncToAvalonLocal(BaseAction):
 
         finally:
             try:
-                entities_factory.dbcon.uninstall()
+                self.entities_factory.dbcon.uninstall()
             except Exception:
                 pass
 
             try:
-                entities_factory.session.close()
+                self.entities_factory.session.close()
             except Exception:
                 pass
 
