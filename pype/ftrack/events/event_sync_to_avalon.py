@@ -571,7 +571,7 @@ class SyncToAvalonEvent(BaseEvent):
 
         for action, ftrack_ids in entities_by_action.items():
             # skip updated (already prepared) and removed (not exist in ftrack)
-            if action in ["update", "remove"]:
+            if action == "remove":
                 continue
 
             for ftrack_id in ftrack_ids:
@@ -693,9 +693,9 @@ class SyncToAvalonEvent(BaseEvent):
             # sort removed entities by parents len
             # - length of parents determine hierarchy level
             recreate_ents = sorted(
-                recreate_ents.items(),
-                key=(lambda line: len(
-                    (line[1].get("data", {}).get("parents") or [])
+                recreate_ents,
+                key=(lambda item: len(
+                    (item.get("data", {}).get("parents") or [])
                 ))
             )
 
