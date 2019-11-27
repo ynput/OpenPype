@@ -1402,12 +1402,32 @@ class SyncToAvalonEvent(BaseEvent):
                 self.moved_in_avalon.append(mongo_id)
 
             else:
-                if old_parent_id in self.ftrack_recreated_mapping:
-                    old_parent_id = (
-                        self.ftrack_recreated_mapping[old_parent_id]
+                avalon_ent = self.avalon_ents_by_id[mongo_id]
+                avalon_parent_id = avalon_ent["data"]["visualParent"]
+                if avalon_parent_id is None:
+                    avalon_parent_id = avalon_ent["parent"]
+
+                avalon_parent = self.avalon_ents_by_id[avalon_parent_id]
+                parent_id = avalon_parent["data"]["ftrackId"]
+
+                if parent_id in self.ftrack_recreated_mapping:
+                    parent_id = (
+                        self.ftrack_recreated_mapping[parent_id]
                     )
-                ftrack_ent = self.ftrack_ents_by_id[ftrack_id]
-                ftrack_ent["parent_id"] = old_parent_id
+                ftrack_ent = self.ftrack_ents_by_id.get(ftrack_id)
+                if not ftrack_ent:
+                    ftrack_ent = self.process_session.query(
+                        self.entities_query_by_id.format(
+                            self.cur_project["id"], ftrack_id
+                        )
+                    ).one()
+                    self.ftrack_ents_by_id[ftrack_id] = ftrack_ent
+
+                if parent_id == ftrack_ent["parent_id"]:
+                    continue
+                self.log.debug("{} - {}".format(parent_id, ftrack_ent["parent_id"]))
+
+                ftrack_ent["parent_id"] = parent_id
                 try:
                     self.process_session.commit()
                 except Exception:
