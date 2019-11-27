@@ -2,7 +2,6 @@ from pype.ftrack import BaseEvent
 
 
 class SyncAllAutoSyncProjects(BaseEvent):
-    ignore_me = True
     """Trigger sychronization of each project where auto sync is set."""
 
     def register(self):
