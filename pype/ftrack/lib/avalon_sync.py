@@ -20,15 +20,15 @@ log = Logger().get_logger(__name__)
 
 
 # Current schemas for avalon types
-entity_schemas = {
+EntitySchemas = {
     "project": "avalon-core:project-2.0",
     "asset": "avalon-core:asset-3.0",
     "config": "avalon-core:config-1.0"
 }
 
 # name of Custom attribute that stores mongo_id from avalon db
-cust_attr_id_key = "avalon_mongo_id"
-cust_attr_auto_sync = "avalon_auto_sync"
+CustAttrIdKey = "avalon_mongo_id"
+CustAttrAutoSync = "avalon_auto_sync"
 
 
 def check_regex(name, entity_type, in_schema=None, schema_patterns=None):

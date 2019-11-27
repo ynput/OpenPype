@@ -6,7 +6,7 @@ import arrow
 import logging
 import ftrack_api
 from pype.ftrack import BaseAction
-from pype.ftrack.lib.avalon_sync import cust_attr_id_key
+from pype.ftrack.lib.avalon_sync import CustAttrIdKey
 from pypeapp import config
 from ftrack_api.exception import NoResultFoundError
 
@@ -207,7 +207,7 @@ class CustomAttributes(BaseAction):
         group = self.get_group('avalon')
 
         data = {}
-        data['key'] = cust_attr_id_key
+        data['key'] = CustAttrIdKey
         data['label'] = cust_attr_label
         data['type'] = custom_attribute_type
         data['default'] = ''

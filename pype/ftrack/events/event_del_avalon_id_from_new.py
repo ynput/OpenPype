@@ -1,4 +1,5 @@
-from pype.ftrack.lib import avalon_sync, BaseEvent
+from pype.ftrack.lib import BaseEvent
+from pype.ftrack.lib.avalon_sync import CustAttrIdKey
 from pype.ftrack.events.event_sync_to_avalon import SyncToAvalonEvent
 
 
@@ -28,7 +29,7 @@ class DelAvalonIdFromNew(BaseEvent):
 
                 elif (
                     entity.get('action', None) == 'update' and
-                    avalon_sync.cust_attr_id_key in entity['keys'] and
+                    CustAttrIdKey in entity['keys'] and
                     entity_id in created
                 ):
                     ftrack_entity = session.get(
@@ -37,13 +38,11 @@ class DelAvalonIdFromNew(BaseEvent):
                     )
 
                     cust_attr = ftrack_entity['custom_attributes'][
-                        avalon_sync.cust_attr_id_key
+                        CustAttrIdKey
                     ]
 
                     if cust_attr != '':
-                        ftrack_entity['custom_attributes'][
-                            avalon_sync.cust_attr_id_key
-                        ] = ''
+                        ftrack_entity['custom_attributes'][CustAttrIdKey] = ''
                         session.commit()
 
             except Exception:
@@ -53,5 +52,4 @@ class DelAvalonIdFromNew(BaseEvent):
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-
     DelAvalonIdFromNew(session, plugins_presets).register()

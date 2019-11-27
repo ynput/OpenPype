@@ -2,12 +2,9 @@ import os
 import json
 
 from ruamel import yaml
-import ftrack_api
 from pype.ftrack import BaseAction
 from pypeapp import config
 from pype.ftrack.lib.avalon_sync import get_avalon_attr
-
-from ftrack_api import session as fa_session
 
 
 class PrepareProject(BaseAction):

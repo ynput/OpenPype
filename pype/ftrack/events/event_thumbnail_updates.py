@@ -1,4 +1,3 @@
-import ftrack_api
 from pype.ftrack import BaseEvent
 
 

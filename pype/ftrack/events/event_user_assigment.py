@@ -1,13 +1,15 @@
-import ftrack_api
-from pype.ftrack import BaseEvent
-from pype.ftrack.lib import avalon_sync
-from pype.ftrack.lib.io_nonsingleton import DbConnector
-from bson.objectid import ObjectId
-from pypeapp import config
-from pypeapp import Anatomy
-import subprocess
 import os
 import re
+import subprocess
+
+from pype.ftrack import BaseEvent
+from pype.ftrack.lib.avalon_sync import CustAttrIdKey
+from pype.ftrack.lib.io_nonsingleton import DbConnector
+
+from bson.objectid import ObjectId
+
+from pypeapp import config
+from pypeapp import Anatomy
 
 
 class UserAssigmentEvent(BaseEvent):
@@ -37,7 +39,6 @@ class UserAssigmentEvent(BaseEvent):
     """
 
     db_con = DbConnector()
-    ca_mongoid = avalon_sync.cust_attr_id_key
 
     def error(self, *err):
         for e in err:
@@ -106,7 +107,7 @@ class UserAssigmentEvent(BaseEvent):
         self.db_con.Session['AVALON_PROJECT'] = task['project']['full_name']
 
         avalon_entity = None
-        parent_id = parent['custom_attributes'].get(self.ca_mongoid)
+        parent_id = parent['custom_attributes'].get(CustAttrIdKey)
         if parent_id:
             parent_id = ObjectId(parent_id)
             avalon_entity = self.db_con.find_one({

@@ -12,7 +12,7 @@ from avalon import schema
 
 from pype.ftrack.lib import avalon_sync
 from pype.ftrack.lib.avalon_sync import (
-    cust_attr_id_key, cust_attr_auto_sync, entity_schemas
+    CustAttrIdKey, CustAttrAutoSync, EntitySchemas
 )
 import ftrack_api
 from ftrack_api import session as fa_session
@@ -515,10 +515,10 @@ class SyncToAvalonEvent(BaseEvent):
                 continue
 
             changes = ent_info["changes"]
-            if cust_attr_auto_sync not in changes:
+            if CustAttrAutoSync not in changes:
                 continue
 
-            auto_sync = changes[cust_attr_auto_sync]["new"]
+            auto_sync = changes[CustAttrAutoSync]["new"]
             if auto_sync == "1":
                 # Trigger sync to avalon action if auto sync was turned on
                 ft_project = self.cur_project
@@ -552,17 +552,17 @@ class SyncToAvalonEvent(BaseEvent):
 
         ft_project = self.cur_project
         # Check if auto-sync custom attribute exists
-        if cust_attr_auto_sync not in ft_project["custom_attributes"]:
+        if CustAttrAutoSync not in ft_project["custom_attributes"]:
             # TODO should we sent message to someone?
             # TODO report
             self.log.error((
                 "Custom attribute \"{}\" is not created or user \"{}\" used"
                 " for Event server don't have permissions to access it!"
-            ).format(cust_attr_auto_sync, self.session.api_user))
+            ).format(CustAttrAutoSync, self.session.api_user))
             return True
 
         # Skip if auto-sync is not set
-        auto_sync = ft_project["custom_attributes"][cust_attr_auto_sync]
+        auto_sync = ft_project["custom_attributes"][CustAttrAutoSync]
         if auto_sync is not True:
             self.log.debug("Auto sync is not turned on")
             return True
@@ -746,7 +746,7 @@ class SyncToAvalonEvent(BaseEvent):
 
                     new_entity["custom_attributes"][key] = val
 
-                new_entity["custom_attributes"][cust_attr_id_key] = (
+                new_entity["custom_attributes"][CustAttrIdKey] = (
                     str(avalon_entity["_id"])
                 )
                 try:
@@ -951,7 +951,7 @@ class SyncToAvalonEvent(BaseEvent):
             "_id": mongo_id,
             "name": name,
             "type": "asset",
-            "schema": entity_schemas["asset"],
+            "schema": EntitySchemas["asset"],
             "parent": proj["_id"],
             "data": {
                 "ftrackId": ftrack_ent["id"],
@@ -993,7 +993,7 @@ class SyncToAvalonEvent(BaseEvent):
         if not replaced:
             self.dbcon.insert_one(final_entity)
 
-        ftrack_ent["custom_attributes"][cust_attr_id_key] = str(mongo_id)
+        ftrack_ent["custom_attributes"][CustAttrIdKey] = str(mongo_id)
         try:
             self.process_session.commit()
         except Exception:
@@ -1259,7 +1259,7 @@ class SyncToAvalonEvent(BaseEvent):
         configuration_id = None
         for attr in cust_attrs:
             key = attr["key"]
-            if key == cust_attr_id_key:
+            if key == CustAttrIdKey:
                 configuration_id = attr["id"]
                 break
 
