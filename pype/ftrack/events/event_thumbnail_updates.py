@@ -25,9 +25,10 @@ class ThumbnailEvents(BaseEvent):
             # Update task thumbnail from published version
             # if (entity['entityType'] == 'assetversion' and
             #         entity['action'] == 'encoded'):
-            if (
-                entity['entityType'] == 'assetversion'
-                and 'thumbid' in (entity.get('keys') or [])
+            elif (
+                entity['entityType'] == 'assetversion' and
+                entity['action'] != 'remove' and
+                'thumbid' in (entity.get('keys') or [])
             ):
 
                 version = session.get('AssetVersion', entity['entityId'])
