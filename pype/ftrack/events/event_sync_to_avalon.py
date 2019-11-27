@@ -14,8 +14,8 @@ from pype.ftrack.lib import avalon_sync
 from pype.ftrack.lib.avalon_sync import (
     cust_attr_id_key, cust_attr_auto_sync, entity_schemas
 )
-from pype.vendor import ftrack_api
-from pype.vendor.ftrack_api import session as fa_session
+import ftrack_api
+from ftrack_api import session as fa_session
 from pype.ftrack import BaseEvent
 
 from pype.ftrack.lib.io_nonsingleton import DbConnector

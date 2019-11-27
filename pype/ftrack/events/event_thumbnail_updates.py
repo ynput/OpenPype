@@ -1,4 +1,4 @@
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseEvent
 
 
@@ -49,7 +49,10 @@ class ThumbnailEvents(BaseEvent):
 
                     self.log.info(msg)
 
-            session.commit()
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
 
 
 def register(session, plugins_presets):

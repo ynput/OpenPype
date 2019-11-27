@@ -4,7 +4,7 @@ import argparse
 import json
 import arrow
 import logging
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.avalon_sync import cust_attr_id_key
 from pypeapp import config

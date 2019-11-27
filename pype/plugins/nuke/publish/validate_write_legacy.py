@@ -4,8 +4,9 @@ import os
 import nuke
 
 from avalon import api
+import re
 import pyblish.api
-
+from avalon.nuke import get_avalon_knob_data
 
 class RepairWriteLegacyAction(pyblish.api.Action):
 
@@ -26,24 +27,47 @@ class RepairWriteLegacyAction(pyblish.api.Action):
         instances = pyblish.api.instances_by_plugin(failed, plugin)
 
         for instance in instances:
-            data = toml.loads(instance[0]["avalon"].value())
+            if "Write" in instance[0].Class():
+                data = toml.loads(instance[0]["avalon"].value())
+            else:
+                data = get_avalon_knob_data(instance[0])
+
+            self.log.info(data)
+
             data["xpos"] = instance[0].xpos()
             data["ypos"] = instance[0].ypos()
             data["input"] = instance[0].input(0)
             data["publish"] = instance[0]["publish"].value()
             data["render"] = instance[0]["render"].value()
             data["render_farm"] = instance[0]["render_farm"].value()
+            data["review"] = instance[0]["review"].value()
 
-            nuke.delete(instance[0])
+            # nuke.delete(instance[0])
 
-            family = "render{}".format(os.environ["AVALON_TASK"].capitalize())
-            api.create(data["subset"], data["asset"], family)
+            task = os.environ["AVALON_TASK"]
+            sanitized_task = re.sub('[^0-9a-zA-Z]+', '', task)
+            subset_name = "render{}Main".format(
+                sanitized_task.capitalize())
+
+            Create_name = "CreateWriteRender"
+
+            creator_plugin = None
+            for Creator in api.discover(api.Creator):
+                if Creator.__name__ != Create_name:
+                    continue
+
+                creator_plugin = Creator
+
+            # return api.create()
+            creator_plugin(data["subset"], data["asset"]).process()
+
             node = nuke.toNode(data["subset"])
             node.setXYpos(data["xpos"], data["ypos"])
             node.setInput(0, data["input"])
             node["publish"].setValue(data["publish"])
             node["render"].setValue(data["render"])
             node["render_farm"].setValue(data["render_farm"])
+            node["review"].setValue(data["review"])
 
 
 class ValidateWriteLegacy(pyblish.api.InstancePlugin):

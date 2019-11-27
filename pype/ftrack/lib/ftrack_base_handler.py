@@ -1,8 +1,8 @@
 import functools
 import time
 from pypeapp import Logger
-from pype.vendor import ftrack_api
-from pype.vendor.ftrack_api import session as fa_session
+import ftrack_api
+from ftrack_api import session as fa_session
 from pype.ftrack.ftrack_server import session_processor
 
 
@@ -10,6 +10,13 @@ class MissingPermision(Exception):
     def __init__(self, message=None):
         if message is None:
             message = 'Ftrack'
+        super().__init__(message)
+
+
+class PreregisterException(Exception):
+    def __init__(self, message=None):
+        if not message:
+            message = "Pre-registration conditions were not met"
         super().__init__(message)
 
 
@@ -89,15 +96,17 @@ class BaseHandler(object):
                     '!{} "{}" - You\'re missing required {} permissions'
                 ).format(self.type, label, str(MPE)))
             except AssertionError as ae:
-                self.log.info((
+                self.log.warning((
                     '!{} "{}" - {}'
                 ).format(self.type, label, str(ae)))
             except NotImplementedError:
                 self.log.error((
                     '{} "{}" - Register method is not implemented'
-                ).format(
-                    self.type, label)
-                )
+                ).format(self.type, label))
+            except PreregisterException as exc:
+                self.log.warning((
+                    '{} "{}" - {}'
+                ).format(self.type, label, str(exc)))
             except Exception as e:
                 self.log.error('{} "{}" - Registration failed ({})'.format(
                     self.type, label, str(e))
@@ -119,6 +128,7 @@ class BaseHandler(object):
             try:
                 return func(*args, **kwargs)
             except Exception as exc:
+                self.session.rollback()
                 msg = '{} "{}": Failed ({})'.format(self.type, label, str(exc))
                 self.log.error(msg, exc_info=True)
                 return {
@@ -163,10 +173,10 @@ class BaseHandler(object):
 
         if result is True:
             return
-        msg = "Pre-register conditions were not met"
+        msg = None
         if isinstance(result, str):
             msg = result
-        raise Exception(msg)
+        raise PreregisterException(msg)
 
     def preregister(self):
         '''
@@ -593,3 +603,24 @@ class BaseHandler(object):
         self.log.debug(
             "Action \"{}\" Triggered successfully".format(action_name)
         )
+
+    def trigger_event(
+        self, topic, event_data={}, session=None, source=None,
+        event=None, on_error="ignore"
+    ):
+        if session is None:
+            session = self.session
+
+        if not source and event:
+            source = event.get("source")
+        # Create and trigger event
+        event = fa_session.ftrack_api.event.base.Event(
+            topic=topic,
+            data=event_data,
+            source=source
+        )
+        session.event_hub.publish(event, on_error=on_error)
+
+        self.log.debug((
+            "Publishing event: {}"
+        ).format(str(event.__dict__)))

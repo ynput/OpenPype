@@ -30,8 +30,7 @@ def main(args):
         server.run_server(session)
 
     except Exception as exc:
-        import traceback
-        traceback.print_tb(exc.__traceback__)
+        log.error("Event server crashed. See traceback below", exc_info=True)
 
     finally:
         log.debug("First closing socket")

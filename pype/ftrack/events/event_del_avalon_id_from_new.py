@@ -1,4 +1,4 @@
-from pype.ftrack import BaseEvent
+import BaseEvent
 from pype.ftrack.lib import avalon_sync
 from pype.ftrack.events.event_sync_to_avalon import SyncToAvalonEvent
 

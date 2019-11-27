@@ -1,7 +1,7 @@
 import os
 
 import pyblish.api
-from pype.vendor import clique
+import clique
 import pype.api
 
 

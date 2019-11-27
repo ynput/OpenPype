@@ -22,7 +22,12 @@ import pymongo
 from pymongo.client_session import ClientSession
 
 class NotActiveTable(Exception):
-    pass
+    def __init__(self, *args, **kwargs):
+        msg = "Active table is not set. (This is bug)"
+        if not (args or kwargs):
+            args = (default_message,)
+        super().__init__(*args, **kwargs)
+
 
 def auto_reconnect(func):
     """Handling auto reconnect in 3 retry times"""
@@ -37,7 +42,16 @@ def auto_reconnect(func):
                 time.sleep(0.1)
         else:
             raise
+    return decorated
 
+
+def check_active_table(func):
+    """Check if DbConnector has active table before db method is called"""
+    @functools.wraps(func)
+    def decorated(obj, *args, **kwargs):
+        if not obj.active_table:
+            raise NotActiveTable()
+        return func(obj, *args, **kwargs)
     return decorated
 
 
@@ -53,7 +67,6 @@ def check_active_table(func):
 
 
 class DbConnector:
-
     log = logging.getLogger(__name__)
     timeout = 1000
 
@@ -68,10 +81,18 @@ class DbConnector:
 
         self.active_table = table_name
 
+    def __getitem__(self, key):
+        # gives direct access to collection withou setting `active_table`
+        return self._database[key]
+
     def __getattribute__(self, attr):
+        # not all methods of PyMongo database are implemented with this it is
+        # possible to use them too
         try:
-            return super().__getattribute__(attr)
+            return super(DbConnector, self).__getattribute__(attr)
         except AttributeError:
+            if self.active_table is None:
+                raise NotActiveTable()
             return self._database[self.active_table].__getattribute__(attr)
 
     def install(self):
@@ -131,6 +152,15 @@ class DbConnector:
     def exist_table(self, table_name):
         return table_name in self.tables()
 
+    def create_table(self, name, **options):
+        if self.exist_table(name):
+            return
+
+        return self._database.create_collection(name, **options)
+
+    def exist_table(self, table_name):
+        return table_name in self.tables()
+
     def tables(self):
         """List available tables
         Returns:
@@ -166,18 +196,21 @@ class DbConnector:
     @check_active_table
     @auto_reconnect
     def find(self, filter, projection=None, sort=None, **options):
-        options["projection"] = projection
         options["sort"] = sort
-        return self._database[self.active_table].find(filter, **options)
+        return self._database[self.active_table].find(
+            filter, projection, **options
+        )
 
     @check_active_table
     @auto_reconnect
     def find_one(self, filter, projection=None, sort=None, **options):
         assert isinstance(filter, dict), "filter must be <dict>"
-
-        options["projection"] = projection
         options["sort"] = sort
-        return self._database[self.active_table].find_one(filter, **options)
+        return self._database[self.active_table].find_one(
+            filter,
+            projection,
+            **options
+        )
 
     @check_active_table
     @auto_reconnect
@@ -202,8 +235,8 @@ class DbConnector:
 
     @check_active_table
     @auto_reconnect
-    def distinct(self, *args, **kwargs):
-        return self._database[self.active_table].distinct(*args, **kwargs)
+    def distinct(self, **options):
+        return self._database[self.active_table].distinct(**options)
 
     @check_active_table
     @auto_reconnect
@@ -216,10 +249,14 @@ class DbConnector:
     @auto_reconnect
     def delete_one(self, filter, collation=None, **options):
         options["collation"] = collation
-        return self._database[self.active_table].delete_one(filter, **options)
+        return self._database[self.active_table].delete_one(
+            filter, **options
+        )
 
     @check_active_table
     @auto_reconnect
     def delete_many(self, filter, collation=None, **options):
         options["collation"] = collation
-        return self._database[self.active_table].delete_many(filter, **options)
+        return self._database[self.active_table].delete_many(
+            filter, **options
+        )
