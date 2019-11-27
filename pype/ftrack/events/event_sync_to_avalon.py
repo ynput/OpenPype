@@ -1458,8 +1458,6 @@ class SyncToAvalonEvent(BaseEvent):
         ):
             return
 
-        cust_attrs, hier_attrs = self.avalon_cust_attrs
-
         parent_changes = []
         hier_cust_attrs_ids = []
         hier_cust_attrs_keys = []
@@ -1543,6 +1541,8 @@ class SyncToAvalonEvent(BaseEvent):
         if not hier_cust_attrs_ids:
             self.update_entities()
             return
+
+        cust_attrs, hier_attrs = self.avalon_cust_attrs
 
         # Hierarchical custom attributes preparation ***
         if all_keys:
