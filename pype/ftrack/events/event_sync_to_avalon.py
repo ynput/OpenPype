@@ -1544,11 +1544,30 @@ class SyncToAvalonEvent(BaseEvent):
 
         # Parents preparation ***
         mongo_to_ftrack_parents = {}
+        missing_ftrack_ents = {}
         for mongo_id in parent_changes:
             avalon_ent = self.avalon_ents_by_id[mongo_id]
             ftrack_id = avalon_ent["data"]["ftrackId"]
+            if ftrack_id not in self.ftrack_ents_by_id:
+                missing_ftrack_ents[ftrack_id] = mongo_id
+                continue
             ftrack_ent = self.ftrack_ents_by_id[ftrack_id]
             mongo_to_ftrack_parents[mongo_id] = len(ftrack_ent["link"])
+
+        if missing_ftrack_ents:
+            joine_ids = ", ".join(
+                ["\"{}\"".format(id) for id in missing_ftrack_ents.keys()]
+            )
+            entities = self.process_session.query(
+                self.entities_query_by_id.format(
+                    self.cur_project["id"], joine_ids
+                )
+            ).all()
+            for entity in entities:
+                ftrack_id = entity["id"]
+                self.ftrack_ents_by_id[ftrack_id] = entity
+                mongo_id = missing_ftrack_ents[ftrack_id]
+                mongo_to_ftrack_parents[mongo_id] = len(entity["link"])
 
         stored_parents_by_mongo = {}
         # sort by hierarchy level
