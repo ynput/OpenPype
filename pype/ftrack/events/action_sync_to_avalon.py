@@ -14,6 +14,7 @@ from pype.ftrack.lib import avalon_sync
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 from pype.vendor import ftrack_api
 from pype.vendor.ftrack_api import session as fa_session
+from pypeapp import config
 
 
 class SyncEntitiesFactory:
