@@ -446,8 +446,11 @@ class SyncToAvalonEvent(BaseEvent):
                 self.entities_query_by_id.format(
                     self.cur_project["id"], ftrack_id
                 )
-            ).one()
-            self.ftrack_ents_by_id[ftrack_id] = entity
+            ).first()
+            if entity:
+                self.ftrack_ents_by_id[ftrack_id] = entity
+            else:
+                return "unknown hierarchy"
         return "/".join([ent["name"] for ent in entity["link"]])
 
     def launch(self, session, event):
@@ -656,7 +659,7 @@ class SyncToAvalonEvent(BaseEvent):
                 if not avalon_ent:
                     self.log.debug((
                         "Parent entity of task was not found in avalon <{}>"
-                    ).format(self.get_ent_path(ftrack_id)))
+                    ).format(self.get_ent_path(parent_id)))
                     continue
 
                 mongo_id = avalon_ent["_id"]
