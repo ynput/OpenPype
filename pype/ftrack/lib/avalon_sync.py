@@ -136,3 +136,80 @@ def get_project_apps(in_app_list):
                 "Error has happened during preparing application \"{}\""
             ).format(app), exc_info=True)
     return apps, warnings
+
+
+def get_hierarchical_attributes(session, entity, attr_names, attr_defaults={}):
+    entity_ids = []
+    if entity.entity_type.lower() == "project":
+        entity_ids.append(entity["id"])
+    else:
+        typed_context = session.query((
+            "select ancestors.id, project from TypedContext where id is \"{}\""
+        ).format(entity["id"])).one()
+        entity_ids.append(typed_context["id"])
+        entity_ids.extend(
+            [ent["id"] for ent in reversed(typed_context["ancestors"])]
+        )
+        entity_ids.append(typed_context["project"]["id"])
+
+    missing_defaults = []
+    for attr_name in attr_names:
+        if attr_name not in attr_defaults:
+            missing_defaults.append(attr_name)
+
+    join_ent_ids = ", ".join(
+        ["\"{}\"".format(entity_id) for entity_id in entity_ids]
+    )
+    join_attribute_names = ", ".join(
+        ["\"{}\"".format(key) for key in attr_names]
+    )
+    queries = []
+    queries.append({
+        "action": "query",
+        "expression": (
+            "select value, entity_id from CustomAttributeValue "
+            "where entity_id in ({}) and configuration.key in ({})"
+        ).format(join_ent_ids, join_attribute_names)
+    })
+
+    if not missing_defaults:
+        if hasattr(session, "call"):
+            [values] = session.call(queries)
+        else:
+            [values] = session._call(queries)
+    else:
+        join_missing_names = ", ".join(
+            ["\"{}\"".format(key) for key in missing_defaults]
+        )
+        queries.append({
+            "action": "query",
+            "expression": (
+                "select default from CustomAttributeConfiguration "
+                "where key in ({})"
+            ).format(join_missing_names)
+        })
+
+        [values, default_values] = session.call(queries)
+        for default_value in default_values:
+            key = default_value["data"][0]["key"]
+            attr_defaults[key] = default_value["data"][0]["default"]
+
+    hier_values = {}
+    for key, val in attr_defaults.items():
+        hier_values[key] = val
+
+    if not values["data"]:
+        return hier_values
+
+    _hier_values = collections.defaultdict(list)
+    for value in values["data"]:
+        key = value["configuration"]["key"]
+        _hier_values[key].append(value)
+
+    for key, values in _hier_values.items():
+        value = sorted(
+            values, key=lambda value: entity_ids.index(value["entity_id"])
+        )[0]
+        hier_values[key] = value["value"]
+
+    return hier_values
