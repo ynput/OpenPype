@@ -15,6 +15,7 @@ from pype.ftrack.lib.avalon_sync import (
     cust_attr_id_key, cust_attr_auto_sync, entity_schemas
 )
 from pype.vendor import ftrack_api
+from pype.vendor.ftrack_api import session as fa_session
 from pype.ftrack import BaseEvent
 
 from pype.ftrack.lib.io_nonsingleton import DbConnector
@@ -1251,6 +1252,14 @@ class SyncToAvalonEvent(BaseEvent):
         if not ent_infos:
             return
 
+        cust_attrs, hier_attrs = self.avalon_cust_attrs
+        configuration_id = None
+        for attr in cust_attrs:
+            key = attr["key"]
+            if key == cust_attr_id_key:
+                configuration_id = attr["id"]
+                break
+
         # Skip if already exit in avalon db or tasks entities
         # - happen when was created by any sync event/action
         pop_out_ents = []
@@ -1265,6 +1274,28 @@ class SyncToAvalonEvent(BaseEvent):
                 parent_id = ent_info["parentId"]
                 new_tasks_by_parent[parent_id].append(ent_info)
                 pop_out_ents.append(ftrack_id)
+
+            _entity_key = collections.OrderedDict({
+                "configuration_id": configuration_id,
+                "entity_id": ftrack_id
+            })
+
+            self.process_session.recorded_operations.push(
+                fa_session.ftrack_api.operation.UpdateEntityOperation(
+                    "ContextCustomAttributeValue",
+                    _entity_key,
+                    "value",
+                    fa_session.ftrack_api.symbol.NOT_SET,
+                    ""
+                )
+            )
+        try:
+            # Commit changes of mongo_id to empty string
+            self.process_session.commit()
+        except Exception:
+            self.process_session.rollback()
+            # TODO logging
+            # TODO report
 
         for ftrack_id in pop_out_ents:
             ent_infos.pop(ftrack_id)
