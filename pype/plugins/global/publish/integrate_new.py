@@ -409,7 +409,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }
 
             if sequence_repre and repre.get("frameStart"):
-                representation['context']['frame'] = repre.get("frameStart")
+                representation['context']['frame'] = src_padding_exp % repre.get("frameStart")
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
