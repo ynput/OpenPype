@@ -626,33 +626,40 @@ class SyncToAvalonEvent(BaseEvent):
         self.ftrack_updated = updated
 
         self.log.debug("Synchronization begins")
-        time_1 = time.time()
-        # 1.) Process removed - may affect all other actions
-        self.process_removed()
-        time_2 = time.time()
-        # 2.) Process renamed - may affect added
-        self.process_renamed()
-        time_3 = time.time()
-        # 3.) Process added - moved entity may be moved to new entity
-        self.process_added()
-        time_4 = time.time()
-        # 4.) Process moved
-        self.process_moved()
-        time_5 = time.time()
-        # 5.) Process updated
-        self.process_updated()
-        time_6 = time.time()
-        # 6.) Process changes in hierarchy or hier custom attribues
-        self.process_hier_cleanup()
-        time_7 = time.time()
+        try:
+            time_1 = time.time()
+            # 1.) Process removed - may affect all other actions
+            self.process_removed()
+            time_2 = time.time()
+            # 2.) Process renamed - may affect added
+            self.process_renamed()
+            time_3 = time.time()
+            # 3.) Process added - moved entity may be moved to new entity
+            self.process_added()
+            time_4 = time.time()
+            # 4.) Process moved
+            self.process_moved()
+            time_5 = time.time()
+            # 5.) Process updated
+            self.process_updated()
+            time_6 = time.time()
+            # 6.) Process changes in hierarchy or hier custom attribues
+            self.process_hier_cleanup()
+            time_7 = time.time()
 
-        print(time_2 - time_1)
-        print(time_3 - time_2)
-        print(time_4 - time_3)
-        print(time_5 - time_4)
-        print(time_6 - time_5)
-        print(time_7 - time_6)
+            print(time_2 - time_1)
+            print(time_3 - time_2)
+            print(time_4 - time_3)
+            print(time_5 - time_4)
+            print(time_6 - time_5)
+            print(time_7 - time_6)
 
+        except Exception:
+            self.report_items["error"][msg].append((
+                str(traceback.format_exc()).replace("\n", "<br>")
+            ).replace(" ", "&nbsp;"))
+
+        self.report()
         return True
 
     def process_removed(self):
@@ -764,9 +771,9 @@ class SyncToAvalonEvent(BaseEvent):
                     error_msg = "Couldn't recreate entity in Ftrack"
                     report_msg = (
                         "{}||Trying to recreate because it or its children"
-                        " contain published data""
+                        " contain published data"
                     ).format(error_msg)
-                    self.report_items["error"][report_msg].append(ent_path)
+                    self.report_items["warning"][report_msg].append(ent_path)
                     self.log.warning(
                         "{}. Process session commit failed! <{}>".format(
                             error_msg, ent_path
@@ -803,9 +810,9 @@ class SyncToAvalonEvent(BaseEvent):
                     )
                     report_msg = (
                         "{}||Entity was recreated because it or its children"
-                        " contain published data""
+                        " contain published data"
                     ).format(error_msg)
-                    self.report_items["error"][report_msg].append(ent_path)
+                    self.report_items["warning"][report_msg].append(ent_path)
                     self.log.warning(
                         "{}. Process session commit failed! <{}>".format(
                             error_msg, ent_path
@@ -1051,7 +1058,7 @@ class SyncToAvalonEvent(BaseEvent):
                 "Schema validation failed for new entity (This is a bug)"
             )
             error_traceback = (
-                str(traceback.format_exc()).replace("\n", "<br>"
+                str(traceback.format_exc()).replace("\n", "<br>")
             ).replace(" ", "&nbsp;")
 
             item_msg = ent_path + "<br>" + error_traceback
@@ -1098,7 +1105,7 @@ class SyncToAvalonEvent(BaseEvent):
                 "{}||SyncToAvalon action may solve this issue"
             ).format(error_msg)
 
-            self.report_items["error"][report_msg].append(ent_path)
+            self.report_items["warning"][report_msg].append(ent_path)
             self.log.error(
                 "{}: \"{}\"".format(error_msg, ent_path),
                 exc_info=True
@@ -1236,7 +1243,7 @@ class SyncToAvalonEvent(BaseEvent):
                         " if it already contained published data."
                     ).format(error_msg)
                     self.report_items["info"][report_msg].append(ent_path)
-                    self.log.warning("{} <{}>").format(error_msg, ent_path))
+                    self.log.warning("{} <{}>".format(error_msg, ent_path))
 
                 except Exception:
                     self.process_session.rollback()
@@ -1251,12 +1258,12 @@ class SyncToAvalonEvent(BaseEvent):
                         " if it already contained published data."
                     ).format(error_msg)
                     error_traceback = (
-                        str(traceback.format_exc()).replace("\n", "<br>"
+                        str(traceback.format_exc()).replace("\n", "<br>")
                     ).replace(" ", "&nbsp;")
 
                     item_msg = ent_path + "<br>" + error_traceback
-                    self.report_items["error"][report_msg].append(item_msg)
-                    self.log.error(
+                    self.report_items["warning"][report_msg].append(item_msg)
+                    self.log.warning(
                         "{}: \"{}\"".format(error_msg, ent_path),
                         exc_info=True
                     )
@@ -1546,11 +1553,11 @@ class SyncToAvalonEvent(BaseEvent):
                     )
                     report_msg = (
                         "{}||Parent in Avalon can't be changed. That"
-                        " may cause issues!! Please fix parent or move entity"
-                        " under synchronized entity."
+                        " may cause issues. Please fix parent or move entity"
+                        " under valid entity."
                     ).format(error_msg)
 
-                    self.report_items["error"][report_msg].append(ent_path)
+                    self.report_items["warning"][report_msg].append(ent_path)
                     self.log.warning("{} <{}>".format(error_msg, ent_path))
                     continue
 
@@ -1585,10 +1592,12 @@ class SyncToAvalonEvent(BaseEvent):
                 avalon_parent = self.avalon_ents_by_id[avalon_parent_id]
                 parent_id = avalon_parent["data"]["ftrackId"]
 
+                # For cases when parent was deleted at the same time
                 if parent_id in self.ftrack_recreated_mapping:
                     parent_id = (
                         self.ftrack_recreated_mapping[parent_id]
                     )
+
                 ftrack_ent = self.ftrack_ents_by_id.get(ftrack_id)
                 if not ftrack_ent:
                     ftrack_ent = self.process_session.query(
@@ -1600,17 +1609,41 @@ class SyncToAvalonEvent(BaseEvent):
 
                 if parent_id == ftrack_ent["parent_id"]:
                     continue
-                self.log.debug("{} - {}".format(parent_id, ftrack_ent["parent_id"]))
 
                 ftrack_ent["parent_id"] = parent_id
                 try:
                     self.process_session.commit()
+                    # TODO logging
+                    # TODO report
+                    msg = "Entity was moved back"
+                    report_msg = (
+                        "{}||Entity can't be moved when"
+                        " it or its children contain published data"
+                    ).format(msg)
+                    ent_path = self.get_ent_path(ftrack_id)
+                    self.report_items["info"][report_msg].append(ent_path)
+                    self.log.warning("{} <{}>".format(msg, ent_path))
+
                 except Exception:
                     self.process_session.rollback()
                     # TODO logging
                     # TODO report
+                    error_msg = (
+                        "Couldn't moved the entity back to its original parent"
+                    )
+                    report_msg = (
+                        "{}||Moved back because it is not possible to"
+                        " move with an entity or it's parents, "
+                        " if it already contained published data."
+                    ).format(error_msg)
+                    error_traceback = (
+                        str(traceback.format_exc()).replace("\n", "<br>")
+                    ).replace(" ", "&nbsp;")
+
+                    item_msg = ent_path + "<br>" + error_traceback
+                    self.report_items["warning"][report_msg].append(item_msg)
                     self.log.warning(
-                        "Process session commit failed!",
+                        "{}: \"{}\"".format(error_msg, ent_path),
                         exc_info=True
                     )
 
@@ -1656,6 +1689,7 @@ class SyncToAvalonEvent(BaseEvent):
         for ftrack_id, ent_info in ent_infos.items():
             mongo_id = ftrack_mongo_mapping[ftrack_id]
             entType = ent_info["entityType"]
+            ent_path = self.get_ent_path(ftrack_id)
             if entType == "show":
                 ent_cust_attrs = cust_attrs_by_obj_id.get("show")
             else:
@@ -1674,6 +1708,11 @@ class SyncToAvalonEvent(BaseEvent):
                     self.updates[mongo_id]["data"] = {}
                 value = values["new"]
                 self.updates[mongo_id]["data"][key] = value
+                self.log.debug(
+                    "Setting data value of \"{}\" to \"{}\" <{}>".format(
+                        key, value, ent_path
+                    )
+                )
 
     def process_hier_cleanup(self):
         if (
@@ -1750,6 +1789,9 @@ class SyncToAvalonEvent(BaseEvent):
             mongo_to_ftrack_parents.items(),
             key=(lambda item: item[1])
         )]
+        self.log.debug(
+            "Updating parents and hieararchy because of name/parenting changes"
+        )
         for mongo_id in mongo_to_ftrack_parents:
             avalon_ent = self.avalon_ents_by_id[mongo_id]
             vis_par = avalon_ent["data"]["visualParent"]
@@ -1911,11 +1953,11 @@ class SyncToAvalonEvent(BaseEvent):
                 "where entity_id in ({}) and configuration.key in ({})"
             ).format(entity_ids_joined, attributes_joined)
         }]
-        if not missing_defaults:
-            if hasattr(session, "call"):
-                [values] = session.call(queries)
-            else:
-                [values] = session._call(queries)
+
+        if hasattr(self.process_session, "call"):
+            [values] = self.process_session.call(queries)
+        else:
+            [values] = self.process_session._call(queries)
 
         ftrack_project_id = self.cur_project["id"]
 
@@ -1971,6 +2013,11 @@ class SyncToAvalonEvent(BaseEvent):
         for ftrack_id, data in entities_dict.items():
             mongo_id = ftrack_mongo_mapping[ftrack_id]
             avalon_ent = self.avalon_ents_by_id[mongo_id]
+            ent_path = self.get_ent_path(ftrack_id)
+            # TODO logging
+            self.log.debug(
+                "Updating hierarchical attributes <{}>".format(ent_path)
+            )
             for key, value in data["hier_attrs"].items():
                 if (
                     key in avalon_ent["data"] and
@@ -1978,6 +2025,7 @@ class SyncToAvalonEvent(BaseEvent):
                 ):
                     continue
 
+                self.log.debug("- {}: {}".format(key, value))
                 if "data" not in self.updates[mongo_id]:
                     self.updates[mongo_id]["data"] = {}
 
@@ -1993,9 +2041,181 @@ class SyncToAvalonEvent(BaseEvent):
             mongo_changes_bulk.append(UpdateOne(filter, change_data))
 
         if not mongo_changes_bulk:
-            # TODO logging
             return
         self.dbcon.bulk_write(mongo_changes_bulk)
+
+    @property
+    def duplicated_report(self):
+        if not self.duplicated:
+            return []
+
+        ft_project = self.cur_project
+        duplicated_names = []
+        for ftrack_id in self.duplicated:
+            ftrack_ent = self.ftrack_ents_by_id.get(ftrack_id)
+            if not ftrack_ent:
+                ftrack_ent = self.process_session.query(
+                    self.entities_query_by_id.format(
+                        ft_project["id"], ftrack_id
+                    )
+                ).one()
+                self.ftrack_ents_by_id[ftrack_id] = ftrack_ent
+            name = ftrack_ent["name"]
+            if name not in duplicated_names:
+                duplicated_names.append(name)
+
+        joined_names = ", ".join(
+            ["\"{}\"".format(name) for name in duplicated_names]
+        )
+        ft_ents = self.process_session.query(
+            self.entities_name_query_by_name.format(
+                ft_project["id"], joined_names
+            )
+        ).all()
+
+        ft_ents_by_name = collections.defaultdict(list)
+        for ft_ent in ft_ents:
+            name = ft_ent["name"]
+            ft_ents_by_name[name].append(ft_ent)
+
+        if not ft_ents_by_name:
+            return []
+
+        subtitle = "Duplicated entity names:"
+        items = []
+        items.append({
+            "type": "label",
+            "value": "# {}".format(subtitle)
+        })
+        items.append({
+            "type": "label",
+            "value": (
+                "<p><i>NOTE: It is not allowed to use the same name"
+                " for multiple entities in the same project</i></p>"
+            )
+        })
+
+        for name, ents in ft_ents_by_name.items():
+            items.append({
+                "type": "label",
+                "value": "## {}".format(name)
+            })
+            paths = []
+            for ent in ents:
+                ftrack_id = ent["id"]
+                ent_path = "/".join([_ent["name"] for _ent in ent["link"]])
+                avalon_ent = self.avalon_ents_by_id.get(ftrack_id)
+
+                if avalon_ent:
+                    additional = " (synchronized)"
+                    if avalon_ent["name"] != name:
+                        additional = " (synchronized as {})".format(
+                            avalon_ent["name"]
+                        )
+                    ent_path += additional
+                paths.append(ent_path)
+
+            items.append({
+                "type": "label",
+                "value": '<p>{}</p>'.format("<br>".join(paths))
+            })
+
+        return items
+
+    @property
+    def regex_report(self):
+        if not self.regex_fail:
+            return []
+
+        subtitle = "Entity names contain prohibited symbols:"
+        items = []
+        items.append({
+            "type": "label",
+            "value": "# {}".format(subtitle)
+        })
+        items.append({
+            "type": "label",
+            "value": (
+                "<p><i>NOTE: You can use Letters( a-Z ),"
+                " Numbers( 0-9 ) and Underscore( _ )</i></p>"
+            )
+        })
+
+        ft_project = self.cur_project
+        for ftrack_id in self.regex_fail:
+            ftrack_ent = self.ftrack_ents_by_id.get(ftrack_id)
+            if not ftrack_ent:
+                ftrack_ent = self.process_session.query(
+                    self.entities_query_by_id.format(
+                        ft_project["id"], ftrack_id
+                    )
+                ).one()
+                self.ftrack_ents_by_id[ftrack_id] = ftrack_ent
+
+            name = ftrack_ent["name"]
+            ent_path = "/".join([_ent["name"] for _ent in ftrack_ent["link"]])
+            items.append({
+                "type": "label",
+                "value": "<p>{} - {}</p>".format(name, ent_path)
+            })
+
+        return items
+
+    def report(self):
+        msg_len = len(self.duplicated) + len(self.regex_fail)
+        for msgs in self.report_items.values():
+            msg_len += len(msgs)
+
+        if msg_len == 0:
+            return
+
+        items = []
+        project_name = self.cur_project["full_name"]
+        title = "Synchronization report ({}):".format(project_name)
+
+        keys = ["error", "warning", "info"]
+        for key in keys:
+            subitems = []
+            if key == "warning":
+                subitems.extend(self.duplicated_report)
+                subitems.extend(self.regex_report)
+
+            for _msg, _items in self.report_items[key].items():
+                if not _items:
+                    continue
+
+                msg_items = _msg.split("||")
+                msg = msg_items[0]
+                subitems.append({
+                    "type": "label",
+                    "value": "# {}".format(msg)
+                })
+
+                if len(msg_items) > 1:
+                    for note in msg_items[1:]:
+                        subitems.append({
+                            "type": "label",
+                            "value": "<p><i>NOTE: {}</i></p>".format(note)
+                        })
+
+                if isinstance(_items, str):
+                    _items = [_items]
+                subitems.append({
+                    "type": "label",
+                    "value": '<p>{}</p>'.format("<br>".join(_items))
+                })
+
+            if items and subitems:
+                items.append(self.report_splitter)
+
+            items.extend(subitems)
+
+        self.show_interface(
+            items=items,
+            title=title,
+            event=self._cur_event
+        )
+        return True
 
 
 def register(session, plugins_presets):
