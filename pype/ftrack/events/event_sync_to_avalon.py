@@ -1731,13 +1731,20 @@ class SyncToAvalonEvent(BaseEvent):
         attributes_joined = ", ".join([
             "\"{}\"".format(name) for name in hier_cust_attrs_keys
         ])
-        [values] = self.process_session._call([{
+
+        queries = [{
             "action": "query",
             "expression": (
                 "select value, entity_id from CustomAttributeValue "
                 "where entity_id in ({}) and configuration.key in ({})"
             ).format(entity_ids_joined, attributes_joined)
-        }])
+        }]
+        if not missing_defaults:
+            if hasattr(session, "call"):
+                [values] = session.call(queries)
+            else:
+                [values] = session._call(queries)
+
         ftrack_project_id = self.cur_project["id"]
 
         for attr in hier_attrs:

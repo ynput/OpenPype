@@ -780,10 +780,10 @@ class SyncEntitiesFactory:
                 entity_ids_joined, attributes_joined
             )
         }]
-        if hasattr(self.session, "_call"):
-            [values] = self.session._call(call_expr)
-        else:
+        if hasattr(self.session, "call"):
             [values] = self.session.call(call_expr)
+        else:
+            [values] = self.session._call(call_expr)
 
         for value in values["data"]:
             entity_id = value["entity_id"]
@@ -843,10 +843,10 @@ class SyncEntitiesFactory:
                 "where entity_id in ({}) and configuration.key in ({})"
             ).format(entity_ids_joined, attributes_joined)
         }]
-        if hasattr(self.session, "_call"):
-            [values] = self.session._call(call_expr)
-        else:
+        if hasattr(self.session, "call"):
             [values] = self.session.call(call_expr)
+        else:
+            [values] = self.session._call(call_expr)
 
         avalon_hier = []
         for value in values["data"]:
