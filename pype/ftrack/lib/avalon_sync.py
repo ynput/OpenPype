@@ -693,7 +693,7 @@ class SyncEntitiesFactory:
 
         for cust_attr in custom_attrs:
             key = cust_attr["key"]
-            attrs.add(key)
+            attrs.add(cust_attr["id"])
             ca_ent_type = cust_attr["entity_type"]
             if key.startswith("avalon_"):
                 if ca_ent_type == "show":
@@ -772,7 +772,7 @@ class SyncEntitiesFactory:
 
         cust_attr_query = (
             "select value, entity_id from ContextCustomAttributeValue "
-            "where entity_id in ({}) and configuration.key in ({})"
+            "where entity_id in ({}) and configuration_id in ({})"
         )
         call_expr = [{
             "action": "query",
@@ -800,8 +800,10 @@ class SyncEntitiesFactory:
         # collect all hierarchical attribute keys
         # and prepare default values to project
         attribute_names = []
+        attribute_ids = []
         for attr in hier_attrs:
             key = attr["key"]
+            attribute_ids.append(attr["id"])
             attribute_names.append(key)
 
             store_key = "hier_attrs"
@@ -834,13 +836,13 @@ class SyncEntitiesFactory:
             "\"{}\"".format(id) for id in sync_ids
         ])
         attributes_joined = ", ".join([
-            "\"{}\"".format(name) for name in attribute_names
+            "\"{}\"".format(name) for name in attribute_ids
         ])
         call_expr = [{
             "action": "query",
             "expression": (
-                "select value, entity_id from ContextCustomAttributeValue "
-                "where entity_id in ({}) and configuration.key in ({})"
+                "select value, entity_id from CustomAttributeValue "
+                "where entity_id in ({}) and configuration_id in ({})"
             ).format(entity_ids_joined, attributes_joined)
         }]
         if hasattr(self.session, "call"):
