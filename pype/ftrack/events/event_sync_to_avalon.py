@@ -371,7 +371,7 @@ class SyncToAvalonEvent(BaseEvent):
         self.hier_cust_attrs_changes = collections.defaultdict(list)
 
         self.duplicated = []
-        self.regex_fail = []
+        self.regex_failed = []
 
         self.regex_schemas = {}
         self.updates = collections.defaultdict(dict)
@@ -546,7 +546,6 @@ class SyncToAvalonEvent(BaseEvent):
             found_actions[0] == "update" and
             not updated
         ):
-            self.log.debug("There are not actions to process after filtering")
             return True
 
         ft_project = self.cur_project
@@ -655,6 +654,7 @@ class SyncToAvalonEvent(BaseEvent):
             print(time_7 - time_6)
 
         except Exception:
+            msg = "An error has happened during synchronization"
             self.report_items["error"][msg].append((
                 str(traceback.format_exc()).replace("\n", "<br>")
             ).replace(" ", "&nbsp;"))
@@ -1283,7 +1283,7 @@ class SyncToAvalonEvent(BaseEvent):
                 new_name, _entity_type, schema_patterns=self.regex_schemas
             )
             if not passed_regex:
-                self.regex_fail.append(ftrack_id)
+                self.regex_failed.append(ftrack_id)
                 continue
 
             # if avalon does not have same name then can be changed
@@ -1340,7 +1340,7 @@ class SyncToAvalonEvent(BaseEvent):
             )
             if not passed_regex:
                 ftrack_id = ent_info["enityId"]
-                self.failed_regex.append(ftrack_id)
+                self.regex_failed.append(ftrack_id)
                 continue
 
             mongo_id = avalon_ent["_id"]
@@ -1389,13 +1389,7 @@ class SyncToAvalonEvent(BaseEvent):
             return
 
         cust_attrs, hier_attrs = self.avalon_cust_attrs
-        configuration_id = None
-        for attr in cust_attrs:
-            key = attr["key"]
-            if key == CustAttrIdKey:
-                configuration_id = attr["id"]
-                break
-
+        entity_type_conf_ids = {}
         # Skip if already exit in avalon db or tasks entities
         # - happen when was created by any sync event/action
         pop_out_ents = []
@@ -1411,10 +1405,29 @@ class SyncToAvalonEvent(BaseEvent):
                 )
                 continue
 
-            if ent_info["entity_type"] == "Task":
+            entity_type = ent_info["entity_type"]
+            if entity_type == "Task":
                 parent_id = ent_info["parentId"]
                 new_tasks_by_parent[parent_id].append(ent_info)
                 pop_out_ents.append(ftrack_id)
+
+            configuration_id = entity_type_conf_ids.get(entity_type)
+            if not configuration_id:
+                for attr in cust_attrs:
+                    key = attr["key"]
+                    if key != CustAttrIdKey:
+                        continue
+
+                    if attr["entity_type"] != ent_info["entityType"]:
+                        continue
+
+                    if ent_info["entityType"] != "show":
+                        if attr["object_type_id"] != ent_info["objectTypeId"]:
+                            continue
+
+                    configuration_id = attr["id"]
+                    entity_type_conf_ids[entity_type] = configuration_id
+                    break
 
             _entity_key = collections.OrderedDict({
                 "configuration_id": configuration_id,
@@ -1430,9 +1443,11 @@ class SyncToAvalonEvent(BaseEvent):
                     ""
                 )
             )
+
         try:
             # Commit changes of mongo_id to empty string
             self.process_session.commit()
+            self.log.debug("Commititng unsetting")
         except Exception:
             self.process_session.rollback()
             # TODO logging
@@ -1826,6 +1841,10 @@ class SyncToAvalonEvent(BaseEvent):
 
         # Skip custom attributes if didn't change
         if not hier_cust_attrs_ids:
+            # TODO logging
+            self.log.debug(
+                "Hierarchical attributes were not changed. Skipping"
+            )
             self.update_entities()
             return
 
@@ -2124,7 +2143,7 @@ class SyncToAvalonEvent(BaseEvent):
 
     @property
     def regex_report(self):
-        if not self.regex_fail:
+        if not self.regex_failed:
             return []
 
         subtitle = "Entity names contain prohibited symbols:"
@@ -2142,7 +2161,7 @@ class SyncToAvalonEvent(BaseEvent):
         })
 
         ft_project = self.cur_project
-        for ftrack_id in self.regex_fail:
+        for ftrack_id in self.regex_failed:
             ftrack_ent = self.ftrack_ents_by_id.get(ftrack_id)
             if not ftrack_ent:
                 ftrack_ent = self.process_session.query(
@@ -2164,7 +2183,7 @@ class SyncToAvalonEvent(BaseEvent):
         return items
 
     def report(self):
-        msg_len = len(self.duplicated) + len(self.regex_fail)
+        msg_len = len(self.duplicated) + len(self.regex_failed)
         for msgs in self.report_items.values():
             msg_len += len(msgs)
 
