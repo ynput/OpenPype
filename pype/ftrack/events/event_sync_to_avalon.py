@@ -2153,7 +2153,9 @@ class SyncToAvalonEvent(BaseEvent):
                 self.ftrack_ents_by_id[ftrack_id] = ftrack_ent
 
             name = ftrack_ent["name"]
-            ent_path = "/".join([_ent["name"] for _ent in ftrack_ent["link"]])
+            ent_path_items = [_ent["name"] for _ent in ftrack_ent["link"][:-1]]
+            ent_path_items.append("<strong>{}</strong>".format(name))
+            ent_path = "/".join(ent_path_items)
             items.append({
                 "type": "label",
                 "value": "<p>{} - {}</p>".format(name, ent_path)
