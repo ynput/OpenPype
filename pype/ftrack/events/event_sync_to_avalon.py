@@ -4,6 +4,7 @@ import copy
 import queue
 import time
 import atexit
+import traceback
 
 from bson.objectid import ObjectId
 from pymongo import UpdateOne
@@ -15,7 +16,6 @@ from pype.ftrack.lib.avalon_sync import (
     CustAttrIdKey, CustAttrAutoSync, EntitySchemas
 )
 import ftrack_api
-from ftrack_api import session as fa_session
 from pype.ftrack import BaseEvent
 
 from pype.ftrack.lib.io_nonsingleton import DbConnector
@@ -470,7 +470,7 @@ class SyncToAvalonEvent(BaseEvent):
             "move": {},
             "add": {}
         }
-        self.log.debug("Starting event")
+
         entities_info = event["data"]["entities"]
         found_actions = set()
         for ent_info in entities_info:
@@ -504,7 +504,6 @@ class SyncToAvalonEvent(BaseEvent):
 
         found_actions = list(found_actions)
         if not found_actions:
-            self.log.debug("There are not actions to do")
             return True
 
         # Check if auto sync was turned on/off
@@ -554,7 +553,6 @@ class SyncToAvalonEvent(BaseEvent):
         # Check if auto-sync custom attribute exists
         if CustAttrAutoSync not in ft_project["custom_attributes"]:
             # TODO should we sent message to someone?
-            # TODO report
             self.log.error((
                 "Custom attribute \"{}\" is not created or user \"{}\" used"
                 " for Event server don't have permissions to access it!"
@@ -564,9 +562,24 @@ class SyncToAvalonEvent(BaseEvent):
         # Skip if auto-sync is not set
         auto_sync = ft_project["custom_attributes"][CustAttrAutoSync]
         if auto_sync is not True:
-            self.log.debug("Auto sync is not turned on")
             return True
 
+        debug_msg = ""
+        debug_msg += "Updated: {}".format(len(updated))
+        debug_action_map = {
+            "add": "Created",
+            "remove": "Removed",
+            "move": "Moved"
+        }
+        for action, infos in entities_by_action.items():
+            if action == "update":
+                continue
+            _action = debug_action_map[action]
+            debug_msg += "| {}: {}".format(_action, len(infos))
+
+        self.log.debug("Project changes <{}>: {}".format(
+            ft_project["full_name"], debug_msg
+        ))
         # Get ftrack entities - find all ftrack ids first
         ftrack_ids = []
         for ftrack_id in updated:
@@ -612,7 +625,7 @@ class SyncToAvalonEvent(BaseEvent):
         self.ftrack_added = entities_by_action["add"]
         self.ftrack_updated = updated
 
-        self.log.debug("Main process started")
+        self.log.debug("Synchronization begins")
         time_1 = time.time()
         # 1.) Process removed - may affect all other actions
         self.process_removed()
@@ -633,7 +646,6 @@ class SyncToAvalonEvent(BaseEvent):
         self.process_hier_cleanup()
         time_7 = time.time()
 
-        self.log.debug("Main process finished")
         print(time_2 - time_1)
         print(time_3 - time_2)
         print(time_4 - time_3)
@@ -686,6 +698,10 @@ class SyncToAvalonEvent(BaseEvent):
                 recreate_ents.append(avalon_ent)
 
         if removable_ids:
+            # TODO logging
+            self.log.debug("Assets marked as archived <{}>".format(
+                ", ".join(removed_names)
+            ))
             self.dbcon.update_many(
                 {"_id": {"$in": removable_ids}, "type": "asset"},
                 {"$set": {"type": "archived_asset"}}
@@ -701,7 +717,12 @@ class SyncToAvalonEvent(BaseEvent):
                     (item.get("data", {}).get("parents") or [])
                 ))
             )
-
+            # TODO logging
+            # TODO report
+            recreate_msg = (
+                "Deleted entity was recreated||Entity was recreated because"
+                " it or its children contain published data"
+            )
             proj, ents = self.avalon_entities
             for avalon_entity in recreate_ents:
                 old_ftrack_id = avalon_entity["data"]["ftrackId"]
@@ -733,6 +754,25 @@ class SyncToAvalonEvent(BaseEvent):
                     # TODO logging
                     # TODO report
                     self.process_session.rolback()
+                    ent_path_items = [self.cur_project["full_name"]]
+                    ent_path_items.extend([
+                        par for par in avalon_entity["data"]["parents"]
+                    ])
+                    ent_path_items.append(avalon_entity["name"])
+                    ent_path = "/".join(ent_path_items)
+
+                    error_msg = "Couldn't recreate entity in Ftrack"
+                    report_msg = (
+                        "{}||Trying to recreate because it or its children"
+                        " contain published data""
+                    ).format(error_msg)
+                    self.report_items["error"][report_msg].append(ent_path)
+                    self.log.warning(
+                        "{}. Process session commit failed! <{}>".format(
+                            error_msg, ent_path
+                        ),
+                        exc_info=True
+                    )
                     continue
 
                 new_entity_id = new_entity["id"]
@@ -749,17 +789,32 @@ class SyncToAvalonEvent(BaseEvent):
                 new_entity["custom_attributes"][CustAttrIdKey] = (
                     str(avalon_entity["_id"])
                 )
+                ent_path = self.get_ent_path(new_entity_id)
+
                 try:
                     self.process_session.commit()
                 except Exception:
                     # TODO logging
                     # TODO report
                     self.process_session.rolback()
+                    error_msg = (
+                        "Couldn't update custom attributes after recreation"
+                        " of entity in Ftrack"
+                    )
+                    report_msg = (
+                        "{}||Entity was recreated because it or its children"
+                        " contain published data""
+                    ).format(error_msg)
+                    self.report_items["error"][report_msg].append(ent_path)
                     self.log.warning(
-                        "Process session commit failed!",
+                        "{}. Process session commit failed! <{}>".format(
+                            error_msg, ent_path
+                        ),
                         exc_info=True
                     )
                     continue
+
+                self.report_items["info"][recreate_msg].append(ent_path)
 
                 self.ftrack_recreated_mapping[old_ftrack_id] = new_entity_id
                 self.process_session.commit()
@@ -852,20 +907,29 @@ class SyncToAvalonEvent(BaseEvent):
                 continue
 
             entity = ents[0]
-            self.log.debug("Checking if can synchronize entity <{}>".format(
-                self.get_ent_path(entity["id"])
-            ))
+            ent_path = self.get_ent_path(entity["id"])
+            # TODO logging
+            self.log.debug(
+                "Checking if can synchronize entity <{}>".format(ent_path)
+            )
             # skip if already synchronized
             ftrack_id = entity["id"]
             if ftrack_id in self.avalon_ents_by_ftrack_id:
-                self.log.debug("Entity is already synchronized")
+                # TODO logging
+                self.log.debug(
+                    "- Entity is already synchronized (skipping) <{}>".format(
+                        ent_path
+                    )
+                )
                 continue
 
             parent_id = entity["parent_id"]
             if parent_id not in self.avalon_ents_by_ftrack_id:
-                self.log.debug(
-                    "Entity's parent entity doesn't seems to be synchronized."
-                )
+                # TODO logging
+                self.log.debug((
+                    "- Entity's parent entity doesn't seems to"
+                    " be synchronized (skipping) <{}>"
+                ).format(ent_path))
                 continue
 
             synchronizable_ents.append(entity)
@@ -933,6 +997,13 @@ class SyncToAvalonEvent(BaseEvent):
         if len(parents) > 0:
             hierarchy = os.path.sep.join(parents)
 
+        # TODO logging
+        self.log.debug(
+            "Trying to synchronize entity <{}>".format(
+                "/".join(ent_path_items)
+            )
+        )
+
         # Tasks
         tasks = []
         for child in ftrack_ent["children"]:
@@ -966,16 +1037,30 @@ class SyncToAvalonEvent(BaseEvent):
         for key, val in cust_attrs.items():
             final_entity["data"][key] = val
 
-        test_queue = queue.Queue()
-        test_queue.put(final_entity)
-        while not test_queue.empty():
-            in_dict = test_queue.get()
-            for key, val in in_dict.items():
-                if isinstance(val, dict):
-                    test_queue.put(val)
-                    continue
+        ent_path_items = [self.cur_project["full_name"]]
+        ent_path_items.extend([par for par in parents])
+        ent_path_items.append(name)
+        ent_path = "/".join(ent_path_items)
 
-        schema.validate(final_entity)
+        try:
+            schema.validate(final_entity)
+        except Exception:
+            # TODO logging
+            # TODO report
+            error_msg = (
+                "Schema validation failed for new entity (This is a bug)"
+            )
+            error_traceback = (
+                str(traceback.format_exc()).replace("\n", "<br>"
+            ).replace(" ", "&nbsp;")
+
+            item_msg = ent_path + "<br>" + error_traceback
+            self.report_items["error"][error_msg].append(item_msg)
+            self.log.error(
+                "{}: \"{}\"".format(error_msg, str(final_entity)),
+                exc_info=True
+            )
+            return None
 
         replaced = False
         archived = self.avalon_archived_by_name.get(name)
@@ -985,6 +1070,12 @@ class SyncToAvalonEvent(BaseEvent):
                 archived["data"]["parents"] == parents or
                 self.changeability_by_mongo_id[archived_id]
             ):
+                # TODO logging
+                self.log.debug(
+                    "Entity was unarchived instead of creation <{}>".format(
+                        ent_path
+                    )
+                )
                 mongo_id = archived_id
                 final_entity["_id"] = mongo_id
                 self.dbcon.replace_one({"_id": mongo_id}, final_entity)
@@ -992,6 +1083,8 @@ class SyncToAvalonEvent(BaseEvent):
 
         if not replaced:
             self.dbcon.insert_one(final_entity)
+            # TODO logging
+            self.log.debug("Entity was synchronized <{}>".format(ent_path))
 
         ftrack_ent["custom_attributes"][CustAttrIdKey] = str(mongo_id)
         try:
@@ -1000,6 +1093,16 @@ class SyncToAvalonEvent(BaseEvent):
             self.process_session.rolback()
             # TODO logging
             # TODO report
+            error_msg = "Failed to store MongoID to entity's custom attribute"
+            report_msg = (
+                "{}||SyncToAvalon action may solve this issue"
+            ).format(error_msg)
+
+            self.report_items["error"][report_msg].append(ent_path)
+            self.log.error(
+                "{}: \"{}\"".format(error_msg, ent_path),
+                exc_info=True
+            )
 
         # modify cached data
         # Skip if self._avalon_ents is not set(maybe never happen)
@@ -1099,12 +1202,21 @@ class SyncToAvalonEvent(BaseEvent):
                 }
                 continue
 
+            ent_path = self.get_ent_path(ftrack_id)
             avalon_ent = self.avalon_ents_by_ftrack_id.get(ftrack_id)
             if not avalon_ent:
+                # TODO logging
+                self.log.debug((
+                    "Can't change the name (Entity is not is avalon) <{}>"
+                ).format(ent_path))
                 not_found[ftrack_id] = ent_info
                 continue
 
             if new_name == avalon_ent["name"]:
+                # TODO logging
+                self.log.debug((
+                    "Avalon entity already has the same name <{}>"
+                ).format(ent_path))
                 continue
 
             mongo_id = avalon_ent["_id"]
@@ -1115,12 +1227,37 @@ class SyncToAvalonEvent(BaseEvent):
                 ftrack_ent["name"] = avalon_ent["name"]
                 try:
                     self.process_session.commit()
+                    # TODO logging
+                    # TODO report
+                    error_msg = "Entity renamed back"
+                    report_msg = (
+                        "{}||It is not possible to change"
+                        " the name of an entity or it's parents, "
+                        " if it already contained published data."
+                    ).format(error_msg)
+                    self.report_items["info"][report_msg].append(ent_path)
+                    self.log.warning("{} <{}>").format(error_msg, ent_path))
+
                 except Exception:
                     self.process_session.rollback()
                     # TODO report
                     # TODO logging
-                    self.log.warning(
-                        "Process session commit failed!",
+                    error_msg = (
+                        "Couldn't rename the entity back to its original name"
+                    )
+                    report_msg = (
+                        "{}||Renamed because it is not possible to"
+                        " change the name of an entity or it's parents, "
+                        " if it already contained published data."
+                    ).format(error_msg)
+                    error_traceback = (
+                        str(traceback.format_exc()).replace("\n", "<br>"
+                    ).replace(" ", "&nbsp;")
+
+                    item_msg = ent_path + "<br>" + error_traceback
+                    self.report_items["error"][report_msg].append(item_msg)
+                    self.log.error(
+                        "{}: \"{}\"".format(error_msg, ent_path),
                         exc_info=True
                     )
 
@@ -1138,15 +1275,8 @@ class SyncToAvalonEvent(BaseEvent):
             passed_regex = avalon_sync.check_regex(
                 new_name, _entity_type, schema_patterns=self.regex_schemas
             )
-            ent_path = self.get_ent_path(ftrack_id)
             if not passed_regex:
-                # TODO report
-                # TODO logging
-                # new name does not match regex (letters numbers and _)
-                # TODO move this to special report method
-                self.log.warning(
-                    "Entity name contain invalid symbols <{}>".format(ent_path)
-                )
+                self.regex_fail.append(ftrack_id)
                 continue
 
             # if avalon does not have same name then can be changed
@@ -1162,8 +1292,8 @@ class SyncToAvalonEvent(BaseEvent):
                 if new_name in old_names:
                     old_names.remove(new_name)
 
-                # TODO report
                 # TODO logging
+                ent_path = self.get_ent_path(ftrack_id)
                 self.log.debug(
                     "Name of entity will be changed to \"{}\" <{}>".format(
                         new_name, ent_path
@@ -1184,15 +1314,7 @@ class SyncToAvalonEvent(BaseEvent):
                 changeable_queue.put((ftrack_id, avalon_ent, new_name))
                 continue
 
-            # TODO report
-            # TODO logging
-            # Duplicated entity name
-            # TODO move this to special report method
-            self.log.warning(
-                "Entity name is duplicated in the project <{}>".format(
-                    ent_path
-                )
-            )
+            self.duplicated.append(ftrack_id)
 
         if old_names:
             self.check_names_synchronizable(old_names)
@@ -1204,51 +1326,55 @@ class SyncToAvalonEvent(BaseEvent):
                 not_found[ent_info["entityId"]] = ent_info
                 continue
 
-            mongo_id = avalon_ent["_id"]
-            if mongo_id not in self.task_changes_by_avalon_id:
-                self.task_changes_by_avalon_id[mongo_id] = (
-                    avalon_ent["data"]["tasks"]
-                )
-
             new_name = task_change["new"]
             old_name = task_change["old"]
             passed_regex = avalon_sync.check_regex(
                 new_name, "task", schema_patterns=self.regex_schemas
             )
             if not passed_regex:
-                # TODO report
-                # TODO logging
                 ftrack_id = ent_info["enityId"]
-                ent_path = self.get_ent_path(ftrack_id)
-                self.log.warning((
-                    "Name of renamed entity <{}> contain invalid symbols"
-                ).format(ent_path))
-                # TODO should we rename back to previous name?
-                # entity = self.ftrack_ents_by_id[ftrack_id]
-                # entity["name"] = old_name
-                # try:
-                #     self.process_session.commit()
-                #     # TODO report
-                #     # TODO logging
-                # except Exception:
-                #     self.process_session.rollback()
-                #     # TODO report
-                #     # TODO logging
-                #     self.log.warning(
-                #         "Process session commit failed!",
-                #         exc_info=True
-                #     )
-
+                self.failed_regex.append(ftrack_id)
                 continue
+
+            mongo_id = avalon_ent["_id"]
+            if mongo_id not in self.task_changes_by_avalon_id:
+                self.task_changes_by_avalon_id[mongo_id] = (
+                    avalon_ent["data"]["tasks"]
+                )
 
             if old_name in self.task_changes_by_avalon_id[mongo_id]:
                 self.task_changes_by_avalon_id[mongo_id].remove(old_name)
+            else:
+                parent_ftrack_ent = self.ftrack_ents_by_id.get(parent_id)
+                if not parent_ftrack_ent:
+                    parent_ftrack_ent = self.process_session.query(
+                        self.entities_query_by_id.format(
+                            self.cur_project["id"], parent_id
+                        )
+                    ).first()
+
+                if parent_ftrack_ent:
+                    self.ftrack_ents_by_id[parent_id] = parent_ftrack_ent
+                    child_names = []
+                    for child in parent_ftrack_ent["children"]:
+                        if child.entity_type.lower() != "task":
+                            continue
+                        child_names.append(child["name"])
+
+                    tasks = [task for task in (
+                        self.task_changes_by_avalon_id[mongo_id]
+                    )]
+                    for task in tasks:
+                        if task not in child_names:
+                            self.task_changes_by_avalon_id[mongo_id].remove(
+                                task
+                            )
 
             if new_name not in self.task_changes_by_avalon_id[mongo_id]:
                 self.task_changes_by_avalon_id[mongo_id].append(new_name)
 
-        # not_found are not processed since all not found are not found
-        # because they are not synchronizable
+        # not_found are not processed since all not found are
+        # not found because they are not synchronizable
 
     def process_added(self):
         ent_infos = self.ftrack_added
@@ -1271,6 +1397,11 @@ class SyncToAvalonEvent(BaseEvent):
         for ftrack_id, ent_info in ent_infos.items():
             if self.avalon_ents_by_ftrack_id.get(ftrack_id):
                 pop_out_ents.append(ftrack_id)
+                self.log.warning(
+                    "Added entity is already synchronized <{}>".format(
+                        self.get_ent_path(ftrack_id)
+                    )
+                )
                 continue
 
             if ent_info["entity_type"] == "Task":
@@ -1284,11 +1415,11 @@ class SyncToAvalonEvent(BaseEvent):
             })
 
             self.process_session.recorded_operations.push(
-                fa_session.ftrack_api.operation.UpdateEntityOperation(
+                ftrack_api.operation.UpdateEntityOperation(
                     "ContextCustomAttributeValue",
                     _entity_key,
                     "value",
-                    fa_session.ftrack_api.symbol.NOT_SET,
+                    ftrack_api.symbol.NOT_SET,
                     ""
                 )
             )
@@ -1298,7 +1429,11 @@ class SyncToAvalonEvent(BaseEvent):
         except Exception:
             self.process_session.rollback()
             # TODO logging
-            # TODO report
+            msg = (
+                "Could not set value of Custom attribute, where mongo id"
+                " is stored, to empty string. Ftrack ids: \"{}\""
+            ).format(", ".join(ent_infos.keys()))
+            self.log.warning(msg, exc_info=True)
 
         for ftrack_id in pop_out_ents:
             ent_infos.pop(ftrack_id)
@@ -1314,8 +1449,6 @@ class SyncToAvalonEvent(BaseEvent):
             to_sync_by_id[ft_id] = self.ftrack_ents_by_id[ft_id]
 
         # cache regex success (for tasks)
-        duplicated = []
-        regex_failed = []
         for ftrack_id, entity in to_sync_by_id.items():
             if entity.entity_type.lower() == "project":
                 raise Exception((
@@ -1325,6 +1458,11 @@ class SyncToAvalonEvent(BaseEvent):
             parent_id = entity["parent_id"]
             parent_avalon = self.avalon_ents_by_ftrack_id.get(parent_id)
             if not parent_avalon:
+                # TODO logging
+                self.log.debug((
+                    "Skipping synchronization of entity"
+                    " because parent was not found in Avalon DB <{}>"
+                ).format(self.get_ent_path(ftrack_id)))
                 continue
 
             is_synchonizable = True
@@ -1333,11 +1471,11 @@ class SyncToAvalonEvent(BaseEvent):
                 name, "asset", schema_patterns=self.regex_schemas
             )
             if not passed_regex:
-                regex_failed.append(ftrack_id)
+                self.regex_failed.append(ftrack_id)
                 is_synchonizable = False
 
             if name in self.avalon_ents_by_name:
-                duplicated.append(ftrack_id)
+                self.duplicated.append(ftrack_id)
                 is_synchonizable = False
 
             if not is_synchonizable:
@@ -1348,6 +1486,11 @@ class SyncToAvalonEvent(BaseEvent):
         for parent_id, ent_infos in new_tasks_by_parent.items():
             avalon_ent = self.avalon_ents_by_ftrack_id.get(parent_id)
             if not avalon_ent:
+                # TODO logging
+                self.log.debug((
+                    "Skipping synchronization of task"
+                    " because parent was not found in Avalon DB <{}>"
+                ).format(self.get_ent_path(parent_id)))
                 continue
 
             mongo_id = avalon_ent["_id"]
@@ -1358,10 +1501,15 @@ class SyncToAvalonEvent(BaseEvent):
 
             for ent_info in ent_infos:
                 new_name = ent_info["changes"]["name"]["new"]
+                passed_regex = avalon_sync.check_regex(
+                    new_name, "task", schema_patterns=self.regex_schemas
+                )
+                if not passed_regex:
+                    self.regex_failed.append(ent_infos["entityId"])
+                    continue
+
                 if new_name not in self.task_changes_by_avalon_id[mongo_id]:
                     self.task_changes_by_avalon_id[mongo_id].append(new_name)
-
-        # TODO process duplicates and regex failed entities
 
     def process_moved(self):
         if not self.ftrack_moved:
@@ -1390,19 +1538,43 @@ class SyncToAvalonEvent(BaseEvent):
                     # TODO report
                     ent_path_items = [self.cur_project["full_name"]]
                     ent_path_items.extend(avalon_ent["data"]["parents"])
+                    ent_path_items.append(avalon_ent["name"])
                     ent_path = "/".join(ent_path_items)
-                    self.log.warning((
-                        "Parent of moved entity <{}> does not exist"
-                    ).format(ent_path))
+
+                    error_msg = (
+                        "New parent of entity is not synchronized to avalon"
+                    )
+                    report_msg = (
+                        "{}||Parent in Avalon can't be changed. That"
+                        " may cause issues!! Please fix parent or move entity"
+                        " under synchronized entity."
+                    ).format(error_msg)
+
+                    self.report_items["error"][report_msg].append(ent_path)
+                    self.log.warning("{} <{}>".format(error_msg, ent_path))
                     continue
+
                 # THIS MUST HAPPEND AFTER CREATING NEW ENTITIES !!!!
                 # - because may be moved to new created entity
                 if "data" not in self.updates[mongo_id]:
                     self.updates[mongo_id]["data"] = {}
-                self.updates[mongo_id]["data"]["visualParent"] = (
-                    par_av_ent["_id"]
-                )
+
+                vis_par_id = None
+                if par_av_ent["type"].lower() != "project":
+                    vis_par_id = par_av_ent["_id"]
+                self.updates[mongo_id]["data"]["visualParent"] = vis_par_id
                 self.moved_in_avalon.append(mongo_id)
+
+                # TODO logging
+                ent_path_items = [self.cur_project["full_name"]]
+                ent_path_items.extend(par_av_ent["data"]["parents"])
+                ent_path_items.append(par_av_ent["name"])
+                ent_path_items.append(avalon_ent["name"])
+                ent_path = "/".join(ent_path_items)
+                self.log.debug((
+                    "Parent of entity ({}) was changed in avalon <{}>"
+                    ).format(str(mongo_id), ent_path)
+                )
 
             else:
                 avalon_ent = self.avalon_ents_by_id[mongo_id]
