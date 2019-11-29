@@ -15,9 +15,9 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
+
         asset_data = io.find_one({"type": "asset",
                                   "name": api.Session["AVALON_ASSET"]})
-
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
@@ -25,6 +25,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
         self.log.debug("nuke.allNodes(): {}".format(nuke.allNodes()))
         for node in nuke.allNodes():
+
             try:
                 if node["disable"].value():
                     continue
@@ -59,14 +60,16 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 node.end()
 
             family = avalon_knob_data["families"]
-            if node["render"].value():
-                self.log.info("flagged for render")
-                family = "render.local"
-                # dealing with local/farm rendering
-                if node["render_farm"].value():
-                    self.log.info("adding render farm family")
-                    family = "render.farm"
-                    instance.data['transfer'] = False
+
+            if node.Class() not in "Read":
+                if node["render"].value():
+                    self.log.info("flagged for render")
+                    family = "render.local"
+                    # dealing with local/farm rendering
+                    if node["render_farm"].value():
+                        self.log.info("adding render farm family")
+                        family = "render.farm"
+                        instance.data['transfer'] = False
 
             instance.data.update({
                 "subset": subset,
