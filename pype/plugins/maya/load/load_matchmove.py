@@ -9,7 +9,7 @@ class MatchmoveLoader(api.Loader):
     Supported script types are .py and .mel
     """
 
-    families = ["rendersetup"]
+    families = ["matchmove"]
     representations = ["py", "mel"]
     defaults = ["Camera", "Object", "Mocap"]
 

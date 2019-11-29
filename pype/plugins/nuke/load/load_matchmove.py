@@ -6,7 +6,7 @@ class MatchmoveLoader(api.Loader):
     This will run matchmove script to create track in script.
     """
 
-    families = ["rendersetup"]
+    families = ["matchmove"]
     representations = ["py"]
     defaults = ["Camera", "Object"]
 
