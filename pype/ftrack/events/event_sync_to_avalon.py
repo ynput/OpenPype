@@ -648,12 +648,17 @@ class SyncToAvalonEvent(BaseEvent):
                 self.update_entities()
             time_7 = time.time()
 
-            print(time_2 - time_1)
-            print(time_3 - time_2)
-            print(time_4 - time_3)
-            print(time_5 - time_4)
-            print(time_6 - time_5)
-            print(time_7 - time_6)
+            time_removed = time_2 - time_1
+            time_renamed = time_3 - time_2
+            time_added = time_4 - time_3
+            time_moved = time_5 - time_4
+            time_updated = time_6 - time_5
+            time_cleanup = time_7 - time_6
+            time_total = time_7 - time_1
+            self.log.debug("Process time: {} <{}, {}, {}, {}, {}, {}>".format(
+                time_total, time_removed, time_renamed, time_added, time_moved,
+                time_updated, time_cleanup
+            ))
 
         except Exception:
             msg = "An error has happened during synchronization"
