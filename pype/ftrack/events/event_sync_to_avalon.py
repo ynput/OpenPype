@@ -2080,7 +2080,9 @@ class SyncToAvalonEvent(BaseEvent):
 
         if not mongo_changes_bulk:
             return
+
         self.dbcon.bulk_write(mongo_changes_bulk)
+        self.updates = collections.defaultdict(dict)
 
     @property
     def duplicated_report(self):
