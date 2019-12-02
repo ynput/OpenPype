@@ -1049,7 +1049,20 @@ class SyncToAvalonEvent(BaseEvent):
         }
         cust_attrs = self.get_cust_attr_values(ftrack_ent)
         for key, val in cust_attrs.items():
+            if key.startswith("avalon_"):
+                continue
             final_entity["data"][key] = val
+
+        _mongo_id_str = cust_attrs.get(CustAttrIdKey)
+        if _mongo_id_str:
+            try:
+                _mongo_id = ObjectId(_mongo_id_str)
+                if _mongo_id not in self.avalon_ents_by_id:
+                    mongo_id = _mongo_id
+                    final_entity["_id"] = mongo_id
+
+            except Exception:
+                pass
 
         ent_path_items = [self.cur_project["full_name"]]
         ent_path_items.extend([par for par in parents])
@@ -1100,23 +1113,25 @@ class SyncToAvalonEvent(BaseEvent):
             # TODO logging
             self.log.debug("Entity was synchronized <{}>".format(ent_path))
 
-        ftrack_ent["custom_attributes"][CustAttrIdKey] = str(mongo_id)
-        try:
-            self.process_session.commit()
-        except Exception:
-            self.process_session.rolback()
-            # TODO logging
-            # TODO report
-            error_msg = "Failed to store MongoID to entity's custom attribute"
-            report_msg = (
-                "{}||SyncToAvalon action may solve this issue"
-            ).format(error_msg)
+        mongo_id_str = str(mongo_id)
+        if mongo_id_str != ftrack_ent["custom_attributes"][CustAttrIdKey]:
+            ftrack_ent["custom_attributes"][CustAttrIdKey] = mongo_id_str
+            try:
+                self.process_session.commit()
+            except Exception:
+                self.process_session.rolback()
+                # TODO logging
+                # TODO report
+                error_msg = "Failed to store MongoID to entity's custom attribute"
+                report_msg = (
+                    "{}||SyncToAvalon action may solve this issue"
+                ).format(error_msg)
 
-            self.report_items["warning"][report_msg].append(ent_path)
-            self.log.error(
-                "{}: \"{}\"".format(error_msg, ent_path),
-                exc_info=True
-            )
+                self.report_items["warning"][report_msg].append(ent_path)
+                self.log.error(
+                    "{}: \"{}\"".format(error_msg, ent_path),
+                    exc_info=True
+                )
 
         # modify cached data
         # Skip if self._avalon_ents is not set(maybe never happen)
@@ -1156,8 +1171,6 @@ class SyncToAvalonEvent(BaseEvent):
             key = attr["key"]
             if key in processed_keys:
                 continue
-            if key.startswith("avalon_"):
-                continue
 
             if key not in entity["custom_attributes"]:
                 continue
@@ -1179,9 +1192,6 @@ class SyncToAvalonEvent(BaseEvent):
         defaults = {}
         for attr in hier_attrs:
             key = attr["key"]
-            if key.startswith("avalon_"):
-                continue
-
             if keys and key not in keys:
                 continue
             hier_keys.append(key)
