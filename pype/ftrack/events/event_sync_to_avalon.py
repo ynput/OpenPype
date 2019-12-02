@@ -644,6 +644,8 @@ class SyncToAvalonEvent(BaseEvent):
             time_6 = time.time()
             # 6.) Process changes in hierarchy or hier custom attribues
             self.process_hier_cleanup()
+            if self.updates:
+                self.update_entities()
             time_7 = time.time()
 
             print(time_2 - time_1)
