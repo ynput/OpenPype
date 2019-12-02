@@ -1729,6 +1729,25 @@ class SyncToAvalonEvent(BaseEvent):
                     )
                 )
 
+                if entType != "show" or key != "applications":
+                    continue
+
+                # Store apps to project't config
+                apps_str = ent_info["changes"]["applications"]["new"]
+                cust_attr_apps = [app for app in apps_str.split(", ") if app]
+
+                proj_apps, warnings = (
+                    avalon_sync.get_project_apps(cust_attr_apps)
+                )
+                if "config" not in self.updates[mongo_id]:
+                    self.updates[mongo_id]["config"] = {}
+                self.updates[mongo_id]["config"]["apps"] = proj_apps
+
+                for msg, items in warnings.items():
+                    if not msg or not items:
+                        continue
+                    self.report_items["warning"][msg] = items
+
     def process_hier_cleanup(self):
         if (
             not self.moved_in_avalon and
