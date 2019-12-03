@@ -2,27 +2,52 @@ import os
 import json
 import appdirs
 import requests
+
 from maya import cmds
+import maya.app.renderSetup.model.override as override
+import maya.app.renderSetup.model.selector as selector
+import maya.app.renderSetup.model.collection as collection
+import maya.app.renderSetup.model.renderLayer as renderLayer
+import maya.app.renderSetup.model.renderSetup as renderSetup
+
 import pype.maya.lib as lib
 import avalon.maya
 
 
-class CreateRenderGlobals(avalon.maya.Creator):
+class CreateRender(avalon.maya.Creator):
+    """Create render layer for export"""
 
-    label = "Render Globals"
-    family = "renderglobals"
-    icon = "gears"
+    label = "Render"
+    family = "renderlayer"
+    icon = "eye"
     defaults = ['Main']
 
     _token = None
     _user = None
     _password = None
 
-    def __init__(self, *args, **kwargs):
-        super(CreateRenderGlobals, self).__init__(*args, **kwargs)
+    # renderSetup instance
+    _rs = None
 
+    def __init__(self, *args, **kwargs):
+        super(CreateRender, self).__init__(*args, **kwargs)
+        self._create_render_settings()
+        self._rs = renderSetup.instance()
+        rl = self._rs.createRenderLayer("MyRenderSetupLayer")
+        cmds.sets()
+
+    def process(self):
+        exists = cmds.ls(self.name)
+        if exists:
+            return cmds.warning("%s already exists." % exists[0])
+
+        with lib.undo_chunk():
+            super(CreateRender, self).process()
+            cmds.setAttr("{}.machineList".format(self.name), lock=True)
+
+    def _create_render_settings(self):
         # We won't be publishing this one
-        self.data["id"] = "avalon.renderglobals"
+        self.data["id"] = "avalon.renderLayer"
 
         # get pools
         pools = []
@@ -87,20 +112,6 @@ class CreateRenderGlobals(avalon.maya.Creator):
         self.data["useMayaBatch"] = True
 
         self.options = {"useSelection": False}  # Force no content
-
-    def process(self):
-
-        exists = cmds.ls(self.name)
-        assert len(exists) <= 1, (
-            "More than one renderglobal exists, this is a bug"
-        )
-
-        if exists:
-            return cmds.warning("%s already exists." % exists[0])
-
-        with lib.undo_chunk():
-            super(CreateRenderGlobals, self).process()
-            cmds.setAttr("{}.machineList".format(self.name), lock=True)
 
     def _load_credentials(self):
         """
