@@ -43,14 +43,16 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             namespace = cmds.referenceQuery(nodes[0], namespace=True)
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
-            print(shapes)
 
             newNodes = (list(set(nodes) - set(shapes)))
-            print(newNodes)
+
+            current_namespace = pm.namespaceInfo(currentNamespace=True)
+
+            if current_namespace != ":":
+                groupName = current_namespace + ":" + groupName
 
             groupNode = pm.PyNode(groupName)
             roots = set()
-            print(nodes)
 
             for node in newNodes:
                 try:

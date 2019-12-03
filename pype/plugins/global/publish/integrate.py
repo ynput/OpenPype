@@ -24,7 +24,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
-    families = ["assembly"]
+    families = []
     exclude_families = ["clip"]
 
     def process(self, instance):
