@@ -7,7 +7,7 @@ import json
 
 from pypeapp import Logger, config
 from pype.ftrack import BaseAction
-from pype.vendor import ftrack_api
+import ftrack_api
 from avalon import io, api
 
 log = Logger().get_logger(__name__)

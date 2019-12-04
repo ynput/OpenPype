@@ -52,7 +52,13 @@ def add_tags_from_presets():
     """
     Will create default tags from presets.
     """
+    project = hiero.core.projects()[-1]
 
+    if "Tag Presets" in project.name():
+        return
+
+    log.debug("Setting default tags on project: {}".format(project.name()))
+    
     # get all presets
     presets = config.get_presets()
 
@@ -77,7 +83,7 @@ def add_tags_from_presets():
 
     # Get project assets. Currently Ftrack specific to differentiate between
     # asset builds and shots.
-    if int(os.getenv("TAG_ASSETBUILD_STARTUP", 0)) is 1:
+    if int(os.getenv("TAG_ASSETBUILD_STARTUP", 0)) == 1:
         nks_pres_tags["[AssetBuilds]"] = {}
         for asset in io.find({"type": "asset"}):
             if asset["data"]["entityType"] == "AssetBuild":
@@ -150,3 +156,5 @@ def add_tags_from_presets():
                     # update only non hierarchy tags
                     # because hierarchy could be edited
                     update_tag(_t, _val)
+
+    log.info("Default Tags were set...")

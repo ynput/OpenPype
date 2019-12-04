@@ -15,19 +15,22 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
+
         asset_data = io.find_one({"type": "asset",
                                   "name": api.Session["AVALON_ASSET"]})
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
 
-        # gets only nodes with subset knob
-        nodes = [n for n in nuke.allNodes()
-                 if get_avalon_knob_data(n,
-                 ["avalon:", "ak:"]).get("subset")]
+        self.log.debug("nuke.allNodes(): {}".format(nuke.allNodes()))
+        for node in nuke.allNodes():
 
-        # creating instances per write node
-        for node in nodes:
+            try:
+                if node["disable"].value():
+                    continue
+            except Exception as E:
+                self.log.warning(E)
+
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
             avalon_knob_data = get_avalon_knob_data(node)
@@ -78,6 +81,23 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 for i in nuke.allNodes():
                     instance.append(i)
                 node.end()
+
+            family = avalon_knob_data["family"]
+            families = [avalon_knob_data["families"]]
+
+            if node.Class() not in "Read":
+                if node["render"].value():
+                    self.log.info("flagged for render")
+                    add_family = "render.local"
+                    # dealing with local/farm rendering
+                    if node["render_farm"].value():
+                        self.log.info("adding render farm family")
+                        add_family = "render.farm"
+                        instance.data["transfer"] = False
+                    families.append(add_family)
+                else:
+                    # add family into families
+                    families.insert(0, family)
 
             instance.data.update({
                 "subset": subset,

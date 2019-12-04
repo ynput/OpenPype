@@ -7,8 +7,6 @@ import contextlib
 import subprocess
 import inspect
 
-from .vendor import pather
-from .vendor.pather.error import ParseError
 
 import avalon.io as io
 import avalon.api
@@ -572,3 +570,43 @@ def get_subsets(asset_name,
                                            "representaions": repres_out}
 
     return output_dict
+
+
+class CustomNone:
+    """Created object can be used as custom None (not equal to None).
+
+    WARNING: Multiple created objects are not equal either.
+    Exmple:
+        >>> a = CustomNone()
+        >>> a == None
+        False
+        >>> b = CustomNone()
+        >>> a == b
+        False
+        >>> a == a
+        True
+    """
+
+    def __init__(self):
+        """Create uuid as identifier for custom None."""
+        import uuid
+        self.identifier = str(uuid.uuid4())
+
+    def __bool__(self):
+        """Return False (like default None)."""
+        return False
+
+    def __eq__(self, other):
+        """Equality is compared by identifier value."""
+        if type(other) == type(self):
+            if other.identifier == self.identifier:
+                return True
+        return False
+
+    def __str__(self):
+        """Return value of identifier when converted to string."""
+        return self.identifier
+
+    def __repr__(self):
+        """Representation of custom None."""
+        return "<CustomNone-{}>".format(str(self.identifier))

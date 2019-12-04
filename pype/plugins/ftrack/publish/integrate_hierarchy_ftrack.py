@@ -47,15 +47,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
 
         input_data = context.data["hierarchyContext"]
 
-        # self.import_to_ftrack(input_data)
-
-        try:
-            self.import_to_ftrack(input_data)
-        except Exception as exc:
-            import sys
-            import traceback
-            self.log.info(traceback.format_exc(sys.exc_info()))
-            raise Exception("failed")
+        self.import_to_ftrack(input_data)
 
     def import_to_ftrack(self, input_data, parent=None):
         for entity_name in input_data:

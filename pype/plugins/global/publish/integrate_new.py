@@ -62,7 +62,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "render",
                 "imagesequence",
                 "review",
-                "render",
                 "rendersetup",
                 "rig",
                 "plate",
@@ -71,6 +70,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "audio",
                 "yetiRig",
                 "yeticache",
+                "source",
+                "matchmove",
+                "image"
                 "nukenodes"
                 ]
     exclude_families = ["clip"]

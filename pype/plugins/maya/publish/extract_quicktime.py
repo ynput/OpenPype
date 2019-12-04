@@ -1,19 +1,16 @@
 import os
-import subprocess
 import contextlib
-import json
 import capture_gui
 import clique
-
+#
 import pype.maya.lib as lib
 import pype.api
-import avalon.maya
-
+#
 from maya import cmds, mel
 import pymel.core as pm
-from pype.vendor import ffmpeg
-# from pype.scripts import otio_burnin
-reload(ffmpeg)
+# import ffmpeg
+# # from pype.scripts import otio_burnin
+# reload(ffmpeg)
 
 
 # TODO: move codec settings to presets
