@@ -1,11 +1,11 @@
 import os
 import sys
 import re
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseEvent
 
 
-class Test_Event(BaseEvent):
+class TestEvent(BaseEvent):
 
     ignore_me = True
 
@@ -23,4 +23,4 @@ class Test_Event(BaseEvent):
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
 
-    Test_Event(session, plugins_presets).register()
+    TestEvent(session, plugins_presets).register()

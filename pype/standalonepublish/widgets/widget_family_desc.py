@@ -6,7 +6,7 @@ import json
 from . import QtWidgets, QtCore, QtGui
 from . import HelpRole, FamilyRole, ExistsRole, PluginRole
 from . import qtawesome
-from pype.vendor import six
+import six
 from pype import lib as pypelib
 
 

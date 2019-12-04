@@ -78,7 +78,8 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "publish": root.knob('publish').value(),
             "family": family,
             "families": [family],
-            "representations": list()
+            "representations": list(),
+            "subsetGroup": "workfiles"
         })
 
         # adding basic script data

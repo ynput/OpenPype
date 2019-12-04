@@ -4,7 +4,7 @@ import argparse
 import logging
 import json
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 
 
@@ -108,6 +108,7 @@ class JobKiller(BaseAction):
                     'Changing Job ({}) status: {} -> failed'
                 ).format(job['id'], origin_status))
             except Exception:
+                session.rollback()
                 self.log.warning((
                     'Changing Job ({}) has failed'
                 ).format(job['id']))

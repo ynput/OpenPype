@@ -1,4 +1,3 @@
-from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent
 
 
@@ -26,33 +25,41 @@ class ThumbnailEvents(BaseEvent):
             # Update task thumbnail from published version
             # if (entity['entityType'] == 'assetversion' and
             #         entity['action'] == 'encoded'):
-            if (
-                entity['entityType'] == 'assetversion'
-                and 'thumbid' in (entity.get('keys') or [])
+            elif (
+                entity['entityType'] == 'assetversion' and
+                entity['action'] != 'remove' and
+                'thumbid' in (entity.get('keys') or [])
             ):
 
                 version = session.get('AssetVersion', entity['entityId'])
+                if not version:
+                    continue
+
                 thumbnail = version.get('thumbnail')
-                if thumbnail:
-                    parent = version['asset']['parent']
-                    task = version['task']
-                    parent['thumbnail_id'] = version['thumbnail_id']
-                    if parent.entity_type.lower() == "project":
-                        name = parent["full_name"]
-                    else:
-                        name = parent["name"]
-                    msg = '>>> Updating thumbnail for shot [ {} ]'.format(name)
+                if not thumbnail:
+                    continue
 
-                    if task:
-                        task['thumbnail_id'] = version['thumbnail_id']
-                        msg += " and task [ {} ]".format(task["name"])
+                parent = version['asset']['parent']
+                task = version['task']
+                parent['thumbnail_id'] = version['thumbnail_id']
+                if parent.entity_type.lower() == "project":
+                    name = parent["full_name"]
+                else:
+                    name = parent["name"]
+                msg = '>>> Updating thumbnail for shot [ {} ]'.format(name)
 
-                    self.log.info(msg)
+                if task:
+                    task['thumbnail_id'] = version['thumbnail_id']
+                    msg += " and task [ {} ]".format(task["name"])
 
-            session.commit()
+                self.log.info(msg)
+
+            try:
+                session.commit()
+            except Exception:
+                session.rollback()
 
 
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
-
     ThumbnailEvents(session, plugins_presets).register()

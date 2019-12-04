@@ -50,6 +50,19 @@ class DbConnector(object):
             self._database = None
             self._is_installed = False
 
+    def __getitem__(self, key):
+        # gives direct access to collection withou setting `active_table`
+        return self._database[key]
+
+    def __getattribute__(self, attr):
+        # not all methods of PyMongo database are implemented with this it is
+        # possible to use them too
+        try:
+            return super(DbConnector, self).__getattribute__(attr)
+        except AttributeError:
+            cur_proj = self.Session["AVALON_PROJECT"]
+            return self._database[cur_proj].__getattribute__(attr)
+
     def install(self):
         """Establish a persistent connection to the database"""
         if self._is_installed:

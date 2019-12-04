@@ -4,7 +4,7 @@ import logging
 import argparse
 import re
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 from avalon import lib as avalonlib
 from pype.ftrack.lib.io_nonsingleton import DbConnector

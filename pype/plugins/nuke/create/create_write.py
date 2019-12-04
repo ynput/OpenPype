@@ -28,8 +28,8 @@ class CreateWriteRender(plugin.PypeCreator):
 
         data = OrderedDict()
 
-        data["family"] = self.nClass
-        data["families"] = self.family
+        data["family"] = self.family
+        data["families"] = self.nClass
 
         for k, v in self.data.items():
             if k not in data.keys():
@@ -40,7 +40,6 @@ class CreateWriteRender(plugin.PypeCreator):
 
     def process(self):
         from pype.nuke import lib as pnlib
-        reload(pnlib)
 
         inputs = []
         outputs = []
@@ -101,7 +100,7 @@ class CreateWriteRender(plugin.PypeCreator):
         for output in outputs:
             output.setInput(0, write_node)
 
-        return True
+        return write_node
 
 #
 # class CreateWritePrerender(avalon.nuke.Creator):

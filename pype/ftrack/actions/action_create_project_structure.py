@@ -4,7 +4,7 @@ import re
 import argparse
 import logging
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 from pypeapp import config
 
@@ -141,6 +141,13 @@ class CreateProjectFolders(BaseAction):
             data['project_id'] = parent['id']
         else:
             data['project_id'] = parent['project']['id']
+
+        existing_entity = self.session.query((
+            "TypedContext where name is \"{}\" and "
+            "parent_id is \"{}\" and project_id is \"{}\""
+        ).format(name, data['parent_id'], data['project_id'])).first()
+        if existing_entity:
+            return existing_entity
 
         new_ent = self.session.create(ent_type, data)
         self.session.commit()

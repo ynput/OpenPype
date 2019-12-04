@@ -3,6 +3,7 @@
 import re
 import os
 import uuid
+import math
 
 import bson
 import json
@@ -1776,9 +1777,10 @@ def set_scene_fps(fps, update=True):
     # pull from mapping
     # this should convert float string to float and int to int
     # so 25.0 is converted to 25, but 23.98 will be still float.
-    decimals = int(str(fps-int(fps))[2:])
-    if decimals == 0:
-        fps = int(fps)
+    dec, ipart = math.modf(fps)
+    if dec == 0.0:
+        fps = int(ipart)
+
     unit = fps_mapping.get(str(fps), None)
     if unit is None:
         raise ValueError("Unsupported FPS value: `%s`" % fps)
@@ -1861,6 +1863,7 @@ def set_context_settings():
 
     # Set project fps
     fps = asset_data.get("fps", project_data.get("fps", 25))
+    api.Session["AVALON_FPS"] = fps
     set_scene_fps(fps)
 
     # Set project resolution
