@@ -4,23 +4,31 @@ import appdirs
 import requests
 
 from maya import cmds
-import maya.app.renderSetup.model.override as override
-import maya.app.renderSetup.model.selector as selector
-import maya.app.renderSetup.model.collection as collection
-import maya.app.renderSetup.model.renderLayer as renderLayer
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pype.maya.lib as lib
 import avalon.maya
 
 
+class RenderSetupListObserver:
+    """This will later server as handler to renderSetup changes"""
+
+    def listItemAdded(self, item):
+        # TODO(antirotor): Implement
+        self.items.append(item)
+        print("*   added {}".format(item.name()))
+
+    def listItemRemoved(self, item):
+        print("removed")
+
+
 class CreateRender(avalon.maya.Creator):
     """Create render layer for export"""
 
     label = "Render"
-    family = "renderlayer"
+    family = "render"
     icon = "eye"
-    defaults = ['Main']
+    defaults = ["Main"]
 
     _token = None
     _user = None
@@ -31,32 +39,39 @@ class CreateRender(avalon.maya.Creator):
 
     def __init__(self, *args, **kwargs):
         super(CreateRender, self).__init__(*args, **kwargs)
-        self._create_render_settings()
-        self._rs = renderSetup.instance()
-        rl = self._rs.createRenderLayer("MyRenderSetupLayer")
-        cmds.sets()
 
     def process(self):
         exists = cmds.ls(self.name)
         if exists:
             return cmds.warning("%s already exists." % exists[0])
 
+        use_selection = self.options.get("useSelection")
         with lib.undo_chunk():
-            super(CreateRender, self).process()
-            cmds.setAttr("{}.machineList".format(self.name), lock=True)
+            self._create_render_settings()
+            instance = super(CreateRender, self).process()
+            cmds.setAttr("{}.machineList".format(instance), lock=True)
+            self._rs = renderSetup.instance()
+            # self._rs.addListObserver(RenderSetupListObserver)
+            if use_selection:
+                print(">>> processing existing layers")
+                layers = self._rs.getRenderLayers()
+                sets = []
+                for layer in layers:
+                    print("  - creating set for {}".format(layer.name()))
+                    set = cmds.sets(n="LAYER_{}".format(layer.name()))
+                    sets.append(set)
+                cmds.sets(sets, forceElement=instance)
 
     def _create_render_settings(self):
-        # We won't be publishing this one
-        self.data["id"] = "avalon.renderLayer"
-
         # get pools
         pools = []
 
-        deadline_url = os.environ.get('DEADLINE_REST_URL', None)
-        muster_url = os.environ.get('MUSTER_REST_URL', None)
+        deadline_url = os.environ.get("DEADLINE_REST_URL", None)
+        muster_url = os.environ.get("MUSTER_REST_URL", None)
         if deadline_url and muster_url:
-            self.log.error("Both Deadline and Muster are enabled. "
-                           "Cannot support both.")
+            self.log.error(
+                "Both Deadline and Muster are enabled. " "Cannot support both."
+            )
             raise RuntimeError("Both Deadline and Muster are enabled")
 
         if deadline_url is None:
@@ -82,8 +97,8 @@ class CreateRender(avalon.maya.Creator):
             try:
                 pools = self._get_muster_pools()
             except requests.exceptions.HTTPError as e:
-                if e.startswith('401'):
-                    self.log.warning('access token expired')
+                if e.startswith("401"):
+                    self.log.warning("access token expired")
                     self._show_login()
                     raise RuntimeError("Access token expired")
             except requests.exceptions.ConnectionError:
@@ -91,8 +106,8 @@ class CreateRender(avalon.maya.Creator):
                 raise RuntimeError("Cannot connect to {}".format(muster_url))
             pool_names = []
             for pool in pools:
-                self.log.info("  - pool: {}".format(pool['name']))
-                pool_names.append(pool['name'])
+                self.log.info("  - pool: {}".format(pool["name"]))
+                pool_names.append(pool["name"])
 
             self.data["primaryPool"] = pool_names
 
@@ -122,14 +137,12 @@ class CreateRender(avalon.maya.Creator):
 
            Show login dialog if access token is invalid or missing.
         """
-        app_dir = os.path.normpath(
-            appdirs.user_data_dir('pype-app', 'pype')
-        )
-        file_name = 'muster_cred.json'
+        app_dir = os.path.normpath(appdirs.user_data_dir("pype-app", "pype"))
+        file_name = "muster_cred.json"
         fpath = os.path.join(app_dir, file_name)
-        file = open(fpath, 'r')
+        file = open(fpath, "r")
         muster_json = json.load(file)
-        self._token = muster_json.get('token', None)
+        self._token = muster_json.get("token", None)
         if not self._token:
             self._show_login()
             raise RuntimeError("Invalid access token for Muster")
@@ -142,26 +155,25 @@ class CreateRender(avalon.maya.Creator):
         """
         Get render pools from muster
         """
-        params = {
-                'authToken': self._token
-            }
-        api_entry = '/api/pools/list'
-        response = self._requests_get(
-            self.MUSTER_REST_URL + api_entry, params=params)
+        params = {"authToken": self._token}
+        api_entry = "/api/pools/list"
+        response = self._requests_get(self.MUSTER_REST_URL + api_entry,
+                                      params=params)
         if response.status_code != 200:
             if response.status_code == 401:
-                self.log.warning('Authentication token expired.')
+                self.log.warning("Authentication token expired.")
                 self._show_login()
             else:
                 self.log.error(
-                    'Cannot get pools from Muster: {}'.format(
-                        response.status_code))
-                raise Exception('Cannot get pools from Muster')
+                    ("Cannot get pools from "
+                     "Muster: {}").format(response.status_code)
+                )
+                raise Exception("Cannot get pools from Muster")
         try:
-            pools = response.json()['ResponseData']['pools']
+            pools = response.json()["ResponseData"]["pools"]
         except ValueError as e:
-            self.log.error('Invalid response from Muster server {}'.format(e))
-            raise Exception('Invalid response from Muster server')
+            self.log.error("Invalid response from Muster server {}".format(e))
+            raise Exception("Invalid response from Muster server")
 
         return pools
 
@@ -173,8 +185,8 @@ class CreateRender(avalon.maya.Creator):
         self.log.debug(api_url)
         login_response = self._requests_post(api_url, timeout=1)
         if login_response.status_code != 200:
-            self.log.error('Cannot show login form to Muster')
-            raise Exception('Cannot show login form to Muster')
+            self.log.error("Cannot show login form to Muster")
+            raise Exception("Cannot show login form to Muster")
 
     def _requests_post(self, *args, **kwargs):
         """ Wrapper for requests, disabling SSL certificate validation if
@@ -186,8 +198,10 @@ class CreateRender(avalon.maya.Creator):
             WARNING: disabling SSL certificate validation is defeating one line
             of defense SSL is providing and it is not recommended.
         """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        if "verify" not in kwargs:
+            kwargs["verify"] = (
+                False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True
+            )  # noqa
         return requests.post(*args, **kwargs)
 
     def _requests_get(self, *args, **kwargs):
@@ -200,6 +214,8 @@ class CreateRender(avalon.maya.Creator):
             WARNING: disabling SSL certificate validation is defeating one line
             of defense SSL is providing and it is not recommended.
         """
-        if 'verify' not in kwargs:
-            kwargs['verify'] = False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True  # noqa
+        if "verify" not in kwargs:
+            kwargs["verify"] = (
+                False if os.getenv("PYPE_DONT_VERIFY_SSL", True) else True
+            )  # noqa
         return requests.get(*args, **kwargs)
