@@ -1,10 +1,6 @@
-import datetime
-import inspect
+import getpass
 from Qt import QtCore, QtWidgets, QtGui
-from PyQt5.QtCore import QVariant
 from .models import LogModel
-
-from .lib import preserve_states
 
 
 class SearchComboBox(QtWidgets.QComboBox):
@@ -53,6 +49,7 @@ class SearchComboBox(QtWidgets.QComboBox):
 
         return text
 
+
 class CheckableComboBox2(QtWidgets.QComboBox):
     def __init__(self, parent=None):
         super(CheckableComboBox, self).__init__(parent)
@@ -96,9 +93,11 @@ class SelectableMenu(QtWidgets.QMenu):
         else:
             super(SelectableMenu, self).mouseReleaseEvent(event)
 
+
 class CustomCombo(QtWidgets.QWidget):
 
     selection_changed = QtCore.Signal()
+    checked_changed = QtCore.Signal(bool)
 
     def __init__(self, title, parent=None):
         super(CustomCombo, self).__init__(parent)
@@ -127,12 +126,27 @@ class CustomCombo(QtWidgets.QWidget):
         self.toolmenu.clear()
         self.addItems(items)
 
+    def select_items(self, items, ignore_input=False):
+        if not isinstance(items, list):
+            items = [items]
+
+        for action in self.toolmenu.actions():
+            check = True
+            if (
+                action.text() in items and ignore_input or
+                action.text() not in items and not ignore_input
+            ):
+                check = False
+
+            action.setChecked(check)
+
     def addItems(self, items):
         for item in items:
             action = self.toolmenu.addAction(item)
             action.setCheckable(True)
-            action.setChecked(True)
             self.toolmenu.addAction(action)
+            action.setChecked(True)
+            action.triggered.connect(self.checked_changed)
 
     def items(self):
         for action in self.toolmenu.actions():
@@ -186,7 +200,9 @@ class CheckableComboBox(QtWidgets.QComboBox):
         for text, checked in items:
             text_item = QtGui.QStandardItem(text)
             checked_item = QtGui.QStandardItem()
-            checked_item.setData(QVariant(checked), QtCore.Qt.CheckStateRole)
+            checked_item.setData(
+                QtCore.QVariant(checked), QtCore.Qt.CheckStateRole
+            )
             self.model.appendRow([text_item, checked_item])
 
 
@@ -216,6 +232,10 @@ class LogsWidget(QtWidgets.QWidget):
 
     active_changed = QtCore.Signal()
 
+    _level_order = [
+        "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"
+    ]
+
     def __init__(self, parent=None):
         super(LogsWidget, self).__init__(parent=parent)
 
@@ -223,16 +243,20 @@ class LogsWidget(QtWidgets.QWidget):
 
         filter_layout = QtWidgets.QHBoxLayout()
 
-        # user_filter = SearchComboBox(self, "Users")
         user_filter = CustomCombo("Users", self)
         users = model.dbcon.distinct("user")
         user_filter.populate(users)
-        user_filter.selection_changed.connect(self.user_changed)
+        user_filter.checked_changed.connect(self.user_changed)
+        user_filter.select_items(getpass.getuser())
 
         level_filter = CustomCombo("Levels", self)
-        # levels = [(level, True) for level in model.dbcon.distinct("level")]
         levels = model.dbcon.distinct("level")
-        level_filter.addItems(levels)
+        _levels = []
+        for level in self._level_order:
+            if level in levels:
+                _levels.append(level)
+        level_filter.populate(_levels)
+        level_filter.checked_changed.connect(self.level_changed)
 
         date_from_label = QtWidgets.QLabel("From:")
         date_filter_from = QtWidgets.QDateTimeEdit()
@@ -241,8 +265,6 @@ class LogsWidget(QtWidgets.QWidget):
         date_from_layout.addWidget(date_from_label)
         date_from_layout.addWidget(date_filter_from)
 
-        # now = datetime.datetime.now()
-        # QtCore.QDateTime(now.year, now.month, now.day, now.hour, now.minute, second = 0, msec = 0, timeSpec = 0)
         date_to_label = QtWidgets.QLabel("To:")
         date_filter_to = QtWidgets.QDateTimeEdit()
 
@@ -252,17 +274,13 @@ class LogsWidget(QtWidgets.QWidget):
 
         filter_layout.addWidget(user_filter)
         filter_layout.addWidget(level_filter)
+        filter_layout.setAlignment(QtCore.Qt.AlignLeft)
 
         filter_layout.addLayout(date_from_layout)
         filter_layout.addLayout(date_to_layout)
 
         view = QtWidgets.QTreeView(self)
         view.setAllColumnsShowFocus(True)
-
-        # # Set view delegates
-        # time_delegate = PrettyTimeDelegate()
-        # column = model.COLUMNS.index("time")
-        # view.setItemDelegateForColumn(column, time_delegate)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -276,34 +294,54 @@ class LogsWidget(QtWidgets.QWidget):
             QtCore.Qt.AscendingOrder
         )
 
-        view.setModel(model)
+        key_val = {
+            "user": users,
+            "level": levels
+        }
+        proxy_model = FilterLogModel(key_val, view)
+        proxy_model.setSourceModel(model)
+        view.setModel(proxy_model)
 
         view.customContextMenuRequested.connect(self.on_context_menu)
         view.selectionModel().selectionChanged.connect(self.active_changed)
-        # user_filter.connect()
 
-        # TODO remove if nothing will affect...
-        # header = self.view.header()
+        # WARNING this is cool but slows down widget a lot
+        # header = view.header()
         # # Enforce the columns to fit the data (purely cosmetic)
         # if Qt.__binding__ in ("PySide2", "PyQt5"):
         #     header.setSectionResizeMode(QtWidgets.QHeaderView.ResizeToContents)
         # else:
         #     header.setResizeMode(QtWidgets.QHeaderView.ResizeToContents)
 
-        # Set signals
-
         # prepare
         model.refresh()
 
         # Store to memory
         self.model = model
+        self.proxy_model = proxy_model
         self.view = view
 
         self.user_filter = user_filter
+        self.level_filter = level_filter
 
     def user_changed(self):
+        valid_actions = []
         for action in self.user_filter.items():
-            print(action)
+            if action.isChecked():
+                valid_actions.append(action.text())
+
+        self.proxy_model.allowed_key_values["user"] = valid_actions
+        self.proxy_model.invalidate()
+
+    def level_changed(self):
+        valid_actions = []
+        for action in self.level_filter.items():
+            if action.isChecked():
+                valid_actions.append(action.text())
+
+        self.proxy_model.allowed_key_values["level"] = valid_actions
+        self.proxy_model.invalidate()
+
 
     def on_context_menu(self, point):
         # TODO will be any actions? it's ready
