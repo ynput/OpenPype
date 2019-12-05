@@ -8,7 +8,7 @@ import six
 import pyblish.api
 from bson.objectid import ObjectId
 
-from avalon import api, dbio
+from avalon import api, io
 
 
 class IntegrateThumbnails(pyblish.api.InstancePlugin):
@@ -19,7 +19,7 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
     families = ["review"]
 
     def process(self, instance):
-        repre_ids = instance.get("published_representation_ids")
+        repre_ids = instance.data.get("published_representation_ids")
         if not repre_ids:
             self.log.debug(
                 "There are not published representation ids on the instance."
@@ -30,27 +30,24 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
 
         anatomy = instance.context.data["anatomy"]
         if "publish" not in anatomy.templates:
-            self.log.error("Anatomy does not have set publish key!")
-            return
+            raise AssertionError("Anatomy does not have set publish key!")
 
         if "thumbnail" not in anatomy.templates["publish"]:
-            self.log.warning((
-                "There is not set \"thumbnail\" template for project {}"
+            raise AssertionError((
+                "There is not set \"thumbnail\" template for project \"{}\""
             ).format(project_name))
-            return
 
         thumbnail_template = anatomy.templates["publish"]["thumbnail"]
 
-        dbio.install()
-        repres = dbio.find({
+        io.install()
+        repres = io.find({
             "_id": {"$in": repre_ids},
             "type": "representation"
         })
         if not repres:
-            self.log.debug((
+            raise AssertionError((
                 "There are not representations in database with ids {}"
             ).format(str(repre_ids)))
-            return
 
         thumb_repre = None
         for repre in repres:
@@ -64,12 +61,13 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             )
             return
 
-        version = dbio.find_one({"_id": thumb_repre["parent"]})
+        version = io.find_one({"_id": thumb_repre["parent"]})
         if not version:
-            self.log.warning("There does not exist version with id {}".format(
-                str(thumb_repre["parent"])
-            ))
-            return
+            raise AssertionError(
+                "There does not exist version with id {}".format(
+                    str(thumb_repre["parent"])
+                )
+            )
 
         # Get full path to thumbnail file from representation
         src_full_path = os.path.normpath(thumb_repre["data"]["path"])
@@ -79,25 +77,27 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             ))
             return
 
+        filename, file_extension = os.path.splitext(src_full_path)
         # Create id for mongo entity now to fill anatomy template
         thumbnail_id = ObjectId()
 
         # Prepare anatomy template fill data
         template_data = copy.deepcopy(thumb_repre["context"])
-        template_data["_id"] = str(thumbnail_id)
-        template_data["thumbnail_root"] = os.environ.get(
-            "AVALON_THUMBNAIL_ROOT"
-        )
+        template_data.update({
+            "_id": str(thumbnail_id),
+            "thumbnail_root": os.environ.get("AVALON_THUMBNAIL_ROOT"),
+            "ext": file_extension,
+            "thumbnail_type": "thumbnail"
+        })
 
         anatomy_filled = anatomy.format(template_data)
         final_path = anatomy_filled.get("publish", {}).get("thumbnail")
         if not final_path:
-            self.log.warning((
+            raise AssertionError((
                 "Anatomy template was not filled with entered data"
                 "\nTemplate: {} "
                 "\nData: {}"
             ).format(thumbnail_template, str(template_data)))
-            return
 
         dst_full_path = os.path.normpath(final_path)
         self.log.debug(
@@ -127,12 +127,12 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             }
         }
         # Create thumbnail entity
-        dbio.insert_one(thumbnail_entity)
+        io.insert_one(thumbnail_entity)
         self.log.debug(
             "Creating entity in database {}".format(str(thumbnail_entity))
         )
         # Set thumbnail id for version
-        dbio.update_one(
+        io.update_many(
             {"_id": version["_id"]},
             {"$set": {"data.thumbnail_id": thumbnail_id}}
         )
