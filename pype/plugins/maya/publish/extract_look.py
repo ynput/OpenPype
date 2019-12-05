@@ -88,7 +88,7 @@ def maketx(source, destination, *args):
     )
 
     if sys.platform == "win32":
-        kwargs["creationflags"] = CREATE_NO_WIDOW
+        kwargs["creationflags"] = CREATE_NO_WINDOW
     try:
         out = subprocess.check_output(**kwargs)
     except subprocess.CalledProcessError as exc:
