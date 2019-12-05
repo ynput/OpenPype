@@ -38,11 +38,7 @@ def source_hash(filepath, *args):
     file_name = os.path.basename(filepath)
     time = str(os.path.getmtime(filepath))
     size = str(os.path.getsize(filepath))
-    return "|".join([
-        file_name,
-        time,
-        size
-    ] + list(args)).replace(".", ",")
+    return "|".join([file_name, time, size] + list(args)).replace(".", ",")
 
 
 def find_paths_by_hash(texture_hash):
@@ -64,28 +60,22 @@ def maketx(source, destination, *args):
     """
 
     cmd = [
-            "maketx",
-            "-v",  # verbose
-            "-u",  # update mode
-            # unpremultiply before conversion (recommended when alpha present)
-            "--unpremult",
-            "--checknan",
-            # use oiio-optimized settings for tile-size, planarconfig, metadata
-            "--oiio",
-            "--filter lanczos3"
-        ]
+        "maketx",
+        "-v",  # verbose
+        "-u",  # update mode
+        # unpremultiply before conversion (recommended when alpha present)
+        "--unpremult",
+        "--checknan",
+        # use oiio-optimized settings for tile-size, planarconfig, metadata
+        "--oiio",
+        "--filter lanczos3",
+    ]
 
     cmd.extend(args)
-    cmd.extend([
-           "-o", destination,
-           source
-    ])
+    cmd.extend(["-o", destination, source])
 
     CREATE_NO_WINDOW = 0x08000000
-    kwargs = dict(
-        args=cmd,
-        stderr=subprocess.STDOUT
-    )
+    kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
 
     if sys.platform == "win32":
         kwargs["creationflags"] = CREATE_NO_WINDOW
@@ -94,6 +84,7 @@ def maketx(source, destination, *args):
     except subprocess.CalledProcessError as exc:
         print(exc)
         import traceback
+
         traceback.print_exc()
         raise
 
@@ -180,11 +171,12 @@ class ExtractLook(pype.api.Extractor):
             # Preserve color space values (force value after filepath change)
             # This will also trigger in the same order at end of context to
             # ensure after context it's still the original value.
-            color_space = resource.get('color_space')
+            color_space = resource.get("color_space")
 
             for f in resource["files"]:
 
-                files_metadata[os.path.normpath(f)] = {'color_space': color_space}
+                files_metadata[os.path.normpath(f)] = {
+                    "color_space": color_space}
                 # files.update(os.path.normpath(f))
 
         # Process the resource files
@@ -195,17 +187,19 @@ class ExtractLook(pype.api.Extractor):
         self.log.info(files)
         for filepath in files_metadata:
 
-            cspace = files_metadata[filepath]['color_space']
+            cspace = files_metadata[filepath]["color_space"]
             linearise = False
-            if cspace == 'sRGB':
+            if cspace == "sRGB":
                 linearise = True
+                # set its file node to 'raw' as tx will be linearized
+                files_metadata[filepath]["color_space"] = "raw"
 
             source, mode, hash = self._process_texture(
                 filepath, do_maketx, staging=dir_path, linearise=linearise
             )
-            destination = self.resource_destination(
-                instance, source, do_maketx
-            )
+            destination = self.resource_destination(instance,
+                                                    source,
+                                                    do_maketx)
 
             # Force copy is specified.
             if instance.data.get("forceCopy", False):
@@ -235,11 +229,11 @@ class ExtractLook(pype.api.Extractor):
             # Preserve color space values (force value after filepath change)
             # This will also trigger in the same order at end of context to
             # ensure after context it's still the original value.
-            color_space_attr = resource['node'] + ".colorSpace"
+            color_space_attr = resource["node"] + ".colorSpace"
             color_space = cmds.getAttr(color_space_attr)
 
             # Remap file node filename to destination
-            attr = resource['attribute']
+            attr = resource["attribute"]
             remap[attr] = destinations[source]
 
             remap[color_space_attr] = color_space
@@ -268,13 +262,15 @@ class ExtractLook(pype.api.Extractor):
                                 channels=True,
                                 constraints=True,
                                 expressions=True,
-                                constructionHistory=True
+                                constructionHistory=True,
                             )
 
         # Write the JSON data
         self.log.info("Extract json..")
-        data = {"attributes": lookdata["attributes"],
-                "relationships": relationships}
+        data = {
+            "attributes": lookdata["attributes"],
+            "relationships": relationships
+        }
 
         with open(json_path, "w") as f:
             json.dump(data, f)
@@ -293,7 +289,7 @@ class ExtractLook(pype.api.Extractor):
         instance.data["representations"].append(
             {
                 "name": "ma",
-                "ext": 'ma',
+                "ext": "ma",
                 "files": os.path.basename(maya_fname),
                 "stagingDir": os.path.dirname(maya_fname),
             }
@@ -301,7 +297,7 @@ class ExtractLook(pype.api.Extractor):
         instance.data["representations"].append(
             {
                 "name": "json",
-                "ext": 'json',
+                "ext": "json",
                 "files": os.path.basename(json_fname),
                 "stagingDir": os.path.dirname(json_fname),
             }
@@ -314,13 +310,12 @@ class ExtractLook(pype.api.Extractor):
         # Source hash for the textures
         instance.data["sourceHashes"] = hashes
 
-        self.log.info("Extracted instance '%s' to: %s" % (
-            instance.name, maya_path)
-        )
+        self.log.info("Extracted instance '%s' to: %s" % (instance.name,
+                                                          maya_path))
 
     def resource_destination(self, instance, filepath, do_maketx):
 
-        anatomy = instance.context.data['anatomy']
+        anatomy = instance.context.data["anatomy"]
 
         self.create_destination_template(instance, anatomy)
 
@@ -332,9 +327,7 @@ class ExtractLook(pype.api.Extractor):
             ext = ".tx"
 
         return os.path.join(
-            instance.data["assumedDestination"],
-            "resources",
-            basename + ext
+            instance.data["assumedDestination"], "resources", basename + ext
         )
 
     def _process_texture(self, filepath, do_maketx, staging, linearise):
@@ -366,17 +359,13 @@ class ExtractLook(pype.api.Extractor):
                 return source, HARDLINK, texture_hash
             else:
                 self.log.warning(
-                    "Paths not found on disk, "
-                    "skipping hardlink: %s" % (existing,)
+                    ("Paths not found on disk, "
+                     "skipping hardlink: %s") % (existing,)
                 )
 
         if do_maketx and ext != ".tx":
             # Produce .tx file in staging if source file is not .tx
-            converted = os.path.join(
-                staging,
-                "resources",
-                fname + ".tx"
-            )
+            converted = os.path.join(staging, "resources", fname + ".tx")
 
             if linearise:
                 self.log.info("tx: converting sRGB -> linear")
@@ -389,9 +378,15 @@ class ExtractLook(pype.api.Extractor):
                 os.makedirs(os.path.dirname(converted))
 
             self.log.info("Generating .tx file for %s .." % filepath)
-            maketx(filepath, converted,
-                   # Include `source-hash` as string metadata
-                   "-sattrib", "sourceHash", texture_hash, colorconvert)
+            maketx(
+                filepath,
+                converted,
+                # Include `source-hash` as string metadata
+                "-sattrib",
+                "sourceHash",
+                texture_hash,
+                colorconvert,
+            )
 
             return converted, COPY, texture_hash
 
@@ -417,58 +412,62 @@ class ExtractLook(pype.api.Extractor):
         project_name = api.Session["AVALON_PROJECT"]
         a_template = anatomy.templates
 
-        project = io.find_one({"type": "project",
-                               "name": project_name},
-                              projection={"config": True, "data": True})
+        project = io.find_one(
+            {"type": "project", "name": project_name},
+            projection={"config": True, "data": True},
+        )
 
-        template = a_template['publish']['path']
+        template = a_template["publish"]["path"]
         # anatomy = instance.context.data['anatomy']
 
-        asset = io.find_one({"type": "asset",
-                             "name": asset_name,
-                             "parent": project["_id"]})
+        asset = io.find_one(
+            {"type": "asset", "name": asset_name, "parent": project["_id"]}
+        )
 
         assert asset, ("No asset found by the name '{}' "
-                       "in project '{}'".format(asset_name, project_name))
-        silo = asset.get('silo')
+                       "in project '{}'").format(asset_name, project_name)
+        silo = asset.get("silo")
 
-        subset = io.find_one({"type": "subset",
-                              "name": subset_name,
-                              "parent": asset["_id"]})
+        subset = io.find_one(
+            {"type": "subset", "name": subset_name, "parent": asset["_id"]}
+        )
 
         # assume there is no version yet, we start at `1`
         version = None
         version_number = 1
         if subset is not None:
-            version = io.find_one({"type": "version",
-                                   "parent": subset["_id"]},
-                                  sort=[("name", -1)])
+            version = io.find_one(
+                {"type": "version",
+                 "parent": subset["_id"]
+                 }, sort=[("name", -1)]
+            )
 
         # if there is a subset there ought to be version
         if version is not None:
             version_number += version["name"]
 
-        if instance.data.get('version'):
-            version_number = int(instance.data.get('version'))
+        if instance.data.get("version"):
+            version_number = int(instance.data.get("version"))
 
-        padding = int(a_template['render']['padding'])
+        padding = int(a_template["render"]["padding"])
 
-        hierarchy = asset['data']['parents']
+        hierarchy = asset["data"]["parents"]
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = "/".join(hierarchy)
 
-        template_data = {"root": api.Session["AVALON_PROJECTS"],
-                         "project": {"name": project_name,
-                                     "code": project['data']['code']},
-                         "silo": silo,
-                         "family": instance.data['family'],
-                         "asset": asset_name,
-                         "subset": subset_name,
-                         "frame": ('#' * padding),
-                         "version": version_number,
-                         "hierarchy": hierarchy,
-                         "representation": "TEMP"}
+        template_data = {
+            "root": api.Session["AVALON_PROJECTS"],
+            "project": {"name": project_name, "code": project["data"]["code"]},
+            "silo": silo,
+            "family": instance.data["family"],
+            "asset": asset_name,
+            "subset": subset_name,
+            "frame": ("#" * padding),
+            "version": version_number,
+            "hierarchy": hierarchy,
+            "representation": "TEMP",
+        }
 
         instance.data["assumedTemplateData"] = template_data
         self.log.info(template_data)
