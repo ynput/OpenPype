@@ -258,26 +258,26 @@ class LogsWidget(QtWidgets.QWidget):
         level_filter.populate(_levels)
         level_filter.checked_changed.connect(self.level_changed)
 
-        date_from_label = QtWidgets.QLabel("From:")
-        date_filter_from = QtWidgets.QDateTimeEdit()
-
-        date_from_layout = QtWidgets.QVBoxLayout()
-        date_from_layout.addWidget(date_from_label)
-        date_from_layout.addWidget(date_filter_from)
-
-        date_to_label = QtWidgets.QLabel("To:")
-        date_filter_to = QtWidgets.QDateTimeEdit()
-
-        date_to_layout = QtWidgets.QVBoxLayout()
-        date_to_layout.addWidget(date_to_label)
-        date_to_layout.addWidget(date_filter_to)
+        # date_from_label = QtWidgets.QLabel("From:")
+        # date_filter_from = QtWidgets.QDateTimeEdit()
+        #
+        # date_from_layout = QtWidgets.QVBoxLayout()
+        # date_from_layout.addWidget(date_from_label)
+        # date_from_layout.addWidget(date_filter_from)
+        #
+        # date_to_label = QtWidgets.QLabel("To:")
+        # date_filter_to = QtWidgets.QDateTimeEdit()
+        #
+        # date_to_layout = QtWidgets.QVBoxLayout()
+        # date_to_layout.addWidget(date_to_label)
+        # date_to_layout.addWidget(date_filter_to)
 
         filter_layout.addWidget(user_filter)
         filter_layout.addWidget(level_filter)
         filter_layout.setAlignment(QtCore.Qt.AlignLeft)
 
-        filter_layout.addLayout(date_from_layout)
-        filter_layout.addLayout(date_to_layout)
+        # filter_layout.addLayout(date_from_layout)
+        # filter_layout.addLayout(date_to_layout)
 
         view = QtWidgets.QTreeView(self)
         view.setAllColumnsShowFocus(True)
