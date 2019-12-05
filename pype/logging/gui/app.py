@@ -33,5 +33,7 @@ class LogsWindow(QtWidgets.QWidget):
 
     def on_selection_changed(self):
         index = self.logs_widget.selected_log()
+        if not index or not index.isValid():
+            return
         node = index.data(self.logs_widget.model.NodeRole)
         self.log_detail.set_detail(node)
