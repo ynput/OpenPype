@@ -309,3 +309,62 @@ class ComponentItem(QtWidgets.QFrame):
             data['fps'] = self.in_data['fps']
 
         return data
+
+
+class LightingButton(QtWidgets.QPushButton):
+    lightingbtnstyle = """
+    QPushButton {
+        text-align: center;
+        color: #777777;
+        background-color: transparent;
+        border-width: 1px;
+        border-color: #777777;
+        border-style: solid;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-left: 3px;
+        padding-right: 3px;
+        border-radius: 3px;
+    }
+
+    QPushButton:hover {
+        border-color: #cccccc;
+        color: #cccccc;
+    }
+
+    QPushButton:pressed {
+        border-color: #ffffff;
+        color: #ffffff;
+    }
+
+    QPushButton:disabled {
+        border-color: #3A3939;
+        color: #3A3939;
+    }
+
+    QPushButton:checked {
+        border-color: #4BB543;
+        color: #4BB543;
+    }
+
+    QPushButton:checked:hover {
+        border-color: #4Bd543;
+        color: #4Bd543;
+    }
+
+    QPushButton:checked:pressed {
+        border-color: #4BF543;
+        color: #4BF543;
+    }
+    """
+    def __init__(self, text, *args, **kwargs):
+        super().__init__(text, *args, **kwargs)
+        self.setStyleSheet(self.lightingbtnstyle)
+
+        self.setCheckable(True)
+
+        preview_font_metrics = self.fontMetrics().boundingRect(text)
+        width = preview_font_metrics.width() + 16
+        height = preview_font_metrics.height() + 5
+        self.setMaximumWidth(width)
+        self.setMaximumHeight(height)
