@@ -50,8 +50,7 @@ class CollectGizmo(pyblish.api.InstancePlugin):
         instance.data.update({
             "versionData": version_data,
             "frameStart": first_frame,
-            "frameEnd": last_frame,
-            "subsetGroup": "gizmos"
+            "frameEnd": last_frame
         })
         self.log.info("Gizmo content collected: `{}`".format(instance[:]))
         self.log.info("Gizmo instance collected: `{}`".format(instance))
