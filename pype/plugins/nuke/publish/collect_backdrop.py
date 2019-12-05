@@ -77,8 +77,7 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
         instance.data.update({
             "versionData": version_data,
             "frameStart": first_frame,
-            "frameEnd": last_frame,
-            "subsetGroup": "backdrops"
+            "frameEnd": last_frame
         })
         self.log.info("Backdrop content collected: `{}`".format(instance[:]))
         self.log.info("Backdrop instance collected: `{}`".format(instance))
