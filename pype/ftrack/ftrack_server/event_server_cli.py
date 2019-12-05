@@ -7,11 +7,9 @@ import socket
 import argparse
 import atexit
 import time
-from urllib.parse import urlparse
 
 import ftrack_api
 from pype.ftrack.lib import credentials
-from pype.ftrack.ftrack_server import FtrackServer
 from pype.ftrack.ftrack_server.lib import (
     ftrack_events_mongo_settings, check_ftrack_url
 )
