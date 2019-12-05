@@ -341,7 +341,10 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
             )
             return
 
-    codec_args = " ".join(codec_data)
+    codec_args = ''
+    if codec_data is not []:
+        codec_args = " ".join(codec_data)
+        
     burnin.render(output_path, args=codec_args, overwrite=overwrite)
 
 

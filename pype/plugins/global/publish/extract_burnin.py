@@ -55,7 +55,7 @@ class ExtractBurnin(pype.api.Extractor):
 
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),
-                "codec": repre.data.get("codec", []),
+                "codec": repre.get("codec", []),
                 "output": full_burnin_path.replace("\\", "/"),
                 "burnin_data": prep_data
             }
