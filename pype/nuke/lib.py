@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from avalon import api, io, lib
 import avalon.nuke
+from avalon.nuke import lib as anlib
 import pype.api as pype
 
 import nuke
@@ -1190,3 +1191,171 @@ class BuildWorkfile(WorkfileSettings):
 
     def position_up(self, multiply=1):
         self.ypos -= (self.ypos_size * multiply) + self.ypos_gap
+
+
+class Exporter_review_lut:
+    """
+    Generator object for review lut from Nuke
+
+    Args:
+        klass (pyblish.plugin): pyblish plugin parent
+
+
+    """
+    _temp_nodes = []
+    data = dict({
+        "representations": list()
+    })
+
+    def __init__(self,
+                 klass,
+                 instance,
+                 name=None,
+                 ext=None,
+                 lut_size=None,
+                 lut_style=None):
+
+        self.log = klass.log
+        self.instance = instance
+
+        self.name = name or "baked_lut"
+        self.ext = ext or "cube"
+        self.lut_size = lut_size or 1024
+        self.lut_style = lut_style or "linear"
+
+        self.stagingDir = self.instance.data["stagingDir"]
+        self.collection = self.instance.data.get("collection", None)
+
+        # set frame start / end and file name to self
+        self.get_file_info()
+
+        self.log.info("File info was set...")
+
+        self.file = self.fhead + self.name + ".{}".format(self.ext)
+        self.path = os.path.join(self.stagingDir, self.file).replace("\\", "/")
+
+    def generate_lut(self):
+        # ---------- start nodes creation
+
+        # CMSTestPattern
+        cms_node = nuke.createNode("CMSTestPattern")
+        cms_node["cube_size"].setValue(96)
+        # connect
+        self._temp_nodes.append(cms_node)
+        self.previous_node = cms_node
+        self.log.debug("CMSTestPattern...   `{}`".format(self._temp_nodes))
+
+        # Node View Process
+        ipn = self.get_view_process_node()
+        if ipn is not None:
+            # connect
+            ipn.setInput(0, self.previous_node)
+            self._temp_nodes.append(ipn)
+            self.previous_node = ipn
+            self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
+
+        # OCIODisplay
+        dag_node = nuke.createNode("OCIODisplay")
+        # connect
+        dag_node.setInput(0, self.previous_node)
+        self._temp_nodes.append(dag_node)
+        self.previous_node = dag_node
+        self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+
+        # GenerateLUT
+        gen_lut_node = nuke.createNode("GenerateLUT")
+        gen_lut_node["file"].setValue(self.path)
+        gen_lut_node["file_type"].setValue(".{}".format(self.ext))
+        gen_lut_node["lut1d"].setValue(self.lut_size)
+        gen_lut_node["style1d"].setValue(self.lut_style)
+        # connect
+        gen_lut_node.setInput(0, self.previous_node)
+        self._temp_nodes.append(gen_lut_node)
+        self.log.debug("GenerateLUT...   `{}`".format(self._temp_nodes))
+
+        # ---------- end nodes creation
+
+        # Export lut file
+        nuke.execute(
+            gen_lut_node.name(),
+            int(self.first_frame),
+            int(self.first_frame))
+
+        self.log.info("Exported...")
+
+        # ---------- generate representation data
+        self.get_representation_data()
+
+        self.log.debug("Representation...   `{}`".format(self.data))
+
+        # ---------- Clean up
+        for node in self._temp_nodes:
+            nuke.delete(node)
+        self.log.info("Deleted nodes...")
+
+        return self.data
+
+    def get_file_info(self):
+        if self.collection:
+            self.log.debug("Collection: `{}`".format(self.collection))
+            # get path
+            self.fname = os.path.basename(self.collection.format(
+                "{head}{padding}{tail}"))
+            self.fhead = self.collection.format("{head}")
+
+            # get first and last frame
+            self.first_frame = min(self.collection.indexes)
+            self.last_frame = max(self.collection.indexes)
+        else:
+            self.fname = os.path.basename(self.instance.data.get("path", None))
+            self.fhead = os.path.splitext(self.fname)[0] + "."
+            self.first_frame = self.instance.data.get("frameStart", None)
+            self.last_frame = self.instance.data.get("frameEnd", None)
+
+        if "#" in self.fhead:
+            self.fhead = self.fhead.replace("#", "")[:-1]
+
+    def get_representation_data(self):
+
+        repre = {
+            'name': self.name,
+            'ext': self.ext,
+            'files': self.file,
+            "stagingDir": self.stagingDir,
+            "anatomy_template": "publish",
+            "tags": [self.name.replace("_", "-")]
+        }
+
+        self.data["representations"].append(repre)
+
+    def get_view_process_node(self):
+        """
+        Will get any active view process.
+
+        Arguments:
+            self (class): in object definition
+
+        Returns:
+            nuke.Node: copy node of Input Process node
+        """
+        anlib.reset_selection()
+        ipn_orig = None
+        for v in [n for n in nuke.allNodes()
+                  if "Viewer" in n.Class()]:
+            ip = v['input_process'].getValue()
+            ipn = v['input_process_node'].getValue()
+            if "VIEWER_INPUT" not in ipn and ip:
+                ipn_orig = nuke.toNode(ipn)
+                ipn_orig.setSelected(True)
+
+        if ipn_orig:
+            # copy selected to clipboard
+            nuke.nodeCopy('%clipboard%')
+            # reset selection
+            anlib.reset_selection()
+            # paste node and selection is on it only
+            nuke.nodePaste('%clipboard%')
+            # assign to variable
+            ipn = nuke.selectedNode()
+
+            return ipn
