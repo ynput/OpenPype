@@ -92,28 +92,32 @@ class DropDataFrame(QtWidgets.QFrame):
         self._refresh_view()
 
     def _set_thumbnail(self, in_item):
+        current_state = in_item.is_thumbnail()
+        in_item.change_thumbnail(not current_state)
+
         checked_item = None
         for item in self.components_list.widgets():
             if item.is_thumbnail():
                 checked_item = item
                 break
-        if checked_item is None or checked_item == in_item:
-            in_item.change_thumbnail()
-        else:
+        if checked_item is not None and checked_item != in_item:
             checked_item.change_thumbnail(False)
-            in_item.change_thumbnail()
+
+        in_item.change_thumbnail(current_state)
 
     def _set_preview(self, in_item):
+        current_state = in_item.is_preview()
+        in_item.change_preview(not current_state)
+
         checked_item = None
         for item in self.components_list.widgets():
             if item.is_preview():
                 checked_item = item
                 break
-        if checked_item is None or checked_item == in_item:
-            in_item.change_preview()
-        else:
+        if checked_item is not None and checked_item != in_item:
             checked_item.change_preview(False)
-            in_item.change_preview()
+
+        in_item.change_preview(current_state)
 
     def _remove_item(self, in_item):
         valid_repre = in_item.has_valid_repre is True

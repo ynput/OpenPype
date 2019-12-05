@@ -266,16 +266,16 @@ class ComponentItem(QtWidgets.QFrame):
         self.signal_repre_change.emit(self, repre_name)
 
     def is_thumbnail(self):
-        return self.thumbnail.checked
+        return self.thumbnail.isChecked()
 
     def change_thumbnail(self, hover=True):
-        self.thumbnail.change_checked(hover)
+        self.thumbnail.setChecked(hover)
 
     def is_preview(self):
-        return self.preview.checked
+        return self.preview.isChecked()
 
     def change_preview(self, hover=True):
-        self.preview.change_checked(hover)
+        self.preview.setChecked(hover)
 
     def collect_data(self):
         in_files = self.in_data['files']
