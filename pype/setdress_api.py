@@ -7,8 +7,7 @@ import copy
 
 from maya import cmds
 
-from avalon import api
-import avalon.io as io
+from avalon import api, io
 from avalon.maya.lib import unique_namespace
 from pype.maya.lib import matrix_equals
 

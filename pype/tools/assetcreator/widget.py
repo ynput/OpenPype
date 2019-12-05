@@ -3,9 +3,8 @@ import contextlib
 import collections
 
 from avalon.vendor import qtawesome
-from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
-from avalon import io
-from avalon import style
+from Qt import QtWidgets, QtCore, QtGui
+from avalon import style, io
 
 from .model import (
     TreeModel,

@@ -2,7 +2,7 @@ import os
 from . import QtCore, QtGui, QtWidgets
 from . import SvgButton
 from . import get_resource
-from avalon import style
+from pypeapp import style
 
 
 class ComponentItem(QtWidgets.QFrame):
