@@ -1,5 +1,6 @@
 import os
 import nuke
+from avalon.nuke import lib as anlib
 import pyblish.api
 import pype
 
@@ -18,28 +19,22 @@ class ExtractReviewData(pype.api.Extractor):
 
     def process(self, instance):
 
-        # Store selection
-        selection = [i for i in nuke.allNodes() if i["selected"].getValue()]
-        # Deselect all nodes to prevent external connections
-        [i["selected"].setValue(False) for i in nuke.allNodes()]
-        self.log.debug("creating staging dir:")
-        self.staging_dir(instance)
+        with anlib.maintained_selection():
+            self.log.debug("creating staging dir:")
+            self.staging_dir(instance)
 
-        self.log.debug("instance: {}".format(instance))
-        self.log.debug("instance.data[families]: {}".format(
-            instance.data["families"]))
+            self.log.debug("instance: {}".format(instance))
+            self.log.debug("instance.data[families]: {}".format(
+                instance.data["families"]))
 
-        if "still" not in instance.data["families"]:
-            self.render_review_representation(instance,
-                                              representation="mov")
-            self.render_review_representation(instance,
-                                              representation="jpeg")
-        else:
+            # if "still" not in instance.data["families"]:
+            #     self.render_review_representation(instance,
+            #                                       representation="mov")
+            #     self.render_review_representation(instance,
+            #                                       representation="jpeg")
+            # else:
             self.render_review_representation(instance, representation="jpeg")
 
-        # Restore selection
-        [i["selected"].setValue(False) for i in nuke.allNodes()]
-        [i["selected"].setValue(True) for i in selection]
 
     def render_review_representation(self,
                                      instance,
@@ -68,6 +63,9 @@ class ExtractReviewData(pype.api.Extractor):
             fhead = os.path.splitext(fname)[0] + "."
             first_frame = instance.data.get("frameStart", None)
             last_frame = instance.data.get("frameEnd", None)
+
+        if "#" in fhead:
+            fhead = fhead.replace("#", "")[:-1]
 
         rnode = nuke.createNode("Read")
 
