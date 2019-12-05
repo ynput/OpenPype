@@ -319,7 +319,7 @@ def main_loop(ftrack_url):
 
         # If thread failed test Ftrack and Mongo connection
         elif not processor_thread.isAlive():
-            if storer_thread.mongo_error:
+            if processor_thread.mongo_error:
                 raise Exception(
                     "Exiting because have issue with acces to MongoDB"
                 )
