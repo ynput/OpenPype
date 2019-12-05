@@ -190,6 +190,27 @@ class CheckableComboBox(QtWidgets.QComboBox):
             self.model.appendRow([text_item, checked_item])
 
 
+class FilterLogModel(QtCore.QSortFilterProxyModel):
+    sub_dict = ["$gt", "$lt", "$not"]
+    def __init__(self, key_values, parent=None):
+        super(FilterLogModel, self).__init__(parent)
+        self.allowed_key_values = key_values
+
+    def filterAcceptsRow(self, row, parent):
+        """
+        Reimplemented from base class.
+        """
+        model = self.sourceModel()
+        for key, values in self.allowed_key_values.items():
+            col_indx = model.COLUMNS.index(key)
+            value = model.index(row, col_indx, parent).data(
+                QtCore.Qt.DisplayRole
+            )
+            if value not in values:
+                return False
+        return True
+
+
 class LogsWidget(QtWidgets.QWidget):
     """A widget that lists the published subsets for an asset"""
 
