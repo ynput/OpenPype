@@ -181,9 +181,10 @@ def any_outdated():
         if representation in checked:
             continue
 
-        representation_doc = io.find_one({"_id": io.ObjectId(representation),
-                                          "type": "representation"},
-                                         projection={"parent": True})
+        representation_doc = io.find_one(
+            {"_id": io.ObjectId(representation), "type": "representation"},
+            projection={"parent": True}
+        )
         if representation_doc and not is_latest(representation_doc):
             return True
         elif not representation_doc:
@@ -297,23 +298,28 @@ def switch_item(container,
     assert asset, ("Could not find asset in the database with the name "
                    "'%s'" % asset_name)
 
-    subset = io.find_one({"name": subset_name,
-                          "type": "subset",
-                          "parent": asset["_id"]})
+    subset = io.find_one({
+        "name": subset_name,
+        "type": "subset",
+        "parent": asset["_id"]
+    })
     assert subset, ("Could not find subset in the database with the name "
                     "'%s'" % subset_name)
 
-    version = io.find_one({"type": "version",
-                           "parent": subset["_id"]},
-                          sort=[('name', -1)])
+    version = io.find_one(
+        {"type": "version", "parent": subset["_id"]},
+        sort=[('name', -1)]
+    )
 
     assert version, "Could not find a version for {}.{}".format(
         asset_name, subset_name
     )
 
-    representation = io.find_one({"name": representation_name,
-                                  "type": "representation",
-                                  "parent": version["_id"]})
+    representation = io.find_one({
+        "name": representation_name,
+        "type": "representation",
+        "parent": version["_id"]}
+    )
 
     assert representation, ("Could not find representation in the database with"
                             " the name '%s'" % representation_name)
@@ -523,8 +529,7 @@ def get_subsets(asset_name,
     from avalon import io
 
     # query asset from db
-    asset_io = io.find_one({"type": "asset",
-                            "name": asset_name})
+    asset_io = io.find_one({"type": "asset", "name": asset_name})
 
     # check if anything returned
     assert asset_io, "Asset not existing. \
@@ -548,14 +553,17 @@ def get_subsets(asset_name,
     # Process subsets
     for subset in subsets:
         if not version:
-            version_sel = io.find_one({"type": "version",
-                                       "parent": subset["_id"]},
-                                      sort=[("name", -1)])
+            version_sel = io.find_one(
+                {"type": "version", "parent": subset["_id"]},
+                sort=[("name", -1)]
+            )
         else:
             assert isinstance(version, int), "version needs to be `int` type"
-            version_sel = io.find_one({"type": "version",
-                                       "parent": subset["_id"],
-                                       "name": int(version)})
+            version_sel = io.find_one({
+                "type": "version",
+                "parent": subset["_id"],
+                "name": int(version)
+            })
 
         find_dict = {"type": "representation",
                      "parent": version_sel["_id"]}
