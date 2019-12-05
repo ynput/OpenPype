@@ -16,6 +16,9 @@ class ComponentItem(QtWidgets.QFrame):
     signal_preview = QtCore.Signal(object)
     signal_repre_change = QtCore.Signal(object, object)
 
+    preview_text = "PREVIEW"
+    thumbnail_text = "THUMBNAIL"
+
     def __init__(self, parent, main_parent):
         super().__init__()
         self.has_valid_repre = True
@@ -124,17 +127,8 @@ class ComponentItem(QtWidgets.QFrame):
 
         frame_icons = QtWidgets.QFrame(frame_repre_icons)
 
-        self.preview = SvgButton(
-            get_resource('preview.svg'), 64, 18,
-            [self.C_NORMAL, self.C_HOVER, self.C_ACTIVE, self.C_ACTIVE_HOVER],
-            frame_icons
-        )
-
-        self.thumbnail = SvgButton(
-            get_resource('thumbnail.svg'), 84, 18,
-            [self.C_NORMAL, self.C_HOVER, self.C_ACTIVE, self.C_ACTIVE_HOVER],
-            frame_icons
-        )
+        self.preview = LightingButton(self.preview_text)
+        self.thumbnail = LightingButton(self.thumbnail_text)
 
         layout = QtWidgets.QHBoxLayout(frame_icons)
         layout.setSpacing(6)
