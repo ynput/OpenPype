@@ -1,4 +1,5 @@
 from . import QtCore
+import re
 
 
 class RecursiveSortFilterProxyModel(QtCore.QSortFilterProxyModel):

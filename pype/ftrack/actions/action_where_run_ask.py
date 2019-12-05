@@ -1,7 +1,5 @@
 import os
-import ftrack_api
 from pype.ftrack import BaseAction
-from ftrack_api import session as fa_session
 
 
 class ActionAskWhereIRun(BaseAction):

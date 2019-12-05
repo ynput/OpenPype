@@ -1,7 +1,4 @@
 import os
-import re
-import collections
-import threading
 import socket
 import socketserver
 from Qt import QtCore

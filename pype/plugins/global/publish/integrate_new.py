@@ -72,6 +72,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "yeticache",
                 "nukenodes",
                 "gizmo"
+                "source",
+                "matchmove",
+                "image"
                 ]
     exclude_families = ["clip"]
 
