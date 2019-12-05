@@ -162,6 +162,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # output filename
                             output_args.append(full_output_path)
+
+                            lut_path = instance.data.get("lutPath")
+                            if lut_path:
+                                lut_arg = "-vf \"lut3d=file='{}'\"".format(
+                                    lut_path)
+                                output_args.insert(0, lut_arg)
+
                             mov_args = [
                                 os.path.join(
                                     os.environ.get(
