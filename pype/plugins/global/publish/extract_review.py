@@ -22,16 +22,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
     families = ["review"]
     hosts = ["nuke", "maya", "shell"]
 
+    outputs = {}
+    ext_filter = []
+
     def process(self, instance):
-        # adding plugin attributes from presets
-        publish_presets = config.get_presets()["plugins"]["global"]["publish"]
-        plugin_attrs = publish_presets[self.__class__.__name__]
-        output_profiles = plugin_attrs.get("outputs", {})
+
+        output_profiles = self.outputs or {}
 
         inst_data = instance.data
         fps = inst_data.get("fps")
         start_frame = inst_data.get("frameStart")
-        pixel_aspect = instance.data["pixelAspect"]
+        pixel_aspect = instance.data.get("pixelAspect") or 1
         self.log.debug("Families In: `{}`".format(instance.data["families"]))
 
         # get representation and loop them
@@ -40,7 +41,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # filter out mov and img sequences
         representations_new = representations[:]
         for repre in representations:
-            if repre['ext'] in plugin_attrs["ext_filter"]:
+            if repre['ext'] in self.ext_filter:
                 tags = repre.get("tags", [])
 
                 self.log.info("Try repre: {}".format(repre))
@@ -92,8 +93,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             self.log.info("p_tags: `{}`".format(p_tags))
                             # add families
                             [instance.data["families"].append(t)
-                            for t in p_tags
-                             if t not in instance.data["families"]]
+                                for t in p_tags
+                                if t not in instance.data["families"]]
+
                             # add to
                             [new_tags.append(t) for t in p_tags
                              if t not in new_tags]
@@ -199,7 +201,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 self.log.info("Added Lut to ffmpeg command")
                                 self.log.debug("_ output_args: `{}`".format(output_args))
 
-
                             mov_args = [
                                 os.path.join(
                                     os.environ.get(
@@ -246,7 +247,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         instance.data["representations"] = representations_new
 
         self.log.debug("Families Out: `{}`".format(instance.data["families"]))
-
 
     def add_video_filter_args(self, args, inserting_arg):
         """
