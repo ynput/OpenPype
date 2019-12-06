@@ -165,9 +165,35 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             lut_path = instance.data.get("lutPath")
                             if lut_path:
-                                lut_arg = "-vf \"lut3d=file='{}'\"".format(
+                                # removing Gama info as it is all baked in lut
+                                gamma = next((g for g in input_args
+                                              if "-gamma" in g), None)
+                                if gamma:
+                                    input_args.remove(gamma)
+
+                                # find all video format settings
+                                vf_settings = [p for p in output_args
+                                               for v in ["-filter:v", "-vf"]
+                                               if v in p]
+                                self.log.debug("_ vf_settings: `{}`".format(vf_settings))
+                                # remove them from output args list
+                                for p in vf_settings:
+                                    self.log.debug("_ remove p: `{}`".format(p))
+                                    output_args.remove(p)
+                                    self.log.debug("_ output_args: `{}`".format(output_args))   
+                                # strip them from all flags
+                                vf_fixed = [p.replace("-vf ", "").replace("-filter:v ", "") for p in vf_settings]
+                                # create lut argument
+                                lut_arg = "lut3d=file='{}',colormatrix=bt601:bt709".format(
                                     lut_path)
-                                output_args.insert(0, lut_arg)
+                                vf_fixed.insert(0, lut_arg)
+                                # create new video filter setting
+                                vf_back = "-vf " + ",".join(vf_fixed)
+                                # add it to output_args
+                                output_args.insert(0, vf_back)
+                                self.log.info("Added Lut to ffmpeg command")
+                                self.log.debug("_ output_args: `{}`".format(output_args))
+
 
                             mov_args = [
                                 os.path.join(
