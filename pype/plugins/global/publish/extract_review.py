@@ -3,7 +3,6 @@ import os
 import pyblish.api
 import clique
 import pype.api
-from pypeapp import config
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
