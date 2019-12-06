@@ -4,10 +4,7 @@ from pypeapp import config
 
 class VersionToTaskStatus(BaseEvent):
 
-    default_status_mapping = {
-        'reviewed': 'Change requested',
-        'approved': 'Complete'
-    }
+    default_status_mapping = {}
 
     def launch(self, session, event):
         '''Propagates status from version to task when changed'''
@@ -40,6 +37,7 @@ class VersionToTaskStatus(BaseEvent):
                     .get("ftrack_config", {})
                     .get("status_version_to_task")
                 ) or self.default_status_mapping
+
                 status_to_set = status_mapping.get(version_name_low)
 
                 self.log.info(
