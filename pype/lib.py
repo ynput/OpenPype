@@ -294,7 +294,10 @@ def switch_item(container,
             representation_name = representation["name"]
 
     # Find the new one
-    asset = io.find_one({"name": asset_name, "type": "asset"})
+    asset = io.find_one({
+        "name": asset_name,
+        "type": "asset"
+    })
     assert asset, ("Could not find asset in the database with the name "
                    "'%s'" % asset_name)
 
@@ -307,7 +310,10 @@ def switch_item(container,
                     "'%s'" % subset_name)
 
     version = io.find_one(
-        {"type": "version", "parent": subset["_id"]},
+        {
+            "type": "version",
+            "parent": subset["_id"]
+        },
         sort=[('name', -1)]
     )
 
@@ -357,7 +363,10 @@ def get_asset(asset_name=None):
     if not asset_name:
         asset_name = avalon.api.Session["AVALON_ASSET"]
 
-    asset_document = io.find_one({"name": asset_name, "type": "asset"})
+    asset_document = io.find_one({
+        "name": asset_name,
+        "type": "asset"
+    })
     if not asset_document:
         raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
 
@@ -554,7 +563,10 @@ def get_subsets(asset_name,
     for subset in subsets:
         if not version:
             version_sel = io.find_one(
-                {"type": "version", "parent": subset["_id"]},
+                {
+                    "type": "version",
+                    "parent": subset["_id"]
+                },
                 sort=[("name", -1)]
             )
         else:
