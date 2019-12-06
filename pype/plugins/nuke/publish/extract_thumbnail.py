@@ -80,7 +80,7 @@ class ExtractThumbnail(pype.api.Extractor):
         ref_node = self.nodes.get("Reformat", None)
         if ref_node:
             for k, v in ref_node:
-                self.log.debug("k,v: {0}:{1}".format(k,v))
+                self.log.debug("k, v: {0}:{1}".format(k, v))
                 if isinstance(v, unicode):
                     v = str(v)
                 reformat_node[k].setValue(v)
@@ -126,7 +126,8 @@ class ExtractThumbnail(pype.api.Extractor):
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))
 
-        self.log.debug("representations: {}".format(instance.data["representations"]))
+        self.log.debug(
+            "representations: {}".format(instance.data["representations"]))
 
         # Clean up
         for node in temporary_nodes:
