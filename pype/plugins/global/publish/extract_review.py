@@ -151,7 +151,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             output_args.extend(profile.get('output', []))
 
                             # letter_box
-                            # TODO: add to documentation
                             lb = profile.get('letter_box', None)
                             if lb:
                                 output_args.append(
@@ -163,6 +162,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             # output filename
                             output_args.append(full_output_path)
 
+                            # scaling none square pixels and 1920 width
+                            # scale=320:-2 # to auto count height with output to be multiple of 2
+                            if profile.get('reformat', False):
+                                pixel_aspect = instance.data["pixelAspect"]
+                                scaling_arg = "scale=1920:'ceil((1920/{})/2)*2':flags=lanczos,setsar=1".format(
+                                    pixel_aspect)
+                                vf_back = self.add_video_filter_args(
+                                    output_args, scaling_arg)
+                                # add it to output_args
+                                output_args.insert(0, vf_back)
+
+                            # baking lut file application
                             lut_path = instance.data.get("lutPath")
                             if lut_path:
                                 # removing Gama info as it is all baked in lut
@@ -171,24 +182,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 if gamma:
                                     input_args.remove(gamma)
 
-                                # find all video format settings
-                                vf_settings = [p for p in output_args
-                                               for v in ["-filter:v", "-vf"]
-                                               if v in p]
-                                self.log.debug("_ vf_settings: `{}`".format(vf_settings))
-                                # remove them from output args list
-                                for p in vf_settings:
-                                    self.log.debug("_ remove p: `{}`".format(p))
-                                    output_args.remove(p)
-                                    self.log.debug("_ output_args: `{}`".format(output_args))   
-                                # strip them from all flags
-                                vf_fixed = [p.replace("-vf ", "").replace("-filter:v ", "") for p in vf_settings]
                                 # create lut argument
-                                lut_arg = "lut3d=file='{}',colormatrix=bt601:bt709".format(
-                                    lut_path)
-                                vf_fixed.insert(0, lut_arg)
-                                # create new video filter setting
-                                vf_back = "-vf " + ",".join(vf_fixed)
+                                lut_arg = "lut3d=file='{}'".format(
+                                    lut_path.replace(
+                                        "\\", "/").replace(":/", "\\:/")
+                                        )
+                                lut_arg += ",colormatrix=bt601:bt709"
+
+                                vf_back = self.add_video_filter_args(
+                                    output_args, lut_arg)
                                 # add it to output_args
                                 output_args.insert(0, vf_back)
                                 self.log.info("Added Lut to ffmpeg command")
@@ -240,3 +242,41 @@ class ExtractReview(pyblish.api.InstancePlugin):
         instance.data["representations"] = representations_new
 
         self.log.debug("Families Out: `{}`".format(instance.data["families"]))
+
+
+    def add_video_filter_args(self, args, inserting_arg):
+        """
+        Fixing video filter argumets to be one long string
+
+        Args:
+            args (list): list of string arguments
+            inserting_arg (str): string argument we want to add
+                                 (without flag `-vf`)
+
+        Returns:
+            str: long joined argument to be added back to list of arguments
+
+        """
+        # find all video format settings
+        vf_settings = [p for p in args
+                       for v in ["-filter:v", "-vf"]
+                       if v in p]
+        self.log.debug("_ vf_settings: `{}`".format(vf_settings))
+
+        # remove them from output args list
+        for p in vf_settings:
+            self.log.debug("_ remove p: `{}`".format(p))
+            args.remove(p)
+            self.log.debug("_ args: `{}`".format(args))
+
+        # strip them from all flags
+        vf_fixed = [p.replace("-vf ", "").replace("-filter:v ", "")
+                    for p in vf_settings]
+
+        self.log.debug("_ vf_fixed: `{}`".format(vf_fixed))
+        vf_fixed.insert(0, inserting_arg)
+        self.log.debug("_ vf_fixed: `{}`".format(vf_fixed))
+        # create new video filter setting
+        vf_back = "-vf " + ",".join(vf_fixed)
+
+        return vf_back
