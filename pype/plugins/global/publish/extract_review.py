@@ -165,7 +165,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # scaling none square pixels and 1920 width
                             # scale=320:-2 # to auto count height with output to be multiple of 2
-                            if profile.get('reformat', False):
+                            if "reformat" in tags:
                                 pixel_aspect = instance.data["pixelAspect"]
                                 scaling_arg = "scale=1920:'ceil((1920/{})/2)*2':flags=lanczos,setsar=1".format(
                                     pixel_aspect)
@@ -176,7 +176,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # baking lut file application
                             lut_path = instance.data.get("lutPath")
-                            if lut_path:
+                            if lut_path and ("bake-lut" in tags):
                                 # removing Gama info as it is all baked in lut
                                 gamma = next((g for g in input_args
                                               if "-gamma" in g), None)
