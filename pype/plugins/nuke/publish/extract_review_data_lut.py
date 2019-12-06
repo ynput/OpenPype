@@ -20,22 +20,22 @@ class ExtractReviewLutData(pype.api.Extractor):
     hosts = ["nuke"]
 
     def process(self, instance):
-        self.log.debug(
-            "_ representations: {}".format(instance.data["representations"]))
-
+        families = instance.data["families"]
         self.log.info("Creating staging dir...")
-
-        stagingDir = instance.data[
-            'representations'][0]["stagingDir"].replace("\\", "/")
-        instance.data["stagingDir"] = stagingDir
-
-        instance.data['representations'][0]["tags"] = ["review"]
+        if "representations" in instance.data:
+            staging_dir = instance.data[
+                "representations"][0]["stagingDir"].replace("\\", "/")
+            instance.data["stagingDir"] = staging_dir
+            instance.data["representations"][0]["tags"] = ["review"]
+        else:
+            instance.data["representations"] = []
+            # get output path
+            render_path = instance.data['path']
+            staging_dir = os.path.normpath(os.path.dirname(render_path))
+            instance.data["stagingDir"] = staging_dir
 
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
-
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
 
         with anlib.maintained_selection():
             exporter = pnlib.Exporter_review_lut(
@@ -47,6 +47,10 @@ class ExtractReviewLutData(pype.api.Extractor):
             instance.data["lutPath"] = os.path.join(
                 exporter.stagingDir, exporter.file).replace("\\", "/")
             instance.data["representations"] += data["representations"]
+
+        if "render.farm" in families:
+            instance.data["families"].remove("review")
+            instance.data["families"].remove("ftrack")
 
         self.log.debug(
             "_ lutPath: {}".format(instance.data["lutPath"]))
