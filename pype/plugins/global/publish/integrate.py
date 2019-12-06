@@ -97,7 +97,10 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         # get next version
         latest_version = io.find_one(
-            {"type": "version", "parent": subset["_id"]},
+            {
+                "type": "version",
+                "parent": subset["_id"]
+            },
             {"name": True},
             sort=[("name", -1)]
         )

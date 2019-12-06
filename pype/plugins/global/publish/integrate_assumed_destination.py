@@ -110,7 +110,10 @@ class IntegrateAssumedDestination(pyblish.api.InstancePlugin):
         version_number = 1
         if subset is not None:
             version = io.find_one(
-                {"type": "version", "parent": subset["_id"]},
+                {
+                    "type": "version",
+                    "parent": subset["_id"]
+                },
                 sort=[("name", -1)]
             )
 

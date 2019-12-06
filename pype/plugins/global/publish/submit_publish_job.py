@@ -28,7 +28,10 @@ def _get_script():
 def get_latest_version(asset_name, subset_name, family):
     # Get asset
     asset_name = io.find_one(
-        {"type": "asset", "name": asset_name},
+        {
+            "type": "asset",
+            "name": asset_name
+        },
         projection={"name": True}
     )
 
