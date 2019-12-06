@@ -1212,6 +1212,7 @@ class Exporter_review_lut:
                  instance,
                  name=None,
                  ext=None,
+                 cube_size=None,
                  lut_size=None,
                  lut_style=None):
 
@@ -1220,6 +1221,7 @@ class Exporter_review_lut:
 
         self.name = name or "baked_lut"
         self.ext = ext or "cube"
+        self.cube_size = cube_size or 32
         self.lut_size = lut_size or 1024
         self.lut_style = lut_style or "linear"
 
@@ -1239,7 +1241,7 @@ class Exporter_review_lut:
 
         # CMSTestPattern
         cms_node = nuke.createNode("CMSTestPattern")
-        cms_node["cube_size"].setValue(96)
+        cms_node["cube_size"].setValue(self.cube_size)
         # connect
         self._temp_nodes.append(cms_node)
         self.previous_node = cms_node
