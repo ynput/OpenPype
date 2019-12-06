@@ -21,7 +21,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
-        # creating instances per write node
 
         self.log.debug("nuke.allNodes(): {}".format(nuke.allNodes()))
         for node in nuke.allNodes():
@@ -45,6 +44,14 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             if avalon_knob_data["id"] != "pyblish.avalon.instance":
                 continue
 
+            # establish families
+            family = avalon_knob_data["family"]
+            families = list()
+
+            # except disabled nodes but exclude backdrops in test
+            if ("nukenodes" not in family) and (node["disable"].value()):
+                continue
+
             subset = avalon_knob_data.get(
                 "subset", None) or node["name"].value()
 
@@ -54,6 +61,23 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             # Add all nodes in group instances.
             if node.Class() == "Group":
+                # only alter families for render family
+                if ("render" in family):
+                    # check if node is not disabled
+                    families.append(avalon_knob_data["families"])
+                    if node["render"].value():
+                        self.log.info("flagged for render")
+                        add_family = "render.local"
+                        # dealing with local/farm rendering
+                        if node["render_farm"].value():
+                            self.log.info("adding render farm family")
+                            add_family = "render.farm"
+                            instance.data["transfer"] = False
+                        families.append(add_family)
+                    else:
+                        # add family into families
+                        families.insert(0, family)
+
                 node.begin()
                 for i in nuke.allNodes():
                     instance.append(i)
@@ -61,7 +85,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             family = avalon_knob_data["family"]
             families = [avalon_knob_data["families"]]
-            
+
             if node.Class() not in "Read":
                 if node["render"].value():
                     self.log.info("flagged for render")
