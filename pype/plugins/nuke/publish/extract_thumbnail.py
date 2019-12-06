@@ -4,7 +4,7 @@ from avalon.nuke import lib as anlib
 import pyblish.api
 import pype
 
-class ExtractReviewData(pype.api.Extractor):
+class ExtractThumbnail(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -12,7 +12,7 @@ class ExtractReviewData(pype.api.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder + 0.01
-    label = "Extract Review Data"
+    label = "Extract Thumbnail"
 
     families = ["review"]
     hosts = ["nuke"]
@@ -20,29 +20,19 @@ class ExtractReviewData(pype.api.Extractor):
     def process(self, instance):
 
         with anlib.maintained_selection():
-            self.log.debug("creating staging dir:")
-            self.staging_dir(instance)
-
             self.log.debug("instance: {}".format(instance))
             self.log.debug("instance.data[families]: {}".format(
                 instance.data["families"]))
 
-            # if "still" not in instance.data["families"]:
-            #     self.render_review_representation(instance,
-            #                                       representation="mov")
-            #     self.render_review_representation(instance,
-            #                                       representation="jpeg")
-            # else:
-            self.render_review_representation(instance, representation="jpeg")
+            self.render_thumbnail(instance)
 
 
-    def render_review_representation(self,
-                                     instance,
-                                     representation="mov"):
+    def render_thumbnail(self, instance):
 
         assert instance.data['representations'][0]['files'], "Instance data files should't be empty!"
 
         temporary_nodes = []
+        self.log.info("Getting staging dir...")
         stagingDir = instance.data[
             'representations'][0]["stagingDir"].replace("\\", "/")
         self.log.debug("StagingDir `{0}`...".format(stagingDir))
@@ -107,39 +97,24 @@ class ExtractReviewData(pype.api.Extractor):
 
         # create write node
         write_node = nuke.createNode("Write")
+        file = fhead + "jpeg"
+        name = "thumbnail"
+        path = os.path.join(stagingDir, file).replace("\\", "/")
+        instance.data["thumbnail"] = path
+        write_node["file"].setValue(path)
+        write_node["file_type"].setValue("jpeg")
+        write_node["raw"].setValue(1)
+        write_node.setInput(0, previous_node)
+        temporary_nodes.append(write_node)
+        tags = ["thumbnail"]
 
-        if representation in "mov":
-            file = fhead + "baked.mov"
-            name = "baked"
-            path = os.path.join(stagingDir, file).replace("\\", "/")
-            self.log.debug("Path: {}".format(path))
-            instance.data["baked_colorspace_movie"] = path
-            write_node["file"].setValue(path)
-            write_node["file_type"].setValue("mov")
-            write_node["raw"].setValue(1)
-            write_node.setInput(0, previous_node)
-            temporary_nodes.append(write_node)
-            tags = ["review", "delete"]
-
-        elif representation in "jpeg":
-            file = fhead + "jpeg"
-            name = "thumbnail"
-            path = os.path.join(stagingDir, file).replace("\\", "/")
-            instance.data["thumbnail"] = path
-            write_node["file"].setValue(path)
-            write_node["file_type"].setValue("jpeg")
-            write_node["raw"].setValue(1)
-            write_node.setInput(0, previous_node)
-            temporary_nodes.append(write_node)
-            tags = ["thumbnail"]
-
-            # retime for
-            first_frame = int(last_frame) / 2
-            last_frame = int(last_frame) / 2
+        # retime for
+        first_frame = int(last_frame) / 2
+        last_frame = int(last_frame) / 2
 
         repre = {
             'name': name,
-            'ext': representation,
+            'ext': "jpeg",
             'files': file,
             "stagingDir": stagingDir,
             "frameStart": first_frame,
@@ -154,9 +129,9 @@ class ExtractReviewData(pype.api.Extractor):
 
         self.log.debug("representations: {}".format(instance.data["representations"]))
 
-        # Clean up
-        for node in temporary_nodes:
-            nuke.delete(node)
+        # # Clean up
+        # for node in temporary_nodes:
+        #     nuke.delete(node)
 
     def get_view_process_node(self):
 
