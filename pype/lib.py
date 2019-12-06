@@ -19,12 +19,15 @@ log = logging.getLogger(__name__)
 def _subprocess(args):
     """Convenience method for getting output errors for subprocess."""
 
+    # make sure environment contains only strings
+    env = {k: str(v) for k, v in os.environ.items()}
+
     proc = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         stdin=subprocess.PIPE,
-        env=os.environ
+        env=env
     )
 
     output = proc.communicate()[0]
