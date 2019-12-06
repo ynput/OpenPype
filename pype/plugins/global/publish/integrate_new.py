@@ -70,10 +70,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "audio",
                 "yetiRig",
                 "yeticache",
+                "nukenodes",
+                "gizmo"
                 "source",
                 "matchmove",
                 "image"
-                "nukenodes"
                 ]
     exclude_families = ["clip"]
 
@@ -413,7 +414,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }
 
             if sequence_repre and repre.get("frameStart"):
-                representation['context']['frame'] = repre.get("frameStart")
+                representation['context']['frame'] = src_padding_exp % repre.get("frameStart")
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -526,13 +527,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # add group if available
         if instance.data.get("subsetGroup"):
-            subset["data"].update(
-                {"subsetGroup": instance.data.get("subsetGroup")}
-            )
             io.update_many({
                 'type': 'subset',
                 '_id': io.ObjectId(subset["_id"])
-            }, {'$set': subset["data"]}
+            }, {'$set': {'data.subsetGroup':
+                instance.data.get('subsetGroup')}}
             )
 
         return subset

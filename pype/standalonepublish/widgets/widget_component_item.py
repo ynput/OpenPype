@@ -2,7 +2,7 @@ import os
 from . import QtCore, QtGui, QtWidgets
 from . import SvgButton
 from . import get_resource
-from avalon import style
+from pypeapp import style
 
 
 class ComponentItem(QtWidgets.QFrame):
@@ -15,6 +15,9 @@ class ComponentItem(QtWidgets.QFrame):
     signal_thumbnail = QtCore.Signal(object)
     signal_preview = QtCore.Signal(object)
     signal_repre_change = QtCore.Signal(object, object)
+
+    preview_text = "PREVIEW"
+    thumbnail_text = "THUMBNAIL"
 
     def __init__(self, parent, main_parent):
         super().__init__()
@@ -124,17 +127,8 @@ class ComponentItem(QtWidgets.QFrame):
 
         frame_icons = QtWidgets.QFrame(frame_repre_icons)
 
-        self.preview = SvgButton(
-            get_resource('preview.svg'), 64, 18,
-            [self.C_NORMAL, self.C_HOVER, self.C_ACTIVE, self.C_ACTIVE_HOVER],
-            frame_icons
-        )
-
-        self.thumbnail = SvgButton(
-            get_resource('thumbnail.svg'), 84, 18,
-            [self.C_NORMAL, self.C_HOVER, self.C_ACTIVE, self.C_ACTIVE_HOVER],
-            frame_icons
-        )
+        self.preview = LightingButton(self.preview_text)
+        self.thumbnail = LightingButton(self.thumbnail_text)
 
         layout = QtWidgets.QHBoxLayout(frame_icons)
         layout.setSpacing(6)
@@ -272,16 +266,16 @@ class ComponentItem(QtWidgets.QFrame):
         self.signal_repre_change.emit(self, repre_name)
 
     def is_thumbnail(self):
-        return self.thumbnail.checked
+        return self.thumbnail.isChecked()
 
     def change_thumbnail(self, hover=True):
-        self.thumbnail.change_checked(hover)
+        self.thumbnail.setChecked(hover)
 
     def is_preview(self):
-        return self.preview.checked
+        return self.preview.isChecked()
 
     def change_preview(self, hover=True):
-        self.preview.change_checked(hover)
+        self.preview.setChecked(hover)
 
     def collect_data(self):
         in_files = self.in_data['files']
@@ -309,3 +303,62 @@ class ComponentItem(QtWidgets.QFrame):
             data['fps'] = self.in_data['fps']
 
         return data
+
+
+class LightingButton(QtWidgets.QPushButton):
+    lightingbtnstyle = """
+    QPushButton {
+        text-align: center;
+        color: #777777;
+        background-color: transparent;
+        border-width: 1px;
+        border-color: #777777;
+        border-style: solid;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        padding-left: 3px;
+        padding-right: 3px;
+        border-radius: 3px;
+    }
+
+    QPushButton:hover {
+        border-color: #cccccc;
+        color: #cccccc;
+    }
+
+    QPushButton:pressed {
+        border-color: #ffffff;
+        color: #ffffff;
+    }
+
+    QPushButton:disabled {
+        border-color: #3A3939;
+        color: #3A3939;
+    }
+
+    QPushButton:checked {
+        border-color: #4BB543;
+        color: #4BB543;
+    }
+
+    QPushButton:checked:hover {
+        border-color: #4Bd543;
+        color: #4Bd543;
+    }
+
+    QPushButton:checked:pressed {
+        border-color: #4BF543;
+        color: #4BF543;
+    }
+    """
+    def __init__(self, text, *args, **kwargs):
+        super().__init__(text, *args, **kwargs)
+        self.setStyleSheet(self.lightingbtnstyle)
+
+        self.setCheckable(True)
+
+        preview_font_metrics = self.fontMetrics().boundingRect(text)
+        width = preview_font_metrics.width() + 16
+        height = preview_font_metrics.height() + 5
+        self.setMaximumWidth(width)
+        self.setMaximumHeight(height)

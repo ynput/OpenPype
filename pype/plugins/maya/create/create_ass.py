@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import avalon.maya
+from pype.maya import lib
 
 from maya import cmds
 
@@ -14,10 +15,21 @@ class CreateAss(avalon.maya.Creator):
     icon = "cube"
     defaults = ['Main']
 
+    def __init__(self, *args, **kwargs):
+        super(CreateAss, self).__init__(*args, **kwargs)
+
+        # Add animation data
+        self.data.update(lib.collect_animation_data())
+
+        # Vertex colors with the geometry
+        self.data["exportSequence"] = False
+
     def process(self):
         instance = super(CreateAss, self).process()
 
-        data = OrderedDict(**self.data)
+        # data = OrderedDict(**self.data)
+
+
 
         nodes = list()
 
@@ -30,4 +42,6 @@ class CreateAss(avalon.maya.Creator):
         assProxy = cmds.sets(name="proxy_SET", empty=True)
         cmds.sets([assContent, assProxy], forceElement=instance)
 
-        self.data = data
+        # self.log.info(data)
+        #
+        # self.data = data

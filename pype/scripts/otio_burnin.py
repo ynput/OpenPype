@@ -91,7 +91,9 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         text = today.strftime(date_format)
         self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
 
-    def add_frame_numbers(self, align, options=None, start_frame=None):
+    def add_frame_numbers(
+        self, align, options=None, start_frame=None, text=None
+    ):
         """
         Convenience method to create the frame number expression.
 
@@ -103,7 +105,12 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if start_frame:
             options['frame_offset'] = start_frame
 
-        options['expression'] = r'%%{eif\:n+%d\:d}' % options['frame_offset']
+        expr = r'%%{eif\:n+%d\:d}' % options['frame_offset']
+        if text and isinstance(text, str):
+            text = r"{}".format(text)
+            expr = text.replace("{current_frame}", expr)
+
+        options['expression'] = expr
         text = str(int(self.end_frame + options['frame_offset']))
         self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
 
@@ -121,7 +128,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
 
         timecode = ffmpeg_burnins._frames_to_timecode(
             options['frame_offset'],
-           self.frame_rate
+            self.frame_rate
         )
         options = options.copy()
         if not options.get('fps'):
@@ -213,13 +220,15 @@ def example(input_path, output_path):
     burnin.render(output_path, overwrite=True)
 
 
-def burnins_from_data(input_path, output_path, data, overwrite=True):
+def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True):
     '''
     This method adds burnins to video/image file based on presets setting.
     Extension of output MUST be same as input. (mov -> mov, avi -> avi,...)
 
     :param input_path: full path to input file where burnins should be add
     :type input_path: str
+    :param codec_data: all codec related arguments in list
+    :param codec_data: list
     :param output_path: full path to output file where output will be rendered
     :type output_path: str
     :param data: data required for burnin settings (more info below)
@@ -284,8 +293,8 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
 
     burnin = ModifiedBurnins(input_path, options_init=options_init)
 
-    start_frame = data.get("start_frame")
-    start_frame_tc = data.get('start_frame_tc', start_frame)
+    frame_start = data.get("frame_start")
+    frame_start_tc = data.get('frame_start_tc', frame_start)
     for align_text, preset in presets.get('burnins', {}).items():
         align = None
         if align_text == 'TOP_LEFT':
@@ -311,7 +320,7 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
 
         if (
             bi_func in ['frame_numbers', 'timecode'] and
-            start_frame is None
+            frame_start is None
         ):
             log.error(
                 'start_frame is not set in entered data!'
@@ -320,9 +329,26 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
             return
 
         if bi_func == 'frame_numbers':
-            burnin.add_frame_numbers(align, start_frame=start_frame)
+            current_frame_identifier = "{current_frame}"
+            text = preset.get('text') or current_frame_identifier
+
+            if current_frame_identifier not in text:
+                log.warning((
+                    'Text for Frame numbers don\'t have '
+                    '`{current_frame}` key in text!'
+                ))
+
+            text_items = []
+            split_items = text.split(current_frame_identifier)
+            for item in split_items:
+                text_items.append(item.format(**data))
+
+            text = "{current_frame}".join(text_items)
+
+            burnin.add_frame_numbers(align, start_frame=frame_start, text=text)
+
         elif bi_func == 'timecode':
-            burnin.add_timecode(align, start_frame=start_frame_tc)
+            burnin.add_timecode(align, start_frame=frame_start_tc)
         elif bi_func == 'text':
             if not preset.get('text'):
                 log.error('Text is not set for text function burnin!')
@@ -339,11 +365,20 @@ def burnins_from_data(input_path, output_path, data, overwrite=True):
             )
             return
 
-    burnin.render(output_path, overwrite=overwrite)
+    codec_args = ''
+    if codec_data is not []:
+        codec_args = " ".join(codec_data)
+        
+    burnin.render(output_path, args=codec_args, overwrite=overwrite)
 
 
 if __name__ == '__main__':
     import sys
     import json
     data = json.loads(sys.argv[-1])
-    burnins_from_data(data['input'], data['output'], data['burnin_data'])
+    burnins_from_data(
+        data['input'],
+        data['codec'],
+        data['output'],
+        data['burnin_data']
+        )

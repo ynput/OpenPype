@@ -1,8 +1,10 @@
-import ftrack_api
 from pype.ftrack import BaseEvent
+from pypeapp import config
 
 
 class VersionToTaskStatus(BaseEvent):
+
+    default_status_mapping = {}
 
     def launch(self, session, event):
         '''Propagates status from version to task when changed'''
@@ -27,13 +29,16 @@ class VersionToTaskStatus(BaseEvent):
                 self.log.info('>>> version status: [ {} ]'.format(
                     version_status['name']))
 
-                status_to_set = None
-                # Filter to versions with status change to "render complete"
-                if version_status['name'].lower() == 'reviewed':
-                    status_to_set = 'Change requested'
+                version_name_low = version_status['name'].lower()
 
-                if version_status['name'].lower() == 'approved':
-                    status_to_set = 'Complete'
+                status_mapping = (
+                    config.get_presets()
+                    .get("ftrack", {})
+                    .get("ftrack_config", {})
+                    .get("status_version_to_task")
+                ) or self.default_status_mapping
+
+                status_to_set = status_mapping.get(version_name_low)
 
                 self.log.info(
                     '>>> status to set: [ {} ]'.format(status_to_set))
@@ -46,7 +51,8 @@ class VersionToTaskStatus(BaseEvent):
                         self.log.info(
                             '!!! status was not found in Ftrack [ {} ]'.format(
                                 status_to_set
-                        ))
+                            )
+                        )
                         continue
 
                 # Proceed if the task status was set

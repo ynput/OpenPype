@@ -1,7 +1,7 @@
 import nuke
 import os
 import pyblish.api
-import avalon.io as io
+from avalon import io
 # TODO: add repair function
 
 

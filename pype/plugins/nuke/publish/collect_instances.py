@@ -30,6 +30,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     continue
             except Exception as E:
                 self.log.warning(E)
+                continue
 
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))

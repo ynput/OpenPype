@@ -114,6 +114,7 @@ def install():
         "write",
         "review",
         "nukenodes" 
+        "gizmo"
     ]
 
     avalon.data["familiesStateDefault"] = False
