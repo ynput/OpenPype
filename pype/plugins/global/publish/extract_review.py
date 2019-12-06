@@ -147,6 +147,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                         )
 
                             output_args = []
+                            output_args.extend(profile.get('codec', []))
                             # preset's output data
                             output_args.extend(profile.get('output', []))
 
@@ -218,7 +219,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 'ext': ext,
                                 'files': repr_file,
                                 "tags": new_tags,
-                                "outputName": name
+                                "outputName": name,
+                                "codec": profile.get('codec', [])
                             })
                             if repre_new.get('preview'):
                                 repre_new.pop("preview")
