@@ -1,9 +1,7 @@
 import pype.maya.plugin
 import os
 from pypeapp import config
-reload(config)
-import pype.maya.plugin
-reload(pype.maya.plugin)
+
 
 class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
     """Load the model"""
@@ -21,7 +19,6 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
         import maya.cmds as cmds
         from avalon import maya
         import pymel.core as pm
-
 
         try:
             family = context["representation"]["context"]["family"]
