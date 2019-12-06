@@ -4,6 +4,7 @@ from avalon.nuke import lib as anlib
 import pyblish.api
 import pype
 
+
 class ExtractThumbnail(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
@@ -26,9 +27,7 @@ class ExtractThumbnail(pype.api.Extractor):
 
             self.render_thumbnail(instance)
 
-
     def render_thumbnail(self, instance):
-
         assert instance.data['representations'][0]['files'], "Instance data files should't be empty!"
 
         temporary_nodes = []
@@ -129,9 +128,9 @@ class ExtractThumbnail(pype.api.Extractor):
 
         self.log.debug("representations: {}".format(instance.data["representations"]))
 
-        # # Clean up
-        # for node in temporary_nodes:
-        #     nuke.delete(node)
+        # Clean up
+        for node in temporary_nodes:
+            nuke.delete(node)
 
     def get_view_process_node(self):
 
