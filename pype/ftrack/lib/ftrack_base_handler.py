@@ -2,7 +2,6 @@ import functools
 import time
 from pypeapp import Logger
 import ftrack_api
-from ftrack_api import session as fa_session
 from pype.ftrack.ftrack_server import session_processor
 
 
@@ -243,7 +242,7 @@ class BaseHandler(object):
             _entities is None or
             _entities[0].get(
                 'link', None
-            ) == fa_session.ftrack_api.symbol.NOT_SET
+            ) == ftrack_api.symbol.NOT_SET
         ):
             _entities = self._get_entities(event)
 
@@ -447,7 +446,7 @@ class BaseHandler(object):
             'applicationId=ftrack.client.web and user.id="{0}"'
         ).format(user_id)
         self.session.event_hub.publish(
-            fa_session.ftrack_api.event.base.Event(
+            ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='message',
@@ -495,8 +494,8 @@ class BaseHandler(object):
 
             if not user:
                 raise TypeError((
-                    'Ftrack user with {} "{}" was not found!'.format(key, value)
-                ))
+                    'Ftrack user with {} "{}" was not found!'
+                ).format(key, value))
 
             user_id = user['id']
 
@@ -505,7 +504,7 @@ class BaseHandler(object):
         ).format(user_id)
 
         self.session.event_hub.publish(
-            fa_session.ftrack_api.event.base.Event(
+            ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='widget',
@@ -533,7 +532,7 @@ class BaseHandler(object):
             else:
                 first = False
 
-            subtitle = {'type': 'label', 'value':'<h3>{}</h3>'.format(key)}
+            subtitle = {'type': 'label', 'value': '<h3>{}</h3>'.format(key)}
             items.append(subtitle)
             if isinstance(value, list):
                 for item in value:
@@ -593,7 +592,7 @@ class BaseHandler(object):
 
         # Create and trigger event
         session.event_hub.publish(
-            fa_session.ftrack_api.event.base.Event(
+            ftrack_api.event.base.Event(
                 topic=topic,
                 data=_event_data,
                 source=dict(user=_user_data)
@@ -614,7 +613,7 @@ class BaseHandler(object):
         if not source and event:
             source = event.get("source")
         # Create and trigger event
-        event = fa_session.ftrack_api.event.base.Event(
+        event = ftrack_api.event.base.Event(
             topic=topic,
             data=event_data,
             source=source
