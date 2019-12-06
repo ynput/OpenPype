@@ -99,7 +99,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "subset": instance.data["subset"],
             "fps": instance.context.data["fps"]
         }
-
+        instance.data["family"] = "write"
         group_node = [x for x in instance if x.Class() == "Group"][0]
         deadlineChunkSize = 1
         if "deadlineChunkSize" in group_node.knobs():
