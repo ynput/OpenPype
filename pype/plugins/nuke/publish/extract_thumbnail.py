@@ -15,7 +15,7 @@ class ExtractThumbnail(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder + 0.01
     label = "Extract Thumbnail"
 
-    families = ["review"]
+    families = ["review", "render.farm"]
     hosts = ["nuke"]
 
     def process(self, instance):
@@ -28,14 +28,24 @@ class ExtractThumbnail(pype.api.Extractor):
             self.render_thumbnail(instance)
 
     def render_thumbnail(self, instance):
-        assert instance.data['representations'][0]['files'], "Instance data files should't be empty!"
+        node = instance[0] # group node
+        self.log.info("Creating staging dir...")
+        if "representations" not in instance.data:
+            staging_dir = instance.data[
+                "representations"][0]["stagingDir"].replace("\\", "/")
+            instance.data["stagingDir"] = staging_dir
+            instance.data["representations"][0]["tags"] = ["review"]
+        else:
+            instance.data["representations"] = []
+            # get output path
+            render_path = instance.data['path']
+            staging_dir = os.path.normpath(os.path.dirname(render_path))
+            instance.data["stagingDir"] = staging_dir
+
+        self.log.info(
+            "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
         temporary_nodes = []
-        self.log.info("Getting staging dir...")
-        stagingDir = instance.data[
-            'representations'][0]["stagingDir"].replace("\\", "/")
-        self.log.debug("StagingDir `{0}`...".format(stagingDir))
-
         collection = instance.data.get("collection", None)
 
         if collection:
@@ -56,17 +66,21 @@ class ExtractThumbnail(pype.api.Extractor):
         if "#" in fhead:
             fhead = fhead.replace("#", "")[:-1]
 
-        rnode = nuke.createNode("Read")
+        path_render = os.path.join(staging_dir, fname).replace("\\", "/")
+        # check if file exist otherwise connect to write node
+        if os.path.isfile(path_render):
+            rnode = nuke.createNode("Read")
 
-        rnode["file"].setValue(
-            os.path.join(stagingDir, fname).replace("\\", "/"))
+            rnode["file"].setValue(path_render)
 
-        rnode["first"].setValue(first_frame)
-        rnode["origfirst"].setValue(first_frame)
-        rnode["last"].setValue(last_frame)
-        rnode["origlast"].setValue(last_frame)
-        temporary_nodes.append(rnode)
-        previous_node = rnode
+            rnode["first"].setValue(first_frame)
+            rnode["origfirst"].setValue(first_frame)
+            rnode["last"].setValue(last_frame)
+            rnode["origlast"].setValue(last_frame)
+            temporary_nodes.append(rnode)
+            previous_node = rnode
+        else:
+            previous_node = node
 
         # get input process and connect it to baking
         ipn = self.get_view_process_node()
@@ -98,7 +112,7 @@ class ExtractThumbnail(pype.api.Extractor):
         write_node = nuke.createNode("Write")
         file = fhead + "jpeg"
         name = "thumbnail"
-        path = os.path.join(stagingDir, file).replace("\\", "/")
+        path = os.path.join(staging_dir, file).replace("\\", "/")
         instance.data["thumbnail"] = path
         write_node["file"].setValue(path)
         write_node["file_type"].setValue("jpeg")
@@ -115,7 +129,7 @@ class ExtractThumbnail(pype.api.Extractor):
             'name': name,
             'ext': "jpeg",
             'files': file,
-            "stagingDir": stagingDir,
+            "stagingDir": staging_dir,
             "frameStart": first_frame,
             "frameEnd": last_frame,
             "anatomy_template": "render",
