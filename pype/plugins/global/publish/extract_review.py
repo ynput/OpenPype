@@ -31,7 +31,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         inst_data = instance.data
         fps = inst_data.get("fps")
         start_frame = inst_data.get("frameStart")
-
+        pixel_aspect = instance.data["pixelAspect"]
         self.log.debug("Families In: `{}`".format(instance.data["families"]))
 
         # get representation and loop them
@@ -147,13 +147,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                         )
 
                             output_args = []
-                            output_args.extend(profile.get('codec', []))
+                            codec_args = profile.get('codec', [])
+                            output_args.extend(codec_args)
                             # preset's output data
                             output_args.extend(profile.get('output', []))
 
                             # letter_box
                             lb = profile.get('letter_box', None)
                             if lb:
+                                if "reformat" not in p_tags:
+                                    lb /= pixel_aspect
                                 output_args.append(
                                     "-filter:v drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{0})))/2):iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black".format(lb))
 
@@ -165,8 +168,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # scaling none square pixels and 1920 width
                             # scale=320:-2 # to auto count height with output to be multiple of 2
-                            if "reformat" in tags:
-                                pixel_aspect = instance.data["pixelAspect"]
+                            if "reformat" in p_tags:
                                 scaling_arg = "scale=1920:'ceil((1920/{})/2)*2':flags=lanczos,setsar=1".format(
                                     pixel_aspect)
                                 vf_back = self.add_video_filter_args(
@@ -176,7 +178,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # baking lut file application
                             lut_path = instance.data.get("lutPath")
-                            if lut_path and ("bake-lut" in tags):
+                            if lut_path and ("bake-lut" in p_tags):
                                 # removing Gama info as it is all baked in lut
                                 gamma = next((g for g in input_args
                                               if "-gamma" in g), None)
@@ -220,7 +222,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 'files': repr_file,
                                 "tags": new_tags,
                                 "outputName": name,
-                                "codec": profile.get('codec', [])
+                                "codec": codec_args
                             })
                             if repre_new.get('preview'):
                                 repre_new.pop("preview")
