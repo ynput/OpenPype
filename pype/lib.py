@@ -1,14 +1,12 @@
 import os
 import re
 import logging
-import importlib
 import itertools
 import contextlib
 import subprocess
 import inspect
 
-
-import avalon.io as io
+from avalon import io
 import avalon.api
 import avalon
 
