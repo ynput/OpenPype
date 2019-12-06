@@ -4,7 +4,6 @@ from pyblish import api
 
 import nuke
 
-
 class CollectClips(api.ContextPlugin):
     """Collect all Track items selection."""
 
@@ -31,6 +30,7 @@ class CollectClips(api.ContextPlugin):
             sub_items = video_track.subTrackItems()
 
             for item in items:
+                data = dict()
                 # compare with selection or if disabled
                 if item not in selection or not item.isEnabled():
                     continue
@@ -83,9 +83,12 @@ class CollectClips(api.ContextPlugin):
                 except Exception:
                     source_first_frame = 0
 
-                data = {"name": "{0}_{1}".format(track.name(), item.name()),
+                data.update({
+                        "name": "{0}_{1}".format(track.name(), item.name()),
                         "item": item,
                         "source": source,
+                        "timecodeStart": str(source.timecodeStart()),
+                        "timelineTimecodeStart": str(sequence.timecodeStart()),
                         "sourcePath": source_path,
                         "track": track.name(),
                         "trackIndex": track_index,
@@ -93,19 +96,24 @@ class CollectClips(api.ContextPlugin):
                         "effects": effects,
                         "sourceIn": int(item.sourceIn()),
                         "sourceOut": int(item.sourceOut()),
+                        "mediaDuration": (int(item.sourceOut()) -
+                            int(item.sourceIn())) + 1,
                         "clipIn": int(item.timelineIn()),
                         "clipOut": int(item.timelineOut()),
+                        "clipDuration": (int(item.timelineOut()) -
+                            int(item.timelineIn())) + 1,
                         "asset": asset,
                         "family": "clip",
                         "families": [],
                         "handles": 0,
                         "handleStart": projectdata.get("handles", 0),
                         "handleEnd": projectdata.get("handles", 0),
-                        "version": int(version)}
+                        "version": int(version)})
 
                 instance = context.create_instance(**data)
 
                 self.log.info("Created instance: {}".format(instance))
+                self.log.info("Created instance.data: {}".format(instance.data))
                 self.log.debug(">> effects: {}".format(instance.data["effects"]))
 
                 context.data["assetsShared"][asset] = dict()
