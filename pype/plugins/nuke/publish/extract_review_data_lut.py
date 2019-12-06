@@ -45,8 +45,7 @@ class ExtractReviewLutData(pype.api.Extractor):
 
             # assign to representations
             instance.data["lutPath"] = os.path.join(
-                exporter.stagingDir, exporter.file).replace("\\", "/").replace(
-                    "C:/", "C\\:/")
+                exporter.stagingDir, exporter.file).replace("\\", "/")
             instance.data["representations"] += data["representations"]
 
         self.log.debug(
