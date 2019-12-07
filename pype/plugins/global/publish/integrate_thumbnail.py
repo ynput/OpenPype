@@ -19,8 +19,8 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
     families = ["review"]
 
     def process(self, instance):
-        repre_ids = instance.data.get("published_representation_ids")
-        if not repre_ids:
+        published_repres = instance.data.get("published_representations")
+        if not published_repres:
             self.log.debug(
                 "There are not published representation ids on the instance."
             )
@@ -40,17 +40,9 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         thumbnail_template = anatomy.templates["publish"]["thumbnail"]
 
         io.install()
-        repres = io.find({
-            "_id": {"$in": repre_ids},
-            "type": "representation"
-        })
-        if not repres:
-            raise AssertionError((
-                "There are not representations in database with ids {}"
-            ).format(str(repre_ids)))
 
         thumb_repre = None
-        for repre in repres:
+        for repre in published_repres:
             if repre["name"].lower() == "thumbnail":
                 thumb_repre = repre
                 break

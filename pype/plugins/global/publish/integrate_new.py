@@ -385,6 +385,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.debug("__ dst: {}".format(dst))
 
             representation = {
+                "_id": io.ObjectId(),
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
@@ -423,8 +424,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for rep in instance.data["representations"]:
             self.log.debug("__ represNAME: {}".format(rep['name']))
             self.log.debug("__ represPATH: {}".format(rep['published_path']))
-        result = io.insert_many(representations)
-        instance.data["published_representation_ids"] = result.inserted_ids
+        io.insert_many(representations)
+        instance.data["published_representations"] = representations
         # self.log.debug("Representation: {}".format(representations))
         self.log.info("Registered {} items".format(len(representations)))
 
