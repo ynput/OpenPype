@@ -106,6 +106,10 @@ def writes_version_sync():
 
     for each in nuke.allNodes():
         if each.Class() == 'Write':
+            # check if the node is avalon tracked
+            if "AvalonTab" not in each.knobs():
+                continue
+
             avalon_knob_data = avalon.nuke.get_avalon_knob_data(
                 each, ['avalon:', 'ak:'])
 
@@ -1361,3 +1365,39 @@ class Exporter_review_lut:
             ipn = nuke.selectedNode()
 
             return ipn
+
+def get_dependent_nodes(nodes):
+    """Get all dependent nodes connected to the list of nodes.
+
+    Looking for connections outside of the nodes in incoming argument.
+
+    Arguments:
+        nodes (list): list of nuke.Node objects
+
+    Returns:
+        connections_in: dictionary of nodes and its dependencies
+        connections_out: dictionary of nodes and its dependency
+    """
+
+    connections_in = dict()
+    connections_out = dict()
+    node_names = [n.name() for n in nodes]
+    for node in nodes:
+        inputs = node.dependencies()
+        outputs = node.dependent()
+        # collect all inputs outside
+        test_in = [(i, n) for i, n in enumerate(inputs)
+                   if n.name() not in node_names]
+        if test_in:
+            connections_in.update({
+                node: test_in
+                })
+        # collect all outputs outside
+        test_out = [i for i in outputs if i.name() not in node_names]
+        if test_out:
+            # only one dependent node is allowed
+            connections_out.update({
+                node: test_out[-1]
+                })
+
+    return connections_in, connections_out

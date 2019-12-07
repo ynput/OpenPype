@@ -1,9 +1,6 @@
-import os
 import contextlib
 
-from avalon import api
-import avalon.io as io
-
+from avalon import api, io
 
 import nuke
 
