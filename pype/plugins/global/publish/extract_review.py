@@ -32,6 +32,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         fps = inst_data.get("fps")
         start_frame = inst_data.get("frameStart")
         pixel_aspect = instance.data["pixelAspect"]
+        resolution_width = instance.data["resolutionWidth"]
+        resolution_height = instance.data["resolutionHeight"]
         self.log.debug("Families In: `{}`".format(instance.data["families"]))
 
         # get representation and loop them
@@ -167,10 +169,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             output_args.append(full_output_path)
 
                             # scaling none square pixels and 1920 width
-                            # scale=320:-2 # to auto count height with output to be multiple of 2
                             if "reformat" in p_tags:
                                 scaling_arg = "scale=1920:'ceil((1920/{})/2)*2':flags=lanczos,setsar=1".format(
-                                    pixel_aspect)
+                                    (lb/pixel_aspect * (resolution_width / resolution_height)))
                                 vf_back = self.add_video_filter_args(
                                     output_args, scaling_arg)
                                 # add it to output_args
