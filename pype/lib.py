@@ -182,7 +182,10 @@ def any_outdated():
             continue
 
         representation_doc = io.find_one(
-            {"_id": io.ObjectId(representation), "type": "representation"},
+            {
+                "_id": io.ObjectId(representation),
+                "type": "representation"
+            },
             projection={"parent": True}
         )
         if representation_doc and not is_latest(representation_doc):
