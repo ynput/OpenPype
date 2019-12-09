@@ -11,7 +11,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.1
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
-    families = ["render", "render.local", "render.farm"]
+    families = ["write"]
 
     def process(self, instance):
 
@@ -95,7 +95,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameEnd": last_frame - handle_end,
             "version": int(version),
             "colorspace":  node["colorspace"].value(),
-            "families": [instance.data["family"]] + instance.data["families"],
+            "families": [instance.data["family"]],
             "subset": instance.data["subset"],
             "fps": instance.context.data["fps"]
         }
@@ -109,6 +109,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         if "deadlinePriority" in group_node.knobs():
             deadlinePriority = group_node["deadlinePriority"].value()
 
+        families = [f for f in instance.data["families"] if "write" not in f]
         instance.data.update({
             "versionData": version_data,
             "path": path,
@@ -119,10 +120,13 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame,
             "outputType": output_type,
+            "family": "write",
+            "families": families,
             "colorspace": node["colorspace"].value(),
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority,
             "subsetGroup": "renders"
         })
+
 
         self.log.debug("instance.data: {}".format(instance.data))
