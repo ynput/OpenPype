@@ -30,7 +30,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     continue
             except Exception as E:
                 self.log.warning(E)
-                continue
+                
 
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
@@ -84,10 +84,16 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 node.end()
 
             family = avalon_knob_data["family"]
-            families = [avalon_knob_data["families"]]
+            families = avalon_knob_data.get("families")
+            if families:
+                families = [families]
+            else:
+                families = [family]
 
             if node.Class() not in "Read":
-                if node["render"].value():
+                if "render" not in node.knobs().keys():
+                    families.insert(0, family)
+                elif node["render"].value():
                     self.log.info("flagged for render")
                     add_family = "render.local"
                     # dealing with local/farm rendering
