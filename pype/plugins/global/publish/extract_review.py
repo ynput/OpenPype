@@ -156,8 +156,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             output_args.extend(profile.get('output', []))
 
                             # letter_box
-                            lb = profile.get('letter_box', None)
-                            if lb:
+                            lb = profile.get('letter_box', 0)
+                            if lb is not 0:
                                 if "reformat" not in p_tags:
                                     lb /= pixel_aspect
                                 output_args.append(
