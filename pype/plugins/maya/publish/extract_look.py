@@ -231,11 +231,12 @@ class ExtractLook(pype.api.Extractor):
             # ensure after context it's still the original value.
             color_space_attr = resource["node"] + ".colorSpace"
             color_space = cmds.getAttr(color_space_attr)
-
+            if files_metadata[source]["color_space"] == "raw":
+                # set colorpsace to raw if we linearized it
+                color_space = "Raw"
             # Remap file node filename to destination
             attr = resource["attribute"]
             remap[attr] = destinations[source]
-
             remap[color_space_attr] = color_space
 
         self.log.info("Finished remapping destinations ...")
@@ -310,6 +311,12 @@ class ExtractLook(pype.api.Extractor):
         # Source hash for the textures
         instance.data["sourceHashes"] = hashes
 
+        """
+        self.log.info("Returning colorspaces to their original values ...")
+        for attr, value in remap.items():
+            self.log.info("  - {}: {}".format(attr, value))
+            cmds.setAttr(attr, value, type="string")
+        """
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
                                                           maya_path))
 
