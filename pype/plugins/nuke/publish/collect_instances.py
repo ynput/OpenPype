@@ -36,7 +36,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
-            avalon_knob_data = get_avalon_knob_data(node)
+            avalon_knob_data = get_avalon_knob_data(node, ["avalon:", "ak:"])
 
             self.log.debug("avalon_knob_data: {}".format(avalon_knob_data))
 
