@@ -29,11 +29,16 @@ class ExtractBurnin(pype.api.Extractor):
         if instance.context.data.get('version'):
             version = "v" + str(instance.context.data['version'])
 
+        frame_start = int(instance.data.get("frameStart") or 0)
+        frame_end = int(instance.data.get("frameEnd") or 1)
+        duration = frame_end - frame_start + 1
         prep_data = {
             "username": instance.context.data['user'],
             "asset": os.environ['AVALON_ASSET'],
             "task": os.environ['AVALON_TASK'],
-            "start_frame": int(instance.data["frameStart"]),
+            "frame_start": frame_start,
+            "frame_end": frame_end,
+            "duration": duration,
             "version": version
         }
         self.log.debug("__ prep_data: {}".format(prep_data))
@@ -49,12 +54,17 @@ class ExtractBurnin(pype.api.Extractor):
             name = "_burnin"
             movieFileBurnin = filename.replace(".mov", "") + name + ".mov"
 
-            full_movie_path = os.path.join(os.path.normpath(stagingdir), repre["files"])
-            full_burnin_path = os.path.join(os.path.normpath(stagingdir), movieFileBurnin)
+            full_movie_path = os.path.join(
+                os.path.normpath(stagingdir), repre["files"]
+            )
+            full_burnin_path = os.path.join(
+                os.path.normpath(stagingdir), movieFileBurnin
+            )
             self.log.debug("__ full_burnin_path: {}".format(full_burnin_path))
 
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),
+                "codec": repre.get("codec", []),
                 "output": full_burnin_path.replace("\\", "/"),
                 "burnin_data": prep_data
             }

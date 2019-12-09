@@ -2,6 +2,7 @@ from avalon import api
 import pype.maya.plugin
 import os
 from pypeapp import config
+import clique
 
 
 class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
@@ -21,6 +22,13 @@ class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
         from avalon import maya
         import pymel.core as pm
 
+        version = context['version']
+        version_data = version.get("data", {})
+
+        self.log.info("version_data: {}\n".format(version_data))
+
+        frameStart = version_data.get("frameStart", None)
+
         try:
             family = context["representation"]["context"]["family"]
         except ValueError:
@@ -30,7 +38,24 @@ class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
 
             groupName = "{}:{}".format(namespace, name)
             path = self.fname
-            proxyPath = os.path.splitext(path)[0] + ".ma"
+            proxyPath_base = os.path.splitext(path)[0]
+
+            if frameStart is not None:
+                proxyPath_base = os.path.splitext(proxyPath_base)[0]
+
+                publish_folder = os.path.split(path)[0]
+                files_in_folder = os.listdir(publish_folder)
+                collections, remainder = clique.assemble(files_in_folder)
+
+                if collections:
+                    hashes = collections[0].padding * '#'
+                    coll = collections[0].format('{head}[index]{tail}')
+                    filename = coll.replace('[index]', hashes)
+
+                    path = os.path.join(publish_folder, filename)
+
+            proxyPath = proxyPath_base + ".ma"
+            self.log.info
 
             nodes = cmds.file(proxyPath,
                               namespace=namespace,
@@ -147,6 +172,13 @@ class AssStandinLoader(api.Loader):
         import mtoa.ui.arnoldmenu
         import pymel.core as pm
 
+        version = context['version']
+        version_data = version.get("data", {})
+
+        self.log.info("version_data: {}\n".format(version_data))
+
+        frameStart = version_data.get("frameStart", None)
+
         asset = context['asset']['name']
         namespace = namespace or lib.unique_namespace(
             asset + "_",
@@ -182,6 +214,8 @@ class AssStandinLoader(api.Loader):
 
         # Set the standin filepath
         standinShape.dso.set(self.fname)
+        if frameStart is not None:
+            standinShape.useFrameExtension.set(1)
 
         nodes = [root, standin]
         self[:] = nodes
@@ -199,14 +233,23 @@ class AssStandinLoader(api.Loader):
 
         path = api.get_representation_path(representation)
 
-        # Update the standin
-        members = pm.sets(container['objectName'], query=True)
-        standins = pm.ls(members, type="AiStandIn", long=True)
+        files_in_path = os.listdir(os.path.split(path)[0])
+        sequence = 0
+        collections, remainder = clique.assemble(files_in_path)
+        if collections:
+            sequence = 1
 
-        assert len(caches) == 1, "This is a bug"
+        # Update the standin
+        standins = list()
+        members = pm.sets(container['objectName'], query=True)
+        for member in members:
+            shape = member.getShape()
+            if (shape and shape.type() == "aiStandIn"):
+                standins.append(shape)
 
         for standin in standins:
-            standin.cacheFileName.set(path)
+            standin.dso.set(path)
+            standin.useFrameExtension.set(sequence)
 
         container = pm.PyNode(container["objectName"])
         container.representation.set(str(representation["_id"]))

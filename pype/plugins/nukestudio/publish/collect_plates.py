@@ -234,8 +234,9 @@ class CollectPlatesData(api.InstancePlugin):
             'stagingDir': staging_dir,
             'name': ext,
             'ext': ext,
-            "frameStart": frame_start,
             "frameEnd": frame_end,
+            "frameStart": "%0{}d".format(
+                len(str(frame_end))) % frame_start
         }
         instance.data["representations"].append(plates_representation)
 
