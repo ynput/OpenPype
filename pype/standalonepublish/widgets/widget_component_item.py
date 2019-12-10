@@ -1,6 +1,5 @@
 import os
 from . import QtCore, QtGui, QtWidgets
-from . import SvgButton
 from . import get_resource
 from pypeapp import style
 
@@ -362,3 +361,173 @@ class LightingButton(QtWidgets.QPushButton):
         height = preview_font_metrics.height() + 5
         self.setMaximumWidth(width)
         self.setMaximumHeight(height)
+
+
+class PngFactory:
+    png_names = {
+        "trash": {
+            "normal": QtGui.QIcon(get_resource("trash.png")),
+            "hover": QtGui.QIcon(get_resource("trash_hover.png")),
+            "pressed": QtGui.QIcon(get_resource("trash_pressed.png")),
+            "pressed_hover": QtGui.QIcon(
+                get_resource("trash_pressed_hover.png")
+            ),
+            "disabled": QtGui.QIcon(get_resource("trash_disabled.png"))
+        },
+
+        "menu": {
+            "normal": QtGui.QIcon(get_resource("menu.png")),
+            "hover": QtGui.QIcon(get_resource("menu_hover.png")),
+            "pressed": QtGui.QIcon(get_resource("menu_pressed.png")),
+            "pressed_hover": QtGui.QIcon(
+                get_resource("menu_pressed_hover.png")
+            ),
+            "disabled": QtGui.QIcon(get_resource("menu_disabled.png"))
+        }
+    }
+
+
+class PngButton(QtWidgets.QPushButton):
+    png_button_style = """
+    QPushButton {
+        border: none;
+        background-color: transparent;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+    QPushButton:hover {}
+    QPushButton:pressed {}
+    QPushButton:disabled {}
+    QPushButton:checked {}
+    QPushButton:checked:hover {}
+    QPushButton:checked:pressed {}
+    """
+
+    def __init__(
+        self, name=None, path=None, hover_path=None, pressed_path=None,
+        hover_pressed_path=None, disabled_path=None,
+        size=None, *args, **kwargs
+    ):
+        self._hovered = False
+        self._pressed = False
+        super(PngButton, self).__init__(*args, **kwargs)
+        self.setStyleSheet(self.png_button_style)
+
+        png_dict = {}
+        if name:
+            png_dict = PngFactory.png_names.get(name) or {}
+            if not png_dict:
+                print((
+                    "WARNING: There is not set icon with name \"{}\""
+                    "in PngFactory!"
+                ).format(name))
+
+        ico_normal = png_dict.get("normal")
+        ico_hover = png_dict.get("hover")
+        ico_pressed = png_dict.get("pressed")
+        ico_hover_pressed = png_dict.get("pressed_hover")
+        ico_disabled = png_dict.get("disabled")
+
+        if path:
+            ico_normal = QtGui.QIcon(path)
+        if hover_path:
+            ico_hover = QtGui.QIcon(hover_path)
+
+        if pressed_path:
+            ico_pressed = QtGui.QIcon(hover_path)
+
+        if hover_pressed_path:
+            ico_hover_pressed = QtGui.QIcon(hover_pressed_path)
+
+        if disabled_path:
+            ico_disabled = QtGui.QIcon(disabled_path)
+
+        self.setIcon(ico_normal)
+        if size:
+            self.setIconSize(size)
+            self.setMaximumSize(size)
+
+        self.ico_normal = ico_normal
+        self.ico_hover = ico_hover
+        self.ico_pressed = ico_pressed
+        self.ico_hover_pressed = ico_hover_pressed
+        self.ico_disabled = ico_disabled
+
+    def setDisabled(self, in_bool):
+        super(PngButton, self).setDisabled(in_bool)
+        icon = self.ico_normal
+        if in_bool and self.ico_disabled:
+            icon = self.ico_disabled
+        self.setIcon(icon)
+
+    def enterEvent(self, event):
+        self._hovered = True
+        if not self.isEnabled():
+            return
+        icon = self.ico_normal
+        if self.ico_hover:
+            icon = self.ico_hover
+
+        if self._pressed and self.ico_hover_pressed:
+            icon = self.ico_hover_pressed
+
+        if self.icon() != icon:
+            self.setIcon(icon)
+
+    def mouseMoveEvent(self, event):
+        super(PngButton, self).mouseMoveEvent(event)
+        if self._pressed:
+            mouse_pos = event.pos()
+            hovering = self.rect().contains(mouse_pos)
+            if hovering and not self._hovered:
+                self.enterEvent(event)
+            elif not hovering and self._hovered:
+                self.leaveEvent(event)
+
+    def leaveEvent(self, event):
+        self._hovered = False
+        if not self.isEnabled():
+            return
+        icon = self.ico_normal
+        if self._pressed and self.ico_pressed:
+            icon = self.ico_pressed
+
+        if self.icon() != icon:
+            self.setIcon(icon)
+
+    def mousePressEvent(self, event):
+        self._pressed = True
+        if not self.isEnabled():
+            return
+        icon = self.ico_hover
+        if self.ico_pressed:
+            icon = self.ico_pressed
+
+        if self.ico_hover_pressed:
+            mouse_pos = event.pos()
+            if self.rect().contains(mouse_pos):
+                icon = self.ico_hover_pressed
+
+        if icon is None:
+            icon = self.ico_normal
+
+        if self.icon() != icon:
+            self.setIcon(icon)
+
+    def mouseReleaseEvent(self, event):
+        if not self.isEnabled():
+            return
+        if self._pressed:
+            self._pressed = False
+            mouse_pos = event.pos()
+            if self.rect().contains(mouse_pos):
+                self.clicked.emit()
+
+        icon = self.ico_normal
+        if self._hovered and self.ico_hover:
+            icon = self.ico_hover
+
+        if self.icon() != icon:
+            self.setIcon(icon)
