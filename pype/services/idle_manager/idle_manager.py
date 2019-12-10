@@ -1,6 +1,6 @@
 import time
 import collections
-from Qt import QtCore, QtGui, QtWidgets
+from Qt import QtCore
 from pynput import mouse, keyboard
 from pypeapp import Logger
 
