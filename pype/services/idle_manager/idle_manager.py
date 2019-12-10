@@ -29,6 +29,13 @@ class IdleManager(QtCore.QThread):
     def tray_start(self):
         self.start()
 
+    def tray_exit(self):
+        self.stop()
+        try:
+            self.time_signals = {}
+        except Exception:
+            pass
+
     def add_time_signal(self, emit_time, signal):
         """ If any module want to use IdleManager, need to use add_time_signal
         :param emit_time: time when signal will be emitted
