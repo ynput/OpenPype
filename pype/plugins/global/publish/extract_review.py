@@ -1,5 +1,5 @@
 import os
-
+import math
 import pyblish.api
 import clique
 import pype.api
@@ -31,8 +31,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         inst_data = instance.data
         fps = inst_data.get("fps")
         start_frame = inst_data.get("frameStart")
-        resolution_height = instance.dataget("resolutionHeight", 1080)
-        resolution_width = instance.dataget("resolutionWidth", 1920)
+        resolution_height = instance.data.get("resolutionHeight", 1080)
+        resolution_width = instance.data.get("resolutionWidth", 1920)
         pixel_aspect = instance.data.get("pixelAspect", 1)
         self.log.debug("Families In: `{}`".format(instance.data["families"]))
 
@@ -169,10 +169,36 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             # output filename
                             output_args.append(full_output_path)
 
+                            self.log.debug("__ pixel_aspect: `{}`".format(pixel_aspect))
+                            self.log.debug("__ resolution_width: `{}`".format(resolution_width))
+                            self.log.debug("__ resolution_height: `{}`".format(resolution_height))
                             # scaling none square pixels and 1920 width
                             if "reformat" in p_tags:
-                                scaling_arg = "scale=1920:'ceil((1920/{})/2)*2':flags=lanczos,setsar=1".format(
-                                    (lb/pixel_aspect * (resolution_width / resolution_height)))
+                                width_scale = 1920
+                                width_half_pad = 0
+                                res_w = int(float(resolution_width) * pixel_aspect)
+                                height_half_pad = int((
+                                    (res_w - 1920) / (
+                                        res_w * .01) * (
+                                            1080 * .01)) / 2
+                                    )
+                                height_scale = 1080 - (height_half_pad * 2)
+                                if height_scale > 1080:
+                                    height_half_pad = 0
+                                    height_scale = 1080
+                                    width_half_pad = (1920 - (float(resolution_width) * (1080 / float(resolution_height))) ) / 2
+                                    width_scale = int(1920 - (width_half_pad * 2))
+
+                                self.log.debug("__ width_scale: `{}`".format(width_scale))
+                                self.log.debug("__ width_half_pad: `{}`".format(width_half_pad))
+                                self.log.debug("__ height_scale: `{}`".format(height_scale))
+                                self.log.debug("__ height_half_pad: `{}`".format(height_half_pad))
+
+
+                                scaling_arg = "scale={0}x{1}:flags=lanczos,pad=1920:1080:{2}:{3}:black,setsar=1".format(
+                                    width_scale, height_scale, width_half_pad, height_half_pad
+                                )
+
                                 vf_back = self.add_video_filter_args(
                                     output_args, scaling_arg)
                                 # add it to output_args
