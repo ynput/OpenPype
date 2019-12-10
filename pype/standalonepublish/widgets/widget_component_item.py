@@ -5,10 +5,6 @@ from pypeapp import style
 
 
 class ComponentItem(QtWidgets.QFrame):
-    C_NORMAL = '#777777'
-    C_HOVER = '#ffffff'
-    C_ACTIVE = '#4BB543'
-    C_ACTIVE_HOVER = '#4BF543'
 
     signal_remove = QtCore.Signal(object)
     signal_thumbnail = QtCore.Signal(object)
@@ -57,10 +53,8 @@ class ComponentItem(QtWidgets.QFrame):
         self.icon.setText("")
         self.icon.setScaledContents(True)
 
-        self.btn_action_menu = SvgButton(
-            get_resource('menu.svg'), 22, 22,
-            [self.C_NORMAL, self.C_HOVER],
-            frame_image_info, False
+        self.btn_action_menu = PngButton(
+            name="menu", size=QtCore.QSize(22, 22)
         )
 
         self.action_menu = QtWidgets.QMenu()
@@ -87,7 +81,9 @@ class ComponentItem(QtWidgets.QFrame):
 
         self.file_info.setStyleSheet('padding-left:3px;')
 
-        expanding_sizePolicy.setHeightForWidth(self.name.sizePolicy().hasHeightForWidth())
+        expanding_sizePolicy.setHeightForWidth(
+            self.name.sizePolicy().hasHeightForWidth()
+        )
 
         frame_name_repre = QtWidgets.QFrame(frame)
 
@@ -103,7 +99,8 @@ class ComponentItem(QtWidgets.QFrame):
         layout.addWidget(self.ext, alignment=QtCore.Qt.AlignRight)
 
         frame_name_repre.setSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding
+            QtWidgets.QSizePolicy.MinimumExpanding,
+            QtWidgets.QSizePolicy.MinimumExpanding
         )
 
         # Repre + icons
@@ -155,12 +152,7 @@ class ComponentItem(QtWidgets.QFrame):
 
         layout_main.addWidget(frame_middle)
 
-        self.remove = SvgButton(
-            get_resource('trash.svg'), 22, 22,
-            [self.C_NORMAL, self.C_HOVER],
-            frame, False
-        )
-
+        self.remove = PngButton(name="trash", size=QtCore.QSize(22, 22))
         layout_main.addWidget(self.remove)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -350,6 +342,7 @@ class LightingButton(QtWidgets.QPushButton):
         color: #4BF543;
     }
     """
+
     def __init__(self, text, *args, **kwargs):
         super().__init__(text, *args, **kwargs)
         self.setStyleSheet(self.lightingbtnstyle)
