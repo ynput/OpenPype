@@ -30,7 +30,7 @@ class ExtractThumbnail(pype.api.Extractor):
     def render_thumbnail(self, instance):
         node = instance[0] # group node
         self.log.info("Creating staging dir...")
-        if "representations" not in instance.data:
+        if "representations" in instance.data:
             staging_dir = instance.data[
                 "representations"][0]["stagingDir"].replace("\\", "/")
             instance.data["stagingDir"] = staging_dir

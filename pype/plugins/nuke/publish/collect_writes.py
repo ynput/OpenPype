@@ -76,7 +76,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 }
 
             try:
-                collected_frames = os.listdir(output_dir)
+                collected_frames = [f for f in os.listdir(output_dir)
+                                    if ext in f]
                 if collected_frames:
                     representation['frameStart'] = "%0{}d".format(
                         len(str(last_frame))) % first_frame
