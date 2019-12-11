@@ -69,6 +69,9 @@ class ExtractReviewData(pype.api.Extractor):
             first_frame = instance.data.get("frameStart", None)
             last_frame = instance.data.get("frameEnd", None)
 
+        if "#" in fhead:
+            fhead = fhead.replace("#", "")[:-1]
+
         rnode = nuke.createNode("Read")
 
         rnode["file"].setValue(
