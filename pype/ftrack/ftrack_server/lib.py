@@ -49,7 +49,9 @@ def ftrack_events_mongo_settings():
 
 
 def get_ftrack_event_mongo_info():
-    host, port, database, username, password, collection, auth_db = ftrack_events_mongo_settings()
+    host, port, database, username, password, collection, auth_db = (
+        ftrack_events_mongo_settings()
+    )
     user_pass = ""
     if username and password:
         user_pass = "{}:{}@".format(username, password)
