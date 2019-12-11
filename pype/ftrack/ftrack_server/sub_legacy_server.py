@@ -1,4 +1,3 @@
-import os
 import sys
 import time
 import datetime
@@ -7,7 +6,6 @@ import threading
 
 from ftrack_server import FtrackServer
 import ftrack_api
-from ftrack_api.event.hub import EventHub
 from pypeapp import Logger
 
 log = Logger().get_logger("Event Server Legacy")
@@ -37,7 +35,10 @@ class TimerChecker(threading.Thread):
 
             if not self.session.event_hub.connected:
                 if not connected:
-                    if (datetime.datetime.now() - start).seconds > self.max_time_out:
+                    if (
+                        (datetime.datetime.now() - start).seconds >
+                        self.max_time_out
+                    ):
                         log.error((
                             "Exiting event server. Session was not connected"
                             " to ftrack server in {} seconds."
@@ -61,7 +62,7 @@ class TimerChecker(threading.Thread):
 def main(args):
     check_thread = None
     try:
-        server = FtrackServer('event')
+        server = FtrackServer("event")
         session = ftrack_api.Session(auto_connect_event_hub=True)
 
         check_thread = TimerChecker(server, session)
