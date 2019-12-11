@@ -14,33 +14,6 @@ import ftrack_api.event
 from ftrack_api.logging import LazyLogMessage as L
 
 
-class StorerEventHub(ftrack_api.event.hub.EventHub):
-    def __init__(self, *args, **kwargs):
-        self.sock = kwargs.pop("sock")
-        super(StorerEventHub, self).__init__(*args, **kwargs)
-
-    def _handle_packet(self, code, packet_identifier, path, data):
-        """Override `_handle_packet` which extend heartbeat"""
-        code_name = self._code_name_mapping[code]
-        if code_name == "heartbeat":
-            # Reply with heartbeat.
-            self.sock.sendall(b"storer")
-            return self._send_packet(self._code_name_mapping['heartbeat'])
-
-        elif code_name == "connect":
-            event = ftrack_api.event.base.Event(
-                topic="pype.storer.started",
-                data={},
-                source={
-                    "id": self.id,
-                    "user": {"username": self._api_user}
-                }
-            )
-            self._event_queue.put(event)
-
-        return super(StorerEventHub, self)._handle_packet(
-            code, packet_identifier, path, data
-        )
 
 
 class StorerSession(ftrack_api.session.Session):
