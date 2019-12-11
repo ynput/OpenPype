@@ -76,6 +76,10 @@ def launch(event):
 
 def trigger_sync(event):
     session = SessionFactory.session
+    source_id = event.get("source", {}).get("id")
+    if not source_id or source_id != session.event_hub.id:
+        return
+
     if session is None:
         log.warning("Session is not set. Can't trigger Sync to avalon action.")
         return True
