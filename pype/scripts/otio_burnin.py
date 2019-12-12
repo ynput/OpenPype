@@ -9,6 +9,21 @@ from pype import api as pype
 log = pype.Logger().get_logger("BurninWrapper", "burninwrap")
 
 
+ffmpeg_path = os.environ.get("FFMPEG_PATH")
+if ffmpeg_path and os.path.exists(ffmpeg_path):
+    # add separator "/" or "\" to be prepared for next part
+    ffmpeg_path += os.path.sep
+else:
+    ffmpeg_path = ""
+
+FFMPEG = (
+    '{} -loglevel panic -i %(input)s %(filters)s %(args)s%(output)s'
+).format(os.path.normpath(ffmpeg_path + "ffmpeg"))
+FFPROBE = (
+    '{} -v quiet -print_format json -show_format -show_streams %(source)s'
+).format(os.path.normpath(ffmpeg_path + "ffprobe"))
+
+
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
     '''
     This is modification of OTIO FFmpeg Burnin adapter.
