@@ -91,6 +91,9 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
     }
 
     def __init__(self, source, streams=None, options_init=None):
+        if not streams:
+            streams = _streams(source)
+
         super().__init__(source, streams)
         if options_init:
             self.options_init.update(options_init)
