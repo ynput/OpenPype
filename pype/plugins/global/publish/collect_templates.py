@@ -85,3 +85,6 @@ class CollectTemplates(pyblish.api.InstancePlugin):
         instance.data["assumedDestination"] = os.path.dirname(
             (anatomy.format(template_data))["publish"]["path"]
         )
+        self.log.info("Assumed Destination has been created...")
+        self.log.debug("__ assumedTemplateData: `{}`".format(instance.data["assumedTemplateData"]))
+        self.log.debug("__ template: `{}`".format(instance.data["template"]))
