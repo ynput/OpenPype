@@ -1,5 +1,7 @@
 import os
 import datetime
+import subprocess
+import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from pypeapp.lib import config
 from pype import api as pype
@@ -22,6 +24,19 @@ FFMPEG = (
 FFPROBE = (
     '{} -v quiet -print_format json -show_format -show_streams %(source)s'
 ).format(os.path.normpath(ffmpeg_path + "ffprobe"))
+
+
+def _streams(source):
+    """Reimplemented from otio burnins to be able use full path to ffprobe
+    :param str source: source media file
+    :rtype: [{}, ...]
+    """
+    command = FFPROBE % {'source': source}
+    proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    out = proc.communicate()[0]
+    if proc.returncode != 0:
+        raise RuntimeError("Failed to run: %s" % command)
+    return json.loads(out)['streams']
 
 
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
