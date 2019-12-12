@@ -217,7 +217,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if self.filter_string:
             filters = '-vf "{}"'.format(self.filter_string)
 
-        return (ffmpeg_burnins.FFMPEG % {
+        return (FFMPEG % {
             'input': self.source,
             'output': output,
             'args': '%s ' % args if args else '',
@@ -398,7 +398,7 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
     codec_args = ''
     if codec_data is not []:
         codec_args = " ".join(codec_data)
-        
+
     burnin.render(output_path, args=codec_args, overwrite=overwrite)
 
 
