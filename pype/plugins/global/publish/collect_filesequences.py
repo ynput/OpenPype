@@ -100,6 +100,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
     label = "RenderedFrames"
 
     def process(self, context):
+        pixel_aspect = 1
+        lut_path = None
         if os.environ.get("PYPE_PUBLISH_PATHS"):
             paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
             self.log.info("Collecting paths: {}".format(paths))
@@ -144,6 +146,12 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         self.log.info("setting session using metadata")
                         api.Session.update(session)
                         os.environ.update(session)
+                    instance = metadata.get("instance")
+                    if instance:
+                        instance_family = instance.get("family")
+                        pixel_aspect = instance.get("pixelAspect", 1)
+                        lut_path = instance.get("lutPath", None)
+
 
             else:
                 # Search in directory
@@ -181,6 +189,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 families.append("ftrack")
             if "review" not in families:
                 families.append("review")
+            if "write" in instance_family:
+                families.append("write")
 
             for collection in collections:
                 instance = context.create_instance(str(collection))
@@ -197,6 +207,11 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 start = data.get("frameStart", indices[0])
                 end = data.get("frameEnd", indices[-1])
 
+                self.log.debug("Collected pixel_aspect:\n"
+                               "{}".format(pixel_aspect))
+                self.log.debug("type pixel_aspect:\n"
+                               "{}".format(type(pixel_aspect)))
+
                 # root = os.path.normpath(root)
                 # self.log.info("Source: {}}".format(data.get("source", "")))
 
@@ -212,8 +227,11 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     "frameStart": start,
                     "frameEnd": end,
                     "fps": fps,
-                    "source": data.get('source', '')
+                    "source": data.get('source', ''),
+                    "pixelAspect": pixel_aspect,
                 })
+                if lut_path:
+                    instance.data.update({"lutPath": lut_path})
                 instance.append(collection)
                 instance.context.data['fps'] = fps
 
