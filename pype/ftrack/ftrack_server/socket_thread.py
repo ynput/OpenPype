@@ -125,7 +125,7 @@ class SocketThread(threading.Thread):
     def get_data_from_con(self, connection):
         return connection.recv(16)
 
-    def handle_data(self, connection, data):
+    def _handle_data(self, connection, data):
         if not data:
             return
 
