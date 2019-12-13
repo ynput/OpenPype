@@ -161,7 +161,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 if "reformat" not in p_tags:
                                     lb /= pixel_aspect
                                 output_args.append(
-                                    "-filter:v drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{0})))/2):iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black".format(lb))
+                                    "-filter:v scale=1920x1080:flags=lanczos,setsar=1,drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{0})))/2):iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black".format(lb))
 
                             # In case audio is longer than video.
                             output_args.append("-shortest")

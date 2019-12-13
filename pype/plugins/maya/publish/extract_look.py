@@ -74,6 +74,8 @@ def maketx(source, destination, *args):
     cmd.extend(args)
     cmd.extend(["-o", destination, source])
 
+    cmd = " ".join(cmd)
+
     CREATE_NO_WINDOW = 0x08000000
     kwargs = dict(args=cmd, stderr=subprocess.STDOUT)
 
@@ -183,6 +185,7 @@ class ExtractLook(pype.api.Extractor):
         transfers = list()
         hardlinks = list()
         hashes = dict()
+        forceCopy = instance.data.get("forceCopy", False)
 
         self.log.info(files)
         for filepath in files_metadata:
@@ -195,20 +198,26 @@ class ExtractLook(pype.api.Extractor):
                 files_metadata[filepath]["color_space"] = "raw"
 
             source, mode, hash = self._process_texture(
-                filepath, do_maketx, staging=dir_path, linearise=linearise
+                filepath,
+                do_maketx,
+                staging=dir_path,
+                linearise=linearise,
+                force=forceCopy
             )
             destination = self.resource_destination(instance,
                                                     source,
                                                     do_maketx)
 
             # Force copy is specified.
-            if instance.data.get("forceCopy", False):
+            if forceCopy:
                 mode = COPY
 
             if mode == COPY:
                 transfers.append((source, destination))
+                self.log.info('copying')
             elif mode == HARDLINK:
                 hardlinks.append((source, destination))
+                self.log.info('hardlinking')
 
             # Store the hashes from hash to destination to include in the
             # database
@@ -231,11 +240,12 @@ class ExtractLook(pype.api.Extractor):
             # ensure after context it's still the original value.
             color_space_attr = resource["node"] + ".colorSpace"
             color_space = cmds.getAttr(color_space_attr)
-
+            if files_metadata[source]["color_space"] == "raw":
+                # set colorpsace to raw if we linearized it
+                color_space = "Raw"
             # Remap file node filename to destination
             attr = resource["attribute"]
             remap[attr] = destinations[source]
-
             remap[color_space_attr] = color_space
 
         self.log.info("Finished remapping destinations ...")
@@ -310,6 +320,12 @@ class ExtractLook(pype.api.Extractor):
         # Source hash for the textures
         instance.data["sourceHashes"] = hashes
 
+        """
+        self.log.info("Returning colorspaces to their original values ...")
+        for attr, value in remap.items():
+            self.log.info("  - {}: {}".format(attr, value))
+            cmds.setAttr(attr, value, type="string")
+        """
         self.log.info("Extracted instance '%s' to: %s" % (instance.name,
                                                           maya_path))
 
@@ -330,7 +346,7 @@ class ExtractLook(pype.api.Extractor):
             instance.data["assumedDestination"], "resources", basename + ext
         )
 
-    def _process_texture(self, filepath, do_maketx, staging, linearise):
+    def _process_texture(self, filepath, do_maketx, staging, linearise, force):
         """Process a single texture file on disk for publishing.
         This will:
             1. Check whether it's already published, if so it will do hardlink
@@ -352,7 +368,7 @@ class ExtractLook(pype.api.Extractor):
         # If source has been published before with the same settings,
         # then don't reprocess but hardlink from the original
         existing = find_paths_by_hash(texture_hash)
-        if existing:
+        if existing and not force:
             self.log.info("Found hash in database, preparing hardlink..")
             source = next((p for p in existing if os.path.exists(p)), None)
             if filepath:

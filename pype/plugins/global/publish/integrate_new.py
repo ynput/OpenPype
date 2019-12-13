@@ -71,7 +71,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "yetiRig",
                 "yeticache",
                 "nukenodes",
-                "gizmo"
+                "gizmo",
                 "source",
                 "matchmove",
                 "image"
