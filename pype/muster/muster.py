@@ -43,8 +43,10 @@ class MusterModule:
             self.aShowLogin.trigger()
 
         if "RestApiServer" in modules:
+            def api_show_login():
+                self.aShowLogin.trigger()
             modules["RestApiServer"].register_callback(
-                "muster/show_login", api_callback, "post"
+                "/show_login", api_show_login, "muster", "post"
             )
 
     # Definition of Tray menu

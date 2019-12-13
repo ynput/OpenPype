@@ -1,7 +1,7 @@
 import time
 import collections
-from Qt import QtCore, QtGui, QtWidgets
-from pype.vendor.pynput import mouse, keyboard
+from Qt import QtCore
+from pynput import mouse, keyboard
 from pypeapp import Logger
 
 
@@ -28,6 +28,13 @@ class IdleManager(QtCore.QThread):
 
     def tray_start(self):
         self.start()
+
+    def tray_exit(self):
+        self.stop()
+        try:
+            self.time_signals = {}
+        except Exception:
+            pass
 
     def add_time_signal(self, emit_time, signal):
         """ If any module want to use IdleManager, need to use add_time_signal

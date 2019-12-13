@@ -11,7 +11,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.1
     label = "Collect Writes"
     hosts = ["nuke", "nukeassist"]
-    families = ["render", "render.local", "render.farm"]
+    families = ["write"]
 
     def process(self, instance):
 
@@ -76,7 +76,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 }
 
             try:
-                collected_frames = os.listdir(output_dir)
+                collected_frames = [f for f in os.listdir(output_dir)
+                                    if ext in f]
                 if collected_frames:
                     representation['frameStart'] = "%0{}d".format(
                         len(str(last_frame))) % first_frame
@@ -99,7 +100,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "subset": instance.data["subset"],
             "fps": instance.context.data["fps"]
         }
-
+        instance.data["family"] = "write"
         group_node = [x for x in instance if x.Class() == "Group"][0]
         deadlineChunkSize = 1
         if "deadlineChunkSize" in group_node.knobs():
@@ -109,6 +110,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         if "deadlinePriority" in group_node.knobs():
             deadlinePriority = group_node["deadlinePriority"].value()
 
+        families = [f for f in instance.data["families"] if "write" not in f]
         instance.data.update({
             "versionData": version_data,
             "path": path,
@@ -119,9 +121,13 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameStart": first_frame,
             "frameEnd": last_frame,
             "outputType": output_type,
+            "family": "write",
+            "families": families,
             "colorspace": node["colorspace"].value(),
             "deadlineChunkSize": deadlineChunkSize,
-            "deadlinePriority": deadlinePriority
+            "deadlinePriority": deadlinePriority,
+            "subsetGroup": "renders"
         })
+
 
         self.log.debug("instance.data: {}".format(instance.data))

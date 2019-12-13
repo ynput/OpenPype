@@ -1,9 +1,6 @@
-import os
 import contextlib
 
-from avalon import api
-import avalon.io as io
-
+from avalon import api, io
 
 import nuke
 
@@ -102,7 +99,7 @@ class LoadMov(api.Loader):
         handle_start = version_data.get("handleStart", None)
         handle_end = version_data.get("handleEnd", None)
         repr_cont = context["representation"]["context"]
-        
+
         # fix handle start and end if none are available
         if not handle_start and not handle_end:
             handle_start = handles

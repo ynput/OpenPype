@@ -14,7 +14,7 @@ class IncrementScriptVersion(pyblish.api.ContextPlugin):
     def process(self, context):
 
         assert all(result["success"] for result in context.data["results"]), (
-            "Atomicity not held, aborting.")
+            "Publishing not succesfull so version is not increased.")
 
         instances = context[:]
 

@@ -2,12 +2,9 @@ import os
 import json
 
 from ruamel import yaml
-from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from pypeapp import config
-from pype.ftrack.lib import get_avalon_attr
-
-from pype.vendor.ftrack_api import session as fa_session
+from pype.ftrack.lib.avalon_sync import get_avalon_attr
 
 
 class PrepareProject(BaseAction):
@@ -55,6 +52,8 @@ class PrepareProject(BaseAction):
         attributes_to_set = {}
         for attr in hier_cust_attrs:
             key = attr["key"]
+            if key.startswith("avalon_"):
+                continue
             attributes_to_set[key] = {
                 "label": attr["label"],
                 "object": attr,
@@ -65,6 +64,8 @@ class PrepareProject(BaseAction):
             if attr["entity_type"].lower() != "show":
                 continue
             key = attr["key"]
+            if key.startswith("avalon_"):
+                continue
             attributes_to_set[key] = {
                 "label": attr["label"],
                 "object": attr,

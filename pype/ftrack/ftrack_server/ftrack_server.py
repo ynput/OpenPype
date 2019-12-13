@@ -2,7 +2,7 @@ import os
 import sys
 import types
 import importlib
-from pype.vendor import ftrack_api
+import ftrack_api
 import time
 import logging
 import inspect
@@ -100,7 +100,10 @@ class FtrackServer:
                     log.warning(msg, exc_info=e)
 
         if len(register_functions_dict) < 1:
-            raise Exception
+            raise Exception((
+                "There are no events with register function."
+                " Registered paths: \"{}\""
+            ).format("| ".join(paths)))
 
         # Load presets for setting plugins
         key = "user"

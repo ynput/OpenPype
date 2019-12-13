@@ -27,6 +27,8 @@ class ValidateFfmpegInstallef(pyblish.api.Validator):
         return True
 
     def process(self, instance):
+        self.log.info("ffmpeg path: `{}`".format(
+            os.environ.get("FFMPEG_PATH", "")))
         if self.is_tool(
                 os.path.join(
                     os.environ.get("FFMPEG_PATH", ""), "ffmpeg")) is False:

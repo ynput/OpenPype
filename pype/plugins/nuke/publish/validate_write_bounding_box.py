@@ -57,7 +57,7 @@ class ValidateNukeWriteBoundingBox(pyblish.api.InstancePlugin):
 
     order = pyblish.api.ValidatorOrder
     optional = True
-    families = ["write"]
+    families = ["render"]
     label = "Write Bounding Box"
     hosts = ["nuke"]
     actions = [RepairNukeBoundingBoxAction]

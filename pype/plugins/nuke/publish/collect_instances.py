@@ -21,7 +21,8 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
-        # creating instances per write node
+
+        root = nuke.root()
 
         self.log.debug("nuke.allNodes(): {}".format(nuke.allNodes()))
         for node in nuke.allNodes():
@@ -31,11 +32,11 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     continue
             except Exception as E:
                 self.log.warning(E)
-                continue
+                
 
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
-            avalon_knob_data = get_avalon_knob_data(node)
+            avalon_knob_data = get_avalon_knob_data(node, ["avalon:", "ak:"])
 
             self.log.debug("avalon_knob_data: {}".format(avalon_knob_data))
 
@@ -43,6 +44,14 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 continue
 
             if avalon_knob_data["id"] != "pyblish.avalon.instance":
+                continue
+
+            # establish families
+            family = avalon_knob_data["family"]
+            families = list()
+
+            # except disabled nodes but exclude backdrops in test
+            if ("nukenodes" not in family) and (node["disable"].value()):
                 continue
 
             subset = avalon_knob_data.get(
@@ -54,22 +63,56 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             # Add all nodes in group instances.
             if node.Class() == "Group":
+                # only alter families for render family
+                if ("render" in family):
+                    # check if node is not disabled
+                    families.append(avalon_knob_data["families"])
+                    if node["render"].value():
+                        self.log.info("flagged for render")
+                        add_family = "render.local"
+                        # dealing with local/farm rendering
+                        if node["render_farm"].value():
+                            self.log.info("adding render farm family")
+                            add_family = "render.farm"
+                            instance.data["transfer"] = False
+                        families.append(add_family)
+                    else:
+                        # add family into families
+                        families.insert(0, family)
+
                 node.begin()
                 for i in nuke.allNodes():
                     instance.append(i)
                 node.end()
 
-            family = avalon_knob_data["families"]
+            family = avalon_knob_data["family"]
+            families = avalon_knob_data.get("families")
+            if families:
+                families = [families]
+            else:
+                families = [family]
+
+            # Get format
+            format = root['format'].value()
+            resolution_width = format.width()
+            resolution_height = format.height()
+            pixel_aspect = format.pixelAspect()
 
             if node.Class() not in "Read":
-                if node["render"].value():
+                if "render" not in node.knobs().keys():
+                    families.insert(0, family)
+                elif node["render"].value():
                     self.log.info("flagged for render")
-                    family = "render.local"
+                    add_family = "render.local"
                     # dealing with local/farm rendering
                     if node["render_farm"].value():
                         self.log.info("adding render farm family")
-                        family = "render.farm"
-                        instance.data['transfer'] = False
+                        add_family = "render.farm"
+                        instance.data["transfer"] = False
+                    families.append(add_family)
+                else:
+                    # add family into families
+                    families.insert(0, family)
 
             instance.data.update({
                 "subset": subset,
@@ -77,12 +120,15 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "label": node.name(),
                 "name": node.name(),
                 "subset": subset,
-                "family": avalon_knob_data["family"],
-                "families": [avalon_knob_data["family"], family],
+                "family": family,
+                "families": families,
                 "avalonKnob": avalon_knob_data,
                 "publish": node.knob('publish').value(),
                 "step": 1,
-                "fps": nuke.root()['fps'].value()
+                "fps": nuke.root()['fps'].value(),
+                "resolutionWidth": resolution_width,
+                "resolutionHeight": resolution_height,
+                "pixelAspect": pixel_aspect,
 
             })
 
@@ -90,5 +136,4 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             instances.append(instance)
 
         context.data["instances"] = instances
-
         self.log.debug("context: {}".format(context))

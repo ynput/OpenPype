@@ -11,8 +11,8 @@ import pype.api
 
 from maya import cmds
 import pymel.core as pm
-from pype.vendor import ffmpeg
-reload(ffmpeg)
+# import ffmpeg
+# reload(ffmpeg)
 
 import avalon.maya
 

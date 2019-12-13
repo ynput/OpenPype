@@ -1,18 +1,23 @@
 import os
 from os.path import getsize
 import logging
-import speedcopy
+import sys
 import clique
 import errno
 import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
+# this is needed until speedcopy for linux is fixed
+if sys.platform == "win32":
+    from speedcopy import copyfile
+else:
+    from shutil import copyfile
 
 log = logging.getLogger(__name__)
 
 
 class IntegrateAssetNew(pyblish.api.InstancePlugin):
-    """Resolve any dependency issius
+    """Resolve any dependency issues
 
     This plug-in resolves any paths which, if not updated might break
     the published file.
@@ -57,7 +62,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "render",
                 "imagesequence",
                 "review",
-                "render",
                 "rendersetup",
                 "rig",
                 "plate",
@@ -66,7 +70,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "audio",
                 "yetiRig",
                 "yeticache",
-                "source"
+                "nukenodes",
+                "gizmo",
+                "source",
+                "matchmove",
+                "image"
                 ]
     exclude_families = ["clip"]
 
@@ -406,7 +414,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }
 
             if sequence_repre and repre.get("frameStart"):
-                representation['context']['frame'] = repre.get("frameStart")
+                representation['context']['frame'] = src_padding_exp % int(repre.get("frameStart"))
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -476,7 +484,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
-            speedcopy.copyfile(src, dst)
+            copyfile(src, dst)
             if str(getsize(src)) in str(getsize(dst)):
                 break
 
@@ -494,7 +502,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         filelink.create(src, dst, filelink.HARDLINK)
 
     def get_subset(self, asset, instance):
-
         subset = io.find_one({"type": "subset",
                               "parent": asset["_id"],
                               "name": instance.data["subset"]})
@@ -503,7 +510,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             subset_name = instance.data["subset"]
             self.log.info("Subset '%s' not found, creating.." % subset_name)
             self.log.debug("families.  %s" % instance.data.get('families'))
-            self.log.debug("families.  %s" % type(instance.data.get('families')))
+            self.log.debug(
+                "families.  %s" % type(instance.data.get('families')))
 
             _id = io.insert_one({
                 "schema": "pype:subset-3.0",
@@ -516,6 +524,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }).inserted_id
 
             subset = io.find_one({"_id": _id})
+
+        # add group if available
+        if instance.data.get("subsetGroup"):
+            io.update_many({
+                'type': 'subset',
+                '_id': io.ObjectId(subset["_id"])
+            }, {'$set': {'data.subsetGroup':
+                instance.data.get('subsetGroup')}}
+            )
 
         return subset
 

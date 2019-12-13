@@ -43,8 +43,13 @@ class ExtractAssProxy(pype.api.Extractor):
 
         # Get only the shape contents we need in such a way that we avoid
         # taking along intermediateObjects
-        members = instance.data['proxy']
-        members = cmds.ls(members,
+        proxy = instance.data.get('proxy', None)
+
+        if not proxy:
+            self.log.info("no proxy mesh")
+            return
+
+        members = cmds.ls(proxy,
                           dag=True,
                           transforms=True,
                           noIntermediate=True)

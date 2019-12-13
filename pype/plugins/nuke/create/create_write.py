@@ -24,18 +24,17 @@ class CreateWriteRender(plugin.PypeCreator):
     def __init__(self, *args, **kwargs):
         super(CreateWriteRender, self).__init__(*args, **kwargs)
 
-        self.name = self.data["subset"]
-
         data = OrderedDict()
 
-        data["family"] = self.nClass
-        data["families"] = self.family
+        data["family"] = self.family
+        data["families"] = self.nClass
 
         for k, v in self.data.items():
             if k not in data.keys():
                 data.update({k: v})
 
         self.data = data
+        self.nodes = nuke.selectedNodes()
         self.log.info("self.data: '{}'".format(self.data))
 
     def process(self):
@@ -48,9 +47,9 @@ class CreateWriteRender(plugin.PypeCreator):
 
         # use selection
         if (self.options or {}).get("useSelection"):
-            nodes = nuke.selectedNodes()
+            nodes = self.nodes
 
-            assert len(nodes) == 1, self.log.error("Select only one node. The node you want to connect to, or tick off `Use selection`")
+            assert len(nodes) < 2, self.log.error("Select only one node. The node you want to connect to, or tick off `Use selection`")
 
             selected_node = nodes[0]
             inputs = [selected_node]
