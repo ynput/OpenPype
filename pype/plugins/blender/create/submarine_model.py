@@ -2,7 +2,6 @@
 
 import bpy
 
-import sonar.blender
 from avalon import api
 from avalon.blender import Creator, lib
 
@@ -16,7 +15,7 @@ class CreateModel(Creator):
     icon = "cube"
 
     def process(self):
-
+        import sonar.blender
         asset = self.data["asset"]
         subset = self.data["subset"]
         name = sonar.blender.plugin.model_name(asset, subset)
