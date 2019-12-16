@@ -1,5 +1,6 @@
 import os
 import json
+import copy
 
 import pype.api
 import pyblish
@@ -48,6 +49,9 @@ class ExtractBurnin(pype.api.Extractor):
         template_data = instance.data.get("assumedTemplateData") or {}
         prep_data.update(template_data)
 
+        # get anatomy project
+        anatomy = instance.context.data['anatomy']
+
         self.log.debug("__ prep_data: {}".format(prep_data))
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
@@ -69,11 +73,17 @@ class ExtractBurnin(pype.api.Extractor):
             )
             self.log.debug("__ full_burnin_path: {}".format(full_burnin_path))
 
+            # create copy of prep_data for anatomy formatting
+            _prep_data = copy.deepcopy(prep_data)
+            _prep_data["representation"] = repre["name"]
+            _prep_data["anatomy"] = (
+                anatomy.format_all(_prep_data).get("solved") or {}
+            )
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),
                 "codec": repre.get("codec", []),
                 "output": full_burnin_path.replace("\\", "/"),
-                "burnin_data": prep_data
+                "burnin_data": _prep_data
             }
 
             self.log.debug("__ burnin_data2: {}".format(burnin_data))
