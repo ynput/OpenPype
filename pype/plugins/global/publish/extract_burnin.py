@@ -32,6 +32,7 @@ class ExtractBurnin(pype.api.Extractor):
         frame_start = int(instance.data.get("frameStart") or 0)
         frame_end = int(instance.data.get("frameEnd") or 1)
         duration = frame_end - frame_start + 1
+
         prep_data = {
             "username": instance.context.data['user'],
             "asset": os.environ['AVALON_ASSET'],
@@ -39,8 +40,14 @@ class ExtractBurnin(pype.api.Extractor):
             "frame_start": frame_start,
             "frame_end": frame_end,
             "duration": duration,
-            "version": version
+            "version": version,
+            "comment": instance.context.data.get("comment"),
+            "intent": instance.context.data.get("intent")
         }
+        # Update data with template data
+        template_data = instance.data.get("assumedTemplateData") or {}
+        prep_data.update(template_data)
+
         self.log.debug("__ prep_data: {}".format(prep_data))
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
