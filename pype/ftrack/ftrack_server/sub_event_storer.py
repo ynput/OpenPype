@@ -7,22 +7,22 @@ import pymongo
 
 import ftrack_api
 from ftrack_server import FtrackServer
-from pype.ftrack.ftrack_server.lib import get_ftrack_event_mongo_info
+from pype.ftrack.ftrack_server.lib import (
+    get_ftrack_event_mongo_info,
+    SocketSession,
+    StorerEventHub
+)
 from pype.ftrack.lib.custom_db_connector import DbConnector
-from session_storer import StorerSession
 from pypeapp import Logger
 
 log = Logger().get_logger("Event storer")
 
+
+class SessionFactory:
+    session = None
+
+
 url, database, table_name = get_ftrack_event_mongo_info()
-
-
-class SessionClass:
-    def __init__(self):
-        self.session = None
-
-
-session_obj = SessionClass()
 dbcon = DbConnector(
     mongo_url=url,
     database_name=database,
@@ -75,7 +75,11 @@ def launch(event):
 
 
 def trigger_sync(event):
-    session = session_obj.session
+    session = SessionFactory.session
+    source_id = event.get("source", {}).get("id")
+    if not source_id or source_id != session.event_hub.id:
+        return
+
     if session is None:
         log.warning("Session is not set. Can't trigger Sync to avalon action.")
         return True
@@ -93,7 +97,7 @@ def trigger_sync(event):
         "$set": {"pype_data.is_processed": True}
     }
     dbcon.update_many(query, set_dict)
-    
+
     selections = []
     for project in projects:
         if project["status"] != "active":
@@ -154,8 +158,10 @@ def main(args):
     sock.sendall(b"CreatedStore")
 
     try:
-        session = StorerSession(auto_connect_event_hub=True, sock=sock)
-        session_obj.session = session
+        session = SocketSession(
+            auto_connect_event_hub=True, sock=sock, Eventhub=StorerEventHub
+        )
+        SessionFactory.session = session
         register(session)
         server = FtrackServer("event")
         log.debug("Launched Ftrack Event storer")

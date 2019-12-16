@@ -22,6 +22,8 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
 
+        root = nuke.root()
+
         self.log.debug("nuke.allNodes(): {}".format(nuke.allNodes()))
         for node in nuke.allNodes():
 
@@ -30,11 +32,11 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     continue
             except Exception as E:
                 self.log.warning(E)
-                continue
+                
 
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
-            avalon_knob_data = get_avalon_knob_data(node)
+            avalon_knob_data = get_avalon_knob_data(node, ["avalon:", "ak:"])
 
             self.log.debug("avalon_knob_data: {}".format(avalon_knob_data))
 
@@ -84,10 +86,22 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 node.end()
 
             family = avalon_knob_data["family"]
-            families = [avalon_knob_data["families"]]
+            families = avalon_knob_data.get("families")
+            if families:
+                families = [families]
+            else:
+                families = [family]
+
+            # Get format
+            format = root['format'].value()
+            resolution_width = format.width()
+            resolution_height = format.height()
+            pixel_aspect = format.pixelAspect()
 
             if node.Class() not in "Read":
-                if node["render"].value():
+                if "render" not in node.knobs().keys():
+                    families.insert(0, family)
+                elif node["render"].value():
                     self.log.info("flagged for render")
                     add_family = "render.local"
                     # dealing with local/farm rendering
@@ -111,7 +125,10 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 "avalonKnob": avalon_knob_data,
                 "publish": node.knob('publish').value(),
                 "step": 1,
-                "fps": nuke.root()['fps'].value()
+                "fps": nuke.root()['fps'].value(),
+                "resolutionWidth": resolution_width,
+                "resolutionHeight": resolution_height,
+                "pixelAspect": pixel_aspect,
 
             })
 
@@ -119,5 +136,4 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             instances.append(instance)
 
         context.data["instances"] = instances
-
         self.log.debug("context: {}".format(context))
