@@ -86,11 +86,13 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 node.end()
 
             family = avalon_knob_data["family"]
-            families = avalon_knob_data.get("families")
-            if families:
-                families = [families]
+            families = list()
+            families_ak = avalon_knob_data.get("families")
+
+            if families_ak:
+                families.append(families_ak)
             else:
-                families = [family]
+                families.append(family)
 
             # Get format
             format = root['format'].value()
@@ -100,7 +102,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             if node.Class() not in "Read":
                 if "render" not in node.knobs().keys():
-                    families.insert(0, family)
+                    pass
                 elif node["render"].value():
                     self.log.info("flagged for render")
                     add_family = "render.local"
