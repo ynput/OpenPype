@@ -24,19 +24,24 @@ class SelectInvalidAction(pyblish.api.Action):
                 if isinstance(invalid_nodes, (list, tuple)):
                     invalid.extend(invalid_nodes)
                 else:
-                    self.log.warning("Failed plug-in doens't have any selectable objects.")
+                    self.log.warning(
+                        "Failed plug-in doens't have any selectable objects."
+                    )
+
+        bpy.ops.object.select_all(action='DESELECT')
 
         # Make sure every node is only processed once
         invalid = list(set(invalid))
-
-        bpy.ops.object.select_all(action='DESELECT')
-        if invalid:
-            invalid_names = [obj.name for obj in invalid]
-            self.log.info("Selecting invalid objects: %s", ", ".join(invalid_names))
-            # Select the objects and also make the last one the active object.
-            for obj in invalid:
-                obj.select_set(True)
-            bpy.context.view_layer.objects.active = invalid[-1]
-
-        else:
+        if not invalid:
             self.log.info("No invalid nodes found.")
+            return
+
+        invalid_names = [obj.name for obj in invalid]
+        self.log.info(
+            "Selecting invalid objects: %s", ", ".join(invalid_names)
+        )
+        # Select the objects and also make the last one the active object.
+        for obj in invalid:
+            obj.select_set(True)
+
+        bpy.context.view_layer.objects.active = invalid[-1]
