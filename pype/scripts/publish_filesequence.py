@@ -4,7 +4,16 @@ import os
 import logging
 import subprocess
 import platform
-from shutil import which
+try:
+    from shutil import which
+except ImportError:
+    # we are in python < 3.3
+    def which(command):
+        path = os.getenv('PATH')
+        for p in path.split(os.path.pathsep):
+            p = os.path.join(p, command)
+            if os.path.exists(p) and os.access(p, os.X_OK):
+                return p
 
 handler = logging.basicConfig()
 log = logging.getLogger("Publish Image Sequences")
