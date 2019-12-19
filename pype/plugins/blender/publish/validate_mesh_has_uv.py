@@ -3,7 +3,7 @@ from typing import List
 import bpy
 
 import pyblish.api
-import sonar.blender.action
+import pype.blender.action
 
 
 class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
@@ -14,7 +14,7 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     families = ["model"]
     category = "geometry"
     label = "Mesh Has UV's"
-    actions = [sonar.blender.action.SelectInvalidAction]
+    actions = [pype.blender.action.SelectInvalidAction]
     optional = True
 
     @staticmethod
@@ -34,7 +34,9 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance) -> List:
         invalid = []
         # TODO (jasper): only check objects in the collection that will be published?
-        for obj in [obj for obj in bpy.data.objects if obj.type == 'MESH']:
+        for obj in [
+            obj for obj in bpy.context.blend_data.objects if obj.type == 'MESH'
+        ]:
             # Make sure we are in object mode.
             bpy.ops.object.mode_set(mode='OBJECT')
             if not cls.has_uvs(obj):

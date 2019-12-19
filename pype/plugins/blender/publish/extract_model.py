@@ -1,10 +1,10 @@
-from pathlib import Path
+import os
 import avalon.blender.workio
 
-import sonar.api
+import pype.api
 
 
-class ExtractModel(sonar.api.Extractor):
+class ExtractModel(pype.api.Extractor):
     """Extract as model."""
 
     label = "Model"
@@ -14,9 +14,10 @@ class ExtractModel(sonar.api.Extractor):
 
     def process(self, instance):
         # Define extract output file path
-        stagingdir = Path(self.staging_dir(instance))
+
+        stagingdir = self.staging_dir(instance)
         filename = f"{instance.name}.blend"
-        filepath = str(stagingdir / filename)
+        filepath = os.path.join(stagingdir, filename)
 
         # Perform extraction
         self.log.info("Performing extraction..")
@@ -24,11 +25,23 @@ class ExtractModel(sonar.api.Extractor):
         # Just save the file to a temporary location. At least for now it's no
         # problem to have (possibly) extra stuff in the file.
         avalon.blender.workio.save_file(filepath, copy=True)
+        #
+        # # Store reference for integration
+        # if "files" not in instance.data:
+        #     instance.data["files"] = list()
+        #
+        # # instance.data["files"].append(filename)
 
-        # Store reference for integration
-        if "files" not in instance.data:
-            instance.data["files"] = list()
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
-        instance.data["files"].append(filename)
+        representation = {
+            'name': 'blend',
+            'ext': 'blend',
+            'files': filename,
+            "stagingDir": stagingdir,
+        }
+        instance.data["representations"].append(representation)
 
-        self.log.info("Extracted instance '%s' to: %s", instance.name, filepath)
+
+        self.log.info("Extracted instance '%s' to: %s", instance.name, representation)
