@@ -119,7 +119,7 @@ class CreateRender(avalon.maya.Creator):
         self.data["suspendPublishJob"] = False
         self.data["extendFrames"] = False
         self.data["overrideExistingFrame"] = True
-        self.data["useLegacyRenderLayers"] = True
+        # self.data["useLegacyRenderLayers"] = True
         self.data["priority"] = 50
         self.data["framesPerTask"] = 1
         self.data["whitelist"] = False
