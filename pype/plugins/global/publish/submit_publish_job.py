@@ -282,6 +282,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         relative_path = os.path.relpath(source, api.registered_root())
         source = os.path.join("{root}", relative_path).replace("\\", "/")
 
+        # find subsets and version to attach render to
+        attach_to = instance.data.get("attachTo")
+        attach_subset_versions = []
+        if attach_to:
+            for subset in attach_to:
+                for instance in context:
+                    if instance.data["subset"] != subset:
+                        continue
+                    attach_subset_versions.append(
+                        {"version": instance.data["version"],
+                         "subset": subset})
+
         # Write metadata for publish job
         metadata = {
             "asset": asset,
@@ -293,6 +305,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "source": source,
             "user": context.data["user"],
             "version": context.data["version"],
+            "attachTo": attach_subset_versions,
             # Optional metadata (for debugging)
             "metadata": {
                 "instance": data,

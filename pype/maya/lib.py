@@ -2488,7 +2488,7 @@ class RenderSetupListObserver:
         members = cmds.sets(render_set, query=True)
         if "LAYER_{}".format(layer_name) in members:
             print("  - removing set for {}".format(layer_name))
-            cmds.delete(n="LAYER_{}".format(layer_name))
+            cmds.delete("LAYER_{}".format(layer_name))
 
 
 class RenderSetupItemObserver():

@@ -191,6 +191,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 families.append("review")
             if "write" in instance_family:
                 families.append("write")
+            if data.get("attachTo"):
+                families.append("attach-render")
 
             for collection in collections:
                 instance = context.create_instance(str(collection))
@@ -232,6 +234,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 })
                 if lut_path:
                     instance.data.update({"lutPath": lut_path})
+
+                if data.get("attachTo"):
+                    instance.data.update({"attachTo": data.get("attachTo")})
+
                 instance.append(collection)
                 instance.context.data['fps'] = fps
 
