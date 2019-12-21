@@ -69,12 +69,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             sets = cmds.sets(layer, query=True) or []
             if sets:
                 for s in sets:
-                    self.log.info("  - attach render to: {}".format(s))
-
-            self.log.debug("marked subsets: {}".format(sets))
+                    self.log.info(" -> attach render to: {}".format(s))
 
             layer_name = "rs_{}".format(expected_layer_name)
-            self.log.info("  - %s" % layer_name)
+
             # Get layer specific settings, might be overrides
             data = {
                 "subset": expected_layer_name,
@@ -146,8 +144,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         """
 
         attributes = maya.read(render_globals)
-
-        self.log.info(attributes)
 
         options = {"renderGlobals": {}}
         options["renderGlobals"]["Priority"] = attributes["priority"]
