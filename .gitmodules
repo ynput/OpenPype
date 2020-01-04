@@ -1,0 +1,3 @@
+[submodule "setup/nuke/nuke_path/KnobScripter-github"]
+	path = setup/nuke/nuke_path/KnobScripter-github
+	url = https://github.com/pypeclub/KnobScripter
