@@ -1,4 +1,5 @@
 import atom_server
+import KnobScripter
 
 from pype.nuke.lib import (
     writes_version_sync,
