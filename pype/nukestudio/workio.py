@@ -22,19 +22,16 @@ def has_unsaved_changes():
 
 
 def save_file(filepath):
+    file = os.path.basename(filepath)
     project = hiero.core.projects()[-1]
 
-    # close `Untitled` project
-    if "Untitled" not in project.name():
-        log.info("Saving project: `{}`".format(project.name()))
+    if project:
+        log.info("Saving project: `{}` as '{}'".format(project.name(), file))
         project.saveAs(filepath)
-    elif not project:
+    else:
         log.info("Creating new project...")
         project = hiero.core.newProject()
         project.saveAs(filepath)
-    else:
-        log.info("Dropping `Untitled` project...")
-        return
 
 
 def open_file(filepath):
