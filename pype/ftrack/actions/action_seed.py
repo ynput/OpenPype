@@ -9,7 +9,7 @@ class SeedDebugProject(BaseAction):
     #: Action identifier.
     identifier = "seed.debug.project"
     #: Action label.
-    label = "SeedDebugProject"
+    label = "Seed Debug Project"
     #: Action description.
     description = "Description"
     #: priority
