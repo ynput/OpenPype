@@ -270,6 +270,10 @@ class SeedDebugProject(BaseAction):
         except ValueError:
             asset_count = 0
 
+        if asset_count <= 0:
+            self.log.debug("No assets to create")
+            return
+
         main_entity = self.session.create("Folder", {
             "name": "Assets",
             "parent": project
@@ -321,6 +325,18 @@ class SeedDebugProject(BaseAction):
             shots_count = int(shots_count)
         except ValueError:
             shots_count = 0
+
+        # Check if both are higher than 0
+        missing = []
+        if seq_count <= 0:
+            missing.append("sequences")
+
+        if shots_count <= 0:
+            missing.append("shots")
+
+        if missing:
+            self.log.debug("No {} to create".format(" and ".join(missing)))
+            return
 
         # Create Folder "Shots"
         main_entity = self.session.create("Folder", {
