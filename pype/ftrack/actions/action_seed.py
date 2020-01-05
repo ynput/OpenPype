@@ -265,6 +265,11 @@ class SeedDebugProject(BaseAction):
     def create_assets(self, project, asset_count):
         self.log.debug("*** Creating assets:")
 
+        try:
+            asset_count = int(asset_count)
+        except ValueError:
+            asset_count = 0
+
         main_entity = self.session.create("Folder", {
             "name": "Assets",
             "parent": project
@@ -305,6 +310,19 @@ class SeedDebugProject(BaseAction):
 
     def create_shots(self, project, seq_count, shots_count):
         self.log.debug("*** Creating shots:")
+
+        # Convert counts to integers
+        try:
+            seq_count = int(seq_count)
+        except ValueError:
+            seq_count = 0
+
+        try:
+            shots_count = int(shots_count)
+        except ValueError:
+            shots_count = 0
+
+        # Create Folder "Shots"
         main_entity = self.session.create("Folder", {
             "name": "Shots",
             "parent": project
