@@ -14,24 +14,35 @@ log = logging.getLogger(__name__)
 
 
 # Special naming case for subprocess since its a built-in method.
-def _subprocess(args):
+def _subprocess(*args, **kwargs):
     """Convenience method for getting output errors for subprocess."""
 
     # make sure environment contains only strings
-    env = {k: str(v) for k, v in os.environ.items()}
+    filtered_env = {k: str(v) for k, v in os.environ.items()}
 
-    proc = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        stdin=subprocess.PIPE,
-        env=env
-    )
+    # set overrides
+    kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
+    kwargs['stderr'] = kwargs.get('stderr', subprocess.STDOUT)
+    kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
+    kwargs['env'] = kwargs.get('env',filtered_env)
 
-    output = proc.communicate()[0]
+    proc = subprocess.Popen(*args, **kwargs)
+
+    output, error = proc.communicate()
+
+    if output:
+        output = output.decode("utf-8")
+        output += "\n"
+        for line in output.strip().split("\n"):
+            log.info(line)
+
+    if error:
+        error = error.decode("utf-8")
+        error += "\n"
+        for line in error.strip().split("\n"):
+            log.error(line)
 
     if proc.returncode != 0:
-        log.error(output)
         raise ValueError("\"{}\" was not successful: {}".format(args, output))
     return output
 
