@@ -25,18 +25,25 @@ def set_workfiles():
     ''' Wrapping function for workfiles launcher '''
     from avalon.tools import workfiles
 
-    # import session to get project dir
-    S = avalon.Session
-    active_project_root = os.path.normpath(
-        os.path.join(S['AVALON_PROJECTS'], S['AVALON_PROJECT'])
-    )
     workdir = os.environ["AVALON_WORKDIR"]
 
     # show workfile gui
     workfiles.show(workdir)
 
+def sync_avalon_data_to_workfile():
+    # import session to get project dir
+    S = avalon.Session
+    active_project_root = os.path.normpath(
+        os.path.join(S['AVALON_PROJECTS'], S['AVALON_PROJECT'])
+    )
     # getting project
     project = hiero.core.projects()[-1]
+
+    if "Tag Presets" in project.name():
+        return
+
+    log.debug("Synchronizing Pype metadata to project: {}".format(
+        project.name()))
 
     # set project root with backward compatibility
     try:
@@ -48,7 +55,7 @@ def set_workfiles():
     # get project data from avalon db
     project_data = pype.get_project()["data"]
 
-    log.info("project_data: {}".format(project_data))
+    log.debug("project_data: {}".format(project_data))
 
     # get format and fps property from avalon db on project
     width = project_data["resolutionWidth"]
@@ -66,6 +73,17 @@ def set_workfiles():
 
     # TODO: add auto colorspace set from project drop
     log.info("Project property has been synchronised with Avalon db")
+
+
+def launch_workfiles_app(event):
+    """
+    Event for launching workfiles after nukestudio start
+
+    Args:
+        event (obj): required but unused
+    """
+    set_workfiles()
+
 
 
 def reload_config():

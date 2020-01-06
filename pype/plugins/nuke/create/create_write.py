@@ -24,8 +24,6 @@ class CreateWriteRender(plugin.PypeCreator):
     def __init__(self, *args, **kwargs):
         super(CreateWriteRender, self).__init__(*args, **kwargs)
 
-        self.name = self.data["subset"]
-
         data = OrderedDict()
 
         data["family"] = self.family
@@ -36,11 +34,11 @@ class CreateWriteRender(plugin.PypeCreator):
                 data.update({k: v})
 
         self.data = data
+        self.nodes = nuke.selectedNodes()
         self.log.info("self.data: '{}'".format(self.data))
 
     def process(self):
         from pype.nuke import lib as pnlib
-        reload(pnlib)
 
         inputs = []
         outputs = []
@@ -49,9 +47,9 @@ class CreateWriteRender(plugin.PypeCreator):
 
         # use selection
         if (self.options or {}).get("useSelection"):
-            nodes = nuke.selectedNodes()
+            nodes = self.nodes
 
-            assert len(nodes) == 1, self.log.error("Select only one node. The node you want to connect to, or tick off `Use selection`")
+            assert len(nodes) < 2, self.log.error("Select only one node. The node you want to connect to, or tick off `Use selection`")
 
             selected_node = nodes[0]
             inputs = [selected_node]
@@ -101,7 +99,7 @@ class CreateWriteRender(plugin.PypeCreator):
         for output in outputs:
             output.setInput(0, write_node)
 
-        return True
+        return write_node
 
 #
 # class CreateWritePrerender(avalon.nuke.Creator):

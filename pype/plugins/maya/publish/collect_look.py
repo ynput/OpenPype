@@ -219,10 +219,6 @@ class CollectLook(pyblish.api.InstancePlugin):
         with lib.renderlayer(instance.data["renderlayer"]):
             self.collect(instance)
 
-        # make ftrack publishable
-        self.maketx = instance.data.get('maketx', True)
-        instance.data['maketx'] = self.maketx
-        self.log.info('maketx: {}'.format(self.maketx))
 
     def collect(self, instance):
 
@@ -297,9 +293,11 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         self.log.info("Collected file nodes:\n{}".format(files))
         # Collect textures if any file nodes are found
-        instance.data["resources"] = [self.collect_resource(n)
-                                      for n in files]
-        self.log.info("Collected resources:\n{}".format(instance.data["resources"]))
+        instance.data["resources"] = []
+        for n in files:
+            instance.data["resources"].append(self.collect_resource(n))
+
+        self.log.info("Collected resources: {}".format(instance.data["resources"]))
 
         # Log a warning when no relevant sets were retrieved for the look.
         if not instance.data["lookData"]["relationships"]:
@@ -423,7 +421,7 @@ class CollectLook(pyblish.api.InstancePlugin):
 
         self.log.debug("processing: {}".format(node))
         if cmds.nodeType(node) == 'file':
-            self.log.debug("file node")
+            self.log.debug("  - file node")
             attribute = "{}.fileTextureName".format(node)
             computed_attribute = "{}.computedFileTextureNamePattern".format(node)
         elif cmds.nodeType(node) == 'aiImage':
@@ -431,7 +429,7 @@ class CollectLook(pyblish.api.InstancePlugin):
             attribute = "{}.filename".format(node)
             computed_attribute = attribute
         source = cmds.getAttr(attribute)
-
+        self.log.info("  - file source: {}".format(source))
         color_space_attr = "{}.colorSpace".format(node)
         color_space = cmds.getAttr(color_space_attr)
         # Compare with the computed file path, e.g. the one with the <UDIM>
@@ -454,6 +452,13 @@ class CollectLook(pyblish.api.InstancePlugin):
         files = get_file_node_files(node)
         if len(files) == 0:
             self.log.error("No valid files found from node `%s`" % node)
+
+        self.log.info("collection of resource done:")
+        self.log.info("  - node: {}".format(node))
+        self.log.info("  - attribute: {}".format(attribute))
+        self.log.info("  - source: {}".format(source))
+        self.log.info("  - file: {}".format(files))
+        self.log.info("  - color space: {}".format(color_space))
 
         # Define the resource
         return {"node": node,

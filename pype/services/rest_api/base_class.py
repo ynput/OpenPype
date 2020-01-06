@@ -1,4 +1,3 @@
-from functools import wraps
 from http import HTTPStatus
 
 from .lib import (
@@ -15,9 +14,12 @@ def route(path, url_prefix="", methods=[], strict_match=False):
     :type path: str
     :param url_prefix: Specify prefix of path, defaults to "/".
     :type url_prefix: str, list, optional
-    :param methods: Specify request method (GET, POST, PUT, etc.) when callback will be triggered, defaults to ["GET"]
+    :param methods: Specify request method (GET, POST, PUT, etc.) when
+        callback will be triggered, defaults to ["GET"]
     :type methods: list, str, optional
-    :param strict_match: Decides if callback can handle both single and multiple entities (~/projects/<project_name> && ~/projects/), defaults to False.
+    :param strict_match: Decides if callback can handle both single and
+        multiple entities (~/projects/<project_name> && ~/projects/),
+        defaults to False.
     :type strict_match: bool
 
     `path` may include dynamic keys that will be stored to object which can
@@ -36,6 +38,7 @@ def route(path, url_prefix="", methods=[], strict_match=False):
     In this case request path must be "/avalon/projects" to trigger registered
     callback.
     """
+
     def decorator(callback):
         RestApiFactory.register_route(
             path, callback, url_prefix, methods, strict_match
@@ -49,26 +52,32 @@ def register_statics(url_prefix, dir_path):
     """Decorator that register callback and all its attributes.
     Callback is registered to Singleton RestApiFactory.
 
-    :param url_prefix: Specify prefix of path, defaults to "/". (Example: "/resources")
+    :param url_prefix: Specify prefix of path, defaults to "/".
+        (Example: "/resources")
     :type url_prefix: str
     :param dir_path: Path to file folder where statics are located.
     :type dir_path: str
     """
+
     RestApiFactory.register_statics((url_prefix, dir_path))
 
 
 def abort(status_code=HTTPStatus.NOT_FOUND, message=None):
-    """Should be used to stop registered callback
+    """Should be used to stop registered callback.
     `abort` raise AbortException that is handled with request Handler which
     returns entered status and may send optional message in body.
 
-    :param status_code: Status that will be send in reply of request, defaults to 404
+    :param status_code: Status that will be send in reply of request,
+        defaults to 404
     :type status_code: int
-    :param message: Message to send in body, default messages are based on statuc_code in Handler, defaults to None
+    :param message: Message to send in body, default messages are based on
+        statuc_code in Handler, defaults to None
     :type message: str, optional
     ...
-    :raises AbortException: This exception is handled in Handler to know about launched `abort`
+    :raises AbortException: This exception is handled in Handler to know
+        about launched `abort`
     """
+
     items = []
     items.append(str(status_code))
     if not message:
@@ -85,9 +94,10 @@ class RestApi:
     Use this class is required when it is necessary to have class for handling
     requests and want to use decorators for registering callbacks.
 
-    It is possible to use decorators in another class only when object, of class
-    where decorators are, is registered to RestApiFactory.
+    It is possible to use decorators in another class only when object,
+    of class where decorators are, is registered to RestApiFactory.
     """
+
     def route(path, url_prefix="", methods=[], strict_match=False):
         return route(path, url_prefix, methods, strict_match)
 

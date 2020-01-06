@@ -1,16 +1,12 @@
 import os
 import re
 import logging
-import importlib
 import itertools
 import contextlib
 import subprocess
 import inspect
 
-from .vendor import pather
-from .vendor.pather.error import ParseError
-
-import avalon.io as io
+from avalon import io
 import avalon.api
 import avalon
 
@@ -18,21 +14,35 @@ log = logging.getLogger(__name__)
 
 
 # Special naming case for subprocess since its a built-in method.
-def _subprocess(args):
+def _subprocess(*args, **kwargs):
     """Convenience method for getting output errors for subprocess."""
 
-    proc = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        stdin=subprocess.PIPE,
-        env=os.environ
-    )
+    # make sure environment contains only strings
+    filtered_env = {k: str(v) for k, v in os.environ.items()}
 
-    output = proc.communicate()[0]
+    # set overrides
+    kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
+    kwargs['stderr'] = kwargs.get('stderr', subprocess.STDOUT)
+    kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
+    kwargs['env'] = kwargs.get('env',filtered_env)
+
+    proc = subprocess.Popen(*args, **kwargs)
+
+    output, error = proc.communicate()
+
+    if output:
+        output = output.decode("utf-8")
+        output += "\n"
+        for line in output.strip().split("\n"):
+            log.info(line)
+
+    if error:
+        error = error.decode("utf-8")
+        error += "\n"
+        for line in error.strip().split("\n"):
+            log.error(line)
 
     if proc.returncode != 0:
-        log.error(output)
         raise ValueError("\"{}\" was not successful: {}".format(args, output))
     return output
 
@@ -562,7 +572,7 @@ def get_subsets(asset_name,
         find_dict = {"type": "representation",
                      "parent": version_sel["_id"]}
 
-        filter_repr = {"$or": [{"name": repr} for repr in representations]}
+        filter_repr = {"name": {"$in": representations}}
 
         find_dict.update(filter_repr)
         repres_out = [i for i in io.find(find_dict)]
@@ -572,3 +582,43 @@ def get_subsets(asset_name,
                                            "representaions": repres_out}
 
     return output_dict
+
+
+class CustomNone:
+    """Created object can be used as custom None (not equal to None).
+
+    WARNING: Multiple created objects are not equal either.
+    Exmple:
+        >>> a = CustomNone()
+        >>> a == None
+        False
+        >>> b = CustomNone()
+        >>> a == b
+        False
+        >>> a == a
+        True
+    """
+
+    def __init__(self):
+        """Create uuid as identifier for custom None."""
+        import uuid
+        self.identifier = str(uuid.uuid4())
+
+    def __bool__(self):
+        """Return False (like default None)."""
+        return False
+
+    def __eq__(self, other):
+        """Equality is compared by identifier value."""
+        if type(other) == type(self):
+            if other.identifier == self.identifier:
+                return True
+        return False
+
+    def __str__(self):
+        """Return value of identifier when converted to string."""
+        return self.identifier
+
+    def __repr__(self):
+        """Representation of custom None."""
+        return "<CustomNone-{}>".format(str(self.identifier))

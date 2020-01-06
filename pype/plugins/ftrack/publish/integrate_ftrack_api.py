@@ -1,5 +1,6 @@
 import os
 import sys
+import six
 import pyblish.api
 import clique
 
@@ -125,6 +126,12 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                         metadata=asset_metadata
                     )
                 )
+                try:
+                    session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    session.rollback()
+                    six.reraise(tp, value, tb)
 
             # Adding metadata
             existing_asset_metadata = asset_entity["metadata"]
@@ -137,10 +144,11 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 "version": 0,
                 "asset": asset_entity,
             }
-            if task:
-                assetversion_data['task'] = task
-
-            assetversion_data.update(data.get("assetversion_data", {}))
+            _assetversion_data = data.get("assetversion_data", {})
+            assetversion_cust_attrs = _assetversion_data.pop(
+                "custom_attributes", {}
+            )
+            assetversion_data.update(_assetversion_data)
 
             assetversion_entity = session.query(
                 self.query("AssetVersion", assetversion_data)
@@ -149,6 +157,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Extracting metadata, and adding after entity creation. This is
             # due to a ftrack_api bug where you can't add metadata on creation.
             assetversion_metadata = assetversion_data.pop("metadata", {})
+
+            if task:
+                assetversion_data['task'] = task
 
             # Create a new entity if none exits.
             if not assetversion_entity:
@@ -162,15 +173,38 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                         metadata=assetversion_metadata
                     )
                 )
+                try:
+                    session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    session.rollback()
+                    six.reraise(tp, value, tb)
 
             # Adding metadata
             existing_assetversion_metadata = assetversion_entity["metadata"]
             existing_assetversion_metadata.update(assetversion_metadata)
             assetversion_entity["metadata"] = existing_assetversion_metadata
 
+            # Adding Custom Attributes
+            for attr, val in assetversion_cust_attrs.items():
+                if attr in assetversion_entity["custom_attributes"]:
+                    assetversion_entity["custom_attributes"][attr] = val
+                    continue
+
+                self.log.warning((
+                    "Custom Attrubute \"{0}\""
+                    " is not available for AssetVersion."
+                    " Can't set it's value to: \"{1}\""
+                ).format(attr, str(val)))
+
             # Have to commit the version and asset, because location can't
             # determine the final location without.
-            session.commit()
+            try:
+                session.commit()
+            except Exception:
+                tp, value, tb = sys.exc_info()
+                session.rollback()
+                six.reraise(tp, value, tb)
 
             # Component
             # Get existing entity.
@@ -209,7 +243,12 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                     session.delete(member)
                     del(member)
 
-                session.commit()
+                try:
+                    session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    session.rollback()
+                    six.reraise(tp, value, tb)
 
                 # Reset members in memory
                 if "members" in component_entity.keys():
@@ -320,4 +359,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 )
             else:
                 # Commit changes.
-                session.commit()
+                try:
+                    session.commit()
+                except Exception:
+                    tp, value, tb = sys.exc_info()
+                    session.rollback()
+                    six.reraise(tp, value, tb)

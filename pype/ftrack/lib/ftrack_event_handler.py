@@ -26,6 +26,7 @@ class BaseEvent(BaseHandler):
             try:
                 func(*args, **kwargs)
             except Exception as exc:
+                self.session.rollback()
                 self.log.error(
                     'Event "{}" Failed: {}'.format(
                         self.__class__.__name__, str(exc)
