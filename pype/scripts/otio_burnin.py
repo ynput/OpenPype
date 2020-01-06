@@ -413,12 +413,14 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
         elif bi_func == 'timecode':
             burnin.add_timecode(align, start_frame=frame_start_tc)
+
         elif bi_func == 'text':
             if not preset.get('text'):
                 log.error('Text is not set for text function burnin!')
                 return
             text = preset['text'].format(**data)
             burnin.add_text(text, align)
+
         elif bi_func == "datetime":
             date_format = preset["format"]
             burnin.add_datetime(date_format, align)
@@ -445,4 +447,4 @@ if __name__ == '__main__':
         data['codec'],
         data['output'],
         data['burnin_data']
-        )
+    )
