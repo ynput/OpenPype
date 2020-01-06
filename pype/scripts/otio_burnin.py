@@ -1,5 +1,7 @@
 import os
 import datetime
+import subprocess
+import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from pypeapp.lib import config
 from pype import api as pype
@@ -7,6 +9,34 @@ from pype import api as pype
 
 
 log = pype.Logger().get_logger("BurninWrapper", "burninwrap")
+
+
+ffmpeg_path = os.environ.get("FFMPEG_PATH")
+if ffmpeg_path and os.path.exists(ffmpeg_path):
+    # add separator "/" or "\" to be prepared for next part
+    ffmpeg_path += os.path.sep
+else:
+    ffmpeg_path = ""
+
+FFMPEG = (
+    '{} -loglevel panic -i %(input)s %(filters)s %(args)s%(output)s'
+).format(os.path.normpath(ffmpeg_path + "ffmpeg"))
+FFPROBE = (
+    '{} -v quiet -print_format json -show_format -show_streams %(source)s'
+).format(os.path.normpath(ffmpeg_path + "ffprobe"))
+
+
+def _streams(source):
+    """Reimplemented from otio burnins to be able use full path to ffprobe
+    :param str source: source media file
+    :rtype: [{}, ...]
+    """
+    command = FFPROBE % {'source': source}
+    proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+    out = proc.communicate()[0]
+    if proc.returncode != 0:
+        raise RuntimeError("Failed to run: %s" % command)
+    return json.loads(out)['streams']
 
 
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
@@ -61,6 +91,9 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
     }
 
     def __init__(self, source, streams=None, options_init=None):
+        if not streams:
+            streams = _streams(source)
+
         super().__init__(source, streams)
         if options_init:
             self.options_init.update(options_init)
@@ -187,7 +220,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if self.filter_string:
             filters = '-vf "{}"'.format(self.filter_string)
 
-        return (ffmpeg_burnins.FFMPEG % {
+        return (FFMPEG % {
             'input': self.source,
             'output': output,
             'args': '%s ' % args if args else '',
@@ -368,7 +401,7 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
     codec_args = ''
     if codec_data is not []:
         codec_args = " ".join(codec_data)
-        
+
     burnin.render(output_path, args=codec_args, overwrite=overwrite)
 
 
