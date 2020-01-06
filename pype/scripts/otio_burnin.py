@@ -98,6 +98,24 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if options_init:
             self.options_init.update(options_init)
 
+    def get_fps(str_value):
+        if str_value == "0/0":
+            print("Source has \"r_frame_rate\" value set to \"0/0\".")
+            return "Unknown"
+
+        items = str_value.split("/")
+        if len(items) == 1:
+            fps = float(items[0])
+
+        elif len(items) == 2:
+            fps = float(items[0]) / float(items[1])
+
+        # Check if fps is integer or float number
+        if int(fps) == fps:
+            fps = int(fps)
+
+        return str(fps)
+
     def add_text(self, text, align, options=None):
         """
         Adding static text to a filter.
