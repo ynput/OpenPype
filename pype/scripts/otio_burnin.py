@@ -95,8 +95,23 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             streams = _streams(source)
 
         super().__init__(source, streams)
+
         if options_init:
             self.options_init.update(options_init)
+
+        if "resolution_width" not in self.options_init:
+            self.options_init["resolution_width"] = (
+                streams[0].get("width", "Unknown")
+            )
+
+        if "resolution_height" not in self.options_init:
+            self.options_init["resolution_height"] = (
+                streams[0].get("height", "Unknown")
+            )
+
+        if "fps" not in self.options_init:
+            fps = self.get_fps(streams[0]["r_frame_rate"])
+            self.options_init["fps"] = fps
 
     def get_fps(str_value):
         if str_value == "0/0":
