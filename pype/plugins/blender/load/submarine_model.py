@@ -38,7 +38,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
         Note:
             It is assumed that only 1 matching collection is found.
         """
-        for collection in bpy.context.blend_data.collections:
+        for collection in bpy.data.collections:
             if collection.name != name:
                 continue
             if collection.library is None:
@@ -82,13 +82,13 @@ class BlendModelLoader(pype.blender.AssetLoader):
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
 
-        with bpy.context.blend_data.libraries.load(
+        with bpy.data.libraries.load(
             libpath, link=True, relative=relative
         ) as (_, data_to):
             data_to.collections = [lib_container]
 
         scene = bpy.context.scene
-        instance_empty = bpy.context.blend_data.objects.new(
+        instance_empty = bpy.data.objects.new(
             container_name, None
         )
         if not instance_empty.get("avalon"):
@@ -97,7 +97,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
         avalon_info.update({"container_name": container_name})
         scene.collection.objects.link(instance_empty)
         instance_empty.instance_type = 'COLLECTION'
-        container = bpy.context.blend_data.collections[lib_container]
+        container = bpy.data.collections[lib_container]
         container.name = container_name
         instance_empty.instance_collection = container
         container.make_local()
@@ -127,7 +127,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
         Warning:
             No nested collections are supported at the moment!
         """
-        collection = bpy.context.blend_data.collections.get(
+        collection = bpy.data.collections.get(
             container["objectName"]
         )
         libpath = Path(api.get_representation_path(representation))
@@ -181,7 +181,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
             collection.objects.unlink(obj)
             remove_obj = True
             for coll in [
-                coll for coll in bpy.context.blend_data.collections
+                coll for coll in bpy.data.collections
                 if coll != collection
             ]:
                 if (
@@ -194,7 +194,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         for obj in objects_to_remove:
             # Only delete objects that are not used elsewhere
-            bpy.context.blend_data.objects.remove(obj)
+            bpy.data.objects.remove(obj)
 
         instance_empties = [
             obj for obj in collection.users_dupli_group
@@ -205,7 +205,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
             container_name = instance_empty["avalon"]["container_name"]
 
         relative = bpy.context.preferences.filepaths.use_relative_paths
-        with bpy.context.blend_data.libraries.load(
+        with bpy.data.libraries.load(
             str(libpath), link=True, relative=relative
         ) as (_, data_to):
             data_to.collections = [container_name]
@@ -219,7 +219,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         for obj in new_collection.objects:
             collection.objects.link(obj)
-        bpy.context.blend_data.collections.remove(new_collection)
+        bpy.data.collections.remove(new_collection)
         # Update the representation on the collection
         avalon_prop = collection[avalon.blender.pipeline.AVALON_PROPERTY]
         avalon_prop["representation"] = str(representation["_id"])
@@ -237,7 +237,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
         Warning:
             No nested collections are supported at the moment!
         """
-        collection = bpy.context.blend_data.collections.get(
+        collection = bpy.data.collections.get(
             container["objectName"]
         )
         if not collection:
@@ -293,18 +293,18 @@ class CacheModelLoader(pype.blender.AssetLoader):
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
 
-        with bpy.context.blend_data.libraries.load(
+        with bpy.data.libraries.load(
             libpath, link=True, relative=relative
         ) as (data_from, data_to):
             data_to.collections = [lib_container]
 
         scene = bpy.context.scene
-        instance_empty = bpy.context.blend_data.objects.new(
+        instance_empty = bpy.data.objects.new(
             container_name, None
         )
         scene.collection.objects.link(instance_empty)
         instance_empty.instance_type = 'COLLECTION'
-        collection = bpy.context.blend_data.collections[lib_container]
+        collection = bpy.data.collections[lib_container]
         collection.name = container_name
         instance_empty.instance_collection = collection
 

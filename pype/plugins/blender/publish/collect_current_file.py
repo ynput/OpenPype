@@ -12,5 +12,5 @@ class CollectBlenderCurrentFile(pyblish.api.ContextPlugin):
 
     def process(self, context):
         """Inject the current working file"""
-        current_file = bpy.context.blend_data.filepath
+        current_file = bpy.data.filepath
         context.data['currentFile'] = current_file

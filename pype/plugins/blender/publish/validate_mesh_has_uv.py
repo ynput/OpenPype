@@ -35,7 +35,7 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
         invalid = []
         # TODO (jasper): only check objects in the collection that will be published?
         for obj in [
-            obj for obj in bpy.context.blend_data.objects if obj.type == 'MESH'
+            obj for obj in bpy.data.objects if obj.type == 'MESH'
         ]:
             # Make sure we are in object mode.
             bpy.ops.object.mode_set(mode='OBJECT')

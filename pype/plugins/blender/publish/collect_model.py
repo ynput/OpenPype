@@ -23,7 +23,7 @@ class CollectModel(pyblish.api.ContextPlugin):
         representation set. If the representation is set, it is a loaded model
         and we don't want to publish it.
         """
-        for collection in bpy.context.blend_data.collections:
+        for collection in bpy.data.collections:
             avalon_prop = collection.get(AVALON_PROPERTY) or dict()
             if (avalon_prop.get('family') == 'model'
                     and not avalon_prop.get('representation')):
