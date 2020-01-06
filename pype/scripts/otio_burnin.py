@@ -118,20 +118,6 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if options_init:
             self.options_init.update(options_init)
 
-        if "resolution_width" not in self.options_init:
-            self.options_init["resolution_width"] = (
-                streams[0].get("width", "Unknown")
-            )
-
-        if "resolution_height" not in self.options_init:
-            self.options_init["resolution_height"] = (
-                streams[0].get("height", "Unknown")
-            )
-
-        if "fps" not in self.options_init:
-            fps = self.get_fps(streams[0]["r_frame_rate"])
-            self.options_init["fps"] = fps
-
     def add_text(self, text, align, options=None):
         """
         Adding static text to a filter.
@@ -362,6 +348,17 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
     frame_start = data.get("frame_start")
     frame_start_tc = data.get('frame_start_tc', frame_start)
+    
+    stream = burnin._streams[0]
+    if "resolution_width" not in data:
+        data["resolution_width"] = stream.get("width", "Unknown")
+
+    if "resolution_height" not in data:
+        data["resolution_height"] = stream.get("height", "Unknown")
+
+    if "fps" not in data:
+        data["fps"] = get_fps(stream.get("r_frame_rate", "0/0"))
+
     for align_text, preset in presets.get('burnins', {}).items():
         align = None
         if align_text == 'TOP_LEFT':
