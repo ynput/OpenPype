@@ -1199,13 +1199,13 @@ class BuildWorkfile(WorkfileSettings):
         self.ypos -= (self.ypos_size * multiply) + self.ypos_gap
 
 
-class Exporter_review_lut:
+class Exporter_review:
     """
-    Generator object for review lut from Nuke
+    Base class object for generating review data from Nuke
 
     Args:
         klass (pyblish.plugin): pyblish plugin parent
-
+        instance (pyblish.context.instance):
 
     """
     _temp_nodes = []
@@ -1215,15 +1215,109 @@ class Exporter_review_lut:
 
     def __init__(self,
                  klass,
+                 instance
+                 ):
+
+        self.log = klass.log
+        self.instance = instance
+        self.path_in = self.instance.data.get("path", None)
+        self.staging_dir = self.instance.data["stagingDir"]
+        self.collection = self.instance.data.get("collection", None)
+
+    def get_file_info(self):
+        if self.collection:
+            self.log.debug("Collection: `{}`".format(self.collection))
+            # get path
+            self.fname = os.path.basename(self.collection.format(
+                "{head}{padding}{tail}"))
+            self.fhead = self.collection.format("{head}")
+
+            # get first and last frame
+            self.first_frame = min(self.collection.indexes)
+            self.last_frame = max(self.collection.indexes)
+        else:
+            self.fname = os.path.basename(self.path_in)
+            self.fhead = os.path.splitext(self.fname)[0] + "."
+            self.first_frame = self.instance.data.get("frameStart", None)
+            self.last_frame = self.instance.data.get("frameEnd", None)
+
+        if "#" in self.fhead:
+            self.fhead = self.fhead.replace("#", "")[:-1]
+
+    def get_representation_data(self, tags=None, range=False):
+        add_tags = []
+        if tags:
+            add_tags = tags
+
+        repre = {
+            'name': self.name,
+            'ext': self.ext,
+            'files': self.file,
+            "stagingDir": self.staging_dir,
+            "anatomy_template": "publish",
+            "tags": [self.name.replace("_", "-")] + add_tags
+        }
+
+        if range:
+            repre.update({
+                "frameStart": self.first_frame,
+                "frameEnd": self.last_frame,
+                })
+
+        self.data["representations"].append(repre)
+
+    def get_view_process_node(self):
+        """
+        Will get any active view process.
+
+        Arguments:
+            self (class): in object definition
+
+        Returns:
+            nuke.Node: copy node of Input Process node
+        """
+        anlib.reset_selection()
+        ipn_orig = None
+        for v in [n for n in nuke.allNodes()
+                  if "Viewer" in n.Class()]:
+            ip = v['input_process'].getValue()
+            ipn = v['input_process_node'].getValue()
+            if "VIEWER_INPUT" not in ipn and ip:
+                ipn_orig = nuke.toNode(ipn)
+                ipn_orig.setSelected(True)
+
+        if ipn_orig:
+            # copy selected to clipboard
+            nuke.nodeCopy('%clipboard%')
+            # reset selection
+            anlib.reset_selection()
+            # paste node and selection is on it only
+            nuke.nodePaste('%clipboard%')
+            # assign to variable
+            ipn = nuke.selectedNode()
+
+            return ipn
+
+
+class Exporter_review_lut(Exporter_review):
+    """
+    Generator object for review lut from Nuke
+
+    Args:
+        klass (pyblish.plugin): pyblish plugin parent
+
+
+    """
+    def __init__(self,
+                 klass,
                  instance,
                  name=None,
                  ext=None,
                  cube_size=None,
                  lut_size=None,
                  lut_style=None):
-
-        self.log = klass.log
-        self.instance = instance
+        # initialize parent class
+        Exporter_review.__init__(self, klass, instance)
 
         self.name = name or "baked_lut"
         self.ext = ext or "cube"
@@ -1231,16 +1325,13 @@ class Exporter_review_lut:
         self.lut_size = lut_size or 1024
         self.lut_style = lut_style or "linear"
 
-        self.stagingDir = self.instance.data["stagingDir"]
-        self.collection = self.instance.data.get("collection", None)
-
         # set frame start / end and file name to self
         self.get_file_info()
 
         self.log.info("File info was set...")
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
-        self.path = os.path.join(self.stagingDir, self.file).replace("\\", "/")
+        self.path = os.path.join(self.staging_dir, self.file).replace("\\", "/")
 
     def generate_lut(self):
         # ---------- start nodes creation
@@ -1303,70 +1394,128 @@ class Exporter_review_lut:
 
         return self.data
 
-    def get_file_info(self):
-        if self.collection:
-            self.log.debug("Collection: `{}`".format(self.collection))
-            # get path
-            self.fname = os.path.basename(self.collection.format(
-                "{head}{padding}{tail}"))
-            self.fhead = self.collection.format("{head}")
 
-            # get first and last frame
-            self.first_frame = min(self.collection.indexes)
-            self.last_frame = max(self.collection.indexes)
+class Exporter_review_mov(Exporter_review):
+    """
+    Metaclass for generating review mov files
+
+    Args:
+        klass (pyblish.plugin): pyblish plugin parent
+
+
+    """
+    def __init__(self,
+                 klass,
+                 instance,
+                 name=None,
+                 ext=None,
+                 ):
+        # initialize parent class
+        Exporter_review.__init__(self, klass, instance)
+
+        # passing presets for nodes to self
+        if hasattr(klass, "nodes"):
+            self.nodes = klass.nodes
         else:
-            self.fname = os.path.basename(self.instance.data.get("path", None))
-            self.fhead = os.path.splitext(self.fname)[0] + "."
-            self.first_frame = self.instance.data.get("frameStart", None)
-            self.last_frame = self.instance.data.get("frameEnd", None)
+            self.nodes = {}
 
-        if "#" in self.fhead:
-            self.fhead = self.fhead.replace("#", "")[:-1]
+        self.name = name or "baked"
+        self.ext = ext or "mov"
 
-    def get_representation_data(self):
+        # set frame start / end and file name to self
+        self.get_file_info()
 
-        repre = {
-            'name': self.name,
-            'ext': self.ext,
-            'files': self.file,
-            "stagingDir": self.stagingDir,
-            "anatomy_template": "publish",
-            "tags": [self.name.replace("_", "-")]
-        }
+        self.log.info("File info was set...")
 
-        self.data["representations"].append(repre)
+        self.file = self.fhead + self.name + ".{}".format(self.ext)
+        self.path = os.path.join(self.staging_dir, self.file).replace("\\", "/")
 
-    def get_view_process_node(self):
-        """
-        Will get any active view process.
+    def generate_mov(self, farm=False):
+        # ---------- start nodes creation
 
-        Arguments:
-            self (class): in object definition
+        # Read node
+        r_node = nuke.createNode("Read")
+        r_node["file"].setValue(self.path_in)
+        r_node["first"].setValue(self.first_frame)
+        r_node["origfirst"].setValue(self.first_frame)
+        r_node["last"].setValue(self.last_frame)
+        r_node["origlast"].setValue(self.last_frame)
+        # connect
+        self._temp_nodes.append(r_node)
+        self.previous_node = r_node
+        self.log.debug("Read...   `{}`".format(self._temp_nodes))
 
-        Returns:
-            nuke.Node: copy node of Input Process node
-        """
-        anlib.reset_selection()
-        ipn_orig = None
-        for v in [n for n in nuke.allNodes()
-                  if "Viewer" in n.Class()]:
-            ip = v['input_process'].getValue()
-            ipn = v['input_process_node'].getValue()
-            if "VIEWER_INPUT" not in ipn and ip:
-                ipn_orig = nuke.toNode(ipn)
-                ipn_orig.setSelected(True)
+        # View Process node
+        ipn = self.get_view_process_node()
+        if ipn is not None:
+            # connect
+            ipn.setInput(0, self.previous_node)
+            self._temp_nodes.append(ipn)
+            self.previous_node = ipn
+            self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
 
-        if ipn_orig:
-            # copy selected to clipboard
-            nuke.nodeCopy('%clipboard%')
-            # reset selection
-            anlib.reset_selection()
-            # paste node and selection is on it only
-            nuke.nodePaste('%clipboard%')
-            # assign to variable
-            ipn = nuke.selectedNode()
+        # reformat_node = nuke.createNode("Reformat")
+        # rn_preset = self.nodes.get("Reformat", None)
+        # if rn_preset:
+        #     self.log.debug("Reformat preset")
+        #     for k, v in rn_preset:
+        #         self.log.debug("k, v: {0}:{1}".format(k, v))
+        #         if isinstance(v, unicode):
+        #             v = str(v)
+        #         reformat_node[k].setValue(v)
+        # # connect
+        # reformat_node.setInput(0, self.previous_node)
+        # self._temp_nodes.append(reformat_node)
+        # self.previous_node = reformat_node
+        # self.log.debug("Reformat...   `{}`".format(self._temp_nodes))
 
-            return ipn
+        # OCIODisplay node
+        dag_node = nuke.createNode("OCIODisplay")
+        # connect
+        dag_node.setInput(0, self.previous_node)
+        self._temp_nodes.append(dag_node)
+        self.previous_node = dag_node
+        self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+
+        # Write node
+        write_node = nuke.createNode("Write")
+        self.log.debug("Path: {}".format(self.path))
+        self.instance.data["baked_colorspace_movie"] = self.path
+        write_node["file"].setValue(self.path)
+        write_node["file_type"].setValue(self.ext)
+        write_node["raw"].setValue(1)
+        # connect
+        write_node.setInput(0, self.previous_node)
+        self._temp_nodes.append(write_node)
+        self.log.debug("Write...   `{}`".format(self._temp_nodes))
+
+        # ---------- end nodes creation
+
+        if not farm:
+            self.log.info("Rendering...  ")
+            # Render Write node
+            nuke.execute(
+                write_node.name(),
+                int(self.first_frame),
+                int(self.last_frame))
+
+            self.log.info("Rendered...")
+
+        # ---------- generate representation data
+        self.get_representation_data(
+            tags=["review", "delete"],
+            range=True
+            )
+
+        self.log.debug("Representation...   `{}`".format(self.data))
+
+        # ---------- Clean up
+        # for node in self._temp_nodes:
+        #     nuke.delete(node)
+        # self.log.info("Deleted nodes...")
+
+        return self.data
+
 
 def get_dependent_nodes(nodes):
     """Get all dependent nodes connected to the list of nodes.

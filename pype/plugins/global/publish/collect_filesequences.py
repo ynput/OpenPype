@@ -148,6 +148,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         os.environ.update(session)
                     instance = metadata.get("instance")
                     if instance:
+                        # here is the place to add ability for nuke noninteractive
+                        # ______________________________________
                         instance_family = instance.get("family")
                         pixel_aspect = instance.get("pixelAspect", 1)
                         resolution_width = instance.get("resolutionWidth", 1920)
