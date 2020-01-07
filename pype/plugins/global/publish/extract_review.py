@@ -196,7 +196,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                     self.log.debug("heigher then delivery")
                                     width_scale = to_width
                                     width_half_pad = 0
-                                    scale_factor = to_width / resolution_width
+                                    scale_factor = float(to_width) / float(resolution_width)
                                     self.log.debug(scale_factor)
                                     height_scale = int(
                                         resolution_height * scale_factor)
