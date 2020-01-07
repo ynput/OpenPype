@@ -150,6 +150,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     if instance:
                         instance_family = instance.get("family")
                         pixel_aspect = instance.get("pixelAspect", 1)
+                        resolution_width = instance.get("resolutionWidth", 1920)
+                        resolution_height = instance.get("resolutionHeight", 1080)
                         lut_path = instance.get("lutPath", None)
 
 
@@ -229,6 +231,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     "fps": fps,
                     "source": data.get('source', ''),
                     "pixelAspect": pixel_aspect,
+                    "resolutionWidth": resolution_width,
+                    "resolutionHeight": resolution_height
                 })
                 if lut_path:
                     instance.data.update({"lutPath": lut_path})
