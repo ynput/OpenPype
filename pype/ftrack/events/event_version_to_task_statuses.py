@@ -62,19 +62,18 @@ class VersionToTaskStatus(BaseEvent):
 
             # Lower version status name and check if has mapping
             version_status = version_status_orig.lower()
-            new_status_names = status_mapping.get(version_status)
-            if not new_status_names:
-                continue
+            new_status_names = []
+            mapped = status_mapping.get(version_status)
+            if mapped:
+                new_status_names.extend(list(mapped))
+
+            new_status_names.append(version_status)
 
             self.log.debug(
                 "Processing AssetVersion status change: [ {} ]".format(
                     version_status_orig
                 )
             )
-
-            # Backwards compatibility (convert string to list)
-            if isinstance(new_status_names, str):
-                new_status_names = [new_status_names]
 
             # Lower all names from presets
             new_status_names = [name.lower() for name in new_status_names]
