@@ -1,5 +1,4 @@
 import os
-import math
 import pyblish.api
 import clique
 import pype.api
@@ -25,14 +24,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
     ext_filter = []
 
     def process(self, instance):
+        to_width = 1920
+        to_height = 1080
 
         output_profiles = self.outputs or {}
 
         inst_data = instance.data
         fps = inst_data.get("fps")
         start_frame = inst_data.get("frameStart")
-        resolution_height = instance.data.get("resolutionHeight", 1080)
-        resolution_width = instance.data.get("resolutionWidth", 1920)
+        resolution_width = instance.data.get("resolutionWidth", to_width)
+        resolution_height = instance.data.get("resolutionHeight", to_height)
         pixel_aspect = instance.data.get("pixelAspect", 1)
         self.log.debug("Families In: `{}`".format(instance.data["families"]))
 
@@ -172,22 +173,35 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             self.log.debug("__ pixel_aspect: `{}`".format(pixel_aspect))
                             self.log.debug("__ resolution_width: `{}`".format(resolution_width))
                             self.log.debug("__ resolution_height: `{}`".format(resolution_height))
+
                             # scaling none square pixels and 1920 width
                             if "reformat" in p_tags:
-                                width_scale = 1920
-                                width_half_pad = 0
-                                res_w = int(float(resolution_width) * pixel_aspect)
-                                height_half_pad = int((
-                                    (res_w - 1920) / (
-                                        res_w * .01) * (
-                                            1080 * .01)) / 2
-                                    )
-                                height_scale = 1080 - (height_half_pad * 2)
-                                if height_scale > 1080:
+                                resolution_ratio = float(resolution_width / (
+                                    resolution_height * pixel_aspect))
+                                delivery_ratio = float(to_width) / float(to_height)
+                                self.log.debug(resolution_ratio)
+                                self.log.debug(delivery_ratio)
+
+                                if resolution_ratio < delivery_ratio:
+                                    self.log.debug("lower then delivery")
+                                    scale_factor = to_height / (
+                                        resolution_height * pixel_aspect)
+                                    self.log.debug(scale_factor)
+                                    width_scale = int(to_width * scale_factor)
+                                    width_half_pad = int((
+                                        to_width - width_scale)/2)
+                                    height_scale = to_height
                                     height_half_pad = 0
-                                    height_scale = 1080
-                                    width_half_pad = (1920 - (float(resolution_width) * (1080 / float(resolution_height))) ) / 2
-                                    width_scale = int(1920 - (width_half_pad * 2))
+                                else:
+                                    self.log.debug("heigher then delivery")
+                                    width_scale = to_width
+                                    width_half_pad = 0
+                                    scale_factor = float(to_width) / float(resolution_width)
+                                    self.log.debug(scale_factor)
+                                    height_scale = int(
+                                        resolution_height * scale_factor)
+                                    height_half_pad = int(
+                                        (to_height - height_scale)/2)
 
                                 self.log.debug("__ width_scale: `{}`".format(width_scale))
                                 self.log.debug("__ width_half_pad: `{}`".format(width_half_pad))

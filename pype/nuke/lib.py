@@ -707,9 +707,11 @@ class WorkfileSettings(object):
         frame_start = int(data["frameStart"]) - handle_start
         frame_end = int(data["frameEnd"]) + handle_end
 
+        self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
         self._root_node["first_frame"].setValue(frame_start)
         self._root_node["last_frame"].setValue(frame_end)
+        self._root_node["lock_range"].setValue(True)
 
         # setting active viewers
         try:
