@@ -156,13 +156,34 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             # preset's output data
                             output_args.extend(profile.get('output', []))
 
+                            # defining image ratios
+                            resolution_ratio = float(resolution_width / (
+                                resolution_height * pixel_aspect))
+                            delivery_ratio = float(to_width) / float(to_height)
+                            self.log.debug(resolution_ratio)
+                            self.log.debug(delivery_ratio)
+
+                            # get scale factor
+                            scale_factor = to_height / (
+                                resolution_height * pixel_aspect)
+                            self.log.debug(scale_factor)
+
                             # letter_box
                             lb = profile.get('letter_box', 0)
-                            if lb is not 0:
+                            if lb != 0:
+                                ffmpet_width = to_width
+                                ffmpet_height = to_height
                                 if "reformat" not in p_tags:
                                     lb /= pixel_aspect
+                                    if resolution_ratio != delivery_ratio:
+                                        ffmpet_width = resolution_width
+                                        ffmpet_height = int(
+                                            resolution_height * pixel_aspect)
+                                else:
+                                    lb /= scale_factor
+
                                 output_args.append(
-                                    "-filter:v scale=1920x1080:flags=lanczos,setsar=1,drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{0})))/2):iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black".format(lb))
+                                    "-filter:v scale={0}x{1}:flags=lanczos,setsar=1,drawbox=0:0:iw:round((ih-(iw*(1/{2})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{2})))/2):iw:round((ih-(iw*(1/{2})))/2):t=fill:c=black".format(ffmpet_width, ffmpet_height, lb))
 
                             # In case audio is longer than video.
                             output_args.append("-shortest")
@@ -176,17 +197,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                             # scaling none square pixels and 1920 width
                             if "reformat" in p_tags:
-                                resolution_ratio = float(resolution_width / (
-                                    resolution_height * pixel_aspect))
-                                delivery_ratio = float(to_width) / float(to_height)
-                                self.log.debug(resolution_ratio)
-                                self.log.debug(delivery_ratio)
-
                                 if resolution_ratio < delivery_ratio:
                                     self.log.debug("lower then delivery")
-                                    scale_factor = to_height / (
-                                        resolution_height * pixel_aspect)
-                                    self.log.debug(scale_factor)
                                     width_scale = int(to_width * scale_factor)
                                     width_half_pad = int((
                                         to_width - width_scale)/2)
@@ -209,8 +221,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 self.log.debug("__ height_half_pad: `{}`".format(height_half_pad))
 
 
-                                scaling_arg = "scale={0}x{1}:flags=lanczos,pad=1920:1080:{2}:{3}:black,setsar=1".format(
-                                    width_scale, height_scale, width_half_pad, height_half_pad
+                                scaling_arg = "scale={0}x{1}:flags=lanczos,pad={2}:{3}:{4}:{5}:black,setsar=1".format(
+                                    width_scale, height_scale, to_width, to_height, width_half_pad, height_half_pad
                                 )
 
                                 vf_back = self.add_video_filter_args(

@@ -1454,21 +1454,6 @@ class Exporter_review_mov(Exporter_review):
             self.previous_node = ipn
             self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
 
-        # reformat_node = nuke.createNode("Reformat")
-        # rn_preset = self.nodes.get("Reformat", None)
-        # if rn_preset:
-        #     self.log.debug("Reformat preset")
-        #     for k, v in rn_preset:
-        #         self.log.debug("k, v: {0}:{1}".format(k, v))
-        #         if isinstance(v, unicode):
-        #             v = str(v)
-        #         reformat_node[k].setValue(v)
-        # # connect
-        # reformat_node.setInput(0, self.previous_node)
-        # self._temp_nodes.append(reformat_node)
-        # self.previous_node = reformat_node
-        # self.log.debug("Reformat...   `{}`".format(self._temp_nodes))
-
         # OCIODisplay node
         dag_node = nuke.createNode("OCIODisplay")
         # connect
@@ -1509,10 +1494,10 @@ class Exporter_review_mov(Exporter_review):
 
         self.log.debug("Representation...   `{}`".format(self.data))
 
-        # ---------- Clean up
-        # for node in self._temp_nodes:
-        #     nuke.delete(node)
-        # self.log.info("Deleted nodes...")
+        ---------- Clean up
+        for node in self._temp_nodes:
+            nuke.delete(node)
+        self.log.info("Deleted nodes...")
 
         return self.data
 
