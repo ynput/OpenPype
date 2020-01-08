@@ -54,10 +54,6 @@ def collect(root,
                                              patterns=[pattern],
                                              minimum_items=1)
 
-    # Ignore any remainders
-    if remainder:
-        print("Skipping remainder {}".format(remainder))
-
     # Exclude any frames outside start and end frame.
     for collection in collections:
         for index in list(collection.indexes):
@@ -71,7 +67,7 @@ def collect(root,
     # Keep only collections that have at least a single frame
     collections = [c for c in collections if c.indexes]
 
-    return collections
+    return collections, remainder
 
 
 class CollectRenderedFrames(pyblish.api.ContextPlugin):
@@ -119,8 +115,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     try:
                         data = json.load(f)
                     except Exception as exc:
-                        self.log.error("Error loading json: "
-                                       "{} - Exception: {}".format(path, exc))
+                        self.log.error(
+                            "Error loading json: "
+                            "{} - Exception: {}".format(path, exc)
+                        )
                         raise
 
                 cwd = os.path.dirname(path)
@@ -156,7 +154,6 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         resolution_height = instance.get("resolutionHeight", 1080)
                         lut_path = instance.get("lutPath", None)
 
-
             else:
                 # Search in directory
                 data = dict()
@@ -167,14 +164,17 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
             if regex:
                 self.log.info("Using regex: {}".format(regex))
 
-            collections = collect(root=root,
-                                  regex=regex,
-                                  exclude_regex=data.get("exclude_regex"),
-                                  frame_start=data.get("frameStart"),
-                                  frame_end=data.get("frameEnd"))
+            collections, remainder = collect(
+                root=root,
+                regex=regex,
+                exclude_regex=data.get("exclude_regex"),
+                frame_start=data.get("frameStart"),
+                frame_end=data.get("frameEnd"),
+            )
 
             self.log.info("Found collections: {}".format(collections))
 
+            """
             if data.get("subset"):
                 # If subset is provided for this json then it must be a single
                 # collection.
@@ -182,8 +182,12 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     self.log.error("Forced subset can only work with a single "
                                    "found sequence")
                     raise RuntimeError("Invalid sequence")
+            """
 
             fps = data.get("fps", 25)
+
+            if data.get("user"):
+                context.data["user"] = data["user"]
 
             # Get family from the data
             families = data.get("families", ["render"])
@@ -191,72 +195,177 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 families.append("render")
             if "ftrack" not in families:
                 families.append("ftrack")
-            if "review" not in families:
-                families.append("review")
             if "write" in instance_family:
                 families.append("write")
 
-            for collection in collections:
-                instance = context.create_instance(str(collection))
-                self.log.info("Collection: %s" % list(collection))
+            if data.get("attachTo"):
+                # we need to attach found collections to existing
+                # subset version as review represenation.
 
-                # Ensure each instance gets a unique reference to the data
+                for attach in data.get("attachTo"):
+                    self.log.info(
+                        "Attaching render {}:v{}".format(
+                            attach["subset"], attach["version"]))
+                    instance = context.create_instance(
+                        attach["subset"])
+                    instance.data.update(
+                        {
+                            "name": attach["subset"],
+                            "version": attach["version"],
+                            "family": 'review',
+                            "families": ['review', 'ftrack'],
+                            "asset": data.get(
+                                "asset", api.Session["AVALON_ASSET"]),
+                            "stagingDir": root,
+                            "frameStart": data.get("frameStart"),
+                            "frameEnd": data.get("frameEnd"),
+                            "fps": fps,
+                            "source": data.get("source", ""),
+                            "pixelAspect": pixel_aspect
+                        })
+
+                    if "representations" not in instance.data:
+                        instance.data["representations"] = []
+
+                    for collection in collections:
+                        self.log.info(
+                            "  - adding representation: {}".format(
+                                str(collection))
+                        )
+                        ext = collection.tail.lstrip(".")
+
+                        representation = {
+                            "name": ext,
+                            "ext": "{}".format(ext),
+                            "files": list(collection),
+                            "stagingDir": root,
+                            "anatomy_template": "render",
+                            "fps": fps,
+                            "tags": ["review"],
+                        }
+                        instance.data["representations"].append(
+                            representation)
+
+            elif data.get("subset"):
+                # if we have subset - add all collections and known
+                # reminder as representations
+
+                self.log.info(
+                    "Adding representations to subset {}".format(
+                        data.get("subset")))
+
+                instance = context.create_instance(data.get("subset"))
                 data = copy.deepcopy(data)
 
-                # If no subset provided, get it from collection's head
-                subset = data.get("subset", collection.head.rstrip("_. "))
-
-                # If no start or end frame provided, get it from collection
-                indices = list(collection.indexes)
-                start = data.get("frameStart", indices[0])
-                end = data.get("frameEnd", indices[-1])
-
-                self.log.debug("Collected pixel_aspect:\n"
-                               "{}".format(pixel_aspect))
-                self.log.debug("type pixel_aspect:\n"
-                               "{}".format(type(pixel_aspect)))
-
-                # root = os.path.normpath(root)
-                # self.log.info("Source: {}}".format(data.get("source", "")))
-
-                ext = list(collection)[0].split('.')[-1]
-
-                instance.data.update({
-                    "name": str(collection),
-                    "family": families[0],  # backwards compatibility / pyblish
-                    "families": list(families),
-                    "subset": subset,
-                    "asset": data.get("asset", api.Session["AVALON_ASSET"]),
-                    "stagingDir": root,
-                    "frameStart": start,
-                    "frameEnd": end,
-                    "fps": fps,
-                    "source": data.get('source', ''),
-                    "pixelAspect": pixel_aspect,
-                    "resolutionWidth": resolution_width,
-                    "resolutionHeight": resolution_height
-                })
-                if lut_path:
-                    instance.data.update({"lutPath": lut_path})
-                instance.append(collection)
-                instance.context.data['fps'] = fps
+                instance.data.update(
+                    {
+                        "name": data.get("subset"),
+                        "family": families[0],
+                        "families": list(families),
+                        "subset": data.get("subset"),
+                        "asset": data.get(
+                            "asset", api.Session["AVALON_ASSET"]),
+                        "stagingDir": root,
+                        "frameStart": data.get("frameStart"),
+                        "frameEnd": data.get("frameEnd"),
+                        "fps": fps,
+                        "source": data.get("source", ""),
+                        "pixelAspect": pixel_aspect,
+                    }
+                )
 
                 if "representations" not in instance.data:
                     instance.data["representations"] = []
 
-                representation = {
-                    'name': ext,
-                    'ext': '{}'.format(ext),
-                    'files': list(collection),
-                    "stagingDir": root,
-                    "anatomy_template": "render",
-                    "fps": fps,
-                    "tags": ['review']
-                }
-                instance.data["representations"].append(representation)
+                for collection in collections:
+                    self.log.info("  - {}".format(str(collection)))
 
-                if data.get('user'):
-                    context.data["user"] = data['user']
+                    ext = collection.tail.lstrip(".")
 
-                self.log.debug("Collected instance:\n"
-                               "{}".format(pformat(instance.data)))
+                    representation = {
+                        "name": ext,
+                        "ext": "{}".format(ext),
+                        "files": list(collection),
+                        "stagingDir": root,
+                        "anatomy_template": "render",
+                        "fps": fps,
+                        "tags": ["review"],
+                    }
+                    instance.data["representations"].append(
+                        representation)
+
+                # process reminders
+                for rem in remainder:
+                    # add only known types to representation
+                    if rem.split(".")[-1] in ['mov', 'jpg', 'mp4']:
+                        self.log.info("  . {}".format(rem))
+                        representation = {
+                            "name": rem.split(".")[-1],
+                            "ext": "{}".format(rem.split(".")[-1]),
+                            "files": rem,
+                            "stagingDir": root,
+                            "anatomy_template": "render",
+                            "fps": fps,
+                            "tags": ["review"],
+                        }
+                    instance.data["representations"].append(
+                        representation)
+
+            else:
+                # we have no subset so we take every collection and create one
+                # from it
+                for collection in collections:
+                    instance = context.create_instance(str(collection))
+                    self.log.info("Creating subset from: %s" % str(collection))
+
+                    # Ensure each instance gets a unique reference to the data
+                    data = copy.deepcopy(data)
+
+                    # If no subset provided, get it from collection's head
+                    subset = data.get("subset", collection.head.rstrip("_. "))
+
+                    # If no start or end frame provided, get it from collection
+                    indices = list(collection.indexes)
+                    start = data.get("frameStart", indices[0])
+                    end = data.get("frameEnd", indices[-1])
+
+                    ext = list(collection)[0].split(".")[-1]
+
+                    if "review" not in families:
+                        families.append("review")
+
+                    instance.data.update(
+                        {
+                            "name": str(collection),
+                            "family": families[0],  # backwards compatibility
+                            "families": list(families),
+                            "subset": subset,
+                            "asset": data.get(
+                                "asset", api.Session["AVALON_ASSET"]),
+                            "stagingDir": root,
+                            "frameStart": start,
+                            "frameEnd": end,
+                            "fps": fps,
+                            "source": data.get("source", ""),
+                            "pixelAspect": pixel_aspect,
+                        }
+                    )
+                    if lut_path:
+                        instance.data.update({"lutPath": lut_path})
+
+                    instance.append(collection)
+                    instance.context.data["fps"] = fps
+
+                    if "representations" not in instance.data:
+                        instance.data["representations"] = []
+
+                    representation = {
+                        "name": ext,
+                        "ext": "{}".format(ext),
+                        "files": list(collection),
+                        "stagingDir": root,
+                        "anatomy_template": "render",
+                        "fps": fps,
+                        "tags": ["review"],
+                    }
+                    instance.data["representations"].append(representation)
