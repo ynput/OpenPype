@@ -354,7 +354,7 @@ class Delivery(BaseAction):
             # TODO log error!
             return
 
-        anatomy_data["frame"] = "{frame}"
+        anatomy_data["frame"] = "<<frame>>"
         anatomy_filled = anatomy.format(anatomy_data)
         delivery_path = anatomy_filled.get("delivery", {}).get(anatomy_name)
         if not delivery_path:
@@ -362,7 +362,7 @@ class Delivery(BaseAction):
             return
 
         delivery_folder = os.path.dirname(delivery_path)
-        dst_head, dst_tail = delivery_path.split("{frame}")
+        dst_head, dst_tail = delivery_path.split("<<frame>>")
         dst_padding = src_collection.padding
         dst_collection = clique.Collection(
             head=dst_head,
