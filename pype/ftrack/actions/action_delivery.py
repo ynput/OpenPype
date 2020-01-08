@@ -24,9 +24,9 @@ class Delivery(BaseAction):
     description = "Deliver data to client"
     #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator", "Project manager"]
-    # icon = '{}/ftrack/action_icons/TestAction.svg'.format(
-    #     os.environ.get('PYPE_STATICS_SERVER', '')
-    # )
+    icon = '{}/ftrack/action_icons/Delivery.svg'.format(
+        os.environ.get('PYPE_STATICS_SERVER', '')
+    )
 
     db_con = DbConnector()
 
