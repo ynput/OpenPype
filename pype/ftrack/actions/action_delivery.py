@@ -228,7 +228,6 @@ class Delivery(BaseAction):
         self.db_con.install()
         self.db_con.Session["AVALON_PROJECT"] = project_name
 
-        components = []
         repres_to_deliver = []
         for entity in entities:
             asset = entity["asset"]
@@ -275,7 +274,6 @@ class Delivery(BaseAction):
                 repre = repres_by_name.get(comp_name)
                 repres_to_deliver.append(repre)
 
-        src_dst_files = {}
         anatomy = Anatomy(project_name)
         for repre in repres_to_deliver:
             # Get destination repre path
@@ -301,6 +299,8 @@ class Delivery(BaseAction):
                 )
 
         self.db_con.uninstall()
+
+        return True
 
     def process_single_file(
         self, repre_path, anatomy, anatomy_name, anatomy_data
@@ -378,9 +378,12 @@ class Delivery(BaseAction):
         for index in src_collection.indexes:
             src_padding = src_collection.format("{padding}") % index
             src_file_name = "{}{}{}".format(src_head, src_padding, src_tail)
+            src = os.path.normpath(
+                os.path.join(dir_path, src_file_name)
+            )
 
             dst_padding = dst_collection.format("{padding}") % index
-            dst_file_name = "{}{}{}".format(dst_head, dst_padding, dst_tail)
+            dst = "{}{}{}".format(dst_head, dst_padding, dst_tail)
 
             self.copy_file(src, dst)
 
