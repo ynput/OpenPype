@@ -171,7 +171,7 @@ class Delivery(BaseAction):
                 "<i>NOTE: It is possible to replace `root` key in anatomy.</i>"
             )
         })
-        
+
         items.append({
             "type": "text",
             "name": "__location_path__",
@@ -306,7 +306,7 @@ class Delivery(BaseAction):
             if location_path:
                 anatomy_data["root"] = location_path
             else:
-                anatomy_data["root"] = pipeline.registered_root()
+                anatomy_data["root"] = os.environ.get("AVALON_PROJECTS") or ""
 
             anatomy_filled = anatomy.format(anatomy_data)
             test_path = (
