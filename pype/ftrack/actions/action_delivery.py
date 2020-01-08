@@ -1,9 +1,12 @@
 import os
 import copy
 import shutil
+import collections
+import string
 
 import clique
 from bson.objectid import ObjectId
+
 from avalon import pipeline
 from avalon.vendor import filelink
 from avalon.tools.libraryloader.io_nonsingleton import DbConnector
@@ -163,9 +166,16 @@ class Delivery(BaseAction):
         })
 
         items.append({
+            "type": "label",
+            "value": (
+                "<i>NOTE: It is possible to replace `root` key in anatomy.</i>"
+            )
+        })
+        
+        items.append({
             "type": "text",
             "name": "__location_path__",
-            "empty_text": "Type location path here..."
+            "empty_text": "Type location path here...(Optional)"
         })
 
         items.append(item_splitter)
@@ -199,6 +209,8 @@ class Delivery(BaseAction):
         if "values" not in event["data"]:
             return
 
+        self.report_items = collections.defaultdict(list)
+
         values = event["data"]["values"]
         skipped = values.pop("__skipped__")
         if skipped:
@@ -214,7 +226,10 @@ class Delivery(BaseAction):
                 component_names.append(key)
 
         if not component_names:
-            return None
+            return {
+                "success": True,
+                "message": "Not selected components to deliver."
+            }
 
         location_path = os.path.normpath(location_path.strip())
         if location_path and not os.path.exists(location_path):
@@ -236,14 +251,24 @@ class Delivery(BaseAction):
 
             parent = asset["parent"]
             parent_mongo_id = parent["custom_attributes"].get(CustAttrIdKey)
-            if not parent_mongo_id:
-                # TODO log error (much better)
-                self.log.warning((
-                    "Seems like entity <{}> is not synchronized to avalon"
-                ).format(parent["name"]))
-                continue
+            if parent_mongo_id:
+                parent_mongo_id = ObjectId(parent_mongo_id)
+            else:
+                asset_ent = self.db_con.find_one({
+                    "type": "asset",
+                    "data.ftrackId": parent["id"]
+                })
+                if not asset_ent:
+                    ent_path = "/".join(
+                        [ent["name"] for ent in parent["link"]]
+                    )
+                    msg = "Not synchronized entities to avalon"
+                    self.report_items[msg].append(ent_path)
+                    self.log.warning("{} <{}>".format(msg, ent_path))
+                    continue
 
-            parent_mongo_id = ObjectId(parent_mongo_id)
+                parent_mongo_id = asset_ent["_id"]
+
             subset_ent = self.db_con.find_one({
                 "type": "subset",
                 "parent": parent_mongo_id,
@@ -283,6 +308,50 @@ class Delivery(BaseAction):
             else:
                 anatomy_data["root"] = pipeline.registered_root()
 
+            anatomy_filled = anatomy.format(anatomy_data)
+            test_path = (
+                anatomy_filled
+                .get("delivery", {})
+                .get(anatomy_name)
+            )
+
+            if not test_path:
+                msg = (
+                    "Missing keys in Representation's context"
+                    " for anatomy template \"{}\"."
+                ).format(anatomy_name)
+
+                all_anatomies = anatomy.format_all(anatomy_data)
+                result = None
+                for anatomies in all_anatomies.values():
+                    for key, temp in anatomies.get("delivery", {}).items():
+                        if key != anatomy_name:
+                            continue
+
+                        result = temp
+                        break
+
+                # TODO log error! - missing keys in anatomy
+                if result:
+                    missing_keys = [
+                        key[1] for key in string.Formatter().parse(result)
+                        if key[1] is not None
+                    ]
+                else:
+                    missing_keys = ["unknown"]
+
+                keys = ", ".join(missing_keys)
+                sub_msg = (
+                    "Representation: {}<br>- Missing keys: \"{}\"<br>"
+                ).format(str(repre["_id"]), keys)
+                self.report_items[msg].append(sub_msg)
+                self.log.warning(
+                    "{} Representation: \"{}\" Filled: <{}>".format(
+                        msg, str(repre["_id"]), str(result)
+                    )
+                )
+                continue
+
             # Get source repre path
             repre_path = self.path_from_represenation(repre)
             # TODO add backup solution where root of path from component
@@ -300,17 +369,13 @@ class Delivery(BaseAction):
 
         self.db_con.uninstall()
 
-        return True
+        return self.report()
 
     def process_single_file(
         self, repre_path, anatomy, anatomy_name, anatomy_data
     ):
         anatomy_filled = anatomy.format(anatomy_data)
-        delivery_path = anatomy_filled.get("delivery", {}).get(anatomy_name)
-        if not delivery_path:
-            # TODO log error! - missing keys in anatomy
-            return
-
+        delivery_path = anatomy_filled["delivery"][anatomy_name]
         delivery_folder = os.path.dirname(delivery_path)
         if not os.path.exists(delivery_folder):
             os.makedirs(delivery_folder)
@@ -321,9 +386,6 @@ class Delivery(BaseAction):
         self, repre_path, anatomy, anatomy_name, anatomy_data
     ):
         dir_path, file_name = os.path.split(repre_path)
-        if not os.path.exists(dir_path):
-            # TODO log if folder don't exist
-            return
 
         base_name, ext = os.path.splitext(file_name)
         file_name_items = None
@@ -334,7 +396,9 @@ class Delivery(BaseAction):
             file_name_items = base_name.split("%")
 
         if not file_name_items:
-            # TODO log if file does not exists
+            msg = "Source file was not found"
+            self.report_items[msg].append(repre_path)
+            self.log.warning("{} <{}>".format(msg, repre_path))
             return
 
         src_collections, remainder = clique.assemble(os.listdir(dir_path))
@@ -352,15 +416,15 @@ class Delivery(BaseAction):
 
         if src_collection is None:
             # TODO log error!
+            msg = "Source collection of files was not found"
+            self.report_items[msg].append(repre_path)
+            self.log.warning("{} <{}>".format(msg, repre_path))
             return
 
         anatomy_data["frame"] = "<<frame>>"
         anatomy_filled = anatomy.format(anatomy_data)
-        delivery_path = anatomy_filled.get("delivery", {}).get(anatomy_name)
-        if not delivery_path:
-            # TODO log error! - missing keys in anatomy
-            return
 
+        delivery_path = anatomy_filled["delivery"][anatomy_name]
         delivery_folder = os.path.dirname(delivery_path)
         dst_head, dst_tail = delivery_path.split("<<frame>>")
         dst_padding = src_collection.padding
@@ -417,6 +481,40 @@ class Delivery(BaseAction):
             )
         except OSError:
             shutil.copyfile(src_path, dst_path)
+
+    def report(self):
+        items = []
+        title = "Delivery report"
+        for msg, _items in self.report_items.items():
+            if not _items:
+                continue
+
+            if items:
+                items.append({"type": "label", "value": "---"})
+
+            items.append({
+                "type": "label",
+                "value": "# {}".format(msg)
+            })
+            if isinstance(_items, str):
+                _items = [_items]
+            items.append({
+                "type": "label",
+                "value": '<p>{}</p>'.format("<br>".join(_items))
+            })
+
+        if not items:
+            return {
+                "success": True,
+                "message": "Delivery Finished"
+            }
+
+        return {
+            "items": items,
+            "title": title,
+            "success": False,
+            "message": "Delivery Finished"
+        }
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
