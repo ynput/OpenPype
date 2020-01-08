@@ -67,8 +67,14 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             # test if there are sets (subsets) to attach render to
             sets = cmds.sets(layer, query=True) or []
+            attachTo = []
             if sets:
                 for s in sets:
+                    attachTo.append({
+                        "version": None,  # we need integrator to get version
+                        "subset": s,
+                        "family": cmds.getAttr("{}.family".format(s))
+                    })
                     self.log.info(" -> attach render to: {}".format(s))
 
             layer_name = "rs_{}".format(expected_layer_name)
@@ -76,7 +82,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # Get layer specific settings, might be overrides
             data = {
                 "subset": expected_layer_name,
-                "attachTo": sets,
+                "attachTo": attachTo,
                 "setMembers": expected_layer_name,
                 "publish": True,
                 "frameStart": self.get_render_attribute("startFrame",

@@ -288,11 +288,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if attach_to:
             for subset in attach_to:
                 for instance in context:
-                    if instance.data["subset"] != subset:
+                    if instance.data["subset"] != subset["subset"]:
                         continue
                     attach_subset_versions.append(
                         {"version": instance.data["version"],
-                         "subset": subset})
+                         "subset": subset["subset"],
+                         "family": subset["family"]})
 
         # Write metadata for publish job
         metadata = {
