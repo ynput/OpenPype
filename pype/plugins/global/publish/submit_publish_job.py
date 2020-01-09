@@ -21,6 +21,12 @@ def _get_script():
     if module_path.endswith(".pyc"):
         module_path = module_path[:-len(".pyc")] + ".py"
 
+    module_path = os.path.normpath(module_path)
+    mount_root = os.path.normpath(os.environ['PYPE_STUDIO_CORE_MOUNT'])
+    network_root = os.path.normpath(os.environ['PYPE_STUDIO_CORE_PATH'])
+
+    module_path = module_path.replace(mount_root, network_root)
+
     return module_path
 
 
@@ -163,6 +169,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         metadata_filename = "{}_metadata.json".format(subset)
         output_dir = instance.data["outputDir"]
         metadata_path = os.path.join(output_dir, metadata_filename)
+
+        metadata_path = os.path.normpath(metadata_path)
+        mount_root = os.path.normpath(os.environ['PYPE_STUDIO_PROJECTS_MOUNT'])
+        network_root = os.path.normpath(os.environ['PYPE_STUDIO_PROJECTS_PATH'])
+
+        metadata_path = metadata_path.replace(mount_root, network_root)
 
         # Generate the payload for Deadline submission
         payload = {
