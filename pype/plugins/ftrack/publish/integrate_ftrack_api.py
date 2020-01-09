@@ -144,8 +144,11 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 "version": 0,
                 "asset": asset_entity,
             }
-
-            assetversion_data.update(data.get("assetversion_data", {}))
+            _assetversion_data = data.get("assetversion_data", {})
+            assetversion_cust_attrs = _assetversion_data.pop(
+                "custom_attributes", {}
+            )
+            assetversion_data.update(_assetversion_data)
 
             assetversion_entity = session.query(
                 self.query("AssetVersion", assetversion_data)
@@ -181,6 +184,18 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             existing_assetversion_metadata = assetversion_entity["metadata"]
             existing_assetversion_metadata.update(assetversion_metadata)
             assetversion_entity["metadata"] = existing_assetversion_metadata
+
+            # Adding Custom Attributes
+            for attr, val in assetversion_cust_attrs.items():
+                if attr in assetversion_entity["custom_attributes"]:
+                    assetversion_entity["custom_attributes"][attr] = val
+                    continue
+
+                self.log.warning((
+                    "Custom Attrubute \"{0}\""
+                    " is not available for AssetVersion."
+                    " Can't set it's value to: \"{1}\""
+                ).format(attr, str(val)))
 
             # Have to commit the version and asset, because location can't
             # determine the final location without.
