@@ -7,10 +7,6 @@ from pypeapp import config
 
 import nuke
 
-
-log = pype.Logger().get_logger(__name__, "nuke")
-
-
 class CreateWriteRender(plugin.PypeCreator):
     # change this to template preset
     name = "WriteRender"
