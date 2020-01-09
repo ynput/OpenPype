@@ -1205,7 +1205,7 @@ class Exporter_review:
 
     Args:
         klass (pyblish.plugin): pyblish plugin parent
-        instance (pyblish.context.instance):
+        instance (pyblish.instance): instance of pyblish context
 
     """
     _temp_nodes = []
@@ -1298,6 +1298,11 @@ class Exporter_review:
 
             return ipn
 
+    def clean_nodes(self):
+        for node in self._temp_nodes:
+            nuke.delete(node)
+        self.log.info("Deleted nodes...")
+
 
 class Exporter_review_lut(Exporter_review):
     """
@@ -1305,6 +1310,7 @@ class Exporter_review_lut(Exporter_review):
 
     Args:
         klass (pyblish.plugin): pyblish plugin parent
+        instance (pyblish.instance): instance of pyblish context
 
 
     """
@@ -1319,6 +1325,12 @@ class Exporter_review_lut(Exporter_review):
         # initialize parent class
         Exporter_review.__init__(self, klass, instance)
 
+        # deal with now lut defined in viewer lut
+        if hasattr(klass, "viewer_lut_raw"):
+            self.viewer_lut_raw = klass.viewer_lut_raw
+        else:
+            self.viewer_lut_raw = False
+
         self.name = name or "baked_lut"
         self.ext = ext or "cube"
         self.cube_size = cube_size or 32
@@ -1331,7 +1343,8 @@ class Exporter_review_lut(Exporter_review):
         self.log.info("File info was set...")
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
-        self.path = os.path.join(self.staging_dir, self.file).replace("\\", "/")
+        self.path = os.path.join(
+            self.staging_dir, self.file).replace("\\", "/")
 
     def generate_lut(self):
         # ---------- start nodes creation
@@ -1353,13 +1366,14 @@ class Exporter_review_lut(Exporter_review):
             self.previous_node = ipn
             self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
 
-        # OCIODisplay
-        dag_node = nuke.createNode("OCIODisplay")
-        # connect
-        dag_node.setInput(0, self.previous_node)
-        self._temp_nodes.append(dag_node)
-        self.previous_node = dag_node
-        self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+        if not self.viewer_lut_raw:
+            # OCIODisplay
+            dag_node = nuke.createNode("OCIODisplay")
+            # connect
+            dag_node.setInput(0, self.previous_node)
+            self._temp_nodes.append(dag_node)
+            self.previous_node = dag_node
+            self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
 
         # GenerateLUT
         gen_lut_node = nuke.createNode("GenerateLUT")
@@ -1388,9 +1402,7 @@ class Exporter_review_lut(Exporter_review):
         self.log.debug("Representation...   `{}`".format(self.data))
 
         # ---------- Clean up
-        for node in self._temp_nodes:
-            nuke.delete(node)
-        self.log.info("Deleted nodes...")
+        self.clean_nodes()
 
         return self.data
 
@@ -1401,7 +1413,7 @@ class Exporter_review_mov(Exporter_review):
 
     Args:
         klass (pyblish.plugin): pyblish plugin parent
-
+        instance (pyblish.instance): instance of pyblish context
 
     """
     def __init__(self,
@@ -1419,6 +1431,12 @@ class Exporter_review_mov(Exporter_review):
         else:
             self.nodes = {}
 
+        # deal with now lut defined in viewer lut
+        if hasattr(klass, "viewer_lut_raw"):
+            self.viewer_lut_raw = klass.viewer_lut_raw
+        else:
+            self.viewer_lut_raw = False
+
         self.name = name or "baked"
         self.ext = ext or "mov"
 
@@ -1428,7 +1446,31 @@ class Exporter_review_mov(Exporter_review):
         self.log.info("File info was set...")
 
         self.file = self.fhead + self.name + ".{}".format(self.ext)
-        self.path = os.path.join(self.staging_dir, self.file).replace("\\", "/")
+        self.path = os.path.join(
+            self.staging_dir, self.file).replace("\\", "/")
+
+    def render(self, render_node_name):
+        self.log.info("Rendering...  ")
+        # Render Write node
+        nuke.execute(
+            render_node_name,
+            int(self.first_frame),
+            int(self.last_frame))
+
+        self.log.info("Rendered...")
+
+    def save_file(self):
+        with anlib.maintained_selection():
+            self.log.info("Saving nodes as file...  ")
+            # select temp nodes
+            anlib.select_nodes(self._temp_nodes)
+            # create nk path
+            path = os.path.splitext(self.path)[0] + ".nk"
+            # save file to the path
+            nuke.nodeCopy(path)
+
+        self.log.info("Nodes exported...")
+        return path
 
     def generate_mov(self, farm=False):
         # ---------- start nodes creation
@@ -1454,13 +1496,14 @@ class Exporter_review_mov(Exporter_review):
             self.previous_node = ipn
             self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
 
-        # OCIODisplay node
-        dag_node = nuke.createNode("OCIODisplay")
-        # connect
-        dag_node.setInput(0, self.previous_node)
-        self._temp_nodes.append(dag_node)
-        self.previous_node = dag_node
-        self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+        if not self.viewer_lut_raw:
+            # OCIODisplay node
+            dag_node = nuke.createNode("OCIODisplay")
+            # connect
+            dag_node.setInput(0, self.previous_node)
+            self._temp_nodes.append(dag_node)
+            self.previous_node = dag_node
+            self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
 
         # Write node
         write_node = nuke.createNode("Write")
@@ -1476,28 +1519,26 @@ class Exporter_review_mov(Exporter_review):
 
         # ---------- end nodes creation
 
-        if not farm:
-            self.log.info("Rendering...  ")
-            # Render Write node
-            nuke.execute(
-                write_node.name(),
-                int(self.first_frame),
-                int(self.last_frame))
-
-            self.log.info("Rendered...")
-
-        # ---------- generate representation data
-        self.get_representation_data(
-            tags=["review", "delete"],
-            range=True
-            )
+        # ---------- render or save to nk
+        if farm:
+            path_nk = self.save_file()
+            self.data.update({
+                "bakeScriptPath": path_nk,
+                "bakeWriteNodeName": write_node.name(),
+                "bakeRenderPath": self.path
+            })
+        else:
+            self.render(write_node.name())
+            # ---------- generate representation data
+            self.get_representation_data(
+                tags=["review", "delete"],
+                range=True
+                )
 
         self.log.debug("Representation...   `{}`".format(self.data))
 
-        ---------- Clean up
-        for node in self._temp_nodes:
-            nuke.delete(node)
-        self.log.info("Deleted nodes...")
+        #---------- Clean up
+        self.clean_nodes()
 
         return self.data
 
