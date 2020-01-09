@@ -1,5 +1,4 @@
 import os
-import nuke
 import pyblish.api
 from avalon.nuke import lib as anlib
 from pype.nuke import lib as pnlib
