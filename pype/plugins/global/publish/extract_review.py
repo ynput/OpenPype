@@ -180,7 +180,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                         ffmpet_height = int(
                                             resolution_height * pixel_aspect)
                                 else:
-                                    lb /= scale_factor
+                                    # TODO: it might still be failing in some cases
+                                    if resolution_ratio != delivery_ratio:
+                                        lb /= scale_factor
+                                    else:
+                                        lb /= pixel_aspect
 
                                 output_args.append(
                                     "-filter:v scale={0}x{1}:flags=lanczos,setsar=1,drawbox=0:0:iw:round((ih-(iw*(1/{2})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{2})))/2):iw:round((ih-(iw*(1/{2})))/2):t=fill:c=black".format(ffmpet_width, ffmpet_height, lb))
