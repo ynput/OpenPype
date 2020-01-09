@@ -1199,7 +1199,7 @@ class BuildWorkfile(WorkfileSettings):
         self.ypos -= (self.ypos_size * multiply) + self.ypos_gap
 
 
-class Exporter_review:
+class ExporterReview:
     """
     Base class object for generating review data from Nuke
 
@@ -1304,7 +1304,7 @@ class Exporter_review:
         self.log.info("Deleted nodes...")
 
 
-class Exporter_review_lut(Exporter_review):
+class ExporterReviewLut(ExporterReview):
     """
     Generator object for review lut from Nuke
 
@@ -1323,7 +1323,7 @@ class Exporter_review_lut(Exporter_review):
                  lut_size=None,
                  lut_style=None):
         # initialize parent class
-        Exporter_review.__init__(self, klass, instance)
+        ExporterReview.__init__(self, klass, instance)
 
         # deal with now lut defined in viewer lut
         if hasattr(klass, "viewer_lut_raw"):
@@ -1407,7 +1407,7 @@ class Exporter_review_lut(Exporter_review):
         return self.data
 
 
-class Exporter_review_mov(Exporter_review):
+class ExporterReviewMov(ExporterReview):
     """
     Metaclass for generating review mov files
 
@@ -1423,7 +1423,7 @@ class Exporter_review_mov(Exporter_review):
                  ext=None,
                  ):
         # initialize parent class
-        Exporter_review.__init__(self, klass, instance)
+        ExporterReview.__init__(self, klass, instance)
 
         # passing presets for nodes to self
         if hasattr(klass, "nodes"):
