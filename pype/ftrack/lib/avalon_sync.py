@@ -699,7 +699,7 @@ class SyncEntitiesFactory:
                 if ca_ent_type == "show":
                     avalon_attrs[ca_ent_type][key] = cust_attr["default"]
                     avalon_attrs_ca_id[ca_ent_type][key] = cust_attr["id"]
-                else:
+                elif ca_ent_type == "task":
                     obj_id = cust_attr["object_type_id"]
                     avalon_attrs[obj_id][key] = cust_attr["default"]
                     avalon_attrs_ca_id[obj_id][key] = cust_attr["id"]
@@ -708,7 +708,7 @@ class SyncEntitiesFactory:
             if ca_ent_type == "show":
                 attrs_per_entity_type[ca_ent_type][key] = cust_attr["default"]
                 attrs_per_entity_type_ca_id[ca_ent_type][key] = cust_attr["id"]
-            else:
+            elif ca_ent_type == "task":
                 obj_id = cust_attr["object_type_id"]
                 attrs_per_entity_type[obj_id][key] = cust_attr["default"]
                 attrs_per_entity_type_ca_id[obj_id][key] = cust_attr["id"]
