@@ -75,7 +75,7 @@ class CollectTemplates(pyblish.api.InstancePlugin):
                          "asset": asset_name,
                          "subset": subset_name,
                          "version": version_number,
-                         "hierarchy": hierarchy,
+                         "hierarchy": hierarchy.replace("\\", "/"),
                          "representation": "TEMP"}
 
         instance.data["template"] = template
