@@ -1537,7 +1537,7 @@ class ExporterReviewMov(ExporterReview):
 
         self.log.debug("Representation...   `{}`".format(self.data))
 
-        #---------- Clean up
+        # ---------- Clean up
         self.clean_nodes()
 
         return self.data

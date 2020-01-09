@@ -146,8 +146,6 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         os.environ.update(session)
                     instance = metadata.get("instance")
                     if instance:
-                        # here is the place to add ability for nuke noninteractive
-                        # ______________________________________
                         instance_family = instance.get("family")
                         pixel_aspect = instance.get("pixelAspect", 1)
                         resolution_width = instance.get("resolutionWidth", 1920)
@@ -221,7 +219,9 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                             "frameEnd": data.get("frameEnd"),
                             "fps": fps,
                             "source": data.get("source", ""),
-                            "pixelAspect": pixel_aspect
+                            "pixelAspect": pixel_aspect,
+                            "resolutionWidth": resolution_width,
+                            "resolutionHeight": resolution_height
                         })
 
                     if "representations" not in instance.data:
@@ -271,6 +271,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "fps": fps,
                         "source": data.get("source", ""),
                         "pixelAspect": pixel_aspect,
+                        "resolutionWidth": resolution_width,
+                        "resolutionHeight": resolution_height
                     }
                 )
 
@@ -348,6 +350,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                             "fps": fps,
                             "source": data.get("source", ""),
                             "pixelAspect": pixel_aspect,
+                            "resolutionWidth": resolution_width,
+                            "resolutionHeight": resolution_height
                         }
                     )
                     if lut_path:
