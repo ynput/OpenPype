@@ -160,7 +160,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         data = instance.data.copy()
         subset = data["subset"]
-        state = data.get("publishJobState", "Suspended")
         job_name = "{batch} - {subset} [publish image sequence]".format(
             batch=job["Props"]["Name"],
             subset=subset
@@ -186,7 +185,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
-                "InitialStatus": state,
                 "Priority": job["Props"]["Pri"]
             },
             "PluginInfo": {

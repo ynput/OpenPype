@@ -46,6 +46,15 @@ class ExtractReviewDataMov(pype.api.Extractor):
                 instance.data["families"].remove("review")
                 instance.data["families"].remove("ftrack")
                 data = exporter.generate_mov(farm=True)
+
+                self.log.debug(
+                    "_ data: {}".format(data))
+
+                instance.data.update({
+                    "bakeRenderPath": data.get("bakeRenderPath"),
+                    "bakeScriptPath": data.get("bakeScriptPath"),
+                    "bakeWriteNodeName": data.get("bakeWriteNodeName")
+                })
             else:
                 data = exporter.generate_mov()
 

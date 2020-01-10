@@ -1508,7 +1508,6 @@ class ExporterReviewMov(ExporterReview):
         # Write node
         write_node = nuke.createNode("Write")
         self.log.debug("Path: {}".format(self.path))
-        self.instance.data["baked_colorspace_movie"] = self.path
         write_node["file"].setValue(self.path)
         write_node["file_type"].setValue(self.ext)
         write_node["raw"].setValue(1)
@@ -1516,7 +1515,6 @@ class ExporterReviewMov(ExporterReview):
         write_node.setInput(0, self.previous_node)
         self._temp_nodes.append(write_node)
         self.log.debug("Write...   `{}`".format(self._temp_nodes))
-
         # ---------- end nodes creation
 
         # ---------- render or save to nk
@@ -1537,7 +1535,7 @@ class ExporterReviewMov(ExporterReview):
 
         self.log.debug("Representation...   `{}`".format(self.data))
 
-        #---------- Clean up
+        # ---------- Clean up
         self.clean_nodes()
 
         return self.data
