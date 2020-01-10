@@ -1,0 +1,59 @@
+{
+    "width": 1920,
+    "height": 1020,
+    "bg-color": "#000000",
+    "__bg-color__": "For setting constant color of background. May cause issues if not set when there are not painted spaces.",
+    "bg-image": null,
+    "__bg-image__": "May be path to static image???",
+    "defaults": {
+        "font-family": "Arial",
+        "font-size": 26,
+        "font-color": "#ffffff",
+        "font-bold": false,
+        "bg-color": null,
+        "bg-alter-color": null,
+        "alignment": "left",
+        "__alignment[enum]__": ["left", "right", "center"]
+    },
+    "items": [{
+        "rel_pos_x": 0.1,
+        "rel_pos_y": 0.1,
+        "rel_width": 0.5,
+        "type": "table",
+        "col-format": [
+            {
+                "font-size": 12,
+                "font-color": "#777777",
+                "alignment": "right"
+            },
+            {
+                "alignment": "left"
+            }
+        ],
+        "rows": [
+            [
+                {
+                    "name": "Version",
+                },
+                {
+                    "value": "mei_101_001_0020_slate_NFX_v001",
+                    "font-bold": true
+                }
+            ], [
+                {
+                    "value": "Date:"
+                },
+                {
+                    "value": "{date}"
+                }
+            ]
+        ]
+    }, {
+        "rel_pos_x": 0.1,
+        "rel_pos_y": 0.1,
+        "rel_width": 0.5,
+        "rel_height": 0.5,
+        "type": "image",
+    }
+    ]
+}
