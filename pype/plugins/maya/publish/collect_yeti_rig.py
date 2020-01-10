@@ -140,9 +140,21 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                              "atttribute'" % node)
 
         # Collect all texture files
+        # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
+        env_re = re.compile(r"\$\{(\w+)\}")
         for texture in texture_filenames:
 
             files = []
+            
+            matches = re.finditer(env_re, texture)
+            for m in matches:
+                try:
+                    texture = texture.replace(m.group(), os.environ[m.group(1)])
+                except KeyError:
+                    msg = "Cannot find requested {} in environment".format(1)
+                    self.log.error(msg)
+                    raise RuntimeError(msg)
+                    
             if os.path.isabs(texture):
                 self.log.debug("Texture is absolute path, ignoring "
                                "image search paths for: %s" % texture)
