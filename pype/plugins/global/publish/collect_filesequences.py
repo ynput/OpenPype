@@ -97,7 +97,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
     def process(self, context):
         pixel_aspect = 1
+        resolution_width = 1920
+        resolution_height = 1080
         lut_path = None
+        subset = None
         if os.environ.get("PYPE_PUBLISH_PATHS"):
             paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
             self.log.info("Collecting paths: {}".format(paths))
@@ -151,6 +154,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         resolution_width = instance.get("resolutionWidth", 1920)
                         resolution_height = instance.get("resolutionHeight", 1080)
                         lut_path = instance.get("lutPath", None)
+                        baked_mov_path = instance.get("bakeRenderPath")
+                        subset = instance.get("subset")
 
             else:
                 # Search in directory
@@ -158,7 +163,11 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 root = path
 
             self.log.info("Collecting: {}".format(root))
+
             regex = data.get("regex")
+            if baked_mov_path:
+                regex = "^{}.*$".format(subset)
+
             if regex:
                 self.log.info("Using regex: {}".format(regex))
 
@@ -171,16 +180,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
             )
 
             self.log.info("Found collections: {}".format(collections))
-
-            """
-            if data.get("subset"):
-                # If subset is provided for this json then it must be a single
-                # collection.
-                if len(collections) > 1:
-                    self.log.error("Forced subset can only work with a single "
-                                   "found sequence")
-                    raise RuntimeError("Invalid sequence")
-            """
+            self.log.info("Found remainder: {}".format(remainder))
 
             fps = data.get("fps", 25)
 
@@ -246,23 +246,31 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         instance.data["representations"].append(
                             representation)
 
-            elif data.get("subset"):
+            elif subset:
                 # if we have subset - add all collections and known
                 # reminder as representations
 
+                # take out review family if mov path
+                # this will make imagesequence none review
+                if baked_mov_path:
+                    self.log.info(
+                        "Baked mov is available {}".format(
+                            baked_mov_path))
+                    families.append("review")
+
                 self.log.info(
                     "Adding representations to subset {}".format(
-                        data.get("subset")))
+                        subset))
 
-                instance = context.create_instance(data.get("subset"))
+                instance = context.create_instance(subset)
                 data = copy.deepcopy(data)
 
                 instance.data.update(
                     {
-                        "name": data.get("subset"),
+                        "name": subset,
                         "family": families[0],
                         "families": list(families),
-                        "subset": data.get("subset"),
+                        "subset": subset,
                         "asset": data.get(
                             "asset", api.Session["AVALON_ASSET"]),
                         "stagingDir": root,
@@ -291,10 +299,17 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "stagingDir": root,
                         "anatomy_template": "render",
                         "fps": fps,
-                        "tags": ["review"],
+                        "tags": ["review"] if not baked_mov_path else [],
                     }
                     instance.data["representations"].append(
                         representation)
+
+                # filter out only relevant mov in case baked available
+                self.log.debug("__ remainder {}".format(remainder))
+                if baked_mov_path:
+                    remainder = [r for r in remainder
+                                 if r in baked_mov_path]
+                    self.log.debug("__ remainder {}".format(remainder))
 
                 # process reminders
                 for rem in remainder:
