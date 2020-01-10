@@ -159,12 +159,13 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             options['frame_offset'] = start_frame
 
         expr = r'%%{eif\:n+%d\:d}' % options['frame_offset']
+        _text = str(int(self.end_frame + options['frame_offset']))
         if text and isinstance(text, str):
             text = r"{}".format(text)
             expr = text.replace("{current_frame}", expr)
+            text = text.replace("{current_frame}", _text)
 
         options['expression'] = expr
-        text = str(int(self.end_frame + options['frame_offset']))
         self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
 
     def add_timecode(self, align, options=None, start_frame=None):

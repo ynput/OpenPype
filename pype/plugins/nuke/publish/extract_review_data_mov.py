@@ -6,15 +6,15 @@ import pype
 reload(pnlib)
 
 
-class ExtractReviewDataLut(pype.api.Extractor):
+class ExtractReviewDataMov(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
 
     """
 
-    order = pyblish.api.ExtractorOrder + 0.005
-    label = "Extract Review Data Lut"
+    order = pyblish.api.ExtractorOrder + 0.01
+    label = "Extract Review Data Mov"
 
     families = ["review"]
     hosts = ["nuke"]
@@ -26,7 +26,7 @@ class ExtractReviewDataLut(pype.api.Extractor):
             staging_dir = instance.data[
                 "representations"][0]["stagingDir"].replace("\\", "/")
             instance.data["stagingDir"] = staging_dir
-            instance.data["representations"][0]["tags"] = ["review"]
+            instance.data["representations"][0]["tags"] = []
         else:
             instance.data["representations"] = []
             # get output path
@@ -39,21 +39,18 @@ class ExtractReviewDataLut(pype.api.Extractor):
 
         # generate data
         with anlib.maintained_selection():
-            exporter = pnlib.ExporterReviewLut(
-                self, instance
-                    )
-            data = exporter.generate_lut()
+            exporter = pnlib.ExporterReviewMov(
+                self, instance)
+
+            if "render.farm" in families:
+                instance.data["families"].remove("review")
+                instance.data["families"].remove("ftrack")
+                data = exporter.generate_mov(farm=True)
+            else:
+                data = exporter.generate_mov()
 
             # assign to representations
-            instance.data["lutPath"] = os.path.join(
-                exporter.stagingDir, exporter.file).replace("\\", "/")
             instance.data["representations"] += data["representations"]
 
-        if "render.farm" in families:
-            instance.data["families"].remove("review")
-            instance.data["families"].remove("ftrack")
-
-        self.log.debug(
-            "_ lutPath: {}".format(instance.data["lutPath"]))
         self.log.debug(
             "_ representations: {}".format(instance.data["representations"]))

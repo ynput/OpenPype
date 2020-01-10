@@ -18,13 +18,16 @@ def _subprocess(*args, **kwargs):
     """Convenience method for getting output errors for subprocess."""
 
     # make sure environment contains only strings
-    filtered_env = {k: str(v) for k, v in os.environ.items()}
+    if not kwargs.get("env"):
+        filtered_env = {k: str(v) for k, v in os.environ.items()}
+    else:
+        filtered_env = {k: str(v) for k, v in kwargs.get("env").items()}
 
     # set overrides
     kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
     kwargs['stderr'] = kwargs.get('stderr', subprocess.STDOUT)
     kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
-    kwargs['env'] = kwargs.get('env',filtered_env)
+    kwargs['env'] = filtered_env
 
     proc = subprocess.Popen(*args, **kwargs)
 

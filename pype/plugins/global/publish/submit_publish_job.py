@@ -21,6 +21,12 @@ def _get_script():
     if module_path.endswith(".pyc"):
         module_path = module_path[:-len(".pyc")] + ".py"
 
+    module_path = os.path.normpath(module_path)
+    mount_root = os.path.normpath(os.environ['PYPE_STUDIO_CORE_MOUNT'])
+    network_root = os.path.normpath(os.environ['PYPE_STUDIO_CORE_PATH'])
+
+    module_path = module_path.replace(mount_root, network_root)
+
     return module_path
 
 
@@ -164,6 +170,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         output_dir = instance.data["outputDir"]
         metadata_path = os.path.join(output_dir, metadata_filename)
 
+        metadata_path = os.path.normpath(metadata_path)
+        mount_root = os.path.normpath(os.environ['PYPE_STUDIO_PROJECTS_MOUNT'])
+        network_root = os.path.normpath(os.environ['PYPE_STUDIO_PROJECTS_PATH'])
+
+        metadata_path = metadata_path.replace(mount_root, network_root)
+
         # Generate the payload for Deadline submission
         payload = {
             "JobInfo": {
@@ -281,6 +293,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         relative_path = os.path.relpath(source, api.registered_root())
         source = os.path.join("{root}", relative_path).replace("\\", "/")
+
+        # find subsets and version to attach render to
+        attach_to = instance.data.get("attachTo")
+        attach_subset_versions = []
+        if attach_to:
+            for subset in attach_to:
+                for instance in context:
+                    if instance.data["subset"] != subset["subset"]:
+                        continue
+                    attach_subset_versions.append(
+                        {"version": instance.data["version"],
+                         "subset": subset["subset"],
+                         "family": subset["family"]})
 
         # Write metadata for publish job
         metadata = {
