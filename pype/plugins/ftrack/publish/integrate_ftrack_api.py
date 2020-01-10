@@ -188,14 +188,18 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Adding Custom Attributes
             for attr, val in assetversion_cust_attrs.items():
                 if attr in assetversion_entity["custom_attributes"]:
-                    assetversion_entity["custom_attributes"][attr] = val
-                    continue
+                    try:
+                        assetversion_entity["custom_attributes"][attr] = val
+                        session.commit()
+                        continue
+                    except Exception:
+                        session.rollback()
 
                 self.log.warning((
                     "Custom Attrubute \"{0}\""
-                    " is not available for AssetVersion."
-                    " Can't set it's value to: \"{1}\""
-                ).format(attr, str(val)))
+                    " is not available for AssetVersion <{1}>."
+                    " Can't set it's value to: \"{2}\""
+                ).format(attr, assetversion_entity["id"], str(val)))
 
             # Have to commit the version and asset, because location can't
             # determine the final location without.

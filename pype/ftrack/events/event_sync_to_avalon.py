@@ -28,7 +28,7 @@ class SyncToAvalonEvent(BaseEvent):
     ignore_entTypes = [
         "socialfeed", "socialnotification", "note",
         "assetversion", "job", "user", "reviewsessionobject", "timer",
-        "timelog", "auth_userrole"
+        "timelog", "auth_userrole", "appointment"
     ]
     ignore_ent_types = ["Milestone"]
     ignore_keys = ["statusid"]
@@ -1438,9 +1438,11 @@ class SyncToAvalonEvent(BaseEvent):
                     if attr["entity_type"] != ent_info["entityType"]:
                         continue
 
-                    if ent_info["entityType"] != "show":
-                        if attr["object_type_id"] != ent_info["objectTypeId"]:
-                            continue
+                    if (
+                        ent_info["entityType"] == "task" and
+                        attr["object_type_id"] != ent_info["objectTypeId"]
+                    ):
+                        continue
 
                     configuration_id = attr["id"]
                     entity_type_conf_ids[entity_type] = configuration_id
@@ -1712,7 +1714,8 @@ class SyncToAvalonEvent(BaseEvent):
 
             if ca_ent_type == "show":
                 cust_attrs_by_obj_id[ca_ent_type][key] = cust_attr
-            else:
+
+            elif ca_ent_type == "task":
                 obj_id = cust_attr["object_type_id"]
                 cust_attrs_by_obj_id[obj_id][key] = cust_attr
 

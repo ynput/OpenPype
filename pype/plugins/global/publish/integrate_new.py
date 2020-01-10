@@ -7,6 +7,7 @@ import errno
 import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
+from pathlib2 import Path
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
     from speedcopy import copyfile
@@ -468,8 +469,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             None
         """
-        src = os.path.normpath(src)
-        dst = os.path.normpath(dst)
+
+        src = Path(src).resolve()
+        drive, _path = os.path.splitdrive(dst)
+        unc = Path(drive).resolve()
+        dst = str(unc / _path)
 
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
@@ -490,6 +494,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def hardlink_file(self, src, dst):
         dirname = os.path.dirname(dst)
+        src = Path(src).resolve()
+        dst = Path(dst).resolve()
         try:
             os.makedirs(dirname)
         except OSError as e:
