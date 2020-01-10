@@ -119,13 +119,15 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         texture_filenames = []
         if image_search_paths:
 
-            # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
-            image_search_paths = self._replace_tokens(image_search_paths)
+            
             # TODO: Somehow this uses OS environment path separator, `:` vs `;`
             # Later on check whether this is pipeline OS cross-compatible.
             image_search_paths = [p for p in
                                   image_search_paths.split(os.path.pathsep) if p]
 
+            # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
+            image_search_paths = self._replace_tokens(image_search_paths)
+            
             # List all related textures
             texture_filenames = cmds.pgYetiCommand(node, listTextures=True)
             self.log.info("Found %i texture(s)" % len(texture_filenames))
@@ -147,7 +149,6 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         for texture in texture_filenames:
 
             files = []
-
             if os.path.isabs(texture):
                 self.log.debug("Texture is absolute path, ignoring "
                                "image search paths for: %s" % texture)
