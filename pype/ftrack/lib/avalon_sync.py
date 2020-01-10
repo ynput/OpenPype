@@ -314,6 +314,9 @@ class SyncEntitiesFactory:
             self.log.warning(msg)
             return {"success": False, "message": msg}
 
+        self.log.debug((
+            "*** Synchronization initialization started <{}>."
+        ).format(project_full_name))
         # Check if `avalon_mongo_id` custom attribute exist or is accessible
         if CustAttrIdKey not in ft_project["custom_attributes"]:
             items = []
