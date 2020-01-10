@@ -119,6 +119,8 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         texture_filenames = []
         if image_search_paths:
 
+            # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
+            image_search_paths = self._replace_tokens(image_search_paths)
             # TODO: Somehow this uses OS environment path separator, `:` vs `;`
             # Later on check whether this is pipeline OS cross-compatible.
             image_search_paths = [p for p in
@@ -141,21 +143,11 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
 
         # Collect all texture files
         # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
-        env_re = re.compile(r"\$\{(\w+)\}")
+        texture_filenames = self._replace_tokens(texture_filenames)
         for texture in texture_filenames:
 
             files = []
-            
-            matches = re.finditer(env_re, texture)
-            for m in matches:
-                try:
-                    texture = texture.replace(m.group(), os.environ[m.group(1)])
-                except KeyError:
-                    msg = "Cannot find requested {} in environment".format(
-                        m.group(1))
-                    self.log.error(msg)
-                    raise RuntimeError(msg)
-                    
+
             if os.path.isabs(texture):
                 self.log.debug("Texture is absolute path, ignoring "
                                "image search paths for: %s" % texture)
@@ -296,3 +288,20 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         collection, remainder = clique.assemble(files, patterns=pattern)
 
         return collection
+
+    def _replace_tokens(self, strings):
+        env_re = re.compile(r"\$\{(\w+)\}")
+
+        replaced = []
+        for s in strings:
+            matches = re.finditer(env_re, s)
+            for m in matches:
+                try:
+                    s = s.replace(m.group(), os.environ[m.group(1)])
+                except KeyError:
+                    msg = "Cannot find requested {} in environment".format(
+                        m.group(1))
+                    self.log.error(msg)
+                    raise RuntimeError(msg)
+            replaced.append(s)
+        return replaced
