@@ -151,7 +151,8 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                 try:
                     texture = texture.replace(m.group(), os.environ[m.group(1)])
                 except KeyError:
-                    msg = "Cannot find requested {} in environment".format(1)
+                    msg = "Cannot find requested {} in environment".format(
+                        m.group(1))
                     self.log.error(msg)
                     raise RuntimeError(msg)
                     
