@@ -273,7 +273,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             resolution_height = repre.get("resolutionHeight")
             fps = instance.data.get("fps")
 
-
             if resolution_width:
                 template_data["resolution_width"] = resolution_width
             if resolution_width:
