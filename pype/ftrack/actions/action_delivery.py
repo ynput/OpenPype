@@ -231,14 +231,16 @@ class Delivery(BaseAction):
                 "message": "Not selected components to deliver."
             }
 
-        location_path = os.path.normpath(location_path.strip())
-        if location_path and not os.path.exists(location_path):
-            return {
-                "success": False,
-                "message": (
-                    "Entered location path does not exists. \"{}\""
-                ).format(location_path)
-            }
+        location_path = location_path.strip()
+        if location_path:
+            location_path = os.path.normpath(location_path)
+            if not os.path.exists(location_path):
+                return {
+                    "success": False,
+                    "message": (
+                        "Entered location path does not exists. \"{}\""
+                    ).format(location_path)
+                }
 
         self.db_con.install()
         self.db_con.Session["AVALON_PROJECT"] = project_name
@@ -299,14 +301,16 @@ class Delivery(BaseAction):
                 repre = repres_by_name.get(comp_name)
                 repres_to_deliver.append(repre)
 
+        if not location_path:
+            location_path = os.environ.get("AVALON_PROJECTS") or ""
+
+        print(location_path)
+
         anatomy = Anatomy(project_name)
         for repre in repres_to_deliver:
             # Get destination repre path
             anatomy_data = copy.deepcopy(repre["context"])
-            if location_path:
-                anatomy_data["root"] = location_path
-            else:
-                anatomy_data["root"] = os.environ.get("AVALON_PROJECTS") or ""
+            anatomy_data["root"] = location_path
 
             anatomy_filled = anatomy.format(anatomy_data)
             test_path = (
@@ -353,11 +357,15 @@ class Delivery(BaseAction):
                 continue
 
             # Get source repre path
+            frame = repre['context'].get('frame')
+
+            if frame:
+                repre["context"]["frame"] = len(str(frame)) * "#"
+
             repre_path = self.path_from_represenation(repre)
             # TODO add backup solution where root of path from component
             # is repalced with AVALON_PROJECTS root
-
-            if repre_path and os.path.exists(repre_path):
+            if not frame:
                 self.process_single_file(
                     repre_path, anatomy, anatomy_name, anatomy_data
                 )
@@ -385,7 +393,7 @@ class Delivery(BaseAction):
     def process_sequence(
         self, repre_path, anatomy, anatomy_name, anatomy_data
     ):
-        dir_path, file_name = os.path.split(repre_path)
+        dir_path, file_name = os.path.split(str(repre_path))
 
         base_name, ext = os.path.splitext(file_name)
         file_name_items = None
@@ -421,12 +429,15 @@ class Delivery(BaseAction):
             self.log.warning("{} <{}>".format(msg, repre_path))
             return
 
-        anatomy_data["frame"] = "<<frame>>"
+        frame_indicator = "@####@"
+
+        anatomy_data["frame"] = frame_indicator
         anatomy_filled = anatomy.format(anatomy_data)
 
         delivery_path = anatomy_filled["delivery"][anatomy_name]
+        print(delivery_path)
         delivery_folder = os.path.dirname(delivery_path)
-        dst_head, dst_tail = delivery_path.split("<<frame>>")
+        dst_head, dst_tail = delivery_path.split(frame_indicator)
         dst_padding = src_collection.padding
         dst_collection = clique.Collection(
             head=dst_head,
@@ -469,10 +480,11 @@ class Delivery(BaseAction):
             # Template references unavailable data
             return None
 
-        if os.path.exists(path):
-            return os.path.normpath(path)
+        return os.path.normpath(path)
 
     def copy_file(self, src_path, dst_path):
+        if os.path.exists(dst_path):
+            return
         try:
             filelink.create(
                 src_path,
@@ -496,11 +508,15 @@ class Delivery(BaseAction):
                 "type": "label",
                 "value": "# {}".format(msg)
             })
-            if isinstance(_items, str):
+            if not isinstance(_items, (list, tuple)):
                 _items = [_items]
+            __items = []
+            for item in _items:
+                __items.append(str(item))
+
             items.append({
                 "type": "label",
-                "value": '<p>{}</p>'.format("<br>".join(_items))
+                "value": '<p>{}</p>'.format("<br>".join(__items))
             })
 
         if not items:
