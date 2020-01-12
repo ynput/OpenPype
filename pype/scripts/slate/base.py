@@ -3,6 +3,7 @@ sys.path.append(r"C:\Users\Public\pype_env2\Lib\site-packages")
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance, ImageColor
 from uuid import uuid4
 
+
 class BaseObj:
     """Base Object for slates."""
 
@@ -11,7 +12,7 @@ class BaseObj:
 
     def __init__(self, parent, style={}, name=None):
         if not self.obj_type:
-            raise NotImplemented(
+            raise NotImplementedError(
                 "Class don't have set object type <{}>".format(
                     self.__class__.__name__
                 )
@@ -50,18 +51,10 @@ class BaseObj:
                 "font-italic": False,
                 "bg-color": None,
                 "bg-alter-color": None,
-                "alignment-vertical": "left", #left, center, right
-                "alignment-horizontal": "top", #top, center, bottom
+                "alignment-vertical": "left",
+                "alignment-horizontal": "top",
                 "padding": 0,
-                # "padding-left": 0,
-                # "padding-right": 0,
-                # "padding-top": 0,
-                # "padding-bottom": 0
                 "margin": 0,
-                # "margin-left": 0,
-                # "margin-right": 0,
-                # "margin-top": 0,
-                # "margin-bottom": 0
             },
             "layer": {},
             "image": {},
@@ -105,8 +98,9 @@ class BaseObj:
 
         for key, value in self._style.items():
             if key in style:
-                style[key] = value
-            style.update()
+                style[key].update(value)
+            else:
+                style[self.obj_type][key] = value
 
         if self.is_drawing:
             self.final_style = style
@@ -133,6 +127,7 @@ class BaseObj:
         output.update(name_specific)
 
         return output
+
 
     @property
     def pos_x(self):
@@ -191,8 +186,8 @@ class MainFrame(BaseObj):
     obj_type = "main_frame"
     available_parents = [None]
 
-    def __init__(self, width, height, style={}, parent=None, name=None):
-        super(MainFrame, self).__init__(parent, style, name)
+    def __init__(self, width, height, *args, **kwargs):
+        super(MainFrame, self).__init__(*args, **kwargs)
         self._width = width
         self._height = height
         self._is_drawing = False
@@ -212,7 +207,7 @@ class MainFrame(BaseObj):
     def draw(self, path):
         self._is_drawing = True
         bg_color = self.style["bg-color"]
-        image = Image.new("RGB", (self.width, self.height))#, color=bg_color)
+        image = Image.new("RGB", (self.width, self.height), color=bg_color)
         for item in self.items.values():
             item.draw(image)
 
@@ -221,14 +216,14 @@ class MainFrame(BaseObj):
         self.reset()
 
 
-
 class Layer(BaseObj):
     obj_type = "layer"
     available_parents = ["main_frame", "layer"]
 
     # Direction can be 0=horizontal/ 1=vertical
-    def __init__(self, *args, **kwargs):
+    def __init__(self, direction=0, *args, **kwargs):
         super(Layer, self).__init__(*args, **kwargs)
+        self._direction = direction
 
     @property
     def pos_x(self):
@@ -248,15 +243,20 @@ class Layer(BaseObj):
 
     @property
     def direction(self):
-        direction = self.style.get("direction", 0)
-        if direction not in (0, 1):
-            raise Exception(
+        if self._direction not in (0, 1):
+            print(
                 "Direction must be 0 or 1 (0 is Vertical / 1 is horizontal)!"
             )
-        return direction
+            return 0
+        return self._direction
 
     def item_pos_x(self, item_id):
         pos_x = self.pos_x
+
+        margin = self.style["margin"]
+        margin_left = self.style.get("margin-left") or margin
+
+        pos_x += margin_left
         if self.direction != 0:
             for id, item in self.items.items():
                 if id == item_id:
@@ -265,12 +265,15 @@ class Layer(BaseObj):
                 if item.obj_type != "image":
                     pos_x += 1
 
-        if pos_x != self.pos_x:
-            pos_x += 1
         return pos_x
 
     def item_pos_y(self, item_id):
         pos_y = self.pos_y
+
+        margin = self.style["margin"]
+        margin_top = self.style.get("margin-top") or margin
+
+        pos_y += margin_top
         if self.direction != 1:
             for id, item in self.items.items():
                 if item_id == id:
@@ -283,7 +286,11 @@ class Layer(BaseObj):
 
     @property
     def height(self):
-        height = 0
+        margin = self.style["margin"]
+        margin_top = self.style.get("margin-top") or margin
+        margin_bottom = self.style.get("margin-bottom") or margin
+
+        height = (margin_top + margin_bottom)
         for item in self.items.values():
             if self.direction == 0:
                 if height > item.height:
@@ -294,6 +301,7 @@ class Layer(BaseObj):
             else:
                 height += item.height
 
+
         min_height = self.style.get("min-height")
         if min_height > height:
             return min_height
@@ -301,7 +309,11 @@ class Layer(BaseObj):
 
     @property
     def width(self):
-        width = 0
+        margin = self.style["margin"]
+        margin_left = self.style.get("margin-left") or margin
+        margin_right = self.style.get("margin-right") or margin
+
+        width = (margin_left + margin_right)
         for item in self.items.values():
             if self.direction == 0:
                 if width > item.width:
@@ -402,9 +414,9 @@ class BaseItem(BaseObj):
         margin_bottom = self.style.get("margin-bottom") or margin
 
         return (
-            height +
-            margin_bottom + margin_top +
-            padding_top + padding_bottom
+            height
+            + margin_bottom + margin_top
+            + padding_top + padding_bottom
         )
 
     def add_item(self, *args, **kwargs):
@@ -416,6 +428,7 @@ class BaseItem(BaseObj):
                 self.__clas__.__name__
             )
         )
+
 
 class ItemImage(BaseItem):
     obj_type = "image"
@@ -751,49 +764,3 @@ if __name__ == "__main__":
     main.draw(dst)
 
     print("*** Drawing done :)")
-
-
-style_schema = {
-    "alignment": {
-        "description": "Alignment of item",
-        "type": "string",
-        "enum": ["left", "right", "center"],
-        "example": "left"
-    },
-    "font-family": {
-        "description": "Font type",
-        "type": "string",
-        "example": "Arial"
-    },
-    "font-size": {
-        "description": "Font size",
-        "type": "integer",
-        "example": 26
-    },
-    "font-color": {
-        "description": "Font color",
-        "type": "string",
-        "regex": (
-            "^[#]{1}[a-fA-F0-9]{1}$"
-            " | ^[#]{1}[a-fA-F0-9]{3}$"
-            " | ^[#]{1}[a-fA-F0-9]{6}$"
-        ),
-        "example": "#ffffff"
-    },
-    "font-bold": {
-        "description": "Font boldness",
-        "type": "boolean",
-        "example": True
-    },
-    "bg-color": {
-        "description": "Background color, None means transparent",
-        "type": ["string", None],
-        "regex": (
-            "^[#]{1}[a-fA-F0-9]{1}$"
-            " | ^[#]{1}[a-fA-F0-9]{3}$"
-            " | ^[#]{1}[a-fA-F0-9]{6}$"
-        ),
-        "example": "#333"
-    },
-    "bg-alter-color": None,
-}
