@@ -27,6 +27,9 @@ class NukeRenderLocal(pype.api.Extractor):
 
         self.log.debug("instance collected: {}".format(instance.data))
 
+        # check if slate node available
+        slate_node = instance.data.get("slateNodeName")
+
         first_frame = instance.data.get("frameStart", None)
         last_frame = instance.data.get("frameEnd", None)
         node_subset_name = instance.data.get("name", None)
@@ -79,6 +82,12 @@ class NukeRenderLocal(pype.api.Extractor):
         if collections:
             collection = collections[0]
             instance.data['collection'] = collection
+
+        if slate_node:
+            instance.data['frameStart'] = first_frame + 1
+            self.log.info(
+                'Removing slate frame: `{}`'.format(
+                    instance.data['frameStart']))
 
         self.log.info('Finished render')
         return
