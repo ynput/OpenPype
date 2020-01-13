@@ -12,7 +12,7 @@ class BaseObj:
     all_style_keys = [
         "font-family", "font-size", "font-color", "font-bold", "font-italic",
         "bg-color", "bg-alter-color",
-        "alignment-vertical", "alignment-horizontal",
+        "alignment-horizontal", "alignment-vertical",
         "padding", "padding-left", "padding-right",
         "padding-top", "padding-bottom",
         "margin", "margin-left", "margin-right",
@@ -56,10 +56,10 @@ class BaseObj:
                 "font-color": "#ffffff",
                 "font-bold": False,
                 "font-italic": False,
-                "bg-color": None,
-                "bg-alter-color": None,
-                "alignment-vertical": "right",
-                "alignment-horizontal": "top",
+                "bg-color": "#0077ff",
+                "bg-alter-color": "#0055dd",
+                "alignment-horizontal": "center",
+                "alignment-vertical": "bottom",
                 "padding": 0,
                 "margin": 0,
             },
@@ -76,8 +76,6 @@ class BaseObj:
                 "margin": 0
             },
             "text": {
-                # "alignment-vertical": "left",
-                # "alignment-horizontal": "top",
                 "padding": 0,
                 "margin": 0
             },
@@ -86,6 +84,7 @@ class BaseObj:
                 "margin": 0
             },
             "table-item": {
+                "alignment-horizontal": "right",
                 "padding": 0,
                 "margin": 0
             },
@@ -178,15 +177,16 @@ class BaseObj:
         pos_x = self.item_pos_x
         margin = self.style["margin"]
         margin_left = self.style.get("margin-left") or margin
-        margin_right = self.style.get("margin-right") or margin
-        return pos_x + margin_left
+
+        pos_x += margin_left
+
+        return pos_x
 
     @property
     def content_pos_y(self):
         pos_y = self.item_pos_y
         margin = self.style["margin"]
         margin_top = self.style.get("margin-top") or margin
-        margin_bottom = self.style.get("margin-bottom") or margin
         return pos_y + margin_top
 
     @property
@@ -281,6 +281,30 @@ class BaseObj:
 
         return height + margin_bottom + margin_top
 
+    # @property
+    # def max_width(self):
+    #     return self.style.get("max-width") or self.width
+    #
+    # @property
+    # def max_height(self):
+    #     return self.style.get("max-height") or self.height
+    #
+    # @property
+    # def max_content_width(self):
+    #     width = self.max_width
+    #     padding = self.style["padding"]
+    #     padding_left = self.style.get("padding-left") or padding
+    #     padding_right = self.style.get("padding-right") or padding
+    #     return (width - (padding_left + padding_right))
+    #
+    # @property
+    # def max_content_height(self):
+    #     height = self.max_height
+    #     padding = self.style["padding"]
+    #     padding_top = self.style.get("padding-top") or padding
+    #     padding_bottom = self.style.get("padding-bottom") or padding
+    #     return (height - (padding_top + padding_bottom))
+
     def add_item(self, item):
         self.items[item.id] = item
 
@@ -344,7 +368,7 @@ class Layer(BaseObj):
     obj_type = "layer"
     available_parents = ["main_frame", "layer"]
 
-    # Direction can be 0=horizontal/ 1=vertical
+    # Direction can be 0=vertical/ 1=horizontal
     def __init__(self, direction=0, *args, **kwargs):
         super(Layer, self).__init__(*args, **kwargs)
         self._direction = direction
@@ -369,25 +393,51 @@ class Layer(BaseObj):
     def direction(self):
         if self._direction not in (0, 1):
             print(
-                "Direction must be 0 or 1 (0 is Vertical / 1 is horizontal)!"
+                "Direction must be 0 or 1 (0 is horizontal / 1 is vertical)!"
             )
             return 0
         return self._direction
 
     def child_pos_x(self, item_id):
         pos_x = self.value_pos_x
+        alignment_hor = self.style["alignment-horizontal"].lower()
+
+        item = None
+        for id, _item in self.items.items():
+            if item_id == id:
+                item = _item
+                break
 
         if self.direction != 0:
-            for id, item in self.items.items():
+            for id, _item in self.items.items():
                 if item_id == id:
                     break
-                pos_x += item.height
-                if item.obj_type != "image":
+                pos_x += _item.height
+                if _item.obj_type != "image":
                     pos_x += 1
-        return pos_x
+
+        else:
+            if alignment_hor in ["center", "centre"]:
+                pos_x += (self.content_width - item.content_width) / 2
+
+            elif alignment_hor == "right":
+                pos_x += self.content_width - item.content_width
+
+            else:
+                margin = self.style["margin"]
+                margin_left = self.style.get("margin-left") or margin
+                pos_x += margin_left
+        return int(pos_x)
 
     def child_pos_y(self, item_id):
         pos_y = self.value_pos_y
+        alignment_ver = self.style["alignment-horizontal"].lower()
+
+        item = None
+        for id, _item in self.items.items():
+            if item_id == id:
+                item = _item
+                break
 
         if self.direction != 1:
             for id, item in self.items.items():
@@ -396,7 +446,19 @@ class Layer(BaseObj):
                 pos_y += item.height
                 if item.obj_type != "image":
                     pos_y += 1
-        return pos_y
+
+        else:
+            if alignment_ver in ["center", "centre"]:
+                pos_y += (self.content_height - item.content_height) / 2
+
+            elif alignment_ver == "bottom":
+                pos_y += self.content_height - item.content_height
+
+            else:
+                margin = self.style["margin"]
+                margin_top = self.style.get("margin-top") or margin
+                pos_y += margin_top
+        return int(pos_y)
 
     @property
     def value_height(self):
@@ -545,7 +607,7 @@ class ItemTable(BaseItem):
 
     obj_type = "table"
 
-    def __init__(self, values, *args, **kwargs):
+    def __init__(self, values, use_alternate_color=False, *args, **kwargs):
         super(ItemTable, self).__init__(*args, **kwargs)
         self.size_values = None
         self.values_by_cords = None
@@ -553,22 +615,28 @@ class ItemTable(BaseItem):
         self.prepare_values(values)
         self.calculate_sizes()
 
+        self.use_alternate_color = use_alternate_color
+
     def prepare_values(self, _values):
         values = []
         values_by_cords = []
-        for row_idx, row in enumerate(_values):
-            if len(values_by_cords) < row_idx + 1:
-                for i in range(len(values_by_cords), row_idx + 1):
-                    values_by_cords.append([])
+        row_count = 0
+        col_count = 0
+        for row in _values:
+            row_count += 1
+            if len(row) > col_count:
+                col_count = len(row)
 
-            for col_idx, col in enumerate(_values[row_idx]):
-                if len(values_by_cords[row_idx]) < col_idx + 1:
-                    for i in range(len(values_by_cords[row_idx]), col_idx + 1):
-                        values_by_cords[row_idx].append("")
-
-                if not col:
+        for row_idx in range(row_count):
+            values_by_cords.append([])
+            for col_idx in range(col_count):
+                values_by_cords[row_idx].append([])
+                if col_idx <= len(_values[row_idx]) - 1:
+                    col = _values[row_idx][col_idx]
+                else:
                     col = ""
-                col_item = TableField(row_idx, col_idx, col, self)
+
+                col_item = TableField(row_idx, col_idx, col, parent=self)
                 values_by_cords[row_idx][col_idx] = col_item
                 values.append(col_item)
 
@@ -631,7 +699,7 @@ class ItemTable(BaseItem):
             height -= 1
         return height
 
-    def pos_info_by_cord(self, cord_x, cord_y):
+    def content_pos_info_by_cord(self, cord_x, cord_y):
         row_heights, col_widths = self.size_values
         pos_x = self.value_pos_x
         pos_y = self.value_pos_y
@@ -669,6 +737,9 @@ class TableField(BaseItem):
 
     @property
     def value_width(self):
+        if not self.value:
+            return 0
+
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
 
@@ -678,6 +749,8 @@ class TableField(BaseItem):
 
     @property
     def value_height(self):
+        if not self.value:
+            return 0
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
 
@@ -688,31 +761,68 @@ class TableField(BaseItem):
     @property
     def item_pos_x(self):
         pos_x, pos_y, width, height = (
-            self.parent.pos_info_by_cord(self.cord_x, self.cord_y)
+            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
         )
         return pos_x
 
     @property
     def item_pos_y(self):
         pos_x, pos_y, width, height = (
-            self.parent.pos_info_by_cord(self.cord_x, self.cord_y)
+            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
         )
         return pos_y
 
+    @property
+    def value_pos_x(self):
+        pos_x, pos_y, width, height = (
+            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
+        )
+
+        alignment_hor = self.style["alignment-horizontal"].lower()
+        if alignment_hor in ["center", "centre"]:
+            pos_x += (width - self.value_width) / 2
+
+        elif alignment_hor == "right":
+            pos_x += width - self.value_width
+
+        else:
+            padding = self.style["padding"]
+            padding_left = self.style.get("padding-left") or padding
+            pos_x += padding_left
+
+        return int(pos_x)
+
+    @property
+    def value_pos_y(self):
+        pos_x, pos_y, width, height = (
+            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
+        )
+
+        alignment_ver = self.style["alignment-vertical"].lower()
+        if alignment_ver in ["center", "centre"]:
+            pos_y += (height - self.value_height) / 2
+
+        elif alignment_ver == "bottom":
+            pos_y += height - self.value_height
+
+        else:
+            padding = self.style["padding"]
+            padding_top = self.style.get("padding-top") or padding
+            pos_y += padding_top
+
+        return int(pos_y)
+
     def draw(self, image, drawer):
         pos_x, pos_y, width, height = (
-            self.parent.pos_info_by_cord(self.cord_x, self.cord_y)
+            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
         )
         pos_start = (pos_x, pos_y)
         pos_end = (pos_x + width, pos_y + height)
         bg_color = self.style["bg-color"]
-        if bg_color and bg_color.lower() != "transparent":
-            padding = self.style["padding"]
+        if self.parent.use_alternate_color and (self.cord_x % 2) == 1:
+            bg_color = self.style["bg-alter-color"]
 
-            padding_left = self.style.get("padding-left") or padding
-            padding_right = self.style.get("padding-right") or padding
-            padding_top = self.style.get("padding-top") or padding
-            padding_bottom = self.style.get("padding-bottom") or padding
+        if bg_color and bg_color.lower() != "transparent":
             # TODO border outline styles
             drawer.rectangle(
                 (pos_start, pos_end),
@@ -734,48 +844,53 @@ class TableField(BaseItem):
 
 if __name__ == "__main__":
     main_style = {
-        "bg-color": "#777777"
+        "bg-color": "#777777",
+        "margin": 0
     }
     text_1_style = {
-        "padding": 10,
+        "padding": 0,
         "bg-color": "#00ff77"
     }
     text_2_style = {
-        "padding": 8,
+        "padding": 0,
         "bg-color": "#ff0066"
     }
     text_3_style = {
         "padding": 0,
         "bg-color": "#ff5500"
     }
-    main = MainFrame(1920, 1080, style=main_style)
-    layer = Layer(parent=main)
-    main.add_item(layer)
-
-    text_1 = ItemText("Testing message 1", layer, text_1_style)
-    text_2 = ItemText("Testing message 2", layer, text_2_style)
-    text_3 = ItemText("Testing message 3", layer, text_3_style)
-    table_1_items = [["0", "Output text 1"], ["1", "Output text 2"], ["2", "Output text 3"]]
-    table_1_style = {
-        "padding": 8,
-        "bg-color": "#0077ff"
-    }
-    table_1 = ItemTable(table_1_items, layer, table_1_style)
-
     image_1_style = {
         "width": 240,
         "height": 120,
         "bg-color": "#7733aa"
     }
+    table_1_style = {
+        "padding": 0,
+        "bg-color": "#0077ff"
+    }
+
+    main = MainFrame(1920, 1080, style=main_style)
+    layer = Layer(parent=main)
+    main.add_item(layer)
+
+    text_1 = ItemText("Testing message 1", layer, text_1_style)
+    text_2 = ItemText("Testing 2", layer, text_2_style)
+    text_3 = ItemText("Testing message 3", layer, text_3_style)
+
+    table_1_items = [["0", "Output text 1", "ha"], ["1", "Output 2"], ["2", "Output text 3"]]
+    table_1 = ItemTable(table_1_items, True, parent=layer, style=table_1_style)
+
     image_1_path = r"C:\Users\jakub.trllo\Desktop\Tests\files\image\kitten.jpg"
     image_1 = ItemImage(image_1_path, layer, image_1_style)
 
     layer.add_item(text_1)
     layer.add_item(text_2)
+    layer.add_item(text_3)
+
     layer.add_item(table_1)
     layer.add_item(image_1)
-    layer.add_item(text_3)
-    dst = r"C:\Users\jakub.trllo\Desktop\Tests\files\image\test_output2.png"
+
+    dst = r"C:\Users\jakub.trllo\Desktop\Tests\files\image\test_output3.png"
     main.draw(dst)
 
     print("*** Drawing done :)")
