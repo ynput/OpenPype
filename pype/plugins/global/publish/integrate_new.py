@@ -270,6 +270,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                              "version": int(version["name"]),
                              "hierarchy": hierarchy}
 
+            resolution_width = repre.get("resolutionWidth")
+            resolution_height = repre.get("resolutionHeight")
+            fps = instance.data.get("fps")
+
+            if resolution_width:
+                template_data["resolution_width"] = resolution_width
+            if resolution_width:
+                template_data["resolution_height"] = resolution_height
+            if resolution_width:
+                template_data["fps"] = fps
+
             files = repre['files']
             if repre.get('stagingDir'):
                 stagingdir = repre['stagingDir']

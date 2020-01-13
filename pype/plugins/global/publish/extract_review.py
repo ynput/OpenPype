@@ -279,7 +279,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 'files': repr_file,
                                 "tags": new_tags,
                                 "outputName": name,
-                                "codec": codec_args
+                                "codec": codec_args,
+                                "resolutionWidth": resolution_width,
+                                "resolutionWidth": resolution_height
                             })
                             if repre_new.get('preview'):
                                 repre_new.pop("preview")

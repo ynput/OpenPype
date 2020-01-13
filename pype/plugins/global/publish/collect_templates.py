@@ -76,7 +76,18 @@ class CollectTemplates(pyblish.api.InstancePlugin):
                          "subset": subset_name,
                          "version": version_number,
                          "hierarchy": hierarchy.replace("\\", "/"),
-                         "representation": "TEMP"}
+                         "representation": "TEMP")}
+
+        resolution_width = instance.data.get("resolutionWidth")
+        resolution_height = instance.data.get("resolutionHeight")
+        fps = instance.data.get("fps")
+
+        if resolution_width:
+            template_data["resolution_width"] = resolution_width
+        if resolution_width:
+            template_data["resolution_height"] = resolution_height
+        if resolution_width:
+            template_data["fps"] = fps
 
         instance.data["template"] = template
         instance.data["assumedTemplateData"] = template_data
