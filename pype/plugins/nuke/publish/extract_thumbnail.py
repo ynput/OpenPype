@@ -34,7 +34,6 @@ class ExtractThumbnail(pype.api.Extractor):
             staging_dir = instance.data[
                 "representations"][0]["stagingDir"].replace("\\", "/")
             instance.data["stagingDir"] = staging_dir
-            instance.data["representations"][0]["tags"] = ["review"]
         else:
             instance.data["representations"] = []
             # get output path
@@ -119,7 +118,7 @@ class ExtractThumbnail(pype.api.Extractor):
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
-        tags = ["thumbnail"]
+        tags = ["thumbnail", "review"]
 
         # retime for
         first_frame = int(last_frame) / 2
