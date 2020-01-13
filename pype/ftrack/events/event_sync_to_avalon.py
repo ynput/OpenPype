@@ -28,7 +28,7 @@ class SyncToAvalonEvent(BaseEvent):
     ignore_entTypes = [
         "socialfeed", "socialnotification", "note",
         "assetversion", "job", "user", "reviewsessionobject", "timer",
-        "timelog", "auth_userrole"
+        "timelog", "auth_userrole", "appointment"
     ]
     ignore_ent_types = ["Milestone"]
     ignore_keys = ["statusid"]
