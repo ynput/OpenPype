@@ -470,11 +470,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             None
         """
 
-        src = Path(src).resolve()
+        src = str(Path(src).resolve())
         drive, _path = os.path.splitdrive(dst)
         unc = Path(drive).resolve()
         dst = str(unc / _path)
-        src = str(src)
 
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
@@ -496,11 +495,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     def hardlink_file(self, src, dst):
         dirname = os.path.dirname(dst)
 
-        src = Path(src).resolve()
+        src = str(Path(src).resolve())
         drive, _path = os.path.splitdrive(dst)
         unc = Path(drive).resolve()
         dst = str(unc / _path)
-        src = str(src)
 
         try:
             os.makedirs(dirname)

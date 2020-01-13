@@ -28,13 +28,12 @@ class ExtractThumbnail(pype.api.Extractor):
             self.render_thumbnail(instance)
 
     def render_thumbnail(self, instance):
-        node = instance[0] # group node
+        node = instance[0]  # group node
         self.log.info("Creating staging dir...")
         if "representations" in instance.data:
             staging_dir = instance.data[
                 "representations"][0]["stagingDir"].replace("\\", "/")
             instance.data["stagingDir"] = staging_dir
-            instance.data["representations"][0]["tags"] = ["review"]
         else:
             instance.data["representations"] = []
             # get output path
@@ -165,7 +164,7 @@ class ExtractThumbnail(pype.api.Extractor):
         if ipn_orig:
             nuke.nodeCopy('%clipboard%')
 
-            [n.setSelected(False) for n in nuke.selectedNodes()] # Deselect all
+            [n.setSelected(False) for n in nuke.selectedNodes()]  # Deselect all
 
             nuke.nodePaste('%clipboard%')
 
