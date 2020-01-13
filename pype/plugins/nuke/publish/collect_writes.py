@@ -25,9 +25,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         self.log.debug("checking instance: {}".format(instance))
 
-        # check if slate node available
-        slate_node = instance.data.get("slateNodeName")
-
         # Determine defined file type
         ext = node["file_type"].value()
 
@@ -42,10 +39,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         handle_end = instance.context.data["handleEnd"]
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
-
-        # remove one frame at beggining if slate
-        if slate_node:
-            first_frame -= 1
 
         if node["use_limit"].getValue():
             handles = 0
@@ -108,12 +101,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "fps": instance.context.data["fps"]
         }
 
-        # if slate node then remove one frame from version data
-        if slate_node:
-            version_data.update({
-                "frameStart": (first_frame + 1) + handle_start,
-            })
-
         instance.data["family"] = "write"
         group_node = [x for x in instance if x.Class() == "Group"][0]
         deadlineChunkSize = 1
@@ -142,6 +129,5 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "deadlinePriority": deadlinePriority,
             "subsetGroup": "renders"
         })
-
 
         self.log.debug("instance.data: {}".format(instance.data))
