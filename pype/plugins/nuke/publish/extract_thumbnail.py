@@ -28,7 +28,7 @@ class ExtractThumbnail(pype.api.Extractor):
             self.render_thumbnail(instance)
 
     def render_thumbnail(self, instance):
-        node = instance[0] # group node
+        node = instance[0]  # group node
         self.log.info("Creating staging dir...")
         if "representations" in instance.data:
             staging_dir = instance.data[
@@ -118,7 +118,7 @@ class ExtractThumbnail(pype.api.Extractor):
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
-        tags = ["thumbnail", "review"]
+        tags = ["thumbnail"]
 
         # retime for
         first_frame = int(last_frame) / 2
