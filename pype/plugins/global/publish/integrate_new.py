@@ -470,7 +470,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             None
         """
 
-        src = Path(src).resolve()
+        src = str(Path(src).resolve())
         drive, _path = os.path.splitdrive(dst)
         unc = Path(drive).resolve()
         dst = str(unc / _path)
