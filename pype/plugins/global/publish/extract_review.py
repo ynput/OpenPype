@@ -32,13 +32,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
         inst_data = instance.data
         fps = inst_data.get("fps")
         start_frame = inst_data.get("frameStart")
-        resolution_width = instance.data.get("resolutionWidth", to_width)
-        resolution_height = instance.data.get("resolutionHeight", to_height)
-        pixel_aspect = instance.data.get("pixelAspect", 1)
-        self.log.debug("Families In: `{}`".format(instance.data["families"]))
+        resolution_width = inst_data.get("resolutionWidth", to_width)
+        resolution_height = inst_data.get("resolutionHeight", to_height)
+        pixel_aspect = inst_data.get("pixelAspect", 1)
+        self.log.debug("Families In: `{}`".format(inst_data["families"]))
 
         # get representation and loop them
-        representations = instance.data["representations"]
+        representations = inst_data["representations"]
 
         # filter out mov and img sequences
         representations_new = representations[:]
@@ -224,7 +224,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 self.log.debug("__ height_scale: `{}`".format(height_scale))
                                 self.log.debug("__ height_half_pad: `{}`".format(height_half_pad))
 
-
                                 scaling_arg = "scale={0}x{1}:flags=lanczos,pad={2}:{3}:{4}:{5}:black,setsar=1".format(
                                     width_scale, height_scale, to_width, to_height, width_half_pad, height_half_pad
                                 )
@@ -279,7 +278,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 'files': repr_file,
                                 "tags": new_tags,
                                 "outputName": name,
-                                "codec": codec_args
+                                "codec": codec_args,
+                                "_profile": profile,
+                                "anatomy_template": "render"
                             })
                             if repre_new.get('preview'):
                                 repre_new.pop("preview")
