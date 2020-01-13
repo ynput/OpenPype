@@ -474,6 +474,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         drive, _path = os.path.splitdrive(dst)
         unc = Path(drive).resolve()
         dst = str(unc / _path)
+        src = str(src)
 
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)

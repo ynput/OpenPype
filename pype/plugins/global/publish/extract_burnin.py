@@ -63,7 +63,8 @@ class ExtractBurnin(pype.api.Extractor):
             filename = "{0}".format(repre["files"])
 
             name = "_burnin"
-            movieFileBurnin = filename.replace(".mov", "") + name + ".mov"
+            ext = os.path.splitext(filename)[1]
+            movieFileBurnin = filename.replace(ext, "") + name + ext
 
             full_movie_path = os.path.join(
                 os.path.normpath(stagingdir), repre["files"]
