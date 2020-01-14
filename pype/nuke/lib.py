@@ -1510,6 +1510,9 @@ class ExporterReviewMov(ExporterReview):
         self.log.debug("Path: {}".format(self.path))
         write_node["file"].setValue(self.path)
         write_node["file_type"].setValue(self.ext)
+        write_node["meta_codec"].setValue("ap4h")
+        write_node["mov64_codec"].setValue("ap4h")
+        write_node["mov64_write_timecode"].setValue(1)
         write_node["raw"].setValue(1)
         # connect
         write_node.setInput(0, self.previous_node)
