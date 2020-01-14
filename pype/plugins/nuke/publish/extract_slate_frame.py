@@ -100,7 +100,10 @@ class ExtractSlateFrame(pype.api.Extractor):
 
         # Clean up
         for node in temporary_nodes:
-            nuke.delete(node)
+            nuke.delete(node
+
+        # fill slate node with comments
+        self.add_comment_slate_node(instance)
 
     def get_view_process_node(self):
 
@@ -120,10 +123,24 @@ class ExtractSlateFrame(pype.api.Extractor):
         if ipn_orig:
             nuke.nodeCopy('%clipboard%')
 
-            [n.setSelected(False) for n in nuke.selectedNodes()] # Deselect all
+            [n.setSelected(False) for n in nuke.selectedNodes()]  # Deselect all
 
             nuke.nodePaste('%clipboard%')
 
             ipn = nuke.selectedNode()
 
             return ipn
+
+    def add_comment_slate_node(self, instance):
+        node = instance.data.get("slateNodeName")
+        if not node:
+            return
+
+        comment = instance.context.data.get("comment")
+        intent = instance.context.data.get("intent")
+
+        try:
+            node["f_submission_note"].setValue(comment)
+            node["f_submitting_for"].setValue(intent)
+        except NameError:
+            return
