@@ -1,9 +1,12 @@
 """This module is used for command line publishing of image sequences."""
 
 import os
+import sys
+import argparse
 import logging
 import subprocess
 import platform
+
 try:
     from shutil import which
 except ImportError:
@@ -23,7 +26,7 @@ error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
 
 
 def __main__():
-    import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--paths",
                         nargs="*",
@@ -43,7 +46,27 @@ def __main__():
     print("Running pype ...")
     auto_pype_root = os.path.dirname(os.path.abspath(__file__))
     auto_pype_root = os.path.abspath(auto_pype_root + "../../../../..")
-    auto_pype_root = os.environ.get('PYPE_ROOT') or auto_pype_root
+    # we need to use `auto_pype_root` to be able to remap locations.
+    # This is egg and chicken case: we need to know our storage locations
+    # to be able to remap them on different platforms but if we got `PYPE_ROOT`
+    # variable, we cannot be sure it originated on different platform and is
+    # therefor invalid.
+    # So we use auto_pype_root to get to `PypeLauncher.path_remapper()`. This
+    # will load Storage environments and is able to remap environment to
+    # correct paths.
+    sys.path.append(auto_pype_root)
+    try:
+        from pypeapp import PypeLauncher
+    except ImportError:
+        print("!!! Error: cannot determine Pype location.")
+        print("--- we are looking at {}, but this is not Pype.".format(
+            auto_pype_root))
+
+    remapped_env = PypeLauncher.path_remapper()
+    auto_pype_root = remapped_env.get('PYPE_ROOT') or auto_pype_root
+    if remapped_env.get('PYPE_ROOT'):
+        print("Got Pype location from environment: {}".format(
+            remapped_env.get('PYPE_ROOT')))
 
     pype_command = "pype.ps1"
     if platform.system().lower() == "linux":
@@ -81,7 +104,7 @@ def __main__():
     # Forcing forwaring the environment because environment inheritance does
     # not always work.
     # Cast all values in environment to str to be safe
-    env = {k: str(v) for k, v in os.environ.items()}
+    env = {k: str(v) for k, v in remapped_env.items()}
     exit_code = subprocess.call(args, env=env)
     if exit_code != 0:
         raise RuntimeError("Publishing failed.")

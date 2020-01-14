@@ -149,7 +149,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                      "FTRACK_API_USER",
                      "FTRACK_API_KEY",
                      "FTRACK_SERVER",
-                     "PYPE_ROOT"
+                     "PYPE_ROOT",
+                     "PYPE_METADATA_FILE"
                      ]
 
     def _submit_deadline_post_job(self, instance, job):
@@ -192,7 +193,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "PluginInfo": {
                 "Version": "3.6",
                 "ScriptFile": _get_script(),
-                "Arguments": '--paths "{}"'.format(metadata_path),
+                "Arguments": "",
                 "SingleFrameOnly": "True"
             },
 
@@ -204,6 +205,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # job so they use the same environment
 
         environment = job["Props"].get("Env", {})
+        environment["PYPE_METADATA_FILE"] = metadata_path
         i = 0
         for index, key in enumerate(environment):
             self.log.info("KEY: {}".format(key))
