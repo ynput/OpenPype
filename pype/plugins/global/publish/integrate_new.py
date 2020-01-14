@@ -473,8 +473,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         src = str(Path(src).resolve())
         drive, _path = os.path.splitdrive(dst)
         unc = Path(drive).resolve()
-        dst = str(unc / _path)
-        src = str(src)
+        dst = str(unc) + _path
 
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
@@ -499,7 +498,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         src = str(Path(src).resolve())
         drive, _path = os.path.splitdrive(dst)
         unc = Path(drive).resolve()
-        dst = str(unc / _path)
+        dst = str(unc) + _path
 
         try:
             os.makedirs(dirname)
