@@ -204,19 +204,27 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # job so they use the same environment
 
         environment = job["Props"].get("Env", {})
+
+        environment = dict(
+            {key: os.environ[key] for key in self.enviro_filter
+             if key in environment}, **api.Session)
+
+        self.log.debug("___> enviro: {}".format(environment))
+        for _key in os.environ:
+            if _key.lower().startswith('pype_'):
+                environment[_key] = os.environ[_key]
+
         i = 0
         for index, key in enumerate(environment):
             self.log.info("KEY: {}".format(key))
-            self.log.info("FILTER: {}".format(self.enviro_filter))
 
-            if key.upper() in self.enviro_filter:
-                payload["JobInfo"].update({
-                    "EnvironmentKeyValue%d" % i: "{key}={value}".format(
-                        key=key,
-                        value=environment[key]
-                    )
-                })
-                i += 1
+            payload["JobInfo"].update({
+                "EnvironmentKeyValue%d" % i: "{key}={value}".format(
+                    key=key,
+                    value=environment[key]
+                )
+            })
+            i += 1
 
         # Avoid copied pools and remove secondary pool
         payload["JobInfo"]["Pool"] = "none"
