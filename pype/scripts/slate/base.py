@@ -103,10 +103,6 @@ class BaseObj:
         return default_style_v1
 
     @property
-    def is_drawing(self):
-        return self.parent.is_drawing
-
-    @property
     def height(self):
         raise NotImplementedError(
             "Attribute `height` is not implemented for <{}>".format(
@@ -124,9 +120,6 @@ class BaseObj:
 
     @property
     def full_style(self):
-        if self.is_drawing and self.final_style is not None:
-            return self.final_style
-
         if self.parent is not None:
             style = dict(val for val in self.parent.full_style.items())
         else:
@@ -145,9 +138,6 @@ class BaseObj:
                     style[key].update(value)
                 else:
                     style[key] = value
-
-        if self.is_drawing:
-            self.final_style = style
 
         return style
 
@@ -385,7 +375,6 @@ class BaseObj:
         self.items[item.id] = item
 
     def reset(self):
-        self.final_style = None
         for item in self.items.values():
             item.reset()
 
@@ -395,12 +384,12 @@ class MainFrame(BaseObj):
     obj_type = "main_frame"
     available_parents = [None]
 
-    def __init__(self, width, height, *args, **kwargs):
+    def __init__(self, width, height, destination_path=None, *args, **kwargs):
         kwargs["parent"] = None
         super(MainFrame, self).__init__(*args, **kwargs)
         self._width = width
         self._height = height
-        self._is_drawing = False
+        self.dst_path = destination_path
 
     @property
     def value_width(self):
@@ -424,19 +413,27 @@ class MainFrame(BaseObj):
     def height(self):
         return self._height
 
-    @property
-    def is_drawing(self):
-        return self._is_drawing
+    def draw(self, path=None):
+        if not path:
+            path = self.dst_path
 
-    def draw(self, path):
-        self._is_drawing = True
+        if not path:
+            raise TypeError((
+                "draw() missing 1 required positional argument: 'path'"
+                " if 'destination_path is not specified'"
+            ))
+
+        dir_path = os.path.dirname(path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
         bg_color = self.style["bg-color"]
-        image = Image.new("RGB", (self.width, self.height), color=bg_color)
+        image = Image.new("RGB", (self.width(), self.height()), color=bg_color)
+        drawer = ImageDraw.Draw(image)
         for item in self.items.values():
-            item.draw(image)
+            item.draw(image, drawer)
 
         image.save(path)
-        self._is_drawing = False
         self.reset()
 
 
@@ -571,26 +568,27 @@ class Layer(BaseObj):
             return min_width
         return width
 
-    def draw(self, image, drawer=None):
-        if drawer is None:
-            drawer = ImageDraw.Draw(image)
-
+    def draw(self, image, drawer):
         for item in self.items.values():
             item.draw(image, drawer)
 
 
 class BaseItem(BaseObj):
-    available_parents = ["layer"]
+    available_parents = ["main_frame", "layer"]
 
     def __init__(self, *args, **kwargs):
         super(BaseItem, self).__init__(*args, **kwargs)
 
     @property
     def item_pos_x(self):
+        if self.parent.obj_type == "main_frame":
+            return self._pos_x
         return self.parent.child_pos_x(self.id)
 
     @property
     def item_pos_y(self):
+        if self.parent.obj_type == "main_frame":
+            return self._pos_y
         return self.parent.child_pos_y(self.id)
 
     def add_item(self, *args, **kwargs):
@@ -794,10 +792,6 @@ class ItemTable(BaseItem):
             pos_y += value
 
         return (pos_x, pos_y, width, height)
-
-    def filled_style(self, cord_x, cord_y):
-        # TODO CHANGE STYLE BY CORDS
-        return self.style
 
 
 class TableField(BaseItem):
