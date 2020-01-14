@@ -18,7 +18,12 @@ class ExtractSlateFrame(pype.api.Extractor):
     families = ["slate"]
     hosts = ["nuke"]
 
+
     def process(self, instance):
+        if hasattr(self, "viewer_lut_raw"):
+            self.viewer_lut_raw = self.viewer_lut_raw
+        else:
+            self.viewer_lut_raw = False
 
         with anlib.maintained_selection():
             self.log.debug("instance: {}".format(instance))
@@ -74,10 +79,11 @@ class ExtractSlateFrame(pype.api.Extractor):
             previous_node = ipn
             temporary_nodes.append(ipn)
 
-        dag_node = nuke.createNode("OCIODisplay")
-        dag_node.setInput(0, previous_node)
-        previous_node = dag_node
-        temporary_nodes.append(dag_node)
+        if not self.viewer_lut_raw:
+            dag_node = nuke.createNode("OCIODisplay")
+            dag_node.setInput(0, previous_node)
+            previous_node = dag_node
+            temporary_nodes.append(dag_node)
 
         # create write node
         write_node = nuke.createNode("Write")
@@ -90,11 +96,12 @@ class ExtractSlateFrame(pype.api.Extractor):
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
 
+        # fill slate node with comments
+        self.add_comment_slate_node(instance)
+        
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))
 
-        self.log.debug(
-            "representations: {}".format(instance.data["representations"]))
         self.log.debug(
             "slate frame path: {}".format(instance.data["slateFrame"]))
 
@@ -102,8 +109,6 @@ class ExtractSlateFrame(pype.api.Extractor):
         for node in temporary_nodes:
             nuke.delete(node)
 
-        # fill slate node with comments
-        self.add_comment_slate_node(instance)
 
     def get_view_process_node(self):
 
