@@ -1460,14 +1460,13 @@ class ExporterReviewMov(ExporterReview):
         self.log.info("Rendered...")
 
     def save_file(self):
+        import shutil
         with anlib.maintained_selection():
             self.log.info("Saving nodes as file...  ")
-            # select temp nodes
-            anlib.select_nodes(self._temp_nodes)
             # create nk path
             path = os.path.splitext(self.path)[0] + ".nk"
             # save file to the path
-            nuke.nodeCopy(path)
+            shutil.copyfile(self.instance.context.data["currentFile"], path)
 
         self.log.info("Nodes exported...")
         return path
@@ -1522,6 +1521,7 @@ class ExporterReviewMov(ExporterReview):
 
         # ---------- render or save to nk
         if farm:
+            nuke.scriptSave()
             path_nk = self.save_file()
             self.data.update({
                 "bakeScriptPath": path_nk,
@@ -1540,7 +1540,7 @@ class ExporterReviewMov(ExporterReview):
 
         # ---------- Clean up
         self.clean_nodes()
-
+        nuke.scriptSave()
         return self.data
 
 

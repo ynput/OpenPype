@@ -101,6 +101,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
         resolution_height = 1080
         lut_path = None
         slate_frame = None
+        families_data = None
         subset = None
         if os.environ.get("PYPE_PUBLISH_PATHS"):
             paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
@@ -157,6 +158,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         lut_path = instance.get("lutPath", None)
                         baked_mov_path = instance.get("bakeRenderPath")
                         subset = instance.get("subset")
+                        families_data = instance.get("families")
                         slate_frame = instance.get("slateFrame")
 
             else:
@@ -197,6 +199,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 families.append("ftrack")
             if "write" in instance_family:
                 families.append("write")
+            if families_data and "slate" in families_data:
+                families.append("slate")
 
             if data.get("attachTo"):
                 # we need to attach found collections to existing
