@@ -98,6 +98,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
     def process(self, context):
         pixel_aspect = 1
         lut_path = None
+        slate_frame = None
         if os.environ.get("PYPE_PUBLISH_PATHS"):
             paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
             self.log.info("Collecting paths: {}".format(paths))
@@ -146,13 +147,12 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         os.environ.update(session)
                     instance = metadata.get("instance")
                     if instance:
-                        # here is the place to add ability for nuke noninteractive
-                        # ______________________________________
                         instance_family = instance.get("family")
                         pixel_aspect = instance.get("pixelAspect", 1)
                         resolution_width = instance.get("resolutionWidth", 1920)
                         resolution_height = instance.get("resolutionHeight", 1080)
                         lut_path = instance.get("lutPath", None)
+                        slate_frame = instance.get("slateFrame", None)
 
             else:
                 # Search in directory
@@ -271,6 +271,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "fps": fps,
                         "source": data.get("source", ""),
                         "pixelAspect": pixel_aspect,
+                        "slateFrame": slate_frame
                     }
                 )
 
