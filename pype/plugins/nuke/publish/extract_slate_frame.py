@@ -100,7 +100,7 @@ class ExtractSlateFrame(pype.api.Extractor):
 
         # Clean up
         for node in temporary_nodes:
-            nuke.delete(node
+            nuke.delete(node)
 
         # fill slate node with comments
         self.add_comment_slate_node(instance)
@@ -132,7 +132,7 @@ class ExtractSlateFrame(pype.api.Extractor):
             return ipn
 
     def add_comment_slate_node(self, instance):
-        node = instance.data.get("slateNodeName")
+        node = instance.data.get("slateNode")
         if not node:
             return
 
