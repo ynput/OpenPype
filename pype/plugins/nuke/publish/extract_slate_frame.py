@@ -82,7 +82,6 @@ class ExtractSlateFrame(pype.api.Extractor):
         # create write node
         write_node = nuke.createNode("Write")
         file = fhead + "slate.png"
-        name = "slate"
         path = os.path.join(staging_dir, file).replace("\\", "/")
         instance.data["slateFrame"] = path
         write_node["file"].setValue(path)
@@ -90,17 +89,6 @@ class ExtractSlateFrame(pype.api.Extractor):
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
-
-        repre = {
-            'name': name,
-            'ext': "png",
-            'files': file,
-            "stagingDir": staging_dir,
-            "frameStart": first_frame,
-            "frameEnd": last_frame,
-            "anatomy_template": "render"
-        }
-        instance.data["representations"].append(repre)
 
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))

@@ -100,6 +100,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
         resolution_width = 1920
         resolution_height = 1080
         lut_path = None
+        slate_frame = None
         subset = None
         if os.environ.get("PYPE_PUBLISH_PATHS"):
             paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
@@ -156,6 +157,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         lut_path = instance.get("lutPath", None)
                         baked_mov_path = instance.get("bakeRenderPath")
                         subset = instance.get("subset")
+                        slate_frame = instance.get("slateFrame")
 
             else:
                 # Search in directory
@@ -280,7 +282,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "source": data.get("source", ""),
                         "pixelAspect": pixel_aspect,
                         "resolutionWidth": resolution_width,
-                        "resolutionHeight": resolution_height
+                        "resolutionHeight": resolution_height,
+                        "slateFrame": slate_frame
                     }
                 )
 
