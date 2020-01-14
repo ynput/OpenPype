@@ -24,7 +24,7 @@ class BaseObj:
         "margin-top", "margin-bottom", "width", "height"
     ]
 
-    def __init__(self, parent, style={}, name=None):
+    def __init__(self, parent, style={}, name=None, pos_x=None, pos_y=None):
         if not self.obj_type:
             raise NotImplementedError(
                 "Class don't have set object type <{}>".format(
@@ -50,7 +50,9 @@ class BaseObj:
         self.id = uuid4()
         self.name = name
         self.items = {}
-        self.final_style = None
+
+        self._pos_x = pos_x or 0
+        self._pos_y = pos_y or 0
 
     @property
     def main_style(self):
