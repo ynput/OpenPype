@@ -16,23 +16,26 @@ class ExtractReviewDataMov(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder + 0.01
     label = "Extract Review Data Mov"
 
-    families = ["review"]
+    families = ["review", "render", "render.local"]
     hosts = ["nuke"]
 
     def process(self, instance):
         families = instance.data["families"]
+
         self.log.info("Creating staging dir...")
+        self.log.debug(
+            "__ representations: `{}`".format(
+                instance.data["representations"]))
         if "representations" in instance.data:
-            staging_dir = instance.data[
-                "representations"][0]["stagingDir"].replace("\\", "/")
-            instance.data["stagingDir"] = staging_dir
-            instance.data["representations"][0]["tags"] = []
-        else:
-            instance.data["representations"] = []
-            # get output path
-            render_path = instance.data['path']
-            staging_dir = os.path.normpath(os.path.dirname(render_path))
-            instance.data["stagingDir"] = staging_dir
+            if instance.data["representations"] == []:
+                render_path = instance.data['path']
+                staging_dir = os.path.normpath(os.path.dirname(render_path))
+                instance.data["stagingDir"] = staging_dir
+            else:
+                staging_dir = instance.data[
+                    "representations"][0]["stagingDir"].replace("\\", "/")
+                instance.data["representations"][0]["tags"] = []
+                instance.data["stagingDir"] = staging_dir
 
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))

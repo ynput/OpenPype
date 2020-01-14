@@ -98,7 +98,7 @@ class ExtractSlateFrame(pype.api.Extractor):
 
         # fill slate node with comments
         self.add_comment_slate_node(instance)
-        
+
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))
 
@@ -149,3 +149,4 @@ class ExtractSlateFrame(pype.api.Extractor):
             node["f_submitting_for"].setValue(intent)
         except NameError:
             return
+        instance.data.pop("slateNode")
