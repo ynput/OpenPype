@@ -151,18 +151,79 @@ class BaseObj:
 
         return style
 
-    @property
-    def style(self):
-        style = self.full_style
+    def get_style_for_obj_type(self, obj_type, style=None):
+        if not style:
+            style = copy.deepcopy(self.full_style)
 
         base = style.get("*") or {}
-        obj_specific = style.get(self.obj_type) or {}
+        obj_specific = style.get(obj_type) or {}
         name_specific = {}
         if self.name:
             name = str(self.name)
             if not name.startswith("#"):
                 name += "#"
             name_specific = style.get(name) or {}
+
+
+        if obj_type == "table-item":
+            col_regex = r"table-item-col\[([\d\-, ]+)*\]"
+            row_regex = r"table-item-row\[([\d\-, ]+)*\]"
+            field_regex = (
+                r"table-item-field\[(([ ]+)?\d+([ ]+)?:([ ]+)?\d+([ ]+)?)*\]"
+            )
+            # STRICT field regex (not allowed spaces)
+            # fild_regex = r"table-item-field\[(\d+:\d+)*\]"
+
+            def get_indexes_from_regex_match(result, field=False):
+                group = result.group(1)
+                indexes = []
+                if field:
+                    return [
+                        int(part.strip()) for part in group.strip().split(":")
+                    ]
+
+                parts = group.strip().split(",")
+                for part in parts:
+                    part = part.strip()
+                    if "-" not in part:
+                        indexes.append(int(part))
+                        continue
+
+                    sub_parts = [
+                        int(sub.strip()) for sub in part.split("-")
+                    ]
+                    if len(sub_parts) != 2:
+                        # TODO logging
+                        print("invalid range '{}'".format(part))
+                        continue
+
+                    for idx in range(sub_parts[0], sub_parts[1]+1):
+                        indexes.append(idx)
+                return indexes
+
+            for key, value in style.items():
+                if not key.startswith(obj_type):
+                    continue
+
+                result = re.search(col_regex, key)
+                if result:
+                    indexes = get_indexes_from_regex_match(result)
+                    if self.col_idx in indexes:
+                        obj_specific.update(value)
+                    continue
+
+                result = re.search(row_regex, key)
+                if result:
+                    indexes = get_indexes_from_regex_match(result)
+                    if self.row_idx in indexes:
+                        obj_specific.update(value)
+                    continue
+
+                result = re.search(field_regex, key)
+                if result:
+                    col_idx, row_idx = get_indexes_from_regex_match(result)
+                    if self.row_idx == col_idx and self.row_idx == row_idx:
+                        obj_specific.update(value)
 
         output = {}
         output.update(base)
@@ -172,11 +233,19 @@ class BaseObj:
         return output
 
     @property
+    def style(self):
+        return self.get_style_for_obj_type(self.obj_type)
+
+    @property
     def item_pos_x(self):
+        if self.parent.obj_type == "main_frame":
+            return self._pos_x
         return 0
 
     @property
     def item_pos_y(self):
+        if self.parent.obj_type == "main_frame":
+            return self._pos_x
         return 0
 
     @property
