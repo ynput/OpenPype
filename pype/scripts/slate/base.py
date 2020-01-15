@@ -827,6 +827,7 @@ class TableField(BaseItem):
 
     obj_type = "table-item"
     available_parents = ["table"]
+    ellide_text = "..."
 
     def __init__(self, cord_x, cord_y, value, *args, **kwargs):
         super(TableField, self).__init__(*args, **kwargs)
