@@ -670,8 +670,12 @@ class ItemText(BaseItem):
         font_color = self.style["font-color"]
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
+        font_bold = self.style.get("font-bold", False)
+        font_italic = self.style.get("font-italic", False)
 
-        font = ImageFont.truetype(font_family, font_size)
+        font = FontFactory.get_font(
+            font_family, font_size, font_italic, font_bold
+        )
         drawer.text(
             self.value_pos_start,
             self.value,
@@ -682,16 +686,24 @@ class ItemText(BaseItem):
     def value_width(self):
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
+        font_bold = self.style.get("font-bold", False)
+        font_italic = self.style.get("font-italic", False)
 
-        font = ImageFont.truetype(font_family, font_size)
+        font = FontFactory.get_font(
+            font_family, font_size, font_italic, font_bold
+        )
         width = font.getsize(self.value)[0]
         return int(width)
 
     def value_height(self):
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
+        font_bold = self.style.get("font-bold", False)
+        font_italic = self.style.get("font-italic", False)
 
-        font = ImageFont.truetype(font_family, font_size)
+        font = FontFactory.get_font(
+            font_family, font_size, font_italic, font_bold
+        )
         height = font.getsize(self.value)[1]
         return int(height)
 
@@ -828,20 +840,28 @@ class TableField(BaseItem):
 
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
+        font_bold = self.style.get("font-bold", False)
+        font_italic = self.style.get("font-italic", False)
 
-        font = ImageFont.truetype(font_family, font_size)
-        width = font.getsize(self.value)[0] + 1
-        return width
+        font = FontFactory.get_font(
+            font_family, font_size, font_italic, font_bold
+        )
+        width = font.getsize_multiline(self.value)[0] + 1
+        return int(width)
 
     def value_height(self):
         if not self.value:
             return 0
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
+        font_bold = self.style.get("font-bold", False)
+        font_italic = self.style.get("font-italic", False)
 
-        font = ImageFont.truetype(font_family, font_size)
-        height = font.getsize(self.value)[1] + 1
-        return height
+        font = FontFactory.get_font(
+            font_family, font_size, font_italic, font_bold
+        )
+        height = font.getsize_multiline(self.value)[1] + 1
+        return int(height)
 
     @property
     def item_pos_x(self):
@@ -917,8 +937,12 @@ class TableField(BaseItem):
         font_color = self.style["font-color"]
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
+        font_bold = self.style.get("font-bold", False)
+        font_italic = self.style.get("font-italic", False)
 
-        font = ImageFont.truetype(font_family, font_size)
+        font = FontFactory.get_font(
+            font_family, font_size, font_italic, font_bold
+        )
         drawer.text(
             self.value_pos_start,
             self.value,
