@@ -918,32 +918,102 @@ class TableField(BaseItem):
             fill=font_color
         )
 
-if __name__ == "__main__":
-    main_style = {
-        "bg-color": "#777777",
-        "margin": 0
-    }
-    text_1_style = {
-        "padding": 0,
-        "bg-color": "#00ff77"
-    }
-    text_2_style = {
-        "padding": 0,
-        "bg-color": "#ff0066"
-    }
-    text_3_style = {
-        "padding": 0,
-        "bg-color": "#ff5500"
-    }
-    image_1_style = {
-        "width": 240,
-        "height": 120,
-        "bg-color": "#7733aa"
-    }
-    table_1_style = {
-        "padding": 0,
-        "bg-color": "#0077ff"
-    }
+
+class FontFactory:
+    fonts = None
+    default = None
+
+    @classmethod
+    def get_font(cls, family, font_size=None, italic=False, bold=False):
+        if cls.fonts is None:
+            cls.load_fonts()
+
+        styles = []
+        if bold:
+            styles.append("Bold")
+
+        if italic:
+            styles.append("Italic")
+
+        if not styles:
+            styles.append("Regular")
+
+        style = " ".join(styles)
+        family = family.lower()
+        family_styles = cls.fonts.get(family)
+        if not family_styles:
+            return cls.default
+
+        font = family_styles.get(style)
+        if font:
+            if font_size:
+                font = font.font_variant(size=font_size)
+            return font
+
+        # Return first found
+        for font in family_styles:
+            if font_size:
+                font = font.font_variant(size=font_size)
+            return font
+
+        return cls.default
+
+    @classmethod
+    def load_fonts(cls):
+
+        cls.default = ImageFont.load_default()
+
+        available_font_ext = [".ttf", ".ttc"]
+        dirs = []
+        if sys.platform == "win32":
+            # check the windows font repository
+            # NOTE: must use uppercase WINDIR, to work around bugs in
+            # 1.5.2's os.environ.get()
+            windir = os.environ.get("WINDIR")
+            if windir:
+                dirs.append(os.path.join(windir, "fonts"))
+
+        elif sys.platform in ("linux", "linux2"):
+            lindirs = os.environ.get("XDG_DATA_DIRS", "")
+            if not lindirs:
+                # According to the freedesktop spec, XDG_DATA_DIRS should
+                # default to /usr/share
+                lindirs = "/usr/share"
+            dirs += [
+                os.path.join(lindir, "fonts") for lindir in lindirs.split(":")
+            ]
+
+        elif sys.platform == "darwin":
+            dirs += [
+                "/Library/Fonts",
+                "/System/Library/Fonts",
+                os.path.expanduser("~/Library/Fonts")
+            ]
+
+        available_fonts = collections.defaultdict(dict)
+        for directory in dirs:
+            for walkroot, walkdir, walkfilenames in os.walk(directory):
+                for walkfilename in walkfilenames:
+                    ext = os.path.splitext(walkfilename)[1]
+                    if ext.lower() not in available_font_ext:
+                        continue
+
+                    fontpath = os.path.join(walkroot, walkfilename)
+                    font_obj = ImageFont.truetype(fontpath)
+                    family = font_obj.font.family.lower()
+                    style = font_obj.font.style
+                    available_fonts[family][style] = font_obj
+
+        cls.fonts = available_fonts
+
+
+def main_v01():
+    main_style = {"bg-color": "#777777", "margin": 0}
+    text_1_style = {"padding": 0, "bg-color": "#00ff77"}
+    text_2_style = {"padding": 0, "bg-color": "#ff0066"}
+    text_3_style = {"padding": 0, "bg-color": "#ff5500"}
+    image_1_style = {"width": 240, "height": 120, "bg-color": "#7733aa"}
+    table_1_style = {"padding": 0, "bg-color": "#0077ff"}
 
     main = MainFrame(1920, 1080, style=main_style)
     layer = Layer(parent=main)
@@ -969,4 +1039,81 @@ if __name__ == "__main__":
     dst = r"C:\Users\jakub.trllo\Desktop\Tests\files\image\test_output3.png"
     main.draw(dst)
 
-    print("*** Drawing done :)")
+
+def main_v02():
+    cur_folder = os.path.dirname(os.path.abspath(__file__))
+    input_json = os.path.join(cur_folder, "netflix_v01.1.json")
+    with open(input_json) as json_file:
+        slate_data = json.load(json_file)
+
+    width = slate_data["width"]
+    height = slate_data["height"]
+    style = slate_data.get("style") or {}
+    dst_path = slate_data.get("destination_path")
+    main = MainFrame(width, height, destination_path=dst_path, style=style)
+
+    load_queue = Queue()
+    for item in slate_data["items"]:
+        load_queue.put((item, main))
+
+    all_objs = []
+    while not load_queue.empty():
+        item_data, parent = load_queue.get()
+
+        item_type = item_data["type"].lower()
+        item_style = item_data.get("style", {})
+        item_name = item_data.get("name")
+
+        pos_x = None
+        pos_y = None
+        if parent.obj_type == "main_frame":
+            pos_x = item_data.get("pos_x", {})
+            pos_y = item_data.get("pos_y", {})
+
+        kwargs = {
+            "parent": parent,
+            "style": item_style,
+            "pos_x": pos_x,
+            "pos_y": pos_y
+        }
+
+        item_obj = None
+        if item_type == "layer":
+            direction = item_data.get("direction", 0)
+            item_obj = Layer(direction, **kwargs)
+            for item in item_data.get("items", []):
+                load_queue.put((item, item_obj))
+
+        elif item_type == "table":
+            use_alternate_color = item_data.get("use_alternate_color", False)
+            values = item_data.get("values") or []
+            item_obj = ItemTable(values, use_alternate_color, **kwargs)
+
+        elif item_type == "image":
+            path = item_data["path"]
+            item_obj = ItemImage(path, **kwargs)
+
+        elif item_type == "rectangle":
+            item_obj = ItemRectangle(**kwargs)
+
+        if not item_obj:
+            print(
+                "Slate item not implemented <{}> - skipping".format(item_type)
+            )
+            continue
+
+        all_objs.append(item_obj)
+
+        parent.add_item(item_obj)
+
+    main.draw()
+    # for item in all_objs:
+        # print(item.style.get("width"), item.style.get("height"))
+        # print(item.width, item.height)
+        # print(item.content_pos_x, item.content_pos_y)
+        # print(item.value_pos_x, item.value_pos_y)
+
+
+if __name__ == "__main__":
+    main_v02()
+    print("*** Drawing is done")
