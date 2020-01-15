@@ -1,0 +1,141 @@
+{
+    "width": 1920,
+    "height": 1080,
+    "destination_path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/netflix_output_v001.png",
+    "style": {
+        "*": {
+            "font-family": "arial",
+            "font-size": 26,
+            "font-color": "#ffffff",
+            "font-bold": false,
+            "font-italic": false,
+            "bg-color": "#0077ff",
+            "alignment-horizontal": "left",
+            "alignment-vertical": "top",
+            "padding": 0,
+            "margin": 0
+        },
+        "rectangle": {
+            "padding": 0,
+            "margin": 0,
+            "bg-color": "#E9324B",
+            "fill": true
+        },
+        "main_frame": {
+            "bg-color": "#252525"
+        },
+        "table": {
+            "bg-color": "transparent"
+        },
+        "table-item": {
+            "bg-color": "#272727",
+            "bg-alter-color": "#212121",
+            "font-color": "#ffffff",
+            "font-bold": true,
+            "font-italic": false,
+            "padding": 5,
+            "padding-bottom": 10,
+            "alignment-vertical": "top",
+            "alignment-horizontal": "left",
+            "word-wrap": true,
+            "ellide": true,
+            "max-lines": 3
+        },
+        "table-item-col[0]": {
+            "font-size": 20,
+            "font-color": "#898989"
+        },
+        "table-item-col[1]": {
+            "font-size": 30,
+            "padding-left": 20
+        }
+    },
+    "items": [{
+        "type": "layer",
+        "name": "LeftSide",
+        "pos_x": 40,
+        "pos_y": 40,
+        "style": {
+            "width": 1094,
+            "height": 1000
+        },
+        "items": [{
+            "type": "table",
+            "values": [
+                ["Show:", "First Contact"]
+            ],
+            "style": {
+                "table-item-col[0]": {
+                    "width": 300
+                }
+            }
+        }, {
+            "type": "rectangle",
+            "style": {
+                "bg-color": "#d40914",
+                "width": 1094,
+                "height": 5,
+                "fill": true
+            }
+        }, {
+            "type": "table",
+            "use_alternate_color": true,
+            "values": [
+                ["Version name:", "mei_101_001_0020_slate_NFX_v001"],
+                ["Date:", "2019-08-09"],
+                ["Shot Types:", "2d comp"],
+                ["Submission Note:", "Submitting as and example with all MEI fields filled out. As well as the additional fields Shot description, Episode, Scene, and Version # that were requested by production."]
+            ],
+            "style": {
+                "table-item-col[0]": {
+                    "alignment-horizontal": "right",
+                    "width": 300
+                },
+                "table-item-col[1]": {
+                    "alignment-horizontal": "left",
+                    "width": 786
+                }
+            }
+        }]
+    }, {
+        "type": "layer",
+        "name": "RightSide",
+        "pos_x": 1174,
+        "pos_y": 40,
+        "style": {
+            "width": 733,
+            "height": 1000
+        },
+        "items": [{
+            "type": "image",
+            "path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/birds.png",
+            "style": {
+                "width": 733,
+                "height": 414
+            }
+        }, {
+            "type": "image",
+            "path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/kitten.jpg",
+            "style": {
+                "width": 733,
+                "height": 55
+            }
+        }, {
+            "type": "table",
+            "use_alternate_color": true,
+            "values": [
+                ["Vendor:", "DAZZLE"],
+                ["Shot Name:", "SLATE_SIMPLE"],
+                ["Frames:", "0 - 1 (2)"]
+            ],
+            "style": {
+                "table-item-col[0]": {
+                    "alignment-horizontal": "left"
+                },
+                "table-item-col[1]": {
+                    "alignment-horizontal": "right"
+                }
+            }
+        }]
+    }]
+}
