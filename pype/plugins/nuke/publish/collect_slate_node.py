@@ -1,6 +1,7 @@
 import pyblish.api
 import nuke
 
+
 class CollectSlate(pyblish.api.InstancePlugin):
     """Check if SLATE node is in scene and connected to rendering tree"""
 
