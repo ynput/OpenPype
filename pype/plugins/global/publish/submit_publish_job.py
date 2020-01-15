@@ -321,6 +321,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "source": source,
             "user": context.data["user"],
             "version": context.data["version"],
+            "intent": context.data["intent"],
+            "comment": context.data["comment"],
             # Optional metadata (for debugging)
             "metadata": {
                 "instance": data,

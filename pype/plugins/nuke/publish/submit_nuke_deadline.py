@@ -1,7 +1,7 @@
 import os
 import json
 import getpass
- 
+
 from avalon import api
 from avalon.vendor import requests
 import re
@@ -43,6 +43,12 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         render_path = instance.data['path']
         render_dir = os.path.normpath(os.path.dirname(render_path))
 
+        # frame start definition
+        frame_start = int(instance.data["frameStart"])
+        # exception for slate workflow
+        if "slate" in instance.data["families"]:
+            frame_start -= 1
+
         script_path = context.data["currentFile"]
 
         script_name = os.path.basename(script_path)
@@ -75,7 +81,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(
-                    start=int(instance.data["frameStart"]),
+                    start=frame_start,
                     end=int(instance.data["frameEnd"])
                 ),
                 "ChunkSize": instance.data["deadlineChunkSize"],
