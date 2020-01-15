@@ -85,6 +85,18 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
                     type=entity_type,
                     parent=parent
                 )
+
+                if entity.entity_type.lower() not in ["task", "project"]:
+                    filter = {
+                        "type": "asset",
+                        "name": entity_name
+                    }
+                    update_data = {
+                        "data.ftrackId": entity["id"],
+                        "data.entityType": entity.entity_type
+                    }
+                    io.update_one(filter, update_data)
+
             # self.log.info('entity: {}'.format(dict(entity)))
             # CUSTOM ATTRIBUTES
             custom_attributes = entity_data.get('custom_attributes', [])
