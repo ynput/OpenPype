@@ -25,11 +25,7 @@ class ExtractBurnin(pype.api.Extractor):
         if "representations" not in instance.data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
-        # TODO: expand burnin data list to include all usefull keys
-        version = ''
-        if instance.context.data.get('version'):
-            version = "v" + str(instance.context.data['version'])
-
+        version = instance.context.data.get('version')
         frame_start = int(instance.data.get("frameStart") or 0)
         frame_end = int(instance.data.get("frameEnd") or 1)
         duration = frame_end - frame_start + 1
@@ -42,9 +38,23 @@ class ExtractBurnin(pype.api.Extractor):
             "frame_end": frame_end,
             "duration": duration,
             "version": version,
-            "comment": instance.context.data.get("comment"),
-            "intent": instance.context.data.get("intent")
+            "comment": instance.context.data.get("comment", ""),
+            "intent": instance.context.data.get("intent", "")
         }
+
+        # exception for slate workflow
+        if "slate" in instance.data["families"]:
+            slate_frame_start = frame_start - 1
+            slate_frame_end = frame_end
+            slate_duration = slate_frame_end - slate_frame_start + 1
+
+            prep_data.update({
+                "slate_frame_start": slate_frame_start,
+                "slate_frame_end": slate_frame_end,
+                "slate_duration": slate_duration
+            })
+
+
         # Update data with template data
         template_data = instance.data.get("assumedTemplateData") or {}
         prep_data.update(template_data)

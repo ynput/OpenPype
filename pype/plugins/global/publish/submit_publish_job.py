@@ -149,7 +149,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                      "FTRACK_API_USER",
                      "FTRACK_API_KEY",
                      "FTRACK_SERVER",
-                     "PYPE_ROOT"
+                     "PYPE_ROOT",
+                     "PYPE_STUDIO_PROJECTS_PATH",
+                     "PYPE_STUDIO_PROJECTS_MOUNT"
                      ]
 
     def _submit_deadline_post_job(self, instance, job):
@@ -203,26 +205,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         environment = job["Props"].get("Env", {})
 
-        environment = dict(
-            {key: os.environ[key] for key in self.enviro_filter
-             if key in environment}, **api.Session)
-
-        self.log.debug("___> enviro: {}".format(environment))
-        for _key in os.environ:
-            if _key.lower().startswith('pype_'):
-                environment[_key] = os.environ[_key]
-
         i = 0
         for index, key in enumerate(environment):
             self.log.info("KEY: {}".format(key))
+            self.log.info("FILTER: {}".format(self.enviro_filter))
 
-            payload["JobInfo"].update({
-                "EnvironmentKeyValue%d" % i: "{key}={value}".format(
-                    key=key,
-                    value=environment[key]
-                )
-            })
-            i += 1
+            if key.upper() in self.enviro_filter:
+                payload["JobInfo"].update({
+                    "EnvironmentKeyValue%d" % i: "{key}={value}".format(
+                        key=key,
+                        value=environment[key]
+                    )
+                })
+                i += 1
 
         # Avoid copied pools and remove secondary pool
         payload["JobInfo"]["Pool"] = "none"
@@ -324,6 +319,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "source": source,
             "user": context.data["user"],
             "version": context.data["version"],
+            "intent": context.data["intent"],
+            "comment": context.data["comment"],
             # Optional metadata (for debugging)
             "metadata": {
                 "instance": data,

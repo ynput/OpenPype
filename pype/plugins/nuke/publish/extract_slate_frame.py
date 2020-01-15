@@ -60,6 +60,10 @@ class ExtractSlateFrame(pype.api.Extractor):
 
             # get first and last frame
             first_frame = min(collection.indexes) - 1
+
+            if "slate" in instance.data["families"]:
+                first_frame += 1
+
             last_frame = first_frame
         else:
             fname = os.path.basename(instance.data.get("path", None))

@@ -42,6 +42,14 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
         # get output path
         render_path = instance.data['path']
+        render_dir = os.path.normpath(os.path.dirname(render_path))
+
+        # frame start definition
+        frame_start = int(instance.data["frameStart"])
+        # exception for slate workflow
+        if "slate" in instance.data["families"]:
+            frame_start -= 1
+
         script_path = context.data["currentFile"]
 
         response = self.payload_submit(instance,
@@ -106,8 +114,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(
-                    start=self._frame_start,
-                    end=self._frame_end
+                    start=frame_start,
+                    end=int(instance.data["frameEnd"])
                 ),
                 "Comment": self._comment,
 

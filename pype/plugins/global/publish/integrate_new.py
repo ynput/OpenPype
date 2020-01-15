@@ -175,16 +175,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if instance.data.get('version'):
             next_version = int(instance.data.get('version'))
 
-        # self.log.info("Verifying version from assumed destination")
-
-        # assumed_data = instance.data["assumedTemplateData"]
-        # assumed_version = assumed_data["version"]
-        # if assumed_version != next_version:
-        #     raise AttributeError("Assumed version 'v{0:03d}' does not match"
-        #                          "next version in database "
-        #                          "('v{1:03d}')".format(assumed_version,
-        #                                                next_version))
-
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
         version_data = self.create_version_data(context, instance)
@@ -323,6 +313,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         repre.get("frameEnd")))
                     index_frame_start = int(repre.get("frameStart"))
 
+                # exception for slate workflow
+                if "slate" in instance.data["families"]:
+                    index_frame_start -= 1
+                    
                 dst_padding_exp = src_padding_exp
                 dst_start_frame = None
                 for i in src_collection.indexes:
@@ -461,20 +455,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.hardlink_file(src, dest)
 
     def unc_convert(self, path):
-        self.log.debug("_ path .. `{}`".format(path))
         drive, _path = os.path.splitdrive(path)
-        self.log.debug("_ drive, _path .. `{}`, `{}`".format(drive, _path))
         unc = Path(drive).resolve()
-        self.log.debug("_ unc.resolved .. `{}`".format(unc))
         path = str(unc) + _path
-        self.log.debug("_ path.resolved .. `{}`".format(path))
 
         if not os.path.exists(str(unc)):
-            self.log.info("_ converting to unc from environments ..")
+            self.log.info("Converting to unc from environments ..")
+
             path_replace = os.getenv("PYPE_STUDIO_PROJECTS_PATH")
             path_mount = os.getenv("PYPE_STUDIO_PROJECTS_MOUNT")
-            self.log.debug("_ path_replace .. `{}`".format(path_replace))
-            self.log.debug("_ path_mount .. `{}`".format(path_mount))
+
             if "/" in path_mount:
                 path = path.replace(path_mount[0:-1], path_replace)
             else:

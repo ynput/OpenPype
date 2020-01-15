@@ -1235,6 +1235,8 @@ class ExporterReview:
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
+            if "slate" in self.instance.data["families"]:
+                self.first_frame += 1
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
