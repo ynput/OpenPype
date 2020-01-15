@@ -853,6 +853,18 @@ class TableField(BaseItem):
         ellide = self.style.get("ellide")
         max_lines = self.style.get("max-lines")
 
+        font_family = self.style["font-family"]
+        font_size = self.style["font-size"]
+        font_bold = self.style.get("font-bold", False)
+        font_italic = self.style.get("font-italic", False)
+
+        font = FontFactory.get_font(
+            font_family, font_size, font_italic, font_bold
+        )
+        val_width = font.getsize(value)[0]
+        if val_width <= max_width:
+            return value
+
         if not ellide and not word_wrap:
             # TODO logging
             print((
