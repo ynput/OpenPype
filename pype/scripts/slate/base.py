@@ -834,6 +834,108 @@ class TableField(BaseItem):
         self.cord_y = cord_y
         self.value = value
 
+    def recalculate_by_width(self, value, max_width):
+        if not value:
+            return ""
+
+        word_wrap = self.style.get("word-wrap")
+        ellide = self.style.get("ellide")
+        max_lines = self.style.get("max-lines")
+
+        if not ellide and not word_wrap:
+            # TODO logging
+            print((
+                "Can't draw text because is too long with"
+                " `word-wrap` and `ellide` turned off"
+            ))
+            return ""
+
+        elif ellide and not word_wrap:
+            max_lines = 1
+
+        font_family = self.style["font-family"]
+        font_size = self.style["font-size"]
+        font_bold = self.style.get("font-bold", False)
+        font_italic = self.style.get("font-italic", False)
+
+        font = FontFactory.get_font(
+            font_family, font_size, font_italic, font_bold
+        )
+
+        words = [word for word in value.split()]
+        words_len = len(words)
+        lines = []
+        last_index = 0
+        while True:
+            line = ""
+            for idx in range(last_index, words_len):
+                _word = words[idx]
+                _line = " ".join([line, _word])
+                _line_width = font.getsize(_line)[0]
+                if _line_width > max_width:
+                    break
+                line = _line
+                last_index = idx
+
+            if line:
+                lines.append(line)
+
+            if last_index == words_len - 1:
+                break
+
+            elif last_index == 0:
+                if ellide:
+                    line = ""
+                    for idx, char in enumerate(words[idx]):
+                        _line = line + char + self.ellide_text
+                        _line_width = font.getsize(_line)[0]
+                        if _line_width > max_width:
+                            if idx == 0:
+                                line = _line
+                            break
+                        line = _line
+
+                    lines.append(line)
+                # TODO logging
+                print("Font size is too big.")
+                break
+
+        output = ""
+        if not lines:
+            return output
+
+        if max_lines and len(lines) > max_lines:
+            lines = [lines[idx] for idx in range(max_lines)]
+            if not ellide:
+                return "\n".join(lines)
+
+            last_line = lines[-1]
+            last_line_width = font.getsize(last_line + self.ellide_text)[0]
+            if last_line_width <= max_width:
+                lines[-1] += self.ellide_text
+                return "\n".join([line for line in lines])
+
+            last_line_words = last_line.split()
+            if len(last_line_words) == 1:
+                if max_lines > 1:
+                    lines[-1] = self.ellide_text
+                    return "\n".join([line for line in lines])
+
+                _line = ""
+                for idx, char in enumerate(last_line):
+                    _line = line + char + self.ellide_text
+                    _line_width = font.getsize(_line)[0]
+                    if _line_width > max_width:
+                        if idx == 0:
+                            line = _line
+                        break
+                    line = _line
+                lines[-1] = line
+                return "\n".join([line for line in lines])
+
+        return "\n".join([line for line in lines])
+
+
     def value_width(self):
         if not self.value:
             return 0
