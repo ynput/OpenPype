@@ -261,7 +261,10 @@ class BaseObj:
     def value_pos_x(self):
         pos_x = int(self.content_pos_x)
         padding = self.style["padding"]
-        padding_left = self.style.get("padding-left") or padding
+        padding_left = self.style.get("padding-left")
+        if padding_left is None:
+            padding_left = padding
+
         pos_x += padding_left
 
         return pos_x
@@ -270,7 +273,10 @@ class BaseObj:
     def value_pos_y(self):
         pos_y = int(self.content_pos_y)
         padding = self.style["padding"]
-        padding_top = self.style.get("padding-top") or padding
+        padding_top = self.style.get("padding-top")
+        if padding_top is None:
+            padding_top = padding
+
         pos_y += padding_top
 
         return pos_y
@@ -314,15 +320,27 @@ class BaseObj:
     def content_width(self):
         width = self.value_width()
         padding = self.style["padding"]
-        padding_left = self.style.get("padding-left") or padding
-        padding_right = self.style.get("padding-right") or padding
+        padding_left = self.style.get("padding-left")
+        if padding_left is None:
+            padding_left = padding
+
+        padding_right = self.style.get("padding-right")
+        if padding_right is None:
+            padding_right = padding
+
         return width + padding_left + padding_right
 
     def content_height(self):
         height = self.value_height()
         padding = self.style["padding"]
-        padding_top = self.style.get("padding-top") or padding
-        padding_bottom = self.style.get("padding-bottom") or padding
+        padding_top = self.style.get("padding-top")
+        if padding_top is None:
+            padding_top = padding
+
+        padding_bottom = self.style.get("padding-bottom")
+        if padding_bottom is None:
+            padding_bottom = padding
+
         return height + padding_top + padding_bottom
 
     def width(self):
@@ -342,30 +360,6 @@ class BaseObj:
         margin_bottom = self.style.get("margin-bottom") or margin
 
         return height + margin_bottom + margin_top
-
-    # @property
-    # def max_width(self):
-    #     return self.style.get("max-width") or self.width
-    #
-    # @property
-    # def max_height(self):
-    #     return self.style.get("max-height") or self.height
-    #
-    # @property
-    # def max_content_width(self):
-    #     width = self.max_width
-    #     padding = self.style["padding"]
-    #     padding_left = self.style.get("padding-left") or padding
-    #     padding_right = self.style.get("padding-right") or padding
-    #     return (width - (padding_left + padding_right))
-    #
-    # @property
-    # def max_content_height(self):
-    #     height = self.max_height
-    #     padding = self.style["padding"]
-    #     padding_top = self.style.get("padding-top") or padding
-    #     padding_bottom = self.style.get("padding-bottom") or padding
-    #     return (height - (padding_top + padding_bottom))
 
     def add_item(self, item):
         self.items[item.id] = item
@@ -846,6 +840,17 @@ class TableField(BaseItem):
         self.value = value
 
     def recalculate_by_width(self, value, max_width):
+        padding = self.style["padding"]
+        padding_left = self.style.get("padding-left")
+        if padding_left is None:
+            padding_left = padding
+
+        padding_right = self.style.get("padding-right")
+        if padding_right is None:
+            padding_right = padding
+
+        max_width -= (padding_left + padding_right)
+
         if not value:
             return ""
 
