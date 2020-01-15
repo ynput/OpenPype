@@ -1169,41 +1169,7 @@ class FontFactory:
 
         cls.fonts = available_fonts
 
-
-def main_v01():
-    main_style = {"bg-color": "#777777", "margin": 0}
-    text_1_style = {"padding": 0, "bg-color": "#00ff77"}
-    text_2_style = {"padding": 0, "bg-color": "#ff0066"}
-    text_3_style = {"padding": 0, "bg-color": "#ff5500"}
-    image_1_style = {"width": 240, "height": 120, "bg-color": "#7733aa"}
-    table_1_style = {"padding": 0, "bg-color": "#0077ff"}
-
-    main = MainFrame(1920, 1080, style=main_style)
-    layer = Layer(parent=main)
-    main.add_item(layer)
-
-    text_1 = ItemText("Testing message 1", layer, text_1_style)
-    text_2 = ItemText("Testing 2", layer, text_2_style)
-    text_3 = ItemText("Testing message 3", layer, text_3_style)
-
-    table_1_items = [["0", "Output text 1", "ha"], ["1", "Output 2"], ["2", "Output text 3"]]
-    table_1 = ItemTable(table_1_items, True, parent=layer, style=table_1_style)
-
-    image_1_path = r"C:\Users\jakub.trllo\Desktop\Tests\files\image\kitten.jpg"
-    image_1 = ItemImage(image_1_path, layer, image_1_style)
-
-    layer.add_item(text_1)
-    layer.add_item(text_2)
-    layer.add_item(text_3)
-
-    layer.add_item(table_1)
-    layer.add_item(image_1)
-
-    dst = r"C:\Users\jakub.trllo\Desktop\Tests\files\image\test_output3.png"
-    main.draw(dst)
-
-
-def main_v02():
+def main():
     cur_folder = os.path.dirname(os.path.abspath(__file__))
     input_json = os.path.join(cur_folder, "netflix_v01.1.json")
     with open(input_json) as json_file:
@@ -1219,7 +1185,6 @@ def main_v02():
     for item in slate_data["items"]:
         load_queue.put((item, main))
 
-    all_objs = []
     while not load_queue.empty():
         item_data, parent = load_queue.get()
 
@@ -1260,23 +1225,17 @@ def main_v02():
             item_obj = ItemRectangle(**kwargs)
 
         if not item_obj:
+            # TODO logging
             print(
                 "Slate item not implemented <{}> - skipping".format(item_type)
             )
             continue
 
-        all_objs.append(item_obj)
-
         parent.add_item(item_obj)
 
     main.draw()
-    # for item in all_objs:
-        # print(item.style.get("width"), item.style.get("height"))
-        # print(item.width, item.height)
-        # print(item.content_pos_x, item.content_pos_y)
-        # print(item.value_pos_x, item.value_pos_y)
+    print("*** Drawing is done")
 
 
 if __name__ == "__main__":
-    main_v02()
-    print("*** Drawing is done")
+    main()
