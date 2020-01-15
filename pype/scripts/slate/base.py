@@ -618,6 +618,35 @@ class ItemImage(BaseItem):
 
     def value_height(self):
         return self.style.get("height")
+class ItemRectangle(BaseItem):
+    obj_type = "rectangle"
+
+    def draw(self, image, drawer):
+        bg_color = self.style["bg-color"]
+        fill = self.style.get("fill", False)
+        kwargs = {}
+        if fill:
+            kwargs["fill"] = bg_color
+        else:
+            kwargs["outline"] = bg_color
+
+        start_pos_x = self.value_pos_x
+        start_pos_y = self.value_pos_y
+        end_pos_x = start_pos_x + self.value_width()
+        end_pos_y = start_pos_y + self.value_height()
+        drawer.rectangle(
+            (
+                (start_pos_x, start_pos_y),
+                (end_pos_x, end_pos_y)
+            ),
+            **kwargs
+        )
+
+    def value_width(self):
+        return int(self.style["width"])
+
+    def value_height(self):
+        return int(self.style["height"])
 
 
 class ItemText(BaseItem):
