@@ -803,20 +803,20 @@ class ItemTable(BaseItem):
             height -= 1
         return height
 
-    def content_pos_info_by_cord(self, cord_x, cord_y):
+    def content_pos_info_by_cord(self, row_idx, col_idx):
         row_heights, col_widths = self.size_values
-        pos_x = self.value_pos_x
-        pos_y = self.value_pos_y
+        pos_x = int(self.value_pos_x)
+        pos_y = int(self.value_pos_y)
         width = 0
         height = 0
         for idx, value in enumerate(col_widths):
-            if cord_y == idx:
+            if col_idx == idx:
                 width = value
                 break
             pos_x += value
 
         for idx, value in enumerate(row_heights):
-            if cord_x == idx:
+            if row_idx == idx:
                 height = value
                 break
             pos_y += value
@@ -830,10 +830,11 @@ class TableField(BaseItem):
     available_parents = ["table"]
     ellide_text = "..."
 
-    def __init__(self, cord_x, cord_y, value, *args, **kwargs):
+    def __init__(self, row_idx, col_idx, value, *args, **kwargs):
         super(TableField, self).__init__(*args, **kwargs)
-        self.cord_x = cord_x
-        self.cord_y = cord_y
+        self.row_idx = row_idx
+        self.col_idx = col_idx
+
         self.value = value
 
     def recalculate_by_width(self, value, max_width):
@@ -970,21 +971,21 @@ class TableField(BaseItem):
     @property
     def item_pos_x(self):
         pos_x, pos_y, width, height = (
-            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
+            self.parent.content_pos_info_by_cord(self.row_idx, self.col_idx)
         )
         return pos_x
 
     @property
     def item_pos_y(self):
         pos_x, pos_y, width, height = (
-            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
+            self.parent.content_pos_info_by_cord(self.row_idx, self.col_idx)
         )
         return pos_y
 
     @property
     def value_pos_x(self):
         pos_x, pos_y, width, height = (
-            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
+            self.parent.content_pos_info_by_cord(self.row_idx, self.col_idx)
         )
         alignment_hor = self.style["alignment-horizontal"].lower()
         if alignment_hor in ["center", "centre"]:
@@ -1003,7 +1004,7 @@ class TableField(BaseItem):
     @property
     def value_pos_y(self):
         pos_x, pos_y, width, height = (
-            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
+            self.parent.content_pos_info_by_cord(self.row_idx, self.col_idx)
         )
 
         alignment_ver = self.style["alignment-vertical"].lower()
@@ -1022,12 +1023,12 @@ class TableField(BaseItem):
 
     def draw(self, image, drawer):
         pos_x, pos_y, width, height = (
-            self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
+            self.parent.content_pos_info_by_cord(self.row_idx, self.col_idx)
         )
         pos_start = (pos_x, pos_y)
         pos_end = (pos_x + width, pos_y + height)
         bg_color = self.style["bg-color"]
-        if self.parent.use_alternate_color and (self.cord_x % 2) == 1:
+        if self.parent.use_alternate_color and (self.row_idx % 2) == 1:
             bg_color = self.style["bg-alter-color"]
 
         if bg_color and bg_color.lower() != "transparent":
