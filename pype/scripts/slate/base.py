@@ -835,6 +835,13 @@ class TableField(BaseItem):
         self.row_idx = row_idx
         self.col_idx = col_idx
 
+        self.orig_value = value
+
+        max_width = self.style.get("max-width")
+        max_width = self.style.get("width") or max_width
+        if max_width:
+            value = self.recalculate_by_width(value, max_width)
+
         self.value = value
 
     def recalculate_by_width(self, value, max_width):
@@ -943,6 +950,10 @@ class TableField(BaseItem):
         if not self.value:
             return 0
 
+        width = self.style.get("width")
+        if width:
+            return int(width)
+
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
         font_bold = self.style.get("font-bold", False)
@@ -952,11 +963,21 @@ class TableField(BaseItem):
             font_family, font_size, font_italic, font_bold
         )
         width = font.getsize_multiline(self.value)[0] + 1
+
+        min_width = self.style.get("min-height")
+        if min_width and min_width > width:
+            width = min_width
+
         return int(width)
 
     def value_height(self):
         if not self.value:
             return 0
+
+        height = self.style.get("height")
+        if height:
+            return int(height)
+
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
         font_bold = self.style.get("font-bold", False)
@@ -966,6 +987,11 @@ class TableField(BaseItem):
             font_family, font_size, font_italic, font_bold
         )
         height = font.getsize_multiline(self.value)[1] + 1
+
+        min_height = self.style.get("min-height")
+        if min_height and min_height > height:
+            height = min_height
+
         return int(height)
 
     @property
