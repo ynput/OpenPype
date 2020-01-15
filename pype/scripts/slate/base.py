@@ -21,7 +21,8 @@ class BaseObj:
         "padding", "padding-left", "padding-right",
         "padding-top", "padding-bottom",
         "margin", "margin-left", "margin-right",
-        "margin-top", "margin-bottom", "width", "height"
+        "margin-top", "margin-bottom", "width", "height",
+        "fill"
     ]
 
     def __init__(self, parent, style={}, name=None, pos_x=None, pos_y=None):
@@ -229,13 +230,13 @@ class BaseObj:
     @property
     def item_pos_x(self):
         if self.parent.obj_type == "main_frame":
-            return self._pos_x
+            return int(self._pos_x)
         return 0
 
     @property
     def item_pos_y(self):
         if self.parent.obj_type == "main_frame":
-            return self._pos_x
+            return int(self._pos_y)
         return 0
 
     @property
@@ -257,7 +258,7 @@ class BaseObj:
 
     @property
     def value_pos_x(self):
-        pos_x = self.content_pos_x * 1
+        pos_x = int(self.content_pos_x)
         padding = self.style["padding"]
         padding_left = self.style.get("padding-left") or padding
         pos_x += padding_left
@@ -266,7 +267,7 @@ class BaseObj:
 
     @property
     def value_pos_y(self):
-        pos_y = self.content_pos_y * 1
+        pos_y = int(self.content_pos_y)
         padding = self.style["padding"]
         padding_top = self.style.get("padding-top") or padding
         pos_y += padding_top
@@ -444,7 +445,7 @@ class Layer(BaseObj):
             pos_x = self._pos_x
         else:
             pos_x = self.parent.value_pos_x
-        return pos_x
+        return int(pos_x)
 
     @property
     def item_pos_y(self):
@@ -454,7 +455,7 @@ class Layer(BaseObj):
             pos_y = self._pos_y
         else:
             pos_y = self.parent.value_pos_y
-        return pos_y
+        return int(pos_y)
 
     @property
     def direction(self):
@@ -569,8 +570,6 @@ class Layer(BaseObj):
 class BaseItem(BaseObj):
     available_parents = ["main_frame", "layer"]
 
-    def __init__(self, *args, **kwargs):
-        super(BaseItem, self).__init__(*args, **kwargs)
 
     @property
     def item_pos_x(self):
@@ -603,9 +602,9 @@ class ItemImage(BaseItem):
         self.image_path = image_path
 
     def draw(self, image, drawer):
-        paste_image = Image.open(self.image_path)
-        paste_image = paste_image.resize(
-            (self.value_width, self.value_height),
+        source_image = Image.open(os.path.normpath(self.image_path))
+        paste_image = source_image.resize(
+            (self.value_width(), self.value_height()),
             Image.ANTIALIAS
         )
         image.paste(
@@ -614,10 +613,12 @@ class ItemImage(BaseItem):
         )
 
     def value_width(self):
-        return self.style.get("width")
+        return int(self.style["width"])
 
     def value_height(self):
-        return self.style.get("height")
+        return int(self.style["height"])
+
+
 class ItemRectangle(BaseItem):
     obj_type = "rectangle"
 
@@ -684,7 +685,7 @@ class ItemText(BaseItem):
 
         font = ImageFont.truetype(font_family, font_size)
         width = font.getsize(self.value)[0]
-        return width
+        return int(width)
 
     def value_height(self):
         font_family = self.style["font-family"]
@@ -692,7 +693,7 @@ class ItemText(BaseItem):
 
         font = ImageFont.truetype(font_family, font_size)
         height = font.getsize(self.value)[1]
-        return height
+        return int(height)
 
 
 class ItemTable(BaseItem):
