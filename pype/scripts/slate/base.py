@@ -211,7 +211,9 @@ class BaseObj:
 
                 result = re.search(field_regex, key)
                 if result:
-                    col_idx, row_idx = get_indexes_from_regex_match(result)
+                    col_idx, row_idx = get_indexes_from_regex_match(
+                        result, True
+                    )
                     if self.row_idx == col_idx and self.row_idx == row_idx:
                         obj_specific.update(value)
 
