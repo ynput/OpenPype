@@ -3,6 +3,7 @@ import sys
 import re
 import copy
 import json
+import collections
 from queue import Queue
 sys.path.append(r"C:\Users\Public\pype_env2\Lib\site-packages")
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance, ImageColor
