@@ -450,6 +450,8 @@ class Layer(BaseObj):
     def item_pos_x(self):
         if self.parent.obj_type == self.obj_type:
             pos_x = self.parent.child_pos_x(self.id)
+        elif self.parent.obj_type == "main_frame":
+            pos_x = self._pos_x
         else:
             pos_x = self.parent.value_pos_x
         return pos_x
@@ -458,6 +460,8 @@ class Layer(BaseObj):
     def item_pos_y(self):
         if self.parent.obj_type == self.obj_type:
             pos_y = self.parent.child_pos_y(self.id)
+        elif self.parent.obj_type == "main_frame":
+            pos_y = self._pos_y
         else:
             pos_y = self.parent.value_pos_y
         return pos_y
