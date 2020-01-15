@@ -102,7 +102,6 @@ class BaseObj:
         }
         return default_style_v1
 
-    @property
     def height(self):
         raise NotImplementedError(
             "Attribute `height` is not implemented for <{}>".format(
@@ -110,7 +109,6 @@ class BaseObj:
             )
         )
 
-    @property
     def width(self):
         raise NotImplementedError(
             "Attribute `width` is not implemented for <{}>".format(
@@ -282,8 +280,8 @@ class BaseObj:
     @property
     def value_pos_end(self):
         pos_x, pos_y = self.value_pos_start
-        pos_x += self.width
-        pos_y += self.height
+        pos_x += self.width()
+        pos_y += self.height()
         return (pos_x, pos_y)
 
     @property
@@ -293,11 +291,10 @@ class BaseObj:
     @property
     def content_pos_end(self):
         pos_x, pos_y = self.content_pos_start
-        pos_x += self.content_width
-        pos_y += self.content_height
+        pos_x += self.content_width()
+        pos_y += self.content_height()
         return (pos_x, pos_y)
 
-    @property
     def value_width(self):
         raise NotImplementedError(
             "Attribute <content_width> is not implemented <{}>".format(
@@ -305,7 +302,6 @@ class BaseObj:
             )
         )
 
-    @property
     def value_height(self):
         raise NotImplementedError(
             "Attribute <content_width> is not implemented for <{}>".format(
@@ -313,25 +309,22 @@ class BaseObj:
             )
         )
 
-    @property
     def content_width(self):
-        width = self.value_width
+        width = self.value_width()
         padding = self.style["padding"]
         padding_left = self.style.get("padding-left") or padding
         padding_right = self.style.get("padding-right") or padding
         return width + padding_left + padding_right
 
-    @property
     def content_height(self):
-        height = self.value_height
+        height = self.value_height()
         padding = self.style["padding"]
         padding_top = self.style.get("padding-top") or padding
         padding_bottom = self.style.get("padding-bottom") or padding
         return height + padding_top + padding_bottom
 
-    @property
     def width(self):
-        width = self.content_width
+        width = self.content_width()
 
         margin = self.style["margin"]
         margin_left = self.style.get("margin-left") or margin
@@ -339,9 +332,8 @@ class BaseObj:
 
         return width + margin_left + margin_right
 
-    @property
     def height(self):
-        height = self.content_height
+        height = self.content_height()
 
         margin = self.style["margin"]
         margin_top = self.style.get("margin-top") or margin
@@ -393,25 +385,21 @@ class MainFrame(BaseObj):
         self._height = height
         self.dst_path = destination_path
 
-    @property
     def value_width(self):
         width = 0
         for item in self.items.values():
-            width += item.width
+            width += item.width()
         return width
 
-    @property
     def value_height(self):
         height = 0
         for item in self.items.values():
-            height += item.height
+            height += item.height()
         return height
 
-    @property
     def width(self):
         return self._width
 
-    @property
     def height(self):
         return self._height
 
@@ -491,16 +479,17 @@ class Layer(BaseObj):
             for id, _item in self.items.items():
                 if item_id == id:
                     break
-                pos_x += _item.height
+
+                pos_x += _item.height()
                 if _item.obj_type != "image":
                     pos_x += 1
 
         else:
             if alignment_hor in ["center", "centre"]:
-                pos_x += (self.content_width - item.content_width) / 2
+                pos_x += (self.content_width() - item.content_width()) / 2
 
             elif alignment_hor == "right":
-                pos_x += self.content_width - item.content_width
+                pos_x += self.content_width() - item.content_width()
 
             else:
                 margin = self.style["margin"]
@@ -522,16 +511,16 @@ class Layer(BaseObj):
             for id, item in self.items.items():
                 if item_id == id:
                     break
-                pos_y += item.height
+                pos_y += item.height()
                 if item.obj_type != "image":
                     pos_y += 1
 
         else:
             if alignment_ver in ["center", "centre"]:
-                pos_y += (self.content_height - item.content_height) / 2
+                pos_y += (self.content_height() - item.content_height()) / 2
 
             elif alignment_ver == "bottom":
-                pos_y += self.content_height - item.content_height
+                pos_y += self.content_height() - item.content_height()
 
             else:
                 margin = self.style["margin"]
@@ -539,35 +528,33 @@ class Layer(BaseObj):
                 pos_y += margin_top
         return int(pos_y)
 
-    @property
     def value_height(self):
         height = 0
         for item in self.items.values():
             if self.direction == 0:
-                if height > item.height:
+                if height > item.height():
                     continue
                 # times 1 because won't get object pointer but number
-                height = item.height * 1
+                height = item.height()
             else:
-                height += item.height
+                height += item.height()
 
 
         min_height = self.style.get("min-height")
-        if min_height > height:
+        if min_height and min_height > height:
             return min_height
         return height
 
-    @property
     def value_width(self):
         width = 0
         for item in self.items.values():
             if self.direction == 0:
-                if width > item.width:
+                if width > item.width():
                     continue
                 # times 1 because won't get object pointer but number
-                width = item.width * 1
+                width = item.width()
             else:
-                width += item.width
+                width += item.width()
 
         min_width = self.style.get("min-width")
         if min_width and min_width > width:
@@ -626,11 +613,9 @@ class ItemImage(BaseItem):
             (self.value_pos_x, self.value_pos_y)
         )
 
-    @property
     def value_width(self):
         return self.style.get("width")
 
-    @property
     def value_height(self):
         return self.style.get("height")
 
@@ -664,7 +649,6 @@ class ItemText(BaseItem):
             fill=font_color
         )
 
-    @property
     def value_width(self):
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
@@ -673,7 +657,6 @@ class ItemText(BaseItem):
         width = font.getsize(self.value)[0]
         return width
 
-    @property
     def value_height(self):
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
@@ -733,12 +716,12 @@ class ItemTable(BaseItem):
                     col_widths.append(0)
 
                 _width = col_widths[col_idx]
-                item_width = col_item.width
+                item_width = col_item.width()
                 if _width < item_width:
                     col_widths[col_idx] = item_width
 
                 _height = row_heights[row_idx]
-                item_height = col_item.height
+                item_height = col_item.height()
                 if _height < item_height:
                     row_heights[row_idx] = item_height
 
@@ -757,7 +740,6 @@ class ItemTable(BaseItem):
         for value in self.values:
             value.draw(image, drawer)
 
-    @property
     def value_width(self):
         row_heights, col_widths = self.size_values
         width = 0
@@ -768,7 +750,6 @@ class ItemTable(BaseItem):
             width -= 1
         return width
 
-    @property
     def value_height(self):
         row_heights, col_widths = self.size_values
         height = 0
@@ -811,7 +792,6 @@ class TableField(BaseItem):
         self.cord_y = cord_y
         self.value = value
 
-    @property
     def value_width(self):
         if not self.value:
             return 0
@@ -823,7 +803,6 @@ class TableField(BaseItem):
         width = font.getsize(self.value)[0] + 1
         return width
 
-    @property
     def value_height(self):
         if not self.value:
             return 0
@@ -853,13 +832,12 @@ class TableField(BaseItem):
         pos_x, pos_y, width, height = (
             self.parent.content_pos_info_by_cord(self.cord_x, self.cord_y)
         )
-
         alignment_hor = self.style["alignment-horizontal"].lower()
         if alignment_hor in ["center", "centre"]:
-            pos_x += (width - self.value_width) / 2
+            pos_x += (width - self.value_width()) / 2
 
         elif alignment_hor == "right":
-            pos_x += width - self.value_width
+            pos_x += width - self.value_width()
 
         else:
             padding = self.style["padding"]
@@ -876,10 +854,10 @@ class TableField(BaseItem):
 
         alignment_ver = self.style["alignment-vertical"].lower()
         if alignment_ver in ["center", "centre"]:
-            pos_y += (height - self.value_height) / 2
+            pos_y += (height - self.value_height()) / 2
 
         elif alignment_ver == "bottom":
-            pos_y += height - self.value_height
+            pos_y += height - self.value_height()
 
         else:
             padding = self.style["padding"]
