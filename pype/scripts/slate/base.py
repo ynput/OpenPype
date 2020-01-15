@@ -477,12 +477,12 @@ class Layer(BaseObj):
                 item = _item
                 break
 
-        if self.direction != 0:
+        if self.direction == 1:
             for id, _item in self.items.items():
                 if item_id == id:
                     break
 
-                pos_x += _item.height()
+                pos_x += _item.width()
                 if _item.obj_type != "image":
                     pos_x += 1
 
@@ -497,6 +497,7 @@ class Layer(BaseObj):
                 margin = self.style["margin"]
                 margin_left = self.style.get("margin-left") or margin
                 pos_x += margin_left
+
         return int(pos_x)
 
     def child_pos_y(self, item_id):
@@ -537,11 +538,11 @@ class Layer(BaseObj):
                 if height > item.height():
                     continue
                 # times 1 because won't get object pointer but number
-                height = item.height()
-            else:
                 height += item.height()
+            else:
+                height = item.height()
 
-
+        # TODO this is not right
         min_height = self.style.get("min-height")
         if min_height and min_height > height:
             return min_height
@@ -550,7 +551,7 @@ class Layer(BaseObj):
     def value_width(self):
         width = 0
         for item in self.items.values():
-            if self.direction == 0:
+            if self.direction == 1:
                 if width > item.width():
                     continue
                 # times 1 because won't get object pointer but number
@@ -1201,6 +1202,7 @@ def main():
         kwargs = {
             "parent": parent,
             "style": item_style,
+            "name": item_name,
             "pos_x": pos_x,
             "pos_y": pos_y
         }
