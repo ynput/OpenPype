@@ -30,22 +30,14 @@ class ExtractThumbnail(pype.api.Extractor):
     def render_thumbnail(self, instance):
         node = instance[0]  # group node
         self.log.info("Creating staging dir...")
-        self.log.debug(
-            "_ representations `{0}`".format(instance.data["representations"]))
-        if "representations" in instance.data:
-            try:
-                staging_dir = instance.data[
-                    "representations"][0]["stagingDir"].replace("\\", "/")
-            except IndexError:
-                path = instance.data["path"]
-                staging_dir = os.path.dirname(path)
-            instance.data["stagingDir"] = staging_dir
-        else:
-            instance.data["representations"] = []
-            # get output path
-            render_path = instance.data['path']
-            staging_dir = os.path.normpath(os.path.dirname(render_path))
-            instance.data["stagingDir"] = staging_dir
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = list()
+
+        staging_dir = os.path.normpath(
+            os.path.dirname(instance.data['path']))
+
+        instance.data["stagingDir"] = staging_dir
 
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))

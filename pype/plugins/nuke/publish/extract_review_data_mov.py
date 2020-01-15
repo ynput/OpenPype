@@ -21,21 +21,15 @@ class ExtractReviewDataMov(pype.api.Extractor):
 
     def process(self, instance):
         families = instance.data["families"]
-
         self.log.info("Creating staging dir...")
-        self.log.debug(
-            "__ representations: `{}`".format(
-                instance.data["representations"]))
-        if "representations" in instance.data:
-            if instance.data["representations"] == []:
-                render_path = instance.data['path']
-                staging_dir = os.path.normpath(os.path.dirname(render_path))
-                instance.data["stagingDir"] = staging_dir
-            else:
-                staging_dir = instance.data[
-                    "representations"][0]["stagingDir"].replace("\\", "/")
-                instance.data["representations"][0]["tags"] = []
-                instance.data["stagingDir"] = staging_dir
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = list()
+
+        staging_dir = os.path.normpath(
+            os.path.dirname(instance.data['path']))
+
+        instance.data["stagingDir"] = staging_dir
 
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))

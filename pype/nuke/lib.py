@@ -1520,7 +1520,6 @@ class ExporterReviewMov(ExporterReview):
         write_node.setInput(0, self.previous_node)
         self._temp_nodes.append(write_node)
         self.log.debug("Write...   `{}`".format(self._temp_nodes))
-
         # ---------- end nodes creation
 
         # ---------- render or save to nk
