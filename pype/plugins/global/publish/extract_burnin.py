@@ -42,18 +42,21 @@ class ExtractBurnin(pype.api.Extractor):
             "intent": instance.context.data.get("intent", "")
         }
 
+        slate_frame_start = frame_start
+        slate_frame_end = frame_end
+        slate_duration = duration
+
         # exception for slate workflow
         if "slate" in instance.data["families"]:
             slate_frame_start = frame_start - 1
             slate_frame_end = frame_end
             slate_duration = slate_frame_end - slate_frame_start + 1
 
-            prep_data.update({
-                "slate_frame_start": slate_frame_start,
-                "slate_frame_end": slate_frame_end,
-                "slate_duration": slate_duration
-            })
-
+        prep_data.update({
+            "slate_frame_start": slate_frame_start,
+            "slate_frame_end": slate_frame_end,
+            "slate_duration": slate_duration
+        })
 
         # Update data with template data
         template_data = instance.data.get("assumedTemplateData") or {}
