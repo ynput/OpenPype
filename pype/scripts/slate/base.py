@@ -646,6 +646,53 @@ class ItemRectangle(BaseItem):
         return int(self.style["height"])
 
 
+class ItemPlaceHolder(BaseItem):
+    obj_type = "placeholder"
+
+    def __init__(self, image_path, *args, **kwargs):
+        self.image_path = image_path
+        super(ItemPlaceHolder, self).__init__(*args, **kwargs)
+
+    def fill_data_format(self):
+        if re.match(self.fill_data_regex, self.image_path):
+            self.image_path = self.image_path.format(**self.fill_data)
+
+    def draw(self, image, drawer):
+        bg_color = self.style["bg-color"]
+
+        kwargs = {}
+        if bg_color != "tranparent":
+            kwargs["fill"] = bg_color
+
+        start_pos_x = self.value_pos_x
+        start_pos_y = self.value_pos_y
+        end_pos_x = start_pos_x + self.value_width()
+        end_pos_y = start_pos_y + self.value_height()
+
+        drawer.rectangle(
+            (
+                (start_pos_x, start_pos_y),
+                (end_pos_x, end_pos_y)
+            ),
+            **kwargs
+        )
+
+    def value_width(self):
+        return int(self.style["width"])
+
+    def value_height(self):
+        return int(self.style["height"])
+
+    def collect_data(self):
+        return {
+            "pos_x": self.value_pos_x,
+            "pos_y": self.value_pos_y,
+            "width": self.value_width(),
+            "height": self.value_height(),
+            "path": self.image_path
+        }
+
+
 class ItemText(BaseItem):
     obj_type = "text"
 
