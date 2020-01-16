@@ -1,7 +1,7 @@
 {
     "width": 1920,
     "height": 1080,
-    "destination_path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/netflix_output_v001.png",
+    "destination_path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/netflix_output_v01.png",
     "style": {
         "*": {
             "font-family": "arial",
@@ -32,33 +32,40 @@
             "bg-color": "transparent"
         },
         "table-item": {
-            "bg-color": "#272727",
-            "bg-alter-color": "#212121",
-            "font-color": "#ffffff",
-            "font-bold": true,
+            "bg-color": "#212121",
+            "bg-alter-color": "#272727",
+            "font-color": "#dcdcdc",
+            "font-bold": false,
             "font-italic": false,
             "padding": 5,
             "padding-bottom": 10,
-            "alignment-vertical": "top",
             "alignment-horizontal": "left",
+            "alignment-vertical": "top",
             "word-wrap": false,
             "ellide": true,
             "max-lines": 1
         },
         "table-item-col[0]": {
             "font-size": 20,
-            "font-color": "#898989"
+            "font-color": "#898989",
+            "font-bold": true,
+            "ellide": false,
+            "word-wrap": true,
+            "max-lines": null
         },
         "table-item-col[1]": {
-            "font-size": 30,
-            "padding-left": 20
+            "font-size": 40,
+            "padding-left": 10
+        },
+        "#colorbar": {
+            "bg-color": "#9932CC"
         }
     },
     "items": [{
         "type": "layer",
         "name": "LeftSide",
-        "pos_x": 40,
-        "pos_y": 40,
+        "pos_x": 27,
+        "pos_y": 27,
         "style": {
             "width": 1094,
             "height": 1000
@@ -67,26 +74,52 @@
             "type": "layer",
             "direction": 1,
             "style": {
-                "layer": {"padding": 0},
+                "table-item": {
+                    "bg-color": "transparent"
+                },
                 "table-item-col[0]": {
-                    "width": 200
+                    "font-size": 20,
+                    "font-color": "#898989",
+                    "alignment-horizontal": "right"
+                },
+                "table-item-col[1]": {
+                    "alignment-horizontal": "left",
+                    "font-bold": true,
+                    "font-size": 40
                 }
             },
             "items": [{
                 "type": "table",
                 "values": [
                     ["Show:", "First Contact"]
-                ]
+                ],
+                "style": {
+                    "table-item-field[0:0]": {
+                        "width": 150
+                    },
+                    "table-item-field[1:0]": {
+                        "width": 580
+                    }
+                }
             }, {
                 "type": "table",
                 "values": [
                     ["Submitting For:", "SAMPLE"]
-                ]
+                ],
+                "style": {
+                    "table-item-field[0:0]": {
+                        "width": 160
+                    },
+                    "table-item-field[1:0]": {
+                        "width": 218,
+                        "alignment-horizontal": "right"
+                    }
+                }
             }]
         }, {
             "type": "rectangle",
             "style": {
-                "bg-color": "#d40914",
+                "bg-color": "#bc1015",
                 "width": 1108,
                 "height": 5,
                 "fill": true
@@ -101,18 +134,24 @@
                 ["Submission Note:", "Submitting as and example with all MEI fields filled out. As well as the additional fields Shot description, Episode, Scene, and Version # that were requested by production."]
             ],
             "style": {
+                "table-item": {
+                    "padding-bottom": 20
+                },
+                "table-item-field[1:0]": {
+                    "font-bold": true
+                },
                 "table-item-field[1:3]": {
                     "word-wrap": true,
                     "ellide": true,
-                    "max-lines": 4
+                    "max-lines": 2
                 },
                 "table-item-col[0]": {
                     "alignment-horizontal": "right",
-                    "width": 300
+                    "width": 150
                 },
                 "table-item-col[1]": {
                     "alignment-horizontal": "left",
-                    "width": 786
+                    "width": 958
                 }
             }
         }]
@@ -122,15 +161,18 @@
         "pos_x": 1164,
         "pos_y": 26,
         "items": [{
-            "type": "image",
+            "type": "placeholder",
+            "name": "thumbnail",
             "path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/birds.png",
             "style": {
                 "width": 730,
                 "height": 412
             }
         }, {
-            "type": "image",
+            "type": "placeholder",
+            "name": "colorbar",
             "path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/kitten.jpg",
+            "return_data": true,
             "style": {
                 "width": 730,
                 "height": 55
@@ -150,7 +192,8 @@
                 },
                 "table-item-col[1]": {
                     "alignment-horizontal": "right",
-                    "width": 530
+                    "width": 530,
+                    "font-size": 30
                 }
             }
         }]

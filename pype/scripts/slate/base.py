@@ -25,6 +25,7 @@ class BaseObj:
         "margin-top", "margin-bottom", "width", "height",
         "fill"
     ]
+    fill_data_regex = r"{[^}]+}"
 
     def __init__(self, parent, style={}, name=None, pos_x=None, pos_y=None):
         if not self.obj_type:
@@ -56,6 +57,16 @@ class BaseObj:
         self._pos_x = pos_x or 0
         self._pos_y = pos_y or 0
 
+        if parent:
+            parent.add_item(self)
+
+    def fill_data_format(self):
+        return
+
+    @property
+    def fill_data(self):
+        return self.parent.fill_data
+
     @property
     def main_style(self):
         default_style_v1 = {
@@ -66,40 +77,43 @@ class BaseObj:
                 "font-bold": False,
                 "font-italic": False,
                 "bg-color": "#0077ff",
-                "bg-alter-color": "#0055dd",
-                "alignment-horizontal": "center",
-                "alignment-vertical": "bottom",
-                "padding": 0,
-                "margin": 0,
-            },
-            "main_frame": {
-                "padding": 0,
-                "margin": 0
+                "alignment-horizontal": "left",
+                "alignment-vertical": "top"
             },
             "layer": {
                 "padding": 0,
                 "margin": 0
             },
-            "image": {
+            "rectangle": {
                 "padding": 0,
-                "margin": 0
+                "margin": 0,
+                "bg-color": "#E9324B",
+                "fill": true
             },
-            "text": {
+            "main_frame": {
                 "padding": 0,
-                "margin": 0
+                "margin": 0,
+                "bg-color": "#252525"
             },
             "table": {
                 "padding": 0,
-                "margin": 0
+                "margin": 0,
+                "bg-color": "transparent"
             },
             "table-item": {
-                "alignment-horizontal": "right",
-                "padding": 0,
-                "margin": 0
-            },
-            "__not_implemented__": {
-                "table-item-col-0": {},
-                "#MyName": {}
+                "padding": 5,
+                "padding-bottom": 10,
+                "margin": 0,
+                "bg-color": "#212121",
+                "bg-alter-color": "#272727",
+                "font-color": "#dcdcdc",
+                "font-bold": false,
+                "font-italic": false,
+                "alignment-horizontal": "left",
+                "alignment-vertical": "top",
+                "word-wrap": false,
+                "ellide": true,
+                "max-lines": 1
             }
         }
         return default_style_v1
@@ -117,6 +131,31 @@ class BaseObj:
                 self.__clas__.__name__
             )
         )
+
+    def collect_data(self):
+        return None
+
+    def find_item(self, obj_type=None, name=None):
+        obj_type_fits = False
+        name_fits = False
+        if obj_type is None or self.obj_type == obj_type:
+            obj_type_fits = True
+
+        if name is None or self.name != name:
+            name_fits = True
+
+        output = []
+        if obj_type_fits and name_fits:
+            output.append(self)
+
+        if not self.items:
+            return output
+
+        for item in self.items.values():
+            output.extend(
+                item.find_item(obj_type=obj_type, name=name)
+            )
+        return output
 
     @property
     def full_style(self):
@@ -151,9 +190,8 @@ class BaseObj:
         if self.name:
             name = str(self.name)
             if not name.startswith("#"):
-                name += "#"
+                name = "#" + name
             name_specific = style.get(name) or {}
-
 
         if obj_type == "table-item":
             col_regex = r"table-item-col\[([\d\-, ]+)*\]"
@@ -363,6 +401,8 @@ class BaseObj:
 
     def add_item(self, item):
         self.items[item.id] = item
+        item.fill_data_format()
+
 
     def reset(self):
         for item in self.items.values():
@@ -374,12 +414,24 @@ class MainFrame(BaseObj):
     obj_type = "main_frame"
     available_parents = [None]
 
-    def __init__(self, width, height, destination_path=None, *args, **kwargs):
+    def __init__(
+        self, width, height, destination_path, fill_data={}, *args, **kwargs
+    ):
         kwargs["parent"] = None
         super(MainFrame, self).__init__(*args, **kwargs)
         self._width = width
         self._height = height
         self.dst_path = destination_path
+        self._fill_data = fill_data
+        self.fill_data_format()
+
+    def fill_data_format(self):
+        if re.match(self.fill_data_regex, self.dst_path):
+            self.dst_path = self.dst_path.format(**self.fill_data)
+
+    @property
+    def fill_data(self):
+        return self._fill_data
 
     def value_width(self):
         width = 0
@@ -400,16 +452,7 @@ class MainFrame(BaseObj):
         return self._height
 
     def draw(self, path=None):
-        if not path:
-            path = self.dst_path
-
-        if not path:
-            raise TypeError((
-                "draw() missing 1 required positional argument: 'path'"
-                " if 'destination_path is not specified'"
-            ))
-
-        dir_path = os.path.dirname(path)
+        dir_path = os.path.dirname(self.dst_path)
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
 
@@ -419,8 +462,23 @@ class MainFrame(BaseObj):
         for item in self.items.values():
             item.draw(image, drawer)
 
-        image.save(path)
+        image.save(self.dst_path)
         self.reset()
+
+    def collect_data(self):
+        output = {}
+        output["width"] = self.width()
+        output["height"] = self.height()
+        output["slate_path"] = self.dst_path
+
+        placeholders = self.find_item(obj_type="placeholder")
+        placeholders_data = []
+        for placeholder in placeholders:
+            placeholders_data.append(placeholder.collect_data())
+
+        output["placeholders"] = placeholders_data
+
+        return output
 
 
 class Layer(BaseObj):
@@ -450,6 +508,7 @@ class Layer(BaseObj):
             pos_y = self._pos_y
         else:
             pos_y = self.parent.value_pos_y
+
         return int(pos_y)
 
     @property
@@ -477,7 +536,7 @@ class Layer(BaseObj):
                     break
 
                 pos_x += _item.width()
-                if _item.obj_type != "image":
+                if _item.obj_type not in ["image", "placeholder"]:
                     pos_x += 1
 
         else:
@@ -509,7 +568,7 @@ class Layer(BaseObj):
                 if item_id == id:
                     break
                 pos_y += item.height()
-                if item.obj_type != "image":
+                if item.obj_type not in ["image", "placeholder"]:
                     pos_y += 1
 
         else:
@@ -519,22 +578,18 @@ class Layer(BaseObj):
             elif alignment_ver == "bottom":
                 pos_y += self.content_height() - item.content_height()
 
-            else:
-                margin = self.style["margin"]
-                margin_top = self.style.get("margin-top") or margin
-                pos_y += margin_top
         return int(pos_y)
 
     def value_height(self):
         height = 0
         for item in self.items.values():
-            if self.direction == 0:
+            if self.direction == 1:
                 if height > item.height():
                     continue
                 # times 1 because won't get object pointer but number
-                height += item.height()
-            else:
                 height = item.height()
+            else:
+                height += item.height()
 
         # TODO this is not right
         min_height = self.style.get("min-height")
@@ -545,12 +600,14 @@ class Layer(BaseObj):
     def value_width(self):
         width = 0
         for item in self.items.values():
-            if self.direction == 1:
+            if self.direction == 0:
                 if width > item.width():
                     continue
                 # times 1 because won't get object pointer but number
                 width = item.width()
             else:
+                if self.name == "LeftSide":
+                    print(item, item.width())
                 width += item.width()
 
         min_width = self.style.get("min-width")
@@ -565,7 +622,6 @@ class Layer(BaseObj):
 
 class BaseItem(BaseObj):
     available_parents = ["main_frame", "layer"]
-
 
     @property
     def item_pos_x(self):
@@ -596,6 +652,10 @@ class ItemImage(BaseItem):
     def __init__(self, image_path, *args, **kwargs):
         super(ItemImage, self).__init__(*args, **kwargs)
         self.image_path = image_path
+
+    def fill_data_format(self):
+        if re.match(self.fill_data_regex, self.image_path):
+            self.image_path = self.image_path.format(**self.fill_data)
 
     def draw(self, image, drawer):
         source_image = Image.open(os.path.normpath(self.image_path))
@@ -756,14 +816,24 @@ class ItemTable(BaseItem):
     obj_type = "table"
 
     def __init__(self, values, use_alternate_color=False, *args, **kwargs):
+
+        self.values_by_cords = None
+        self.prepare_values(values)
+
         super(ItemTable, self).__init__(*args, **kwargs)
         self.size_values = None
-        self.values_by_cords = None
-
-        self.prepare_values(values)
         self.calculate_sizes()
 
         self.use_alternate_color = use_alternate_color
+
+    def add_item(self, item):
+        if item.obj_type == "table-item":
+            return
+        super(ItemTable, self).add_item(item)
+
+    def fill_data_format(self):
+        for item in self.values:
+            item.fill_data_format()
 
     def prepare_values(self, _values):
         values = []
@@ -876,14 +946,6 @@ class TableField(BaseItem):
         super(TableField, self).__init__(*args, **kwargs)
         self.row_idx = row_idx
         self.col_idx = col_idx
-
-        self.orig_value = value
-
-        max_width = self.style.get("max-width")
-        max_width = self.style.get("width") or max_width
-        if max_width:
-            value = self.recalculate_by_width(value, max_width)
-
         self.value = value
 
     def recalculate_by_width(self, value, max_width):
@@ -928,24 +990,23 @@ class TableField(BaseItem):
         elif ellide and not word_wrap:
             max_lines = 1
 
-        font_family = self.style["font-family"]
-        font_size = self.style["font-size"]
-        font_bold = self.style.get("font-bold", False)
-        font_italic = self.style.get("font-italic", False)
-
-        font = FontFactory.get_font(
-            font_family, font_size, font_italic, font_bold
-        )
-
         words = [word for word in value.split()]
         words_len = len(words)
         lines = []
-        last_index = 0
+        last_index = None
         while True:
+            start_index = 0
+            if last_index is not None:
+                start_index = int(last_index) + 1
+
             line = ""
-            for idx in range(last_index, words_len):
+            for idx in range(start_index, words_len):
                 _word = words[idx]
-                _line = " ".join([line, _word])
+                connector = " "
+                if line == "":
+                    connector = ""
+
+                _line = connector.join([line, _word])
                 _line_width = font.getsize(_line)[0]
                 if _line_width > max_width:
                     break
@@ -958,7 +1019,7 @@ class TableField(BaseItem):
             if last_index == words_len - 1:
                 break
 
-            elif last_index == 0:
+            elif last_index is None:
                 if ellide:
                     line = ""
                     for idx, char in enumerate(words[idx]):
@@ -968,7 +1029,7 @@ class TableField(BaseItem):
                             if idx == 0:
                                 line = _line
                             break
-                        line = _line
+                        line = line + char
 
                     lines.append(line)
                 # TODO logging
@@ -979,45 +1040,102 @@ class TableField(BaseItem):
         if not lines:
             return output
 
-        if max_lines and len(lines) > max_lines:
-            lines = [lines[idx] for idx in range(max_lines)]
-            if not ellide:
-                return "\n".join(lines)
+        over_max_lines = (max_lines and len(lines) > max_lines)
+        if not over_max_lines:
+            return "\n".join([line for line in lines])
 
-            last_line = lines[-1]
-            last_line_width = font.getsize(last_line + self.ellide_text)[0]
-            if last_line_width <= max_width:
-                lines[-1] += self.ellide_text
+        lines = [lines[idx] for idx in range(max_lines)]
+        if not ellide:
+            return "\n".join(lines)
+
+        last_line = lines[-1]
+        last_line_width = font.getsize(last_line + self.ellide_text)[0]
+        if last_line_width <= max_width:
+            lines[-1] += self.ellide_text
+            return "\n".join([line for line in lines])
+
+        last_line_words = last_line.split()
+        if len(last_line_words) == 1:
+            if max_lines > 1:
+                # TODO try previous line?
+                lines[-1] = self.ellide_text
                 return "\n".join([line for line in lines])
 
-            last_line_words = last_line.split()
-            if len(last_line_words) == 1:
-                if max_lines > 1:
-                    lines[-1] = self.ellide_text
-                    return "\n".join([line for line in lines])
+            line = ""
+            for idx, word in enumerate(last_line_words):
+                _line = line + word + self.ellide_text
+                _line_width = font.getsize(_line)[0]
+                if _line_width > max_width:
+                    if idx == 0:
+                        line = _line
+                    break
+                line = _line
+            lines[-1] = line
 
-                _line = ""
-                for idx, char in enumerate(last_line):
-                    _line = line + char + self.ellide_text
-                    _line_width = font.getsize(_line)[0]
-                    if _line_width > max_width:
-                        if idx == 0:
-                            line = _line
-                        break
-                    line = _line
-                lines[-1] = line
-                return "\n".join([line for line in lines])
+            return "\n".join([line for line in lines])
+
+        line = ""
+        for idx, _word in enumerate(last_line_words):
+            connector = " "
+            if line == "":
+                connector = ""
+
+            _line = connector.join([line, _word + self.ellide_text])
+            _line_width = font.getsize(_line)[0]
+
+            if _line_width <= max_width:
+                line = connector.join([line, _word])
+                continue
+
+            if idx != 0:
+                line += self.ellide_text
+                break
+
+            if max_lines != 1:
+                # TODO try previous line?
+                line = self.ellide_text
+                break
+
+            for idx, char in enumerate(_word):
+                _line = line + char + self.ellide_text
+                _line_width = font.getsize(_line)[0]
+                if _line_width > max_width:
+                    if idx == 0:
+                        line = _line
+                    break
+                line = line + char
+            break
+
+        lines[-1] = line
 
         return "\n".join([line for line in lines])
 
+    def fill_data_format(self):
+        value = self.value
+        if re.match(self.fill_data_regex, value):
+            value = value.format(**self.fill_data)
+
+        self.orig_value = value
+
+        max_width = self.style.get("max-width")
+        max_width = self.style.get("width") or max_width
+        if max_width:
+            value = self.recalculate_by_width(value, max_width)
+
+        self.value = value
+
+    def content_width(self):
+        width = self.style.get("width")
+        if width:
+            return int(width)
+        return super(TableField, self).content_width()
+
+    def content_height(self):
+        return super(TableField, self).content_height()
 
     def value_width(self):
         if not self.value:
             return 0
-
-        width = self.style.get("width")
-        if width:
-            return int(width)
 
         font_family = self.style["font-family"]
         font_size = self.style["font-size"]
@@ -1087,7 +1205,10 @@ class TableField(BaseItem):
 
         else:
             padding = self.style["padding"]
-            padding_left = self.style.get("padding-left") or padding
+            padding_left = self.style.get("padding-left")
+            if padding_left is None:
+                padding_left = padding
+
             pos_x += padding_left
 
         return int(pos_x)
@@ -1107,7 +1228,10 @@ class TableField(BaseItem):
 
         else:
             padding = self.style["padding"]
-            padding_top = self.style.get("padding-top") or padding
+            padding_top = self.style.get("padding-top")
+            if padding_top is None:
+                padding_top = padding
+
             pos_y += padding_top
 
         return int(pos_y)
@@ -1139,11 +1263,17 @@ class TableField(BaseItem):
         font = FontFactory.get_font(
             font_family, font_size, font_italic, font_bold
         )
-        drawer.text(
+
+        alignment_hor = self.style["alignment-horizontal"].lower()
+        if alignment_hor == "centre":
+            alignment_hor = "center"
+
+        drawer.multiline_text(
             self.value_pos_start,
             self.value,
             font=font,
-            fill=font_color
+            fill=font_color,
+            align=alignment_hor
         )
 
 
@@ -1236,15 +1366,36 @@ class FontFactory:
 
 def main():
     cur_folder = os.path.dirname(os.path.abspath(__file__))
-    input_json = os.path.join(cur_folder, "netflix_v01.1.json")
+    # input_json = os.path.join(cur_folder, "netflix_v01.json")
+    # input_json = os.path.join(cur_folder, "netflix_v02.json")
+    input_json = os.path.join(cur_folder, "netflix_v03.json")
     with open(input_json) as json_file:
         slate_data = json.load(json_file)
 
+    fill_data = {
+        "destination_path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/netflix_output_v03.png",
+        "project": {
+            "name": "Project name"
+        },
+        "intent": "WIP",
+        "version_name": "mei_101_001_0020_slate_NFX_v001",
+        "date": "2019-08-09",
+        "shot_type": "2d comp",
+        "submission_note": "Submitting as and example with all MEI fields filled out. As well as the additional fields Shot description, Episode, Scene, and Version # that were requested by production.",
+        "thumbnail_path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/birds.png",
+        "color_bar_path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/kitten.jpg",
+        "vendor": "DAZZLE",
+        "shot_name": "SLATE_SIMPLE",
+        "frame_start": 1001,
+        "frame_end": 1004,
+        "duration": 3
+    }
     width = slate_data["width"]
     height = slate_data["height"]
+    dst_path = slate_data["destination_path"]
     style = slate_data.get("style") or {}
-    dst_path = slate_data.get("destination_path")
-    main = MainFrame(width, height, destination_path=dst_path, style=style)
+
+    main = MainFrame(width, height, dst_path, fill_data, style=style)
 
     load_queue = Queue()
     for item in slate_data["items"]:
@@ -1271,7 +1422,6 @@ def main():
             "pos_y": pos_y
         }
 
-        item_obj = None
         if item_type == "layer":
             direction = item_data.get("direction", 0)
             item_obj = Layer(direction, **kwargs)
@@ -1281,26 +1431,28 @@ def main():
         elif item_type == "table":
             use_alternate_color = item_data.get("use_alternate_color", False)
             values = item_data.get("values") or []
-            item_obj = ItemTable(values, use_alternate_color, **kwargs)
+            ItemTable(values, use_alternate_color, **kwargs)
 
         elif item_type == "image":
             path = item_data["path"]
-            item_obj = ItemImage(path, **kwargs)
+            ItemImage(path, **kwargs)
 
         elif item_type == "rectangle":
-            item_obj = ItemRectangle(**kwargs)
+            ItemRectangle(**kwargs)
 
-        if not item_obj:
+        elif item_type == "placeholder":
+            path = item_data["path"]
+            ItemPlaceHolder(path, **kwargs)
+
+        else:
             # TODO logging
             print(
                 "Slate item not implemented <{}> - skipping".format(item_type)
             )
-            continue
-
-        parent.add_item(item_obj)
 
     main.draw()
-    print("*** Drawing is done")
+    print(main.collect_data())
+    print("*** Finished")
 
 
 if __name__ == "__main__":
