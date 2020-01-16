@@ -35,16 +35,14 @@ class ExtractSlateFrame(pype.api.Extractor):
     def render_slate(self, instance):
         node = instance[0]  # group node
         self.log.info("Creating staging dir...")
-        if "representations" in instance.data:
-            staging_dir = instance.data[
-                "representations"][0]["stagingDir"].replace("\\", "/")
-            instance.data["stagingDir"] = staging_dir
-        else:
-            instance.data["representations"] = []
-            # get output path
-            render_path = instance.data['path']
-            staging_dir = os.path.normpath(os.path.dirname(render_path))
-            instance.data["stagingDir"] = staging_dir
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = list()
+
+        staging_dir = os.path.normpath(
+            os.path.dirname(instance.data['path']))
+
+        instance.data["stagingDir"] = staging_dir
 
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
