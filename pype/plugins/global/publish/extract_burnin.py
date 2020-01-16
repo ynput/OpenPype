@@ -25,7 +25,8 @@ class ExtractBurnin(pype.api.Extractor):
         if "representations" not in instance.data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
-        version = instance.context.data.get('version')
+        version = instance.context.data.get(
+            'version', instance.data.get('version'))
         frame_start = int(instance.data.get("frameStart") or 0)
         frame_end = int(instance.data.get("frameEnd") or 1)
         duration = frame_end - frame_start + 1
