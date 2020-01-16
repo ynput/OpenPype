@@ -1,25 +1,45 @@
 import os
 import json
+import logging
 from queue import Queue
 
-# --- Lines for debug purpose ---------------------------------
-import sys
-sys.path.append(r"C:\Users\Public\pype_env2\Lib\site-packages")
-# -------------------------------------------------------------
-
-from slate_base.main_frame import MainFrame
-from slate_base.layer import Layer
-from slate_base.items import (
+from .slate_base.main_frame import MainFrame
+from .slate_base.layer import Layer
+from .slate_base.items import (
     ItemTable, ItemImage, ItemRectangle, ItemPlaceHolder
 )
 
+from pypeapp import config
 
-def main(fill_data):
-    cur_folder = os.path.dirname(os.path.abspath(__file__))
-    input_json = os.path.join(cur_folder, "netflix_v03.json")
-    with open(input_json) as json_file:
-        slate_data = json.load(json_file)
+log = logging.getLogger(__name__)
 
+
+RequiredSlateKeys = ["width", "height", "destination_path"]
+
+
+def create_slates(fill_data, slate_name):
+    presets = config.get_presets()
+    slate_presets = (
+        presets
+        .get("tools", {})
+        .get("slates")
+    ) or {}
+    slate_data = slate_presets.get(slate_name)
+
+    if not slate_data:
+        log.error("Slate data of <{}> does not exists.")
+        return False
+
+    missing_keys = []
+    for key in RequiredSlateKeys:
+        if key not in slate_data:
+            missing_keys.append("`{}`".format(key))
+
+    if missing_keys:
+        log.error("Slate data of <{}> miss required keys: {}".format(
+            slate_name, ", ".join(missing_keys)
+        ))
+        return False
 
     width = slate_data["width"]
     height = slate_data["height"]
@@ -44,7 +64,7 @@ def main(fill_data):
         if parent.obj_type != "main_frame":
             if pos_x or pos_y:
                 # TODO logging
-                self.log.warning((
+                log.warning((
                     "You have specified `pos_x` and `pos_y` but won't be used."
                     " Possible only if parent of an item is `main_frame`."
                 ))
@@ -83,32 +103,43 @@ def main(fill_data):
 
         else:
             # TODO logging
-            self.log.warning(
-                "Slate item not implemented <{}> - skipping".format(item_type)
+            log.warning(
+                "Not implemented object type `{}` - skipping".format(item_type)
             )
 
     main.draw()
-    print("Slate creation finished")
+    log.debug("Slate creation finished")
 
 
-if __name__ == "__main__":
+def example():
     fill_data = {
-        "destination_path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/netflix_output_v03.png",
+        "destination_path": "PATH/TO/OUTPUT/FILE",
         "project": {
-            "name": "Project name"
+            "name": "Testing project"
         },
         "intent": "WIP",
-        "version_name": "mei_101_001_0020_slate_NFX_v001",
+        "version_name": "seq01_sh0100_compositing_v01",
         "date": "2019-08-09",
         "shot_type": "2d comp",
-        "submission_note": "Submitting as and example with all MEI fields filled out. As well as the additional fields Shot description, Episode, Scene, and Version # that were requested by production.",
-        "thumbnail_path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/birds.png",
-        "color_bar_path": "C:/Users/jakub.trllo/Desktop/Tests/files/image/kitten.jpg",
-        "vendor": "DAZZLE",
-        "shot_name": "SLATE_SIMPLE",
+        "submission_note": (
+            "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
+            " Aenean commodo ligula eget dolor. Aenean massa."
+            " Cum sociis natoque penatibus et magnis dis parturient montes,"
+            " nascetur ridiculus mus. Donec quam felis, ultricies nec,"
+            " pellentesque eu, pretium quis, sem. Nulla consequat massa quis"
+            " enim. Donec pede justo, fringilla vel,"
+            " aliquet nec, vulputate eget, arcu."
+        ),
+        "thumbnail_path": "PATH/TO/THUMBNAIL/FILE",
+        "color_bar_path": "PATH/TO/COLOR/BAR/FILE",
+        "vendor": "Our Studio",
+        "shot_name": "sh0100",
         "frame_start": 1001,
         "frame_end": 1004,
         "duration": 3
     }
-    main(fill_data)
-    # raise NotImplementedError("Slates don't have Implemented args running")
+    create_slates(fill_data, "example_HD")
+
+
+if __name__ == "__main__":
+    raise NotImplementedError("Slates don't have Implemented args running")
