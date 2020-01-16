@@ -316,7 +316,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 # exception for slate workflow
                 if "slate" in instance.data["families"]:
                     index_frame_start -= 1
-                    
+
                 dst_padding_exp = src_padding_exp
                 dst_start_frame = None
                 for i in src_collection.indexes:
@@ -408,6 +408,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 }
             }
 
+            if repre.get("outputName"):
+                representation["context"]["output"] = repre['outputName']
+
             if sequence_repre and repre.get("frameStart"):
                 representation['context']['frame'] = src_padding_exp % int(repre.get("frameStart"))
 
@@ -455,11 +458,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.hardlink_file(src, dest)
 
     def unc_convert(self, path):
+        self.log.debug("> __ path: `{}`".format(path))
         drive, _path = os.path.splitdrive(path)
-        unc = Path(drive).resolve()
-        path = str(unc) + _path
+        self.log.debug("> __ drive, _path: `{}`, `{}`".format(drive, _path))
 
-        if not os.path.exists(str(unc)):
+        if not os.path.exists(drive + "/"):
             self.log.info("Converting to unc from environments ..")
 
             path_replace = os.getenv("PYPE_STUDIO_PROJECTS_PATH")
@@ -611,7 +614,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "source": source,
                         "comment": context.data.get("comment"),
                         "machine": context.data.get("machine"),
-                        "fps": context.data.get("fps")}
+                        "fps": context.data.get(
+                            "fps", instance.data.get("fps"))}
 
         # Include optional data if present in
         optionals = [
