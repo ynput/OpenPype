@@ -213,7 +213,7 @@ class BaseObj:
 
                 result = re.search(field_regex, key)
                 if result:
-                    col_idx, row_idx = get_indexes_from_regex_match(
+                    row_idx, col_idx = get_indexes_from_regex_match(
                         result, True
                     )
                     if self.col_idx == col_idx and self.row_idx == row_idx:
