@@ -1,0 +1,58 @@
+{
+    "*": {
+        "font-family": "arial",
+        "font-size": 26,
+        "font-color": "#ffffff",
+        "font-bold": false,
+        "font-italic": false,
+        "bg-color": "#0077ff",
+        "alignment-horizontal": "left",
+        "alignment-vertical": "top",
+        "word-wrap": true,
+        "ellide": true,
+        "max-lines": null
+    },
+    "layer": {
+        "padding": 0,
+        "margin": 0
+    },
+    "rectangle": {
+        "padding": 0,
+        "margin": 0,
+        "fill": true
+    },
+    "image": {
+        "padding": 0,
+        "margin": 0,
+        "fill": true
+    },
+    "placeholder": {
+        "padding": 0,
+        "margin": 0,
+        "fill": true
+    },
+    "main_frame": {
+        "padding": 0,
+        "margin": 0,
+        "bg-color": "#252525"
+    },
+    "table": {
+        "padding": 0,
+        "margin": 0,
+        "bg-color": "transparent"
+    },
+    "table-item": {
+        "padding": 0,
+        "margin": 0,
+        "bg-color": "#212121",
+        "bg-alter-color": "#272727",
+        "font-color": "#dcdcdc",
+        "font-bold": false,
+        "font-italic": false,
+        "alignment-horizontal": "left",
+        "alignment-vertical": "top",
+        "word-wrap": false,
+        "ellide": true,
+        "max-lines": 1
+    }
+}
