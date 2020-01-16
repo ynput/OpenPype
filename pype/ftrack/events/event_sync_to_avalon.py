@@ -1463,8 +1463,10 @@ class SyncToAvalonEvent(BaseEvent):
                     self.dbcon.update_one({
                         "_id": avalon_ent_by_name["_id"]
                     }, {
-                        "data.ftrackId": ftrack_id,
-                        "data.entityType": entity_type
+                        "$set": {
+                            "data.ftrackId": ftrack_id,
+                            "data.entityType": entity_type
+                        }
                     })
                     self._avalon_ents_by_ftrack_id[ftrack_id] = (
                         avalon_ent_by_name
