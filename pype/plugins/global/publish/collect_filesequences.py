@@ -91,7 +91,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
     """
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.0001
     targets = ["filesequence"]
     label = "RenderedFrames"
 

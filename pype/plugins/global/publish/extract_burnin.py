@@ -38,7 +38,7 @@ class ExtractBurnin(pype.api.Extractor):
             "frame_start": frame_start,
             "frame_end": frame_end,
             "duration": duration,
-            "version": version,
+            "version": int(version),
             "comment": instance.context.data.get("comment", ""),
             "intent": instance.context.data.get("intent", "")
         }
