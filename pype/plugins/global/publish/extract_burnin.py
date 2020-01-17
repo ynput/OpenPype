@@ -4,6 +4,7 @@ import copy
 
 import pype.api
 import pyblish
+from pypeapp import config
 
 
 class ExtractBurnin(pype.api.Extractor):
@@ -45,6 +46,9 @@ class ExtractBurnin(pype.api.Extractor):
             "comment": instance.context.data.get("comment"),
             "intent": instance.context.data.get("intent")
         }
+
+        # Add datetime data to preparation data
+        prep_data.update(config.get_datetime_data())
         # Update data with template data
         template_data = instance.data.get("assumedTemplateData") or {}
         prep_data.update(template_data)
