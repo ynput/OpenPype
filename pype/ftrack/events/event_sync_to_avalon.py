@@ -1503,14 +1503,16 @@ class SyncToAvalonEvent(BaseEvent):
 
                     if self._avalon_ents:
                         found = None
-                        for _idx_, _ent_ in enumerate(self._avalon_ents):
+                        project, entities = self._avalon_ents
+                        for _idx_, _ent_ in enumerate(entities):
                             if _ent_["_id"] != avalon_ent_by_name["_id"]:
                                 continue
                             found = _idx_
                             break
 
                         if found is not None:
-                            self._avalon_ents[found] = avalon_ent_by_name
+                            entities[found] = avalon_ent_by_name
+                            self._avalon_ents = project, entities
 
                     pop_out_ents.append(ftrack_id)
                     continue
