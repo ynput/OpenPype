@@ -1468,9 +1468,50 @@ class SyncToAvalonEvent(BaseEvent):
                             "data.entityType": entity_type
                         }
                     })
+
+                    avalon_ent_by_name["data"]["ftrackId"] = ftrack_id
+                    avalon_ent_by_name["data"]["entityType"] = entity_type
+
                     self._avalon_ents_by_ftrack_id[ftrack_id] = (
                         avalon_ent_by_name
                     )
+                    if self._avalon_ents_by_parent_id:
+                        found = None
+                        for _parent_id_, _entities_ in (
+                            self._avalon_ents_by_parent_id.items()
+                        ):
+                            for _idx_, entity in enumerate(_entities_):
+                                if entity["_id"] == avalon_ent_by_name["_id"]:
+                                    found = (_parent_id_, _idx_)
+                                    break
+
+                            if found:
+                                break
+
+                        if found:
+                            _parent_id_, _idx_ = found
+                            self._avalon_ents_by_parent_id[_parent_id_][
+                                _idx_] = avalon_ent_by_name
+
+                    if self._avalon_ents_by_id:
+                        self._avalon_ents_by_id[avalon_ent_by_name["_id"]] = (
+                            avalon_ent_by_name
+                        )
+
+                    if self._avalon_ents_by_name:
+                        self._avalon_ents_by_name[name] = avalon_ent_by_name
+
+                    if self._avalon_ents:
+                        found = None
+                        for _idx_, _ent_ in enumerate(self._avalon_ents):
+                            if _ent_["_id"] != avalon_ent_by_name["_id"]:
+                                continue
+                            found = _idx_
+                            break
+
+                        if found is not None:
+                            self._avalon_ents[found] = avalon_ent_by_name
+
                     pop_out_ents.append(ftrack_id)
                     continue
 
