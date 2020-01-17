@@ -12,7 +12,6 @@ import os
 import re
 import copy
 import json
-from pprint import pformat
 
 import pyblish.api
 from avalon import api
@@ -104,6 +103,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
         families_data = None
         subset = None
         version = None
+        frame_start = 0
+        frame_end = 0
         if os.environ.get("PYPE_PUBLISH_PATHS"):
             paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
             self.log.info("Collecting paths: {}".format(paths))
@@ -129,6 +130,9 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
                 cwd = os.path.dirname(path)
                 root_override = data.get("root")
+                frame_start = int(data.get("frameStart"))
+                frame_end = int(data.get("frameEnd"))
+
                 if root_override:
                     if os.path.isabs(root_override):
                         root = root_override
@@ -177,12 +181,15 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
             if regex:
                 self.log.info("Using regex: {}".format(regex))
 
+            if "slate" in families_data:
+                frame_start -= 1
+
             collections, remainder = collect(
                 root=root,
                 regex=regex,
                 exclude_regex=data.get("exclude_regex"),
-                frame_start=data.get("frameStart"),
-                frame_end=data.get("frameEnd"),
+                frame_start=frame_start,
+                frame_end=frame_end,
             )
 
             self.log.info("Found collections: {}".format(collections))
@@ -223,8 +230,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                             "asset": data.get(
                                 "asset", api.Session["AVALON_ASSET"]),
                             "stagingDir": root,
-                            "frameStart": data.get("frameStart"),
-                            "frameEnd": data.get("frameEnd"),
+                            "frameStart": frame_start,
+                            "frameEnd": frame_end,
                             "fps": fps,
                             "source": data.get("source", ""),
                             "pixelAspect": pixel_aspect,
@@ -260,17 +267,12 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
                 # take out review family if mov path
                 # this will make imagesequence none review
-                frame_start = data.get("frameStart")
-                frame_end = data.get("frameEnd")
 
                 if baked_mov_path:
                     self.log.info(
                         "Baked mov is available {}".format(
                             baked_mov_path))
                     families.append("review")
-
-                if "slate" in families:
-                    frame_start -= 1
 
                 self.log.info(
                     "Adding representations to subset {}".format(
@@ -307,6 +309,9 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     self.log.info("  - {}".format(str(collection)))
 
                     ext = collection.tail.lstrip(".")
+                    
+                    if "slate" in instance.data["families"]:
+                        frame_start += 1
 
                     representation = {
                         "name": ext,
@@ -411,3 +416,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "tags": ["review"],
                     }
                     instance.data["representations"].append(representation)
+            self.log.debug(
+                "__ representations {}".format(
+                    instance.data["representations"]))
+            self.log.debug(
+                "__ instance.data {}".format(instance.data))

@@ -7,7 +7,7 @@ import errno
 import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
-from pathlib2 import Path
+
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
     from speedcopy import copyfile
