@@ -1,5 +1,3 @@
-import os
-import json
 import logging
 from queue import Queue
 
@@ -112,6 +110,10 @@ def create_slates(fill_data, slate_name):
 
 
 def example():
+    # import sys
+    # sys.append(r"PATH/TO/PILLOW/PACKAGE")
+    # sys.append(r"PATH/TO/PYPE-SETUP")
+
     fill_data = {
         "destination_path": "PATH/TO/OUTPUT/FILE",
         "project": {
@@ -142,4 +144,4 @@ def example():
 
 
 if __name__ == "__main__":
-    raise NotImplementedError("Slates don't have Implemented args running")
+    example()
