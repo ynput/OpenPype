@@ -1,9 +1,7 @@
 import os
 import json
 import getpass
-
-import nuke
-
+ 
 from avalon import api
 from avalon.vendor import requests
 import re
@@ -27,40 +25,36 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        node = None
-        for x in instance:
-            if x.Class() == "Write":
-                node = x
-
-        if node is None:
-            return
+        node = instance[0]
+        # for x in instance:
+        #     if x.Class() == "Write":
+        #         node = x
+        #
+        # if node is None:
+        #     return
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
                                            "http://localhost:8082")
         assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
         context = instance.context
-        workspace = os.path.dirname(context.data["currentFile"])
-        filepath = None
 
-        # get path
-        path = nuke.filename(node)
-        output_dir = instance.data['outputDir']
+        # get output path
+        render_path = instance.data['path']
+        render_dir = os.path.normpath(os.path.dirname(render_path))
 
-        filepath = context.data["currentFile"]
+        script_path = context.data["currentFile"]
 
-        self.log.debug(filepath)
-
-        filename = os.path.basename(filepath)
+        script_name = os.path.basename(script_path)
         comment = context.data.get("comment", "")
-        dirname = os.path.join(workspace, "renders")
+
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
-        jobname = "%s - %s" % (filename, instance.name)
+        jobname = "%s - %s" % (script_name, instance.name)
         ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
 
         try:
             # Ensure render folder exists
-            os.makedirs(dirname)
+            os.makedirs(render_dir)
         except OSError:
             pass
 
@@ -71,7 +65,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         payload = {
             "JobInfo": {
                 # Top-level group name
-                "BatchName": filename,
+                "BatchName": script_name,
 
                 # Job name, as seen in Monitor
                 "Name": jobname,
@@ -95,20 +89,20 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             },
             "PluginInfo": {
                 # Input
-                "SceneFile": filepath,
+                "SceneFile": script_path,
 
                 # Output directory and filename
-                "OutputFilePath": dirname.replace("\\", "/"),
+                "OutputFilePath": render_dir.replace("\\", "/"),
                 # "OutputFilePrefix": render_variables["filename_prefix"],
 
                 # Mandatory for Deadline
                 "Version": ver.group(),
 
                 # Resolve relative references
-                "ProjectPath": workspace,
-
+                "ProjectPath": script_path,
+                "AWSAssetFile0": render_path,
                 # Only the specific write node is rendered.
-                "WriteNode": instance[0].name()
+                "WriteNode": node.name()
             },
 
             # Mandatory for Deadline, may be empty

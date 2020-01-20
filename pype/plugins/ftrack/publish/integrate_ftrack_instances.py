@@ -116,6 +116,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 },
                 "assetversion_data": {
                     "version": version_number,
+                    "comment": instance.context.data.get("comment", "")
                 },
                 "component_data": component_data,
                 "component_path": comp['published_path'],
@@ -123,6 +124,16 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 "component_overwrite": False,
                 "thumbnail": comp['thumbnail']
             }
+
+            # Add custom attributes for AssetVersion
+            assetversion_cust_attrs = {}
+            intent_val = instance.context.data.get("intent")
+            if intent_val:
+                assetversion_cust_attrs["intent"] = intent_val
+
+            component_item["assetversion_data"]["custom_attributes"] = (
+                assetversion_cust_attrs
+            )
 
             componentList.append(component_item)
             # Create copy with ftrack.unmanaged location if thumb or prev

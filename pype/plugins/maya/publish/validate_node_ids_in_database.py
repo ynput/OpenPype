@@ -1,6 +1,6 @@
 import pyblish.api
 
-import avalon.io as io
+from avalon import io
 
 import pype.api
 import pype.maya.action
