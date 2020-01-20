@@ -309,7 +309,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     self.log.info("  - {}".format(str(collection)))
 
                     ext = collection.tail.lstrip(".")
-                    
+
                     if "slate" in instance.data["families"]:
                         frame_start += 1
 
@@ -343,6 +343,11 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         if "slate" in instance.data["families"]:
                             frame_start += 1
 
+                        tags = ["review"]
+
+                        if baked_mov_path:
+                            tags.append("delete")
+
                         representation = {
                             "name": rem.split(".")[-1],
                             "ext": "{}".format(rem.split(".")[-1]),
@@ -351,7 +356,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                             "frameStart": frame_start,
                             "anatomy_template": "render",
                             "fps": fps,
-                            "tags": ["review"],
+                            "tags": tags
                         }
                     instance.data["representations"].append(
                         representation)
