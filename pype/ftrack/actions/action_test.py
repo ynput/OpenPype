@@ -9,11 +9,12 @@ import re
 import ftrack_api
 from pype.ftrack import BaseAction
 from avalon import io, inventory, schema
-from pypeapp import Anatomy
+
 
 class TestAction(BaseAction):
     '''Edit meta data action.'''
 
+    ignore_me = True
     #: Action identifier.
     identifier = 'test.action'
     #: Action label.
@@ -34,11 +35,8 @@ class TestAction(BaseAction):
         return True
 
     def launch(self, session, entities, event):
-        anatomy = Anatomy()
-        data = {
-            "version": None
-        }
-        print(anatomy.format(data))
+        self.log.info(event)
+
         return True
 
 
