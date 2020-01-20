@@ -185,8 +185,7 @@ class ExtractReviewSlate(pype.api.Extractor):
             repre_update = {
                 "files": output_file,
                 "name": repre["name"],
-                "tags": [x for x in repre["tags"] if x != "delete"],
-                "anatomy_template": "render"
+                "tags": [x for x in repre["tags"] if x != "delete"]
             }
             inst_data["representations"][i].update(repre_update)
             self.log.debug(

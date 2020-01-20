@@ -57,10 +57,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         if not ext:
                             ext = "mov"
                             self.log.warning(
-                                "`ext` attribute not in output profile. Setting to default ext: `mov`")
+                                str("`ext` attribute not in output "
+                                    "profile. Setting to default ext: `mov`"))
 
-                        self.log.debug("instance.families: {}".format(instance.data['families']))
-                        self.log.debug("profile.families: {}".format(profile['families']))
+                        self.log.debug(
+                            "instance.families: {}".format(
+                                instance.data['families']))
+                        self.log.debug(
+                            "profile.families: {}".format(profile['families']))
 
                         if any(item in instance.data['families'] for item in profile['families']):
                             if isinstance(repre["files"], list):
@@ -115,8 +119,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             # necessary input data
                             # adds start arg only if image sequence
                             if isinstance(repre["files"], list):
-                                input_args.append("-start_number {0} -framerate {1}".format(
-                                    start_frame, fps))
+                                input_args.append(
+                                    "-start_number {0} -framerate {1}".format(
+                                        start_frame, fps))
 
                             input_args.append("-i {}".format(full_input_path))
 
@@ -180,14 +185,19 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                         ffmpet_height = int(
                                             resolution_height * pixel_aspect)
                                 else:
-                                    # TODO: it might still be failing in some cases
                                     if resolution_ratio != delivery_ratio:
                                         lb /= scale_factor
                                     else:
                                         lb /= pixel_aspect
 
-                                output_args.append(
-                                    "-filter:v scale={0}x{1}:flags=lanczos,setsar=1,drawbox=0:0:iw:round((ih-(iw*(1/{2})))/2):t=fill:c=black,drawbox=0:ih-round((ih-(iw*(1/{2})))/2):iw:round((ih-(iw*(1/{2})))/2):t=fill:c=black".format(ffmpet_width, ffmpet_height, lb))
+                                output_args.append(str(
+                                    "-filter:v scale={0}x{1}:flags=lanczos,"
+                                    "setsar=1,drawbox=0:0:iw:"
+                                    "round((ih-(iw*(1/{2})))/2):t=fill:"
+                                    "c=black,drawbox=0:ih-round((ih-(iw*("
+                                    "1/{2})))/2):iw:round((ih-(iw*(1/{2})))"
+                                    "/2):t=fill:c=black").format(
+                                        ffmpet_width, ffmpet_height, lb))
 
                             # In case audio is longer than video.
                             output_args.append("-shortest")
@@ -195,9 +205,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             # output filename
                             output_args.append(full_output_path)
 
-                            self.log.debug("__ pixel_aspect: `{}`".format(pixel_aspect))
-                            self.log.debug("__ resolution_width: `{}`".format(resolution_width))
-                            self.log.debug("__ resolution_height: `{}`".format(resolution_height))
+                            self.log.debug(
+                                "__ pixel_aspect: `{}`".format(pixel_aspect))
+                            self.log.debug(
+                                "__ resolution_width: `{}`".format(
+                                    resolution_width))
+                            self.log.debug(
+                                "__ resolution_height: `{}`".format(
+                                    resolution_height))
 
                             # scaling none square pixels and 1920 width
                             if "reformat" in p_tags:
@@ -212,21 +227,34 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                     self.log.debug("heigher then delivery")
                                     width_scale = to_width
                                     width_half_pad = 0
-                                    scale_factor = float(to_width) / float(resolution_width)
+                                    scale_factor = float(to_width) / float(
+                                        resolution_width)
                                     self.log.debug(scale_factor)
                                     height_scale = int(
                                         resolution_height * scale_factor)
                                     height_half_pad = int(
                                         (to_height - height_scale)/2)
 
-                                self.log.debug("__ width_scale: `{}`".format(width_scale))
-                                self.log.debug("__ width_half_pad: `{}`".format(width_half_pad))
-                                self.log.debug("__ height_scale: `{}`".format(height_scale))
-                                self.log.debug("__ height_half_pad: `{}`".format(height_half_pad))
+                                self.log.debug(
+                                    "__ width_scale: `{}`".format(width_scale))
+                                self.log.debug(
+                                    "__ width_half_pad: `{}`".format(
+                                        width_half_pad))
+                                self.log.debug(
+                                    "__ height_scale: `{}`".format(
+                                        height_scale))
+                                self.log.debug(
+                                    "__ height_half_pad: `{}`".format(
+                                        height_half_pad))
 
-                                scaling_arg = "scale={0}x{1}:flags=lanczos,pad={2}:{3}:{4}:{5}:black,setsar=1".format(
-                                    width_scale, height_scale, to_width, to_height, width_half_pad, height_half_pad
-                                )
+                                scaling_arg = str(
+                                    "scale={0}x{1}:flags=lanczos,"
+                                    "pad={2}:{3}:{4}:{5}:black,setsar=1"
+                                        ).format(width_scale, height_scale,
+                                                 to_width, to_height,
+                                                 width_half_pad,
+                                                 height_half_pad
+                                                 )
 
                                 vf_back = self.add_video_filter_args(
                                     output_args, scaling_arg)
@@ -254,7 +282,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 # add it to output_args
                                 output_args.insert(0, vf_back)
                                 self.log.info("Added Lut to ffmpeg command")
-                                self.log.debug("_ output_args: `{}`".format(output_args))
+                                self.log.debug(
+                                    "_ output_args: `{}`".format(output_args))
 
                             mov_args = [
                                 os.path.join(
@@ -280,8 +309,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 "outputName": name,
                                 "codec": codec_args,
                                 "_profile": profile,
-                                "anatomy_template": "render"
-                                "resolutionWidth": resolution_height
+                                "resolutionHeight": resolution_height,
                                 "resolutionWidth": resolution_width,
                             })
                             if repre_new.get('preview'):
