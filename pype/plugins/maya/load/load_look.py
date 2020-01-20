@@ -116,9 +116,11 @@ class LookLoader(pype.maya.plugin.ReferenceLoader):
                                                          shapes=True))
         nodes = set(nodes_list)
 
-        json_representation = io.find_one({"type": "representation",
-                                           "parent": representation['parent'],
-                                           "name": "json"})
+        json_representation = io.find_one({
+            "type": "representation",
+            "parent": representation['parent'],
+            "name": "json"
+        })
 
         # Load relationships
         shader_relation = api.get_representation_path(json_representation)
