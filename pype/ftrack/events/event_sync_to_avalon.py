@@ -131,7 +131,9 @@ class SyncToAvalonEvent(BaseEvent):
             ftrack_id = proj["data"]["ftrackId"]
             self._avalon_ents_by_ftrack_id[ftrack_id] = proj
             for ent in ents:
-                ftrack_id = ent["data"]["ftrackId"]
+                ftrack_id = ent["data"].get("ftrackId")
+                if ftrack_id is None:
+                    continue
                 self._avalon_ents_by_ftrack_id[ftrack_id] = ent
         return self._avalon_ents_by_ftrack_id
 
@@ -1427,6 +1429,93 @@ class SyncToAvalonEvent(BaseEvent):
                 parent_id = ent_info["parentId"]
                 new_tasks_by_parent[parent_id].append(ent_info)
                 pop_out_ents.append(ftrack_id)
+                continue
+
+            name = (
+                ent_info
+                .get("changes", {})
+                .get("name", {})
+                .get("new")
+            )
+            avalon_ent_by_name = self.avalon_ents_by_name.get(name)
+            avalon_ent_by_name_ftrack_id = (
+                avalon_ent_by_name
+                .get("data", {})
+                .get("ftrackId")
+            )
+            if avalon_ent_by_name and avalon_ent_by_name_ftrack_id is None:
+                ftrack_ent = self.ftrack_ents_by_id.get(ftrack_id)
+                if not ftrack_ent:
+                    ftrack_ent = self.process_session.query(
+                        self.entities_query_by_id.format(
+                            self.cur_project["id"], ftrack_id
+                        )
+                    ).one()
+                    self.ftrack_ents_by_id[ftrack_id] = ftrack_ent
+
+                ent_path_items = [ent["name"] for ent in ftrack_ent["link"]]
+                parents = ent_path_items[1:len(ent_path_items)-1:]
+
+                avalon_ent_parents = (
+                    avalon_ent_by_name.get("data", {}).get("parents")
+                )
+                if parents == avalon_ent_parents:
+                    self.dbcon.update_one({
+                        "_id": avalon_ent_by_name["_id"]
+                    }, {
+                        "$set": {
+                            "data.ftrackId": ftrack_id,
+                            "data.entityType": entity_type
+                        }
+                    })
+
+                    avalon_ent_by_name["data"]["ftrackId"] = ftrack_id
+                    avalon_ent_by_name["data"]["entityType"] = entity_type
+
+                    self._avalon_ents_by_ftrack_id[ftrack_id] = (
+                        avalon_ent_by_name
+                    )
+                    if self._avalon_ents_by_parent_id:
+                        found = None
+                        for _parent_id_, _entities_ in (
+                            self._avalon_ents_by_parent_id.items()
+                        ):
+                            for _idx_, entity in enumerate(_entities_):
+                                if entity["_id"] == avalon_ent_by_name["_id"]:
+                                    found = (_parent_id_, _idx_)
+                                    break
+
+                            if found:
+                                break
+
+                        if found:
+                            _parent_id_, _idx_ = found
+                            self._avalon_ents_by_parent_id[_parent_id_][
+                                _idx_] = avalon_ent_by_name
+
+                    if self._avalon_ents_by_id:
+                        self._avalon_ents_by_id[avalon_ent_by_name["_id"]] = (
+                            avalon_ent_by_name
+                        )
+
+                    if self._avalon_ents_by_name:
+                        self._avalon_ents_by_name[name] = avalon_ent_by_name
+
+                    if self._avalon_ents:
+                        found = None
+                        project, entities = self._avalon_ents
+                        for _idx_, _ent_ in enumerate(entities):
+                            if _ent_["_id"] != avalon_ent_by_name["_id"]:
+                                continue
+                            found = _idx_
+                            break
+
+                        if found is not None:
+                            entities[found] = avalon_ent_by_name
+                            self._avalon_ents = project, entities
+
+                    pop_out_ents.append(ftrack_id)
+                    continue
 
             configuration_id = entity_type_conf_ids.get(entity_type)
             if not configuration_id:
