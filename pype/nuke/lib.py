@@ -1235,6 +1235,8 @@ class ExporterReview:
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
+            if "slate" in self.instance.data["families"]:
+                self.first_frame += 1
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
@@ -1460,14 +1462,13 @@ class ExporterReviewMov(ExporterReview):
         self.log.info("Rendered...")
 
     def save_file(self):
+        import shutil
         with anlib.maintained_selection():
             self.log.info("Saving nodes as file...  ")
-            # select temp nodes
-            anlib.select_nodes(self._temp_nodes)
             # create nk path
             path = os.path.splitext(self.path)[0] + ".nk"
             # save file to the path
-            nuke.nodeCopy(path)
+            shutil.copyfile(self.instance.context.data["currentFile"], path)
 
         self.log.info("Nodes exported...")
         return path
@@ -1508,19 +1509,21 @@ class ExporterReviewMov(ExporterReview):
         # Write node
         write_node = nuke.createNode("Write")
         self.log.debug("Path: {}".format(self.path))
-        self.instance.data["baked_colorspace_movie"] = self.path
         write_node["file"].setValue(self.path)
         write_node["file_type"].setValue(self.ext)
+        write_node["meta_codec"].setValue("ap4h")
+        write_node["mov64_codec"].setValue("ap4h")
+        write_node["mov64_write_timecode"].setValue(1)
         write_node["raw"].setValue(1)
         # connect
         write_node.setInput(0, self.previous_node)
         self._temp_nodes.append(write_node)
         self.log.debug("Write...   `{}`".format(self._temp_nodes))
-
         # ---------- end nodes creation
 
         # ---------- render or save to nk
         if farm:
+            nuke.scriptSave()
             path_nk = self.save_file()
             self.data.update({
                 "bakeScriptPath": path_nk,
@@ -1537,9 +1540,9 @@ class ExporterReviewMov(ExporterReview):
 
         self.log.debug("Representation...   `{}`".format(self.data))
 
-        #---------- Clean up
+        # ---------- Clean up
         self.clean_nodes()
-
+        nuke.scriptSave()
         return self.data
 
 

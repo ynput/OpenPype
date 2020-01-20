@@ -7,7 +7,7 @@ import errno
 import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
-from pathlib2 import Path
+
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
     from speedcopy import copyfile
@@ -181,16 +181,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if instance.data.get('version'):
             next_version = int(instance.data.get('version'))
 
-        # self.log.info("Verifying version from assumed destination")
-
-        # assumed_data = instance.data["assumedTemplateData"]
-        # assumed_version = assumed_data["version"]
-        # if assumed_version != next_version:
-        #     raise AttributeError("Assumed version 'v{0:03d}' does not match"
-        #                          "next version in database "
-        #                          "('v{1:03d}')".format(assumed_version,
-        #                                                next_version))
-
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
         version_data = self.create_version_data(context, instance)
@@ -340,6 +330,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         repre.get("frameEnd")))
                     index_frame_start = int(repre.get("frameStart"))
 
+                # exception for slate workflow
+                if "slate" in instance.data["families"]:
+                    index_frame_start -= 1
+
                 dst_padding_exp = src_padding_exp
                 dst_start_frame = None
                 for i in src_collection.indexes:
@@ -374,7 +368,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst_head,
                     dst_start_frame,
                     dst_tail).replace("..", ".")
-                repre['published_path'] = dst
+                repre['published_path'] = self.unc_convert(dst)
 
             else:
                 # Single file
@@ -403,7 +397,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
 
-                repre['published_path'] = dst
+                repre['published_path'] = self.unc_convert(dst)
                 self.log.debug("__ dst: {}".format(dst))
 
             representation = {
@@ -430,6 +424,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     "representation": repre['ext']
                 }
             }
+
+            if repre.get("outputName"):
+                representation["context"]["output"] = repre['outputName']
 
             if sequence_repre and repre.get("frameStart"):
                 representation['context']['frame'] = src_padding_exp % int(repre.get("frameStart"))
@@ -477,6 +474,23 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
             self.hardlink_file(src, dest)
 
+    def unc_convert(self, path):
+        self.log.debug("> __ path: `{}`".format(path))
+        drive, _path = os.path.splitdrive(path)
+        self.log.debug("> __ drive, _path: `{}`, `{}`".format(drive, _path))
+
+        if not os.path.exists(drive + "/"):
+            self.log.info("Converting to unc from environments ..")
+
+            path_replace = os.getenv("PYPE_STUDIO_PROJECTS_PATH")
+            path_mount = os.getenv("PYPE_STUDIO_PROJECTS_MOUNT")
+
+            if "/" in path_mount:
+                path = path.replace(path_mount[0:-1], path_replace)
+            else:
+                path = path.replace(path_mount, path_replace)
+        return path
+
     def copy_file(self, src, dst):
         """ Copy given source to destination
 
@@ -486,11 +500,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             None
         """
-
-        src = str(Path(src).resolve())
-        drive, _path = os.path.splitdrive(dst)
-        unc = Path(drive).resolve()
-        dst = str(unc / _path)
+        src = self.unc_convert(src)
+        dst = self.unc_convert(dst)
 
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
@@ -511,10 +522,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def hardlink_file(self, src, dst):
         dirname = os.path.dirname(dst)
-        src = Path(src).resolve()
-        drive, _path = os.path.splitdrive(dst)
-        unc = Path(drive).resolve()
-        dst = str(unc / _path)
+
+        src = self.unc_convert(src)
+        dst = self.unc_convert(dst)
+
         try:
             os.makedirs(dirname)
         except OSError as e:
@@ -622,7 +633,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "source": source,
                         "comment": context.data.get("comment"),
                         "machine": context.data.get("machine"),
-                        "fps": context.data.get("fps")}
+                        "fps": context.data.get(
+                            "fps", instance.data.get("fps"))}
 
         # Include optional data if present in
         optionals = [

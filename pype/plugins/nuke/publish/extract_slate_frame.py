@@ -5,7 +5,7 @@ import pyblish.api
 import pype
 
 
-class ExtractThumbnail(pype.api.Extractor):
+class ExtractSlateFrame(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -13,21 +13,26 @@ class ExtractThumbnail(pype.api.Extractor):
     """
 
     order = pyblish.api.ExtractorOrder + 0.01
-    label = "Extract Thumbnail"
+    label = "Extract Slate Frame"
 
-    families = ["review", "render.farm"]
+    families = ["slate"]
     hosts = ["nuke"]
 
+
     def process(self, instance):
+        if hasattr(self, "viewer_lut_raw"):
+            self.viewer_lut_raw = self.viewer_lut_raw
+        else:
+            self.viewer_lut_raw = False
 
         with anlib.maintained_selection():
             self.log.debug("instance: {}".format(instance))
             self.log.debug("instance.data[families]: {}".format(
                 instance.data["families"]))
 
-            self.render_thumbnail(instance)
+            self.render_slate(instance)
 
-    def render_thumbnail(self, instance):
+    def render_slate(self, instance):
         node = instance[0]  # group node
         self.log.info("Creating staging dir...")
 
@@ -52,32 +57,22 @@ class ExtractThumbnail(pype.api.Extractor):
             fhead = collection.format("{head}")
 
             # get first and last frame
-            first_frame = min(collection.indexes)
-            last_frame = max(collection.indexes)
+            first_frame = min(collection.indexes) - 1
+
+            if "slate" in instance.data["families"]:
+                first_frame += 1
+
+            last_frame = first_frame
         else:
             fname = os.path.basename(instance.data.get("path", None))
             fhead = os.path.splitext(fname)[0] + "."
-            first_frame = instance.data.get("frameStart", None)
-            last_frame = instance.data.get("frameEnd", None)
+            first_frame = instance.data.get("frameStart", None) - 1
+            last_frame = first_frame
 
         if "#" in fhead:
             fhead = fhead.replace("#", "")[:-1]
 
-        path_render = os.path.join(staging_dir, fname).replace("\\", "/")
-        # check if file exist otherwise connect to write node
-        if os.path.isfile(path_render):
-            rnode = nuke.createNode("Read")
-
-            rnode["file"].setValue(path_render)
-
-            rnode["first"].setValue(first_frame)
-            rnode["origfirst"].setValue(first_frame)
-            rnode["last"].setValue(last_frame)
-            rnode["origlast"].setValue(last_frame)
-            temporary_nodes.append(rnode)
-            previous_node = rnode
-        else:
-            previous_node = node
+        previous_node = node
 
         # get input process and connect it to baking
         ipn = self.get_view_process_node()
@@ -86,63 +81,36 @@ class ExtractThumbnail(pype.api.Extractor):
             previous_node = ipn
             temporary_nodes.append(ipn)
 
-        reformat_node = nuke.createNode("Reformat")
-
-        ref_node = self.nodes.get("Reformat", None)
-        if ref_node:
-            for k, v in ref_node:
-                self.log.debug("k, v: {0}:{1}".format(k, v))
-                if isinstance(v, unicode):
-                    v = str(v)
-                reformat_node[k].setValue(v)
-
-        reformat_node.setInput(0, previous_node)
-        previous_node = reformat_node
-        temporary_nodes.append(reformat_node)
-
-        dag_node = nuke.createNode("OCIODisplay")
-        dag_node.setInput(0, previous_node)
-        previous_node = dag_node
-        temporary_nodes.append(dag_node)
+        if not self.viewer_lut_raw:
+            dag_node = nuke.createNode("OCIODisplay")
+            dag_node.setInput(0, previous_node)
+            previous_node = dag_node
+            temporary_nodes.append(dag_node)
 
         # create write node
         write_node = nuke.createNode("Write")
-        file = fhead + "jpeg"
-        name = "thumbnail"
+        file = fhead + "slate.png"
         path = os.path.join(staging_dir, file).replace("\\", "/")
-        instance.data["thumbnail"] = path
+        instance.data["slateFrame"] = path
         write_node["file"].setValue(path)
-        write_node["file_type"].setValue("jpeg")
+        write_node["file_type"].setValue("png")
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
-        tags = ["thumbnail"]
 
-        # retime for
-        first_frame = int(last_frame) / 2
-        last_frame = int(last_frame) / 2
-
-        repre = {
-            'name': name,
-            'ext': "jpeg",
-            'files': file,
-            "stagingDir": staging_dir,
-            "frameStart": first_frame,
-            "frameEnd": last_frame,
-            "anatomy_template": "render",
-            "tags": tags
-        }
-        instance.data["representations"].append(repre)
+        # fill slate node with comments
+        self.add_comment_slate_node(instance)
 
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))
 
         self.log.debug(
-            "representations: {}".format(instance.data["representations"]))
+            "slate frame path: {}".format(instance.data["slateFrame"]))
 
         # Clean up
         for node in temporary_nodes:
             nuke.delete(node)
+
 
     def get_view_process_node(self):
 
@@ -169,3 +137,18 @@ class ExtractThumbnail(pype.api.Extractor):
             ipn = nuke.selectedNode()
 
             return ipn
+
+    def add_comment_slate_node(self, instance):
+        node = instance.data.get("slateNode")
+        if not node:
+            return
+
+        comment = instance.context.data.get("comment")
+        intent = instance.context.data.get("intent")
+
+        try:
+            node["f_submission_note"].setValue(comment)
+            node["f_submitting_for"].setValue(intent)
+        except NameError:
+            return
+        instance.data.pop("slateNode")

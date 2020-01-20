@@ -161,7 +161,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                      "FTRACK_API_USER",
                      "FTRACK_API_KEY",
                      "FTRACK_SERVER",
-                     "PYPE_ROOT"
+                     "PYPE_ROOT",
+                     "PYPE_STUDIO_PROJECTS_PATH",
+                     "PYPE_STUDIO_PROJECTS_MOUNT"
                      ]
 
     def _submit_deadline_post_job(self, instance, job):
@@ -172,7 +174,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         data = instance.data.copy()
         subset = data["subset"]
-        state = data.get("publishJobState", "Suspended")
         job_name = "{batch} - {subset} [publish image sequence]".format(
             batch=job["Props"]["Name"],
             subset=subset
@@ -198,7 +199,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
-                "InitialStatus": state,
                 "Priority": job["Props"]["Pri"]
             },
             "PluginInfo": {
@@ -216,6 +216,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # job so they use the same environment
 
         environment = job["Props"].get("Env", {})
+
         i = 0
         for index, key in enumerate(environment):
             self.log.info("KEY: {}".format(key))
@@ -330,6 +331,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "source": source,
             "user": context.data["user"],
             "version": context.data["version"],
+            "intent": context.data.get("intent"),
+            "comment": context.data.get("comment"),
             # Optional metadata (for debugging)
             "metadata": {
                 "instance": data,
