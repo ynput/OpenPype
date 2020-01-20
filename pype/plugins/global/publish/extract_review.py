@@ -46,6 +46,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if repre['ext'] in self.ext_filter:
                 tags = repre.get("tags", [])
 
+                if "thumbnail" in tags:
+                    continue
+
                 self.log.info("Try repre: {}".format(repre))
 
                 if "review" in tags:

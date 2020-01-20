@@ -132,6 +132,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 root_override = data.get("root")
                 frame_start = int(data.get("frameStart"))
                 frame_end = int(data.get("frameEnd"))
+                subset = data.get("subset")
 
                 if root_override:
                     if os.path.isabs(root_override):
@@ -162,10 +163,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         resolution_height = instance.get("resolutionHeight", 1080)
                         lut_path = instance.get("lutPath", None)
                         baked_mov_path = instance.get("bakeRenderPath")
-                        subset = instance.get("subset")
                         families_data = instance.get("families")
                         slate_frame = instance.get("slateFrame")
                         version = instance.get("version")
+
 
             else:
                 # Search in directory
@@ -199,6 +200,9 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
             if data.get("user"):
                 context.data["user"] = data["user"]
+
+            if data.get("version"):
+                version = data.get("version")
 
             # Get family from the data
             families = data.get("families", ["render"])
@@ -272,6 +276,9 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     self.log.info(
                         "Baked mov is available {}".format(
                             baked_mov_path))
+                    families.append("review")
+
+                if session['AVALON_APP'] == "maya":
                     families.append("review")
 
                 self.log.info(
@@ -399,7 +406,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                             "source": data.get("source", ""),
                             "pixelAspect": pixel_aspect,
                             "resolutionWidth": resolution_width,
-                            "resolutionHeight": resolution_height
+                            "resolutionHeight": resolution_height,
+                            "version": version
                         }
                     )
                     if lut_path:
@@ -421,6 +429,16 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "tags": ["review"],
                     }
                     instance.data["representations"].append(representation)
+
+                    # temporary ... allow only beauty on ftrack
+                    if session['AVALON_APP'] == "maya":
+                        AOV_filter = ['beauty']
+                        for aov in AOV_filter:
+                            if aov not in instance.data['subset']:
+                                instance.data['families'].remove('review')
+                                instance.data['families'].remove('ftrack')
+                                representation["tags"].remove('review')
+
             self.log.debug(
                 "__ representations {}".format(
                     instance.data["representations"]))

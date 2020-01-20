@@ -341,6 +341,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             }
         }
 
+        if api.Session["AVALON_APP"] == "nuke":
+            metadata['subset'] = subset
+
         if submission_type == "muster":
             ftrack = {
                 "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
