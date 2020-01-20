@@ -33,14 +33,22 @@ def _get_script():
 # Logic to retrieve latest files concerning extendFrames
 def get_latest_version(asset_name, subset_name, family):
     # Get asset
-    asset_name = io.find_one({"type": "asset",
-                              "name": asset_name},
-                             projection={"name": True})
+    asset_name = io.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        projection={"name": True}
+    )
 
-    subset = io.find_one({"type": "subset",
-                          "name": subset_name,
-                          "parent": asset_name["_id"]},
-                         projection={"_id": True, "name": True})
+    subset = io.find_one(
+        {
+            "type": "subset",
+            "name": subset_name,
+            "parent": asset_name["_id"]
+        },
+        projection={"_id": True, "name": True}
+    )
 
     # Check if subsets actually exists (pre-run check)
     assert subset, "No subsets found, please publish with `extendFrames` off"
@@ -51,11 +59,15 @@ def get_latest_version(asset_name, subset_name, family):
                           "data.endFrame": True,
                           "parent": True}
 
-    version = io.find_one({"type": "version",
-                           "parent": subset["_id"],
-                           "data.families": family},
-                          projection=version_projection,
-                          sort=[("name", -1)])
+    version = io.find_one(
+        {
+            "type": "version",
+            "parent": subset["_id"],
+            "data.families": family
+        },
+        projection=version_projection,
+        sort=[("name", -1)]
+    )
 
     assert version, "No version found, this is a bug"
 

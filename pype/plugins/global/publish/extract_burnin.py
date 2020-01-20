@@ -4,6 +4,7 @@ import copy
 
 import pype.api
 import pyblish
+from pypeapp import config
 
 
 class ExtractBurnin(pype.api.Extractor):
@@ -42,6 +43,9 @@ class ExtractBurnin(pype.api.Extractor):
             "comment": instance.context.data.get("comment", ""),
             "intent": instance.context.data.get("intent", "")
         }
+
+        # Add datetime data to preparation data
+        prep_data.update(config.get_datetime_data())
 
         slate_frame_start = frame_start
         slate_frame_end = frame_end
