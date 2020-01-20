@@ -281,6 +281,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 "codec": codec_args,
                                 "_profile": profile,
                                 "anatomy_template": "render"
+                                "resolutionWidth": resolution_height
+                                "resolutionWidth": resolution_width,
                             })
                             if repre_new.get('preview'):
                                 repre_new.pop("preview")

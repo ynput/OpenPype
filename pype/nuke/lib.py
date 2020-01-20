@@ -1581,3 +1581,70 @@ def get_dependent_nodes(nodes):
                 })
 
     return connections_in, connections_out
+
+
+def find_free_space_to_paste_nodes(
+        nodes,
+        group=nuke.root(),
+        direction="right",
+        offset=300):
+    """
+    For getting coordinates in DAG (node graph) for placing new nodes
+
+    Arguments:
+        nodes (list): list of nuke.Node objects
+        group (nuke.Node) [optional]: object in which context it is
+        direction (str) [optional]: where we want it to be placed
+                                    [left, right, top, bottom]
+        offset (int) [optional]: what offset it is from rest of nodes
+
+    Returns:
+        xpos (int): x coordinace in DAG
+        ypos (int): y coordinace in DAG
+    """
+    if len(nodes) == 0:
+        return 0, 0
+
+    group_xpos = list()
+    group_ypos = list()
+
+    # get local coordinates of all nodes
+    nodes_xpos = [n.xpos() for n in nodes] + \
+                 [n.xpos() + n.screenWidth() for n in nodes]
+
+    nodes_ypos = [n.ypos() for n in nodes] + \
+                 [n.ypos() + n.screenHeight() for n in nodes]
+
+    # get complete screen size of all nodes to be placed in
+    nodes_screen_width = max(nodes_xpos) - min(nodes_xpos)
+    nodes_screen_heigth = max(nodes_ypos) - min(nodes_ypos)
+
+    # get screen size (r,l,t,b) of all nodes in `group`
+    with group:
+        group_xpos = [n.xpos() for n in nuke.allNodes() if n not in nodes] + \
+                     [n.xpos() + n.screenWidth() for n in nuke.allNodes()
+                      if n not in nodes]
+        group_ypos = [n.ypos() for n in nuke.allNodes() if n not in nodes] + \
+                     [n.ypos() + n.screenHeight() for n in nuke.allNodes()
+                      if n not in nodes]
+
+        # calc output left
+        if direction in "left":
+            xpos = min(group_xpos) - abs(nodes_screen_width) - abs(offset)
+            ypos = min(group_ypos)
+            return xpos, ypos
+        # calc output right
+        if direction in "right":
+            xpos = max(group_xpos) + abs(offset)
+            ypos = min(group_ypos)
+            return xpos, ypos
+        # calc output top
+        if direction in "top":
+            xpos = min(group_xpos)
+            ypos = min(group_ypos) - abs(nodes_screen_heigth) - abs(offset)
+            return xpos, ypos
+        # calc output bottom
+        if direction in "bottom":
+            xpos = min(group_xpos)
+            ypos = max(group_ypos) + abs(offset)
+            return xpos, ypos
