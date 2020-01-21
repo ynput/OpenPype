@@ -1,8 +1,0 @@
-# create publishable read node usually used for enabling version tracking
-# also useful for sharing across shots or assets
-
-# if read nodes are selected it will convert them to centainer
-# if no read node selected it will create read node and offer browser to shot resource folder
-
-# type movie > mov or imagesequence
-# type still > matpaint .psd, .tif, .png, 

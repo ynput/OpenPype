@@ -170,8 +170,10 @@ def switch(asset_name, filepath=None, new=True):
     assert asset, "Could not find '%s' in the database" % asset_name
 
     # Get current project
-    self._project = io.find_one({"type": "project",
-                                 "name": api.Session["AVALON_PROJECT"]})
+    self._project = io.find_one({
+        "type": "project",
+        "name": api.Session["AVALON_PROJECT"]
+    })
 
     # Go to comp
     if not filepath:

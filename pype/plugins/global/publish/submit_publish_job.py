@@ -33,14 +33,22 @@ def _get_script():
 # Logic to retrieve latest files concerning extendFrames
 def get_latest_version(asset_name, subset_name, family):
     # Get asset
-    asset_name = io.find_one({"type": "asset",
-                              "name": asset_name},
-                             projection={"name": True})
+    asset_name = io.find_one(
+        {
+            "type": "asset",
+            "name": asset_name
+        },
+        projection={"name": True}
+    )
 
-    subset = io.find_one({"type": "subset",
-                          "name": subset_name,
-                          "parent": asset_name["_id"]},
-                         projection={"_id": True, "name": True})
+    subset = io.find_one(
+        {
+            "type": "subset",
+            "name": subset_name,
+            "parent": asset_name["_id"]
+        },
+        projection={"_id": True, "name": True}
+    )
 
     # Check if subsets actually exists (pre-run check)
     assert subset, "No subsets found, please publish with `extendFrames` off"
@@ -51,11 +59,15 @@ def get_latest_version(asset_name, subset_name, family):
                           "data.endFrame": True,
                           "parent": True}
 
-    version = io.find_one({"type": "version",
-                           "parent": subset["_id"],
-                           "data.families": family},
-                          projection=version_projection,
-                          sort=[("name", -1)])
+    version = io.find_one(
+        {
+            "type": "version",
+            "parent": subset["_id"],
+            "data.families": family
+        },
+        projection=version_projection,
+        sort=[("name", -1)]
+    )
 
     assert version, "No version found, this is a bug"
 
@@ -151,6 +163,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                      "FTRACK_SERVER",
                      "PYPE_ROOT",
                      "PYPE_METADATA_FILE"
+                     "PYPE_STUDIO_PROJECTS_PATH",
+                     "PYPE_STUDIO_PROJECTS_MOUNT"
                      ]
 
     def _submit_deadline_post_job(self, instance, job):
@@ -161,7 +175,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         data = instance.data.copy()
         subset = data["subset"]
-        state = data.get("publishJobState", "Suspended")
         job_name = "{batch} - {subset} [publish image sequence]".format(
             batch=job["Props"]["Name"],
             subset=subset
@@ -173,7 +186,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         metadata_path = os.path.normpath(metadata_path)
         mount_root = os.path.normpath(os.environ['PYPE_STUDIO_PROJECTS_MOUNT'])
-        network_root = os.path.normpath(os.environ['PYPE_STUDIO_PROJECTS_PATH'])
+        network_root = os.path.normpath(
+            os.environ['PYPE_STUDIO_PROJECTS_PATH'])
 
         metadata_path = metadata_path.replace(mount_root, network_root)
 
@@ -187,7 +201,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
-                "InitialStatus": state,
                 "Priority": job["Props"]["Pri"]
             },
             "PluginInfo": {
@@ -296,6 +309,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         relative_path = os.path.relpath(source, api.registered_root())
         source = os.path.join("{root}", relative_path).replace("\\", "/")
 
+        # find subsets and version to attach render to
+        attach_to = instance.data.get("attachTo")
+        attach_subset_versions = []
+        if attach_to:
+            for subset in attach_to:
+                for instance in context:
+                    if instance.data["subset"] != subset["subset"]:
+                        continue
+                    attach_subset_versions.append(
+                        {"version": instance.data["version"],
+                         "subset": subset["subset"],
+                         "family": subset["family"]})
+
         # Write metadata for publish job
         metadata = {
             "asset": asset,
@@ -307,6 +333,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "source": source,
             "user": context.data["user"],
             "version": context.data["version"],
+            "intent": context.data.get("intent"),
+            "comment": context.data.get("comment"),
             # Optional metadata (for debugging)
             "metadata": {
                 "instance": data,
@@ -314,6 +342,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "session": api.Session.copy()
             }
         }
+
+        if api.Session["AVALON_APP"] == "nuke":
+            metadata['subset'] = subset
 
         if submission_type == "muster":
             ftrack = {
