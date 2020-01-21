@@ -39,6 +39,25 @@ def _streams(source):
     return json.loads(out)['streams']
 
 
+def get_fps(str_value):
+    if str_value == "0/0":
+        print("Source has \"r_frame_rate\" value set to \"0/0\".")
+        return "Unknown"
+
+    items = str_value.split("/")
+    if len(items) == 1:
+        fps = float(items[0])
+
+    elif len(items) == 2:
+        fps = float(items[0]) / float(items[1])
+
+    # Check if fps is integer or float number
+    if int(fps) == fps:
+        fps = int(fps)
+
+    return str(fps)
+
+
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
     '''
     This is modification of OTIO FFmpeg Burnin adapter.
@@ -95,6 +114,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             streams = _streams(source)
 
         super().__init__(source, streams)
+
         if options_init:
             self.options_init.update(options_init)
 
@@ -139,12 +159,13 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             options['frame_offset'] = start_frame
 
         expr = r'%%{eif\:n+%d\:d}' % options['frame_offset']
+        _text = str(int(self.end_frame + options['frame_offset']))
         if text and isinstance(text, str):
             text = r"{}".format(text)
             expr = text.replace("{current_frame}", expr)
+            text = text.replace("{current_frame}", _text)
 
         options['expression'] = expr
-        text = str(int(self.end_frame + options['frame_offset']))
         self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
 
     def add_timecode(self, align, options=None, start_frame=None):
@@ -328,6 +349,17 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
     frame_start = data.get("frame_start")
     frame_start_tc = data.get('frame_start_tc', frame_start)
+    
+    stream = burnin._streams[0]
+    if "resolution_width" not in data:
+        data["resolution_width"] = stream.get("width", "Unknown")
+
+    if "resolution_height" not in data:
+        data["resolution_height"] = stream.get("height", "Unknown")
+
+    if "fps" not in data:
+        data["fps"] = get_fps(stream.get("r_frame_rate", "0/0"))
+
     for align_text, preset in presets.get('burnins', {}).items():
         align = None
         if align_text == 'TOP_LEFT':
@@ -382,12 +414,14 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
         elif bi_func == 'timecode':
             burnin.add_timecode(align, start_frame=frame_start_tc)
+
         elif bi_func == 'text':
             if not preset.get('text'):
                 log.error('Text is not set for text function burnin!')
                 return
             text = preset['text'].format(**data)
             burnin.add_text(text, align)
+
         elif bi_func == "datetime":
             date_format = preset["format"]
             burnin.add_datetime(date_format, align)
@@ -414,4 +448,4 @@ if __name__ == '__main__':
         data['codec'],
         data['output'],
         data['burnin_data']
-        )
+    )

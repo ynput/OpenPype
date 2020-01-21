@@ -707,9 +707,11 @@ class WorkfileSettings(object):
         frame_start = int(data["frameStart"]) - handle_start
         frame_end = int(data["frameEnd"]) + handle_end
 
+        self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
         self._root_node["first_frame"].setValue(frame_start)
         self._root_node["last_frame"].setValue(frame_end)
+        self._root_node["lock_range"].setValue(True)
 
         # setting active viewers
         try:
@@ -1197,13 +1199,13 @@ class BuildWorkfile(WorkfileSettings):
         self.ypos -= (self.ypos_size * multiply) + self.ypos_gap
 
 
-class Exporter_review_lut:
+class ExporterReview:
     """
-    Generator object for review lut from Nuke
+    Base class object for generating review data from Nuke
 
     Args:
         klass (pyblish.plugin): pyblish plugin parent
-
+        instance (pyblish.instance): instance of pyblish context
 
     """
     _temp_nodes = []
@@ -1213,93 +1215,14 @@ class Exporter_review_lut:
 
     def __init__(self,
                  klass,
-                 instance,
-                 name=None,
-                 ext=None,
-                 cube_size=None,
-                 lut_size=None,
-                 lut_style=None):
+                 instance
+                 ):
 
         self.log = klass.log
         self.instance = instance
-
-        self.name = name or "baked_lut"
-        self.ext = ext or "cube"
-        self.cube_size = cube_size or 32
-        self.lut_size = lut_size or 1024
-        self.lut_style = lut_style or "linear"
-
-        self.stagingDir = self.instance.data["stagingDir"]
+        self.path_in = self.instance.data.get("path", None)
+        self.staging_dir = self.instance.data["stagingDir"]
         self.collection = self.instance.data.get("collection", None)
-
-        # set frame start / end and file name to self
-        self.get_file_info()
-
-        self.log.info("File info was set...")
-
-        self.file = self.fhead + self.name + ".{}".format(self.ext)
-        self.path = os.path.join(self.stagingDir, self.file).replace("\\", "/")
-
-    def generate_lut(self):
-        # ---------- start nodes creation
-
-        # CMSTestPattern
-        cms_node = nuke.createNode("CMSTestPattern")
-        cms_node["cube_size"].setValue(self.cube_size)
-        # connect
-        self._temp_nodes.append(cms_node)
-        self.previous_node = cms_node
-        self.log.debug("CMSTestPattern...   `{}`".format(self._temp_nodes))
-
-        # Node View Process
-        ipn = self.get_view_process_node()
-        if ipn is not None:
-            # connect
-            ipn.setInput(0, self.previous_node)
-            self._temp_nodes.append(ipn)
-            self.previous_node = ipn
-            self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
-
-        # OCIODisplay
-        dag_node = nuke.createNode("OCIODisplay")
-        # connect
-        dag_node.setInput(0, self.previous_node)
-        self._temp_nodes.append(dag_node)
-        self.previous_node = dag_node
-        self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
-
-        # GenerateLUT
-        gen_lut_node = nuke.createNode("GenerateLUT")
-        gen_lut_node["file"].setValue(self.path)
-        gen_lut_node["file_type"].setValue(".{}".format(self.ext))
-        gen_lut_node["lut1d"].setValue(self.lut_size)
-        gen_lut_node["style1d"].setValue(self.lut_style)
-        # connect
-        gen_lut_node.setInput(0, self.previous_node)
-        self._temp_nodes.append(gen_lut_node)
-        self.log.debug("GenerateLUT...   `{}`".format(self._temp_nodes))
-
-        # ---------- end nodes creation
-
-        # Export lut file
-        nuke.execute(
-            gen_lut_node.name(),
-            int(self.first_frame),
-            int(self.first_frame))
-
-        self.log.info("Exported...")
-
-        # ---------- generate representation data
-        self.get_representation_data()
-
-        self.log.debug("Representation...   `{}`".format(self.data))
-
-        # ---------- Clean up
-        for node in self._temp_nodes:
-            nuke.delete(node)
-        self.log.info("Deleted nodes...")
-
-        return self.data
 
     def get_file_info(self):
         if self.collection:
@@ -1312,8 +1235,10 @@ class Exporter_review_lut:
             # get first and last frame
             self.first_frame = min(self.collection.indexes)
             self.last_frame = max(self.collection.indexes)
+            if "slate" in self.instance.data["families"]:
+                self.first_frame += 1
         else:
-            self.fname = os.path.basename(self.instance.data.get("path", None))
+            self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
             self.first_frame = self.instance.data.get("frameStart", None)
             self.last_frame = self.instance.data.get("frameEnd", None)
@@ -1321,16 +1246,25 @@ class Exporter_review_lut:
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
 
-    def get_representation_data(self):
+    def get_representation_data(self, tags=None, range=False):
+        add_tags = []
+        if tags:
+            add_tags = tags
 
         repre = {
             'name': self.name,
             'ext': self.ext,
             'files': self.file,
-            "stagingDir": self.stagingDir,
+            "stagingDir": self.staging_dir,
             "anatomy_template": "publish",
-            "tags": [self.name.replace("_", "-")]
+            "tags": [self.name.replace("_", "-")] + add_tags
         }
+
+        if range:
+            repre.update({
+                "frameStart": self.first_frame,
+                "frameEnd": self.last_frame,
+                })
 
         self.data["representations"].append(repre)
 
@@ -1365,6 +1299,252 @@ class Exporter_review_lut:
             ipn = nuke.selectedNode()
 
             return ipn
+
+    def clean_nodes(self):
+        for node in self._temp_nodes:
+            nuke.delete(node)
+        self.log.info("Deleted nodes...")
+
+
+class ExporterReviewLut(ExporterReview):
+    """
+    Generator object for review lut from Nuke
+
+    Args:
+        klass (pyblish.plugin): pyblish plugin parent
+        instance (pyblish.instance): instance of pyblish context
+
+
+    """
+    def __init__(self,
+                 klass,
+                 instance,
+                 name=None,
+                 ext=None,
+                 cube_size=None,
+                 lut_size=None,
+                 lut_style=None):
+        # initialize parent class
+        ExporterReview.__init__(self, klass, instance)
+
+        # deal with now lut defined in viewer lut
+        if hasattr(klass, "viewer_lut_raw"):
+            self.viewer_lut_raw = klass.viewer_lut_raw
+        else:
+            self.viewer_lut_raw = False
+
+        self.name = name or "baked_lut"
+        self.ext = ext or "cube"
+        self.cube_size = cube_size or 32
+        self.lut_size = lut_size or 1024
+        self.lut_style = lut_style or "linear"
+
+        # set frame start / end and file name to self
+        self.get_file_info()
+
+        self.log.info("File info was set...")
+
+        self.file = self.fhead + self.name + ".{}".format(self.ext)
+        self.path = os.path.join(
+            self.staging_dir, self.file).replace("\\", "/")
+
+    def generate_lut(self):
+        # ---------- start nodes creation
+
+        # CMSTestPattern
+        cms_node = nuke.createNode("CMSTestPattern")
+        cms_node["cube_size"].setValue(self.cube_size)
+        # connect
+        self._temp_nodes.append(cms_node)
+        self.previous_node = cms_node
+        self.log.debug("CMSTestPattern...   `{}`".format(self._temp_nodes))
+
+        # Node View Process
+        ipn = self.get_view_process_node()
+        if ipn is not None:
+            # connect
+            ipn.setInput(0, self.previous_node)
+            self._temp_nodes.append(ipn)
+            self.previous_node = ipn
+            self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
+
+        if not self.viewer_lut_raw:
+            # OCIODisplay
+            dag_node = nuke.createNode("OCIODisplay")
+            # connect
+            dag_node.setInput(0, self.previous_node)
+            self._temp_nodes.append(dag_node)
+            self.previous_node = dag_node
+            self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+
+        # GenerateLUT
+        gen_lut_node = nuke.createNode("GenerateLUT")
+        gen_lut_node["file"].setValue(self.path)
+        gen_lut_node["file_type"].setValue(".{}".format(self.ext))
+        gen_lut_node["lut1d"].setValue(self.lut_size)
+        gen_lut_node["style1d"].setValue(self.lut_style)
+        # connect
+        gen_lut_node.setInput(0, self.previous_node)
+        self._temp_nodes.append(gen_lut_node)
+        self.log.debug("GenerateLUT...   `{}`".format(self._temp_nodes))
+
+        # ---------- end nodes creation
+
+        # Export lut file
+        nuke.execute(
+            gen_lut_node.name(),
+            int(self.first_frame),
+            int(self.first_frame))
+
+        self.log.info("Exported...")
+
+        # ---------- generate representation data
+        self.get_representation_data()
+
+        self.log.debug("Representation...   `{}`".format(self.data))
+
+        # ---------- Clean up
+        self.clean_nodes()
+
+        return self.data
+
+
+class ExporterReviewMov(ExporterReview):
+    """
+    Metaclass for generating review mov files
+
+    Args:
+        klass (pyblish.plugin): pyblish plugin parent
+        instance (pyblish.instance): instance of pyblish context
+
+    """
+    def __init__(self,
+                 klass,
+                 instance,
+                 name=None,
+                 ext=None,
+                 ):
+        # initialize parent class
+        ExporterReview.__init__(self, klass, instance)
+
+        # passing presets for nodes to self
+        if hasattr(klass, "nodes"):
+            self.nodes = klass.nodes
+        else:
+            self.nodes = {}
+
+        # deal with now lut defined in viewer lut
+        if hasattr(klass, "viewer_lut_raw"):
+            self.viewer_lut_raw = klass.viewer_lut_raw
+        else:
+            self.viewer_lut_raw = False
+
+        self.name = name or "baked"
+        self.ext = ext or "mov"
+
+        # set frame start / end and file name to self
+        self.get_file_info()
+
+        self.log.info("File info was set...")
+
+        self.file = self.fhead + self.name + ".{}".format(self.ext)
+        self.path = os.path.join(
+            self.staging_dir, self.file).replace("\\", "/")
+
+    def render(self, render_node_name):
+        self.log.info("Rendering...  ")
+        # Render Write node
+        nuke.execute(
+            render_node_name,
+            int(self.first_frame),
+            int(self.last_frame))
+
+        self.log.info("Rendered...")
+
+    def save_file(self):
+        import shutil
+        with anlib.maintained_selection():
+            self.log.info("Saving nodes as file...  ")
+            # create nk path
+            path = os.path.splitext(self.path)[0] + ".nk"
+            # save file to the path
+            shutil.copyfile(self.instance.context.data["currentFile"], path)
+
+        self.log.info("Nodes exported...")
+        return path
+
+    def generate_mov(self, farm=False):
+        # ---------- start nodes creation
+
+        # Read node
+        r_node = nuke.createNode("Read")
+        r_node["file"].setValue(self.path_in)
+        r_node["first"].setValue(self.first_frame)
+        r_node["origfirst"].setValue(self.first_frame)
+        r_node["last"].setValue(self.last_frame)
+        r_node["origlast"].setValue(self.last_frame)
+        # connect
+        self._temp_nodes.append(r_node)
+        self.previous_node = r_node
+        self.log.debug("Read...   `{}`".format(self._temp_nodes))
+
+        # View Process node
+        ipn = self.get_view_process_node()
+        if ipn is not None:
+            # connect
+            ipn.setInput(0, self.previous_node)
+            self._temp_nodes.append(ipn)
+            self.previous_node = ipn
+            self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
+
+        if not self.viewer_lut_raw:
+            # OCIODisplay node
+            dag_node = nuke.createNode("OCIODisplay")
+            # connect
+            dag_node.setInput(0, self.previous_node)
+            self._temp_nodes.append(dag_node)
+            self.previous_node = dag_node
+            self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+
+        # Write node
+        write_node = nuke.createNode("Write")
+        self.log.debug("Path: {}".format(self.path))
+        write_node["file"].setValue(self.path)
+        write_node["file_type"].setValue(self.ext)
+        write_node["meta_codec"].setValue("ap4h")
+        write_node["mov64_codec"].setValue("ap4h")
+        write_node["mov64_write_timecode"].setValue(1)
+        write_node["raw"].setValue(1)
+        # connect
+        write_node.setInput(0, self.previous_node)
+        self._temp_nodes.append(write_node)
+        self.log.debug("Write...   `{}`".format(self._temp_nodes))
+        # ---------- end nodes creation
+
+        # ---------- render or save to nk
+        if farm:
+            nuke.scriptSave()
+            path_nk = self.save_file()
+            self.data.update({
+                "bakeScriptPath": path_nk,
+                "bakeWriteNodeName": write_node.name(),
+                "bakeRenderPath": self.path
+            })
+        else:
+            self.render(write_node.name())
+            # ---------- generate representation data
+            self.get_representation_data(
+                tags=["review", "delete"],
+                range=True
+                )
+
+        self.log.debug("Representation...   `{}`".format(self.data))
+
+        # ---------- Clean up
+        self.clean_nodes()
+        nuke.scriptSave()
+        return self.data
+
 
 def get_dependent_nodes(nodes):
     """Get all dependent nodes connected to the list of nodes.
@@ -1401,3 +1581,70 @@ def get_dependent_nodes(nodes):
                 })
 
     return connections_in, connections_out
+
+
+def find_free_space_to_paste_nodes(
+        nodes,
+        group=nuke.root(),
+        direction="right",
+        offset=300):
+    """
+    For getting coordinates in DAG (node graph) for placing new nodes
+
+    Arguments:
+        nodes (list): list of nuke.Node objects
+        group (nuke.Node) [optional]: object in which context it is
+        direction (str) [optional]: where we want it to be placed
+                                    [left, right, top, bottom]
+        offset (int) [optional]: what offset it is from rest of nodes
+
+    Returns:
+        xpos (int): x coordinace in DAG
+        ypos (int): y coordinace in DAG
+    """
+    if len(nodes) == 0:
+        return 0, 0
+
+    group_xpos = list()
+    group_ypos = list()
+
+    # get local coordinates of all nodes
+    nodes_xpos = [n.xpos() for n in nodes] + \
+                 [n.xpos() + n.screenWidth() for n in nodes]
+
+    nodes_ypos = [n.ypos() for n in nodes] + \
+                 [n.ypos() + n.screenHeight() for n in nodes]
+
+    # get complete screen size of all nodes to be placed in
+    nodes_screen_width = max(nodes_xpos) - min(nodes_xpos)
+    nodes_screen_heigth = max(nodes_ypos) - min(nodes_ypos)
+
+    # get screen size (r,l,t,b) of all nodes in `group`
+    with group:
+        group_xpos = [n.xpos() for n in nuke.allNodes() if n not in nodes] + \
+                     [n.xpos() + n.screenWidth() for n in nuke.allNodes()
+                      if n not in nodes]
+        group_ypos = [n.ypos() for n in nuke.allNodes() if n not in nodes] + \
+                     [n.ypos() + n.screenHeight() for n in nuke.allNodes()
+                      if n not in nodes]
+
+        # calc output left
+        if direction in "left":
+            xpos = min(group_xpos) - abs(nodes_screen_width) - abs(offset)
+            ypos = min(group_ypos)
+            return xpos, ypos
+        # calc output right
+        if direction in "right":
+            xpos = max(group_xpos) + abs(offset)
+            ypos = min(group_ypos)
+            return xpos, ypos
+        # calc output top
+        if direction in "top":
+            xpos = min(group_xpos)
+            ypos = min(group_ypos) - abs(nodes_screen_heigth) - abs(offset)
+            return xpos, ypos
+        # calc output bottom
+        if direction in "bottom":
+            xpos = min(group_xpos)
+            ypos = max(group_ypos) + abs(offset)
+            return xpos, ypos

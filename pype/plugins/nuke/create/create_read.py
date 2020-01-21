@@ -6,9 +6,6 @@ from pype import api as pype
 import nuke
 
 
-log = pype.Logger().get_logger(__name__, "nuke")
-
-
 class CrateRead(avalon.nuke.Creator):
     # change this to template preset
     name = "ReadCopy"

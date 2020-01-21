@@ -6,7 +6,7 @@ import pype
 reload(pnlib)
 
 
-class ExtractReviewLutData(pype.api.Extractor):
+class ExtractReviewDataLut(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
     must be run after extract_render_local.py
@@ -37,8 +37,9 @@ class ExtractReviewLutData(pype.api.Extractor):
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
+        # generate data
         with anlib.maintained_selection():
-            exporter = pnlib.Exporter_review_lut(
+            exporter = pnlib.ExporterReviewLut(
                 self, instance
                     )
             data = exporter.generate_lut()
