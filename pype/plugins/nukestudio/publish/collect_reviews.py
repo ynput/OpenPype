@@ -100,6 +100,19 @@ class CollectReviews(api.InstancePlugin):
             "name": "preview",
             "ext": ext
         }
+
+        # if int(rev_inst.data.get("sourceIn")) >
+        mediaDuration = instance.data.get("mediaDuration")
+        clipDuration = instance.data.get("clipDuration")
+
+        if mediaDuration > clipDuration:
+            self.log.debug("Media duration higher: {}".format(
+                (mediaDuration - clipDuration)))
+            # representation.update({
+            #     "frameStart": instance.data.get("sourceInH"),
+            #     "frameEnd": instance.data.get("sourceOutH")
+            # })
+
         instance.data["representations"].append(representation)
 
         self.log.debug("Added representation: {}".format(representation))
