@@ -219,10 +219,6 @@ class CollectLook(pyblish.api.InstancePlugin):
         with lib.renderlayer(instance.data["renderlayer"]):
             self.collect(instance)
 
-        # make ftrack publishable
-        self.maketx = instance.data.get('maketx', True)
-        instance.data['maketx'] = self.maketx
-        self.log.info('maketx: {}'.format(self.maketx))
 
     def collect(self, instance):
 

@@ -7,6 +7,7 @@ import errno
 import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
+
 # this is needed until speedcopy for linux is fixed
 if sys.platform == "win32":
     from speedcopy import copyfile
@@ -71,7 +72,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "yetiRig",
                 "yeticache",
                 "nukenodes",
-                "gizmo"
+                "gizmo",
                 "source",
                 "matchmove",
                 "image"
@@ -152,9 +153,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         io.install()
         project = io.find_one({"type": "project"})
 
-        asset = io.find_one({"type": "asset",
-                             "name": ASSET,
-                             "parent": project["_id"]})
+        asset = io.find_one({
+            "type": "asset",
+            "name": ASSET,
+            "parent": project["_id"]
+        })
 
         assert all([project, asset]), ("Could not find current project or "
                                        "asset '%s'" % ASSET)
@@ -162,10 +165,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         subset = self.get_subset(asset, instance)
 
         # get next version
-        latest_version = io.find_one({"type": "version",
-                                      "parent": subset["_id"]},
-                                     {"name": True},
-                                     sort=[("name", -1)])
+        latest_version = io.find_one(
+            {
+                "type": "version",
+                "parent": subset["_id"]
+            },
+            {"name": True},
+            sort=[("name", -1)]
+        )
 
         next_version = 1
         if latest_version is not None:
@@ -173,16 +180,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         if instance.data.get('version'):
             next_version = int(instance.data.get('version'))
-
-        # self.log.info("Verifying version from assumed destination")
-
-        # assumed_data = instance.data["assumedTemplateData"]
-        # assumed_version = assumed_data["version"]
-        # if assumed_version != next_version:
-        #     raise AttributeError("Assumed version 'v{0:03d}' does not match"
-        #                          "next version in database "
-        #                          "('v{1:03d}')".format(assumed_version,
-        #                                                next_version))
 
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
@@ -269,6 +266,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                              "version": int(version["name"]),
                              "hierarchy": hierarchy}
 
+            resolution_width = repre.get("resolutionWidth")
+            resolution_height = repre.get("resolutionHeight")
+            fps = instance.data.get("fps")
+
+            if resolution_width:
+                template_data["resolution_width"] = resolution_width
+            if resolution_width:
+                template_data["resolution_height"] = resolution_height
+            if resolution_width:
+                template_data["fps"] = fps
+
             files = repre['files']
             if repre.get('stagingDir'):
                 stagingdir = repre['stagingDir']
@@ -322,6 +330,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         repre.get("frameEnd")))
                     index_frame_start = int(repre.get("frameStart"))
 
+                # exception for slate workflow
+                if "slate" in instance.data["families"]:
+                    index_frame_start -= 1
+
                 dst_padding_exp = src_padding_exp
                 dst_start_frame = None
                 for i in src_collection.indexes:
@@ -356,7 +368,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst_head,
                     dst_start_frame,
                     dst_tail).replace("..", ".")
-                repre['published_path'] = dst
+                repre['published_path'] = self.unc_convert(dst)
 
             else:
                 # Single file
@@ -385,7 +397,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
 
-                repre['published_path'] = dst
+                repre['published_path'] = self.unc_convert(dst)
                 self.log.debug("__ dst: {}".format(dst))
 
             representation = {
@@ -413,8 +425,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 }
             }
 
+            if repre.get("outputName"):
+                representation["context"]["output"] = repre['outputName']
+
             if sequence_repre and repre.get("frameStart"):
-                representation['context']['frame'] = src_padding_exp % repre.get("frameStart")
+                representation['context']['frame'] = src_padding_exp % int(repre.get("frameStart"))
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -459,6 +474,23 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
             self.hardlink_file(src, dest)
 
+    def unc_convert(self, path):
+        self.log.debug("> __ path: `{}`".format(path))
+        drive, _path = os.path.splitdrive(path)
+        self.log.debug("> __ drive, _path: `{}`, `{}`".format(drive, _path))
+
+        if not os.path.exists(drive + "/"):
+            self.log.info("Converting to unc from environments ..")
+
+            path_replace = os.getenv("PYPE_STUDIO_PROJECTS_PATH")
+            path_mount = os.getenv("PYPE_STUDIO_PROJECTS_MOUNT")
+
+            if "/" in path_mount:
+                path = path.replace(path_mount[0:-1], path_replace)
+            else:
+                path = path.replace(path_mount, path_replace)
+        return path
+
     def copy_file(self, src, dst):
         """ Copy given source to destination
 
@@ -468,8 +500,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             None
         """
-        src = os.path.normpath(src)
-        dst = os.path.normpath(dst)
+        src = self.unc_convert(src)
+        dst = self.unc_convert(dst)
 
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
@@ -490,6 +522,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def hardlink_file(self, src, dst):
         dirname = os.path.dirname(dst)
+
+        src = self.unc_convert(src)
+        dst = self.unc_convert(dst)
+
         try:
             os.makedirs(dirname)
         except OSError as e:
@@ -502,9 +538,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         filelink.create(src, dst, filelink.HARDLINK)
 
     def get_subset(self, asset, instance):
-        subset = io.find_one({"type": "subset",
-                              "parent": asset["_id"],
-                              "name": instance.data["subset"]})
+        subset = io.find_one({
+            "type": "subset",
+            "parent": asset["_id"],
+            "name": instance.data["subset"]
+        })
 
         if subset is None:
             subset_name = instance.data["subset"]
@@ -595,7 +633,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "source": source,
                         "comment": context.data.get("comment"),
                         "machine": context.data.get("machine"),
-                        "fps": context.data.get("fps")}
+                        "fps": context.data.get(
+                            "fps", instance.data.get("fps"))}
 
         # Include optional data if present in
         optionals = [
