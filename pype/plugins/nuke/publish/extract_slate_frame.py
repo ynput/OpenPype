@@ -12,7 +12,7 @@ class ExtractSlateFrame(pype.api.Extractor):
 
     """
 
-    order = pyblish.api.ExtractorOrder + 0.01
+    order = pyblish.api.ExtractorOrder - 0.001
     label = "Extract Slate Frame"
 
     families = ["slate"]
