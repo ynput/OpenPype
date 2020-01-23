@@ -197,6 +197,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
             fps = data.get("fps", 25)
 
+            # adding publish comment and intent to context
+            context.data["comment"] = data.get("comment", "")
+            context.data["intent"] = data.get("intent", "")
+
             if data.get("user"):
                 context.data["user"] = data["user"]
 
