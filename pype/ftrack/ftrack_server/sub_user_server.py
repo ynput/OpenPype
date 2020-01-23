@@ -7,7 +7,7 @@ from pype.ftrack.ftrack_server.lib import SocketSession, UserEventHub
 
 from pypeapp import Logger
 
-log = Logger().get_logger(__name__)
+log = Logger().get_logger("FtrackUserServer")
 
 
 def main(args):
