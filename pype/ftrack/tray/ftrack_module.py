@@ -171,7 +171,7 @@ class FtrackModule:
 
             # If thread failed test Ftrack and Mongo connection
             elif not self.thread_socket_server.isAlive():
-                self.thread_socket_server_thread.join()
+                self.thread_socket_server.join()
                 self.thread_socket_server = None
                 ftrack_accessible = False
 
