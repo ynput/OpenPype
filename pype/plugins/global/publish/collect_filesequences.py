@@ -101,6 +101,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
         lut_path = None
         slate_frame = None
         families_data = None
+        baked_mov_path = None
         subset = None
         version = None
         frame_start = 0
