@@ -7,7 +7,7 @@ class IntegrateFtrackComments(pyblish.api.InstancePlugin):
     """Create comments in Ftrack."""
 
     order = pyblish.api.IntegratorOrder
-    label = "Integrate Comments to Ftrack."
+    label = "Integrate Comments to Ftrack"
     families = ["shot"]
     enabled = False
 
