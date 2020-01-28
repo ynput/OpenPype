@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import socket
 import threading
@@ -52,7 +53,7 @@ class SocketThread(threading.Thread):
         )
 
         self.subproc = subprocess.Popen(
-            ["python", self.filepath, "-port", str(self.port)],
+            [sys.executable, self.filepath, "-port", str(self.port)],
             stdout=subprocess.PIPE
         )
 
