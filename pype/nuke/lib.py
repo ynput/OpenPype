@@ -21,7 +21,6 @@ from .presets import (
 from .presets import (
     get_anatomy
 )
-# TODO: remove get_anatomy and import directly Anatomy() here
 
 from pypeapp import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -50,8 +49,6 @@ def checkInventoryVersions():
     and check if the node is having actual version. If not then it will color
     it to red.
     """
-    # TODO: make it for all nodes not just Read (Loader
-
     # get all Loader nodes by avalon attribute metadata
     for each in nuke.allNodes():
         if each.Class() == 'Read':
@@ -93,7 +90,6 @@ def checkInventoryVersions():
 def writes_version_sync():
     ''' Callback synchronizing version of publishable write nodes
     '''
-    # TODO: make it work with new write node group
     try:
         rootVersion = pype.get_version_from_path(nuke.root().name())
         padding = len(rootVersion)
@@ -130,7 +126,8 @@ def writes_version_sync():
                     os.makedirs(os.path.dirname(node_new_file), 0o766)
             except Exception as e:
                 log.warning(
-                    "Write node: `{}` has no version in path: {}".format(each.name(), e))
+                    "Write node: `{}` has no version in path: {}".format(
+                        each.name(), e))
 
 
 def version_up_script():
@@ -183,9 +180,11 @@ def format_anatomy(data):
     try:
         padding = int(anatomy.templates['render']['padding'])
     except KeyError as e:
-        log.error("`padding` key is not in `render` "
-                  "Anatomy template. Please, add it there and restart "
-                  "the pipeline (padding: \"4\"): `{}`".format(e))
+        msg = "`padding` key is not in `render` "
+            "Anatomy template. Please, add it there and restart "
+             "the pipeline (padding: \"4\"): `{}`".format(e)
+        log.error(msg)
+        nuke.message(msg)
 
     version = data.get("version", None)
     if not version:
@@ -265,7 +264,9 @@ def create_write_node(name, data, input=None, prenodes=None):
         anatomy_filled = format_anatomy(data)
 
     except Exception as e:
-        log.error("problem with resolving anatomy tepmlate: {}".format(e))
+        msg = "problem with resolving anatomy tepmlate: {}".format(e)
+        log.error(msg)
+        nuke.message(msg)
 
     # build file path to workfiles
     fpath = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
@@ -543,8 +544,11 @@ class WorkfileSettings(object):
             viewer_dict (dict): adjustments from presets
 
         '''
-        assert isinstance(viewer_dict, dict), log.error(
-            "set_viewers_colorspace(): argument should be dictionary")
+        if not isinstance(viewer_dict, dict):
+            msg = "set_viewers_colorspace(): argument should be dictionary"
+            log.error(msg)
+            nuke.message(msg)
+            return
 
         filter_knobs = [
             "viewerProcess",
@@ -592,8 +596,10 @@ class WorkfileSettings(object):
             root_dict (dict): adjustmensts from presets
 
         '''
-        assert isinstance(root_dict, dict), log.error(
-            "set_root_colorspace(): argument should be dictionary")
+        if not isinstance(root_dict, dict):
+            msg = "set_root_colorspace(): argument should be dictionary"
+            log.error(msg)
+            nuke.message(msg)
 
         log.debug(">> root_dict: {}".format(root_dict))
 
@@ -640,8 +646,11 @@ class WorkfileSettings(object):
         '''
         # TODO: complete this function so any write node in
         # scene will have fixed colorspace following presets for the project
-        assert isinstance(write_dict, dict), log.error(
-            "set_root_colorspace(): argument should be dictionary")
+        if not isinstance(write_dict, dict):
+            msg = "set_root_colorspace(): argument should be dictionary"
+            nuke.message(msg)
+            log.error(msg)
+            return
 
         log.debug("__ set_writes_colorspace(): {}".format(write_dict))
 
@@ -653,25 +662,28 @@ class WorkfileSettings(object):
         try:
             self.set_root_colorspace(nuke_colorspace["root"])
         except AttributeError:
-            log.error(
-                "set_colorspace(): missing `root` settings in template")
+            msg = "set_colorspace(): missing `root` settings in template"
+
         try:
             self.set_viewers_colorspace(nuke_colorspace["viewer"])
         except AttributeError:
-            log.error(
-                "set_colorspace(): missing `viewer` settings in template")
+            msg = "set_colorspace(): missing `viewer` settings in template"
+            nuke.message(msg)
+            log.error(msg)
         try:
             self.set_writes_colorspace(nuke_colorspace["write"])
         except AttributeError:
-            log.error(
-                "set_colorspace(): missing `write` settings in template")
+            msg = "set_colorspace(): missing `write` settings in template"
+            nuke.message(msg)
+            log.error(msg)
 
         try:
             for key in nuke_colorspace:
                 log.debug("Preset's colorspace key: {}".format(key))
         except TypeError:
-            log.error("Nuke is not in templates! \n\n\n"
-                      "contact your supervisor!")
+            msg = "Nuke is not in templates! Contact your supervisor!"
+            nuke.message(msg)
+            log.error(msg)
 
     def reset_frame_range_handles(self):
         """Set frame range to current asset"""
@@ -758,13 +770,13 @@ class WorkfileSettings(object):
         }
 
         if any(x for x in data.values() if x is None):
-            log.error(
-                "Missing set shot attributes in DB."
-                "\nContact your supervisor!."
-                "\n\nWidth: `{width}`"
-                "\nHeight: `{height}`"
-                "\nPixel Asspect: `{pixel_aspect}`".format(**data)
-            )
+            msg = "Missing set shot attributes in DB."
+                  "\nContact your supervisor!."
+                  "\n\nWidth: `{width}`"
+                  "\nHeight: `{height}`"
+                  "\nPixel Asspect: `{pixel_aspect}`".format(**data)
+            log.error(msg)
+            nuke.message(msg)
 
         bbox = self._asset_entity.get('data', {}).get('crop')
 
@@ -781,10 +793,10 @@ class WorkfileSettings(object):
                 )
             except Exception as e:
                 bbox = None
-                log.error(
-                    "{}: {} \nFormat:Crop need to be set with dots, example: "
+                msg = "{}: {} \nFormat:Crop need to be set with dots, example: "
                     "0.0.1920.1080, /nSetting to default".format(__name__, e)
-                )
+                log.error(msg)
+                nuke.message(msg)
 
         existing_format = None
         for format in nuke.formats():

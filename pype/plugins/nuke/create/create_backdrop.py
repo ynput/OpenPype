@@ -35,8 +35,10 @@ class CreateBackdrop(Creator):
 
                 return instance
             else:
-                nuke.message("Please select nodes you "
-                             "wish to add to a container")
+                msg = "Please select nodes you "
+                      "wish to add to a container"
+                self.log.error(msg)
+                nuke.message(msg)
                 return
         else:
             bckd_node = autoBackdrop()
