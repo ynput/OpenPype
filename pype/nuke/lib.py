@@ -180,9 +180,10 @@ def format_anatomy(data):
     try:
         padding = int(anatomy.templates['render']['padding'])
     except KeyError as e:
-        msg = "`padding` key is not in `render` "
+        msg = ("`padding` key is not in `render` "
             "Anatomy template. Please, add it there and restart "
-             "the pipeline (padding: \"4\"): `{}`".format(e)
+            "the pipeline (padding: \"4\"): `{}`").format(e)
+
         log.error(msg)
         nuke.message(msg)
 
@@ -770,11 +771,11 @@ class WorkfileSettings(object):
         }
 
         if any(x for x in data.values() if x is None):
-            msg = "Missing set shot attributes in DB."
+            msg = ("Missing set shot attributes in DB."
                   "\nContact your supervisor!."
                   "\n\nWidth: `{width}`"
                   "\nHeight: `{height}`"
-                  "\nPixel Asspect: `{pixel_aspect}`".format(**data)
+                  "\nPixel Asspect: `{pixel_aspect}`").format(**data)
             log.error(msg)
             nuke.message(msg)
 
@@ -793,8 +794,8 @@ class WorkfileSettings(object):
                 )
             except Exception as e:
                 bbox = None
-                msg = "{}: {} \nFormat:Crop need to be set with dots, example: "
-                    "0.0.1920.1080, /nSetting to default".format(__name__, e)
+                msg = ("{}:{} \nFormat:Crop need to be set with dots, example: "
+                    "0.0.1920.1080, /nSetting to default").format(__name__, e)
                 log.error(msg)
                 nuke.message(msg)
 

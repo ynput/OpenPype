@@ -42,8 +42,8 @@ class CreateWriteRender(plugin.PypeCreator):
             nodes = self.nodes
 
             if not (len(nodes) < 2):
-                msg = "Select only one node. The node you want to connect to, "
-                      "or tick off `Use selection`"
+                msg = ("Select only one node. The node you want to connect to, "
+                      "or tick off `Use selection`")
                 log.error(msg)
                 nuke.message(msg)
 
@@ -137,8 +137,8 @@ class CreateWritePrerender(plugin.PypeCreator):
             nodes = self.nodes
 
             if not (len(nodes) < 2):
-                msg = "Select only one node. The node you want to connect to, "
-                      "or tick off `Use selection`"
+                msg = ("Select only one node. The node you want to connect to, "
+                      "or tick off `Use selection`")
                 self.log.error(msg)
                 nuke.message(msg)
 
