@@ -78,7 +78,12 @@ class CreateRender(avalon.maya.Creator):
             self.log.warning("Deadline REST API url not found.")
         else:
             argument = "{}/api/pools?NamesOnly=true".format(deadline_url)
-            response = self._requests_get(argument)
+            try:
+                response = self._requests_get(argument)
+            except requests.exceptions.ConnectionError as e:
+                msg = 'Cannot connect to deadline web service'
+                self.log.error(msg)
+                raise RuntimeError('{} - {}'.format(msg, e))
             if not response.ok:
                 self.log.warning("No pools retrieved")
             else:

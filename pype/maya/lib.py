@@ -2469,7 +2469,7 @@ class RenderSetupListObserver:
         if not render_set:
             return
 
-        members = cmds.sets(render_set, query=True)
+        members = cmds.sets(render_set, query=True) or []
         if not "LAYER_{}".format(layer_name) in members:
             print("  - creating set for {}".format(layer_name))
             set = cmds.sets(n="LAYER_{}".format(layer_name))
