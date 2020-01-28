@@ -10,18 +10,6 @@ import pype.maya.lib as lib
 import avalon.maya
 
 
-class RenderSetupListObserver:
-    """This will later server as handler to renderSetup changes"""
-
-    def listItemAdded(self, item):
-        # TODO(antirotor): Implement
-        self.items.append(item)
-        print("*   added {}".format(item.name()))
-
-    def listItemRemoved(self, item):
-        print("removed")
-
-
 class CreateRender(avalon.maya.Creator):
     """Create render layer for export"""
 
@@ -51,7 +39,6 @@ class CreateRender(avalon.maya.Creator):
             instance = super(CreateRender, self).process()
             cmds.setAttr("{}.machineList".format(instance), lock=True)
             self._rs = renderSetup.instance()
-            # self._rs.addListObserver(RenderSetupListObserver)
             if use_selection:
                 print(">>> processing existing layers")
                 layers = self._rs.getRenderLayers()
@@ -115,11 +102,6 @@ class CreateRender(avalon.maya.Creator):
                 pool_names.append(pool["name"])
 
             self.data["primaryPool"] = pool_names
-
-        # We don't need subset or asset attributes
-        # self.data.pop("subset", None)
-        # self.data.pop("asset", None)
-        # self.data.pop("active", None)
 
         self.data["suspendPublishJob"] = False
         self.data["extendFrames"] = False

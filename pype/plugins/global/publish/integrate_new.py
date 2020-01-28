@@ -84,8 +84,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
             return
-        if "attach-to" in instance.data["families"]:
-            return
 
         self.register(instance)
 

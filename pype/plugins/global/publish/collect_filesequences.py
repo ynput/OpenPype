@@ -167,6 +167,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         slate_frame = instance.get("slateFrame")
                         version = instance.get("version")
 
+
             else:
                 # Search in directory
                 data = dict()
