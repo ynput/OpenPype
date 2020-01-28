@@ -40,14 +40,11 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             namespace = cmds.referenceQuery(nodes[0], namespace=True)
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
-            print(shapes)
 
             newNodes = (list(set(nodes) - set(shapes)))
-            print(newNodes)
 
             groupNode = pm.PyNode(groupName)
             roots = set()
-            print(nodes)
 
             for node in newNodes:
                 try:
@@ -57,7 +54,7 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             for root in roots:
                 root.setParent(world=True)
 
-            groupNode.root().zeroTransformPivots()
+            groupNode.zeroTransformPivots()
             for root in roots:
                 root.setParent(groupNode)
 
