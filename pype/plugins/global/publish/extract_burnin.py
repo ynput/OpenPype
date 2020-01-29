@@ -156,15 +156,35 @@ class ExtractBurnin(pype.api.Extractor):
             self.log.debug("Output: {}".format(output))
 
             repre_update = {
+                "anatomy_template": "render",
                 "files": movieFileBurnin,
                 "name": repre["name"],
                 "tags": [x for x in repre["tags"] if x != "delete"]
             }
+
+            if is_sequence:
+                burnin_seq_files = list()
+                for frame_index in range(_prep_data["duration"] + 1):
+                    if frame_index == 0:
+                        continue
+                    burnin_seq_files.append(movieFileBurnin % frame_index)
+                repre_update.update({
+                    "files": burnin_seq_files
+                })
+
             instance.data["representations"][i].update(repre_update)
 
             # removing the source mov file
-            os.remove(full_movie_path)
-            self.log.debug("Removed: `{}`".format(full_movie_path))
+            if is_sequence:
+                for frame_index in range(_prep_data["duration"] + 1):
+                    if frame_index == 0:
+                        continue
+                    rm_file = full_movie_path % frame_index
+                    os.remove(rm_file)
+                    self.log.debug("Removed: `{}`".format(rm_file))
+            else:
+                os.remove(full_movie_path)
+                self.log.debug("Removed: `{}`".format(full_movie_path))
 
         # Remove any representations tagged for deletion.
         for repre in instance.data["representations"]:
