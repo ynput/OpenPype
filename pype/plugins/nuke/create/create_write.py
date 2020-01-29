@@ -41,9 +41,11 @@ class CreateWriteRender(plugin.PypeCreator):
         if (self.options or {}).get("useSelection"):
             nodes = self.nodes
 
-            assert len(nodes) < 2, self.log.error(
-                "Select only one node. The node you want to connect to, "
-                "or tick off `Use selection`")
+            if not (len(nodes) < 2):
+                msg = ("Select only one node. The node you want to connect to, "
+                      "or tick off `Use selection`")
+                log.error(msg)
+                nuke.message(msg)
 
             selected_node = nodes[0]
             inputs = [selected_node]
@@ -134,7 +136,11 @@ class CreateWritePrerender(plugin.PypeCreator):
         if (self.options or {}).get("useSelection"):
             nodes = self.nodes
 
-            assert len(nodes) < 2, self.log.error("Select only one node. The node you want to connect to, or tick off `Use selection`")
+            if not (len(nodes) < 2):
+                msg = ("Select only one node. The node you want to connect to, "
+                      "or tick off `Use selection`")
+                self.log.error(msg)
+                nuke.message(msg)
 
             selected_node = nodes[0]
             inputs = [selected_node]

@@ -41,7 +41,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             if not repre.get('files'):
                 msg = ("no frames were collected, "
                        "you need to render them")
-                self.log.warning(msg)
+                self.log.error(msg)
                 raise ValidationException(msg)
 
             collections, remainder = clique.assemble(repre["files"])
@@ -75,7 +75,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             self.log.info(
                 'len(collection.indexes): {}'.format(collected_frames_len)
             )
-            
+
             if "slate" in instance.data["families"]:
                 collected_frames_len -= 1
 

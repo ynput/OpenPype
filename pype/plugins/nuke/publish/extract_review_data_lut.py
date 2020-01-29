@@ -41,7 +41,7 @@ class ExtractReviewDataLut(pype.api.Extractor):
         with anlib.maintained_selection():
             exporter = pnlib.ExporterReviewLut(
                 self, instance
-                    )
+                )
             data = exporter.generate_lut()
 
             # assign to representations
