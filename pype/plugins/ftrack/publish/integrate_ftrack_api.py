@@ -148,6 +148,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             assetversion_cust_attrs = _assetversion_data.pop(
                 "custom_attributes", {}
             )
+            asset_version_comment = _assetversion_data.pop(
+                "comment", None
+            )
             assetversion_data.update(_assetversion_data)
 
             assetversion_entity = session.query(
@@ -184,6 +187,20 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             existing_assetversion_metadata = assetversion_entity["metadata"]
             existing_assetversion_metadata.update(assetversion_metadata)
             assetversion_entity["metadata"] = existing_assetversion_metadata
+
+            # Add comment
+            if asset_version_comment:
+                assetversion_entity["comment"] = asset_version_comment
+                try:
+                    session.commit()
+                except Exception:
+                    session.rollback()
+                    self.log.warning((
+                        "Comment was not possible to set for AssetVersion"
+                        "\"{0}\". Can't set it's value to: \"{1}\""
+                    ).format(
+                        assetversion_entity["id"], str(asset_version_comment)
+                    ))
 
             # Adding Custom Attributes
             for attr, val in assetversion_cust_attrs.items():
