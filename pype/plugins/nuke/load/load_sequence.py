@@ -73,7 +73,7 @@ class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
     families = ["write", "source", "plate", "render"]
-    representations = ["exr", "dpx", "jpg", "jpeg"]
+    representations = ["exr", "dpx", "jpg", "jpeg", "png"]
 
     label = "Load sequence"
     order = -10
