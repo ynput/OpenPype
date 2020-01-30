@@ -1995,7 +1995,7 @@ class SyncEntitiesFactory:
                 vis_par = ent["data"]["visualParent"]
                 if (
                     vis_par is not None and
-                    str(vis_par) in self.deleted_entities
+                    str(vis_par) in _deleted_entities
                 ):
                     continue
                 _ready.append(mongo_id)
