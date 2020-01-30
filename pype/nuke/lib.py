@@ -1013,7 +1013,8 @@ class BuildWorkfile(WorkfileSettings):
     def process(self,
                 regex_filter=None,
                 version=None,
-                representations=["exr", "dpx", "lutJson", "mov", "preview"]):
+                representations=["exr", "dpx", "lutJson", "mov",
+                                 "preview", "png"]):
         """
         A short description.
 
