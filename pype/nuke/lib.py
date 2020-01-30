@@ -1055,9 +1055,10 @@ class BuildWorkfile(WorkfileSettings):
         wn["render"].setValue(True)
         vn.setInput(0, wn)
 
-        bdn = self.create_backdrop(label="Render write \n\n\n\nOUTPUT",
-                                   color='0xcc1102ff', layer=-1,
-                                   nodes=[wn])
+        # adding backdrop under write
+        self.create_backdrop(label="Render write \n\n\n\nOUTPUT",
+                             color='0xcc1102ff', layer=-1,
+                             nodes=[wn])
 
         # move position
         self.position_up(4)
@@ -1071,10 +1072,12 @@ class BuildWorkfile(WorkfileSettings):
                                    version=version,
                                    representations=representations)
 
-        log.info("__ subsets: `{}`".format(subsets))
+        for name, subset in subsets.items():
+            log.debug("___________________")
+            log.debug(name)
+            log.debug(subset["version"])
 
         nodes_backdrop = list()
-
         for name, subset in subsets.items():
             if "lut" in name:
                 continue
@@ -1104,6 +1107,7 @@ class BuildWorkfile(WorkfileSettings):
                 # move position
                 self.position_right()
 
+        # adding backdrop under all read nodes
         self.create_backdrop(label="Loaded Reads",
                              color='0x2d7702ff', layer=-1,
                              nodes=nodes_backdrop)
