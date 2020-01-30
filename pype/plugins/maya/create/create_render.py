@@ -45,8 +45,8 @@ class CreateRender(avalon.maya.Creator):
                 sets = []
                 for layer in layers:
                     print("  - creating set for {}".format(layer.name()))
-                    set = cmds.sets(n="LAYER_{}".format(layer.name()))
-                    sets.append(set)
+                    render_set = cmds.sets(n="LAYER_{}".format(layer.name()))
+                    sets.append(render_set)
                 cmds.sets(sets, forceElement=instance)
 
     def _create_render_settings(self):
