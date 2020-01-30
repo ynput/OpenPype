@@ -31,7 +31,7 @@ class SyncToAvalonEvent(BaseEvent):
         "timelog", "auth_userrole", "appointment"
     ]
     ignore_ent_types = ["Milestone"]
-    ignore_keys = ["statusid"]
+    ignore_keys = ["statusid", "thumbid"]
 
     project_query = (
         "select full_name, name, custom_attributes"
