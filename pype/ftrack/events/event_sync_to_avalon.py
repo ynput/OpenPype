@@ -486,6 +486,14 @@ class SyncToAvalonEvent(BaseEvent):
 
             action = ent_info["action"]
             ftrack_id = ent_info["entityId"]
+            if isinstance(ftrack_id, list):
+                self.log.warning((
+                    "BUG REPORT: Entity info has `entityId` as `list` \"{}\""
+                ).format(ent_info))
+                if len(ftrack_id) == 0:
+                    continue
+                ftrack_id = ftrack_id[0]
+
             if action == "move":
                 ent_keys = ent_info["keys"]
                 # Seprate update info from move action
