@@ -1,10 +1,12 @@
+import re
+import nuke
 import contextlib
 
 from avalon import api, io
-
-import nuke
+from pype.nuke import presets
 
 from pype.api import Logger
+
 log = Logger().get_logger(__name__, "nuke")
 
 
@@ -24,7 +26,7 @@ def preserve_trim(node):
     offset_frame = None
     if node['frame_mode'].value() == "start at":
         start_at_frame = node['frame'].value()
-    if node['frame_mode'].value() is "offset":
+    if node['frame_mode'].value() == "offset":
         offset_frame = node['frame'].value()
 
     try:
@@ -134,20 +136,32 @@ class LoadSequence(api.Loader):
             if colorspace is not None:
                 r["colorspace"].setValue(str(colorspace))
 
+            # load nuke presets for Read's colorspace
+            read_clrs_presets = presets.get_colorspace_preset().get(
+                "nuke", {}).get("read", {})
+
+            # check if any colorspace presets for read is mathing
+            preset_clrsp = next((read_clrs_presets[k]
+                                 for k in read_clrs_presets
+                                 if bool(re.search(k, file))),
+                                None)
+            if preset_clrsp is not None:
+                r["colorspace"].setValue(str(preset_clrsp))
+
             loader_shift(r, first, relative=True)
             r["origfirst"].setValue(int(first))
             r["first"].setValue(int(first))
             r["origlast"].setValue(int(last))
             r["last"].setValue(int(last))
 
-            # add additional metadata from the version to imprint to Avalon knob
+            # add additional metadata from the version to imprint Avalon knob
             add_keys = ["frameStart", "frameEnd",
                         "source", "colorspace", "author", "fps", "version",
                         "handleStart", "handleEnd"]
 
             data_imprint = {}
             for k in add_keys:
-                if k is 'version':
+                if k == 'version':
                     data_imprint.update({k: context["version"]['name']})
                 else:
                     data_imprint.update(
@@ -179,7 +193,7 @@ class LoadSequence(api.Loader):
             rtn["after"].setValue("continue")
             rtn["input.first_lock"].setValue(True)
             rtn["input.first"].setValue(
-            self.handle_start + self.first_frame
+                self.handle_start + self.first_frame
             )
 
         if time_warp_nodes != []:

@@ -1013,7 +1013,8 @@ class BuildWorkfile(WorkfileSettings):
     def process(self,
                 regex_filter=None,
                 version=None,
-                representations=["exr", "dpx", "lutJson", "mov", "preview"]):
+                representations=["exr", "dpx", "lutJson", "mov",
+                                 "preview", "png"]):
         """
         A short description.
 
@@ -1103,9 +1104,9 @@ class BuildWorkfile(WorkfileSettings):
                 # move position
                 self.position_right()
 
-            bdn = self.create_backdrop(label="Loaded Reads",
-                                       color='0x2d7702ff', layer=-1,
-                                       nodes=nodes_backdrop)
+        self.create_backdrop(label="Loaded Reads",
+                             color='0x2d7702ff', layer=-1,
+                             nodes=nodes_backdrop)
 
     def read_loader(self, representation):
         """
