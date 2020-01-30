@@ -1828,6 +1828,13 @@ class SyncToAvalonEvent(BaseEvent):
                 obj_type_id = ent_info["objectTypeId"]
                 ent_cust_attrs = cust_attrs_by_obj_id.get(obj_type_id)
 
+            if ent_cust_attrs is None:
+                self.log.warning((
+                    "BUG REPORT: Entity has ent type without"
+                    " custom attributes <{}> \"{}\""
+                ).format(entType, ent_info))
+                continue
+
             for key, values in ent_info["changes"].items():
                 if key in hier_attrs_keys:
                     self.hier_cust_attrs_changes[key].append(ftrack_id)
