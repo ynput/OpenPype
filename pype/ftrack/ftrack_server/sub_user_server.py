@@ -2,6 +2,8 @@ import sys
 import signal
 import socket
 
+import traceback
+
 from ftrack_server import FtrackServer
 from pype.ftrack.ftrack_server.lib import SocketSession, UserEventHub
 
@@ -31,6 +33,8 @@ def main(args):
         server = FtrackServer("action")
         log.debug("Launched User Ftrack Server")
         server.run_server(session=session)
+    except Exception:
+        traceback.print_exception(*sys.exc_info())
 
     finally:
         log.debug("Closing socket")
