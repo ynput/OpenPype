@@ -77,6 +77,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
         info_msg = "Created new {entity_type} with data: {data}"
         info_msg += ", metadata: {metadata}."
 
+        used_asset_versions = []
         # Iterate over components and publish
         for data in instance.data.get("ftrackComponentsList", []):
 
@@ -386,3 +387,14 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                     tp, value, tb = sys.exc_info()
                     session.rollback()
                     six.reraise(tp, value, tb)
+
+            if assetversion_entity not in used_asset_versions:
+                used_asset_versions.append(assettype_entity)
+
+        asset_versions_key = "ftrackIntegratedAssetVersions"
+        if asset_versions_key not in instance.context.data:
+            instance.context.data[asset_versions_key] = []
+
+        for asset_version in used_asset_versions:
+            if asset_version not in instance.context.data[asset_versions_key]:
+                instance.context.data[asset_versions_key].append(asset_version)
