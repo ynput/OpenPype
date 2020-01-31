@@ -15,4 +15,5 @@ class CollectComment(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder
 
     def process(self, context):
-        context.data["comment"] = ""
+        comment = (context.data.get("comment") or "").strip()
+        context.data["comment"] = comment
