@@ -5,6 +5,7 @@ import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from pypeapp.lib import config
 from pype import api as pype
+from subprocess import Popen, PIPE
 # FFmpeg in PATH is required
 
 
@@ -21,6 +22,7 @@ else:
 FFMPEG = (
     '{} -loglevel panic -i %(input)s %(filters)s %(args)s%(output)s'
 ).format(os.path.normpath(ffmpeg_path + "ffmpeg"))
+
 FFPROBE = (
     '{} -v quiet -print_format json -show_format -show_streams %(source)s'
 ).format(os.path.normpath(ffmpeg_path + "ffprobe"))
@@ -248,6 +250,33 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             'filters': filters
         }).strip()
 
+    def render(self, output, args=None, overwrite=False, **kwargs):
+        """
+        Render the media to a specified destination.
+
+        :param str output: output file
+        :param str args: additional FFMPEG arguments
+        :param bool overwrite: overwrite the output if it exists
+        """
+        if not overwrite and os.path.exists(output):
+            raise RuntimeError("Destination '%s' exists, please "
+                               "use overwrite" % output)
+
+        is_sequence = "%" in output
+
+        command = self.command(output=output,
+                               args=args,
+                               overwrite=overwrite)
+        proc = Popen(command, shell=True)
+        proc.communicate()
+        if proc.returncode != 0:
+            raise RuntimeError("Failed to render '%s': %s'"
+                               % (output, command))
+        if is_sequence:
+            output = output % kwargs.get("duration")
+        if not os.path.exists(output):
+            raise RuntimeError("Failed to generate this fucking file '%s'" % output)
+
 
 def example(input_path, output_path):
     options_init = {
@@ -349,7 +378,7 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
     frame_start = data.get("frame_start")
     frame_start_tc = data.get('frame_start_tc', frame_start)
-    
+
     stream = burnin._streams[0]
     if "resolution_width" not in data:
         data["resolution_width"] = stream.get("width", "Unknown")
@@ -436,7 +465,7 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
     if codec_data is not []:
         codec_args = " ".join(codec_data)
 
-    burnin.render(output_path, args=codec_args, overwrite=overwrite)
+    burnin.render(output_path, args=codec_args, overwrite=overwrite, **data)
 
 
 if __name__ == '__main__':

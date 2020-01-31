@@ -340,10 +340,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 for i in src_collection.indexes:
                     src_padding = src_padding_exp % i
 
-                    # for adding first frame into db
-                    if not dst_start_frame:
-                        dst_start_frame = src_padding
-
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
 
@@ -364,6 +360,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
+
+                    # for adding first frame into db
+                    if not dst_start_frame:
+                        dst_start_frame = dst_padding
+
 
                 dst = "{0}{1}{2}".format(
                     dst_head,
