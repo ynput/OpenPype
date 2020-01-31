@@ -253,7 +253,49 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         :param instance: Instance data
         :type instance: dict
+
+        Data needed for collect_filesequences:
+
+        root
+        asset *
+        source *
+        frameStart
+        frameEnd
+        subset
+        ftrack
+        fps
+        user
+        version *
+        attachTo *:
+            subset
+            version
+        regex !
+        exclude_regex !
+
+        metadata:
+            session *
+            instance *:
+                family
+                pixelAspect *
+                resolutionWidth
+                resolutionHeight
+                lutPath *
+                bakeRenderPath
+                families
+                slateFrame
+                version
+                representations:
+                    name
+                    ext
+                    files": []]
+                    frameStart
+                    frameEnd
+                    stagingDir
+                    anatomy_template
+                    fps
+                    tags
         """
+
         # Get a submission job
         data = instance.data.copy()
         render_job = data.pop("deadlineSubmissionJob", None)

@@ -72,9 +72,9 @@ def collect(root,
 class CollectRenderedFrames(pyblish.api.ContextPlugin):
     """Gather file sequences from working directory
 
-    When "FILESEQUENCE" environment variable is set these paths (folders or
-    .json files) are parsed for image sequences. Otherwise the current
-    working directory is searched for file sequences.
+    When "PYPE_PUBLISH_PATHS" environment variable is set these paths
+    (folders or .json files) are parsed for image sequences.
+    Otherwise the current working directory is searched for file sequences.
 
     The json configuration may have the optional keys:
         asset (str): The asset to publish to. If not provided fall back to
@@ -101,7 +101,6 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
         lut_path = None
         slate_frame = None
         families_data = None
-        baked_mov_path = None
         subset = None
         version = None
         frame_start = 0
@@ -167,8 +166,6 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         families_data = instance.get("families")
                         slate_frame = instance.get("slateFrame")
                         version = instance.get("version")
-
-
             else:
                 # Search in directory
                 data = dict()
@@ -198,10 +195,6 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
             self.log.info("Found remainder: {}".format(remainder))
 
             fps = data.get("fps", 25)
-
-            # adding publish comment and intent to context
-            context.data["comment"] = data.get("comment", "")
-            context.data["intent"] = data.get("intent", "")
 
             if data.get("user"):
                 context.data["user"] = data["user"]
@@ -266,6 +259,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                             "anatomy_template": "render",
                             "fps": fps,
                             "tags": ["review"],
+                            "frameStart": frame_start,
+                            "frameEnd": frame_end
                         }
                         instance.data["representations"].append(
                             representation)
@@ -428,8 +423,6 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "name": ext,
                         "ext": "{}".format(ext),
                         "files": list(collection),
-                        "frameStart": start,
-                        "frameEnd": end,
                         "stagingDir": root,
                         "anatomy_template": "render",
                         "fps": fps,
