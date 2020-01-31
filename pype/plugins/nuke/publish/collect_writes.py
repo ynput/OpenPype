@@ -14,6 +14,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     families = ["write"]
 
     def process(self, instance):
+        # adding 2d focused rendering
+        instance.data["families"].append("render2d")
 
         node = None
         for x in instance:

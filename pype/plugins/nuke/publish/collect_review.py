@@ -25,7 +25,6 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         instance.data["families"].append("review")
         instance.data['families'].append('ftrack')
-        instance.data["families"].append("render2d")
 
         self.log.info("Review collected: `{}`".format(instance))
         self.log.debug("__ instance.data: `{}`".format(instance.data))
