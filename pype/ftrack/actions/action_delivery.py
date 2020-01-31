@@ -312,42 +312,32 @@ class Delivery(BaseAction):
             anatomy_data = copy.deepcopy(repre["context"])
             anatomy_data["root"] = location_path
 
-            anatomy_filled = anatomy.format(anatomy_data)
-            test_path = (
-                anatomy_filled
-                .get("delivery", {})
-                .get(anatomy_name)
-            )
+            anatomy_filled = anatomy.format_all(anatomy_data)
+            test_path = anatomy_filled["delivery"][anatomy_name]
 
-            if not test_path:
+            if not test_path.solved:
                 msg = (
                     "Missing keys in Representation's context"
                     " for anatomy template \"{}\"."
                 ).format(anatomy_name)
 
-                all_anatomies = anatomy.format_all(anatomy_data)
-                result = None
-                for anatomies in all_anatomies.values():
-                    for key, temp in anatomies.get("delivery", {}).items():
-                        if key != anatomy_name:
-                            continue
+                if test_path.missing_keys:
+                    keys = ", ".join(test_path.missing_keys)
+                    sub_msg = (
+                        "Representation: {}<br>- Missing keys: \"{}\"<br>"
+                    ).format(str(repre["_id"]), keys)
 
-                        result = temp
-                        break
+                if test_path.invalid_types:
+                    items = []
+                    for key, value in test_path.invalid_types.items():
+                        items.append("\"{}\" {}".format(key, str(value)))
 
-                # TODO log error! - missing keys in anatomy
-                if result:
-                    missing_keys = [
-                        key[1] for key in string.Formatter().parse(result)
-                        if key[1] is not None
-                    ]
-                else:
-                    missing_keys = ["unknown"]
+                    keys = ", ".join(items)
+                    sub_msg = (
+                        "Representation: {}<br>"
+                        "- Invalid value DataType: \"{}\"<br>"
+                    ).format(str(repre["_id"]), keys)
 
-                keys = ", ".join(missing_keys)
-                sub_msg = (
-                    "Representation: {}<br>- Missing keys: \"{}\"<br>"
-                ).format(str(repre["_id"]), keys)
                 self.report_items[msg].append(sub_msg)
                 self.log.warning(
                     "{} Representation: \"{}\" Filled: <{}>".format(
