@@ -326,8 +326,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 index_frame_start = None
 
                 if repre.get("frameStart"):
-                    frame_start_padding = len(str(
-                        repre.get("frameEnd")))
+                    frame_start_padding = anatomy.templates["render"]["padding"]
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
