@@ -1,14 +1,6 @@
 import os
-import sys
-import argparse
-import logging
-import collections
-import json
-import re
 
-from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
-from avalon import io, inventory, schema
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 
 
@@ -134,7 +126,6 @@ class PypeUpdateFromV2_2_0(BaseAction):
                 "title": title
             }
 
-
     def launch(self, session, entities, event):
         if 'values' not in event['data']:
             return
@@ -182,7 +173,7 @@ class PypeUpdateFromV2_2_0(BaseAction):
                 {"type": "asset"},
                 {"$unset": {"silo": ""}}
             )
-            
+
             self.log.debug("- setting schema of assets to v.3")
             self.db_con.update_many(
                 {"type": "asset"},
@@ -191,10 +182,8 @@ class PypeUpdateFromV2_2_0(BaseAction):
 
         return True
 
+
 def register(session, plugins_presets={}):
     """Register plugin. Called when used as an plugin."""
-
-    if not isinstance(session, ftrack_api.session.Session):
-        return
 
     PypeUpdateFromV2_2_0(session, plugins_presets).register()

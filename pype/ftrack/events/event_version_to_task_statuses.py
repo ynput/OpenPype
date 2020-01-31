@@ -1,73 +1,134 @@
-from pype.vendor import ftrack_api
 from pype.ftrack import BaseEvent
+from pypeapp import config
 
 
 class VersionToTaskStatus(BaseEvent):
 
+    # Presets usage
+    default_status_mapping = {}
+
     def launch(self, session, event):
         '''Propagates status from version to task when changed'''
-        session.commit()
 
         # start of event procedure ----------------------------------
         for entity in event['data'].get('entities', []):
-            # Filter non-assetversions
-            if (
-                entity['entityType'] == 'assetversion' and
-                'statusid' in (entity.get('keys') or [])
-            ):
+            # Filter AssetVersions
+            if entity["entityType"] != "assetversion":
+                continue
 
-                version = session.get('AssetVersion', entity['entityId'])
-                try:
-                    version_status = session.get(
-                        'Status', entity['changes']['statusid']['new']
-                    )
-                except Exception:
+            # Skip if statusid not in keys (in changes)
+            keys = entity.get("keys")
+            if not keys or "statusid" not in keys:
+                continue
+
+            # Get new version task name
+            version_status_id = (
+                entity
+                .get("changes", {})
+                .get("statusid", {})
+                .get("new", {})
+            )
+
+            # Just check that `new` is set to any value
+            if not version_status_id:
+                continue
+
+            try:
+                version_status = session.get("Status", version_status_id)
+            except Exception:
+                self.log.warning(
+                    "Troubles with query status id [ {} ]".format(
+                        version_status_id
+                    ),
+                    exc_info=True
+                )
+
+            if not version_status:
+                continue
+
+            version_status_orig = version_status["name"]
+
+            # Load status mapping from presets
+            status_mapping = (
+                config.get_presets()
+                .get("ftrack", {})
+                .get("ftrack_config", {})
+                .get("status_version_to_task")
+            ) or self.default_status_mapping
+
+            # Skip if mapping is empty
+            if not status_mapping:
+                continue
+
+            # Lower version status name and check if has mapping
+            version_status = version_status_orig.lower()
+            new_status_names = []
+            mapped = status_mapping.get(version_status)
+            if mapped:
+                new_status_names.extend(list(mapped))
+
+            new_status_names.append(version_status)
+
+            self.log.debug(
+                "Processing AssetVersion status change: [ {} ]".format(
+                    version_status_orig
+                )
+            )
+
+            # Lower all names from presets
+            new_status_names = [name.lower() for name in new_status_names]
+
+            # Get entities necessary for processing
+            version = session.get("AssetVersion", entity["entityId"])
+            task = version.get("task")
+            if not task:
+                continue
+
+            project_schema = task["project"]["project_schema"]
+            # Get all available statuses for Task
+            statuses = project_schema.get_statuses("Task", task["type_id"])
+            # map lowered status name with it's object
+            stat_names_low = {
+                status["name"].lower(): status for status in statuses
+            }
+
+            new_status = None
+            for status_name in new_status_names:
+                if status_name not in stat_names_low:
                     continue
-                task_status = version_status
-                task = version['task']
-                self.log.info('>>> version status: [ {} ]'.format(
-                    version_status['name']))
 
-                status_to_set = None
-                # Filter to versions with status change to "render complete"
-                if version_status['name'].lower() == 'reviewed':
-                    status_to_set = 'Change requested'
+                # store object of found status
+                new_status = stat_names_low[status_name]
+                self.log.debug("Status to set: [ {} ]".format(
+                    new_status["name"]
+                ))
+                break
 
-                if version_status['name'].lower() == 'approved':
-                    status_to_set = 'Complete'
+            # Skip if status names were not found for paticulat entity
+            if not new_status:
+                self.log.warning(
+                    "Any of statuses from presets can be set: {}".format(
+                        str(new_status_names)
+                    )
+                )
+                continue
 
-                self.log.info(
-                    '>>> status to set: [ {} ]'.format(status_to_set))
+            # Get full path to task for logging
+            ent_path = "/".join([ent["name"] for ent in task["link"]])
 
-                if status_to_set is not None:
-                    query = 'Status where name is "{}"'.format(status_to_set)
-                    try:
-                        task_status = session.query(query).one()
-                    except Exception:
-                        self.log.info(
-                            '!!! status was not found in Ftrack [ {} ]'.format(
-                                status_to_set
-                        ))
-                        continue
-
-                # Proceed if the task status was set
-                if task_status is not None:
-                    # Get path to task
-                    path = task['name']
-                    for p in task['ancestors']:
-                        path = p['name'] + '/' + path
-
-                    # Setting task status
-                    try:
-                        task['status'] = task_status
-                        session.commit()
-                    except Exception as e:
-                        session.rollback()
-                        self.log.warning('!!! [ {} ] status couldnt be set:\
-                            [ {} ]'.format(path, e))
-                    else:
-                        self.log.info('>>> [ {} ] updated to [ {} ]'.format(
-                            path, task_status['name']))
+            # Setting task status
+            try:
+                task["status"] = new_status
+                session.commit()
+                self.log.debug("[ {} ] Status updated to [ {} ]".format(
+                    ent_path, new_status['name']
+                ))
+            except Exception:
+                session.rollback()
+                self.log.warning(
+                    "[ {} ]Status couldn't be set".format(ent_path),
+                    exc_info=True
+                )
 
 
 def register(session, plugins_presets):

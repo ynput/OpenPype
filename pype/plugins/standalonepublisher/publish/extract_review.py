@@ -2,7 +2,7 @@ import os
 import tempfile
 
 import pyblish.api
-from pype.vendor import clique
+import clique
 import pype.api
 
 

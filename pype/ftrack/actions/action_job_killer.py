@@ -4,7 +4,7 @@ import argparse
 import logging
 import json
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 
 

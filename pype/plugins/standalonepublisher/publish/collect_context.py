@@ -45,66 +45,71 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         with open(input_json_path, "r") as f:
             in_data = json.load(f)
 
-        asset_name = in_data['asset']
-        family_preset_key = in_data.get('family_preset_key', '')
-        family = in_data['family']
-        subset = in_data['subset']
+        asset_name = in_data["asset"]
+        family_preset_key = in_data.get("family_preset_key", "")
+        family = in_data["family"]
+        subset = in_data["subset"]
 
         # Load presets
         presets = context.data.get("presets")
         if not presets:
             from pypeapp import config
+
             presets = config.get_presets()
 
         # Get from presets anatomy key that will be used for getting template
         # - default integrate new is used if not set
-        anatomy_key = presets.get(
-            "standalone_publish", {}).get(
-            "families", {}).get(
-            family_preset_key, {}).get(
-            "anatomy_template"
+        anatomy_key = (
+            presets.get("standalone_publish", {})
+            .get("families", {})
+            .get(family_preset_key, {})
+            .get("anatomy_template")
         )
 
-        project = io.find_one({'type': 'project'})
-        asset = io.find_one({
-            'type': 'asset',
-            'name': asset_name
-        })
-        context.data['project'] = project
-        context.data['asset'] = asset
+        project = io.find_one({"type": "project"})
+        asset = io.find_one({"type": "asset", "name": asset_name})
+        context.data["project"] = project
+        context.data["asset"] = asset
 
         instance = context.create_instance(subset)
 
-        instance.data.update({
-            "subset": subset,
-            "asset": asset_name,
-            "label": subset,
-            "name": subset,
-            "family": family,
-            "frameStart": in_data.get("representations", [None])[0].get("frameStart", None),
-            "frameEnd": in_data.get("representations", [None])[0].get("frameEnd", None),
-            "families": [family, 'ftrack'],
-        })
+        instance.data.update(
+            {
+                "subset": subset,
+                "asset": asset_name,
+                "label": subset,
+                "name": subset,
+                "family": family,
+                "version": in_data.get("version", 1),
+                "frameStart": in_data.get("representations", [None])[0].get(
+                    "frameStart", None
+                ),
+                "frameEnd": in_data.get("representations", [None])[0].get(
+                    "frameEnd", None
+                ),
+                "families": [family, "ftrack"],
+            }
+        )
         self.log.info("collected instance: {}".format(instance.data))
         self.log.info("parsing data: {}".format(in_data))
 
-        instance.data['destination_list'] = list()
-        instance.data['representations'] = list()
-        instance.data['source'] = 'standalone publisher'
+        instance.data["destination_list"] = list()
+        instance.data["representations"] = list()
+        instance.data["source"] = "standalone publisher"
 
-        for component in in_data['representations']:
+        for component in in_data["representations"]:
 
-            component['destination'] = component['files']
-            component['stagingDir'] = component['stagingDir']
+            component["destination"] = component["files"]
+            component["stagingDir"] = component["stagingDir"]
             # Do not set anatomy_template if not specified
             if anatomy_key:
-                component['anatomy_template'] = anatomy_key
-            if isinstance(component['files'], list):
-                collections, remainder = clique.assemble(component['files'])
+                component["anatomy_template"] = anatomy_key
+            if isinstance(component["files"], list):
+                collections, remainder = clique.assemble(component["files"])
                 self.log.debug("collecting sequence: {}".format(collections))
                 instance.data["frameStart"] = int(component["frameStart"])
                 instance.data["frameEnd"] = int(component["frameEnd"])
-                instance.data['fps'] = int(component['fps'])
+                instance.data["fps"] = int(component["fps"])
 
             if component["preview"]:
                 instance.data["families"].append("review")

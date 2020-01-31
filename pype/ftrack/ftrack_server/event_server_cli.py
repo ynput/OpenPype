@@ -7,11 +7,9 @@ import socket
 import argparse
 import atexit
 import time
-from urllib.parse import urlparse
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack.lib import credentials
-from pype.ftrack.ftrack_server import FtrackServer
 from pype.ftrack.ftrack_server.lib import (
     ftrack_events_mongo_settings, check_ftrack_url
 )
@@ -67,9 +65,8 @@ def validate_credentials(url, user, api):
     except Exception as e:
         print(
             'ERROR: Can\'t log into Ftrack with used credentials:'
-            ' Ftrack server: "{}" // Username: {} // API key: {}'.format(
-            url, user, api
-        ))
+            ' Ftrack server: "{}" // Username: {} // API key: {}'
+        ).format(url, user, api)
         return False
 
     print('DEBUG: Credentials Username: "{}", API key: "{}" are valid.'.format(
@@ -147,9 +144,9 @@ def legacy_server(ftrack_url):
                 ).format(str(max_fail_count), str(wait_time_after_max_fail)))
                 subproc_failed_count += 1
             elif ((
-                    datetime.datetime.now() - subproc_last_failed
-                ).seconds > wait_time_after_max_fail):
-                    subproc_failed_count = 0
+                datetime.datetime.now() - subproc_last_failed
+            ).seconds > wait_time_after_max_fail):
+                subproc_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
         elif subproc.poll() is not None:
@@ -277,9 +274,9 @@ def main_loop(ftrack_url):
                 ).format(str(max_fail_count), str(wait_time_after_max_fail)))
                 storer_failed_count += 1
             elif ((
-                    datetime.datetime.now() - storer_last_failed
-                ).seconds > wait_time_after_max_fail):
-                    storer_failed_count = 0
+                datetime.datetime.now() - storer_last_failed
+            ).seconds > wait_time_after_max_fail):
+                storer_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
         elif not storer_thread.isAlive():
@@ -313,13 +310,13 @@ def main_loop(ftrack_url):
                 processor_failed_count += 1
 
             elif ((
-                    datetime.datetime.now() - processor_last_failed
-                ).seconds > wait_time_after_max_fail):
-                    processor_failed_count = 0
+                datetime.datetime.now() - processor_last_failed
+            ).seconds > wait_time_after_max_fail):
+                processor_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
         elif not processor_thread.isAlive():
-            if storer_thread.mongo_error:
+            if processor_thread.mongo_error:
                 raise Exception(
                     "Exiting because have issue with acces to MongoDB"
                 )

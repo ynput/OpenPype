@@ -1,9 +1,8 @@
 import functools
 import time
 from pypeapp import Logger
-from pype.vendor import ftrack_api
-from pype.vendor.ftrack_api import session as fa_session
-from pype.ftrack.ftrack_server import session_processor
+import ftrack_api
+from pype.ftrack.ftrack_server.lib import SocketSession
 
 
 class MissingPermision(Exception):
@@ -42,7 +41,7 @@ class BaseHandler(object):
         self.log = Logger().get_logger(self.__class__.__name__)
         if not(
             isinstance(session, ftrack_api.session.Session) or
-            isinstance(session, session_processor.ProcessSession)
+            isinstance(session, SocketSession)
         ):
             raise Exception((
                 "Session object entered with args is instance of \"{}\""
@@ -243,7 +242,7 @@ class BaseHandler(object):
             _entities is None or
             _entities[0].get(
                 'link', None
-            ) == fa_session.ftrack_api.symbol.NOT_SET
+            ) == ftrack_api.symbol.NOT_SET
         ):
             _entities = self._get_entities(event)
 
@@ -447,7 +446,7 @@ class BaseHandler(object):
             'applicationId=ftrack.client.web and user.id="{0}"'
         ).format(user_id)
         self.session.event_hub.publish(
-            fa_session.ftrack_api.event.base.Event(
+            ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='message',
@@ -495,8 +494,8 @@ class BaseHandler(object):
 
             if not user:
                 raise TypeError((
-                    'Ftrack user with {} "{}" was not found!'.format(key, value)
-                ))
+                    'Ftrack user with {} "{}" was not found!'
+                ).format(key, value))
 
             user_id = user['id']
 
@@ -505,7 +504,7 @@ class BaseHandler(object):
         ).format(user_id)
 
         self.session.event_hub.publish(
-            fa_session.ftrack_api.event.base.Event(
+            ftrack_api.event.base.Event(
                 topic='ftrack.action.trigger-user-interface',
                 data=dict(
                     type='widget',
@@ -533,7 +532,7 @@ class BaseHandler(object):
             else:
                 first = False
 
-            subtitle = {'type': 'label', 'value':'<h3>{}</h3>'.format(key)}
+            subtitle = {'type': 'label', 'value': '<h3>{}</h3>'.format(key)}
             items.append(subtitle)
             if isinstance(value, list):
                 for item in value:
@@ -593,7 +592,7 @@ class BaseHandler(object):
 
         # Create and trigger event
         session.event_hub.publish(
-            fa_session.ftrack_api.event.base.Event(
+            ftrack_api.event.base.Event(
                 topic=topic,
                 data=_event_data,
                 source=dict(user=_user_data)
@@ -603,3 +602,24 @@ class BaseHandler(object):
         self.log.debug(
             "Action \"{}\" Triggered successfully".format(action_name)
         )
+
+    def trigger_event(
+        self, topic, event_data={}, session=None, source=None,
+        event=None, on_error="ignore"
+    ):
+        if session is None:
+            session = self.session
+
+        if not source and event:
+            source = event.get("source")
+        # Create and trigger event
+        event = ftrack_api.event.base.Event(
+            topic=topic,
+            data=event_data,
+            source=source
+        )
+        session.event_hub.publish(event, on_error=on_error)
+
+        self.log.debug((
+            "Publishing event: {}"
+        ).format(str(event.__dict__)))

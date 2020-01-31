@@ -1,9 +1,7 @@
 import pype.maya.plugin
 import os
 from pypeapp import config
-reload(config)
-import pype.maya.plugin
-reload(pype.maya.plugin)
+
 
 class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
     """Load the model"""
@@ -21,7 +19,6 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
         import maya.cmds as cmds
         from avalon import maya
         import pymel.core as pm
-
 
         try:
             family = context["representation"]["context"]["family"]
@@ -43,14 +40,11 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             namespace = cmds.referenceQuery(nodes[0], namespace=True)
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
-            print(shapes)
 
             newNodes = (list(set(nodes) - set(shapes)))
-            print(newNodes)
 
             groupNode = pm.PyNode(groupName)
             roots = set()
-            print(nodes)
 
             for node in newNodes:
                 try:
@@ -60,7 +54,7 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             for root in roots:
                 root.setParent(world=True)
 
-            groupNode.root().zeroTransformPivots()
+            groupNode.zeroTransformPivots()
             for root in roots:
                 root.setParent(groupNode)
 
@@ -97,19 +91,3 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
 
     def switch(self, container, representation):
         self.update(container, representation)
-
-
-# for backwards compatibility
-class AbcLoader(ReferenceLoader):
-    label = "Deprecated loader (don't use)"
-    families = ["pointcache", "animation"]
-    representations = ["abc"]
-    tool_names = []
-
-
-# for backwards compatibility
-class ModelLoader(ReferenceLoader):
-    label = "Deprecated loader (don't use)"
-    families = ["model", "pointcache"]
-    representations = ["abc"]
-    tool_names = []

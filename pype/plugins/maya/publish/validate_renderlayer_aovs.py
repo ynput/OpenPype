@@ -49,9 +49,10 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
         """Check if subset is registered in the database under the asset"""
 
         asset = io.find_one({"type": "asset", "name": asset_name})
-        is_valid = io.find_one({"type": "subset",
-                                "name": subset_name,
-                                "parent": asset["_id"]})
+        is_valid = io.find_one({
+            "type": "subset",
+            "name": subset_name,
+            "parent": asset["_id"]
+        })
 
         return is_valid
-

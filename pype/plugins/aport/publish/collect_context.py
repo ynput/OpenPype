@@ -1,9 +1,6 @@
 import os
 import pyblish.api
-from avalon import (
-    io,
-    api as avalon
-)
+from avalon import api as avalon
 from pype import api as pype
 import json
 from pathlib import Path

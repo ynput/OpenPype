@@ -1,12 +1,15 @@
-from pype.vendor import ftrack_api
-from pype.ftrack import BaseEvent, lib
-from pype.ftrack.lib.io_nonsingleton import DbConnector
-from bson.objectid import ObjectId
-from pypeapp import config
-from pypeapp import Anatomy
-import subprocess
 import os
 import re
+import subprocess
+
+from pype.ftrack import BaseEvent
+from pype.ftrack.lib.avalon_sync import CustAttrIdKey
+from pype.ftrack.lib.io_nonsingleton import DbConnector
+
+from bson.objectid import ObjectId
+
+from pypeapp import config
+from pypeapp import Anatomy
 
 
 class UserAssigmentEvent(BaseEvent):
@@ -36,7 +39,6 @@ class UserAssigmentEvent(BaseEvent):
     """
 
     db_con = DbConnector()
-    ca_mongoid = lib.get_ca_mongoid()
 
     def error(self, *err):
         for e in err:
@@ -105,7 +107,7 @@ class UserAssigmentEvent(BaseEvent):
         self.db_con.Session['AVALON_PROJECT'] = task['project']['full_name']
 
         avalon_entity = None
-        parent_id = parent['custom_attributes'].get(self.ca_mongoid)
+        parent_id = parent['custom_attributes'].get(CustAttrIdKey)
         if parent_id:
             parent_id = ObjectId(parent_id)
             avalon_entity = self.db_con.find_one({
@@ -205,7 +207,12 @@ class UserAssigmentEvent(BaseEvent):
             # formatting work dir is easiest part as we can use whole path
             work_dir = anatomy.format(data)['avalon']['work']
             # we also need publish but not whole
-            publish = anatomy.format_all(data)['partial']['avalon']['publish']
+            filled_all = anatomy.format_all(data)
+            if "partial" not in filled_all:
+                publish = filled_all['avalon']['publish']
+            else:
+                # Backwards compatibility
+                publish = filled_all["partial"]['avalon']['publish']
             # now find path to {asset}
             m = re.search("(^.+?{})".format(data['asset']),
                           publish)

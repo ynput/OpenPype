@@ -228,80 +228,19 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AuxFiles": []
         }
 
-        # Include critical environment variables with submission
+        # We need those to pass them to pype for it to set correct context
         keys = [
-            # This will trigger `userSetup.py` on the slave
-            # such that proper initialisation happens the same
-            # way as it does on a local machine.
-            # TODO(marcus): This won't work if the slaves don't
-            # have accesss to these paths, such as if slaves are
-            # running Linux and the submitter is on Windows.
-            "PYTHONPATH",
-            "PATH",
-
-            "MTOA_EXTENSIONS_PATH",
-            "MTOA_EXTENSIONS",
-            "DYLD_LIBRARY_PATH",
-            "MAYA_RENDER_DESC_PATH",
-            "MAYA_MODULE_PATH",
-            "ARNOLD_PLUGIN_PATH",
-            "AVALON_SCHEMA",
             "FTRACK_API_KEY",
             "FTRACK_API_USER",
             "FTRACK_SERVER",
-            "PYBLISHPLUGINPATH",
-
-            # todo: This is a temporary fix for yeti variables
-            "PEREGRINEL_LICENSE",
-            "SOLIDANGLE_LICENSE",
-            "ARNOLD_LICENSE"
-            "MAYA_MODULE_PATH",
-            "TOOL_ENV"
+            "AVALON_PROJECT",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "PYPE_USERNAME"
         ]
+
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
-        # self.log.debug("enviro: {}".format(pprint(environment)))
-        for path in os.environ:
-            if path.lower().startswith('pype_'):
-                environment[path] = os.environ[path]
-
-        environment["PATH"] = os.environ["PATH"]
-        # self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
-        clean_environment = {}
-        for key in environment:
-            clean_path = ""
-            self.log.debug("key: {}".format(key))
-            self.log.debug("value: {}".format(environment[key]))
-            to_process = str(environment[key])
-            if key == "PYPE_STUDIO_CORE_MOUNT":
-                clean_path = to_process
-            elif "://" in to_process:
-                clean_path = to_process
-            elif os.pathsep not in str(to_process):
-                try:
-                    path = to_process
-                    path.decode('UTF-8', 'strict')
-                    clean_path = os.path.normpath(path)
-                except UnicodeDecodeError:
-                    print('path contains non UTF characters')
-            else:
-                for path in to_process.split(os.pathsep):
-                    try:
-                        path.decode('UTF-8', 'strict')
-                        clean_path += os.path.normpath(path) + os.pathsep
-                    except UnicodeDecodeError:
-                        print('path contains non UTF characters')
-
-            if key == "PYTHONPATH":
-                clean_path = clean_path.replace('python2', 'python3')
-            clean_path = clean_path.replace(
-                                            os.path.normpath(
-                                                environment['PYPE_STUDIO_CORE_MOUNT']),  # noqa
-                                            os.path.normpath(
-                                                environment['PYPE_STUDIO_CORE_PATH']))   # noqa
-            clean_environment[key] = clean_path
-
-        environment = clean_environment
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
@@ -319,7 +258,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         self.preflight_check(instance)
 
-        self.log.info("Submitting..")
+        self.log.info("Submitting ...")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         # E.g. http://192.168.0.1:8082/api/jobs

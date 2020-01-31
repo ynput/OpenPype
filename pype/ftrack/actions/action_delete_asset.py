@@ -1,354 +1,606 @@
 import os
-import sys
-import logging
+import collections
+import uuid
+from datetime import datetime
+from queue import Queue
+
 from bson.objectid import ObjectId
-import argparse
-from pype.vendor import ftrack_api
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 
 
-class DeleteAsset(BaseAction):
+class DeleteAssetSubset(BaseAction):
     '''Edit meta data action.'''
 
     #: Action identifier.
-    identifier = 'delete.asset'
+    identifier = "delete.asset.subset"
     #: Action label.
-    label = 'Delete Asset/Subsets'
+    label = "Delete Asset/Subsets"
     #: Action description.
-    description = 'Removes from Avalon with all childs and asset from Ftrack'
-    icon = '{}/ftrack/action_icons/DeleteAsset.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
+    description = "Removes from Avalon with all childs and asset from Ftrack"
+    icon = "{}/ftrack/action_icons/DeleteAsset.svg".format(
+        os.environ.get("PYPE_STATICS_SERVER", "")
     )
     #: roles that are allowed to register this action
-    role_list = ['Pypeclub', 'Administrator']
-    #: Db
-    db = DbConnector()
+    role_list = ["Pypeclub", "Administrator", "Project Manager"]
+    #: Db connection
+    dbcon = DbConnector()
 
-    value = None
+    splitter = {"type": "label", "value": "---"}
+    action_data_by_id = {}
+    asset_prefix = "asset:"
+    subset_prefix = "subset:"
 
     def discover(self, session, entities, event):
-        ''' Validation '''
-        if len(entities) != 1:
-            return False
+        """ Validation """
+        task_ids = []
+        for ent_info in event["data"]["selection"]:
+            entType = ent_info.get("entityType", "")
+            if entType == "task":
+                task_ids.append(ent_info["entityId"])
 
-        valid = ["task"]
-        entityType = event["data"]["selection"][0].get("entityType", "")
-        if entityType.lower() not in valid:
-            return False
-
-        return True
+        for entity in entities:
+            ftrack_id = entity["id"]
+            if ftrack_id not in task_ids:
+                continue
+            if entity.entity_type.lower() != "task":
+                return True
+        return False
 
     def _launch(self, event):
-        self.reset_session()
         try:
-            self.db.install()
             args = self._translate_event(
                 self.session, event
             )
+            if "values" not in event["data"]:
+                self.dbcon.install()
+                return self._interface(self.session, *args)
 
-            interface = self._interface(
-                self.session, *args
-            )
-
-            confirmation = self.confirm_delete(
-                True, *args
-            )
-
-            if interface:
-                return interface
-
+            confirmation = self.confirm_delete(*args)
             if confirmation:
                 return confirmation
 
+            self.dbcon.install()
             response = self.launch(
                 self.session, *args
             )
         finally:
-            self.db.uninstall()
+            self.dbcon.uninstall()
 
         return self._handle_result(
             self.session, response, *args
         )
 
     def interface(self, session, entities, event):
-        if not event['data'].get('values', {}):
-            self.attempt = 1
-            items = []
-            entity = entities[0]
-            title = 'Choose items to delete from "{}"'.format(entity['name'])
-            project = entity['project']
+        self.show_message(event, "Preparing data...", True)
+        items = []
+        title = "Choose items to delete"
 
-            self.db.Session['AVALON_PROJECT'] = project["full_name"]
+        # Filter selection and get ftrack ids
+        selection = event["data"].get("selection") or []
+        ftrack_ids = []
+        project_in_selection = False
+        for entity in selection:
+            entity_type = (entity.get("entityType") or "").lower()
+            if entity_type != "task":
+                if entity_type == "show":
+                    project_in_selection = True
+                continue
 
-            av_entity = self.db.find_one({
-                'type': 'asset',
-                'name': entity['name']
+            ftrack_id = entity.get("entityId")
+            if not ftrack_id:
+                continue
+
+            ftrack_ids.append(ftrack_id)
+
+        if project_in_selection:
+            msg = "It is not possible to use this action on project entity."
+            self.show_message(event, msg, True)
+
+        # Filter event even more (skip task entities)
+        # - task entities are not relevant for avalon
+        for entity in entities:
+            ftrack_id = entity["id"]
+            if ftrack_id not in ftrack_ids:
+                continue
+
+            if entity.entity_type.lower() == "task":
+                ftrack_ids.remove(ftrack_id)
+
+        if not ftrack_ids:
+            # It is bug if this happens!
+            return {
+                "success": False,
+                "message": "Invalid selection for this action (Bug)"
+            }
+
+        if entities[0].entity_type.lower() == "project":
+            project = entities[0]
+        else:
+            project = entities[0]["project"]
+
+        project_name = project["full_name"]
+        self.dbcon.Session["AVALON_PROJECT"] = project_name
+
+        selected_av_entities = self.dbcon.find({
+            "type": "asset",
+            "data.ftrackId": {"$in": ftrack_ids}
+        })
+        selected_av_entities = [ent for ent in selected_av_entities]
+        if not selected_av_entities:
+            return {
+                "success": False,
+                "message": "Didn't found entities in avalon"
+            }
+
+        # Remove cached action older than 2 minutes
+        old_action_ids = []
+        for id, data in self.action_data_by_id.items():
+            created_at = data.get("created_at")
+            if not created_at:
+                old_action_ids.append(id)
+                continue
+            cur_time = datetime.now()
+            existing_in_sec = (created_at - cur_time).total_seconds()
+            if existing_in_sec > 60 * 2:
+                old_action_ids.append(id)
+
+        for id in old_action_ids:
+            self.action_data_by_id.pop(id, None)
+
+        # Store data for action id
+        action_id = str(uuid.uuid1())
+        self.action_data_by_id[action_id] = {
+            "attempt": 1,
+            "created_at": datetime.now(),
+            "project_name": project_name,
+            "subset_ids_by_name": {},
+            "subset_ids_by_parent": {}
+        }
+
+        id_item = {
+            "type": "hidden",
+            "name": "action_id",
+            "value": action_id
+        }
+
+        items.append(id_item)
+        asset_ids = [ent["_id"] for ent in selected_av_entities]
+        subsets_for_selection = self.dbcon.find({
+            "type": "subset",
+            "parent": {"$in": asset_ids}
+        })
+
+        asset_ending = ""
+        if len(selected_av_entities) > 1:
+            asset_ending = "s"
+
+        asset_title = {
+            "type": "label",
+            "value": "# Delete asset{}:".format(asset_ending)
+        }
+        asset_note = {
+            "type": "label",
+            "value": (
+                "<p><i>NOTE: Action will delete checked entities"
+                " in Ftrack and Avalon with all children entities and"
+                " published content.</i></p>"
+            )
+        }
+
+        items.append(asset_title)
+        items.append(asset_note)
+
+        asset_items = collections.defaultdict(list)
+        for asset in selected_av_entities:
+            ent_path_items = [project_name]
+            ent_path_items.extend(asset.get("data", {}).get("parents") or [])
+            ent_path_to_parent = "/".join(ent_path_items) + "/"
+            asset_items[ent_path_to_parent].append(asset)
+
+        for asset_parent_path, assets in sorted(asset_items.items()):
+            items.append({
+                "type": "label",
+                "value": "## <b>- {}</b>".format(asset_parent_path)
             })
-
-            if av_entity is None:
-                return {
-                    'success': False,
-                    'message': 'Didn\'t found assets in avalon'
-                }
-
-            asset_label = {
-                'type': 'label',
-                'value': '## Delete whole asset: ##'
-            }
-            asset_item = {
-                'label': av_entity['name'],
-                'name': 'whole_asset',
-                'type': 'boolean',
-                'value': False
-            }
-            splitter = {
-                'type': 'label',
-                'value': '{}'.format(200*"-")
-            }
-            subset_label = {
-                'type': 'label',
-                'value': '## Subsets: ##'
-            }
-            if av_entity is not None:
-                items.append(asset_label)
-                items.append(asset_item)
-                items.append(splitter)
-
-                all_subsets = self.db.find({
-                    'type': 'subset',
-                    'parent': av_entity['_id']
+            for asset in assets:
+                items.append({
+                    "label": asset["name"],
+                    "name": "{}{}".format(
+                        self.asset_prefix, str(asset["_id"])
+                    ),
+                    "type": 'boolean',
+                    "value": False
                 })
 
-                subset_items = []
-                for subset in all_subsets:
-                    item = {
-                        'label': subset['name'],
-                        'name': str(subset['_id']),
-                        'type': 'boolean',
-                        'value': False
-                    }
-                    subset_items.append(item)
-                if len(subset_items) > 0:
-                    items.append(subset_label)
-                    items.extend(subset_items)
-            else:
-                return {
-                    'success': False,
-                    'message': 'Didn\'t found assets in avalon'
-                }
+        subset_ids_by_name = collections.defaultdict(list)
+        subset_ids_by_parent = collections.defaultdict(list)
+        for subset in subsets_for_selection:
+            subset_id = subset["_id"]
+            name = subset["name"]
+            parent_id = subset["parent"]
+            subset_ids_by_name[name].append(subset_id)
+            subset_ids_by_parent[parent_id].append(subset_id)
 
+        if not subset_ids_by_name:
             return {
-                'items': items,
-                'title': title
+                "items": items,
+                "title": title
             }
 
-    def confirm_delete(self, first_attempt, entities, event):
-        if first_attempt is True:
-            if 'values' not in event['data']:
-                return
+        subset_ending = ""
+        if len(subset_ids_by_name.keys()) > 1:
+            subset_ending = "s"
 
-            values = event['data']['values']
+        subset_title = {
+            "type": "label",
+            "value": "# Subset{} to delete:".format(subset_ending)
+        }
+        subset_note = {
+            "type": "label",
+            "value": (
+                "<p><i>WARNING: Subset{} will be removed"
+                " for all <b>selected</b> entities.</i></p>"
+            ).format(subset_ending)
+        }
 
-            if len(values) <= 0:
-                return
-            if 'whole_asset' not in values:
-                return
-        else:
-            values = self.values
+        items.append(self.splitter)
+        items.append(subset_title)
+        items.append(subset_note)
 
-        title = 'Confirmation of deleting {}'
-        if values['whole_asset'] is True:
-            title = title.format(
-                'whole asset {}'.format(
-                    entities[0]['name']
-                )
-            )
-        else:
-            subsets = []
-            for key, value in values.items():
-                if value is True:
-                    subsets.append(key)
-            len_subsets = len(subsets)
-            if len_subsets == 0:
+        for name in subset_ids_by_name:
+            items.append({
+                "label": "<b>{}</b>".format(name),
+                "name": "{}{}".format(self.subset_prefix, name),
+                "type": "boolean",
+                "value": False
+            })
+
+        self.action_data_by_id[action_id]["subset_ids_by_parent"] = (
+            subset_ids_by_parent
+        )
+        self.action_data_by_id[action_id]["subset_ids_by_name"] = (
+            subset_ids_by_name
+        )
+
+        return {
+            "items": items,
+            "title": title
+        }
+
+    def confirm_delete(self, entities, event):
+        values = event["data"]["values"]
+        action_id = values.get("action_id")
+        spec_data = self.action_data_by_id.get(action_id)
+        if not spec_data:
+            # it is a bug if this happens!
+            return {
+                "success": False,
+                "message": "Something bad has happened. Please try again."
+            }
+
+        # Process Delete confirmation
+        delete_key = values.get("delete_key")
+        if delete_key:
+            delete_key = delete_key.lower().strip()
+            # Go to launch part if user entered `delete`
+            if delete_key == "delete":
+                return
+            # Skip whole process if user didn't enter any text
+            elif delete_key == "":
+                self.action_data_by_id.pop(action_id, None)
                 return {
-                    'success': True,
-                    'message': 'Nothing was selected to delete'
+                    "success": True,
+                    "message": "Deleting cancelled (delete entry was empty)"
                 }
-            elif len_subsets == 1:
-                title = title.format(
-                    '{} subset'.format(len_subsets)
-                )
-            else:
-                title = title.format(
-                    '{} subsets'.format(len_subsets)
-                )
+            # Get data to show again
+            to_delete = spec_data["to_delete"]
 
-        self.values = values
+        else:
+            to_delete = collections.defaultdict(list)
+            for key, value in values.items():
+                if not value:
+                    continue
+                if key.startswith(self.asset_prefix):
+                    _key = key.replace(self.asset_prefix, "")
+                    to_delete["assets"].append(_key)
+
+                elif key.startswith(self.subset_prefix):
+                    _key = key.replace(self.subset_prefix, "")
+                    to_delete["subsets"].append(_key)
+
+            self.action_data_by_id[action_id]["to_delete"] = to_delete
+
+        asset_to_delete = len(to_delete.get("assets") or []) > 0
+        subset_to_delete = len(to_delete.get("subsets") or []) > 0
+
+        if not asset_to_delete and not subset_to_delete:
+            self.action_data_by_id.pop(action_id, None)
+            return {
+                "success": True,
+                "message": "Nothing was selected to delete"
+            }
+
+        attempt = spec_data["attempt"]
+        if attempt > 3:
+            self.action_data_by_id.pop(action_id, None)
+            return {
+                "success": False,
+                "message": "You didn't enter \"DELETE\" properly 3 times!"
+            }
+
+        self.action_data_by_id[action_id]["attempt"] += 1
+
+        title = "Confirmation of deleting"
+
+        if asset_to_delete:
+            asset_len = len(to_delete["assets"])
+            asset_ending = ""
+            if asset_len > 1:
+                asset_ending = "s"
+            title += " {} Asset{}".format(asset_len, asset_ending)
+            if subset_to_delete:
+                title += " and"
+
+        if subset_to_delete:
+            sub_len = len(to_delete["subsets"])
+            type_ending = ""
+            sub_ending = ""
+            if sub_len == 1:
+                subset_ids_by_name = spec_data["subset_ids_by_name"]
+                if len(subset_ids_by_name[to_delete["subsets"][0]]) > 1:
+                    sub_ending = "s"
+
+            elif sub_len > 1:
+                type_ending = "s"
+                sub_ending = "s"
+
+            title += " {} type{} of subset{}".format(
+                sub_len, type_ending, sub_ending
+            )
+
         items = []
 
+        id_item = {"type": "hidden", "name": "action_id", "value": action_id}
         delete_label = {
             'type': 'label',
             'value': '# Please enter "DELETE" to confirm #'
         }
-
         delete_item = {
-            'name': 'delete_key',
-            'type': 'text',
-            'value': '',
-            'empty_text': 'Type Delete here...'
+            "name": "delete_key",
+            "type": "text",
+            "value": "",
+            "empty_text": "Type Delete here..."
         }
+
+        items.append(id_item)
         items.append(delete_label)
         items.append(delete_item)
 
         return {
-            'items': items,
-            'title': title
+            "items": items,
+            "title": title
         }
 
     def launch(self, session, entities, event):
-        if 'values' not in event['data']:
-            return
-
-        values = event['data']['values']
-        if len(values) <= 0:
-            return
-        if 'delete_key' not in values:
-            return
-
-        if values['delete_key'].lower() != 'delete':
-            if values['delete_key'].lower() == '':
-                return {
-                    'success': False,
-                    'message': 'Deleting cancelled'
-                }
-            if self.attempt < 3:
-                self.attempt += 1
-                return_dict = self.confirm_delete(False, entities, event)
-                return_dict['title'] = '{} ({} attempt)'.format(
-                    return_dict['title'], self.attempt
-                )
-                return return_dict
+        self.show_message(event, "Processing...", True)
+        values = event["data"]["values"]
+        action_id = values.get("action_id")
+        spec_data = self.action_data_by_id.get(action_id)
+        if not spec_data:
+            # it is a bug if this happens!
             return {
-                'success': False,
-                'message': 'You didn\'t enter "DELETE" properly 3 times!'
+                "success": False,
+                "message": "Something bad has happened. Please try again."
             }
 
-        entity = entities[0]
-        project = entity['project']
+        report_messages = collections.defaultdict(list)
 
-        self.db.Session['AVALON_PROJECT'] = project["full_name"]
+        project_name = spec_data["project_name"]
+        to_delete = spec_data["to_delete"]
+        self.dbcon.Session["AVALON_PROJECT"] = project_name
 
-        all_ids = []
-        if self.values.get('whole_asset', False) is True:
-            av_entity = self.db.find_one({
-                'type': 'asset',
-                'name': entity['name']
+        assets_to_delete = to_delete.get("assets") or []
+        subsets_to_delete = to_delete.get("subsets") or []
+
+        # Convert asset ids to ObjectId obj
+        assets_to_delete = [ObjectId(id) for id in assets_to_delete if id]
+
+        subset_ids_by_parent = spec_data["subset_ids_by_parent"]
+        subset_ids_by_name = spec_data["subset_ids_by_name"]
+
+        subset_ids_to_archive = []
+        asset_ids_to_archive = []
+        ftrack_ids_to_delete = []
+        if len(assets_to_delete) > 0:
+            # Prepare data when deleting whole avalon asset
+            avalon_assets = self.dbcon.find({"type": "asset"})
+            avalon_assets_by_parent = collections.defaultdict(list)
+            for asset in avalon_assets:
+                parent_id = asset["data"]["visualParent"]
+                avalon_assets_by_parent[parent_id].append(asset)
+                if asset["_id"] in assets_to_delete:
+                    ftrack_id = asset["data"]["ftrackId"]
+                    ftrack_ids_to_delete.append(ftrack_id)
+
+            children_queue = Queue()
+            for mongo_id in assets_to_delete:
+                children_queue.put(mongo_id)
+
+            while not children_queue.empty():
+                mongo_id = children_queue.get()
+                if mongo_id in asset_ids_to_archive:
+                    continue
+
+                asset_ids_to_archive.append(mongo_id)
+                for subset_id in subset_ids_by_parent.get(mongo_id, []):
+                    if subset_id not in subset_ids_to_archive:
+                        subset_ids_to_archive.append(subset_id)
+
+                children = avalon_assets_by_parent.get(mongo_id)
+                if not children:
+                    continue
+
+                for child in children:
+                    child_id = child["_id"]
+                    if child_id not in asset_ids_to_archive:
+                        children_queue.put(child_id)
+
+        # Prepare names of assets in ftrack and ids of subsets in mongo
+        asset_names_to_delete = []
+        if len(subsets_to_delete) > 0:
+            for name in subsets_to_delete:
+                asset_names_to_delete.append(name)
+                for subset_id in subset_ids_by_name[name]:
+                    if subset_id in subset_ids_to_archive:
+                        continue
+                    subset_ids_to_archive.append(subset_id)
+
+        # Get ftrack ids of entities where will be delete only asset
+        not_deleted_entities_id = []
+        ftrack_id_name_map = {}
+        if asset_names_to_delete:
+            for entity in entities:
+                ftrack_id = entity["id"]
+                ftrack_id_name_map[ftrack_id] = entity["name"]
+                if ftrack_id in ftrack_ids_to_delete:
+                    continue
+                not_deleted_entities_id.append(ftrack_id)
+
+        mongo_proc_txt = "MongoProcessing: "
+        ftrack_proc_txt = "Ftrack processing: "
+        if asset_ids_to_archive:
+            self.log.debug("{}Archivation of assets <{}>".format(
+                mongo_proc_txt,
+                ", ".join([str(id) for id in asset_ids_to_archive])
+            ))
+            self.dbcon.update_many(
+                {
+                    "_id": {"$in": asset_ids_to_archive},
+                    "type": "asset"
+                },
+                {"$set": {"type": "archived_asset"}}
+            )
+
+        if subset_ids_to_archive:
+            self.log.debug("{}Archivation of subsets <{}>".format(
+                mongo_proc_txt,
+                ", ".join([str(id) for id in subset_ids_to_archive])
+            ))
+            self.dbcon.update_many(
+                {
+                    "_id": {"$in": subset_ids_to_archive},
+                    "type": "subset"
+                },
+                {"$set": {"type": "archived_subset"}}
+            )
+
+        if ftrack_ids_to_delete:
+            self.log.debug("{}Deleting Ftrack Entities <{}>".format(
+                ftrack_proc_txt, ", ".join(ftrack_ids_to_delete)
+            ))
+
+            joined_ids_to_delete = ", ".join(
+                ["\"{}\"".format(id) for id in ftrack_ids_to_delete]
+            )
+            ftrack_ents_to_delete = self.session.query(
+                "select id, link from TypedContext where id in ({})".format(
+                    joined_ids_to_delete
+                )
+            ).all()
+            for entity in ftrack_ents_to_delete:
+                self.session.delete(entity)
+                try:
+                    self.session.commit()
+                except Exception:
+                    ent_path = "/".join(
+                        [ent["name"] for ent in entity["link"]]
+                    )
+                    msg = "Failed to delete entity"
+                    report_messages[msg].append(ent_path)
+                    self.session.rollback()
+                    self.log.warning(
+                        "{} <{}>".format(msg, ent_path),
+                        exc_info=True
+                    )
+
+        if not_deleted_entities_id:
+            joined_not_deleted = ", ".join([
+                "\"{}\"".format(ftrack_id)
+                for ftrack_id in not_deleted_entities_id
+            ])
+            joined_asset_names = ", ".join([
+                "\"{}\"".format(name)
+                for name in asset_names_to_delete
+            ])
+            # Find assets of selected entities with names of checked subsets
+            assets = self.session.query((
+                "select id from Asset where"
+                " context_id in ({}) and name in ({})"
+            ).format(joined_not_deleted, joined_asset_names)).all()
+
+            self.log.debug("{}Deleting Ftrack Assets <{}>".format(
+                ftrack_proc_txt,
+                ", ".join([asset["id"] for asset in assets])
+            ))
+            for asset in assets:
+                self.session.delete(asset)
+                try:
+                    self.session.commit()
+                except Exception:
+                    self.session.rollback()
+                    msg = "Failed to delete asset"
+                    report_messages[msg].append(asset["id"])
+                    self.log.warning(
+                        "{} <{}>".format(asset["id"]),
+                        exc_info=True
+                    )
+
+        return self.report_handle(report_messages, project_name, event)
+
+    def report_handle(self, report_messages, project_name, event):
+        if not report_messages:
+            return {
+                "success": True,
+                "message": "Deletion was successful!"
+            }
+
+        title = "Delete report ({}):".format(project_name)
+        items = []
+        items.append({
+            "type": "label",
+            "value": "# Deleting was not completely successful"
+        })
+        items.append({
+            "type": "label",
+            "value": "<p><i>Check logs for more information</i></p>"
+        })
+        for msg, _items in report_messages.items():
+            if not _items or not msg:
+                continue
+
+            items.append({
+                "type": "label",
+                "value": "# {}".format(msg)
             })
 
-            if av_entity is not None:
-                all_ids.append(av_entity['_id'])
-                all_ids.extend(self.find_child(av_entity))
+            if isinstance(_items, str):
+                _items = [_items]
+            items.append({
+                "type": "label",
+                "value": '<p>{}</p>'.format("<br>".join(_items))
+            })
+            items.append(self.splitter)
 
-            session.delete(entity)
-            session.commit()
-        else:
-            subset_names = []
-            for key, value in self.values.items():
-                if key == 'delete_key' or value is False:
-                    continue
-
-                entity_id = ObjectId(key)
-                av_entity = self.db.find_one({'_id': entity_id})
-                subset_names.append(av_entity['name'])
-                if av_entity is None:
-                    continue
-                all_ids.append(entity_id)
-                all_ids.extend(self.find_child(av_entity))
-
-            for ft_asset in entity['assets']:
-                if ft_asset['name'] in subset_names:
-                    session.delete(ft_asset)
-                    session.commit()
-
-        if len(all_ids) == 0:
-            return {
-                'success': True,
-                'message': 'No entities to delete in avalon'
-            }
-
-        delete_query = {'_id': {'$in': all_ids}}
-        self.db.delete_many(delete_query)
+        self.show_interface(items, title, event)
 
         return {
-            'success': True,
-            'message': 'All assets were deleted!'
+            "success": False,
+            "message": "Deleting finished. Read report messages."
         }
-
-    def find_child(self, entity):
-        output = []
-        id = entity['_id']
-        visuals = [x for x in self.db.find({'data.visualParent': id})]
-        assert len(visuals) == 0, 'This asset has another asset as child'
-        childs = self.db.find({'parent': id})
-        for child in childs:
-            output.append(child['_id'])
-            output.extend(self.find_child(child))
-        return output
-
-    def find_assets(self, asset_names):
-        assets = []
-        for name in asset_names:
-            entity = self.db.find_one({
-                'type': 'asset',
-                'name': name
-            })
-            if entity is not None and entity not in assets:
-                assets.append(entity)
-        return assets
 
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
-    DeleteAsset(session, plugins_presets).register()
-
-
-def main(arguments=None):
-    '''Set up logging and register action.'''
-    if arguments is None:
-        arguments = []
-
-    parser = argparse.ArgumentParser()
-    # Allow setting of logging level from arguments.
-    loggingLevels = {}
-    for level in (
-        logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING,
-        logging.ERROR, logging.CRITICAL
-    ):
-        loggingLevels[logging.getLevelName(level).lower()] = level
-
-    parser.add_argument(
-        '-v', '--verbosity',
-        help='Set the logging output verbosity.',
-        choices=loggingLevels.keys(),
-        default='info'
-    )
-    namespace = parser.parse_args(arguments)
-
-    # Set up basic logging
-    logging.basicConfig(level=loggingLevels[namespace.verbosity])
-
-    session = ftrack_api.Session()
-
-    register(session)
-
-    # Wait for events
-    logging.info(
-        'Registered actions and listening for events. Use Ctrl-C to abort.'
-    )
-    session.event_hub.wait()
-
-
-if __name__ == '__main__':
-    raise SystemExit(main(sys.argv[1:]))
+    DeleteAssetSubset(session, plugins_presets).register()

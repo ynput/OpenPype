@@ -1,4 +1,4 @@
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseEvent
 import operator
 

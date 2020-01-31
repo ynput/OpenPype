@@ -1,9 +1,6 @@
-import os
 import contextlib
 
-from avalon import api
-import avalon.io as io
-
+from avalon import api, io
 
 import nuke
 
@@ -76,7 +73,7 @@ class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
     families = ["write", "source", "plate", "render"]
-    representations = ["exr", "dpx", "jpg", "jpeg"]
+    representations = ["exr", "dpx", "jpg", "jpeg", "png"]
 
     label = "Load sequence"
     order = -10

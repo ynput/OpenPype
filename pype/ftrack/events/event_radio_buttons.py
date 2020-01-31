@@ -1,5 +1,5 @@
-from pype.vendor import ftrack_api
-from pype.ftrack import BaseEvent
+import ftrack_api
+from pype.ftrack.lib import BaseEvent
 
 
 class RadioButtons(BaseEvent):
@@ -37,4 +37,4 @@ class RadioButtons(BaseEvent):
 def register(session, plugins_presets):
     '''Register plugin. Called when used as an plugin.'''
 
-    Radio_buttons(session, plugins_presets).register()
+    RadioButtons(session, plugins_presets).register()

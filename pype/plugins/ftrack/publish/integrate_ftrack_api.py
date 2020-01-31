@@ -144,10 +144,14 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                 "version": 0,
                 "asset": asset_entity,
             }
-            if task:
-                assetversion_data['task'] = task
-
-            assetversion_data.update(data.get("assetversion_data", {}))
+            _assetversion_data = data.get("assetversion_data", {})
+            assetversion_cust_attrs = _assetversion_data.pop(
+                "custom_attributes", {}
+            )
+            asset_version_comment = _assetversion_data.pop(
+                "comment", None
+            )
+            assetversion_data.update(_assetversion_data)
 
             assetversion_entity = session.query(
                 self.query("AssetVersion", assetversion_data)
@@ -156,6 +160,9 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             # Extracting metadata, and adding after entity creation. This is
             # due to a ftrack_api bug where you can't add metadata on creation.
             assetversion_metadata = assetversion_data.pop("metadata", {})
+
+            if task:
+                assetversion_data['task'] = task
 
             # Create a new entity if none exits.
             if not assetversion_entity:
@@ -180,6 +187,36 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
             existing_assetversion_metadata = assetversion_entity["metadata"]
             existing_assetversion_metadata.update(assetversion_metadata)
             assetversion_entity["metadata"] = existing_assetversion_metadata
+
+            # Add comment
+            if asset_version_comment:
+                assetversion_entity["comment"] = asset_version_comment
+                try:
+                    session.commit()
+                except Exception:
+                    session.rollback()
+                    self.log.warning((
+                        "Comment was not possible to set for AssetVersion"
+                        "\"{0}\". Can't set it's value to: \"{1}\""
+                    ).format(
+                        assetversion_entity["id"], str(asset_version_comment)
+                    ))
+
+            # Adding Custom Attributes
+            for attr, val in assetversion_cust_attrs.items():
+                if attr in assetversion_entity["custom_attributes"]:
+                    try:
+                        assetversion_entity["custom_attributes"][attr] = val
+                        session.commit()
+                        continue
+                    except Exception:
+                        session.rollback()
+
+                self.log.warning((
+                    "Custom Attrubute \"{0}\""
+                    " is not available for AssetVersion <{1}>."
+                    " Can't set it's value to: \"{2}\""
+                ).format(attr, assetversion_entity["id"], str(val)))
 
             # Have to commit the version and asset, because location can't
             # determine the final location without.

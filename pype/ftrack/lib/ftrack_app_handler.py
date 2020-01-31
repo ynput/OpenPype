@@ -345,25 +345,44 @@ class AppAction(BaseHandler):
             statuses = presets['status_update']
 
             actual_status = entity['status']['name'].lower()
-            next_status_name = None
-            for key, value in statuses.items():
-                if actual_status in value or '_any_' in value:
-                    if key != '_ignore_':
-                        next_status_name = key
+            already_tested = []
+            ent_path = "/".join(
+                [ent["name"] for ent in entity['link']]
+            )
+            while True:
+                next_status_name = None
+                for key, value in statuses.items():
+                    if key in already_tested:
+                        continue
+                    if actual_status in value or '_any_' in value:
+                        if key != '_ignore_':
+                            next_status_name = key
+                            already_tested.append(key)
+                        break
+                    already_tested.append(key)
+
+                if next_status_name is None:
                     break
 
-            if next_status_name is not None:
                 try:
                     query = 'Status where name is "{}"'.format(
                         next_status_name
                     )
                     status = session.query(query).one()
+
                     entity['status'] = status
                     session.commit()
+                    self.log.debug("Changing status to \"{}\" <{}>".format(
+                        next_status_name, ent_path
+                    ))
+                    break
+
                 except Exception:
+                    session.rollback()
                     msg = (
-                        'Status "{}" in presets wasn\'t found on Ftrack'
-                    ).format(next_status_name)
+                        'Status "{}" in presets wasn\'t found'
+                        ' on Ftrack entity type "{}"'
+                    ).format(next_status_name, entity.entity_type)
                     self.log.warning(msg)
 
         # Set origin avalon environments

@@ -1,6 +1,5 @@
 import os
 from pypeapp import Logger
-import hiero
 from avalon import api as avalon
 from pyblish import api as pyblish
 
@@ -17,7 +16,8 @@ from .menu import (
     install as menu_install,
     _update_menu_task_label
 )
-from .tags import add_tags_from_presets
+
+from .events import register_hiero_events
 
 __all__ = [
     # Workfiles API
@@ -56,7 +56,8 @@ def install(config):
     Installing Nukestudio integration for avalon
 
     Args:
-        config (obj): avalon config module `pype` in our case, it is not used but required by avalon.api.install()
+        config (obj): avalon config module `pype` in our case, it is not
+        used but required by avalon.api.install()
 
     """
 
@@ -73,7 +74,8 @@ def install(config):
     # Disable all families except for the ones we explicitly want to see
     family_states = [
         "write",
-        "review"
+        "review",
+        "plate"
     ]
 
     avalon.data["familiesStateDefault"] = False
@@ -82,49 +84,8 @@ def install(config):
     # install menu
     menu_install()
 
-    # Workfiles.
-    launch_workfiles = os.environ.get("WORKFILES_STARTUP")
-
-    if launch_workfiles:
-        hiero.core.events.registerInterest(
-            "kAfterNewProjectCreated", launch_workfiles_app
-        )
-
-    # Add tags on project load.
-    hiero.core.events.registerInterest(
-        "kAfterProjectLoad", add_tags
-    )
-
-
-def add_tags(event):
-    """
-    Event for automatic tag creation after nukestudio start
-
-    Args:
-        event (obj): required but unused
-    """
-
-    add_tags_from_presets()
-
-
-def launch_workfiles_app(event):
-    """
-    Event for launching workfiles after nukestudio start
-
-    Args:
-        event (obj): required but unused
-    """
-    from .lib import set_workfiles
-
-    set_workfiles()
-
-    # Closing the new project.
-    event.sender.close()
-
-    # Deregister interest as its a one-time launch.
-    hiero.core.events.unregisterInterest(
-        "kAfterNewProjectCreated", launch_workfiles_app
-    )
+    # register hiero events
+    register_hiero_events()
 
 
 def uninstall():

@@ -1,12 +1,9 @@
-import os
 import sys
-import datetime
 import signal
 import socket
-import pymongo
 
 from ftrack_server import FtrackServer
-from pype.ftrack.ftrack_server.session_processor import ProcessSession
+from pype.ftrack.ftrack_server.lib import SocketSession, ProcessEventHub
 from pypeapp import Logger
 
 log = Logger().get_logger("Event processor")
@@ -24,14 +21,15 @@ def main(args):
 
     sock.sendall(b"CreatedProcess")
     try:
-        session = ProcessSession(auto_connect_event_hub=True, sock=sock)
-        server = FtrackServer('event')
+        session = SocketSession(
+            auto_connect_event_hub=True, sock=sock, Eventhub=ProcessEventHub
+        )
+        server = FtrackServer("event")
         log.debug("Launched Ftrack Event processor")
         server.run_server(session)
 
-    except Exception as exc:
-        import traceback
-        traceback.print_tb(exc.__traceback__)
+    except Exception:
+        log.error("Event server crashed. See traceback below", exc_info=True)
 
     finally:
         log.debug("First closing socket")

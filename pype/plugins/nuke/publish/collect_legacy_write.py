@@ -1,25 +1,31 @@
-import nuke
-
 import pyblish.api
 
 
-class CollectWriteLegacy(pyblish.api.ContextPlugin):
+class CollectWriteLegacy(pyblish.api.InstancePlugin):
     """Collect legacy write nodes."""
 
-    order = pyblish.api.CollectorOrder
-    label = "Collect Write Legacy"
+    order = pyblish.api.CollectorOrder + 0.0101
+    label = "Collect Write node Legacy"
     hosts = ["nuke", "nukeassist"]
 
-    def process(self, context):
+    def process(self, instance):
+        self.log.info(instance[:])
+        node = instance[0]
 
-        for node in nuke.allNodes():
-            if node.Class() != "Write":
-                continue
+        if node.Class() not in ["Group", "Write"]:
+            return
 
-            if "avalon" not in node.knobs().keys():
-                continue
+        family_knobs = ["ak:family", "avalon:family"]
+        test = [k for k in node.knobs().keys() if k in family_knobs]
+        self.log.info(test)
 
-            instance = context.create_instance(
-                node.name(), family="write.legacy"
+        if len(test) == 1:
+            if "render" in node[test[0]].value():
+                self.log.info("render")
+                return
+
+        if "render" in node.knobs():
+            instance.data.update(
+                {"family": "write.legacy",
+                 "families": []}
             )
-            instance.append(node)

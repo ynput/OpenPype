@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 from avalon import api, io, lib
 import avalon.nuke
+from avalon.nuke import lib as anlib
 import pype.api as pype
 
 import nuke
@@ -20,7 +21,6 @@ from .presets import (
 from .presets import (
     get_anatomy
 )
-# TODO: remove get_anatomy and import directly Anatomy() here
 
 from pypeapp import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -49,8 +49,6 @@ def checkInventoryVersions():
     and check if the node is having actual version. If not then it will color
     it to red.
     """
-    # TODO: make it for all nodes not just Read (Loader
-
     # get all Loader nodes by avalon attribute metadata
     for each in nuke.allNodes():
         if each.Class() == 'Read':
@@ -92,7 +90,6 @@ def checkInventoryVersions():
 def writes_version_sync():
     ''' Callback synchronizing version of publishable write nodes
     '''
-    # TODO: make it work with new write node group
     try:
         rootVersion = pype.get_version_from_path(nuke.root().name())
         padding = len(rootVersion)
@@ -105,6 +102,10 @@ def writes_version_sync():
 
     for each in nuke.allNodes():
         if each.Class() == 'Write':
+            # check if the node is avalon tracked
+            if "AvalonTab" not in each.knobs():
+                continue
+
             avalon_knob_data = avalon.nuke.get_avalon_knob_data(
                 each, ['avalon:', 'ak:'])
 
@@ -125,7 +126,8 @@ def writes_version_sync():
                     os.makedirs(os.path.dirname(node_new_file), 0o766)
             except Exception as e:
                 log.warning(
-                    "Write node: `{}` has no version in path: {}".format(each.name(), e))
+                    "Write node: `{}` has no version in path: {}".format(
+                        each.name(), e))
 
 
 def version_up_script():
@@ -178,9 +180,12 @@ def format_anatomy(data):
     try:
         padding = int(anatomy.templates['render']['padding'])
     except KeyError as e:
-        log.error("`padding` key is not in `render` "
-                  "Anatomy template. Please, add it there and restart "
-                  "the pipeline (padding: \"4\"): `{}`".format(e))
+        msg = ("`padding` key is not in `render` "
+            "Anatomy template. Please, add it there and restart "
+            "the pipeline (padding: \"4\"): `{}`").format(e)
+
+        log.error(msg)
+        nuke.message(msg)
 
     version = data.get("version", None)
     if not version:
@@ -260,7 +265,9 @@ def create_write_node(name, data, input=None, prenodes=None):
         anatomy_filled = format_anatomy(data)
 
     except Exception as e:
-        log.error("problem with resolving anatomy tepmlate: {}".format(e))
+        msg = "problem with resolving anatomy tepmlate: {}".format(e)
+        log.error(msg)
+        nuke.message(msg)
 
     # build file path to workfiles
     fpath = str(anatomy_filled["work"]["folder"]).replace("\\", "/")
@@ -538,8 +545,11 @@ class WorkfileSettings(object):
             viewer_dict (dict): adjustments from presets
 
         '''
-        assert isinstance(viewer_dict, dict), log.error(
-            "set_viewers_colorspace(): argument should be dictionary")
+        if not isinstance(viewer_dict, dict):
+            msg = "set_viewers_colorspace(): argument should be dictionary"
+            log.error(msg)
+            nuke.message(msg)
+            return
 
         filter_knobs = [
             "viewerProcess",
@@ -587,8 +597,10 @@ class WorkfileSettings(object):
             root_dict (dict): adjustmensts from presets
 
         '''
-        assert isinstance(root_dict, dict), log.error(
-            "set_root_colorspace(): argument should be dictionary")
+        if not isinstance(root_dict, dict):
+            msg = "set_root_colorspace(): argument should be dictionary"
+            log.error(msg)
+            nuke.message(msg)
 
         log.debug(">> root_dict: {}".format(root_dict))
 
@@ -635,8 +647,11 @@ class WorkfileSettings(object):
         '''
         # TODO: complete this function so any write node in
         # scene will have fixed colorspace following presets for the project
-        assert isinstance(write_dict, dict), log.error(
-            "set_root_colorspace(): argument should be dictionary")
+        if not isinstance(write_dict, dict):
+            msg = "set_root_colorspace(): argument should be dictionary"
+            nuke.message(msg)
+            log.error(msg)
+            return
 
         log.debug("__ set_writes_colorspace(): {}".format(write_dict))
 
@@ -648,25 +663,28 @@ class WorkfileSettings(object):
         try:
             self.set_root_colorspace(nuke_colorspace["root"])
         except AttributeError:
-            log.error(
-                "set_colorspace(): missing `root` settings in template")
+            msg = "set_colorspace(): missing `root` settings in template"
+
         try:
             self.set_viewers_colorspace(nuke_colorspace["viewer"])
         except AttributeError:
-            log.error(
-                "set_colorspace(): missing `viewer` settings in template")
+            msg = "set_colorspace(): missing `viewer` settings in template"
+            nuke.message(msg)
+            log.error(msg)
         try:
             self.set_writes_colorspace(nuke_colorspace["write"])
         except AttributeError:
-            log.error(
-                "set_colorspace(): missing `write` settings in template")
+            msg = "set_colorspace(): missing `write` settings in template"
+            nuke.message(msg)
+            log.error(msg)
 
         try:
             for key in nuke_colorspace:
                 log.debug("Preset's colorspace key: {}".format(key))
         except TypeError:
-            log.error("Nuke is not in templates! \n\n\n"
-                      "contact your supervisor!")
+            msg = "Nuke is not in templates! Contact your supervisor!"
+            nuke.message(msg)
+            log.error(msg)
 
     def reset_frame_range_handles(self):
         """Set frame range to current asset"""
@@ -702,9 +720,11 @@ class WorkfileSettings(object):
         frame_start = int(data["frameStart"]) - handle_start
         frame_end = int(data["frameEnd"]) + handle_end
 
+        self._root_node["lock_range"].setValue(False)
         self._root_node["fps"].setValue(fps)
         self._root_node["first_frame"].setValue(frame_start)
         self._root_node["last_frame"].setValue(frame_end)
+        self._root_node["lock_range"].setValue(True)
 
         # setting active viewers
         try:
@@ -751,13 +771,13 @@ class WorkfileSettings(object):
         }
 
         if any(x for x in data.values() if x is None):
-            log.error(
-                "Missing set shot attributes in DB."
-                "\nContact your supervisor!."
-                "\n\nWidth: `{width}`"
-                "\nHeight: `{height}`"
-                "\nPixel Asspect: `{pixel_aspect}`".format(**data)
-            )
+            msg = ("Missing set shot attributes in DB."
+                  "\nContact your supervisor!."
+                  "\n\nWidth: `{width}`"
+                  "\nHeight: `{height}`"
+                  "\nPixel Asspect: `{pixel_aspect}`").format(**data)
+            log.error(msg)
+            nuke.message(msg)
 
         bbox = self._asset_entity.get('data', {}).get('crop')
 
@@ -774,10 +794,10 @@ class WorkfileSettings(object):
                 )
             except Exception as e:
                 bbox = None
-                log.error(
-                    "{}: {} \nFormat:Crop need to be set with dots, example: "
-                    "0.0.1920.1080, /nSetting to default".format(__name__, e)
-                )
+                msg = ("{}:{} \nFormat:Crop need to be set with dots, example: "
+                    "0.0.1920.1080, /nSetting to default").format(__name__, e)
+                log.error(msg)
+                nuke.message(msg)
 
         existing_format = None
         for format in nuke.formats():
@@ -1190,3 +1210,454 @@ class BuildWorkfile(WorkfileSettings):
 
     def position_up(self, multiply=1):
         self.ypos -= (self.ypos_size * multiply) + self.ypos_gap
+
+
+class ExporterReview:
+    """
+    Base class object for generating review data from Nuke
+
+    Args:
+        klass (pyblish.plugin): pyblish plugin parent
+        instance (pyblish.instance): instance of pyblish context
+
+    """
+    _temp_nodes = []
+    data = dict({
+        "representations": list()
+    })
+
+    def __init__(self,
+                 klass,
+                 instance
+                 ):
+
+        self.log = klass.log
+        self.instance = instance
+        self.path_in = self.instance.data.get("path", None)
+        self.staging_dir = self.instance.data["stagingDir"]
+        self.collection = self.instance.data.get("collection", None)
+
+    def get_file_info(self):
+        if self.collection:
+            self.log.debug("Collection: `{}`".format(self.collection))
+            # get path
+            self.fname = os.path.basename(self.collection.format(
+                "{head}{padding}{tail}"))
+            self.fhead = self.collection.format("{head}")
+
+            # get first and last frame
+            self.first_frame = min(self.collection.indexes)
+            self.last_frame = max(self.collection.indexes)
+            if "slate" in self.instance.data["families"]:
+                self.first_frame += 1
+        else:
+            self.fname = os.path.basename(self.path_in)
+            self.fhead = os.path.splitext(self.fname)[0] + "."
+            self.first_frame = self.instance.data.get("frameStart", None)
+            self.last_frame = self.instance.data.get("frameEnd", None)
+
+        if "#" in self.fhead:
+            self.fhead = self.fhead.replace("#", "")[:-1]
+
+    def get_representation_data(self, tags=None, range=False):
+        add_tags = []
+        if tags:
+            add_tags = tags
+
+        repre = {
+            'name': self.name,
+            'ext': self.ext,
+            'files': self.file,
+            "stagingDir": self.staging_dir,
+            "anatomy_template": "publish",
+            "tags": [self.name.replace("_", "-")] + add_tags
+        }
+
+        if range:
+            repre.update({
+                "frameStart": self.first_frame,
+                "frameEnd": self.last_frame,
+                })
+
+        self.data["representations"].append(repre)
+
+    def get_view_process_node(self):
+        """
+        Will get any active view process.
+
+        Arguments:
+            self (class): in object definition
+
+        Returns:
+            nuke.Node: copy node of Input Process node
+        """
+        anlib.reset_selection()
+        ipn_orig = None
+        for v in [n for n in nuke.allNodes()
+                  if "Viewer" in n.Class()]:
+            ip = v['input_process'].getValue()
+            ipn = v['input_process_node'].getValue()
+            if "VIEWER_INPUT" not in ipn and ip:
+                ipn_orig = nuke.toNode(ipn)
+                ipn_orig.setSelected(True)
+
+        if ipn_orig:
+            # copy selected to clipboard
+            nuke.nodeCopy('%clipboard%')
+            # reset selection
+            anlib.reset_selection()
+            # paste node and selection is on it only
+            nuke.nodePaste('%clipboard%')
+            # assign to variable
+            ipn = nuke.selectedNode()
+
+            return ipn
+
+    def clean_nodes(self):
+        for node in self._temp_nodes:
+            nuke.delete(node)
+        self.log.info("Deleted nodes...")
+
+
+class ExporterReviewLut(ExporterReview):
+    """
+    Generator object for review lut from Nuke
+
+    Args:
+        klass (pyblish.plugin): pyblish plugin parent
+        instance (pyblish.instance): instance of pyblish context
+
+
+    """
+    def __init__(self,
+                 klass,
+                 instance,
+                 name=None,
+                 ext=None,
+                 cube_size=None,
+                 lut_size=None,
+                 lut_style=None):
+        # initialize parent class
+        ExporterReview.__init__(self, klass, instance)
+
+        # deal with now lut defined in viewer lut
+        if hasattr(klass, "viewer_lut_raw"):
+            self.viewer_lut_raw = klass.viewer_lut_raw
+        else:
+            self.viewer_lut_raw = False
+
+        self.name = name or "baked_lut"
+        self.ext = ext or "cube"
+        self.cube_size = cube_size or 32
+        self.lut_size = lut_size or 1024
+        self.lut_style = lut_style or "linear"
+
+        # set frame start / end and file name to self
+        self.get_file_info()
+
+        self.log.info("File info was set...")
+
+        self.file = self.fhead + self.name + ".{}".format(self.ext)
+        self.path = os.path.join(
+            self.staging_dir, self.file).replace("\\", "/")
+
+    def generate_lut(self):
+        # ---------- start nodes creation
+
+        # CMSTestPattern
+        cms_node = nuke.createNode("CMSTestPattern")
+        cms_node["cube_size"].setValue(self.cube_size)
+        # connect
+        self._temp_nodes.append(cms_node)
+        self.previous_node = cms_node
+        self.log.debug("CMSTestPattern...   `{}`".format(self._temp_nodes))
+
+        # Node View Process
+        ipn = self.get_view_process_node()
+        if ipn is not None:
+            # connect
+            ipn.setInput(0, self.previous_node)
+            self._temp_nodes.append(ipn)
+            self.previous_node = ipn
+            self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
+
+        if not self.viewer_lut_raw:
+            # OCIODisplay
+            dag_node = nuke.createNode("OCIODisplay")
+            # connect
+            dag_node.setInput(0, self.previous_node)
+            self._temp_nodes.append(dag_node)
+            self.previous_node = dag_node
+            self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+
+        # GenerateLUT
+        gen_lut_node = nuke.createNode("GenerateLUT")
+        gen_lut_node["file"].setValue(self.path)
+        gen_lut_node["file_type"].setValue(".{}".format(self.ext))
+        gen_lut_node["lut1d"].setValue(self.lut_size)
+        gen_lut_node["style1d"].setValue(self.lut_style)
+        # connect
+        gen_lut_node.setInput(0, self.previous_node)
+        self._temp_nodes.append(gen_lut_node)
+        self.log.debug("GenerateLUT...   `{}`".format(self._temp_nodes))
+
+        # ---------- end nodes creation
+
+        # Export lut file
+        nuke.execute(
+            gen_lut_node.name(),
+            int(self.first_frame),
+            int(self.first_frame))
+
+        self.log.info("Exported...")
+
+        # ---------- generate representation data
+        self.get_representation_data()
+
+        self.log.debug("Representation...   `{}`".format(self.data))
+
+        # ---------- Clean up
+        self.clean_nodes()
+
+        return self.data
+
+
+class ExporterReviewMov(ExporterReview):
+    """
+    Metaclass for generating review mov files
+
+    Args:
+        klass (pyblish.plugin): pyblish plugin parent
+        instance (pyblish.instance): instance of pyblish context
+
+    """
+    def __init__(self,
+                 klass,
+                 instance,
+                 name=None,
+                 ext=None,
+                 ):
+        # initialize parent class
+        ExporterReview.__init__(self, klass, instance)
+
+        # passing presets for nodes to self
+        if hasattr(klass, "nodes"):
+            self.nodes = klass.nodes
+        else:
+            self.nodes = {}
+
+        # deal with now lut defined in viewer lut
+        if hasattr(klass, "viewer_lut_raw"):
+            self.viewer_lut_raw = klass.viewer_lut_raw
+        else:
+            self.viewer_lut_raw = False
+
+        self.name = name or "baked"
+        self.ext = ext or "mov"
+
+        # set frame start / end and file name to self
+        self.get_file_info()
+
+        self.log.info("File info was set...")
+
+        self.file = self.fhead + self.name + ".{}".format(self.ext)
+        self.path = os.path.join(
+            self.staging_dir, self.file).replace("\\", "/")
+
+    def render(self, render_node_name):
+        self.log.info("Rendering...  ")
+        # Render Write node
+        nuke.execute(
+            render_node_name,
+            int(self.first_frame),
+            int(self.last_frame))
+
+        self.log.info("Rendered...")
+
+    def save_file(self):
+        import shutil
+        with anlib.maintained_selection():
+            self.log.info("Saving nodes as file...  ")
+            # create nk path
+            path = os.path.splitext(self.path)[0] + ".nk"
+            # save file to the path
+            shutil.copyfile(self.instance.context.data["currentFile"], path)
+
+        self.log.info("Nodes exported...")
+        return path
+
+    def generate_mov(self, farm=False):
+        # ---------- start nodes creation
+
+        # Read node
+        r_node = nuke.createNode("Read")
+        r_node["file"].setValue(self.path_in)
+        r_node["first"].setValue(self.first_frame)
+        r_node["origfirst"].setValue(self.first_frame)
+        r_node["last"].setValue(self.last_frame)
+        r_node["origlast"].setValue(self.last_frame)
+        # connect
+        self._temp_nodes.append(r_node)
+        self.previous_node = r_node
+        self.log.debug("Read...   `{}`".format(self._temp_nodes))
+
+        # View Process node
+        ipn = self.get_view_process_node()
+        if ipn is not None:
+            # connect
+            ipn.setInput(0, self.previous_node)
+            self._temp_nodes.append(ipn)
+            self.previous_node = ipn
+            self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
+
+        if not self.viewer_lut_raw:
+            # OCIODisplay node
+            dag_node = nuke.createNode("OCIODisplay")
+            # connect
+            dag_node.setInput(0, self.previous_node)
+            self._temp_nodes.append(dag_node)
+            self.previous_node = dag_node
+            self.log.debug("OCIODisplay...   `{}`".format(self._temp_nodes))
+
+        # Write node
+        write_node = nuke.createNode("Write")
+        self.log.debug("Path: {}".format(self.path))
+        write_node["file"].setValue(self.path)
+        write_node["file_type"].setValue(self.ext)
+        write_node["meta_codec"].setValue("ap4h")
+        write_node["mov64_codec"].setValue("ap4h")
+        write_node["mov64_write_timecode"].setValue(1)
+        write_node["raw"].setValue(1)
+        # connect
+        write_node.setInput(0, self.previous_node)
+        self._temp_nodes.append(write_node)
+        self.log.debug("Write...   `{}`".format(self._temp_nodes))
+        # ---------- end nodes creation
+
+        # ---------- render or save to nk
+        if farm:
+            nuke.scriptSave()
+            path_nk = self.save_file()
+            self.data.update({
+                "bakeScriptPath": path_nk,
+                "bakeWriteNodeName": write_node.name(),
+                "bakeRenderPath": self.path
+            })
+        else:
+            self.render(write_node.name())
+            # ---------- generate representation data
+            self.get_representation_data(
+                tags=["review", "delete"],
+                range=True
+                )
+
+        self.log.debug("Representation...   `{}`".format(self.data))
+
+        # ---------- Clean up
+        self.clean_nodes()
+        nuke.scriptSave()
+        return self.data
+
+
+def get_dependent_nodes(nodes):
+    """Get all dependent nodes connected to the list of nodes.
+
+    Looking for connections outside of the nodes in incoming argument.
+
+    Arguments:
+        nodes (list): list of nuke.Node objects
+
+    Returns:
+        connections_in: dictionary of nodes and its dependencies
+        connections_out: dictionary of nodes and its dependency
+    """
+
+    connections_in = dict()
+    connections_out = dict()
+    node_names = [n.name() for n in nodes]
+    for node in nodes:
+        inputs = node.dependencies()
+        outputs = node.dependent()
+        # collect all inputs outside
+        test_in = [(i, n) for i, n in enumerate(inputs)
+                   if n.name() not in node_names]
+        if test_in:
+            connections_in.update({
+                node: test_in
+                })
+        # collect all outputs outside
+        test_out = [i for i in outputs if i.name() not in node_names]
+        if test_out:
+            # only one dependent node is allowed
+            connections_out.update({
+                node: test_out[-1]
+                })
+
+    return connections_in, connections_out
+
+
+def find_free_space_to_paste_nodes(
+        nodes,
+        group=nuke.root(),
+        direction="right",
+        offset=300):
+    """
+    For getting coordinates in DAG (node graph) for placing new nodes
+
+    Arguments:
+        nodes (list): list of nuke.Node objects
+        group (nuke.Node) [optional]: object in which context it is
+        direction (str) [optional]: where we want it to be placed
+                                    [left, right, top, bottom]
+        offset (int) [optional]: what offset it is from rest of nodes
+
+    Returns:
+        xpos (int): x coordinace in DAG
+        ypos (int): y coordinace in DAG
+    """
+    if len(nodes) == 0:
+        return 0, 0
+
+    group_xpos = list()
+    group_ypos = list()
+
+    # get local coordinates of all nodes
+    nodes_xpos = [n.xpos() for n in nodes] + \
+                 [n.xpos() + n.screenWidth() for n in nodes]
+
+    nodes_ypos = [n.ypos() for n in nodes] + \
+                 [n.ypos() + n.screenHeight() for n in nodes]
+
+    # get complete screen size of all nodes to be placed in
+    nodes_screen_width = max(nodes_xpos) - min(nodes_xpos)
+    nodes_screen_heigth = max(nodes_ypos) - min(nodes_ypos)
+
+    # get screen size (r,l,t,b) of all nodes in `group`
+    with group:
+        group_xpos = [n.xpos() for n in nuke.allNodes() if n not in nodes] + \
+                     [n.xpos() + n.screenWidth() for n in nuke.allNodes()
+                      if n not in nodes]
+        group_ypos = [n.ypos() for n in nuke.allNodes() if n not in nodes] + \
+                     [n.ypos() + n.screenHeight() for n in nuke.allNodes()
+                      if n not in nodes]
+
+        # calc output left
+        if direction in "left":
+            xpos = min(group_xpos) - abs(nodes_screen_width) - abs(offset)
+            ypos = min(group_ypos)
+            return xpos, ypos
+        # calc output right
+        if direction in "right":
+            xpos = max(group_xpos) + abs(offset)
+            ypos = min(group_ypos)
+            return xpos, ypos
+        # calc output top
+        if direction in "top":
+            xpos = min(group_xpos)
+            ypos = min(group_ypos) - abs(nodes_screen_heigth) - abs(offset)
+            return xpos, ypos
+        # calc output bottom
+        if direction in "bottom":
+            xpos = min(group_xpos)
+            ypos = max(group_ypos) + abs(offset)
+            return xpos, ypos
