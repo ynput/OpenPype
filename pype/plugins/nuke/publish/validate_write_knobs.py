@@ -8,24 +8,31 @@ class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
     """Ensure knobs are consistent.
 
     Knobs to validate and their values comes from the
-    "nuke/knobs.json" preset, which needs this structure:
-        {
-          "family": {
-            "knob_name": knob_value
-          }
-        }
+
+    Example for presets in config:
+    "presets/plugins/nuke/publish.json" preset, which needs this structure:
+        "ValidateNukeWriteKnobs": {
+            "enabled": true,
+            "knobs": {
+                "family": {
+                    "knob_name": knob_value
+                    }
+                }
+            }
     """
 
     order = pyblish.api.ValidatorOrder
-    label = "Knobs"
+    label = "Validate Write Knobs"
     hosts = ["nuke"]
     actions = [pype.api.RepairContextAction]
     optional = True
 
     def process(self, context):
         # Check for preset existence.
-        if not context.data["presets"]["nuke"].get("knobs"):
+        if not getattr(self, "knobs"):
             return
+            
+        self.log.debug("__ self.knobs: {}".format(self.knobs))
 
         invalid = self.get_invalid(context, compute=True)
         if invalid:
@@ -43,7 +50,6 @@ class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
 
     @classmethod
     def get_invalid_knobs(cls, context):
-        presets = context.data["presets"]["nuke"]["knobs"]
         invalid_knobs = []
         for instance in context:
             # Filter publisable instances.
@@ -53,15 +59,15 @@ class ValidateNukeWriteKnobs(pyblish.api.ContextPlugin):
             # Filter families.
             families = [instance.data["family"]]
             families += instance.data.get("families", [])
-            families = list(set(families) & set(presets.keys()))
+            families = list(set(families) & set(cls.knobs.keys()))
             if not families:
                 continue
 
             # Get all knobs to validate.
             knobs = {}
             for family in families:
-                for preset in presets[family]:
-                    knobs.update({preset: presets[family][preset]})
+                for preset in cls.knobs[family]:
+                    knobs.update({preset: cls.knobs[family][preset]})
 
             # Get invalid knobs.
             nodes = []

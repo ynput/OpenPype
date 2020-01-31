@@ -142,6 +142,13 @@ class CreateProjectFolders(BaseAction):
         else:
             data['project_id'] = parent['project']['id']
 
+        existing_entity = self.session.query((
+            "TypedContext where name is \"{}\" and "
+            "parent_id is \"{}\" and project_id is \"{}\""
+        ).format(name, data['parent_id'], data['project_id'])).first()
+        if existing_entity:
+            return existing_entity
+
         new_ent = self.session.create(ent_type, data)
         self.session.commit()
         return new_ent

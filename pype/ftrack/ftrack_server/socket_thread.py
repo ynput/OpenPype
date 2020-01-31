@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import signal
 import socket
 import threading
 import subprocess
@@ -10,7 +9,9 @@ from pypeapp import Logger
 
 class SocketThread(threading.Thread):
     """Thread that checks suprocess of storer of processor of events"""
+
     MAX_TIMEOUT = 35
+
     def __init__(self, name, port, filepath):
         super(SocketThread, self).__init__()
         self.log = Logger().get_logger("SocketThread", "Event Thread")
@@ -25,6 +26,8 @@ class SocketThread(threading.Thread):
         self.finished = False
 
         self.mongo_error = False
+
+        self._temp_data = {}
 
     def stop(self):
         self._is_running = False
@@ -50,8 +53,7 @@ class SocketThread(threading.Thread):
         )
 
         self.subproc = subprocess.Popen(
-            ["python", self.filepath, "-port", str(self.port)],
-            stdout=subprocess.PIPE
+            [sys.executable, self.filepath, "-port", str(self.port)]
         )
 
         # Listen for incoming connections
@@ -81,8 +83,9 @@ class SocketThread(threading.Thread):
                     try:
                         if not self._is_running:
                             break
+                        data = None
                         try:
-                            data = connection.recv(16)
+                            data = self.get_data_from_con(connection)
                             time_con = time.time()
 
                         except socket.timeout:
@@ -99,10 +102,7 @@ class SocketThread(threading.Thread):
                             self._is_running = False
                             break
 
-                        if data:
-                            if data == b"MongoError":
-                                self.mongo_error = True
-                            connection.sendall(data)
+                        self._handle_data(connection, data)
 
                     except Exception as exc:
                         self.log.error(
@@ -115,9 +115,15 @@ class SocketThread(threading.Thread):
                 if self.subproc.poll() is None:
                     self.subproc.terminate()
 
-                lines = self.subproc.stdout.readlines()
-                if lines:
-                    print("*** Socked Thread stdout ***")
-                    for line in lines:
-                        os.write(1, line)
                 self.finished = True
+
+    def get_data_from_con(self, connection):
+        return connection.recv(16)
+
+    def _handle_data(self, connection, data):
+        if not data:
+            return
+
+        if data == b"MongoError":
+            self.mongo_error = True
+        connection.sendall(data)

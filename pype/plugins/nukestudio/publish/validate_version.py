@@ -3,6 +3,7 @@ from avalon import io
 from pype.action import get_errored_instances_from_context
 import pype.api as pype
 
+
 @pyblish.api.log
 class RepairNukestudioVersionUp(pyblish.api.Action):
     label = "Version Up Workfile"
@@ -53,13 +54,17 @@ class ValidateVersion(pyblish.api.InstancePlugin):
             io.install()
             project = io.find_one({"type": "project"})
 
-            asset = io.find_one({"type": "asset",
-                                 "name": asset_name,
-                                 "parent": project["_id"]})
+            asset = io.find_one({
+                "type": "asset",
+                "name": asset_name,
+                "parent": project["_id"]
+            })
 
-            subset = io.find_one({"type": "subset",
-                                  "parent": asset["_id"],
-                                  "name": subset_name})
+            subset = io.find_one({
+                "type": "subset",
+                "parent": asset["_id"],
+                "name": subset_name
+            })
 
             version_db = io.find_one({
                 'type': 'version',

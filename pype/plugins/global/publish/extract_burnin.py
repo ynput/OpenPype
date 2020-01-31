@@ -1,8 +1,10 @@
 import os
 import json
+import copy
 
 import pype.api
 import pyblish
+from pypeapp import config
 
 
 class ExtractBurnin(pype.api.Extractor):
@@ -24,18 +26,50 @@ class ExtractBurnin(pype.api.Extractor):
         if "representations" not in instance.data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
-        # TODO: expand burnin data list to include all usefull keys
-        version = ''
-        if instance.context.data.get('version'):
-            version = "v" + str(instance.context.data['version'])
+        version = instance.context.data.get(
+            'version', instance.data.get('version'))
+        frame_start = int(instance.data.get("frameStart") or 0)
+        frame_end = int(instance.data.get("frameEnd") or 1)
+        duration = frame_end - frame_start + 1
 
         prep_data = {
             "username": instance.context.data['user'],
             "asset": os.environ['AVALON_ASSET'],
             "task": os.environ['AVALON_TASK'],
-            "start_frame": int(instance.data["frameStart"]),
-            "version": version
+            "frame_start": frame_start,
+            "frame_end": frame_end,
+            "duration": duration,
+            "version": int(version),
+            "comment": instance.context.data.get("comment", ""),
+            "intent": instance.context.data.get("intent", "")
         }
+
+        # Add datetime data to preparation data
+        prep_data.update(config.get_datetime_data())
+
+        slate_frame_start = frame_start
+        slate_frame_end = frame_end
+        slate_duration = duration
+
+        # exception for slate workflow
+        if "slate" in instance.data["families"]:
+            slate_frame_start = frame_start - 1
+            slate_frame_end = frame_end
+            slate_duration = slate_frame_end - slate_frame_start + 1
+
+        prep_data.update({
+            "slate_frame_start": slate_frame_start,
+            "slate_frame_end": slate_frame_end,
+            "slate_duration": slate_duration
+        })
+
+        # Update data with template data
+        template_data = instance.data.get("assumedTemplateData") or {}
+        prep_data.update(template_data)
+
+        # get anatomy project
+        anatomy = instance.context.data['anatomy']
+
         self.log.debug("__ prep_data: {}".format(prep_data))
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
@@ -47,16 +81,28 @@ class ExtractBurnin(pype.api.Extractor):
             filename = "{0}".format(repre["files"])
 
             name = "_burnin"
-            movieFileBurnin = filename.replace(".mov", "") + name + ".mov"
+            ext = os.path.splitext(filename)[1]
+            movieFileBurnin = filename.replace(ext, "") + name + ext
 
-            full_movie_path = os.path.join(os.path.normpath(stagingdir), repre["files"])
-            full_burnin_path = os.path.join(os.path.normpath(stagingdir), movieFileBurnin)
+            full_movie_path = os.path.join(
+                os.path.normpath(stagingdir), repre["files"]
+            )
+            full_burnin_path = os.path.join(
+                os.path.normpath(stagingdir), movieFileBurnin
+            )
             self.log.debug("__ full_burnin_path: {}".format(full_burnin_path))
+
+            # create copy of prep_data for anatomy formatting
+            _prep_data = copy.deepcopy(prep_data)
+            _prep_data["representation"] = repre["name"]
+            filled_anatomy = anatomy.format_all(_prep_data)
+            _prep_data["anatomy"] = filled_anatomy.get_solved()
 
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),
+                "codec": repre.get("codec", []),
                 "output": full_burnin_path.replace("\\", "/"),
-                "burnin_data": prep_data
+                "burnin_data": _prep_data
             }
 
             self.log.debug("__ burnin_data2: {}".format(burnin_data))

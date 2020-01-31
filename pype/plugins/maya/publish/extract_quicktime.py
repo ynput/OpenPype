@@ -1,16 +1,14 @@
 import os
+import glob
 import contextlib
-import capture_gui
 import clique
+import capture
 #
 import pype.maya.lib as lib
 import pype.api
 #
 from maya import cmds, mel
 import pymel.core as pm
-# import ffmpeg
-# # from pype.scripts import otio_burnin
-# reload(ffmpeg)
 
 
 # TODO: move codec settings to presets
@@ -93,7 +91,18 @@ class ExtractQuicktime(pype.api.Extractor):
         pm.currentTime(refreshFrameInt, edit=True)
 
         with maintained_time():
-            playblast = capture_gui.lib.capture_scene(preset)
+            filename = preset.get("filename", "%TEMP%")
+
+            # Force viewer to False in call to capture because we have our own
+            # viewer opening call to allow a signal to trigger between playblast
+            # and viewer
+            preset['viewer'] = False
+
+            # Remove panel key since it's internal value to capture_gui
+            preset.pop("panel", None)
+
+            path = capture.capture(**preset)
+            playblast = self._fix_playblast_output_path(path)
 
         self.log.info("file list  {}".format(playblast))
 
@@ -118,6 +127,46 @@ class ExtractQuicktime(pype.api.Extractor):
             'tags': ['review', 'delete']
         }
         instance.data["representations"].append(representation)
+
+    def _fix_playblast_output_path(self, filepath):
+        """Workaround a bug in maya.cmds.playblast to return correct filepath.
+
+        When the `viewer` argument is set to False and maya.cmds.playblast
+        does not automatically open the playblasted file the returned
+        filepath does not have the file's extension added correctly.
+
+        To workaround this we just glob.glob() for any file extensions and
+         assume the latest modified file is the correct file and return it.
+
+        """
+        # Catch cancelled playblast
+        if filepath is None:
+            self.log.warning("Playblast did not result in output path. "
+                             "Playblast is probably interrupted.")
+            return None
+
+        # Fix: playblast not returning correct filename (with extension)
+        # Lets assume the most recently modified file is the correct one.
+        if not os.path.exists(filepath):
+            directory = os.path.dirname(filepath)
+            filename = os.path.basename(filepath)
+            # check if the filepath is has frame based filename
+            # example : capture.####.png
+            parts = filename.split(".")
+            if len(parts) == 3:
+                query = os.path.join(directory, "{}.*.{}".format(parts[0],
+                                                                 parts[-1]))
+                files = glob.glob(query)
+            else:
+                files = glob.glob("{}.*".format(filepath))
+
+            if not files:
+                raise RuntimeError("Couldn't find playblast from: "
+                                   "{0}".format(filepath))
+            filepath = max(files, key=os.path.getmtime)
+
+        return filepath
+
 
 
 @contextlib.contextmanager

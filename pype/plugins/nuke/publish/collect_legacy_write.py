@@ -24,7 +24,8 @@ class CollectWriteLegacy(pyblish.api.InstancePlugin):
                 self.log.info("render")
                 return
 
-        instance.data.update(
-            {"family": "write.legacy",
-            "families": []}
-        )
+        if "render" in node.knobs():
+            instance.data.update(
+                {"family": "write.legacy",
+                 "families": []}
+            )

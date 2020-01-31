@@ -1,6 +1,8 @@
 # :coding: utf-8
 # :copyright: Copyright (c) 2015 ftrack
 
+import warnings
+
 import ftrack_api_old.entity.base
 
 
@@ -33,25 +35,51 @@ class Note(ftrack_api_old.entity.base.Entity):
 class CreateNoteMixin(object):
     '''Mixin to add create_note method on entity class.'''
 
-    def create_note(self, content, author, recipients=None, category=None):
+    def create_note(
+        self, content, author, recipients=None, category=None, labels=None
+    ):
         '''Create note with *content*, *author*.
 
-        Note category can be set by including *category* and *recipients*
-        can be specified as a list of user or group instances.
+        NoteLabels can be set by including *labels*.
+
+        Note category can be set by including *category*.
+        
+        *recipients* can be specified as a list of user or group instances.
 
         '''
+        note_label_support = 'NoteLabel' in self.session.types
+
+        if not labels:
+            labels = []
+
+        if labels and not note_label_support:
+            raise ValueError(
+                'NoteLabel is not supported by the current server version.'
+            )
+
+        if category and labels:
+            raise ValueError(
+                'Both category and labels cannot be set at the same time.'
+            )
+
         if not recipients:
             recipients = []
 
-        category_id = None
-        if category:
-            category_id = category['id']
-
         data = {
             'content': content,
-            'author': author,
-            'category_id': category_id
+            'author': author
         }
+
+        if category:
+            if note_label_support:
+                labels = [category]
+                warnings.warn(
+                    'category argument will be removed in an upcoming version, '
+                    'please use labels instead.',
+                    PendingDeprecationWarning
+                )
+            else:
+                data['category_id'] = category['id']
 
         note = self.session.create('Note', data)
 
@@ -64,5 +92,14 @@ class CreateNoteMixin(object):
             })
 
             note['recipients'].append(recipient)
+
+        for label in labels:
+            self.session.create(
+                'NoteLabelLink',
+                {
+                    'label_id': label['id'],
+                    'note_id': note['id']
+                }
+            )
 
         return note

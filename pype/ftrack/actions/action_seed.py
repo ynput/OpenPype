@@ -9,7 +9,7 @@ class SeedDebugProject(BaseAction):
     #: Action identifier.
     identifier = "seed.debug.project"
     #: Action label.
-    label = "SeedDebugProject"
+    label = "Seed Debug Project"
     #: Action description.
     description = "Description"
     #: priority
@@ -265,6 +265,15 @@ class SeedDebugProject(BaseAction):
     def create_assets(self, project, asset_count):
         self.log.debug("*** Creating assets:")
 
+        try:
+            asset_count = int(asset_count)
+        except ValueError:
+            asset_count = 0
+
+        if asset_count <= 0:
+            self.log.debug("No assets to create")
+            return
+
         main_entity = self.session.create("Folder", {
             "name": "Assets",
             "parent": project
@@ -305,6 +314,31 @@ class SeedDebugProject(BaseAction):
 
     def create_shots(self, project, seq_count, shots_count):
         self.log.debug("*** Creating shots:")
+
+        # Convert counts to integers
+        try:
+            seq_count = int(seq_count)
+        except ValueError:
+            seq_count = 0
+
+        try:
+            shots_count = int(shots_count)
+        except ValueError:
+            shots_count = 0
+
+        # Check if both are higher than 0
+        missing = []
+        if seq_count <= 0:
+            missing.append("sequences")
+
+        if shots_count <= 0:
+            missing.append("shots")
+
+        if missing:
+            self.log.debug("No {} to create".format(" and ".join(missing)))
+            return
+
+        # Create Folder "Shots"
         main_entity = self.session.create("Folder", {
             "name": "Shots",
             "parent": project
