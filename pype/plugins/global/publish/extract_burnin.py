@@ -96,12 +96,7 @@ class ExtractBurnin(pype.api.Extractor):
             _prep_data = copy.deepcopy(prep_data)
             _prep_data["representation"] = repre["name"]
             filled_anatomy = anatomy.format_all(_prep_data)
-            if hasattr(filled_anatomy, "get_solved"):
-                _filled_anatomy = filled_anatomy.get_solved()
-            else:
-                # Backwards compatibility
-                _filled_anatomy = filled_anatomy.get("solved")
-            _prep_data["anatomy"] = _filled_anatomy or {}
+            _prep_data["anatomy"] = filled_anatomy.get_solved()
 
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),
