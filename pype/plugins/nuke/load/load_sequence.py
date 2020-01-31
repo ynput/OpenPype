@@ -1,10 +1,12 @@
+import re
+import nuke
 import contextlib
 
 from avalon import api, io
-
-import nuke
+from pype.nuke import presets
 
 from pype.api import Logger
+
 log = Logger().get_logger(__name__, "nuke")
 
 
@@ -130,6 +132,18 @@ class LoadSequence(api.Loader):
             colorspace = context["version"]["data"].get("colorspace")
             if colorspace:
                 r["colorspace"].setValue(str(colorspace))
+
+            # load nuke presets for Read's colorspace
+            read_clrs_presets = presets.get_colorspace_preset().get(
+                "nuke", {}).get("read", {})
+
+            # check if any colorspace presets for read is mathing
+            preset_clrsp = next((read_clrs_presets[k]
+                                 for k in read_clrs_presets
+                                 if bool(re.search(k, file))),
+                                None)
+            if preset_clrsp is not None:
+                r["colorspace"].setValue(str(preset_clrsp))
 
             loader_shift(r, first, relative=True)
             r["origfirst"].setValue(int(first))

@@ -1,8 +1,9 @@
+import re
+import nuke
 import contextlib
 
 from avalon import api, io
-
-import nuke
+from pype.nuke import presets
 
 from pype.api import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -136,6 +137,18 @@ class LoadMov(api.Loader):
 
             if colorspace:
                 read_node["colorspace"].setValue(str(colorspace))
+
+            # load nuke presets for Read's colorspace
+            read_clrs_presets = presets.get_colorspace_preset().get(
+                "nuke", {}).get("read", {})
+
+            # check if any colorspace presets for read is mathing
+            preset_clrsp = next((read_clrs_presets[k]
+                                 for k in read_clrs_presets
+                                 if bool(re.search(k, file))),
+                                None)
+            if preset_clrsp is not None:
+                read_node["colorspace"].setValue(str(preset_clrsp))
 
             # add additional metadata from the version to imprint Avalon knob
             add_keys = [
