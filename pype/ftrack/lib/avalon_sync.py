@@ -1722,7 +1722,11 @@ class SyncEntitiesFactory:
         self.avalon_project_id = new_id
 
         self._avalon_ents_by_id[str(new_id)] = project_item
+        if self._avalon_ents_by_ftrack_id is None:
+            self._avalon_ents_by_ftrack_id = {}
         self._avalon_ents_by_ftrack_id[self.ft_project_id] = str(new_id)
+        if self._avalon_ents_by_name is None:
+            self._avalon_ents_by_name = {}
         self._avalon_ents_by_name[project_item["name"]] = str(new_id)
 
         self.create_list.append(project_item)
@@ -1991,7 +1995,7 @@ class SyncEntitiesFactory:
                 vis_par = ent["data"]["visualParent"]
                 if (
                     vis_par is not None and
-                    str(vis_par) in self.deleted_entities
+                    str(vis_par) in _deleted_entities
                 ):
                     continue
                 _ready.append(mongo_id)

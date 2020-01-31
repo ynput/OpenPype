@@ -15,10 +15,11 @@ log = logging.getLogger(__name__)
 def _get_menu():
     """Return the menu instance if it currently exists in Maya"""
 
-    app = QtWidgets.QApplication.instance()
-    widgets = dict((w.objectName(), w) for w in app.allWidgets())
+    widgets = dict((
+        w.objectName(), w) for w in QtWidgets.QApplication.allWidgets())
     menu = widgets.get(self._menu)
     return menu
+
 
 
 def deferred():

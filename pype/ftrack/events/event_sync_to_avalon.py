@@ -31,7 +31,7 @@ class SyncToAvalonEvent(BaseEvent):
         "timelog", "auth_userrole", "appointment"
     ]
     ignore_ent_types = ["Milestone"]
-    ignore_keys = ["statusid"]
+    ignore_keys = ["statusid", "thumbid"]
 
     project_query = (
         "select full_name, name, custom_attributes"
@@ -486,6 +486,14 @@ class SyncToAvalonEvent(BaseEvent):
 
             action = ent_info["action"]
             ftrack_id = ent_info["entityId"]
+            if isinstance(ftrack_id, list):
+                self.log.warning((
+                    "BUG REPORT: Entity info has `entityId` as `list` \"{}\""
+                ).format(ent_info))
+                if len(ftrack_id) == 0:
+                    continue
+                ftrack_id = ftrack_id[0]
+
             if action == "move":
                 ent_keys = ent_info["keys"]
                 # Seprate update info from move action
@@ -1819,6 +1827,13 @@ class SyncToAvalonEvent(BaseEvent):
             else:
                 obj_type_id = ent_info["objectTypeId"]
                 ent_cust_attrs = cust_attrs_by_obj_id.get(obj_type_id)
+
+            if ent_cust_attrs is None:
+                self.log.warning((
+                    "BUG REPORT: Entity has ent type without"
+                    " custom attributes <{}> \"{}\""
+                ).format(entType, ent_info))
+                continue
 
             for key, values in ent_info["changes"].items():
                 if key in hier_attrs_keys:

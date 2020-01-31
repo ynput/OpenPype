@@ -101,6 +101,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
         lut_path = None
         slate_frame = None
         families_data = None
+        baked_mov_path = None
         subset = None
         version = None
         frame_start = 0
@@ -197,6 +198,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
             self.log.info("Found remainder: {}".format(remainder))
 
             fps = data.get("fps", 25)
+
+            # adding publish comment and intent to context
+            context.data["comment"] = data.get("comment", "")
+            context.data["intent"] = data.get("intent", "")
 
             if data.get("user"):
                 context.data["user"] = data["user"]
@@ -423,6 +428,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "name": ext,
                         "ext": "{}".format(ext),
                         "files": list(collection),
+                        "frameStart": start,
+                        "frameEnd": end,
                         "stagingDir": root,
                         "anatomy_template": "render",
                         "fps": fps,
