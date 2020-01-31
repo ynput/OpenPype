@@ -52,6 +52,11 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
 
             newNodes = (list(set(nodes) - set(shapes)))
 
+            current_namespace = pm.namespaceInfo(currentNamespace=True)
+
+            if current_namespace != ":":
+                groupName = current_namespace + ":" + groupName
+
             groupNode = pm.PyNode(groupName)
             roots = set()
 

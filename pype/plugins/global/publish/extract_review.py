@@ -53,10 +53,21 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 if "review" in tags:
                     staging_dir = repre["stagingDir"]
+
+                    # iterating preset output profiles
                     for name, profile in output_profiles.items():
+                        repre_new = repre.copy()
+                        ext = profile.get("ext", None)
+                        p_tags = profile.get('tags', [])
+                        self.log.info("p_tags: `{}`".format(p_tags))
+
+                        # adding control for presets to be sequence
+                        # or single file
+                        is_sequence = ("sequence" in p_tags) and (ext in (
+                            "png", "jpg", "jpeg"))
+
                         self.log.debug("Profile name: {}".format(name))
 
-                        ext = profile.get("ext", None)
                         if not ext:
                             ext = "mov"
                             self.log.warning(
@@ -88,18 +99,22 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 filename = repre["files"].split(".")[0]
 
                             repr_file = filename + "_{0}.{1}".format(name, ext)
-
                             full_output_path = os.path.join(
                                 staging_dir, repr_file)
+
+                            if is_sequence:
+                                filename_base = filename + "_{0}".format(name)
+                                repr_file = filename_base + ".%08d.{0}".format(
+                                    ext)
+                                repre_new["sequence_file"] = repr_file
+                                full_output_path = os.path.join(
+                                    staging_dir, filename_base, repr_file)
 
                             self.log.info("input {}".format(full_input_path))
                             self.log.info("output {}".format(full_output_path))
 
-                            repre_new = repre.copy()
-
                             new_tags = [x for x in tags if x != "delete"]
-                            p_tags = profile.get('tags', [])
-                            self.log.info("p_tags: `{}`".format(p_tags))
+
                             # add families
                             [instance.data["families"].append(t)
                                 for t in p_tags
@@ -288,6 +303,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 self.log.debug(
                                     "_ output_args: `{}`".format(output_args))
 
+                            if is_sequence:
+                                stg_dir = os.path.dirname(full_output_path)
+
+                                if not os.path.exists(stg_dir):
+                                    self.log.debug(
+                                        "creating dir: {}".format(stg_dir))
+                                    os.mkdir(stg_dir)
+
                             mov_args = [
                                 os.path.join(
                                     os.environ.get(
@@ -315,6 +338,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 "resolutionHeight": resolution_height,
                                 "resolutionWidth": resolution_width,
                             })
+                            if is_sequence:
+                                repre_new.update({
+                                    "stagingDir": stg_dir,
+                                    "files": os.listdir(stg_dir)
+                                })
+
                             if repre_new.get('preview'):
                                 repre_new.pop("preview")
                             if repre_new.get('thumbnail'):
