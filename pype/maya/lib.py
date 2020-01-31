@@ -2330,7 +2330,9 @@ def fix_incompatible_containers():
         if loader in ["MayaAsciiLoader",
                       "AbcLoader",
                       "ModelLoader",
-                      "CameraLoader"]:
+                      "CameraLoader",
+                      "RigLoader",
+                      "FBXLoader"]:
             cmds.setAttr(container["objectName"] + ".loader",
                          "ReferenceLoader", type="string")
 
