@@ -140,9 +140,9 @@ class ImportMayaLoader(api.Loader):
 
         message = "Are you sure you want import this"
         state = QtWidgets.QMessageBox.warning(None,
-                                               "Are you sure?",
-                                               message,
-                                               buttons=buttons,
-                                               defaultButton=accept)
+                                              "Are you sure?",
+                                              message,
+                                              buttons=buttons,
+                                              defaultButton=accept)
 
         return state == accept

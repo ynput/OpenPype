@@ -21,7 +21,7 @@ class CollectMatchmovePublish(pyblish.api.InstancePlugin):
 
     label = "Collect Matchmove - SA Publish"
     order = pyblish.api.CollectorOrder
-    family = ["matchmove"]
+    families = ["matchmove"]
     hosts = ["standalonepublisher"]
 
     def process(self, instance):
