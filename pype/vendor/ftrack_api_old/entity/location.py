@@ -526,7 +526,8 @@ class Location(ftrack_api_old.entity.base.Entity):
             for index, resource_identifier in enumerate(resource_identifiers):
                 resource_identifiers[index] = (
                     self.resource_identifier_transformer.decode(
-                        resource_identifier
+                        resource_identifier,
+                        context={'component': components[index]}
                     )
                 )
 

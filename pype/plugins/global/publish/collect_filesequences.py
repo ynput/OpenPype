@@ -101,6 +101,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
         lut_path = None
         slate_frame = None
         families_data = None
+        baked_mov_path = None
         subset = None
         version = None
         frame_start = 0
@@ -427,6 +428,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "name": ext,
                         "ext": "{}".format(ext),
                         "files": list(collection),
+                        "frameStart": start,
+                        "frameEnd": end,
                         "stagingDir": root,
                         "anatomy_template": "render",
                         "fps": fps,

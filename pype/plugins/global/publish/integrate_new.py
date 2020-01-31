@@ -76,6 +76,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "source",
                 "matchmove",
                 "image"
+                "source",
+                "assembly"
                 ]
     exclude_families = ["clip"]
 
@@ -326,8 +328,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 index_frame_start = None
 
                 if repre.get("frameStart"):
-                    frame_start_padding = len(str(
-                        repre.get("frameEnd")))
+                    frame_start_padding = anatomy.templates["render"]["padding"]
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
@@ -402,6 +403,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 self.log.debug("__ dst: {}".format(dst))
 
             representation = {
+                "_id": io.ObjectId(),
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
@@ -444,6 +446,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("__ represNAME: {}".format(rep['name']))
             self.log.debug("__ represPATH: {}".format(rep['published_path']))
         io.insert_many(representations)
+        instance.data["published_representations"] = representations
         # self.log.debug("Representation: {}".format(representations))
         self.log.info("Registered {} items".format(len(representations)))
 

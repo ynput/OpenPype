@@ -11,13 +11,13 @@ class IntegrateCleanComponentData(pyblish.api.InstancePlugin):
     label = 'Clean component data'
     families = ["ftrack"]
     optional = True
-    active = True
+    active = False
 
     def process(self, instance):
 
         for comp in instance.data['representations']:
             self.log.debug('component {}'.format(comp))
-            
+
             if "%" in comp['published_path'] or "#" in comp['published_path']:
                 continue
 

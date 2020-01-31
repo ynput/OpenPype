@@ -49,9 +49,11 @@ class Factory(object):
 
         # Build attributes for class.
         attributes = ftrack_api_old.attribute.Attributes()
-        immutable = schema.get('immutable', [])
+        immutable_properties = schema.get('immutable', [])
+        computed_properties = schema.get('computed', [])
         for name, fragment in schema.get('properties', {}).items():
-            mutable = name not in immutable
+            mutable = name not in immutable_properties
+            computed = name in computed_properties
 
             default = fragment.get('default', ftrack_api_old.symbol.NOT_SET)
             if default == '{uid}':
@@ -62,7 +64,8 @@ class Factory(object):
             if data_type is not ftrack_api_old.symbol.NOT_SET:
 
                 if data_type in (
-                    'string', 'boolean', 'integer', 'number', 'variable'
+                    'string', 'boolean', 'integer', 'number', 'variable',
+                    'object'
                 ):
                     # Basic scalar attribute.
                     if data_type == 'number':
@@ -74,7 +77,7 @@ class Factory(object):
                             data_type = 'datetime'
 
                     attribute = self.create_scalar_attribute(
-                        class_name, name, mutable, default, data_type
+                        class_name, name, mutable, computed, default, data_type
                     )
                     if attribute:
                         attributes.add(attribute)
@@ -139,11 +142,12 @@ class Factory(object):
         return cls
 
     def create_scalar_attribute(
-        self, class_name, name, mutable, default, data_type
+        self, class_name, name, mutable, computed, default, data_type
     ):
         '''Return appropriate scalar attribute instance.'''
         return ftrack_api_old.attribute.ScalarAttribute(
-            name, data_type=data_type, default_value=default, mutable=mutable
+            name, data_type=data_type, default_value=default, mutable=mutable,
+            computed=computed
         )
 
     def create_reference_attribute(self, class_name, name, mutable, reference):

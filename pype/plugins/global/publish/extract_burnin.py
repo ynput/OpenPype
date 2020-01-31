@@ -107,9 +107,9 @@ class ExtractBurnin(pype.api.Extractor):
             # create copy of prep_data for anatomy formatting
             _prep_data = copy.deepcopy(prep_data)
             _prep_data["representation"] = repre["name"]
-            _prep_data["anatomy"] = (
-                anatomy.format_all(_prep_data).get("solved") or {}
-            )
+            filled_anatomy = anatomy.format_all(_prep_data)
+            _prep_data["anatomy"] = filled_anatomy.get_solved()
+
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),
                 "codec": repre.get("codec", []),

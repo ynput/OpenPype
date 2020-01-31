@@ -23,25 +23,43 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
 
         # Collect session
         session = ftrack_api.Session()
+        self.log.debug("Ftrack user: \"{0}\"".format(session.api_user))
         context.data["ftrackSession"] = session
 
         # Collect task
 
-        project = os.environ.get('AVALON_PROJECT', '')
-        asset = os.environ.get('AVALON_ASSET', '')
-        task = os.environ.get('AVALON_TASK', None)
-        self.log.debug(task)
+        project_name = os.environ.get('AVALON_PROJECT', '')
+        asset_name = os.environ.get('AVALON_ASSET', '')
+        task_name = os.environ.get('AVALON_TASK', None)
 
-        if task:
-            result = session.query('Task where\
-                project.full_name is "{0}" and\
-                name is "{1}" and\
-                parent.name is "{2}"'.format(project, task, asset)).one()
-            context.data["ftrackTask"] = result
+        # Find project entity
+        project_query = 'Project where full_name is "{0}"'.format(project_name)
+        self.log.debug("Project query: < {0} >".format(project_query))
+        project_entity = session.query(project_query).one()
+        self.log.debug("Project found: {0}".format(project_entity))
+
+        # Find asset entity
+        entity_query = (
+            'TypedContext where project_id is "{0}"'
+            ' and name is "{1}"'
+        ).format(project_entity["id"], asset_name)
+        self.log.debug("Asset entity query: < {0} >".format(entity_query))
+        asset_entity = session.query(entity_query).one()
+        self.log.debug("Asset found: {0}".format(asset_entity))
+
+        # Find task entity if task is set
+        if task_name:
+            task_query = (
+                'Task where name is "{0}" and parent_id is "{1}"'
+            ).format(task_name, asset_entity["id"])
+            self.log.debug("Task entity query: < {0} >".format(task_query))
+            task_entity = session.query(task_query).one()
+            self.log.debug("Task entity found: {0}".format(task_entity))
+
         else:
-            result = session.query('TypedContext where\
-                project.full_name is "{0}" and\
-                name is "{1}"'.format(project, asset)).one()
-            context.data["ftrackEntity"] = result
+            task_entity = None
+            self.log.warning("Task name is not set.")
 
-        self.log.info(result)
+        context.data["ftrackProject"] = asset_entity
+        context.data["ftrackEntity"] = asset_entity
+        context.data["ftrackTask"] = task_entity
