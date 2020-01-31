@@ -1,8 +1,9 @@
+import re
+import nuke
 import contextlib
 
 from avalon import api, io
-
-import nuke
+from pype.nuke import presets
 
 from pype.api import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -24,7 +25,7 @@ def preserve_trim(node):
     offset_frame = None
     if node['frame_mode'].value() == "start at":
         start_at_frame = node['frame'].value()
-    if node['frame_mode'].value() is "offset":
+    if node['frame_mode'].value() == "offset":
         offset_frame = node['frame'].value()
 
     try:
@@ -122,7 +123,6 @@ class LoadMov(api.Loader):
             repr_cont["subset"],
             repr_cont["representation"])
 
-
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
             # TODO: it might be universal read to img/geo/camera
@@ -139,7 +139,20 @@ class LoadMov(api.Loader):
             read_node["last"].setValue(last)
             read_node["frame_mode"].setValue("start at")
             read_node["frame"].setValue(str(offset_frame))
-            # add additional metadata from the version to imprint to Avalon knob
+
+            # load nuke presets for Read's colorspace
+            read_clrs_presets = presets.get_colorspace_preset().get(
+                "nuke", {}).get("read", {})
+
+            # check if any colorspace presets for read is mathing
+            preset_clrsp = next((read_clrs_presets[k]
+                                 for k in read_clrs_presets
+                                 if bool(re.search(k, file))),
+                                None)
+            if preset_clrsp is not None:
+                read_node["colorspace"].setValue(str(preset_clrsp))
+
+            # add additional metadata from the version to imprint Avalon knob
             add_keys = [
                 "frameStart", "frameEnd", "handles", "source", "author",
                 "fps", "version", "handleStart", "handleEnd"
@@ -147,7 +160,7 @@ class LoadMov(api.Loader):
 
             data_imprint = {}
             for key in add_keys:
-                if key is 'version':
+                if key == 'version':
                     data_imprint.update({
                         key: context["version"]['name']
                     })
