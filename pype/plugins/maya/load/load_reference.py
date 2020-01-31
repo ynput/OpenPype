@@ -1,4 +1,6 @@
 import pype.maya.plugin
+from avalon import api, maya
+from maya import cmds
 import os
 from pypeapp import config
 
@@ -11,8 +13,10 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
                 "animation",
                 "mayaAscii",
                 "setdress",
-                "layout"]
-    representations = ["ma", "abc"]
+                "layout",
+                "camera",
+                "rig"]
+    representations = ["ma", "abc", "fbx"]
     tool_names = ["loader"]
 
     label = "Reference"
@@ -42,7 +46,7 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
                               reference=True,
                               returnNewNodes=True)
 
-            namespace = cmds.referenceQuery(nodes[0], namespace=True)
+            # namespace = cmds.referenceQuery(nodes[0], namespace=True)
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
 
@@ -92,7 +96,39 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             cmds.setAttr(groupName + ".selectHandleY", cy)
             cmds.setAttr(groupName + ".selectHandleZ", cz)
 
+            if data.get("post_process", True):
+                if family == "rig":
+                    self._post_process_rig(name, namespace, context, data)
+
             return newNodes
 
     def switch(self, container, representation):
         self.update(container, representation)
+
+    def _post_process_rig(self, name, namespace, context, data):
+
+        output = next((node for node in self if
+                       node.endswith("out_SET")), None)
+        controls = next((node for node in self if
+                         node.endswith("controls_SET")), None)
+
+        assert output, "No out_SET in rig, this is a bug."
+        assert controls, "No controls_SET in rig, this is a bug."
+
+        # Find the roots amongst the loaded nodes
+        roots = cmds.ls(self[:], assemblies=True, long=True)
+        assert roots, "No root nodes in rig, this is a bug."
+
+        asset = api.Session["AVALON_ASSET"]
+        dependency = str(context["representation"]["_id"])
+
+        self.log.info("Creating subset: {}".format(namespace))
+
+        # Create the animation instance
+        with maya.maintained_selection():
+            cmds.select([output, controls] + roots, noExpand=True)
+            api.create(name=namespace,
+                       asset=asset,
+                       family="animation",
+                       options={"useSelection": True},
+                       data={"dependencies": dependency})
