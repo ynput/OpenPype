@@ -97,7 +97,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameEnd": last_frame - handle_end,
             "version": int(instance.data['version']),
             "colorspace":  node["colorspace"].value(),
-            "families": [instance.data["family"]],
+            "families": ["render"],
             "subset": instance.data["subset"],
             "fps": instance.context.data["fps"]
         }
