@@ -24,7 +24,7 @@ def preserve_trim(node):
     offset_frame = None
     if node['frame_mode'].value() == "start at":
         start_at_frame = node['frame'].value()
-    if node['frame_mode'].value() is "offset":
+    if node['frame_mode'].value() == "offset":
         offset_frame = node['frame'].value()
 
     try:
@@ -85,30 +85,26 @@ class LoadMov(api.Loader):
             containerise,
             viewer_update_and_undo_stop
         )
-
         version = context['version']
         version_data = version.get("data", {})
 
-        orig_first = version_data.get("frameStart", None)
-        orig_last = version_data.get("frameEnd", None)
+        orig_first = version_data.get("frameStart")
+        orig_last = version_data.get("frameEnd")
         diff = orig_first - 1
-        # set first to 1
+
         first = orig_first - diff
         last = orig_last - diff
-        handles = version_data.get("handles", None)
-        handle_start = version_data.get("handleStart", None)
-        handle_end = version_data.get("handleEnd", None)
-        repr_cont = context["representation"]["context"]
 
-        # fix handle start and end if none are available
-        if not handle_start and not handle_end:
-            handle_start = handles
-            handle_end = handles
+        handle_start = version_data.get("handleStart")
+        handle_end = version_data.get("handleEnd")
+
+        colorspace = version_data.get("colorspace")
+        repr_cont = context["representation"]["context"]
 
         # create handles offset (only to last, because of mov)
         last += handle_start + handle_end
         # offset should be with handles so it match orig frame range
-        offset_frame = orig_first + handle_start
+        offset_frame = orig_first - handle_start
 
         # Fallback to asset name when namespace is None
         if namespace is None:
@@ -122,10 +118,8 @@ class LoadMov(api.Loader):
             repr_cont["subset"],
             repr_cont["representation"])
 
-
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
-            # TODO: it might be universal read to img/geo/camera
             read_node = nuke.createNode(
                 "Read",
                 "name {}".format(read_name)
@@ -139,7 +133,11 @@ class LoadMov(api.Loader):
             read_node["last"].setValue(last)
             read_node["frame_mode"].setValue("start at")
             read_node["frame"].setValue(str(offset_frame))
-            # add additional metadata from the version to imprint to Avalon knob
+
+            if colorspace:
+                read_node["colorspace"].setValue(str(colorspace))
+
+            # add additional metadata from the version to imprint Avalon knob
             add_keys = [
                 "frameStart", "frameEnd", "handles", "source", "author",
                 "fps", "version", "handleStart", "handleEnd"
@@ -147,7 +145,7 @@ class LoadMov(api.Loader):
 
             data_imprint = {}
             for key in add_keys:
-                if key is 'version':
+                if key == 'version':
                     data_imprint.update({
                         key: context["version"]['name']
                     })
@@ -186,10 +184,10 @@ class LoadMov(api.Loader):
         )
 
         node = nuke.toNode(container['objectName'])
-        # TODO: prepare also for other Read img/geo/camera
+
         assert node.Class() == "Read", "Must be Read"
 
-        file = api.get_representation_path(representation)
+        file = self.fname.replace("\\", "/")
 
         # Get start frame from version data
         version = io.find_one({
@@ -207,15 +205,17 @@ class LoadMov(api.Loader):
 
         version_data = version.get("data", {})
 
-        orig_first = version_data.get("frameStart", None)
-        orig_last = version_data.get("frameEnd", None)
+        orig_first = version_data.get("frameStart")
+        orig_last = version_data.get("frameEnd")
         diff = orig_first - 1
+
         # set first to 1
         first = orig_first - diff
         last = orig_last - diff
         handles = version_data.get("handles", 0)
         handle_start = version_data.get("handleStart", 0)
         handle_end = version_data.get("handleEnd", 0)
+        colorspace = version_data.get("colorspace")
 
         if first is None:
             log.warning("Missing start frame for updated version"
@@ -231,11 +231,11 @@ class LoadMov(api.Loader):
         # create handles offset (only to last, because of mov)
         last += handle_start + handle_end
         # offset should be with handles so it match orig frame range
-        offset_frame = orig_first + handle_start
+        offset_frame = orig_first - handle_start
 
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
-            node["file"].setValue(file["path"])
+            node["file"].setValue(file)
             log.info("__ node['file']: {}".format(node["file"].value()))
 
         # Set the global in to the start frame of the sequence
@@ -247,19 +247,22 @@ class LoadMov(api.Loader):
         node["frame_mode"].setValue("start at")
         node["frame"].setValue(str(offset_frame))
 
+        if colorspace:
+            node["colorspace"].setValue(str(colorspace))
+
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "frameStart": version_data.get("frameStart"),
-            "frameEnd": version_data.get("frameEnd"),
-            "version": version.get("name"),
+            "frameStart": str(first),
+            "frameEnd": str(last),
+            "version": str(version.get("name")),
+            "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
-            "handles": version_data.get("handles"),
-            "handleStart": version_data.get("handleStart"),
-            "handleEnd": version_data.get("handleEnd"),
-            "fps": version_data.get("fps"),
+            "handleStart": str(handle_start),
+            "handleEnd": str(handle_end),
+            "fps": str(version_data.get("fps")),
             "author": version_data.get("author"),
-            "outputDir": version_data.get("outputDir"),
+            "outputDir": version_data.get("outputDir")
         })
 
         # change color of node

@@ -374,7 +374,7 @@ def create_write_node(name, data, input=None, prenodes=None):
         now_node.setInput(0, prev_node)
 
     # imprinting group node
-    GN = avalon.nuke.imprint(GN, data["avalon"])
+    avalon.nuke.imprint(GN, data["avalon"], tab="Pype")
 
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
