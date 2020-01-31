@@ -428,6 +428,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "name": ext,
                         "ext": "{}".format(ext),
                         "files": list(collection),
+                        "frameStart": start,
+                        "frameEnd": end,
                         "stagingDir": root,
                         "anatomy_template": "render",
                         "fps": fps,
