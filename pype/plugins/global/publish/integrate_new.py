@@ -76,6 +76,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "source",
                 "matchmove",
                 "image"
+                "source",
+                "assembly"
                 ]
     exclude_families = ["clip"]
 
