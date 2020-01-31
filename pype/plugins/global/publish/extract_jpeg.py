@@ -6,7 +6,7 @@ import pype.api
 
 
 class ExtractJpegEXR(pyblish.api.InstancePlugin):
-    """Resolve any dependency issies
+    """Resolve any dependency issues
 
     This plug-in resolves any paths which, if not updated might break
     the published file.
@@ -55,8 +55,8 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             filename = os.path.splitext(input_file)[0]
             if not filename.endswith('.'):
                 filename += "."
-            jpegFile = filename + "jpg"
-            full_output_path = os.path.join(stagingdir, jpegFile)
+            jpeg_file = filename + "jpg"
+            full_output_path = os.path.join(stagingdir, jpeg_file)
 
             self.log.info("output {}".format(full_output_path))
 
@@ -87,9 +87,9 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 instance.data["representations"] = []
 
             representation = {
-                'name': 'jpg',
+                'name': 'thumbnail',
                 'ext': 'jpg',
-                'files': jpegFile,
+                'files': jpeg_file,
                 "stagingDir": stagingdir,
                 "thumbnail": True,
                 "tags": ['thumbnail']

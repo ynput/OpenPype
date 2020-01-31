@@ -19,6 +19,12 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
     families = ["review"]
 
     def process(self, instance):
+
+        if not os.environ.get("AVALON_THUMBNAIL_ROOT"):
+            self.log.info("AVALON_THUMBNAIL_ROOT is not set."
+                          " Skipping thumbnail integration.")
+            return
+
         published_repres = instance.data.get("published_representations")
         if not published_repres:
             self.log.debug(
