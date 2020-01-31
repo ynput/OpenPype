@@ -58,7 +58,7 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             for node in newNodes:
                 try:
                     roots.add(pm.PyNode(node).getAllParents()[-2])
-                except:
+                except:  # noqa: E722
                     pass
             for root in roots:
                 root.setParent(world=True)
