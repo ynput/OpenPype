@@ -1,4 +1,4 @@
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseEvent
 import operator
 
@@ -80,10 +80,10 @@ class NextTaskUpdate(BaseEvent):
                             '>>> [ {} ] updated to [ Ready ]'
                         ).format(path))
                     except Exception as e:
+                        session.rollback()
                         self.log.warning((
                             '!!! [ {} ] status couldnt be set: [ {} ]'
-                        ).format(path, e))
-                        session.rollback()
+                        ).format(path, str(e)), exc_info=True)
 
 
 def register(session, plugins_presets):

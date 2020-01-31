@@ -4,8 +4,9 @@ import argparse
 import json
 import arrow
 import logging
-from pype.vendor import ftrack_api
-from pype.ftrack import BaseAction, get_ca_mongoid
+import ftrack_api
+from pype.ftrack import BaseAction
+from pype.ftrack.lib.avalon_sync import CustAttrIdKey
 from pypeapp import config
 from ftrack_api.exception import NoResultFoundError
 
@@ -171,7 +172,6 @@ class CustomAttributes(BaseAction):
 
     def avalon_mongo_id_attributes(self, session):
         # Attribute Name and Label
-        cust_attr_name = get_ca_mongoid()
         cust_attr_label = 'Avalon/Mongo Id'
 
         # Types that don't need object_type_id
@@ -207,7 +207,7 @@ class CustomAttributes(BaseAction):
         group = self.get_group('avalon')
 
         data = {}
-        data['key'] = cust_attr_name
+        data['key'] = CustAttrIdKey
         data['label'] = cust_attr_label
         data['type'] = custom_attribute_type
         data['default'] = ''

@@ -1,20 +1,18 @@
 import os
 from . import QtCore, QtGui, QtWidgets
-from . import SvgButton
 from . import get_resource
-from avalon import style
+from pypeapp import style
 
 
 class ComponentItem(QtWidgets.QFrame):
-    C_NORMAL = '#777777'
-    C_HOVER = '#ffffff'
-    C_ACTIVE = '#4BB543'
-    C_ACTIVE_HOVER = '#4BF543'
 
     signal_remove = QtCore.Signal(object)
     signal_thumbnail = QtCore.Signal(object)
     signal_preview = QtCore.Signal(object)
     signal_repre_change = QtCore.Signal(object, object)
+
+    preview_text = "PREVIEW"
+    thumbnail_text = "THUMBNAIL"
 
     def __init__(self, parent, main_parent):
         super().__init__()
@@ -55,10 +53,8 @@ class ComponentItem(QtWidgets.QFrame):
         self.icon.setText("")
         self.icon.setScaledContents(True)
 
-        self.btn_action_menu = SvgButton(
-            get_resource('menu.svg'), 22, 22,
-            [self.C_NORMAL, self.C_HOVER],
-            frame_image_info, False
+        self.btn_action_menu = PngButton(
+            name="menu", size=QtCore.QSize(22, 22)
         )
 
         self.action_menu = QtWidgets.QMenu()
@@ -85,7 +81,9 @@ class ComponentItem(QtWidgets.QFrame):
 
         self.file_info.setStyleSheet('padding-left:3px;')
 
-        expanding_sizePolicy.setHeightForWidth(self.name.sizePolicy().hasHeightForWidth())
+        expanding_sizePolicy.setHeightForWidth(
+            self.name.sizePolicy().hasHeightForWidth()
+        )
 
         frame_name_repre = QtWidgets.QFrame(frame)
 
@@ -101,7 +99,8 @@ class ComponentItem(QtWidgets.QFrame):
         layout.addWidget(self.ext, alignment=QtCore.Qt.AlignRight)
 
         frame_name_repre.setSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding, QtWidgets.QSizePolicy.MinimumExpanding
+            QtWidgets.QSizePolicy.MinimumExpanding,
+            QtWidgets.QSizePolicy.MinimumExpanding
         )
 
         # Repre + icons
@@ -124,17 +123,8 @@ class ComponentItem(QtWidgets.QFrame):
 
         frame_icons = QtWidgets.QFrame(frame_repre_icons)
 
-        self.preview = SvgButton(
-            get_resource('preview.svg'), 64, 18,
-            [self.C_NORMAL, self.C_HOVER, self.C_ACTIVE, self.C_ACTIVE_HOVER],
-            frame_icons
-        )
-
-        self.thumbnail = SvgButton(
-            get_resource('thumbnail.svg'), 84, 18,
-            [self.C_NORMAL, self.C_HOVER, self.C_ACTIVE, self.C_ACTIVE_HOVER],
-            frame_icons
-        )
+        self.preview = LightingButton(self.preview_text)
+        self.thumbnail = LightingButton(self.thumbnail_text)
 
         layout = QtWidgets.QHBoxLayout(frame_icons)
         layout.setSpacing(6)
@@ -162,12 +152,7 @@ class ComponentItem(QtWidgets.QFrame):
 
         layout_main.addWidget(frame_middle)
 
-        self.remove = SvgButton(
-            get_resource('trash.svg'), 22, 22,
-            [self.C_NORMAL, self.C_HOVER],
-            frame, False
-        )
-
+        self.remove = PngButton(name="trash", size=QtCore.QSize(22, 22))
         layout_main.addWidget(self.remove)
 
         layout = QtWidgets.QVBoxLayout(self)
@@ -272,16 +257,16 @@ class ComponentItem(QtWidgets.QFrame):
         self.signal_repre_change.emit(self, repre_name)
 
     def is_thumbnail(self):
-        return self.thumbnail.checked
+        return self.thumbnail.isChecked()
 
     def change_thumbnail(self, hover=True):
-        self.thumbnail.change_checked(hover)
+        self.thumbnail.setChecked(hover)
 
     def is_preview(self):
-        return self.preview.checked
+        return self.preview.isChecked()
 
     def change_preview(self, hover=True):
-        self.preview.change_checked(hover)
+        self.preview.setChecked(hover)
 
     def collect_data(self):
         in_files = self.in_data['files']
@@ -309,3 +294,229 @@ class ComponentItem(QtWidgets.QFrame):
             data['fps'] = self.in_data['fps']
 
         return data
+
+
+class LightingButton(QtWidgets.QPushButton):
+    lightingbtnstyle = """
+    QPushButton {
+        font: %(font_size_pt)spt;
+        text-align: center;
+        color: #777777;
+        background-color: transparent;
+        border-width: 1px;
+        border-color: #777777;
+        border-style: solid;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        padding-left: 3px;
+        padding-right: 3px;
+        border-radius: 3px;
+    }
+
+    QPushButton:hover {
+        border-color: #cccccc;
+        color: #cccccc;
+    }
+
+    QPushButton:pressed {
+        border-color: #ffffff;
+        color: #ffffff;
+    }
+
+    QPushButton:disabled {
+        border-color: #3A3939;
+        color: #3A3939;
+    }
+
+    QPushButton:checked {
+        border-color: #4BB543;
+        color: #4BB543;
+    }
+
+    QPushButton:checked:hover {
+        border-color: #4Bd543;
+        color: #4Bd543;
+    }
+
+    QPushButton:checked:pressed {
+        border-color: #4BF543;
+        color: #4BF543;
+    }
+    """
+
+    def __init__(self, text, font_size_pt=8, *args, **kwargs):
+        super(LightingButton, self).__init__(text, *args, **kwargs)
+        self.setStyleSheet(self.lightingbtnstyle % {
+            "font_size_pt": font_size_pt
+        })
+        self.setCheckable(True)
+
+
+class PngFactory:
+    png_names = {
+        "trash": {
+            "normal": QtGui.QIcon(get_resource("trash.png")),
+            "hover": QtGui.QIcon(get_resource("trash_hover.png")),
+            "pressed": QtGui.QIcon(get_resource("trash_pressed.png")),
+            "pressed_hover": QtGui.QIcon(
+                get_resource("trash_pressed_hover.png")
+            ),
+            "disabled": QtGui.QIcon(get_resource("trash_disabled.png"))
+        },
+
+        "menu": {
+            "normal": QtGui.QIcon(get_resource("menu.png")),
+            "hover": QtGui.QIcon(get_resource("menu_hover.png")),
+            "pressed": QtGui.QIcon(get_resource("menu_pressed.png")),
+            "pressed_hover": QtGui.QIcon(
+                get_resource("menu_pressed_hover.png")
+            ),
+            "disabled": QtGui.QIcon(get_resource("menu_disabled.png"))
+        }
+    }
+
+
+class PngButton(QtWidgets.QPushButton):
+    png_button_style = """
+    QPushButton {
+        border: none;
+        background-color: transparent;
+        padding-top: 0px;
+        padding-bottom: 0px;
+        padding-left: 0px;
+        padding-right: 0px;
+    }
+    QPushButton:hover {}
+    QPushButton:pressed {}
+    QPushButton:disabled {}
+    QPushButton:checked {}
+    QPushButton:checked:hover {}
+    QPushButton:checked:pressed {}
+    """
+
+    def __init__(
+        self, name=None, path=None, hover_path=None, pressed_path=None,
+        hover_pressed_path=None, disabled_path=None,
+        size=None, *args, **kwargs
+    ):
+        self._hovered = False
+        self._pressed = False
+        super(PngButton, self).__init__(*args, **kwargs)
+        self.setStyleSheet(self.png_button_style)
+
+        png_dict = {}
+        if name:
+            png_dict = PngFactory.png_names.get(name) or {}
+            if not png_dict:
+                print((
+                    "WARNING: There is not set icon with name \"{}\""
+                    "in PngFactory!"
+                ).format(name))
+
+        ico_normal = png_dict.get("normal")
+        ico_hover = png_dict.get("hover")
+        ico_pressed = png_dict.get("pressed")
+        ico_hover_pressed = png_dict.get("pressed_hover")
+        ico_disabled = png_dict.get("disabled")
+
+        if path:
+            ico_normal = QtGui.QIcon(path)
+        if hover_path:
+            ico_hover = QtGui.QIcon(hover_path)
+
+        if pressed_path:
+            ico_pressed = QtGui.QIcon(hover_path)
+
+        if hover_pressed_path:
+            ico_hover_pressed = QtGui.QIcon(hover_pressed_path)
+
+        if disabled_path:
+            ico_disabled = QtGui.QIcon(disabled_path)
+
+        self.setIcon(ico_normal)
+        if size:
+            self.setIconSize(size)
+            self.setMaximumSize(size)
+
+        self.ico_normal = ico_normal
+        self.ico_hover = ico_hover
+        self.ico_pressed = ico_pressed
+        self.ico_hover_pressed = ico_hover_pressed
+        self.ico_disabled = ico_disabled
+
+    def setDisabled(self, in_bool):
+        super(PngButton, self).setDisabled(in_bool)
+        icon = self.ico_normal
+        if in_bool and self.ico_disabled:
+            icon = self.ico_disabled
+        self.setIcon(icon)
+
+    def enterEvent(self, event):
+        self._hovered = True
+        if not self.isEnabled():
+            return
+        icon = self.ico_normal
+        if self.ico_hover:
+            icon = self.ico_hover
+
+        if self._pressed and self.ico_hover_pressed:
+            icon = self.ico_hover_pressed
+
+        if self.icon() != icon:
+            self.setIcon(icon)
+
+    def mouseMoveEvent(self, event):
+        super(PngButton, self).mouseMoveEvent(event)
+        if self._pressed:
+            mouse_pos = event.pos()
+            hovering = self.rect().contains(mouse_pos)
+            if hovering and not self._hovered:
+                self.enterEvent(event)
+            elif not hovering and self._hovered:
+                self.leaveEvent(event)
+
+    def leaveEvent(self, event):
+        self._hovered = False
+        if not self.isEnabled():
+            return
+        icon = self.ico_normal
+        if self._pressed and self.ico_pressed:
+            icon = self.ico_pressed
+
+        if self.icon() != icon:
+            self.setIcon(icon)
+
+    def mousePressEvent(self, event):
+        self._pressed = True
+        if not self.isEnabled():
+            return
+        icon = self.ico_hover
+        if self.ico_pressed:
+            icon = self.ico_pressed
+
+        if self.ico_hover_pressed:
+            mouse_pos = event.pos()
+            if self.rect().contains(mouse_pos):
+                icon = self.ico_hover_pressed
+
+        if icon is None:
+            icon = self.ico_normal
+
+        if self.icon() != icon:
+            self.setIcon(icon)
+
+    def mouseReleaseEvent(self, event):
+        if not self.isEnabled():
+            return
+        if self._pressed:
+            self._pressed = False
+            mouse_pos = event.pos()
+            if self.rect().contains(mouse_pos):
+                self.clicked.emit()
+
+        icon = self.ico_normal
+        if self._hovered and self.ico_hover:
+            icon = self.ico_hover
+
+        if self.icon() != icon:
+            self.setIcon(icon)

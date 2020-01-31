@@ -7,13 +7,12 @@ import socket
 import argparse
 import atexit
 import time
-from urllib.parse import urlparse
 
-import requests
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack.lib import credentials
-from pype.ftrack.ftrack_server import FtrackServer
-from pype.ftrack.ftrack_server.lib import ftrack_events_mongo_settings
+from pype.ftrack.ftrack_server.lib import (
+    ftrack_events_mongo_settings, check_ftrack_url
+)
 import socket_thread
 
 
@@ -23,36 +22,6 @@ class MongoPermissionsError(Exception):
         if not message:
             message = "Exiting because have issue with acces to MongoDB"
         super().__init__(message)
-
-
-def check_ftrack_url(url, log_errors=True):
-    """Checks if Ftrack server is responding"""
-    if not url:
-        print('ERROR: Ftrack URL is not set!')
-        return None
-
-    url = url.strip('/ ')
-
-    if 'http' not in url:
-        if url.endswith('ftrackapp.com'):
-            url = 'https://' + url
-        else:
-            url = 'https://{0}.ftrackapp.com'.format(url)
-    try:
-        result = requests.get(url, allow_redirects=False)
-    except requests.exceptions.RequestException:
-        if log_errors:
-            print('ERROR: Entered Ftrack URL is not accesible!')
-        return False
-
-    if (result.status_code != 200 or 'FTRACK_VERSION' not in result.headers):
-        if log_errors:
-            print('ERROR: Entered Ftrack URL is not accesible!')
-        return False
-
-    print('DEBUG: Ftrack server {} is accessible.'.format(url))
-
-    return url
 
 
 def check_mongo_url(host, port, log_error=False):
@@ -96,9 +65,8 @@ def validate_credentials(url, user, api):
     except Exception as e:
         print(
             'ERROR: Can\'t log into Ftrack with used credentials:'
-            ' Ftrack server: "{}" // Username: {} // API key: {}'.format(
-            url, user, api
-        ))
+            ' Ftrack server: "{}" // Username: {} // API key: {}'
+        ).format(url, user, api)
         return False
 
     print('DEBUG: Credentials Username: "{}", API key: "{}" are valid.'.format(
@@ -176,9 +144,9 @@ def legacy_server(ftrack_url):
                 ).format(str(max_fail_count), str(wait_time_after_max_fail)))
                 subproc_failed_count += 1
             elif ((
-                    datetime.datetime.now() - subproc_last_failed
-                ).seconds > wait_time_after_max_fail):
-                    subproc_failed_count = 0
+                datetime.datetime.now() - subproc_last_failed
+            ).seconds > wait_time_after_max_fail):
+                subproc_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
         elif subproc.poll() is not None:
@@ -306,9 +274,9 @@ def main_loop(ftrack_url):
                 ).format(str(max_fail_count), str(wait_time_after_max_fail)))
                 storer_failed_count += 1
             elif ((
-                    datetime.datetime.now() - storer_last_failed
-                ).seconds > wait_time_after_max_fail):
-                    storer_failed_count = 0
+                datetime.datetime.now() - storer_last_failed
+            ).seconds > wait_time_after_max_fail):
+                storer_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
         elif not storer_thread.isAlive():
@@ -342,13 +310,13 @@ def main_loop(ftrack_url):
                 processor_failed_count += 1
 
             elif ((
-                    datetime.datetime.now() - processor_last_failed
-                ).seconds > wait_time_after_max_fail):
-                    processor_failed_count = 0
+                datetime.datetime.now() - processor_last_failed
+            ).seconds > wait_time_after_max_fail):
+                processor_failed_count = 0
 
         # If thread failed test Ftrack and Mongo connection
         elif not processor_thread.isAlive():
-            if storer_thread.mongo_error:
+            if processor_thread.mongo_error:
                 raise Exception(
                     "Exiting because have issue with acces to MongoDB"
                 )

@@ -1,10 +1,9 @@
 import os
-import sys
-from pprint import pprint
 import acre
 
 from avalon import api, lib, io
 import pype.api as pype
+from pypeapp import Anatomy
 
 
 class PremierePro(api.Action):

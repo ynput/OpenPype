@@ -4,7 +4,7 @@ import argparse
 import logging
 import json
 
-from pype.vendor import ftrack_api
+import ftrack_api
 from pype.ftrack import BaseAction
 
 
@@ -43,7 +43,7 @@ class ThumbToChildren(BaseAction):
                 'description': 'Push thumbnails to Childrens'
             })
         })
-
+        session.commit()
         try:
             for entity in entities:
                 thumbid = entity['thumbnail_id']
@@ -53,10 +53,11 @@ class ThumbToChildren(BaseAction):
 
             # inform the user that the job is done
             job['status'] = 'done'
-        except Exception:
+        except Exception as exc:
+            session.rollback()
             # fail the job if something goes wrong
             job['status'] = 'failed'
-            raise
+            raise exc
         finally:
             session.commit()
 

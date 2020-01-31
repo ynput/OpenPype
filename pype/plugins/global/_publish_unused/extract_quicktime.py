@@ -1,7 +1,7 @@
 import os
 import pyblish.api
 import subprocess
-from pype.vendor import clique
+import clique
 
 
 class ExtractQuicktimeEXR(pyblish.api.InstancePlugin):

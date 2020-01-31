@@ -24,7 +24,7 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
     label = "Integrate Frames"
     order = pyblish.api.IntegratorOrder
-    families = ["imagesequence", "source"]
+    families = ["imagesequence"]
 
     family_targets = [".frames", ".local", ".review", "imagesequence", "render", "source"]
     exclude_families = ["clip"]
@@ -88,9 +88,11 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
         project = io.find_one({"type": "project"})
 
-        asset = io.find_one({"type": "asset",
-                             "name": ASSET,
-                             "parent": project["_id"]})
+        asset = io.find_one({
+            "type": "asset",
+            "name": ASSET,
+            "parent": project["_id"]
+        })
 
         assert all([project, asset]), ("Could not find current project or "
                                        "asset '%s'" % ASSET)
@@ -98,10 +100,14 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
         subset = self.get_subset(asset, instance)
 
         # get next version
-        latest_version = io.find_one({"type": "version",
-                                      "parent": subset["_id"]},
-                                     {"name": True},
-                                     sort=[("name", -1)])
+        latest_version = io.find_one(
+            {
+                "type": "version",
+                "parent": subset["_id"]
+            },
+            {"name": True},
+            sort=[("name", -1)]
+        )
 
         next_version = 1
         if latest_version is not None:
@@ -251,9 +257,6 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
             self.log.debug("path_to_save: {}".format(path_to_save))
 
-
-
-
             representation = {
                 "schema": "pype:representation-2.0",
                 "type": "representation",
@@ -332,9 +335,11 @@ class IntegrateFrames(pyblish.api.InstancePlugin):
 
     def get_subset(self, asset, instance):
 
-        subset = io.find_one({"type": "subset",
-                              "parent": asset["_id"],
-                              "name": instance.data["subset"]})
+        subset = io.find_one({
+            "type": "subset",
+            "parent": asset["_id"],
+            "name": instance.data["subset"]
+        })
 
         if subset is None:
             subset_name = instance.data["subset"]

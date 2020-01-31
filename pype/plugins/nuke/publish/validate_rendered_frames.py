@@ -28,7 +28,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["render.no"]
+    families = ["render"]
 
     label = "Validate rendered frame"
     hosts = ["nuke", "nukestudio"]
@@ -41,7 +41,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             if not repre.get('files'):
                 msg = ("no frames were collected, "
                        "you need to render them")
-                self.log.warning(msg)
+                self.log.error(msg)
                 raise ValidationException(msg)
 
             collections, remainder = clique.assemble(repre["files"])
@@ -75,6 +75,9 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             self.log.info(
                 'len(collection.indexes): {}'.format(collected_frames_len)
             )
+
+            if "slate" in instance.data["families"]:
+                collected_frames_len -= 1
 
             assert (collected_frames_len == frame_length), (
                 "{} missing frames. Use repair to render all frames"

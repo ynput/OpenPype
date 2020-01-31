@@ -7,7 +7,7 @@ class LinkAsGroup(api.Loader):
     """Copy the published file to be pasted at the desired location"""
 
     representations = ["nk"]
-    families = ["workfile"]
+    families = ["workfile", "nukenodes"]
 
     label = "Load Precomp"
     order = 0
@@ -63,8 +63,6 @@ class LinkAsGroup(api.Loader):
         colorspace = context["version"]["data"].get("colorspace", None)
         self.log.info("colorspace: {}\n".format(colorspace))
 
-        # ['version', 'file', 'reading', 'output', 'useOutput']
-
         P["name"].setValue("{}_{}".format(name, namespace))
         P["useOutput"].setValue(True)
 
@@ -74,14 +72,15 @@ class LinkAsGroup(api.Loader):
                       if n.Class() == "Group"
                       if get_avalon_knob_data(n)]
 
-            # create panel for selecting output
-            panel_choices = " ".join(writes)
-            panel_label = "Select write node for output"
-            p = nuke.Panel("Select Write Node")
-            p.addEnumerationPulldown(
-                panel_label, panel_choices)
-            p.show()
-            P["output"].setValue(p.value(panel_label))
+            if writes:
+                # create panel for selecting output
+                panel_choices = " ".join(writes)
+                panel_label = "Select write node for output"
+                p = nuke.Panel("Select Write Node")
+                p.addEnumerationPulldown(
+                    panel_label, panel_choices)
+                p.show()
+                P["output"].setValue(p.value(panel_label))
 
         P["tile_color"].setValue(0xff0ff0ff)
 

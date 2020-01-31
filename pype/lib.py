@@ -1,16 +1,12 @@
 import os
 import re
 import logging
-import importlib
 import itertools
 import contextlib
 import subprocess
 import inspect
 
-from .vendor import pather
-from .vendor.pather.error import ParseError
-
-import avalon.io as io
+from avalon import io
 import avalon.api
 import avalon
 
@@ -18,21 +14,38 @@ log = logging.getLogger(__name__)
 
 
 # Special naming case for subprocess since its a built-in method.
-def _subprocess(args):
+def _subprocess(*args, **kwargs):
     """Convenience method for getting output errors for subprocess."""
 
-    proc = subprocess.Popen(
-        args,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        stdin=subprocess.PIPE,
-        env=os.environ
-    )
+    # make sure environment contains only strings
+    if not kwargs.get("env"):
+        filtered_env = {k: str(v) for k, v in os.environ.items()}
+    else:
+        filtered_env = {k: str(v) for k, v in kwargs.get("env").items()}
 
-    output = proc.communicate()[0]
+    # set overrides
+    kwargs['stdout'] = kwargs.get('stdout', subprocess.PIPE)
+    kwargs['stderr'] = kwargs.get('stderr', subprocess.STDOUT)
+    kwargs['stdin'] = kwargs.get('stdin', subprocess.PIPE)
+    kwargs['env'] = filtered_env
+
+    proc = subprocess.Popen(*args, **kwargs)
+
+    output, error = proc.communicate()
+
+    if output:
+        output = output.decode("utf-8")
+        output += "\n"
+        for line in output.strip().split("\n"):
+            log.info(line)
+
+    if error:
+        error = error.decode("utf-8")
+        error += "\n"
+        for line in error.strip().split("\n"):
+            log.error(line)
 
     if proc.returncode != 0:
-        log.error(output)
         raise ValueError("\"{}\" was not successful: {}".format(args, output))
     return output
 
@@ -183,9 +196,13 @@ def any_outdated():
         if representation in checked:
             continue
 
-        representation_doc = io.find_one({"_id": io.ObjectId(representation),
-                                          "type": "representation"},
-                                         projection={"parent": True})
+        representation_doc = io.find_one(
+            {
+                "_id": io.ObjectId(representation),
+                "type": "representation"
+            },
+            projection={"parent": True}
+        )
         if representation_doc and not is_latest(representation_doc):
             return True
         elif not representation_doc:
@@ -295,27 +312,38 @@ def switch_item(container,
             representation_name = representation["name"]
 
     # Find the new one
-    asset = io.find_one({"name": asset_name, "type": "asset"})
+    asset = io.find_one({
+        "name": asset_name,
+        "type": "asset"
+    })
     assert asset, ("Could not find asset in the database with the name "
                    "'%s'" % asset_name)
 
-    subset = io.find_one({"name": subset_name,
-                          "type": "subset",
-                          "parent": asset["_id"]})
+    subset = io.find_one({
+        "name": subset_name,
+        "type": "subset",
+        "parent": asset["_id"]
+    })
     assert subset, ("Could not find subset in the database with the name "
                     "'%s'" % subset_name)
 
-    version = io.find_one({"type": "version",
-                           "parent": subset["_id"]},
-                          sort=[('name', -1)])
+    version = io.find_one(
+        {
+            "type": "version",
+            "parent": subset["_id"]
+        },
+        sort=[('name', -1)]
+    )
 
     assert version, "Could not find a version for {}.{}".format(
         asset_name, subset_name
     )
 
-    representation = io.find_one({"name": representation_name,
-                                  "type": "representation",
-                                  "parent": version["_id"]})
+    representation = io.find_one({
+        "name": representation_name,
+        "type": "representation",
+        "parent": version["_id"]}
+    )
 
     assert representation, ("Could not find representation in the database with"
                             " the name '%s'" % representation_name)
@@ -353,7 +381,10 @@ def get_asset(asset_name=None):
     if not asset_name:
         asset_name = avalon.api.Session["AVALON_ASSET"]
 
-    asset_document = io.find_one({"name": asset_name, "type": "asset"})
+    asset_document = io.find_one({
+        "name": asset_name,
+        "type": "asset"
+    })
     if not asset_document:
         raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
 
@@ -525,8 +556,7 @@ def get_subsets(asset_name,
     from avalon import io
 
     # query asset from db
-    asset_io = io.find_one({"type": "asset",
-                            "name": asset_name})
+    asset_io = io.find_one({"type": "asset", "name": asset_name})
 
     # check if anything returned
     assert asset_io, "Asset not existing. \
@@ -550,19 +580,25 @@ def get_subsets(asset_name,
     # Process subsets
     for subset in subsets:
         if not version:
-            version_sel = io.find_one({"type": "version",
-                                       "parent": subset["_id"]},
-                                      sort=[("name", -1)])
+            version_sel = io.find_one(
+                {
+                    "type": "version",
+                    "parent": subset["_id"]
+                },
+                sort=[("name", -1)]
+            )
         else:
             assert isinstance(version, int), "version needs to be `int` type"
-            version_sel = io.find_one({"type": "version",
-                                       "parent": subset["_id"],
-                                       "name": int(version)})
+            version_sel = io.find_one({
+                "type": "version",
+                "parent": subset["_id"],
+                "name": int(version)
+            })
 
         find_dict = {"type": "representation",
                      "parent": version_sel["_id"]}
 
-        filter_repr = {"$or": [{"name": repr} for repr in representations]}
+        filter_repr = {"name": {"$in": representations}}
 
         find_dict.update(filter_repr)
         repres_out = [i for i in io.find(find_dict)]
@@ -572,3 +608,43 @@ def get_subsets(asset_name,
                                            "representaions": repres_out}
 
     return output_dict
+
+
+class CustomNone:
+    """Created object can be used as custom None (not equal to None).
+
+    WARNING: Multiple created objects are not equal either.
+    Exmple:
+        >>> a = CustomNone()
+        >>> a == None
+        False
+        >>> b = CustomNone()
+        >>> a == b
+        False
+        >>> a == a
+        True
+    """
+
+    def __init__(self):
+        """Create uuid as identifier for custom None."""
+        import uuid
+        self.identifier = str(uuid.uuid4())
+
+    def __bool__(self):
+        """Return False (like default None)."""
+        return False
+
+    def __eq__(self, other):
+        """Equality is compared by identifier value."""
+        if type(other) == type(self):
+            if other.identifier == self.identifier:
+                return True
+        return False
+
+    def __str__(self):
+        """Return value of identifier when converted to string."""
+        return self.identifier
+
+    def __repr__(self):
+        """Representation of custom None."""
+        return "<CustomNone-{}>".format(str(self.identifier))
