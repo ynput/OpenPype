@@ -1,11 +1,9 @@
 import re
 import os
 import types
+from abc import ABC, abstractmethod
 
 from maya import cmds
-from maya import OpenMaya as om
-import maya.aovs as aovs
-import pymel.core as pm
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
 import pyblish.api
@@ -19,7 +17,8 @@ R_FRAME_RANGE = re.compile(r'^(?P<sf>(-?)\d+)-(?P<ef>(-?)\d+)$')
 R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
 R_LAYER_TOKEN = re.compile(
     r'.*%l.*|.*<layer>.*|.*<renderlayer>.*', re.IGNORECASE)
-R_AOV_TOKEN = re.compile(r'.*%l.*|.*<aov>.*|.*<renderpass>.*', re.IGNORECASE)
+R_AOV_TOKEN = re.compile(r'.*%a.*|.*<aov>.*|.*<renderpass>.*', re.IGNORECASE)
+R_SUBSTITUTE_AOV_TOKEN = re.compile(r'%a|<aov>|<renderpass>', re.IGNORECASE)
 R_SUBSTITUTE_LAYER_TOKEN = re.compile(
     r'%l|<layer>|<renderlayer>', re.IGNORECASE)
 R_SUBSTITUTE_CAMERA_TOKEN = re.compile(r'%c|<camera>', re.IGNORECASE)
@@ -42,18 +41,6 @@ ImagePrefixes = {
     'redshift': 'defaultRenderGlobals.imageFilePrefix'
 }
 
-# Arnold AOV driver extension mapping
-# Is there a better way?
-aiDriverExtension = {
-    'jpeg': 'jpg',
-    'exr': 'exr',
-    'deepexr': 'exr',
-    'png': 'png',
-    'tiff': 'tif',
-    'mtoa_shaders': 'ass',  # TODO: research what those last two should be
-    'maya': ''
-}
-
 
 class CollectMayaRender(pyblish.api.ContextPlugin):
     """Gather all publishable render layers from renderSetup"""
@@ -62,132 +49,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     hosts = ["maya"]
     label = "Collect Render Layers"
     families = ["render"]
-
-    def _get_expected_files(self, layer):
-        #                      ______________________________________________
-        # ____________________/ ____________________________________________/
-        # 1 -  get scene name  /__________________/
-        # ____________________/
-        scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
-        scene_name, _ = os.path.splitext(scene_basename)
-
-        #                      ______________________________________________
-        # ____________________/ ____________________________________________/
-        # 2 -  detect renderer /__________________/
-        # ____________________/
-        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
-        if renderer.startswith('renderman'):
-            renderer = 'renderman'
-
-        #                    ________________________________________________
-        # __________________/ ______________________________________________/
-        # 3 -  image prefix  /__________________/
-        # __________________/
-        try:
-            file_prefix = cmds.getAttr(ImagePrefixes[renderer])
-        except KeyError:
-            raise RuntimeError("Unsupported renderer {}".format(renderer))
-
-        #                    ________________________________________________
-        # __________________/ ______________________________________________/
-        # 4 -  get renderabe cameras_____________/
-        # __________________/
-        cam_parents = [cmds.listRelatives(x, ap=True)[-1]
-                       for x in cmds.ls(cameras=True)]
-
-        self.log.info("cameras in scene: %s" % ", ".join(cam_parents))
-
-        renderable_cameras = []
-        for cam in cam_parents:
-            renderable = False
-            if self.maya_is_true(cmds.getAttr('{}.renderable'.format(cam))):
-                renderable = True
-
-            for override in self.get_layer_overrides(
-                    '{}.renderable'.format(cam), 'rs_{}'.format(layer)):
-                renderable = self.maya_is_true(override)
-
-            if renderable:
-                renderable_cameras.append(cam)
-
-        self.log.info("renderable cameras: %s" % ", ".join(renderable_cameras))
-
-        #                    ________________________________________________
-        # __________________/ ______________________________________________/
-        # 5 -  get AOVs      /_____________/
-        # __________________/
-
-        enabled_aovs = []
-
-        if renderer == "arnold":
-
-            if (cmds.getAttr('defaultArnoldRenderOptions.aovMode') and
-                    not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):
-                # AOVs are set to be rendered separately. We should expect
-                # <RenderPass> token in path.
-                mergeAOVs = False
-            else:
-                mergeAOVs = True
-
-            if not mergeAOVs:
-                ai_aovs = [n for n in cmds.ls(type='aiAOV')]
-
-                for aov in ai_aovs:
-                    enabled = self.maya_is_true(
-                        cmds.getAttr('{}.enabled'.format(aov)))
-                    ai_driver = cmds.listConnections(
-                        '{}.outputs'.format(aov))[0]
-                    ai_translator = cmds.getAttr(
-                        '{}.aiTranslator'.format(ai_driver))
-                    try:
-                        aov_ext = aiDriverExtension[ai_translator]
-                    except KeyError:
-                        msg = ('Unrecognized arnold '
-                               'drive format for AOV - {}').format(
-                            cmds.getAttr('{}.name'.format(aov))
-                        )
-                        self.log.error(msg)
-                        raise RuntimeError(msg)
-
-                    for override in self.get_layer_overrides(
-                            '{}.enabled'.format(aov), 'rs_{}'.format(layer)):
-                        enabled = self.maya_is_true(override)
-                    if enabled:
-                        enabled_aovs.append((aov, aov_ext))
-
-                self.log.info("enabled aovs: %s" % ", ".join(
-                    [cmds.getAttr('%s.name' % (n,)) for n in enabled_aovs]))
-
-        elif renderer == "vray":
-            # todo: implement vray aovs
-            pass
-
-        elif renderer == "redshift":
-            # todo: implement redshift aovs
-            pass
-
-        elif renderer == "mentalray":
-            # todo: implement mentalray aovs
-            pass
-
-        elif renderer == "renderman":
-            # todo: implement renderman aovs
-            pass
-
-        mappings = (
-            (R_SUBSTITUTE_SCENE_TOKEN, scene_name),
-            (R_SUBSTITUTE_LAYER_TOKEN, layer),
-            (R_SUBSTITUTE_CAMERA_TOKEN, camera),
-        )
-
-        # if we have <camera> token in prefix path we'll expect output for
-        # every renderable camera in layer.
-
-
-
-        for regex, value in mappings:
-            file_prefix = re.sub(regex, value, file_prefix)
-
 
     def process(self, context):
         render_instance = None
@@ -249,30 +110,15 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             layer_name = "rs_{}".format(expected_layer_name)
 
             # collect all frames we are expecting to be rendered
-            files = cmds.renderSettings(fp=True, fin=True, lin=True,
-                                        lut=True, lyr=expected_layer_name)
+            renderer = cmds.getAttr(
+                'defaultRenderGlobals.currentRenderer').lower()
+            # handle various renderman names
+            if renderer.startswith('renderman'):
+                renderer = 'renderman'
 
-            if len(files) == 1:
-                # if last file is not specified, maya is not set for animation
-                pass
-            else:
-                # get frame position and padding
-
-                # get extension
-                re.search(r'\.(\w+)$', files[0])
-
-                # find <RenderPass> token. If no AOVs are specified, assume
-                # <RenderPass> is 'beauty'
-                render_passes = ['beauty']
-                if pm.getAttr('defaultRenderGlobals.currentRenderer') == 'arnold':  # noqa: E501
-                    # arnold is our renderer
-                    for node in cmd.ls(type="aiAOV"):
-                        render_pass = node.split('_')[1]
-
-
-
-
-
+            # return all expected files for all cameras and aovs in given
+            # frame range
+            exp_files = ExpectedFiles().get(renderer, layer_name)
 
             # Get layer specific settings, might be overrides
             data = {
@@ -298,7 +144,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
-                "source": filepath
+                "source": filepath,
+                "expectedFiles": exp_files
             }
 
             # Apply each user defined attribute as data
@@ -432,7 +279,147 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                         if node_name == layer:
                             yield cmds.getAttr(attr_name)
 
-    def _maya_is_true(self, attr_val):
+
+class ExpectedFiles:
+
+    def get(renderer, layer):
+        if renderer.lower() == 'arnold':
+            return ExpectedFilesArnold(layer).get_files()
+        elif renderer.lower() == 'vray':
+            return ExpectedFilesVray(layer).get_files()
+        elif renderer.lower() == 'redshift':
+            return ExpectedFilesRedshift(layer).get_files()
+        elif renderer.lower() == 'mentalray':
+            renderer.ExpectedFilesMentalray(layer).get_files()
+        elif renderer.lower() == 'renderman':
+            renderer.ExpectedFilesRenderman(layer).get_files()
+        else:
+            raise UnsupportedRendererException(
+                "unsupported {}".format(renderer))
+
+
+class AExpectedFiles(ABC):
+
+    renderer = None
+    layer = None
+
+    def __init__(self, layer):
+        self.layer = layer
+
+    @abstractmethod
+    def get_aovs(self):
+        pass
+
+    def get_files(self):
+        #                      ______________________________________________
+        # ____________________/ ____________________________________________/
+        # 1 -  get scene name  /__________________/
+        # ____________________/
+        scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
+        scene_name, _ = os.path.splitext(scene_basename)
+
+        #                      ______________________________________________
+        # ____________________/ ____________________________________________/
+        # 2 -  detect renderer /__________________/
+        # ____________________/
+        renderer = self.renderer
+
+        #                    ________________________________________________
+        # __________________/ ______________________________________________/
+        # 3 -  image prefix  /__________________/
+        # __________________/
+        try:
+            file_prefix = cmds.getAttr(ImagePrefixes[renderer])
+        except KeyError:
+            raise UnsupportedRendererException(
+                "Unsupported renderer {}".format(renderer))
+
+        if not file_prefix:
+            raise RuntimeError("Image prefix not set")
+
+        default_ext = cmds.getAttr('defaultRenderGlobals.imfPluginKey')
+
+        #                    ________________________________________________
+        # __________________/ ______________________________________________/
+        # 4 -  get renderable cameras_____________/
+        # __________________/
+
+        renderable_cameras = self.get_renderable_cameras()
+        #                    ________________________________________________
+        # __________________/ ______________________________________________/
+        # 5 -  get AOVs      /____________________/
+        # __________________/
+
+        enabled_aovs = self.get_aovs()
+
+        # if we have <camera> token in prefix path we'll expect output for
+        # every renderable camera in layer.
+
+        expected_files = []
+        start_frame = int(self.get_render_attribute('startFrame'))
+        end_frame = int(self.get_render_attribute('endFrame'))
+        frame_step = int(self.get_render_attribute('byFrameStep'))
+        padding = int(self.get_render_attribute('extensionPadding'))
+
+        resolved_path = file_prefix
+        for cam in renderable_cameras:
+            if enabled_aovs:
+                for aov in enabled_aovs:
+
+                    mappings = (
+                        (R_SUBSTITUTE_SCENE_TOKEN, scene_name),
+                        (R_SUBSTITUTE_LAYER_TOKEN, self.layer),
+                        (R_SUBSTITUTE_CAMERA_TOKEN, cam),
+                        (R_SUBSTITUTE_AOV_TOKEN, aov[0])
+                    )
+
+                    for regex, value in mappings:
+                        file_prefix = re.sub(regex, value, file_prefix)
+
+                    for frame in range(
+                            int(start_frame), int(end_frame), int(frame_step)):
+                        expected_files.append(
+                            '{}.{}.{}'.format(file_prefix,
+                                              str(frame).rjust(padding, "0"),
+                                              aov[1]))
+                    file_prefix = resolved_path
+            else:
+                mappings = (
+                    (R_SUBSTITUTE_SCENE_TOKEN, scene_name),
+                    (R_SUBSTITUTE_LAYER_TOKEN, self.layer),
+                    (R_SUBSTITUTE_CAMERA_TOKEN, cam)
+                )
+
+                for regex, value in mappings:
+                    file_prefix = re.sub(regex, value, file_prefix)
+
+                for frame in range(
+                        int(start_frame), int(end_frame), int(frame_step)):
+                    expected_files.append(
+                        '{}.{}.{}'.format(file_prefix,
+                                          str(frame).rjust(padding, "0"),
+                                          default_ext))
+
+        return expected_files
+
+    def get_renderable_cameras(self):
+        cam_parents = [cmds.listRelatives(x, ap=True)[-1]
+                       for x in cmds.ls(cameras=True)]
+
+        renderable_cameras = []
+        for cam in cam_parents:
+            renderable = False
+            if self.maya_is_true(cmds.getAttr('{}.renderable'.format(cam))):
+                renderable = True
+
+            for override in self.get_layer_overrides(
+                    '{}.renderable'.format(cam), self.layer):
+                renderable = self.maya_is_true(override)
+
+            if renderable:
+                renderable_cameras.append(cam)
+
+    def maya_is_true(self, attr_val):
         """
         Whether a Maya attr evaluates to True.
         When querying an attribute value from an ambiguous object the
@@ -445,3 +432,166 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             return any(attr_val)
         else:
             return bool(attr_val)
+
+
+class ExpectedFilesArnold(AExpectedFiles):
+
+    # Arnold AOV driver extension mapping
+    # Is there a better way?
+    aiDriverExtension = {
+        'jpeg': 'jpg',
+        'exr': 'exr',
+        'deepexr': 'exr',
+        'png': 'png',
+        'tiff': 'tif',
+        'mtoa_shaders': 'ass',  # TODO: research what those last two should be
+        'maya': ''
+    }
+
+    def __init__(self, layer):
+        super(self).__init__(layer)
+        self.renderer = 'arnold'
+
+    def _get_aovs(self):
+        enabled_aovs = []
+        if not (cmds.getAttr('defaultArnoldRenderOptions.aovMode')
+                and not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):
+            # AOVs are merged in mutli-channel file
+            return enabled_aovs
+
+        # AOVs are set to be rendered separately. We should expect
+        # <RenderPass> token in path.
+
+        ai_aovs = [n for n in cmds.ls(type='aiAOV')]
+
+        for aov in ai_aovs:
+            enabled = self.maya_is_true(
+                cmds.getAttr('{}.enabled'.format(aov)))
+            ai_driver = cmds.listConnections(
+                '{}.outputs'.format(aov))[0]
+            ai_translator = cmds.getAttr(
+                '{}.aiTranslator'.format(ai_driver))
+            try:
+                aov_ext = self.aiDriverExtension[ai_translator]
+            except KeyError:
+                msg = ('Unrecognized arnold '
+                       'driver format for AOV - {}').format(
+                    cmds.getAttr('{}.name'.format(aov))
+                )
+                raise AOVError(msg)
+
+            for override in self.get_layer_overrides(
+                    '{}.enabled'.format(aov), self.layer):
+                enabled = self.maya_is_true(override)
+            if enabled:
+                enabled_aovs.append(
+                    (
+                        cmds.getAttr('%s.name' % aov),
+                        aov_ext
+                    )
+                )
+        return enabled_aovs
+
+
+class ExpectedFilesVray(AExpectedFiles):
+
+    def __init__(self, layer):
+        super(self).__init__(layer)
+        self.renderer = 'vray'
+
+    def _get_aovs(self):
+
+        default_ext = cmds.getAttr('defaultRenderGlobals.imfPluginKey')
+        enabled_aovs = []
+        vr_aovs = [n for n in cmds.ls(
+            type=["VRayRenderElement", "VRayRenderElementSet"])]
+
+        # todo: find out how to detect multichannel exr for vray
+        for aov in vr_aovs:
+            enabled = self.maya_is_true(
+                cmds.getAttr('{}.enabled'.format(aov)))
+            for override in self.get_layer_overrides(
+                    '{}.enabled'.format(aov), 'rs_{}'.format(self.layer)):
+                enabled = self.maya_is_true(override)
+
+            if enabled:
+                # todo: find how vray set format for AOVs
+                enabled_aovs.append(
+                    (
+                        self._get_vray_aov_name(aov),
+                        default_ext)
+                    )
+        return enabled_aovs
+
+    def _get_vray_aov_name(self, node):
+
+        # Get render element pass type
+        vray_node_attr = next(attr for attr in cmds.listAttr(node)
+                              if attr.startswith("vray_name"))
+        pass_type = vray_node_attr.rsplit("_", 1)[-1]
+
+        # Support V-Ray extratex explicit name (if set by user)
+        if pass_type == "extratex":
+            explicit_attr = "{}.vray_explicit_name_extratex".format(node)
+            explicit_name = cmds.getAttr(explicit_attr)
+            if explicit_name:
+                return explicit_name
+
+        # Node type is in the attribute name but we need to check if value
+        # of the attribute as it can be changed
+        return cmds.getAttr("{}.{}".format(node, vray_node_attr))
+
+
+class ExpectedFilesRedshift(AExpectedFiles):
+
+    def __init__(self, layer):
+        super(self).__init__(layer)
+        self.renderer = 'redshift'
+
+    def _get_aovs(self):
+        enabled_aovs = []
+        default_ext = cmds.getAttr('defaultRenderGlobals.imfPluginKey')
+        rs_aovs = [n for n in cmds.ls(type='RedshiftAOV')]
+
+        # todo: find out how to detect multichannel exr for redshift
+        for aov in rs_aovs:
+            enabled = self.maya_is_true(
+                cmds.getAttr('{}.enabled'.format(aov)))
+            for override in self.get_layer_overrides(
+                    '{}.enabled'.format(aov), self.layer):
+                enabled = self.maya_is_true(override)
+
+            if enabled:
+                # todo: find how redshift set format for AOVs
+                enabled_aovs.append(
+                    (
+                        cmds.getAttr('%s.name' % aov),
+                        default_ext
+                    )
+                )
+
+        return enabled_aovs
+
+
+class ExpectedFilesRenderman(AExpectedFiles):
+
+    def __init__(self, layer):
+        raise UnimplementedRendererException('Renderman not implemented')
+
+
+class ExpectedFilesMentalray(AExpectedFiles):
+
+    def __init__(self, layer):
+        raise UnimplementedRendererException('Mentalray not implemented')
+
+
+class AOVError(Exception):
+    pass
+
+
+class UnsupportedRendererException(Exception):
+    pass
+
+
+class UnimplementedRendererException(Exception):
+    pass
