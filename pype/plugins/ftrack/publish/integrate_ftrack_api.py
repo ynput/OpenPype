@@ -389,7 +389,7 @@ class IntegrateFtrackApi(pyblish.api.InstancePlugin):
                     six.reraise(tp, value, tb)
 
             if assetversion_entity not in used_asset_versions:
-                used_asset_versions.append(assettype_entity)
+                used_asset_versions.append(assetversion_entity)
 
         asset_versions_key = "ftrackIntegratedAssetVersions"
         if asset_versions_key not in instance.data:
