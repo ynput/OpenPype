@@ -53,8 +53,7 @@ class SocketThread(threading.Thread):
         )
 
         self.subproc = subprocess.Popen(
-            [sys.executable, self.filepath, "-port", str(self.port)],
-            stdout=subprocess.PIPE
+            [sys.executable, self.filepath, "-port", str(self.port)]
         )
 
         # Listen for incoming connections
@@ -116,11 +115,6 @@ class SocketThread(threading.Thread):
                 if self.subproc.poll() is None:
                     self.subproc.terminate()
 
-                lines = self.subproc.stdout.readlines()
-                if lines:
-                    print("*** Socked Thread stdout ***")
-                    for line in lines:
-                        os.write(1, line)
                 self.finished = True
 
     def get_data_from_con(self, connection):
