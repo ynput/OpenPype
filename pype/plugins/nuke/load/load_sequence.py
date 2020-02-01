@@ -95,7 +95,6 @@ class LoadSequence(api.Loader):
 
         self.first_frame = int(nuke.root()["first_frame"].getValue())
         self.handle_start = version_data.get("handleStart", 0)
-        self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
 
         first = version_data.get("frameStart", None)
@@ -110,18 +109,16 @@ class LoadSequence(api.Loader):
 
         file = self.fname.replace("\\", "/")
 
-        log.info("file: {}\n".format(self.fname))
-
         repr_cont = context["representation"]["context"]
-        read_name = "Read_{0}_{1}_{2}".format(
-                                        repr_cont["asset"],
-                                        repr_cont["subset"],
-                                        repr_cont["representation"])
-
         if "#" not in file:
             frame = repr_cont.get("frame")
             padding = len(frame)
             file = file.replace(frame, "#"*padding)
+
+        read_name = "Read_{0}_{1}_{2}".format(
+                                        repr_cont["asset"],
+                                        repr_cont["subset"],
+                                        repr_cont["representation"])
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
@@ -132,8 +129,8 @@ class LoadSequence(api.Loader):
             r["file"].setValue(file)
 
             # Set colorspace defined in version data
-            colorspace = context["version"]["data"].get("colorspace", None)
-            if colorspace is not None:
+            colorspace = context["version"]["data"].get("colorspace")
+            if colorspace:
                 r["colorspace"].setValue(str(colorspace))
 
             # load nuke presets for Read's colorspace
@@ -224,16 +221,20 @@ class LoadSequence(api.Loader):
         """
 
         from avalon.nuke import (
-            ls_img_sequence,
             update_container
         )
 
         node = nuke.toNode(container['objectName'])
-        # TODO: prepare also for other Read img/geo/camera
+
         assert node.Class() == "Read", "Must be Read"
 
-        path = api.get_representation_path(representation)
-        file = ls_img_sequence(path)
+        repr_cont = representation["context"]
+        file = self.fname.replace("\\", "/")
+
+        if "#" not in file:
+            frame = repr_cont.get("frame")
+            padding = len(frame)
+            file = file.replace(frame, "#"*padding)
 
         # Get start frame from version data
         version = io.find_one({
@@ -255,8 +256,8 @@ class LoadSequence(api.Loader):
         self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
 
-        first = version_data.get("frameStart", None)
-        last = version_data.get("frameEnd", None)
+        first = version_data.get("frameStart")
+        last = version_data.get("frameEnd")
 
         if first is None:
             log.warning("Missing start frame for updated version"
@@ -269,7 +270,7 @@ class LoadSequence(api.Loader):
 
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
-            node["file"].setValue(file["path"])
+            node["file"].setValue(file)
             log.info("__ node['file']: {}".format(node["file"].value()))
 
         # Set the global in to the start frame of the sequence
@@ -282,14 +283,14 @@ class LoadSequence(api.Loader):
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "frameStart": version_data.get("frameStart"),
-            "frameEnd": version_data.get("frameEnd"),
-            "version": version.get("name"),
+            "frameStart": str(first),
+            "frameEnd": str(last),
+            "version": str(version.get("name")),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
-            "handleStart": version_data.get("handleStart"),
-            "handleEnd": version_data.get("handleEnd"),
-            "fps": version_data.get("fps"),
+            "handleStart": str(self.handle_start),
+            "handleEnd": str(self.handle_end),
+            "fps": str(version_data.get("fps")),
             "author": version_data.get("author"),
             "outputDir": version_data.get("outputDir"),
         })
