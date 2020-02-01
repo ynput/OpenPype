@@ -109,12 +109,12 @@ class LoadSequence(api.Loader):
 
         file = self.fname.replace("\\", "/")
 
+        repr_cont = context["representation"]["context"]
         if "#" not in file:
             frame = repr_cont.get("frame")
             padding = len(frame)
             file = file.replace(frame, "#"*padding)
 
-        repr_cont = context["representation"]["context"]
         read_name = "Read_{0}_{1}_{2}".format(
                                         repr_cont["asset"],
                                         repr_cont["subset"],
