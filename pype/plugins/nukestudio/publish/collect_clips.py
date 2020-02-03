@@ -17,7 +17,7 @@ class CollectClips(api.ContextPlugin):
             self.log.debug("Created `assetsShared` in context")
             context.data["assetsShared"] = dict()
 
-        projectdata = context.data["projectData"]
+        projectdata = context.data["projectEntity"]["data"]
         version = context.data.get("version", "001")
         sequence = context.data.get("activeSequence")
         selection = context.data.get("selection")
