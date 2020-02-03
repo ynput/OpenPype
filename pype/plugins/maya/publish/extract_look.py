@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import copy
 import tempfile
 import contextlib
 import subprocess
@@ -333,7 +334,7 @@ class ExtractLook(pype.api.Extractor):
 
         anatomy = instance.context.data["anatomy"]
 
-        self.create_destination_template(instance, anatomy)
+        destination_dir = self.create_destination_template(instance, anatomy)
 
         # Compute destination location
         basename, ext = os.path.splitext(os.path.basename(filepath))
@@ -343,7 +344,7 @@ class ExtractLook(pype.api.Extractor):
             ext = ".tx"
 
         return os.path.join(
-            instance.data["assumedDestination"], "resources", basename + ext
+            destination_dir, "resources", basename + ext
         )
 
     def _process_texture(self, filepath, do_maketx, staging, linearise, force):
@@ -421,38 +422,17 @@ class ExtractLook(pype.api.Extractor):
             file path (str)
         """
 
-        # get all the stuff from the database
+        asset_entity = instance.context["assetEntity"]
+
+        template_data = copy.deepcopy(instance.data["anatomyData"])
+
         subset_name = instance.data["subset"]
         self.log.info(subset_name)
-        asset_name = instance.data["asset"]
-        project_name = api.Session["AVALON_PROJECT"]
-        a_template = anatomy.templates
-
-        project = io.find_one(
-            {
-                "type": "project",
-                "name": project_name
-            },
-            projection={"config": True, "data": True}
-        )
-
-        template = a_template["publish"]["path"]
-        # anatomy = instance.context.data['anatomy']
-
-        asset = io.find_one({
-            "type": "asset",
-            "name": asset_name,
-            "parent": project["_id"]
-        })
-
-        assert asset, ("No asset found by the name '{}' "
-                       "in project '{}'").format(asset_name, project_name)
-        silo = asset.get("silo")
 
         subset = io.find_one({
             "type": "subset",
             "name": subset_name,
-            "parent": asset["_id"]
+            "parent": asset_entity["_id"]
         })
 
         # assume there is no version yet, we start at `1`
@@ -471,33 +451,18 @@ class ExtractLook(pype.api.Extractor):
         if version is not None:
             version_number += version["name"]
 
-        if instance.data.get("version"):
-            version_number = int(instance.data.get("version"))
+        if instance.data.get('version'):
+            version_number = int(instance.data.get('version'))
 
-        padding = int(a_template["render"]["padding"])
+        anatomy = instance.context.data["anatomy"]
+        padding = int(anatomy.templates['render']['padding'])
 
-        hierarchy = asset["data"]["parents"]
-        if hierarchy:
-            # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = "/".join(hierarchy)
-
-        template_data = {
-            "root": api.Session["AVALON_PROJECTS"],
-            "project": {"name": project_name, "code": project["data"]["code"]},
-            "silo": silo,
-            "family": instance.data["family"],
-            "asset": asset_name,
+        template_data.update({
             "subset": subset_name,
             "frame": ("#" * padding),
             "version": version_number,
-            "hierarchy": hierarchy,
-            "representation": "TEMP",
-        }
+            "representation": "TEMP"
+        })
+        anatomy_filled = anatomy.format(template_data)
 
-        instance.data["assumedTemplateData"] = template_data
-        self.log.info(template_data)
-        instance.data["template"] = template
-        # We take the parent folder of representation 'filepath'
-        instance.data["assumedDestination"] = os.path.dirname(
-            anatomy.format(template_data)["publish"]["path"]
-        )
+        return os.path.dirname(anatomy_filled["publish"]["path"])
