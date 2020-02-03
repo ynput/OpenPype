@@ -45,7 +45,7 @@ class ExtractBurnin(pype.api.Extractor):
         }
 
         # Add datetime data to preparation data
-        datetime_data = isntance.context.data.get("datetimeData") or {}
+        datetime_data = instance.context.data.get("datetimeData") or {}
         prep_data.update(datetime_data)
 
         slate_frame_start = frame_start
