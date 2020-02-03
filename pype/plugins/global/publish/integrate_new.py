@@ -272,7 +272,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                              "version": int(version["name"]),
                              "hierarchy": hierarchy}
 
-
             # Add datetime data to template data
             datetime_data = context.data.get("datetimeData") or {}
             template_data.update(datetime_data)
