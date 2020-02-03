@@ -80,7 +80,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "assembly"
                 ]
     exclude_families = ["clip"]
-    repre_context_stable_keys = [
+    db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"
     ]
@@ -413,7 +413,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 repre['published_path'] = self.unc_convert(dst)
                 self.log.debug("__ dst: {}".format(dst))
 
-            for key in self.repre_context_stable_keys:
+            for key in self.db_representation_context_keys:
                 value = template_data.get(key)
                 if not value:
                     continue
