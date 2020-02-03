@@ -2,6 +2,7 @@ import os
 from os.path import getsize
 import logging
 import sys
+import copy
 import clique
 import errno
 import pyblish.api
@@ -100,12 +101,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def register(self, instance):
         # Required environment variables
-        PROJECT = api.Session["AVALON_PROJECT"]
-        ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
-        TASK = instance.data.get("task") or api.Session["AVALON_TASK"]
-        LOCATION = api.Session["AVALON_LOCATION"]
+        anatomy_data = instance.data["anatomyData"]
+        asset_entity = instance.data["assetEntity"]
+        avalon_location = api.Session["AVALON_LOCATION"]
+
+        io.install()
 
         context = instance.context
+
         # Atomicity
         #
         # Guarantee atomic publishes - each asset contains
@@ -140,35 +143,27 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
-            self.log.info('''{} is missing reference to staging
-                            directory Will try to get it from
-                            representation'''.format(instance))
+            self.log.info((
+                "{0} is missing reference to staging directory."
+                " Will try to get it from representation."
+            ).format(instance))
 
-        # extra check if stagingDir actually exists and is available
-
-        self.log.debug("Establishing staging directory @ %s" % stagingdir)
+        else:
+            self.log.debug(
+                "Establishing staging directory @ {0}".format(stagingdir)
+            )
 
         # Ensure at least one file is set up for transfer in staging dir.
-        repres = instance.data.get("representations", None)
+        repres = instance.data.get("representations")
         assert repres, "Instance has no files to transfer"
         assert isinstance(repres, (list, tuple)), (
-            "Instance 'files' must be a list, got: {0}".format(repres)
+            "Instance 'files' must be a list, got: {0} {1}".format(
+                str(type(repres)), str(repres)
+            )
         )
 
-        # FIXME: io is not initialized at this point for shell host
-        io.install()
-        project = io.find_one({"type": "project"})
-
-        asset = io.find_one({
-            "type": "asset",
-            "name": ASSET,
-            "parent": project["_id"]
-        })
-
-        assert all([project, asset]), ("Could not find current project or "
-                                       "asset '%s'" % ASSET)
-
-        subset = self.get_subset(asset, instance)
+        intent = context.data.get("intent")
+        subset = self.get_subset(asset_entity, instance)
 
         # get next version
         latest_version = io.find_one(
@@ -229,16 +224,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         #    \ \________.
         #     \|________|
         #
-        root = api.registered_root()
-        hierarchy = ""
-        parents = io.find_one({
-            "type": 'asset',
-            "name": ASSET
-        })['data']['parents']
-        if parents and len(parents) > 0:
-            # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = os.path.join(*parents)
-
         anatomy = instance.context.data['anatomy']
 
         # Find the representations to transfer amongst the files
@@ -261,20 +246,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             # |_______|
             #
             # create template data for Anatomy
-            template_data = {"root": root,
-                             "project": {"name": PROJECT,
-                                         "code": project['data']['code']},
-                             "silo": asset.get('silo'),
-                             "task": TASK,
-                             "asset": ASSET,
-                             "family": instance.data['family'],
-                             "subset": subset["name"],
-                             "version": int(version["name"]),
-                             "hierarchy": hierarchy}
+            template_data = copy.deepcopy(anatomy_data)
+            # TODO cleanup this code, should be already in anatomyData
+            template_data.update({
+                "subset": subset["name"],
+                "version": int(version["name"])
+            })
 
-            # Add datetime data to template data
-            datetime_data = context.data.get("datetimeData") or {}
-            template_data.update(datetime_data)
+            if intent is not None:
+                template_data["intent"] = intent
 
             resolution_width = repre.get("resolutionWidth")
             resolution_height = repre.get("resolutionHeight")
@@ -292,6 +272,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 stagingdir = repre['stagingDir']
             if repre.get('anatomy_template'):
                 template_name = repre['anatomy_template']
+
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
@@ -322,7 +303,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     template_filled = anatomy_filled[template_name]["path"]
                     if repre_context is None:
                         repre_context = template_filled.used_values
-
                     test_dest_files.append(
                         os.path.normpath(template_filled)
                     )
