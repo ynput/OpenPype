@@ -91,7 +91,7 @@ class CollectTemplates(pyblish.api.InstancePlugin):
                          "representation": "TEMP"}
 
         # Add datetime data to template data
-        datetime_data = context.data.get("datetimeData") or {}
+        datetime_data = instance.context.data.get("datetimeData") or {}
         template_data.update(datetime_data)
 
         resolution_width = instance.data.get("resolutionWidth")
