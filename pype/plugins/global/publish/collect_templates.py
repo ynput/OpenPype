@@ -88,7 +88,7 @@ class CollectTemplates(pyblish.api.InstancePlugin):
                          "subset": subset_name,
                          "version": version_number,
                          "hierarchy": hierarchy.replace("\\", "/"),
-                         "representation": "TEMP")}
+                         "representation": "TEMP"}
 
         # Add datetime data to template data
         datetime_data = context.data.get("datetimeData") or {}
