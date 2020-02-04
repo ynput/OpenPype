@@ -81,12 +81,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
 
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=relative
-        ) as (_, data_to):
-            data_to.collections = [lib_container]
-
-        scene = bpy.context.scene
+        bpy.data.collections.new( lib_container )
 
         container = bpy.data.collections[lib_container]
         container.name = container_name
@@ -98,35 +93,34 @@ class BlendRigLoader(pype.blender.AssetLoader):
             self.__class__.__name__,
         )
 
-        override_context = pype.blender.plugin.create_blender_context()
-        bpy.ops.object.collection_instance_add( override_context, name = container_name + "_CON" )
-
-        override_context = pype.blender.plugin.create_blender_context( bpy.data.objects[container_name + "_CON"] )
-        bpy.ops.object.make_override_library( override_context )
-        bpy.ops.object.delete( override_context )
-
         container_metadata = container.get( 'avalon' )
 
         objects_list = []
 
-        for c in bpy.data.collections:
+        with bpy.data.libraries.load(
+            libpath, link=True, relative=relative
+        ) as (data_from, data_to):
 
-            if c.name == container_name + "_CON" and c.library is None:
+            data_to.collections = [lib_container]
 
-                for obj in c.objects:
+        scene = bpy.context.scene
 
-                    scene.collection.objects.link( obj )
-                    c.objects.unlink( obj )
+        models = [ obj for obj in bpy.data.collections[lib_container].objects if obj.type == 'MESH' ]
+        armatures = [ obj for obj in bpy.data.collections[lib_container].objects if obj.type == 'ARMATURE' ]
 
-                    if not obj.get("avalon"):
-                        obj["avalon"] = dict()
+        for obj in models + armatures:
 
-                    avalon_info = obj["avalon"]
-                    avalon_info.update( { "container_name": container_name } )
+            scene.collection.objects.link( obj )
 
-                    objects_list.append( obj )
+            obj = obj.make_local()
 
-                bpy.data.collections.remove( c )
+            if not obj.get("avalon"):
+
+                obj["avalon"] = dict()
+
+            avalon_info = obj["avalon"]
+            avalon_info.update( { "container_name": container_name } )
+            objects_list.append( obj )
 
         container_metadata["objects"] = objects_list
 
@@ -321,13 +315,9 @@ class BlendRigLoader(pype.blender.AssetLoader):
         assert not (collection.children), (
             "Nested collections are not supported."
         )
-        instance_objects = list(collection.objects)
 
         data = collection.get( "avalon" )
         objects = data["objects"]
-
-        for obj in instance_objects:
-            bpy.data.objects.remove(obj)
 
         for obj in objects:
             bpy.data.objects.remove( obj )
