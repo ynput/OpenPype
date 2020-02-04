@@ -24,6 +24,26 @@ def rig_name(asset: str, subset: str, namespace: Optional[str] = None) -> str:
         name = f"{namespace}:{name}"
     return name
 
+def create_blender_context( obj: Optional[bpy.types.Object] = None ):
+    """Create a new Blender context. If an object is passed as
+    parameter, it is set as selected and active.
+    """
+    for win in bpy.context.window_manager.windows:
+        for area in win.screen.areas:
+            if area.type == 'VIEW_3D':
+                for region in area.regions:
+                    if region.type == 'WINDOW':
+                        override_context = {
+                            'window': win, 
+                            'screen': win.screen, 
+                            'area': area, 
+                            'region': region, 
+                            'scene': bpy.context.scene,
+                            'active_object': obj,
+                            'selected_objects': [obj]
+                        }
+                        return override_context
+    raise Exception( "Could not create a custom Blender context." )
 
 class AssetLoader(api.Loader):
     """A basic AssetLoader for Blender
