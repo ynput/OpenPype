@@ -13,70 +13,14 @@ class IntegrateResourcesPath(pyblish.api.InstancePlugin):
     families = ["clip",  "projectfile", "plate"]
 
     def process(self, instance):
-        project_entity = instance.context["projectEntity"]
-        asset_entity = instance.context["assetEntity"]
-
         template_data = copy.deepcopy(instance.data["anatomyData"])
 
-        asset_name = instance.data["asset"]
-        if asset_name != asset_entity["name"]:
-            asset_entity = io.find_one({
-                "type": "asset",
-                "name": asset_name,
-                "parent": project_entity["_id"]
-            })
-            assert asset_entity, (
-                "No asset found by the name '{}' in project '{}'".format(
-                    asset_name, project_entity["name"]
-                )
-            )
-
-            instance.data["assetEntity"] = asset_entity
-
-            template_data["name"] = asset_entity["name"]
-            silo_name = asset_entity.get("silo")
-            if silo_name:
-                template_data["silo"] = silo_name
-
-            parents = asset_entity["data"].get("parents") or []
-            hierarchy = "/".join(parents)
-            template_data["hierarchy"] = hierarchy
-
-        subset_name = instance.data["subset"]
-        self.log.info(subset_name)
-
-        subset = io.find_one({
-            "type": "subset",
-            "name": subset_name,
-            "parent": asset_entity["_id"]
-        })
-
-        # assume there is no version yet, we start at `1`
-        version = None
-        version_number = 1
-        if subset is not None:
-            version = io.find_one(
-                {
-                    "type": "version",
-                    "parent": subset["_id"]
-                },
-                sort=[("name", -1)]
-            )
-
-        # if there is a subset there ought to be version
-        if version is not None:
-            version_number += version["name"]
-
-        if instance.data.get('version'):
-            version_number = int(instance.data.get('version'))
-
         anatomy = instance.context.data["anatomy"]
-        padding = int(anatomy.templates['render']['padding'])
+        padding = int(anatomy.templates["render"]["padding"])
 
+        # add possible representation specific key to anatomy data
         template_data.update({
-            "subset": subset_name,
-            "frame": ('#' * padding),
-            "version": version_number,
+            "frame": ("#" * padding),
             "representation": "TEMP"
         })
 
