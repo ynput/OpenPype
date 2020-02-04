@@ -601,6 +601,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "fps": context.data.get(
                             "fps", instance.data.get("fps"))}
 
+        intent = context.data.get("intent")
+        if intent is not None:
+            version_data["intent"] = intent
+
         # Include optional data if present in
         optionals = [
             "frameStart", "frameEnd", "step", "handles",
