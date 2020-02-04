@@ -298,7 +298,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
-                if "slate" in instance.data["families"]:
+                if index_frame_start and "slate" in instance.data["families"]:
                     index_frame_start -= 1
 
                 dst_padding_exp = src_padding_exp
