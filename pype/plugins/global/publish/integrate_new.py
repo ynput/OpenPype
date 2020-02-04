@@ -102,12 +102,36 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     def register(self, instance):
         # Required environment variables
         anatomy_data = instance.data["anatomyData"]
-        asset_entity = instance.data["assetEntity"]
         avalon_location = api.Session["AVALON_LOCATION"]
 
         io.install()
 
         context = instance.context
+
+        project_entity = instance.data["projectEntity"]
+
+        asset_name = instance.data["asset"]
+        asset_entity = instance.data.get("assetEntity")
+        if not asset_entity:
+            asset_entity = io.find_one({
+                "type": "asset",
+                "name": asset_name,
+                "parent": project_entity["_id"]
+            })
+
+            assert asset_entity, (
+                "No asset found by the name \"{0}\" in project \"{1}\""
+            ).format(asset_name, project_entity["name"])
+
+            instance.data["assetEntity"] = asset_entity
+
+            # update anatomy data with asset specific keys
+            # - name should already been set
+            hierarchy = ""
+            parents = asset_entity["data"]["parents"]
+            if parents:
+                hierarchy = "/".join(parents)
+            anatomy_data["hierarchy"] = hierarchy
 
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
