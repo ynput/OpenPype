@@ -156,40 +156,18 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         subset = self.get_subset(asset_entity, instance)
 
-        # TODO iLLiCiT use "latestVersion" from `instance.data`
-        # and store version in anatomyData instance collector
-        # instead of query again
-        instance_version = instance.data.get('version')
-        if instance_version is not None:
-            next_version = int(instance_version)
-
-        else:
-            # get next version
-            latest_version = io.find_one(
-                {
-                    "type": "version",
-                    "parent": subset["_id"]
-                },
-                {"name": True},
-                sort=[("name", -1)]
-            )
-
-            next_version = 1
-            if latest_version is not None:
-                next_version += int(latest_version["name"])
-
-        self.log.debug("Next version: v{0:03d}".format(next_version))
+        version_number = instance.data["version"]
+        self.log.debug("Next version: v{0:03d}".format(version_number))
 
         version_data = self.create_version_data(context, instance)
 
         version_data_instance = instance.data.get('versionData')
-
         if version_data_instance:
             version_data.update(version_data_instance)
 
         version = self.create_version(
             subset=subset,
-            version_number=next_version,
+            version_number=version_number,
             locations=[avalon_location],
             data=version_data
         )
@@ -198,7 +176,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         existing_version = io.find_one({
             'type': 'version',
             'parent': subset["_id"],
-            'name': next_version
+            'name': version_number
         })
         if existing_version is None:
             version_id = io.insert_one(version).inserted_id
@@ -208,7 +186,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             io.update_many({
                 'type': 'version',
                 'parent': subset["_id"],
-                'name': next_version
+                'name': version_number
             }, {'$set': version}
             )
             version_id = existing_version['_id']
