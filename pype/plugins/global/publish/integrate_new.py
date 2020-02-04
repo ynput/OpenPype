@@ -157,22 +157,27 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         intent = context.data.get("intent")
         subset = self.get_subset(asset_entity, instance)
 
-        # get next version
-        latest_version = io.find_one(
-            {
-                "type": "version",
-                "parent": subset["_id"]
-            },
-            {"name": True},
-            sort=[("name", -1)]
-        )
+        # TODO iLLiCiT use "latestVersion" from `instance.data`
+        # and store version in anatomyData instance collector
+        # instead of query again
+        instance_version = instance.data.get('version')
+        if instance_version is not None:
+            next_version = int(instance_version)
 
-        next_version = 1
-        if latest_version is not None:
-            next_version += latest_version["name"]
+        else:
+            # get next version
+            latest_version = io.find_one(
+                {
+                    "type": "version",
+                    "parent": subset["_id"]
+                },
+                {"name": True},
+                sort=[("name", -1)]
+            )
 
-        if instance.data.get('version'):
-            next_version = int(instance.data.get('version'))
+            next_version = 1
+            if latest_version is not None:
+                next_version += int(latest_version["name"])
 
         self.log.debug("Next version: v{0:03d}".format(next_version))
 
