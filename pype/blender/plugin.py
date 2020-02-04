@@ -17,6 +17,13 @@ def model_name(asset: str, subset: str, namespace: Optional[str] = None) -> str:
         name = f"{namespace}:{name}"
     return name
 
+def rig_name(asset: str, subset: str, namespace: Optional[str] = None) -> str:
+    """Return a consistent name for a rig asset."""
+    name = f"{asset}_{subset}"
+    if namespace:
+        name = f"{namespace}:{name}"
+    return name
+
 
 class AssetLoader(api.Loader):
     """A basic AssetLoader for Blender
