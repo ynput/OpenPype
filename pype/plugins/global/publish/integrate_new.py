@@ -229,12 +229,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for idx, repre in enumerate(instance.data["representations"]):
             # create template data for Anatomy
             template_data = copy.deepcopy(anatomy_data)
-            # TODO cleanup this code, should be already in anatomyData
-            template_data.update({
-                "subset": subset["name"],
-                "version": int(version["name"])
-            })
-
             if intent is not None:
                 template_data["intent"] = intent
 
