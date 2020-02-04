@@ -159,10 +159,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if version_data_instance:
             version_data.update(version_data_instance)
 
-        version = self.create_version(subset=subset,
-                                      version_number=next_version,
-                                      locations=[LOCATION],
-                                      data=version_data)
+        version = self.create_version(
+            subset=subset,
+            version_number=next_version,
+            locations=[avalon_location],
+            data=version_data
+        )
 
         self.log.debug("Creating version ...")
         existing_version = io.find_one({
