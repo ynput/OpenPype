@@ -111,8 +111,15 @@ class LoadMov(api.Loader):
         if namespace is None:
             namespace = context['asset']['name']
 
-        file = self.fname.replace("\\", "/")
-        log.info("file: {}\n".format(self.fname))
+        file = self.fname
+
+        if not file:
+            repr_id = context["representation"]["_id"]
+            log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return
+
+        file = file.replace("\\", "/")
 
         read_name = "Read_{0}_{1}_{2}".format(
             repr_cont["asset"],
@@ -200,7 +207,15 @@ class LoadMov(api.Loader):
 
         assert node.Class() == "Read", "Must be Read"
 
-        file = self.fname.replace("\\", "/")
+        file = self.fname
+
+        if not file:
+            repr_id = representation["_id"]
+            log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return
+
+        file = file.replace("\\", "/")
 
         # Get start frame from version data
         version = io.find_one({
@@ -262,6 +277,19 @@ class LoadMov(api.Loader):
 
         if colorspace:
             node["colorspace"].setValue(str(colorspace))
+
+        # load nuke presets for Read's colorspace
+        read_clrs_presets = presets.get_colorspace_preset().get(
+            "nuke", {}).get("read", {})
+
+        # check if any colorspace presets for read is mathing
+        preset_clrsp = next((read_clrs_presets[k]
+                             for k in read_clrs_presets
+                             if bool(re.search(k, file))),
+                            None)
+        if preset_clrsp is not None:
+            node["colorspace"].setValue(str(preset_clrsp))
+
 
         updated_dict = {}
         updated_dict.update({
