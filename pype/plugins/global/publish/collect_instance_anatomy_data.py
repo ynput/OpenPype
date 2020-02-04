@@ -53,40 +53,42 @@ class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
         instance.context.data["projectEntity"] = project_entity
 
         subset_name = instance.data["subset"]
-        subset_entity = io.find_one({
-            "type": "subset",
-            "name": subset_name,
-            "parent": asset_entity["_id"]
-        })
-
         version_number = instance.data.get("version")
-        if version_number is None:
-            version_number = instance.context.data.get("version")
-
         latest_version = None
-        if subset_entity is None:
-            self.log.debug("Subset entity does not exist yet.")
-        else:
-            version_entity = io.find_one(
-                {
-                    "type": "version",
-                    "parent": subset_entity["_id"]
-                },
-                sort=[("name", -1)]
-            )
-            if version_entity:
-                latest_version = version_entity["name"]
 
+        if asset_entity:
+            subset_entity = io.find_one({
+                "type": "subset",
+                "name": subset_name,
+                "parent": asset_entity["_id"]
+            })
+
+
+            if subset_entity is None:
+                self.log.debug("Subset entity does not exist yet.")
+            else:
+                version_entity = io.find_one(
+                    {
+                        "type": "version",
+                        "parent": subset_entity["_id"]
+                    },
+                    sort=[("name", -1)]
+                )
+                if version_entity:
+                    latest_version = version_entity["name"]
+
+        # If version is not specified for instance or context
         if version_number is None:
             # TODO we should be able to change this version by studio
             # preferences (like start with version number `0`)
             version_number = 1
+            # use latest version (+1) if already any exist
             if latest_version is not None:
                 version_number += int(latest_version)
 
         # Version should not be collected since may be instance
         anatomy_data.update({
-            "asset": asset_entity["name"],
+            "asset": asset_name,
             "family": instance.data["family"],
             "subset": subset_name,
             "version": version_number
