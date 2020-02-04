@@ -154,7 +154,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             )
         )
 
-        intent = context.data.get("intent")
         subset = self.get_subset(asset_entity, instance)
 
         # TODO iLLiCiT use "latestVersion" from `instance.data`
@@ -212,6 +211,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             )
             version_id = existing_version['_id']
         instance.data['version'] = version['name']
+
+        intent = context.data.get("intent")
+        if intent is not None:
+            anatomy_data["intent"] = intent
 
         anatomy = instance.context.data['anatomy']
 
