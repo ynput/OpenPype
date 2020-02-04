@@ -108,14 +108,6 @@ class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
 
         instance.data["anatomyData"] = anatomy_data
         instance.data["latestVersion"] = latest_version
-        # TODO check if template is used anywhere
-        # instance.data["template"] = template
-
-        # TODO we should move this to any Validator
-        # # We take the parent folder of representation 'filepath'
-        # instance.data["assumedDestination"] = os.path.dirname(
-        #     (anatomy.format(template_data))["publish"]["path"]
-        # )
 
         self.log.info("Instance anatomy Data collected")
         self.log.debug(json.dumps(anatomy_data, indent=4))
