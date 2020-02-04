@@ -54,9 +54,6 @@ class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
                 "parent": project_entity["_id"]
             })
 
-        instance.context.data["assetEntity"] = asset_entity
-        instance.context.data["projectEntity"] = project_entity
-
         subset_name = instance.data["subset"]
         version_number = instance.data.get("version")
         latest_version = None
@@ -67,7 +64,6 @@ class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
                 "name": subset_name,
                 "parent": asset_entity["_id"]
             })
-
 
             if subset_entity is None:
                 self.log.debug("Subset entity does not exist yet.")
@@ -84,7 +80,7 @@ class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
 
         # If version is not specified for instance or context
         if version_number is None:
-            # TODO we should be able to change this version by studio
+            # TODO we should be able to change default version by studio
             # preferences (like start with version number `0`)
             version_number = 1
             # use latest version (+1) if already any exist
@@ -111,8 +107,12 @@ class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
         if resolution_height:
             anatomy_data["fps"] = fps
 
+        instance.data["projectEntity"] = project_entity
+        instance.data["assetEntity"] = asset_entity
         instance.data["anatomyData"] = anatomy_data
         instance.data["latestVersion"] = latest_version
+        # TODO should be version number set here?
+        instance.data["version"] = version_number
 
         self.log.info("Instance anatomy Data collected")
         self.log.debug(json.dumps(anatomy_data, indent=4))
