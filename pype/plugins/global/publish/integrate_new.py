@@ -109,38 +109,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         context = instance.context
 
-        # Atomicity
-        #
-        # Guarantee atomic publishes - each asset contains
-        # an identical set of members.
-        #     __
-        #    /     o
-        #   /       \
-        #  |    o    |
-        #   \       /
-        #    o   __/
-        #
-        # for result in context.data["results"]:
-        #     if not result["success"]:
-        #         self.log.debug(result)
-        #         exc_type, exc_value, exc_traceback = result["error_info"]
-        #         extracted_traceback = traceback.extract_tb(exc_traceback)[-1]
-        #         self.log.debug(
-        #             "Error at line {}: \"{}\"".format(
-        #                 extracted_traceback[1], result["error"]
-        #             )
-        #         )
-        # assert all(result["success"] for result in context.data["results"]),(
-        #     "Atomicity not held, aborting.")
-
-        # Assemble
-        #
-        #       |
-        #       v
-        #  --->   <----
-        #       ^
-        #       |
-        #
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
             self.log.info((
@@ -214,16 +182,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             version_id = existing_version['_id']
         instance.data['version'] = version['name']
 
-        # Write to disk
-        #          _
-        #         | |
-        #        _| |_
-        #    ____\   /
-        #   |\    \ / \
-        #   \ \    v   \
-        #    \ \________.
-        #     \|________|
-        #
         anatomy = instance.context.data['anatomy']
 
         # Find the representations to transfer amongst the files
@@ -235,16 +193,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data['transfers'] = []
 
         for idx, repre in enumerate(instance.data["representations"]):
-
-            # Collection
-            #   _______
-            #  |______|\
-            # |      |\|
-            # |       ||
-            # |       ||
-            # |       ||
-            # |_______|
-            #
             # create template data for Anatomy
             template_data = copy.deepcopy(anatomy_data)
             # TODO cleanup this code, should be already in anatomyData
