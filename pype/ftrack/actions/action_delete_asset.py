@@ -99,6 +99,7 @@ class DeleteAssetSubset(BaseAction):
 
         # Filter event even more (skip task entities)
         # - task entities are not relevant for avalon
+        entity_mapping = {}
         for entity in entities:
             ftrack_id = entity["id"]
             if ftrack_id not in ftrack_ids:
@@ -106,6 +107,8 @@ class DeleteAssetSubset(BaseAction):
 
             if entity.entity_type.lower() == "task":
                 ftrack_ids.remove(ftrack_id)
+
+            entity_mapping[ftrack_id] = entity
 
         if not ftrack_ids:
             # It is bug if this happens!
@@ -122,11 +125,39 @@ class DeleteAssetSubset(BaseAction):
         project_name = project["full_name"]
         self.dbcon.Session["AVALON_PROJECT"] = project_name
 
-        selected_av_entities = self.dbcon.find({
+        selected_av_entities = list(self.dbcon.find({
             "type": "asset",
             "data.ftrackId": {"$in": ftrack_ids}
-        })
-        selected_av_entities = [ent for ent in selected_av_entities]
+        }))
+        if len(selected_av_entities) != len(ftrack_ids):
+            found_ftrack_ids = [
+                ent["data"]["ftrackId"] for ent in selected_av_entities
+            ]
+            for ftrack_id, entity in entity_mapping.items():
+                if ftrack_id in found_ftrack_ids:
+                    continue
+
+                av_ents_by_name = list(self.dbcon.find({
+                    "type": "asset",
+                    "name": entity["name"]
+                }))
+                if not av_ents_by_name:
+                    continue
+
+                ent_path_items = [ent["name"] for ent in entity["link"]]
+                parents = ent_path_items[1:len(ent_path_items)-1:]
+                # TODO we should say to user that
+                # few of them are missing in avalon
+                for av_ent in av_ents_by_name:
+                    if av_ent["data"]["parents"] != parents:
+                        continue
+
+                    # TODO we should say to user that found entity
+                    # with same name does not match same ftrack id?
+                    if "ftrackId" not in av_ent["data"]:
+                        selected_av_entities.append(av_ent)
+                        break
+
         if not selected_av_entities:
             return {
                 "success": False,
