@@ -107,7 +107,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
         container_metadata = container.get( 'avalon' )
 
-        object_names_list = []
+        objects_list = []
 
         for c in bpy.data.collections:
 
@@ -124,11 +124,11 @@ class BlendRigLoader(pype.blender.AssetLoader):
                     avalon_info = obj["avalon"]
                     avalon_info.update( { "container_name": container_name } )
 
-                    object_names_list.append( obj.name )
+                    objects_list.append( obj )
 
                 bpy.data.collections.remove( c )
 
-        container_metadata["objects"] = object_names_list
+        container_metadata["objects"] = objects_list
 
         bpy.ops.object.select_all( action = 'DESELECT' )
 
@@ -324,13 +324,13 @@ class BlendRigLoader(pype.blender.AssetLoader):
         instance_objects = list(collection.objects)
 
         data = collection.get( "avalon" )
-        object_names = data["objects"]
+        objects = data["objects"]
 
         for obj in instance_objects:
             bpy.data.objects.remove(obj)
 
-        for name in object_names:
-            bpy.data.objects.remove( bpy.data.objects[name] )
+        for obj in objects:
+            bpy.data.objects.remove( obj )
         
         bpy.data.collections.remove(collection)
 
