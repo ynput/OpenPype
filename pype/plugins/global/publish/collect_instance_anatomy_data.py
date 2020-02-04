@@ -26,7 +26,7 @@ import pyblish.api
 class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
     """Fill templates with data needed for publish"""
 
-    order = pyblish.api.CollectorOrder + 0.1
+    order = pyblish.api.CollectorOrder + 0.49
     label = "Collect instance anatomy data"
     hosts = ["maya", "nuke", "standalonepublisher"]
 
