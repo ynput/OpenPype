@@ -1,7 +1,6 @@
 import os
 import json
 import contextlib
-import copy
 
 from maya import cmds
 
@@ -111,16 +110,7 @@ class ExtractYetiRig(pype.api.Extractor):
 
         self.log.info("Writing metadata file")
 
-        # Create assumed destination folder for imageSearchPath
-        template_data = copy.deepcopy(instance.data["anatomyData"])
-
-        anatomy = instance.context["anatomy"]
-        filled = anatomy.format(template_data)
-
-        destination_folder = os.path.dir(filled["publish"]["path"])
-
-        image_search_path = os.path.join(destination_folder, "resources")
-        image_search_path = os.path.normpath(image_search_path)
+        image_search_path = resources_dir = instance.data["resourcesDir"]
 
         settings = instance.data.get("rigsettings", None)
         if settings:
