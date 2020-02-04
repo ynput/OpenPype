@@ -102,7 +102,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
     def register(self, instance):
         # Required environment variables
         anatomy_data = instance.data["anatomyData"]
-        avalon_location = api.Session["AVALON_LOCATION"]
 
         io.install()
 
@@ -165,6 +164,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if version_data_instance:
             version_data.update(version_data_instance)
 
+        # TODO remove avalon_location (shall we?)
+        avalon_location = api.Session["AVALON_LOCATION"]
+        # TODO rename method from `create_version` to
+        # `prepare_version` or similar...
         version = self.create_version(
             subset=subset,
             version_number=version_number,

@@ -16,11 +16,12 @@ class IntegrateResourcesPath(pyblish.api.InstancePlugin):
         template_data = copy.deepcopy(instance.data["anatomyData"])
 
         anatomy = instance.context.data["anatomy"]
-        padding = int(anatomy.templates["render"]["padding"])
+        frame_padding = int(anatomy.templates["render"]["padding"])
 
         # add possible representation specific key to anatomy data
+        # TODO ability to set host specific "frame" value
         template_data.update({
-            "frame": ("#" * padding),
+            "frame": ("#" * frame_padding),
             "representation": "TEMP"
         })
 
