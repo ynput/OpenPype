@@ -8,12 +8,17 @@ Requires:
     instance    -> family
 
 Optional:
+    instance    -> version
     instance    -> resolutionWidth
     instance    -> resolutionHeight
     instance    -> fps
 
 Provides:
+    instance    -> projectEntity
+    instance    -> assetEntity
     instance    -> anatomyData
+    instance    -> version
+    instance    -> latestVersion
 """
 
 import copy
