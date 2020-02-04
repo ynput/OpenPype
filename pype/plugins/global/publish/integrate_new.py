@@ -203,6 +203,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if existing_version is None:
             version_id = io.insert_one(version).inserted_id
         else:
+            # TODO query by _id and
+            # remove old version and representations but keep their ids
             io.update_many({
                 'type': 'version',
                 'parent': subset["_id"],
@@ -304,6 +306,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_padding_exp = src_padding_exp
                 dst_start_frame = None
                 for i in src_collection.indexes:
+                    # TODO 1.) do not count padding in each index iteration
+                    # 2.) do not count dst_padding from src_padding before
+                    #   index_frame_start check
                     src_padding = src_padding_exp % i
 
                     src_file_name = "{0}{1}{2}".format(
