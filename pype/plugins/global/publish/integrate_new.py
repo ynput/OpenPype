@@ -331,7 +331,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
 
-
                 dst = "{0}{1}{2}".format(
                     dst_head,
                     dst_start_frame,
@@ -503,14 +502,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         filelink.create(src, dst, filelink.HARDLINK)
 
     def get_subset(self, asset, instance):
+        subset_name = instance.data["subset"]
         subset = io.find_one({
             "type": "subset",
             "parent": asset["_id"],
-            "name": instance.data["subset"]
+            "name": subset_name
         })
 
         if subset is None:
-            subset_name = instance.data["subset"]
             self.log.info("Subset '%s' not found, creating.." % subset_name)
             self.log.debug("families.  %s" % instance.data.get('families'))
             self.log.debug(
