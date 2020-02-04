@@ -105,10 +105,13 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
         scene = bpy.context.scene
 
-        models = [ obj for obj in bpy.data.collections[lib_container].objects if obj.type == 'MESH' ]
+        meshes = [ obj for obj in bpy.data.collections[lib_container].objects if obj.type == 'MESH' ]
         armatures = [ obj for obj in bpy.data.collections[lib_container].objects if obj.type == 'ARMATURE' ]
 
-        for obj in models + armatures:
+        # Link meshes first, then armatures.
+        # The armature is unparented for all the non-local meshes,
+        # when it is made local.
+        for obj in meshes + armatures:
 
             scene.collection.objects.link( obj )
 
@@ -122,6 +125,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
             avalon_info.update( { "container_name": container_name } )
             objects_list.append( obj )
 
+        # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
 
         bpy.ops.object.select_all( action = 'DESELECT' )
