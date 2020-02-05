@@ -119,6 +119,8 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
             obj = obj.make_local()
 
+            obj.data.make_local()
+
             if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
 
                 obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
@@ -228,7 +230,9 @@ class BlendRigLoader(pype.blender.AssetLoader):
             f"Unsupported file: {libpath}"
         )
 
-        collection_libpath = container["libpath"]
+        collection_metadata = collection.get(avalon.blender.pipeline.AVALON_PROPERTY)
+
+        collection_libpath = collection_metadata["libpath"]
         normalized_collection_libpath = (
             str(Path(bpy.path.abspath(collection_libpath)).resolve())
         )
@@ -245,15 +249,19 @@ class BlendRigLoader(pype.blender.AssetLoader):
             return
 
         # Get the armature of the rig
-        armatures = [ obj for obj in container["objects"] if obj.type == 'ARMATURE' ]
+        armatures = [ obj for obj in collection_metadata["objects"] if obj.type == 'ARMATURE' ]
         assert( len( armatures ) == 1 )
 
         action = armatures[0].animation_data.action
 
-        for obj in container["objects"]:
-            bpy.data.objects.remove( obj )
+        for obj in collection_metadata["objects"]:
 
-        lib_container = container["lib_container"]
+            if obj.type == 'ARMATURE':
+                bpy.data.armatures.remove( obj.data )
+            elif obj.type == 'MESH':
+                bpy.data.meshes.remove( obj.data )
+
+        lib_container = collection_metadata["lib_container"]
 
         relative = bpy.context.preferences.filepaths.use_relative_paths
         with bpy.data.libraries.load(
@@ -278,6 +286,8 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
             obj = obj.make_local()
 
+            obj.data.make_local()
+
             if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
 
                 obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
@@ -289,8 +299,6 @@ class BlendRigLoader(pype.blender.AssetLoader):
             if obj.type == 'ARMATURE' and action is not None:
 
                 obj.animation_data.action = action
-
-        collection_metadata = collection.get(avalon.blender.pipeline.AVALON_PROPERTY)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
@@ -328,7 +336,11 @@ class BlendRigLoader(pype.blender.AssetLoader):
         objects = collection_metadata["objects"]
 
         for obj in objects:
-            bpy.data.objects.remove( obj )
+
+            if obj.type == 'ARMATURE':
+                bpy.data.armatures.remove( obj.data )
+            elif obj.type == 'MESH':
+                bpy.data.meshes.remove( obj.data )
         
         bpy.data.collections.remove( collection )
 
