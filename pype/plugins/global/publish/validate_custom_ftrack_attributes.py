@@ -47,7 +47,7 @@ class ValidateFtrackAttributes(pyblish.api.InstancePlugin):
 
         host = pyblish.api.current_host()
         to_check = context.data["presets"].get(
-            host, {}).get("ftrack_attributes")
+            host, {}).get("ftrack_custom_attributes")
         if not to_check:
             self.log.warning("ftrack_attributes preset not found")
             return

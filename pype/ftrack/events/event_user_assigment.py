@@ -208,11 +208,8 @@ class UserAssigmentEvent(BaseEvent):
             work_dir = anatomy.format(data)['avalon']['work']
             # we also need publish but not whole
             filled_all = anatomy.format_all(data)
-            if "partial" not in filled_all:
-                publish = filled_all['avalon']['publish']
-            else:
-                # Backwards compatibility
-                publish = filled_all["partial"]['avalon']['publish']
+            publish = filled_all['avalon']['publish']
+
             # now find path to {asset}
             m = re.search("(^.+?{})".format(data['asset']),
                           publish)

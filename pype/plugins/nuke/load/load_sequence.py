@@ -1,10 +1,12 @@
+import re
+import nuke
 import contextlib
 
 from avalon import api, io
-
-import nuke
+from pype.nuke import presets
 
 from pype.api import Logger
+
 log = Logger().get_logger(__name__, "nuke")
 
 
@@ -24,7 +26,7 @@ def preserve_trim(node):
     offset_frame = None
     if node['frame_mode'].value() == "start at":
         start_at_frame = node['frame'].value()
-    if node['frame_mode'].value() is "offset":
+    if node['frame_mode'].value() == "offset":
         offset_frame = node['frame'].value()
 
     try:
@@ -93,7 +95,6 @@ class LoadSequence(api.Loader):
 
         self.first_frame = int(nuke.root()["first_frame"].getValue())
         self.handle_start = version_data.get("handleStart", 0)
-        self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
 
         first = version_data.get("frameStart", None)
@@ -106,20 +107,26 @@ class LoadSequence(api.Loader):
         first -= self.handle_start
         last += self.handle_end
 
-        file = self.fname.replace("\\", "/")
+        file = self.fname
 
-        log.info("file: {}\n".format(self.fname))
+        if not file:
+            repr_id = context["representation"]["_id"]
+            log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return
+
+        file = file.replace("\\", "/")
 
         repr_cont = context["representation"]["context"]
-        read_name = "Read_{0}_{1}_{2}".format(
-                                        repr_cont["asset"],
-                                        repr_cont["subset"],
-                                        repr_cont["representation"])
-
         if "#" not in file:
             frame = repr_cont.get("frame")
             padding = len(frame)
             file = file.replace(frame, "#"*padding)
+
+        read_name = "Read_{0}_{1}_{2}".format(
+                                        repr_cont["asset"],
+                                        repr_cont["subset"],
+                                        repr_cont["representation"])
 
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
@@ -130,9 +137,21 @@ class LoadSequence(api.Loader):
             r["file"].setValue(file)
 
             # Set colorspace defined in version data
-            colorspace = context["version"]["data"].get("colorspace", None)
-            if colorspace is not None:
+            colorspace = context["version"]["data"].get("colorspace")
+            if colorspace:
                 r["colorspace"].setValue(str(colorspace))
+
+            # load nuke presets for Read's colorspace
+            read_clrs_presets = presets.get_colorspace_preset().get(
+                "nuke", {}).get("read", {})
+
+            # check if any colorspace presets for read is mathing
+            preset_clrsp = next((read_clrs_presets[k]
+                                 for k in read_clrs_presets
+                                 if bool(re.search(k, file))),
+                                None)
+            if preset_clrsp is not None:
+                r["colorspace"].setValue(str(preset_clrsp))
 
             loader_shift(r, first, relative=True)
             r["origfirst"].setValue(int(first))
@@ -140,14 +159,14 @@ class LoadSequence(api.Loader):
             r["origlast"].setValue(int(last))
             r["last"].setValue(int(last))
 
-            # add additional metadata from the version to imprint to Avalon knob
+            # add additional metadata from the version to imprint Avalon knob
             add_keys = ["frameStart", "frameEnd",
                         "source", "colorspace", "author", "fps", "version",
                         "handleStart", "handleEnd"]
 
             data_imprint = {}
             for k in add_keys:
-                if k is 'version':
+                if k == 'version':
                     data_imprint.update({k: context["version"]['name']})
                 else:
                     data_imprint.update(
@@ -179,7 +198,7 @@ class LoadSequence(api.Loader):
             rtn["after"].setValue("continue")
             rtn["input.first_lock"].setValue(True)
             rtn["input.first"].setValue(
-            self.handle_start + self.first_frame
+                self.handle_start + self.first_frame
             )
 
         if time_warp_nodes != []:
@@ -210,16 +229,29 @@ class LoadSequence(api.Loader):
         """
 
         from avalon.nuke import (
-            ls_img_sequence,
             update_container
         )
 
         node = nuke.toNode(container['objectName'])
-        # TODO: prepare also for other Read img/geo/camera
+
         assert node.Class() == "Read", "Must be Read"
 
-        path = api.get_representation_path(representation)
-        file = ls_img_sequence(path)
+        repr_cont = representation["context"]
+
+        file = self.fname
+
+        if not file:
+            repr_id = representation["_id"]
+            log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return
+
+        file = file.replace("\\", "/")
+
+        if "#" not in file:
+            frame = repr_cont.get("frame")
+            padding = len(frame)
+            file = file.replace(frame, "#"*padding)
 
         # Get start frame from version data
         version = io.find_one({
@@ -241,8 +273,8 @@ class LoadSequence(api.Loader):
         self.handle_start = version_data.get("handleStart", 0)
         self.handle_end = version_data.get("handleEnd", 0)
 
-        first = version_data.get("frameStart", None)
-        last = version_data.get("frameEnd", None)
+        first = version_data.get("frameStart")
+        last = version_data.get("frameEnd")
 
         if first is None:
             log.warning("Missing start frame for updated version"
@@ -255,7 +287,7 @@ class LoadSequence(api.Loader):
 
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
-            node["file"].setValue(file["path"])
+            node["file"].setValue(file)
             log.info("__ node['file']: {}".format(node["file"].value()))
 
         # Set the global in to the start frame of the sequence
@@ -268,14 +300,14 @@ class LoadSequence(api.Loader):
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "frameStart": version_data.get("frameStart"),
-            "frameEnd": version_data.get("frameEnd"),
-            "version": version.get("name"),
+            "frameStart": str(first),
+            "frameEnd": str(last),
+            "version": str(version.get("name")),
             "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
-            "handleStart": version_data.get("handleStart"),
-            "handleEnd": version_data.get("handleEnd"),
-            "fps": version_data.get("fps"),
+            "handleStart": str(self.handle_start),
+            "handleEnd": str(self.handle_end),
+            "fps": str(version_data.get("fps")),
             "author": version_data.get("author"),
             "outputDir": version_data.get("outputDir"),
         })

@@ -51,7 +51,7 @@ if os.getenv("PYBLISH_GUI", None):
     pyblish.register_gui(os.getenv("PYBLISH_GUI", None))
 
 
-def install(config):
+def install():
     """
     Installing Nukestudio integration for avalon
 

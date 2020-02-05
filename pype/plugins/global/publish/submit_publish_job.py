@@ -294,6 +294,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         data = instance.data.copy()
         context = instance.context
 
+        if hasattr(instance, "_log"):
+            data['_log'] = instance._log
         render_job = data.pop("deadlineSubmissionJob", None)
         submission_type = "deadline"
         if not render_job:
