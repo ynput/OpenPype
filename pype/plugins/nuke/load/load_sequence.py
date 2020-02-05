@@ -107,7 +107,15 @@ class LoadSequence(api.Loader):
         first -= self.handle_start
         last += self.handle_end
 
-        file = self.fname.replace("\\", "/")
+        file = self.fname
+
+        if not file:
+            repr_id = context["representation"]["_id"]
+            log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return
+
+        file = file.replace("\\", "/")
 
         repr_cont = context["representation"]["context"]
         if "#" not in file:
@@ -229,7 +237,16 @@ class LoadSequence(api.Loader):
         assert node.Class() == "Read", "Must be Read"
 
         repr_cont = representation["context"]
-        file = self.fname.replace("\\", "/")
+
+        file = self.fname
+
+        if not file:
+            repr_id = representation["_id"]
+            log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return
+
+        file = file.replace("\\", "/")
 
         if "#" not in file:
             frame = repr_cont.get("frame")

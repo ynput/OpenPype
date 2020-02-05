@@ -1445,7 +1445,7 @@ class SyncToAvalonEvent(BaseEvent):
                 .get("name", {})
                 .get("new")
             )
-            avalon_ent_by_name = self.avalon_ents_by_name.get(name)
+            avalon_ent_by_name = self.avalon_ents_by_name.get(name) or {}
             avalon_ent_by_name_ftrack_id = (
                 avalon_ent_by_name
                 .get("data", {})
