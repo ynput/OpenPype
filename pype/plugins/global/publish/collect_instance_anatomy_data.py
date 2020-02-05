@@ -87,13 +87,19 @@ class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
             if latest_version is not None:
                 version_number += int(latest_version)
 
-        # Version should not be collected since may be instance
-        anatomy_data.update({
+        anatomy_updates = {
             "asset": asset_name,
             "family": instance.data["family"],
             "subset": subset_name,
             "version": version_number
-        })
+        }
+
+        task_name = instance.data.get("task")
+        if task_name:
+            anatomy_updates["task"] = task_name
+
+        # Version should not be collected since may be instance
+        anatomy_data.update(anatomy_updates)
 
         resolution_width = instance.data.get("resolutionWidth")
         if resolution_width:

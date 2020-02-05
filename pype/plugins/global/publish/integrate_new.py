@@ -132,6 +132,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 hierarchy = "/".join(parents)
             anatomy_data["hierarchy"] = hierarchy
 
+        task_name = instance.data.get("task")
+        if task_name:
+            anatomy_data["task"] = task_name
+
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
             self.log.info((
