@@ -16,6 +16,8 @@ import json
 import pyblish.api
 from avalon import api
 
+from pypeapp import PypeLauncher
+
 
 def collect(root,
             regex=None,
@@ -72,9 +74,9 @@ def collect(root,
 class CollectRenderedFrames(pyblish.api.ContextPlugin):
     """Gather file sequences from working directory
 
-    When "PYPE_PUBLISH_PATHS" environment variable is set these paths
-    (folders or .json files) are parsed for image sequences.
-    Otherwise the current working directory is searched for file sequences.
+    When "FILESEQUENCE" environment variable is set these paths (folders or
+    .json files) are parsed for image sequences. Otherwise the current
+    working directory is searched for file sequences.
 
     The json configuration may have the optional keys:
         asset (str): The asset to publish to. If not provided fall back to
@@ -101,6 +103,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
         lut_path = None
         slate_frame = None
         families_data = None
+        baked_mov_path = None
         subset = None
         version = None
         frame_start = 0
@@ -159,8 +162,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     if instance:
                         instance_family = instance.get("family")
                         pixel_aspect = instance.get("pixelAspect", 1)
-                        resolution_width = instance.get("resolutionWidth", 1920)
-                        resolution_height = instance.get("resolutionHeight", 1080)
+                        resolution_width = instance.get(
+                            "resolutionWidth", 1920)
+                        resolution_height = instance.get(
+                            "resolutionHeight", 1080)
                         lut_path = instance.get("lutPath", None)
                         baked_mov_path = instance.get("bakeRenderPath")
                         families_data = instance.get("families")
@@ -183,18 +188,23 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
             if "slate" in families_data:
                 frame_start -= 1
 
-            collections, remainder = collect(
-                root=root,
-                regex=regex,
-                exclude_regex=data.get("exclude_regex"),
-                frame_start=frame_start,
-                frame_end=frame_end,
-            )
+            if regex:
+                collections, remainder = collect(
+                    root=root,
+                    regex=regex,
+                    exclude_regex=data.get("exclude_regex"),
+                    frame_start=frame_start,
+                    frame_end=frame_end,
+                )
 
-            self.log.info("Found collections: {}".format(collections))
-            self.log.info("Found remainder: {}".format(remainder))
+                self.log.info("Found collections: {}".format(collections))
+                self.log.info("Found remainder: {}".format(remainder))
 
             fps = data.get("fps", 25)
+
+            # adding publish comment and intent to context
+            context.data["comment"] = data.get("comment", "")
+            context.data["intent"] = data.get("intent", "")
 
             if data.get("user"):
                 context.data["user"] = data["user"]
@@ -221,9 +231,9 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     self.log.info(
                         "Attaching render {}:v{}".format(
                             attach["subset"], attach["version"]))
-                    instance = context.create_instance(
+                    new_instance = context.create_instance(
                         attach["subset"])
-                    instance.data.update(
+                    new_instance.data.update(
                         {
                             "name": attach["subset"],
                             "version": attach["version"],
@@ -241,29 +251,34 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                             "resolutionHeight": resolution_height
                         })
 
-                    if "representations" not in instance.data:
-                        instance.data["representations"] = []
+                    if regex:
+                        if "representations" not in new_instance.data:
+                            new_instance.data["representations"] = []
 
-                    for collection in collections:
-                        self.log.info(
-                            "  - adding representation: {}".format(
-                                str(collection))
-                        )
-                        ext = collection.tail.lstrip(".")
+                        for collection in collections:
+                            self.log.info(
+                                "  - adding representation: {}".format(
+                                    str(collection))
+                            )
+                            ext = collection.tail.lstrip(".")
 
-                        representation = {
-                            "name": ext,
-                            "ext": "{}".format(ext),
-                            "files": list(collection),
-                            "stagingDir": root,
-                            "anatomy_template": "render",
-                            "fps": fps,
-                            "tags": ["review"],
-                            "frameStart": frame_start,
-                            "frameEnd": frame_end
-                        }
-                        instance.data["representations"].append(
-                            representation)
+                            representation = {
+                                "name": ext,
+                                "ext": "{}".format(ext),
+                                "files": list(collection),
+                                "stagingDir": root,
+                                "anatomy_template": "render",
+                                "fps": fps,
+                                "tags": ["review"],
+                            }
+                            new_instance.data["representations"].append(
+                                representation)
+                    else:
+                        try:
+                            representations = data["metadata"]["instance"]["representations"]  # noqa: E501
+                        except KeyError as e:
+                            assert False, e
+                        new_instance.data["representations"] = representations
 
             elif subset:
                 # if we have subset - add all collections and known
@@ -285,10 +300,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     "Adding representations to subset {}".format(
                         subset))
 
-                instance = context.create_instance(subset)
+                new_instance = context.create_instance(subset)
                 data = copy.deepcopy(data)
 
-                instance.data.update(
+                new_instance.data.update(
                     {
                         "name": subset,
                         "family": families[0],
@@ -309,138 +324,158 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     }
                 )
 
-                if "representations" not in instance.data:
-                    instance.data["representations"] = []
+                if "representations" not in new_instance.data:
+                    new_instance.data["representations"] = []
 
-                for collection in collections:
-                    self.log.info("  - {}".format(str(collection)))
+                if regex:
+                    for collection in collections:
+                        self.log.info("  - {}".format(str(collection)))
 
-                    ext = collection.tail.lstrip(".")
+                        ext = collection.tail.lstrip(".")
 
-                    if "slate" in instance.data["families"]:
-                        frame_start += 1
-
-                    representation = {
-                        "name": ext,
-                        "ext": "{}".format(ext),
-                        "files": list(collection),
-                        "frameStart": frame_start,
-                        "frameEnd": frame_end,
-                        "stagingDir": root,
-                        "anatomy_template": "render",
-                        "fps": fps,
-                        "tags": ["review"] if not baked_mov_path else [],
-                    }
-                    instance.data["representations"].append(
-                        representation)
-
-                # filter out only relevant mov in case baked available
-                self.log.debug("__ remainder {}".format(remainder))
-                if baked_mov_path:
-                    remainder = [r for r in remainder
-                                 if r in baked_mov_path]
-                    self.log.debug("__ remainder {}".format(remainder))
-
-                # process reminders
-                for rem in remainder:
-                    # add only known types to representation
-                    if rem.split(".")[-1] in ['mov', 'jpg', 'mp4']:
-                        self.log.info("  . {}".format(rem))
-
-                        if "slate" in instance.data["families"]:
+                        if "slate" in new_instance.data["families"]:
                             frame_start += 1
 
-                        tags = ["review"]
-
-                        if baked_mov_path:
-                            tags.append("delete")
-
                         representation = {
-                            "name": rem.split(".")[-1],
-                            "ext": "{}".format(rem.split(".")[-1]),
-                            "files": rem,
-                            "stagingDir": root,
+                            "name": ext,
+                            "ext": "{}".format(ext),
+                            "files": list(collection),
                             "frameStart": frame_start,
+                            "frameEnd": frame_end,
+                            "stagingDir": root,
                             "anatomy_template": "render",
                             "fps": fps,
-                            "tags": tags
+                            "tags": ["review"] if not baked_mov_path else [],
                         }
-                    instance.data["representations"].append(
-                        representation)
+                        new_instance.data["representations"].append(
+                            representation)
+
+                        # filter out only relevant mov in case baked available
+                        self.log.debug("__ remainder {}".format(remainder))
+                        if baked_mov_path:
+                            remainder = [r for r in remainder
+                                         if r in baked_mov_path]
+                            self.log.debug("__ remainder {}".format(remainder))
+
+                        # process reminders
+                        for rem in remainder:
+                            # add only known types to representation
+                            if rem.split(".")[-1] in ['mov', 'jpg', 'mp4']:
+                                self.log.info("  . {}".format(rem))
+
+                                if "slate" in instance.data["families"]:
+                                    frame_start += 1
+
+                                tags = ["review"]
+
+                                if baked_mov_path:
+                                    tags.append("delete")
+
+                                representation = {
+                                    "name": rem.split(".")[-1],
+                                    "ext": "{}".format(rem.split(".")[-1]),
+                                    "files": rem,
+                                    "stagingDir": root,
+                                    "frameStart": frame_start,
+                                    "anatomy_template": "render",
+                                    "fps": fps,
+                                    "tags": tags
+                                }
+                            new_instance.data["representations"].append(
+                                representation)
+                else:
+                    try:
+                        representations = data["metadata"]["instance"]["representations"]  # noqa: E501
+                    except KeyError as e:
+                        assert False, e
+
+                    new_instance.data["representations"] = representations
 
             else:
                 # we have no subset so we take every collection and create one
                 # from it
-                for collection in collections:
-                    instance = context.create_instance(str(collection))
-                    self.log.info("Creating subset from: %s" % str(collection))
+                if regex:
+                    for collection in collections:
+                        new_instance = context.create_instance(str(collection))
+                        self.log.info(
+                            "Creating subset from: %s" % str(collection))
 
-                    # Ensure each instance gets a unique reference to the data
-                    data = copy.deepcopy(data)
+                        # Ensure each instance gets a unique
+                        # reference to the data
+                        data = copy.deepcopy(data)
 
-                    # If no subset provided, get it from collection's head
-                    subset = data.get("subset", collection.head.rstrip("_. "))
+                        # If no subset provided, get it from collection's head
+                        subset = data.get(
+                            "subset", collection.head.rstrip("_. "))
 
-                    # If no start or end frame provided, get it from collection
-                    indices = list(collection.indexes)
-                    start = data.get("frameStart", indices[0])
-                    end = data.get("frameEnd", indices[-1])
+                        # If no start or end frame provided,
+                        # get it from collection
+                        indices = list(collection.indexes)
+                        start = data.get("frameStart", indices[0])
+                        end = data.get("frameEnd", indices[-1])
 
-                    ext = list(collection)[0].split(".")[-1]
+                        ext = list(collection)[0].split(".")[-1]
 
-                    if "review" not in families:
-                        families.append("review")
+                        if "review" not in families:
+                            families.append("review")
 
-                    instance.data.update(
-                        {
-                            "name": str(collection),
-                            "family": families[0],  # backwards compatibility
-                            "families": list(families),
-                            "subset": subset,
-                            "asset": data.get(
-                                "asset", api.Session["AVALON_ASSET"]),
-                            "stagingDir": root,
+                        new_instance.data.update(
+                            {
+                                "name": str(collection),
+                                "family": families[0],
+                                "families": list(families),
+                                "subset": subset,
+                                "asset": data.get(
+                                    "asset", api.Session["AVALON_ASSET"]),
+                                "stagingDir": root,
+                                "frameStart": start,
+                                "frameEnd": end,
+                                "fps": fps,
+                                "source": data.get("source", ""),
+                                "pixelAspect": pixel_aspect,
+                                "resolutionWidth": resolution_width,
+                                "resolutionHeight": resolution_height,
+                                "version": version
+                            }
+                        )
+                        if lut_path:
+                            new_instance.data.update({"lutPath": lut_path})
+
+                        new_instance.append(collection)
+                        new_instance.context.data["fps"] = fps
+
+                        if "representations" not in new_instance.data:
+                            new_instance.data["representations"] = []
+
+                        representation = {
+                            "name": ext,
+                            "ext": "{}".format(ext),
+                            "files": list(collection),
                             "frameStart": start,
                             "frameEnd": end,
+                            "stagingDir": root,
+                            "anatomy_template": "render",
                             "fps": fps,
-                            "source": data.get("source", ""),
-                            "pixelAspect": pixel_aspect,
-                            "resolutionWidth": resolution_width,
-                            "resolutionHeight": resolution_height,
-                            "version": version
+                            "tags": ["review"],
                         }
-                    )
-                    if lut_path:
-                        instance.data.update({"lutPath": lut_path})
+                        new_instance.data["representations"].append(
+                            representation)
 
-                    instance.append(collection)
-                    instance.context.data["fps"] = fps
+                        # temporary ... allow only beauty on ftrack
+                        if session['AVALON_APP'] == "maya":
+                            AOV_filter = ['beauty']
+                            for aov in AOV_filter:
+                                if aov not in new_instance.data['subset']:
+                                    new_instance.data['families'].remove(
+                                        'review')
+                                    new_instance.data['families'].remove(
+                                        'ftrack')
+                                    representation["tags"].remove('review')
 
-                    if "representations" not in instance.data:
-                        instance.data["representations"] = []
-
-                    representation = {
-                        "name": ext,
-                        "ext": "{}".format(ext),
-                        "files": list(collection),
-                        "stagingDir": root,
-                        "anatomy_template": "render",
-                        "fps": fps,
-                        "tags": ["review"],
-                    }
-                    instance.data["representations"].append(representation)
-
-                    # temporary ... allow only beauty on ftrack
-                    if session['AVALON_APP'] == "maya":
-                        AOV_filter = ['beauty']
-                        for aov in AOV_filter:
-                            if aov not in instance.data['subset']:
-                                instance.data['families'].remove('review')
-                                instance.data['families'].remove('ftrack')
-                                representation["tags"].remove('review')
-
+            self.log.info("remapping paths ...")
+            new_instance.data["representations"] = [PypeLauncher.path_remapper(r) for r in new_instance.data["representations"]]  # noqa: E501
             self.log.debug(
                 "__ representations {}".format(
-                    instance.data["representations"]))
+                    new_instance.data["representations"]))
             self.log.debug(
-                "__ instance.data {}".format(instance.data))
+                "__ instance.data {}".format(new_instance.data))

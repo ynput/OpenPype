@@ -1,7 +1,8 @@
 import re
 import os
 import types
-from abc import ABC, abstractmethod
+# TODO: pending python 3 upgrade
+from abc import ABCMeta, abstractmethod
 
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
@@ -48,12 +49,11 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder + 0.01
     hosts = ["maya"]
     label = "Collect Render Layers"
-    families = ["render"]
 
     def process(self, context):
         render_instance = None
         for instance in context:
-            if 'render' in instance.data['families']:
+            if 'rendering' in instance.data['families']:
                 render_instance = instance
 
         if not render_instance:
@@ -65,6 +65,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         collected_render_layers = render_instance.data['setMembers']
         filepath = context.data["currentFile"].replace("\\", "/")
         asset = api.Session["AVALON_ASSET"]
+        workspace = context.data["workspaceDir"]
 
         self._rs = renderSetup.instance()
         maya_render_layers = {l.name(): l for l in self._rs.getRenderLayers()}
@@ -120,11 +121,19 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # frame range
             exp_files = ExpectedFiles().get(renderer, layer_name)
 
+            # append full path
+            full_exp_files = []
+            for ef in exp_files:
+                full_path = os.path.join(workspace, "render", ef)
+                full_path = full_path.replace("\\", "/")
+                full_exp_files.append(full_path)
+
+            self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
             data = {
                 "subset": expected_layer_name,
                 "attachTo": attachTo,
-                "setMembers": expected_layer_name,
+                "setMembers": layer_name,
                 "publish": True,
                 "frameStart": self.get_render_attribute("startFrame",
                                                         layer=layer_name),
@@ -136,7 +145,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                                                       layer=layer_name),
 
                 # instance subset
-                "family": "Render Layers",
+                "family": "renderlayer",
                 "families": ["renderlayer"],
                 "asset": asset,
                 "time": api.time(),
@@ -145,7 +154,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
                 "source": filepath,
-                "expectedFiles": exp_files
+                "expectedFiles": full_exp_files
             }
 
             # Apply each user defined attribute as data
@@ -200,9 +209,6 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         options["renderGlobals"].update({"Pool": pool_a})
         if pool_b:
             options["renderGlobals"].update({"SecondaryPool": pool_b})
-
-        legacy = attributes["useLegacyRenderLayers"]
-        options["renderGlobals"]["UseLegacyRenderLayers"] = legacy
 
         # Machine list
         machine_list = attributes["machineList"]
@@ -267,22 +273,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         return lib.get_attr_in_layer("defaultRenderGlobals.{}".format(attr),
                                      layer=layer)
 
-    def _get_layer_overrides(self, attr, layer):
-        connections = cmds.listConnections(attr, plugs=True)
-        if connections:
-            for connection in connections:
-                if connection:
-                    node_name = connection.split('.')[0]
-                    if cmds.nodeType(node_name) == 'renderLayer':
-                        attr_name = '%s.value' % '.'.join(
-                            connection.split('.')[:-1])
-                        if node_name == layer:
-                            yield cmds.getAttr(attr_name)
-
 
 class ExpectedFiles:
 
-    def get(renderer, layer):
+    def get(self, renderer, layer):
         if renderer.lower() == 'arnold':
             return ExpectedFilesArnold(layer).get_files()
         elif renderer.lower() == 'vray':
@@ -298,8 +292,8 @@ class ExpectedFiles:
                 "unsupported {}".format(renderer))
 
 
-class AExpectedFiles(ABC):
-
+class AExpectedFiles:
+    __metaclass__ = ABCMeta
     renderer = None
     layer = None
 
@@ -356,6 +350,9 @@ class AExpectedFiles(ABC):
         # every renderable camera in layer.
 
         expected_files = []
+        layer_name = self.layer
+        if self.layer.startswith("rs_"):
+            layer_name = self.layer[3:]
         start_frame = int(self.get_render_attribute('startFrame'))
         end_frame = int(self.get_render_attribute('endFrame'))
         frame_step = int(self.get_render_attribute('byFrameStep'))
@@ -368,7 +365,7 @@ class AExpectedFiles(ABC):
 
                     mappings = (
                         (R_SUBSTITUTE_SCENE_TOKEN, scene_name),
-                        (R_SUBSTITUTE_LAYER_TOKEN, self.layer),
+                        (R_SUBSTITUTE_LAYER_TOKEN, layer_name),
                         (R_SUBSTITUTE_CAMERA_TOKEN, cam),
                         (R_SUBSTITUTE_AOV_TOKEN, aov[0])
                     )
@@ -377,7 +374,9 @@ class AExpectedFiles(ABC):
                         file_prefix = re.sub(regex, value, file_prefix)
 
                     for frame in range(
-                            int(start_frame), int(end_frame), int(frame_step)):
+                            int(start_frame),
+                            int(end_frame) + 1,
+                            int(frame_step)):
                         expected_files.append(
                             '{}.{}.{}'.format(file_prefix,
                                               str(frame).rjust(padding, "0"),
@@ -386,7 +385,7 @@ class AExpectedFiles(ABC):
             else:
                 mappings = (
                     (R_SUBSTITUTE_SCENE_TOKEN, scene_name),
-                    (R_SUBSTITUTE_LAYER_TOKEN, self.layer),
+                    (R_SUBSTITUTE_LAYER_TOKEN, layer_name),
                     (R_SUBSTITUTE_CAMERA_TOKEN, cam)
                 )
 
@@ -394,7 +393,9 @@ class AExpectedFiles(ABC):
                     file_prefix = re.sub(regex, value, file_prefix)
 
                 for frame in range(
-                        int(start_frame), int(end_frame), int(frame_step)):
+                        int(start_frame),
+                        int(end_frame) + 1,
+                        int(frame_step)):
                     expected_files.append(
                         '{}.{}.{}'.format(file_prefix,
                                           str(frame).rjust(padding, "0"),
@@ -418,6 +419,7 @@ class AExpectedFiles(ABC):
 
             if renderable:
                 renderable_cameras.append(cam)
+        return renderable_cameras
 
     def maya_is_true(self, attr_val):
         """
@@ -432,6 +434,22 @@ class AExpectedFiles(ABC):
             return any(attr_val)
         else:
             return bool(attr_val)
+
+    def get_layer_overrides(self, attr, layer):
+        connections = cmds.listConnections(attr, plugs=True)
+        if connections:
+            for connection in connections:
+                if connection:
+                    node_name = connection.split('.')[0]
+                    if cmds.nodeType(node_name) == 'renderLayer':
+                        attr_name = '%s.value' % '.'.join(
+                            connection.split('.')[:-1])
+                        if node_name == layer:
+                            yield cmds.getAttr(attr_name)
+
+    def get_render_attribute(self, attr):
+        return lib.get_attr_in_layer("defaultRenderGlobals.{}".format(attr),
+                                     layer=self.layer)
 
 
 class ExpectedFilesArnold(AExpectedFiles):
@@ -449,10 +467,10 @@ class ExpectedFilesArnold(AExpectedFiles):
     }
 
     def __init__(self, layer):
-        super(self).__init__(layer)
+        super(ExpectedFilesArnold, self).__init__(layer)
         self.renderer = 'arnold'
 
-    def _get_aovs(self):
+    def get_aovs(self):
         enabled_aovs = []
         if not (cmds.getAttr('defaultArnoldRenderOptions.aovMode')
                 and not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):
@@ -490,16 +508,26 @@ class ExpectedFilesArnold(AExpectedFiles):
                         aov_ext
                     )
                 )
+        if not enabled_aovs:
+            # if there are no AOVs, append 'beauty' as this is arnolds
+            # default. If <RenderPass> token is specified and no AOVs are
+            # defined, this will be used.
+            enabled_aovs.append(
+                (
+                    'beauty',
+                    cmds.getAttr('defaultRenderGlobals.imfPluginKey')
+                )
+            )
         return enabled_aovs
 
 
 class ExpectedFilesVray(AExpectedFiles):
 
     def __init__(self, layer):
-        super(self).__init__(layer)
+        super(ExpectedFilesVray, self).__init__(layer)
         self.renderer = 'vray'
 
-    def _get_aovs(self):
+    def get_aovs(self):
 
         default_ext = cmds.getAttr('defaultRenderGlobals.imfPluginKey')
         enabled_aovs = []
@@ -545,10 +573,10 @@ class ExpectedFilesVray(AExpectedFiles):
 class ExpectedFilesRedshift(AExpectedFiles):
 
     def __init__(self, layer):
-        super(self).__init__(layer)
+        super(ExpectedFilesRedshift, self).__init__(layer)
         self.renderer = 'redshift'
 
-    def _get_aovs(self):
+    def get_aovs(self):
         enabled_aovs = []
         default_ext = cmds.getAttr('defaultRenderGlobals.imfPluginKey')
         rs_aovs = [n for n in cmds.ls(type='RedshiftAOV')]

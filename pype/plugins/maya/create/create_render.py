@@ -14,7 +14,7 @@ class CreateRender(avalon.maya.Creator):
     """Create render layer for export"""
 
     label = "Render"
-    family = "render"
+    family = "rendering"
     icon = "eye"
     defaults = ["Main"]
 

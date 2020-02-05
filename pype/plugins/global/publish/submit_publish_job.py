@@ -2,6 +2,7 @@ import os
 import json
 import re
 import logging
+from collections import namedtuple
 
 from avalon import api, io
 from avalon.vendor import requests, clique
@@ -9,21 +10,23 @@ from avalon.vendor import requests, clique
 import pyblish.api
 
 
+AOVFilter = namedtuple("AOVFilter", ["app", "aov"])
+
+
 def _get_script():
     """Get path to the image sequence script"""
     try:
         from pype.scripts import publish_filesequence
     except Exception:
-        raise RuntimeError("Expected module 'publish_deadline'"
-                           "to be available")
+        assert False, "Expected module 'publish_deadline'to be available"
 
     module_path = publish_filesequence.__file__
     if module_path.endswith(".pyc"):
-        module_path = module_path[:-len(".pyc")] + ".py"
+        module_path = module_path[: -len(".pyc")] + ".py"
 
     module_path = os.path.normpath(module_path)
-    mount_root = os.path.normpath(os.environ['PYPE_STUDIO_CORE_MOUNT'])
-    network_root = os.path.normpath(os.environ['PYPE_STUDIO_CORE_PATH'])
+    mount_root = os.path.normpath(os.environ["PYPE_STUDIO_CORE_MOUNT"])
+    network_root = os.path.normpath(os.environ["PYPE_STUDIO_CORE_PATH"])
 
     module_path = module_path.replace(mount_root, network_root)
 
@@ -34,39 +37,29 @@ def _get_script():
 def get_latest_version(asset_name, subset_name, family):
     # Get asset
     asset_name = io.find_one(
-        {
-            "type": "asset",
-            "name": asset_name
-        },
-        projection={"name": True}
+        {"type": "asset", "name": asset_name}, projection={"name": True}
     )
 
     subset = io.find_one(
-        {
-            "type": "subset",
-            "name": subset_name,
-            "parent": asset_name["_id"]
-        },
-        projection={"_id": True, "name": True}
+        {"type": "subset", "name": subset_name, "parent": asset_name["_id"]},
+        projection={"_id": True, "name": True},
     )
 
     # Check if subsets actually exists (pre-run check)
     assert subset, "No subsets found, please publish with `extendFrames` off"
 
     # Get version
-    version_projection = {"name": True,
-                          "data.startFrame": True,
-                          "data.endFrame": True,
-                          "parent": True}
+    version_projection = {
+        "name": True,
+        "data.startFrame": True,
+        "data.endFrame": True,
+        "parent": True,
+    }
 
     version = io.find_one(
-        {
-            "type": "version",
-            "parent": subset["_id"],
-            "data.families": family
-        },
+        {"type": "version", "parent": subset["_id"], "data.families": family},
         projection=version_projection,
-        sort=[("name", -1)]
+        sort=[("name", -1)],
     )
 
     assert version, "No version found, this is a bug"
@@ -87,8 +80,12 @@ def get_resources(version, extension=None):
 
     directory = api.get_representation_path(representation)
     print("Source: ", directory)
-    resources = sorted([os.path.normpath(os.path.join(directory, fname))
-                        for fname in os.listdir(directory)])
+    resources = sorted(
+        [
+            os.path.normpath(os.path.join(directory, fname))
+            for fname in os.listdir(directory)
+        ]
+    )
 
     return resources
 
@@ -149,23 +146,22 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     hosts = ["fusion", "maya", "nuke"]
 
-    families = [
-        "render.farm",
-        "renderlayer",
-        "imagesequence"
-    ]
+    families = ["render.farm", "renderlayer", "imagesequence"]
+
+    # this will add review and ftrack tag only to `beauty` in `maya` app
+    aov_filter = [AOVFilter("maya", ["beauty"])]
 
     enviro_filter = [
-                     "PATH",
-                     "PYTHONPATH",
-                     "FTRACK_API_USER",
-                     "FTRACK_API_KEY",
-                     "FTRACK_SERVER",
-                     "PYPE_ROOT",
-                     "PYPE_METADATA_FILE",
-                     "PYPE_STUDIO_PROJECTS_PATH",
-                     "PYPE_STUDIO_PROJECTS_MOUNT"
-                     ]
+        "PATH",
+        "PYTHONPATH",
+        "FTRACK_API_USER",
+        "FTRACK_API_KEY",
+        "FTRACK_SERVER",
+        "PYPE_ROOT",
+        "PYPE_METADATA_FILE",
+        "PYPE_STUDIO_PROJECTS_PATH",
+        "PYPE_STUDIO_PROJECTS_MOUNT",
+    ]
 
     def _submit_deadline_post_job(self, instance, job):
         """
@@ -176,8 +172,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         data = instance.data.copy()
         subset = data["subset"]
         job_name = "{batch} - {subset} [publish image sequence]".format(
-            batch=job["Props"]["Name"],
-            subset=subset
+            batch=job["Props"]["Name"], subset=subset
         )
 
         metadata_filename = "{}_metadata.json".format(subset)
@@ -185,9 +180,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         metadata_path = os.path.join(output_dir, metadata_filename)
 
         metadata_path = os.path.normpath(metadata_path)
-        mount_root = os.path.normpath(os.environ['PYPE_STUDIO_PROJECTS_MOUNT'])
+        mount_root = os.path.normpath(os.environ["PYPE_STUDIO_PROJECTS_MOUNT"])
         network_root = os.path.normpath(
-            os.environ['PYPE_STUDIO_PROJECTS_PATH'])
+            os.environ["PYPE_STUDIO_PROJECTS_PATH"]
+        )
 
         metadata_path = metadata_path.replace(mount_root, network_root)
 
@@ -197,21 +193,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "Plugin": "Python",
                 "BatchName": job["Props"]["Batch"],
                 "Name": job_name,
-                "JobType": "Normal",
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
-                "Priority": job["Props"]["Pri"]
+                "Priority": job["Props"]["Pri"],
             },
             "PluginInfo": {
                 "Version": "3.6",
                 "ScriptFile": _get_script(),
                 "Arguments": "",
-                "SingleFrameOnly": "True"
+                "SingleFrameOnly": "True",
             },
-
             # Mandatory for Deadline, may be empty
-            "AuxFiles": []
+            "AuxFiles": [],
         }
 
         # Transfer the environment from the original job to this dependent
@@ -225,12 +219,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.info("FILTER: {}".format(self.enviro_filter))
 
             if key.upper() in self.enviro_filter:
-                payload["JobInfo"].update({
-                    "EnvironmentKeyValue%d" % i: "{key}={value}".format(
-                        key=key,
-                        value=environment[key]
-                    )
-                })
+                payload["JobInfo"].update(
+                    {
+                        "EnvironmentKeyValue%d"
+                        % i: "{key}={value}".format(
+                            key=key, value=environment[key]
+                        )
+                    }
+                )
                 i += 1
 
         # Avoid copied pools and remove secondary pool
@@ -295,33 +291,32 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     fps
                     tags
         """
-
-        # Get a submission job
         data = instance.data.copy()
+        context = instance.context
+
         render_job = data.pop("deadlineSubmissionJob", None)
         submission_type = "deadline"
-
         if not render_job:
             # No deadline job. Try Muster: musterSubmissionJob
             render_job = data.pop("musterSubmissionJob", None)
             submission_type = "muster"
-            if not render_job:
-                raise RuntimeError("Can't continue without valid Deadline "
-                                   "or Muster submission prior to this "
-                                   "plug-in.")
+            assert render_job, (
+                "Can't continue without valid Deadline "
+                "or Muster submission prior to this "
+                "plug-in."
+            )
 
         if submission_type == "deadline":
-            self.DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
-                                                    "http://localhost:8082")
+            self.DEADLINE_REST_URL = os.environ.get(
+                "DEADLINE_REST_URL", "http://localhost:8082"
+            )
             assert self.DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
             self._submit_deadline_post_job(instance, render_job)
 
         asset = data.get("asset") or api.Session["AVALON_ASSET"]
-        subset = data["subset"]
+        subset = data.get("subset")
 
-        # Get start/end frame from instance, if not available get from context
-        context = instance.context
         start = instance.data.get("frameStart")
         if start is None:
             start = context.data["frameStart"]
@@ -329,45 +324,76 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if end is None:
             end = context.data["frameEnd"]
 
-        # Add in regex for sequence filename
-        # This assumes the output files start with subset name and ends with
-        # a file extension. The "ext" key includes the dot with the extension.
-        if "ext" in instance.data:
-            ext = r"\." + re.escape(instance.data["ext"])
-        else:
-            ext = r"\.\D+"
-
-        regex = r"^{subset}.*\d+{ext}$".format(subset=re.escape(subset),
-                                               ext=ext)
-
         try:
-            source = data['source']
+            source = data["source"]
         except KeyError:
             source = context.data["currentFile"]
 
-        source = source.replace(os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"),
-                                api.registered_root())
-
+        source = source.replace(
+            os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"), api.registered_root()
+        )
         relative_path = os.path.relpath(source, api.registered_root())
         source = os.path.join("{root}", relative_path).replace("\\", "/")
+        regex = None
 
-        # find subsets and version to attach render to
-        attach_to = instance.data.get("attachTo")
-        attach_subset_versions = []
-        if attach_to:
-            for subset in attach_to:
-                for instance in context:
-                    if instance.data["subset"] != subset["subset"]:
-                        continue
-                    attach_subset_versions.append(
-                        {"version": instance.data["version"],
-                         "subset": subset["subset"],
-                         "family": subset["family"]})
+        if data.get("expectedFiles"):
+            representations = []
+            cols, rem = clique.assemble(data.get("expectedFiles"))
+            for c in cols:
+                ext = c.tail.lstrip(".")
+                review = True
+                for filter in self.aov_filter:
+                    if os.environ.get("AVALON_APP", "") == filter.app:
+                        for aov in filter.aov:
+                            if re.match(
+                                r"(\.|_)({})(\.|_)".format(aov), list(c)[0]
+                            ):
+                                review = False
+                rep = {
+                    "name": ext,
+                    "ext": ext,
+                    "files": [os.path.basename(f) for f in list(c)],
+                    "frameStart": int(start),
+                    "frameEnd": int(end),
+                    # If expectedFile are absolute, we need only filenames
+                    "stagingDir": os.path.dirname(list(c)[0]),
+                    "anatomy_template": "render",
+                    "fps": context.data.get("fps", None),
+                    "tags": ["review"] if review else [],
+                }
 
+                representations.append(rep)
+
+            for r in rem:
+                ext = r.split(".")[-1]
+                rep = {
+                    "name": ext,
+                    "ext": ext,
+                    "files": os.path.basename(r),
+                    "stagingDir": os.path.dirname(r),
+                    "anatomy_template": "publish",
+                }
+
+                representations.append(rep)
+
+            if "representations" not in instance.data:
+                data["representations"] = []
+
+            # add representation
+            data["representations"] += representations
+
+        else:
+            if "ext" in instance.data:
+                ext = r"\." + re.escape(instance.data["ext"])
+            else:
+                ext = r"\.\D+"
+
+            regex = r"^{subset}.*\d+{ext}$".format(
+                subset=re.escape(subset), ext=ext
+            )
         # Write metadata for publish job
         metadata = {
             "asset": asset,
-            "regex": regex,
             "frameStart": start,
             "frameEnd": end,
             "fps": context.data.get("fps", None),
@@ -375,27 +401,29 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "source": source,
             "user": context.data["user"],
             "version": context.data["version"],
-            "attachTo": attach_subset_versions,
             "intent": context.data.get("intent"),
             "comment": context.data.get("comment"),
             # Optional metadata (for debugging)
             "metadata": {
-                "instance": data,
                 "job": render_job,
-                "session": api.Session.copy()
-            }
+                "session": api.Session.copy(),
+                "instance": data,
+            },
         }
 
         if api.Session["AVALON_APP"] == "nuke":
-            metadata['subset'] = subset
+            metadata["subset"] = subset
 
         if submission_type == "muster":
             ftrack = {
                 "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
                 "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
-                "FTRACK_SERVER": os.environ.get("FTRACK_SERVER")
+                "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
             metadata.update({"ftrack": ftrack})
+
+        if regex:
+            metadata["regex"] = regex
 
         # Ensure output dir exists
         output_dir = instance.data["outputDir"]
@@ -418,16 +446,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # Frame comparison
             prev_start = None
             prev_end = None
-            resource_range = range(int(start), int(end)+1)
+            resource_range = range(int(start), int(end) + 1)
 
             # Gather all the subset files (one subset per render pass!)
             subset_names = [data["subset"]]
             subset_names.extend(data.get("renderPasses", []))
             resources = []
             for subset_name in subset_names:
-                version = get_latest_version(asset_name=data["asset"],
-                                             subset_name=subset_name,
-                                             family=family)
+                version = get_latest_version(
+                    asset_name=data["asset"],
+                    subset_name=subset_name,
+                    family=family,
+                )
 
                 # Set prev start / end frames for comparison
                 if not prev_start and not prev_end:
@@ -435,9 +465,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     prev_end = version["data"]["frameEnd"]
 
                 subset_resources = get_resources(version, _ext)
-                resource_files = get_resource_files(subset_resources,
-                                                    resource_range,
-                                                    override)
+                resource_files = get_resource_files(
+                    subset_resources, resource_range, override
+                )
 
                 resources.extend(resource_files)
 
@@ -445,27 +475,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             updated_end = max(end, prev_end)
 
             # Update metadata and instance start / end frame
-            self.log.info("Updating start / end frame : "
-                          "{} - {}".format(updated_start, updated_end))
-
-            # TODO : Improve logic to get new frame range for the
-            # publish job (publish_filesequence.py)
-            # The current approach is not following Pyblish logic
-            # which is based
-            # on Collect / Validate / Extract.
-
-            # ---- Collect Plugins  ---
-            # Collect Extend Frames - Only run if extendFrames is toggled
-            # # # Store in instance:
-            # # # Previous rendered files per subset based on frames
-            # # # --> Add to instance.data[resources]
-            # # # Update publish frame range
-
-            # ---- Validate Plugins ---
-            # Validate Extend Frames
-            # # # Check if instance has the requirements to extend frames
-            # There might have been some things which can be added to the list
-            # Please do so when fixing this.
+            self.log.info(
+                "Updating start / end frame : "
+                "{} - {}".format(updated_start, updated_end)
+            )
 
             # Start frame
             metadata["frameStart"] = updated_start
