@@ -78,6 +78,8 @@ class CollectTemplates(pyblish.api.InstancePlugin):
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
+        else:
+            hierarchy = ""
 
         template_data = {"root": api.Session["AVALON_PROJECTS"],
                          "project": {"name": project_name,
