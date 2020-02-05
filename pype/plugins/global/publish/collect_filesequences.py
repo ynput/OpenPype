@@ -108,6 +108,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
         version = None
         frame_start = 0
         frame_end = 0
+        new_instance = None
+
         if os.environ.get("PYPE_PUBLISH_PATHS"):
             paths = os.environ["PYPE_PUBLISH_PATHS"].split(os.pathsep)
             self.log.info("Collecting paths: {}".format(paths))
@@ -394,6 +396,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
             else:
                 # we have no subset so we take every collection and create one
                 # from it
+
                 if regex:
                     for collection in collections:
                         new_instance = context.create_instance(str(collection))
@@ -471,11 +474,39 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                                     new_instance.data['families'].remove(
                                         'ftrack')
                                     representation["tags"].remove('review')
+                else:
+                    subset = data["metadata"]["instance"]["subset"]
+                    self.log.info("Creating new subset: {}".format(subset))
+                    new_instance = context.create_instance(subset)
+                    data = copy.deepcopy(data)
+                    new_instance.data.update(
+                        {
+                            "name": subset,
+                            "family": 'render',
+                            "families": ['render'],
+                            "subset": subset,
+                            "asset": data.get(
+                                "asset", api.Session["AVALON_ASSET"]),
+                            "stagingDir": root,
+                            "frameStart": frame_start,
+                            "frameEnd": frame_end,
+                            "fps": fps,
+                            "source": data.get("source", ""),
+                            "pixelAspect": pixel_aspect,
+                            "resolutionWidth": resolution_width,
+                            "resolutionHeight": resolution_height,
+                            "slateFrame": slate_frame
+                        }
+                    )
+                    new_instance.data["representations"] = data["metadata"]["instance"]["representations"]
 
-            self.log.info("remapping paths ...")
-            new_instance.data["representations"] = [PypeLauncher.path_remapper(r) for r in new_instance.data["representations"]]  # noqa: E501
-            self.log.debug(
-                "__ representations {}".format(
-                    new_instance.data["representations"]))
-            self.log.debug(
-                "__ instance.data {}".format(new_instance.data))
+            if new_instance:
+                self.log.info("remapping paths ...")
+                new_instance.data["representations"] = [PypeLauncher.path_remapper(r) for r in new_instance.data["representations"]]  # noqa: E501
+                self.log.debug(
+                    "__ representations {}".format(
+                        new_instance.data["representations"]))
+                self.log.debug(
+                    "__ instance.data {}".format(new_instance.data))
+            else:
+                self.log.error("nothing collected")

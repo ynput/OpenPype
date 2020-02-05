@@ -124,7 +124,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # append full path
             full_exp_files = []
             for ef in exp_files:
-                full_path = os.path.join(workspace, "render", ef)
+                full_path = os.path.join(workspace, "renders", ef)
                 full_path = full_path.replace("\\", "/")
                 full_exp_files.append(full_path)
 
