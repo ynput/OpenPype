@@ -439,10 +439,10 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 if __name__ == '__main__':
     import sys
     import json
-    data = json.loads(sys.argv[-1])
+    in_data = json.loads(sys.argv[-1])
     burnins_from_data(
-        data['input'],
-        data['codec'],
-        data['output'],
-        data['burnin_data']
+        in_data['input'],
+        in_data['codec'],
+        in_data['output'],
+        in_data['burnin_data']
     )
