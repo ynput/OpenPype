@@ -55,6 +55,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         for instance in context:
             if 'rendering' in instance.data['families']:
                 render_instance = instance
+                render_instance.data["remove"] = True
 
         if not render_instance:
             self.log.info("No render instance found, skipping render "

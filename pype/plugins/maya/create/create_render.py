@@ -25,6 +25,22 @@ class CreateRender(avalon.maya.Creator):
     # renderSetup instance
     _rs = None
 
+    _image_prefix_nodes = {
+        'mentalray': 'defaultRenderGlobals.imageFilePrefix',
+        'vray': 'vraySettings.fileNamePrefix',
+        'arnold': 'defaultRenderGlobals.imageFilePrefix',
+        'renderman': 'defaultRenderGlobals.imageFilePrefix',
+        'redshift': 'defaultRenderGlobals.imageFilePrefix'
+    }
+
+    _image_prefixes = {
+        'mentalray': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
+        'vray': '"maya/<scene>/<Layer>/<Layer>',
+        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
+        'renderman': 'maya/<Scene>/<layer>/<layer>_<aov>',
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>'
+    }
+
     def __init__(self, *args, **kwargs):
         super(CreateRender, self).__init__(*args, **kwargs)
 
@@ -48,6 +64,16 @@ class CreateRender(avalon.maya.Creator):
                     render_set = cmds.sets(n="LAYER_{}".format(layer.name()))
                     sets.append(render_set)
                 cmds.sets(sets, forceElement=instance)
+
+            renderer = cmds.getAttr(
+                'defaultRenderGlobals.currentRenderer').lower()
+            # handle various renderman names
+            if renderer.startswith('renderman'):
+                renderer = 'renderman'
+
+            cmds.setAttr(self._image_prefix_nodes[renderer],
+                         self._image_prefixes[renderer],
+                         type="string")
 
     def _create_render_settings(self):
         # get pools

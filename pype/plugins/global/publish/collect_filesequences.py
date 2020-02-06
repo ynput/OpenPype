@@ -479,12 +479,17 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     self.log.info("Creating new subset: {}".format(subset))
                     new_instance = context.create_instance(subset)
                     data = copy.deepcopy(data)
+                    task = data["metadata"]["session"]["AVALON_TASK"]
+                    new_subset_name = 'render{}{}{}{}'.format(
+                        task[0].upper(), task[1:],
+                        subset[0].upper(), subset[1:])
+
                     new_instance.data.update(
                         {
-                            "name": subset,
+                            "name": new_subset_name,
                             "family": 'render',
                             "families": ['render'],
-                            "subset": subset,
+                            "subset": new_subset_name,
                             "asset": data.get(
                                 "asset", api.Session["AVALON_ASSET"]),
                             "stagingDir": root,
@@ -500,7 +505,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     )
                     new_instance.data["representations"] = data["metadata"]["instance"]["representations"]
 
-            if new_instance:
+            if new_instance is not None:
                 self.log.info("remapping paths ...")
                 new_instance.data["representations"] = [PypeLauncher.path_remapper(r) for r in new_instance.data["representations"]]  # noqa: E501
                 self.log.debug(

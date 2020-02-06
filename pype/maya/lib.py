@@ -2462,7 +2462,7 @@ def _get_render_instance():
         if not has_family:
             continue
 
-        if cmds.getAttr("{}.family".format(objset)) == 'render':
+        if cmds.getAttr("{}.family".format(objset)) == 'rendering':
             return objset
 
     return None
