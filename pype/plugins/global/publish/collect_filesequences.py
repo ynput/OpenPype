@@ -507,7 +507,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
             if new_instance is not None:
                 self.log.info("remapping paths ...")
-                new_instance.data["representations"] = [PypeLauncher.path_remapper(r) for r in new_instance.data["representations"]]  # noqa: E501
+                new_instance.data["representations"] = [PypeLauncher.path_remapper(data=r) for r in new_instance.data["representations"]]  # noqa: E501
                 self.log.debug(
                     "__ representations {}".format(
                         new_instance.data["representations"]))

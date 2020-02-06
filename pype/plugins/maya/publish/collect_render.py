@@ -503,9 +503,13 @@ class ExpectedFilesArnold(AExpectedFiles):
                     '{}.enabled'.format(aov), self.layer):
                 enabled = self.maya_is_true(override)
             if enabled:
+                # If aov RGBA is selected, arnold will translate it to `beauty`
+                aov_name = cmds.getAttr('%s.name' % aov)
+                if aov_name == 'RGBA':
+                    aov_name = 'beauty'
                 enabled_aovs.append(
                     (
-                        cmds.getAttr('%s.name' % aov),
+                        aov_name,
                         aov_ext
                     )
                 )
