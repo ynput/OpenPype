@@ -347,14 +347,14 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
     For this preset we'll need at least this data:
     data = {
-        "start_frame": 1001,
+        "frame_start": 1001,
         "shot": "sh0010"
     }
 
     When Timecode should start from 1 then data need:
     data = {
-        "start_frame": 1001,
-        "start_frame_tc": 1,
+        "frame_start": 1001,
+        "frame_start_tc": 1,
         "shot": "sh0010"
     }
     '''
