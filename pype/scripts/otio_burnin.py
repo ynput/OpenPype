@@ -226,9 +226,13 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
 
         is_sequence = "%" in output
 
-        command = self.command(output=output,
-                               args=args,
-                               overwrite=overwrite)
+        command = self.command(
+            output=output,
+            args=args,
+            overwrite=overwrite
+        )
+        print(command)
+
         proc = Popen(command, shell=True)
         proc.communicate()
         if proc.returncode != 0:
