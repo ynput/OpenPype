@@ -296,10 +296,6 @@ def example(input_path, output_path):
     burnin.add_text('My Text', ModifiedBurnins.TOP_CENTERED)
     # Datetime
     burnin.add_text('%d-%m-%y', ModifiedBurnins.TOP_RIGHT)
-    # Frame number
-    burnin.add_frame_numbers(ModifiedBurnins.TOP_RIGHT, start_frame=start_frame)
-    # Timecode
-    burnin.add_timecode(ModifiedBurnins.TOP_LEFT, start_frame=start_frame)
     # Start render (overwrite output file if exist)
     burnin.render(output_path, overwrite=True)
 
