@@ -302,7 +302,9 @@ def example(input_path, output_path):
     burnin.render(output_path, overwrite=True)
 
 
-def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True):
+def burnins_from_data(
+    input_path, output_path, data, codec_data=None, overwrite=True
+):
     '''
     This method adds burnins to video/image file based on presets setting.
     Extension of output MUST be same as input. (mov -> mov, avi -> avi,...)
@@ -453,7 +455,7 @@ if __name__ == '__main__':
     in_data = json.loads(sys.argv[-1])
     burnins_from_data(
         in_data['input'],
-        in_data['codec'],
         in_data['output'],
-        in_data['burnin_data']
+        in_data['burnin_data'],
+        in_data['codec']
     )
