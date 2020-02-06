@@ -201,8 +201,12 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             'color': options['font_color'],
             'size': options['font_size']
         }
+        timecode_text = options.get("timecode") or ""
+        text_for_size = text + timecode_text
         data.update(options)
-        data.update(ffmpeg_burnins._drawtext(align, resolution, text, options))
+        data.update(
+            ffmpeg_burnins._drawtext(align, resolution, text_for_size, options)
+        )
         if 'font' in data and ffmpeg_burnins._is_windows():
             data['font'] = data['font'].replace(os.sep, r'\\' + os.sep)
             data['font'] = data['font'].replace(':', r'\:')
