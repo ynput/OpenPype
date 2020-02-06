@@ -359,17 +359,18 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
     for align_text, preset in presets.get('burnins', {}).items():
         align = None
-        if align_text == 'TOP_LEFT':
+        align_text = align_text.strip().lower()
+        if align_text == "top_left":
             align = ModifiedBurnins.TOP_LEFT
-        elif align_text == 'TOP_CENTERED':
+        elif align_text == "top_centered":
             align = ModifiedBurnins.TOP_CENTERED
-        elif align_text == 'TOP_RIGHT':
+        elif align_text == "top_right":
             align = ModifiedBurnins.TOP_RIGHT
-        elif align_text == 'BOTTOM_LEFT':
+        elif align_text == "bottom_left":
             align = ModifiedBurnins.BOTTOM_LEFT
-        elif align_text == 'BOTTOM_CENTERED':
+        elif align_text == "bottom_centered":
             align = ModifiedBurnins.BOTTOM_CENTERED
-        elif align_text == 'BOTTOM_RIGHT':
+        elif align_text == "bottom_right":
             align = ModifiedBurnins.BOTTOM_RIGHT
 
         bi_func = preset.get('function')
