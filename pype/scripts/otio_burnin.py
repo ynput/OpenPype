@@ -140,7 +140,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
 
         :param str text: text to apply to the drawtext
         :param enum align: alignment, must use provided enum flags
-        :param int frame_start: starting frame for burnins
+        :param int frame_start: starting frame for burnins current frame
         :param dict options: recommended to use TextOptions
         """
         if not options:
@@ -152,32 +152,41 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
 
         self._add_burnin(text, align, options, DRAWTEXT)
 
-    def add_timecode(self, align, options=None, start_frame=None):
+    def add_timecode(
+        self, align, frame_start=None, frame_start_tc=None, text=None,
+        options=None
+    ):
         """
         Convenience method to create the frame number expression.
 
         :param enum align: alignment, must use provided enum flags
+        :param int frame_start:  starting frame for burnins current frame
+        :param int frame_start_tc:  starting frame for burnins timecode
+        :param str text: text that will be before timecode
         :param dict options: recommended to use TimeCodeOptions
         """
         if not options:
             options = ffmpeg_burnins.TimeCodeOptions(**self.options_init)
-        if start_frame:
-            options['frame_offset'] = start_frame
 
-        timecode = ffmpeg_burnins._frames_to_timecode(
-            options['frame_offset'],
+        options = options.copy()
+        if frame_start:
+            options["frame_offset"] = frame_start
+
+        if not frame_start_tc:
+            frame_start_tc = options["frame_offset"]
+
+        if not text:
+            text = ""
+
+        if not options.get("fps"):
+            options["fps"] = self.frame_rate
+
+        options["timecode"] = ffmpeg_burnins._frames_to_timecode(
+            frame_start_tc,
             self.frame_rate
         )
-        options = options.copy()
-        if not options.get('fps'):
-            options['fps'] = self.frame_rate
 
-        self._add_burnin(
-            timecode.replace(':', r'\:'),
-            align,
-            options,
-            ffmpeg_burnins.TIMECODE
-        )
+        self._add_burnin(text, align, options, TIMECODE)
 
     def _add_burnin(self, text, align, options, draw):
         """
