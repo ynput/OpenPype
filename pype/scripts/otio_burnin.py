@@ -134,17 +134,21 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if options_init:
             self.options_init.update(options_init)
 
-    def add_text(self, text, align, options=None):
+    def add_text(self, text, align, frame_start=None, options=None):
         """
         Adding static text to a filter.
 
         :param str text: text to apply to the drawtext
         :param enum align: alignment, must use provided enum flags
+        :param int frame_start: starting frame for burnins
         :param dict options: recommended to use TextOptions
         """
         if not options:
             options = ffmpeg_burnins.TextOptions(**self.options_init)
-        self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
+
+        options = options.copy()
+        if frame_start:
+            options["frame_offset"] = frame_start
 
     def add_timecode(self, align, options=None, start_frame=None):
         """
