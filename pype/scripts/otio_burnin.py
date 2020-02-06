@@ -150,6 +150,8 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if frame_start:
             options["frame_offset"] = frame_start
 
+        self._add_burnin(text, align, options, DRAWTEXT)
+
     def add_timecode(self, align, options=None, start_frame=None):
         """
         Convenience method to create the frame number expression.
