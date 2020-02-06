@@ -37,6 +37,11 @@ TIMECODE = (
     "%(color)s@%(opacity).1f:fontsize=%(size)d:fontfile='%(font)s'"
 )
 
+MISSING_KEY_VALUE = "N/A"
+CURRENT_FRAME_KEY = "{current_frame}"
+TIME_CODE_KEY = "{timecode}"
+
+
 def _streams(source):
     """Reimplemented from otio burnins to be able use full path to ffprobe
     :param str source: source media file
