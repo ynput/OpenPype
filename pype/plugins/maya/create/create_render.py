@@ -55,15 +55,22 @@ class CreateRender(avalon.maya.Creator):
             instance = super(CreateRender, self).process()
             cmds.setAttr("{}.machineList".format(instance), lock=True)
             self._rs = renderSetup.instance()
+            layers = self._rs.getRenderLayers()
             if use_selection:
                 print(">>> processing existing layers")
-                layers = self._rs.getRenderLayers()
                 sets = []
                 for layer in layers:
                     print("  - creating set for {}".format(layer.name()))
                     render_set = cmds.sets(n="LAYER_{}".format(layer.name()))
                     sets.append(render_set)
                 cmds.sets(sets, forceElement=instance)
+
+            # if no render layers are present, create default one with
+            # asterix selector
+            if not layers:
+                rl = self._rs.createRenderLayer('Main')
+                cl = rl.createCollection("defaultCollection")
+                cl.getSelector().setPattern('*')
 
             renderer = cmds.getAttr(
                 'defaultRenderGlobals.currentRenderer').lower()

@@ -148,7 +148,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     families = ["render.farm", "renderlayer", "imagesequence"]
 
-    # this will add review and ftrack tag only to `beauty` in `maya` app
     aov_filter = [AOVFilter("maya", ["beauty"])]
 
     enviro_filter = [
@@ -249,48 +248,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         :param instance: Instance data
         :type instance: dict
-
-        Data needed for collect_filesequences:
-
-        root
-        asset *
-        source *
-        frameStart
-        frameEnd
-        subset
-        ftrack
-        fps
-        user
-        version *
-        attachTo *:
-            subset
-            version
-        regex !
-        exclude_regex !
-
-        metadata:
-            session *
-            instance *:
-                family
-                pixelAspect *
-                resolutionWidth
-                resolutionHeight
-                lutPath *
-                bakeRenderPath
-                families
-                slateFrame
-                version
-                representations:
-                    name
-                    ext
-                    files": []]
-                    frameStart
-                    frameEnd
-                    stagingDir
-                    anatomy_template
-                    fps
-                    tags
         """
+
         data = instance.data.copy()
         context = instance.context
 
@@ -341,16 +300,22 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if data.get("expectedFiles"):
             representations = []
             cols, rem = clique.assemble(data.get("expectedFiles"))
+            # create representation for every collected sequence
             for c in cols:
                 ext = c.tail.lstrip(".")
-                review = True
+                preview = False
+                # if filtered aov name is found in filename, toggle it for
+                # preview video renderin
                 for filter in self.aov_filter:
                     if os.environ.get("AVALON_APP", "") == filter.app:
                         for aov in filter.aov:
                             if re.match(
-                                r"(\.|_)({})(\.|_)".format(aov), list(c)[0]
+                                r".+(?:\.|_)({})(?:\.|_).*".format(aov),
+                                list(c)[0]
                             ):
-                                review = False
+                                preview = True
+                                break
+                    break
                 rep = {
                     "name": ext,
                     "ext": ext,
@@ -361,7 +326,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     "stagingDir": os.path.dirname(list(c)[0]),
                     "anatomy_template": "render",
                     "fps": context.data.get("fps", None),
-                    "tags": ["review"] if review else [],
+                    "tags": ["review"] if preview else [],
                 }
 
                 representations.append(rep)

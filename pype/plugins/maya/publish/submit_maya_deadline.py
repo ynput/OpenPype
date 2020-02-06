@@ -211,9 +211,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 # Only render layers are considered renderable in this pipeline
                 "UsingRenderLayers": True,
 
-                # Use legacy Render Layer system
-                # "UseLegacyRenderLayers": legacy_layers,
-
                 # Render only this layer
                 "RenderLayer": renderlayer,
 

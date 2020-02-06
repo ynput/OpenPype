@@ -225,11 +225,11 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
             if families_data and "slate" in families_data:
                 families.append("slate")
 
-            if data.get("attachTo"):
+            if data["metadata"]["instance"].get("attachTo"):
                 # we need to attach found collections to existing
                 # subset version as review represenation.
 
-                for attach in data.get("attachTo"):
+                for attach in data["metadata"]["instance"]["attachTo"]:
                     self.log.info(
                         "Attaching render {}:v{}".format(
                             attach["subset"], attach["version"]))
@@ -238,6 +238,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     new_instance.data.update(
                         {
                             "name": attach["subset"],
+                            "subset": attach["subset"],
                             "version": attach["version"],
                             "family": 'review',
                             "families": ['review', 'ftrack'],
@@ -368,7 +369,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                                 if "slate" in instance.data["families"]:
                                     frame_start += 1
 
-                                tags = ["review"]
+                                tags = ["preview"]
 
                                 if baked_mov_path:
                                     tags.append("delete")
@@ -476,13 +477,15 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                                     representation["tags"].remove('review')
                 else:
                     subset = data["metadata"]["instance"]["subset"]
-                    self.log.info("Creating new subset: {}".format(subset))
-                    new_instance = context.create_instance(subset)
                     data = copy.deepcopy(data)
                     task = data["metadata"]["session"]["AVALON_TASK"]
                     new_subset_name = 'render{}{}{}{}'.format(
                         task[0].upper(), task[1:],
                         subset[0].upper(), subset[1:])
+
+                    self.log.info(
+                        "Creating new subset: {}".format(new_subset_name))
+                    new_instance = context.create_instance(new_subset_name)
 
                     new_instance.data.update(
                         {
@@ -503,11 +506,11 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                             "slateFrame": slate_frame
                         }
                     )
-                    new_instance.data["representations"] = data["metadata"]["instance"]["representations"]
+                    new_instance.data["representations"] = data["metadata"]["instance"]["representations"]  # noqa: E501
 
             if new_instance is not None:
                 self.log.info("remapping paths ...")
-                new_instance.data["representations"] = [PypeLauncher.path_remapper(data=r) for r in new_instance.data["representations"]]  # noqa: E501
+                new_instance.data["representations"] = [PypeLauncher().path_remapper(data=r) for r in new_instance.data["representations"]]  # noqa: E501
                 self.log.debug(
                     "__ representations {}".format(
                         new_instance.data["representations"]))

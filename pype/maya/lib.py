@@ -2491,7 +2491,7 @@ class RenderSetupListObserver:
         members = cmds.sets(render_set, query=True) or []
         if not "LAYER_{}".format(layer_name) in members:
             print("  - creating set for {}".format(layer_name))
-            set = cmds.sets(n="LAYER_{}".format(layer_name))
+            set = cmds.sets(n="LAYER_{}".format(layer_name), empty=True)
             cmds.sets(set, forceElement=render_set)
             rio = RenderSetupItemObserver(item)
             print("-   adding observer for {}".format(item.name()))
