@@ -307,34 +307,22 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
         - each key of "burnins" represents Alignment, there are 6 possibilities:
             TOP_LEFT        TOP_CENTERED        TOP_RIGHT
             BOTTOM_LEFT     BOTTOM_CENTERED     BOTTOM_RIGHT
-        - value for each key is dict which should contain "function" which says
-            what kind of burnin is that:
-            "text", "timecode" or "frame_numbers"
-            - "text" key with content is also required when "text" function is used
+        - value must be string with text you want to burn-in
+        - text may contain specific formatting keys (exmplained below)
 
     Requirement of *data* keys is based on presets.
-    - "start_frame" - is required when "timecode" or "frame_numbers" function is used
-    - "start_frame_tc" - when "timecode" should start with different frame
+    - "frame_start" - is required when "timecode" or "current_frame" ins keys
+    - "frame_start_tc" - when "timecode" should start with different frame
     - *keys for static text*
 
     EXAMPLE:
     preset = {
         "options": {*OPTIONS FOR LOOK*},
         "burnins": {
-            "TOP_LEFT": {
-                "function": "text",
-                "text": "static_text"
-            },
-            "TOP_RIGHT": {
-                "function": "text",
-                "text": "{shot}"
-            },
-            "BOTTOM_LEFT": {
-                "function": "timecode"
-            },
-            "BOTTOM_RIGHT": {
-                "function": "frame_numbers"
-            }
+            "TOP_LEFT": "static_text",
+            "TOP_RIGHT": "{shot}",
+            "BOTTOM_LEFT": "TC: {timecode}",
+            "BOTTOM_RIGHT": "{frame_start}{current_frame}"
         }
     }
 
