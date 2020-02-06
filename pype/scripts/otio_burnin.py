@@ -27,6 +27,15 @@ FFPROBE = (
     '{} -v quiet -print_format json -show_format -show_streams %(source)s'
 ).format(os.path.normpath(ffmpeg_path + "ffprobe"))
 
+DRAWTEXT = (
+    "drawtext=text=\\'%(text)s\\':x=%(x)s:y=%(y)s:fontcolor="
+    "%(color)s@%(opacity).1f:fontsize=%(size)d:fontfile='%(font)s'"
+)
+TIMECODE = (
+    "drawtext=text=\\'%(text)s\\':timecode=\\'%(timecode)s\\'"
+    ":timecode_rate=%(fps).2f:x=%(x)s:y=%(y)s:fontcolor="
+    "%(color)s@%(opacity).1f:fontsize=%(size)d:fontfile='%(font)s'"
+)
 
 def _streams(source):
     """Reimplemented from otio burnins to be able use full path to ffprobe
