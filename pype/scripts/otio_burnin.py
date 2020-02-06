@@ -197,7 +197,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         """
         resolution = self.resolution
         data = {
-            'text': options.get('expression') or text,
+            'text': text,
             'color': options['font_color'],
             'size': options['font_size']
         }
