@@ -1,4 +1,5 @@
 import os
+import sys
 import re
 import datetime
 import subprocess
@@ -451,8 +452,6 @@ def burnins_from_data(
 
 
 if __name__ == '__main__':
-    import sys
-    import json
     in_data = json.loads(sys.argv[-1])
     burnins_from_data(
         in_data['input'],
