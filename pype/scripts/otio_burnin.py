@@ -132,44 +132,6 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             options = ffmpeg_burnins.TextOptions(**self.options_init)
         self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
 
-    def add_datetime(self, date_format, align, options=None):
-        """
-        Adding date text to a filter. Using pythons datetime module.
-
-        :param str date_format: format of date (e.g. `%d.%m.%Y`)
-        :param enum align: alignment, must use provided enum flags
-        :param dict options: recommended to use TextOptions
-        """
-        if not options:
-            options = ffmpeg_burnins.TextOptions(**self.options_init)
-        today = datetime.datetime.today()
-        text = today.strftime(date_format)
-        self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
-
-    def add_frame_numbers(
-        self, align, options=None, start_frame=None, text=None
-    ):
-        """
-        Convenience method to create the frame number expression.
-
-        :param enum align: alignment, must use provided enum flags
-        :param dict options: recommended to use FrameNumberOptions
-        """
-        if not options:
-            options = ffmpeg_burnins.FrameNumberOptions(**self.options_init)
-        if start_frame:
-            options['frame_offset'] = start_frame
-
-        expr = r'%%{eif\:n+%d\:d}' % options['frame_offset']
-        _text = str(int(self.end_frame + options['frame_offset']))
-        if text and isinstance(text, str):
-            text = r"{}".format(text)
-            expr = text.replace("{current_frame}", expr)
-            text = text.replace("{current_frame}", _text)
-
-        options['expression'] = expr
-        self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
-
     def add_timecode(self, align, options=None, start_frame=None):
         """
         Convenience method to create the frame number expression.
