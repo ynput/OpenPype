@@ -368,15 +368,27 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
     stream = burnin._streams[0]
     if "resolution_width" not in data:
-        data["resolution_width"] = stream.get("width", "Unknown")
+        data["resolution_width"] = stream.get("width", MISSING_KEY_VALUE)
 
     if "resolution_height" not in data:
-        data["resolution_height"] = stream.get("height", "Unknown")
+        data["resolution_height"] = stream.get("height", MISSING_KEY_VALUE)
 
     if "fps" not in data:
         data["fps"] = get_fps(stream.get("r_frame_rate", "0/0"))
 
-    for align_text, preset in presets.get('burnins', {}).items():
+    # Check frame start and add expression if is available
+    if frame_start is not None:
+        data[CURRENT_FRAME_KEY] = r'%%{eif\:n+%d\:d}' % frame_start
+
+    if frame_start_tc is not None:
+        data[TIME_CODE_KEY[1:-1]] = TIME_CODE_KEY
+
+    for align_text, value in presets.get('burnins', {}).items():
+        if not value:
+            continue
+
+        has_timecode = TIME_CODE_KEY in value
+
         align = None
         align_text = align_text.strip().lower()
         if align_text == "top_left":
@@ -392,65 +404,44 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
         elif align_text == "bottom_right":
             align = ModifiedBurnins.BOTTOM_RIGHT
 
-        bi_func = preset.get('function')
-        if not bi_func:
-            log.error(
-                'Missing function for burnin!'
-                'Burnins are not created!'
+        # Replace with missing key value if frame_start_tc is not set
+        if frame_start_tc is None and has_timecode:
+            has_timecode = False
+            log.warning(
+                "`frame_start` and `frame_start_tc`"
+                " are not set in entered data."
             )
-            return
+            value = value.replace(TIME_CODE_KEY, MISSING_KEY_VALUE)
 
-        if (
-            bi_func in ['frame_numbers', 'timecode'] and
-            frame_start is None
-        ):
-            log.error(
-                'start_frame is not set in entered data!'
-                'Burnins are not created!'
-            )
-            return
+        key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
-        if bi_func == 'frame_numbers':
-            current_frame_identifier = "{current_frame}"
-            text = preset.get('text') or current_frame_identifier
+        missing_keys = []
+        for group in key_pattern.findall(value):
+            try:
+                group.format(**data)
+            except (TypeError, KeyError):
+                missing_keys.append(group)
 
-            if current_frame_identifier not in text:
-                log.warning((
-                    'Text for Frame numbers don\'t have '
-                    '`{current_frame}` key in text!'
-                ))
+        missing_keys = list(set(missing_keys))
+        for key in missing_keys:
+            value = value.replace(key, MISSING_KEY_VALUE)
 
-            text_items = []
-            split_items = text.split(current_frame_identifier)
-            for item in split_items:
-                text_items.append(item.format(**data))
+        # Handle timecode differently
+        if has_timecode:
+            args = [align, frame_start, frame_start_tc]
+            if not value.startswith(TIME_CODE_KEY):
+                value_items = value.split(TIME_CODE_KEY)
+                text = value_items[0].format(**data)
+                args.append(value_items[0])
 
-            text = "{current_frame}".join(text_items)
+            burnin.add_timecode(*args)
+            continue
 
-            burnin.add_frame_numbers(align, start_frame=frame_start, text=text)
+        text = value.format(**data)
+        burnin.add_text(text, align, frame_start)
 
-        elif bi_func == 'timecode':
-            burnin.add_timecode(align, start_frame=frame_start_tc)
-
-        elif bi_func == 'text':
-            if not preset.get('text'):
-                log.error('Text is not set for text function burnin!')
-                return
-            text = preset['text'].format(**data)
-            burnin.add_text(text, align)
-
-        elif bi_func == "datetime":
-            date_format = preset["format"]
-            burnin.add_datetime(date_format, align)
-
-        else:
-            log.error(
-                'Unknown function for burnins {}'.format(bi_func)
-            )
-            return
-
-    codec_args = ''
-    if codec_data is not []:
+    codec_args = ""
+    if codec_data:
         codec_args = " ".join(codec_data)
 
     burnin.render(output_path, args=codec_args, overwrite=overwrite, **data)
