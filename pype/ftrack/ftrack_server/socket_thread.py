@@ -12,13 +12,14 @@ class SocketThread(threading.Thread):
 
     MAX_TIMEOUT = 35
 
-    def __init__(self, name, port, filepath):
+    def __init__(self, name, port, filepath, additional_args=[]):
         super(SocketThread, self).__init__()
         self.log = Logger().get_logger("SocketThread", "Event Thread")
         self.setName(name)
         self.name = name
         self.port = port
         self.filepath = filepath
+        self.additional_args = additional_args
         self.sock = None
         self.subproc = None
         self.connection = None
@@ -53,7 +54,12 @@ class SocketThread(threading.Thread):
         )
 
         self.subproc = subprocess.Popen(
-            [sys.executable, self.filepath, "-port", str(self.port)]
+            [
+                sys.executable,
+                self.filepath,
+                *self.additional_args,
+                str(self.port)
+            ]
         )
 
         # Listen for incoming connections
