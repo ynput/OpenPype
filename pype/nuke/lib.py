@@ -645,15 +645,105 @@ class WorkfileSettings(object):
             write_dict (dict): nuke write node as dictionary
 
         '''
-        # TODO: complete this function so any write node in
         # scene will have fixed colorspace following presets for the project
         if not isinstance(write_dict, dict):
             msg = "set_root_colorspace(): argument should be dictionary"
-            nuke.message(msg)
             log.error(msg)
             return
 
-        log.debug("__ set_writes_colorspace(): {}".format(write_dict))
+        from avalon.nuke import get_avalon_knob_data
+
+        for node in nuke.allNodes():
+
+            if node.Class() in ["Viewer", "Dot"]:
+                continue
+
+            # get data from avalon knob
+            avalon_knob_data = get_avalon_knob_data(node, ["avalon:", "ak:"])
+
+            if not avalon_knob_data:
+                continue
+
+            if avalon_knob_data["id"] != "pyblish.avalon.instance":
+                continue
+
+            # establish families
+            families = [avalon_knob_data["family"]]
+            if avalon_knob_data.get("families"):
+                families.append(avalon_knob_data.get("families"))
+
+            # except disabled nodes but exclude backdrops in test
+            for fmly, knob in write_dict.items():
+                write = None
+                if (fmly in families):
+                    # Add all nodes in group instances.
+                    if node.Class() == "Group":
+                        node.begin()
+                        for x in nuke.allNodes():
+                            if x.Class() == "Write":
+                                write = x
+                        node.end()
+                    elif node.Class() == "Write":
+                        write = node
+                    else:
+                        log.warning("Wrong write node Class")
+
+                    write["colorspace"].setValue(str(knob["colorspace"]))
+                    log.info(
+                        "Setting `{0}` to `{1}`".format(
+                            write.name(),
+                            knob["colorspace"]))
+
+    def set_reads_colorspace(self, reads):
+        """ Setting colorspace to Read nodes
+
+        Looping trought all read nodes and tries to set colorspace based on regex rules in presets
+        """
+        changes = dict()
+        for n in nuke.allNodes():
+            file = nuke.filename(n)
+            if not n.Class() == "Read":
+                continue
+
+            # load nuke presets for Read's colorspace
+            read_clrs_presets = get_colorspace_preset().get(
+                "nuke", {}).get("read", {})
+
+            # check if any colorspace presets for read is mathing
+            preset_clrsp = next((read_clrs_presets[k]
+                                 for k in read_clrs_presets
+                                 if bool(re.search(k, file))),
+                                None)
+            log.debug(preset_clrsp)
+            if preset_clrsp is not None:
+                current = n["colorspace"].value()
+                future = str(preset_clrsp)
+                if current != future:
+                    changes.update({
+                        n.name(): {
+                            "from": current,
+                            "to": future
+                        }
+                    })
+        log.debug(changes)
+        if changes:
+            msg = "Read nodes are not set to correct colospace:\n\n"
+            for nname, knobs in changes.items():
+                msg += str(" - node: '{0}' is now '{1}' "
+                           "but should be '{2}'\n").format(
+                               nname, knobs["from"], knobs["to"]
+                               )
+
+            msg += "\nWould you like to change it?"
+
+            if nuke.ask(msg):
+                for nname, knobs in changes.items():
+                    n = nuke.toNode(nname)
+                    n["colorspace"].setValue(knobs["to"])
+                    log.info(
+                        "Setting `{0}` to `{1}`".format(
+                            nname,
+                            knobs["to"]))
 
     def set_colorspace(self):
         ''' Setting colorpace following presets
@@ -671,12 +761,17 @@ class WorkfileSettings(object):
             msg = "set_colorspace(): missing `viewer` settings in template"
             nuke.message(msg)
             log.error(msg)
+
         try:
             self.set_writes_colorspace(nuke_colorspace["write"])
         except AttributeError:
             msg = "set_colorspace(): missing `write` settings in template"
             nuke.message(msg)
             log.error(msg)
+
+        reads = nuke_colorspace.get("read")
+        if reads:
+            self.set_reads_colorspace(reads)
 
         try:
             for key in nuke_colorspace:
