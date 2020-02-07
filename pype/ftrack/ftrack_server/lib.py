@@ -123,20 +123,30 @@ def check_ftrack_url(url, log_errors=True):
     return url
 
 
-class StorerEventHub(ftrack_api.event.hub.EventHub):
+class SocketBaseEventHub(ftrack_api.event.hub.EventHub):
+
+    hearbeat_msg = b"hearbeat"
+    heartbeat_callbacks = []
+
     def __init__(self, *args, **kwargs):
         self.sock = kwargs.pop("sock")
-        super(StorerEventHub, self).__init__(*args, **kwargs)
+        super(SocketBaseEventHub, self).__init__(*args, **kwargs)
 
     def _handle_packet(self, code, packet_identifier, path, data):
         """Override `_handle_packet` which extend heartbeat"""
         code_name = self._code_name_mapping[code]
         if code_name == "heartbeat":
             # Reply with heartbeat.
-            self.sock.sendall(b"storer")
-            return self._send_packet(self._code_name_mapping['heartbeat'])
+            for callback in self.heartbeat_callbacks:
+                callback()
 
-        elif code_name == "connect":
+            self.sock.sendall(self.hearbeat_msg)
+            return self._send_packet(self._code_name_mapping["heartbeat"])
+
+        return super(SocketBaseEventHub, self)._handle_packet(
+            code, packet_identifier, path, data
+        )
+
             event = ftrack_api.event.base.Event(
                 topic="pype.storer.started",
                 data={},
