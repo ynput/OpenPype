@@ -222,7 +222,7 @@ def main_loop(ftrack_url):
 
     # stop threads on exit
     # TODO check if works and args have thread objects!
-    def on_exit(processor_thread, storer_thread):
+    def on_exit(processor_thread, storer_thread, statuser_thread):
         if processor_thread is not None:
             processor_thread.stop()
             processor_thread.join()
@@ -233,8 +233,16 @@ def main_loop(ftrack_url):
             storer_thread.join()
             storer_thread = None
 
+        if statuser_thread is not None:
+            statuser_thread.stop()
+            statuser_thread.join()
+            statuser_thread = None
+
     atexit.register(
-        on_exit, processor_thread=processor_thread, storer_thread=storer_thread
+        on_exit,
+        processor_thread=processor_thread,
+        storer_thread=storer_thread,
+        statuser_thread=statuser_thread
     )
 
     system_name, pc_name = platform.uname()[:2]
@@ -283,6 +291,51 @@ def main_loop(ftrack_url):
         printed_ftrack_error = False
         printed_mongo_error = False
 
+        # ====== STATUSER =======
+        if statuser_thread is None:
+            if statuser_failed_count < max_fail_count:
+                statuser_thread = socket_thread.StatusSocketThread(
+                    statuser_name, statuser_port, statuser_path,
+                    [main_info_str]
+                )
+                statuser_thread.start()
+
+            elif statuser_failed_count == max_fail_count:
+                print((
+                    "Statuser failed {}times in row"
+                    " I'll try to run again {}s later"
+                ).format(str(max_fail_count), str(wait_time_after_max_fail)))
+                statuser_failed_count += 1
+
+            elif ((
+                datetime.datetime.now() - statuser_last_failed
+            ).seconds > wait_time_after_max_fail):
+                statuser_failed_count = 0
+
+        # If thread failed test Ftrack and Mongo connection
+        elif not statuser_thread.isAlive():
+            statuser_thread.join()
+            statuser_thread = None
+            ftrack_accessible = False
+            mongo_accessible = False
+
+            _processor_last_failed = datetime.datetime.now()
+            delta_time = (
+                _processor_last_failed - statuser_last_failed
+            ).seconds
+
+            if delta_time < min_fail_seconds:
+                statuser_failed_count += 1
+            else:
+                statuser_failed_count = 0
+            statuser_last_failed = _processor_last_failed
+
+        elif statuser_thread.stop_subprocess:
+            print("Main process was stopped by action")
+            on_exit(processor_thread, storer_thread, statuser_thread)
+            os.kill(os.getpid(), signal.SIGTERM)
+            return 1
+
         # ====== STORER =======
         # Run backup thread which does not requeire mongo to work
         if storer_thread is None:
@@ -291,6 +344,7 @@ def main_loop(ftrack_url):
                     storer_name, storer_port, storer_path
                 )
                 storer_thread.start()
+
             elif storer_failed_count == max_fail_count:
                 print((
                     "Storer failed {}times I'll try to run again {}s later"
@@ -360,44 +414,9 @@ def main_loop(ftrack_url):
                 processor_failed_count = 0
             processor_last_failed = _processor_last_failed
 
-        # ====== STATUSER =======
-        if statuser_thread is None:
-            if statuser_failed_count < max_fail_count:
-                statuser_thread = socket_thread.SocketThread(
-                    statuser_name, statuser_port, statuser_path,
-                    [main_info_str]
-                )
-                statuser_thread.start()
-
-            elif statuser_failed_count == max_fail_count:
-                print((
-                    "Statuser failed {}times in row"
-                    " I'll try to run again {}s later"
-                ).format(str(max_fail_count), str(wait_time_after_max_fail)))
-                statuser_failed_count += 1
-
-            elif ((
-                datetime.datetime.now() - statuser_last_failed
-            ).seconds > wait_time_after_max_fail):
-                statuser_failed_count = 0
-
-        # If thread failed test Ftrack and Mongo connection
-        elif not statuser_thread.isAlive():
-            statuser_thread.join()
-            statuser_thread = None
-            ftrack_accessible = False
-            mongo_accessible = False
-
-            _processor_last_failed = datetime.datetime.now()
-            delta_time = (
-                _processor_last_failed - statuser_last_failed
-            ).seconds
-
-            if delta_time < min_fail_seconds:
-                statuser_failed_count += 1
-            else:
-                statuser_failed_count = 0
-            statuser_last_failed = _processor_last_failed
+        if statuser_thread is not None:
+            statuser_thread.set_process("storer", storer_thread)
+            statuser_thread.set_process("processor", processor_thread)
 
         time.sleep(1)
 

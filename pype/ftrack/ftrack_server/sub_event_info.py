@@ -1,6 +1,8 @@
 import os
 import sys
 import json
+import time
+import threading
 import signal
 import socket
 import datetime
@@ -29,6 +31,7 @@ action_data = {
 class ObjectFactory:
     session = None
     status_factory = None
+    checker_thread = None
 
 
 class Status:
@@ -267,6 +270,17 @@ def server_activity(event):
             "title": "Server current status"
         }
 
+    session = ObjectFactory.session
+    if values["main"]:
+        session.event_hub.sock.sendall(b"RestartM")
+        return
+
+    if values["storer"]:
+        session.event_hub.sock.sendall(b"RestartS")
+
+    if values["processor"]:
+        session.event_hub.sock.sendall(b"RestartP")
+
 
 def trigger_info_get():
     session = ObjectFactory.session
@@ -367,13 +381,34 @@ def main(args):
         return _returncode
 
 
+class OutputChecker(threading.Thread):
+    read_input = True
+
+    def run(self):
+        while self.read_input:
+            line = sys.stdin.readlines()
+            log.info(str(line))
+            # for line in sys.stdin.readlines():
+            #     log.info(str(line))
+            log.info("alive-end")
+            time.sleep(0.5)
+
+    def stop(self):
+        self.read_input = False
+
+
 if __name__ == "__main__":
     # Register interupt signal
     def signal_handler(sig, frame):
         print("You pressed Ctrl+C. Process ended.")
+        ObjectFactory.checker_thread.stop()
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+
+    checker_thread = OutputChecker()
+    ObjectFactory.checker_thread = checker_thread
+    checker_thread.start()
 
     sys.exit(main(sys.argv))
