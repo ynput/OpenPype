@@ -134,7 +134,6 @@ class CollectPlatesData(api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "handles": version_data['handleStart'],
             "colorspace": item.sourceMediaColourTransform(),
             "colorspaceScript": instance.context.data["colorspace"],
             "families": [f for f in families if 'ftrack' not in f],

@@ -6,6 +6,7 @@ import pyblish.api
 import tempfile
 from avalon import io, api
 
+
 class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
     """Collect video tracks effects into context."""
 
@@ -17,9 +18,12 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
         item = instance.data["item"]
         effects = instance.data.get("effectTrackItems")
 
-        instance.data["families"] = [f for f in instance.data.get("families", []) if f not in ["lut"]]
+        instance.data["families"] = [f for f in instance.data.get(
+            "families", []) if f not in ["lut"]]
 
-        self.log.debug("___ instance.data[families]: `{}`".format(instance.data["families"]))
+        self.log.debug(
+            "__ instance.data[families]: `{}`".format(
+                instance.data["families"]))
 
         # skip any without effects
         if not effects:
@@ -102,7 +106,6 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "handles": version_data['handleStart'],
             "colorspace": item.sourceMediaColourTransform(),
             "colorspaceScript": instance.context.data["colorspace"],
             "families": ["plate", "lut"],
@@ -132,7 +135,7 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
 
     def copy_linked_files(self, effect, dst_dir):
         for k, v in effect["node"].items():
-            if k in "file" and v is not '':
+            if k in "file" and v != '':
                 base_name = os.path.basename(v)
                 dst = os.path.join(dst_dir, base_name).replace("\\", "/")
 
