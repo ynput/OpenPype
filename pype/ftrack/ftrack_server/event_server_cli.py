@@ -4,7 +4,10 @@ import signal
 import datetime
 import subprocess
 import socket
+import json
+import platform
 import argparse
+import getpass
 import atexit
 import time
 import uuid
@@ -233,6 +236,16 @@ def main_loop(ftrack_url):
     atexit.register(
         on_exit, processor_thread=processor_thread, storer_thread=storer_thread
     )
+
+    system_name, pc_name = platform.uname()[:2]
+    host_name = socket.gethostname()
+    main_info = {
+        "created_at": datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S"),
+        "Username": getpass.getuser(),
+        "Host Name": host_name,
+        "Host IP": socket.gethostbyname(host_name)
+    }
+    main_info_str = json.dumps(main_info)
     # Main loop
     while True:
         # Check if accessible Ftrack and Mongo url
@@ -270,6 +283,7 @@ def main_loop(ftrack_url):
         printed_ftrack_error = False
         printed_mongo_error = False
 
+        # ====== STORER =======
         # Run backup thread which does not requeire mongo to work
         if storer_thread is None:
             if storer_failed_count < max_fail_count:
@@ -304,6 +318,7 @@ def main_loop(ftrack_url):
                 storer_failed_count = 0
             storer_last_failed = _storer_last_failed
 
+        # ====== PROCESSOR =======
         if processor_thread is None:
             if processor_failed_count < max_fail_count:
                 processor_thread = socket_thread.SocketThread(
@@ -345,10 +360,12 @@ def main_loop(ftrack_url):
                 processor_failed_count = 0
             processor_last_failed = _processor_last_failed
 
+        # ====== STATUSER =======
         if statuser_thread is None:
             if statuser_failed_count < max_fail_count:
                 statuser_thread = socket_thread.SocketThread(
-                    statuser_name, statuser_port, statuser_path
+                    statuser_name, statuser_port, statuser_path,
+                    [main_info_str]
                 )
                 statuser_thread.start()
 
