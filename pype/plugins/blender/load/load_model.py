@@ -12,7 +12,6 @@ from avalon import api
 
 logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
 
-
 class BlendModelLoader(pype.blender.AssetLoader):
     """Load models from a .blend file.
 
@@ -30,36 +29,6 @@ class BlendModelLoader(pype.blender.AssetLoader):
     label = "Link Model"
     icon = "code-fork"
     color = "orange"
-
-    @staticmethod
-    def _get_lib_collection(name: str, libpath: Path) -> Optional[bpy.types.Collection]:
-        """Find the collection(s) with name, loaded from libpath.
-
-        Note:
-            It is assumed that only 1 matching collection is found.
-        """
-        for collection in bpy.data.collections:
-            if collection.name != name:
-                continue
-            if collection.library is None:
-                continue
-            if not collection.library.filepath:
-                continue
-            collection_lib_path = str(Path(bpy.path.abspath(collection.library.filepath)).resolve())
-            normalized_libpath = str(Path(bpy.path.abspath(str(libpath))).resolve())
-            if collection_lib_path == normalized_libpath:
-                return collection
-        return None
-
-    @staticmethod
-    def _collection_contains_object(
-        collection: bpy.types.Collection, object: bpy.types.Object
-    ) -> bool:
-        """Check if the collection contains the object."""
-        for obj in collection.objects:
-            if obj == object:
-                return True
-        return False
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -82,25 +51,8 @@ class BlendModelLoader(pype.blender.AssetLoader):
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
 
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=relative
-        ) as (_, data_to):
-            data_to.collections = [lib_container]
-
-        scene = bpy.context.scene
-        instance_empty = bpy.data.objects.new(
-            container_name, None
-        )
-        if not instance_empty.get("avalon"):
-            instance_empty["avalon"] = dict()
-        avalon_info = instance_empty["avalon"]
-        avalon_info.update({"container_name": container_name})
-        scene.collection.objects.link(instance_empty)
-        instance_empty.instance_type = 'COLLECTION'
-        container = bpy.data.collections[lib_container]
+        container = bpy.data.collections.new(lib_container)
         container.name = container_name
-        instance_empty.instance_collection = container
-        container.make_local()
         avalon.blender.pipeline.containerise_existing(
             container,
             name,
@@ -109,9 +61,47 @@ class BlendModelLoader(pype.blender.AssetLoader):
             self.__class__.__name__,
         )
 
+        container_metadata = container.get(
+            avalon.blender.pipeline.AVALON_PROPERTY)
+
+        container_metadata["libpath"] = libpath
+        container_metadata["lib_container"] = lib_container
+
+        with bpy.data.libraries.load(
+            libpath, link=True, relative=relative
+        ) as (_, data_to):
+            data_to.collections = [lib_container]
+
+        scene = bpy.context.scene
+
+        scene.collection.children.link(bpy.data.collections[lib_container])
+
+        rig_container = scene.collection.children[lib_container].make_local()
+
+        objects_list = []
+
+        for obj in rig_container.objects:
+
+            obj = obj.make_local()
+
+            obj.data.make_local()
+
+            if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
+
+                obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
+
+            avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
+            avalon_info.update({"container_name": container_name})
+
+            objects_list.append(obj)
+
+        # Save the list of objects in the metadata container
+        container_metadata["objects"] = objects_list
+
+        bpy.ops.object.select_all(action='DESELECT')
+
         nodes = list(container.objects)
         nodes.append(container)
-        nodes.append(instance_empty)
         self[:] = nodes
         return nodes
 
@@ -154,9 +144,11 @@ class BlendModelLoader(pype.blender.AssetLoader):
         assert extension in pype.blender.plugin.VALID_EXTENSIONS, (
             f"Unsupported file: {libpath}"
         )
-        collection_libpath = (
-            self._get_library_from_container(collection).filepath
-        )
+
+        collection_metadata = collection.get(
+            avalon.blender.pipeline.AVALON_PROPERTY)
+
+        collection_libpath = collection_metadata["libpath"]
         normalized_collection_libpath = (
             str(Path(bpy.path.abspath(collection_libpath)).resolve())
         )
@@ -171,58 +163,52 @@ class BlendModelLoader(pype.blender.AssetLoader):
         if normalized_collection_libpath == normalized_libpath:
             logger.info("Library already loaded, not updating...")
             return
-        # Let Blender's garbage collection take care of removing the library
-        # itself after removing the objects.
-        objects_to_remove = set()
-        collection_objects = list()
-        collection_objects[:] = collection.objects
-        for obj in collection_objects:
-            # Unlink every object
-            collection.objects.unlink(obj)
-            remove_obj = True
-            for coll in [
-                coll for coll in bpy.data.collections
-                if coll != collection
-            ]:
-                if (
-                    coll.objects and
-                    self._collection_contains_object(coll, obj)
-                ):
-                    remove_obj = False
-            if remove_obj:
-                objects_to_remove.add(obj)
 
-        for obj in objects_to_remove:
-            # Only delete objects that are not used elsewhere
-            bpy.data.objects.remove(obj)
+        for obj in collection_metadata["objects"]:
 
-        instance_empties = [
-            obj for obj in collection.users_dupli_group
-            if obj.name in collection.name
-        ]
-        if instance_empties:
-            instance_empty = instance_empties[0]
-            container_name = instance_empty["avalon"]["container_name"]
+            bpy.data.meshes.remove(obj.data)
+
+        lib_container = collection_metadata["lib_container"]
+
+        bpy.data.collections.remove(bpy.data.collections[lib_container])
 
         relative = bpy.context.preferences.filepaths.use_relative_paths
         with bpy.data.libraries.load(
             str(libpath), link=True, relative=relative
         ) as (_, data_to):
-            data_to.collections = [container_name]
+            data_to.collections = [lib_container]
 
-        new_collection = self._get_lib_collection(container_name, libpath)
-        if new_collection is None:
-            raise ValueError(
-                "A matching collection '{container_name}' "
-                "should have been found in: {libpath}"
-            )
+        scene = bpy.context.scene
 
-        for obj in new_collection.objects:
-            collection.objects.link(obj)
-        bpy.data.collections.remove(new_collection)
-        # Update the representation on the collection
-        avalon_prop = collection[avalon.blender.pipeline.AVALON_PROPERTY]
-        avalon_prop["representation"] = str(representation["_id"])
+        scene.collection.children.link(bpy.data.collections[lib_container])
+
+        rig_container = scene.collection.children[lib_container].make_local()
+
+        objects_list = []
+
+        # Link meshes first, then armatures.
+        # The armature is unparented for all the non-local meshes,
+        # when it is made local.
+        for obj in rig_container.objects:
+
+            obj = obj.make_local()
+
+            obj.data.make_local()
+
+            if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
+
+                obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
+
+            avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
+            avalon_info.update({"container_name": collection.name})
+            objects_list.append(obj)
+
+        # Save the list of objects in the metadata container
+        collection_metadata["objects"] = objects_list
+        collection_metadata["libpath"] = str(libpath)
+        collection_metadata["representation"] = str(representation["_id"])
+
+        bpy.ops.object.select_all(action='DESELECT')
 
     def remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -245,10 +231,17 @@ class BlendModelLoader(pype.blender.AssetLoader):
         assert not (collection.children), (
             "Nested collections are not supported."
         )
-        instance_parents = list(collection.users_dupli_group)
-        instance_objects = list(collection.objects)
-        for obj in instance_objects + instance_parents:
-            bpy.data.objects.remove(obj)
+
+        collection_metadata = collection.get(
+            avalon.blender.pipeline.AVALON_PROPERTY)
+        objects = collection_metadata["objects"]
+        lib_container = collection_metadata["lib_container"]
+
+        for obj in objects:
+
+            bpy.data.meshes.remove(obj.data)
+
+        bpy.data.collections.remove(bpy.data.collections[lib_container])
         bpy.data.collections.remove(collection)
 
         return True
@@ -281,7 +274,8 @@ class CacheModelLoader(pype.blender.AssetLoader):
             context: Full parenthood of representation to load
             options: Additional settings dictionary
         """
-        raise NotImplementedError("Loading of Alembic files is not yet implemented.")
+        raise NotImplementedError(
+            "Loading of Alembic files is not yet implemented.")
         # TODO (jasper): implement Alembic import.
 
         libpath = self.fname

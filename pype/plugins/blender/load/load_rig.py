@@ -31,38 +31,6 @@ class BlendRigLoader(pype.blender.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    @staticmethod
-    def _get_lib_collection(name: str, libpath: Path) -> Optional[bpy.types.Collection]:
-        """Find the collection(s) with name, loaded from libpath.
-
-        Note:
-            It is assumed that only 1 matching collection is found.
-        """
-        for collection in bpy.data.collections:
-            if collection.name != name:
-                continue
-            if collection.library is None:
-                continue
-            if not collection.library.filepath:
-                continue
-            collection_lib_path = str(
-                Path(bpy.path.abspath(collection.library.filepath)).resolve())
-            normalized_libpath = str(
-                Path(bpy.path.abspath(str(libpath))).resolve())
-            if collection_lib_path == normalized_libpath:
-                return collection
-        return None
-
-    @staticmethod
-    def _collection_contains_object(
-        collection: bpy.types.Collection, object: bpy.types.Object
-    ) -> bool:
-        """Check if the collection contains the object."""
-        for obj in collection.objects:
-            if obj == object:
-                return True
-        return False
-
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
         options: Optional[Dict] = None
@@ -84,9 +52,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
 
-        bpy.data.collections.new(lib_container)
-
-        container = bpy.data.collections[lib_container]
+        container = bpy.data.collections.new(lib_container)
         container.name = container_name
         avalon.blender.pipeline.containerise_existing(
             container,
@@ -104,7 +70,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
         with bpy.data.libraries.load(
             libpath, link=True, relative=relative
-        ) as (data_from, data_to):
+        ) as (_, data_to):
             data_to.collections = [lib_container]
 
         scene = bpy.context.scene
@@ -134,6 +100,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
             avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
+
             objects_list.append(obj)
 
         # Save the list of objects in the metadata container
