@@ -147,6 +147,25 @@ class SocketBaseEventHub(ftrack_api.event.hub.EventHub):
             code, packet_identifier, path, data
         )
 
+
+class StatusEventHub(SocketBaseEventHub):
+    def _handle_packet(self, code, packet_identifier, path, data):
+        """Override `_handle_packet` which extend heartbeat"""
+        code_name = self._code_name_mapping[code]
+        if code_name == "connect":
+            event = ftrack_api.event.base.Event(
+                topic="pype.status.started",
+                data={},
+                source={
+                    "id": self.id,
+                    "user": {"username": self._api_user}
+                }
+            )
+            self._event_queue.put(event)
+
+        return super(StatusEventHub, self)._handle_packet(
+            code, packet_identifier, path, data
+        )
             event = ftrack_api.event.base.Event(
                 topic="pype.storer.started",
                 data={},
