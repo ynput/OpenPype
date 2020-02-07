@@ -7,6 +7,7 @@ import socket
 import argparse
 import atexit
 import time
+import uuid
 
 import ftrack_api
 from pype.ftrack.lib import credentials
@@ -175,6 +176,7 @@ def main_loop(ftrack_url):
     otherwise thread will be killed.
     """
 
+    os.environ["FTRACK_EVENT_SUB_ID"] = str(uuid.uuid1())
     # Get mongo hostname and port for testing mongo connection
     mongo_list = ftrack_events_mongo_settings()
     mongo_hostname = mongo_list[0]
@@ -201,6 +203,13 @@ def main_loop(ftrack_url):
     processor_thread = None
     processor_last_failed = datetime.datetime.now()
     processor_failed_count = 0
+
+    statuser_name = "StorerThread"
+    statuser_port = 10021
+    statuser_path = "{}/sub_event_info.py".format(file_path)
+    statuser_thread = None
+    statuser_last_failed = datetime.datetime.now()
+    statuser_failed_count = 0
 
     ftrack_accessible = False
     mongo_accessible = False
@@ -335,6 +344,43 @@ def main_loop(ftrack_url):
             else:
                 processor_failed_count = 0
             processor_last_failed = _processor_last_failed
+
+        if statuser_thread is None:
+            if statuser_failed_count < max_fail_count:
+                statuser_thread = socket_thread.SocketThread(
+                    statuser_name, statuser_port, statuser_path
+                )
+                statuser_thread.start()
+
+            elif statuser_failed_count == max_fail_count:
+                print((
+                    "Statuser failed {}times in row"
+                    " I'll try to run again {}s later"
+                ).format(str(max_fail_count), str(wait_time_after_max_fail)))
+                statuser_failed_count += 1
+
+            elif ((
+                datetime.datetime.now() - statuser_last_failed
+            ).seconds > wait_time_after_max_fail):
+                statuser_failed_count = 0
+
+        # If thread failed test Ftrack and Mongo connection
+        elif not statuser_thread.isAlive():
+            statuser_thread.join()
+            statuser_thread = None
+            ftrack_accessible = False
+            mongo_accessible = False
+
+            _processor_last_failed = datetime.datetime.now()
+            delta_time = (
+                _processor_last_failed - statuser_last_failed
+            ).seconds
+
+            if delta_time < min_fail_seconds:
+                statuser_failed_count += 1
+            else:
+                statuser_failed_count = 0
+            statuser_last_failed = _processor_last_failed
 
         time.sleep(1)
 
