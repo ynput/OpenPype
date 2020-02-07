@@ -28,6 +28,10 @@ from pypeapp import Logger
 from pype.ftrack.lib.custom_db_connector import DbConnector
 
 
+TOPIC_STATUS_SERVER = "pype.event.server.status"
+TOPIC_STATUS_SERVER_RESULT = "pype.event.server.status.result"
+
+
 def ftrack_events_mongo_settings():
     host = None
     port = None
