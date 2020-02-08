@@ -1,7 +1,6 @@
 import os
 import sys
 import json
-import time
 import threading
 import signal
 import socket
@@ -19,9 +18,10 @@ log = Logger().get_logger("Event storer")
 action_identifier = (
     "event.server.status" + os.environ["FTRACK_EVENT_SUB_ID"]
 )
+host_ip = socket.gethostbyname(socket.gethostname())
 action_data = {
     "label": "Pype Admin",
-    "variant": "- Event server Status",
+    "variant": "- Event server Status ({})".format(host_ip),
     "description": "Get Infromation about event server",
     "actionIdentifier": action_identifier,
     "icon": None
