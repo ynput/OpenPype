@@ -209,7 +209,7 @@ def main_loop(ftrack_url):
 
     statuser_name = "StorerThread"
     statuser_port = 10021
-    statuser_path = "{}/sub_event_info.py".format(file_path)
+    statuser_path = "{}/sub_event_status.py".format(file_path)
     statuser_thread = None
     statuser_last_failed = datetime.datetime.now()
     statuser_failed_count = 0
