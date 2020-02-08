@@ -32,6 +32,7 @@ class ObjectFactory:
     session = None
     status_factory = None
     checker_thread = None
+    last_trigger = None
 
 
 class Status:
@@ -124,8 +125,8 @@ class StatusFactory:
     note_item = {
         "type": "label",
         "value": (
-            "<i>NOTE: Hit `submit` and uncheck all"
-            " checkers to refresh data.</i>"
+            "<i>HINT: To refresh data uncheck"
+            " all checkboxes and hit `Submit` button.</i>"
         )
     }
     splitter_item = {
@@ -164,9 +165,13 @@ class StatusFactory:
 
         source = event["data"]["source"]
         data = event["data"]["status_info"]
+
+        self.update_status_info(source, data)
+
+    def update_status_info(self, process_name, info):
         for status in self.statuses:
-            if status.name == source:
-                status.update(data)
+            if status.name == process_name:
+                status.update(info)
                 break
 
     def bool_items(self):
@@ -178,7 +183,7 @@ class StatusFactory:
         items.append({
             "type": "label",
             "value": (
-                "<i><b>WARNING:</b> Main process may not restart"
+                "<i><b>WARNING:</b> Main process may shut down when checked"
                 " if does not run as a service!</i>"
             )
         })
@@ -283,6 +288,11 @@ def server_activity(event):
 
 
 def trigger_info_get():
+    if ObjectFactory.last_trigger:
+        delta = datetime.datetime.now() - ObjectFactory.last_trigger
+        if delta.seconds() < 5:
+            return
+
     session = ObjectFactory.session
     session.event_hub.publish(
         ftrack_api.event.base.Event(
@@ -352,8 +362,8 @@ def main(args):
 
     statuse_names = {
         "main": "Main process",
-        "storer": "Storer",
-        "processor": "Processor"
+        "storer": "Event Storer",
+        "processor": "Event Processor"
     }
 
     ObjectFactory.status_factory = StatusFactory(statuse_names)
@@ -386,12 +396,15 @@ class OutputChecker(threading.Thread):
 
     def run(self):
         while self.read_input:
-            line = sys.stdin.readlines()
-            log.info(str(line))
-            # for line in sys.stdin.readlines():
-            #     log.info(str(line))
-            log.info("alive-end")
-            time.sleep(0.5)
+            for line in sys.stdin:
+                line = line.rstrip().lower()
+                if not line.startswith("reset:"):
+                    continue
+                process_name = line.replace("reset:", "")
+
+                ObjectFactory.status_factory.update_status_info(
+                    process_name, None
+                )
 
     def stop(self):
         self.read_input = False

@@ -164,7 +164,7 @@ class StatusSocketThread(SocketThread):
 
             self.process_threads[process_name] = thread
             self.subproc.stdin.write(
-                str.encode("reset:{}".format(process_name))
+                str.encode("reset:{}\r\n".format(process_name))
             )
             self.subproc.stdin.flush()
 
