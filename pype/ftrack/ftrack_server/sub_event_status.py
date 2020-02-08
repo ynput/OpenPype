@@ -12,7 +12,7 @@ from pype.ftrack.ftrack_server.lib import (
     SocketSession, StatusEventHub,
     TOPIC_STATUS_SERVER, TOPIC_STATUS_SERVER_RESULT
 )
-from pypeapp import Logger
+from pypeapp import Logger, config
 
 log = Logger().get_logger("Event storer")
 action_identifier = (
@@ -24,7 +24,16 @@ action_data = {
     "variant": "- Event server Status ({})".format(host_ip),
     "description": "Get Infromation about event server",
     "actionIdentifier": action_identifier,
-    "icon": None
+    "icon": "{}/ftrack/action_icons/PypeAdmin.svg".format(
+        os.environ.get(
+            "PYPE_STATICS_SERVER",
+            "http://localhost:{}".format(
+                config.get_presets().get("services", {}).get(
+                    "rest_api", {}
+                ).get("default_port", 8021)
+            )
+        )
+    )
 }
 
 
