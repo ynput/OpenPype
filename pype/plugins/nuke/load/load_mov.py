@@ -4,9 +4,7 @@ import contextlib
 
 from avalon import api, io
 from pype.nuke import presets
-
-from pype.api import Logger
-log = Logger().get_logger(__name__, "nuke")
+from pypeapp import config
 
 
 @contextlib.contextmanager
@@ -34,14 +32,14 @@ def preserve_trim(node):
         if start_at_frame:
             node['frame_mode'].setValue("start at")
             node['frame'].setValue(str(script_start))
-            log.info("start frame of Read was set to"
-                     "{}".format(script_start))
+            print("start frame of Read was set to"
+                  "{}".format(script_start))
 
         if offset_frame:
             node['frame_mode'].setValue("offset")
             node['frame'].setValue(str((script_start + offset_frame)))
-            log.info("start frame of Read was set to"
-                     "{}".format(script_start))
+            print("start frame of Read was set to"
+                  "{}".format(script_start))
 
 
 def loader_shift(node, frame, relative=True):
@@ -70,11 +68,37 @@ def loader_shift(node, frame, relative=True):
     return int(script_start)
 
 
+def add_review_presets_config():
+    returning = {
+        "families": list(),
+        "representations": list()
+    }
+    review_presets = config.get_presets()["plugins"]["global"]["publish"].get(
+        "ExtractReview", {})
+
+    outputs = review_presets.get("outputs", {})
+    #
+    for output, properities in outputs.items():
+        returning["representations"].append(output)
+        returning["families"] += properities.get("families", [])
+
+    return returning
+
+
 class LoadMov(api.Loader):
     """Load mov file into Nuke"""
+    presets = add_review_presets_config()
+    families = [
+        "source",
+        "plate",
+        "render",
+        "review"] + presets["families"]
 
-    families = ["write", "source", "plate", "render", "review"]
-    representations = ["wipmov", "h264", "mov", "preview", "review", "mp4"]
+    representations = [
+        "mov",
+        "preview",
+        "review",
+        "mp4"] + presets["representations"]
 
     label = "Load mov"
     order = -10
@@ -115,7 +139,7 @@ class LoadMov(api.Loader):
 
         if not file:
             repr_id = context["representation"]["_id"]
-            log.warning(
+            self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
@@ -211,7 +235,7 @@ class LoadMov(api.Loader):
 
         if not file:
             repr_id = representation["_id"]
-            log.warning(
+            self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
@@ -246,9 +270,10 @@ class LoadMov(api.Loader):
         colorspace = version_data.get("colorspace")
 
         if first is None:
-            log.warning("Missing start frame for updated version"
-                        "assuming starts at frame 0 for: "
-                        "{} ({})".format(node['name'].value(), representation))
+            self.log.warning("Missing start frame for updated version"
+                             "assuming starts at frame 0 for: "
+                             "{} ({})".format(
+                                node['name'].value(), representation))
             first = 0
 
         # fix handle start and end if none are available
@@ -264,7 +289,7 @@ class LoadMov(api.Loader):
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
             node["file"].setValue(file)
-            log.info("__ node['file']: {}".format(node["file"].value()))
+            self.log.info("__ node['file']: {}".format(node["file"].value()))
 
         # Set the global in to the start frame of the sequence
         loader_shift(node, first, relative=True)
@@ -289,7 +314,6 @@ class LoadMov(api.Loader):
                             None)
         if preset_clrsp is not None:
             node["colorspace"].setValue(str(preset_clrsp))
-
 
         updated_dict = {}
         updated_dict.update({
@@ -316,7 +340,7 @@ class LoadMov(api.Loader):
         update_container(
             node, updated_dict
         )
-        log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
 
