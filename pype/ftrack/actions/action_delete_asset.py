@@ -99,6 +99,7 @@ class DeleteAssetSubset(BaseAction):
 
         # Filter event even more (skip task entities)
         # - task entities are not relevant for avalon
+        entity_mapping = {}
         for entity in entities:
             ftrack_id = entity["id"]
             if ftrack_id not in ftrack_ids:
@@ -106,6 +107,8 @@ class DeleteAssetSubset(BaseAction):
 
             if entity.entity_type.lower() == "task":
                 ftrack_ids.remove(ftrack_id)
+
+            entity_mapping[ftrack_id] = entity
 
         if not ftrack_ids:
             # It is bug if this happens!
@@ -122,11 +125,41 @@ class DeleteAssetSubset(BaseAction):
         project_name = project["full_name"]
         self.dbcon.Session["AVALON_PROJECT"] = project_name
 
-        selected_av_entities = self.dbcon.find({
+        selected_av_entities = list(self.dbcon.find({
             "type": "asset",
             "data.ftrackId": {"$in": ftrack_ids}
-        })
-        selected_av_entities = [ent for ent in selected_av_entities]
+        }))
+        found_without_ftrack_id = {}
+        if len(selected_av_entities) != len(ftrack_ids):
+            found_ftrack_ids = [
+                ent["data"]["ftrackId"] for ent in selected_av_entities
+            ]
+            for ftrack_id, entity in entity_mapping.items():
+                if ftrack_id in found_ftrack_ids:
+                    continue
+
+                av_ents_by_name = list(self.dbcon.find({
+                    "type": "asset",
+                    "name": entity["name"]
+                }))
+                if not av_ents_by_name:
+                    continue
+
+                ent_path_items = [ent["name"] for ent in entity["link"]]
+                parents = ent_path_items[1:len(ent_path_items)-1:]
+                # TODO we should say to user that
+                # few of them are missing in avalon
+                for av_ent in av_ents_by_name:
+                    if av_ent["data"]["parents"] != parents:
+                        continue
+
+                    # TODO we should say to user that found entity
+                    # with same name does not match same ftrack id?
+                    if "ftrackId" not in av_ent["data"]:
+                        selected_av_entities.append(av_ent)
+                        found_without_ftrack_id[str(av_ent["_id"])] = ftrack_id
+                        break
+
         if not selected_av_entities:
             return {
                 "success": False,
@@ -155,7 +188,8 @@ class DeleteAssetSubset(BaseAction):
             "created_at": datetime.now(),
             "project_name": project_name,
             "subset_ids_by_name": {},
-            "subset_ids_by_parent": {}
+            "subset_ids_by_parent": {},
+            "without_ftrack_id": found_without_ftrack_id
         }
 
         id_item = {
@@ -413,14 +447,21 @@ class DeleteAssetSubset(BaseAction):
         asset_ids_to_archive = []
         ftrack_ids_to_delete = []
         if len(assets_to_delete) > 0:
+            map_av_ftrack_id = spec_data["without_ftrack_id"]
             # Prepare data when deleting whole avalon asset
             avalon_assets = self.dbcon.find({"type": "asset"})
             avalon_assets_by_parent = collections.defaultdict(list)
             for asset in avalon_assets:
+                asset_id = asset["_id"]
                 parent_id = asset["data"]["visualParent"]
                 avalon_assets_by_parent[parent_id].append(asset)
-                if asset["_id"] in assets_to_delete:
-                    ftrack_id = asset["data"]["ftrackId"]
+                if asset_id in assets_to_delete:
+                    ftrack_id = map_av_ftrack_id.get(str(asset_id))
+                    if not ftrack_id:
+                        ftrack_id = asset["data"].get("ftrackId")
+
+                    if not ftrack_id:
+                        continue
                     ftrack_ids_to_delete.append(ftrack_id)
 
             children_queue = Queue()

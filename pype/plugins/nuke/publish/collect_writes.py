@@ -14,6 +14,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     families = ["write"]
 
     def process(self, instance):
+        # adding 2d focused rendering
+        instance.data["families"].append("render2d")
 
         node = None
         for x in instance:
@@ -50,9 +52,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         output_dir = os.path.dirname(path)
         self.log.debug('output dir: {}'.format(output_dir))
 
-        # get version
-        version = pype.get_version_from_path(nuke.root().name())
-        instance.data['version'] = version
+        # get version to instance for integration
+        instance.data['version'] = instance.context.data.get(
+            "version", pype.get_version_from_path(nuke.root().name()))
+
         self.log.debug('Write Version: %s' % instance.data('version'))
 
         # create label
@@ -94,12 +97,13 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "handleEnd": handle_end,
             "frameStart": first_frame + handle_start,
             "frameEnd": last_frame - handle_end,
-            "version": int(version),
+            "version": int(instance.data['version']),
             "colorspace":  node["colorspace"].value(),
-            "families": [instance.data["family"]],
+            "families": ["render"],
             "subset": instance.data["subset"],
             "fps": instance.context.data["fps"]
         }
+
         instance.data["family"] = "write"
         group_node = [x for x in instance if x.Class() == "Group"][0]
         deadlineChunkSize = 1
@@ -125,9 +129,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "families": families,
             "colorspace": node["colorspace"].value(),
             "deadlineChunkSize": deadlineChunkSize,
-            "deadlinePriority": deadlinePriority,
-            "subsetGroup": "renders"
+            "deadlinePriority": deadlinePriority
         })
-
 
         self.log.debug("instance.data: {}".format(instance.data))

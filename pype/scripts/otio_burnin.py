@@ -5,6 +5,7 @@ import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from pypeapp.lib import config
 from pype import api as pype
+from subprocess import Popen, PIPE
 # FFmpeg in PATH is required
 
 
@@ -21,6 +22,7 @@ else:
 FFMPEG = (
     '{} -loglevel panic -i %(input)s %(filters)s %(args)s%(output)s'
 ).format(os.path.normpath(ffmpeg_path + "ffmpeg"))
+
 FFPROBE = (
     '{} -v quiet -print_format json -show_format -show_streams %(source)s'
 ).format(os.path.normpath(ffmpeg_path + "ffprobe"))
@@ -37,6 +39,25 @@ def _streams(source):
     if proc.returncode != 0:
         raise RuntimeError("Failed to run: %s" % command)
     return json.loads(out)['streams']
+
+
+def get_fps(str_value):
+    if str_value == "0/0":
+        print("Source has \"r_frame_rate\" value set to \"0/0\".")
+        return "Unknown"
+
+    items = str_value.split("/")
+    if len(items) == 1:
+        fps = float(items[0])
+
+    elif len(items) == 2:
+        fps = float(items[0]) / float(items[1])
+
+    # Check if fps is integer or float number
+    if int(fps) == fps:
+        fps = int(fps)
+
+    return str(fps)
 
 
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
@@ -95,6 +116,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             streams = _streams(source)
 
         super().__init__(source, streams)
+
         if options_init:
             self.options_init.update(options_init)
 
@@ -228,6 +250,33 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             'filters': filters
         }).strip()
 
+    def render(self, output, args=None, overwrite=False, **kwargs):
+        """
+        Render the media to a specified destination.
+
+        :param str output: output file
+        :param str args: additional FFMPEG arguments
+        :param bool overwrite: overwrite the output if it exists
+        """
+        if not overwrite and os.path.exists(output):
+            raise RuntimeError("Destination '%s' exists, please "
+                               "use overwrite" % output)
+
+        is_sequence = "%" in output
+
+        command = self.command(output=output,
+                               args=args,
+                               overwrite=overwrite)
+        proc = Popen(command, shell=True)
+        proc.communicate()
+        if proc.returncode != 0:
+            raise RuntimeError("Failed to render '%s': %s'"
+                               % (output, command))
+        if is_sequence:
+            output = output % kwargs.get("duration")
+        if not os.path.exists(output):
+            raise RuntimeError("Failed to generate this fucking file '%s'" % output)
+
 
 def example(input_path, output_path):
     options_init = {
@@ -329,6 +378,17 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
     frame_start = data.get("frame_start")
     frame_start_tc = data.get('frame_start_tc', frame_start)
+
+    stream = burnin._streams[0]
+    if "resolution_width" not in data:
+        data["resolution_width"] = stream.get("width", "Unknown")
+
+    if "resolution_height" not in data:
+        data["resolution_height"] = stream.get("height", "Unknown")
+
+    if "fps" not in data:
+        data["fps"] = get_fps(stream.get("r_frame_rate", "0/0"))
+
     for align_text, preset in presets.get('burnins', {}).items():
         align = None
         if align_text == 'TOP_LEFT':
@@ -383,12 +443,14 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
 
         elif bi_func == 'timecode':
             burnin.add_timecode(align, start_frame=frame_start_tc)
+
         elif bi_func == 'text':
             if not preset.get('text'):
                 log.error('Text is not set for text function burnin!')
                 return
             text = preset['text'].format(**data)
             burnin.add_text(text, align)
+
         elif bi_func == "datetime":
             date_format = preset["format"]
             burnin.add_datetime(date_format, align)
@@ -403,7 +465,7 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
     if codec_data is not []:
         codec_args = " ".join(codec_data)
 
-    burnin.render(output_path, args=codec_args, overwrite=overwrite)
+    burnin.render(output_path, args=codec_args, overwrite=overwrite, **data)
 
 
 if __name__ == '__main__':
@@ -415,4 +477,4 @@ if __name__ == '__main__':
         data['codec'],
         data['output'],
         data['burnin_data']
-        )
+    )

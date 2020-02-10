@@ -2318,6 +2318,25 @@ def get_attr_in_layer(attr, layer):
     return cmds.getAttr(attr)
 
 
+def fix_incompatible_containers():
+    """Return whether the current scene has any outdated content"""
+
+    host = avalon.api.registered_host()
+    for container in host.ls():
+        loader = container['loader']
+
+        print(container['loader'])
+
+        if loader in ["MayaAsciiLoader",
+                      "AbcLoader",
+                      "ModelLoader",
+                      "CameraLoader",
+                      "RigLoader",
+                      "FBXLoader"]:
+            cmds.setAttr(container["objectName"] + ".loader",
+                         "ReferenceLoader", type="string")
+
+
 def _null(*args):
     pass
 

@@ -6,6 +6,7 @@ import pyblish.api
 import tempfile
 from avalon import io, api
 
+
 class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
     """Collect video tracks effects into context."""
 
@@ -17,9 +18,12 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
         item = instance.data["item"]
         effects = instance.data.get("effectTrackItems")
 
-        instance.data["families"] = [f for f in instance.data.get("families", []) if f not in ["lut"]]
+        instance.data["families"] = [f for f in instance.data.get(
+            "families", []) if f not in ["lut"]]
 
-        self.log.debug("___ instance.data[families]: `{}`".format(instance.data["families"]))
+        self.log.debug(
+            "__ instance.data[families]: `{}`".format(
+                instance.data["families"]))
 
         # skip any without effects
         if not effects:
@@ -102,7 +106,6 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "handles": version_data['handleStart'],
             "colorspace": item.sourceMediaColourTransform(),
             "colorspaceScript": instance.context.data["colorspace"],
             "families": ["plate", "lut"],
@@ -132,7 +135,7 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
 
     def copy_linked_files(self, effect, dst_dir):
         for k, v in effect["node"].items():
-            if k in "file" and v is not '':
+            if k in "file" and v != '':
                 base_name = os.path.basename(v)
                 dst = os.path.join(dst_dir, base_name).replace("\\", "/")
 
@@ -169,32 +172,44 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
         project_name = api.Session["AVALON_PROJECT"]
         a_template = anatomy.templates
 
-        project = io.find_one({"type": "project",
-                               "name": project_name},
-                              projection={"config": True, "data": True})
+        project = io.find_one(
+            {
+                "type": "project",
+                "name": project_name
+            },
+            projection={"config": True, "data": True}
+        )
 
         template = a_template['publish']['path']
         # anatomy = instance.context.data['anatomy']
 
-        asset = io.find_one({"type": "asset",
-                             "name": asset_name,
-                             "parent": project["_id"]})
+        asset = io.find_one({
+            "type": "asset",
+            "name": asset_name,
+            "parent": project["_id"]
+        })
 
         assert asset, ("No asset found by the name '{}' "
                        "in project '{}'".format(asset_name, project_name))
         silo = asset.get('silo')
 
-        subset = io.find_one({"type": "subset",
-                              "name": subset_name,
-                              "parent": asset["_id"]})
+        subset = io.find_one({
+            "type": "subset",
+            "name": subset_name,
+            "parent": asset["_id"]
+        })
 
         # assume there is no version yet, we start at `1`
         version = None
         version_number = 1
         if subset is not None:
-            version = io.find_one({"type": "version",
-                                   "parent": subset["_id"]},
-                                  sort=[("name", -1)])
+            version = io.find_one(
+                {
+                    "type": "version",
+                    "parent": subset["_id"]
+                },
+                sort=[("name", -1)]
+            )
 
         # if there is a subset there ought to be version
         if version is not None:

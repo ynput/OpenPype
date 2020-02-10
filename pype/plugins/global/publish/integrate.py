@@ -24,7 +24,7 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     label = "Integrate Asset"
     order = pyblish.api.IntegratorOrder
-    families = ["assembly"]
+    families = []
     exclude_families = ["clip"]
 
     def process(self, instance):
@@ -84,9 +84,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
         project = io.find_one({"type": "project"})
 
-        asset = io.find_one({"type": "asset",
-                             "name": ASSET,
-                             "parent": project["_id"]})
+        asset = io.find_one({
+            "type": "asset",
+            "name": ASSET,
+            "parent": project["_id"]
+        })
 
         assert all([project, asset]), ("Could not find current project or "
                                        "asset '%s'" % ASSET)
@@ -94,10 +96,14 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
         subset = self.get_subset(asset, instance)
 
         # get next version
-        latest_version = io.find_one({"type": "version",
-                                      "parent": subset["_id"]},
-                                     {"name": True},
-                                     sort=[("name", -1)])
+        latest_version = io.find_one(
+            {
+                "type": "version",
+                "parent": subset["_id"]
+            },
+            {"name": True},
+            sort=[("name", -1)]
+        )
 
         next_version = 1
         if latest_version is not None:
@@ -318,9 +324,11 @@ class IntegrateAsset(pyblish.api.InstancePlugin):
 
     def get_subset(self, asset, instance):
 
-        subset = io.find_one({"type": "subset",
-                              "parent": asset["_id"],
-                              "name": instance.data["subset"]})
+        subset = io.find_one({
+            "type": "subset",
+            "parent": asset["_id"],
+            "name": instance.data["subset"]
+        })
 
         if subset is None:
             subset_name = instance.data["subset"]

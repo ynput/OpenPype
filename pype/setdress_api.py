@@ -462,8 +462,12 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
                 # Check whether the conversion can be done by the Loader.
                 # They *must* use the same asset, subset and Loader for
                 # `api.update` to make sense.
-                old = io.find_one({"_id": io.ObjectId(representation_current)})
-                new = io.find_one({"_id": io.ObjectId(representation_new)})
+                old = io.find_one({
+                    "_id": io.ObjectId(representation_current)
+                })
+                new = io.find_one({
+                    "_id": io.ObjectId(representation_new)
+                })
                 is_valid = compare_representations(old=old, new=new)
                 if not is_valid:
                     log.error("Skipping: %s. See log for details.",

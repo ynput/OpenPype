@@ -15,9 +15,10 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
-
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]})
+        asset_data = io.find_one({
+            "type": "asset",
+            "name": api.Session["AVALON_ASSET"]
+        })
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
@@ -27,12 +28,15 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
         self.log.debug("nuke.allNodes(): {}".format(nuke.allNodes()))
         for node in nuke.allNodes():
 
+            if node.Class() in ["Viewer", "Dot"]:
+                continue
+
             try:
                 if node["disable"].value():
                     continue
             except Exception as E:
                 self.log.warning(E)
-                
+
 
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
