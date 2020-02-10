@@ -5,10 +5,6 @@ import contextlib
 from avalon import api, io
 from pype.nuke import presets
 
-from pype.api import Logger
-
-log = Logger().get_logger(__name__, "nuke")
-
 
 @contextlib.contextmanager
 def preserve_trim(node):
@@ -35,14 +31,14 @@ def preserve_trim(node):
         if start_at_frame:
             node['frame_mode'].setValue("start at")
             node['frame'].setValue(str(script_start))
-            log.info("start frame of Read was set to"
-                     "{}".format(script_start))
+            print("start frame of Read was set to"
+                  "{}".format(script_start))
 
         if offset_frame:
             node['frame_mode'].setValue("offset")
             node['frame'].setValue(str((script_start + offset_frame)))
-            log.info("start frame of Read was set to"
-                     "{}".format(script_start))
+            print("start frame of Read was set to"
+                  "{}".format(script_start))
 
 
 def loader_shift(node, frame, relative=True):
@@ -74,7 +70,7 @@ def loader_shift(node, frame, relative=True):
 class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
-    families = ["write", "source", "plate", "render"]
+    families = ["render2d", "source", "plate", "render"]
     representations = ["exr", "dpx", "jpg", "jpeg", "png"]
 
     label = "Load sequence"
@@ -91,7 +87,7 @@ class LoadSequence(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
 
-        log.info("version_data: {}\n".format(version_data))
+        self.log.info("version_data: {}\n".format(version_data))
 
         self.first_frame = int(nuke.root()["first_frame"].getValue())
         self.handle_start = version_data.get("handleStart", 0)
@@ -111,7 +107,7 @@ class LoadSequence(api.Loader):
 
         if not file:
             repr_id = context["representation"]["_id"]
-            log.warning(
+            self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
@@ -242,7 +238,7 @@ class LoadSequence(api.Loader):
 
         if not file:
             repr_id = representation["_id"]
-            log.warning(
+            self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return
 
@@ -277,9 +273,10 @@ class LoadSequence(api.Loader):
         last = version_data.get("frameEnd")
 
         if first is None:
-            log.warning("Missing start frame for updated version"
-                        "assuming starts at frame 0 for: "
-                        "{} ({})".format(node['name'].value(), representation))
+            self.log.warning("Missing start frame for updated version"
+                             "assuming starts at frame 0 for: "
+                             "{} ({})".format(
+                                node['name'].value(), representation))
             first = 0
 
         first -= self.handle_start
@@ -288,7 +285,7 @@ class LoadSequence(api.Loader):
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
             node["file"].setValue(file)
-            log.info("__ node['file']: {}".format(node["file"].value()))
+            self.log.info("__ node['file']: {}".format(node["file"].value()))
 
         # Set the global in to the start frame of the sequence
         loader_shift(node, first, relative=True)
@@ -328,7 +325,7 @@ class LoadSequence(api.Loader):
             node,
             updated_dict
         )
-        log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
 
