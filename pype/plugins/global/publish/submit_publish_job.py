@@ -297,6 +297,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         source = os.path.join("{root}", relative_path).replace("\\", "/")
         regex = None
 
+        families = ["render"]
         if data.get("expectedFiles"):
             representations = []
             cols, rem = clique.assemble(data.get("expectedFiles"))
@@ -326,10 +327,19 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     "stagingDir": os.path.dirname(list(c)[0]),
                     "anatomy_template": "render",
                     "fps": context.data.get("fps", None),
-                    "tags": ["review"] if preview else [],
+                    "tags": ["review", "preview"] if preview else [],
                 }
 
                 representations.append(rep)
+
+                # if we have one representation with preview tag
+                # flag whole instance for review and for ftrack
+                if preview:
+                    if "ftrack" not in families:
+                        if os.environ.get("FTRACK_SERVER"):
+                            families.append("ftrack")
+                    if "review" not in families:
+                        families.append("review")
 
             for r in rem:
                 ext = r.split(".")[-1]
@@ -364,7 +374,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "frameStart": start,
             "frameEnd": end,
             "fps": context.data.get("fps", None),
-            "families": ["render"],
+            "families": families,
             "source": source,
             "user": context.data["user"],
             "version": context.data["version"],

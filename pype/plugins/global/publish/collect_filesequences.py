@@ -491,7 +491,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         {
                             "name": new_subset_name,
                             "family": 'render',
-                            "families": ['render'],
+                            "families": data["metadata"]["families"],
                             "subset": new_subset_name,
                             "asset": data.get(
                                 "asset", api.Session["AVALON_ASSET"]),
