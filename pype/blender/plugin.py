@@ -10,15 +10,8 @@ from avalon import api
 VALID_EXTENSIONS = [".blend"]
 
 
-def model_name(asset: str, subset: str, namespace: Optional[str] = None) -> str:
-    """Return a consistent name for a model asset."""
-    name = f"{asset}_{subset}"
-    if namespace:
-        name = f"{namespace}:{name}"
-    return name
-
-def rig_name(asset: str, subset: str, namespace: Optional[str] = None) -> str:
-    """Return a consistent name for a rig asset."""
+def asset_name(asset: str, subset: str, namespace: Optional[str] = None) -> str:
+    """Return a consistent name for an asset."""
     name = f"{asset}_{subset}"
     if namespace:
         name = f"{namespace}:{name}"
@@ -149,7 +142,7 @@ class AssetLoader(api.Loader):
 
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        instance_name = model_name(asset, subset, namespace)
+        instance_name = asset_name(asset, subset, namespace)
 
         return self._get_instance_collection(instance_name, nodes)
 

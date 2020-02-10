@@ -46,8 +46,8 @@ class BlendRigLoader(pype.blender.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = pype.blender.plugin.rig_name(asset, subset)
-        container_name = pype.blender.plugin.rig_name(
+        lib_container = pype.blender.plugin.asset_name(asset, subset)
+        container_name = pype.blender.plugin.asset_name(
             asset, subset, namespace
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
@@ -112,53 +112,6 @@ class BlendRigLoader(pype.blender.AssetLoader):
         nodes.append(container)
         self[:] = nodes
         return nodes
-
-    def load(self,
-             context: dict,
-             name: Optional[str] = None,
-             namespace: Optional[str] = None,
-             options: Optional[Dict] = None) -> Optional[bpy.types.Collection]:
-        """Load asset via database
-
-        Arguments:
-            context: Full parenthood of representation to load
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            options: Additional settings dictionary
-        """
-        # TODO (jasper): make it possible to add the asset several times by
-        # just re-using the collection
-        assert Path(self.fname).exists(), f"{self.fname} doesn't exist."
-
-        self.process_asset(
-            context=context,
-            name=name,
-            namespace=namespace,
-            options=options,
-        )
-
-        # Only containerise if anything was loaded by the Loader.
-        nodes = self[:]
-        if not nodes:
-            return None
-
-        # Only containerise if it's not already a collection from a .blend file.
-        representation = context["representation"]["name"]
-        if representation != "blend":
-            from avalon.blender.pipeline import containerise
-            return containerise(
-                name=name,
-                namespace=namespace,
-                nodes=nodes,
-                context=context,
-                loader=self.__class__.__name__,
-            )
-
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-        instance_name = pype.blender.plugin.rig_name(asset, subset, namespace)
-
-        return self._get_instance_collection(instance_name, nodes)
 
     def update(self, container: Dict, representation: Dict):
         """Update the loaded asset.

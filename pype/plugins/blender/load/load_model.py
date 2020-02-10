@@ -12,6 +12,7 @@ from avalon import api
 
 logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
 
+
 class BlendModelLoader(pype.blender.AssetLoader):
     """Load models from a .blend file.
 
@@ -45,8 +46,8 @@ class BlendModelLoader(pype.blender.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = pype.blender.plugin.model_name(asset, subset)
-        container_name = pype.blender.plugin.model_name(
+        lib_container = pype.blender.plugin.asset_name(asset, subset)
+        container_name = pype.blender.plugin.asset_name(
             asset, subset, namespace
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
@@ -76,11 +77,11 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         scene.collection.children.link(bpy.data.collections[lib_container])
 
-        rig_container = scene.collection.children[lib_container].make_local()
+        model_container = scene.collection.children[lib_container].make_local()
 
         objects_list = []
 
-        for obj in rig_container.objects:
+        for obj in model_container.objects:
 
             obj = obj.make_local()
 
@@ -182,14 +183,14 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         scene.collection.children.link(bpy.data.collections[lib_container])
 
-        rig_container = scene.collection.children[lib_container].make_local()
+        model_container = scene.collection.children[lib_container].make_local()
 
         objects_list = []
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
-        for obj in rig_container.objects:
+        for obj in model_container.objects:
 
             obj = obj.make_local()
 
@@ -283,7 +284,7 @@ class CacheModelLoader(pype.blender.AssetLoader):
         subset = context["subset"]["name"]
         # TODO (jasper): evaluate use of namespace which is 'alien' to Blender.
         lib_container = container_name = (
-            pype.blender.plugin.model_name(asset, subset, namespace)
+            pype.blender.plugin.asset_name(asset, subset, namespace)
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
 
