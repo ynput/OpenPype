@@ -148,7 +148,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     families = ["render.farm", "renderlayer", "imagesequence"]
 
-    aov_filter = [AOVFilter("maya", ["beauty"])]
+    aov_filter = {"maya": ["beauty"]}
 
     enviro_filter = [
         "PATH",
@@ -307,9 +307,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 preview = False
                 # if filtered aov name is found in filename, toggle it for
                 # preview video renderin
-                for filter in self.aov_filter:
-                    if os.environ.get("AVALON_APP", "") == filter.app:
-                        for aov in filter.aov:
+                for app in self.aov_filter:
+                    if os.environ.get("AVALON_APP", "") == app:
+                        for aov in self.aov_filter[app]:
                             if re.match(
                                 r".+(?:\.|_)({})(?:\.|_).*".format(aov),
                                 list(c)[0]
