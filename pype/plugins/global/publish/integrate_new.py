@@ -207,6 +207,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             'parent': subset["_id"],
             'name': next_version
         })
+        existing_repres = None
         if existing_version is None:
             version_id = io.insert_one(version).inserted_id
         else:
@@ -217,6 +218,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }, {'$set': version}
             )
             version_id = existing_version['_id']
+            existing_repres = {repre["name"]: repre for repre in io.find({
+                "type": "representation",
+                "parent": version_id
+            })}
+
         instance.data['version'] = version['name']
 
         # Write to disk
@@ -249,6 +255,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
+        new_repre_names = []
         for idx, repre in enumerate(instance.data["representations"]):
 
             # Collection
@@ -419,8 +426,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     continue
                 repre_context[key] = template_data[key]
 
+            repre_name = repre['name']
+            new_repre_names.append(repre_name)
+            # Use previous
+            if existing_repres and repre_name in existing_repres:
+                repre_id = existing_repres[repre_name]["_id"]
+            else:
+                repre_id = io.ObjectId()
+
             representation = {
-                "_id": io.ObjectId(),
+                "_id": repre_id,
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
@@ -445,6 +460,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data['destination_list'] = destination_list
             representations.append(representation)
             self.log.debug("__ representations: {}".format(representations))
+
+        # Remove old representations if there are any (before insertion of new)
+        if existing_repres:
+            repre_ids_to_remove = []
+            for repre in existing_repres.values():
+                repre_ids_to_remove.append(repre["_id"])
+            io.delete_many({"_id": {"$in": repre_ids_to_remove}})
 
         self.log.debug("__ representations: {}".format(representations))
         for rep in instance.data["representations"]:
