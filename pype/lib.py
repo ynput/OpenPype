@@ -13,6 +13,15 @@ import avalon
 log = logging.getLogger(__name__)
 
 
+def get_path_to_ffmpeg():
+    paths = os.environ.get("FFMPEG_PATH") or ""
+    path_items = paths.split(os.pathsep)
+    for item in path_items:
+        item = os.path.normpath(item)
+        if os.path.exists(item):
+            return item
+    return ""
+
 # Special naming case for subprocess since its a built-in method.
 def _subprocess(*args, **kwargs):
     """Convenience method for getting output errors for subprocess."""

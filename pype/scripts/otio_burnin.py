@@ -5,14 +5,14 @@ import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from pypeapp.lib import config
 from pype import api as pype
-from subprocess import Popen, PIPE
+import pype.lib
 # FFmpeg in PATH is required
 
 
 log = pype.Logger().get_logger("BurninWrapper", "burninwrap")
 
 
-ffmpeg_path = os.environ.get("FFMPEG_PATH")
+ffmpeg_path = pype.lib.get_path_to_ffmpeg()
 if ffmpeg_path and os.path.exists(ffmpeg_path):
     # add separator "/" or "\" to be prepared for next part
     ffmpeg_path += os.path.sep
@@ -267,7 +267,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         command = self.command(output=output,
                                args=args,
                                overwrite=overwrite)
-        proc = Popen(command, shell=True)
+        proc = subprocess.Popen(command, shell=True)
         proc.communicate()
         if proc.returncode != 0:
             raise RuntimeError("Failed to render '%s': %s'"

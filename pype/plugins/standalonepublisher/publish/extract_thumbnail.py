@@ -3,6 +3,7 @@ import tempfile
 import subprocess
 import pyblish.api
 import pype.api
+import pype.lib
 
 
 class ExtractThumbnailSP(pyblish.api.InstancePlugin):
@@ -73,7 +74,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
                 config_data.get("__default__", {})
             )
 
-            ffmpeg_path = os.getenv("FFMPEG_PATH", "")
+            ffmpeg_path = pype.lib.get_path_to_ffmpeg()
             if ffmpeg_path:
                 ffmpeg_path += "/ffmpeg"
             else:

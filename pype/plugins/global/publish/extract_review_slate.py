@@ -1,5 +1,6 @@
 import os
 import pype.api
+import pype.lib
 import pyblish
 
 
@@ -21,7 +22,7 @@ class ExtractReviewSlate(pype.api.Extractor):
 
         suffix = "_slate"
         slate_path = inst_data.get("slateFrame")
-        ffmpeg_path = os.path.join(os.environ.get("FFMPEG_PATH", ""), "ffmpeg")
+        ffmpeg_path = os.path.join(pype.lib.get_path_to_ffmpeg(), "ffmpeg")
 
         to_width = 1920
         to_height = 1080

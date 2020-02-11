@@ -3,6 +3,7 @@ import os
 import pyblish.api
 import clique
 import pype.api
+import pype.lib
 
 
 class ExtractJpegEXR(pyblish.api.InstancePlugin):
@@ -67,7 +68,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
             jpeg_items = []
             jpeg_items.append(
-                os.path.join(os.environ.get("FFMPEG_PATH"), "ffmpeg"))
+                os.path.join(pype.lib.get_path_to_ffmpeg(), "ffmpeg"))
             # override file if already exists
             jpeg_items.append("-y")
             # use same input args like with mov

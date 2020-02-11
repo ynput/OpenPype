@@ -4,6 +4,7 @@ import tempfile
 import pyblish.api
 import clique
 import pype.api
+import pype.lib
 
 
 class ExtractReviewSP(pyblish.api.InstancePlugin):
@@ -148,7 +149,7 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                 # output filename
                 output_args.append(full_output_path)
 
-                ffmpeg_path = os.getenv("FFMPEG_PATH", "")
+                ffmpeg_path = pype.lib.get_path_to_ffmpeg()
                 if ffmpeg_path:
                     ffmpeg_path += "/ffmpeg"
                 else:
