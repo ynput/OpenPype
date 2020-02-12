@@ -146,6 +146,7 @@ class CollectPlatesData(api.InstancePlugin):
             head, padding = os.path.splitext(basename)
             ext = ext[1:]
             padding = padding[1:]
+            self.log.debug("_ padding: `{}`".format(padding))
             # head, padding, ext = source_file.split('.')
             source_first_frame = int(padding)
             padding = len(padding)
