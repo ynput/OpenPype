@@ -411,7 +411,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
 
-
                 dst = "{0}{1}{2}".format(
                     dst_head,
                     dst_start_frame,
@@ -457,10 +456,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             repre_name = repre['name']
             new_repre_names.append(repre_name)
-            # Use previous
-            if existing_repres and repre_name in existing_repres:
-                repre_id = existing_repres[repre_name]["_id"]
-            else:
+
+            # Use previous representation's id if there are any
+            repre_id = None
+            for _repre in existing_repres:
+                # NOTE should we check lowered names?
+                if repre_name == _repre["name"]:
+                    repre_id = _repre["orig_id"]
+                    break
+
+            # Create new id if existing representations does not match
+            if repre_id is None:
                 repre_id = io.ObjectId()
 
             representation = {
