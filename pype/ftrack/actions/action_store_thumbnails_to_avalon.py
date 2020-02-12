@@ -256,6 +256,11 @@ class StoreThumbnailsToAvalon(BaseAction):
                 {"$set": {"data.thumbnail_id": thumbnail_id}}
             )
 
+            self.db_con.update_one(
+                {"_id": avalon_asset["_id"]},
+                {"$set": {"data.thumbnail_id": thumbnail_id}}
+            )
+
         return True
 
     def get_thumbnail_url(self, resource_identifier, size=None):
