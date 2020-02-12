@@ -96,6 +96,8 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
             objects_list.append(obj)
 
+        model_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
 
@@ -203,6 +205,8 @@ class BlendModelLoader(pype.blender.AssetLoader):
             avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": collection.name})
             objects_list.append(obj)
+
+        model_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list

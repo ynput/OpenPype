@@ -103,6 +103,8 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
             objects_list.append(obj)
 
+        rig_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
 
@@ -231,6 +233,8 @@ class BlendRigLoader(pype.blender.AssetLoader):
             if obj.type == 'ARMATURE' and action is not None:
 
                 obj.animation_data.action = action
+
+        rig_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
