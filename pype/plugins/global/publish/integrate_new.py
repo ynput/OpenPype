@@ -4,6 +4,8 @@ import logging
 import sys
 import clique
 import errno
+
+from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
@@ -207,21 +209,48 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             'parent': subset["_id"],
             'name': next_version
         })
-        existing_repres = None
+
         if existing_version is None:
             version_id = io.insert_one(version).inserted_id
         else:
+            # Update version data
             io.update_many({
                 'type': 'version',
                 'parent': subset["_id"],
                 'name': next_version
-            }, {'$set': version}
-            )
+            }, {
+                '$set': version
+            })
             version_id = existing_version['_id']
-            existing_repres = {repre["name"]: repre for repre in io.find({
+
+            # Find representations of existing version and archive them
+            current_repres = list(io.find({
                 "type": "representation",
                 "parent": version_id
-            })}
+            }))
+            bulk_writes = []
+            for repre in current_repres:
+                # Representation must change type,
+                # `_id` must be stored to other key and replaced with new
+                # - that is because new representations should have same ID
+                repre_id = repre["_id"]
+                bulk_writes.append(DeleteOne({"_id": repre_id}))
+
+                repre["orig_id"] = repre_id
+                repre["_id"] = io.ObjectId()
+                repre["type"] = "archived_representation"
+                bulk_writes.append(InsertOne(repre))
+
+            # bulk updates
+            if bulk_writes:
+                io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+                    bulk_writes
+                )
+
+        existing_repres = list(io.find({
+            "parent": version_id,
+            "type": "archived_representation"
+        }))
 
         instance.data['version'] = version['name']
 
