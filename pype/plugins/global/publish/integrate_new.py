@@ -76,8 +76,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "source",
                 "matchmove",
                 "image"
+                "source",
+                "assembly"
                 ]
     exclude_families = ["clip"]
+    db_representation_context_keys = [
+        "project", "asset", "task", "subset", "version", "representation",
+        "family", "hierarchy", "task", "username"
+    ]
 
     def process(self, instance):
 
@@ -266,6 +272,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                              "version": int(version["name"]),
                              "hierarchy": hierarchy}
 
+            # Add datetime data to template data
+            datetime_data = context.data.get("datetimeData") or {}
+            template_data.update(datetime_data)
+
             resolution_width = repre.get("resolutionWidth")
             resolution_height = repre.get("resolutionHeight")
             fps = instance.data.get("fps")
@@ -286,7 +296,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 anatomy.templates[template_name]["path"])
 
             sequence_repre = isinstance(files, list)
-
+            repre_context = None
             if sequence_repre:
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
@@ -309,10 +319,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     template_data["representation"] = repre['ext']
                     template_data["frame"] = src_padding_exp % i
                     anatomy_filled = anatomy.format(template_data)
+                    template_filled = anatomy_filled[template_name]["path"]
+                    if repre_context is None:
+                        repre_context = template_filled.used_values
 
                     test_dest_files.append(
-                        os.path.normpath(
-                            anatomy_filled[template_name]["path"])
+                        os.path.normpath(template_filled)
                     )
 
                 self.log.debug(
@@ -326,8 +338,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 index_frame_start = None
 
                 if repre.get("frameStart"):
-                    frame_start_padding = len(str(
-                        repre.get("frameEnd")))
+                    frame_start_padding = anatomy.templates["render"]["padding"]
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
@@ -338,10 +349,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst_start_frame = None
                 for i in src_collection.indexes:
                     src_padding = src_padding_exp % i
-
-                    # for adding first frame into db
-                    if not dst_start_frame:
-                        dst_start_frame = src_padding
 
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
@@ -363,6 +370,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
+
+                    # for adding first frame into db
+                    if not dst_start_frame:
+                        dst_start_frame = dst_padding
+
 
                 dst = "{0}{1}{2}".format(
                     dst_head,
@@ -392,15 +404,23 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
-                dst = os.path.normpath(
-                    anatomy_filled[template_name]["path"]).replace("..", ".")
+                template_filled = anatomy_filled[template_name]["path"]
+                repre_context = template_filled.used_values
+                dst = os.path.normpath(template_filled).replace("..", ".")
 
                 instance.data["transfers"].append([src, dst])
 
                 repre['published_path'] = self.unc_convert(dst)
                 self.log.debug("__ dst: {}".format(dst))
 
+            for key in self.db_representation_context_keys:
+                value = template_data.get(key)
+                if not value:
+                    continue
+                repre_context[key] = template_data[key]
+
             representation = {
+                "_id": io.ObjectId(),
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
@@ -410,19 +430,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 # Imprint shortcut to context
                 # for performance reasons.
-                "context": {
-                    "root": root,
-                    "project": {"name": PROJECT,
-                                "code": project['data']['code']},
-                    'task': TASK,
-                    "silo": asset.get('silo'),
-                    "asset": ASSET,
-                    "family": instance.data['family'],
-                    "subset": subset["name"],
-                    "version": version["name"],
-                    "hierarchy": hierarchy,
-                    "representation": repre['ext']
-                }
+                "context": repre_context
             }
 
             if repre.get("outputName"):
@@ -443,6 +451,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("__ represNAME: {}".format(rep['name']))
             self.log.debug("__ represPATH: {}".format(rep['published_path']))
         io.insert_many(representations)
+        instance.data["published_representations"] = representations
         # self.log.debug("Representation: {}".format(representations))
         self.log.info("Registered {} items".format(len(representations)))
 

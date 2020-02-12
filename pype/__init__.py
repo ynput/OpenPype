@@ -9,7 +9,7 @@ from pypeapp import config
 import logging
 log = logging.getLogger(__name__)
 
-__version__ = "2.3.0"
+__version__ = "2.5.0"
 
 PACKAGE_DIR = os.path.dirname(__file__)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")

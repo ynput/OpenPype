@@ -14,6 +14,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     families = ["write"]
 
     def process(self, instance):
+        # adding 2d focused rendering
+        instance.data["families"].append("render2d")
 
         node = None
         for x in instance:
@@ -97,7 +99,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameEnd": last_frame - handle_end,
             "version": int(instance.data['version']),
             "colorspace":  node["colorspace"].value(),
-            "families": [instance.data["family"]],
+            "families": ["render"],
             "subset": instance.data["subset"],
             "fps": instance.context.data["fps"]
         }
@@ -127,8 +129,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "families": families,
             "colorspace": node["colorspace"].value(),
             "deadlineChunkSize": deadlineChunkSize,
-            "deadlinePriority": deadlinePriority,
-            "subsetGroup": "renders"
+            "deadlinePriority": deadlinePriority
         })
 
         self.log.debug("instance.data: {}".format(instance.data))

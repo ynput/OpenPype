@@ -78,6 +78,8 @@ class CollectTemplates(pyblish.api.InstancePlugin):
         if hierarchy:
             # hierarchy = os.path.sep.join(hierarchy)
             hierarchy = os.path.join(*hierarchy)
+        else:
+            hierarchy = ""
 
         template_data = {"root": api.Session["AVALON_PROJECTS"],
                          "project": {"name": project_name,
@@ -88,7 +90,11 @@ class CollectTemplates(pyblish.api.InstancePlugin):
                          "subset": subset_name,
                          "version": version_number,
                          "hierarchy": hierarchy.replace("\\", "/"),
-                         "representation": "TEMP")}
+                         "representation": "TEMP"}
+
+        # Add datetime data to template data
+        datetime_data = instance.context.data.get("datetimeData") or {}
+        template_data.update(datetime_data)
 
         resolution_width = instance.data.get("resolutionWidth")
         resolution_height = instance.data.get("resolutionHeight")
