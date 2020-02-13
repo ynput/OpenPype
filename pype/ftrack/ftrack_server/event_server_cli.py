@@ -63,10 +63,19 @@ def validate_credentials(url, user, api):
         )
         session.close()
     except Exception as e:
-        print(
-            'ERROR: Can\'t log into Ftrack with used credentials:'
-            ' Ftrack server: "{}" // Username: {} // API key: {}'
-        ).format(url, user, api)
+        print("Can't log into Ftrack with used credentials:")
+        ftrack_cred = {
+            "Ftrack server": str(url),
+            "Username": str(user),
+            "API key": str(api)
+        }
+        item_lens = [len(key) + 1 for key in ftrack_cred.keys()]
+        justify_len = max(*item_lens)
+        for key, value in ftrack_cred.items():
+            print("{} {}".format(
+                (key + ":").ljust(justify_len, " "),
+                value
+            ))
         return False
 
     print('DEBUG: Credentials Username: "{}", API key: "{}" are valid.'.format(
