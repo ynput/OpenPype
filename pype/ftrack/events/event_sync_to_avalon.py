@@ -1544,6 +1544,14 @@ class SyncToAvalonEvent(BaseEvent):
                     entity_type_conf_ids[entity_type] = configuration_id
                     break
 
+            if not configuration_id:
+                self.log.warning(
+                    "BUG REPORT: Missing configuration for `{} < {} >`".format(
+                        entity_type, ent_info["entityType"]
+                    )
+                )
+                continue
+
             _entity_key = collections.OrderedDict({
                 "configuration_id": configuration_id,
                 "entity_id": ftrack_id
