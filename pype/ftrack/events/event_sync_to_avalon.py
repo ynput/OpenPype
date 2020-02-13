@@ -573,8 +573,7 @@ class SyncToAvalonEvent(BaseEvent):
         if auto_sync is not True:
             return True
 
-        debug_msg = ""
-        debug_msg += "Updated: {}".format(len(updated))
+        debug_msg = "Updated: {}".format(len(updated))
         debug_action_map = {
             "add": "Created",
             "remove": "Removed",
