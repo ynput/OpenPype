@@ -75,11 +75,14 @@ class SyncToAvalonEvent(BaseEvent):
         self.debug_print_time = now_datetime
         known_types_items = []
         for entityType, entity_type in self.debug_sync_types.items():
-            known_types_items.append("{} <{}>".format(entity_type, entityType))
+            ent_types_msg = ", ".join(entity_type)
+            known_types_items.append(
+                "<{}> ({})".format(entityType, ent_types_msg)
+            )
 
         known_entityTypes = ", ".join(known_types_items)
         self.log.debug(
-            "DEBUG MESSAGE: Known entityTypes {}".format(known_entityTypes)
+            "DEBUG MESSAGE: Known types {}".format(known_entityTypes)
         )
 
     @property
@@ -1603,7 +1606,7 @@ class SyncToAvalonEvent(BaseEvent):
         try:
             # Commit changes of mongo_id to empty string
             self.process_session.commit()
-            self.log.debug("Commititng unsetting")
+            self.log.debug("Committing unsetting")
         except Exception:
             self.process_session.rollback()
             # TODO logging
