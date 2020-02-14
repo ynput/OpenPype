@@ -19,14 +19,17 @@ class UserModule:
     log = pype.Logger().get_logger("UserModule", "user")
 
     def __init__(self, main_parent=None, parent=None):
+        self._callbacks_on_user_change = []
         self.cred = {}
-
         self.cred_path = os.path.normpath(os.path.join(
             self.cred_folder_path, self.cred_filename
         ))
         self.widget_login = UserWidget(self)
 
         self.load_credentials()
+
+    def register_callback_on_user_change(self, callback):
+        self._callbacks_on_user_change.append(callback)
 
     def tray_start(self):
         """Store credentials to env and preset them to widget"""
@@ -94,6 +97,17 @@ class UserModule:
                 " has invalid json format. Loading system username."
             ))
             return self.save_credentials(getpass.getuser())
+
+    def change_credentials(self, username):
+        self.save_credentials(username)
+        for callback in self._callbacks_on_user_change:
+            try:
+                callback()
+            except Exception:
+                self.log.warning(
+                    "Failed to execute callback \"{}\".".format(str(callback)),
+                    exc_info=True
+                )
 
     def save_credentials(self, username):
         """Save credentials to JSON file, env and widget"""
