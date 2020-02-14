@@ -15,12 +15,6 @@ class ValidateScript(pyblish.api.InstancePlugin):
     def process(self, instance):
         ctx_data = instance.context.data
         asset_name = ctx_data["asset"]
-
-        # asset = io.find_one({
-        #     "type": "asset",
-        #     "name": asset_name
-        # })
-
         asset = lib.get_asset(asset_name)
         asset_data = asset["data"]
 

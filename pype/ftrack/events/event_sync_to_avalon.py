@@ -1643,7 +1643,7 @@ class SyncToAvalonEvent(BaseEvent):
                     new_name, "task", schema_patterns=self.regex_schemas
                 )
                 if not passed_regex:
-                    self.regex_failed.append(ent_infos["entityId"])
+                    self.regex_failed.append(ent_info["entityId"])
                     continue
 
                 if new_name not in self.task_changes_by_avalon_id[mongo_id]:
