@@ -134,7 +134,6 @@ class CollectPlatesData(api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "handles": version_data['handleStart'],
             "colorspace": item.sourceMediaColourTransform(),
             "colorspaceScript": instance.context.data["colorspace"],
             "families": [f for f in families if 'ftrack' not in f],
@@ -156,8 +155,9 @@ class CollectPlatesData(api.InstancePlugin):
                 ext=ext
             )
 
-            start_frame = source_first_frame + instance.data["sourceInH"]
-            duration = instance.data["sourceOutH"] - instance.data["sourceInH"]
+            start_frame = int(source_first_frame + instance.data["sourceInH"])
+            duration = int(
+                instance.data["sourceOutH"] - instance.data["sourceInH"])
             end_frame = start_frame + duration
             self.log.debug("start_frame: `{}`".format(start_frame))
             self.log.debug("end_frame: `{}`".format(end_frame))
