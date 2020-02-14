@@ -19,7 +19,7 @@ class CollectResourcesPath(pyblish.api.InstancePlugin):
     """Generate directory path where the files and resources will be stored"""
 
     label = "Collect Resources Path"
-    order = pyblish.api.CollectorOrder + 0.995
+    order = pyblish.api.CollectorOrder + 0.495
 
     def process(self, instance):
         anatomy = instance.context.data["anatomy"]
