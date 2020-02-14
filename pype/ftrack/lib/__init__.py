@@ -1,5 +1,5 @@
 from . import avalon_sync
-from .credentials import *
+from . import credentials
 from .ftrack_app_handler import *
 from .ftrack_event_handler import *
 from .ftrack_action_handler import *
