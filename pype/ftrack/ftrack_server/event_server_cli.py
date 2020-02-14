@@ -446,9 +446,9 @@ def main(argv):
         event_paths = kwargs.ftrackeventpaths
 
     if not kwargs.noloadcred:
-        cred = credentials._get_credentials(True)
+        cred = credentials.get_credentials(ftrack_url)
         username = cred.get('username')
-        api_key = cred.get('apiKey')
+        api_key = cred.get('api_key')
 
     if kwargs.ftrackuser:
         username = kwargs.ftrackuser
@@ -482,7 +482,7 @@ def main(argv):
         return 1
 
     if kwargs.storecred:
-        credentials._save_credentials(username, api_key, True)
+        credentials.save_credentials(username, api_key, ftrack_url)
 
     # Set Ftrack environments
     os.environ["FTRACK_SERVER"] = ftrack_url
