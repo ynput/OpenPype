@@ -432,7 +432,7 @@ def burnins_from_data(
             if not value.startswith(TIME_CODE_KEY):
                 value_items = value.split(TIME_CODE_KEY)
                 text = value_items[0].format(**data)
-                args.append(value_items[0])
+                args.append(text)
 
             burnin.add_timecode(*args)
             continue
