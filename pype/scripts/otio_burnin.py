@@ -34,7 +34,7 @@ DRAWTEXT = (
     "%(color)s@%(opacity).1f:fontsize=%(size)d:fontfile='%(font)s'"
 )
 TIMECODE = (
-    "drawtext=text=\\'%(text)s\\':timecode=\\'%(timecode)s\\'"
+    "drawtext=timecode=\\'%(timecode)s\\':text=\\'%(text)s\\'"
     ":timecode_rate=%(fps).2f:x=%(x)s:y=%(y)s:fontcolor="
     "%(color)s@%(opacity).1f:fontsize=%(size)d:fontfile='%(font)s'"
 )
