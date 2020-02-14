@@ -40,6 +40,9 @@ class UserModule:
         os.environ[self.env_name] = username
         self.widget_login.set_user(username)
 
+    def get_user(self):
+        return self.cred.get("username") or getpass.getuser()
+
     def process_modules(self, modules):
         """ Gives ability to connect with imported modules from TrayManager.
 
