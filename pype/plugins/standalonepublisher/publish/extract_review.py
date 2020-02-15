@@ -149,12 +149,7 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                 # output filename
                 output_args.append(full_output_path)
 
-                ffmpeg_path = pype.lib.get_path_to_ffmpeg()
-                if ffmpeg_path:
-                    ffmpeg_path += "/ffmpeg"
-                else:
-                    ffmpeg_path = "ffmpeg"
-
+                ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
                 mov_args = [
                     ffmpeg_path,
                     " ".join(input_args),

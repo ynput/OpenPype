@@ -28,11 +28,8 @@ class ValidateFfmpegInstallef(pyblish.api.Validator):
         return True
 
     def process(self, instance):
-        self.log.info("ffmpeg path: `{}`".format(
-            pype.lib.get_path_to_ffmpeg()
-        ))
-        if self.is_tool(
-                os.path.join(
-                    pype.lib.get_path_to_ffmpeg(), "ffmpeg")) is False:
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+        self.log.info("ffmpeg path: `{}`".format(ffmpeg_path))
+        if self.is_tool(ffmpeg_path) is False:
             self.log.error("ffmpeg not found in PATH")
             raise RuntimeError('ffmpeg not installed.')

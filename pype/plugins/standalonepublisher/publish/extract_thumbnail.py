@@ -74,11 +74,7 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
                 config_data.get("__default__", {})
             )
 
-            ffmpeg_path = pype.lib.get_path_to_ffmpeg()
-            if ffmpeg_path:
-                ffmpeg_path += "/ffmpeg"
-            else:
-                ffmpeg_path = "ffmpeg"
+            ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
             jpeg_items = []
             jpeg_items.append(ffmpeg_path)

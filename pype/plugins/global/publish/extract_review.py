@@ -311,10 +311,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                         "creating dir: {}".format(stg_dir))
                                     os.mkdir(stg_dir)
 
+                            ffmpeg_path = (
+                                pype.lib.get_ffmpeg_tool_path("ffmpeg")
+                            )
                             mov_args = [
-                                os.path.join(
-                                    pype.lib.get_path_to_ffmpeg(), "ffmpeg"
-                                ),
+                                ffmpeg_path,
                                 " ".join(input_args),
                                 " ".join(output_args)
                             ]

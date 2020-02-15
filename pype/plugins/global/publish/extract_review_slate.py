@@ -22,7 +22,7 @@ class ExtractReviewSlate(pype.api.Extractor):
 
         suffix = "_slate"
         slate_path = inst_data.get("slateFrame")
-        ffmpeg_path = os.path.join(pype.lib.get_path_to_ffmpeg(), "ffmpeg")
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         to_width = 1920
         to_height = 1080
