@@ -8,7 +8,7 @@ except ImportError:
     import errno
 
 
-class ValidateFfmpegInstallef(pyblish.api.Validator):
+class ValidateFFmpegInstalled(pyblish.api.Validator):
     """Validate availability of ffmpeg tool in PATH"""
 
     order = pyblish.api.ValidatorOrder
