@@ -168,14 +168,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if version_data_instance:
             version_data.update(version_data_instance)
 
-        # TODO remove avalon_location (shall we?)
-        avalon_location = api.Session["AVALON_LOCATION"]
         # TODO rename method from `create_version` to
         # `prepare_version` or similar...
         version = self.create_version(
             subset=subset,
             version_number=version_number,
-            locations=[avalon_location],
             data=version_data
         )
 
@@ -528,26 +525,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         return subset
 
-    def create_version(self, subset, version_number, locations, data=None):
+    def create_version(self, subset, version_number, data=None):
         """ Copy given source to destination
 
         Args:
             subset (dict): the registered subset of the asset
             version_number (int): the version number
-            locations (list): the currently registered locations
 
         Returns:
             dict: collection of data to create a version
         """
-        # Imprint currently registered location
-        version_locations = [location for location in locations if
-                             location is not None]
 
         return {"schema": "pype:version-3.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,
-                "locations": version_locations,
                 "data": data}
 
     def create_version_data(self, context, instance):
