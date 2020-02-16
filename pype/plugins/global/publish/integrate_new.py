@@ -160,7 +160,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         subset = self.get_subset(asset_entity, instance)
 
         version_number = instance.data["version"]
-        self.log.debug("Next version: v{0:03d}".format(version_number))
+        self.log.debug("Next version: v{}".format(version_number))
 
         version_data = self.create_version_data(context, instance)
 
