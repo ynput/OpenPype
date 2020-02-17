@@ -161,7 +161,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         api.Session.update(session)
                         os.environ.update(session)
                     instance = metadata.get("instance")
-                    if instance:
+                    if instance and isinstance(instance, list):
                         instance_family = instance.get("family")
                         pixel_aspect = instance.get("pixelAspect", 1)
                         resolution_width = instance.get(
@@ -225,11 +225,15 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
             if families_data and "slate" in families_data:
                 families.append("slate")
 
-            if data["metadata"]["instance"].get("attachTo"):
+            if not isinstance(instance, list):
+                instances = [instance]
+
+            # attachTo must be only on single instance
+            if instances[0].get("attachTo"):
                 # we need to attach found collections to existing
                 # subset version as review represenation.
 
-                for attach in data["metadata"]["instance"]["attachTo"]:
+                for attach in instances[0].get("attachTo"):
                     self.log.info(
                         "Attaching render {}:v{}".format(
                             attach["subset"], attach["version"]))
@@ -476,37 +480,40 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                                         'ftrack')
                                     representation["tags"].remove('review')
                 else:
-                    subset = data["metadata"]["instance"]["subset"]
                     data = copy.deepcopy(data)
-                    task = data["metadata"]["session"]["AVALON_TASK"]
-                    new_subset_name = 'render{}{}{}{}'.format(
-                        task[0].upper(), task[1:],
-                        subset[0].upper(), subset[1:])
+                    if not isinstance(data["metadata"]["instance"], list):
+                        instances = [data["metadata"]["instance"]]
+                    for instance in instances:
+                        subset = instance["subset"]
+                        task = data["metadata"]["session"]["AVALON_TASK"]
+                        new_subset_name = 'render{}{}{}{}'.format(
+                            task[0].upper(), task[1:],
+                            subset[0].upper(), subset[1:])
 
-                    self.log.info(
-                        "Creating new subset: {}".format(new_subset_name))
-                    new_instance = context.create_instance(new_subset_name)
+                        self.log.info(
+                            "Creating new subset: {}".format(new_subset_name))
+                        new_instance = context.create_instance(new_subset_name)
 
-                    new_instance.data.update(
-                        {
-                            "name": new_subset_name,
-                            "family": 'render',
-                            "families": data["metadata"]["families"],
-                            "subset": new_subset_name,
-                            "asset": data.get(
-                                "asset", api.Session["AVALON_ASSET"]),
-                            "stagingDir": root,
-                            "frameStart": frame_start,
-                            "frameEnd": frame_end,
-                            "fps": fps,
-                            "source": data.get("source", ""),
-                            "pixelAspect": pixel_aspect,
-                            "resolutionWidth": resolution_width,
-                            "resolutionHeight": resolution_height,
-                            "slateFrame": slate_frame
-                        }
-                    )
-                    new_instance.data["representations"] = data["metadata"]["instance"]["representations"]  # noqa: E501
+                        new_instance.data.update(
+                            {
+                                "name": new_subset_name,
+                                "family": 'render',
+                                "families": data["metadata"]["families"],
+                                "subset": new_subset_name,
+                                "asset": data.get(
+                                    "asset", api.Session["AVALON_ASSET"]),
+                                "stagingDir": root,
+                                "frameStart": frame_start,
+                                "frameEnd": frame_end,
+                                "fps": fps,
+                                "source": data.get("source", ""),
+                                "pixelAspect": pixel_aspect,
+                                "resolutionWidth": resolution_width,
+                                "resolutionHeight": resolution_height,
+                                "slateFrame": slate_frame
+                            }
+                        )
+                        new_instance.data["representations"] = instance["representations"]  # noqa: E501
 
             if new_instance is not None:
                 self.log.info("remapping paths ...")

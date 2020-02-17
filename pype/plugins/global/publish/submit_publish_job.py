@@ -2,7 +2,6 @@ import os
 import json
 import re
 import logging
-from collections import namedtuple
 
 from avalon import api, io
 from avalon.vendor import requests, clique
@@ -10,7 +9,7 @@ from avalon.vendor import requests, clique
 import pyblish.api
 
 
-AOVFilter = namedtuple("AOVFilter", ["app", "aov"])
+R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
 
 
 def _get_script():
@@ -162,6 +161,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "PYPE_STUDIO_PROJECTS_MOUNT",
     ]
 
+    # pool used to do the publishing job
+    deadline_pool = ""
+
     def _submit_deadline_post_job(self, instance, job):
         """
         Deadline specific code separated from :meth:`process` for sake of
@@ -196,6 +198,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
                 "Priority": job["Props"]["Pri"],
+                "Pool": self.deadline_pool
             },
             "PluginInfo": {
                 "Version": "3.6",
@@ -240,6 +243,183 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if not response.ok:
             raise Exception(response.text)
 
+    def _create_instances_for_aov(self, context, instance_data, exp_files):
+        task = os.environ["AVALON_TASK"]
+        subset = instance_data["subset"]
+        instances = []
+        for aov, files in exp_files.items():
+            cols, rem = clique.assemble(files)
+            # we shouldn't have any reminders
+            if rem:
+                self.log.warning(
+                    "skipping unexpected files found "
+                    "in sequence: {}".format(rem))
+
+            # but we really expect only one collection, nothing else make sense
+            self.log.error("got {} sequence type".format(len(cols)))
+            assert len(cols) == 1, "only one image sequence type is expected"
+
+            # create subset name `familyTaskSubset_AOV`
+            subset_name = 'render{}{}{}{}_{}'.format(
+                task[0].upper(), task[1:],
+                subset[0].upper(), subset[1:],
+                aov)
+
+            staging = os.path.dirname(list(cols[0])[0])
+            start = int(instance_data.get("frameStart"))
+            end = int(instance_data.get("frameEnd"))
+
+            new_instance = self.context.create_instance(subset_name)
+            app = os.environ.get("AVALON_APP", "")
+
+            preview = False
+            if app in self.aov_filter.keys():
+                if aov in self.aov_filter[app]:
+                    preview = True
+
+            new_instance.data.update(instance_data)
+            new_instance.data["subset"] = subset_name
+            ext = cols[0].tail.lstrip(".")
+            rep = {
+                "name": ext,
+                "ext": ext,
+                "files": [os.path.basename(f) for f in list(cols[0])],
+                "frameStart": start,
+                "frameEnd": end,
+                # If expectedFile are absolute, we need only filenames
+                "stagingDir": staging,
+                "anatomy_template": "render",
+                "fps": new_instance.data.get("fps"),
+                "tags": ["review", "preview"] if preview else []
+            }
+
+            # if extending frames from existing version, copy files from there
+            # into our destination directory
+            if instance_data.get("extendFrames", False):
+                self.log.info("Preparing to copy ...")
+                import speedcopy
+
+                # get latest version of subset
+                # this will stop if subset wasn't published yet
+                version = get_latest_version(
+                    instance_data.get("asset"),
+                    subset_name, "render")
+                # get its files based on extension
+                subset_resources = get_resources(version, ext)
+                r_col, _ = clique.assemble(subset_resources)
+
+                # if override remove all frames we are expecting to be rendered
+                # so we'll copy only those missing from current render
+                if instance_data.get("overrideExistingFrame"):
+                    for frame in range(start, end+1):
+                        if frame not in r_col.indexes:
+                            continue
+                        r_col.indexes.remove(frame)
+
+                # now we need to translate published names from represenation
+                # back. This is tricky, right now we'll just use same naming
+                # and only switch frame numbers
+                resource_files = []
+                r_filename = os.path.basename(list(cols[0])[0])  # first file
+                op = re.search(R_FRAME_NUMBER, r_filename)
+                pre = r_filename[:op.start("frame")]
+                post = r_filename[op.end("frame"):]
+                assert op is not None, "padding string wasn't found"
+                for frame in list(r_col):
+                    fn = re.search(R_FRAME_NUMBER, frame)
+                    # silencing linter as we need to compare to True, not to
+                    # type
+                    assert fn is not None, "padding string wasn't found"
+                    # list of tuples (source, destination)
+                    resource_files.append(
+                        (frame,
+                         os.path.join(staging,
+                                      "{}{}{}".format(pre,
+                                                      fn.group("frame"),
+                                                      post)))
+                    )
+
+                for source in resource_files:
+                    speedcopy.copy(source[0], source[1])
+
+                self.log.info(
+                    "Finished copying %i files" % len(resource_files))
+
+            if preview:
+                if "ftrack" not in new_instance.data["families"]:
+                    if os.environ.get("FTRACK_SERVER"):
+                        new_instance.data["families"].append("ftrack")
+                if "review" not in new_instance.data["families"]:
+                    new_instance.data["families"].append("review")
+
+            new_instance.data["representations"] = [rep]
+            instances.append(new_instance)
+
+        return instances
+
+    def _get_representations(self, instance, exp_files):
+        representations = []
+        start = int(instance.data.get("frameStart"))
+        end = int(instance.data.get("frameEnd"))
+        cols, rem = clique.assemble(exp_files)
+        # create representation for every collected sequence
+        for c in cols:
+            ext = c.tail.lstrip(".")
+            preview = False
+            # if filtered aov name is found in filename, toggle it for
+            # preview video rendering
+            for app in self.aov_filter:
+                if os.environ.get("AVALON_APP", "") == app:
+                    for aov in self.aov_filter[app]:
+                        if re.match(
+                            r".+(?:\.|_)({})(?:\.|_).*".format(aov),
+                            list(c)[0]
+                        ):
+                            preview = True
+                            break
+                break
+            rep = {
+                "name": str(c),
+                "ext": ext,
+                "files": [os.path.basename(f) for f in list(c)],
+                "frameStart": start,
+                "frameEnd": end,
+                # If expectedFile are absolute, we need only filenames
+                "stagingDir": os.path.dirname(list(c)[0]),
+                "anatomy_template": "render",
+                "fps": instance.data.get("fps"),
+                "tags": ["review", "preview"] if preview else [],
+            }
+
+            representations.append(rep)
+
+            # TODO: implement extendFrame
+
+            families = instance.data.get("families")
+            # if we have one representation with preview tag
+            # flag whole instance for review and for ftrack
+            if preview:
+                if "ftrack" not in families:
+                    if os.environ.get("FTRACK_SERVER"):
+                        families.append("ftrack")
+                if "review" not in families:
+                    families.append("review")
+                instance.data["families"] = families
+
+        for r in rem:
+            ext = r.split(".")[-1]
+            rep = {
+                "name": r,
+                "ext": ext,
+                "files": os.path.basename(r),
+                "stagingDir": os.path.dirname(r),
+                "anatomy_template": "publish",
+            }
+
+            representations.append(rep)
+
+        return representations
+
     def process(self, instance):
         """
         Detect type of renderfarm submission and create and post dependend job
@@ -252,6 +432,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         data = instance.data.copy()
         context = instance.context
+        self.context = context
 
         if hasattr(instance, "_log"):
             data['_log'] = instance._log
@@ -285,6 +466,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if end is None:
             end = context.data["frameEnd"]
 
+        if data.get("extendFrames", False):
+            start, end = self._extend_frames(
+                asset,
+                subset,
+                start,
+                end,
+                data["overrideExistingFrame"])
+
         try:
             source = data["source"]
         except KeyError:
@@ -298,78 +487,91 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         regex = None
 
         families = ["render"]
+
+        instance_skeleton_data = {
+            "family": "render",
+            "subset": subset,
+            "families": families,
+            "asset": asset,
+            "frameStart": start,
+            "frameEnd": end,
+            "fps": data.get("fps", 25),
+            "source": source,
+            "extendFrames": data.get("extendFrames"),
+            "overrideExistingFrame": data.get("overrideExistingFrame")
+        }
+
+        instances = None
         if data.get("expectedFiles"):
-            representations = []
-            cols, rem = clique.assemble(data.get("expectedFiles"))
-            # create representation for every collected sequence
-            for c in cols:
-                ext = c.tail.lstrip(".")
-                preview = False
-                # if filtered aov name is found in filename, toggle it for
-                # preview video renderin
-                for app in self.aov_filter:
-                    if os.environ.get("AVALON_APP", "") == app:
-                        for aov in self.aov_filter[app]:
-                            if re.match(
-                                r".+(?:\.|_)({})(?:\.|_).*".format(aov),
-                                list(c)[0]
-                            ):
-                                preview = True
-                                break
-                    break
-                rep = {
-                    "name": ext,
-                    "ext": ext,
-                    "files": [os.path.basename(f) for f in list(c)],
-                    "frameStart": int(start),
-                    "frameEnd": int(end),
-                    # If expectedFile are absolute, we need only filenames
-                    "stagingDir": os.path.dirname(list(c)[0]),
-                    "anatomy_template": "render",
-                    "fps": context.data.get("fps", None),
-                    "tags": ["review", "preview"] if preview else [],
+            """
+            if content of `expectedFiles` are dictionaries, we will handle
+            it as list of AOVs, creating instance from every one of them.
+
+            Example:
+            --------
+
+            expectedFiles = [
+                {
+                    "beauty": [
+                        "foo_v01.0001.exr",
+                        "foo_v01.0002.exr"
+                    ],
+                    "Z": [
+                        "boo_v01.0001.exr",
+                        "boo_v01.0002.exr"
+                    ]
                 }
+            ]
 
-                representations.append(rep)
+            This will create instances for `beauty` and `Z` subset
+            adding those files to their respective representations.
 
-                # if we have one representation with preview tag
-                # flag whole instance for review and for ftrack
-                if preview:
-                    if "ftrack" not in families:
-                        if os.environ.get("FTRACK_SERVER"):
-                            families.append("ftrack")
-                    if "review" not in families:
-                        families.append("review")
+            If we've got only list of files, we collect all filesequences.
+            More then one doesn't probably make sense, but we'll handle it
+            like creating one instance with multiple representations.
 
-            for r in rem:
-                ext = r.split(".")[-1]
-                rep = {
-                    "name": ext,
-                    "ext": ext,
-                    "files": os.path.basename(r),
-                    "stagingDir": os.path.dirname(r),
-                    "anatomy_template": "publish",
-                }
+            Example:
+            --------
 
-                representations.append(rep)
+            expectedFiles = [
+                "foo_v01.0001.exr",
+                "foo_v01.0002.exr",
+                "xxx_v01.0001.exr",
+                "xxx_v01.0002.exr"
+            ]
 
-            if "representations" not in instance.data:
-                data["representations"] = []
+            This will result in one instance with two representations:
+            `foo` and `xxx`
+            """
+            if isinstance(data.get("expectedFiles")[0], dict):
+                instances = self._create_instances_for_aov(
+                    instance_skeleton_data,
+                    data.get("expectedFiles"))
+            else:
+                representations = self._get_representations(
+                    instance_skeleton_data,
+                    data.get("expectedFiles")
+                )
 
-            # add representation
-            data["representations"] += representations
+                if "representations" not in instance.data:
+                    data["representations"] = []
+
+                # add representation
+                data["representations"] += representations
 
         else:
+            # deprecated: passing regex is depecated. Please use
+            # `expectedFiles` and collect them.
             if "ext" in instance.data:
                 ext = r"\." + re.escape(instance.data["ext"])
             else:
                 ext = r"\.\D+"
 
             regex = r"^{subset}.*\d+{ext}$".format(
-                subset=re.escape(subset), ext=ext
-            )
+                subset=re.escape(subset), ext=ext)
         # Write metadata for publish job
-        metadata = {
+        # publish job file
+        publish_job = {
             "asset": asset,
             "frameStart": start,
             "frameEnd": end,
@@ -380,34 +582,33 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "version": context.data["version"],
             "intent": context.data.get("intent"),
             "comment": context.data.get("comment"),
-            # Optional metadata (for debugging)
-            "metadata": {
-                "job": render_job,
-                "session": api.Session.copy(),
-                "instance": data,
-            },
+            "job": render_job,
+            "session": api.Session.copy(),
+            "instances": instances or [data]
         }
 
-        if api.Session["AVALON_APP"] == "nuke":
-            metadata["subset"] = subset
-
+        # pass Ftrack credentials in case of Muster
         if submission_type == "muster":
             ftrack = {
                 "FTRACK_API_USER": os.environ.get("FTRACK_API_USER"),
                 "FTRACK_API_KEY": os.environ.get("FTRACK_API_KEY"),
                 "FTRACK_SERVER": os.environ.get("FTRACK_SERVER"),
             }
-            metadata.update({"ftrack": ftrack})
+            publish_job.update({"ftrack": ftrack})
 
         if regex:
-            metadata["regex"] = regex
+            publish_job["regex"] = regex
 
         # Ensure output dir exists
         output_dir = instance.data["outputDir"]
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
 
-        if data.get("extendFrames", False):
+        # TODO: remove this code
+        # deprecated: this is left here for backwards compatibility and is
+        # not probably working at all. :hammer:
+        if data.get("extendFrames", False) \
+           and not data.get("expectedFiles", False):
 
             family = "render"
             override = data["overrideExistingFrame"]
@@ -423,18 +624,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # Frame comparison
             prev_start = None
             prev_end = None
-            resource_range = range(int(start), int(end) + 1)
+            resource_range = range(int(start), int(end)+1)
 
             # Gather all the subset files (one subset per render pass!)
             subset_names = [data["subset"]]
             subset_names.extend(data.get("renderPasses", []))
             resources = []
             for subset_name in subset_names:
-                version = get_latest_version(
-                    asset_name=data["asset"],
-                    subset_name=subset_name,
-                    family=family,
-                )
+                version = get_latest_version(asset_name=data["asset"],
+                                             subset_name=subset_name,
+                                             family=family)
 
                 # Set prev start / end frames for comparison
                 if not prev_start and not prev_end:
@@ -442,9 +641,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     prev_end = version["data"]["frameEnd"]
 
                 subset_resources = get_resources(version, _ext)
-                resource_files = get_resource_files(
-                    subset_resources, resource_range, override
-                )
+                resource_files = get_resource_files(subset_resources,
+                                                    resource_range,
+                                                    override)
 
                 resources.extend(resource_files)
 
@@ -452,10 +651,27 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             updated_end = max(end, prev_end)
 
             # Update metadata and instance start / end frame
-            self.log.info(
-                "Updating start / end frame : "
-                "{} - {}".format(updated_start, updated_end)
-            )
+            self.log.info("Updating start / end frame : "
+                          "{} - {}".format(updated_start, updated_end))
+
+            # TODO : Improve logic to get new frame range for the
+            # publish job (publish_filesequence.py)
+            # The current approach is not following Pyblish logic
+            # which is based
+            # on Collect / Validate / Extract.
+
+            # ---- Collect Plugins  ---
+            # Collect Extend Frames - Only run if extendFrames is toggled
+            # # # Store in instance:
+            # # # Previous rendered files per subset based on frames
+            # # # --> Add to instance.data[resources]
+            # # # Update publish frame range
+
+            # ---- Validate Plugins ---
+            # Validate Extend Frames
+            # # # Check if instance has the requirements to extend frames
+            # There might have been some things which can be added to the list
+            # Please do so when fixing this.
 
             # Start frame
             metadata["frameStart"] = updated_start
@@ -494,3 +710,33 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 shutil.copy(source, dest)
 
             self.log.info("Finished copying %i files" % len(resources))
+
+    def _extend_frames(self, asset, subset, start, end, override):
+        family = "render"
+        # override = data.get("overrideExistingFrame", False)
+
+        # Frame comparison
+        prev_start = None
+        prev_end = None
+
+        version = get_latest_version(
+            asset_name=asset,
+            subset_name=subset,
+            family=family,
+        )
+
+        # Set prev start / end frames for comparison
+        if not prev_start and not prev_end:
+            prev_start = version["data"]["frameStart"]
+            prev_end = version["data"]["frameEnd"]
+
+        updated_start = min(start, prev_start)
+        updated_end = max(end, prev_end)
+
+        # Update metadata and instance start / end frame
+        self.log.info(
+            "Updating start / end frame : "
+            "{} - {}".format(updated_start, updated_end)
+        )
+
+        return updated_start, updated_end

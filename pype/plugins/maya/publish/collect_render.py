@@ -374,14 +374,16 @@ class AExpectedFiles:
                     for regex, value in mappings:
                         file_prefix = re.sub(regex, value, file_prefix)
 
+                    aov_files = []
                     for frame in range(
                             int(start_frame),
                             int(end_frame) + 1,
                             int(frame_step)):
-                        expected_files.append(
+                        aov_files.append(
                             '{}.{}.{}'.format(file_prefix,
                                               str(frame).rjust(padding, "0"),
                                               aov[1]))
+                    expected_files.append({aov[0]: aov_files})
                     file_prefix = resolved_path
             else:
                 mappings = (
