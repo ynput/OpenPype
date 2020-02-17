@@ -110,15 +110,7 @@ class ExtractYetiRig(pype.api.Extractor):
 
         self.log.info("Writing metadata file")
 
-        # Create assumed destination folder for imageSearchPath
-        assumed_temp_data = instance.data["assumedTemplateData"]
-        template = instance.data["template"]
-        template_formatted = template.format(**assumed_temp_data)
-
-        destination_folder = os.path.dirname(template_formatted)
-
-        image_search_path = os.path.join(destination_folder, "resources")
-        image_search_path = os.path.normpath(image_search_path)
+        image_search_path = resources_dir = instance.data["resourcesDir"]
 
         settings = instance.data.get("rigsettings", None)
         if settings:

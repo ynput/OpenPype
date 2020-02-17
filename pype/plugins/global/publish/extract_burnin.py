@@ -32,21 +32,15 @@ class ExtractBurnin(pype.api.Extractor):
         frame_end = int(instance.data.get("frameEnd") or 1)
         duration = frame_end - frame_start + 1
 
-        prep_data = {
-            "username": instance.context.data['user'],
-            "asset": os.environ['AVALON_ASSET'],
-            "task": os.environ['AVALON_TASK'],
+        prep_data = copy.deepcopy(instance.data["anatomyData"])
+        prep_data.update({
             "frame_start": frame_start,
             "frame_end": frame_end,
             "duration": duration,
             "version": int(version),
             "comment": instance.context.data.get("comment", ""),
             "intent": instance.context.data.get("intent", "")
-        }
-
-        # Add datetime data to preparation data
-        datetime_data = instance.context.data.get("datetimeData") or {}
-        prep_data.update(datetime_data)
+        })
 
         slate_frame_start = frame_start
         slate_frame_end = frame_end
@@ -63,10 +57,6 @@ class ExtractBurnin(pype.api.Extractor):
             "slate_frame_end": slate_frame_end,
             "slate_duration": slate_duration
         })
-
-        # Update data with template data
-        template_data = instance.data.get("assumedTemplateData") or {}
-        prep_data.update(template_data)
 
         # get anatomy project
         anatomy = instance.context.data['anatomy']

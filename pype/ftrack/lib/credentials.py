@@ -2,85 +2,140 @@ import os
 import json
 import ftrack_api
 import appdirs
+import getpass
+try:
+    from urllib.parse import urlparse
+except ImportError:
+    from urlparse import urlparse
 
 
-config_path = os.path.normpath(appdirs.user_data_dir('pype-app', 'pype'))
-action_file_name = 'ftrack_cred.json'
-event_file_name = 'ftrack_event_cred.json'
-action_fpath = os.path.join(config_path, action_file_name)
-event_fpath = os.path.join(config_path, event_file_name)
-folders = set([os.path.dirname(action_fpath), os.path.dirname(event_fpath)])
+CONFIG_PATH = os.path.normpath(appdirs.user_data_dir("pype-app", "pype"))
+CREDENTIALS_FILE_NAME = "ftrack_cred.json"
+CREDENTIALS_PATH = os.path.join(CONFIG_PATH, CREDENTIALS_FILE_NAME)
+CREDENTIALS_FOLDER = os.path.dirname(CREDENTIALS_PATH)
 
-for folder in folders:
-    if not os.path.isdir(folder):
-        os.makedirs(folder)
+if not os.path.isdir(CREDENTIALS_FOLDER):
+    os.makedirs(CREDENTIALS_FOLDER)
+
+USER_GETTER = None
 
 
-def _get_credentials(event=False):
-    if event:
-        fpath = event_fpath
-    else:
-        fpath = action_fpath
+def get_ftrack_hostname(ftrack_server=None):
+    if not ftrack_server:
+        ftrack_server = os.environ["FTRACK_SERVER"]
 
+    if "//" not in ftrack_server:
+        ftrack_server = "//" + ftrack_server
+
+    return urlparse(ftrack_server).hostname
+
+
+def get_user():
+    if USER_GETTER:
+        return USER_GETTER()
+    return getpass.getuser()
+
+
+def get_credentials(ftrack_server=None, user=None):
     credentials = {}
-    try:
-        file = open(fpath, 'r')
-        credentials = json.load(file)
-    except Exception:
-        file = open(fpath, 'w')
+    if not os.path.exists(CREDENTIALS_PATH):
+        with open(CREDENTIALS_PATH, "w") as file:
+            file.write(json.dumps(credentials))
+            file.close()
+        return credentials
 
-    file.close()
+    with open(CREDENTIALS_PATH, "r") as file:
+        content = file.read()
+
+    hostname = get_ftrack_hostname(ftrack_server)
+    if not user:
+        user = get_user()
+
+    content_json = json.loads(content or "{}")
+    credentials = content_json.get(hostname, {}).get(user) or {}
 
     return credentials
 
 
-def _save_credentials(username, apiKey, event=False, auto_connect=None):
-    data = {
-        'username': username,
-        'apiKey': apiKey
+def save_credentials(ft_user, ft_api_key, ftrack_server=None, user=None):
+    hostname = get_ftrack_hostname(ftrack_server)
+    if not user:
+        user = get_user()
+
+    with open(CREDENTIALS_PATH, "r") as file:
+        content = file.read()
+
+    content_json = json.loads(content or "{}")
+    if hostname not in content_json:
+        content_json[hostname] = {}
+
+    content_json[hostname][user] = {
+        "username": ft_user,
+        "api_key": ft_api_key
     }
 
-    if event:
-        fpath = event_fpath
-        if auto_connect is None:
-            cred = _get_credentials(True)
-            auto_connect = cred.get('auto_connect', False)
-        data['auto_connect'] = auto_connect
-    else:
-        fpath = action_fpath
+    # Deprecated keys
+    if "username" in content_json:
+        content_json.pop("username")
+    if "apiKey" in content_json:
+        content_json.pop("apiKey")
 
-    file = open(fpath, 'w')
-    file.write(json.dumps(data))
-    file.close()
+    with open(CREDENTIALS_PATH, "w") as file:
+        file.write(json.dumps(content_json, indent=4))
 
 
-def _clear_credentials(event=False):
-    if event:
-        fpath = event_fpath
-    else:
-        fpath = action_fpath
-    open(fpath, 'w').close()
-    _set_env(None, None)
+def clear_credentials(ft_user=None, ftrack_server=None, user=None):
+    if not ft_user:
+        ft_user = os.environ.get("FTRACK_API_USER")
+
+    if not ft_user:
+        return
+
+    hostname = get_ftrack_hostname(ftrack_server)
+    if not user:
+        user = get_user()
+
+    with open(CREDENTIALS_PATH, "r") as file:
+        content = file.read()
+
+    content_json = json.loads(content or "{}")
+    if hostname not in content_json:
+        content_json[hostname] = {}
+
+    content_json[hostname].pop(user, None)
+
+    with open(CREDENTIALS_PATH, "w") as file:
+        file.write(json.dumps(content_json))
 
 
-def _set_env(username, apiKey):
-    if not username:
-        username = ''
-    if not apiKey:
-        apiKey = ''
-    os.environ['FTRACK_API_USER'] = username
-    os.environ['FTRACK_API_KEY'] = apiKey
+def set_env(ft_user=None, ft_api_key=None):
+    os.environ["FTRACK_API_USER"] = ft_user or ""
+    os.environ["FTRACK_API_KEY"] = ft_api_key or ""
 
 
-def _check_credentials(username=None, apiKey=None):
+def get_env_credentials():
+    return (
+        os.environ.get("FTRACK_API_USER"),
+        os.environ.get("FTRACK_API_KEY")
+    )
 
-    if username and apiKey:
-        _set_env(username, apiKey)
+
+def check_credentials(ft_user, ft_api_key, ftrack_server=None):
+    if not ftrack_server:
+        ftrack_server = os.environ["FTRACK_SERVER"]
+
+    if not ft_user or not ft_api_key:
+        return False
 
     try:
-        session = ftrack_api.Session()
+        session = ftrack_api.Session(
+            server_url=ftrack_server,
+            api_key=ft_api_key,
+            api_user=ft_user
+        )
         session.close()
-    except Exception as e:
+
+    except Exception:
         return False
 
     return True

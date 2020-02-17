@@ -1,12 +1,58 @@
+import os
 import sys
 import signal
 import socket
+import datetime
 
 from ftrack_server import FtrackServer
-from pype.ftrack.ftrack_server.lib import SocketSession, ProcessEventHub
+from pype.ftrack.ftrack_server.lib import (
+    SocketSession, ProcessEventHub, TOPIC_STATUS_SERVER
+)
+import ftrack_api
 from pypeapp import Logger
 
 log = Logger().get_logger("Event processor")
+
+subprocess_started = datetime.datetime.now()
+
+
+class SessionFactory:
+    session = None
+
+
+def send_status(event):
+    subprocess_id = event["data"].get("subprocess_id")
+    if not subprocess_id:
+        return
+
+    if subprocess_id != os.environ["FTRACK_EVENT_SUB_ID"]:
+        return
+
+    session = SessionFactory.session
+    if not session:
+        return
+
+    new_event_data = {
+        "subprocess_id": subprocess_id,
+        "source": "processor",
+        "status_info": {
+            "created_at": subprocess_started.strftime("%Y.%m.%d %H:%M:%S")
+        }
+    }
+
+    new_event = ftrack_api.event.base.Event(
+        topic="pype.event.server.status.result",
+        data=new_event_data
+    )
+
+    session.event_hub.publish(new_event)
+
+
+def register(session):
+    '''Registers the event, subscribing the discover and launch topics.'''
+    session.event_hub.subscribe(
+        "topic={}".format(TOPIC_STATUS_SERVER), send_status
+    )
 
 
 def main(args):
@@ -24,6 +70,9 @@ def main(args):
         session = SocketSession(
             auto_connect_event_hub=True, sock=sock, Eventhub=ProcessEventHub
         )
+        register(session)
+        SessionFactory.session = session
+
         server = FtrackServer("event")
         log.debug("Launched Ftrack Event processor")
         server.run_server(session)
