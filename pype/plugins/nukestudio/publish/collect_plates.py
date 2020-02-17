@@ -23,8 +23,10 @@ class CollectPlates(api.InstancePlugin):
         # Exclude non-tagged instances.
         tagged = False
         for tag in instance.data["tags"]:
-            family = dict(tag["metadata"]).get("tag.family", "")
+            tag_data = dict(tag["metadata"])
+            family = tag_data.get("tag.family", "")
             if family.lower() == "plate":
+                subset = tag_data.get("tag.subset", "Main")
                 tagged = True
                 break
 
@@ -43,12 +45,7 @@ class CollectPlates(api.InstancePlugin):
         data["family"] = family.lower()
         data["families"] = ["ftrack"] + instance.data["families"][1:]
         data["source"] = data["sourcePath"]
-
-        subset = ""
-        for tag in instance.data["tags"]:
-            tag_data = dict(tag["metadata"])
-            if "tag.subset" in tag_data:
-                subset = tag_data["tag.subset"]
+        
         data["subset"] = data["family"] + subset.title()
 
         data["name"] = data["subset"] + "_" + data["asset"]
