@@ -43,7 +43,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             self.log.debug(repre)
             if 'review' in repre['tags'] or "thumb-nuke" in repre['tags']:
                 if not isinstance(repre['files'], list):
-                    return
+                    continue
 
                 input_file = repre['files'][0]
 
