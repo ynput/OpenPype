@@ -196,6 +196,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             append_repres = instance.data.get("append", False)
 
             # Update version data
+            # TODO query by _id and
             io.update_many({
                 'type': 'version',
                 'parent': subset["_id"],
@@ -322,7 +323,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 index_frame_start = None
 
                 if repre.get("frameStart"):
-                    frame_start_padding = anatomy.templates["render"]["padding"]
+                    frame_start_padding = (
+                        anatomy.templates["render"]["padding"]
+                    )
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
@@ -407,9 +410,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             # Use previous representation's id if there are any
             repre_id = None
+            repre_name_low = repre["name"].lower()
             for _repre in existing_repres:
                 # NOTE should we check lowered names?
-                if repre_name == _repre["name"]:
+                if repre_name_low == _repre["name"]:
                     repre_id = _repre["orig_id"]
                     break
 
@@ -435,7 +439,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 representation["context"]["output"] = repre['outputName']
 
             if sequence_repre and repre.get("frameStart"):
-                representation['context']['frame'] = src_padding_exp % int(repre.get("frameStart"))
+                representation['context']['frame'] = (
+                    src_padding_exp % int(repre.get("frameStart"))
+                )
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
