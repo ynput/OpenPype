@@ -204,6 +204,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                                       data=version_data)
 
         self.log.debug("Creating version ...")
+        
+        new_repre_names_low = [_repre["name"].lower() for _repre in repres]
+
         existing_version = io.find_one({
             'type': 'version',
             'parent': subset["_id"],
@@ -213,6 +216,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if existing_version is None:
             version_id = io.insert_one(version).inserted_id
         else:
+            # Check if instance have set `append` mode which cause that
+            # only replicated representations are set to archive
+            append_repres = instance.data.get("append", False)
+
             # Update version data
             io.update_many({
                 'type': 'version',
@@ -230,6 +237,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             }))
             bulk_writes = []
             for repre in current_repres:
+                if append_repres:
+                    # archive only duplicated representations
+                    if repre["name"].lower() not in new_repre_names_low:
+                        continue
                 # Representation must change type,
                 # `_id` must be stored to other key and replaced with new
                 # - that is because new representations should have same ID
@@ -284,7 +295,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
-        new_repre_names = []
         for idx, repre in enumerate(instance.data["representations"]):
 
             # Collection
@@ -453,9 +463,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 if not value:
                     continue
                 repre_context[key] = template_data[key]
-
-            repre_name = repre['name']
-            new_repre_names.append(repre_name)
 
             # Use previous representation's id if there are any
             repre_id = None
