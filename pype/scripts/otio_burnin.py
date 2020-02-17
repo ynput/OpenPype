@@ -199,7 +199,11 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         """
         resolution = self.resolution
         data = {
-            'text': text,
+            'text': (
+                text
+                .replace(",", r"\,")
+                .replace(':', r'\:')
+            ),
             'color': options['font_color'],
             'size': options['font_size']
         }
