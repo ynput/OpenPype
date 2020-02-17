@@ -1,6 +1,7 @@
 import os
 import requests
 import errno
+import json
 
 from bson.objectid import ObjectId
 from pype.ftrack import BaseAction
@@ -41,13 +42,30 @@ class StoreThumbnailsToAvalon(BaseAction):
         # DEBUG LINE
         # root_path = r"C:\Users\jakub.trllo\Desktop\Tests\ftrack_thumbnails"
 
+        user = session.query(
+            "User where username is '{0}'".format(session.api_user)
+        ).one()
+        action_job = session.create("Job", {
+            "user": user,
+            "status": "running",
+            "data": json.dumps({
+                "description": "Storing thumbnails to avalon."
+            })
+        })
+        session.commit()
+
         thumbnail_roots = os.environ.get(self.thumbnail_key)
         if not thumbnail_roots:
+            msg = "`{}` environment is not set".format(self.thumbnail_key)
+
+            action_job["status"] = "failed"
+            session.commit()
+
+            self.log.warning(msg)
+
             return {
                 "success": False,
-                "message": "`{}` environment is not set".format(
-                    self.thumbnail_key
-                )
+                "message": msg
             }
 
         existing_thumbnail_root = None
@@ -57,11 +75,18 @@ class StoreThumbnailsToAvalon(BaseAction):
                 break
 
         if existing_thumbnail_root is None:
+            msg = (
+                "Can't access paths, set in `{}` ({})"
+            ).format(self.thumbnail_key, thumbnail_roots)
+
+            action_job["status"] = "failed"
+            session.commit()
+
+            self.log.warning(msg)
+
             return {
                 "success": False,
-                "message": (
-                    "Can't access paths, set in `{}` ({})"
-                ).format(self.thumbnail_key, thumbnail_roots)
+                "message": msg
             }
 
         project = get_project_from_entity(entities[0])
@@ -70,6 +95,9 @@ class StoreThumbnailsToAvalon(BaseAction):
 
         if "publish" not in anatomy.templates:
             msg = "Anatomy does not have set publish key!"
+
+            action_job["status"] = "failed"
+            session.commit()
 
             self.log.warning(msg)
 
@@ -83,6 +111,9 @@ class StoreThumbnailsToAvalon(BaseAction):
                 "There is not set \"thumbnail\""
                 " template in Antomy for project \"{}\""
             ).format(project_name)
+
+            action_job["status"] = "failed"
+            session.commit()
 
             self.log.warning(msg)
 
@@ -126,6 +157,9 @@ class StoreThumbnailsToAvalon(BaseAction):
                 "Thumbnail Anatomy template expects more keys than action"
                 " can offer. {}"
             ).format(submsg)
+
+            action_job["status"] = "failed"
+            session.commit()
 
             self.log.warning(msg)
 
@@ -256,10 +290,8 @@ class StoreThumbnailsToAvalon(BaseAction):
                 {"$set": {"data.thumbnail_id": thumbnail_id}}
             )
 
-            self.db_con.update_one(
-                {"_id": avalon_asset["_id"]},
-                {"$set": {"data.thumbnail_id": thumbnail_id}}
-            )
+        action_job["status"] = "done"
+        session.commit()
 
         return True
 
