@@ -15,7 +15,7 @@ class CollectAudio(api.InstancePlugin):
     order = api.CollectorOrder + 0.1025
     label = "Collect Audio"
     hosts = ["nukestudio"]
-    families = ["clip"]
+    families = ["clip", "plate"]
 
     def process(self, instance):
         # Exclude non-tagged instances.
