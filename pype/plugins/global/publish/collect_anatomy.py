@@ -18,7 +18,7 @@ Provides:
 import os
 import json
 
-from avalon import io, api, lib
+from avalon import api, lib
 from pypeapp import Anatomy
 import pyblish.api
 
