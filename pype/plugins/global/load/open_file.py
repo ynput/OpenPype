@@ -18,7 +18,7 @@ def open(filepath):
 class Openfile(api.Loader):
     """Open Image Sequence with system default"""
 
-    families = ["write"]
+    families = ["render2d"]
     representations = ["*"]
 
     label = "Open"
