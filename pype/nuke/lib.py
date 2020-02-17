@@ -196,7 +196,7 @@ def format_anatomy(data):
         "root": api.Session["AVALON_PROJECTS"],
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
-        "task": api.Session["AVALON_TASK"].lower(),
+        "task": api.Session["AVALON_TASK"],
         "family": data["avalon"]["family"],
         "project": {"name": project_document["name"],
                     "code": project_document["data"].get("code", '')},
@@ -519,11 +519,6 @@ class WorkfileSettings(object):
         self.data = kwargs
 
     def get_nodes(self, nodes=None, nodes_filter=None):
-        # filter out only dictionaries for node creation
-        #
-        # print("\n\n")
-        # pprint(self._nodes)
-        #
 
         if not isinstance(nodes, list) and not isinstance(nodes_filter, list):
             return [n for n in nuke.allNodes()]
@@ -790,6 +785,8 @@ class WorkfileSettings(object):
             nuke.message(msg)
             return
         data = self._asset_entity["data"]
+
+        log.debug("__ asset data: `{}`".format(data))
 
         missing_cols = []
         check_cols = ["fps", "frameStart", "frameEnd",
@@ -1070,7 +1067,7 @@ class BuildWorkfile(WorkfileSettings):
             "project": {"name": self._project["name"],
                         "code": self._project["data"].get("code", '')},
             "asset": self._asset or os.environ["AVALON_ASSET"],
-            "task": kwargs.get("task") or api.Session["AVALON_TASK"].lower(),
+            "task": kwargs.get("task") or api.Session["AVALON_TASK"],
             "hierarchy": kwargs.get("hierarchy") or pype.get_hierarchy(),
             "version": kwargs.get("version", {}).get("name", 1),
             "user": getpass.getuser(),
