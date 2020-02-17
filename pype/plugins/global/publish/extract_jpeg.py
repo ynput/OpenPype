@@ -19,7 +19,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     label = "Extract Jpeg EXR"
     hosts = ["shell"]
     order = pyblish.api.ExtractorOrder
-    families = ["imagesequence", "render", "write", "source"]
+    families = ["imagesequence", "render", "render2d", "source"]
     enabled = False
 
     def process(self, instance):
@@ -41,8 +41,12 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
         for repre in representations:
             self.log.debug(repre)
-            if 'review' not in repre['tags']:
-                return
+            valid = 'review' in repre['tags'] or "thumb-nuke" in repre['tags']
+            if not valid:
+                continue
+
+            if not isinstance(repre['files'], list):
+                continue
 
             input_file = repre['files'][0]
 
