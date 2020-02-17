@@ -378,7 +378,7 @@ def burnins_from_data(
 
     # Check frame start and add expression if is available
     if frame_start is not None:
-        data[CURRENT_FRAME_KEY] = r'%%{eif\:n+%d\:d}' % frame_start
+        data[CURRENT_FRAME_KEY[1:-1]] = r'%%{eif\:n+%d\:d}' % frame_start
 
     if frame_start_tc is not None:
         data[TIME_CODE_KEY[1:-1]] = TIME_CODE_KEY
