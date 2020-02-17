@@ -243,10 +243,93 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if not response.ok:
             raise Exception(response.text)
 
+    def _copy_extend_frames(self, instance, representation):
+        """
+        This will copy all existing frames from subset's latest version back
+        to render directory and rename them to what renderer is expecting.
+
+        :param instance: instance to get required data from
+        :type instance: pyblish.plugin.Instance
+        """
+        import speedcopy
+
+        self.log.info("Preparing to copy ...")
+        start = instance.data.get("startFrame")
+        end = instance.data.get("endFrame")
+
+        # get latest version of subset
+        # this will stop if subset wasn't published yet
+        version = get_latest_version(
+            instance.data.get("asset"),
+            instance.data.get("subset"), "render")
+        # get its files based on extension
+        subset_resources = get_resources(version, representation.get("ext"))
+        r_col, _ = clique.assemble(subset_resources)
+
+        # if override remove all frames we are expecting to be rendered
+        # so we'll copy only those missing from current render
+        if instance.data.get("overrideExistingFrame"):
+            for frame in range(start, end+1):
+                if frame not in r_col.indexes:
+                    continue
+                r_col.indexes.remove(frame)
+
+        # now we need to translate published names from represenation
+        # back. This is tricky, right now we'll just use same naming
+        # and only switch frame numbers
+        resource_files = []
+        r_filename = os.path.basename(
+            representation.get("files")[0])  # first file
+        op = re.search(R_FRAME_NUMBER, r_filename)
+        pre = r_filename[:op.start("frame")]
+        post = r_filename[op.end("frame"):]
+        assert op is not None, "padding string wasn't found"
+        for frame in list(r_col):
+            fn = re.search(R_FRAME_NUMBER, frame)
+            # silencing linter as we need to compare to True, not to
+            # type
+            assert fn is not None, "padding string wasn't found"
+            # list of tuples (source, destination)
+            resource_files.append(
+                (frame,
+                 os.path.join(representation.get("stagingDir"),
+                              "{}{}{}".format(pre,
+                                              fn.group("frame"),
+                                              post)))
+            )
+
+        # test if destination dir exists and create it if not
+        output_dir = os.path.dirname(representation.get("files")[0])
+        if not os.path.isdir(output_dir):
+            os.makedirs(output_dir)
+
+        # copy files
+        for source in resource_files:
+            speedcopy.copy(source[0], source[1])
+            self.log.info("  > {}".format(source[1]))
+
+        self.log.info(
+            "Finished copying %i files" % len(resource_files))
+
     def _create_instances_for_aov(self, context, instance_data, exp_files):
+        """
+        This will create new instance for every aov it can detect in expected
+        files list.
+
+        :param context: context of orignal instance to get important data
+        :type context: pyblish.plugin.Context
+        :param instance_data: skeleton data for instance (those needed) later
+                              by collector
+        :type instance_data: pyblish.plugin.Instance
+        :param exp_files: list of expected files divided by aovs
+        :type exp_files: list
+        :returns: list of instances
+        :rtype: list(publish.plugin.Instance)
+        """
         task = os.environ["AVALON_TASK"]
         subset = instance_data["subset"]
         instances = []
+        # go through aovs in expected files
         for aov, files in exp_files.items():
             cols, rem = clique.assemble(files)
             # we shouldn't have any reminders
@@ -280,6 +363,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             new_instance.data.update(instance_data)
             new_instance.data["subset"] = subset_name
             ext = cols[0].tail.lstrip(".")
+
+            # create represenation
             rep = {
                 "name": ext,
                 "ext": ext,
@@ -293,58 +378,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "tags": ["review", "preview"] if preview else []
             }
 
-            # if extending frames from existing version, copy files from there
-            # into our destination directory
-            if instance_data.get("extendFrames", False):
-                self.log.info("Preparing to copy ...")
-                import speedcopy
-
-                # get latest version of subset
-                # this will stop if subset wasn't published yet
-                version = get_latest_version(
-                    instance_data.get("asset"),
-                    subset_name, "render")
-                # get its files based on extension
-                subset_resources = get_resources(version, ext)
-                r_col, _ = clique.assemble(subset_resources)
-
-                # if override remove all frames we are expecting to be rendered
-                # so we'll copy only those missing from current render
-                if instance_data.get("overrideExistingFrame"):
-                    for frame in range(start, end+1):
-                        if frame not in r_col.indexes:
-                            continue
-                        r_col.indexes.remove(frame)
-
-                # now we need to translate published names from represenation
-                # back. This is tricky, right now we'll just use same naming
-                # and only switch frame numbers
-                resource_files = []
-                r_filename = os.path.basename(list(cols[0])[0])  # first file
-                op = re.search(R_FRAME_NUMBER, r_filename)
-                pre = r_filename[:op.start("frame")]
-                post = r_filename[op.end("frame"):]
-                assert op is not None, "padding string wasn't found"
-                for frame in list(r_col):
-                    fn = re.search(R_FRAME_NUMBER, frame)
-                    # silencing linter as we need to compare to True, not to
-                    # type
-                    assert fn is not None, "padding string wasn't found"
-                    # list of tuples (source, destination)
-                    resource_files.append(
-                        (frame,
-                         os.path.join(staging,
-                                      "{}{}{}".format(pre,
-                                                      fn.group("frame"),
-                                                      post)))
-                    )
-
-                for source in resource_files:
-                    speedcopy.copy(source[0], source[1])
-
-                self.log.info(
-                    "Finished copying %i files" % len(resource_files))
-
+            # add tags
             if preview:
                 if "ftrack" not in new_instance.data["families"]:
                     if os.environ.get("FTRACK_SERVER"):
@@ -355,9 +389,26 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             new_instance.data["representations"] = [rep]
             instances.append(new_instance)
 
+            # if extending frames from existing version, copy files from there
+            # into our destination directory
+            if instance_data.get("extendFrames", False):
+                self._copy_extend_frames(new_instance, rep)
+
         return instances
 
     def _get_representations(self, instance, exp_files):
+        """
+        This will return representations of expected files if they are not
+        in hierarchy of aovs. There should be only one sequence of files for
+        most cases, but if not - we create representation from each of them.
+
+        :param instance: instance for which we are setting representations
+        :type instance: pyblish.plugin.Instance
+        :param exp_files: list of expected files
+        :type exp_files: list
+        :returns: list of representations
+        :rtype: list(dict)
+        """
         representations = []
         start = int(instance.data.get("frameStart"))
         end = int(instance.data.get("frameEnd"))
@@ -406,6 +457,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     families.append("review")
                 instance.data["families"] = families
 
+        # add reminders as representations
         for r in rem:
             ext = r.split(".")[-1]
             rep = {
@@ -569,6 +621,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             regex = r"^{subset}.*\d+{ext}$".format(
                 subset=re.escape(subset), ext=ext)
+
         # Write metadata for publish job
         # publish job file
         publish_job = {
@@ -604,116 +657,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
 
-        # TODO: remove this code
-        # deprecated: this is left here for backwards compatibility and is
-        # not probably working at all. :hammer:
-        if data.get("extendFrames", False) \
-           and not data.get("expectedFiles", False):
-
-            family = "render"
-            override = data["overrideExistingFrame"]
-
-            # override = data.get("overrideExistingFrame", False)
-            out_file = render_job.get("OutFile")
-            if not out_file:
-                raise RuntimeError("OutFile not found in render job!")
-
-            extension = os.path.splitext(out_file[0])[1]
-            _ext = extension[1:]
-
-            # Frame comparison
-            prev_start = None
-            prev_end = None
-            resource_range = range(int(start), int(end)+1)
-
-            # Gather all the subset files (one subset per render pass!)
-            subset_names = [data["subset"]]
-            subset_names.extend(data.get("renderPasses", []))
-            resources = []
-            for subset_name in subset_names:
-                version = get_latest_version(asset_name=data["asset"],
-                                             subset_name=subset_name,
-                                             family=family)
-
-                # Set prev start / end frames for comparison
-                if not prev_start and not prev_end:
-                    prev_start = version["data"]["frameStart"]
-                    prev_end = version["data"]["frameEnd"]
-
-                subset_resources = get_resources(version, _ext)
-                resource_files = get_resource_files(subset_resources,
-                                                    resource_range,
-                                                    override)
-
-                resources.extend(resource_files)
-
-            updated_start = min(start, prev_start)
-            updated_end = max(end, prev_end)
-
-            # Update metadata and instance start / end frame
-            self.log.info("Updating start / end frame : "
-                          "{} - {}".format(updated_start, updated_end))
-
-            # TODO : Improve logic to get new frame range for the
-            # publish job (publish_filesequence.py)
-            # The current approach is not following Pyblish logic
-            # which is based
-            # on Collect / Validate / Extract.
-
-            # ---- Collect Plugins  ---
-            # Collect Extend Frames - Only run if extendFrames is toggled
-            # # # Store in instance:
-            # # # Previous rendered files per subset based on frames
-            # # # --> Add to instance.data[resources]
-            # # # Update publish frame range
-
-            # ---- Validate Plugins ---
-            # Validate Extend Frames
-            # # # Check if instance has the requirements to extend frames
-            # There might have been some things which can be added to the list
-            # Please do so when fixing this.
-
-            # Start frame
-            metadata["frameStart"] = updated_start
-            metadata["metadata"]["instance"]["frameStart"] = updated_start
-
-            # End frame
-            metadata["frameEnd"] = updated_end
-            metadata["metadata"]["instance"]["frameEnd"] = updated_end
-
-        metadata_filename = "{}_metadata.json".format(subset)
-
-        metadata_path = os.path.join(output_dir, metadata_filename)
-        # convert log messages if they are `LogRecord` to their
-        # string format to allow serializing as JSON later on.
-        rendered_logs = []
-        for log in metadata["metadata"]["instance"].get("_log", []):
-            if isinstance(log, logging.LogRecord):
-                rendered_logs.append(log.getMessage())
-            else:
-                rendered_logs.append(log)
-
-        metadata["metadata"]["instance"]["_log"] = rendered_logs
-        with open(metadata_path, "w") as f:
-            json.dump(metadata, f, indent=4, sort_keys=True)
-
-        # Copy files from previous render if extendFrame is True
-        if data.get("extendFrames", False):
-
-            self.log.info("Preparing to copy ..")
-            import shutil
-
-            dest_path = data["outputDir"]
-            for source in resources:
-                src_file = os.path.basename(source)
-                dest = os.path.join(dest_path, src_file)
-                shutil.copy(source, dest)
-
-            self.log.info("Finished copying %i files" % len(resources))
-
     def _extend_frames(self, asset, subset, start, end, override):
-        family = "render"
-        # override = data.get("overrideExistingFrame", False)
+        """
+        This will get latest version of asset and update frame range based
+        on minimum and maximuma values
+        """
 
         # Frame comparison
         prev_start = None
@@ -722,7 +670,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         version = get_latest_version(
             asset_name=asset,
             subset_name=subset,
-            family=family,
+            family='render'
         )
 
         # Set prev start / end frames for comparison
@@ -733,7 +681,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         updated_start = min(start, prev_start)
         updated_end = max(end, prev_end)
 
-        # Update metadata and instance start / end frame
         self.log.info(
             "Updating start / end frame : "
             "{} - {}".format(updated_start, updated_end)
