@@ -291,9 +291,9 @@ class StoreThumbnailsToAvalon(BaseAction):
             )
 
             self.db_con.update_one(
--                {"_id": avalon_asset["_id"]},
--                {"$set": {"data.thumbnail_id": thumbnail_id}}
--            )
+                {"_id": avalon_asset["_id"]},
+                {"$set": {"data.thumbnail_id": thumbnail_id}}
+            )
 
         action_job["status"] = "done"
         session.commit()
