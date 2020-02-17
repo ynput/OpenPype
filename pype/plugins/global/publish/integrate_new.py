@@ -2,6 +2,7 @@ import os
 from os.path import getsize
 import logging
 import sys
+import copy
 import clique
 import errno
 import pyblish.api
@@ -100,144 +101,104 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def register(self, instance):
         # Required environment variables
-        PROJECT = api.Session["AVALON_PROJECT"]
-        ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
-        TASK = instance.data.get("task") or api.Session["AVALON_TASK"]
-        LOCATION = api.Session["AVALON_LOCATION"]
+        anatomy_data = instance.data["anatomyData"]
+
+        io.install()
 
         context = instance.context
-        # Atomicity
-        #
-        # Guarantee atomic publishes - each asset contains
-        # an identical set of members.
-        #     __
-        #    /     o
-        #   /       \
-        #  |    o    |
-        #   \       /
-        #    o   __/
-        #
-        # for result in context.data["results"]:
-        #     if not result["success"]:
-        #         self.log.debug(result)
-        #         exc_type, exc_value, exc_traceback = result["error_info"]
-        #         extracted_traceback = traceback.extract_tb(exc_traceback)[-1]
-        #         self.log.debug(
-        #             "Error at line {}: \"{}\"".format(
-        #                 extracted_traceback[1], result["error"]
-        #             )
-        #         )
-        # assert all(result["success"] for result in context.data["results"]),(
-        #     "Atomicity not held, aborting.")
 
-        # Assemble
-        #
-        #       |
-        #       v
-        #  --->   <----
-        #       ^
-        #       |
-        #
+        project_entity = instance.data["projectEntity"]
+
+        asset_name = instance.data["asset"]
+        asset_entity = instance.data.get("assetEntity")
+        if not asset_entity:
+            asset_entity = io.find_one({
+                "type": "asset",
+                "name": asset_name,
+                "parent": project_entity["_id"]
+            })
+
+            assert asset_entity, (
+                "No asset found by the name \"{0}\" in project \"{1}\""
+            ).format(asset_name, project_entity["name"])
+
+            instance.data["assetEntity"] = asset_entity
+
+            # update anatomy data with asset specific keys
+            # - name should already been set
+            hierarchy = ""
+            parents = asset_entity["data"]["parents"]
+            if parents:
+                hierarchy = "/".join(parents)
+            anatomy_data["hierarchy"] = hierarchy
+
+        task_name = instance.data.get("task")
+        if task_name:
+            anatomy_data["task"] = task_name
+
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
-            self.log.info('''{} is missing reference to staging
-                            directory Will try to get it from
-                            representation'''.format(instance))
+            self.log.info((
+                "{0} is missing reference to staging directory."
+                " Will try to get it from representation."
+            ).format(instance))
 
-        # extra check if stagingDir actually exists and is available
-
-        self.log.debug("Establishing staging directory @ %s" % stagingdir)
+        else:
+            self.log.debug(
+                "Establishing staging directory @ {0}".format(stagingdir)
+            )
 
         # Ensure at least one file is set up for transfer in staging dir.
-        repres = instance.data.get("representations", None)
+        repres = instance.data.get("representations")
         assert repres, "Instance has no files to transfer"
         assert isinstance(repres, (list, tuple)), (
-            "Instance 'files' must be a list, got: {0}".format(repres)
+            "Instance 'files' must be a list, got: {0} {1}".format(
+                str(type(repres)), str(repres)
+            )
         )
 
-        # FIXME: io is not initialized at this point for shell host
-        io.install()
-        project = io.find_one({"type": "project"})
+        subset = self.get_subset(asset_entity, instance)
 
-        asset = io.find_one({
-            "type": "asset",
-            "name": ASSET,
-            "parent": project["_id"]
-        })
-
-        assert all([project, asset]), ("Could not find current project or "
-                                       "asset '%s'" % ASSET)
-
-        subset = self.get_subset(asset, instance)
-
-        # get next version
-        latest_version = io.find_one(
-            {
-                "type": "version",
-                "parent": subset["_id"]
-            },
-            {"name": True},
-            sort=[("name", -1)]
-        )
-
-        next_version = 1
-        if latest_version is not None:
-            next_version += latest_version["name"]
-
-        if instance.data.get('version'):
-            next_version = int(instance.data.get('version'))
-
-        self.log.debug("Next version: v{0:03d}".format(next_version))
+        version_number = instance.data["version"]
+        self.log.debug("Next version: v{}".format(version_number))
 
         version_data = self.create_version_data(context, instance)
 
         version_data_instance = instance.data.get('versionData')
-
         if version_data_instance:
             version_data.update(version_data_instance)
 
-        version = self.create_version(subset=subset,
-                                      version_number=next_version,
-                                      locations=[LOCATION],
-                                      data=version_data)
+        # TODO rename method from `create_version` to
+        # `prepare_version` or similar...
+        version = self.create_version(
+            subset=subset,
+            version_number=version_number,
+            data=version_data
+        )
 
         self.log.debug("Creating version ...")
         existing_version = io.find_one({
             'type': 'version',
             'parent': subset["_id"],
-            'name': next_version
+            'name': version_number
         })
         if existing_version is None:
             version_id = io.insert_one(version).inserted_id
         else:
+            # TODO query by _id and
+            # remove old version and representations but keep their ids
             io.update_many({
                 'type': 'version',
                 'parent': subset["_id"],
-                'name': next_version
+                'name': version_number
             }, {'$set': version}
             )
             version_id = existing_version['_id']
         instance.data['version'] = version['name']
 
-        # Write to disk
-        #          _
-        #         | |
-        #        _| |_
-        #    ____\   /
-        #   |\    \ / \
-        #   \ \    v   \
-        #    \ \________.
-        #     \|________|
-        #
-        root = api.registered_root()
-        hierarchy = ""
-        parents = io.find_one({
-            "type": 'asset',
-            "name": ASSET
-        })['data']['parents']
-        if parents and len(parents) > 0:
-            # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = os.path.join(*parents)
+        intent = context.data.get("intent")
+        if intent is not None:
+            anatomy_data["intent"] = intent
 
         anatomy = instance.context.data['anatomy']
 
@@ -250,31 +211,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data['transfers'] = []
 
         for idx, repre in enumerate(instance.data["representations"]):
-
-            # Collection
-            #   _______
-            #  |______|\
-            # |      |\|
-            # |       ||
-            # |       ||
-            # |       ||
-            # |_______|
-            #
             # create template data for Anatomy
-            template_data = {"root": root,
-                             "project": {"name": PROJECT,
-                                         "code": project['data']['code']},
-                             "silo": asset.get('silo'),
-                             "task": TASK,
-                             "asset": ASSET,
-                             "family": instance.data['family'],
-                             "subset": subset["name"],
-                             "version": int(version["name"]),
-                             "hierarchy": hierarchy}
-
-            # Add datetime data to template data
-            datetime_data = context.data.get("datetimeData") or {}
-            template_data.update(datetime_data)
+            template_data = copy.deepcopy(anatomy_data)
+            if intent is not None:
+                template_data["intent"] = intent
 
             resolution_width = repre.get("resolutionWidth")
             resolution_height = repre.get("resolutionHeight")
@@ -292,6 +232,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 stagingdir = repre['stagingDir']
             if repre.get('anatomy_template'):
                 template_name = repre['anatomy_template']
+
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
@@ -322,7 +263,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     template_filled = anatomy_filled[template_name]["path"]
                     if repre_context is None:
                         repre_context = template_filled.used_values
-
                     test_dest_files.append(
                         os.path.normpath(template_filled)
                     )
@@ -342,12 +282,15 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
-                if "slate" in instance.data["families"]:
+                if index_frame_start and "slate" in instance.data["families"]:
                     index_frame_start -= 1
 
                 dst_padding_exp = src_padding_exp
                 dst_start_frame = None
                 for i in src_collection.indexes:
+                    # TODO 1.) do not count padding in each index iteration
+                    # 2.) do not count dst_padding from src_padding before
+                    #   index_frame_start check
                     src_padding = src_padding_exp % i
 
                     src_file_name = "{0}{1}{2}".format(
@@ -374,7 +317,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     # for adding first frame into db
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
-
 
                 dst = "{0}{1}{2}".format(
                     dst_head,
@@ -547,14 +489,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         filelink.create(src, dst, filelink.HARDLINK)
 
     def get_subset(self, asset, instance):
+        subset_name = instance.data["subset"]
         subset = io.find_one({
             "type": "subset",
             "parent": asset["_id"],
-            "name": instance.data["subset"]
+            "name": subset_name
         })
 
         if subset is None:
-            subset_name = instance.data["subset"]
             self.log.info("Subset '%s' not found, creating.." % subset_name)
             self.log.debug("families.  %s" % instance.data.get('families'))
             self.log.debug(
@@ -583,26 +525,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         return subset
 
-    def create_version(self, subset, version_number, locations, data=None):
+    def create_version(self, subset, version_number, data=None):
         """ Copy given source to destination
 
         Args:
             subset (dict): the registered subset of the asset
             version_number (int): the version number
-            locations (list): the currently registered locations
 
         Returns:
             dict: collection of data to create a version
         """
-        # Imprint currently registered location
-        version_locations = [location for location in locations if
-                             location is not None]
 
         return {"schema": "pype:version-3.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,
-                "locations": version_locations,
                 "data": data}
 
     def create_version_data(self, context, instance):
@@ -644,6 +581,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "machine": context.data.get("machine"),
                         "fps": context.data.get(
                             "fps", instance.data.get("fps"))}
+
+        intent = context.data.get("intent")
+        if intent is not None:
+            version_data["intent"] = intent
 
         # Include optional data if present in
         optionals = [

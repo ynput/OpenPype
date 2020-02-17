@@ -35,7 +35,7 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
             "subset": subset,
             "asset": os.getenv("AVALON_ASSET", None),
             "label": subset,
-            "publish": False,
+            "publish": True,
             "family": 'workfile',
             "families": ['workfile'],
             "setMembers": [current_file]
