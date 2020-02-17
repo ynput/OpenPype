@@ -211,12 +211,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
             # Get family from the data
             families = data.get("families", ["render"])
-            if "render" not in families:
-                families.append("render")
             if "ftrack" not in families:
                 families.append("ftrack")
-            if "write" in instance_family:
-                families.append("write")
+            if families_data and "render2d" in families_data:
+                families.append("render2d")
             if families_data and "slate" in families_data:
                 families.append("slate")
 
@@ -334,7 +332,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "stagingDir": root,
                         "anatomy_template": "render",
                         "fps": fps,
-                        "tags": ["review"] if not baked_mov_path else [],
+                        "tags": ["review"] if not baked_mov_path else ["thumb-nuke"],
                     }
                     instance.data["representations"].append(
                         representation)
@@ -388,8 +386,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
                     # If no start or end frame provided, get it from collection
                     indices = list(collection.indexes)
-                    start = data.get("frameStart", indices[0])
-                    end = data.get("frameEnd", indices[-1])
+                    start = int(data.get("frameStart", indices[0]))
+                    end = int(data.get("frameEnd", indices[-1]))
 
                     ext = list(collection)[0].split(".")[-1]
 

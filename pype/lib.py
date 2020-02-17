@@ -361,23 +361,7 @@ def _get_host_name():
 
 
 def get_asset(asset_name=None):
-    entity_data_keys_from_project_when_miss = [
-        "frameStart", "frameEnd", "handleStart", "handleEnd", "fps",
-        "resolutionWidth", "resolutionHeight"
-    ]
-
-    entity_keys_from_project_when_miss = []
-
-    alternatives = {
-        "handleStart": "handles",
-        "handleEnd": "handles"
-    }
-
-    defaults = {
-        "handleStart": 0,
-        "handleEnd": 0
-    }
-
+    """ Returning asset document from database """
     if not asset_name:
         asset_name = avalon.api.Session["AVALON_ASSET"]
 
@@ -385,56 +369,9 @@ def get_asset(asset_name=None):
         "name": asset_name,
         "type": "asset"
     })
+
     if not asset_document:
         raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
-
-    project_document = io.find_one({"type": "project"})
-
-    for key in entity_data_keys_from_project_when_miss:
-        if asset_document["data"].get(key):
-            continue
-
-        value = project_document["data"].get(key)
-        if value is not None or key not in alternatives:
-            asset_document["data"][key] = value
-            continue
-
-        alt_key = alternatives[key]
-        value = asset_document["data"].get(alt_key)
-        if value is not None:
-            asset_document["data"][key] = value
-            continue
-
-        value = project_document["data"].get(alt_key)
-        if value:
-            asset_document["data"][key] = value
-            continue
-
-        if key in defaults:
-            asset_document["data"][key] = defaults[key]
-
-    for key in entity_keys_from_project_when_miss:
-        if asset_document.get(key):
-            continue
-
-        value = project_document.get(key)
-        if value is not None or key not in alternatives:
-            asset_document[key] = value
-            continue
-
-        alt_key = alternatives[key]
-        value = asset_document.get(alt_key)
-        if value:
-            asset_document[key] = value
-            continue
-
-        value = project_document.get(alt_key)
-        if value:
-            asset_document[key] = value
-            continue
-
-        if key in defaults:
-            asset_document[key] = defaults[key]
 
     return asset_document
 
