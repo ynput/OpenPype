@@ -16,7 +16,7 @@ class CollectReviews(api.InstancePlugin):
     order = api.CollectorOrder + 0.1022
     label = "Collect Reviews"
     hosts = ["nukestudio"]
-    families = ["clip"]
+    families = ["plate"]
 
     def process(self, instance):
         # Exclude non-tagged instances.

@@ -14,7 +14,7 @@ class CollectPlates(api.InstancePlugin):
     """
 
     # Run just before CollectSubsets
-    order = api.CollectorOrder + 0.1025
+    order = api.CollectorOrder + 0.1021
     label = "Collect Plates"
     hosts = ["nukestudio"]
     families = ["clip"]
@@ -36,24 +36,27 @@ class CollectPlates(api.InstancePlugin):
                 "\"plate\"".format(instance)
             )
             return
+        self.log.debug("__ subset: `{}`".format(instance.data["subset"]))
+        # if "audio" in instance.data["subset"]:
+        #     return
 
         # Collect data.
         data = {}
         for key, value in instance.data.iteritems():
             data[key] = value
 
+        self.log.debug("__ family: `{}`".format(family))
+        self.log.debug("__ subset: `{}`".format(subset))
+
         data["family"] = family.lower()
         data["families"] = ["ftrack"] + instance.data["families"][1:]
         data["source"] = data["sourcePath"]
-        
-        data["subset"] = data["family"] + subset.title()
-
+        data["subset"] = family + subset.title()
         data["name"] = data["subset"] + "_" + data["asset"]
 
         data["label"] = "{} - {} - ({})".format(
-            data['asset'], data["subset"], os.path.splitext(data["sourcePath"])[
-                1]
-        )
+            data['asset'], data["subset"], os.path.splitext(
+                data["sourcePath"])[1])
 
         if "review" in instance.data["families"]:
             data["label"] += " - review"
