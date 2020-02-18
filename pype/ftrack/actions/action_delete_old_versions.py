@@ -130,8 +130,8 @@ class DeleteOldVersions(BaseAction):
         items.append({
             "type": "boolean",
             "name": "force_delete_publish_folder",
-            "label": "Are you sure?",
-            "value": True
+            "label": "Are You sure?",
+            "value": False
         })
 
         return {
