@@ -1,20 +1,11 @@
 import os
 
 import pyblish.api
-import clique
 import pype.api
 
 
 class ExtractJpegEXR(pyblish.api.InstancePlugin):
-    """Resolve any dependency issues
-
-    This plug-in resolves any paths which, if not updated might break
-    the published file.
-
-    The order of families is important, when working with lookdev you want to
-    first publish the texture, update the texture paths in the nodes and then
-    publish the shading network. Same goes for file dependent assets.
-    """
+    """Create jpg thumbnail from sequence using ffmpeg"""
 
     label = "Extract Jpeg EXR"
     hosts = ["shell"]
@@ -23,11 +14,6 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
     enabled = False
 
     def process(self, instance):
-        start = instance.data.get("frameStart")
-        stagingdir = os.path.normpath(instance.data.get("stagingDir"))
-
-        collected_frames = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(collected_frames)
 
         self.log.info("subset {}".format(instance.data['subset']))
         if 'crypto' in instance.data['subset']:
@@ -44,6 +30,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             if 'review' not in repre['tags']:
                 return
 
+            stagingdir = os.path.normpath(repre.get("stagingDir"))
             input_file = repre['files'][0]
 
             # input_file = (

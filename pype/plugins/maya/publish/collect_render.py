@@ -1,7 +1,46 @@
+"""
+This collector will go through render layers in maya and prepare all data
+needed to create instances and their representations for submition and
+publishing on farm.
+
+Requires:
+    instance    -> families
+    instance    -> setMembers
+
+    context     -> currentFile
+    context     -> workspaceDir
+    context     -> user
+
+    session     -> AVALON_ASSET
+
+Optional:
+
+Provides:
+    instance    -> label
+    instance    -> subset
+    instance    -> attachTo
+    instance    -> setMembers
+    instance    -> publish
+    instance    -> frameStart
+    instance    -> frameEnd
+    instance    -> byFrameStep
+    instance    -> renderer
+    instance    -> family
+    instance    -> families
+    instance    -> asset
+    instance    -> time
+    instance    -> author
+    instance    -> source
+    instance    -> expectedFiles
+    instance    -> resolutionWidth
+    instance    -> resolutionHeight
+    instance    -> pixelAspect
+"""
+
 import re
 import os
 import types
-# TODO: pending python 3 upgrade
+import six
 from abc import ABCMeta, abstractmethod
 
 from maya import cmds
@@ -122,12 +161,27 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # frame range
             exp_files = ExpectedFiles().get(renderer, layer_name)
 
+            # if we want to attach render to subset, check if we have AOV's
+            # in expectedFiles. If so, raise error as we cannot attach AOV
+            # (considered to be subset on its own) to another subset
+            if attachTo:
+                assert len(exp_files[0].keys()) == 1, (
+                    "attaching multiple AOVs or renderable cameras to "
+                    "subset is not supported")
+
             # append full path
             full_exp_files = []
-            for ef in exp_files:
-                full_path = os.path.join(workspace, "renders", ef)
-                full_path = full_path.replace("\\", "/")
-                full_exp_files.append(full_path)
+            aov_dict = {}
+
+            for aov, files in exp_files[0].items():
+                full_paths = []
+                for ef in files:
+                    full_path = os.path.join(workspace, "renders", ef)
+                    full_path = full_path.replace("\\", "/")
+                    full_paths.append(full_path)
+                aov_dict[aov] = full_paths
+
+            full_exp_files.append(aov_dict)
 
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
@@ -136,12 +190,13 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "attachTo": attachTo,
                 "setMembers": layer_name,
                 "publish": True,
-                "frameStart": self.get_render_attribute("startFrame",
-                                                        layer=layer_name),
-                "frameEnd": self.get_render_attribute("endFrame",
-                                                      layer=layer_name),
-                "byFrameStep": self.get_render_attribute("byFrameStep",
-                                                         layer=layer_name),
+                "frameStart": int(self.get_render_attribute("startFrame",
+                                                            layer=layer_name)),
+                "frameEnd": int(self.get_render_attribute("endFrame",
+                                                          layer=layer_name)),
+                "byFrameStep": int(
+                    self.get_render_attribute("byFrameStep",
+                                              layer=layer_name)),
                 "renderer": self.get_render_attribute("currentRenderer",
                                                       layer=layer_name),
 
@@ -155,7 +210,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
                 "source": filepath,
-                "expectedFiles": full_exp_files
+                "expectedFiles": full_exp_files,
+                "resolutionWidth": cmds.getAttr("defaultResolution.width"),
+                "resolutionHeight": cmds.getAttr("defaultResolution.height"),
+                "pixelAspect": cmds.getAttr("defaultResolution.height")
             }
 
             # Apply each user defined attribute as data
@@ -285,16 +343,16 @@ class ExpectedFiles:
         elif renderer.lower() == 'redshift':
             return ExpectedFilesRedshift(layer).get_files()
         elif renderer.lower() == 'mentalray':
-            renderer.ExpectedFilesMentalray(layer).get_files()
+            return ExpectedFilesMentalray(layer).get_files()
         elif renderer.lower() == 'renderman':
-            renderer.ExpectedFilesRenderman(layer).get_files()
+            return ExpectedFilesRenderman(layer).get_files()
         else:
             raise UnsupportedRendererException(
                 "unsupported {}".format(renderer))
 
 
+@six.add_metaclass(ABCMeta)
 class AExpectedFiles:
-    __metaclass__ = ABCMeta
     renderer = None
     layer = None
 
@@ -360,9 +418,10 @@ class AExpectedFiles:
         padding = int(self.get_render_attribute('extensionPadding'))
 
         resolved_path = file_prefix
-        for cam in renderable_cameras:
-            if enabled_aovs:
-                for aov in enabled_aovs:
+        if enabled_aovs:
+            aov_file_list = {}
+            for aov in enabled_aovs:
+                for cam in renderable_cameras:
 
                     mappings = (
                         (R_SUBSTITUTE_SCENE_TOKEN, scene_name),
@@ -380,12 +439,23 @@ class AExpectedFiles:
                             int(end_frame) + 1,
                             int(frame_step)):
                         aov_files.append(
-                            '{}.{}.{}'.format(file_prefix,
-                                              str(frame).rjust(padding, "0"),
-                                              aov[1]))
-                    expected_files.append({aov[0]: aov_files})
+                            '{}.{}.{}'.format(
+                                file_prefix,
+                                str(frame).rjust(padding, "0"),
+                                aov[1]))
+
+                    # if we have more then one renderable camera, append
+                    # camera name to AOV to allow per camera AOVs.
+                    aov_name = aov[0]
+                    if len(renderable_cameras) > 1:
+                        aov_name = "{}_{}".format(aov[0], cam)
+
+                    aov_file_list[aov_name] = aov_files
                     file_prefix = resolved_path
-            else:
+
+            expected_files.append(aov_file_list)
+        else:
+            for cam in renderable_cameras:
                 mappings = (
                     (R_SUBSTITUTE_SCENE_TOKEN, scene_name),
                     (R_SUBSTITUTE_LAYER_TOKEN, layer_name),
@@ -475,9 +545,17 @@ class ExpectedFilesArnold(AExpectedFiles):
 
     def get_aovs(self):
         enabled_aovs = []
-        if not (cmds.getAttr('defaultArnoldRenderOptions.aovMode')
-                and not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):
-            # AOVs are merged in mutli-channel file
+        try:
+            if not (cmds.getAttr('defaultArnoldRenderOptions.aovMode')
+                    and not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):
+                # AOVs are merged in mutli-channel file
+                return enabled_aovs
+        except ValueError:
+            # this occurs when Render Setting windows was not opened yet. In
+            # such case there are no Arnold options created so query for AOVs
+            # will fail. We terminate here as there are no AOVs specified then.
+            # This state will most probably fail later on some Validator
+            # anyway.
             return enabled_aovs
 
         # AOVs are set to be rendered separately. We should expect
@@ -515,16 +593,15 @@ class ExpectedFilesArnold(AExpectedFiles):
                         aov_ext
                     )
                 )
-        if not enabled_aovs:
-            # if there are no AOVs, append 'beauty' as this is arnolds
-            # default. If <RenderPass> token is specified and no AOVs are
-            # defined, this will be used.
-            enabled_aovs.append(
-                (
-                    'beauty',
-                    cmds.getAttr('defaultRenderGlobals.imfPluginKey')
-                )
+        # Append 'beauty' as this is arnolds
+        # default. If <RenderPass> token is specified and no AOVs are
+        # defined, this will be used.
+        enabled_aovs.append(
+            (
+                u'beauty',
+                cmds.getAttr('defaultRenderGlobals.imfPluginKey')
             )
+        )
         return enabled_aovs
 
 

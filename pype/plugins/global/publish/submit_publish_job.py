@@ -1,15 +1,26 @@
 import os
 import json
 import re
-import logging
+from copy import copy
 
 from avalon import api, io
 from avalon.vendor import requests, clique
 
 import pyblish.api
 
-
+# regex for finding frame number in string
 R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
+
+# mapping of instance properties to be transfered to new instance for every
+# specified family
+instance_transfer = {
+    "slate": ["slateFrame"],
+    "review": ["lutPath"],
+    "render.farm": ["bakeScriptPath", "bakeRenderPath", "bakeWriteNodeName"]
+    }
+
+# list of family names to transfer to new family if present
+families_transfer = ["render2d", "ftrack", "slate"]
 
 
 def _get_script():
@@ -217,9 +228,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["PYPE_METADATA_FILE"] = metadata_path
         i = 0
         for index, key in enumerate(environment):
-            self.log.info("KEY: {}".format(key))
-            self.log.info("FILTER: {}".format(self.enviro_filter))
-
             if key.upper() in self.enviro_filter:
                 payload["JobInfo"].update(
                     {
@@ -235,8 +243,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         payload["JobInfo"]["Pool"] = "none"
         payload["JobInfo"].pop("SecondaryPool", None)
 
-        self.log.info("Submitting..")
-        self.log.info(json.dumps(payload, indent=4, sort_keys=True))
+        self.log.info("Submitting Deadline job ...")
+        # self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         url = "{}/api/jobs".format(self.DEADLINE_REST_URL)
         response = requests.post(url, json=payload)
@@ -251,6 +259,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         :param instance: instance to get required data from
         :type instance: pyblish.plugin.Instance
         """
+
         import speedcopy
 
         self.log.info("Preparing to copy ...")
@@ -311,13 +320,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         self.log.info(
             "Finished copying %i files" % len(resource_files))
 
-    def _create_instances_for_aov(self, context, instance_data, exp_files):
+    def _create_instances_for_aov(self, instance_data, exp_files):
         """
         This will create new instance for every aov it can detect in expected
         files list.
 
-        :param context: context of orignal instance to get important data
-        :type context: pyblish.plugin.Context
         :param instance_data: skeleton data for instance (those needed) later
                               by collector
         :type instance_data: pyblish.plugin.Instance
@@ -326,11 +333,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         :returns: list of instances
         :rtype: list(publish.plugin.Instance)
         """
+
         task = os.environ["AVALON_TASK"]
         subset = instance_data["subset"]
         instances = []
         # go through aovs in expected files
-        for aov, files in exp_files.items():
+        for aov, files in exp_files[0].items():
             cols, rem = clique.assemble(files)
             # we shouldn't have any reminders
             if rem:
@@ -339,7 +347,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     "in sequence: {}".format(rem))
 
             # but we really expect only one collection, nothing else make sense
-            self.log.error("got {} sequence type".format(len(cols)))
             assert len(cols) == 1, "only one image sequence type is expected"
 
             # create subset name `familyTaskSubset_AOV`
@@ -352,7 +359,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             start = int(instance_data.get("frameStart"))
             end = int(instance_data.get("frameEnd"))
 
-            new_instance = self.context.create_instance(subset_name)
+            self.log.info("Creating data for: {}".format(subset_name))
+
             app = os.environ.get("AVALON_APP", "")
 
             preview = False
@@ -360,13 +368,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 if aov in self.aov_filter[app]:
                     preview = True
 
-            new_instance.data.update(instance_data)
-            new_instance.data["subset"] = subset_name
+            new_instance = copy(instance_data)
+            new_instance["subset"] = subset_name
+
             ext = cols[0].tail.lstrip(".")
 
             # create represenation
             rep = {
-                "name": ext,
+                "name": aov,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(cols[0])],
                 "frameStart": start,
@@ -374,26 +383,25 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
                 "anatomy_template": "render",
-                "fps": new_instance.data.get("fps"),
+                "fps": new_instance.get("fps"),
                 "tags": ["review", "preview"] if preview else []
             }
 
             # add tags
             if preview:
-                if "ftrack" not in new_instance.data["families"]:
+                if "ftrack" not in new_instance["families"]:
                     if os.environ.get("FTRACK_SERVER"):
-                        new_instance.data["families"].append("ftrack")
-                if "review" not in new_instance.data["families"]:
-                    new_instance.data["families"].append("review")
+                        new_instance["families"].append("ftrack")
+                if "review" not in new_instance["families"]:
+                    new_instance["families"].append("review")
 
-            new_instance.data["representations"] = [rep]
-            instances.append(new_instance)
+            new_instance["representations"] = [rep]
 
             # if extending frames from existing version, copy files from there
             # into our destination directory
-            if instance_data.get("extendFrames", False):
+            if new_instance.get("extendFrames", False):
                 self._copy_extend_frames(new_instance, rep)
-
+            instances.append(new_instance)
         return instances
 
     def _get_representations(self, instance, exp_files):
@@ -409,9 +417,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         :returns: list of representations
         :rtype: list(dict)
         """
+
         representations = []
-        start = int(instance.data.get("frameStart"))
-        end = int(instance.data.get("frameEnd"))
+        start = int(instance.get("frameStart"))
+        end = int(instance.get("frameEnd"))
         cols, rem = clique.assemble(exp_files)
         # create representation for every collected sequence
         for c in cols:
@@ -438,15 +447,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": os.path.dirname(list(c)[0]),
                 "anatomy_template": "render",
-                "fps": instance.data.get("fps"),
+                "fps": instance.get("fps"),
                 "tags": ["review", "preview"] if preview else [],
             }
 
             representations.append(rep)
 
-            # TODO: implement extendFrame
-
-            families = instance.data.get("families")
+            families = instance.get("families")
             # if we have one representation with preview tag
             # flag whole instance for review and for ftrack
             if preview:
@@ -455,7 +462,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                         families.append("ftrack")
                 if "review" not in families:
                     families.append("review")
-                instance.data["families"] = families
+                instance["families"] = families
 
         # add reminders as representations
         for r in rem:
@@ -536,7 +543,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         )
         relative_path = os.path.relpath(source, api.registered_root())
         source = os.path.join("{root}", relative_path).replace("\\", "/")
-        regex = None
 
         families = ["render"]
 
@@ -550,94 +556,138 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "fps": data.get("fps", 25),
             "source": source,
             "extendFrames": data.get("extendFrames"),
-            "overrideExistingFrame": data.get("overrideExistingFrame")
+            "overrideExistingFrame": data.get("overrideExistingFrame"),
+            "pixelAspect": data.get("pixelAspect", 1),
+            "resolutionWidth": data.get("resolutionWidth", 1920),
+            "resolutionHeight": data.get("resolutionHeight", 1080),
         }
 
+        # transfer specific families from original instance to new render
+        if "render2d" in instance.data.get("families", []):
+            instance_skeleton_data["families"] += ["render2d"]
+
+        if "ftrack" in instance.data.get("families", []):
+            instance_skeleton_data["families"] += ["ftrack"]
+
+        if "slate" in instance.data.get("families", []):
+            instance_skeleton_data["families"] += ["slate"]
+
+        # transfer specific properties from original instance based on
+        # mapping dictionary `instance_transfer`
+        for key, values in instance_transfer.items():
+            if key in instance.data.get("families", []):
+                for v in values:
+                    instance_skeleton_data[v] = instance.data.get(v)
+
         instances = None
-        if data.get("expectedFiles"):
-            """
-            if content of `expectedFiles` are dictionaries, we will handle
-            it as list of AOVs, creating instance from every one of them.
+        assert data.get("expectedFiles"), ("Submission from old Pype version"
+                                           " - missing expectedFiles")
 
-            Example:
-            --------
+        """
+        if content of `expectedFiles` are dictionaries, we will handle
+        it as list of AOVs, creating instance from every one of them.
 
-            expectedFiles = [
-                {
-                    "beauty": [
-                        "foo_v01.0001.exr",
-                        "foo_v01.0002.exr"
-                    ],
-                    "Z": [
-                        "boo_v01.0001.exr",
-                        "boo_v01.0002.exr"
-                    ]
-                }
-            ]
+        Example:
+        --------
 
-            This will create instances for `beauty` and `Z` subset
-            adding those files to their respective representations.
+        expectedFiles = [
+            {
+                "beauty": [
+                    "foo_v01.0001.exr",
+                    "foo_v01.0002.exr"
+                ],
 
-            If we've got only list of files, we collect all filesequences.
-            More then one doesn't probably make sense, but we'll handle it
-            like creating one instance with multiple representations.
+                "Z": [
+                    "boo_v01.0001.exr",
+                    "boo_v01.0002.exr"
+                ]
+            }
+        ]
 
-            Example:
-            --------
+        This will create instances for `beauty` and `Z` subset
+        adding those files to their respective representations.
 
-            expectedFiles = [
-                "foo_v01.0001.exr",
-                "foo_v01.0002.exr",
-                "xxx_v01.0001.exr",
-                "xxx_v01.0002.exr"
-            ]
+        If we've got only list of files, we collect all filesequences.
+        More then one doesn't probably make sense, but we'll handle it
+        like creating one instance with multiple representations.
 
-            This will result in one instance with two representations:
-            `foo` and `xxx`
-            """
-            if isinstance(data.get("expectedFiles")[0], dict):
-                instances = self._create_instances_for_aov(
-                    instance_skeleton_data,
-                    data.get("expectedFiles"))
-            else:
-                representations = self._get_representations(
-                    instance_skeleton_data,
-                    data.get("expectedFiles")
-                )
+        Example:
+        --------
 
-                if "representations" not in instance.data:
-                    data["representations"] = []
+        expectedFiles = [
+            "foo_v01.0001.exr",
+            "foo_v01.0002.exr",
+            "xxx_v01.0001.exr",
+            "xxx_v01.0002.exr"
+        ]
 
-                # add representation
-                data["representations"] += representations
+        This will result in one instance with two representations:
+        `foo` and `xxx`
+        """
+
+        if isinstance(data.get("expectedFiles")[0], dict):
+            # we cannot attach AOVs to other subsets as we consider every
+            # AOV subset of its own.
+
+            if len(data.get("attachTo")) > 0:
+                assert len(data.get("expectedFiles")[0].keys()) > 1, (
+                    "attaching multiple AOVs or renderable cameras to "
+                    "subset is not supported")
+
+            # create instances for every AOV we found in expected files.
+            # note: this is done for every AOV and every render camere (if
+            #       there are multiple renderable cameras in scene)
+            instances = self._create_instances_for_aov(
+                instance_skeleton_data,
+                data.get("expectedFiles"))
+            self.log.info("got {} instance{}".format(
+                len(instances),
+                "s" if len(instances) > 1 else ""))
 
         else:
-            # deprecated: passing regex is depecated. Please use
-            # `expectedFiles` and collect them.
-            if "ext" in instance.data:
-                ext = r"\." + re.escape(instance.data["ext"])
-            else:
-                ext = r"\.\D+"
+            representations = self._get_representations(
+                instance_skeleton_data,
+                data.get("expectedFiles")
+            )
 
-            regex = r"^{subset}.*\d+{ext}$".format(
-                subset=re.escape(subset), ext=ext)
+            if "representations" not in instance_skeleton_data:
+                instance_skeleton_data["representations"] = []
 
-        # Write metadata for publish job
+            # add representation
+            instance_skeleton_data["representations"] += representations
+            instances = [instance_skeleton_data]
+
+        # if we are attaching to other subsets, create copy of existing
+        # instances, change data to match thats subset and replace
+        # existing instances with modified data
+        if instance.data.get("attachTo"):
+            self.log.info("Attaching render to subset:")
+            new_instances = []
+            for at in instance.data.get("attachTo"):
+                for i in instances:
+                    new_i = copy(i)
+                    new_i["version"] = at.get("version")
+                    new_i["subset"] = at.get("subset")
+                    new_i["families"].append(at.get("family"))
+                    new_instances.append(new_i)
+                    self.log.info("  - {} / v{}".format(
+                        at.get("subset"), at.get("version")))
+            instances = new_instances
+
         # publish job file
         publish_job = {
             "asset": asset,
             "frameStart": start,
             "frameEnd": end,
             "fps": context.data.get("fps", None),
-            "families": families,
             "source": source,
             "user": context.data["user"],
-            "version": context.data["version"],
+            "version": context.data["version"],  # this is workfile version
             "intent": context.data.get("intent"),
             "comment": context.data.get("comment"),
             "job": render_job,
             "session": api.Session.copy(),
-            "instances": instances or [data]
+            "instances": instances
         }
 
         # pass Ftrack credentials in case of Muster
@@ -649,13 +699,17 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             }
             publish_job.update({"ftrack": ftrack})
 
-        if regex:
-            publish_job["regex"] = regex
-
         # Ensure output dir exists
         output_dir = instance.data["outputDir"]
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
+
+        metadata_filename = "{}_metadata.json".format(subset)
+
+        metadata_path = os.path.join(output_dir, metadata_filename)
+        self.log.info("Writing json file: {}".format(metadata_path))
+        with open(metadata_path, "w") as f:
+            json.dump(publish_job, f, indent=4, sort_keys=True)
 
     def _extend_frames(self, asset, subset, start, end, override):
         """

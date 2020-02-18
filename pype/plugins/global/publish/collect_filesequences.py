@@ -95,6 +95,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.0001
     targets = ["filesequence"]
     label = "RenderedFrames"
+    active = False
 
     def process(self, context):
         pixel_aspect = 1
