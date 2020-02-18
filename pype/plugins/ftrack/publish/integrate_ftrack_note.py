@@ -18,7 +18,17 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             self.log.info("Comment is not set.")
             return
 
-        self.log.debug("Comment is set to {}".format(comment))
+        self.log.debug("Comment is set to `{}`".format(comment))
+
+        intent = instance.context.data.get("intent")
+        if intent:
+            msg = "Intent is set to `{}` and was added to comment.".format(
+                intent
+            )
+            comment = "{}: {}".format(intent, comment)
+        else:
+            msg = "Intent is not set."
+        self.log.debug(msg)
 
         asset_versions_key = "ftrackIntegratedAssetVersions"
         asset_versions = instance.data.get(asset_versions_key)
