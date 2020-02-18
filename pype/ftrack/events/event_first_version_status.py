@@ -1,0 +1,175 @@
+from pype.ftrack import BaseEvent
+
+
+class FirstVersionStatus(BaseEvent):
+
+    # WARNING Priority MUST be higher
+    # than handler in `event_version_to_task_statuses.py`
+    priority = 200
+
+    first_run = True
+    keys_enum = ["task", "task_type"]
+    # This should be set with presets
+    task_status_map = []
+
+    # EXAMPLE of `task_status_map`
+    __example_status_map__ = [{
+        # `key` specify where to look for name (is enumerator of `keys_enum`)
+        "key": "task",
+        # speicification of name
+        "name": "compositing",
+        # Status to set to the task
+        "status": "Blocking"
+    }]
+
+    def launch(self, session, event):
+        """Set task's status for first created Asset Version."""
+
+        if not self.task_status_map:
+            return
+
+        if self.first_run:
+            self.first_run = False
+            valid_task_status_map = []
+            for item in self.task_status_map:
+                key = (item.get("key") or "").lower()
+                name = (item.get("name") or "").lower()
+                status = (item.get("status") or "").lower()
+                if not (key and name and status):
+                    self.log.warning((
+                        "Invalid item in Task -> Status mapping. {}"
+                    ).format(str(item)))
+                    continue
+
+                if key not in self.keys_enum:
+                    expected_msg = ""
+                    last_key_idx = len(self.keys_enum) - 1
+                    for idx, key in enumerate(self.keys_enum):
+                        if idx == 0:
+                            joining_part = "`{}`"
+                        elif idx == last_key_idx:
+                            joining_part = "or `{}`"
+                        else:
+                            joining_part = ", `{}`"
+                        expected_msg += joining_part.format(key)
+
+                    self.log.warning((
+                        "Invalid key `{}`. Expected: {}."
+                    ).format(key, expected_msg))
+                    continue
+
+                valid_task_status_map.append({
+                    "key": key,
+                    "name": name,
+                    "status": status
+                })
+            self.task_status_map = valid_task_status_map
+
+        entities_info = self.filter_event_ents(event)
+        if not entities_info:
+            return
+
+        entity_ids = []
+        for entity_info in entities_info:
+            entity_ids.append(entity_info["entityId"])
+
+        joined_entity_ids = ",".join(
+            ["\"{}\"".format(entity_id) for entity_id in entity_ids]
+        )
+        asset_verisons = session.query(
+            "AssetVersion where id in ({})".format(joined_entity_ids)
+        ).all()
+
+        statuses_per_type_id = {}
+
+        project_schema = None
+        for asset_verison in asset_verisons:
+            task_entity = asset_verison["task"]
+            found_item = None
+            for item in self.task_status_map:
+                if (
+                    item["key"] == "task" and
+                    task_entity["name"].lower() != item["name"]
+                ):
+                    continue
+
+                elif (
+                    item["key"] == "task_type" and
+                    task_entity["type"]["name"].lower() != item["name"]
+                ):
+                    continue
+
+                found_item = item
+                break
+
+            if not found_item:
+                continue
+
+            if project_schema is None:
+                project_schema = task_entity["project"]["project_schema"]
+
+            # Get all available statuses for Task
+            type_id = task_entity["type_id"]
+            if type_id not in statuses_per_type_id:
+                statuses = project_schema.get_statuses(
+                    "Task", task_entity["type_id"]
+                )
+
+                # map lowered status name with it's object
+                statuses_per_type_id[type_id] = {
+                    status["name"].lower(): status for status in statuses
+                }
+
+            statuses_by_low_name = statuses_per_type_id[type_id]
+            new_status = statuses_by_low_name.get(found_item["status"])
+            if not new_status:
+                continue
+
+            ent_path = "/".join([ent["name"] for ent in task_entity["link"]])
+
+            try:
+                task_entity["status"] = new_status
+                session.commit()
+                self.log.debug("[ {} ] Status updated to [ {} ]".format(
+                    ent_path, new_status['name']
+                ))
+
+            except Exception:
+                session.rollback()
+                self.log.warning(
+                    "[ {} ] Status couldn't be set.".format(ent_path),
+                    exc_info=True
+                )
+
+    def filter_event_ents(self, event):
+        filtered_ents = []
+        for entity in event["data"].get("entities", []):
+            # Care only about add actions
+            if entity["action"] != "add":
+                continue
+
+            # Filter AssetVersions
+            if entity["entityType"] != "assetversion":
+                continue
+
+            entity_changes = entity.get("changes") or {}
+
+            # Check if version of Asset Version is `1`
+            version_num = entity_changes.get("version", {}).get("new")
+            if version_num != 1:
+                continue
+
+            # Skip in Asset Version don't have task
+            task_id = entity_changes.get("taskid", {}).get("new")
+            if not task_id:
+                continue
+
+            filtered_ents.append(entity)
+
+        return filtered_ents
+
+
+def register(session, plugins_presets):
+    '''Register plugin. Called when used as an plugin.'''
+
+    FirstVersionStatus(session, plugins_presets).register()
