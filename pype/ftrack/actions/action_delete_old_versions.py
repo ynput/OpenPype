@@ -352,9 +352,9 @@ class DeleteOldVersions(BaseAction):
             if version_tags == orig_version_tags:
                 continue
 
-            filter = {"_id": version["_id"]}
+            update_query = {"_id": version["_id"]}
             update_data = {"$set": {"data.tags": version_tags}}
-            mongo_changes_bulk.append(UpdateOne(filter, update_data))
+            mongo_changes_bulk.append(UpdateOne(update_query, update_data))
 
         if mongo_changes_bulk:
             self.dbcon.bulk_write(mongo_changes_bulk)
