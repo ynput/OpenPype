@@ -10,9 +10,13 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.4999
     label = "Integrate Ftrack note"
     families = ["ftrack"]
-    # Can be set in presets (Allows only `intent` and `comment` keys)
-    note_with_intent_template = "{intent}: {comment}"
     optional = True
+
+    # Can be set in presets:
+    # - Allows only `intent` and `comment` keys
+    note_with_intent_template = "{intent}: {comment}"
+    # - note label must exist in Ftrack
+    note_labels = []
 
     def process(self, instance):
         comment = (instance.context.data.get("comment") or "").strip()
@@ -52,8 +56,22 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
                 )
             )
 
+        labels = []
+        if self.note_labels:
+            all_labels = session.query("NoteLabel").all()
+            labels_by_low_name = {lab["name"].lower(): lab for lab in all_labels}
+            for _label in self.note_labels:
+                label = labels_by_low_name.get(_label.lower())
+                if not label:
+                    self.log.warning(
+                        "Note Label `{}` was not found.".format(_label)
+                    )
+                    continue
+
+                labels.append(label)
+
         for asset_version in asset_versions:
-            asset_version.create_note(comment, author=user)
+            asset_version.create_note(comment, author=user, labels=labels)
 
             try:
                 session.commit()
