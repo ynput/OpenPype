@@ -57,7 +57,7 @@ class DeleteOldVersions(BaseAction):
                 "message": msg
             }
 
-        elif not os.path.exists(root):
+        if not os.path.exists(root):
             msg = "Root path does not exists \"{}\".".format(str(root))
             items.append({
                 "type": "label",
