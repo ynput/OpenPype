@@ -217,12 +217,10 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
 
             # Get family from the data
             families = data.get("families", ["render"])
-            if "render" not in families:
-                families.append("render")
             if "ftrack" not in families:
                 families.append("ftrack")
-            if "write" in instance_family:
-                families.append("write")
+            if families_data and "render2d" in families_data:
+                families.append("render2d")
             if families_data and "slate" in families_data:
                 families.append("slate")
 
@@ -332,8 +330,30 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     }
                 )
 
-                if "representations" not in new_instance.data:
-                    new_instance.data["representations"] = []
+                if "representations" not in instance.data:
+                    instance.data["representations"] = []
+
+                for collection in collections:
+                    self.log.info("  - {}".format(str(collection)))
+
+                    ext = collection.tail.lstrip(".")
+
+                    if "slate" in instance.data["families"]:
+                        frame_start += 1
+
+                    representation = {
+                        "name": ext,
+                        "ext": "{}".format(ext),
+                        "files": list(collection),
+                        "frameStart": frame_start,
+                        "frameEnd": frame_end,
+                        "stagingDir": root,
+                        "anatomy_template": "render",
+                        "fps": fps,
+                        "tags": ["review"] if not baked_mov_path else ["thumb-nuke"],
+                    }
+                    instance.data["representations"].append(
+                        representation)
 
                 if regex:
                     for collection in collections:
@@ -403,52 +423,16 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 # we have no subset so we take every collection and create one
                 # from it
 
-                if regex:
-                    for collection in collections:
-                        new_instance = context.create_instance(str(collection))
-                        self.log.info(
-                            "Creating subset from: %s" % str(collection))
+                    # Ensure each instance gets a unique reference to the data
+                    data = copy.deepcopy(data)
 
-                        # Ensure each instance gets a unique
-                        # reference to the data
-                        data = copy.deepcopy(data)
+                    # If no subset provided, get it from collection's head
+                    subset = data.get("subset", collection.head.rstrip("_. "))
 
-                        # If no subset provided, get it from collection's head
-                        subset = data.get(
-                            "subset", collection.head.rstrip("_. "))
-
-                        # If no start or end frame provided,
-                        # get it from collection
-                        indices = list(collection.indexes)
-                        start = data.get("frameStart", indices[0])
-                        end = data.get("frameEnd", indices[-1])
-
-                        ext = list(collection)[0].split(".")[-1]
-
-                        if "review" not in families:
-                            families.append("review")
-
-                        new_instance.data.update(
-                            {
-                                "name": str(collection),
-                                "family": families[0],
-                                "families": list(families),
-                                "subset": subset,
-                                "asset": data.get(
-                                    "asset", api.Session["AVALON_ASSET"]),
-                                "stagingDir": root,
-                                "frameStart": start,
-                                "frameEnd": end,
-                                "fps": fps,
-                                "source": data.get("source", ""),
-                                "pixelAspect": pixel_aspect,
-                                "resolutionWidth": resolution_width,
-                                "resolutionHeight": resolution_height,
-                                "version": version
-                            }
-                        )
-                        if lut_path:
-                            new_instance.data.update({"lutPath": lut_path})
+                    # If no start or end frame provided, get it from collection
+                    indices = list(collection.indexes)
+                    start = int(data.get("frameStart", indices[0]))
+                    end = int(data.get("frameEnd", indices[-1]))
 
                         new_instance.append(collection)
                         new_instance.context.data["fps"] = fps
