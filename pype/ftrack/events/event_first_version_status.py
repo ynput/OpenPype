@@ -14,6 +14,7 @@ class FirstVersionStatus(BaseEvent):
     # EXAMPLE of `task_status_map`
     __example_status_map__ = [{
         # `key` specify where to look for name (is enumerator of `keys_enum`)
+        # By default is set to "task"
         "key": "task",
         # speicification of name
         "name": "compositing",
@@ -26,7 +27,7 @@ class FirstVersionStatus(BaseEvent):
 
         valid_task_status_map = []
         for item in self.task_status_map:
-            key = (item.get("key") or "").lower()
+            key = (item.get("key") or "task").lower()
             name = (item.get("name") or "").lower()
             status = (item.get("status") or "").lower()
             if not (key and name and status):
