@@ -482,4 +482,4 @@ class DeleteOldVersions(BaseAction):
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''
 
-    PrepareForArchivation(session, plugins_presets).register()
+    DeleteOldVersions(session, plugins_presets).register()
