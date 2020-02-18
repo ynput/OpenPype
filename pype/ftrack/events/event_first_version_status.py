@@ -7,7 +7,6 @@ class FirstVersionStatus(BaseEvent):
     # than handler in `event_version_to_task_statuses.py`
     priority = 200
 
-    first_run = True
     keys_enum = ["task", "task_type"]
     # This should be set with presets
     task_status_map = []
@@ -22,48 +21,51 @@ class FirstVersionStatus(BaseEvent):
         "status": "Blocking"
     }]
 
+    def register(self, *args, **kwargs):
+        result = super(FirstVersionStatus, self).register(*args, **kwargs)
+
+        valid_task_status_map = []
+        for item in self.task_status_map:
+            key = (item.get("key") or "").lower()
+            name = (item.get("name") or "").lower()
+            status = (item.get("status") or "").lower()
+            if not (key and name and status):
+                self.log.warning((
+                    "Invalid item in Task -> Status mapping. {}"
+                ).format(str(item)))
+                continue
+
+            if key not in self.keys_enum:
+                expected_msg = ""
+                last_key_idx = len(self.keys_enum) - 1
+                for idx, key in enumerate(self.keys_enum):
+                    if idx == 0:
+                        joining_part = "`{}`"
+                    elif idx == last_key_idx:
+                        joining_part = "or `{}`"
+                    else:
+                        joining_part = ", `{}`"
+                    expected_msg += joining_part.format(key)
+
+                self.log.warning((
+                    "Invalid key `{}`. Expected: {}."
+                ).format(key, expected_msg))
+                continue
+
+            valid_task_status_map.append({
+                "key": key,
+                "name": name,
+                "status": status
+            })
+        self.task_status_map = valid_task_status_map
+
+        return result
+
     def launch(self, session, event):
         """Set task's status for first created Asset Version."""
 
         if not self.task_status_map:
             return
-
-        if self.first_run:
-            self.first_run = False
-            valid_task_status_map = []
-            for item in self.task_status_map:
-                key = (item.get("key") or "").lower()
-                name = (item.get("name") or "").lower()
-                status = (item.get("status") or "").lower()
-                if not (key and name and status):
-                    self.log.warning((
-                        "Invalid item in Task -> Status mapping. {}"
-                    ).format(str(item)))
-                    continue
-
-                if key not in self.keys_enum:
-                    expected_msg = ""
-                    last_key_idx = len(self.keys_enum) - 1
-                    for idx, key in enumerate(self.keys_enum):
-                        if idx == 0:
-                            joining_part = "`{}`"
-                        elif idx == last_key_idx:
-                            joining_part = "or `{}`"
-                        else:
-                            joining_part = ", `{}`"
-                        expected_msg += joining_part.format(key)
-
-                    self.log.warning((
-                        "Invalid key `{}`. Expected: {}."
-                    ).format(key, expected_msg))
-                    continue
-
-                valid_task_status_map.append({
-                    "key": key,
-                    "name": name,
-                    "status": status
-                })
-            self.task_status_map = valid_task_status_map
 
         entities_info = self.filter_event_ents(event)
         if not entities_info:
