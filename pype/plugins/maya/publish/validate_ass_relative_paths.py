@@ -14,7 +14,7 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
     order = pype.api.ValidateContentsOrder
     hosts = ['maya']
     families = ['ass']
-    label = "Validate ASS has relative texture paths"
+    label = "ASS has relative texture paths"
     actions = [pype.api.RepairAction]
 
     def process(self, instance):
@@ -22,9 +22,14 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
         # `defaultArnoldRenderOptions` doesn't exists
         try:
             relative_texture = cmds.getAttr(
+                "defaultArnoldRenderOptions.absolute_texture_paths")
+            relative_procedural = cmds.getAttr(
                 "defaultArnoldRenderOptions.absolute_procedural_paths")
             texture_search_path = cmds.getAttr(
                 "defaultArnoldRenderOptions.tspath"
+            )
+            procedural_search_path = cmds.getAttr(
+                "defaultArnoldRenderOptions.pspath"
             )
         except ValueError:
             assert False, ("Can not validate, render setting were not opened "
@@ -32,36 +37,49 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
 
         scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
-        project_root = "{}{}{}{}".format(
+        project_root = "{}{}{}".format(
             os.environ.get("AVALON_PROJECTS"),
             os.path.sep,
-            os.environ.get("AVALON_PROJECT"),
-            os.pathsep
+            os.environ.get("AVALON_PROJECT")
         )
         assert self.maya_is_true(relative_texture) is not True, \
-            ("Texture path are set to be absolute")
+            ("Texture path is set to be absolute")
+        assert self.maya_is_true(relative_procedural) is not True, \
+            ("Procedural path is set to be absolute")
 
-        texture_search_path.replace("\\", "/")
+        texture_search_path = texture_search_path.replace("\\", "/")
+        procedural_search_path = procedural_search_path.replace("\\", "/")
+        project_root = project_root.replace("\\", "/")
+
         assert project_root in texture_search_path, \
             ("Project root is not in texture_search_path")
+        assert project_root in procedural_search_path, \
+            ("Project root is not in procedural_search_path")
 
     @classmethod
     def repair(cls, instance):
         texture_search_path = cmds.getAttr(
             "defaultArnoldRenderOptions.tspath"
         )
-        project_root = "{}{}{}{}".format(
+        procedural_search_path = cmds.getAttr(
+            "defaultArnoldRenderOptions.pspath"
+        )
+
+        project_root = "{}{}{}".format(
             os.environ.get("AVALON_PROJECTS"),
             os.path.sep,
             os.environ.get("AVALON_PROJECT"),
-            os.pathsep
-        )
+        ).replace("\\", "/")
 
-        project_root = project_root.replace("\\", "/")
         cmds.setAttr("defaultArnoldRenderOptions.tspath",
-                     project_root + texture_search_path,
+                     project_root + os.pathsep + texture_search_path,
+                     type="string")
+        cmds.setAttr("defaultArnoldRenderOptions.pspath",
+                     project_root + os.pathsep + procedural_search_path,
                      type="string")
         cmds.setAttr("defaultArnoldRenderOptions.absolute_procedural_paths",
+                     False)
+        cmds.setAttr("defaultArnoldRenderOptions.absolute_texture_paths",
                      False)
 
     def maya_is_true(self, attr_val):
