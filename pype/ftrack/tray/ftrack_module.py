@@ -1,26 +1,27 @@
 import os
-import json
-import threading
 import time
-from Qt import QtCore, QtGui, QtWidgets
+import datetime
+import threading
+from Qt import QtCore, QtWidgets
 
 import ftrack_api
-from pypeapp import style
-from pype.ftrack import FtrackServer, check_ftrack_url, credentials
+from ..ftrack_server.lib import check_ftrack_url
+from ..ftrack_server import socket_thread
+from ..lib import credentials
 from . import login_dialog
 
-from pype import api as pype
+from pypeapp import Logger
 
 
-log = pype.Logger().get_logger("FtrackModule", "ftrack")
+log = Logger().get_logger("FtrackModule", "ftrack")
 
 
 class FtrackModule:
     def __init__(self, main_parent=None, parent=None):
         self.parent = parent
         self.widget_login = login_dialog.Login_Dialog_ui(self)
-        self.action_server = FtrackServer('action')
         self.thread_action_server = None
+        self.thread_socket_server = None
         self.thread_timer = None
 
         self.bool_logged = False
@@ -33,29 +34,28 @@ class FtrackModule:
 
     def validate(self):
         validation = False
-        cred = credentials._get_credentials()
-        try:
-            if 'username' in cred and 'apiKey' in cred:
-                validation = credentials._check_credentials(
-                    cred['username'],
-                    cred['apiKey']
-                )
-                if validation is False:
-                    self.show_login_widget()
-            else:
-                self.show_login_widget()
-
-        except Exception as e:
-            log.error("We are unable to connect to Ftrack: {0}".format(e))
-
-        validation = credentials._check_credentials()
-        if validation is True:
+        cred = credentials.get_credentials()
+        ft_user = cred.get("username")
+        ft_api_key = cred.get("api_key")
+        validation = credentials.check_credentials(ft_user, ft_api_key)
+        if validation:
+            credentials.set_env(ft_user, ft_api_key)
             log.info("Connected to Ftrack successfully")
             self.loginChange()
-        else:
-            log.warning("Please sign in to Ftrack")
-            self.bool_logged = False
-            self.set_menu_visibility()
+
+            return validation
+
+        if not validation and ft_user and ft_api_key:
+            log.warning(
+                "Current Ftrack credentials are not valid. {}: {} - {}".format(
+                    str(os.environ.get("FTRACK_SERVER")), ft_user, ft_api_key
+                )
+            )
+
+        log.info("Please sign in to Ftrack")
+        self.bool_logged = False
+        self.show_login_widget()
+        self.set_menu_visibility()
 
         return validation
 
@@ -66,7 +66,7 @@ class FtrackModule:
         self.start_action_server()
 
     def logout(self):
-        credentials._clear_credentials()
+        credentials.clear_credentials()
         self.stop_action_server()
 
         log.info("Logged out of Ftrack")
@@ -75,14 +75,6 @@ class FtrackModule:
 
     # Actions part
     def start_action_server(self):
-        self.bool_action_thread_running = True
-        self.set_menu_visibility()
-        if (
-            self.thread_action_server is not None and
-            self.bool_action_thread_running is False
-        ):
-            self.stop_action_server()
-
         if self.thread_action_server is None:
             self.thread_action_server = threading.Thread(
                 target=self.set_action_server
@@ -90,35 +82,114 @@ class FtrackModule:
             self.thread_action_server.start()
 
     def set_action_server(self):
-        first_check = True
-        while self.bool_action_thread_running is True:
-            if not check_ftrack_url(os.environ['FTRACK_SERVER']):
-                if first_check:
-                    log.warning(
-                        "Could not connect to Ftrack server"
-                    )
-                    first_check = False
+        if self.bool_action_server_running:
+            return
+
+        self.bool_action_server_running = True
+        self.bool_action_thread_running = False
+
+        ftrack_url = os.environ['FTRACK_SERVER']
+
+        parent_file_path = os.path.dirname(
+            os.path.dirname(os.path.realpath(__file__))
+        )
+
+        min_fail_seconds = 5
+        max_fail_count = 3
+        wait_time_after_max_fail = 10
+
+        # Threads data
+        thread_name = "ActionServerThread"
+        thread_port = 10021
+        subprocess_path = (
+            "{}/ftrack_server/sub_user_server.py".format(parent_file_path)
+        )
+        if self.thread_socket_server is not None:
+            self.thread_socket_server.stop()
+            self.thread_socket_server.join()
+            self.thread_socket_server = None
+
+        last_failed = datetime.datetime.now()
+        failed_count = 0
+
+        ftrack_accessible = False
+        printed_ftrack_error = False
+
+        # Main loop
+        while True:
+            if not self.bool_action_server_running:
+                log.debug("Action server was pushed to stop.")
+                break
+
+            # Check if accessible Ftrack and Mongo url
+            if not ftrack_accessible:
+                ftrack_accessible = check_ftrack_url(ftrack_url)
+
+            # Run threads only if Ftrack is accessible
+            if not ftrack_accessible:
+                if not printed_ftrack_error:
+                    log.warning("Can't access Ftrack {}".format(ftrack_url))
+
+                if self.thread_socket_server is not None:
+                    self.thread_socket_server.stop()
+                    self.thread_socket_server.join()
+                    self.thread_socket_server = None
+                    self.bool_action_thread_running = False
+                    self.set_menu_visibility()
+
+                printed_ftrack_error = True
+
                 time.sleep(1)
                 continue
-            log.info(
-                "Connected to Ftrack server. Running actions session"
-            )
-            try:
-                self.bool_action_server_running = True
+
+            printed_ftrack_error = False
+
+            # Run backup thread which does not requeire mongo to work
+            if self.thread_socket_server is None:
+                if failed_count < max_fail_count:
+                    self.thread_socket_server = socket_thread.SocketThread(
+                        thread_name, thread_port, subprocess_path
+                    )
+                    self.thread_socket_server.start()
+                    self.bool_action_thread_running = True
+                    self.set_menu_visibility()
+
+                elif failed_count == max_fail_count:
+                    log.warning((
+                        "Action server failed {} times."
+                        " I'll try to run again {}s later"
+                    ).format(
+                        str(max_fail_count), str(wait_time_after_max_fail))
+                    )
+                    failed_count += 1
+
+                elif ((
+                    datetime.datetime.now() - last_failed
+                ).seconds > wait_time_after_max_fail):
+                    failed_count = 0
+
+            # If thread failed test Ftrack and Mongo connection
+            elif not self.thread_socket_server.isAlive():
+                self.thread_socket_server.join()
+                self.thread_socket_server = None
+                ftrack_accessible = False
+
+                self.bool_action_thread_running = False
                 self.set_menu_visibility()
-                self.action_server.run_server()
-                if self.bool_action_thread_running:
-                    log.debug("Ftrack action server has stopped")
-            except Exception:
-                log.warning(
-                    "Ftrack Action server crashed. Trying to connect again",
-                    exc_info=True
-                )
-            self.bool_action_server_running = False
-            self.set_menu_visibility()
-            first_check = True
+
+                _last_failed = datetime.datetime.now()
+                delta_time = (_last_failed - last_failed).seconds
+                if delta_time < min_fail_seconds:
+                    failed_count += 1
+                else:
+                    failed_count = 0
+                last_failed = _last_failed
+
+            time.sleep(1)
 
         self.bool_action_thread_running = False
+        self.bool_action_server_running = False
+        self.set_menu_visibility()
 
     def reset_action_server(self):
         self.stop_action_server()
@@ -126,16 +197,18 @@ class FtrackModule:
 
     def stop_action_server(self):
         try:
-            self.bool_action_thread_running = False
-            self.action_server.stop_session()
+            self.bool_action_server_running = False
+            if self.thread_socket_server is not None:
+                self.thread_socket_server.stop()
+                self.thread_socket_server.join()
+                self.thread_socket_server = None
+
             if self.thread_action_server is not None:
                 self.thread_action_server.join()
                 self.thread_action_server = None
 
             log.info("Ftrack action server was forced to stop")
 
-            self.bool_action_server_running = False
-            self.set_menu_visibility()
         except Exception:
             log.warning(
                 "Error has happened during Killing action server",
@@ -201,9 +274,9 @@ class FtrackModule:
                 self.stop_timer_thread()
             return
 
-        self.aRunActionS.setVisible(not self.bool_action_thread_running)
+        self.aRunActionS.setVisible(not self.bool_action_server_running)
         self.aResetActionS.setVisible(self.bool_action_thread_running)
-        self.aStopActionS.setVisible(self.bool_action_thread_running)
+        self.aStopActionS.setVisible(self.bool_action_server_running)
 
         if self.bool_timer_event is False:
             self.start_timer_thread()
@@ -233,10 +306,22 @@ class FtrackModule:
         except Exception as e:
             log.error("During Killing Timer event server: {0}".format(e))
 
+    def changed_user(self):
+        self.stop_action_server()
+        credentials.set_env()
+        self.validate()
+
     def process_modules(self, modules):
         if 'TimersManager' in modules:
             self.timer_manager = modules['TimersManager']
             self.timer_manager.add_module(self)
+
+        if "UserModule" in modules:
+            credentials.USER_GETTER = modules["UserModule"].get_user
+            modules["UserModule"].register_callback_on_user_change(
+                self.changed_user
+            )
+
 
     def start_timer_manager(self, data):
         if self.thread_timer is not None:
@@ -262,7 +347,7 @@ class FtrackEventsThread(QtCore.QThread):
 
     def __init__(self, parent):
         super(FtrackEventsThread, self).__init__()
-        cred = credentials._get_credentials()
+        cred = credentials.get_credentials()
         self.username = cred['username']
         self.user = None
         self.last_task = None

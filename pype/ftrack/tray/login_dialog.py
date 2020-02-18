@@ -204,11 +204,11 @@ class Login_Dialog_ui(QtWidgets.QWidget):
             self.setError("{0} {1}".format(msg, " and ".join(missing)))
             return
 
-        verification = credentials._check_credentials(username, apiKey)
+        verification = credentials.check_credentials(username, apiKey)
 
         if verification:
-            credentials._save_credentials(username, apiKey, self.is_event)
-            credentials._set_env(username, apiKey)
+            credentials.save_credentials(username, apiKey, self.is_event)
+            credentials.set_env(username, apiKey)
             if self.parent is not None:
                 self.parent.loginChange()
             self._close_widget()
@@ -304,11 +304,11 @@ class Login_Dialog_ui(QtWidgets.QWidget):
             self._login_server_thread.start(url)
             return
 
-        verification = credentials._check_credentials(username, apiKey)
+        verification = credentials.check_credentials(username, apiKey)
 
         if verification is True:
-            credentials._save_credentials(username, apiKey, self.is_event)
-            credentials._set_env(username, apiKey)
+            credentials.save_credentials(username, apiKey, self.is_event)
+            credentials.set_env(username, apiKey)
             if self.parent is not None:
                 self.parent.loginChange()
             self._close_widget()

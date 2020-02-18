@@ -1,6 +1,6 @@
 from pype import api as pype
 from pypeapp import Anatomy, config
-
+import nuke
 
 log = pype.Logger().get_logger(__name__, "nuke")
 
@@ -28,7 +28,7 @@ def get_node_dataflow_preset(**kwarg):
     families = kwarg.get("families", [])
     preset = kwarg.get("preset", None)  # omit < 2.0.0v
 
-    assert any([host, cls]), log.error(
+    assert any([host, cls]), nuke.message(
         "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
 
     nuke_dataflow = get_dataflow_preset().get(str(host), None)
@@ -56,8 +56,10 @@ def get_node_colorspace_preset(**kwarg):
     families = kwarg.get("families", [])
     preset = kwarg.get("preset", None)  # omit < 2.0.0v
 
-    assert any([host, cls]), log.error(
-            "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__))
+    if not any([host, cls]):
+        msg = "`{}`: Missing mandatory kwargs `host`, `cls`".format(__file__)
+        log.error(msg)
+        nuke.message(msg)
 
     nuke_colorspace = get_colorspace_preset().get(str(host), None)
     nuke_colorspace_node = nuke_colorspace.get(str(cls), None)

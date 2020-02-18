@@ -15,9 +15,10 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
     hosts = ["nuke", "nukeassist"]
 
     def process(self, context):
-
-        asset_data = io.find_one({"type": "asset",
-                                  "name": api.Session["AVALON_ASSET"]})
+        asset_data = io.find_one({
+            "type": "asset",
+            "name": api.Session["AVALON_ASSET"]
+        })
 
         self.log.debug("asset_data: {}".format(asset_data["data"]))
         instances = []
@@ -27,12 +28,15 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
         self.log.debug("nuke.allNodes(): {}".format(nuke.allNodes()))
         for node in nuke.allNodes():
 
+            if node.Class() in ["Viewer", "Dot"]:
+                continue
+
             try:
                 if node["disable"].value():
                     continue
             except Exception as E:
                 self.log.warning(E)
-                
+
 
             # get data from avalon knob
             self.log.debug("node[name]: {}".format(node['name'].value()))
@@ -86,11 +90,13 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                 node.end()
 
             family = avalon_knob_data["family"]
-            families = avalon_knob_data.get("families")
-            if families:
-                families = [families]
+            families = list()
+            families_ak = avalon_knob_data.get("families")
+
+            if families_ak:
+                families.append(families_ak)
             else:
-                families = [family]
+                families.append(family)
 
             # Get format
             format = root['format'].value()
@@ -100,7 +106,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             if node.Class() not in "Read":
                 if "render" not in node.knobs().keys():
-                    families.insert(0, family)
+                    pass
                 elif node["render"].value():
                     self.log.info("flagged for render")
                     add_family = "render.local"

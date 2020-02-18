@@ -162,6 +162,7 @@ def on_open(_):
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
     lib.validate_fps()
+    lib.fix_incompatible_containers()
 
     if any_outdated():
         log.warning("Scene has outdated content.")

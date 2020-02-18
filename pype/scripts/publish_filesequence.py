@@ -1,10 +1,22 @@
 """This module is used for command line publishing of image sequences."""
 
 import os
+import sys
+import argparse
 import logging
 import subprocess
 import platform
-from shutil import which
+
+try:
+    from shutil import which
+except ImportError:
+    # we are in python < 3.3
+    def which(command):
+        path = os.getenv('PATH')
+        for p in path.split(os.path.pathsep):
+            p = os.path.join(p, command)
+            if os.path.exists(p) and os.access(p, os.X_OK):
+                return p
 
 handler = logging.basicConfig()
 log = logging.getLogger("Publish Image Sequences")
@@ -14,7 +26,6 @@ error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
 
 
 def __main__():
-    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument("--paths",
                         nargs="*",
@@ -34,7 +45,11 @@ def __main__():
     print("Running pype ...")
     auto_pype_root = os.path.dirname(os.path.abspath(__file__))
     auto_pype_root = os.path.abspath(auto_pype_root + "../../../../..")
+
     auto_pype_root = os.environ.get('PYPE_ROOT') or auto_pype_root
+    if os.environ.get('PYPE_ROOT'):
+        print("Got Pype location from environment: {}".format(
+            os.environ.get('PYPE_ROOT')))
 
     pype_command = "pype.ps1"
     if platform.system().lower() == "linux":
@@ -60,7 +75,7 @@ def __main__():
     print("Set pype root to: {}".format(pype_root))
     print("Paths: {}".format(kwargs.paths or [os.getcwd()]))
 
-    paths = kwargs.paths or [os.getcwd()]
+    paths = kwargs.paths or [os.environ.get("PYPE_METADATA_FILE")] or [os.getcwd()]  # noqa
 
     args = [
         os.path.join(pype_root, pype_command),

@@ -236,6 +236,7 @@ class SyncEntitiesFactory:
         " from TypedContext where project_id is \"{}\""
     )
     ignore_custom_attr_key = "avalon_ignore_sync"
+    ignore_entity_types = ["milestone"]
 
     report_splitter = {"type": "label", "value": "---"}
 
@@ -314,6 +315,9 @@ class SyncEntitiesFactory:
             self.log.warning(msg)
             return {"success": False, "message": msg}
 
+        self.log.debug((
+            "*** Synchronization initialization started <{}>."
+        ).format(project_full_name))
         # Check if `avalon_mongo_id` custom attribute exist or is accessible
         if CustAttrIdKey not in ft_project["custom_attributes"]:
             items = []
@@ -363,7 +367,10 @@ class SyncEntitiesFactory:
             parent_id = entity["parent_id"]
             entity_type = entity.entity_type
             entity_type_low = entity_type.lower()
-            if entity_type_low == "task":
+            if entity_type_low in self.ignore_entity_types:
+                continue
+
+            elif entity_type_low == "task":
                 entities_dict[parent_id]["tasks"].append(entity["name"])
                 continue
 
@@ -699,7 +706,7 @@ class SyncEntitiesFactory:
                 if ca_ent_type == "show":
                     avalon_attrs[ca_ent_type][key] = cust_attr["default"]
                     avalon_attrs_ca_id[ca_ent_type][key] = cust_attr["id"]
-                else:
+                elif ca_ent_type == "task":
                     obj_id = cust_attr["object_type_id"]
                     avalon_attrs[obj_id][key] = cust_attr["default"]
                     avalon_attrs_ca_id[obj_id][key] = cust_attr["id"]
@@ -708,7 +715,7 @@ class SyncEntitiesFactory:
             if ca_ent_type == "show":
                 attrs_per_entity_type[ca_ent_type][key] = cust_attr["default"]
                 attrs_per_entity_type_ca_id[ca_ent_type][key] = cust_attr["id"]
-            else:
+            elif ca_ent_type == "task":
                 obj_id = cust_attr["object_type_id"]
                 attrs_per_entity_type[obj_id][key] = cust_attr["default"]
                 attrs_per_entity_type_ca_id[obj_id][key] = cust_attr["id"]
@@ -1719,7 +1726,11 @@ class SyncEntitiesFactory:
         self.avalon_project_id = new_id
 
         self._avalon_ents_by_id[str(new_id)] = project_item
+        if self._avalon_ents_by_ftrack_id is None:
+            self._avalon_ents_by_ftrack_id = {}
         self._avalon_ents_by_ftrack_id[self.ft_project_id] = str(new_id)
+        if self._avalon_ents_by_name is None:
+            self._avalon_ents_by_name = {}
         self._avalon_ents_by_name[project_item["name"]] = str(new_id)
 
         self.create_list.append(project_item)
@@ -1988,7 +1999,7 @@ class SyncEntitiesFactory:
                 vis_par = ent["data"]["visualParent"]
                 if (
                     vis_par is not None and
-                    str(vis_par) in self.deleted_entities
+                    str(vis_par) in _deleted_entities
                 ):
                     continue
                 _ready.append(mongo_id)

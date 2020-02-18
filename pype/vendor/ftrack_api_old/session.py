@@ -16,6 +16,7 @@ import hashlib
 import tempfile
 import threading
 import atexit
+import warnings
 
 import requests
 import requests.auth
@@ -42,7 +43,13 @@ import ftrack_api_old.structure.origin
 import ftrack_api_old.structure.entity_id
 import ftrack_api_old.accessor.server
 import ftrack_api_old._centralized_storage_scenario
+import ftrack_api_old.logging
 from ftrack_api_old.logging import LazyLogMessage as L
+
+try:
+    from weakref import WeakMethod
+except ImportError:
+    from ftrack_api_old._weakref import WeakMethod
 
 
 class SessionAuthentication(requests.auth.AuthBase):
@@ -69,7 +76,7 @@ class Session(object):
     def __init__(
         self, server_url=None, api_key=None, api_user=None, auto_populate=True,
         plugin_paths=None, cache=None, cache_key_maker=None,
-        auto_connect_event_hub=True, schema_cache_path=None,
+        auto_connect_event_hub=None, schema_cache_path=None,
         plugin_arguments=None
     ):
         '''Initialise session.
@@ -233,7 +240,8 @@ class Session(object):
             self._api_key
         )
 
-        if auto_connect_event_hub:
+        self._auto_connect_event_hub_thread = None
+        if auto_connect_event_hub in (None, True):
             # Connect to event hub in background thread so as not to block main
             # session usage waiting for event hub connection.
             self._auto_connect_event_hub_thread = threading.Thread(
@@ -242,8 +250,14 @@ class Session(object):
             self._auto_connect_event_hub_thread.daemon = True
             self._auto_connect_event_hub_thread.start()
 
+        # To help with migration from auto_connect_event_hub default changing
+        # from True to False.
+        self._event_hub._deprecation_warning_auto_connect = (
+            auto_connect_event_hub is None
+        )
+
         # Register to auto-close session on exit.
-        atexit.register(self.close)
+        atexit.register(WeakMethod(self.close))
 
         self._plugin_paths = plugin_paths
         if self._plugin_paths is None:
@@ -271,6 +285,15 @@ class Session(object):
         ftrack_api_old._centralized_storage_scenario.register(self)
 
         self._configure_locations()
+        self.event_hub.publish(
+            ftrack_api_old.event.base.Event(
+                topic='ftrack.api.session.ready',
+                data=dict(
+                    session=self
+                )
+            ),
+            synchronous=True
+        )
 
     def __enter__(self):
         '''Return session as context manager.'''
@@ -389,7 +412,8 @@ class Session(object):
 
         try:
             self.event_hub.disconnect()
-            self._auto_connect_event_hub_thread.join()
+            if self._auto_connect_event_hub_thread:
+                self._auto_connect_event_hub_thread.join()
         except ftrack_api_old.exception.EventHubConnectionError:
             pass
 
@@ -427,6 +451,16 @@ class Session(object):
 
         # Re-configure certain session aspects that may be dependant on cache.
         self._configure_locations()
+
+        self.event_hub.publish(
+            ftrack_api_old.event.base.Event(
+                topic='ftrack.api.session.reset',
+                data=dict(
+                    session=self
+                )
+            ),
+            synchronous=True
+        )
 
     def auto_populating(self, auto_populate):
         '''Temporarily set auto populate to *auto_populate*.
@@ -508,7 +542,7 @@ class Session(object):
                 'entity_key': entity.get('id')
             })
 
-        result = self._call(
+        result = self.call(
             [payload]
         )
 
@@ -790,12 +824,13 @@ class Session(object):
         }]
 
         # TODO: When should this execute? How to handle background=True?
-        results = self._call(batch)
+        results = self.call(batch)
 
         # Merge entities into local cache and return merged entities.
         data = []
+        merged = dict()
         for entity in results[0]['data']:
-            data.append(self.merge(entity))
+            data.append(self._merge_recursive(entity, merged))
 
         return data, results[0]['metadata']
 
@@ -855,6 +890,48 @@ class Session(object):
 
         else:
             return value
+
+    def _merge_recursive(self, entity, merged=None):
+        '''Merge *entity* and all its attributes recursivly.'''
+        log_debug = self.logger.isEnabledFor(logging.DEBUG)
+
+        if merged is None:
+            merged = {}
+
+        attached = self.merge(entity, merged)
+
+        for attribute in entity.attributes:
+            # Remote attributes.
+            remote_value = attribute.get_remote_value(entity)
+
+            if isinstance(
+                remote_value,
+                (
+                    ftrack_api_old.entity.base.Entity,
+                    ftrack_api_old.collection.Collection,
+                    ftrack_api_old.collection.MappedCollectionProxy
+                )
+            ):
+                log_debug and self.logger.debug(
+                    'Merging remote value for attribute {0}.'.format(attribute)
+                )
+
+                if isinstance(remote_value, ftrack_api_old.entity.base.Entity):
+                    self._merge_recursive(remote_value, merged=merged)
+
+                elif isinstance(
+                    remote_value, ftrack_api_old.collection.Collection
+                ):
+                    for entry in remote_value:
+                        self._merge_recursive(entry, merged=merged)
+
+                elif isinstance(
+                    remote_value, ftrack_api_old.collection.MappedCollectionProxy
+                ):
+                    for entry in remote_value.collection:
+                        self._merge_recursive(entry, merged=merged)
+
+        return attached
 
     def _merge_entity(self, entity, merged=None):
         '''Merge *entity* into session returning merged entity.
@@ -1185,7 +1262,7 @@ class Session(object):
 
         # Process batch.
         if batch:
-            result = self._call(batch)
+            result = self.call(batch)
 
             # Clear recorded operations.
             self.recorded_operations.clear()
@@ -1260,7 +1337,7 @@ class Session(object):
 
     def _fetch_server_information(self):
         '''Return server information.'''
-        result = self._call([{'action': 'query_server_information'}])
+        result = self.call([{'action': 'query_server_information'}])
         return result[0]
 
     def _discover_plugins(self, plugin_arguments=None):
@@ -1362,7 +1439,7 @@ class Session(object):
                 'Loading schemas from server due to hash not matching.'
                 'Local: {0!r} != Server: {1!r}', local_schema_hash, server_hash
             ))
-            schemas = self._call([{'action': 'query_schemas'}])[0]
+            schemas = self.call([{'action': 'query_schemas'}])[0]
 
             if schema_cache_path:
                 try:
@@ -1525,8 +1602,24 @@ class Session(object):
             synchronous=True
         )
 
+    @ftrack_api_old.logging.deprecation_warning(
+        'Session._call is now available as public method Session.call. The '
+        'private method will be removed in version 2.0.'
+    )
     def _call(self, data):
-        '''Make request to server with *data*.'''
+        '''Make request to server with *data* batch describing the actions.
+
+        .. note::
+
+            This private method is now available as public method
+            :meth:`entity_reference`. This alias remains for backwards
+            compatibility, but will be removed in version 2.0.
+
+        '''
+        return self.call(data)
+
+    def call(self, data):
+        '''Make request to server with *data* batch describing the actions.'''
         url = self._server_url + '/api'
         headers = {
             'content-type': 'application/json',
@@ -1553,7 +1646,7 @@ class Session(object):
                 'Server reported error in unexpected format. Raw error was: {0}'
                 .format(response.text)
             )
-            self.logger.error(error_message)
+            self.logger.exception(error_message)
             raise ftrack_api_old.exception.ServerError(error_message)
 
         else:
@@ -1562,7 +1655,7 @@ class Session(object):
                 error_message = 'Server reported error: {0}({1})'.format(
                     result['exception'], result['content']
                 )
-                self.logger.error(error_message)
+                self.logger.exception(error_message)
                 raise ftrack_api_old.exception.ServerError(error_message)
 
         return result
@@ -1620,12 +1713,12 @@ class Session(object):
             if "entity_data" in data:
                 for key, value in data["entity_data"].items():
                     if isinstance(value, ftrack_api_old.entity.base.Entity):
-                        data["entity_data"][key] = self._entity_reference(value)
+                        data["entity_data"][key] = self.entity_reference(value)
 
             return data
 
         if isinstance(item, ftrack_api_old.entity.base.Entity):
-            data = self._entity_reference(item)
+            data = self.entity_reference(item)
 
             with self.auto_populating(True):
 
@@ -1646,14 +1739,15 @@ class Session(object):
                             value = attribute.get_local_value(item)
 
                     elif entity_attribute_strategy == 'persisted_only':
-                        value = attribute.get_remote_value(item)
+                        if not attribute.computed:
+                            value = attribute.get_remote_value(item)
 
                     if value is not ftrack_api_old.symbol.NOT_SET:
                         if isinstance(
                             attribute, ftrack_api_old.attribute.ReferenceAttribute
                         ):
                             if isinstance(value, ftrack_api_old.entity.base.Entity):
-                                value = self._entity_reference(value)
+                                value = self.entity_reference(value)
 
                         data[attribute.name] = value
 
@@ -1668,14 +1762,14 @@ class Session(object):
         if isinstance(item, ftrack_api_old.collection.Collection):
             data = []
             for entity in item:
-                data.append(self._entity_reference(entity))
+                data.append(self.entity_reference(entity))
 
             return data
 
         raise TypeError('{0!r} is not JSON serializable'.format(item))
 
-    def _entity_reference(self, entity):
-        '''Return reference to *entity*.
+    def entity_reference(self, entity):
+        '''Return entity reference that uniquely identifies *entity*.
 
         Return a mapping containing the __entity_type__ of the entity along with
         the key, value pairs that make up it's primary key.
@@ -1688,6 +1782,26 @@ class Session(object):
             reference.update(ftrack_api_old.inspection.primary_key(entity))
 
         return reference
+
+    @ftrack_api_old.logging.deprecation_warning(
+        'Session._entity_reference is now available as public method '
+        'Session.entity_reference. The private method will be removed '
+        'in version 2.0.'
+    )
+    def _entity_reference(self, entity):
+        '''Return entity reference that uniquely identifies *entity*.
+
+        Return a mapping containing the __entity_type__ of the entity along
+        with the key, value pairs that make up it's primary key.
+
+        .. note::
+
+            This private method is now available as public method
+            :meth:`entity_reference`. This alias remains for backwards
+            compatibility, but will be removed in version 2.0.
+
+        '''
+        return self.entity_reference(entity)
 
     def decode(self, string):
         '''Return decoded JSON *string* as Python object.'''
@@ -2016,6 +2130,10 @@ class Session(object):
 
         return availabilities
 
+    @ftrack_api_old.logging.deprecation_warning(
+        'Session.delayed_job has been deprecated in favour of session.call. '
+        'Please refer to the release notes for more information.'
+    )
     def delayed_job(self, job_type):
         '''Execute a delayed job on the server, a `ftrack.entity.job.Job` is returned.
 
@@ -2033,7 +2151,7 @@ class Session(object):
         }
 
         try:
-            result = self._call(
+            result = self.call(
                 [operation]
             )[0]
 
@@ -2070,7 +2188,7 @@ class Session(object):
             )
 
         try:
-            result = self._call([operation])
+            result = self.call([operation])
 
         except ftrack_api_old.exception.ServerError as error:
             # Raise informative error if the action is not supported.
@@ -2172,7 +2290,7 @@ class Session(object):
         }
 
         try:
-            result = self._call([operation])
+            result = self.call([operation])
 
         except ftrack_api_old.exception.ServerError as error:
             # Raise informative error if the action is not supported.
@@ -2212,7 +2330,7 @@ class Session(object):
         }
 
         try:
-            result = self._call([operation])
+            result = self.call([operation])
 
         except ftrack_api_old.exception.ServerError as error:
             # Raise informative error if the action is not supported.
@@ -2258,7 +2376,7 @@ class Session(object):
             )
 
         try:
-            self._call(operations)
+            self.call(operations)
 
         except ftrack_api_old.exception.ServerError as error:
             # Raise informative error if the action is not supported.
@@ -2306,7 +2424,7 @@ class Session(object):
             )
 
         try:
-            self._call(operations)
+            self.call(operations)
         except ftrack_api_old.exception.ServerError as error:
             # Raise informative error if the action is not supported.
             if 'Invalid action u\'send_review_session_invite\'' in error.message:

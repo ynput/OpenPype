@@ -6,9 +6,6 @@ from pype import api as pype
 import nuke
 
 
-log = pype.Logger().get_logger(__name__, "nuke")
-
-
 class CrateRead(avalon.nuke.Creator):
     # change this to template preset
     name = "ReadCopy"
@@ -37,7 +34,9 @@ class CrateRead(avalon.nuke.Creator):
         nodes = self.nodes
 
         if not nodes or len(nodes) == 0:
-            nuke.message('Please select Read node')
+            msg = "Please select Read node"
+            self.log.error(msg)
+            nuke.message(msg)
         else:
             count_reads = 0
             for node in nodes:
@@ -49,7 +48,9 @@ class CrateRead(avalon.nuke.Creator):
                 count_reads += 1
 
             if count_reads < 1:
-                nuke.message('Please select Read node')
+                msg = "Please select Read node"
+                self.log.error(msg)
+                nuke.message(msg)
         return
 
     def change_read_node(self, name, node, data):

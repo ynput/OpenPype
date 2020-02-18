@@ -263,7 +263,6 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             # get custom attributes of the shot
             if instance.data.get("main"):
                 in_info['custom_attributes'] = {
-                    'handles': int(instance.data.get('handles', 0)),
                     "handleStart": handle_start,
                     "handleEnd": handle_end,
                     "frameStart": instance.data["frameStart"],
