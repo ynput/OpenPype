@@ -27,7 +27,7 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             msg = "Intent is set to `{}` and was added to comment.".format(
                 intent
             )
-            comment = note_with_intent_template.format(**{
+            comment = self.note_with_intent_template.format(**{
                 "intent": intent,
                 "comment": comment
             })
