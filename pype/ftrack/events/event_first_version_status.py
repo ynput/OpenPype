@@ -58,7 +58,12 @@ class FirstVersionStatus(BaseEvent):
                 "name": name,
                 "status": status
             })
+
         self.task_status_map = valid_task_status_map
+        if not self.task_status_map:
+            self.log.warning((
+                "Event handler `{}` don't have set presets."
+            ).format(self.__class__.__name__))
 
         return result
 
@@ -123,12 +128,15 @@ class FirstVersionStatus(BaseEvent):
                     status["name"].lower(): status for status in statuses
                 }
 
+            ent_path = "/".join([ent["name"] for ent in task_entity["link"]])
+
             statuses_by_low_name = statuses_per_type_id[type_id]
             new_status = statuses_by_low_name.get(found_item["status"])
             if not new_status:
+                self.log.warning("Status `{}` was not found for `{}`.".format(
+                    found_item["status"], ent_path
+                ))
                 continue
-
-            ent_path = "/".join([ent["name"] for ent in task_entity["link"]])
 
             try:
                 task_entity["status"] = new_status
