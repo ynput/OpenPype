@@ -102,15 +102,14 @@ class DeleteOldVersions(BaseAction):
         items.append({
             "type": "label",
             "value": (
-                "<i><b>NOTE:</b> We do recommend to keep 2"
-                " versions (even if default is 1).</i>"
+                "<i><b>NOTE:</b> We do recommend to keep 2 versions.</i>"
             )
         })
         items.append({
             "type": "number",
             "name": "last_versions_count",
             "label": "Versions",
-            "value": 1
+            "value": 2
         })
 
         items.append(self.splitter_item)
