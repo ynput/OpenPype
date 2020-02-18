@@ -10,6 +10,8 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.4999
     label = "Integrate Ftrack note"
     families = ["ftrack"]
+    # Can be set in presets (Allows only `intent` and `comment` keys)
+    note_with_intent_template = "{intent}: {comment}"
     optional = True
 
     def process(self, instance):
@@ -25,7 +27,10 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             msg = "Intent is set to `{}` and was added to comment.".format(
                 intent
             )
-            comment = "{}: {}".format(intent, comment)
+            comment = note_with_intent_template.format(**{
+                "intent": intent,
+                "comment": comment
+            })
         else:
             msg = "Intent is not set."
         self.log.debug(msg)
