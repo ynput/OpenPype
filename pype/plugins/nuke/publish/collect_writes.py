@@ -44,7 +44,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         frame_length = int(
             last_frame - first_frame + 1
         )
-        
+
         if node["use_limit"].getValue():
             handles = 0
             first_frame = int(node["first"].getValue())
@@ -89,13 +89,22 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                     frame_start_str = "%0{}d".format(
                         len(str(last_frame))) % first_frame
                     representation['frameStart'] = frame_start_str
+
+                    # in case slate is expected and not yet rendered
+                    self.log.debug("_ frame_length: {}".format(frame_length))
+                    self.log.debug(
+                        "_ collected_frames_len: {}".format(
+                            collected_frames_len))
+                    # this will only run if slate frame is not already
+                    # rendered from previews publishes
                     if "slate" in instance.data["families"] \
-                            and (frame_length != collected_frames_len):
+                            and (frame_length == collected_frames_len):
                         frame_slate_str = "%0{}d".format(
                             len(str(last_frame))) % (first_frame - 1)
                         slate_frame = collected_frames[0].replace(
                             frame_start_str, frame_slate_str)
                         collected_frames.insert(0, slate_frame)
+
                 representation['files'] = collected_frames
                 instance.data["representations"].append(representation)
             except Exception:
