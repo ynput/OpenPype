@@ -18,7 +18,7 @@ class FirstVersionStatus(BaseEvent):
         "key": "task",
         # speicification of name
         "name": "compositing",
-        # Status to set to the task
+        # Status to set to the asset version
         "status": "Blocking"
     }]
 
@@ -84,15 +84,15 @@ class FirstVersionStatus(BaseEvent):
         joined_entity_ids = ",".join(
             ["\"{}\"".format(entity_id) for entity_id in entity_ids]
         )
-        asset_verisons = session.query(
+        asset_versions = session.query(
             "AssetVersion where id in ({})".format(joined_entity_ids)
         ).all()
 
-        statuses_per_type_id = {}
+        asset_version_statuses = None
 
         project_schema = None
-        for asset_verison in asset_verisons:
-            task_entity = asset_verison["task"]
+        for asset_version in asset_versions:
+            task_entity = asset_version["task"]
             found_item = None
             for item in self.task_status_map:
                 if (
@@ -117,29 +117,31 @@ class FirstVersionStatus(BaseEvent):
                 project_schema = task_entity["project"]["project_schema"]
 
             # Get all available statuses for Task
-            type_id = task_entity["type_id"]
-            if type_id not in statuses_per_type_id:
-                statuses = project_schema.get_statuses(
-                    "Task", task_entity["type_id"]
-                )
+            if asset_version_statuses is None:
+                statuses = project_schema.get_statuses("AssetVersion")
 
                 # map lowered status name with it's object
-                statuses_per_type_id[type_id] = {
+                asset_version_statuses = {
                     status["name"].lower(): status for status in statuses
                 }
 
-            ent_path = "/".join([ent["name"] for ent in task_entity["link"]])
+            ent_path = "/".join(
+                [ent["name"] for ent in task_entity["link"]] +
+                [
+                    str(asset_version["asset"]["name"]),
+                    str(asset_version["version"])
+                ]
+            )
 
-            statuses_by_low_name = statuses_per_type_id[type_id]
-            new_status = statuses_by_low_name.get(found_item["status"])
+            new_status = asset_version_statuses.get(found_item["status"])
             if not new_status:
-                self.log.warning("Status `{}` was not found for `{}`.".format(
-                    found_item["status"], ent_path
-                ))
+                self.log.warning(
+                    "AssetVersion doesn't have status `{}`."
+                ).format(found_item["status"])
                 continue
 
             try:
-                task_entity["status"] = new_status
+                asset_version["status"] = new_status
                 session.commit()
                 self.log.debug("[ {} ] Status updated to [ {} ]".format(
                     ent_path, new_status['name']
