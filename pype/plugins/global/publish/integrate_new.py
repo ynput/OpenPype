@@ -453,7 +453,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Remove old representations if there are any (before insertion of new)
         if existing_repres:
             repre_ids_to_remove = []
-            for repre in existing_repres.values():
+            for repre in existing_repres:
                 repre_ids_to_remove.append(repre["_id"])
             io.delete_many({"_id": {"$in": repre_ids_to_remove}})
 
