@@ -8,20 +8,6 @@ from avalon.vendor import requests, clique
 
 import pyblish.api
 
-# regex for finding frame number in string
-R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
-
-# mapping of instance properties to be transfered to new instance for every
-# specified family
-instance_transfer = {
-    "slate": ["slateFrame"],
-    "review": ["lutPath"],
-    "render.farm": ["bakeScriptPath", "bakeRenderPath", "bakeWriteNodeName"]
-    }
-
-# list of family names to transfer to new family if present
-families_transfer = ["render2d", "ftrack", "slate"]
-
 
 def _get_script():
     """Get path to the image sequence script"""
@@ -145,9 +131,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         - publishJobState (str, Optional): "Active" or "Suspended"
             This defaults to "Suspended"
 
-    This requires a "frameStart" and "frameEnd" to be present in instance.data
-    or in context.data.
-
     """
 
     label = "Submit image sequence jobs to Deadline or Muster"
@@ -174,6 +157,20 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     # pool used to do the publishing job
     deadline_pool = ""
+
+    # regex for finding frame number in string
+    R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
+
+    # mapping of instance properties to be transfered to new instance for every
+    # specified family
+    instance_transfer = {
+        "slate": ["slateFrame"],
+        "review": ["lutPath"],
+        "render.farm": ["bakeScriptPath", "bakeRenderPath", "bakeWriteNodeName"]
+        }
+
+    # list of family names to transfer to new family if present
+    families_transfer = ["render2d", "ftrack", "slate"]
 
     def _submit_deadline_post_job(self, instance, job):
         """
@@ -289,12 +286,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         resource_files = []
         r_filename = os.path.basename(
             representation.get("files")[0])  # first file
-        op = re.search(R_FRAME_NUMBER, r_filename)
+        op = re.search(self.R_FRAME_NUMBER, r_filename)
         pre = r_filename[:op.start("frame")]
         post = r_filename[op.end("frame"):]
         assert op is not None, "padding string wasn't found"
         for frame in list(r_col):
-            fn = re.search(R_FRAME_NUMBER, frame)
+            fn = re.search(self.R_FRAME_NUMBER, frame)
             # silencing linter as we need to compare to True, not to
             # type
             assert fn is not None, "padding string wasn't found"
@@ -563,18 +560,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         }
 
         # transfer specific families from original instance to new render
-        if "render2d" in instance.data.get("families", []):
-            instance_skeleton_data["families"] += ["render2d"]
-
-        if "ftrack" in instance.data.get("families", []):
-            instance_skeleton_data["families"] += ["ftrack"]
-
-        if "slate" in instance.data.get("families", []):
-            instance_skeleton_data["families"] += ["slate"]
+        for item in self.families_transfer:
+            if item in instance.data.get("families", []):
+                instance_skeleton_data["families"] += [item]
 
         # transfer specific properties from original instance based on
         # mapping dictionary `instance_transfer`
-        for key, values in instance_transfer.items():
+        for key, values in self.instance_transfer.items():
             if key in instance.data.get("families", []):
                 for v in values:
                     instance_skeleton_data[v] = instance.data.get(v)
