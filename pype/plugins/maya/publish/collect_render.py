@@ -59,6 +59,7 @@ R_LAYER_TOKEN = re.compile(
     r'.*%l.*|.*<layer>.*|.*<renderlayer>.*', re.IGNORECASE)
 R_AOV_TOKEN = re.compile(r'.*%a.*|.*<aov>.*|.*<renderpass>.*', re.IGNORECASE)
 R_SUBSTITUTE_AOV_TOKEN = re.compile(r'%a|<aov>|<renderpass>', re.IGNORECASE)
+R_REMOVE_AOV_TOKEN = re.compile(r'_%a|_<aov>|_<renderpass>', re.IGNORECASE)
 R_SUBSTITUTE_LAYER_TOKEN = re.compile(
     r'%l|<layer>|<renderlayer>', re.IGNORECASE)
 R_SUBSTITUTE_CAMERA_TOKEN = re.compile(r'%c|<camera>', re.IGNORECASE)
@@ -160,6 +161,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             # return all expected files for all cameras and aovs in given
             # frame range
             exp_files = ExpectedFiles().get(renderer, layer_name)
+            assert exp_files, ("no file names were generated, this is bug")
 
             # if we want to attach render to subset, check if we have AOV's
             # in expectedFiles. If so, raise error as we cannot attach AOV
@@ -173,15 +175,31 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             full_exp_files = []
             aov_dict = {}
 
-            for aov, files in exp_files[0].items():
+            # we either get AOVs or just list of files. List of files can
+            # mean two things - there are no AOVs enabled or multipass EXR
+            # is produced. In either case we treat those as `beauty`.
+            if isinstance(exp_files[0], dict):
+                for aov, files in exp_files[0].items():
+                    full_paths = []
+                    for ef in files:
+                        full_path = os.path.join(workspace, "renders", ef)
+                        full_path = full_path.replace("\\", "/")
+                        full_paths.append(full_path)
+                    aov_dict[aov] = full_paths
+            else:
                 full_paths = []
-                for ef in files:
+                for ef in exp_files:
                     full_path = os.path.join(workspace, "renders", ef)
                     full_path = full_path.replace("\\", "/")
                     full_paths.append(full_path)
-                aov_dict[aov] = full_paths
+                aov_dict["beauty"] = full_paths
 
             full_exp_files.append(aov_dict)
+
+            from pprint import pprint
+            print("=" * 40)
+            pprint(full_exp_files)
+            print("=" * 40)
 
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
@@ -363,7 +381,15 @@ class AExpectedFiles:
     def get_aovs(self):
         pass
 
-    def get_files(self):
+    def get_renderer_prefix(self):
+        try:
+            file_prefix = cmds.getAttr(ImagePrefixes[self.renderer])
+        except KeyError:
+            raise UnsupportedRendererException(
+                "Unsupported renderer {}".format(self.renderer))
+        return file_prefix
+
+    def _get_layer_data(self):
         #                      ______________________________________________
         # ____________________/ ____________________________________________/
         # 1 -  get scene name  /__________________/
@@ -381,11 +407,7 @@ class AExpectedFiles:
         # __________________/ ______________________________________________/
         # 3 -  image prefix  /__________________/
         # __________________/
-        try:
-            file_prefix = cmds.getAttr(ImagePrefixes[renderer])
-        except KeyError:
-            raise UnsupportedRendererException(
-                "Unsupported renderer {}".format(renderer))
+        file_prefix = self.get_renderer_prefix()
 
         if not file_prefix:
             raise RuntimeError("Image prefix not set")
@@ -397,6 +419,9 @@ class AExpectedFiles:
         # 4 -  get renderable cameras_____________/
         # __________________/
 
+        # if we have <camera> token in prefix path we'll expect output for
+        # every renderable camera in layer.
+
         renderable_cameras = self.get_renderable_cameras()
         #                    ________________________________________________
         # __________________/ ______________________________________________/
@@ -404,11 +429,11 @@ class AExpectedFiles:
         # __________________/
 
         enabled_aovs = self.get_aovs()
+        from pprint import pprint
+        print("-" * 40)
+        pprint(enabled_aovs)
+        print("-" * 40)
 
-        # if we have <camera> token in prefix path we'll expect output for
-        # every renderable camera in layer.
-
-        expected_files = []
         layer_name = self.layer
         if self.layer.startswith("rs_"):
             layer_name = self.layer[3:]
@@ -417,62 +442,104 @@ class AExpectedFiles:
         frame_step = int(self.get_render_attribute('byFrameStep'))
         padding = int(self.get_render_attribute('extensionPadding'))
 
-        resolved_path = file_prefix
-        if enabled_aovs:
-            aov_file_list = {}
-            for aov in enabled_aovs:
-                for cam in renderable_cameras:
+        scene_data = {
+            "frameStart": start_frame,
+            "frameEnd": end_frame,
+            "frameStep": frame_step,
+            "padding": padding,
+            "cameras": renderable_cameras,
+            "sceneName": scene_name,
+            "layerName": layer_name,
+            "renderer": renderer,
+            "defaultExt": default_ext,
+            "filePrefix": file_prefix,
+            "enabledAOVs": enabled_aovs
+        }
+        return scene_data
 
-                    mappings = (
-                        (R_SUBSTITUTE_SCENE_TOKEN, scene_name),
-                        (R_SUBSTITUTE_LAYER_TOKEN, layer_name),
-                        (R_SUBSTITUTE_CAMERA_TOKEN, cam),
-                        (R_SUBSTITUTE_AOV_TOKEN, aov[0])
-                    )
+    def _generate_single_file_sequence(self, layer_data):
+        expected_files = []
+        file_prefix = layer_data["filePrefix"]
+        for cam in layer_data["cameras"]:
+            mappings = (
+                (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
+                (R_SUBSTITUTE_LAYER_TOKEN, layer_data["layerName"]),
+                (R_SUBSTITUTE_CAMERA_TOKEN, cam),
+                # this is required to remove unfilled aov token, for example
+                # in Redshift
+                (R_REMOVE_AOV_TOKEN, "")
+            )
 
-                    for regex, value in mappings:
-                        file_prefix = re.sub(regex, value, file_prefix)
+            for regex, value in mappings:
+                file_prefix = re.sub(regex, value, file_prefix)
 
-                    aov_files = []
-                    for frame in range(
-                            int(start_frame),
-                            int(end_frame) + 1,
-                            int(frame_step)):
-                        aov_files.append(
-                            '{}.{}.{}'.format(
-                                file_prefix,
-                                str(frame).rjust(padding, "0"),
-                                aov[1]))
+            for frame in range(
+                    int(layer_data["frameStart"]),
+                    int(layer_data["frameEnd"]) + 1,
+                    int(layer_data["frameStep"])):
+                expected_files.append(
+                    '{}.{}.{}'.format(file_prefix,
+                                      str(frame).rjust(
+                                        layer_data["padding"], "0"),
+                                      layer_data["defaultExt"]))
+        return expected_files
 
-                    # if we have more then one renderable camera, append
-                    # camera name to AOV to allow per camera AOVs.
-                    aov_name = aov[0]
-                    if len(renderable_cameras) > 1:
-                        aov_name = "{}_{}".format(aov[0], cam)
+    def _generate_aov_file_sequences(self, layer_data):
+        expected_files = []
+        aov_file_list = {}
+        file_prefix = layer_data["filePrefix"]
+        for aov in layer_data["enabledAOVs"]:
+            for cam in layer_data["cameras"]:
 
-                    aov_file_list[aov_name] = aov_files
-                    file_prefix = resolved_path
-
-            expected_files.append(aov_file_list)
-        else:
-            for cam in renderable_cameras:
                 mappings = (
-                    (R_SUBSTITUTE_SCENE_TOKEN, scene_name),
-                    (R_SUBSTITUTE_LAYER_TOKEN, layer_name),
-                    (R_SUBSTITUTE_CAMERA_TOKEN, cam)
+                    (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
+                    (R_SUBSTITUTE_LAYER_TOKEN, layer_data["layerName"]),
+                    (R_SUBSTITUTE_CAMERA_TOKEN, cam),
+                    (R_SUBSTITUTE_AOV_TOKEN, aov[0])
                 )
 
                 for regex, value in mappings:
                     file_prefix = re.sub(regex, value, file_prefix)
 
+                aov_files = []
                 for frame in range(
-                        int(start_frame),
-                        int(end_frame) + 1,
-                        int(frame_step)):
-                    expected_files.append(
-                        '{}.{}.{}'.format(file_prefix,
-                                          str(frame).rjust(padding, "0"),
-                                          default_ext))
+                        int(layer_data["frameStart"]),
+                        int(layer_data["frameEnd"]) + 1,
+                        int(layer_data["frameStep"])):
+                    aov_files.append(
+                        '{}.{}.{}'.format(
+                            file_prefix,
+                            str(frame).rjust(layer_data["padding"], "0"),
+                            aov[1]))
+
+                # if we have more then one renderable camera, append
+                # camera name to AOV to allow per camera AOVs.
+                aov_name = aov[0]
+                if len(layer_data["cameras"]) > 1:
+                    aov_name = "{}_{}".format(aov[0], cam)
+
+                aov_file_list[aov_name] = aov_files
+                file_prefix = layer_data["filePrefix"]
+
+        expected_files.append(aov_file_list)
+        return expected_files
+
+    def get_files(self):
+        """
+        This method will return list of expected files.
+
+        It will translate render token strings  ('<RenderPass>', etc.) to
+        their values. This task is tricky as every renderer deals with this
+        differently. It depends on `get_aovs()` abstract method implemented
+        for every supported renderer.
+        """
+        layer_data = self._get_layer_data()
+
+        expected_files = []
+        if layer_data.get("enabledAOVs"):
+            expected_files = self._generate_aov_file_sequences(layer_data)
+        else:
+            expected_files = self._generate_single_file_sequence(layer_data)
 
         return expected_files
 
@@ -656,13 +723,53 @@ class ExpectedFilesVray(AExpectedFiles):
 
 class ExpectedFilesRedshift(AExpectedFiles):
 
+    # mapping redshift extension dropdown values to strings
+    ext_mapping = ['iff', 'exr', 'tif', 'png', 'tga', 'jpg']
+
     def __init__(self, layer):
         super(ExpectedFilesRedshift, self).__init__(layer)
         self.renderer = 'redshift'
 
+    def get_renderer_prefix(self):
+        prefix = super(ExpectedFilesRedshift, self).get_renderer_prefix()
+        prefix = "{}_<aov>".format(prefix)
+        return prefix
+
+    def get_files(self):
+        expected_files = super(ExpectedFilesRedshift, self).get_files()
+
+        # we need to add one sequence for plain beauty if AOVs are enabled.
+        # as redshift output beauty without 'beauty' in filename.
+
+        layer_data = self._get_layer_data()
+        if layer_data.get("enabledAOVs"):
+            expected_files[0][u"beauty"] = self._generate_single_file_sequence(layer_data)  # noqa: E501
+
+        return expected_files
+
     def get_aovs(self):
         enabled_aovs = []
-        default_ext = cmds.getAttr('defaultRenderGlobals.imfPluginKey')
+
+        try:
+            if self.maya_is_true(
+                    cmds.getAttr("redshiftOptions.exrForceMultilayer")):
+                # AOVs are merged in mutli-channel file
+                print("*" * 40)
+                print(cmds.getAttr("redshiftOptions.exrForceMultilayer"))
+                print("*" * 40)
+                return enabled_aovs
+        except ValueError:
+            # this occurs when Render Setting windows was not opened yet. In
+            # such case there are no Arnold options created so query for AOVs
+            # will fail. We terminate here as there are no AOVs specified then.
+            # This state will most probably fail later on some Validator
+            # anyway.
+            print("+" * 40)
+            return enabled_aovs
+
+        default_ext = self.ext_mapping[
+            cmds.getAttr('redshiftOptions.imageFormat')
+        ]
         rs_aovs = [n for n in cmds.ls(type='RedshiftAOV')]
 
         # todo: find out how to detect multichannel exr for redshift
@@ -674,7 +781,6 @@ class ExpectedFilesRedshift(AExpectedFiles):
                 enabled = self.maya_is_true(override)
 
             if enabled:
-                # todo: find how redshift set format for AOVs
                 enabled_aovs.append(
                     (
                         cmds.getAttr('%s.name' % aov),

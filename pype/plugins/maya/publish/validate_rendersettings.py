@@ -48,6 +48,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'redshift': 'defaultRenderGlobals.imageFilePrefix'
     }
 
+    ImagePrefixTokens = {
+
+        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass',
+        'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
+        'vray': 'maya/<scene>/<Layer>/<Layer>'
+    }
+
     R_AOV_TOKEN = re.compile(
         r'%a|<aov>|<renderpass>', re.IGNORECASE)
     R_LAYER_TOKEN = re.compile(
@@ -99,26 +106,31 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                           "doesn't have: '<renderlayer>' or "
                           "'<layer>' token".format(prefix))
 
-        if not re.search(cls.R_AOV_TOKEN, prefix):
-            invalid = True
-            cls.log.error("Wrong image prefix [ {} ] - "
-                          "doesn't have: '<renderpass>' or "
-                          "'<aov>' token".format(prefix))
-
         if len(cameras) > 1:
             if not re.search(cls.R_CAMERA_TOKEN, prefix):
                 invalid = True
                 cls.log.error("Wrong image prefix [ {} ] - "
                               "doesn't have: '<camera>' token".format(prefix))
 
+        # renderer specific checks
         if renderer == "vray":
-            if prefix.lower() != cls.VRAY_PREFIX.lower():
-                cls.log.warning("warning: prefix differs from "
-                                "recommended {}".format(cls.VRAY_PREFIX))
+            # no vray checks implemented yet
+            pass
+        elif renderer == "redshift":
+            # no redshift check implemented yet
+            pass
         else:
-            if prefix.lower() != cls.DEFAULT_PREFIX.lower():
-                cls.log.warning("warning: prefix differs from "
-                                "recommended {}".format(cls.DEFAULT_PREFIX))
+            if not re.search(cls.R_AOV_TOKEN, prefix):
+                invalid = True
+                cls.log.error("Wrong image prefix [ {} ] - "
+                              "doesn't have: '<renderpass>' or "
+                              "token".format(prefix))
+
+        # prefix check
+        if prefix.lower() != cls.ImagePrefixTokens[renderer].lower():
+            cls.log.warning("warning: prefix differs from "
+                            "recommended {}".format(
+                                cls.ImagePrefixTokens[renderer]))
 
         if padding != cls.DEFAULT_PADDING:
             invalid = True
@@ -126,21 +138,6 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                 cls.DEFAULT_PADDING, "0" * cls.DEFAULT_PADDING))
 
         return invalid
-
-    @classmethod
-    def get_prefix(cls, renderer):
-        prefix = cls.RENDERER_PREFIX.get(renderer, cls.DEFAULT_PREFIX)
-        # maya.cmds and pymel.core return only default project directory and
-        # not the current one but only default.
-        output_path = os.path.join(
-            mel.eval("workspace -q -rd;"), pm.workspace.fileRules["images"]
-        )
-        # Workfile paths can be configured to have host name in file path.
-        # In this case we want to avoid duplicate folder names.
-        if "maya" in output_path.lower():
-            prefix = prefix.replace("maya/", "")
-
-        return prefix
 
     @classmethod
     def repair(cls, instance):
@@ -156,7 +153,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             node = render_attrs["node"]
             prefix_attr = render_attrs["prefix"]
 
-            fname_prefix = cls.get_prefix(renderer)
+            fname_prefix = cls.ImagePrefixTokens[renderer]
             cmds.setAttr("{}.{}".format(node, prefix_attr),
                          fname_prefix, type="string")
 
