@@ -60,6 +60,10 @@ R_LAYER_TOKEN = re.compile(
 R_AOV_TOKEN = re.compile(r'.*%a.*|.*<aov>.*|.*<renderpass>.*', re.IGNORECASE)
 R_SUBSTITUTE_AOV_TOKEN = re.compile(r'%a|<aov>|<renderpass>', re.IGNORECASE)
 R_REMOVE_AOV_TOKEN = re.compile(r'_%a|_<aov>|_<renderpass>', re.IGNORECASE)
+# to remove unused renderman tokens
+R_CLEAN_FRAME_TOKEN = re.compile(r'\.?<f\d>\.?', re.IGNORECASE)
+R_CLEAN_EXT_TOKEN = re.compile(r'\.?<ext>\.?', re.IGNORECASE)
+
 R_SUBSTITUTE_LAYER_TOKEN = re.compile(
     r'%l|<layer>|<renderlayer>', re.IGNORECASE)
 R_SUBSTITUTE_CAMERA_TOKEN = re.compile(r'%c|<camera>', re.IGNORECASE)
@@ -78,7 +82,7 @@ ImagePrefixes = {
     'mentalray': 'defaultRenderGlobals.imageFilePrefix',
     'vray': 'vraySettings.fileNamePrefix',
     'arnold': 'defaultRenderGlobals.imageFilePrefix',
-    'renderman': 'defaultRenderGlobals.imageFilePrefix',
+    'renderman': 'rmanGlobals.imageFileFormat',
     'redshift': 'defaultRenderGlobals.imageFilePrefix'
 }
 
@@ -195,12 +199,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 aov_dict["beauty"] = full_paths
 
             full_exp_files.append(aov_dict)
-
-            from pprint import pprint
-            print("=" * 40)
-            pprint(full_exp_files)
-            print("=" * 40)
-
+            self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
             # Get layer specific settings, might be overrides
             data = {
@@ -429,10 +428,6 @@ class AExpectedFiles:
         # __________________/
 
         enabled_aovs = self.get_aovs()
-        from pprint import pprint
-        print("-" * 40)
-        pprint(enabled_aovs)
-        print("-" * 40)
 
         layer_name = self.layer
         if self.layer.startswith("rs_"):
@@ -467,7 +462,9 @@ class AExpectedFiles:
                 (R_SUBSTITUTE_CAMERA_TOKEN, cam),
                 # this is required to remove unfilled aov token, for example
                 # in Redshift
-                (R_REMOVE_AOV_TOKEN, "")
+                (R_REMOVE_AOV_TOKEN, ""),
+                (R_CLEAN_FRAME_TOKEN, ""),
+                (R_CLEAN_EXT_TOKEN, "")
             )
 
             for regex, value in mappings:
@@ -495,7 +492,9 @@ class AExpectedFiles:
                     (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
                     (R_SUBSTITUTE_LAYER_TOKEN, layer_data["layerName"]),
                     (R_SUBSTITUTE_CAMERA_TOKEN, cam),
-                    (R_SUBSTITUTE_AOV_TOKEN, aov[0])
+                    (R_SUBSTITUTE_AOV_TOKEN, aov[0]),
+                    (R_CLEAN_FRAME_TOKEN, ""),
+                    (R_CLEAN_EXT_TOKEN, "")
                 )
 
                 for regex, value in mappings:
@@ -829,13 +828,67 @@ class ExpectedFilesRedshift(AExpectedFiles):
 class ExpectedFilesRenderman(AExpectedFiles):
 
     def __init__(self, layer):
-        raise UnimplementedRendererException('Renderman not implemented')
+        super(ExpectedFilesRenderman, self).__init__(layer)
+        self.renderer = 'renderman'
+
+    def get_aovs(self):
+        enabled_aovs = []
+
+        default_ext = "exr"
+        displays = cmds.listConnections("rmanGlobals.displays")
+        for aov in displays:
+            aov_name = str(aov)
+            if aov_name == "rmanDefaultDisplay":
+                aov_name = "beauty"
+
+            enabled = self.maya_is_true(
+                cmds.getAttr("{}.enable".format(aov)))
+            for override in self.get_layer_overrides(
+                    '{}.enable'.format(aov), self.layer):
+                enabled = self.maya_is_true(override)
+
+            if enabled:
+                enabled_aovs.append(
+                    (
+                        aov_name,
+                        default_ext
+                    )
+                )
+
+        return enabled_aovs
+
+    def get_files(self):
+        """
+        In renderman we hack it with prepending path. This path would
+        normally be translated from `rmanGlobals.imageOutputDir`. We skip
+        this and harcode prepend path we expect. There is no place for user
+        to mess around with this settings anyway and it is enforced in
+        render settings validator.
+        """
+        layer_data = self._get_layer_data()
+        new_aovs = {}
+
+        expected_files = super(ExpectedFilesRenderman, self).get_files()
+        # we always get beauty
+        for aov, files in expected_files[0].items():
+            new_files = []
+            for file in files:
+                new_file = "{}/{}/{}".format(layer_data["sceneName"],
+                                             layer_data["layerName"],
+                                             file)
+                new_files.append(new_file)
+            new_aovs[aov] = new_files
+
+        return [new_aovs]
 
 
 class ExpectedFilesMentalray(AExpectedFiles):
 
     def __init__(self, layer):
         raise UnimplementedRendererException('Mentalray not implemented')
+
+    def get_aovs(self):
+        return []
 
 
 class AOVError(Exception):

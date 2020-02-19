@@ -44,7 +44,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         'mentalray': 'defaultRenderGlobals.imageFilePrefix',
         'vray': 'vraySettings.fileNamePrefix',
         'arnold': 'defaultRenderGlobals.imageFilePrefix',
-        'renderman': 'defaultRenderGlobals.imageFilePrefix',
+        'renderman': 'rmanGlobals.imageFileFormat',
         'redshift': 'defaultRenderGlobals.imageFilePrefix'
     }
 
@@ -52,8 +52,18 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
         'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass',
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
-        'vray': 'maya/<scene>/<Layer>/<Layer>'
+        'vray': 'maya/<scene>/<Layer>/<Layer>',
+        'renderman': '<layer>_<aov>.<f4>.<ext>'
     }
+
+    # WARNING: There is bug? in renderman, translating <scene> token
+    # to something left behind mayas default image prefix. So instead
+    # `SceneName_v01` it translates to:
+    # `SceneName_v01/<RenderLayer>/<RenderLayers_<RenderPass>` that means
+    # for example:
+    # `SceneName_v01/Main/Main_<RenderPass>`. Possible solution is to define
+    # custom token like <scene_name> to point to determined scene name.
+    RendermanDirPrefix = "<ws>/renders/maya/<scene>/<layer>"
 
     R_AOV_TOKEN = re.compile(
         r'%a|<aov>|<renderpass>', re.IGNORECASE)
@@ -119,6 +129,19 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
         elif renderer == "redshift":
             # no redshift check implemented yet
             pass
+        elif renderer == "renderman":
+            file_prefix = cmds.getAttr("rmanGlobals.imageFileFormat")
+            dir_prefix = cmds.getAttr("rmanGlobals.imageOutputDir")
+
+            if file_prefix.lower() != cls.ImagePrefixTokens[renderer].lower():
+                invalid = True
+                cls.log.error("Wrong image prefix [ {} ]".format(file_prefix))
+
+            if dir_prefix.lower() != cls.RendermanDirPrefix.lower():
+                invalid = True
+                cls.log.error("Wrong directory prefix [ {} ]".format(
+                    dir_prefix))
+
         else:
             if not re.search(cls.R_AOV_TOKEN, prefix):
                 invalid = True
