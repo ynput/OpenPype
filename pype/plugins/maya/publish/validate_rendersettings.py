@@ -173,14 +173,23 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             render_attrs = lib.RENDER_ATTRS.get(renderer, default)
 
             # Repair prefix
-            node = render_attrs["node"]
-            prefix_attr = render_attrs["prefix"]
+            if renderer != "renderman":
+                node = render_attrs["node"]
+                prefix_attr = render_attrs["prefix"]
 
-            fname_prefix = cls.ImagePrefixTokens[renderer]
-            cmds.setAttr("{}.{}".format(node, prefix_attr),
-                         fname_prefix, type="string")
+                fname_prefix = cls.ImagePrefixTokens[renderer]
+                cmds.setAttr("{}.{}".format(node, prefix_attr),
+                             fname_prefix, type="string")
 
-            # Repair padding
-            padding_attr = render_attrs["padding"]
-            cmds.setAttr("{}.{}".format(node, padding_attr),
-                         cls.DEFAULT_PADDING)
+                # Repair padding
+                padding_attr = render_attrs["padding"]
+                cmds.setAttr("{}.{}".format(node, padding_attr),
+                             cls.DEFAULT_PADDING)
+            else:
+                # renderman handles stuff differently
+                cmds.setAttr("rmanGlobals.imageFileFormat",
+                             cls.ImagePrefixTokens[renderer],
+                             type="string")
+                cmds.setAttr("rmanGlobals.imageOutputDir",
+                             cls.RendermanDirPrefix,
+                             type="string")
