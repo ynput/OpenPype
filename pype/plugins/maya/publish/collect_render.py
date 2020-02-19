@@ -674,14 +674,53 @@ class ExpectedFilesArnold(AExpectedFiles):
 
 class ExpectedFilesVray(AExpectedFiles):
 
+    # V-ray file extension mapping
+    # 5 - exr
+    # 6 - multichannel exr
+    # 13 - deep exr
+
     def __init__(self, layer):
         super(ExpectedFilesVray, self).__init__(layer)
         self.renderer = 'vray'
 
-    def get_aovs(self):
+    def get_renderer_prefix(self):
+        prefix = super(ExpectedFilesVray, self).get_renderer_prefix()
+        prefix = "{}_<aov>".format(prefix)
+        return prefix
 
-        default_ext = cmds.getAttr('defaultRenderGlobals.imfPluginKey')
+    def get_files(self):
+        expected_files = super(ExpectedFilesVray, self).get_files()
+
+        # we need to add one sequence for plain beauty if AOVs are enabled.
+        # as vray output beauty without 'beauty' in filename.
+
+        layer_data = self._get_layer_data()
+        if layer_data.get("enabledAOVs"):
+            expected_files[0][u"beauty"] = self._generate_single_file_sequence(layer_data)  # noqa: E501
+
+        return expected_files
+
+    def get_aovs(self):
         enabled_aovs = []
+
+        try:
+            # really? do we set it in vray just by selecting multichannel exr?
+            if cmds.getAttr(
+                    "vraySettings.imageFormatStr") == "exr (multichannel)":
+                # AOVs are merged in mutli-channel file
+                return enabled_aovs
+        except ValueError:
+            # this occurs when Render Setting windows was not opened yet. In
+            # such case there are no Arnold options created so query for AOVs
+            # will fail. We terminate here as there are no AOVs specified then.
+            # This state will most probably fail later on some Validator
+            # anyway.
+            return enabled_aovs
+
+        default_ext = cmds.getAttr('vraySettings.imageFormatStr')
+        if default_ext == "exr (multichannel)" or default_ext == "exr (deep)":
+            default_ext = "exr"
+
         vr_aovs = [n for n in cmds.ls(
             type=["VRayRenderElement", "VRayRenderElementSet"])]
 
@@ -754,9 +793,6 @@ class ExpectedFilesRedshift(AExpectedFiles):
             if self.maya_is_true(
                     cmds.getAttr("redshiftOptions.exrForceMultilayer")):
                 # AOVs are merged in mutli-channel file
-                print("*" * 40)
-                print(cmds.getAttr("redshiftOptions.exrForceMultilayer"))
-                print("*" * 40)
                 return enabled_aovs
         except ValueError:
             # this occurs when Render Setting windows was not opened yet. In
@@ -764,7 +800,6 @@ class ExpectedFilesRedshift(AExpectedFiles):
             # will fail. We terminate here as there are no AOVs specified then.
             # This state will most probably fail later on some Validator
             # anyway.
-            print("+" * 40)
             return enabled_aovs
 
         default_ext = self.ext_mapping[
