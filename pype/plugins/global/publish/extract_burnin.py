@@ -32,6 +32,10 @@ class ExtractBurnin(pype.api.Extractor):
         frame_end = int(instance.data.get("frameEnd") or 1)
         duration = frame_end - frame_start + 1
 
+        if "slate.farm" in instance.data["families"]:
+            frame_start += 1
+            duration -= 1
+
         prep_data = {
             "username": instance.context.data['user'],
             "asset": os.environ['AVALON_ASSET'],
@@ -47,22 +51,6 @@ class ExtractBurnin(pype.api.Extractor):
         # Add datetime data to preparation data
         datetime_data = instance.context.data.get("datetimeData") or {}
         prep_data.update(datetime_data)
-
-        slate_frame_start = frame_start
-        slate_frame_end = frame_end
-        slate_duration = duration
-
-        # exception for slate workflow
-        if "slate" in instance.data["families"]:
-            slate_frame_start = frame_start - 1
-            slate_frame_end = frame_end
-            slate_duration = slate_frame_end - slate_frame_start + 1
-
-        prep_data.update({
-            "slate_frame_start": slate_frame_start,
-            "slate_frame_end": slate_frame_end,
-            "slate_duration": slate_duration
-        })
 
         # Update data with template data
         template_data = instance.data.get("assumedTemplateData") or {}
@@ -110,6 +98,26 @@ class ExtractBurnin(pype.api.Extractor):
             _prep_data["representation"] = repre["name"]
             filled_anatomy = anatomy.format_all(_prep_data)
             _prep_data["anatomy"] = filled_anatomy.get_solved()
+
+            # dealing with slates
+            slate_frame_start = frame_start
+            slate_frame_end = frame_end
+            slate_duration = duration
+
+            # exception for slate workflow
+            if ("slate" in instance.data["families"]):
+                if "slate-frame" in repre.get("tags", []):
+                    slate_frame_start = frame_start - 1
+                    slate_frame_end = frame_end
+                    slate_duration = duration + 1
+
+            self.log.debug("__1 slate_frame_start: {}".format(slate_frame_start))
+
+            _prep_data.update({
+                "slate_frame_start": slate_frame_start,
+                "slate_frame_end": slate_frame_end,
+                "slate_duration": slate_duration
+            })
 
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),

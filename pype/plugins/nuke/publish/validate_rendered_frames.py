@@ -76,7 +76,8 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                 'len(collection.indexes): {}'.format(collected_frames_len)
             )
 
-            if "slate" in instance.data["families"]:
+            if ("slate" in instance.data["families"]) \
+                    and (frame_length != collected_frames_len):
                 collected_frames_len -= 1
 
             assert (collected_frames_len == frame_length), (

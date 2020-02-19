@@ -158,7 +158,6 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         os.environ.update(session)
                     instance = metadata.get("instance")
                     if instance:
-                        instance_family = instance.get("family")
                         pixel_aspect = instance.get("pixelAspect", 1)
                         resolution_width = instance.get("resolutionWidth", 1920)
                         resolution_height = instance.get("resolutionHeight", 1080)
@@ -167,7 +166,6 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         families_data = instance.get("families")
                         slate_frame = instance.get("slateFrame")
                         version = instance.get("version")
-
 
             else:
                 # Search in directory
@@ -217,6 +215,7 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                 families.append("render2d")
             if families_data and "slate" in families_data:
                 families.append("slate")
+                families.append("slate.farm")
 
             if data.get("attachTo"):
                 # we need to attach found collections to existing
