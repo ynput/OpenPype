@@ -273,6 +273,11 @@ class AppAction(BaseHandler):
         # Full path to executable launcher
         execfile = None
 
+        if application.get("launch_hook"):
+            hook = application.get("launch_hook")
+            self.log.info("launching hook: {}".format(hook))
+            pypelib.execute_hook(application.get("launch_hook"))
+
         if sys.platform == "win32":
 
             for ext in os.environ["PATHEXT"].split(os.pathsep):

@@ -6,6 +6,8 @@ import contextlib
 import subprocess
 import inspect
 
+import six
+
 from avalon import io
 import avalon.api
 import avalon
@@ -585,3 +587,21 @@ class CustomNone:
     def __repr__(self):
         """Representation of custom None."""
         return "<CustomNone-{}>".format(str(self.identifier))
+
+
+def execute_hook(hook, **kwargs):
+    class_name = hook.split("/")[-1]
+
+    abspath = os.path.join(os.getenv('PYPE_ROOT'),
+                           'repos', 'pype', **hook.split("/")[:-1])
+
+    try:
+        with open(abspath) as f:
+            six.exec_(f.read())
+
+    except Exception as exp:
+        log.exception("loading hook failed: {}".format(exp),
+                      exc_info=True)
+
+    hook_obj = globals()[class_name]()
+    hook_obj.execute(**kwargs)
