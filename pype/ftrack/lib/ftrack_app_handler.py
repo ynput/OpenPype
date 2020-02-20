@@ -256,14 +256,6 @@ class AppAction(BaseHandler):
         env = acre.merge(env, current_env=dict(os.environ))
         env = acre.append(dict(os.environ), env)
 
-
-        #
-        # tools_env = acre.get_tools(tools)
-        # env = acre.compute(dict(tools_env))
-        # env = acre.merge(env, dict(os.environ))
-        # os.environ = acre.append(dict(os.environ), env)
-        # os.environ = acre.compute(os.environ)
-
         # Get path to execute
         st_temp_path = os.environ['PYPE_CONFIG']
         os_plat = platform.system().lower()
