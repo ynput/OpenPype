@@ -21,14 +21,16 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
     def process(self, instance):
 
         if not os.environ.get("AVALON_THUMBNAIL_ROOT"):
-            self.log.info("AVALON_THUMBNAIL_ROOT is not set."
-                          " Skipping thumbnail integration.")
+            self.log.warning(
+                "AVALON_THUMBNAIL_ROOT is not set."
+                " Skipping thumbnail integration."
+            )
             return
 
         published_repres = instance.data.get("published_representations")
         if not published_repres:
             self.log.debug(
-                "There are not published representation ids on the instance."
+                "There are not published representations on the instance."
             )
             return
 
@@ -36,10 +38,11 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
 
         anatomy = instance.context.data["anatomy"]
         if "publish" not in anatomy.templates:
-            raise AssertionError("Anatomy does not have set publish key!")
+            self.warning("Anatomy does not have set publish key!")
+            return
 
         if "thumbnail" not in anatomy.templates["publish"]:
-            raise AssertionError((
+            self.warning((
                 "There is not set \"thumbnail\" template for project \"{}\""
             ).format(project_name))
 
