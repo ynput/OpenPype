@@ -234,6 +234,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     bulk_writes
                 )
 
+        version = io.find_one({"_id": version_id})
+
         existing_repres = list(io.find({
             "parent": version_id,
             "type": "archived_representation"
@@ -451,7 +453,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             representations.append(representation)
             published_representations[repre_id] = {
                 "representation": representation,
-                "anatomy_data": template_data
+                "anatomy_data": template_data,
+                # TODO prabably should store subset and version to instance
+                "subset_entity": subset,
+                "version_entity": version
             }
             self.log.debug("__ representations: {}".format(representations))
 
