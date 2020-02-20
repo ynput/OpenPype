@@ -363,43 +363,83 @@ def CreateNukeWorkfile(nodes=None,
                                 )
 
 
-class ClipsLoader:
+class ClipLoader:
+    data = dict()
 
-    def __init__(self, representations, **kwargs):
+    def __init__(self, plugin_cls, context, **kwargs):
         """ Initialize object
 
         Arguments:
-            hiero_workfile_name (str): name of workfile
-            representations (dict): representations for processing
-            example: {assetName_subsetName_representationName: {
-                            "_id": ObjectId("5as5d54fa56dfa56s6d56asddf4as"),
-                            "path": "path/to/file/created/by/get_repr..",
-                            "binPath": "projectBinPath",
-                            "context": {
-                                "subset": "subsetName",
-                                "task": "taskName",
-                                "family": "write",
-                                "hierarchy": "parent/subparent",
-                                "frame": "0996",
-                                "project": {
-                                    "code": "j01test",
-                                    "name": "J01_jakub_test"
-                                },
-                                "version": 1,
-                                "asset": "assetName",
-                                "representation": "representationName",
-                                "root": "projectsRootPath"
-                            }
-                        }
-                    }
+            plugin_cls (api.Loader): plugin object
+            context (dict): loader plugin context
+            kwargs (dict)[optional]: possible keys:
+                project_bin_path: "path/to/binItem"
+                hiero_workfile_name: "name_of_hiero_project_file_no_extension"
+
         """
-        self.representations = representations
+        self.cls = plugin_cls
+        self.context = context
         self.kwargs = kwargs
         self.active_project = self.get_active_project()
         self.project_bin = self.active_project.clipsBin()
 
+        assert self.set_data(), str("Cannot Load selected data, look into "
+                                    "database or call your supervisor")
+
         # inject asset data to representation dict
         self.get_asset_data()
+
+    def set_data(self):
+        """ Gets context and convert it to self.data
+        data structure:
+            {
+                "name": "assetName_subsetName_representationName"
+                "path": "path/to/file/created/by/get_repr..",
+                "binPath": "projectBinPath",
+            }
+        """
+        # create name
+        repr = self.context["representaion"]
+        repr_cntx = repr["context"]
+        asset = repr_cntx["asset"]
+        subset = repr_cntx["subset"]
+        representation = repr_cntx["representation"]
+        self.data["name"] = "_".join([asset, subset, representation])
+
+        # gets file path
+        file = self.cls.fname
+
+        if not file:
+            repr_id = repr["_id"]
+            log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return None
+
+        self.data["path"] = file.replace("\\", "/")
+
+        if repr_cntx.get("frame"):
+            self.fix_path_hashes()
+
+        # solve project bin structure path
+        hierarchy = "/".join((
+            "Loader",
+            repr_cntx["hierarchy"].replace("\\", "/"),
+            asset
+            ))
+        self.data["binPath"] = self.kwargs.get(
+            "project_bin_path",
+            hierarchy
+            )
+
+    def fix_path_hashes(self):
+        """ Convert file path where it is needed padding with hashes
+        """
+        file = self.data["path"]
+        if "#" not in file:
+            frame = self.context["representaion"]["context"].get("frame")
+            padding = len(frame)
+            file = file.replace(frame, "#"*padding)
+        self.data["path"] = file
 
     def get_active_project(self):
         """ Get hiero active project object
@@ -416,9 +456,8 @@ class ClipsLoader:
         joint `data` key with asset.data dict into the representaion
 
         """
-        for name, data in self.representations.items():
-            asset_name = data["context"]["asset"]
-            data["data"] = pype.get_asset(asset_name)["data"]
+        asset_name = self.context["representaion"]["context"]["asset"]
+        self.data["assetData"] = pype.get_asset(asset_name)["data"]
 
     def make_project_bin(self, hierarchy):
         """ Creare bins by given hierarchy path
