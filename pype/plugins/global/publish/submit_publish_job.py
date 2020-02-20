@@ -166,6 +166,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                      "PYPE_STUDIO_PROJECTS_PATH",
                      "PYPE_STUDIO_PROJECTS_MOUNT"
                      ]
+                     
+    deadline_pool = ""
 
     def _submit_deadline_post_job(self, instance, job):
         """
@@ -201,7 +203,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
-                "Priority": job["Props"]["Pri"]
+                "Priority": job["Props"]["Pri"],
+                "Pool": self.deadline_pool
             },
             "PluginInfo": {
                 "Version": "3.6",
