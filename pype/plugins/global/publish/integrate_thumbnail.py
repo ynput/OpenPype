@@ -52,9 +52,12 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             return
 
         thumb_repre = None
-        for repre in published_repres:
+        thumb_repre_anatomy_data = None
+        for repre_info in published_repres.values():
+            repre = repre_info["representation"]
             if repre["name"].lower() == "thumbnail":
                 thumb_repre = repre
+                thumb_repre_anatomy_data = repre_info["anatomy_data"]
                 break
 
         if not thumb_repre:
