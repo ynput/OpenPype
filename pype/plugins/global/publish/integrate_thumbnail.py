@@ -92,15 +92,9 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         })
 
         anatomy_filled = anatomy.format(template_data)
-        final_path = anatomy_filled.get("publish", {}).get("thumbnail")
-        if not final_path:
-            raise AssertionError((
-                "Anatomy template was not filled with entered data"
-                "\nTemplate: {} "
-                "\nData: {}"
-            ).format(thumbnail_template, str(template_data)))
+        template_filled = anatomy_filled["publish"]["thumbnail"]
 
-        dst_full_path = os.path.normpath(final_path)
+        dst_full_path = os.path.normpath(str(template_filled))
         self.log.debug(
             "Copying file .. {} -> {}".format(src_full_path, dst_full_path)
         )
@@ -118,13 +112,14 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         template_data.pop("_id")
         template_data.pop("thumbnail_root")
 
+        repre_context = template_filled.used_values
         thumbnail_entity = {
             "_id": thumbnail_id,
             "type": "thumbnail",
             "schema": "pype:thumbnail-1.0",
             "data": {
                 "template": thumbnail_template,
-                "template_data": template_data
+                "template_data": repre_context
             }
         }
         # Create thumbnail entity
