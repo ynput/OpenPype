@@ -8,7 +8,6 @@ from avalon.vendor.Qt import (QtWidgets, QtGui)
 import pype.api as pype
 from pypeapp import Logger
 
-
 log = Logger().get_logger(__name__, "nukestudio")
 
 cached_process = None
@@ -363,6 +362,97 @@ def CreateNukeWorkfile(nodes=None,
                                 **kwargs
                                 )
 
+
+class ClipsLoader:
+
+    def __init__(self, representations, **kwargs):
+        """ Initialize object
+
+        Arguments:
+            hiero_workfile_name (str): name of workfile
+            representations (dict): representations for processing
+            example: {assetName_subsetName_representationName: {
+                            "_id": ObjectId("5as5d54fa56dfa56s6d56asddf4as"),
+                            "path": "path/to/file/created/by/get_repr..",
+                            "binPath": "projectBinPath",
+                            "context": {
+                                "subset": "subsetName",
+                                "task": "taskName",
+                                "family": "write",
+                                "hierarchy": "parent/subparent",
+                                "frame": "0996",
+                                "project": {
+                                    "code": "j01test",
+                                    "name": "J01_jakub_test"
+                                },
+                                "version": 1,
+                                "asset": "assetName",
+                                "representation": "representationName",
+                                "root": "projectsRootPath"
+                            }
+                        }
+                    }
+        """
+        self.representations = representations
+        self.kwargs = kwargs
+        self.active_project = self.get_active_project()
+        self.project_bin = self.active_project.clipsBin()
+
+        # inject asset data to representation dict
+        self.get_asset_data()
+
+    def get_active_project(self):
+        """ Get hiero active project object
+        """
+        fname = self.kwargs.get("hiero_workfile_name", "")
+
+        return next((p for p in hiero.core.projects()
+                     if fname in p.name()),
+                    hiero.core.projects()[-1])
+
+    def get_asset_data(self):
+        """ Get all available asset data
+
+        joint `data` key with asset.data dict into the representaion
+
+        """
+        for name, data in self.representations.items():
+            asset_name = data["context"]["asset"]
+            data["data"] = pype.get_asset(asset_name)["data"]
+
+    def make_project_bin(self, hierarchy):
+        """ Creare bins by given hierarchy path
+
+        It will also make sure no duplicit bins will be created
+
+        Arguments:
+            hierarchy (str): path devided by slashes "bin0/bin1/bin2"
+
+        Returns:
+            bin (hiero.core.BinItem): with the bin to be used for mediaItem
+        """
+        pass
+
+    def make_track_item(self):
+        """ Create track item with """
+        pass
+
+    def set_clip_color(self, last_version=True):
+        """ Sets color of clip on clip/track item
+
+        Arguments:
+            last_version (bool): True = green | False = red
+        """
+        pass
+
+    def set_container_tag(self, item, metadata):
+        """ Sets container tag to given clip/track item
+
+        Arguments:
+            item (hiero.core.BinItem or hiero.core.TrackItem)
+            metadata (dict): data to be added to tag
+        """
+        pass
 
 def create_nk_workfile_clips(nk_workfiles, seq=None):
     '''
