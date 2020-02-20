@@ -519,11 +519,6 @@ class WorkfileSettings(object):
         self.data = kwargs
 
     def get_nodes(self, nodes=None, nodes_filter=None):
-        # filter out only dictionaries for node creation
-        #
-        # print("\n\n")
-        # pprint(self._nodes)
-        #
 
         if not isinstance(nodes, list) and not isinstance(nodes_filter, list):
             return [n for n in nuke.allNodes()]
@@ -790,6 +785,8 @@ class WorkfileSettings(object):
             nuke.message(msg)
             return
         data = self._asset_entity["data"]
+
+        log.debug("__ asset data: `{}`".format(data))
 
         missing_cols = []
         check_cols = ["fps", "frameStart", "frameEnd",
