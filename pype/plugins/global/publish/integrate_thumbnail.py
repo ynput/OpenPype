@@ -18,6 +18,10 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.01
     families = ["review"]
 
+    required_context_keys = [
+        "project", "asset", "task", "subset", "version"
+    ]
+
     def process(self, instance):
 
         if not os.environ.get("AVALON_THUMBNAIL_ROOT"):
@@ -45,10 +49,7 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
             self.warning((
                 "There is not set \"thumbnail\" template for project \"{}\""
             ).format(project_name))
-
-        thumbnail_template = anatomy.templates["publish"]["thumbnail"]
-
-        io.install()
+            return
 
         thumb_repre = None
         for repre in published_repres:
@@ -61,6 +62,10 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
                 "There is not representation with name \"thumbnail\""
             )
             return
+
+        io.install()
+
+        thumbnail_template = anatomy.templates["publish"]["thumbnail"]
 
         version = io.find_one({"_id": thumb_repre["parent"]})
         if not version:
@@ -83,7 +88,7 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         thumbnail_id = ObjectId()
 
         # Prepare anatomy template fill data
-        template_data = copy.deepcopy(thumb_repre["context"])
+        template_data = copy.deepcopy(thumb_repre_anatomy_data)
         template_data.update({
             "_id": str(thumbnail_id),
             "thumbnail_root": os.environ.get("AVALON_THUMBNAIL_ROOT"),
@@ -113,6 +118,12 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         template_data.pop("thumbnail_root")
 
         repre_context = template_filled.used_values
+        for key in self.required_context_keys:
+            value = template_data.get(key)
+            if not value:
+                continue
+            repre_context[key] = template_data[key]
+
         thumbnail_entity = {
             "_id": thumbnail_id,
             "type": "thumbnail",
