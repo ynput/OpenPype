@@ -255,6 +255,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
+        published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
             # create template data for Anatomy
             template_data = copy.deepcopy(anatomy_data)
@@ -448,6 +449,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("__ destination_list: {}".format(destination_list))
             instance.data['destination_list'] = destination_list
             representations.append(representation)
+            published_representations[repre_id] = {
+                "representation": representation,
+                "anatomy_data": template_data
+            }
             self.log.debug("__ representations: {}".format(representations))
 
         # Remove old representations if there are any (before insertion of new)
@@ -462,7 +467,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("__ represNAME: {}".format(rep['name']))
             self.log.debug("__ represPATH: {}".format(rep['published_path']))
         io.insert_many(representations)
-        instance.data["published_representations"] = representations
+        instance.data["published_representations"] = (
+            published_representations
+        )
         # self.log.debug("Representation: {}".format(representations))
         self.log.info("Registered {} items".format(len(representations)))
 
