@@ -54,7 +54,25 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
             ' and name is "{1}"'
         ).format(project_entity["id"], asset_name)
         self.log.debug("Asset entity query: < {0} >".format(entity_query))
-        asset_entity = session.query(entity_query).one()
+        asset_entities = []
+        for entity in session.query(entity_query).all():
+            # Skip tasks
+            if entity.entity_type.lower() != "task":
+                asset_entities.append(entity)
+
+        if len(asset_entities) == 0:
+            raise AssertionError((
+                "Entity with name \"{0}\" not found"
+                " in Ftrack project \"{1}\"."
+            ).format(asset_name, project_name))
+
+        elif len(asset_entities) > 1:
+            raise AssertionError((
+                "Found more than one entity with name \"{0}\""
+                " in Ftrack project \"{1}\"."
+            ).format(asset_name, project_name))
+
+        asset_entity = asset_entities[0]
         self.log.debug("Asset found: {0}".format(asset_entity))
 
         # Find task entity if task is set
