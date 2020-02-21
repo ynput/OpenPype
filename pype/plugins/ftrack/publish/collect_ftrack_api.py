@@ -35,7 +35,17 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
         # Find project entity
         project_query = 'Project where full_name is "{0}"'.format(project_name)
         self.log.debug("Project query: < {0} >".format(project_query))
-        project_entity = session.query(project_query).one()
+        project_entity = list(session.query(project_query).all())
+        if len(project_entity) == 0:
+            raise AssertionError(
+                "Project \"{0}\" not found in Ftrack.".format(project_name)
+            )
+        # QUESTION Is possible to happen?
+        elif len(project_entity) > 1:
+            raise AssertionError((
+                "Found more than one project with name \"{0}\" in Ftrack."
+            ).format(project_name))
+
         self.log.debug("Project found: {0}".format(project_entity))
 
         # Find asset entity
