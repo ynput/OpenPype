@@ -170,7 +170,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         }
 
     # list of family names to transfer to new family if present
-    families_transfer = ["render2d", "ftrack", "slate"]
+    families_transfer = ["render3d", "render2d", "ftrack", "slate"]
 
     def _submit_deadline_post_job(self, instance, job):
         """
@@ -372,7 +372,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             # create represenation
             rep = {
-                "name": aov,
+                "name": ext,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(cols[0])],
                 "frameStart": start,
@@ -617,12 +617,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         `foo` and `xxx`
         """
 
+        self.log.info(data.get("expectedFiles"))
+
         if isinstance(data.get("expectedFiles")[0], dict):
             # we cannot attach AOVs to other subsets as we consider every
             # AOV subset of its own.
 
             if len(data.get("attachTo")) > 0:
-                assert len(data.get("expectedFiles")[0].keys()) > 1, (
+                assert len(data.get("expectedFiles")[0].keys()) == 1, (
                     "attaching multiple AOVs or renderable cameras to "
                     "subset is not supported")
 
@@ -660,7 +662,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     new_i = copy(i)
                     new_i["version"] = at.get("version")
                     new_i["subset"] = at.get("subset")
-                    new_i["families"].append(at.get("family"))
+                    new_i["family"] = at.get("family")
+                    new_i["append"] = True
                     new_instances.append(new_i)
                     self.log.info("  - {} / v{}".format(
                         at.get("subset"), at.get("version")))
