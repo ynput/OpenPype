@@ -1,3 +1,4 @@
+import sys
 import os
 import platform
 import json
@@ -107,15 +108,52 @@ def create_unreal_project(project_name, ue_version, dir):
     of Avalon Integration Plugin and we copy its content to project folder
     and enable this plugin.
     """
+    import git
 
     if os.path.isdir(os.environ.get("AVALON_UNREAL_PLUGIN", "")):
         # copy plugin to correct path under project
-        plugin_path = os.path.join(dir, "Plugins", "Avalon")
-        if not os.path.isdir(plugin_path):
-            os.makedirs(plugin_path, exist_ok=True)
+        plugins_path = os.path.join(dir, "Plugins")
+        avalon_plugin_path = os.path.join(plugins_path, "Avalon")
+        if not os.path.isdir(avalon_plugin_path):
+            os.makedirs(avalon_plugin_path, exist_ok=True)
             dir_util._path_created = {}
             dir_util.copy_tree(os.environ.get("AVALON_UNREAL_PLUGIN"),
-                               plugin_path)
+                               avalon_plugin_path)
+
+    # If `PYPE_UNREAL_ENGINE_PYTHON_PLUGIN` is set, copy it from there to
+    # support offline installation.
+    # Otherwise clone UnrealEnginePython to Plugins directory
+    # https://github.com/20tab/UnrealEnginePython.git
+    uep_path = os.path.join(plugins_path, "UnrealEnginePython")
+    if os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
+
+        os.makedirs(uep_path, exist_ok=True)
+        dir_util._path_created = {}
+        dir_util.copy_tree(os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
+                           uep_path)
+    else:
+        git.Repo.clone_from("https://github.com/20tab/UnrealEnginePython.git",
+                            uep_path)
+
+    # now we need to fix python path in:
+    # `UnrealEnginePython.Build.cs`
+    # to point to our python
+    with open(os.path.join(
+            uep_path, "Source",
+            "UnrealEnginePython",
+            "UnrealEnginePython.Build.cs"), mode="r") as f:
+        build_file = f.read()
+
+    fix = build_file.replace(
+        'private string pythonHome = "";',
+        'private string pythonHome = "{}";'.format(
+            sys.base_prefix.replace("\\", "/")))
+
+    with open(os.path.join(
+            uep_path, "Source",
+            "UnrealEnginePython",
+            "UnrealEnginePython.Build.cs"), mode="w") as f:
+        f.write(fix)
 
     data = {
         "FileVersion": 3,
@@ -134,6 +172,7 @@ def create_unreal_project(project_name, ue_version, dir):
             {"Name": "PythonScriptPlugin", "Enabled": True},
             {"Name": "EditorScriptingUtilities", "Enabled": True},
             {"Name": "Avalon", "Enabled": True},
+            {"Name": "UnrealEnginePython", "Enabled": True}
         ],
     }
 
@@ -296,6 +335,7 @@ class {1}_API A{0}GameModeBase : public AGameModeBase
 
     subprocess.run(command2)
 
+    """
     uhtmanifest = os.path.join(os.path.dirname(project_file),
                                f"{project_name}.uhtmanifest")
 
@@ -303,3 +343,4 @@ class {1}_API A{0}GameModeBase : public AGameModeBase
                 "-Unattended", "-WarningsAsErrors", "-installed"]
 
     subprocess.run(command3)
+    """

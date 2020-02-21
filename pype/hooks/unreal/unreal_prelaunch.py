@@ -79,4 +79,5 @@ class UnrealPrelaunch(PypeHook):
             unreal_lib.prepare_project(project_file, detected[engine_version])
 
         env["PYPE_UNREAL_PROJECT_FILE"] = project_file
+        env["AVALON_CURRENT_UNREAL_ENGINE"] = detected[engine_version]
         return True
