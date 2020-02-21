@@ -50,7 +50,7 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
 
     ImagePrefixTokens = {
 
-        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass',
+        'arnold': 'maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>',
         'redshift': 'maya/<Scene>/<RenderLayer>/<RenderLayer>',
         'vray': 'maya/<scene>/<Layer>/<Layer>',
         'renderman': '<layer>_<aov>.<f4>.<ext>'
@@ -143,11 +143,19 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     dir_prefix))
 
         else:
-            if not re.search(cls.R_AOV_TOKEN, prefix):
-                invalid = True
-                cls.log.error("Wrong image prefix [ {} ] - "
-                              "doesn't have: '<renderpass>' or "
-                              "token".format(prefix))
+            multichannel = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
+            if multichannel:
+                if re.search(cls.R_AOV_TOKEN, prefix):
+                    invalid = True
+                    cls.log.error("Wrong image prefix [ {} ] - "
+                                  "You can't use '<renderpass>' token "
+                                  "with merge AOVs turned on".format(prefix))
+            else:
+                if not re.search(cls.R_AOV_TOKEN, prefix):
+                    invalid = True
+                    cls.log.error("Wrong image prefix [ {} ] - "
+                                  "doesn't have: '<renderpass>' or "
+                                  "token".format(prefix))
 
         # prefix check
         if prefix.lower() != cls.ImagePrefixTokens[renderer].lower():
