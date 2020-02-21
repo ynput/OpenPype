@@ -381,7 +381,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "stagingDir": staging,
                 "anatomy_template": "render",
                 "fps": new_instance.get("fps"),
-                "tags": ["review", "preview"] if preview else []
+                "tags": ["review"] if preview else []
             }
 
             # add tags
