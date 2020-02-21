@@ -597,7 +597,20 @@ class CustomNone:
         return "<CustomNone-{}>".format(str(self.identifier))
 
 
-def execute_hook(hook, **kwargs):
+def execute_hook(hook, *args, **kwargs):
+    """
+    This will load hook file, instantiate class and call `execute` method
+    on it. Hook must be in a form:
+
+    `$PYPE_ROOT/repos/pype/path/to/hook.py/HookClass`
+
+    This will load `hook.py`, instantiate HookClass and then execute_hook
+    `execute(*args, **kwargs)`
+
+    :param hook: path to hook class
+    :type hook: str
+    """
+
     class_name = hook.split("/")[-1]
 
     abspath = os.path.join(os.getenv('PYPE_ROOT'),
@@ -606,13 +619,10 @@ def execute_hook(hook, **kwargs):
     mod_name, mod_ext = os.path.splitext(os.path.basename(abspath))
 
     if not mod_ext == ".py":
-        return
+        return False
 
     module = types.ModuleType(mod_name)
     module.__file__ = abspath
-
-    log.info("-" * 80)
-    print(module)
 
     try:
         with open(abspath) as f:
@@ -623,13 +633,12 @@ def execute_hook(hook, **kwargs):
     except Exception as exp:
         log.exception("loading hook failed: {}".format(exp),
                       exc_info=True)
+        return False
 
-    from pprint import pprint
-    print("-" * 80)
-    pprint(dir(module))
-
-    hook_obj = globals()[class_name]()
-    hook_obj.execute(**kwargs)
+    obj = getattr(module, class_name)
+    hook_obj = obj()
+    ret_val = hook_obj.execute(*args, **kwargs)
+    return ret_val
 
 
 @six.add_metaclass(ABCMeta)
@@ -639,5 +648,5 @@ class PypeHook:
         pass
 
     @abstractmethod
-    def execute(**kwargs):
+    def execute(self, *args, **kwargs):
         pass
