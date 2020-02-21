@@ -63,8 +63,15 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                 'Task where name is "{0}" and parent_id is "{1}"'
             ).format(task_name, asset_entity["id"])
             self.log.debug("Task entity query: < {0} >".format(task_query))
-            task_entity = session.query(task_query).one()
-            self.log.debug("Task entity found: {0}".format(task_entity))
+            task_entity = session.query(task_query).first()
+            if not task_entity:
+                self.log.warning(
+                    "Task entity with name \"{0}\" was not found.".format(
+                        task_name
+                    )
+                )
+            else:
+                self.log.debug("Task entity found: {0}".format(task_entity))
 
         else:
             task_entity = None
