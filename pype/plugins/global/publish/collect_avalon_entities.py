@@ -19,7 +19,7 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
     label = "Collect Avalon Entities"
 
     def process(self, context):
-        is.install()
+        io.install()
         project_name = api.Session["AVALON_PROJECT"]
         asset_name = api.Session["AVALON_ASSET"]
 
