@@ -152,6 +152,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 # necessary input data
                 # adds start arg only if image sequence
                 if isinstance(repre["files"], list):
+
+                    if start_frame != repre.get("detectedStart", start_frame):
+                        start_frame = repre.get("detectedStart")
                     input_args.append(
                         "-start_number {0} -framerate {1}".format(
                             start_frame, fps))

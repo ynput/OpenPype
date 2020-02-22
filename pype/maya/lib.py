@@ -2176,17 +2176,28 @@ def load_capture_preset(path=None, data=None):
         4: 'nolights'}
     for key in preset[id]:
         if key == 'high_quality':
-            temp_options2['multiSampleEnable'] = True
-            temp_options2['multiSampleCount'] = 8
-            temp_options2['textureMaxResolution'] = 1024
-            temp_options2['enableTextureMaxRes'] = True
+            if preset[id][key] == True:
+                temp_options2['multiSampleEnable'] = True
+                temp_options2['multiSampleCount'] = 4
+                temp_options2['textureMaxResolution'] = 1024
+                temp_options2['enableTextureMaxRes'] = True
+                temp_options2['textureMaxResMode'] = 1
+            else:
+                temp_options2['multiSampleEnable'] = False
+                temp_options2['multiSampleCount'] = 4
+                temp_options2['textureMaxResolution'] = 512
+                temp_options2['enableTextureMaxRes'] = True
+                temp_options2['textureMaxResMode'] = 0
+
+        if key == 'ssaoEnable':
+            if preset[id][key] == True:
+                temp_options2['ssaoEnable'] = True
+            else:
+                temp_options2['ssaoEnable'] = False
 
         if key == 'alphaCut':
             temp_options2['transparencyAlgorithm'] = 5
             temp_options2['transparencyQuality'] = 1
-
-        if key == 'ssaoEnable':
-            temp_options2['ssaoEnable'] = True
 
         if key == 'headsUpDisplay':
             temp_options['headsUpDisplay'] = True

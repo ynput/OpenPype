@@ -137,3 +137,12 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         self.log.debug("Setting thumbnail for version \"{}\" <{}>".format(
             version["name"], str(version["_id"])
         ))
+
+        asset_entity = instance.data["assetEntity"]
+        io.update_many(
+            {"_id": asset_entity["_id"]},
+            {"$set": {"data.thumbnail_id": thumbnail_id}}
+        )
+        self.log.debug("Setting thumbnail for asset \"{}\" <{}>".format(
+            asset_entity["name"], str(version["_id"])
+        ))
