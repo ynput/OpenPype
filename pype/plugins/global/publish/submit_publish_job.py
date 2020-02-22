@@ -662,8 +662,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     new_i = copy(i)
                     new_i["version"] = at.get("version")
                     new_i["subset"] = at.get("subset")
-                    new_i["family"] = at.get("family")
                     new_i["append"] = True
+                    new_i["families"].append(at.get("family"))
                     new_instances.append(new_i)
                     self.log.info("  - {} / v{}".format(
                         at.get("subset"), at.get("version")))

@@ -101,6 +101,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 render_instance = instance
                 render_instance.data["remove"] = True
 
+            # make sure workfile instance publishing is enabled
+            if 'workfile' in instance.data['families']:
+                instance.data["publish"] = True
+
         if not render_instance:
             self.log.info("No render instance found, skipping render "
                           "layer collection.")
