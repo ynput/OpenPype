@@ -256,10 +256,16 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         )
                         ext = collection.tail.lstrip(".")
 
+                        detected_start = min(collection.indexes)
+                        detected_end = max(collection.indexes)
+
                         representation = {
                             "name": ext,
                             "ext": "{}".format(ext),
                             "files": list(collection),
+                            "frameStart": frame_start,
+                            "detectedStart": detected_start,
+                            "detectedEnd": detected_end,
                             "stagingDir": root,
                             "anatomy_template": "render",
                             "fps": fps,
@@ -323,12 +329,17 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     if "slate" in instance.data["families"]:
                         frame_start += 1
 
+                    detected_start = min(collection.indexes)
+                    detected_end = max(collection.indexes)
+
                     representation = {
                         "name": ext,
                         "ext": "{}".format(ext),
                         "files": list(collection),
                         "frameStart": frame_start,
                         "frameEnd": frame_end,
+                        "detectedStart": detected_start,
+                        "detectedEnd": detected_end,
                         "stagingDir": root,
                         "anatomy_template": "render",
                         "fps": fps,
@@ -394,6 +405,9 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                     if "review" not in families:
                         families.append("review")
 
+                    detected_start = min(collection.indexes)
+                    detected_end = max(collection.indexes)
+
                     instance.data.update(
                         {
                             "name": str(collection),
@@ -428,6 +442,8 @@ class CollectRenderedFrames(pyblish.api.ContextPlugin):
                         "files": list(collection),
                         "frameStart": start,
                         "frameEnd": end,
+                        "detectedStart": detected_start,
+                        "detectedEnd": detected_end,
                         "stagingDir": root,
                         "anatomy_template": "render",
                         "fps": fps,
