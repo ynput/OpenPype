@@ -272,7 +272,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 )
 
         if bulk_writes:
-            pass
+            io._database[io.Session["AVALON_PROJECT"]].bulk_write(bulk_writes)
 
     def create_hardlink(self, src_path, dst_path):
         dst_path = self.path_root_check(dst_path)
