@@ -26,14 +26,14 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.log.debug(
-            "Integrate of Master version for subset `{}` begins.".format(
+            "--- Integration of Master version for subset `{}` begins.".format(
                 instance.data.get("subset", str(instance))
             )
         )
         published_repres = instance.data.get("published_representations")
         if not published_repres:
             self.log.debug(
-                "There are not published representations on the instance."
+                "*** There are not published representations on the instance."
             )
             return
 
@@ -42,12 +42,12 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         # TODO raise error if master not set?
         anatomy = instance.context.data["anatomy"]
         if "publish" not in anatomy.templates:
-            self.log.warning("Anatomy does not have set publish key!")
+            self.log.warning("!!! Anatomy does not have set publish key!")
             return
 
         if "master" not in anatomy.templates["publish"]:
             self.log.warning((
-                "There is not set \"master\" template for project \"{}\""
+                "!!! There is not set \"master\" template for project \"{}\""
             ).format(project_name))
             return
 
@@ -78,7 +78,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         if not published_repres:
             self.log.debug(
-                "All published representations were filtered by name."
+                "*** All published representations were filtered by name."
             )
             return
 
@@ -93,7 +93,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         if not src_version_entity:
             self.log.warning((
-                "Can't find origin version in database."
+                "!!! Can't find origin version in database."
                 " Skipping Master version publish."
             ))
             return
@@ -241,7 +241,8 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 raise Exception((
                     "Integrity error. Files of published representation"
                     " is combination of frame collections and single files."
-                ))
+                    "Collections: `{}` Single files: `{}`"
+                ).format(str(collections), str(remainders)))
 
             src_col = collections[0]
 
@@ -266,13 +267,12 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         # Copy(hardlink) paths of source and destination files
         # TODO should we *only* create hardlinks?
         # TODO less logs about drives
+        # TODO should we keep files for deletion until this is successful?
         for src_path, dst_path in src_to_dst_file_paths:
             self.create_hardlink(src_path, dst_path)
 
         # Archive not replaced old representations
         for repre_name_low, repre in old_repres_to_delete.items():
-            # TODO delete their files
-
             # Replace archived representation (This is backup)
             # - should not happen to have both repre and archived repre
             if repre_name_low in archived_repres_by_name:
@@ -297,6 +297,12 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         if bulk_writes:
             io._database[io.Session["AVALON_PROJECT"]].bulk_write(bulk_writes)
+
+        self.log.debug((
+            "--- End of Master version integration for subset `{}`."
+        ).format(
+            instance.data.get("subset", str(instance))
+        ))
 
     def create_hardlink(self, src_path, dst_path):
         dst_path = self.path_root_check(dst_path)
