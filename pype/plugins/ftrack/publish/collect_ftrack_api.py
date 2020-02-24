@@ -46,6 +46,7 @@ class CollectFtrackApi(pyblish.api.ContextPlugin):
                 "Found more than one project with name \"{0}\" in Ftrack."
             ).format(project_name))
 
+        project_entity = project_entity[0]
         self.log.debug("Project found: {0}".format(project_entity))
 
         # Find asset entity
