@@ -264,9 +264,10 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                     (src_file, dst_file)
                 )
 
+        self.path_checks = []
+
         # Copy(hardlink) paths of source and destination files
         # TODO should we *only* create hardlinks?
-        # TODO less logs about drives
         # TODO should we keep files for deletion until this is successful?
         for src_path, dst_path in src_to_dst_file_paths:
             self.create_hardlink(src_path, dst_path)
@@ -333,9 +334,13 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         drive, _path = os.path.splitdrive(normalized_path)
         if os.path.exists(drive + "/"):
-            self.log.debug(
-                "Drive \"{}\" exist. Nothing to change.".format(drive)
-            )
+            key = "drive_check{}".format(drive)
+            if key not in self.path_checks:
+                self.log.debug(
+                    "Drive \"{}\" exist. Nothing to change.".format(drive)
+                )
+                self.path_checks.append(key)
+
             return normalized_path
 
         path_env_key = "PYPE_STUDIO_PROJECTS_PATH"
@@ -348,15 +353,18 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             missing_envs.append(mount_env_key)
 
         if missing_envs:
-            _add_s = ""
-            if len(missing_envs) > 1:
-                _add_s = "s"
+            key = "missing_envs"
+            if key not in self.path_checks:
+                self.path_checks.append(key)
+                _add_s = ""
+                if len(missing_envs) > 1:
+                    _add_s = "s"
 
-            self.log.warning((
-                "Can't replace MOUNT drive path to UNC path due to missing"
-                " environment variable{}: `{}`. This may cause issues during"
-                " publishing process."
-            ).format(_add_s, ", ".join(missing_envs)))
+                self.log.warning((
+                    "Can't replace MOUNT drive path to UNC path due to missing"
+                    " environment variable{}: `{}`. This may cause issues"
+                    " during publishing process."
+                ).format(_add_s, ", ".join(missing_envs)))
 
             return normalized_path
 
