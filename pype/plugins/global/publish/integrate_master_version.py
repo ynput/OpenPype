@@ -10,20 +10,21 @@ from avalon import api, io, pipeline
 from avalon.vendor import filelink
 
 
-log = logging.getLogger(__name__)
-
-
 class IntegrateMasterVersion(pyblish.api.InstancePlugin):
     label = "Integrate Master Version"
     # Must happen after IntegrateNew
     order = pyblish.api.IntegratorOrder + 0.1
 
+    # Can specify representation names that will be ignored (lower case)
     ignored_representation_names = []
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "representation",
         "family", "hierarchy", "task", "username"
     ]
-
+    # TODO add family filtering
+    # QUESTION/TODO this process should happen on server if crashed due to
+    # permissions error on files (files were used or user didn't have perms)
+    # *but all other plugins must be sucessfully completed
     def process(self, instance):
         self.log.debug(
             "--- Integration of Master version for subset `{}` begins.".format(
