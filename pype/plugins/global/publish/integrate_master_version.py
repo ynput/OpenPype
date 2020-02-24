@@ -25,6 +25,11 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
     ]
 
     def process(self, instance):
+        self.log.debug(
+            "Integrate of Master version for subset `{}` begins.".format(
+                instance.data.get("subset", str(instance))
+            )
+        )
         published_repres = instance.data.get("published_representations")
         if not published_repres:
             self.log.debug(
@@ -37,14 +42,20 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         # TODO raise error if master not set?
         anatomy = instance.context.data["anatomy"]
         if "publish" not in anatomy.templates:
-            self.warning("Anatomy does not have set publish key!")
+            self.log.warning("Anatomy does not have set publish key!")
             return
 
         if "master" not in anatomy.templates["publish"]:
-            self.warning((
+            self.log.warning((
                 "There is not set \"master\" template for project \"{}\""
             ).format(project_name))
             return
+
+        master_template = anatomy.templates["publish"]["master"]
+
+        self.log.debug("`Master` template check was successful. `{}`".format(
+            master_template
+        ))
 
         src_version_entity = None
 
@@ -55,6 +66,11 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 src_version_entity = repre_info.get("version_entity")
 
             if repre["name"].lower() in self.ignored_representation_names:
+                self.log.debug(
+                    "Filtering representation with name: `{}`".format(
+                        repre["name"].lower()
+                    )
+                )
                 filtered_repre_ids.append(repre_id)
 
         for repre_id in filtered_repre_ids:
@@ -67,12 +83,19 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             return
 
         if src_version_entity is None:
+            self.log.debug((
+                "Published version entity was not sent in representation data."
+                " Querying entity from database."
+            ))
             src_version_entity = (
                 self.version_from_representations(published_repres)
             )
 
         if not src_version_entity:
-            self.log.warning("Can't find origin version in database.")
+            self.log.warning((
+                "Can't find origin version in database."
+                " Skipping Master version publish."
+            ))
             return
 
         old_version, old_repres = (
@@ -99,6 +122,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         bulk_writes = []
 
         if old_version:
+            self.log.debug("Replacing old master version.")
             bulk_writes.append(
                 ReplaceOne(
                     {"_id": new_master_version["_id"]},
@@ -106,6 +130,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 )
             )
         else:
+            self.log.debug("Creating first master version.")
             bulk_writes.append(
                 InsertOne(new_master_version)
             )
@@ -282,11 +307,17 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         try:
             os.makedirs(dirname)
+            self.log.debug("Folder created: \"{}\"".format(dirname))
         except OSError as exc:
             if exc.errno != errno.EEXIST:
                 self.log.error("An unexpected error occurred.", exc_info=True)
                 raise
 
+            self.log.debug("Folder already exists: \"{}\"".format(dirname))
+
+        self.log.debug("Copying file \"{}\" to \"{}\"".format(
+            src_path, dst_path
+        ))
         filelink.create(src_path, dst_path, filelink.HARDLINK)
 
     def path_root_check(self, path):
