@@ -1,6 +1,7 @@
 import os
 import copy
 import logging
+import clique
 
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
@@ -39,8 +40,6 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 "There is not set \"master\" template for project \"{}\""
             ).format(project_name))
             return
-
-        master_template = anatomy.templates["publish"]["master"]
 
         src_version_entity = None
 
@@ -133,13 +132,21 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         self.delete_repre_files(old_repres)
 
-        for repre_id, repre_info in published_repres.items():
-            repre = copy.deepcopy(repre_info["representation"])
-            repre_name_low = repre["name"].lower()
+        master_template = anatomy.templates["publish"]["master"]
 
+        src_to_dst_file_paths = []
+        for repre_id, repre_info in published_repres.items():
+
+            # Skip if new repre does not have published repre files
+            published_files = repre_info["published_files"]
+            if len(published_files) == 0:
+                continue
+
+            # Prepare new repre
+            repre = copy.deepcopy(repre_info["representation"])
             repre["parent"] = new_master_version["_id"]
-            # TODO change repre data and context (new anatomy)
-            # TODO hardlink files
+
+            repre_name_low = repre["name"].lower()
 
             # Replace current representation
             if repre_name_low in old_repres_to_replace:
@@ -169,6 +176,52 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 repre["_id"] = io.ObjectId()
                 bulk_writes.append(
                     InsertOne(repre)
+                )
+
+            # TODO change repre data and context (new anatomy)
+            # TODO hardlink files
+
+            # Prepare anatomy data
+            anatomy_data = repre_info["anatomy_data"]
+            anatomy_data.pop("version", None)
+
+            if len(published_files) == 1:
+                anatomy_filled = anatomy.format(anatomy_data)
+                template_filled = anatomy_filled["publish"]["master"]
+                src_to_dst_file_paths.append(
+                    (published_files[0], template_filled)
+                )
+                continue
+
+            collections, remainders = clique.assemble(published_files)
+            if remainders or not collections or len(collections) > 1:
+                raise Exception((
+                    "Integrity error. Files of published representation"
+                    " is combination of frame collections and single files."
+                ))
+
+            src_col = collections[0]
+
+            # Get filled path to repre context
+            anatomy_filled = anatomy.format(anatomy_data)
+            template_filled = anatomy_filled["publish"]["master"]
+
+            # Get head and tail for collection
+            frame_splitter = "_-_FRAME_SPLIT_-_"
+            anatomy_data["frame"] = frame_splitter
+            _anatomy_filled = anatomy.format(anatomy_data)
+            _template_filled = _anatomy_filled["publish"]["master"]
+            head, tail = _template_filled.split(frame_splitter)
+            padding = (
+                anatomy.templates["render"]["padding"]
+            )
+
+            dst_col = clique.Collection(head=head, padding=padding, tail=tail)
+            dst_col.indexes.clear()
+            dst_col.indexes.update(src_col.indexes)
+            for src_file, dst_file in zip(src_col, dst_col):
+                src_to_dst_file_paths.append(
+                    (src_file, dst_file)
                 )
 
         # Archive not replaced old representations
