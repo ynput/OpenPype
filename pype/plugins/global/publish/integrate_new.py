@@ -259,6 +259,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
+            published_files = []
+
             # create template data for Anatomy
             template_data = copy.deepcopy(anatomy_data)
             if intent is not None:
@@ -364,15 +366,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
+                    published_files.append(dst)
+
                     # for adding first frame into db
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
-
-                dst = "{0}{1}{2}".format(
-                    dst_head,
-                    dst_start_frame,
-                    dst_tail).replace("..", ".")
-                repre['published_path'] = self.unc_convert(dst)
 
             else:
                 # Single file
@@ -402,8 +400,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
 
-                repre['published_path'] = self.unc_convert(dst)
+                published_files.append(dst)
+
                 self.log.debug("__ dst: {}".format(dst))
+
+            repre["publishedFiles"] = published_files
 
             for key in self.db_representation_context_keys:
                 value = template_data.get(key)
@@ -454,6 +455,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             published_representations[repre_id] = {
                 "representation": representation,
                 "anatomy_data": template_data,
+                "published_files": published_files,
                 # TODO prabably should store subset and version to instance
                 "subset_entity": subset,
                 "version_entity": version
@@ -470,7 +472,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.debug("__ representations: {}".format(representations))
         for rep in instance.data["representations"]:
             self.log.debug("__ represNAME: {}".format(rep['name']))
-            self.log.debug("__ represPATH: {}".format(rep['published_path']))
+            self.log.debug("__ represPATH:\n{}".format(
+                ",\n".join(rep['publishedFiles'])
+            ))
         io.insert_many(representations)
         instance.data["published_representations"] = (
             published_representations
