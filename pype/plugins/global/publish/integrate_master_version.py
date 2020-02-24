@@ -242,6 +242,10 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                     (src_file, dst_file)
                 )
 
+        # TODO should we *only* create hardlinks?
+        for src_path, dst_path in src_to_dst_file_paths:
+            self.create_hardlink(src_path, dst_path)
+
         # Archive not replaced old representations
         for repre_name_low, repre in old_repres_to_delete.items():
             # TODO delete their files
@@ -270,6 +274,83 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         if bulk_writes:
             pass
+
+    def create_hardlink(self, src_path, dst_path):
+        dst_path = self.path_root_check(dst_path)
+        src_path = self.path_root_check(src_path)
+
+        dirname = os.path.dirname(dst_path)
+
+        try:
+            os.makedirs(dirname)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                self.log.error("An unexpected error occurred.", exc_info=True)
+                raise
+
+        filelink.create(src_path, dst_path, filelink.HARDLINK)
+
+    def path_root_check(self, path):
+        normalized_path = os.path.normpath(path)
+        forward_slash_path = normalized_path.replace("\\", "/")
+
+        drive, _path = os.path.splitdrive(normalized_path)
+        if os.path.exists(drive + "/"):
+            self.log.debug(
+                "Drive \"{}\" exist. Nothing to change.".format(drive)
+            )
+            return normalized_path
+
+        path_env_key = "PYPE_STUDIO_PROJECTS_PATH"
+        mount_env_key = "PYPE_STUDIO_PROJECTS_MOUNT"
+        missing_envs = []
+        if path_env_key not in os.environ:
+            missing_envs.append(path_env_key)
+
+        if mount_env_key not in os.environ:
+            missing_envs.append(mount_env_key)
+
+        if missing_envs:
+            _add_s = ""
+            if len(missing_envs) > 1:
+                _add_s = "s"
+
+            self.log.warning((
+                "Can't replace MOUNT drive path to UNC path due to missing"
+                " environment variable{}: `{}`. This may cause issues during"
+                " publishing process."
+            ).format(_add_s, ", ".join(missing_envs)))
+
+            return normalized_path
+
+        unc_root = os.environ[path_env_key].replace("\\", "/")
+        mount_root = os.environ[mount_env_key].replace("\\", "/")
+
+        # --- Remove slashes at the end of mount and unc roots ---
+        while unc_root.endswith("/"):
+            unc_root = unc_root[:-1]
+
+        while mount_root.endswith("/"):
+            mount_root = mount_root[:-1]
+        # ---
+
+        if forward_slash_path.startswith(unc_root):
+            self.log.debug((
+                "Path already starts with UNC root: \"{}\""
+            ).format(unc_root))
+            return normalized_path
+
+        if not forward_slash_path.startswith(mount_root):
+            self.log.warning((
+                "Path do not start with MOUNT root \"{}\" "
+                "set in environment variable \"{}\""
+            ).format(unc_root, mount_env_key))
+            return normalized_path
+
+        # Replace Mount root with Unc root
+        path = unc_root + forward_slash_path[len(mount_root):]
+
+        return os.path.normpath(path)
 
     def delete_repre_files(self, repres):
         if not repres:
