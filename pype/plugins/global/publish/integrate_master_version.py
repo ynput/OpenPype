@@ -263,7 +263,9 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                     (src_file, dst_file)
                 )
 
+        # Copy(hardlink) paths of source and destination files
         # TODO should we *only* create hardlinks?
+        # TODO less logs about drives
         for src_path, dst_path in src_to_dst_file_paths:
             self.create_hardlink(src_path, dst_path)
 
@@ -443,17 +445,24 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         renamed_files = []
         failed = False
         for file_path in files_to_delete:
-            # TODO too robust for testing - should be easier in future
-            _rename_path = file_path + ".BACKUP"
-            rename_path = None
-            max_index = 200
-            cur_index = 1
-            while True:
-                if max_index >= cur_index:
-                    raise Exception((
+            self.log.debug(
+                "Preparing file for deletion: `{}`".format(file_path)
+            )
+            rename_path = file_path + ".BACKUP"
+
+            max_index = 10
+            cur_index = 0
+            _rename_path = None
+            while os.path.exists(rename_path):
+                if _rename_path is None:
+                    _rename_path = rename_path
+
+                if cur_index >= max_index:
+                    self.log.warning((
                         "Max while loop index reached! Can't make backup"
                         " for previous master version."
                     ))
+                    failed = True
                     break
 
                 if not os.path.exists(_rename_path):
@@ -462,21 +471,41 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
                 try:
                     os.remove(_rename_path)
+                    self.log.debug(
+                        "Deleted old backup file: \"{}\"".format(_rename_path)
+                    )
                 except Exception:
+                    self.log.warning(
+                        "Could not delete old backup file \"{}\".".format(
+                            _rename_path
+                        ),
+                        exc_info=True
+                    )
                     _rename_path = file_path + ".BACKUP{}".format(
                         str(cur_index)
                     )
                 cur_index += 1
+
+            # Skip if any already failed
+            if failed:
+                break
 
             try:
                 args = (file_path, rename_path)
                 os.rename(*args)
                 renamed_files.append(args)
             except Exception:
+                self.log.warning(
+                    "Could not rename file `{}` to `{}`".format(
+                        file_path, rename_path
+                    ),
+                    exc_info=True
+                )
                 failed = True
                 break
 
         if failed:
+            # Rename back old renamed files
             for dst_name, src_name in renamed_files:
                 os.rename(src_name, dst_name)
 
