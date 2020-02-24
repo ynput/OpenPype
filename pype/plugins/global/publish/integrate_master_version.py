@@ -317,6 +317,8 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         self.log.debug("Copying file \"{}\" to \"{}\"".format(
             src_path, dst_path
         ))
+        # TODO check if file exists!!!
+        # - uncomplete publish may cause that file already exists
         filelink.create(src_path, dst_path, filelink.HARDLINK)
 
     def path_root_check(self, path):
