@@ -2,6 +2,7 @@ import os
 import copy
 import logging
 import clique
+import errno
 
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
@@ -18,6 +19,10 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.1
 
     ignored_representation_names = []
+    db_representation_context_keys = [
+        "project", "asset", "task", "subset", "representation",
+        "family", "hierarchy", "task", "username"
+    ]
 
     def process(self, instance):
         published_repres = instance.data.get("published_representations")
@@ -142,9 +147,34 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             if len(published_files) == 0:
                 continue
 
+            # Prepare anatomy data
+            anatomy_data = repre_info["anatomy_data"]
+            anatomy_data.pop("version", None)
+
+            # Get filled path to repre context
+            anatomy_filled = anatomy.format(anatomy_data)
+            template_filled = anatomy_filled["publish"]["master"]
+
+            repre_data = {
+                "path": str(template_filled),
+                "template": master_template
+            }
+            repre_context = template_filled.used_values
+            for key in self.db_representation_context_keys:
+                if (
+                    key in repre_context or
+                    key not in anatomy_data
+                ):
+                    continue
+
+                repre_context[key] = anatomy_data[key]
+
+            # TODO change repre data and context (new anatomy)
             # Prepare new repre
             repre = copy.deepcopy(repre_info["representation"])
             repre["parent"] = new_master_version["_id"]
+            repre["context"] = repre_context
+            repre["data"] = repre_data
 
             repre_name_low = repre["name"].lower()
 
@@ -178,16 +208,8 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                     InsertOne(repre)
                 )
 
-            # TODO change repre data and context (new anatomy)
             # TODO hardlink files
-
-            # Prepare anatomy data
-            anatomy_data = repre_info["anatomy_data"]
-            anatomy_data.pop("version", None)
-
             if len(published_files) == 1:
-                anatomy_filled = anatomy.format(anatomy_data)
-                template_filled = anatomy_filled["publish"]["master"]
                 src_to_dst_file_paths.append(
                     (published_files[0], template_filled)
                 )
@@ -201,10 +223,6 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 ))
 
             src_col = collections[0]
-
-            # Get filled path to repre context
-            anatomy_filled = anatomy.format(anatomy_data)
-            template_filled = anatomy_filled["publish"]["master"]
 
             # Get head and tail for collection
             frame_splitter = "_-_FRAME_SPLIT_-_"
