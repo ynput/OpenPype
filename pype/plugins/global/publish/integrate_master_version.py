@@ -120,10 +120,9 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 old_repres_to_replace[repre_name_low] = (
                     old_repres_by_name.pop(repre_name_low)
                 )
-            else:
-                old_repres_to_delete[repre_name_low] = (
-                    old_repres_by_name.pop(repre_name_low)
-                )
+
+        if old_repres_by_name:
+            old_repres_to_delete = old_repres_by_name
 
         archived_repres = list(io.find({
             # Check what is type of archived representation
