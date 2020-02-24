@@ -161,8 +161,6 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         self.delete_repre_files(old_repres)
 
-        master_template = anatomy.templates["publish"]["master"]
-
         src_to_dst_file_paths = []
         for repre_id, repre_info in published_repres.items():
 
@@ -193,7 +191,6 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
                 repre_context[key] = anatomy_data[key]
 
-            # TODO change repre data and context (new anatomy)
             # Prepare new repre
             repre = copy.deepcopy(repre_info["representation"])
             repre["parent"] = new_master_version["_id"]
@@ -232,7 +229,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                     InsertOne(repre)
                 )
 
-            # TODO hardlink files
+            # Prepare paths of source and destination files
             if len(published_files) == 1:
                 src_to_dst_file_paths.append(
                     (published_files[0], template_filled)
