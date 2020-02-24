@@ -373,6 +373,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
 
+                dst = "{0}{1}{2}".format(
+                    dst_head,
+                    dst_start_frame,
+                    dst_tail
+                ).replace("..", ".")
+                repre['published_path'] = self.unc_convert(dst)
+
             else:
                 # Single file
                 #  _______
@@ -402,7 +409,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 instance.data["transfers"].append([src, dst])
 
                 published_files.append(dst)
-
+                repre['published_path'] = self.unc_convert(dst)
                 self.log.debug("__ dst: {}".format(dst))
 
             repre["publishedFiles"] = published_files
@@ -473,9 +480,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         self.log.debug("__ representations: {}".format(representations))
         for rep in instance.data["representations"]:
             self.log.debug("__ represNAME: {}".format(rep['name']))
-            self.log.debug("__ represPATH:\n{}".format(
-                ",\n".join(rep['publishedFiles'])
-            ))
+            self.log.debug("__ represPATH: {}".format(rep['published_path']))
         io.insert_many(representations)
         instance.data["published_representations"] = (
             published_representations
