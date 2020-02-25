@@ -104,11 +104,11 @@ def install():
         #     'function': creator.show,
         #     'icon': QIcon('icons:ColorAdd.png')
         # },
-        # {
-        #     'action': QAction('Load...', None),
-        #     'function': cbloader.show,
-        #     'icon': QIcon('icons:CopyRectangle.png')
-        # },
+        {
+            'action': QAction('Load...', None),
+            'function': cbloader.show,
+            'icon': QIcon('icons:CopyRectangle.png')
+        },
         {
             'action': QAction('Publish...', None),
             'function': publish.show,
