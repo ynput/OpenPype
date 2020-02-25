@@ -364,10 +364,10 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             # TODO should we *only* create hardlinks?
             # TODO should we keep files for deletion until this is successful?
             for src_path, dst_path in src_to_dst_file_paths:
-                self.create_hardlink(src_path, dst_path)
+                self.copy_file(src_path, dst_path)
 
             for src_path, dst_path in other_file_paths_mapping:
-                self.create_hardlink(src_path, dst_path)
+                self.copy_file(src_path, dst_path)
 
             # Archive not replaced old representations
             for repre_name_low, repre in old_repres_to_delete.items():
@@ -412,7 +412,8 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             raise
 
         self.log.debug((
-            "--- End of Master version integration for subset `{}`."
+            "--- Master version integration for subset `{}`"
+            " seems to be successful."
         ).format(
             instance.data.get("subset", str(instance))
         ))
@@ -458,7 +459,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         return publish_folder
 
-    def create_hardlink(self, src_path, dst_path):
+    def copy_file(self, src_path, dst_path):
         # TODO check drives if are the same to check if cas hardlink
         dst_path = self.path_root_check(dst_path)
         src_path = self.path_root_check(src_path)
@@ -478,7 +479,19 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         self.log.debug("Copying file \"{}\" to \"{}\"".format(
             src_path, dst_path
         ))
-        filelink.create(src_path, dst_path, filelink.HARDLINK)
+
+        # First try hardlink and copy if paths are cross drive
+        try:
+            filelink.create(src_path, dst_path, filelink.HARDLINK)
+            # Return when successful
+            return
+
+        except OSError as exc:
+            # re-raise exception if different than cross drive path
+            if exc.errno != errno.EXDEV:
+                raise
+
+        shutil.copy(src_path, dst_path)
 
     def path_root_check(self, path):
         normalized_path = os.path.normpath(path)
