@@ -1,4 +1,7 @@
 from avalon import api
+import hiero
+from pype.nukestudio import lib
+reload(lib)
 
 
 class LoadSequencesToTimelineAssetOrigin(api.Loader):
@@ -17,7 +20,18 @@ class LoadSequencesToTimelineAssetOrigin(api.Loader):
     color = "orange"
 
     def load(self, context, name, namespace, data):
-        pass
+
+        data.update({
+            # "projectBinPath": "Loaded",
+            "hieroWorkfileName": hiero.ui.activeProject().name()
+            })
+
+        self.log.info("data: `{}`".format(data))
+
+        clip_loader = lib.ClipLoader(self, context, **data)
+        clip_loader.load()
+
+        self.log.info("Loader done: `{}`".format(name))
 
     def switch(self, container, representation):
         self.update(container, representation)
