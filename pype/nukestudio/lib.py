@@ -364,32 +364,40 @@ def CreateNukeWorkfile(nodes=None,
 
 
 class ClipLoader:
-    data = dict()
 
-    def __init__(self, plugin_cls, context, **kwargs):
+    active_bin = None
+
+    def __init__(self, plugin_cls, context, sequence=None, track=None, **kwargs):
         """ Initialize object
 
         Arguments:
             plugin_cls (api.Loader): plugin object
             context (dict): loader plugin context
+            sequnce (hiero.core.Sequence): sequence object
+            track (hiero.core.Track): track object
             kwargs (dict)[optional]: possible keys:
-                project_bin_path: "path/to/binItem"
-                hiero_workfile_name: "name_of_hiero_project_file_no_extension"
+                projectBinPath: "path/to/binItem"
+                hieroWorkfileName: "name_of_hiero_project_file_no_extension"
 
         """
         self.cls = plugin_cls
         self.context = context
         self.kwargs = kwargs
-        self.active_project = self.get_active_project()
+        self.active_project = self._get_active_project()
         self.project_bin = self.active_project.clipsBin()
+        self.active_sequence = self._get_active_sequence(sequence)
+        self.active_track = self._get_active_track(track)
 
-        assert self.set_data(), str("Cannot Load selected data, look into "
+        self.data = dict()
+
+        assert self._set_data(), str("Cannot Load selected data, look into "
                                     "database or call your supervisor")
 
         # inject asset data to representation dict
-        self.get_asset_data()
+        self._get_asset_data()
+        log.debug("__init__ self.data: `{}`".format(self.data))
 
-    def set_data(self):
+    def _set_data(self):
         """ Gets context and convert it to self.data
         data structure:
             {
@@ -399,67 +407,69 @@ class ClipLoader:
             }
         """
         # create name
-        repr = self.context["representaion"]
+        repr = self.context["representation"]
         repr_cntx = repr["context"]
-        asset = repr_cntx["asset"]
-        subset = repr_cntx["subset"]
-        representation = repr_cntx["representation"]
+        asset = str(repr_cntx["asset"])
+        subset = str(repr_cntx["subset"])
+        representation = str(repr_cntx["representation"])
         self.data["name"] = "_".join([asset, subset, representation])
 
         # gets file path
         file = self.cls.fname
-
         if not file:
             repr_id = repr["_id"]
             log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return None
-
         self.data["path"] = file.replace("\\", "/")
 
+        # convert to hashed path
         if repr_cntx.get("frame"):
-            self.fix_path_hashes()
+            self._fix_path_hashes()
 
         # solve project bin structure path
-        hierarchy = "/".join((
+        hierarchy = str("/".join((
             "Loader",
             repr_cntx["hierarchy"].replace("\\", "/"),
             asset
-            ))
+            )))
+
         self.data["binPath"] = self.kwargs.get(
-            "project_bin_path",
+            "projectBinPath",
             hierarchy
             )
 
-    def fix_path_hashes(self):
+        return True
+
+    def _fix_path_hashes(self):
         """ Convert file path where it is needed padding with hashes
         """
         file = self.data["path"]
         if "#" not in file:
-            frame = self.context["representaion"]["context"].get("frame")
+            frame = self.context["representation"]["context"].get("frame")
             padding = len(frame)
             file = file.replace(frame, "#"*padding)
         self.data["path"] = file
 
-    def get_active_project(self):
+    def _get_active_project(self):
         """ Get hiero active project object
         """
-        fname = self.kwargs.get("hiero_workfile_name", "")
+        fname = self.kwargs.get("hieroWorkfileName", "")
 
         return next((p for p in hiero.core.projects()
                      if fname in p.name()),
                     hiero.core.projects()[-1])
 
-    def get_asset_data(self):
+    def _get_asset_data(self):
         """ Get all available asset data
 
         joint `data` key with asset.data dict into the representaion
 
         """
-        asset_name = self.context["representaion"]["context"]["asset"]
+        asset_name = self.context["representation"]["context"]["asset"]
         self.data["assetData"] = pype.get_asset(asset_name)["data"]
 
-    def make_project_bin(self, hierarchy):
+    def _make_project_bin(self, hierarchy):
         """ Creare bins by given hierarchy path
 
         It will also make sure no duplicit bins will be created
@@ -470,13 +480,45 @@ class ClipLoader:
         Returns:
             bin (hiero.core.BinItem): with the bin to be used for mediaItem
         """
-        pass
+        if self.active_bin:
+            return self.active_bin
 
-    def make_track_item(self):
+        assert hierarchy != "", "Please add hierarchy!"
+        log.debug("__ hierarchy1: `{}`".format(hierarchy))
+        if '/' in hierarchy:
+            hierarchy = hierarchy.split('/')
+        else:
+            hierarchy = [hierarchy]
+
+        parent_bin = None
+        for i, name in enumerate(hierarchy):
+            # if first index and list is more then one long
+            if i == 0:
+                bin = next((bin for bin in self.project_bin.bins()
+                            if name in bin.name()), None)
+                if not bin:
+                    bin = hiero.core.Bin(name)
+                    self.project_bin.addItem(bin)
+                log.debug("__ bin.name: `{}`".format(bin.name()))
+                parent_bin = bin
+
+            # if second to prelast
+            elif (i >= 1) and (i <= (len(hierarchy) - 1)):
+                bin = next((bin for bin in parent_bin.bins()
+                            if name in bin.name()), None)
+                if not bin:
+                    bin = hiero.core.Bin(name)
+                    parent_bin.addItem(bin)
+
+                parent_bin = bin
+
+        return parent_bin
+
+    def _make_track_item(self):
         """ Create track item with """
         pass
 
-    def set_clip_color(self, last_version=True):
+    def _set_clip_color(self, last_version=True):
         """ Sets color of clip on clip/track item
 
         Arguments:
@@ -484,7 +526,7 @@ class ClipLoader:
         """
         pass
 
-    def set_container_tag(self, item, metadata):
+    def _set_container_tag(self, item, metadata):
         """ Sets container tag to given clip/track item
 
         Arguments:
@@ -492,6 +534,74 @@ class ClipLoader:
             metadata (dict): data to be added to tag
         """
         pass
+
+    def _get_active_sequence(self, sequence):
+        if not sequence:
+            return hiero.ui.activeSequence()
+        else:
+            return sequence
+
+    def _get_active_track(self, track):
+        if not track:
+            track_name = self.data["name"]
+
+        if track_name not in self.active_sequence.videoTracks():
+            track = hiero.core.VideoTrack(track_name)
+            self.active_sequence.addTrack(track)
+
+        return track
+
+    def load(self):
+        log.debug("__ active_project: `{}`".format(self.active_project))
+        log.debug("__ active_sequence: `{}`".format(self.active_sequence))
+
+        # create project bin for the media to be imported into
+        self.active_bin = self._make_project_bin(self.data["binPath"])
+        log.debug("__ active_bin: `{}`".format(self.active_bin))
+
+        # create mediaItem in active project bin
+        # create clip media
+        media = hiero.core.MediaSource(self.data["path"])
+        media_in = int(media.startTime())
+        media_duration = int(media.duration())
+
+        handle_start = self.data["assetData"]["handleStart"]
+        handle_end = self.data["assetData"]["handleEnd"]
+
+        if media_in:
+            source_in = media_in + handle_start
+        else:
+            source_in = self.data["assetData"]["frameStart"] + handle_start
+
+        if media_duration:
+            source_out = (media_in + media_duration - 1) - handle_end
+        else:
+            source_out = self.data["assetData"]["frameEnd"]- handle_end
+
+        source = hiero.core.Clip(media)
+
+        # add to bin as clip item
+        items_in_bin = [b.name() for b in bin.items()]
+        if self.data["name"] not in items_in_bin:
+            binItem = hiero.core.BinItem(source)
+            bin.addItem(binItem)
+
+        new_source = [
+            item for item in bin.items() if split_name in item.name()
+        ][0].items()[0].item()
+
+        # add to track as clip item
+        trackItem = hiero.core.TrackItem(
+            self.data["name"], hiero.core.TrackItem.kVideo)
+        trackItem.setSource(new_source)
+        trackItem.setSourceIn(self.data["assetData"]["sourceIn"])
+        trackItem.setSourceOut(self.data["assetData"]["sourceOut"])
+        trackItem.setTimelineIn(self.data["assetData"]["clipIn"])
+        trackItem.setTimelineOut(self.data["assetData"]["clipOut"])
+        self.active_track.addTrackItem(trackItem)
+
+        log.info("Loading clips: `{}`".format(self.data["name"]))
+
 
 def create_nk_workfile_clips(nk_workfiles, seq=None):
     '''
@@ -529,9 +639,7 @@ def create_nk_workfile_clips(nk_workfiles, seq=None):
         else:
             track = seq.tracks(nk['task'])
 
-        # create slip media
-        print("__ path: `{}`".format(nk['path']))
-
+        # create clip media
         media = hiero.core.MediaSource(nk['path'])
         media_in = int(media.startTime() or 0)
         media_duration = int(media.duration() or 0)
@@ -549,20 +657,10 @@ def create_nk_workfile_clips(nk_workfiles, seq=None):
         else:
             source_out = nk["frameEnd"] - handle_end
 
-        print("__ media: `{}`".format(media))
-        print("__ media_in: `{}`".format(media_in))
-        print("__ media_duration : `{}`".format(media_duration))
-        print("__ source_in: `{}`".format(source_in))
-        print("__ source_out : `{}`".format(source_out))
-
         source = hiero.core.Clip(media)
-        print("__ source : `{}`".format(source))
-        print("__ source.sourceIn(): `{}`".format(source.sourceIn()))
 
         name = os.path.basename(os.path.splitext(nk['path'])[0])
         split_name = split_by_client_version(name)[0] or name
-
-        print("__ split_name: `{}`".format(split_name))
 
         # add to bin as clip item
         items_in_bin = [b.name() for b in bin.items()]
@@ -570,14 +668,9 @@ def create_nk_workfile_clips(nk_workfiles, seq=None):
             binItem = hiero.core.BinItem(source)
             bin.addItem(binItem)
 
-        print("__ bin.items(): `{}`".format(bin.items()))
-
         new_source = [
             item for item in bin.items() if split_name in item.name()
         ][0].items()[0].item()
-
-        print("__ new_source: `{}`".format(new_source))
-        print("__ new_source: `{}`".format(new_source))
 
         # add to track as clip item
         trackItem = hiero.core.TrackItem(
@@ -585,10 +678,8 @@ def create_nk_workfile_clips(nk_workfiles, seq=None):
         trackItem.setSource(new_source)
         trackItem.setSourceIn(source_in)
         trackItem.setSourceOut(source_out)
-        trackItem.setSourceIn(source_in)
         trackItem.setTimelineIn(nk["clipIn"])
         trackItem.setTimelineOut(nk["clipIn"] + (source_out - source_in))
-        track.addTrackItem(trackItem)
         track.addTrackItem(trackItem)
         clips_lst.append(trackItem)
 
