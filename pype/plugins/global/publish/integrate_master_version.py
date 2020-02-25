@@ -1,8 +1,8 @@
 import os
 import copy
-import logging
 import clique
 import errno
+import shutil
 
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
@@ -25,6 +25,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
     # QUESTION/TODO this process should happen on server if crashed due to
     # permissions error on files (files were used or user didn't have perms)
     # *but all other plugins must be sucessfully completed
+
     def process(self, instance):
         self.log.debug(
             "--- Integration of Master version for subset `{}` begins.".format(
@@ -42,24 +43,25 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         # TODO raise error if master not set?
         anatomy = instance.context.data["anatomy"]
-        if "publish" not in anatomy.templates:
-            self.log.warning("!!! Anatomy does not have set publish key!")
+        if "master" not in anatomy.templates:
+            self.log.warning("!!! Anatomy does not have set `master` key!")
             return
 
-        if "master" not in anatomy.templates["publish"]:
+        if "path" not in anatomy.templates["master"]:
             self.log.warning((
-                "!!! There is not set \"master\" template for project \"{}\""
+                "!!! There is not set `path` template in `master` anatomy"
+                " for project \"{}\"."
             ).format(project_name))
             return
 
-        master_template = anatomy.templates["publish"]["master"]
-
+        master_template = anatomy.templates["master"]["path"]
         self.log.debug("`Master` template check was successful. `{}`".format(
             master_template
         ))
 
-        src_version_entity = None
+        master_publish_dir = self.get_publish_dir(instance)
 
+        src_version_entity = None
         filtered_repre_ids = []
         for repre_id, repre_info in published_repres.items():
             repre = repre_info["representation"]
@@ -99,6 +101,47 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             ))
             return
 
+        all_copied_files = []
+        transfers = instance.data.get("transfers", list())
+        for src, dst in transfers:
+            dst = os.path.normpath(dst)
+            if dst not in all_copied_files:
+                all_copied_files.append(dst)
+
+        hardlinks = instance.data.get("hardlinks", list())
+        for src, dst in hardlinks:
+            dst = os.path.normpath(dst)
+            if dst not in all_copied_files:
+                all_copied_files.append(dst)
+
+        all_repre_file_paths = []
+        for repre_info in published_repres:
+            published_files = repre_info.get("published_files") or []
+            for file_path in published_files:
+                file_path = os.path.normpath(file_path)
+                if file_path not in all_repre_file_paths:
+                    all_repre_file_paths.append(file_path)
+
+        # TODO this is not best practice of getting resources for publish
+        # WARNING due to this we must remove all files from master publish dir
+        instance_publish_dir = os.path.normpath(
+            instance.data["publishDir"]
+        )
+        other_file_paths_mapping = []
+        for file_path in all_copied_files:
+            # Check if it is from publishDir
+            if not file_path.startswith(instance_publish_dir):
+                continue
+
+            if file_path in all_repre_file_paths:
+                continue
+
+            dst_filepath = file_path.replace(
+                instance_publish_dir, master_publish_dir
+            )
+            other_file_paths_mapping.append((file_path, dst_filepath))
+
+        # Current version
         old_version, old_repres = (
             self.current_master_ents(src_version_entity)
         )
@@ -120,6 +163,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             "schema": "pype:master_version-1.0"
         }
 
+        # Don't make changes in database until everything is O.K.
         bulk_writes = []
 
         if old_version:
@@ -160,145 +204,212 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             repre_name_low = repre["name"].lower()
             archived_repres_by_name[repre_name_low] = repre
 
-        self.delete_repre_files(old_repres)
+        if os.path.exists(master_publish_dir):
+            backup_master_publish_dir = master_publish_dir + ".BACKUP"
+            max_idx = 10
+            idx = 0
+            _backup_master_publish_dir = backup_master_publish_dir
+            while os.path.exists(_backup_master_publish_dir):
+                self.log.debug((
+                    "Backup folder already exists."
+                    " Trying to remove \"{}\""
+                ).format(_backup_master_publish_dir))
 
-        src_to_dst_file_paths = []
-        for repre_id, repre_info in published_repres.items():
+                try:
+                    shutil.rmtree(_backup_master_publish_dir)
+                    backup_master_publish_dir = _backup_master_publish_dir
+                    break
+                except Exception:
+                    self.log.info((
+                        "Could not remove previous backup folder."
+                        " Trying to add index to folder name"
+                    ))
 
-            # Skip if new repre does not have published repre files
-            published_files = repre_info["published_files"]
-            if len(published_files) == 0:
-                continue
+                _backup_master_publish_dir = (
+                    backup_master_publish_dir + str(idx)
+                )
+                if not os.path.exists(_backup_master_publish_dir):
+                    backup_master_publish_dir = _backup_master_publish_dir
+                    break
 
-            # Prepare anatomy data
-            anatomy_data = repre_info["anatomy_data"]
-            anatomy_data.pop("version", None)
+                if idx > max_idx:
+                    raise AssertionError((
+                        "Backup folders are fully occupied to max index \"{}\""
+                    ).format(max_idx))
+                    break
 
-            # Get filled path to repre context
-            anatomy_filled = anatomy.format(anatomy_data)
-            template_filled = anatomy_filled["publish"]["master"]
+                idx += 1
 
-            repre_data = {
-                "path": str(template_filled),
-                "template": master_template
-            }
-            repre_context = template_filled.used_values
-            for key in self.db_representation_context_keys:
-                if (
-                    key in repre_context or
-                    key not in anatomy_data
-                ):
+            self.log.debug("Backup folder path is \"{}\"".format(
+                backup_master_publish_dir
+            ))
+            try:
+                os.rename(master_publish_dir, backup_master_publish_dir)
+            except PermissionError:
+                raise AssertionError((
+                    "Could not create master version because it is not"
+                    " possible to replace current master files."
+                ))
+        try:
+            src_to_dst_file_paths = []
+            for repre_id, repre_info in published_repres.items():
+
+                # Skip if new repre does not have published repre files
+                published_files = repre_info["published_files"]
+                if len(published_files) == 0:
                     continue
 
-                repre_context[key] = anatomy_data[key]
+                # Prepare anatomy data
+                anatomy_data = repre_info["anatomy_data"]
+                anatomy_data.pop("version", None)
 
-            # Prepare new repre
-            repre = copy.deepcopy(repre_info["representation"])
-            repre["parent"] = new_master_version["_id"]
-            repre["context"] = repre_context
-            repre["data"] = repre_data
+                # Get filled path to repre context
+                anatomy_filled = anatomy.format(anatomy_data)
+                template_filled = anatomy_filled["publish"]["master"]
 
-            repre_name_low = repre["name"].lower()
+                repre_data = {
+                    "path": str(template_filled),
+                    "template": master_template
+                }
+                repre_context = template_filled.used_values
+                for key in self.db_representation_context_keys:
+                    if (
+                        key in repre_context or
+                        key not in anatomy_data
+                    ):
+                        continue
 
-            # Replace current representation
-            if repre_name_low in old_repres_to_replace:
-                old_repre = old_repres_to_replace.pop(repre_name_low)
-                repre["_id"] = old_repre["_id"]
-                bulk_writes.append(
-                    ReplaceOne(
-                        {"_id": old_repre["_id"]},
-                        repre
+                    repre_context[key] = anatomy_data[key]
+
+                # Prepare new repre
+                repre = copy.deepcopy(repre_info["representation"])
+                repre["parent"] = new_master_version["_id"]
+                repre["context"] = repre_context
+                repre["data"] = repre_data
+
+                repre_name_low = repre["name"].lower()
+
+                # Replace current representation
+                if repre_name_low in old_repres_to_replace:
+                    old_repre = old_repres_to_replace.pop(repre_name_low)
+                    repre["_id"] = old_repre["_id"]
+                    bulk_writes.append(
+                        ReplaceOne(
+                            {"_id": old_repre["_id"]},
+                            repre
+                        )
                     )
-                )
 
-            # Unarchive representation
-            elif repre_name_low in archived_repres_by_name:
-                archived_repre = archived_repres_by_name.pop(repre_name_low)
-                old_id = archived_repre["old_id"]
-                repre["_id"] = old_id
-                bulk_writes.append(
-                    ReplaceOne(
-                        {"old_id": old_id},
-                        repre
+                # Unarchive representation
+                elif repre_name_low in archived_repres_by_name:
+                    archived_repre = archived_repres_by_name.pop(
+                        repre_name_low
                     )
-                )
-
-            # Create representation
-            else:
-                repre["_id"] = io.ObjectId()
-                bulk_writes.append(
-                    InsertOne(repre)
-                )
-
-            # Prepare paths of source and destination files
-            if len(published_files) == 1:
-                src_to_dst_file_paths.append(
-                    (published_files[0], template_filled)
-                )
-                continue
-
-            collections, remainders = clique.assemble(published_files)
-            if remainders or not collections or len(collections) > 1:
-                raise Exception((
-                    "Integrity error. Files of published representation"
-                    " is combination of frame collections and single files."
-                    "Collections: `{}` Single files: `{}`"
-                ).format(str(collections), str(remainders)))
-
-            src_col = collections[0]
-
-            # Get head and tail for collection
-            frame_splitter = "_-_FRAME_SPLIT_-_"
-            anatomy_data["frame"] = frame_splitter
-            _anatomy_filled = anatomy.format(anatomy_data)
-            _template_filled = _anatomy_filled["publish"]["master"]
-            head, tail = _template_filled.split(frame_splitter)
-            padding = (
-                anatomy.templates["render"]["padding"]
-            )
-
-            dst_col = clique.Collection(head=head, padding=padding, tail=tail)
-            dst_col.indexes.clear()
-            dst_col.indexes.update(src_col.indexes)
-            for src_file, dst_file in zip(src_col, dst_col):
-                src_to_dst_file_paths.append(
-                    (src_file, dst_file)
-                )
-
-        self.path_checks = []
-
-        # Copy(hardlink) paths of source and destination files
-        # TODO should we *only* create hardlinks?
-        # TODO should we keep files for deletion until this is successful?
-        for src_path, dst_path in src_to_dst_file_paths:
-            self.create_hardlink(src_path, dst_path)
-
-        # Archive not replaced old representations
-        for repre_name_low, repre in old_repres_to_delete.items():
-            # Replace archived representation (This is backup)
-            # - should not happen to have both repre and archived repre
-            if repre_name_low in archived_repres_by_name:
-                archived_repre = archived_repres_by_name.pop(repre_name_low)
-                repre["old_id"] = repre["_id"]
-                repre["_id"] = archived_repre["_id"]
-                repre["type"] = archived_repre["type"]
-                bulk_writes.append(
-                    ReplaceOne(
-                        {"_id": archived_repre["_id"]},
-                        repre
+                    old_id = archived_repre["old_id"]
+                    repre["_id"] = old_id
+                    bulk_writes.append(
+                        ReplaceOne(
+                            {"old_id": old_id},
+                            repre
+                        )
                     )
+
+                # Create representation
+                else:
+                    repre["_id"] = io.ObjectId()
+                    bulk_writes.append(
+                        InsertOne(repre)
+                    )
+
+                # Prepare paths of source and destination files
+                if len(published_files) == 1:
+                    src_to_dst_file_paths.append(
+                        (published_files[0], template_filled)
+                    )
+                    continue
+
+                collections, remainders = clique.assemble(published_files)
+                if remainders or not collections or len(collections) > 1:
+                    raise Exception((
+                        "Integrity error. Files of published representation "
+                        "is combination of frame collections and single files."
+                        "Collections: `{}` Single files: `{}`"
+                    ).format(str(collections), str(remainders)))
+
+                src_col = collections[0]
+
+                # Get head and tail for collection
+                frame_splitter = "_-_FRAME_SPLIT_-_"
+                anatomy_data["frame"] = frame_splitter
+                _anatomy_filled = anatomy.format(anatomy_data)
+                _template_filled = _anatomy_filled["master"]["path"]
+                head, tail = _template_filled.split(frame_splitter)
+                padding = (
+                    anatomy.templates["render"]["padding"]
                 )
 
-            else:
-                repre["old_id"] = repre["_id"]
-                repre["_id"] = io.ObjectId()
-                repre["type"] = "archived_representation"
-                bulk_writes.append(
-                    InsertOne(repre)
+                dst_col = clique.Collection(
+                    head=head, padding=padding, tail=tail
+                )
+                dst_col.indexes.clear()
+                dst_col.indexes.update(src_col.indexes)
+                for src_file, dst_file in zip(src_col, dst_col):
+                    src_to_dst_file_paths.append(
+                        (src_file, dst_file)
+                    )
+
+            self.path_checks = []
+
+            # Copy(hardlink) paths of source and destination files
+            # TODO should we *only* create hardlinks?
+            # TODO should we keep files for deletion until this is successful?
+            for src_path, dst_path in src_to_dst_file_paths:
+                self.create_hardlink(src_path, dst_path)
+
+            for src_path, dst_path in other_file_paths_mapping:
+                self.create_hardlink(src_path, dst_path)
+
+            # Archive not replaced old representations
+            for repre_name_low, repre in old_repres_to_delete.items():
+                # Replace archived representation (This is backup)
+                # - should not happen to have both repre and archived repre
+                if repre_name_low in archived_repres_by_name:
+                    archived_repre = archived_repres_by_name.pop(
+                        repre_name_low
+                    )
+                    repre["old_id"] = repre["_id"]
+                    repre["_id"] = archived_repre["_id"]
+                    repre["type"] = archived_repre["type"]
+                    bulk_writes.append(
+                        ReplaceOne(
+                            {"_id": archived_repre["_id"]},
+                            repre
+                        )
+                    )
+
+                else:
+                    repre["old_id"] = repre["_id"]
+                    repre["_id"] = io.ObjectId()
+                    repre["type"] = "archived_representation"
+                    bulk_writes.append(
+                        InsertOne(repre)
+                    )
+
+            if bulk_writes:
+                io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+                    bulk_writes
                 )
 
-        if bulk_writes:
-            io._database[io.Session["AVALON_PROJECT"]].bulk_write(bulk_writes)
+            # Remove backuped previous master
+            shutil.rmtree(backup_master_publish_dir)
+
+        except Exception:
+            os.rename(backup_master_publish_dir, master_publish_dir)
+            self.log.error((
+                "!!! Creating of Master version failed."
+                " Previous master version maybe lost some data!"
+            ))
+            raise
 
         self.log.debug((
             "--- End of Master version integration for subset `{}`."
@@ -306,7 +417,49 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             instance.data.get("subset", str(instance))
         ))
 
+    def get_all_files_from_path(self, path):
+        files = []
+        for (dir_path, dir_names, file_names) in os.walk(path):
+            for file_name in file_names:
+                _path = os.path.join(dir_path, file_name)
+                files.append(_path)
+        return files
+
+    def get_publish_dir(self, instance):
+        anatomy = instance.context.data["anatomy"]
+        template_data = copy.deepcopy(instance.data["anatomyData"])
+
+        if "folder" in anatomy.templates["master"]:
+            anatomy_filled = anatomy.format(template_data)
+            publish_folder = anatomy_filled["master"]["folder"]
+        else:
+            # This is for cases of Deprecated anatomy without `folder`
+            # TODO remove when all clients have solved this issue
+            template_data.update({
+                "frame": "FRAME_TEMP",
+                "representation": "TEMP"
+            })
+            anatomy_filled = anatomy.format(template_data)
+            # solve deprecated situation when `folder` key is not underneath
+            # `publish` anatomy
+            project_name = api.Session["AVALON_PROJECT"]
+            self.log.warning((
+                "Deprecation warning: Anatomy does not have set `folder`"
+                " key underneath `publish` (in global of for project `{}`)."
+            ).format(project_name))
+
+            file_path = anatomy_filled["master"]["path"]
+            # Directory
+            publish_folder = os.path.dirname(file_path)
+
+        publish_folder = os.path.normpath(publish_folder)
+
+        self.log.debug("Master publish dir: \"{}\"".format(publish_folder))
+
+        return publish_folder
+
     def create_hardlink(self, src_path, dst_path):
+        # TODO check drives if are the same to check if cas hardlink
         dst_path = self.path_root_check(dst_path)
         src_path = self.path_root_check(src_path)
 
@@ -314,7 +467,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         try:
             os.makedirs(dirname)
-            self.log.debug("Folder created: \"{}\"".format(dirname))
+            self.log.debug("Folder(s) created: \"{}\"".format(dirname))
         except OSError as exc:
             if exc.errno != errno.EEXIST:
                 self.log.error("An unexpected error occurred.", exc_info=True)
@@ -325,8 +478,6 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         self.log.debug("Copying file \"{}\" to \"{}\"".format(
             src_path, dst_path
         ))
-        # TODO check if file exists!!!
-        # - uncomplete publish may cause that file already exists
         filelink.create(src_path, dst_path, filelink.HARDLINK)
 
     def path_root_check(self, path):
@@ -397,142 +548,6 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         path = unc_root + forward_slash_path[len(mount_root):]
 
         return os.path.normpath(path)
-
-    def delete_repre_files(self, repres):
-        if not repres:
-            return
-
-        frame_splitter = "_-_FRAME_-_"
-        files_to_delete = []
-        for repre in repres:
-            is_sequence = False
-            if "frame" in repre["context"]:
-                repre["context"]["frame"] = frame_splitter
-                is_sequence = True
-
-            template = repre["data"]["template"]
-            context = repre["context"]
-            context["root"] = api.registered_root()
-            path = pipeline.format_template_with_optional_keys(
-                context, template
-            )
-            path = os.path.normpath(path)
-            if not is_sequence:
-                if os.path.exists(path):
-                    files_to_delete.append(path)
-                continue
-
-            dirpath = os.path.dirname(path)
-            file_start = None
-            file_end = None
-            file_items = path.split(frame_splitter)
-            if len(file_items) == 0:
-                continue
-            elif len(file_items) == 1:
-                if path.startswith(frame_splitter):
-                    file_end = file_items[0]
-                else:
-                    file_start = file_items[1]
-
-            elif len(file_items) == 2:
-                file_start, file_end = file_items
-
-            else:
-                raise ValueError((
-                    "Representation template has `frame` key "
-                    "more than once inside."
-                ))
-
-            for file_name in os.listdir(dirpath):
-                check_name = str(file_name)
-                if file_start and not check_name.startswith(file_start):
-                    continue
-                check_name.replace(file_start, "")
-
-                if file_end and not check_name.endswith(file_end):
-                    continue
-                check_name.replace(file_end, "")
-
-                # File does not have frame
-                if not check_name:
-                    continue
-
-                files_to_delete.append(os.path.join(dirpath, file_name))
-
-        renamed_files = []
-        failed = False
-        for file_path in files_to_delete:
-            self.log.debug(
-                "Preparing file for deletion: `{}`".format(file_path)
-            )
-            rename_path = file_path + ".BACKUP"
-
-            max_index = 10
-            cur_index = 0
-            _rename_path = None
-            while os.path.exists(rename_path):
-                if _rename_path is None:
-                    _rename_path = rename_path
-
-                if cur_index >= max_index:
-                    self.log.warning((
-                        "Max while loop index reached! Can't make backup"
-                        " for previous master version."
-                    ))
-                    failed = True
-                    break
-
-                if not os.path.exists(_rename_path):
-                    rename_path = _rename_path
-                    break
-
-                try:
-                    os.remove(_rename_path)
-                    self.log.debug(
-                        "Deleted old backup file: \"{}\"".format(_rename_path)
-                    )
-                except Exception:
-                    self.log.warning(
-                        "Could not delete old backup file \"{}\".".format(
-                            _rename_path
-                        ),
-                        exc_info=True
-                    )
-                    _rename_path = file_path + ".BACKUP{}".format(
-                        str(cur_index)
-                    )
-                cur_index += 1
-
-            # Skip if any already failed
-            if failed:
-                break
-
-            try:
-                args = (file_path, rename_path)
-                os.rename(*args)
-                renamed_files.append(args)
-            except Exception:
-                self.log.warning(
-                    "Could not rename file `{}` to `{}`".format(
-                        file_path, rename_path
-                    ),
-                    exc_info=True
-                )
-                failed = True
-                break
-
-        if failed:
-            # Rename back old renamed files
-            for dst_name, src_name in renamed_files:
-                os.rename(src_name, dst_name)
-
-            raise AssertionError((
-                "Could not create master version because it is not possible"
-                " to replace current master files."
-            ))
-
-        for _, renamed_path in renamed_files:
-            os.remove(renamed_path)
 
     def version_from_representations(self, repres):
         for repre in repres:
