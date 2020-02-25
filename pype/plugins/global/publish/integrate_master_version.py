@@ -6,7 +6,7 @@ import shutil
 
 from pymongo import InsertOne, ReplaceOne
 import pyblish.api
-from avalon import api, io, pipeline
+from avalon import api, io, schema
 from avalon.vendor import filelink
 
 
@@ -162,6 +162,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             "type": "master_version",
             "schema": "pype:master_version-1.0"
         }
+        schema.validate(new_master_version)
 
         # Don't make changes in database until everything is O.K.
         bulk_writes = []
@@ -286,9 +287,11 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 repre["parent"] = new_master_version["_id"]
                 repre["context"] = repre_context
                 repre["data"] = repre_data
+                repre.pop("_id", None)
+
+                schema.validate(repre)
 
                 repre_name_low = repre["name"].lower()
-
                 # Replace current representation
                 if repre_name_low in old_repres_to_replace:
                     old_repre = old_repres_to_replace.pop(repre_name_low)
