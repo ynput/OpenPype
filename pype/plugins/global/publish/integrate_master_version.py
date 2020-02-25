@@ -115,7 +115,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 all_copied_files.append(dst)
 
         all_repre_file_paths = []
-        for repre_info in published_repres:
+        for repre_info in published_repres.values():
             published_files = repre_info.get("published_files") or []
             for file_path in published_files:
                 file_path = os.path.normpath(file_path)
@@ -265,7 +265,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
                 # Get filled path to repre context
                 anatomy_filled = anatomy.format(anatomy_data)
-                template_filled = anatomy_filled["publish"]["master"]
+                template_filled = anatomy_filled["master"]["path"]
 
                 repre_data = {
                     "path": str(template_filled),
