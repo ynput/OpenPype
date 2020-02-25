@@ -28,7 +28,7 @@ class SyncToAvalonEvent(BaseEvent):
     ignore_entTypes = [
         "socialfeed", "socialnotification", "note",
         "assetversion", "job", "user", "reviewsessionobject", "timer",
-        "timelog", "auth_userrole", "appointment"
+        "timelog", "auth_userrole", "appointment", "notelabellink"
     ]
     ignore_ent_types = ["Milestone"]
     ignore_keys = ["statusid", "thumbid"]
@@ -1544,6 +1544,14 @@ class SyncToAvalonEvent(BaseEvent):
                     configuration_id = attr["id"]
                     entity_type_conf_ids[entity_type] = configuration_id
                     break
+
+            if not configuration_id:
+                self.log.warning(
+                    "BUG REPORT: Missing configuration for `{} < {} >`".format(
+                        entity_type, ent_info["entityType"]
+                    )
+                )
+                continue
 
             _entity_key = collections.OrderedDict({
                 "configuration_id": configuration_id,
