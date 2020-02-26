@@ -2,6 +2,7 @@ import os
 
 import pyblish.api
 import pype.api
+import pype.lib
 
 
 class ExtractJpegEXR(pyblish.api.InstancePlugin):
@@ -56,9 +57,10 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             proj_name = os.environ.get('AVALON_PROJECT', '__default__')
             profile = config_data.get(proj_name, config_data['__default__'])
 
+            ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+
             jpeg_items = []
-            jpeg_items.append(
-                os.path.join(os.environ.get("FFMPEG_PATH"), "ffmpeg"))
+            jpeg_items.append(ffmpeg_path)
             # override file if already exists
             jpeg_items.append("-y")
             # use same input args like with mov

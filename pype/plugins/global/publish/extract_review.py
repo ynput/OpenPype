@@ -2,6 +2,7 @@ import os
 import pyblish.api
 import clique
 import pype.api
+import pype.lib
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -39,6 +40,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # get representation and loop them
         representations = inst_data["representations"]
+
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         # filter out mov and img sequences
         representations_new = representations[:]
@@ -149,6 +152,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 # necessary input data
                 # adds start arg only if image sequence
                 if isinstance(repre["files"], list):
+
+                    if start_frame != repre.get("detectedStart", start_frame):
+                        start_frame = repre.get("detectedStart")
                     input_args.append(
                         "-start_number {0} -framerate {1}".format(
                             start_frame, fps))
@@ -324,10 +330,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         os.mkdir(stg_dir)
 
                 mov_args = [
-                    os.path.join(
-                        os.environ.get(
-                            "FFMPEG_PATH",
-                            ""), "ffmpeg"),
+                    ffmpeg_path,
                     " ".join(input_args),
                     " ".join(output_args)
                 ]
