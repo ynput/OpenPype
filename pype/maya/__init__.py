@@ -229,4 +229,6 @@ def on_task_changed(*args):
 
     # Run
     maya.pipeline._on_task_changed()
-    lib.update_content_on_context_change()
+    with maya.suspended_refresh():
+        lib.set_context_settings()
+        lib.update_content_on_context_change()
