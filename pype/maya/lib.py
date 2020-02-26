@@ -2611,3 +2611,18 @@ def update_content_on_context_change():
                                  new_data["frameEnd"],)
         except ValueError:
             pass
+
+
+def show_message(title, msg):
+    from avalon.vendor.Qt import QtWidgets
+    from ..widgets import message_window
+
+    # Find maya main window
+    top_level_widgets = {w.objectName(): w for w in
+                         QtWidgets.QApplication.topLevelWidgets()}
+
+    parent = top_level_widgets.get("MayaWindow", None)
+    if parent is None:
+        pass
+    else:
+        message_window.message(title=title, message=msg, parent=parent)
