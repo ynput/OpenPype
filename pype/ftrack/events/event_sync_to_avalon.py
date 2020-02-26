@@ -25,11 +25,7 @@ class SyncToAvalonEvent(BaseEvent):
 
     dbcon = DbConnector()
 
-    ignore_entTypes = [
-        "socialfeed", "socialnotification", "note",
-        "assetversion", "job", "user", "reviewsessionobject", "timer",
-        "timelog", "auth_userrole", "appointment", "notelabellink"
-    ]
+    interest_entTypes = ["show", "task"]
     ignore_ent_types = ["Milestone"]
     ignore_keys = ["statusid", "thumbid"]
 
@@ -477,7 +473,7 @@ class SyncToAvalonEvent(BaseEvent):
         found_actions = set()
         for ent_info in entities_info:
             entityType = ent_info["entityType"]
-            if entityType in self.ignore_entTypes:
+            if entityType not in self.interest_entTypes:
                 continue
 
             entity_type = ent_info.get("entity_type")
