@@ -102,9 +102,10 @@ class SyncToAvalonEvent(BaseEvent):
         if self._avalon_ents_by_id is None:
             self._avalon_ents_by_id = {}
             proj, ents = self.avalon_entities
-            self._avalon_ents_by_id[proj["_id"]] = proj
-            for ent in ents:
-                self._avalon_ents_by_id[ent["_id"]] = ent
+            if proj:
+                self._avalon_ents_by_id[proj["_id"]] = proj
+                for ent in ents:
+                    self._avalon_ents_by_id[ent["_id"]] = ent
         return self._avalon_ents_by_id
 
     @property
@@ -124,13 +125,14 @@ class SyncToAvalonEvent(BaseEvent):
         if self._avalon_ents_by_ftrack_id is None:
             self._avalon_ents_by_ftrack_id = {}
             proj, ents = self.avalon_entities
-            ftrack_id = proj["data"]["ftrackId"]
-            self._avalon_ents_by_ftrack_id[ftrack_id] = proj
-            for ent in ents:
-                ftrack_id = ent["data"].get("ftrackId")
-                if ftrack_id is None:
-                    continue
-                self._avalon_ents_by_ftrack_id[ftrack_id] = ent
+            if proj:
+                ftrack_id = proj["data"]["ftrackId"]
+                self._avalon_ents_by_ftrack_id[ftrack_id] = proj
+                for ent in ents:
+                    ftrack_id = ent["data"].get("ftrackId")
+                    if ftrack_id is None:
+                        continue
+                    self._avalon_ents_by_ftrack_id[ftrack_id] = ent
         return self._avalon_ents_by_ftrack_id
 
     @property
