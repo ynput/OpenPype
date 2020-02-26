@@ -2454,6 +2454,139 @@ class shelf():
             cmds.shelfLayout(self.name, p="ShelfLayout")
 
 
+def _get_render_instance():
+    objectset = cmds.ls("*.id", long=True, type="objectSet",
+                        recursive=True, objectsOnly=True)
+
+    for objset in objectset:
+
+        if not cmds.attributeQuery("id", node=objset, exists=True):
+            continue
+
+        id_attr = "{}.id".format(objset)
+        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
+            continue
+
+        has_family = cmds.attributeQuery("family",
+                                         node=objset,
+                                         exists=True)
+        if not has_family:
+            continue
+
+        if cmds.getAttr("{}.family".format(objset)) == 'rendering':
+            return objset
+
+    return None
+
+
+renderItemObserverList = []
+
+
+class RenderSetupListObserver:
+
+    def listItemAdded(self, item):
+        print("--- adding ...")
+        self._add_render_layer(item)
+
+    def listItemRemoved(self, item):
+        print("--- removing ...")
+        self._remove_render_layer(item.name())
+
+    def _add_render_layer(self, item):
+        render_set = _get_render_instance()
+        layer_name = item.name()
+
+        if not render_set:
+            return
+
+        members = cmds.sets(render_set, query=True) or []
+        if not "LAYER_{}".format(layer_name) in members:
+            print("  - creating set for {}".format(layer_name))
+            set = cmds.sets(n="LAYER_{}".format(layer_name), empty=True)
+            cmds.sets(set, forceElement=render_set)
+            rio = RenderSetupItemObserver(item)
+            print("-   adding observer for {}".format(item.name()))
+            item.addItemObserver(rio.itemChanged)
+            renderItemObserverList.append(rio)
+
+    def _remove_render_layer(self, layer_name):
+        render_set = _get_render_instance()
+
+        if not render_set:
+            return
+
+        members = cmds.sets(render_set, query=True)
+        if "LAYER_{}".format(layer_name) in members:
+            print("  - removing set for {}".format(layer_name))
+            cmds.delete("LAYER_{}".format(layer_name))
+
+
+class RenderSetupItemObserver():
+
+    def __init__(self, item):
+        self.item = item
+        self.original_name = item.name()
+
+    def itemChanged(self, *args, **kwargs):
+        if self.item.name() == self.original_name:
+            return
+
+        render_set = _get_render_instance()
+
+        if not render_set:
+            return
+
+        members = cmds.sets(render_set, query=True)
+        if "LAYER_{}".format(self.original_name) in members:
+            print(" <> renaming {} to {}".format(self.original_name,
+                                                 self.item.name()))
+            cmds.rename("LAYER_{}".format(self.original_name),
+                        "LAYER_{}".format(self.item.name()))
+        self.original_name = self.item.name()
+
+
+renderListObserver = RenderSetupListObserver()
+
+
+def add_render_layer_change_observer():
+    import maya.app.renderSetup.model.renderSetup as renderSetup
+
+    rs = renderSetup.instance()
+    render_set = _get_render_instance()
+    if not render_set:
+        return
+
+    members = cmds.sets(render_set, query=True)
+    layers = rs.getRenderLayers()
+    for layer in layers:
+        if "LAYER_{}".format(layer.name()) in members:
+            rio = RenderSetupItemObserver(layer)
+            print("-   adding observer for {}".format(layer.name()))
+            layer.addItemObserver(rio.itemChanged)
+            renderItemObserverList.append(rio)
+
+
+def add_render_layer_observer():
+    import maya.app.renderSetup.model.renderSetup as renderSetup
+
+    print(">   adding renderSetup observer ...")
+    rs = renderSetup.instance()
+    rs.addListObserver(renderListObserver)
+    pass
+
+
+def remove_render_layer_observer():
+    import maya.app.renderSetup.model.renderSetup as renderSetup
+
+    print("<   removing renderSetup observer ...")
+    rs = renderSetup.instance()
+    try:
+        rs.removeListObserver(renderListObserver)
+    except ValueError:
+        # no observer set yet
+        pass
+
+
 def update_content_on_context_change():
     """
     This will update scene content to match new asset on context change

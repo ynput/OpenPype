@@ -1,17 +1,26 @@
+import re
+
 import pyblish.api
 import pype.api
 import pype.maya.action
 
+from maya import cmds
+
+
+ImagePrefixes = {
+    'mentalray': 'defaultRenderGlobals.imageFilePrefix',
+    'vray': 'vraySettings.fileNamePrefix',
+    'arnold': 'defaultRenderGlobals.imageFilePrefix',
+    'renderman': 'defaultRenderGlobals.imageFilePrefix',
+    'redshift': 'defaultRenderGlobals.imageFilePrefix'
+}
+
 
 class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
-    """Only one camera may be renderable in a layer.
+    """Validate renderable camera count for layer and <Camera> token.
 
-    Currently the pipeline supports only a single camera per layer.
-    This is because when multiple cameras are rendered the output files
-    automatically get different names because the <Camera> render token
-    is not in the output path. As such the output files conflict with how
-    our pipeline expects the output.
-
+    Pipeline is supporting multiple renderable cameras per layer, but image
+    prefix must contain <Camera> token.
     """
 
     order = pype.api.ValidateContentsOrder
@@ -20,6 +29,8 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
     families = ["renderlayer",
                 "vrayscene"]
     actions = [pype.maya.action.SelectInvalidAction]
+
+    R_CAMERA_TOKEN = re.compile(r'%c|<camera>', re.IGNORECASE)
 
     def process(self, instance):
         """Process all the cameras in the instance"""
@@ -31,8 +42,17 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
     def get_invalid(cls, instance):
 
         cameras = instance.data.get("cameras", [])
+        renderer = cmds.getAttr('defaultRenderGlobals.currentRenderer').lower()
+        # handle various renderman names
+        if renderer.startswith('renderman'):
+            renderer = 'renderman'
+        file_prefix = cmds.getAttr(ImagePrefixes[renderer])
 
         if len(cameras) > 1:
+            if re.search(cls.R_CAMERA_TOKEN, file_prefix):
+                # if there is <Camera> token in prefix and we have more then
+                # 1 camera, all is ok.
+                return
             cls.log.error("Multiple renderable cameras found for %s: %s " %
                           (instance.data["setMembers"], cameras))
             return [instance.data["setMembers"]] + cameras
