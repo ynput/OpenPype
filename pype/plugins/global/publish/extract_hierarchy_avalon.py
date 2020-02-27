@@ -81,7 +81,12 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                     })
                     unarchive_entity = None
                     for archived_entity in archived_entities:
-                        if data["parents"] == archived_entity:
+                        archived_parents = (
+                            archived_entity
+                            .get("data", {})
+                            .get("parents")
+                        )
+                        if data["parents"] == archived_parents:
                             unarchive_entity = archived_entity
                             break
 
