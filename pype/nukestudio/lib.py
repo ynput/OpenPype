@@ -385,8 +385,6 @@ class ClipLoader:
         self.kwargs = kwargs
         self.active_project = self._get_active_project()
         self.project_bin = self.active_project.clipsBin()
-        self.active_sequence = self._get_active_sequence(sequence)
-        self.active_track = self._get_active_track(track)
 
         self.data = dict()
 
@@ -396,6 +394,10 @@ class ClipLoader:
         # inject asset data to representation dict
         self._get_asset_data()
         log.debug("__init__ self.data: `{}`".format(self.data))
+
+        # add active components to class
+        self.active_sequence = self._get_active_sequence(sequence)
+        self.active_track = self._get_active_track(track)
 
     def _set_data(self):
         """ Gets context and convert it to self.data
@@ -564,40 +566,63 @@ class ClipLoader:
         media = hiero.core.MediaSource(self.data["path"])
         media_in = int(media.startTime())
         media_duration = int(media.duration())
+        log.debug("__ media_in: `{}`".format(media_in))
+        log.debug("__ media_duration: `{}`".format(media_duration))
 
         handle_start = self.data["assetData"]["handleStart"]
         handle_end = self.data["assetData"]["handleEnd"]
 
+        fps = self.data["assetData"]["fps"]
+
         if media_in:
-            source_in = media_in + handle_start
+            source_in = int(media_in + handle_start)
         else:
-            source_in = self.data["assetData"]["frameStart"] + handle_start
+            source_in = int(self.data["assetData"]["frameStart"] + handle_start)
 
         if media_duration:
-            source_out = (media_in + media_duration - 1) - handle_end
+            source_out = int((media_in + media_duration - 1) - handle_end)
         else:
-            source_out = self.data["assetData"]["frameEnd"]- handle_end
+            source_out = int(self.data["assetData"]["frameEnd"] - handle_end)
 
-        source = hiero.core.Clip(media)
+        log.debug("__ source_in: `{}`".format(source_in))
+        log.debug("__ source_out: `{}`".format(source_out))
+        log.debug("__ handle_start: `{}`".format(handle_start))
+        log.debug("__ handle_end: `{}`".format(handle_end))
 
-        # add to bin as clip item
-        items_in_bin = [b.name() for b in bin.items()]
-        if self.data["name"] not in items_in_bin:
-            binItem = hiero.core.BinItem(source)
-            bin.addItem(binItem)
+        # create Clip from Media
+        _clip = hiero.core.Clip(media)
+        _clip.setName(self.data["name"])
 
-        new_source = [
-            item for item in bin.items() if split_name in item.name()
-        ][0].items()[0].item()
+        # add Clip to bin if not there yet
+        if self.data["name"] not in [b.name() for b in self.active_bin.items()]:
+            binItem = hiero.core.BinItem(_clip)
+            self.active_bin.addItem(binItem)
+
+        _source = next((item for item in self.active_bin.items()
+                        if self.data["name"] in item.name()), None)
+
+        if not _source:
+            log.warning("Problem with created Source clip: `{}`".format(
+                self.data["name"]))
+
+        version = next((s for s in _source.items()), None)
+        clip = version.item()
 
         # add to track as clip item
         trackItem = hiero.core.TrackItem(
             self.data["name"], hiero.core.TrackItem.kVideo)
-        trackItem.setSource(new_source)
-        trackItem.setSourceIn(self.data["assetData"]["sourceIn"])
-        trackItem.setSourceOut(self.data["assetData"]["sourceOut"])
-        trackItem.setTimelineIn(self.data["assetData"]["clipIn"])
-        trackItem.setTimelineOut(self.data["assetData"]["clipOut"])
+
+        log.info("clip: `{}`".format(clip))
+        log.info("_clip: `{}`".format(_clip))
+        log.info("clip.sourceIn(): `{}`".format(clip.sourceIn()))
+        log.info("clip.sourceOut(): `{}`".format(clip.sourceOut()))
+
+        trackItem.setSource(clip)
+        # trackItem.setTimelineIn(self.data["assetData"]["clipIn"])
+        trackItem.setSourceIn(5)
+        # trackItem.setTimelineOut(self.data["assetData"]["clipOut"])
+        trackItem.setSourceOut(10)
+
         self.active_track.addTrackItem(trackItem)
 
         log.info("Loading clips: `{}`".format(self.data["name"]))
