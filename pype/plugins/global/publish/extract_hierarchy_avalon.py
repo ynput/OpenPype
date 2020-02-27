@@ -36,20 +36,25 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             for k, val in entity_data.get("custom_attributes", {}).items():
                 data[k] = val
 
-            # Tasks.
-            tasks = entity_data.get("tasks", [])
-            if tasks is not None or len(tasks) > 0:
-                data["tasks"] = tasks
-            parents = []
-            visualParent = None
-            # do not store project"s id as visualParent (silo asset)
-            if self.project is not None:
-                if self.project["_id"] != parent["_id"]:
-                    visualParent = parent["_id"]
-                    parents.extend(parent.get("data", {}).get("parents", []))
-                    parents.append(parent["name"])
-            data["visualParent"] = visualParent
-            data["parents"] = parents
+            if entity_type.lower() != "project":
+                data["inputs"] = entity_data.get("inputs", [])
+
+                # Tasks.
+                tasks = entity_data.get("tasks", [])
+                if tasks is not None or len(tasks) > 0:
+                    data["tasks"] = tasks
+                parents = []
+                visualParent = None
+                # do not store project"s id as visualParent (silo asset)
+                if self.project is not None:
+                    if self.project["_id"] != parent["_id"]:
+                        visualParent = parent["_id"]
+                        parents.extend(
+                            parent.get("data", {}).get("parents", [])
+                        )
+                        parents.append(parent["name"])
+                data["visualParent"] = visualParent
+                data["parents"] = parents
 
             update_data = True
             # Process project
