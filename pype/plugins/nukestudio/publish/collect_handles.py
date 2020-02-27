@@ -55,8 +55,6 @@ class CollectClipHandles(api.ContextPlugin):
                 # debug printing
                 self.log.debug("_ s_asset_data: `{}`".format(
                     s_asset_data))
-                self.log.debug("_ instance.data[handles]: `{}`".format(
-                    instance.data["handles"]))
                 self.log.debug("_ instance.data[handleStart]: `{}`".format(
                     instance.data["handleStart"]))
                 self.log.debug("_ instance.data[handleEnd]: `{}`".format(
