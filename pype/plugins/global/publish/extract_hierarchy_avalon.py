@@ -28,8 +28,6 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             entity_type = entity_data["entity_type"]
 
             data = {}
-
-            data["inputs"] = entity_data.get("inputs", [])
             data["entityType"] = entity_type
 
             # Custom attributes.
@@ -64,8 +62,9 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 assert (entity is not None), "Did not find project in DB"
 
                 # get data from already existing project
-                for key, value in entity.get("data", {}).items():
-                    data[key] = value
+                entity_data = entity.get("data") or {}
+                entity_data.update(data)
+                data = entity_data
 
                 self.project = entity
             # Raise error if project or parent are not set
@@ -76,7 +75,12 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             # Else process assset
             else:
                 entity = io.find_one({"type": "asset", "name": name})
-                if entity is None:
+                if entity:
+                    # Do not override data, only update
+                    entity_data = entity.get("data") or {}
+                    entity_data.update(data)
+                    data = entity_data
+                else:
                     # Skip updating data
                     update_data = False
 
@@ -113,6 +117,10 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 self.import_to_avalon(entity_data["childs"], entity)
 
     def unarchive_entity(self, entity, data):
+        entity_data = entity.get("data") or {}
+        entity_data.update(data)
+        data = entity_data
+
         new_entity = {
             "_id": entity["_id"],
             "schema": "avalon-core:asset-3.0",
