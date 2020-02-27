@@ -2067,9 +2067,10 @@ class SyncEntitiesFactory:
                 # different hierarchy - can't recreate entity
                 continue
 
-            _vis_parent = str(deleted_entity["data"]["visualParent"])
+            _vis_parent = deleted_entity["data"]["visualParent"]
             if _vis_parent is None:
                 _vis_parent = self.avalon_project_id
+            _vis_parent = str(_vis_parent)
             ftrack_parent_id = self.avalon_ftrack_mapper[_vis_parent]
             self.create_ftrack_ent_from_avalon_ent(
                 deleted_entity, ftrack_parent_id
