@@ -51,6 +51,7 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             data["visualParent"] = visualParent
             data["parents"] = parents
 
+            update_data = True
             # Process project
             if entity_type.lower() == "project":
                 entity = io.find_one({"type": "project"})
@@ -70,15 +71,50 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
             # Else process assset
             else:
                 entity = io.find_one({"type": "asset", "name": name})
-                # Create entity if doesn"t exist
                 if entity is None:
-                    entity = self.create_avalon_asset(name, data)
+                    # Skip updating data
+                    update_data = False
 
-            # Update entity data with input data
-            io.update_many({"_id": entity["_id"]}, {"$set": {"data": data}})
+                    archived_entities = io.find({
+                        "type": "archived_asset",
+                        "name": name
+                    })
+                    unarchive_entity = None
+                    for archived_entity in archived_entities:
+                        if data["parents"] == archived_entity:
+                            unarchive_entity = archived_entity
+                            break
+
+                    if unarchive_entity is None:
+                        # Create entity if doesn"t exist
+                        entity = self.create_avalon_asset(name, data)
+                    else:
+                        # Unarchive if entity was archived
+                        entity = self.unarchive_entity(unarchive_entity, data)
+
+            if update_data:
+                # Update entity data with input data
+                io.update_many(
+                    {"_id": entity["_id"]},
+                    {"$set": {"data": data}}
+                )
 
             if "childs" in entity_data:
                 self.import_to_avalon(entity_data["childs"], entity)
+
+    def unarchive_entity(self, entity, data):
+        new_entity = {
+            "_id": entity["_id"],
+            "schema": "avalon-core:asset-3.0",
+            "name": entity["name"],
+            "parent": self.project["_id"],
+            "type": "asset",
+            "data": data
+        }
+        io.replace_one(
+            {"_id": entity["_id"]},
+            new_entity
+        )
 
     def create_avalon_asset(self, name, data):
         item = {
