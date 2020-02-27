@@ -5,13 +5,6 @@ from pypeapp import Logger
 from avalon.api import Session
 from hiero.ui import findMenuAction
 
-# this way we secure compatibility between nuke 10 and 11
-try:
-    from PySide.QtGui import *
-except Exception:
-    from PySide2.QtGui import *
-    from PySide2.QtWidgets import *
-
 from .tags import add_tags_from_presets
 
 from .lib import (
@@ -51,6 +44,7 @@ def install():
 
     # here is the best place to add menu
     from avalon.tools import publish
+    from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
 
@@ -60,16 +54,14 @@ def install():
 
     self._change_context_menu = context_label
 
-    # Grab Hiero's MenuBar
-    M = hiero.ui.menuBar()
-
     try:
         check_made_menu = findMenuAction(menu_name)
     except Exception:
-        pass
+        check_made_menu = None
 
     if not check_made_menu:
-        menu = M.addMenu(menu_name)
+        # Grab Hiero's MenuBar
+        menu = hiero.ui.menuBar().addMenu(menu_name)
     else:
         menu = check_made_menu.menu()
 
@@ -79,28 +71,36 @@ def install():
     menu.addSeparator()
 
     workfiles_action = menu.addAction("Work Files...")
-    workfiles_action.setIcon("icons:Position.png")
+    workfiles_action.setIcon(QtGui.QIcon("icons:Position.png"))
     workfiles_action.triggered.connect(set_workfiles)
 
     default_tags_action = menu.addAction("Create Default Tags...")
-    default_tags_action.setIcon("icons:Position.png")
+    default_tags_action.setIcon(QtGui.QIcon("icons:Position.png"))
     default_tags_action.triggered.connect(add_tags_from_presets)
 
     menu.addSeparator()
 
     publish_action = menu.addAction("Publish...")
-    publish_action.setIcon("icons:Output.png")
-    publish_action.triggered.connect(publish.show)
+    publish_action.setIcon(QtGui.QIcon("icons:Output.png"))
+    publish_action.triggered.connect(
+        lambda *args: publish.show(hiero.ui.mainWindow())
+    )
 
     menu.addSeparator()
 
     reload_action = menu.addAction("Reload pipeline...")
-    reload_action.setIcon("icons:ColorAdd.png")
+    reload_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
     reload_action.triggered.connect(reload_config)
+
+    # Is this required?
+    hiero.ui.registerAction(context_label_action)
+    hiero.ui.registerAction(workfiles_action)
+    hiero.ui.registerAction(default_tags_action)
+    hiero.ui.registerAction(publish_action)
+    hiero.ui.registerAction(reload_action)
 
     self.context_label_action = context_label_action
     self.workfile_actions = workfiles_action
     self.default_tags_action = default_tags_action
     self.publish_action = publish_action
     self.reload_action = reload_action
-    # hiero.ui.registerAction(action)
