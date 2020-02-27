@@ -16,7 +16,7 @@ class CollectReviews(api.InstancePlugin):
     order = api.CollectorOrder + 0.1022
     label = "Collect Reviews"
     hosts = ["nukestudio"]
-    families = ["clip"]
+    families = ["plate"]
 
     def process(self, instance):
         # Exclude non-tagged instances.
@@ -125,7 +125,7 @@ class CollectReviews(api.InstancePlugin):
             thumb_path,
             format='png'
         )
-        
+
         self.log.debug("__ sourceIn: `{}`".format(instance.data["sourceIn"]))
         self.log.debug("__ thumbnail: `{}`, frame: `{}`".format(thumbnail, thumb_frame))
 
@@ -145,7 +145,10 @@ class CollectReviews(api.InstancePlugin):
         item = instance.data["item"]
 
         transfer_data = [
-            "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart", "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut", "clipInH", "clipOutH", "asset", "track", "version"
+            "handleStart", "handleEnd", "sourceIn", "sourceOut",
+            "frameStart", "frameEnd", "sourceInH", "sourceOutH",
+            "clipIn", "clipOut", "clipInH", "clipOutH", "asset",
+            "track", "version"
         ]
 
         version_data = dict()
@@ -154,7 +157,6 @@ class CollectReviews(api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "handles": version_data['handleStart'],
             "colorspace": item.sourceMediaColourTransform(),
             "families": instance.data["families"],
             "subset": instance.data["subset"],

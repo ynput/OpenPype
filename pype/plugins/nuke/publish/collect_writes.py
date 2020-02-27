@@ -14,6 +14,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     families = ["write"]
 
     def process(self, instance):
+        # adding 2d focused rendering
+        instance.data["families"].append("render2d")
 
         node = None
         for x in instance:
@@ -50,9 +52,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         output_dir = os.path.dirname(path)
         self.log.debug('output dir: {}'.format(output_dir))
 
-        # get version to instance for integration
-        instance.data['version'] = instance.context.data.get(
-            "version", pype.get_version_from_path(nuke.root().name()))
+        # # get version to instance for integration
+        # instance.data['version'] = instance.context.data.get(
+        #     "version", pype.get_version_from_path(nuke.root().name()))
 
         self.log.debug('Write Version: %s' % instance.data('version'))
 
@@ -90,16 +92,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         # Add version data to instance
         version_data = {
-            "handles": handle_start,
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
-            "frameStart": first_frame + handle_start,
-            "frameEnd": last_frame - handle_end,
-            "version": int(instance.data['version']),
             "colorspace":  node["colorspace"].value(),
-            "families": [instance.data["family"]],
-            "subset": instance.data["subset"],
-            "fps": instance.context.data["fps"]
         }
 
         instance.data["family"] = "write"

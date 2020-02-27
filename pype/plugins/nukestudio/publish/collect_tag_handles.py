@@ -38,7 +38,9 @@ class CollectClipTagHandles(api.ContextPlugin):
 
                     # gets arguments if there are any
                     t_args = t_metadata.get("tag.args", "")
-                    assert t_args, self.log.error("Tag with Handles is missing Args. Use only handle start/end")
+                    assert t_args, self.log.error(
+                        "Tag with Handles is missing Args. "
+                        "Use only handle start/end")
 
                     t_args = json.loads(t_args.replace("'", "\""))
                     # add in start
@@ -55,8 +57,8 @@ class CollectClipTagHandles(api.ContextPlugin):
 
                     # adding handles to asset_shared on context
                     if instance.data.get("handleEnd"):
-                        assets_shared_a["handleEnd"] = instance.data["handleEnd"]
+                        assets_shared_a[
+                            "handleEnd"] = instance.data["handleEnd"]
                     if instance.data.get("handleStart"):
-                        assets_shared_a["handleStart"] = instance.data["handleStart"]
-                    if instance.data.get("handles"):
-                        assets_shared_a["handles"] = instance.data["handles"]
+                        assets_shared_a[
+                            "handleStart"] = instance.data["handleStart"]

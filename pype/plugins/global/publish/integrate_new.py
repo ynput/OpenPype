@@ -2,8 +2,11 @@ import os
 from os.path import getsize
 import logging
 import sys
+import copy
 import clique
 import errno
+
+from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
@@ -76,8 +79,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "source",
                 "matchmove",
                 "image"
+                "source",
+                "assembly"
                 ]
     exclude_families = ["clip"]
+    db_representation_context_keys = [
+        "project", "asset", "task", "subset", "version", "representation",
+        "family", "hierarchy", "task", "username"
+    ]
 
     def process(self, instance):
 
@@ -94,144 +103,148 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def register(self, instance):
         # Required environment variables
-        PROJECT = api.Session["AVALON_PROJECT"]
-        ASSET = instance.data.get("asset") or api.Session["AVALON_ASSET"]
-        TASK = instance.data.get("task") or api.Session["AVALON_TASK"]
-        LOCATION = api.Session["AVALON_LOCATION"]
+        anatomy_data = instance.data["anatomyData"]
+
+        io.install()
 
         context = instance.context
-        # Atomicity
-        #
-        # Guarantee atomic publishes - each asset contains
-        # an identical set of members.
-        #     __
-        #    /     o
-        #   /       \
-        #  |    o    |
-        #   \       /
-        #    o   __/
-        #
-        # for result in context.data["results"]:
-        #     if not result["success"]:
-        #         self.log.debug(result)
-        #         exc_type, exc_value, exc_traceback = result["error_info"]
-        #         extracted_traceback = traceback.extract_tb(exc_traceback)[-1]
-        #         self.log.debug(
-        #             "Error at line {}: \"{}\"".format(
-        #                 extracted_traceback[1], result["error"]
-        #             )
-        #         )
-        # assert all(result["success"] for result in context.data["results"]),(
-        #     "Atomicity not held, aborting.")
 
-        # Assemble
-        #
-        #       |
-        #       v
-        #  --->   <----
-        #       ^
-        #       |
-        #
+        project_entity = instance.data["projectEntity"]
+
+        context_asset_name = context.data["assetEntity"]["name"]
+
+        asset_name = instance.data["asset"]
+        asset_entity = instance.data.get("assetEntity")
+        if not asset_entity or asset_entity["name"] != context_asset_name:
+            asset_entity = io.find_one({
+                "type": "asset",
+                "name": asset_name,
+                "parent": project_entity["_id"]
+            })
+            assert asset_entity, (
+                "No asset found by the name \"{0}\" in project \"{1}\""
+            ).format(asset_name, project_entity["name"])
+
+            instance.data["assetEntity"] = asset_entity
+
+            # update anatomy data with asset specific keys
+            # - name should already been set
+            hierarchy = ""
+            parents = asset_entity["data"]["parents"]
+            if parents:
+                hierarchy = "/".join(parents)
+            anatomy_data["hierarchy"] = hierarchy
+
+        task_name = instance.data.get("task")
+        if task_name:
+            anatomy_data["task"] = task_name
+
         stagingdir = instance.data.get("stagingDir")
         if not stagingdir:
-            self.log.info('''{} is missing reference to staging
-                            directory Will try to get it from
-                            representation'''.format(instance))
+            self.log.info((
+                "{0} is missing reference to staging directory."
+                " Will try to get it from representation."
+            ).format(instance))
 
-        # extra check if stagingDir actually exists and is available
-
-        self.log.debug("Establishing staging directory @ %s" % stagingdir)
+        else:
+            self.log.debug(
+                "Establishing staging directory @ {0}".format(stagingdir)
+            )
 
         # Ensure at least one file is set up for transfer in staging dir.
-        repres = instance.data.get("representations", None)
+        repres = instance.data.get("representations")
         assert repres, "Instance has no files to transfer"
         assert isinstance(repres, (list, tuple)), (
-            "Instance 'files' must be a list, got: {0}".format(repres)
+            "Instance 'files' must be a list, got: {0} {1}".format(
+                str(type(repres)), str(repres)
+            )
         )
 
-        # FIXME: io is not initialized at this point for shell host
-        io.install()
-        project = io.find_one({"type": "project"})
+        subset = self.get_subset(asset_entity, instance)
 
-        asset = io.find_one({
-            "type": "asset",
-            "name": ASSET,
-            "parent": project["_id"]
-        })
-
-        assert all([project, asset]), ("Could not find current project or "
-                                       "asset '%s'" % ASSET)
-
-        subset = self.get_subset(asset, instance)
-
-        # get next version
-        latest_version = io.find_one(
-            {
-                "type": "version",
-                "parent": subset["_id"]
-            },
-            {"name": True},
-            sort=[("name", -1)]
-        )
-
-        next_version = 1
-        if latest_version is not None:
-            next_version += latest_version["name"]
-
-        if instance.data.get('version'):
-            next_version = int(instance.data.get('version'))
-
-        self.log.debug("Next version: v{0:03d}".format(next_version))
+        version_number = instance.data["version"]
+        self.log.debug("Next version: v{}".format(version_number))
 
         version_data = self.create_version_data(context, instance)
 
         version_data_instance = instance.data.get('versionData')
-
         if version_data_instance:
             version_data.update(version_data_instance)
 
-        version = self.create_version(subset=subset,
-                                      version_number=next_version,
-                                      locations=[LOCATION],
-                                      data=version_data)
+        # TODO rename method from `create_version` to
+        # `prepare_version` or similar...
+        version = self.create_version(
+            subset=subset,
+            version_number=version_number,
+            data=version_data
+        )
 
         self.log.debug("Creating version ...")
+
+        new_repre_names_low = [_repre["name"].lower() for _repre in repres]
+
         existing_version = io.find_one({
             'type': 'version',
             'parent': subset["_id"],
-            'name': next_version
+            'name': version_number
         })
+
         if existing_version is None:
             version_id = io.insert_one(version).inserted_id
         else:
+            # Check if instance have set `append` mode which cause that
+            # only replicated representations are set to archive
+            append_repres = instance.data.get("append", False)
+
+            # Update version data
+            # TODO query by _id and
             io.update_many({
                 'type': 'version',
                 'parent': subset["_id"],
-                'name': next_version
-            }, {'$set': version}
-            )
+                'name': version_number
+            }, {
+                '$set': version
+            })
             version_id = existing_version['_id']
+
+            # Find representations of existing version and archive them
+            current_repres = list(io.find({
+                "type": "representation",
+                "parent": version_id
+            }))
+            bulk_writes = []
+            for repre in current_repres:
+                if append_repres:
+                    # archive only duplicated representations
+                    if repre["name"].lower() not in new_repre_names_low:
+                        continue
+                # Representation must change type,
+                # `_id` must be stored to other key and replaced with new
+                # - that is because new representations should have same ID
+                repre_id = repre["_id"]
+                bulk_writes.append(DeleteOne({"_id": repre_id}))
+
+                repre["orig_id"] = repre_id
+                repre["_id"] = io.ObjectId()
+                repre["type"] = "archived_representation"
+                bulk_writes.append(InsertOne(repre))
+
+            # bulk updates
+            if bulk_writes:
+                io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+                    bulk_writes
+                )
+
+        existing_repres = list(io.find({
+            "parent": version_id,
+            "type": "archived_representation"
+        }))
+
         instance.data['version'] = version['name']
 
-        # Write to disk
-        #          _
-        #         | |
-        #        _| |_
-        #    ____\   /
-        #   |\    \ / \
-        #   \ \    v   \
-        #    \ \________.
-        #     \|________|
-        #
-        root = api.registered_root()
-        hierarchy = ""
-        parents = io.find_one({
-            "type": 'asset',
-            "name": ASSET
-        })['data']['parents']
-        if parents and len(parents) > 0:
-            # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = os.path.join(*parents)
+        intent = context.data.get("intent")
+        if intent is not None:
+            anatomy_data["intent"] = intent
 
         anatomy = instance.context.data['anatomy']
 
@@ -244,27 +257,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data['transfers'] = []
 
         for idx, repre in enumerate(instance.data["representations"]):
-
-            # Collection
-            #   _______
-            #  |______|\
-            # |      |\|
-            # |       ||
-            # |       ||
-            # |       ||
-            # |_______|
-            #
             # create template data for Anatomy
-            template_data = {"root": root,
-                             "project": {"name": PROJECT,
-                                         "code": project['data']['code']},
-                             "silo": asset.get('silo'),
-                             "task": TASK,
-                             "asset": ASSET,
-                             "family": instance.data['family'],
-                             "subset": subset["name"],
-                             "version": int(version["name"]),
-                             "hierarchy": hierarchy}
+            template_data = copy.deepcopy(anatomy_data)
+            if intent is not None:
+                template_data["intent"] = intent
 
             resolution_width = repre.get("resolutionWidth")
             resolution_height = repre.get("resolutionHeight")
@@ -282,11 +278,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 stagingdir = repre['stagingDir']
             if repre.get('anatomy_template'):
                 template_name = repre['anatomy_template']
+
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
 
             sequence_repre = isinstance(files, list)
-
+            repre_context = None
             if sequence_repre:
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
@@ -309,10 +306,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     template_data["representation"] = repre['ext']
                     template_data["frame"] = src_padding_exp % i
                     anatomy_filled = anatomy.format(template_data)
-
+                    template_filled = anatomy_filled[template_name]["path"]
+                    if repre_context is None:
+                        repre_context = template_filled.used_values
                     test_dest_files.append(
-                        os.path.normpath(
-                            anatomy_filled[template_name]["path"])
+                        os.path.normpath(template_filled)
                     )
 
                 self.log.debug(
@@ -326,22 +324,22 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 index_frame_start = None
 
                 if repre.get("frameStart"):
-                    frame_start_padding = len(str(
-                        repre.get("frameEnd")))
+                    frame_start_padding = (
+                        anatomy.templates["render"]["padding"]
+                    )
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
-                if "slate" in instance.data["families"]:
+                if index_frame_start and "slate" in instance.data["families"]:
                     index_frame_start -= 1
 
                 dst_padding_exp = src_padding_exp
                 dst_start_frame = None
                 for i in src_collection.indexes:
+                    # TODO 1.) do not count padding in each index iteration
+                    # 2.) do not count dst_padding from src_padding before
+                    #   index_frame_start check
                     src_padding = src_padding_exp % i
-
-                    # for adding first frame into db
-                    if not dst_start_frame:
-                        dst_start_frame = src_padding
 
                     src_file_name = "{0}{1}{2}".format(
                         src_head, src_padding, src_tail)
@@ -363,6 +361,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
+
+                    # for adding first frame into db
+                    if not dst_start_frame:
+                        dst_start_frame = dst_padding
 
                 dst = "{0}{1}{2}".format(
                     dst_head,
@@ -392,16 +394,36 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
-                dst = os.path.normpath(
-                    anatomy_filled[template_name]["path"]).replace("..", ".")
+                template_filled = anatomy_filled[template_name]["path"]
+                repre_context = template_filled.used_values
+                dst = os.path.normpath(template_filled).replace("..", ".")
 
                 instance.data["transfers"].append([src, dst])
 
                 repre['published_path'] = self.unc_convert(dst)
                 self.log.debug("__ dst: {}".format(dst))
 
+            for key in self.db_representation_context_keys:
+                value = template_data.get(key)
+                if not value:
+                    continue
+                repre_context[key] = template_data[key]
+
+            # Use previous representation's id if there are any
+            repre_id = None
+            repre_name_low = repre["name"].lower()
+            for _repre in existing_repres:
+                # NOTE should we check lowered names?
+                if repre_name_low == _repre["name"]:
+                    repre_id = _repre["orig_id"]
+                    break
+
+            # Create new id if existing representations does not match
+            if repre_id is None:
+                repre_id = io.ObjectId()
+
             representation = {
-                "_id": io.ObjectId(),
+                "_id": repre_id,
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
@@ -411,26 +433,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 # Imprint shortcut to context
                 # for performance reasons.
-                "context": {
-                    "root": root,
-                    "project": {"name": PROJECT,
-                                "code": project['data']['code']},
-                    'task': TASK,
-                    "silo": asset.get('silo'),
-                    "asset": ASSET,
-                    "family": instance.data['family'],
-                    "subset": subset["name"],
-                    "version": version["name"],
-                    "hierarchy": hierarchy,
-                    "representation": repre['ext']
-                }
+                "context": repre_context
             }
 
             if repre.get("outputName"):
                 representation["context"]["output"] = repre['outputName']
 
             if sequence_repre and repre.get("frameStart"):
-                representation['context']['frame'] = src_padding_exp % int(repre.get("frameStart"))
+                representation['context']['frame'] = (
+                    src_padding_exp % int(repre.get("frameStart"))
+                )
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -438,6 +450,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data['destination_list'] = destination_list
             representations.append(representation)
             self.log.debug("__ representations: {}".format(representations))
+
+        # Remove old representations if there are any (before insertion of new)
+        if existing_repres:
+            repre_ids_to_remove = []
+            for repre in existing_repres:
+                repre_ids_to_remove.append(repre["_id"])
+            io.delete_many({"_id": {"$in": repre_ids_to_remove}})
 
         self.log.debug("__ representations: {}".format(representations))
         for rep in instance.data["representations"]:
@@ -504,7 +523,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         src = self.unc_convert(src)
         dst = self.unc_convert(dst)
-
+        src = os.path.normpath(src)
+        dst = os.path.normpath(dst)
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
         try:
@@ -540,14 +560,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         filelink.create(src, dst, filelink.HARDLINK)
 
     def get_subset(self, asset, instance):
+        subset_name = instance.data["subset"]
         subset = io.find_one({
             "type": "subset",
             "parent": asset["_id"],
-            "name": instance.data["subset"]
+            "name": subset_name
         })
 
         if subset is None:
-            subset_name = instance.data["subset"]
             self.log.info("Subset '%s' not found, creating.." % subset_name)
             self.log.debug("families.  %s" % instance.data.get('families'))
             self.log.debug(
@@ -576,26 +596,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         return subset
 
-    def create_version(self, subset, version_number, locations, data=None):
+    def create_version(self, subset, version_number, data=None):
         """ Copy given source to destination
 
         Args:
             subset (dict): the registered subset of the asset
             version_number (int): the version number
-            locations (list): the currently registered locations
 
         Returns:
             dict: collection of data to create a version
         """
-        # Imprint currently registered location
-        version_locations = [location for location in locations if
-                             location is not None]
 
         return {"schema": "pype:version-3.0",
                 "type": "version",
                 "parent": subset["_id"],
                 "name": version_number,
-                "locations": version_locations,
                 "data": data}
 
     def create_version_data(self, context, instance):
@@ -637,6 +652,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "machine": context.data.get("machine"),
                         "fps": context.data.get(
                             "fps", instance.data.get("fps"))}
+
+        intent = context.data.get("intent")
+        if intent is not None:
+            version_data["intent"] = intent
 
         # Include optional data if present in
         optionals = [

@@ -236,6 +236,7 @@ class SyncEntitiesFactory:
         " from TypedContext where project_id is \"{}\""
     )
     ignore_custom_attr_key = "avalon_ignore_sync"
+    ignore_entity_types = ["milestone"]
 
     report_splitter = {"type": "label", "value": "---"}
 
@@ -366,7 +367,10 @@ class SyncEntitiesFactory:
             parent_id = entity["parent_id"]
             entity_type = entity.entity_type
             entity_type_low = entity_type.lower()
-            if entity_type_low == "task":
+            if entity_type_low in self.ignore_entity_types:
+                continue
+
+            elif entity_type_low == "task":
                 entities_dict[parent_id]["tasks"].append(entity["name"])
                 continue
 

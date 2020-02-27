@@ -196,7 +196,7 @@ def format_anatomy(data):
         "root": api.Session["AVALON_PROJECTS"],
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
-        "task": api.Session["AVALON_TASK"].lower(),
+        "task": api.Session["AVALON_TASK"],
         "family": data["avalon"]["family"],
         "project": {"name": project_document["name"],
                     "code": project_document["data"].get("code", '')},
@@ -374,7 +374,7 @@ def create_write_node(name, data, input=None, prenodes=None):
         now_node.setInput(0, prev_node)
 
     # imprinting group node
-    GN = avalon.nuke.imprint(GN, data["avalon"])
+    avalon.nuke.imprint(GN, data["avalon"])
 
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
@@ -519,11 +519,6 @@ class WorkfileSettings(object):
         self.data = kwargs
 
     def get_nodes(self, nodes=None, nodes_filter=None):
-        # filter out only dictionaries for node creation
-        #
-        # print("\n\n")
-        # pprint(self._nodes)
-        #
 
         if not isinstance(nodes, list) and not isinstance(nodes_filter, list):
             return [n for n in nuke.allNodes()]
@@ -645,15 +640,105 @@ class WorkfileSettings(object):
             write_dict (dict): nuke write node as dictionary
 
         '''
-        # TODO: complete this function so any write node in
         # scene will have fixed colorspace following presets for the project
         if not isinstance(write_dict, dict):
             msg = "set_root_colorspace(): argument should be dictionary"
-            nuke.message(msg)
             log.error(msg)
             return
 
-        log.debug("__ set_writes_colorspace(): {}".format(write_dict))
+        from avalon.nuke import get_avalon_knob_data
+
+        for node in nuke.allNodes():
+
+            if node.Class() in ["Viewer", "Dot"]:
+                continue
+
+            # get data from avalon knob
+            avalon_knob_data = get_avalon_knob_data(node, ["avalon:", "ak:"])
+
+            if not avalon_knob_data:
+                continue
+
+            if avalon_knob_data["id"] != "pyblish.avalon.instance":
+                continue
+
+            # establish families
+            families = [avalon_knob_data["family"]]
+            if avalon_knob_data.get("families"):
+                families.append(avalon_knob_data.get("families"))
+
+            # except disabled nodes but exclude backdrops in test
+            for fmly, knob in write_dict.items():
+                write = None
+                if (fmly in families):
+                    # Add all nodes in group instances.
+                    if node.Class() == "Group":
+                        node.begin()
+                        for x in nuke.allNodes():
+                            if x.Class() == "Write":
+                                write = x
+                        node.end()
+                    elif node.Class() == "Write":
+                        write = node
+                    else:
+                        log.warning("Wrong write node Class")
+
+                    write["colorspace"].setValue(str(knob["colorspace"]))
+                    log.info(
+                        "Setting `{0}` to `{1}`".format(
+                            write.name(),
+                            knob["colorspace"]))
+
+    def set_reads_colorspace(self, reads):
+        """ Setting colorspace to Read nodes
+
+        Looping trought all read nodes and tries to set colorspace based on regex rules in presets
+        """
+        changes = dict()
+        for n in nuke.allNodes():
+            file = nuke.filename(n)
+            if not n.Class() == "Read":
+                continue
+
+            # load nuke presets for Read's colorspace
+            read_clrs_presets = get_colorspace_preset().get(
+                "nuke", {}).get("read", {})
+
+            # check if any colorspace presets for read is mathing
+            preset_clrsp = next((read_clrs_presets[k]
+                                 for k in read_clrs_presets
+                                 if bool(re.search(k, file))),
+                                None)
+            log.debug(preset_clrsp)
+            if preset_clrsp is not None:
+                current = n["colorspace"].value()
+                future = str(preset_clrsp)
+                if current != future:
+                    changes.update({
+                        n.name(): {
+                            "from": current,
+                            "to": future
+                        }
+                    })
+        log.debug(changes)
+        if changes:
+            msg = "Read nodes are not set to correct colospace:\n\n"
+            for nname, knobs in changes.items():
+                msg += str(" - node: '{0}' is now '{1}' "
+                           "but should be '{2}'\n").format(
+                               nname, knobs["from"], knobs["to"]
+                               )
+
+            msg += "\nWould you like to change it?"
+
+            if nuke.ask(msg):
+                for nname, knobs in changes.items():
+                    n = nuke.toNode(nname)
+                    n["colorspace"].setValue(knobs["to"])
+                    log.info(
+                        "Setting `{0}` to `{1}`".format(
+                            nname,
+                            knobs["to"]))
 
     def set_colorspace(self):
         ''' Setting colorpace following presets
@@ -671,12 +756,17 @@ class WorkfileSettings(object):
             msg = "set_colorspace(): missing `viewer` settings in template"
             nuke.message(msg)
             log.error(msg)
+
         try:
             self.set_writes_colorspace(nuke_colorspace["write"])
         except AttributeError:
             msg = "set_colorspace(): missing `write` settings in template"
             nuke.message(msg)
             log.error(msg)
+
+        reads = nuke_colorspace.get("read")
+        if reads:
+            self.set_reads_colorspace(reads)
 
         try:
             for key in nuke_colorspace:
@@ -695,6 +785,8 @@ class WorkfileSettings(object):
             nuke.message(msg)
             return
         data = self._asset_entity["data"]
+
+        log.debug("__ asset data: `{}`".format(data))
 
         missing_cols = []
         check_cols = ["fps", "frameStart", "frameEnd",
@@ -975,7 +1067,7 @@ class BuildWorkfile(WorkfileSettings):
             "project": {"name": self._project["name"],
                         "code": self._project["data"].get("code", '')},
             "asset": self._asset or os.environ["AVALON_ASSET"],
-            "task": kwargs.get("task") or api.Session["AVALON_TASK"].lower(),
+            "task": kwargs.get("task") or api.Session["AVALON_TASK"],
             "hierarchy": kwargs.get("hierarchy") or pype.get_hierarchy(),
             "version": kwargs.get("version", {}).get("name", 1),
             "user": getpass.getuser(),
@@ -1013,7 +1105,8 @@ class BuildWorkfile(WorkfileSettings):
     def process(self,
                 regex_filter=None,
                 version=None,
-                representations=["exr", "dpx", "lutJson", "mov", "preview"]):
+                representations=["exr", "dpx", "lutJson", "mov",
+                                 "preview", "png"]):
         """
         A short description.
 
@@ -1054,9 +1147,10 @@ class BuildWorkfile(WorkfileSettings):
         wn["render"].setValue(True)
         vn.setInput(0, wn)
 
-        bdn = self.create_backdrop(label="Render write \n\n\n\nOUTPUT",
-                                   color='0xcc1102ff', layer=-1,
-                                   nodes=[wn])
+        # adding backdrop under write
+        self.create_backdrop(label="Render write \n\n\n\nOUTPUT",
+                             color='0xcc1102ff', layer=-1,
+                             nodes=[wn])
 
         # move position
         self.position_up(4)
@@ -1070,10 +1164,12 @@ class BuildWorkfile(WorkfileSettings):
                                    version=version,
                                    representations=representations)
 
-        log.info("__ subsets: `{}`".format(subsets))
+        for name, subset in subsets.items():
+            log.debug("___________________")
+            log.debug(name)
+            log.debug(subset["version"])
 
         nodes_backdrop = list()
-
         for name, subset in subsets.items():
             if "lut" in name:
                 continue
@@ -1103,9 +1199,10 @@ class BuildWorkfile(WorkfileSettings):
                 # move position
                 self.position_right()
 
-            bdn = self.create_backdrop(label="Loaded Reads",
-                                       color='0x2d7702ff', layer=-1,
-                                       nodes=nodes_backdrop)
+        # adding backdrop under all read nodes
+        self.create_backdrop(label="Loaded Reads",
+                             color='0x2d7702ff', layer=-1,
+                             nodes=nodes_backdrop)
 
     def read_loader(self, representation):
         """
@@ -1269,7 +1366,7 @@ class ExporterReview:
             'ext': self.ext,
             'files': self.file,
             "stagingDir": self.staging_dir,
-            "anatomy_template": "publish",
+            "anatomy_template": "render",
             "tags": [self.name.replace("_", "-")] + add_tags
         }
 

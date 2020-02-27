@@ -1,33 +1,20 @@
 import os
 
 import pyblish.api
-import clique
 import pype.api
+import pype.lib
 
 
 class ExtractJpegEXR(pyblish.api.InstancePlugin):
-    """Resolve any dependency issues
-
-    This plug-in resolves any paths which, if not updated might break
-    the published file.
-
-    The order of families is important, when working with lookdev you want to
-    first publish the texture, update the texture paths in the nodes and then
-    publish the shading network. Same goes for file dependent assets.
-    """
+    """Create jpg thumbnail from sequence using ffmpeg"""
 
     label = "Extract Jpeg EXR"
     hosts = ["shell"]
     order = pyblish.api.ExtractorOrder
-    families = ["imagesequence", "render", "write", "source"]
+    families = ["imagesequence", "render", "render2d", "source"]
     enabled = False
 
     def process(self, instance):
-        start = instance.data.get("frameStart")
-        stagingdir = os.path.normpath(instance.data.get("stagingDir"))
-
-        collected_frames = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(collected_frames)
 
         self.log.info("subset {}".format(instance.data['subset']))
         if 'crypto' in instance.data['subset']:
@@ -41,9 +28,14 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
 
         for repre in representations:
             self.log.debug(repre)
-            if 'review' not in repre['tags']:
-                return
+            valid = 'review' in repre['tags'] or "thumb-nuke" in repre['tags']
+            if not valid:
+                continue
 
+            if not isinstance(repre['files'], list):
+                continue
+
+            stagingdir = os.path.normpath(repre.get("stagingDir"))
             input_file = repre['files'][0]
 
             # input_file = (
@@ -65,9 +57,10 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             proj_name = os.environ.get('AVALON_PROJECT', '__default__')
             profile = config_data.get(proj_name, config_data['__default__'])
 
+            ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+
             jpeg_items = []
-            jpeg_items.append(
-                os.path.join(os.environ.get("FFMPEG_PATH"), "ffmpeg"))
+            jpeg_items.append(ffmpeg_path)
             # override file if already exists
             jpeg_items.append("-y")
             # use same input args like with mov
