@@ -361,23 +361,23 @@ class DeleteOldVersions(BaseAction):
 
         self.dbcon.uninstall()
 
-        for entity in entities:
-            entity["is_published"] = False
-
-        try:
-            session.commit()
-
-        except Exception:
-            msg = (
-                "Could not set `is_published` attribute to `False`"
-                " for selected AssetVersions."
-            )
-            self.log.warning(msg, exc_info=True)
-
-            return {
-                "success": False,
-                "message": msg
-            }
+        # for entity in entities:
+        #     entity["is_published"] = False
+        #
+        # try:
+        #     session.commit()
+        #
+        # except Exception:
+        #     msg = (
+        #         "Could not set `is_published` attribute to `False`"
+        #         " for selected AssetVersions."
+        #     )
+        #     self.log.warning(msg, exc_info=True)
+        #
+        #     return {
+        #         "success": False,
+        #         "message": msg
+        #     }
 
         return True
 
