@@ -131,6 +131,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         - publishJobState (str, Optional): "Active" or "Suspended"
             This defaults to "Suspended"
 
+        - expectedFiles (list or dict): explained bellow
+
     """
 
     label = "Submit image sequence jobs to Deadline or Muster"
@@ -166,7 +168,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     instance_transfer = {
         "slate": ["slateFrame"],
         "review": ["lutPath"],
-        "render.farm": ["bakeScriptPath", "bakeRenderPath", "bakeWriteNodeName"]
+        "render.farm": ["bakeScriptPath", "bakeRenderPath",
+                        "bakeWriteNodeName", "version"]
         }
 
     # list of family names to transfer to new family if present
@@ -384,13 +387,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "tags": ["review"] if preview else []
             }
 
-            # add tags
-            if preview:
-                if "ftrack" not in new_instance["families"]:
-                    if os.environ.get("FTRACK_SERVER"):
-                        new_instance["families"].append("ftrack")
-                if "review" not in new_instance["families"]:
-                    new_instance["families"].append("review")
+            self._solve_families(new_instance, preview)
 
             new_instance["representations"] = [rep]
 
@@ -399,6 +396,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if new_instance.get("extendFrames", False):
                 self._copy_extend_frames(new_instance, rep)
             instances.append(new_instance)
+
         return instances
 
     def _get_representations(self, instance, exp_files):
@@ -419,6 +417,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         start = int(instance.get("frameStart"))
         end = int(instance.get("frameEnd"))
         cols, rem = clique.assemble(exp_files)
+        bake_render_path = instance.get("bakeRenderPath")
+
         # create representation for every collected sequence
         for c in cols:
             ext = c.tail.lstrip(".")
@@ -435,8 +435,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                             preview = True
                             break
                 break
+
+            if bake_render_path:
+                preview = False
+
             rep = {
-                "name": str(c),
+                "name": ext,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(c)],
                 "frameStart": start,
@@ -450,31 +454,40 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             representations.append(rep)
 
-            families = instance.get("families")
-            # if we have one representation with preview tag
-            # flag whole instance for review and for ftrack
-            if preview:
-                if "ftrack" not in families:
-                    if os.environ.get("FTRACK_SERVER"):
-                        families.append("ftrack")
-                if "review" not in families:
-                    families.append("review")
-                instance["families"] = families
+            self._solve_families(instance, preview)
 
         # add reminders as representations
         for r in rem:
             ext = r.split(".")[-1]
             rep = {
-                "name": r,
+                "name": ext,
                 "ext": ext,
                 "files": os.path.basename(r),
                 "stagingDir": os.path.dirname(r),
                 "anatomy_template": "publish",
             }
-
+            if r in bake_render_path:
+                rep.update({
+                    "anatomy_template": "render",
+                    "tags": ["review", "preview"]
+                })
+                # solve families with `preview` attributes
+                self._solve_families(instance, True)
             representations.append(rep)
 
         return representations
+
+    def _solve_families(self, instance, preview=False):
+        families = instance.get("families")
+        # if we have one representation with preview tag
+        # flag whole instance for review and for ftrack
+        if preview:
+            if "ftrack" not in families:
+                if os.environ.get("FTRACK_SERVER"):
+                    families.append("ftrack")
+            if "review" not in families:
+                families.append("review")
+            instance["families"] = families
 
     def process(self, instance):
         """
