@@ -27,8 +27,9 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         representations_new = representations[:]
 
         for repre in representations:
+            tags = repre.get("tags", [])
             self.log.debug(repre)
-            valid = 'review' in repre['tags'] or "thumb-nuke" in repre['tags']
+            valid = 'review' in tags or "thumb-nuke" in tags
             if not valid:
                 continue
 
