@@ -1,4 +1,4 @@
-import pyblish
+import pyblish.api
 
 
 class ValidateVersion(pyblish.api.InstancePlugin):
@@ -13,11 +13,13 @@ class ValidateVersion(pyblish.api.InstancePlugin):
     hosts = ["nuke", "maya", "blender"]
 
     def process(self, instance):
-        version = int(instance.data.get("version")
-        latest_version = int(instance.data.get("latestVersion", 0))
+        version = instance.data.get("version")
+        latest_version = instance.data.get("latestVersion")
 
-        assert (version != latest_version), ("Version `{0}` that you are"
-                                           " trying to publish, already"
-                                           " exists in the"
-                                           " database `{1}`.").format(
-                                            version, latest_version)
+        if latest_version is not None:
+            msg = ("Version `{0}` that you are"
+                   " trying to publish, already"
+                   " exists in the"
+                   " database.").format(
+                   version, latest_version)
+            assert (int(version) > int(latest_version)), msg
