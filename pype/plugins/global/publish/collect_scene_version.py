@@ -21,7 +21,7 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         if '<shell>' in filename:
             return
 
-        rootVersion = pype.get_version_from_path(filename)
+        rootVersion = int(pype.get_version_from_path(filename))
         context.data['version'] = rootVersion
-
+        self.log.info("{}".format(type(rootVersion)))
         self.log.info('Scene Version: %s' % context.data.get('version'))
