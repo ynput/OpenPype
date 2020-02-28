@@ -468,8 +468,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             }
             if r in bake_render_path:
                 rep.update({
+                    "fps": instance.get("fps"),
                     "anatomy_template": "render",
-                    "tags": ["review", "preview"]
+                    "tags": ["review", "delete"]
                 })
                 # solve families with `preview` attributes
                 self._solve_families(instance, True)
@@ -498,7 +499,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         :param instance: Instance data
         :type instance: dict
         """
-
         data = instance.data.copy()
         context = instance.context
         self.context = context
@@ -531,9 +531,18 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         start = instance.data.get("frameStart")
         if start is None:
             start = context.data["frameStart"]
+
         end = instance.data.get("frameEnd")
         if end is None:
             end = context.data["frameEnd"]
+
+        handle_start = instance.data.get("handleStart")
+        if handle_start is None:
+            handle_start = context.data["handleStart"]
+
+        handle_end = instance.data.get("handleEnd")
+        if handle_end is None:
+            handle_end = context.data["handleEnd"]
 
         if data.get("extendFrames", False):
             start, end = self._extend_frames(
@@ -563,7 +572,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "asset": asset,
             "frameStart": start,
             "frameEnd": end,
-            "fps": data.get("fps", 25),
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
+            "fps": data["fps"],
             "source": source,
             "extendFrames": data.get("extendFrames"),
             "overrideExistingFrame": data.get("overrideExistingFrame"),
@@ -583,6 +594,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if key in instance.data.get("families", []):
                 for v in values:
                     instance_skeleton_data[v] = instance.data.get(v)
+
+        # look into instance data if representations are not having any
+        # which are having tag `publish_on_farm` and include them
+        for r in instance.data.get("representations", []):
+            if "publish_on_farm" in r.get("tags"):
+                # create representations attribute of not there
+                if "representations" not in instance_skeleton_data.keys():
+                    instance_skeleton_data["representations"] = []
+
+                instance_skeleton_data["representations"].append(r)
 
         instances = None
         assert data.get("expectedFiles"), ("Submission from old Pype version"
@@ -657,7 +678,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 data.get("expectedFiles")
             )
 
-            if "representations" not in instance_skeleton_data:
+            if "representations" not in instance_skeleton_data.keys():
                 instance_skeleton_data["representations"] = []
 
             # add representation
