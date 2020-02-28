@@ -193,6 +193,8 @@ class AppAction(BaseHandler):
         if parents:
             hierarchy = os.path.join(*parents)
 
+        os.environ["AVALON_HIERARCHY"] = hierarchy
+
         application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
 
         data = {

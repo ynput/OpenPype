@@ -418,6 +418,13 @@ def burnins_from_data(
         if not value:
             continue
 
+        if isinstance(value, (dict, list, tuple)):
+            raise TypeError((
+                "Expected string or number type."
+                " Got: {} - \"{}\""
+                " (Make sure you have new burnin presets)."
+            ).format(str(type(value)), str(value)))
+
         has_timecode = TIME_CODE_KEY in value
 
         align = None
