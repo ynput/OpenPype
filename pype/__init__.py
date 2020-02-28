@@ -79,7 +79,7 @@ def install():
         for path in PROJECT_PLUGINS_PATH.split(os.pathsep):
             if not path:
                 continue
-            plugin_path = os.path.join(path, project_name)
+            plugin_path = os.path.join(path, project_name, "plugins")
             if os.path.exists(plugin_path):
                 pyblish.register_plugin_path(plugin_path)
                 avalon.register_plugin_path(avalon.Loader, plugin_path)
