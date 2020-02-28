@@ -62,9 +62,9 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 assert (entity is not None), "Did not find project in DB"
 
                 # get data from already existing project
-                entity_data = entity.get("data") or {}
-                entity_data.update(data)
-                data = entity_data
+                cur_entity_data = entity.get("data") or {}
+                cur_entity_data.update(data)
+                data = cur_entity_data
 
                 self.project = entity
             # Raise error if project or parent are not set
@@ -77,9 +77,9 @@ class ExtractHierarchyToAvalon(pyblish.api.ContextPlugin):
                 entity = io.find_one({"type": "asset", "name": name})
                 if entity:
                     # Do not override data, only update
-                    entity_data = entity.get("data") or {}
-                    entity_data.update(data)
-                    data = entity_data
+                    cur_entity_data = entity.get("data") or {}
+                    cur_entity_data.update(data)
+                    data = cur_entity_data
                 else:
                     # Skip updating data
                     update_data = False
