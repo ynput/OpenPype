@@ -1,3 +1,5 @@
+PUBLISH_PATHS = []
+
 from .standalonepublish_module import StandAlonePublishModule
 from .app import (
     show,
