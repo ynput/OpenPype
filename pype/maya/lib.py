@@ -2585,3 +2585,44 @@ def remove_render_layer_observer():
     except ValueError:
         # no observer set yet
         pass
+
+
+def update_content_on_context_change():
+    """
+    This will update scene content to match new asset on context change
+    """
+    scene_sets = cmds.listSets(allSets=True)
+    new_asset = api.Session["AVALON_ASSET"]
+    new_data = lib.get_asset()["data"]
+    for s in scene_sets:
+        try:
+            if cmds.getAttr("{}.id".format(s)) == "pyblish.avalon.instance":
+                attr = cmds.listAttr(s)
+                print(s)
+                if "asset" in attr:
+                    print("  - setting asset to: [ {} ]".format(new_asset))
+                    cmds.setAttr("{}.asset".format(s),
+                                 new_asset, type="string")
+                if "frameStart" in attr:
+                    cmds.setAttr("{}.frameStart".format(s),
+                                 new_data["frameStart"])
+                if "frameEnd" in attr:
+                    cmds.setAttr("{}.frameEnd".format(s),
+                                 new_data["frameEnd"],)
+        except ValueError:
+            pass
+
+
+def show_message(title, msg):
+    from avalon.vendor.Qt import QtWidgets
+    from ..widgets import message_window
+
+    # Find maya main window
+    top_level_widgets = {w.objectName(): w for w in
+                         QtWidgets.QApplication.topLevelWidgets()}
+
+    parent = top_level_widgets.get("MayaWindow", None)
+    if parent is None:
+        pass
+    else:
+        message_window.message(title=title, message=msg, parent=parent)

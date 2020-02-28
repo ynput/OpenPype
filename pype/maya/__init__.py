@@ -229,3 +229,10 @@ def on_task_changed(*args):
 
     # Run
     maya.pipeline._on_task_changed()
+    with maya.suspended_refresh():
+        lib.set_context_settings()
+        lib.update_content_on_context_change()
+
+    lib.show_message("Context was changed",
+                     ("Context was changed to {}".format(
+                        avalon.Session["AVALON_ASSET"])))
