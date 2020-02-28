@@ -2399,15 +2399,19 @@ class shelf():
             if not item.get('command'):
                 item['command'] = self._null
             if item['type'] == 'button':
-                self.addButon(item['name'], command=item['command'])
+                self.addButon(item['name'],
+                              command=item['command'],
+                              icon=item['icon'])
             if item['type'] == 'menuItem':
                 self.addMenuItem(item['parent'],
                                  item['name'],
-                                 command=item['command'])
+                                 command=item['command'],
+                                 icon=item['icon'])
             if item['type'] == 'subMenu':
                 self.addMenuItem(item['parent'],
                                  item['name'],
-                                 command=item['command'])
+                                 command=item['command'],
+                                 icon=item['icon'])
 
     def addButon(self, label, icon="commandButton.png",
                  command=_null, doubleCommand=_null):
@@ -2417,7 +2421,8 @@ class shelf():
         '''
         cmds.setParent(self.name)
         if icon:
-            icon = self.iconPath + icon
+            icon = os.path.join(self.iconPath, icon)
+            print(icon)
         cmds.shelfButton(width=37, height=37, image=icon, label=label,
                          command=command, dcc=doubleCommand,
                          imageOverlayLabel=label, olb=self.labelBackground,
@@ -2429,7 +2434,8 @@ class shelf():
             double click command and image.
         '''
         if icon:
-            icon = self.iconPath + icon
+            icon = os.path.join(self.iconPath, icon)
+            print(icon)
         return cmds.menuItem(p=parent, label=label, c=command, i="")
 
     def addSubMenu(self, parent, label, icon=None):
@@ -2438,7 +2444,8 @@ class shelf():
             the specified parent popup menu.
         '''
         if icon:
-            icon = self.iconPath + icon
+            icon = os.path.join(self.iconPath, icon)
+            print(icon)
         return cmds.menuItem(p=parent, label=label, i=icon, subMenu=1)
 
     def _cleanOldShelf(self):
