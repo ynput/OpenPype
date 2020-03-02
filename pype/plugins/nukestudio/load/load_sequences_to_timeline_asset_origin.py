@@ -26,7 +26,7 @@ class LoadSequencesToTimelineAssetOrigin(api.Loader):
             "hieroWorkfileName": hiero.ui.activeProject().name()
             })
 
-        self.log.develop("_ context: `{}`".format(context))
+        self.log.debug("_ context: `{}`".format(context))
 
         clip_loader = lib.ClipLoader(self, context, **data)
         clip_loader.load()
