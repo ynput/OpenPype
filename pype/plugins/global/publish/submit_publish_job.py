@@ -544,6 +544,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if handle_end is None:
             handle_end = context.data["handleEnd"]
 
+        fps = instance.data.get("fps")
+        if fps is None:
+            fps = context.data["fps"]
+
         if data.get("extendFrames", False):
             start, end = self._extend_frames(
                 asset,
@@ -574,7 +578,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "frameEnd": end,
             "handleStart": handle_start,
             "handleEnd": handle_end,
-            "fps": data["fps"],
+            "fps": fps,
             "source": source,
             "extendFrames": data.get("extendFrames"),
             "overrideExistingFrame": data.get("overrideExistingFrame"),
