@@ -4,6 +4,7 @@ import platform
 import json
 from distutils import dir_util
 import subprocess
+from pypeapp import config
 
 
 def get_engine_versions():
@@ -63,7 +64,7 @@ def _win_get_engine_versions():
     return _parse_launcher_locations(install_json_path)
 
 
-def _darwin_get_engine_version():
+def _darwin_get_engine_version() -> dict:
     """
     It works the same as on Windows, just JSON file location is different.
     """
@@ -79,7 +80,16 @@ def _darwin_get_engine_version():
     return _parse_launcher_locations(install_json_path)
 
 
-def _parse_launcher_locations(install_json_path):
+def _parse_launcher_locations(install_json_path: str) -> dict:
+    """
+    This will parse locations from json file.
+
+    :param install_json_path: path to `LauncherInstalled.dat`
+    :type install_json_path: str
+    :returns: returns dict with unreal engine versions as keys and
+              paths to those engine installations as value.
+    :rtype: dict
+    """
     engine_locations = {}
     if os.path.isfile(install_json_path):
         with open(install_json_path, "r") as ilf:
@@ -99,7 +109,11 @@ def _parse_launcher_locations(install_json_path):
     return engine_locations
 
 
-def create_unreal_project(project_name, ue_version, dir):
+def create_unreal_project(project_name: str,
+                          ue_version: str,
+                          pr_dir: str,
+                          engine_path: str,
+                          dev_mode: bool = False) -> None:
     """
     This will create `.uproject` file at specified location. As there is no
     way I know to create project via command line, this is easiest option.
@@ -107,12 +121,30 @@ def create_unreal_project(project_name, ue_version, dir):
     `AVALON_UNREAL_PLUGIN` environment variable we assume this is location
     of Avalon Integration Plugin and we copy its content to project folder
     and enable this plugin.
+
+    :param project_name: project name
+    :type project_name: str
+    :param ue_version: unreal engine version (like 4.23)
+    :type ue_version: str
+    :param pr_dir: path to directory where project will be created
+    :type pr_dir: str
+    :param engine_path: Path to Unreal Engine installation
+    :type engine_path: str
+    :param dev_mode: Flag to trigger C++ style Unreal project needing
+                     Visual Studio and other tools to compile plugins from
+                     sources. This will trigger automatically if `Binaries`
+                     directory is not found in plugin folders as this indicates
+                     this is only source distribution of the plugin. Dev mode
+                     is also set by preset file `unreal/project_setup.json` in
+                     **PYPE_CONFIG**.
+    :type dev_mode: bool
+    :returns: None
     """
-    import git
+    preset = config.get_presets()["unreal"]["project_setup"]
 
     if os.path.isdir(os.environ.get("AVALON_UNREAL_PLUGIN", "")):
         # copy plugin to correct path under project
-        plugins_path = os.path.join(dir, "Plugins")
+        plugins_path = os.path.join(pr_dir, "Plugins")
         avalon_plugin_path = os.path.join(plugins_path, "Avalon")
         if not os.path.isdir(avalon_plugin_path):
             os.makedirs(avalon_plugin_path, exist_ok=True)
@@ -120,68 +152,105 @@ def create_unreal_project(project_name, ue_version, dir):
             dir_util.copy_tree(os.environ.get("AVALON_UNREAL_PLUGIN"),
                                avalon_plugin_path)
 
-    # If `PYPE_UNREAL_ENGINE_PYTHON_PLUGIN` is set, copy it from there to
-    # support offline installation.
-    # Otherwise clone UnrealEnginePython to Plugins directory
-    # https://github.com/20tab/UnrealEnginePython.git
-    uep_path = os.path.join(plugins_path, "UnrealEnginePython")
-    if os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
+            if (not os.path.isdir(os.path.join(avalon_plugin_path, "Binaries"))
+                    or not os.path.join(avalon_plugin_path, "Intermediate")):
+                dev_mode = True
 
-        os.makedirs(uep_path, exist_ok=True)
-        dir_util._path_created = {}
-        dir_util.copy_tree(os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
-                           uep_path)
-    else:
-        git.Repo.clone_from("https://github.com/20tab/UnrealEnginePython.git",
-                            uep_path)
-
-    # now we need to fix python path in:
-    # `UnrealEnginePython.Build.cs`
-    # to point to our python
-    with open(os.path.join(
-            uep_path, "Source",
-            "UnrealEnginePython",
-            "UnrealEnginePython.Build.cs"), mode="r") as f:
-        build_file = f.read()
-
-    fix = build_file.replace(
-        'private string pythonHome = "";',
-        'private string pythonHome = "{}";'.format(
-            sys.base_prefix.replace("\\", "/")))
-
-    with open(os.path.join(
-            uep_path, "Source",
-            "UnrealEnginePython",
-            "UnrealEnginePython.Build.cs"), mode="w") as f:
-        f.write(fix)
-
+    # data for project file
     data = {
         "FileVersion": 3,
         "EngineAssociation": ue_version,
         "Category": "",
         "Description": "",
-        "Modules": [
-            {
+        "Plugins": [
+            {"Name": "PythonScriptPlugin", "Enabled": True},
+            {"Name": "EditorScriptingUtilities", "Enabled": True},
+            {"Name": "Avalon", "Enabled": True}
+        ]
+    }
+
+    if preset["install_unreal_python_engine"]:
+        # If `PYPE_UNREAL_ENGINE_PYTHON_PLUGIN` is set, copy it from there to
+        # support offline installation.
+        # Otherwise clone UnrealEnginePython to Plugins directory
+        # https://github.com/20tab/UnrealEnginePython.git
+        uep_path = os.path.join(plugins_path, "UnrealEnginePython")
+        if os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"):
+
+            os.makedirs(uep_path, exist_ok=True)
+            dir_util._path_created = {}
+            dir_util.copy_tree(
+                os.environ.get("PYPE_UNREAL_ENGINE_PYTHON_PLUGIN"),
+                uep_path)
+        else:
+            # WARNING: this will trigger dev_mode, because we need to compile
+            # this plugin.
+            dev_mode = True
+            import git
+            git.Repo.clone_from(
+                "https://github.com/20tab/UnrealEnginePython.git",
+                uep_path)
+
+        data["Plugins"].append(
+            {"Name": "UnrealEnginePython", "Enabled": True})
+
+        if (not os.path.isdir(os.path.join(uep_path, "Binaries"))
+                or not os.path.join(uep_path, "Intermediate")):
+            dev_mode = True
+
+    if dev_mode or preset["dev_mode"]:
+        # this will add project module and necessary source file to make it
+        # C++ project and to (hopefully) make Unreal Editor to compile all
+        # sources at start
+
+        data["Modules"] = [{
                 "Name": project_name,
                 "Type": "Runtime",
                 "LoadingPhase": "Default",
                 "AdditionalDependencies": ["Engine"],
-            }
-        ],
-        "Plugins": [
-            {"Name": "PythonScriptPlugin", "Enabled": True},
-            {"Name": "EditorScriptingUtilities", "Enabled": True},
-            {"Name": "Avalon", "Enabled": True},
-            {"Name": "UnrealEnginePython", "Enabled": True}
-        ],
-    }
+            }]
 
-    project_file = os.path.join(dir, "{}.uproject".format(project_name))
+        if preset["install_unreal_python_engine"]:
+            # now we need to fix python path in:
+            # `UnrealEnginePython.Build.cs`
+            # to point to our python
+            with open(os.path.join(
+                    uep_path, "Source",
+                    "UnrealEnginePython",
+                    "UnrealEnginePython.Build.cs"), mode="r") as f:
+                build_file = f.read()
+
+            fix = build_file.replace(
+                'private string pythonHome = "";',
+                'private string pythonHome = "{}";'.format(
+                    sys.base_prefix.replace("\\", "/")))
+
+            with open(os.path.join(
+                    uep_path, "Source",
+                    "UnrealEnginePython",
+                    "UnrealEnginePython.Build.cs"), mode="w") as f:
+                f.write(fix)
+
+    # write project file
+    project_file = os.path.join(pr_dir, "{}.uproject".format(project_name))
     with open(project_file, mode="w") as pf:
         json.dump(data, pf, indent=4)
 
+    # ensure we have PySide installed in engine
+    # TODO: make it work for other platforms 🍎 🐧
+    if platform.system().lower() == "windows":
+        python_path = os.path.join(engine_path, "Engine", "Binaries",
+                                   "ThirdParty", "Python", "Win64",
+                                   "python.exe")
 
-def prepare_project(project_file: str, engine_path: str):
+        subprocess.run([python_path, "-m",
+                        "pip", "install", "pyside"])
+
+    if dev_mode or preset["dev_mode"]:
+        _prepare_cpp_project(pr_dir, engine_path)
+
+
+def _prepare_cpp_project(project_file: str, engine_path: str) -> None:
     """
     This function will add source files needed for project to be
     rebuild along with the avalon integration plugin.

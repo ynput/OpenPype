@@ -42,7 +42,7 @@ class UnrealPrelaunch(PypeHook):
         # of the project name. This is because project name is then used
         # in various places inside c++ code and there variable names cannot
         # start with non-alpha. We append 'P' before project name to solve it.
-        # :scream:
+        # 😱
         if not project_name[:1].isalpha():
             self.log.warning(f"Project name doesn't start with alphabet "
                              f"character ({project_name}). Appending 'P'")
@@ -67,17 +67,17 @@ class UnrealPrelaunch(PypeHook):
         os.makedirs(project_path, exist_ok=True)
 
         project_file = os.path.join(project_path, f"{project_name}.uproject")
+        engine_path = detected[engine_version]
         if not os.path.isfile(project_file):
             self.log.info((f"{self.signature} creating unreal "
                            f"project [ {project_name} ]"))
             if env.get("AVALON_UNREAL_PLUGIN"):
                 os.environ["AVALON_UNREAL_PLUGIN"] = env.get("AVALON_UNREAL_PLUGIN")  # noqa: E501
             unreal_lib.create_unreal_project(project_name,
-                                             engine_version, project_path)
-
-            self.log.info((f"{self.signature} preparing unreal project ... "))
-            unreal_lib.prepare_project(project_file, detected[engine_version])
+                                             engine_version,
+                                             project_path,
+                                             engine_path=engine_path)
 
         env["PYPE_UNREAL_PROJECT_FILE"] = project_file
-        env["AVALON_CURRENT_UNREAL_ENGINE"] = detected[engine_version]
+        env["AVALON_CURRENT_UNREAL_ENGINE"] = engine_path
         return True
