@@ -220,6 +220,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                                               layer=layer_name)),
                 "renderer": self.get_render_attribute("currentRenderer",
                                                       layer=layer_name),
+                "handleStart": context.data["assetEntity"]['data']['handleStart'],
+                "handleEnd": context.data["assetEntity"]['data']['handleEnd'],
 
                 # instance subset
                 "family": "renderlayer",
