@@ -1,6 +1,7 @@
 import os
 import json
 import getpass
+import clique
 
 from maya import cmds
 
@@ -242,7 +243,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0.replace("\\", "/"),
+                "OutputDirectory0": os.path.dirname(output_filename_0),
+                "OutputFilename0": output_filename_0.replace("\\", "/")
             },
             "PluginInfo": {
                 # Input
@@ -271,6 +273,26 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             # Mandatory for Deadline, may be empty
             "AuxFiles": []
         }
+
+        exp = instance.data.get("expectedFiles")
+
+        OutputFilenames = {}
+        expIndex = 0
+
+        if isinstance(exp[0], dict):
+            # we have aovs and we need to iterate over them
+            for aov, files in exp[0].items():
+                col = clique.assemble(files)[0][0]
+                outputFile = col.format('{head}{padding}{tail}')
+                payload['JobInfo']['OutputFilename' + str(expIndex)] = outputFile
+                OutputFilenames[expIndex] = outputFile
+                expIndex += 1
+        else:
+            col = clique.assemble(files)[0][0]
+            outputFile = col.format('{head}{padding}{tail}')
+            payload['JobInfo']['OutputFilename' + str(expIndex)] = outputFile
+            # OutputFilenames[expIndex] = outputFile
+
 
         # We need those to pass them to pype for it to set correct context
         keys = [
