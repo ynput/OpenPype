@@ -167,8 +167,11 @@ class DeleteOldVersions(BaseAction):
         asset_versions_by_parent_id = collections.defaultdict(list)
         subset_names_by_asset_name = collections.defaultdict(list)
 
+        ftrack_assets_by_name = {}
         for entity in entities:
-            parent_ent = entity["asset"]["parent"]
+            ftrack_asset = entity["asset"]
+
+            parent_ent = ftrack_asset["parent"]
             parent_ftrack_id = parent_ent["id"]
             parent_name = parent_ent["name"]
 
@@ -183,8 +186,11 @@ class DeleteOldVersions(BaseAction):
                 project = parent_ent["project"]
 
             # Collect subset names per asset
-            subset_name = entity["asset"]["name"]
+            subset_name = ftrack_asset["name"]
             subset_names_by_asset_name[parent_name].append(subset_name)
+
+            if subset_name not in ftrack_assets_by_name:
+                ftrack_assets_by_name[subset_name] = ftrack_asset
 
         # Set Mongo collection
         project_name = project["full_name"]
@@ -236,7 +242,6 @@ class DeleteOldVersions(BaseAction):
         def sort_func(ent):
             return int(ent["name"])
 
-        last_versions_by_parent = collections.defaultdict(list)
         all_last_versions = []
         for parent_id, _versions in versions_by_parent.items():
             for idx, version in enumerate(
@@ -244,7 +249,6 @@ class DeleteOldVersions(BaseAction):
             ):
                 if idx >= versions_count:
                     break
-                last_versions_by_parent[parent_id].append(version)
                 all_last_versions.append(version)
 
         self.log.debug("Collected versions ({})".format(len(versions)))
@@ -252,6 +256,11 @@ class DeleteOldVersions(BaseAction):
         # Filter latest versions
         for version in all_last_versions:
             versions.remove(version)
+
+        # Update versions_by_parent without filtered versions
+        versions_by_parent = collections.defaultdict(list)
+        for ent in versions:
+            versions_by_parent[ent["parent"]].append(ent)
 
         # Filter already deleted versions
         versions_to_pop = []
@@ -360,6 +369,47 @@ class DeleteOldVersions(BaseAction):
             self.dbcon.bulk_write(mongo_changes_bulk)
 
         self.dbcon.uninstall()
+
+        # Set attribute `is_published` to `False` on ftrack AssetVersions
+        for subset_id, _versions in versions_by_parent.items():
+            subset_name = None
+            for subset in subsets:
+                if subset["_id"] == subset_id:
+                    subset_name = subset["name"]
+                    break
+
+            if subset_name is None:
+                self.log.warning(
+                    "Subset with ID `{}` was not found.".format(str(subset_id))
+                )
+                continue
+
+            ftrack_asset = ftrack_assets_by_name.get(subset_name)
+            if not ftrack_asset:
+                self.log.warning((
+                    "Could not find Ftrack asset with name `{}`"
+                ).format(subset_name))
+                continue
+
+            version_numbers = [int(ver["name"]) for ver in _versions]
+            for version in ftrack_asset["versions"]:
+                if int(version["version"]) in version_numbers:
+                    version["is_published"] = False
+
+        try:
+            session.commit()
+
+        except Exception:
+            msg = (
+                "Could not set `is_published` attribute to `False`"
+                " for selected AssetVersions."
+            )
+            self.log.warning(msg, exc_info=True)
+
+            return {
+                "success": False,
+                "message": msg
+            }
 
         return True
 
