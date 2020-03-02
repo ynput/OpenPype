@@ -125,8 +125,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0.replace("\\", "/"),
-                "OutputDirectory0": output_directory_0
+                "OutputFilename0": output_filename_0.replace("\\", "/")
 
             },
             "PluginInfo": {
