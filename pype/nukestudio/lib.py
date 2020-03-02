@@ -414,7 +414,8 @@ class ClipLoader:
         asset = str(repr_cntx["asset"])
         subset = str(repr_cntx["subset"])
         representation = str(repr_cntx["representation"])
-        self.data["name"] = "_".join([asset, subset, representation])
+        self.data["clip_name"] = "_".join([asset, subset, representation])
+        self.data["track_name"] = "_".join([subset, representation])
 
         # gets file path
         file = self.cls.fname
@@ -545,13 +546,20 @@ class ClipLoader:
 
     def _get_active_track(self, track):
         if not track:
-            track_name = self.data["name"]
+            track_name = self.data["track_name"]
+        else:
+            track_name = track.name()
 
-        if track_name not in self.active_sequence.videoTracks():
-            track = hiero.core.VideoTrack(track_name)
-            self.active_sequence.addTrack(track)
+        track_pass = next(
+            (t for t in self.active_sequence.videoTracks()
+             if t.name() in track_name), None
+        )
 
-        return track
+        if not track_pass:
+            track_pass = hiero.core.VideoTrack(track_name)
+            self.active_sequence.addTrack(track_pass)
+
+        return track_pass
 
     def load(self):
         log.debug("__ active_project: `{}`".format(self.active_project))
@@ -561,9 +569,8 @@ class ClipLoader:
         self.active_bin = self._make_project_bin(self.data["binPath"])
         log.debug("__ active_bin: `{}`".format(self.active_bin))
 
-        # check if slate is included
-        slate_on = next((f for f in self.context["version"]["data"]["families"]
-                         if "slate" in f), None)
+        log.debug("__ version.data: `{}`".format(
+            self.context["version"]["data"]))
 
         # create mediaItem in active project bin
         # create clip media
@@ -576,6 +583,22 @@ class ClipLoader:
         clip_in = int(self.data["assetData"]["clipIn"])
         clip_out = int(self.data["assetData"]["clipOut"])
 
+        log.debug("__ media_duration: `{}`".format(media_duration))
+        log.debug("__ handle_start: `{}`".format(handle_start))
+        log.debug("__ handle_end: `{}`".format(handle_end))
+        log.debug("__ clip_in: `{}`".format(clip_in))
+        log.debug("__ clip_out: `{}`".format(clip_out))
+
+        # check if slate is included
+        # either in version data families or by calculating frame diff
+        slate_on = next(
+            (f for f in self.context["version"]["data"]["families"]
+             if "slate" in f),
+            None) or bool(((
+                    clip_in - clip_out + 1) + handle_start + handle_end
+                    ) - media_duration)
+
+        log.debug("__ slate_on: `{}`".format(slate_on))
         # calculate slate differences
         if slate_on:
             media_duration -= 1
@@ -585,26 +608,28 @@ class ClipLoader:
 
         # create Clip from Media
         _clip = hiero.core.Clip(media)
-        _clip.setName(self.data["name"])
+        _clip.setName(self.data["clip_name"])
 
         # add Clip to bin if not there yet
-        if self.data["name"] not in [b.name() for b in self.active_bin.items()]:
+        if self.data["clip_name"] not in [
+                b.name()
+                for b in self.active_bin.items()]:
             binItem = hiero.core.BinItem(_clip)
             self.active_bin.addItem(binItem)
 
         _source = next((item for item in self.active_bin.items()
-                        if self.data["name"] in item.name()), None)
+                        if self.data["clip_name"] in item.name()), None)
 
         if not _source:
             log.warning("Problem with created Source clip: `{}`".format(
-                self.data["name"]))
+                self.data["clip_name"]))
 
         version = next((s for s in _source.items()), None)
         clip = version.item()
 
         # add to track as clip item
         track_item = hiero.core.TrackItem(
-            self.data["name"], hiero.core.TrackItem.kVideo)
+            self.data["clip_name"], hiero.core.TrackItem.kVideo)
 
         track_item.setSource(clip)
 
@@ -616,7 +641,7 @@ class ClipLoader:
 
         self.active_track.addTrackItem(track_item)
 
-        log.info("Loading clips: `{}`".format(self.data["name"]))
+        log.info("Loading clips: `{}`".format(self.data["clip_name"]))
 
 
 def create_nk_workfile_clips(nk_workfiles, seq=None):
