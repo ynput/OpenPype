@@ -73,5 +73,5 @@ def current_file():
     return normalised
 
 
-def work_root():
-    return os.path.normpath(api.Session["AVALON_WORKDIR"]).replace("\\", "/")
+def work_root(session):
+    return os.path.normpath(session["AVALON_WORKDIR"]).replace("\\", "/")
