@@ -561,33 +561,27 @@ class ClipLoader:
         self.active_bin = self._make_project_bin(self.data["binPath"])
         log.debug("__ active_bin: `{}`".format(self.active_bin))
 
+        # check if slate is included
+        slate_on = next((f for f in self.context["version"]["data"]["families"]
+                         if "slate" in f), None)
+
         # create mediaItem in active project bin
         # create clip media
         media = hiero.core.MediaSource(self.data["path"])
-        media_in = int(media.startTime())
         media_duration = int(media.duration())
-        log.debug("__ media_in: `{}`".format(media_in))
-        log.debug("__ media_duration: `{}`".format(media_duration))
 
-        handle_start = self.data["assetData"]["handleStart"]
-        handle_end = self.data["assetData"]["handleEnd"]
+        handle_start = int(self.data["assetData"]["handleStart"])
+        handle_end = int(self.data["assetData"]["handleEnd"])
+
+        clip_in = int(self.data["assetData"]["clipIn"])
+        clip_out = int(self.data["assetData"]["clipOut"])
+
+        # calculate slate differences
+        if slate_on:
+            media_duration -= 1
+            handle_start += 1
 
         fps = self.data["assetData"]["fps"]
-
-        if media_in:
-            source_in = int(media_in + handle_start)
-        else:
-            source_in = int(self.data["assetData"]["frameStart"] + handle_start)
-
-        if media_duration:
-            source_out = int((media_in + media_duration - 1) - handle_end)
-        else:
-            source_out = int(self.data["assetData"]["frameEnd"] - handle_end)
-
-        log.debug("__ source_in: `{}`".format(source_in))
-        log.debug("__ source_out: `{}`".format(source_out))
-        log.debug("__ handle_start: `{}`".format(handle_start))
-        log.debug("__ handle_end: `{}`".format(handle_end))
 
         # create Clip from Media
         _clip = hiero.core.Clip(media)
@@ -609,21 +603,18 @@ class ClipLoader:
         clip = version.item()
 
         # add to track as clip item
-        trackItem = hiero.core.TrackItem(
+        track_item = hiero.core.TrackItem(
             self.data["name"], hiero.core.TrackItem.kVideo)
 
-        log.info("clip: `{}`".format(clip))
-        log.info("_clip: `{}`".format(_clip))
-        log.info("clip.sourceIn(): `{}`".format(clip.sourceIn()))
-        log.info("clip.sourceOut(): `{}`".format(clip.sourceOut()))
+        track_item.setSource(clip)
 
-        trackItem.setSource(clip)
-        # trackItem.setTimelineIn(self.data["assetData"]["clipIn"])
-        trackItem.setSourceIn(5)
-        # trackItem.setTimelineOut(self.data["assetData"]["clipOut"])
-        trackItem.setSourceOut(10)
+        track_item.setSourceIn(handle_start)
+        track_item.setTimelineIn(clip_in)
 
-        self.active_track.addTrackItem(trackItem)
+        track_item.setSourceOut(media_duration - handle_end)
+        track_item.setTimelineOut(clip_out)
+
+        self.active_track.addTrackItem(track_item)
 
         log.info("Loading clips: `{}`".format(self.data["name"]))
 
