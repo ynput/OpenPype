@@ -278,6 +278,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 stagingdir = repre['stagingDir']
             if repre.get('anatomy_template'):
                 template_name = repre['anatomy_template']
+            if repre.get("outputName"):
+                template_data["output"] = repre['outputName']
 
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
@@ -388,9 +390,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 )
 
                 template_data["representation"] = repre['ext']
-
-                if repre.get("outputName"):
-                    template_data["output"] = repre['outputName']
 
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
