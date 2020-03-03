@@ -89,7 +89,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         jobname = "%s - %s" % (script_name, instance.name)
 
         output_filename_0 = self.preview_fname(render_path)
-        output_directory_0 = render_dir.replace("\\", "/")
 
         if not responce_data:
             responce_data = {}
@@ -125,7 +124,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputDirectory0": output_directory_0,
                 "OutputFilename0": output_filename_0.replace("\\", "/")
 
             },
