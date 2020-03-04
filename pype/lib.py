@@ -672,6 +672,12 @@ def get_workfile_build_presets(task_name):
     return per_task_preset
 
 
+def get_link_assets(asset_entity):
+    """Return linked assets for `asset_entity`."""
+    # TODO implement
+    return [test_asset]
+
+
 def collect_last_version_repres(asset_entities):
     """Collect subsets, versions and representations for asset_entities.
 
