@@ -643,3 +643,30 @@ class CustomNone:
     def __repr__(self):
         """Representation of custom None."""
         return "<CustomNone-{}>".format(str(self.identifier))
+
+
+def get_workfile_build_presets(task_name):
+    host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
+    presets = config.get_presets(io.Session["AVALON_PROJECT"])
+    # Get presets for host
+    workfile_presets = presets["plugins"].get(host_name, {}).get(
+        "workfile_build"
+    )
+    if not workfile_presets:
+        return
+
+    task_name_low = task_name.lower()
+    per_task_preset = None
+    for variant in workfile_presets:
+        variant_tasks = variant.get("tasks")
+        if not variant_tasks:
+            continue
+
+        variant_tasks_low = [task.lower() for task in variant_tasks]
+        if task_name_low not in variant_tasks_low:
+            continue
+
+        per_task_preset = variant
+        break
+
+    return per_task_preset
