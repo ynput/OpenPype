@@ -1,4 +1,4 @@
-"""Load a model asset in Blender."""
+"""Load an action in Blender."""
 
 import logging
 from pathlib import Path
@@ -10,24 +10,21 @@ import bpy
 import pype.blender
 from avalon import api
 
-logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
+logger = logging.getLogger("pype").getChild("blender").getChild("load_action")
 
 
-class BlendModelLoader(pype.blender.AssetLoader):
-    """Load models from a .blend file.
-
-    Because they come from a .blend file we can simply link the collection that
-    contains the model. There is no further need to 'containerise' it.
+class BlendAnimationLoader(pype.blender.AssetLoader):
+    """Load action from a .blend file.
 
     Warning:
         Loading the same asset more then once is not properly supported at the
         moment.
     """
 
-    families = ["model"]
+    families = ["action"]
     representations = ["blend"]
 
-    label = "Link Model"
+    label = "Link Action"
     icon = "code-fork"
     color = "orange"
 
@@ -77,19 +74,22 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         scene.collection.children.link(bpy.data.collections[lib_container])
 
-        model_container = scene.collection.children[lib_container].make_local()
+        animation_container = scene.collection.children[lib_container].make_local()
 
         objects_list = []
 
-        for obj in model_container.objects:
+        # Link meshes first, then armatures.
+        # The armature is unparented for all the non-local meshes,
+        # when it is made local.
+        for obj in animation_container.objects:
 
             obj = obj.make_local()
 
-            obj.data.make_local()
+            # obj.data.make_local()
 
-            for material_slot in obj.material_slots:
+            if obj.animation_data is not None and obj.animation_data.action is not None:
 
-                material_slot.material.make_local()
+                obj.animation_data.action.make_local()
 
             if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
 
@@ -100,7 +100,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
             objects_list.append(obj)
 
-        model_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+        animation_container.pop(avalon.blender.pipeline.AVALON_PROPERTY)
 
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
@@ -124,13 +124,15 @@ class BlendModelLoader(pype.blender.AssetLoader):
         Warning:
             No nested collections are supported at the moment!
         """
+
         collection = bpy.data.collections.get(
             container["objectName"]
         )
+
         libpath = Path(api.get_representation_path(representation))
         extension = libpath.suffix.lower()
 
-        logger.debug(
+        logger.info(
             "Container: %s\nRepresentation: %s",
             pformat(container, indent=2),
             pformat(representation, indent=2),
@@ -171,9 +173,24 @@ class BlendModelLoader(pype.blender.AssetLoader):
             logger.info("Library already loaded, not updating...")
             return
 
+        strips = []
+
         for obj in collection_metadata["objects"]:
 
-            bpy.data.meshes.remove(obj.data)
+            for armature_obj in [ objj for objj in bpy.data.objects if objj.type == 'ARMATURE' ]:
+
+                if armature_obj.animation_data is not None:
+
+                    for track in armature_obj.animation_data.nla_tracks:
+
+                        for strip in track.strips:
+
+                            if strip.action == obj.animation_data.action:
+
+                                strips.append(strip)
+
+            bpy.data.actions.remove(obj.animation_data.action)
+            bpy.data.objects.remove(obj)
 
         lib_container = collection_metadata["lib_container"]
 
@@ -189,18 +206,25 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         scene.collection.children.link(bpy.data.collections[lib_container])
 
-        model_container = scene.collection.children[lib_container].make_local()
+        animation_container = scene.collection.children[lib_container].make_local()
 
         objects_list = []
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
-        for obj in model_container.objects:
+        for obj in animation_container.objects:
 
             obj = obj.make_local()
 
-            obj.data.make_local()
+            if obj.animation_data is not None and obj.animation_data.action is not None:
+
+                obj.animation_data.action.make_local()
+
+                for strip in strips:
+
+                    strip.action = obj.animation_data.action
+                    strip.action_frame_end = obj.animation_data.action.frame_range[1]
 
             if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
 
@@ -208,9 +232,10 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
             avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": collection.name})
+
             objects_list.append(obj)
 
-        model_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+        animation_container.pop(avalon.blender.pipeline.AVALON_PROPERTY)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
@@ -232,6 +257,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
         Warning:
             No nested collections are supported at the moment!
         """
+
         collection = bpy.data.collections.get(
             container["objectName"]
         )
@@ -248,71 +274,22 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         for obj in objects:
 
-            bpy.data.meshes.remove(obj.data)
+            for armature_obj in [ objj for objj in bpy.data.objects if objj.type == 'ARMATURE' ]:
+
+                if armature_obj.animation_data is not None:
+
+                    for track in armature_obj.animation_data.nla_tracks:
+
+                        for strip in track.strips:
+
+                            if strip.action == obj.animation_data.action:
+
+                                track.strips.remove(strip)
+
+            bpy.data.actions.remove(obj.animation_data.action)
+            bpy.data.objects.remove(obj)
 
         bpy.data.collections.remove(bpy.data.collections[lib_container])
         bpy.data.collections.remove(collection)
 
         return True
-
-
-class CacheModelLoader(pype.blender.AssetLoader):
-    """Load cache models.
-
-    Stores the imported asset in a collection named after the asset.
-
-    Note:
-        At least for now it only supports Alembic files.
-    """
-
-    families = ["model"]
-    representations = ["abc"]
-
-    label = "Link Model"
-    icon = "code-fork"
-    color = "orange"
-
-    def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[List]:
-        """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
-        raise NotImplementedError(
-            "Loading of Alembic files is not yet implemented.")
-        # TODO (jasper): implement Alembic import.
-
-        libpath = self.fname
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-        # TODO (jasper): evaluate use of namespace which is 'alien' to Blender.
-        lib_container = container_name = (
-            pype.blender.plugin.asset_name(asset, subset, namespace)
-        )
-        relative = bpy.context.preferences.filepaths.use_relative_paths
-
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=relative
-        ) as (data_from, data_to):
-            data_to.collections = [lib_container]
-
-        scene = bpy.context.scene
-        instance_empty = bpy.data.objects.new(
-            container_name, None
-        )
-        scene.collection.objects.link(instance_empty)
-        instance_empty.instance_type = 'COLLECTION'
-        collection = bpy.data.collections[lib_container]
-        collection.name = container_name
-        instance_empty.instance_collection = collection
-
-        nodes = list(collection.objects)
-        nodes.append(collection)
-        nodes.append(instance_empty)
-        self[:] = nodes
-        return nodes

@@ -9,7 +9,7 @@ class ExtractBlend(pype.api.Extractor):
 
     label = "Extract Blend"
     hosts = ["blender"]
-    families = ["animation", "model", "rig"]
+    families = ["animation", "model", "rig", "action"]
     optional = True
 
     def process(self, instance):

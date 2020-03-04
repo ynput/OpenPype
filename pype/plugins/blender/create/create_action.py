@@ -6,12 +6,12 @@ from avalon import api
 from avalon.blender import Creator, lib
 
 
-class CreateAnimation(Creator):
-    """Animation output for character rigs"""
+class CreateAction(Creator):
+    """Action output for character rigs"""
 
-    name = "animationMain"
-    label = "Animation"
-    family = "animation"
+    name = "actionMain"
+    label = "Action"
+    family = "action"
     icon = "male"
 
     def process(self):
@@ -27,6 +27,12 @@ class CreateAnimation(Creator):
 
         if (self.options or {}).get("useSelection"):
             for obj in lib.get_selection():
-                collection.objects.link(obj)
+                if obj.animation_data is not None and obj.animation_data.action is not None:
+
+                    empty_obj = bpy.data.objects.new( name = name, object_data = None )
+                    empty_obj.animation_data_create()
+                    empty_obj.animation_data.action = obj.animation_data.action
+                    empty_obj.animation_data.action.name = name
+                    collection.objects.link(empty_obj)
 
         return collection

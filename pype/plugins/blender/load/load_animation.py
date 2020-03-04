@@ -10,14 +10,11 @@ import bpy
 import pype.blender
 from avalon import api
 
-logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
+logger = logging.getLogger("pype").getChild("blender").getChild("load_animation")
 
 
 class BlendAnimationLoader(pype.blender.AssetLoader):
     """Load animations from a .blend file.
-
-    Because they come from a .blend file we can simply link the collection that
-    contains the model. There is no further need to 'containerise' it.
 
     Warning:
         Loading the same asset more then once is not properly supported at the
@@ -93,6 +90,10 @@ class BlendAnimationLoader(pype.blender.AssetLoader):
             obj = obj.make_local()
 
             obj.data.make_local()
+
+            if obj.animation_data is not None and obj.animation_data.action is not None:
+
+                obj.animation_data.action.make_local()
 
             if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
 
