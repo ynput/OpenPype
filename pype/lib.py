@@ -672,6 +672,215 @@ def get_workfile_build_presets(task_name):
     return per_task_preset
 
 
+def load_containers_by_asset_data(
+    asset_entity_data, workfile_presets, loaders_by_name
+):
+    if not asset_entity_data or not workfile_presets or not loaders_by_name:
+        return
+
+    asset_entity = asset_entity_data["asset_entity"]
+    # Filter workfile presets by available loaders
+    valid_variants = []
+    for variant in workfile_presets:
+        variant_loaders = variant.get("loaders")
+        if not variant_loaders:
+            log.warning((
+                "Workfile variant has missing loaders configuration: {0}"
+            ).format(json.dumps(variant, indent=4)))
+            continue
+
+        found = False
+        for loader_name in variant_loaders:
+            if loader_name in loaders_by_name:
+                valid_variants.append(variant)
+                found = True
+                break
+
+        if not found:
+            log.warning(
+                "Loaders in Workfile variant are not available: {0}".format(
+                    json.dumps(variant, indent=4)
+                )
+            )
+
+    if not valid_variants:
+        log.warning("There are not valid Workfile variants. Skipping process.")
+        return
+
+    log.debug("Valid Workfile variants: {}".format(valid_variants))
+
+    subsets = []
+    version_by_subset_id = {}
+    repres_by_version_id = {}
+    for subset_id, in_data in asset_entity_data["subsets"].items():
+        subsets.append(in_data["subset_entity"])
+        version_data = in_data["version"]
+        version_entity = version_data["version_entity"]
+        version_by_subset_id[subset_id] = version_entity
+        repres_by_version_id[version_entity["_id"]] = version_data["repres"]
+
+    if not subsets:
+        log.warning("There are not subsets for asset {0}".format(
+            asset_entity["name"]
+        ))
+        return
+
+    subsets_by_family = collections.defaultdict(list)
+    for subset in subsets:
+        family = subset["data"].get("family")
+        if not family:
+            families = subset["data"].get("families")
+            if not families:
+                continue
+            family = families[0]
+
+        subsets_by_family[family].append(subset)
+
+    valid_subsets_by_id = {}
+    variants_per_subset_id = {}
+    for family, subsets in subsets_by_family.items():
+        family_low = family.lower()
+        for variant in valid_variants:
+            # Family filtering
+            variant_families = variant.get("families") or []
+            if not variant_families:
+                continue
+
+            variant_families_low = [fam.lower() for fam in variant_families]
+            if family_low not in variant_families_low:
+                continue
+
+            # Regex filtering (optional)
+            variant_regexes = variant.get("subset_filters")
+            for subset in subsets:
+                if variant_regexes:
+                    valid = False
+                    for pattern in variant_regexes:
+                        if re.match(pattern, subset["name"]):
+                            valid = True
+                            break
+
+                    if not valid:
+                        continue
+
+                subset_id = subset["_id"]
+                valid_subsets_by_id[subset_id] = subset
+                variants_per_subset_id[subset_id] = variant
+
+            # break variants loop if got here
+            break
+
+    if not valid_subsets_by_id:
+        log.warning("There are not valid subsets.")
+        return
+
+    log.debug("Valid subsets: {}".format(valid_subsets_by_id.values()))
+
+    valid_repres_by_subset_id = collections.defaultdict(list)
+    for subset_id, subset_entity in valid_subsets_by_id.items():
+        variant = variants_per_subset_id[subset_id]
+        variant_repre_names = variant.get("repre_names")
+        if not variant_repre_names:
+            continue
+
+        # Lower names
+        variant_repre_names = [name.lower() for name in variant_repre_names]
+
+        version_entity = version_by_subset_id[subset_id]
+        version_id = version_entity["_id"]
+        repres = repres_by_version_id[version_id]
+        for repre in repres:
+            repre_name_low = repre["name"].lower()
+            if repre_name_low in variant_repre_names:
+                valid_repres_by_subset_id[subset_id].append(repre)
+
+    # DEBUG message
+    msg = "Valid representations for Asset: `{}`".format(asset_entity["name"])
+    for subset_id, repres in valid_repres_by_subset_id.items():
+        subset = valid_subsets_by_id[subset_id]
+        msg += "\n# Subset Name/ID: `{}`/{}".format(subset["name"], subset_id)
+        for repre in repres:
+            msg += "\n## Repre name: `{}`".format(repre["name"])
+
+    log.debug(msg)
+
+    loaded_containers = {
+        "asset_entity": asset_entity,
+        "containers": []
+    }
+
+    for subset_id, repres in valid_repres_by_subset_id.items():
+        subset = valid_subsets_by_id[subset_id]
+        subset_name = subset["name"]
+
+        variant = variants_per_subset_id[subset_id]
+
+        variant_loader_names = variant["loaders"]
+        variant_loader_count = len(variant_loader_names)
+
+        variant_repre_names = variant["repre_names"]
+        variant_repre_count = len(variant_repre_names)
+
+        is_loaded = False
+        for repre_name_idx, variant_repre_name in enumerate(
+            variant_repre_names
+        ):
+            found_repre = None
+            for repre in repres:
+                repre_name = repre["name"]
+                if repre_name == variant_repre_name:
+                    found_repre = repre
+                    break
+
+            if not found_repre:
+                continue
+
+            for loader_idx, loader_name in enumerate(variant_loader_names):
+                if is_loaded:
+                    break
+
+                loader = loaders_by_name.get(loader_name)
+                if not loader:
+                    continue
+                try:
+                    container = avalon.api.load(
+                        loader,
+                        found_repre["_id"],
+                        name=subset_name
+                    )
+                    loaded_containers["containers"].append(container)
+                    is_loaded = True
+
+                except Exception as exc:
+                    if exc == pipeline.IncompatibleLoaderError:
+                        log.info((
+                            "Loader `{}` is not compatible with"
+                            " representation `{}`"
+                        ).format(loader_name, repre["name"]))
+
+                    else:
+                        log.error(
+                            "Unexpected error happened during loading",
+                            exc_info=True
+                        )
+
+                    msg = "Loading failed."
+                    if loader_idx < (variant_loader_count - 1):
+                        msg += " Trying next loader."
+                    elif repre_name_idx < (variant_repre_count - 1):
+                        msg += (
+                            " Loading of subset `{}` was not successful."
+                        ).format(subset_name)
+                    else:
+                        msg += " Trying next representation."
+                    log.info(msg)
+
+            if is_loaded:
+                break
+
+    return loaded_containers
+
+
 def get_link_assets(asset_entity):
     """Return linked assets for `asset_entity`."""
     # TODO implement
