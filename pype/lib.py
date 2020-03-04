@@ -1,14 +1,19 @@
 import os
 import re
+import uuid
+import json
+import getpass
+import collections
 import logging
 import itertools
 import contextlib
 import subprocess
 import inspect
+import platform
 
-from avalon import io
+from avalon import io, pipeline
 import avalon.api
-import avalon
+from pypeapp import config
 
 log = logging.getLogger(__name__)
 
@@ -489,7 +494,6 @@ def filter_pyblish_plugins(plugins):
                     `discover()` method.
     :type plugins: Dict
     """
-    from pypeapp import config
     from pyblish import api
 
     host = api.current_host()
@@ -546,7 +550,6 @@ def get_subsets(asset_name,
     Returns:
         dict: subsets with version and representaions in keys
     """
-    from avalon import io
 
     # query asset from db
     asset_io = io.find_one({"type": "asset", "name": asset_name})
@@ -620,7 +623,6 @@ class CustomNone:
 
     def __init__(self):
         """Create uuid as identifier for custom None."""
-        import uuid
         self.identifier = str(uuid.uuid4())
 
     def __bool__(self):
