@@ -751,7 +751,7 @@ def load_containers_by_asset_data(
                 continue
 
             # Regex filtering (optional)
-            variant_regexes = variant.get("subset_filters")
+            variant_regexes = variant.get("subset_name_filters")
             for subset in subsets:
                 if variant_regexes:
                     valid = False
