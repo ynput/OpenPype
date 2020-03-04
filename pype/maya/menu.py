@@ -3,7 +3,9 @@ import os
 import logging
 
 from avalon.vendor.Qt import QtWidgets, QtCore, QtGui
-
+from avalon.maya import pipeline
+import avalon.api
+from ..lib import build_first_workfile
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
@@ -21,8 +23,15 @@ def _get_menu():
     return menu
 
 
-
 def deferred():
+    def add_build_workfiles_item():
+        # Add build first workfile
+        cmds.menuItem(divider=True, parent=pipeline._menu)
+        cmds.menuItem(
+            "Build First Workfile",
+            parent=pipeline._menu,
+            command=lambda *args: build_first_workfile()
+        )
 
     log.info("Attempting to install scripts menu..")
 
@@ -30,8 +39,11 @@ def deferred():
         import scriptsmenu.launchformaya as launchformaya
         import scriptsmenu.scriptsmenu as scriptsmenu
     except ImportError:
-        log.warning("Skipping studio.menu install, because "
-                    "'scriptsmenu' module seems unavailable.")
+        log.warning(
+            "Skipping studio.menu install, because "
+            "'scriptsmenu' module seems unavailable."
+        )
+        add_build_workfiles_item()
         return
 
     # load configuration of custom menu
@@ -39,15 +51,16 @@ def deferred():
     config = scriptsmenu.load_configuration(config_path)
 
     # run the launcher for Maya menu
-    studio_menu = launchformaya.main(title=self._menu.title(),
-                                 objectName=self._menu)
+    studio_menu = launchformaya.main(
+        title=self._menu.title(),
+        objectName=self._menu
+    )
 
     # apply configuration
     studio_menu.build_from_configuration(studio_menu, config)
 
 
 def uninstall():
-
     menu = _get_menu()
     if menu:
         log.info("Attempting to uninstall..")
@@ -60,9 +73,8 @@ def uninstall():
 
 
 def install():
-
     if cmds.about(batch=True):
-        print("Skipping pype.menu initialization in batch mode..")
+        log.info("Skipping pype.menu initialization in batch mode..")
         return
 
     uninstall()
