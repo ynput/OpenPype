@@ -1238,3 +1238,12 @@ def create_first_workfile(file_ext=None):
     host.save_file(workfile_path)
 
     return workfile_path
+
+
+def build_first_workfile(file_ext=None):
+    # DEBUG this should probably be host specific
+    # Create workfile
+    workfile_path = create_first_workfile(file_ext)
+    # Load containers
+    loaded_containers = load_containers_for_workfile()
+    return (workfile_path, loaded_containers)
