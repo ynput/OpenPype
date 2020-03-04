@@ -980,3 +980,138 @@ def collect_last_version_repres(asset_entities):
         )
 
     return output
+
+
+def load_containers_for_workfile():
+    """Load containers for (first) workfile.
+
+    Loads latest versions of current and linked assets to workfile by logic
+    stored in Workfile variants from presets. Variants are set by host,
+    filtered by current task name and used by families.
+
+    Each family can specify representation names and loaders for
+    representations and first available and successful loaded representation is
+    returned as container.
+
+    At the end you'll get list of loaded containers per each asset.
+
+    loaded_containers [{
+        "asset_entity": <AssetEntity1>,
+        "containers": [<Container1>, <Container2>, ...]
+    }, {
+        "asset_entity": <AssetEntity2>,
+        "containers": [<Container3>, ...]
+    }, {
+        ...
+    }]
+    """
+    io.install()
+
+    # Get current asset name and entity
+    current_asset_name = io.Session["AVALON_ASSET"]
+    current_asset_entity = io.find_one({
+        "type": "asset",
+        "name": current_asset_name
+    })
+
+    # Skip if asset was not found
+    if not current_asset_entity:
+        print("Asset entity with name `{}` was not found".format(
+            current_asset_name
+        ))
+        return
+
+    # Prepare available loaders
+    loaders_by_name = {}
+    for loader in avalon.api.discover(avalon.api.Loader):
+        loader_name = loader.__name__
+        if loader_name in loaders_by_name:
+            raise KeyError("Duplicated loader name {0}!".format(loader_name))
+        loaders_by_name[loader_name] = loader
+
+    # Skip if there are any loaders
+    if not loaders_by_name:
+        print("There are not registered loaders.")
+        return
+
+    # Get current task name
+    current_task_name = os.environ["AVALON_TASK"]
+    current_task_name_low = current_task_name.lower()
+    # Load workfile presets for task
+    workfile_presets = get_workfile_build_presets(current_task_name_low)
+
+    # Skip if there are any presets for task
+    if not workfile_presets:
+        log.warning(
+            "For current task `{}` is not set any loading preset.".format(
+                current_task_name
+            )
+        )
+        return
+
+    # Get presets for loading current asset
+    current_context = workfile_presets.get("current_context")
+    # Get presets for loading linked assets
+    link_context = workfile_presets.get("linked_assets")
+    # Skip if both are missing
+    if not current_context and not link_context:
+        log.warning("Current task `{}` has empty loading preset.".format(
+            current_task_name
+        ))
+        return
+
+    elif not current_context:
+        log.warning((
+            "Current task `{}` don't have set loading preset for it's context."
+        ).format(current_task_name))
+
+    elif not link_context:
+        log.warning((
+            "Current task `{}` don't have set "
+            "loading preset for it's linked assets."
+        ).format(current_task_name))
+
+    # Prepare assets to process by workfile presets
+    assets = []
+    current_asset_id = None
+    if current_context:
+        # Add current asset entity if preset has current context set
+        assets.append(current_asset_entity)
+        current_asset_id = current_asset_entity["_id"]
+
+    if link_context:
+        # Find and append linked assets if preset has set linked mapping
+        link_assets = get_link_assets(current_asset_entity)
+        if link_assets:
+            assets.extend(link_assets)
+
+    # Skip if there are any assets
+    # - this may happend if only linked mapping is set and there are not links
+    if not assets:
+        log.warning("Asset does not have linked assets. Nothing to process.")
+        return
+
+    # Prepare entities from database for assets
+    prepared_entities = collect_last_version_repres(assets)
+
+    # Load containers by prepared entities and presets
+    loaded_containers = []
+    # - Current asset containers
+    if current_asset_id and current_asset_id in prepared_entities:
+        current_context_data = prepared_entities.pop(current_asset_id)
+        loaded_data = load_containers_by_asset_data(
+            current_context_data, current_context, loaders_by_name
+        )
+        if loaded_data:
+            loaded_containers.append(loaded_data)
+
+    # - Linked assets container
+    for linked_asset_data in prepared_entities.values():
+        loaded_data = load_containers_by_asset_data(
+            linked_asset_data, link_context, loaders_by_name
+        )
+        if loaded_data:
+            loaded_containers.append(loaded_data)
+
+    # Return list of loaded containers
+    return loaded_containers
