@@ -884,7 +884,7 @@ def load_containers_by_asset_data(
 def get_link_assets(asset_entity):
     """Return linked assets for `asset_entity`."""
     # TODO implement
-    return [test_asset]
+    return []
 
 
 def collect_last_version_repres(asset_entities):
