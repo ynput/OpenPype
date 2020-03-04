@@ -1115,3 +1115,126 @@ def load_containers_for_workfile():
 
     # Return list of loaded containers
     return loaded_containers
+
+
+def get_last_workfile_path(root, template, file_ext):
+    template = re.sub("<.*?>", ".*?", template)
+    template = re.sub("{version.*}", "([0-9]+)", template)
+    template = re.sub("{comment.*?}", ".+?", template)
+    # template = pipeline._format_work_template(template)
+    template = "^" + template + "$"
+
+    all_file_names = []
+    if os.path.exists(root):
+        all_file_names = os.listdir(root)
+
+    filtered_file_names = [
+        file_name for file_name in all_file_names
+        if os.path.splitext(file_name)[1] == file_ext
+    ]
+
+    kwargs = {}
+    if platform.system() == "Windows":
+        kwargs["flags"] = re.IGNORECASE
+
+    version = None
+    last_file_name = None
+    for file_name in sorted(filtered_file_names):
+        match = re.match(template, file_name, **kwargs)
+        if not match:
+            continue
+
+        file_version = int(match.group(1))
+        if file_version >= version:
+            last_file_name = file_name
+            version = file_version + 1
+
+    last_file_path = None
+    if last_file_name:
+        last_file_path = os.path.join(root, last_file_name)
+
+    return last_file_path
+
+
+def create_first_workfile(file_ext=None):
+    """Builds first workfile and load containers for it.
+
+    :param file_ext: Work file extension may be specified otherwise first
+    extension in host's registered extensions is used.
+    :type file_ext: str
+    :return: Workfile path and loaded containers by Asset entity
+    :rtype: tuple
+    """
+    # Get host
+    host = avalon.api.registered_host()
+
+    # Workfile extension
+    if file_ext is None:
+        if not host.file_extensions():
+            raise AssertionError(
+                "Host doesn't have set file extensions. Can't create workfile."
+            )
+        file_ext = host.file_extensions()[0]
+
+    workfile_root = host.work_root(io.Session)
+
+    # make sure extension has dot
+    if not file_ext.startswith("."):
+        file_ext = ".{}".format(file_ext)
+
+    # Create new workfile
+    project_doc = io.find_one({"type": "project"})
+    asset_name = io.Session["AVALON_ASSET"]
+    asset_doc = io.find_one({
+        "type": "asset",
+        "name": asset_name
+    })
+    if not asset_doc:
+        raise AssertionError(
+            "Asset with name `{}` was not found.".format(asset_name)
+        )
+
+    root = avalon.api.registered_root()
+    template = project_doc["config"]["template"]["workfile"]
+    file_path = get_last_workfile_path(root, template, file_ext)
+    # TODO what should do if already exists?
+    # 1.) create new
+    # 2.) override
+    # 3.) raise exception
+    if file_path is not None:
+        log.warning("There already exist workfile `{}`.".format(file_path))
+        return file_path
+
+    hierarchy = ""
+    parents = asset_doc["data"].get("parents")
+    if parents:
+        hierarchy = "/".join(parents)
+
+    # Use same data as Workfiles tool
+    template_data = {
+        "root": root,
+        "project": {
+            "name": project_doc["name"],
+            "code": project_doc["data"].get("code")
+        },
+        "asset": asset_name,
+        "task": io.Session["AVALON_TASK"],
+        "hierarchy": hierarchy,
+        "version": 1,
+        "user": getpass.getuser(),
+        "ext": file_ext
+    }
+
+    # Use same template as in Workfiles Tool
+    template_filled = pipeline.format_template_with_optional_keys(
+        template_data, template
+    )
+
+    # make sure filled template does not have more dots due to extension
+    while ".." in template_filled:
+        template_filled = template_filled.replace("..", ".")
+
+    workfile_path = os.path.join(workfile_root, template_filled)
+    host.save_file(workfile_path)
+
+    return workfile_path
