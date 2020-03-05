@@ -42,6 +42,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             width = int(sequence.format().width())
             height = int(sequence.format().height())
             pixel_aspect = sequence.format().pixelAspect()
+            fps = context.data["fps"]
 
             # build data for inner nukestudio project property
             data = {
@@ -164,6 +165,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                         "resolutionWidth": width,
                         "resolutionHeight": height,
                         "pixelAspect": pixel_aspect,
+                        "fps": fps,
                         "tasks":  instance.data["tasks"]
                     })
 
@@ -228,6 +230,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     instance.data["resolutionHeight"] = s_asset_data[
                         "resolutionHeight"]
                     instance.data["pixelAspect"] = s_asset_data["pixelAspect"]
+                    instance.data["fps"] = s_asset_data["fps"]
 
                     # adding frame start if any on instance
                     start_frame = s_asset_data.get("startingFrame")

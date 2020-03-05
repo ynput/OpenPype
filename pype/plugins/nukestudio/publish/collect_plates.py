@@ -126,7 +126,7 @@ class CollectPlatesData(api.InstancePlugin):
         transfer_data = [
             "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart",
             "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut",
-            "clipInH", "clipOutH", "asset", "track", "version", "resolutionWidth", "resolutionHeight", "pixelAspect"
+            "clipInH", "clipOutH", "asset", "track", "version", "resolutionWidth", "resolutionHeight", "pixelAspect", "fps"
         ]
 
         # pass data to version
