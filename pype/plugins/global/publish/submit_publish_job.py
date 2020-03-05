@@ -207,7 +207,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
                 "Priority": job["Props"]["Pri"],
-                "Pool": self.deadline_pool
+                "Pool": self.deadline_pool,
+                "OutputDirectory0": output_dir
             },
             "PluginInfo": {
                 "Version": "3.6",
