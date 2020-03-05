@@ -8,7 +8,7 @@ import pyblish.api
 from avalon.blender.pipeline import AVALON_PROPERTY
 
 
-class CollectAnimation(pyblish.api.ContextPlugin):
+class CollectAction(pyblish.api.ContextPlugin):
     """Collect the data of an action."""
 
     hosts = ["blender"]
