@@ -83,7 +83,7 @@ class CollectPlates(api.InstancePlugin):
 class CollectPlatesData(api.InstancePlugin):
     """Collect plates"""
 
-    order = api.CollectorOrder + 0.495
+    order = api.CollectorOrder + 0.48
     label = "Collect Plates Data"
     hosts = ["nukestudio"]
     families = ["plate"]
@@ -126,7 +126,7 @@ class CollectPlatesData(api.InstancePlugin):
         transfer_data = [
             "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart",
             "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut",
-            "clipInH", "clipOutH", "asset", "track", "version", "width", "height", "pixelAspect"
+            "clipInH", "clipOutH", "asset", "track", "version", "resolutionWidth", "resolutionHeight", "pixelAspect"
         ]
 
         # pass data to version
