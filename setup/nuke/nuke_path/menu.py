@@ -1,6 +1,5 @@
 import os
 import sys
-import atom_server
 import KnobScripter
 
 from pype.nuke.lib import (
