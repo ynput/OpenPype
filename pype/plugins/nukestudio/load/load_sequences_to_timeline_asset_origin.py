@@ -27,6 +27,8 @@ class LoadSequencesToTimelineAssetOrigin(api.Loader):
             })
 
         self.log.debug("_ context: `{}`".format(context))
+        self.log.debug("_ representation._id: `{}`".format(
+            context["representation"]["_id"]))
 
         clip_loader = lib.ClipLoader(self, context, **data)
         clip_loader.load()
