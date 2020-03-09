@@ -595,10 +595,11 @@ class ClipLoader:
             (f for f in self.context["version"]["data"]["families"]
              if "slate" in f),
             None) or bool(((
-                    clip_in - clip_out + 1) + handle_start + handle_end
+                    clip_out - clip_in + 1) + handle_start + handle_end
                     ) - media_duration)
 
         log.debug("__ slate_on: `{}`".format(slate_on))
+
         # calculate slate differences
         if slate_on:
             media_duration -= 1
@@ -638,7 +639,7 @@ class ClipLoader:
 
         track_item.setSourceOut(media_duration - handle_end)
         track_item.setTimelineOut(clip_out)
-
+        track_item.setPlaybackSpeed(1)
         self.active_track.addTrackItem(track_item)
 
         log.info("Loading clips: `{}`".format(self.data["clip_name"]))
