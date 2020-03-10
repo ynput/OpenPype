@@ -432,7 +432,7 @@ def add_deadline_tab(node):
     node.addKnob(nuke.Tab_Knob("Deadline"))
 
     knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
-    knob.setValue(1)
+    knob.setValue(0)
     node.addKnob(knob)
 
     knob = nuke.Int_Knob("deadlinePriority", "Priority")

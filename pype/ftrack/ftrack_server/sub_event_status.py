@@ -369,13 +369,6 @@ def main(args):
     # store socket connection object
     ObjectFactory.sock = sock
 
-    statuse_names = {
-        "main": "Main process",
-        "storer": "Event Storer",
-        "processor": "Event Processor"
-    }
-
-    ObjectFactory.status_factory = StatusFactory(statuse_names)
     ObjectFactory.status_factory["main"].update(server_info)
     _returncode = 0
     try:
@@ -428,6 +421,13 @@ if __name__ == "__main__":
 
     signal.signal(signal.SIGINT, signal_handler)
     signal.signal(signal.SIGTERM, signal_handler)
+
+    statuse_names = {
+        "main": "Main process",
+        "storer": "Event Storer",
+        "processor": "Event Processor"
+    }
+    ObjectFactory.status_factory = StatusFactory(statuse_names)
 
     checker_thread = OutputChecker()
     ObjectFactory.checker_thread = checker_thread
