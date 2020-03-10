@@ -1,5 +1,5 @@
 from pyblish import api
-
+import os
 
 class CollectAudio(api.InstancePlugin):
     """Collect audio from tags.
@@ -12,7 +12,7 @@ class CollectAudio(api.InstancePlugin):
     """
 
     # Run just before CollectSubsets
-    order = api.CollectorOrder + 0.1025
+    order = api.CollectorOrder + 0.1021
     label = "Collect Audio"
     hosts = ["nukestudio"]
     families = ["clip"]
@@ -21,8 +21,10 @@ class CollectAudio(api.InstancePlugin):
         # Exclude non-tagged instances.
         tagged = False
         for tag in instance.data["tags"]:
-            family = dict(tag["metadata"]).get("tag.family", "")
+            tag_data = dict(tag["metadata"])
+            family = tag_data.get("tag.family", "")
             if family.lower() == "audio":
+                subset = tag_data.get("tag.subset", "Main")
                 tagged = True
 
         if not tagged:
@@ -40,14 +42,14 @@ class CollectAudio(api.InstancePlugin):
         data["family"] = "audio"
         data["families"] = ["ftrack"]
 
-        subset = ""
-        for tag in instance.data["tags"]:
-            tag_data = dict(tag["metadata"])
-            if "tag.subset" in tag_data:
-                subset = tag_data["tag.subset"]
         data["subset"] = "audio" + subset.title()
 
         data["source"] = data["sourcePath"]
+
+        data["label"] = "{} - {} - ({})".format(
+            data['asset'], data["subset"], os.path.splitext(data["sourcePath"])[
+                1]
+        )
 
         self.log.debug("Creating instance with data: {}".format(data))
         instance.context.create_instance(**data)

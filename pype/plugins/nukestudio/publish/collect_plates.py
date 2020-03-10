@@ -14,7 +14,7 @@ class CollectPlates(api.InstancePlugin):
     """
 
     # Run just before CollectSubsets
-    order = api.CollectorOrder + 0.1025
+    order = api.CollectorOrder + 0.1021
     label = "Collect Plates"
     hosts = ["nukestudio"]
     families = ["clip"]
@@ -23,8 +23,10 @@ class CollectPlates(api.InstancePlugin):
         # Exclude non-tagged instances.
         tagged = False
         for tag in instance.data["tags"]:
-            family = dict(tag["metadata"]).get("tag.family", "")
+            tag_data = dict(tag["metadata"])
+            family = tag_data.get("tag.family", "")
             if family.lower() == "plate":
+                subset = tag_data.get("tag.subset", "Main")
                 tagged = True
                 break
 
@@ -34,29 +36,27 @@ class CollectPlates(api.InstancePlugin):
                 "\"plate\"".format(instance)
             )
             return
+        self.log.debug("__ subset: `{}`".format(instance.data["subset"]))
+        # if "audio" in instance.data["subset"]:
+        #     return
 
         # Collect data.
         data = {}
         for key, value in instance.data.iteritems():
             data[key] = value
 
+        self.log.debug("__ family: `{}`".format(family))
+        self.log.debug("__ subset: `{}`".format(subset))
+
         data["family"] = family.lower()
         data["families"] = ["ftrack"] + instance.data["families"][1:]
         data["source"] = data["sourcePath"]
-
-        subset = ""
-        for tag in instance.data["tags"]:
-            tag_data = dict(tag["metadata"])
-            if "tag.subset" in tag_data:
-                subset = tag_data["tag.subset"]
-        data["subset"] = data["family"] + subset.title()
-
+        data["subset"] = family + subset.title()
         data["name"] = data["subset"] + "_" + data["asset"]
 
         data["label"] = "{} - {} - ({})".format(
-            data['asset'], data["subset"], os.path.splitext(data["sourcePath"])[
-                1]
-        )
+            data['asset'], data["subset"], os.path.splitext(
+                data["sourcePath"])[1])
 
         if "review" in instance.data["families"]:
             data["label"] += " - review"
@@ -83,7 +83,7 @@ class CollectPlates(api.InstancePlugin):
 class CollectPlatesData(api.InstancePlugin):
     """Collect plates"""
 
-    order = api.CollectorOrder + 0.495
+    order = api.CollectorOrder + 0.48
     label = "Collect Plates Data"
     hosts = ["nukestudio"]
     families = ["plate"]
@@ -126,7 +126,7 @@ class CollectPlatesData(api.InstancePlugin):
         transfer_data = [
             "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart",
             "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut",
-            "clipInH", "clipOutH", "asset", "track", "version", "width", "height", "pixelAspect"
+            "clipInH", "clipOutH", "asset", "track", "version", "resolutionWidth", "resolutionHeight", "pixelAspect", "fps"
         ]
 
         # pass data to version
@@ -146,6 +146,7 @@ class CollectPlatesData(api.InstancePlugin):
             head, padding = os.path.splitext(basename)
             ext = ext[1:]
             padding = padding[1:]
+            self.log.debug("_ padding: `{}`".format(padding))
             # head, padding, ext = source_file.split('.')
             source_first_frame = int(padding)
             padding = len(padding)

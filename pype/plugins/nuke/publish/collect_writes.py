@@ -56,8 +56,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         self.log.debug('output dir: {}'.format(output_dir))
 
         # get version to instance for integration
-        instance.data['version'] = instance.context.data.get(
-            "version", pype.get_version_from_path(nuke.root().name()))
+        instance.data['version'] = instance.context.data["version"]
 
         self.log.debug('Write Version: %s' % instance.data('version'))
 
@@ -113,16 +112,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         # Add version data to instance
         version_data = {
-            "handles": handle_start,
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
-            "frameStart": first_frame + handle_start,
-            "frameEnd": last_frame - handle_end,
-            "version": int(instance.data['version']),
             "colorspace":  node["colorspace"].value(),
-            "families": ["render"],
-            "subset": instance.data["subset"],
-            "fps": instance.context.data["fps"]
         }
 
         instance.data["family"] = "write"
@@ -142,7 +132,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputDir": output_dir,
             "ext": ext,
             "label": label,
-            "handles": handles,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
             "frameStart": first_frame,
             "frameEnd": last_frame,
             "outputType": output_type,

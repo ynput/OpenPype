@@ -112,6 +112,7 @@ class LoadMov(api.Loader):
         )
         version = context['version']
         version_data = version.get("data", {})
+        repr_id = context["representation"]["_id"]
 
         orig_first = version_data.get("frameStart")
         orig_last = version_data.get("frameEnd")
@@ -120,12 +121,16 @@ class LoadMov(api.Loader):
         first = orig_first - diff
         last = orig_last - diff
 
-        handle_start = version_data.get("handleStart")
-        handle_end = version_data.get("handleEnd")
+        handle_start = version_data.get("handleStart", 0)
+        handle_end = version_data.get("handleEnd", 0)
 
         colorspace = version_data.get("colorspace")
         repr_cont = context["representation"]["context"]
 
+        self.log.debug(
+            "Representation id `{}` ".format(repr_id))
+
+        context["representation"]["_id"]
         # create handles offset (only to last, because of mov)
         last += handle_start + handle_end
         # offset should be with handles so it match orig frame range
@@ -138,7 +143,6 @@ class LoadMov(api.Loader):
         file = self.fname
 
         if not file:
-            repr_id = context["representation"]["_id"]
             self.log.warning(
                 "Representation id `{}` is failing to load".format(repr_id))
             return

@@ -3,6 +3,7 @@ import collections
 import copy
 import queue
 import time
+import datetime
 import atexit
 import traceback
 
@@ -47,8 +48,38 @@ class SyncToAvalonEvent(BaseEvent):
 
     def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
+        # Debug settings
+        # - time expiration in seconds
+        self.debug_print_time_expiration = 5 * 60
+        # - store current time
+        self.debug_print_time = datetime.datetime.now()
+        # - store synchronize entity types to be able to use
+        #   only entityTypes in interest instead of filtering by ignored
+        self.debug_sync_types = collections.defaultdict(list)
+
+        # Set processing session to not use global
         self.set_process_session(session)
         super().__init__(session, plugins_presets)
+
+    def debug_logs(self):
+        """This is debug method for printing small debugs messages. """
+        now_datetime = datetime.datetime.now()
+        delta = now_datetime - self.debug_print_time
+        if delta.total_seconds() < self.debug_print_time_expiration:
+            return
+
+        self.debug_print_time = now_datetime
+        known_types_items = []
+        for entityType, entity_type in self.debug_sync_types.items():
+            ent_types_msg = ", ".join(entity_type)
+            known_types_items.append(
+                "<{}> ({})".format(entityType, ent_types_msg)
+            )
+
+        known_entityTypes = ", ".join(known_types_items)
+        self.log.debug(
+            "DEBUG MESSAGE: Known types {}".format(known_entityTypes)
+        )
 
     @property
     def cur_project(self):
@@ -482,6 +513,9 @@ class SyncToAvalonEvent(BaseEvent):
             if not entity_type or entity_type in self.ignore_ent_types:
                 continue
 
+            if entity_type not in self.debug_sync_types[entityType]:
+                self.debug_sync_types[entityType].append(entity_type)
+
             action = ent_info["action"]
             ftrack_id = ent_info["entityId"]
             if isinstance(ftrack_id, list):
@@ -571,8 +605,7 @@ class SyncToAvalonEvent(BaseEvent):
         if auto_sync is not True:
             return True
 
-        debug_msg = ""
-        debug_msg += "Updated: {}".format(len(updated))
+        debug_msg = "Updated: {}".format(len(updated))
         debug_action_map = {
             "add": "Created",
             "remove": "Removed",
@@ -631,6 +664,8 @@ class SyncToAvalonEvent(BaseEvent):
         self.ftrack_moved = entities_by_action["move"]
         self.ftrack_added = entities_by_action["add"]
         self.ftrack_updated = updated
+
+        self.debug_logs()
 
         self.log.debug("Synchronization begins")
         try:
@@ -1569,7 +1604,7 @@ class SyncToAvalonEvent(BaseEvent):
         try:
             # Commit changes of mongo_id to empty string
             self.process_session.commit()
-            self.log.debug("Commititng unsetting")
+            self.log.debug("Committing unsetting")
         except Exception:
             self.process_session.rollback()
             # TODO logging

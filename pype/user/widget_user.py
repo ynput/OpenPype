@@ -77,7 +77,7 @@ class UserWidget(QtWidgets.QWidget):
     def click_save(self):
         # all what should happen - validations and saving into appsdir
         username = self.input_username.text()
-        self.module.save_credentials(username)
+        self.module.change_credentials(username)
         self._close_widget()
 
     def closeEvent(self, event):

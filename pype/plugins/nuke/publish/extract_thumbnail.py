@@ -116,7 +116,7 @@ class ExtractThumbnail(pype.api.Extractor):
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
-        tags = ["thumbnail"]
+        tags = ["thumbnail", "publish_on_farm"]
 
         # retime for
         first_frame = int(last_frame) / 2

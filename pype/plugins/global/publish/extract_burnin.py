@@ -26,35 +26,26 @@ class ExtractBurnin(pype.api.Extractor):
         if "representations" not in instance.data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
-        version = instance.context.data.get(
-            'version', instance.data.get('version'))
+        version = instance.data.get(
+            'version', instance.context.data.get('version'))
         frame_start = int(instance.data.get("frameStart") or 0)
         frame_end = int(instance.data.get("frameEnd") or 1)
         duration = frame_end - frame_start + 1
+
+        prep_data = copy.deepcopy(instance.data["anatomyData"])
 
         if "slate.farm" in instance.data["families"]:
             frame_start += 1
             duration -= 1
 
-        prep_data = {
-            "username": instance.context.data['user'],
-            "asset": os.environ['AVALON_ASSET'],
-            "task": os.environ['AVALON_TASK'],
+        prep_data.update({
             "frame_start": frame_start,
             "frame_end": frame_end,
             "duration": duration,
             "version": int(version),
             "comment": instance.context.data.get("comment", ""),
             "intent": instance.context.data.get("intent", "")
-        }
-
-        # Add datetime data to preparation data
-        datetime_data = instance.context.data.get("datetimeData") or {}
-        prep_data.update(datetime_data)
-
-        # Update data with template data
-        template_data = instance.data.get("assumedTemplateData") or {}
-        prep_data.update(template_data)
+        })
 
         # get anatomy project
         anatomy = instance.context.data['anatomy']

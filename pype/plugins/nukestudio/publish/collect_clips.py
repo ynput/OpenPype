@@ -1,7 +1,7 @@
 import os
 
 from pyblish import api
-
+import hiero
 import nuke
 
 class CollectClips(api.ContextPlugin):
@@ -17,7 +17,7 @@ class CollectClips(api.ContextPlugin):
             self.log.debug("Created `assetsShared` in context")
             context.data["assetsShared"] = dict()
 
-        projectdata = context.data["projectData"]
+        projectdata = context.data["projectEntity"]["data"]
         version = context.data.get("version", "001")
         sequence = context.data.get("activeSequence")
         selection = context.data.get("selection")
@@ -48,7 +48,9 @@ class CollectClips(api.ContextPlugin):
                 track = item.parent()
                 source = item.source().mediaSource()
                 source_path = source.firstpath()
-                effects = [f for f in item.linkedItems() if f.isEnabled()]
+                effects = [f for f in item.linkedItems()
+                           if f.isEnabled()
+                           if isinstance(f, hiero.core.EffectTrackItem)]
 
                 # If source is *.nk its a comp effect and we need to fetch the
                 # write node output. This should be improved by parsing the script

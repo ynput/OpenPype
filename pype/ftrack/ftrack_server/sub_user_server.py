@@ -5,7 +5,7 @@ import socket
 import traceback
 
 from ftrack_server import FtrackServer
-from pype.ftrack.ftrack_server.lib import SocketSession, UserEventHub
+from pype.ftrack.ftrack_server.lib import SocketSession, SocketBaseEventHub
 
 from pypeapp import Logger
 
@@ -28,7 +28,7 @@ def main(args):
 
     try:
         session = SocketSession(
-            auto_connect_event_hub=True, sock=sock, Eventhub=UserEventHub
+            auto_connect_event_hub=True, sock=sock, Eventhub=SocketBaseEventHub
         )
         server = FtrackServer("action")
         log.debug("Launched User Ftrack Server")

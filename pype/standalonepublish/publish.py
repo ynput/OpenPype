@@ -5,14 +5,14 @@ import tempfile
 import random
 import string
 
-from avalon import io
-from avalon import api as avalon
+from avalon import io, api
 from avalon.tools import publish as av_publish
 
 import pype
 from pypeapp import execute
 
 import pyblish.api
+from . import PUBLISH_PATHS
 
 
 def set_context(project, asset, task, app):
@@ -30,7 +30,6 @@ def set_context(project, asset, task, app):
         task = ''
     os.environ["AVALON_TASK"] = task
     io.Session["AVALON_TASK"] = task
-
 
     io.install()
 
@@ -76,7 +75,7 @@ def avalon_api_publish(data, gui=True):
     io.install()
 
     # Create hash name folder in temp
-    chars = "".join( [random.choice(string.ascii_letters) for i in range(15)] )
+    chars = "".join([random.choice(string.ascii_letters) for i in range(15)])
     staging_dir = tempfile.mkdtemp(chars)
 
     # create also json and fill with data
@@ -105,8 +104,27 @@ def avalon_api_publish(data, gui=True):
 def cli_publish(data, gui=True):
     io.install()
 
+    pyblish.api.deregister_all_plugins()
+    # Registers Global pyblish plugins
+    pype.install()
+    # Registers Standalone pyblish plugins
+    for path in PUBLISH_PATHS:
+        pyblish.api.register_plugin_path(path)
+
+    project_plugins_paths = os.environ.get("PYPE_PROJECT_PLUGINS")
+    project_name = os.environ["AVALON_PROJECT"]
+    if project_plugins_paths and project_name:
+        for path in project_plugins_paths.split(os.pathsep):
+            if not path:
+                continue
+            plugin_path = os.path.join(path, project_name, "plugins")
+            if os.path.exists(plugin_path):
+                pyblish.api.register_plugin_path(plugin_path)
+                api.register_plugin_path(api.Loader, plugin_path)
+                api.register_plugin_path(api.Creator, plugin_path)
+
     # Create hash name folder in temp
-    chars = "".join( [random.choice(string.ascii_letters) for i in range(15)] )
+    chars = "".join([random.choice(string.ascii_letters) for i in range(15)])
     staging_dir = tempfile.mkdtemp(chars)
 
     # create json for return data
