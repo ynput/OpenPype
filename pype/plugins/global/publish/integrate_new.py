@@ -80,7 +80,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "matchmove",
                 "image"
                 "source",
-                "assembly"
+                "assembly",
+                "textures"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
