@@ -13,7 +13,7 @@ from avalon import api
 logger = logging.getLogger("pype").getChild("blender").getChild("load_action")
 
 
-class BlendAnimationLoader(pype.blender.AssetLoader):
+class BlendActionLoader(pype.blender.AssetLoader):
     """Load action from a .blend file.
 
     Warning:
@@ -47,7 +47,6 @@ class BlendAnimationLoader(pype.blender.AssetLoader):
         container_name = pype.blender.plugin.asset_name(
             asset, subset, namespace
         )
-        relative = bpy.context.preferences.filepaths.use_relative_paths
 
         container = bpy.data.collections.new(lib_container)
         container.name = container_name
@@ -65,6 +64,7 @@ class BlendAnimationLoader(pype.blender.AssetLoader):
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
 
+        relative = bpy.context.preferences.filepaths.use_relative_paths
         with bpy.data.libraries.load(
             libpath, link=True, relative=relative
         ) as (_, data_to):
@@ -84,8 +84,6 @@ class BlendAnimationLoader(pype.blender.AssetLoader):
         for obj in animation_container.objects:
 
             obj = obj.make_local()
-
-            # obj.data.make_local()
 
             if obj.animation_data is not None and obj.animation_data.action is not None:
 

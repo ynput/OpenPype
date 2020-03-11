@@ -31,43 +31,19 @@ class BlendModelLoader(pype.blender.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[List]:
-        """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
+    @staticmethod
+    def _remove(self, objects, lib_container):
 
-        libpath = self.fname
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-        lib_container = pype.blender.plugin.asset_name(asset, subset)
-        container_name = pype.blender.plugin.asset_name(
-            asset, subset, namespace
-        )
+        for obj in objects:
+
+            bpy.data.meshes.remove(obj.data)
+
+        bpy.data.collections.remove(bpy.data.collections[lib_container])
+
+    @staticmethod
+    def _process(self, libpath, lib_container, container_name):
+
         relative = bpy.context.preferences.filepaths.use_relative_paths
-
-        container = bpy.data.collections.new(lib_container)
-        container.name = container_name
-        avalon.blender.pipeline.containerise_existing(
-            container,
-            name,
-            namespace,
-            context,
-            self.__class__.__name__,
-        )
-
-        container_metadata = container.get(
-            avalon.blender.pipeline.AVALON_PROPERTY)
-
-        container_metadata["libpath"] = libpath
-        container_metadata["lib_container"] = lib_container
-
         with bpy.data.libraries.load(
             libpath, link=True, relative=relative
         ) as (_, data_to):
@@ -102,13 +78,53 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         model_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
 
+        bpy.ops.object.select_all(action='DESELECT')
+
+        return objects_list
+
+    def process_asset(
+        self, context: dict, name: str, namespace: Optional[str] = None,
+        options: Optional[Dict] = None
+    ) -> Optional[List]:
+        """
+        Arguments:
+            name: Use pre-defined name
+            namespace: Use pre-defined namespace
+            context: Full parenthood of representation to load
+            options: Additional settings dictionary
+        """
+
+        libpath = self.fname
+        asset = context["asset"]["name"]
+        subset = context["subset"]["name"]
+        lib_container = pype.blender.plugin.asset_name(asset, subset)
+        container_name = pype.blender.plugin.asset_name(
+            asset, subset, namespace
+        )
+
+        collection = bpy.data.collections.new(lib_container)
+        collection.name = container_name
+        avalon.blender.pipeline.containerise_existing(
+            collection,
+            name,
+            namespace,
+            context,
+            self.__class__.__name__,
+        )
+
+        container_metadata = collection.get(
+            avalon.blender.pipeline.AVALON_PROPERTY)
+
+        container_metadata["libpath"] = libpath
+        container_metadata["lib_container"] = lib_container
+
+        objects_list = self._process(self, libpath, lib_container, container_name)
+
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
 
-        bpy.ops.object.select_all(action='DESELECT')
-
-        nodes = list(container.objects)
-        nodes.append(container)
+        nodes = list(collection.objects)
+        nodes.append(collection)
         self[:] = nodes
         return nodes
 
@@ -154,8 +170,10 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         collection_metadata = collection.get(
             avalon.blender.pipeline.AVALON_PROPERTY)
-
         collection_libpath = collection_metadata["libpath"]
+        objects = collection_metadata["objects"]
+        lib_container = collection_metadata["lib_container"]
+
         normalized_collection_libpath = (
             str(Path(bpy.path.abspath(collection_libpath)).resolve())
         )
@@ -171,53 +189,14 @@ class BlendModelLoader(pype.blender.AssetLoader):
             logger.info("Library already loaded, not updating...")
             return
 
-        for obj in collection_metadata["objects"]:
+        self._remove(self, objects, lib_container)
 
-            bpy.data.meshes.remove(obj.data)
-
-        lib_container = collection_metadata["lib_container"]
-
-        bpy.data.collections.remove(bpy.data.collections[lib_container])
-
-        relative = bpy.context.preferences.filepaths.use_relative_paths
-        with bpy.data.libraries.load(
-            str(libpath), link=True, relative=relative
-        ) as (_, data_to):
-            data_to.collections = [lib_container]
-
-        scene = bpy.context.scene
-
-        scene.collection.children.link(bpy.data.collections[lib_container])
-
-        model_container = scene.collection.children[lib_container].make_local()
-
-        objects_list = []
-
-        # Link meshes first, then armatures.
-        # The armature is unparented for all the non-local meshes,
-        # when it is made local.
-        for obj in model_container.objects:
-
-            obj = obj.make_local()
-
-            obj.data.make_local()
-
-            if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
-
-                obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
-
-            avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
-            avalon_info.update({"container_name": collection.name})
-            objects_list.append(obj)
-
-        model_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+        objects_list = self._process(self, str(libpath), lib_container, collection.name)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
         collection_metadata["libpath"] = str(libpath)
         collection_metadata["representation"] = str(representation["_id"])
-
-        bpy.ops.object.select_all(action='DESELECT')
 
     def remove(self, container: Dict) -> bool:
         """Remove an existing container from a Blender scene.
@@ -246,11 +225,8 @@ class BlendModelLoader(pype.blender.AssetLoader):
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
-        for obj in objects:
+        self._remove(self, objects, lib_container)
 
-            bpy.data.meshes.remove(obj.data)
-
-        bpy.data.collections.remove(bpy.data.collections[lib_container])
         bpy.data.collections.remove(collection)
 
         return True

@@ -28,43 +28,22 @@ class BlendAnimationLoader(pype.blender.AssetLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_asset(
-        self, context: dict, name: str, namespace: Optional[str] = None,
-        options: Optional[Dict] = None
-    ) -> Optional[List]:
-        """
-        Arguments:
-            name: Use pre-defined name
-            namespace: Use pre-defined namespace
-            context: Full parenthood of representation to load
-            options: Additional settings dictionary
-        """
+    @staticmethod
+    def _remove(self, objects, lib_container):
 
-        libpath = self.fname
-        asset = context["asset"]["name"]
-        subset = context["subset"]["name"]
-        lib_container = pype.blender.plugin.asset_name(asset, subset)
-        container_name = pype.blender.plugin.asset_name(
-            asset, subset, namespace
-        )
+        for obj in objects:
+
+            if obj.type == 'ARMATURE':
+                bpy.data.armatures.remove(obj.data)
+            elif obj.type == 'MESH':
+                bpy.data.meshes.remove(obj.data)
+
+        bpy.data.collections.remove(bpy.data.collections[lib_container])
+
+    @staticmethod
+    def _process(self, libpath, lib_container, container_name):
+
         relative = bpy.context.preferences.filepaths.use_relative_paths
-
-        container = bpy.data.collections.new(lib_container)
-        container.name = container_name
-        avalon.blender.pipeline.containerise_existing(
-            container,
-            name,
-            namespace,
-            context,
-            self.__class__.__name__,
-        )
-
-        container_metadata = container.get(
-            avalon.blender.pipeline.AVALON_PROPERTY)
-
-        container_metadata["libpath"] = libpath
-        container_metadata["lib_container"] = lib_container
-
         with bpy.data.libraries.load(
             libpath, link=True, relative=relative
         ) as (_, data_to):
@@ -77,8 +56,9 @@ class BlendAnimationLoader(pype.blender.AssetLoader):
         animation_container = scene.collection.children[lib_container].make_local()
 
         meshes = [obj for obj in animation_container.objects if obj.type == 'MESH']
-        armatures = [
-            obj for obj in animation_container.objects if obj.type == 'ARMATURE']
+        armatures = [obj for obj in animation_container.objects if obj.type == 'ARMATURE']
+
+        # Should check if there is only an armature?
 
         objects_list = []
 
@@ -106,10 +86,50 @@ class BlendAnimationLoader(pype.blender.AssetLoader):
 
         animation_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
 
+        bpy.ops.object.select_all(action='DESELECT')
+
+        return objects_list
+
+    def process_asset(
+        self, context: dict, name: str, namespace: Optional[str] = None,
+        options: Optional[Dict] = None
+    ) -> Optional[List]:
+        """
+        Arguments:
+            name: Use pre-defined name
+            namespace: Use pre-defined namespace
+            context: Full parenthood of representation to load
+            options: Additional settings dictionary
+        """
+
+        libpath = self.fname
+        asset = context["asset"]["name"]
+        subset = context["subset"]["name"]
+        lib_container = pype.blender.plugin.asset_name(asset, subset)
+        container_name = pype.blender.plugin.asset_name(
+            asset, subset, namespace
+        )
+
+        container = bpy.data.collections.new(lib_container)
+        container.name = container_name
+        avalon.blender.pipeline.containerise_existing(
+            container,
+            name,
+            namespace,
+            context,
+            self.__class__.__name__,
+        )
+
+        container_metadata = container.get(
+            avalon.blender.pipeline.AVALON_PROPERTY)
+
+        container_metadata["libpath"] = libpath
+        container_metadata["lib_container"] = lib_container
+
+        objects_list = self._process(self, libpath, lib_container, container_name)
+
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
-
-        bpy.ops.object.select_all(action='DESELECT')
 
         nodes = list(container.objects)
         nodes.append(container)
@@ -177,59 +197,16 @@ class BlendAnimationLoader(pype.blender.AssetLoader):
             logger.info("Library already loaded, not updating...")
             return
 
-        # Get the armature of the rig
-        armatures = [obj for obj in collection_metadata["objects"]
-                     if obj.type == 'ARMATURE']
-        assert(len(armatures) == 1)
-
-        for obj in collection_metadata["objects"]:
-
-            if obj.type == 'ARMATURE':
-                bpy.data.armatures.remove(obj.data)
-            elif obj.type == 'MESH':
-                bpy.data.meshes.remove(obj.data)
-
+        objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
-        bpy.data.collections.remove(bpy.data.collections[lib_container])
-
-        relative = bpy.context.preferences.filepaths.use_relative_paths
-        with bpy.data.libraries.load(
-            str(libpath), link=True, relative=relative
-        ) as (_, data_to):
-            data_to.collections = [lib_container]
-
-        scene = bpy.context.scene
-
-        scene.collection.children.link(bpy.data.collections[lib_container])
-
-        animation_container = scene.collection.children[lib_container].make_local()
-
-        meshes = [obj for obj in animation_container.objects if obj.type == 'MESH']
-        armatures = [
-            obj for obj in animation_container.objects if obj.type == 'ARMATURE']
-        objects_list = []
-
+        # Get the armature of the rig
+        armatures = [obj for obj in objects if obj.type == 'ARMATURE']
         assert(len(armatures) == 1)
 
-        # Link meshes first, then armatures.
-        # The armature is unparented for all the non-local meshes,
-        # when it is made local.
-        for obj in meshes + armatures:
+        self._remove(self, objects, lib_container)
 
-            obj = obj.make_local()
-
-            obj.data.make_local()
-
-            if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
-
-                obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
-
-            avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
-            avalon_info.update({"container_name": collection.name})
-            objects_list.append(obj)
-
-        animation_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+        objects_list = self._process(self, str(libpath), lib_container, collection.name)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
@@ -266,14 +243,8 @@ class BlendAnimationLoader(pype.blender.AssetLoader):
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
-        for obj in objects:
-
-            if obj.type == 'ARMATURE':
-                bpy.data.armatures.remove(obj.data)
-            elif obj.type == 'MESH':
-                bpy.data.meshes.remove(obj.data)
-
-        bpy.data.collections.remove(bpy.data.collections[lib_container])
+        self._remove(self, objects, lib_container)
+        
         bpy.data.collections.remove(collection)
 
         return True

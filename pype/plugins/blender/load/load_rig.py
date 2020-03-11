@@ -30,6 +30,68 @@ class BlendRigLoader(pype.blender.AssetLoader):
     label = "Link Rig"
     icon = "code-fork"
     color = "orange"
+    
+    @staticmethod
+    def _remove(self, objects, lib_container):
+
+        for obj in objects:
+
+            if obj.type == 'ARMATURE':
+                bpy.data.armatures.remove(obj.data)
+            elif obj.type == 'MESH':
+                bpy.data.meshes.remove(obj.data)
+
+        bpy.data.collections.remove(bpy.data.collections[lib_container])
+
+    @staticmethod
+    def _process(self, libpath, lib_container, container_name, action):
+
+        relative = bpy.context.preferences.filepaths.use_relative_paths
+        with bpy.data.libraries.load(
+            libpath, link=True, relative=relative
+        ) as (_, data_to):
+            data_to.collections = [lib_container]
+
+        scene = bpy.context.scene
+
+        scene.collection.children.link(bpy.data.collections[lib_container])
+
+        rig_container = scene.collection.children[lib_container].make_local()
+
+        meshes = [obj for obj in rig_container.objects if obj.type == 'MESH']
+        armatures = [obj for obj in rig_container.objects if obj.type == 'ARMATURE']
+        
+        objects_list = []
+
+        assert(len(armatures) == 1)
+
+        # Link meshes first, then armatures.
+        # The armature is unparented for all the non-local meshes,
+        # when it is made local.
+        for obj in meshes + armatures:
+
+            obj = obj.make_local()
+
+            obj.data.make_local()
+
+            if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
+
+                obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
+
+            avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
+            avalon_info.update({"container_name": container_name})
+
+            if obj.type == 'ARMATURE' and action is not None:
+
+                obj.animation_data.action = action
+
+            objects_list.append(obj)
+            
+        rig_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+
+        bpy.ops.object.select_all(action='DESELECT')
+
+        return objects_list
 
     def process_asset(
         self, context: dict, name: str, namespace: Optional[str] = None,
@@ -50,7 +112,6 @@ class BlendRigLoader(pype.blender.AssetLoader):
         container_name = pype.blender.plugin.asset_name(
             asset, subset, namespace
         )
-        relative = bpy.context.preferences.filepaths.use_relative_paths
 
         container = bpy.data.collections.new(lib_container)
         container.name = container_name
@@ -68,47 +129,10 @@ class BlendRigLoader(pype.blender.AssetLoader):
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
 
-        with bpy.data.libraries.load(
-            libpath, link=True, relative=relative
-        ) as (_, data_to):
-            data_to.collections = [lib_container]
-
-        scene = bpy.context.scene
-
-        scene.collection.children.link(bpy.data.collections[lib_container])
-
-        rig_container = scene.collection.children[lib_container].make_local()
-
-        meshes = [obj for obj in rig_container.objects if obj.type == 'MESH']
-        armatures = [
-            obj for obj in rig_container.objects if obj.type == 'ARMATURE']
-
-        objects_list = []
-
-        # Link meshes first, then armatures.
-        # The armature is unparented for all the non-local meshes,
-        # when it is made local.
-        for obj in meshes + armatures:
-
-            obj = obj.make_local()
-
-            obj.data.make_local()
-
-            if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
-
-                obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
-
-            avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
-            avalon_info.update({"container_name": container_name})
-
-            objects_list.append(obj)
-
-        rig_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+        objects_list = self._process(self, libpath, lib_container, container_name, None)
 
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
-
-        bpy.ops.object.select_all(action='DESELECT')
 
         nodes = list(container.objects)
         nodes.append(container)
@@ -159,8 +183,10 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
         collection_metadata = collection.get(
             avalon.blender.pipeline.AVALON_PROPERTY)
-
         collection_libpath = collection_metadata["libpath"]
+        objects = collection_metadata["objects"]
+        lib_container = collection_metadata["lib_container"]
+
         normalized_collection_libpath = (
             str(Path(bpy.path.abspath(collection_libpath)).resolve())
         )
@@ -177,64 +203,14 @@ class BlendRigLoader(pype.blender.AssetLoader):
             return
 
         # Get the armature of the rig
-        armatures = [obj for obj in collection_metadata["objects"]
-                     if obj.type == 'ARMATURE']
+        armatures = [obj for obj in objects if obj.type == 'ARMATURE']
         assert(len(armatures) == 1)
 
         action = armatures[0].animation_data.action
 
-        for obj in collection_metadata["objects"]:
+        self._remove(self, objects, lib_container)
 
-            if obj.type == 'ARMATURE':
-                bpy.data.armatures.remove(obj.data)
-            elif obj.type == 'MESH':
-                bpy.data.meshes.remove(obj.data)
-
-        lib_container = collection_metadata["lib_container"]
-
-        bpy.data.collections.remove(bpy.data.collections[lib_container])
-
-        relative = bpy.context.preferences.filepaths.use_relative_paths
-        with bpy.data.libraries.load(
-            str(libpath), link=True, relative=relative
-        ) as (_, data_to):
-            data_to.collections = [lib_container]
-
-        scene = bpy.context.scene
-
-        scene.collection.children.link(bpy.data.collections[lib_container])
-
-        rig_container = scene.collection.children[lib_container].make_local()
-
-        meshes = [obj for obj in rig_container.objects if obj.type == 'MESH']
-        armatures = [
-            obj for obj in rig_container.objects if obj.type == 'ARMATURE']
-        objects_list = []
-
-        assert(len(armatures) == 1)
-
-        # Link meshes first, then armatures.
-        # The armature is unparented for all the non-local meshes,
-        # when it is made local.
-        for obj in meshes + armatures:
-
-            obj = obj.make_local()
-
-            obj.data.make_local()
-
-            if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
-
-                obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
-
-            avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
-            avalon_info.update({"container_name": collection.name})
-            objects_list.append(obj)
-
-            if obj.type == 'ARMATURE' and action is not None:
-
-                obj.animation_data.action = action
-
-        rig_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+        objects_list = self._process(self, str(libpath), lib_container, collection.name, action)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
@@ -271,14 +247,8 @@ class BlendRigLoader(pype.blender.AssetLoader):
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
-        for obj in objects:
-
-            if obj.type == 'ARMATURE':
-                bpy.data.armatures.remove(obj.data)
-            elif obj.type == 'MESH':
-                bpy.data.meshes.remove(obj.data)
-
-        bpy.data.collections.remove(bpy.data.collections[lib_container])
+        self._remove(self, objects, lib_container)
+        
         bpy.data.collections.remove(collection)
 
         return True
