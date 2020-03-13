@@ -1,5 +1,6 @@
 from pyblish import api
 
+
 class CollectInstanceVersion(api.InstancePlugin):
     """ Collecting versions of Hiero project into instances
 
@@ -9,9 +10,6 @@ class CollectInstanceVersion(api.InstancePlugin):
 
     order = api.CollectorOrder + 0.015
     label = "Collect Instance Version"
-
-    optional = True
-    active = True
 
     def process(self, instance):
         version = instance.context.data.get("version", "001")
