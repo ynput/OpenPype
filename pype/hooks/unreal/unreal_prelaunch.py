@@ -36,7 +36,7 @@ class UnrealPrelaunch(PypeHook):
         # Unreal is sensitive about project names longer then 20 chars
         if len(project_name) > 20:
             self.log.warning((f"Project name exceed 20 characters "
-                              f"[ {project_name} ]!"))
+                              f"({project_name})!"))
 
         # Unreal doesn't accept non alphabet characters at the start
         # of the project name. This is because project name is then used

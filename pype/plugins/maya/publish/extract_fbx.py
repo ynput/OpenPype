@@ -212,12 +212,11 @@ class ExtractFBX(pype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'mov',
-            'ext': 'mov',
+            'name': 'fbx',
+            'ext': 'fbx',
             'files': filename,
             "stagingDir": stagingDir,
         }
         instance.data["representations"].append(representation)
-
 
         self.log.info("Extract FBX successful to: {0}".format(path))
