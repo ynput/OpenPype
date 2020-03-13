@@ -37,6 +37,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         handle_start = inst_data.get("handleStart")
         handle_end = inst_data.get("handleEnd")
         pixel_aspect = inst_data.get("pixelAspect", 1)
+        resolution_width = inst_data.get("resolutionWidth", self.to_width)
+        resolution_height = inst_data.get("resolutionHeight", self.to_height)
         self.log.debug("Families In: `{}`".format(inst_data["families"]))
         self.log.debug("__ frame_start: {}".format(frame_start))
         self.log.debug("__ frame_end: {}".format(frame_end))
@@ -343,7 +345,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     self.log.info("Added Lut to ffmpeg command")
                     self.log.debug(
                         "_ output_args: `{}`".format(output_args))
-
 
                 if is_sequence:
                     stg_dir = os.path.dirname(full_output_path)
