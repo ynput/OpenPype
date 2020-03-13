@@ -31,12 +31,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output_profiles = self.outputs or {}
 
         inst_data = instance.data
-        fps = inst_data.get("fps")
-        start_frame = inst_data.get("frameStart")
-        resolution_width = inst_data.get("resolutionWidth", to_width)
-        resolution_height = inst_data.get("resolutionHeight", to_height)
+        fps = float(inst_data.get("fps"))
+        frame_start = inst_data.get("frameStart")
+        frame_end = inst_data.get("frameEnd")
+        handle_start = inst_data.get("handleStart")
+        handle_end = inst_data.get("handleEnd")
         pixel_aspect = inst_data.get("pixelAspect", 1)
         self.log.debug("Families In: `{}`".format(inst_data["families"]))
+        self.log.debug("__ frame_start: {}".format(frame_start))
+        self.log.debug("__ frame_end: {}".format(frame_end))
+        self.log.debug("__ handle_start: {}".format(handle_start))
+        self.log.debug("__ handle_end: {}".format(handle_end))
 
         # get representation and loop them
         representations = inst_data["representations"]
@@ -72,6 +77,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 # or single file
                 is_sequence = ("sequence" in p_tags) and (ext in (
                     "png", "jpg", "jpeg"))
+
+                # no handles switch from profile tags
+                no_handles = "no-handles" in p_tags
 
                 self.log.debug("Profile name: {}".format(name))
 
@@ -142,6 +150,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 self.log.info("new_tags: `{}`".format(new_tags))
 
                 input_args = []
+                output_args = []
 
                 # overrides output file
                 input_args.append("-y")
@@ -152,12 +161,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 # necessary input data
                 # adds start arg only if image sequence
                 if isinstance(repre["files"], list):
+                    if frame_start != repre.get("detectedStart", frame_start):
+                        frame_start = repre.get("detectedStart")
 
-                    if start_frame != repre.get("detectedStart", start_frame):
-                        start_frame = repre.get("detectedStart")
+                    # exclude handle if no handles defined
+                    if no_handles:
+                        frame_start += handle_start
+
                     input_args.append(
                         "-start_number {0} -framerate {1}".format(
-                            start_frame, fps))
+                            frame_start, fps))
+                else:
+                    if no_handles:
+                        start_sec = float(handle_start) / fps
+                        input_args.append("-ss {:0.2f}".format(start_sec))
 
                 input_args.append("-i {}".format(full_input_path))
 
@@ -191,7 +208,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                                 ]
                             )
 
-                output_args = []
                 codec_args = profile.get('codec', [])
                 output_args.extend(codec_args)
                 # preset's output data
@@ -237,6 +253,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # In case audio is longer than video.
                 output_args.append("-shortest")
+
+                if no_handles:
+                    duration_sec = float(
+                        (frame_end - (
+                            frame_start + handle_start
+                            ) + 1) - handle_end) / fps
+                    output_args.append("-t {:0.2f}".format(duration_sec))
 
                 # output filename
                 output_args.append(full_output_path)
@@ -321,6 +344,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     self.log.debug(
                         "_ output_args: `{}`".format(output_args))
 
+
                 if is_sequence:
                     stg_dir = os.path.dirname(full_output_path)
 
@@ -358,7 +382,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         "stagingDir": stg_dir,
                         "files": os.listdir(stg_dir)
                     })
-
+                if no_handles:
+                    repre_new.update({
+                        "outputName": name + "_noHandles"
+                        })
                 if repre_new.get('preview'):
                     repre_new.pop("preview")
                 if repre_new.get('thumbnail'):
