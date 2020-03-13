@@ -45,3 +45,8 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
 
         context.data["projectEntity"] = project_entity
         context.data["assetEntity"] = asset_entity
+
+        data = asset_entity['data']
+        context.data['handles'] = int(data.get("handles", 0))
+        context.data["handleStart"] = int(data.get( "handleStart", 0))
+        context.data["handleEnd"] = int(data.get("handleEnd", 0))

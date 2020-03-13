@@ -31,11 +31,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output_profiles = self.outputs or {}
 
         inst_data = instance.data
+        context_data = instance.context.data
         fps = float(inst_data.get("fps"))
         frame_start = inst_data.get("frameStart")
         frame_end = inst_data.get("frameEnd")
-        handle_start = inst_data.get("handleStart")
-        handle_end = inst_data.get("handleEnd")
+        handle_start = inst_data.get("handleStart",
+                                     context_data.get("handleStart"))
+        handle_end = inst_data.get("handleEnd",
+                                   context_data.get("handleEnd"))
         pixel_aspect = inst_data.get("pixelAspect", 1)
         resolution_width = inst_data.get("resolutionWidth", to_width)
         resolution_height = inst_data.get("resolutionHeight", to_height)
