@@ -8,7 +8,7 @@ class CollectInstanceVersion(api.InstancePlugin):
     version of the actual project.
     """
 
-    order = api.CollectorOrder + 0.015
+    order = api.CollectorOrder + 0.011
     label = "Collect Instance Version"
 
     def process(self, instance):
