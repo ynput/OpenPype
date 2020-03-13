@@ -12,7 +12,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
     otherwise the representation is ignored.
 
     All new represetnations are created and encoded by ffmpeg following
-    presets found in `pype-config/presets/plugins/global/publish.json:ExtractReview:outputs`. To change the file extension
+    presets found in `pype-config/presets/plugins/global/
+    publish.json:ExtractReview:outputs`. To change the file extension
     filter values use preset's attributes `ext_filter`
     """
 
@@ -171,7 +172,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                     # exclude handle if no handles defined
                     if no_handles:
-                        frame_start += handle_start
+                        frame_start_no_handles = frame_start + handle_start
+                        frame_end_no_handles = frame_end - handle_end
 
                     input_args.append(
                         "-start_number {0} -framerate {1}".format(
@@ -180,6 +182,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     if no_handles:
                         start_sec = float(handle_start) / fps
                         input_args.append("-ss {:0.2f}".format(start_sec))
+                        frame_start_no_handles += handle_start
+                        frame_end_no_handles -= handle_end
 
                 input_args.append("-i {}".format(full_input_path))
 
@@ -379,7 +383,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "codec": codec_args,
                     "_profile": profile,
                     "resolutionHeight": resolution_height,
-                    "resolutionWidth": resolution_width,
+                    "resolutionWidth": resolution_width
                 })
                 if is_sequence:
                     repre_new.update({
@@ -388,7 +392,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     })
                 if no_handles:
                     repre_new.update({
-                        "outputName": name + "_noHandles"
+                        "outputName": name + "_noHandles",
+                        "startFrameReview": frame_start_no_handles,
+                        "endFrameReview": frame_end_no_handles
                         })
                 if repre_new.get('preview'):
                     repre_new.pop("preview")
