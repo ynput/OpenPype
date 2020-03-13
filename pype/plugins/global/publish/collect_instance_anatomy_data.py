@@ -108,9 +108,15 @@ class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
         if resolution_height:
             anatomy_data["resolution_height"] = resolution_height
 
+        pixel_aspect = instance.data.get("pixelAspect")
+        if pixel_aspect:
+            anatomy_data["pixel_aspect"] = float("{:0.2f}".format(
+                float(pixel_aspect)))
+
         fps = instance.data.get("fps")
-        if resolution_height:
-            anatomy_data["fps"] = fps
+        if fps:
+            anatomy_data["fps"] = float("{:0.2f}".format(
+                float(fps)))
 
         instance.data["projectEntity"] = project_entity
         instance.data["assetEntity"] = asset_entity

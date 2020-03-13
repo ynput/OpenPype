@@ -80,7 +80,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "matchmove",
                 "image"
                 "source",
-                "assembly"
+                "assembly",
+                "textures"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -283,6 +284,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 stagingdir = repre['stagingDir']
             if repre.get('anatomy_template'):
                 template_name = repre['anatomy_template']
+            if repre.get("outputName"):
+                template_data["output"] = repre['outputName']
 
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
@@ -397,9 +400,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 template_data["representation"] = repre['ext']
 
-                if repre.get("outputName"):
-                    template_data["output"] = repre['outputName']
-
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled[template_name]["path"]
@@ -452,7 +452,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             if sequence_repre and repre.get("frameStart"):
                 representation['context']['frame'] = (
-                    src_padding_exp % int(repre.get("frameStart"))
+                    dst_padding_exp % int(repre.get("frameStart"))
                 )
 
             self.log.debug("__ representation: {}".format(representation))
@@ -544,7 +544,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         src = self.unc_convert(src)
         dst = self.unc_convert(dst)
-
+        src = os.path.normpath(src)
+        dst = os.path.normpath(dst)
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
         try:

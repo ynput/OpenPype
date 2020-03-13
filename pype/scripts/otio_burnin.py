@@ -6,25 +6,22 @@ import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from pypeapp.lib import config
 from pypeapp import Logger
-
+import pype.lib
 
 log = Logger().get_logger("BurninWrapper", "burninwrap")
 
 
-ffmpeg_path = os.environ.get("FFMPEG_PATH")
-if ffmpeg_path and os.path.exists(ffmpeg_path):
-    # add separator "/" or "\" to be prepared for next part
-    ffmpeg_path += os.path.sep
-else:
-    ffmpeg_path = ""
+ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
+
 
 FFMPEG = (
     '{} -loglevel panic -i %(input)s %(filters)s %(args)s%(output)s'
-).format(os.path.normpath(ffmpeg_path + "ffmpeg"))
+).format(ffmpeg_path)
 
 FFPROBE = (
     '{} -v quiet -print_format json -show_format -show_streams %(source)s'
-).format(os.path.normpath(ffmpeg_path + "ffprobe"))
+).format(ffprobe_path)
 
 DRAWTEXT = (
     "drawtext=text=\\'%(text)s\\':x=%(x)s:y=%(y)s:fontcolor="
@@ -420,6 +417,13 @@ def burnins_from_data(
     for align_text, value in presets.get('burnins', {}).items():
         if not value:
             continue
+
+        if isinstance(value, (dict, list, tuple)):
+            raise TypeError((
+                "Expected string or number type."
+                " Got: {} - \"{}\""
+                " (Make sure you have new burnin presets)."
+            ).format(str(type(value)), str(value)))
 
         has_timecode = TIME_CODE_KEY in value
 

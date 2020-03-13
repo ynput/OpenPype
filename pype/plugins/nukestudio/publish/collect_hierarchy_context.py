@@ -42,6 +42,7 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             width = int(sequence.format().width())
             height = int(sequence.format().height())
             pixel_aspect = sequence.format().pixelAspect()
+            fps = context.data["fps"]
 
             # build data for inner nukestudio project property
             data = {
@@ -161,9 +162,10 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                         "asset": asset,
                         "hierarchy": hierarchy,
                         "parents": parents,
-                        "width": width,
-                        "height": height,
+                        "resolutionWidth": width,
+                        "resolutionHeight": height,
                         "pixelAspect": pixel_aspect,
+                        "fps": fps,
                         "tasks":  instance.data["tasks"]
                     })
 
@@ -223,9 +225,12 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                     instance.data["parents"] = s_asset_data["parents"]
                     instance.data["hierarchy"] = s_asset_data["hierarchy"]
                     instance.data["tasks"] = s_asset_data["tasks"]
-                    instance.data["width"] = s_asset_data["width"]
-                    instance.data["height"] = s_asset_data["height"]
+                    instance.data["resolutionWidth"] = s_asset_data[
+                        "resolutionWidth"]
+                    instance.data["resolutionHeight"] = s_asset_data[
+                        "resolutionHeight"]
                     instance.data["pixelAspect"] = s_asset_data["pixelAspect"]
+                    instance.data["fps"] = s_asset_data["fps"]
 
                     # adding frame start if any on instance
                     start_frame = s_asset_data.get("startingFrame")
@@ -275,8 +280,8 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
                 # adding SourceResolution if Tag was present
                 if instance.data.get("main"):
                     in_info['custom_attributes'].update({
-                        "resolutionWidth": instance.data["width"],
-                        "resolutionHeight": instance.data["height"],
+                        "resolutionWidth": instance.data["resolutionWidth"],
+                        "resolutionHeight": instance.data["resolutionHeight"],
                         "pixelAspect": instance.data["pixelAspect"]
                     })
 
