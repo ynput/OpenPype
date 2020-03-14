@@ -10,7 +10,7 @@ def set_context_favorites(favorites={}):
         favorites (dict): couples of {name:path}
     """
     dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    icon_path = os.path.join(dir, 'res', 'icons', 'folder-favorite.png')
+    icon_path = os.path.join(dir, 'res', 'icons', 'folder-favorite3.png')
 
     for name, path in favorites.items():
         nuke.addFavoriteDir(

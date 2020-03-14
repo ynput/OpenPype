@@ -952,7 +952,6 @@ class WorkfileSettings(object):
         favorite_items = OrderedDict()
 
         # project
-        favorite_items.update({"Projects root": projects_root})
         favorite_items.update({"Project dir": os.path.join(
             projects_root, project).replace("\\", "/")})
         # shot
