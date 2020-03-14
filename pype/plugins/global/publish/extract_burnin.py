@@ -4,7 +4,6 @@ import copy
 
 import pype.api
 import pyblish
-from pypeapp import config
 
 
 class ExtractBurnin(pype.api.Extractor):
@@ -26,10 +25,16 @@ class ExtractBurnin(pype.api.Extractor):
         if "representations" not in instance.data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
+        context_data = instance.context.data
+
         version = instance.data.get(
             'version', instance.context.data.get('version'))
         frame_start = int(instance.data.get("frameStart") or 0)
         frame_end = int(instance.data.get("frameEnd") or 1)
+        handle_start = instance.data.get("handleStart",
+                                         context_data.get("handleStart"))
+        handle_end = instance.data.get("handleEnd",
+                                       context_data.get("handleEnd"))
         duration = frame_end - frame_start + 1
 
         prep_data = copy.deepcopy(instance.data["anatomyData"])
@@ -58,6 +63,9 @@ class ExtractBurnin(pype.api.Extractor):
                 continue
 
             is_sequence = "sequence" in repre.get("tags", [])
+
+            # no handles switch from profile tags
+            no_handles = "no-handles" in repre.get("tags", [])
 
             stagingdir = repre["stagingDir"]
             filename = "{0}".format(repre["files"])
@@ -90,17 +98,32 @@ class ExtractBurnin(pype.api.Extractor):
             filled_anatomy = anatomy.format_all(_prep_data)
             _prep_data["anatomy"] = filled_anatomy.get_solved()
 
+            # copy frame range variables
+            frame_start_cp = frame_start
+            frame_end_cp = frame_end
+            duration_cp = duration
+
+            if no_handles:
+                frame_start_cp = frame_start + handle_start
+                frame_end_cp = frame_end - handle_end
+                duration_cp = frame_end_cp - frame_start_cp + 1
+                _prep_data.update({
+                    "frame_start": frame_start_cp,
+                    "frame_end": frame_end_cp,
+                    "duration": duration_cp,
+                })
+
             # dealing with slates
-            slate_frame_start = frame_start
-            slate_frame_end = frame_end
-            slate_duration = duration
+            slate_frame_start = frame_start_cp
+            slate_frame_end = frame_end_cp
+            slate_duration = duration_cp
 
             # exception for slate workflow
             if ("slate" in instance.data["families"]):
                 if "slate-frame" in repre.get("tags", []):
-                    slate_frame_start = frame_start - 1
-                    slate_frame_end = frame_end
-                    slate_duration = duration + 1
+                    slate_frame_start = frame_start_cp - 1
+                    slate_frame_end = frame_end_cp
+                    slate_duration = duration_cp + 1
 
             self.log.debug("__1 slate_frame_start: {}".format(slate_frame_start))
 
