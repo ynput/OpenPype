@@ -183,8 +183,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
                             frame_start_handle, fps))
                 else:
                     if no_handles:
-                        start_sec = float(handle_start) / fps
-                        input_args.append("-ss {:0.2f}".format(start_sec))
+                        # start_sec = float(handle_start) / fps
+                        input_args.append(
+                              "-start_number {0} -framerate {1}".format(
+                                handle_start, fps
+                              )
+                            )
                         frame_start_handle = frame_start
                         frame_end_handle = frame_end
 
