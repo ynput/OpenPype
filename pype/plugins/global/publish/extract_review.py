@@ -41,8 +41,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         handle_end = inst_data.get("handleEnd",
                                    context_data.get("handleEnd"))
         pixel_aspect = inst_data.get("pixelAspect", 1)
-        resolution_width = inst_data.get("resolutionWidth", to_width)
-        resolution_height = inst_data.get("resolutionHeight", to_height)
+        resolution_width = inst_data.get("resolutionWidth", self.to_width)
+        resolution_height = inst_data.get("resolutionHeight", self.to_height)
         self.log.debug("Families In: `{}`".format(inst_data["families"]))
         self.log.debug("__ frame_start: {}".format(frame_start))
         self.log.debug("__ frame_end: {}".format(frame_end))
@@ -223,7 +223,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 output_args.extend(profile.get('output', []))
 
                 # defining image ratios
-                resolution_ratio = (float(resolution_width) * pixel_aspect) /  resolution_height
+                resolution_ratio = (float(resolution_width) * pixel_aspect) / resolution_height
                 delivery_ratio = float(self.to_width) / float(self.to_height)
                 self.log.debug(
                     "__ resolution_ratio: `{}`".format(resolution_ratio))
