@@ -30,7 +30,7 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         assert project_entity, (
             "Project '{0}' was not found."
         ).format(project_name)
-        self.log.debug("Collected Project entity \"{}\"".format(project_entity))
+        self.log.debug("Collected Project \"{}\"".format(project_entity))
 
         asset_entity = io.find_one({
             "type": "asset",
@@ -41,7 +41,12 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
             "No asset found by the name '{0}' in project '{1}'"
         ).format(asset_name, project_name)
 
-        self.log.debug("Collected Asset entity \"{}\"".format(asset_entity))
+        self.log.debug("Collected Asset \"{}\"".format(asset_entity))
 
         context.data["projectEntity"] = project_entity
         context.data["assetEntity"] = asset_entity
+
+        data = asset_entity['data']
+        context.data['handles'] = int(data.get("handles", 0))
+        context.data["handleStart"] = int(data.get("handleStart", 0))
+        context.data["handleEnd"] = int(data.get("handleEnd", 0))
