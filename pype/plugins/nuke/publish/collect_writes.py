@@ -46,7 +46,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         )
 
         if node["use_limit"].getValue():
-            handles = 0
             first_frame = int(node["first"].getValue())
             last_frame = int(node["last"].getValue())
 
