@@ -18,7 +18,6 @@ class CollectClips(api.ContextPlugin):
             context.data["assetsShared"] = dict()
 
         projectdata = context.data["projectEntity"]["data"]
-        version = context.data.get("version", "001")
         sequence = context.data.get("activeSequence")
         selection = context.data.get("selection")
 
@@ -108,8 +107,7 @@ class CollectClips(api.ContextPlugin):
                         "family": "clip",
                         "families": [],
                         "handleStart": projectdata.get("handleStart", 0),
-                        "handleEnd": projectdata.get("handleEnd", 0),
-                        "version": int(version)})
+                        "handleEnd": projectdata.get("handleEnd", 0)})
 
                 instance = context.create_instance(**data)
 
