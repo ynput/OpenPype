@@ -166,30 +166,33 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # necessary input data
                 # adds start arg only if image sequence
+
+                frame_start_handle = frame_start - handle_start
+                frame_end_handle = frame_end + handle_end
                 if isinstance(repre["files"], list):
-                    if frame_start != repre.get("detectedStart", frame_start):
-                        frame_start = repre.get("detectedStart")
+                    if frame_start_handle != repre.get("detectedStart", frame_start_handle):
+                        frame_start_handle = repre.get("detectedStart")
 
                     # exclude handle if no handles defined
                     if no_handles:
-                        frame_start_no_handles = frame_start + handle_start
-                        frame_end_no_handles = frame_end - handle_end
+                        frame_start_handle = frame_start
+                        frame_end_handle = frame_end
 
                     input_args.append(
                         "-start_number {0} -framerate {1}".format(
-                            frame_start, fps))
+                            frame_start_handle, fps))
                 else:
                     if no_handles:
                         start_sec = float(handle_start) / fps
                         input_args.append("-ss {:0.2f}".format(start_sec))
-                        frame_start_no_handles = frame_start + handle_start
-                        frame_end_no_handles = frame_end - handle_end
+                        frame_start_handle = frame_start
+                        frame_end_handle = frame_end
 
                 input_args.append("-i {}".format(full_input_path))
 
                 for audio in instance.data.get("audio", []):
                     offset_frames = (
-                        instance.data.get("startFrameReview") -
+                        instance.data.get("frameStartFtrack") -
                         audio["offset"]
                     )
                     offset_seconds = offset_frames / fps
@@ -276,10 +279,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 output_args.append("-shortest")
 
                 if no_handles:
-                    duration_sec = float(
-                        (frame_end - (
-                            frame_start + handle_start
-                            ) + 1) - handle_end) / fps
+                    duration_sec = float(frame_end_handle - frame_start_handle + 1) / fps
+
                     output_args.append("-t {:0.2f}".format(duration_sec))
 
                 # output filename
@@ -397,7 +398,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "codec": codec_args,
                     "_profile": profile,
                     "resolutionHeight": resolution_height,
-                    "resolutionWidth": resolution_width
+                    "resolutionWidth": resolution_width,
+                    "frameStartFtrack": frame_start_handle,
+                    "frameEndFtrack": frame_end_handle
                 })
                 if is_sequence:
                     repre_new.update({
@@ -407,8 +410,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 if no_handles:
                     repre_new.update({
                         "outputName": name + "_noHandles",
-                        "startFrameReview": frame_start_no_handles,
-                        "endFrameReview": frame_end_no_handles
+                        "frameStartFtrack": frame_start,
+                        "frameEndFtrack": frame_end
                         })
                 if repre_new.get('preview'):
                     repre_new.pop("preview")

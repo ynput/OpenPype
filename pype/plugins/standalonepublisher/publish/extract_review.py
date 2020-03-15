@@ -170,8 +170,8 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                     "stagingDir": out_stagigng_dir,
                     "tags": new_tags,
                     "outputName": name,
-                    "startFrameReview": 1,
-                    "endFrameReview": video_len
+                    "frameStartFtrack": 1,
+                    "frameEndFtrack": video_len
                 })
                 # cleanup thumbnail from new repre
                 if repre_new.get("thumbnail"):

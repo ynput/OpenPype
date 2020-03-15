@@ -1369,8 +1369,8 @@ class ExporterReview:
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
-            self.first_frame = self.instance.data.get("frameStart", None)
-            self.last_frame = self.instance.data.get("frameEnd", None)
+            self.first_frame = self.instance.data.get("frameStartHandle", None)
+            self.last_frame = self.instance.data.get("frameEndHandle", None)
 
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]

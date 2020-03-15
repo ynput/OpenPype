@@ -36,7 +36,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             output_type = "mov"
 
         # Get frame range
-        handles = instance.context.data['handles']
         handle_start = instance.context.data["handleStart"]
         handle_end = instance.context.data["handleEnd"]
         first_frame = int(nuke.root()["first_frame"].getValue())
@@ -133,8 +132,10 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "label": label,
             "handleStart": handle_start,
             "handleEnd": handle_end,
-            "frameStart": first_frame,
-            "frameEnd": last_frame,
+            "frameStart": first_frame + handle_start,
+            "frameEnd": last_frame - handle_end,
+            "frameStartHandle": first_frame,
+            "frameEndHandle": last_frame,
             "outputType": output_type,
             "family": "write",
             "families": families,
