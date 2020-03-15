@@ -15,12 +15,11 @@ import nuke
 from .presets import (
     get_colorspace_preset,
     get_node_dataflow_preset,
-    get_node_colorspace_preset
-)
-
-from .presets import (
+    get_node_colorspace_preset,
     get_anatomy
 )
+
+from .utils import set_context_favorites
 
 from pypeapp import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -432,7 +431,7 @@ def add_deadline_tab(node):
     node.addKnob(nuke.Tab_Knob("Deadline"))
 
     knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
-    knob.setValue(1)
+    knob.setValue(0)
     node.addKnob(knob)
 
     knob = nuke.Int_Knob("deadlinePriority", "Priority")
@@ -943,6 +942,26 @@ class WorkfileSettings(object):
         self.reset_frame_range_handles()
         # add colorspace menu item
         self.set_colorspace()
+
+    def set_favorites(self):
+        projects_root = os.getenv("AVALON_PROJECTS")
+        work_dir = os.getenv("AVALON_WORKDIR")
+        asset = os.getenv("AVALON_ASSET")
+        project = os.getenv("AVALON_PROJECT")
+        hierarchy = os.getenv("AVALON_HIERARCHY")
+        favorite_items = OrderedDict()
+
+        # project
+        favorite_items.update({"Project dir": os.path.join(
+            projects_root, project).replace("\\", "/")})
+        # shot
+        favorite_items.update({"Shot dir": os.path.join(
+            projects_root, project,
+            hierarchy, asset).replace("\\", "/")})
+        # workdir
+        favorite_items.update({"Work dir": work_dir})
+
+        set_context_favorites(favorite_items)
 
 
 def get_hierarchical_attr(entity, attr, default=None):

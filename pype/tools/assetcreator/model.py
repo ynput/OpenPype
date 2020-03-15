@@ -241,7 +241,7 @@ class TasksModel(TreeModel):
         self.endResetModel()
 
     def flags(self, index):
-        return QtCore.Qt.ItemIsEnabled
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def headerData(self, section, orientation, role):
 

@@ -46,7 +46,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         )
 
         if node["use_limit"].getValue():
-            handles = 0
             first_frame = int(node["first"].getValue())
             last_frame = int(node["last"].getValue())
 
@@ -55,9 +54,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         output_dir = os.path.dirname(path)
         self.log.debug('output dir: {}'.format(output_dir))
 
-        # # get version to instance for integration
-        # instance.data['version'] = instance.context.data.get(
-        #     "version", pype.get_version_from_path(nuke.root().name()))
+        # get version to instance for integration
+        instance.data['version'] = instance.context.data["version"]
 
         self.log.debug('Write Version: %s' % instance.data('version'))
 
@@ -133,7 +131,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputDir": output_dir,
             "ext": ext,
             "label": label,
-            "handles": handles,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
             "frameStart": first_frame,
             "frameEnd": last_frame,
             "outputType": output_type,
