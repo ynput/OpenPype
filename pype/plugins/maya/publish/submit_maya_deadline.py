@@ -234,8 +234,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": instance.data.get("mayaRenderPlugin", "MayaBatch"),
                 "Frames": "{start}-{end}x{step}".format(
-                    start=int(instance.data["frameStart"]),
-                    end=int(instance.data["frameEnd"]),
+                    start=int(instance.data["frameStartHandle"]),
+                    end=int(instance.data["frameEndHandle"]),
                     step=int(instance.data["byFrameStep"]),
                 ),
 
@@ -340,7 +340,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
 
-        for key in ("frameStart", "frameEnd", "byFrameStep"):
+        for key in ("frameStartHandle", "frameEndHandle", "byFrameStep"):
             value = instance.data[key]
 
             if int(value) == value:

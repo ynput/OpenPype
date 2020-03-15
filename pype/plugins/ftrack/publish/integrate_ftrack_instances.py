@@ -73,9 +73,9 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                 '''
                 start_frame = 0
                 end_frame = 1
-                if 'endFrameReview' in comp and 'startFrameReview' in comp:
+                if 'frameEndFtrack' in comp and 'frameStartFtrack' in comp:
                     end_frame += (
-                        comp['endFrameReview'] - comp['startFrameReview']
+                        comp['frameEndFtrack'] - comp['frameStartFtrack']
                     )
                 else:
                     end_frame += (
