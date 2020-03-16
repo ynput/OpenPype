@@ -40,7 +40,8 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
         if not config:
             return
 
-        items = config.get("data")
+        configuration = json.loads(config)
+        items = configuration.get("data")
         if not items:
             return
 
