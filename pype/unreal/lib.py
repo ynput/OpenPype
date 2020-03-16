@@ -13,7 +13,17 @@ def get_engine_versions():
     Location can be overridden by `UNREAL_ENGINE_LOCATION` environment
     variable.
 
-    Returns dictionary with version as a key and dir as value.
+    Returns:
+
+        dict: dictionary with version as a key and dir as value.
+
+    Example:
+
+        >>> get_engine_version()
+        {
+            "4.23": "C:/Epic Games/UE_4.23",
+            "4.24": "C:/Epic Games/UE_4.24"
+        }
     """
     try:
         engine_locations = {}
