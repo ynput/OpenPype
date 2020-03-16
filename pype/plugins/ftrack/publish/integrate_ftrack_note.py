@@ -71,18 +71,19 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
         session = instance.context.data["ftrackSession"]
 
         intent_val = instance.context.data.get("intent", {}).get("value")
-        intent_label = None
+        intent_label = instance.context.data.get("intent", {}).get("label")
+        final_label = None
         if intent_val:
-            intent_label = self.get_intent_label(session, intent_val)
-            if intent_label is None:
-                intent_label = intent_val
+            final_label = self.get_intent_label(session, intent_val)
+            if final_label is None:
+                final_label = intent_label
 
         # if intent label is set then format comment
         # - it is possible that intent_label is equal to "" (empty string)
-        if intent_label:
-            msg = "Intent label is to `{}`.".format(intent_label)
+        if final_label:
+            msg = "Intent label is set to `{}`.".format(final_label)
             comment = self.note_with_intent_template.format(**{
-                "intent": intent_val,
+                "intent": final_label,
                 "comment": comment
             })
 
@@ -90,7 +91,7 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             msg = (
                 "Intent is set to `{}` and was not added"
                 " to comment because label is set to `{}`."
-            ).format(intent_val, intent_label)
+            ).format(intent_val, final_label)
 
         else:
             msg = "Intent is not set."
