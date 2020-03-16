@@ -4,22 +4,13 @@ import pyblish.api
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
-    """Gather instances by objectSet and pre-defined attribute
+    """Gather instances by AvalonPublishInstance class
 
-    This collector takes into account assets that are associated with
-    an objectSet and marked with a unique identifier;
+    This collector finds all paths containing `AvalonPublishInstance` class
+    asset
 
     Identifier:
         id (str): "pyblish.avalon.instance"
-
-    Limitations:
-        - Does not take into account nodes connected to those
-            within an objectSet. Extractors are assumed to export
-            with history preserved, but this limits what they will
-            be able to achieve and the amount of data available
-            to validators. An additional collector could also
-            append this input data into the instance, as we do
-            for `pype.rig` with collect_history.
 
     """
 
@@ -29,124 +20,40 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        objectset = cmds.ls("*.id", long=True, type="objectSet",
-                            recursive=True, objectsOnly=True)
+        ar = unreal.AssetRegistryHelpers.get_asset_registry()
+        instance_containers = ar.get_assets_by_class(
+            "AvalonPublishInstance", True)
 
-        context.data['objectsets'] = objectset
-        for objset in objectset:
+        for container_data in instance_containers:
+            asset = container_data.get_asset()
+            data = unreal.EditorAssetLibrary.get_metadata_tag_values(asset)
+            data["objectName"] = container_data.asset_name
+            # convert to strings
+            data = {str(key): str(value) for (key, value) in data.items()}
+            assert data.get("family"), (
+                "instance has no family"
+            )
 
-            if not cmds.attributeQuery("id", node=objset, exists=True):
-                continue
+            # content of container
+            members = unreal.EditorAssetLibrary.list_assets(
+                asset.get_path_name(), recursive=True, include_folder=True
+            )
+            self.log.debug(members)
+            self.log.debug(asset.get_path_name())
+            # remove instance container
+            members.remove(asset.get_path_name())
+            self.log.info("Creating instance for {}".format(asset.get_name()))
 
-            id_attr = "{}.id".format(objset)
-            if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
-                continue
-
-            # The developer is responsible for specifying
-            # the family of each instance.
-            has_family = cmds.attributeQuery("family",
-                                             node=objset,
-                                             exists=True)
-            assert has_family, "\"%s\" was missing a family" % objset
-
-            members = cmds.sets(objset, query=True)
-            if members is None:
-                self.log.warning("Skipped empty instance: \"%s\" " % objset)
-                continue
-
-            self.log.info("Creating instance for {}".format(objset))
-
-            data = dict()
-
-            # Apply each user defined attribute as data
-            for attr in cmds.listAttr(objset, userDefined=True) or list():
-                try:
-                    value = cmds.getAttr("%s.%s" % (objset, attr))
-                except Exception:
-                    # Some attributes cannot be read directly,
-                    # such as mesh and color attributes. These
-                    # are considered non-essential to this
-                    # particular publishing pipeline.
-                    value = None
-                data[attr] = value
-
-            # temporarily translation of `active` to `publish` till issue has
-            # been resolved, https://github.com/pyblish/pyblish-base/issues/307
-            if "active" in data:
-                data["publish"] = data["active"]
-
-            # Collect members
-            members = cmds.ls(members, long=True) or []
-
-            # `maya.cmds.listRelatives(noIntermediate=True)` only works when
-            # `shapes=True` argument is passed, since we also want to include
-            # transforms we filter afterwards.
-            children = cmds.listRelatives(members,
-                                          allDescendents=True,
-                                          fullPath=True) or []
-            children = cmds.ls(children, noIntermediate=True, long=True)
-
-            parents = []
-            if data.get("includeParentHierarchy", True):
-                # If `includeParentHierarchy` then include the parents
-                # so they will also be picked up in the instance by validators
-                parents = self.get_all_parents(members)
-            members_hierarchy = list(set(members + children + parents))
-
-            if 'families' not in data:
-                data['families'] = [data.get('family')]
-
-            # Create the instance
-            instance = context.create_instance(objset)
-            instance[:] = members_hierarchy
+            instance = context.create_instance(asset.get_name())
+            instance[:] = members
 
             # Store the exact members of the object set
             instance.data["setMembers"] = members
+            instance.data["families"] = [data.get("family")]
 
-
-            # Define nice label
-            name = cmds.ls(objset, long=False)[0]   # use short name
-            label = "{0} ({1})".format(name,
+            label = "{0} ({1})".format(asset.get_name()[:-4],
                                        data["asset"])
-
-            # Append start frame and end frame to label if present
-            if "frameStart" and "frameEnd" in data:
-                label += "  [{0}-{1}]".format(int(data["frameStart"]),
-                                              int(data["frameEnd"]))
 
             instance.data["label"] = label
 
             instance.data.update(data)
-
-            # Produce diagnostic message for any graphical
-            # user interface interested in visualising it.
-            self.log.info("Found: \"%s\" " % instance.data["name"])
-            self.log.debug("DATA: \"%s\" " % instance.data)
-
-
-        def sort_by_family(instance):
-            """Sort by family"""
-            return instance.data.get("families", instance.data.get("family"))
-
-        # Sort/grouped by family (preserving local index)
-        context[:] = sorted(context, key=sort_by_family)
-
-        return context
-
-    def get_all_parents(self, nodes):
-        """Get all parents by using string operations (optimization)
-
-        Args:
-            nodes (list): the nodes which are found in the objectSet
-
-        Returns:
-            list
-        """
-
-        parents = []
-        for node in nodes:
-            splitted = node.split("|")
-            items = ["|".join(splitted[0:i]) for i in range(2, len(splitted))]
-            parents.extend(items)
-
-        return list(set(parents))

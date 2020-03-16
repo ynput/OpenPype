@@ -16,7 +16,7 @@ class CollectSceneVersion(pyblish.api.ContextPlugin):
         if "standalonepublisher" in context.data.get("host", []):
             return
 
-        if "unreal" in context.data.get("host", []):
+        if "unreal" in pyblish.api.registered_hosts():
             return
 
         filename = os.path.basename(context.data.get('currentFile'))
