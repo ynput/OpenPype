@@ -157,7 +157,7 @@ class ExtractSlateFrame(pype.api.Extractor):
             return
 
         comment = instance.context.data.get("comment")
-        intent = instance.context.data.get("intent", {}).get("value")
+        intent = instance.context.data.get("intent", {}).get("value", "")
 
         try:
             node["f_submission_note"].setValue(comment)
