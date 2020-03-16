@@ -52,7 +52,7 @@ class ExtractBurnin(pype.api.Extractor):
             "duration": duration,
             "version": int(version),
             "comment": instance.context.data.get("comment", ""),
-            "intent": instance.context.data.get("intent", "")
+            "intent": instance.context.data.get("intent", {}).get("label", "")
         })
 
         # get anatomy project

@@ -127,7 +127,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             # Add custom attributes for AssetVersion
             assetversion_cust_attrs = {}
-            intent_val = instance.context.data.get("intent")
+            intent_val = instance.context.data.get("intent", {}).get("value")
             if intent_val:
                 assetversion_cust_attrs["intent"] = intent_val
 
