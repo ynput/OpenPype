@@ -311,12 +311,11 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
 
         # replace path for UNC / network share paths, co PYPE is found
         # over network. It assumes PYPE is located somewhere in
-        # PYPE_STUDIO_CORE_PATH
+        # PYPE_CORE_PATH
         pype_root = os.environ["PYPE_ROOT"].replace(
-            os.path.normpath(
-                os.environ['PYPE_STUDIO_CORE_MOUNT']),  # noqa
-            os.path.normpath(
-                os.environ['PYPE_STUDIO_CORE_PATH']))   # noqa
+            os.path.normpath(os.environ['PYPE_CORE_MOUNT']),
+            os.path.normpath(os.environ['PYPE_CORE_PATH'])
+        )
 
         # we must provide either full path to executable or use musters own
         # python named MPython.exe, residing directly in muster bin
@@ -521,7 +520,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
             clean_path = ""
             self.log.debug("key: {}".format(key))
             to_process = environment[key]
-            if key == "PYPE_STUDIO_CORE_MOUNT":
+            if key == "PYPE_CORE_MOUNT":
                 clean_path = environment[key]
             elif "://" in environment[key]:
                 clean_path = environment[key]
@@ -542,8 +541,8 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
 
             # this should replace paths so they are pointing to network share
             clean_path = clean_path.replace(
-                os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
-                os.path.normpath(environment['PYPE_STUDIO_CORE_PATH']))
+                os.path.normpath(environment['PYPE_CORE_MOUNT']),
+                os.path.normpath(environment['PYPE_CORE_PATH']))
             clean_environment[key] = clean_path
 
         return clean_environment

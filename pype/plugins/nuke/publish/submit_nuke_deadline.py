@@ -198,7 +198,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             clean_path = ""
             self.log.debug("key: {}".format(key))
             to_process = environment[key]
-            if key == "PYPE_STUDIO_CORE_MOUNT":
+            if key == "PYPE_CORE_MOUNT":
                 clean_path = environment[key]
             elif "://" in environment[key]:
                 clean_path = environment[key]
@@ -221,10 +221,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 clean_path = clean_path.replace('python2', 'python3')
 
             clean_path = clean_path.replace(
-                                    os.path.normpath(
-                                        environment['PYPE_STUDIO_CORE_MOUNT']),  # noqa
-                                    os.path.normpath(
-                                        environment['PYPE_STUDIO_CORE_PATH']))   # noqa
+                os.path.normpath(environment['PYPE_CORE_MOUNT']),
+                os.path.normpath(environment['PYPE_CORE_PATH'])
+            )
             clean_environment[key] = clean_path
 
         environment = clean_environment
