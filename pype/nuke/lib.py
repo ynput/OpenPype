@@ -619,7 +619,8 @@ class WorkfileSettings(object):
         # third set ocio custom path
         if root_dict.get("customOCIOConfigPath"):
             self._root_node["customOCIOConfigPath"].setValue(
-                str(root_dict["customOCIOConfigPath"]).format(**os.environ)
+                str(root_dict["customOCIOConfigPath"]).format(
+                    **os.environ).replace("\\", "/")
                 )
             log.debug("nuke.root()['{}'] changed to: {}".format(
                 "customOCIOConfigPath", root_dict["customOCIOConfigPath"]))
