@@ -24,10 +24,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     outputs = {}
     ext_filter = []
+    to_width = 1920
+    to_height = 1080
 
     def process(self, instance):
-        to_width = 1920
-        to_height = 1080
 
         output_profiles = self.outputs or {}
 
@@ -41,8 +41,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         handle_end = inst_data.get("handleEnd",
                                    context_data.get("handleEnd"))
         pixel_aspect = inst_data.get("pixelAspect", 1)
-        resolution_width = inst_data.get("resolutionWidth", to_width)
-        resolution_height = inst_data.get("resolutionHeight", to_height)
+        resolution_width = inst_data.get("resolutionWidth", self.to_width)
+        resolution_height = inst_data.get("resolutionHeight", self.to_height)
         self.log.debug("Families In: `{}`".format(inst_data["families"]))
         self.log.debug("__ frame_start: {}".format(frame_start))
         self.log.debug("__ frame_end: {}".format(frame_end))
@@ -226,30 +226,42 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 output_args.extend(profile.get('output', []))
 
                 # defining image ratios
-                resolution_ratio = float(resolution_width / (
-                    resolution_height * pixel_aspect))
-                delivery_ratio = float(to_width) / float(to_height)
-                self.log.debug(resolution_ratio)
-                self.log.debug(delivery_ratio)
+                resolution_ratio = (float(resolution_width) * pixel_aspect) / resolution_height
+                delivery_ratio = float(self.to_width) / float(self.to_height)
+                self.log.debug(
+                    "__ resolution_ratio: `{}`".format(resolution_ratio))
+                self.log.debug(
+                    "__ delivery_ratio: `{}`".format(delivery_ratio))
 
                 # get scale factor
-                scale_factor = to_height / (
+                scale_factor = float(self.to_height) / (
                     resolution_height * pixel_aspect)
-                self.log.debug(scale_factor)
+
+                # shorten two decimals long float number for testing conditions
+                resolution_ratio_test = float(
+                    "{:0.2f}".format(resolution_ratio))
+                delivery_ratio_test = float(
+                    "{:0.2f}".format(delivery_ratio))
+
+                if resolution_ratio_test < delivery_ratio_test:
+                    scale_factor = float(self.to_width) / (
+                        resolution_width * pixel_aspect)
+
+                self.log.debug("__ scale_factor: `{}`".format(scale_factor))
 
                 # letter_box
                 lb = profile.get('letter_box', 0)
                 if lb != 0:
-                    ffmpet_width = to_width
-                    ffmpet_height = to_height
+                    ffmpeg_width = self.to_width
+                    ffmpeg_height = self.to_height
                     if "reformat" not in p_tags:
                         lb /= pixel_aspect
-                        if resolution_ratio != delivery_ratio:
-                            ffmpet_width = resolution_width
-                            ffmpet_height = int(
+                        if resolution_ratio_test != delivery_ratio_test:
+                            ffmpeg_width = resolution_width
+                            ffmpeg_height = int(
                                 resolution_height * pixel_aspect)
                     else:
-                        if resolution_ratio != delivery_ratio:
+                        if resolution_ratio_test != delivery_ratio_test:
                             lb /= scale_factor
                         else:
                             lb /= pixel_aspect
@@ -261,7 +273,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         "c=black,drawbox=0:ih-round((ih-(iw*("
                         "1/{2})))/2):iw:round((ih-(iw*(1/{2})))"
                         "/2):t=fill:c=black").format(
-                            ffmpet_width, ffmpet_height, lb))
+                            ffmpeg_width, ffmpeg_height, lb))
 
                 # In case audio is longer than video.
                 output_args.append("-shortest")
@@ -285,24 +297,26 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 # scaling none square pixels and 1920 width
                 if "reformat" in p_tags:
-                    if resolution_ratio < delivery_ratio:
+                    if resolution_ratio_test < delivery_ratio_test:
                         self.log.debug("lower then delivery")
-                        width_scale = int(to_width * scale_factor)
+                        width_scale = int(self.to_width * scale_factor)
                         width_half_pad = int((
-                            to_width - width_scale)/2)
-                        height_scale = to_height
+                            self.to_width - width_scale)/2)
+                        height_scale = self.to_height
                         height_half_pad = 0
                     else:
                         self.log.debug("heigher then delivery")
-                        width_scale = to_width
+                        width_scale = self.to_width
                         width_half_pad = 0
-                        scale_factor = float(to_width) / float(
-                            resolution_width)
-                        self.log.debug(scale_factor)
+                        scale_factor = float(self.to_width) / (float(
+                            resolution_width) * pixel_aspect)
+                        self.log.debug(
+                            "__ scale_factor: `{}`".format(
+                                scale_factor))
                         height_scale = int(
                             resolution_height * scale_factor)
                         height_half_pad = int(
-                            (to_height - height_scale)/2)
+                            (self.to_height - height_scale)/2)
 
                     self.log.debug(
                         "__ width_scale: `{}`".format(width_scale))
@@ -320,7 +334,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         "scale={0}x{1}:flags=lanczos,"
                         "pad={2}:{3}:{4}:{5}:black,setsar=1"
                             ).format(width_scale, height_scale,
-                                     to_width, to_height,
+                                     self.to_width, self.to_height,
                                      width_half_pad,
                                      height_half_pad
                                      )
@@ -411,6 +425,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         for repre in representations_new:
             if "delete" in repre.get("tags", []):
                 representations_new.remove(repre)
+
+        instance.data.update({
+            "reviewToWidth": self.to_width,
+            "reviewToHeight": self.to_height
+        })
 
         self.log.debug(
             "new representations: {}".format(representations_new))

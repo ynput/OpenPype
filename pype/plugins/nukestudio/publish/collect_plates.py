@@ -126,7 +126,7 @@ class CollectPlatesData(api.InstancePlugin):
         transfer_data = [
             "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart",
             "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut",
-            "clipInH", "clipOutH", "asset", "track", "version", "resolutionWidth", "resolutionHeight", "pixelAspect", "fps"
+            "clipInH", "clipOutH", "asset", "track", "resolutionWidth", "resolutionHeight", "pixelAspect", "fps"
         ]
 
         # pass data to version
@@ -140,6 +140,13 @@ class CollectPlatesData(api.InstancePlugin):
             "subset": name,
             "fps": instance.context.data["fps"]
         })
+
+        version = instance.data.get("version")
+        if version:
+            version_data.update({
+                "version": version
+            })
+
 
         try:
             basename, ext = os.path.splitext(source_file)
