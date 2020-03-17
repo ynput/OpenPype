@@ -1627,15 +1627,22 @@ class ExporterReviewMov(ExporterReview):
             self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
 
         if not self.viewer_lut_raw:
-            colorspace = self.bake_colorspace_main \
-                or self.bake_colorspace_fallback
+            colorspaces = [
+                self.bake_colorspace_main, self.bake_colorspace_fallback
+                ]
 
-            self.log.debug("_ colorspace...   `{}`".format(colorspace))
-
-            if colorspace:
+            if any(colorspaces):
                 # OCIOColorSpace with controled output
                 dag_node = nuke.createNode("OCIOColorSpace")
-                dag_node["out_colorspace"].setValue(str(colorspace))
+                for c in colorspaces:
+                    test = dag_node["out_colorspace"].setValue(str(c))
+                    if test:
+                        self.log.info(
+                            "Baking in colorspace...   `{}`".format(c))
+                        break
+
+                if not test:
+                    dag_node = nuke.createNode("OCIODisplay")
             else:
                 # OCIODisplay
                 dag_node = nuke.createNode("OCIODisplay")
