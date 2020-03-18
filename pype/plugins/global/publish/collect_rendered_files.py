@@ -35,7 +35,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     def _process_path(self, data):
         # validate basic necessary data
         data_err = "invalid json file - missing data"
-        required = ["asset", "user", "intent", "comment",
+        required = ["asset", "user", "comment",
                     "job", "instances", "session", "version"]
         assert all(elem in data.keys() for elem in required), data_err
 
