@@ -3,7 +3,7 @@ import os
 from pyblish import api as pyblish
 from avalon import api as avalon
 from .lib import filter_pyblish_plugins
-from pypeapp import config
+from pypeapp import config, Roots
 
 
 import logging
@@ -85,6 +85,10 @@ def install():
                 avalon.register_plugin_path(avalon.Loader, plugin_path)
                 avalon.register_plugin_path(avalon.Creator, plugin_path)
 
+    if project_name:
+        root_obj = Roots(project_name)
+        root = root_obj.roots
+        avalon.register_root(root)
     # apply monkey patched discover to original one
     avalon.discover = patched_discover
 
