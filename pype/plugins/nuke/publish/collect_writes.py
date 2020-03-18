@@ -1,7 +1,6 @@
 import os
 import nuke
 import pyblish.api
-import pype.api as pype
 
 
 @pyblish.api.log
