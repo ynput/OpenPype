@@ -257,7 +257,7 @@ def create_unreal_project(project_name: str,
                         "pip", "install", "pyside"])
 
     if dev_mode or preset["dev_mode"]:
-        _prepare_cpp_project(pr_dir, engine_path)
+        _prepare_cpp_project(project_file, engine_path)
 
 
 def _prepare_cpp_project(project_file: str, engine_path: str) -> None:
