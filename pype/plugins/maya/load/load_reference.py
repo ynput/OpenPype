@@ -1,5 +1,4 @@
 import pype.maya.plugin
-reload(pype.maya.plugin)
 from avalon import api, maya
 from maya import cmds
 import os
@@ -102,12 +101,11 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             cmds.setAttr(groupName + ".selectHandleY", cy)
             cmds.setAttr(groupName + ".selectHandleZ", cz)
 
-            if "translate" in options:
-                cmds.setAttr(groupName + ".t", *options["translate"])
-
-            if options.get("post_process", True):
-                if family == "rig":
-                    self._post_process_rig(name, namespace, context, options)
+            if family == "rig":
+                self._post_process_rig(name, namespace, context, options)
+            else:
+                if "translate" in options:
+                    cmds.setAttr(groupName + ".t", *options["translate"])
 
             return newNodes
 
