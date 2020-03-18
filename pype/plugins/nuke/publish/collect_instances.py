@@ -89,8 +89,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     instance.append(i)
                 node.end()
 
-            family = avalon_knob_data["family"]
-            families = list()
             families_ak = avalon_knob_data.get("families")
 
             if families_ak:
