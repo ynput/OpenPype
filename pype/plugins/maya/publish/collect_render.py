@@ -238,7 +238,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "expectedFiles": full_exp_files,
                 "resolutionWidth": cmds.getAttr("defaultResolution.width"),
                 "resolutionHeight": cmds.getAttr("defaultResolution.height"),
-                "pixelAspect": cmds.getAttr("defaultResolution.height")
+                "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect")
             }
 
             # Apply each user defined attribute as data
