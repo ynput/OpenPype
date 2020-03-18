@@ -80,6 +80,8 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                             add_family = "render.farm"
                             instance.data["transfer"] = False
                         families.append(add_family)
+                        if "prerender" in family:
+                            families.append("prerender")
                     else:
                         # add family into families
                         families.insert(0, family)
