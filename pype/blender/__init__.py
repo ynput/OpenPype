@@ -1,15 +1,7 @@
-import logging
-from pathlib import Path
 import os
-
-import bpy
 
 from avalon import api as avalon
 from pyblish import api as pyblish
-
-from .plugin import AssetLoader
-
-logger = logging.getLogger("pype.blender")
 
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)
