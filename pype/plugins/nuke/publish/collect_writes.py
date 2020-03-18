@@ -66,7 +66,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             int(last_frame)
         )
 
-        if 'render' in instance.data['families']:
         if [fm for fm in instance.data['families']
                 if fm in ["render", "prerender"]]:
             if "representations" not in instance.data:
@@ -96,7 +95,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                     # this will only run if slate frame is not already
                     # rendered from previews publishes
                     if "slate" in instance.data["families"] \
-                            and (frame_length == collected_frames_len):
+                            and (frame_length == collected_frames_len) \
+                            and ("prerender" not in instance.data["families"]):
                         frame_slate_str = "%0{}d".format(
                             len(str(last_frame))) % (first_frame - 1)
                         slate_frame = collected_frames[0].replace(
@@ -105,6 +105,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
                 representation['files'] = collected_frames
                 instance.data["representations"].append(representation)
+                if "render" not in instance.data["families"]:
+                    instance.data["families"].append("render")
             except Exception:
                 instance.data["representations"].append(representation)
                 self.log.debug("couldn't collect frames: {}".format(label))
@@ -144,5 +146,19 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
         })
-
+        self.log.debug("families: {}".format(families))
+        if "prerender" in families:
+            _families = list()
+            for fm in families:
+                if fm in _families:
+                    continue
+                if "render" in fm:
+                    if "prerender" in fm:
+                        continue
+                    _families.append(fm)
+            instance.data.update({
+                "family": "prerender",
+                "families": _families
+                })
+            self.log.debug("_families: {}".format(_families))
         self.log.debug("instance.data: {}".format(instance.data))
