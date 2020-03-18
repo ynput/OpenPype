@@ -24,7 +24,7 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_reference(self, context, name, namespace, data):
+    def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
         from avalon import maya
         import pymel.core as pm
@@ -101,16 +101,18 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             cmds.setAttr(groupName + ".selectHandleY", cy)
             cmds.setAttr(groupName + ".selectHandleZ", cz)
 
-            if data.get("post_process", True):
-                if family == "rig":
-                    self._post_process_rig(name, namespace, context, data)
+            if family == "rig":
+                self._post_process_rig(name, namespace, context, options)
+            else:
+                if "translate" in options:
+                    cmds.setAttr(groupName + ".t", *options["translate"])
 
             return newNodes
 
     def switch(self, container, representation):
         self.update(container, representation)
 
-    def _post_process_rig(self, name, namespace, context, data):
+    def _post_process_rig(self, name, namespace, context, options):
 
         output = next((node for node in self if
                        node.endswith("out_SET")), None)

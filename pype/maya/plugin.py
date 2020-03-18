@@ -1,4 +1,5 @@
 from avalon import api
+from avalon.vendor import qargparse
 
 
 def get_reference_node_parents(ref):
@@ -33,11 +34,29 @@ class ReferenceLoader(api.Loader):
     `update` logic.
 
     """
-    def load(self,
-             context,
-             name=None,
-             namespace=None,
-             data=None):
+
+    options = [
+        qargparse.Integer(
+            "count",
+            label="Count",
+            default=1,
+            min=1,
+            help="How many times to load?"
+        ),
+        qargparse.Double3(
+            "offset",
+            label="Position Offset",
+            help="Offset loaded models for easier selection."
+        )
+    ]
+
+    def load(
+        self,
+        context,
+        name=None,
+        namespace=None,
+        options=None
+    ):
 
         import os
         from avalon.maya import lib
@@ -46,29 +65,46 @@ class ReferenceLoader(api.Loader):
         assert os.path.exists(self.fname), "%s does not exist." % self.fname
 
         asset = context['asset']
+        loaded_containers = []
 
-        namespace = namespace or lib.unique_namespace(
-            asset["name"] + "_",
-            prefix="_" if asset["name"][0].isdigit() else "",
-            suffix="_",
-        )
+        count = options.get("count") or 1
+        for c in range(0, count):
+            namespace = namespace or lib.unique_namespace(
+                asset["name"] + "_",
+                prefix="_" if asset["name"][0].isdigit() else "",
+                suffix="_",
+            )
 
-        self.process_reference(context=context,
-                               name=name,
-                               namespace=namespace,
-                               data=data)
+            # Offset loaded subset
+            if "offset" in options:
+                offset = [i * c for i in options["offset"]]
+                options["translate"] = offset
 
-        # Only containerize if any nodes were loaded by the Loader
-        nodes = self[:]
-        if not nodes:
-            return
+            self.log.info(options)
 
-        return containerise(
-            name=name,
-            namespace=namespace,
-            nodes=nodes,
-            context=context,
-            loader=self.__class__.__name__)
+            self.process_reference(
+                context=context,
+                name=name,
+                namespace=namespace,
+                options=options
+            )
+
+            # Only containerize if any nodes were loaded by the Loader
+            nodes = self[:]
+            if not nodes:
+                return
+
+            loaded_containers.append(containerise(
+                name=name,
+                namespace=namespace,
+                nodes=nodes,
+                context=context,
+                loader=self.__class__.__name__
+            ))
+
+            c += 1
+            namespace = None
+        return loaded_containers
 
     def process_reference(self, context, name, namespace, data):
         """To be implemented by subclass"""
