@@ -42,6 +42,11 @@ class ReferenceLoader(api.Loader):
             default=1,
             min=1,
             help="How many times to load?"
+        ),
+        qargparse.Double3(
+            "offset",
+            label="Position Offset",
+            help="Offset loaded models for easier selection."
         )
     ]
 
@@ -50,8 +55,7 @@ class ReferenceLoader(api.Loader):
         context,
         name=None,
         namespace=None,
-        options=None,
-        data=None
+        options=None
     ):
 
         import os
@@ -64,19 +68,25 @@ class ReferenceLoader(api.Loader):
         loaded_containers = []
 
         count = options.get("count") or 1
-        while count > 0:
-            count -= 1
+        for c in range(0, count):
             namespace = namespace or lib.unique_namespace(
                 asset["name"] + "_",
                 prefix="_" if asset["name"][0].isdigit() else "",
                 suffix="_",
             )
 
+            # Offset loaded subset
+            if "offset" in options:
+                offset = [i * c for i in options["offset"]]
+                options["translate"] = offset
+
+            self.log.info(options)
+
             self.process_reference(
                 context=context,
                 name=name,
                 namespace=namespace,
-                data=data
+                options=options
             )
 
             # Only containerize if any nodes were loaded by the Loader
@@ -91,6 +101,9 @@ class ReferenceLoader(api.Loader):
                 context=context,
                 loader=self.__class__.__name__
             ))
+
+            c += 1
+            namespace = None
         return loaded_containers
 
     def process_reference(self, context, name, namespace, data):
