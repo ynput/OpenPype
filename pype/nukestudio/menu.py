@@ -43,7 +43,7 @@ def install():
     """
 
     # here is the best place to add menu
-    from avalon.tools import publish
+    from avalon.tools import publish, cbloader
     from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
@@ -86,6 +86,9 @@ def install():
         lambda *args: publish.show(hiero.ui.mainWindow())
     )
 
+    loader_action = menu.addAction("Load...")
+    loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
+    loader_action.triggered.connect(cbloader.show)
     menu.addSeparator()
 
     reload_action = menu.addAction("Reload pipeline...")
@@ -93,11 +96,12 @@ def install():
     reload_action.triggered.connect(reload_config)
 
     # Is this required?
-    hiero.ui.registerAction(context_label_action)
-    hiero.ui.registerAction(workfiles_action)
-    hiero.ui.registerAction(default_tags_action)
-    hiero.ui.registerAction(publish_action)
-    hiero.ui.registerAction(reload_action)
+    # hiero.ui.registerAction(context_label_action)
+    # hiero.ui.registerAction(workfiles_action)
+    # hiero.ui.registerAction(default_tags_action)
+    # hiero.ui.registerAction(publish_action)
+    # hiero.ui.registerAction(loader_action)
+    # hiero.ui.registerAction(reload_action)
 
     self.context_label_action = context_label_action
     self.workfile_actions = workfiles_action

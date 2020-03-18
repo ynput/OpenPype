@@ -211,17 +211,19 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "attachTo": attachTo,
                 "setMembers": layer_name,
                 "publish": True,
-                "frameStart": int(self.get_render_attribute("startFrame",
+                "frameStart": int(context.data["assetEntity"]['data']['frameStart']),
+                "frameEnd": int(context.data["assetEntity"]['data']['frameEnd']),
+                "frameStartHandle": int(self.get_render_attribute("startFrame",
                                                             layer=layer_name)),
-                "frameEnd": int(self.get_render_attribute("endFrame",
+                "frameEndHandle": int(self.get_render_attribute("endFrame",
                                                           layer=layer_name)),
                 "byFrameStep": int(
                     self.get_render_attribute("byFrameStep",
                                               layer=layer_name)),
                 "renderer": self.get_render_attribute("currentRenderer",
                                                       layer=layer_name),
-                "handleStart": context.data["assetEntity"]['data']['handleStart'],
-                "handleEnd": context.data["assetEntity"]['data']['handleEnd'],
+                "handleStart": int(context.data["assetEntity"]['data']['handleStart']),
+                "handleEnd": int(context.data["assetEntity"]['data']['handleEnd']),
 
                 # instance subset
                 "family": "renderlayer",
@@ -236,7 +238,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "expectedFiles": full_exp_files,
                 "resolutionWidth": cmds.getAttr("defaultResolution.width"),
                 "resolutionHeight": cmds.getAttr("defaultResolution.height"),
-                "pixelAspect": cmds.getAttr("defaultResolution.height")
+                "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect")
             }
 
             # Apply each user defined attribute as data
@@ -259,8 +261,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             # Define nice label
             label = "{0} ({1})".format(expected_layer_name, data["asset"])
-            label += "  [{0}-{1}]".format(int(data["frameStart"]),
-                                          int(data["frameEnd"]))
+            label += "  [{0}-{1}]".format(int(data["frameStartHandle"]),
+                                          int(data["frameEndHandle"]))
 
             instance = context.create_instance(expected_layer_name)
             instance.data["label"] = label

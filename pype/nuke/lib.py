@@ -15,12 +15,11 @@ import nuke
 from .presets import (
     get_colorspace_preset,
     get_node_dataflow_preset,
-    get_node_colorspace_preset
-)
-
-from .presets import (
+    get_node_colorspace_preset,
     get_anatomy
 )
+
+from .utils import set_context_favorites
 
 from pypeapp import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -620,7 +619,8 @@ class WorkfileSettings(object):
         # third set ocio custom path
         if root_dict.get("customOCIOConfigPath"):
             self._root_node["customOCIOConfigPath"].setValue(
-                str(root_dict["customOCIOConfigPath"]).format(**os.environ)
+                str(root_dict["customOCIOConfigPath"]).format(
+                    **os.environ).replace("\\", "/")
                 )
             log.debug("nuke.root()['{}'] changed to: {}".format(
                 "customOCIOConfigPath", root_dict["customOCIOConfigPath"]))
@@ -943,6 +943,26 @@ class WorkfileSettings(object):
         self.reset_frame_range_handles()
         # add colorspace menu item
         self.set_colorspace()
+
+    def set_favorites(self):
+        projects_root = os.getenv("AVALON_PROJECTS")
+        work_dir = os.getenv("AVALON_WORKDIR")
+        asset = os.getenv("AVALON_ASSET")
+        project = os.getenv("AVALON_PROJECT")
+        hierarchy = os.getenv("AVALON_HIERARCHY")
+        favorite_items = OrderedDict()
+
+        # project
+        favorite_items.update({"Project dir": os.path.join(
+            projects_root, project).replace("\\", "/")})
+        # shot
+        favorite_items.update({"Shot dir": os.path.join(
+            projects_root, project,
+            hierarchy, asset).replace("\\", "/")})
+        # workdir
+        favorite_items.update({"Work dir": work_dir})
+
+        set_context_favorites(favorite_items)
 
 
 def get_hierarchical_attr(entity, attr, default=None):
@@ -1350,8 +1370,8 @@ class ExporterReview:
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
-            self.first_frame = self.instance.data.get("frameStart", None)
-            self.last_frame = self.instance.data.get("frameEnd", None)
+            self.first_frame = self.instance.data.get("frameStartHandle", None)
+            self.last_frame = self.instance.data.get("frameEndHandle", None)
 
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]

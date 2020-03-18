@@ -41,8 +41,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         self._ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())
-        self._frame_start = int(instance.data["frameStart"])
-        self._frame_end = int(instance.data["frameEnd"])
+        self._frame_start = int(instance.data["frameStartHandle"])
+        self._frame_end = int(instance.data["frameEndHandle"])
 
         # get output path
         render_path = instance.data['path']

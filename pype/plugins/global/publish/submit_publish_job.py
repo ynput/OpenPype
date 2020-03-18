@@ -238,8 +238,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 )
                 i += 1
 
-        # Avoid copied pools and remove secondary pool
-        payload["JobInfo"]["Pool"] = "none"
+        # remove secondary pool
         payload["JobInfo"].pop("SecondaryPool", None)
 
         self.log.info("Submitting Deadline job ...")
@@ -355,8 +354,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 aov)
 
             staging = os.path.dirname(list(cols[0])[0])
-            start = int(instance_data.get("frameStart"))
-            end = int(instance_data.get("frameEnd"))
 
             self.log.info("Creating data for: {}".format(subset_name))
 
@@ -377,8 +374,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "name": ext,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(cols[0])],
-                "frameStart": start,
-                "frameEnd": end,
+                "frameStart": int(instance_data.get("frameStartHandle")),
+                "frameEnd": int(instance_data.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
                 "anatomy_template": "render",
@@ -413,8 +410,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
 
         representations = []
-        start = int(instance.get("frameStart"))
-        end = int(instance.get("frameEnd"))
         cols, rem = clique.assemble(exp_files)
         bake_render_path = instance.get("bakeRenderPath")
 
@@ -442,8 +437,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "name": ext,
                 "ext": ext,
                 "files": [os.path.basename(f) for f in list(c)],
-                "frameStart": start,
-                "frameEnd": end,
+                "frameStart": int(instance.get("frameStartHandle")),
+                "frameEnd": int(instance.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": os.path.dirname(list(c)[0]),
                 "anatomy_template": "render",
@@ -577,6 +572,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "frameEnd": end,
             "handleStart": handle_start,
             "handleEnd": handle_end,
+            "frameStartHandle": start - handle_start,
+            "frameEndHandle": end + handle_end,
             "fps": fps,
             "source": source,
             "extendFrames": data.get("extendFrames"),

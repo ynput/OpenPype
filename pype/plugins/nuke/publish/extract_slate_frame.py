@@ -77,7 +77,7 @@ class ExtractSlateFrame(pype.api.Extractor):
         else:
             fname = os.path.basename(instance.data.get("path", None))
             fhead = os.path.splitext(fname)[0] + "."
-            first_frame = instance.data.get("frameStart", None) - 1
+            first_frame = instance.data.get("frameStartHandle", None) - 1
             last_frame = first_frame
 
         if "#" in fhead:
@@ -157,7 +157,7 @@ class ExtractSlateFrame(pype.api.Extractor):
             return
 
         comment = instance.context.data.get("comment")
-        intent = instance.context.data.get("intent")
+        intent = instance.context.data.get("intent", {}).get("value", "")
 
         try:
             node["f_submission_note"].setValue(comment)

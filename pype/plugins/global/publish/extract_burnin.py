@@ -35,22 +35,28 @@ class ExtractBurnin(pype.api.Extractor):
                                          context_data.get("handleStart"))
         handle_end = instance.data.get("handleEnd",
                                        context_data.get("handleEnd"))
-        duration = frame_end - frame_start + 1
+
+        frame_start_handle = frame_start - handle_start
+        frame_end_handle = frame_end + handle_end
+        duration = frame_end_handle - frame_start_handle + 1
 
         prep_data = copy.deepcopy(instance.data["anatomyData"])
 
         if "slate.farm" in instance.data["families"]:
-            frame_start += 1
+            frame_start_handle += 1
             duration -= 1
 
         prep_data.update({
-            "frame_start": frame_start,
-            "frame_end": frame_end,
+            "frame_start": frame_start_handle,
+            "frame_end": frame_end_handle,
             "duration": duration,
             "version": int(version),
-            "comment": instance.context.data.get("comment", ""),
-            "intent": instance.context.data.get("intent", "")
+            "comment": instance.context.data.get("comment", "")
         })
+
+        intent = instance.context.data.get("intent", {}).get("label")
+        if intent:
+            prep_data["intent"] = intent
 
         # get anatomy project
         anatomy = instance.context.data['anatomy']
@@ -99,13 +105,13 @@ class ExtractBurnin(pype.api.Extractor):
             _prep_data["anatomy"] = filled_anatomy.get_solved()
 
             # copy frame range variables
-            frame_start_cp = frame_start
-            frame_end_cp = frame_end
+            frame_start_cp = frame_start_handle
+            frame_end_cp = frame_end_handle
             duration_cp = duration
 
             if no_handles:
-                frame_start_cp = frame_start + handle_start
-                frame_end_cp = frame_end - handle_end
+                frame_start_cp = frame_start
+                frame_end_cp = frame_end
                 duration_cp = frame_end_cp - frame_start_cp + 1
                 _prep_data.update({
                     "frame_start": frame_start_cp,

@@ -51,7 +51,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             collection = collections[0]
 
             frame_length = int(
-                instance.data["frameEnd"] - instance.data["frameStart"] + 1
+                instance.data["frameEndHandle"] - instance.data["frameStartHandle"] + 1
             )
 
             if frame_length != 1:
