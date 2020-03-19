@@ -366,7 +366,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             new_instance = copy(instance_data)
             new_instance["subset"] = subset_name
-            new_instance["group"] = aov
+            new_instance["subsetGroup"] = aov
 
             ext = cols[0].tail.lstrip(".")
 

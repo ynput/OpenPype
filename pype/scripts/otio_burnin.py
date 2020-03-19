@@ -296,7 +296,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             args=args,
             overwrite=overwrite
         )
-        print(command)
+        # print(command)
 
         proc = subprocess.Popen(command, shell=True)
         proc.communicate()
