@@ -24,7 +24,6 @@ class CollectClipHandles(api.ContextPlugin):
                 continue
 
             # get handles
-            handles = int(instance.data["handles"])
             handle_start = int(instance.data["handleStart"])
             handle_end = int(instance.data["handleEnd"])
 
@@ -38,11 +37,9 @@ class CollectClipHandles(api.ContextPlugin):
                 self.log.debug("Adding to shared assets: `{}`".format(
                     instance.data["name"]))
                 asset_shared.update({
-                    "handles": handles,
                     "handleStart": handle_start,
                     "handleEnd": handle_end
                 })
-
 
         for instance in filtered_instances:
             if not instance.data.get("main") and not instance.data.get("handleTag"):
@@ -50,7 +47,6 @@ class CollectClipHandles(api.ContextPlugin):
                     instance.data["name"]))
                 name = instance.data["asset"]
                 s_asset_data = assets_shared.get(name)
-                instance.data["handles"] = s_asset_data.get("handles", 0)
                 instance.data["handleStart"] = s_asset_data.get(
                     "handleStart", 0
                 )
@@ -59,8 +55,6 @@ class CollectClipHandles(api.ContextPlugin):
                 # debug printing
                 self.log.debug("_ s_asset_data: `{}`".format(
                     s_asset_data))
-                self.log.debug("_ instance.data[handles]: `{}`".format(
-                    instance.data["handles"]))
                 self.log.debug("_ instance.data[handleStart]: `{}`".format(
                     instance.data["handleStart"]))
                 self.log.debug("_ instance.data[handleEnd]: `{}`".format(

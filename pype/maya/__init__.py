@@ -8,7 +8,6 @@ from avalon import api as avalon, pipeline, maya
 from avalon.maya.pipeline import IS_HEADLESS
 from avalon.tools import workfiles
 from pyblish import api as pyblish
-from pypeapp import config
 
 from ..lib import (
     any_outdated
@@ -156,12 +155,19 @@ def on_open(_):
     from avalon.vendor.Qt import QtWidgets
     from ..widgets import popup
 
+    cmds.evalDeferred(
+        "from pype.maya import lib;lib.remove_render_layer_observer()")
+    cmds.evalDeferred(
+        "from pype.maya import lib;lib.add_render_layer_observer()")
+    cmds.evalDeferred(
+        "from pype.maya import lib;lib.add_render_layer_change_observer()")
     # # Update current task for the current scene
     # update_task_from_path(cmds.file(query=True, sceneName=True))
 
     # Validate FPS after update_task_from_path to
     # ensure it is using correct FPS for the asset
     lib.validate_fps()
+    lib.fix_incompatible_containers()
 
     if any_outdated():
         log.warning("Scene has outdated content.")
@@ -193,6 +199,12 @@ def on_new(_):
     """Set project resolution and fps when create a new file"""
     avalon.logger.info("Running callback on new..")
     with maya.suspended_refresh():
+        cmds.evalDeferred(
+            "from pype.maya import lib;lib.remove_render_layer_observer()")
+        cmds.evalDeferred(
+            "from pype.maya import lib;lib.add_render_layer_observer()")
+        cmds.evalDeferred(
+            "from pype.maya import lib;lib.add_render_layer_change_observer()")
         lib.set_context_settings()
 
 
@@ -217,3 +229,10 @@ def on_task_changed(*args):
 
     # Run
     maya.pipeline._on_task_changed()
+    with maya.suspended_refresh():
+        lib.set_context_settings()
+        lib.update_content_on_context_change()
+
+    lib.show_message("Context was changed",
+                     ("Context was changed to {}".format(
+                        avalon.Session["AVALON_ASSET"])))

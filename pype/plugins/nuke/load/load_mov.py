@@ -1,11 +1,10 @@
+import re
+import nuke
 import contextlib
 
 from avalon import api, io
-
-import nuke
-
-from pype.api import Logger
-log = Logger().get_logger(__name__, "nuke")
+from pype.nuke import presets
+from pypeapp import config
 
 
 @contextlib.contextmanager
@@ -24,7 +23,7 @@ def preserve_trim(node):
     offset_frame = None
     if node['frame_mode'].value() == "start at":
         start_at_frame = node['frame'].value()
-    if node['frame_mode'].value() is "offset":
+    if node['frame_mode'].value() == "offset":
         offset_frame = node['frame'].value()
 
     try:
@@ -33,14 +32,14 @@ def preserve_trim(node):
         if start_at_frame:
             node['frame_mode'].setValue("start at")
             node['frame'].setValue(str(script_start))
-            log.info("start frame of Read was set to"
-                     "{}".format(script_start))
+            print("start frame of Read was set to"
+                  "{}".format(script_start))
 
         if offset_frame:
             node['frame_mode'].setValue("offset")
             node['frame'].setValue(str((script_start + offset_frame)))
-            log.info("start frame of Read was set to"
-                     "{}".format(script_start))
+            print("start frame of Read was set to"
+                  "{}".format(script_start))
 
 
 def loader_shift(node, frame, relative=True):
@@ -69,11 +68,37 @@ def loader_shift(node, frame, relative=True):
     return int(script_start)
 
 
+def add_review_presets_config():
+    returning = {
+        "families": list(),
+        "representations": list()
+    }
+    review_presets = config.get_presets()["plugins"]["global"]["publish"].get(
+        "ExtractReview", {})
+
+    outputs = review_presets.get("outputs", {})
+    #
+    for output, properities in outputs.items():
+        returning["representations"].append(output)
+        returning["families"] += properities.get("families", [])
+
+    return returning
+
+
 class LoadMov(api.Loader):
     """Load mov file into Nuke"""
+    presets = add_review_presets_config()
+    families = [
+        "source",
+        "plate",
+        "render",
+        "review"] + presets["families"]
 
-    families = ["write", "source", "plate", "render", "review"]
-    representations = ["wipmov", "h264", "mov", "preview", "review", "mp4"]
+    representations = [
+        "mov",
+        "preview",
+        "review",
+        "mp4"] + presets["representations"]
 
     label = "Load mov"
     order = -10
@@ -85,47 +110,52 @@ class LoadMov(api.Loader):
             containerise,
             viewer_update_and_undo_stop
         )
-
         version = context['version']
         version_data = version.get("data", {})
+        repr_id = context["representation"]["_id"]
 
-        orig_first = version_data.get("frameStart", None)
-        orig_last = version_data.get("frameEnd", None)
+        orig_first = version_data.get("frameStart")
+        orig_last = version_data.get("frameEnd")
         diff = orig_first - 1
-        # set first to 1
+
         first = orig_first - diff
         last = orig_last - diff
-        handles = version_data.get("handles", None)
-        handle_start = version_data.get("handleStart", None)
-        handle_end = version_data.get("handleEnd", None)
+
+        handle_start = version_data.get("handleStart", 0)
+        handle_end = version_data.get("handleEnd", 0)
+
+        colorspace = version_data.get("colorspace")
         repr_cont = context["representation"]["context"]
 
-        # fix handle start and end if none are available
-        if not handle_start and not handle_end:
-            handle_start = handles
-            handle_end = handles
+        self.log.debug(
+            "Representation id `{}` ".format(repr_id))
 
+        context["representation"]["_id"]
         # create handles offset (only to last, because of mov)
         last += handle_start + handle_end
         # offset should be with handles so it match orig frame range
-        offset_frame = orig_first + handle_start
+        offset_frame = orig_first - handle_start
 
         # Fallback to asset name when namespace is None
         if namespace is None:
             namespace = context['asset']['name']
 
-        file = self.fname.replace("\\", "/")
-        log.info("file: {}\n".format(self.fname))
+        file = self.fname
+
+        if not file:
+            self.log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return
+
+        file = file.replace("\\", "/")
 
         read_name = "Read_{0}_{1}_{2}".format(
             repr_cont["asset"],
             repr_cont["subset"],
             repr_cont["representation"])
 
-
         # Create the Loader with the filename path set
         with viewer_update_and_undo_stop():
-            # TODO: it might be universal read to img/geo/camera
             read_node = nuke.createNode(
                 "Read",
                 "name {}".format(read_name)
@@ -139,7 +169,23 @@ class LoadMov(api.Loader):
             read_node["last"].setValue(last)
             read_node["frame_mode"].setValue("start at")
             read_node["frame"].setValue(str(offset_frame))
-            # add additional metadata from the version to imprint to Avalon knob
+
+            if colorspace:
+                read_node["colorspace"].setValue(str(colorspace))
+
+            # load nuke presets for Read's colorspace
+            read_clrs_presets = presets.get_colorspace_preset().get(
+                "nuke", {}).get("read", {})
+
+            # check if any colorspace presets for read is mathing
+            preset_clrsp = next((read_clrs_presets[k]
+                                 for k in read_clrs_presets
+                                 if bool(re.search(k, file))),
+                                None)
+            if preset_clrsp is not None:
+                read_node["colorspace"].setValue(str(preset_clrsp))
+
+            # add additional metadata from the version to imprint Avalon knob
             add_keys = [
                 "frameStart", "frameEnd", "handles", "source", "author",
                 "fps", "version", "handleStart", "handleEnd"
@@ -147,7 +193,7 @@ class LoadMov(api.Loader):
 
             data_imprint = {}
             for key in add_keys:
-                if key is 'version':
+                if key == 'version':
                     data_imprint.update({
                         key: context["version"]['name']
                     })
@@ -186,10 +232,18 @@ class LoadMov(api.Loader):
         )
 
         node = nuke.toNode(container['objectName'])
-        # TODO: prepare also for other Read img/geo/camera
+
         assert node.Class() == "Read", "Must be Read"
 
-        file = api.get_representation_path(representation)
+        file = self.fname
+
+        if not file:
+            repr_id = representation["_id"]
+            self.log.warning(
+                "Representation id `{}` is failing to load".format(repr_id))
+            return
+
+        file = file.replace("\\", "/")
 
         # Get start frame from version data
         version = io.find_one({
@@ -207,20 +261,23 @@ class LoadMov(api.Loader):
 
         version_data = version.get("data", {})
 
-        orig_first = version_data.get("frameStart", None)
-        orig_last = version_data.get("frameEnd", None)
+        orig_first = version_data.get("frameStart")
+        orig_last = version_data.get("frameEnd")
         diff = orig_first - 1
+
         # set first to 1
         first = orig_first - diff
         last = orig_last - diff
         handles = version_data.get("handles", 0)
         handle_start = version_data.get("handleStart", 0)
         handle_end = version_data.get("handleEnd", 0)
+        colorspace = version_data.get("colorspace")
 
         if first is None:
-            log.warning("Missing start frame for updated version"
-                        "assuming starts at frame 0 for: "
-                        "{} ({})".format(node['name'].value(), representation))
+            self.log.warning("Missing start frame for updated version"
+                             "assuming starts at frame 0 for: "
+                             "{} ({})".format(
+                                node['name'].value(), representation))
             first = 0
 
         # fix handle start and end if none are available
@@ -231,12 +288,12 @@ class LoadMov(api.Loader):
         # create handles offset (only to last, because of mov)
         last += handle_start + handle_end
         # offset should be with handles so it match orig frame range
-        offset_frame = orig_first + handle_start
+        offset_frame = orig_first - handle_start
 
         # Update the loader's path whilst preserving some values
         with preserve_trim(node):
-            node["file"].setValue(file["path"])
-            log.info("__ node['file']: {}".format(node["file"].value()))
+            node["file"].setValue(file)
+            self.log.info("__ node['file']: {}".format(node["file"].value()))
 
         # Set the global in to the start frame of the sequence
         loader_shift(node, first, relative=True)
@@ -247,19 +304,34 @@ class LoadMov(api.Loader):
         node["frame_mode"].setValue("start at")
         node["frame"].setValue(str(offset_frame))
 
+        if colorspace:
+            node["colorspace"].setValue(str(colorspace))
+
+        # load nuke presets for Read's colorspace
+        read_clrs_presets = presets.get_colorspace_preset().get(
+            "nuke", {}).get("read", {})
+
+        # check if any colorspace presets for read is mathing
+        preset_clrsp = next((read_clrs_presets[k]
+                             for k in read_clrs_presets
+                             if bool(re.search(k, file))),
+                            None)
+        if preset_clrsp is not None:
+            node["colorspace"].setValue(str(preset_clrsp))
+
         updated_dict = {}
         updated_dict.update({
             "representation": str(representation["_id"]),
-            "frameStart": version_data.get("frameStart"),
-            "frameEnd": version_data.get("frameEnd"),
-            "version": version.get("name"),
+            "frameStart": str(first),
+            "frameEnd": str(last),
+            "version": str(version.get("name")),
+            "colorspace": version_data.get("colorspace"),
             "source": version_data.get("source"),
-            "handles": version_data.get("handles"),
-            "handleStart": version_data.get("handleStart"),
-            "handleEnd": version_data.get("handleEnd"),
-            "fps": version_data.get("fps"),
+            "handleStart": str(handle_start),
+            "handleEnd": str(handle_end),
+            "fps": str(version_data.get("fps")),
             "author": version_data.get("author"),
-            "outputDir": version_data.get("outputDir"),
+            "outputDir": version_data.get("outputDir")
         })
 
         # change color of node
@@ -272,7 +344,7 @@ class LoadMov(api.Loader):
         update_container(
             node, updated_dict
         )
-        log.info("udated to version: {}".format(version.get("name")))
+        self.log.info("udated to version: {}".format(version.get("name")))
 
     def remove(self, container):
 

@@ -3,14 +3,15 @@
 
 from operator import eq, ne, ge, le, gt, lt
 
-from pyparsing import (ParserElement, Group, Word, CaselessKeyword, Forward,
+from pyparsing import (Group, Word, CaselessKeyword, Forward,
                        FollowedBy, Suppress, oneOf, OneOrMore, Optional,
                        alphanums, quotedString, removeQuotes)
 
 import ftrack_api_old.exception
 
-# Optimise parsing using packrat memoisation feature.
-ParserElement.enablePackrat()
+# Do not enable packrat since it is not thread-safe and will result in parsing
+# exceptions in a multi threaded environment.
+# ParserElement.enablePackrat()
 
 
 class Parser(object):

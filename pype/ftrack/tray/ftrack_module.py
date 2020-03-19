@@ -34,29 +34,28 @@ class FtrackModule:
 
     def validate(self):
         validation = False
-        cred = credentials._get_credentials()
-        try:
-            if 'username' in cred and 'apiKey' in cred:
-                validation = credentials._check_credentials(
-                    cred['username'],
-                    cred['apiKey']
-                )
-                if validation is False:
-                    self.show_login_widget()
-            else:
-                self.show_login_widget()
-
-        except Exception as e:
-            log.error("We are unable to connect to Ftrack: {0}".format(e))
-
-        validation = credentials._check_credentials()
-        if validation is True:
+        cred = credentials.get_credentials()
+        ft_user = cred.get("username")
+        ft_api_key = cred.get("api_key")
+        validation = credentials.check_credentials(ft_user, ft_api_key)
+        if validation:
+            credentials.set_env(ft_user, ft_api_key)
             log.info("Connected to Ftrack successfully")
             self.loginChange()
-        else:
-            log.warning("Please sign in to Ftrack")
-            self.bool_logged = False
-            self.set_menu_visibility()
+
+            return validation
+
+        if not validation and ft_user and ft_api_key:
+            log.warning(
+                "Current Ftrack credentials are not valid. {}: {} - {}".format(
+                    str(os.environ.get("FTRACK_SERVER")), ft_user, ft_api_key
+                )
+            )
+
+        log.info("Please sign in to Ftrack")
+        self.bool_logged = False
+        self.show_login_widget()
+        self.set_menu_visibility()
 
         return validation
 
@@ -67,7 +66,7 @@ class FtrackModule:
         self.start_action_server()
 
     def logout(self):
-        credentials._clear_credentials()
+        credentials.clear_credentials()
         self.stop_action_server()
 
         log.info("Logged out of Ftrack")
@@ -171,7 +170,7 @@ class FtrackModule:
 
             # If thread failed test Ftrack and Mongo connection
             elif not self.thread_socket_server.isAlive():
-                self.thread_socket_server_thread.join()
+                self.thread_socket_server.join()
                 self.thread_socket_server = None
                 ftrack_accessible = False
 
@@ -307,10 +306,22 @@ class FtrackModule:
         except Exception as e:
             log.error("During Killing Timer event server: {0}".format(e))
 
+    def changed_user(self):
+        self.stop_action_server()
+        credentials.set_env()
+        self.validate()
+
     def process_modules(self, modules):
         if 'TimersManager' in modules:
             self.timer_manager = modules['TimersManager']
             self.timer_manager.add_module(self)
+
+        if "UserModule" in modules:
+            credentials.USER_GETTER = modules["UserModule"].get_user
+            modules["UserModule"].register_callback_on_user_change(
+                self.changed_user
+            )
+
 
     def start_timer_manager(self, data):
         if self.thread_timer is not None:
@@ -336,7 +347,7 @@ class FtrackEventsThread(QtCore.QThread):
 
     def __init__(self, parent):
         super(FtrackEventsThread, self).__init__()
-        cred = credentials._get_credentials()
+        cred = credentials.get_credentials()
         self.username = cred['username']
         self.user = None
         self.last_task = None

@@ -10,8 +10,6 @@ class ExtractAudioFile(pype.api.Extractor):
     hosts = ["nukestudio"]
     families = ["clip", "audio"]
     match = api.Intersection
-    optional = True
-    active = False
 
     def process(self, instance):
         import os

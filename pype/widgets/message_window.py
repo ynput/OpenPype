@@ -7,7 +7,7 @@ log = logging.getLogger(__name__)
 
 class Window(QtWidgets.QWidget):
     def __init__(self, parent, title, message, level):
-        super().__init__()
+        super(Window, self).__init__()
         self.parent = parent
         self.title = title
         self.message = message
@@ -48,9 +48,10 @@ class Window(QtWidgets.QWidget):
         return
 
 
-def message(title=None, message=None, level="info"):
-    global app
-    app = QtWidgets.QApplication(sys.argv)
+def message(title=None, message=None, level="info", parent=None):
+    app = parent
+    if not app:
+        app = QtWidgets.QApplication(sys.argv)
     ex = Window(app, title, message, level)
     ex.show()
     # sys.exit(app.exec_())

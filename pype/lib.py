@@ -13,6 +13,62 @@ import avalon
 log = logging.getLogger(__name__)
 
 
+def get_paths_from_environ(env_key, return_first=False):
+    """Return existing paths from specific envirnment variable.
+
+    :param env_key: Environment key where should look for paths.
+    :type env_key: str
+    :param return_first: Return first path on `True`, list of all on `False`.
+    :type return_first: boolean
+
+    Difference when none of paths exists:
+    - when `return_first` is set to `False` then function returns empty list.
+    - when `return_first` is set to `True` then function returns `None`.
+    """
+
+    existing_paths = []
+    paths = os.environ.get(env_key) or ""
+    path_items = paths.split(os.pathsep)
+    for path in path_items:
+        # Skip empty string
+        if not path:
+            continue
+        # Normalize path
+        path = os.path.normpath(path)
+        # Check if path exists
+        if os.path.exists(path):
+            # Return path if `return_first` is set to True
+            if return_first:
+                return path
+            # Store path
+            existing_paths.append(path)
+
+    # Return None if none of paths exists
+    if return_first:
+        return None
+    # Return all existing paths from environment variable
+    return existing_paths
+
+
+def get_ffmpeg_tool_path(tool="ffmpeg"):
+    """Find path to ffmpeg tool in FFMPEG_PATH paths.
+
+    Function looks for tool in paths set in FFMPEG_PATH environment. If tool
+    exists then returns it's full path.
+
+    Returns tool name itself when tool path was not found. (FFmpeg path may be
+    set in PATH environment variable)
+    """
+
+    dir_paths = get_paths_from_environ("FFMPEG_PATH")
+    for dir_path in dir_paths:
+        for file_name in os.listdir(dir_path):
+            base, ext = os.path.splitext(file_name)
+            if base.lower() == tool.lower():
+                return os.path.join(dir_path, tool)
+    return tool
+
+
 # Special naming case for subprocess since its a built-in method.
 def _subprocess(*args, **kwargs):
     """Convenience method for getting output errors for subprocess."""
@@ -361,23 +417,7 @@ def _get_host_name():
 
 
 def get_asset(asset_name=None):
-    entity_data_keys_from_project_when_miss = [
-        "frameStart", "frameEnd", "handleStart", "handleEnd", "fps",
-        "resolutionWidth", "resolutionHeight"
-    ]
-
-    entity_keys_from_project_when_miss = []
-
-    alternatives = {
-        "handleStart": "handles",
-        "handleEnd": "handles"
-    }
-
-    defaults = {
-        "handleStart": 0,
-        "handleEnd": 0
-    }
-
+    """ Returning asset document from database """
     if not asset_name:
         asset_name = avalon.api.Session["AVALON_ASSET"]
 
@@ -385,56 +425,9 @@ def get_asset(asset_name=None):
         "name": asset_name,
         "type": "asset"
     })
+
     if not asset_document:
         raise TypeError("Entity \"{}\" was not found in DB".format(asset_name))
-
-    project_document = io.find_one({"type": "project"})
-
-    for key in entity_data_keys_from_project_when_miss:
-        if asset_document["data"].get(key):
-            continue
-
-        value = project_document["data"].get(key)
-        if value is not None or key not in alternatives:
-            asset_document["data"][key] = value
-            continue
-
-        alt_key = alternatives[key]
-        value = asset_document["data"].get(alt_key)
-        if value is not None:
-            asset_document["data"][key] = value
-            continue
-
-        value = project_document["data"].get(alt_key)
-        if value:
-            asset_document["data"][key] = value
-            continue
-
-        if key in defaults:
-            asset_document["data"][key] = defaults[key]
-
-    for key in entity_keys_from_project_when_miss:
-        if asset_document.get(key):
-            continue
-
-        value = project_document.get(key)
-        if value is not None or key not in alternatives:
-            asset_document[key] = value
-            continue
-
-        alt_key = alternatives[key]
-        value = asset_document.get(alt_key)
-        if value:
-            asset_document[key] = value
-            continue
-
-        value = project_document.get(alt_key)
-        if value:
-            asset_document[key] = value
-            continue
-
-        if key in defaults:
-            asset_document[key] = defaults[key]
 
     return asset_document
 

@@ -23,11 +23,12 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         add_publish_knob(root)
 
         family = "workfile"
+        task = os.getenv("AVALON_TASK", None)
         # creating instances per write node
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        subset = "{0}_{1}".format(os.getenv("AVALON_TASK", None), family)
+        subset = family + task.capitalize()
 
         # Get frame range
         first_frame = int(root["first_frame"].getValue())
@@ -72,8 +73,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "publish": root.knob('publish').value(),
             "family": family,
             "families": [family],
-            "representations": list(),
-            "subsetGroup": "workfiles"
+            "representations": list()
         })
 
         # adding basic script data

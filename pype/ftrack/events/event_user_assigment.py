@@ -207,7 +207,9 @@ class UserAssigmentEvent(BaseEvent):
             # formatting work dir is easiest part as we can use whole path
             work_dir = anatomy.format(data)['avalon']['work']
             # we also need publish but not whole
-            publish = anatomy.format_all(data)['partial']['avalon']['publish']
+            filled_all = anatomy.format_all(data)
+            publish = filled_all['avalon']['publish']
+
             # now find path to {asset}
             m = re.search("(^.+?{})".format(data['asset']),
                           publish)

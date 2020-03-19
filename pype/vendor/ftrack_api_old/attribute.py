@@ -148,7 +148,8 @@ class Attribute(object):
     '''A name and value pair persisted remotely.'''
 
     def __init__(
-        self, name, default_value=ftrack_api_old.symbol.NOT_SET, mutable=True
+        self, name, default_value=ftrack_api_old.symbol.NOT_SET, mutable=True,
+        computed=False
     ):
         '''Initialise attribute with *name*.
 
@@ -161,10 +162,14 @@ class Attribute(object):
         are :attr:`ftrack_api_old.symbol.NOT_SET`. The exception to this is when the
         target value is also :attr:`ftrack_api_old.symbol.NOT_SET`.
 
+        If *computed* is set to True the value is a remote side computed value
+        and should not be long-term cached.
+
         '''
         super(Attribute, self).__init__()
         self._name = name
         self._mutable = mutable
+        self._computed = computed
         self.default_value = default_value
 
         self._local_key = 'local'
@@ -204,6 +209,11 @@ class Attribute(object):
     def mutable(self):
         '''Return whether attribute is mutable.'''
         return self._mutable
+
+    @property
+    def computed(self):
+        '''Return whether attribute is computed.'''
+        return self._computed
 
     def get_value(self, entity):
         '''Return current value for *entity*.

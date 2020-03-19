@@ -3,7 +3,6 @@ import pyblish.api
 from avalon.nuke import lib as anlib
 from pype.nuke import lib as pnlib
 import pype
-reload(pnlib)
 
 
 class ExtractReviewDataMov(pype.api.Extractor):

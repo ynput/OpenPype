@@ -2176,17 +2176,28 @@ def load_capture_preset(path=None, data=None):
         4: 'nolights'}
     for key in preset[id]:
         if key == 'high_quality':
-            temp_options2['multiSampleEnable'] = True
-            temp_options2['multiSampleCount'] = 8
-            temp_options2['textureMaxResolution'] = 1024
-            temp_options2['enableTextureMaxRes'] = True
+            if preset[id][key] == True:
+                temp_options2['multiSampleEnable'] = True
+                temp_options2['multiSampleCount'] = 4
+                temp_options2['textureMaxResolution'] = 1024
+                temp_options2['enableTextureMaxRes'] = True
+                temp_options2['textureMaxResMode'] = 1
+            else:
+                temp_options2['multiSampleEnable'] = False
+                temp_options2['multiSampleCount'] = 4
+                temp_options2['textureMaxResolution'] = 512
+                temp_options2['enableTextureMaxRes'] = True
+                temp_options2['textureMaxResMode'] = 0
+
+        if key == 'ssaoEnable':
+            if preset[id][key] == True:
+                temp_options2['ssaoEnable'] = True
+            else:
+                temp_options2['ssaoEnable'] = False
 
         if key == 'alphaCut':
             temp_options2['transparencyAlgorithm'] = 5
             temp_options2['transparencyQuality'] = 1
-
-        if key == 'ssaoEnable':
-            temp_options2['ssaoEnable'] = True
 
         if key == 'headsUpDisplay':
             temp_options['headsUpDisplay'] = True
@@ -2318,6 +2329,25 @@ def get_attr_in_layer(attr, layer):
     return cmds.getAttr(attr)
 
 
+def fix_incompatible_containers():
+    """Return whether the current scene has any outdated content"""
+
+    host = avalon.api.registered_host()
+    for container in host.ls():
+        loader = container['loader']
+
+        print(container['loader'])
+
+        if loader in ["MayaAsciiLoader",
+                      "AbcLoader",
+                      "ModelLoader",
+                      "CameraLoader",
+                      "RigLoader",
+                      "FBXLoader"]:
+            cmds.setAttr(container["objectName"] + ".loader",
+                         "ReferenceLoader", type="string")
+
+
 def _null(*args):
     pass
 
@@ -2369,15 +2399,19 @@ class shelf():
             if not item.get('command'):
                 item['command'] = self._null
             if item['type'] == 'button':
-                self.addButon(item['name'], command=item['command'])
+                self.addButon(item['name'],
+                              command=item['command'],
+                              icon=item['icon'])
             if item['type'] == 'menuItem':
                 self.addMenuItem(item['parent'],
                                  item['name'],
-                                 command=item['command'])
+                                 command=item['command'],
+                                 icon=item['icon'])
             if item['type'] == 'subMenu':
                 self.addMenuItem(item['parent'],
                                  item['name'],
-                                 command=item['command'])
+                                 command=item['command'],
+                                 icon=item['icon'])
 
     def addButon(self, label, icon="commandButton.png",
                  command=_null, doubleCommand=_null):
@@ -2387,7 +2421,8 @@ class shelf():
         '''
         cmds.setParent(self.name)
         if icon:
-            icon = self.iconPath + icon
+            icon = os.path.join(self.iconPath, icon)
+            print(icon)
         cmds.shelfButton(width=37, height=37, image=icon, label=label,
                          command=command, dcc=doubleCommand,
                          imageOverlayLabel=label, olb=self.labelBackground,
@@ -2399,7 +2434,8 @@ class shelf():
             double click command and image.
         '''
         if icon:
-            icon = self.iconPath + icon
+            icon = os.path.join(self.iconPath, icon)
+            print(icon)
         return cmds.menuItem(p=parent, label=label, c=command, i="")
 
     def addSubMenu(self, parent, label, icon=None):
@@ -2408,7 +2444,8 @@ class shelf():
             the specified parent popup menu.
         '''
         if icon:
-            icon = self.iconPath + icon
+            icon = os.path.join(self.iconPath, icon)
+            print(icon)
         return cmds.menuItem(p=parent, label=label, i=icon, subMenu=1)
 
     def _cleanOldShelf(self):
@@ -2422,3 +2459,177 @@ class shelf():
                     cmds.deleteUI(each)
         else:
             cmds.shelfLayout(self.name, p="ShelfLayout")
+
+
+def _get_render_instance():
+    objectset = cmds.ls("*.id", long=True, type="objectSet",
+                        recursive=True, objectsOnly=True)
+
+    for objset in objectset:
+
+        if not cmds.attributeQuery("id", node=objset, exists=True):
+            continue
+
+        id_attr = "{}.id".format(objset)
+        if cmds.getAttr(id_attr) != "pyblish.avalon.instance":
+            continue
+
+        has_family = cmds.attributeQuery("family",
+                                         node=objset,
+                                         exists=True)
+        if not has_family:
+            continue
+
+        if cmds.getAttr("{}.family".format(objset)) == 'rendering':
+            return objset
+
+    return None
+
+
+renderItemObserverList = []
+
+
+class RenderSetupListObserver:
+
+    def listItemAdded(self, item):
+        print("--- adding ...")
+        self._add_render_layer(item)
+
+    def listItemRemoved(self, item):
+        print("--- removing ...")
+        self._remove_render_layer(item.name())
+
+    def _add_render_layer(self, item):
+        render_set = _get_render_instance()
+        layer_name = item.name()
+
+        if not render_set:
+            return
+
+        members = cmds.sets(render_set, query=True) or []
+        if not "LAYER_{}".format(layer_name) in members:
+            print("  - creating set for {}".format(layer_name))
+            set = cmds.sets(n="LAYER_{}".format(layer_name), empty=True)
+            cmds.sets(set, forceElement=render_set)
+            rio = RenderSetupItemObserver(item)
+            print("-   adding observer for {}".format(item.name()))
+            item.addItemObserver(rio.itemChanged)
+            renderItemObserverList.append(rio)
+
+    def _remove_render_layer(self, layer_name):
+        render_set = _get_render_instance()
+
+        if not render_set:
+            return
+
+        members = cmds.sets(render_set, query=True)
+        if "LAYER_{}".format(layer_name) in members:
+            print("  - removing set for {}".format(layer_name))
+            cmds.delete("LAYER_{}".format(layer_name))
+
+
+class RenderSetupItemObserver():
+
+    def __init__(self, item):
+        self.item = item
+        self.original_name = item.name()
+
+    def itemChanged(self, *args, **kwargs):
+        if self.item.name() == self.original_name:
+            return
+
+        render_set = _get_render_instance()
+
+        if not render_set:
+            return
+
+        members = cmds.sets(render_set, query=True)
+        if "LAYER_{}".format(self.original_name) in members:
+            print(" <> renaming {} to {}".format(self.original_name,
+                                                 self.item.name()))
+            cmds.rename("LAYER_{}".format(self.original_name),
+                        "LAYER_{}".format(self.item.name()))
+        self.original_name = self.item.name()
+
+
+renderListObserver = RenderSetupListObserver()
+
+
+def add_render_layer_change_observer():
+    import maya.app.renderSetup.model.renderSetup as renderSetup
+
+    rs = renderSetup.instance()
+    render_set = _get_render_instance()
+    if not render_set:
+        return
+
+    members = cmds.sets(render_set, query=True)
+    layers = rs.getRenderLayers()
+    for layer in layers:
+        if "LAYER_{}".format(layer.name()) in members:
+            rio = RenderSetupItemObserver(layer)
+            print("-   adding observer for {}".format(layer.name()))
+            layer.addItemObserver(rio.itemChanged)
+            renderItemObserverList.append(rio)
+
+
+def add_render_layer_observer():
+    import maya.app.renderSetup.model.renderSetup as renderSetup
+
+    print(">   adding renderSetup observer ...")
+    rs = renderSetup.instance()
+    rs.addListObserver(renderListObserver)
+    pass
+
+
+def remove_render_layer_observer():
+    import maya.app.renderSetup.model.renderSetup as renderSetup
+
+    print("<   removing renderSetup observer ...")
+    rs = renderSetup.instance()
+    try:
+        rs.removeListObserver(renderListObserver)
+    except ValueError:
+        # no observer set yet
+        pass
+
+
+def update_content_on_context_change():
+    """
+    This will update scene content to match new asset on context change
+    """
+    scene_sets = cmds.listSets(allSets=True)
+    new_asset = api.Session["AVALON_ASSET"]
+    new_data = lib.get_asset()["data"]
+    for s in scene_sets:
+        try:
+            if cmds.getAttr("{}.id".format(s)) == "pyblish.avalon.instance":
+                attr = cmds.listAttr(s)
+                print(s)
+                if "asset" in attr:
+                    print("  - setting asset to: [ {} ]".format(new_asset))
+                    cmds.setAttr("{}.asset".format(s),
+                                 new_asset, type="string")
+                if "frameStart" in attr:
+                    cmds.setAttr("{}.frameStart".format(s),
+                                 new_data["frameStart"])
+                if "frameEnd" in attr:
+                    cmds.setAttr("{}.frameEnd".format(s),
+                                 new_data["frameEnd"],)
+        except ValueError:
+            pass
+
+
+def show_message(title, msg):
+    from avalon.vendor.Qt import QtWidgets
+    from ..widgets import message_window
+
+    # Find maya main window
+    top_level_widgets = {w.objectName(): w for w in
+                         QtWidgets.QApplication.topLevelWidgets()}
+
+    parent = top_level_widgets.get("MayaWindow", None)
+    if parent is None:
+        pass
+    else:
+        message_window.message(title=title, message=msg, parent=parent)

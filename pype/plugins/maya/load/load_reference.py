@@ -1,4 +1,6 @@
 import pype.maya.plugin
+from avalon import api, maya
+from maya import cmds
 import os
 from pypeapp import config
 
@@ -6,8 +8,15 @@ from pypeapp import config
 class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
     """Load the model"""
 
-    families = ["model", "pointcache", "animation"]
-    representations = ["ma", "abc"]
+    families = ["model",
+                "pointcache",
+                "animation",
+                "mayaAscii",
+                "setdress",
+                "layout",
+                "camera",
+                "rig"]
+    representations = ["ma", "abc", "fbx"]
     tool_names = ["loader"]
 
     label = "Reference"
@@ -15,7 +24,7 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_reference(self, context, name, namespace, data):
+    def process_reference(self, context, name, namespace, options):
         import maya.cmds as cmds
         from avalon import maya
         import pymel.core as pm
@@ -37,27 +46,29 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
                               reference=True,
                               returnNewNodes=True)
 
-            namespace = cmds.referenceQuery(nodes[0], namespace=True)
+            # namespace = cmds.referenceQuery(nodes[0], namespace=True)
 
             shapes = cmds.ls(nodes, shapes=True, long=True)
-            print(shapes)
 
             newNodes = (list(set(nodes) - set(shapes)))
-            print(newNodes)
+
+            current_namespace = pm.namespaceInfo(currentNamespace=True)
+
+            if current_namespace != ":":
+                groupName = current_namespace + ":" + groupName
 
             groupNode = pm.PyNode(groupName)
             roots = set()
-            print(nodes)
 
             for node in newNodes:
                 try:
                     roots.add(pm.PyNode(node).getAllParents()[-2])
-                except:
+                except:  # noqa: E722
                     pass
             for root in roots:
                 root.setParent(world=True)
 
-            groupNode.root().zeroTransformPivots()
+            groupNode.zeroTransformPivots()
             for root in roots:
                 root.setParent(groupNode)
 
@@ -90,23 +101,41 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
             cmds.setAttr(groupName + ".selectHandleY", cy)
             cmds.setAttr(groupName + ".selectHandleZ", cz)
 
+            if family == "rig":
+                self._post_process_rig(name, namespace, context, options)
+            else:
+                if "translate" in options:
+                    cmds.setAttr(groupName + ".t", *options["translate"])
+
             return newNodes
 
     def switch(self, container, representation):
         self.update(container, representation)
 
+    def _post_process_rig(self, name, namespace, context, options):
 
-# for backwards compatibility
-class AbcLoader(ReferenceLoader):
-    label = "Deprecated loader (don't use)"
-    families = ["pointcache", "animation"]
-    representations = ["abc"]
-    tool_names = []
+        output = next((node for node in self if
+                       node.endswith("out_SET")), None)
+        controls = next((node for node in self if
+                         node.endswith("controls_SET")), None)
 
+        assert output, "No out_SET in rig, this is a bug."
+        assert controls, "No controls_SET in rig, this is a bug."
 
-# for backwards compatibility
-class ModelLoader(ReferenceLoader):
-    label = "Deprecated loader (don't use)"
-    families = ["model", "pointcache"]
-    representations = ["abc"]
-    tool_names = []
+        # Find the roots amongst the loaded nodes
+        roots = cmds.ls(self[:], assemblies=True, long=True)
+        assert roots, "No root nodes in rig, this is a bug."
+
+        asset = api.Session["AVALON_ASSET"]
+        dependency = str(context["representation"]["_id"])
+
+        self.log.info("Creating subset: {}".format(namespace))
+
+        # Create the animation instance
+        with maya.maintained_selection():
+            cmds.select([output, controls] + roots, noExpand=True)
+            api.create(name=namespace,
+                       asset=asset,
+                       family="animation",
+                       options={"useSelection": True},
+                       data={"dependencies": dependency})

@@ -33,41 +33,6 @@ if os.getenv("PYBLISH_GUI", None):
     pyblish.register_gui(os.getenv("PYBLISH_GUI", None))
 
 
-class NukeHandler(logging.Handler):
-    '''
-    Nuke Handler - emits logs into nuke's script editor.
-    warning will emit nuke.warning()
-    critical and fatal would popup msg dialog to alert of the error.
-    '''
-
-    def __init__(self):
-        logging.Handler.__init__(self)
-        self.set_name("Pype_Nuke_Handler")
-
-    def emit(self, record):
-        # Formated message:
-        msg = self.format(record)
-
-        if record.levelname.lower() in [
-            # "warning",
-            "critical",
-            "fatal",
-            "error"
-        ]:
-            msg = self.format(record)
-            nuke.message(msg)
-
-
-'''Adding Nuke Logging Handler'''
-log.info([handler.get_name() for handler in logging.root.handlers[:]])
-nuke_handler = NukeHandler()
-if nuke_handler.get_name() \
-    not in [handler.get_name()
-            for handler in logging.root.handlers[:]]:
-    logging.getLogger().addHandler(nuke_handler)
-    logging.getLogger().setLevel(logging.INFO)
-log.info([handler.get_name() for handler in logging.root.handlers[:]])
-
 def reload_config():
     """Attempt to reload pipeline at run-time.
 
@@ -113,7 +78,7 @@ def install():
     family_states = [
         "write",
         "review",
-        "nukenodes" 
+        "nukenodes"
         "gizmo"
     ]
 
@@ -128,9 +93,9 @@ def install():
 
     # Set context settings.
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
+    nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
 
     menu.install()
-
 
 
 def launch_workfiles_app():

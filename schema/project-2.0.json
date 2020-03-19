@@ -1,0 +1,86 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "pype:project-2.0",
+    "description": "A unit of data",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "schema",
+        "type",
+        "name",
+        "data",
+        "config"
+    ],
+
+    "properties": {
+        "schema": {
+            "description": "Schema identifier for payload",
+            "type": "string",
+            "enum": ["avalon-core:project-2.0", "pype:project-2.0"],
+            "example": "avalon-core:project-2.0"
+        },
+        "type": {
+            "description": "The type of document",
+            "type": "string",
+            "enum": ["project"],
+            "example": "project"
+        },
+        "parent": {
+            "description": "Unique identifier to parent document",
+            "example": "592c33475f8c1b064c4d1696"
+        },
+        "name": {
+            "description": "Name of directory",
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.]*$",
+            "example": "hulk"
+        },
+        "data": {
+            "description": "Document metadata",
+            "type": "object",
+            "example": {
+                "fps": 24,
+                "width": 1920,
+                "height": 1080
+            }
+        },
+        "config": {
+            "type": "object",
+            "description": "Document metadata",
+            "example": {
+                "schema": "pype:config-1.0",
+                "apps": [
+                    {
+                        "name": "maya2016",
+                        "label": "Autodesk Maya 2016"
+                    },
+                    {
+                        "name": "nuke10",
+                        "label": "The Foundry Nuke 10.0"
+                    }
+                ],
+                "tasks": [
+                    {"name": "model"},
+                    {"name": "render"},
+                    {"name": "animate"},
+                    {"name": "rig"},
+                    {"name": "lookdev"},
+                    {"name": "layout"}
+                ],
+                "template": {
+                    "work":
+                        "{root}/{project}/{silo}/{asset}/work/{task}/{app}",
+                    "publish":
+                        "{root}/{project}/{silo}/{asset}/publish/{subset}/v{version:0>3}/{subset}.{representation}"
+                }
+            },
+            "$ref": "config-1.0.json"
+        }
+    },
+
+    "definitions": {}
+}

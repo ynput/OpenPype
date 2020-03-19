@@ -11,7 +11,9 @@ class CollectVideoTracksLuts(pyblish.api.InstancePlugin):
 
     def process(self, instance):
 
-        self.log.debug("Finding soft effect for subset: `{}`".format(instance.data.get("subset")))
+        self.log.debug(
+            "Finding soft effect for subset: `{}`".format(
+                instance.data.get("subset")))
 
         # taking active sequence
         subset = instance.data.get("subset")
@@ -41,8 +43,12 @@ class CollectVideoTracksLuts(pyblish.api.InstancePlugin):
 
         if len(instance.data.get("effectTrackItems", {}).keys()) > 0:
             instance.data["families"] += ["lut"]
-            self.log.debug("effects.keys: {}".format(instance.data.get("effectTrackItems", {}).keys()))
-            self.log.debug("effects: {}".format(instance.data.get("effectTrackItems", {})))
+            self.log.debug(
+                "effects.keys: {}".format(
+                    instance.data.get("effectTrackItems", {}).keys()))
+            self.log.debug(
+                "effects: {}".format(
+                    instance.data.get("effectTrackItems", {})))
 
     def add_effect(self, instance, track_index, item):
         track = item.parentTrack().name()

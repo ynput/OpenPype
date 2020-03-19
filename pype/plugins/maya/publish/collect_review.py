@@ -54,8 +54,10 @@ class CollectReview(pyblish.api.InstancePlugin):
                     self.log.debug('adding review family to {}'.format(reviewable_subset))
                     data['review_camera'] = camera
                     # data["publish"] = False
-                    data['startFrameReview'] = instance.data["frameStart"]
-                    data['endFrameReview'] = instance.data["frameEnd"]
+                    data['frameStartFtrack'] = instance.data["frameStartHandle"]
+                    data['frameEndFtrack'] = instance.data["frameEndHandle"]
+                    data['frameStartHandle'] = instance.data["frameStartHandle"]
+                    data['frameEndHandle'] = instance.data["frameEndHandle"]
                     data["frameStart"] = instance.data["frameStart"]
                     data["frameEnd"] = instance.data["frameEnd"]
                     data['handles'] = instance.data['handles']
@@ -69,8 +71,8 @@ class CollectReview(pyblish.api.InstancePlugin):
         else:
             instance.data['subset'] = task + 'Review'
             instance.data['review_camera'] = camera
-            instance.data['startFrameReview'] = instance.data["frameStart"]
-            instance.data['endFrameReview'] = instance.data["frameEnd"]
+            instance.data['frameStartFtrack'] = instance.data["frameStartHandle"]
+            instance.data['frameEndFtrack'] = instance.data["frameEndHandle"]
 
             # make ftrack publishable
             instance.data["families"] = ['ftrack']

@@ -1,0 +1,28 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "pype:representation-1.0",
+    "description": "The inverse of an instance",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "schema",
+        "format",
+        "path"
+    ],
+
+    "properties": {
+        "schema": {"type": "string"},
+        "format": {
+            "description": "File extension, including '.'",
+            "type": "string"
+        },
+        "path": {
+            "description": "Unformatted path to version.",
+            "type": "string"
+        }
+    }
+}

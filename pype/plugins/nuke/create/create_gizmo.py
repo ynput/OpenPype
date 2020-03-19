@@ -36,8 +36,10 @@ class CreateGizmo(Creator):
                     node["tile_color"].setValue(int(self.node_color, 16))
                     return anlib.imprint(node, self.data)
                 else:
-                    nuke.message("Please select a group node "
-                                 "you wish to publish as the gizmo")
+                    msg = ("Please select a group node "
+                          "you wish to publish as the gizmo")
+                    self.log.error(msg)
+                    nuke.message(msg)
 
             if len(nodes) >= 2:
                 anlib.select_nodes(nodes)
@@ -58,8 +60,10 @@ class CreateGizmo(Creator):
                 return anlib.imprint(gizmo_node, self.data)
 
             else:
-                nuke.message("Please select nodes you "
-                             "wish to add to the gizmo")
+                msg = ("Please select nodes you "
+                      "wish to add to the gizmo")
+                self.log.error(msg)
+                nuke.message(msg)
                 return
         else:
             with anlib.maintained_selection():

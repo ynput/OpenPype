@@ -100,9 +100,9 @@ class FtrackServer:
                     log.warning(msg, exc_info=e)
 
         if len(register_functions_dict) < 1:
-            raise Exception((
-                "There are no events with register function."
-                " Registered paths: \"{}\""
+            log.warning((
+                "There are no events with `register` function"
+                " in registered paths: \"{}\""
             ).format("| ".join(paths)))
 
         # Load presets for setting plugins
@@ -122,7 +122,7 @@ class FtrackServer:
                 else:
                     register(self.session, plugins_presets=plugins_presets)
 
-                if function_counter%7 == 0:
+                if function_counter % 7 == 0:
                     time.sleep(0.1)
                 function_counter += 1
             except Exception as exc:

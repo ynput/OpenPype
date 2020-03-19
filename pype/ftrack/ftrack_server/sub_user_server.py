@@ -2,12 +2,14 @@ import sys
 import signal
 import socket
 
+import traceback
+
 from ftrack_server import FtrackServer
-from pype.ftrack.ftrack_server.lib import SocketSession, UserEventHub
+from pype.ftrack.ftrack_server.lib import SocketSession, SocketBaseEventHub
 
 from pypeapp import Logger
 
-log = Logger().get_logger(__name__)
+log = Logger().get_logger("FtrackUserServer")
 
 
 def main(args):
@@ -18,17 +20,21 @@ def main(args):
 
     # Connect the socket to the port where the server is listening
     server_address = ("localhost", port)
-    log.debug("Storer connected to {} port {}".format(*server_address))
+    log.debug(
+        "User Ftrack Server connected to {} port {}".format(*server_address)
+    )
     sock.connect(server_address)
     sock.sendall(b"CreatedUser")
 
     try:
         session = SocketSession(
-            auto_connect_event_hub=True, sock=sock, Eventhub=UserEventHub
+            auto_connect_event_hub=True, sock=sock, Eventhub=SocketBaseEventHub
         )
         server = FtrackServer("action")
-        log.debug("Launched Ftrack Event storer")
+        log.debug("Launched User Ftrack Server")
         server.run_server(session=session)
+    except Exception:
+        traceback.print_exception(*sys.exc_info())
 
     finally:
         log.debug("Closing socket")
@@ -42,7 +48,6 @@ if __name__ == "__main__":
         log.info(
             "Process was forced to stop. Process ended."
         )
-        log.info("Process ended.")
         sys.exit(0)
 
     signal.signal(signal.SIGINT, signal_handler)

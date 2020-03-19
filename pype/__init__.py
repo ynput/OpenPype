@@ -9,8 +9,9 @@ from pypeapp import config
 import logging
 log = logging.getLogger(__name__)
 
-__version__ = "2.3.0"
+__version__ = "2.6.0"
 
+PROJECT_PLUGINS_PATH = os.environ.get("PYPE_PROJECT_PLUGINS")
 PACKAGE_DIR = os.path.dirname(__file__)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
@@ -71,6 +72,18 @@ def install():
     pyblish.register_plugin_path(PUBLISH_PATH)
     pyblish.register_discovery_filter(filter_pyblish_plugins)
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
+
+    # Register project specific plugins
+    project_name = os.environ.get("AVALON_PROJECT")
+    if PROJECT_PLUGINS_PATH and project_name:
+        for path in PROJECT_PLUGINS_PATH.split(os.pathsep):
+            if not path:
+                continue
+            plugin_path = os.path.join(path, project_name, "plugins")
+            if os.path.exists(plugin_path):
+                pyblish.register_plugin_path(plugin_path)
+                avalon.register_plugin_path(avalon.Loader, plugin_path)
+                avalon.register_plugin_path(avalon.Creator, plugin_path)
 
     # apply monkey patched discover to original one
     avalon.discover = patched_discover
