@@ -34,7 +34,7 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
         published_repres = instance.data.get("published_representations")
         if not published_repres:
             self.log.debug(
-                "There are not published representations on the instance."
+                "There are no published representations on the instance."
             )
             return
 
@@ -42,12 +42,12 @@ class IntegrateThumbnails(pyblish.api.InstancePlugin):
 
         anatomy = instance.context.data["anatomy"]
         if "publish" not in anatomy.templates:
-            self.warning("Anatomy does not have set publish key!")
+            self.log.warning("Anatomy is missing the \"publish\" key!")
             return
 
         if "thumbnail" not in anatomy.templates["publish"]:
-            self.warning((
-                "There is not set \"thumbnail\" template for project \"{}\""
+            self.log.warning((
+                "There is no \"thumbnail\" template set for the project \"{}\""
             ).format(project_name))
             return
 
