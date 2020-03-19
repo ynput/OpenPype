@@ -33,7 +33,6 @@ class CreateRig(Creator):
     #             return found
 
     def process(self):
-        import pype.blender
 
         asset = self.data["asset"]
         subset = self.data["subset"]
@@ -61,7 +60,7 @@ class CreateRig(Creator):
 
                     for subobj in obj.children:
 
-                        objects_to_link.add( subobj )
+                        objects_to_link.add(subobj)
 
                     # Create a new collection and link the widgets that
                     # the rig uses.

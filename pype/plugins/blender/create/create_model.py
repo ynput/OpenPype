@@ -6,6 +6,7 @@ from avalon import api
 from avalon.blender import Creator, lib
 import pype.blender.plugin
 
+
 class CreateModel(Creator):
     """Polygonal static geometry"""
 

@@ -7,7 +7,6 @@ from avalon.blender import Creator, lib
 import pype.blender.plugin
 
 
-
 class CreateAnimation(Creator):
     """Animation output for character rigs"""
 
@@ -17,7 +16,6 @@ class CreateAnimation(Creator):
     icon = "male"
 
     def process(self):
-        import pype.blender
 
         asset = self.data["asset"]
         subset = self.data["subset"]
