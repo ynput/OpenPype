@@ -202,7 +202,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
             repre_name_low = repre["name"].lower()
             archived_repres_by_name[repre_name_low] = repre
 
-        backup_master_publish_dir = str(master_publish_dir)
+        backup_master_publish_dir = None
         if os.path.exists(master_publish_dir):
             backup_master_publish_dir = master_publish_dir + ".BACKUP"
             max_idx = 10
@@ -402,11 +402,17 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 )
 
             # Remove backuped previous master
-            if os.path.exists(backup_master_publish_dir):
+            if (
+                backup_master_publish_dir is not None and
+                os.path.exists(backup_master_publish_dir)
+            ):
                 shutil.rmtree(backup_master_publish_dir)
 
         except Exception:
-            if os.path.exists(backup_master_publish_dir):
+            if (
+                backup_master_publish_dir is not None and
+                os.path.exists(backup_master_publish_dir)
+            ):
                 os.rename(backup_master_publish_dir, master_publish_dir)
             self.log.error((
                 "!!! Creating of Master version failed."
