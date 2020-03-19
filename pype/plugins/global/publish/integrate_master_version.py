@@ -61,13 +61,10 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         master_publish_dir = self.get_publish_dir(instance)
 
-        src_version_entity = None
+        src_version_entity = instance.data.get("versionEntity")
         filtered_repre_ids = []
         for repre_id, repre_info in published_repres.items():
             repre = repre_info["representation"]
-            if src_version_entity is None:
-                src_version_entity = repre_info.get("version_entity")
-
             if repre["name"].lower() in self.ignored_representation_names:
                 self.log.debug(
                     "Filtering representation with name: `{}`".format(

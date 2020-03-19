@@ -162,6 +162,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         )
 
         subset = self.get_subset(asset_entity, instance)
+        instance.data["subsetEntity"] = subset
 
         version_number = instance.data["version"]
         self.log.debug("Next version: v{}".format(version_number))
@@ -237,6 +238,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 )
 
         version = io.find_one({"_id": version_id})
+        instance.data["versionEntity"] = version
 
         existing_repres = list(io.find({
             "parent": version_id,
@@ -463,10 +465,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             published_representations[repre_id] = {
                 "representation": representation,
                 "anatomy_data": template_data,
-                "published_files": published_files,
-                # TODO prabably should store subset and version to instance
-                "subset_entity": subset,
-                "version_entity": version
+                "published_files": published_files
             }
             self.log.debug("__ representations: {}".format(representations))
 
