@@ -5,15 +5,14 @@ from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
 
-import avalon.blender.pipeline
+from avalon import api, blender
 import bpy
-import pype.blender
-from avalon import api
+import pype.blender.plugin
 
 logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
 
 
-class BlendRigLoader(pype.blender.AssetLoader):
+class BlendRigLoader(pype.blender.plugin.AssetLoader):
     """Load rigs from a .blend file.
 
     Because they come from a .blend file we can simply link the collection that
@@ -30,7 +29,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
     label = "Link Rig"
     icon = "code-fork"
     color = "orange"
-    
+
     @staticmethod
     def _remove(self, objects, lib_container):
 
@@ -60,7 +59,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
         meshes = [obj for obj in rig_container.objects if obj.type == 'MESH']
         armatures = [obj for obj in rig_container.objects if obj.type == 'ARMATURE']
-        
+
         objects_list = []
 
         assert(len(armatures) == 1)
@@ -74,11 +73,11 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
             obj.data.make_local()
 
-            if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
+            if not obj.get(blender.pipeline.AVALON_PROPERTY):
 
-                obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
+                obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
-            avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
+            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
             if obj.type == 'ARMATURE' and action is not None:
@@ -86,8 +85,8 @@ class BlendRigLoader(pype.blender.AssetLoader):
                 obj.animation_data.action = action
 
             objects_list.append(obj)
-            
-        rig_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+
+        rig_container.pop( blender.pipeline.AVALON_PROPERTY )
 
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -115,7 +114,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
 
         container = bpy.data.collections.new(lib_container)
         container.name = container_name
-        avalon.blender.pipeline.containerise_existing(
+        blender.pipeline.containerise_existing(
             container,
             name,
             namespace,
@@ -124,7 +123,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
         )
 
         container_metadata = container.get(
-            avalon.blender.pipeline.AVALON_PROPERTY)
+            blender.pipeline.AVALON_PROPERTY)
 
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
@@ -182,7 +181,7 @@ class BlendRigLoader(pype.blender.AssetLoader):
         )
 
         collection_metadata = collection.get(
-            avalon.blender.pipeline.AVALON_PROPERTY)
+            blender.pipeline.AVALON_PROPERTY)
         collection_libpath = collection_metadata["libpath"]
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
@@ -243,12 +242,12 @@ class BlendRigLoader(pype.blender.AssetLoader):
         )
 
         collection_metadata = collection.get(
-            avalon.blender.pipeline.AVALON_PROPERTY)
+            blender.pipeline.AVALON_PROPERTY)
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
         self._remove(self, objects, lib_container)
-        
+
         bpy.data.collections.remove(collection)
 
         return True

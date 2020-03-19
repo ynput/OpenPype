@@ -4,6 +4,7 @@ import bpy
 
 from avalon import api
 from avalon.blender import Creator, lib
+import pype.blender.plugin
 
 
 class CreateRig(Creator):
@@ -42,16 +43,16 @@ class CreateRig(Creator):
         self.data['task'] = api.Session.get('AVALON_TASK')
         lib.imprint(collection, self.data)
 
-        # Add the rig object and all the children meshes to 
-        # a set and link them all at the end to avoid duplicates. 
+        # Add the rig object and all the children meshes to
+        # a set and link them all at the end to avoid duplicates.
         # Blender crashes if trying to link an object that is already linked.
-        # This links automatically the children meshes if they were not 
+        # This links automatically the children meshes if they were not
         # selected, and doesn't link them twice if they, insted,
         # were manually selected by the user.
         objects_to_link = set()
 
         if (self.options or {}).get("useSelection"):
-            
+
             for obj in lib.get_selection():
 
                 objects_to_link.add( obj )
@@ -75,7 +76,7 @@ class CreateRig(Creator):
                     # if len( custom_shapes ) > 0:
 
                     #     widgets_collection = bpy.data.collections.new(name="Widgets")
-                        
+
                     #     collection.children.link(widgets_collection)
 
                     #     for custom_shape in custom_shapes:

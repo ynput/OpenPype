@@ -4,7 +4,7 @@ import bpy
 
 from avalon import api
 from avalon.blender import Creator, lib
-
+import pype.blender.plugin
 
 class CreateModel(Creator):
     """Polygonal static geometry"""
@@ -15,7 +15,6 @@ class CreateModel(Creator):
     icon = "cube"
 
     def process(self):
-        import pype.blender
 
         asset = self.data["asset"]
         subset = self.data["subset"]

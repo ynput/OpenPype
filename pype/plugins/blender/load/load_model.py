@@ -5,15 +5,14 @@ from pathlib import Path
 from pprint import pformat
 from typing import Dict, List, Optional
 
-import avalon.blender.pipeline
+from avalon import api, blender
 import bpy
-import pype.blender
-from avalon import api
+import pype.blender.plugin
 
 logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
 
 
-class BlendModelLoader(pype.blender.AssetLoader):
+class BlendModelLoader(pype.blender.plugin.AssetLoader):
     """Load models from a .blend file.
 
     Because they come from a .blend file we can simply link the collection that
@@ -67,16 +66,16 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
                 material_slot.material.make_local()
 
-            if not obj.get(avalon.blender.pipeline.AVALON_PROPERTY):
+            if not obj.get(blender.pipeline.AVALON_PROPERTY):
 
-                obj[avalon.blender.pipeline.AVALON_PROPERTY] = dict()
+                obj[blender.pipeline.AVALON_PROPERTY] = dict()
 
-            avalon_info = obj[avalon.blender.pipeline.AVALON_PROPERTY]
+            avalon_info = obj[blender.pipeline.AVALON_PROPERTY]
             avalon_info.update({"container_name": container_name})
 
             objects_list.append(obj)
 
-        model_container.pop( avalon.blender.pipeline.AVALON_PROPERTY )
+        model_container.pop( blender.pipeline.AVALON_PROPERTY )
 
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -104,7 +103,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
 
         collection = bpy.data.collections.new(lib_container)
         collection.name = container_name
-        avalon.blender.pipeline.containerise_existing(
+        blender.pipeline.containerise_existing(
             collection,
             name,
             namespace,
@@ -113,7 +112,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
         )
 
         container_metadata = collection.get(
-            avalon.blender.pipeline.AVALON_PROPERTY)
+            blender.pipeline.AVALON_PROPERTY)
 
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
@@ -169,7 +168,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
         )
 
         collection_metadata = collection.get(
-            avalon.blender.pipeline.AVALON_PROPERTY)
+            blender.pipeline.AVALON_PROPERTY)
         collection_libpath = collection_metadata["libpath"]
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
@@ -221,7 +220,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
         )
 
         collection_metadata = collection.get(
-            avalon.blender.pipeline.AVALON_PROPERTY)
+            blender.pipeline.AVALON_PROPERTY)
         objects = collection_metadata["objects"]
         lib_container = collection_metadata["lib_container"]
 
@@ -232,7 +231,7 @@ class BlendModelLoader(pype.blender.AssetLoader):
         return True
 
 
-class CacheModelLoader(pype.blender.AssetLoader):
+class CacheModelLoader(pype.blender.plugin.AssetLoader):
     """Load cache models.
 
     Stores the imported asset in a collection named after the asset.

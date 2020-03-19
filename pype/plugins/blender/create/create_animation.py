@@ -4,6 +4,8 @@ import bpy
 
 from avalon import api
 from avalon.blender import Creator, lib
+import pype.blender.plugin
+
 
 
 class CreateAnimation(Creator):
