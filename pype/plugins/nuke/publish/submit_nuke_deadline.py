@@ -5,7 +5,6 @@ import getpass
 from avalon import api
 from avalon.vendor import requests
 import re
-
 import pyblish.api
 
 
@@ -23,6 +22,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     families = ["render.farm"]
     optional = True
 
+    deadline_priority = 50
+    deadline_pool = ""
+    deadline_pool_secondary = ""
+    deadline_chunk_size = 1
+
     def process(self, instance):
 
         node = instance[0]
@@ -37,8 +41,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         self._ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())
-        self._frame_start = int(instance.data["frameStart"])
-        self._frame_end = int(instance.data["frameEnd"])
+        self._frame_start = int(instance.data["frameStartHandle"])
+        self._frame_end = int(instance.data["frameEndHandle"])
 
         # get output path
         render_path = instance.data['path']
@@ -55,7 +59,9 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                                        )
         # Store output dir for unified publisher (filesequence)
         instance.data["deadlineSubmissionJob"] = response.json()
-        instance.data["publishJobState"] = "Active"
+        instance.data["outputDir"] = os.path.dirname(
+            render_path).replace("\\", "/")
+        instance.data["publishJobState"] = "Suspended"
 
         if instance.data.get("bakeScriptPath"):
             render_path = instance.data.get("bakeRenderPath")
@@ -87,6 +93,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         script_name = os.path.basename(script_path)
         jobname = "%s - %s" % (script_name, instance.name)
 
+        output_filename_0 = self.preview_fname(render_path)
+
         if not responce_data:
             responce_data = {}
 
@@ -95,6 +103,15 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             os.makedirs(render_dir)
         except OSError:
             pass
+
+        # define chunk and priority
+        chunk_size = instance.data.get("deadlineChunkSize")
+        if chunk_size == 0:
+            chunk_size = self.deadline_chunk_size
+
+        priority = instance.data.get("deadlinePriority")
+        if priority != 50:
+            priority = self.deadline_priority
 
         payload = {
             "JobInfo": {
@@ -107,10 +124,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": self._deadline_user,
 
-                "Priority": instance.data["deadlinePriority"],
+                "Priority": priority,
+                "ChunkSize": chunk_size,
 
-                "Pool": "2d",
-                "SecondaryPool": "2d",
+                "Pool": self.deadline_pool,
+                "SecondaryPool": self.deadline_pool_secondary,
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(
@@ -118,6 +136,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                     end=self._frame_end
                 ),
                 "Comment": self._comment,
+
+                # Optional, enable double-click to preview rendered
+                # frames from Deadline Monitor
+                "OutputFilename0": output_filename_0.replace("\\", "/")
 
             },
             "PluginInfo": {
@@ -220,6 +242,10 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         self.log.info("Submitting..")
         self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
+        # adding expectied files to instance.data
+        self.expected_files(instance, render_path)
+        self.log.debug("__ expectedFiles: `{}`".format(
+            instance.data["expectedFiles"]))
         response = requests.post(self.deadline_url, json=payload)
 
         if not response.ok:
@@ -240,3 +266,51 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 "%f=%d was rounded off to nearest integer"
                 % (value, int(value))
             )
+
+    def preview_fname(self, path):
+        """Return output file path with #### for padding.
+
+        Deadline requires the path to be formatted with # in place of numbers.
+        For example `/path/to/render.####.png`
+
+        Args:
+            path (str): path to rendered images
+
+        Returns:
+            str
+
+        """
+        self.log.debug("_ path: `{}`".format(path))
+        if "%" in path:
+            search_results = re.search(r"(%0)(\d)(d.)", path).groups()
+            self.log.debug("_ search_results: `{}`".format(search_results))
+            return int(search_results[1])
+        if "#" in path:
+            self.log.debug("_ path: `{}`".format(path))
+            return path
+        else:
+            return path
+
+    def expected_files(self,
+                       instance,
+                       path):
+        """ Create expected files in instance data
+        """
+        if not instance.data.get("expectedFiles"):
+            instance.data["expectedFiles"] = list()
+
+        dir = os.path.dirname(path)
+        file = os.path.basename(path)
+
+        if "#" in file:
+            pparts = file.split("#")
+            padding = "%0{}d".format(len(pparts) - 1)
+            file = pparts[0] + padding + pparts[-1]
+
+        if "%" not in file:
+            instance.data["expectedFiles"].append(path)
+            return
+
+        for i in range(self._frame_start, (self._frame_end + 1)):
+            instance.data["expectedFiles"].append(
+                os.path.join(dir, (file % i)).replace("\\", "/"))

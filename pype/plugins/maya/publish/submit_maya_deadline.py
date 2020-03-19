@@ -1,6 +1,7 @@
 import os
 import json
 import getpass
+import clique
 
 from maya import cmds
 
@@ -117,6 +118,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     else:
         optional = True
 
+    use_published = True
+
     def process(self, instance):
 
         DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
@@ -125,8 +128,56 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         context = instance.context
         workspace = context.data["workspaceDir"]
+        anatomy = context.data['anatomy']
 
         filepath = None
+
+        if self.use_published:
+            for i in context:
+                if "workfile" in i.data["families"]:
+                    assert i.data["publish"] is True, (
+                        "Workfile (scene) must be published along")
+                    template_data = i.data.get("anatomyData")
+                    rep = i.data.get("representations")[0].get("name")
+                    template_data["representation"] = rep
+                    template_data["ext"] = rep
+                    template_data["comment"] = None
+                    anatomy_filled = anatomy.format(template_data)
+                    template_filled = anatomy_filled["publish"]["path"]
+                    filepath = os.path.normpath(template_filled)
+                    self.log.info("Using published scene for render {}".format(
+                        filepath))
+
+                    # now we need to switch scene in expected files
+                    # because <scene> token will now point to published
+                    # scene file and that might differ from current one
+                    new_scene = os.path.splitext(
+                        os.path.basename(filepath))[0]
+                    orig_scene = os.path.splitext(
+                        os.path.basename(context.data["currentFile"]))[0]
+                    exp = instance.data.get("expectedFiles")
+
+                    if isinstance(exp[0], dict):
+                        # we have aovs and we need to iterate over them
+                        new_exp = {}
+                        for aov, files in exp[0].items():
+                            replaced_files = []
+                            for f in files:
+                                replaced_files.append(
+                                    f.replace(orig_scene, new_scene)
+                                )
+                            new_exp[aov] = replaced_files
+                        instance.data["expectedFiles"] = [new_exp]
+                    else:
+                        new_exp = []
+                        for f in exp:
+                            new_exp.append(
+                                f.replace(orig_scene, new_scene)
+                            )
+                        instance.data["expectedFiles"] = [new_exp]
+                    self.log.info("Scene name was switched {} -> {}".format(
+                        orig_scene, new_scene
+                    ))
 
         allInstances = []
         for result in context.data["results"]:
@@ -134,12 +185,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                result["instance"] not in allInstances):
                 allInstances.append(result["instance"])
 
-        for inst in allInstances:
-            print(inst)
-            if inst.data['family'] == 'scene':
-                filepath = inst.data['destination_list'][0]
-
+        # fallback if nothing was set
         if not filepath:
+            self.log.warning("Falling back to workfile")
             filepath = context.data["currentFile"]
 
         self.log.debug(filepath)
@@ -150,8 +198,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
         renderlayer_name = instance.data['subset']      # beauty
-        renderlayer_globals = instance.data["renderGlobals"]
-        legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
+        # renderlayer_globals = instance.data["renderGlobals"]
+        # legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
 
@@ -186,8 +234,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
                 "Plugin": instance.data.get("mayaRenderPlugin", "MayaBatch"),
                 "Frames": "{start}-{end}x{step}".format(
-                    start=int(instance.data["frameStart"]),
-                    end=int(instance.data["frameEnd"]),
+                    start=int(instance.data["frameStartHandle"]),
+                    end=int(instance.data["frameEndHandle"]),
                     step=int(instance.data["byFrameStep"]),
                 ),
 
@@ -195,7 +243,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
                 # Optional, enable double-click to preview rendered
                 # frames from Deadline Monitor
-                "OutputFilename0": output_filename_0.replace("\\", "/"),
+                "OutputDirectory0": os.path.dirname(output_filename_0),
+                "OutputFilename0": output_filename_0.replace("\\", "/")
             },
             "PluginInfo": {
                 # Input
@@ -211,9 +260,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 # Only render layers are considered renderable in this pipeline
                 "UsingRenderLayers": True,
 
-                # Use legacy Render Layer system
-                "UseLegacyRenderLayers": legacy_layers,
-
                 # Render only this layer
                 "RenderLayer": renderlayer,
 
@@ -227,6 +273,26 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             # Mandatory for Deadline, may be empty
             "AuxFiles": []
         }
+
+        exp = instance.data.get("expectedFiles")
+
+        OutputFilenames = {}
+        expIndex = 0
+
+        if isinstance(exp[0], dict):
+            # we have aovs and we need to iterate over them
+            for aov, files in exp[0].items():
+                col = clique.assemble(files)[0][0]
+                outputFile = col.format('{head}{padding}{tail}')
+                payload['JobInfo']['OutputFilename' + str(expIndex)] = outputFile
+                OutputFilenames[expIndex] = outputFile
+                expIndex += 1
+        else:
+            col = clique.assemble(files)[0][0]
+            outputFile = col.format('{head}{padding}{tail}')
+            payload['JobInfo']['OutputFilename' + str(expIndex)] = outputFile
+            # OutputFilenames[expIndex] = outputFile
+
 
         # We need those to pass them to pype for it to set correct context
         keys = [
@@ -274,7 +340,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
     def preflight_check(self, instance):
         """Ensure the startFrame, endFrame and byFrameStep are integers"""
 
-        for key in ("frameStart", "frameEnd", "byFrameStep"):
+        for key in ("frameStartHandle", "frameEndHandle", "byFrameStep"):
             value = instance.data[key]
 
             if int(value) == value:

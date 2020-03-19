@@ -93,9 +93,9 @@ def install():
 
     # Set context settings.
     nuke.addOnCreate(workfile_settings.set_context_settings, nodeClass="Root")
+    nuke.addOnCreate(workfile_settings.set_favorites, nodeClass="Root")
 
     menu.install()
-
 
 
 def launch_workfiles_app():

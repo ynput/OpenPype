@@ -86,8 +86,11 @@ class LoadSequence(api.Loader):
 
         version = context['version']
         version_data = version.get("data", {})
-
+        repr_id = context["representation"]["_id"]
+        
         self.log.info("version_data: {}\n".format(version_data))
+        self.log.debug(
+            "Representation id `{}` ".format(repr_id))
 
         self.first_frame = int(nuke.root()["first_frame"].getValue())
         self.handle_start = version_data.get("handleStart", 0)

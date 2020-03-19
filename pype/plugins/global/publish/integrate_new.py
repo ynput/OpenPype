@@ -5,6 +5,8 @@ import sys
 import copy
 import clique
 import errno
+
+from pymongo import DeleteOne, InsertOne
 import pyblish.api
 from avalon import api, io
 from avalon.vendor import filelink
@@ -79,6 +81,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "image"
                 "source",
                 "assembly",
+                "textures"
                 "action"
                 ]
     exclude_families = ["clip"]
@@ -110,15 +113,16 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         project_entity = instance.data["projectEntity"]
 
+        context_asset_name = context.data["assetEntity"]["name"]
+
         asset_name = instance.data["asset"]
         asset_entity = instance.data.get("assetEntity")
-        if not asset_entity:
+        if not asset_entity or asset_entity["name"] != context_asset_name:
             asset_entity = io.find_one({
                 "type": "asset",
                 "name": asset_name,
                 "parent": project_entity["_id"]
             })
-
             assert asset_entity, (
                 "No asset found by the name \"{0}\" in project \"{1}\""
             ).format(asset_name, project_entity["name"])
@@ -178,23 +182,66 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         )
 
         self.log.debug("Creating version ...")
+
+        new_repre_names_low = [_repre["name"].lower() for _repre in repres]
+
         existing_version = io.find_one({
             'type': 'version',
             'parent': subset["_id"],
             'name': version_number
         })
+
         if existing_version is None:
             version_id = io.insert_one(version).inserted_id
         else:
+            # Check if instance have set `append` mode which cause that
+            # only replicated representations are set to archive
+            append_repres = instance.data.get("append", False)
+
+            # Update version data
             # TODO query by _id and
-            # remove old version and representations but keep their ids
             io.update_many({
                 'type': 'version',
                 'parent': subset["_id"],
                 'name': version_number
-            }, {'$set': version}
-            )
+            }, {
+                '$set': version
+            })
             version_id = existing_version['_id']
+
+            # Find representations of existing version and archive them
+            current_repres = list(io.find({
+                "type": "representation",
+                "parent": version_id
+            }))
+            bulk_writes = []
+            for repre in current_repres:
+                if append_repres:
+                    # archive only duplicated representations
+                    if repre["name"].lower() not in new_repre_names_low:
+                        continue
+                # Representation must change type,
+                # `_id` must be stored to other key and replaced with new
+                # - that is because new representations should have same ID
+                repre_id = repre["_id"]
+                bulk_writes.append(DeleteOne({"_id": repre_id}))
+
+                repre["orig_id"] = repre_id
+                repre["_id"] = io.ObjectId()
+                repre["type"] = "archived_representation"
+                bulk_writes.append(InsertOne(repre))
+
+            # bulk updates
+            if bulk_writes:
+                io._database[io.Session["AVALON_PROJECT"]].bulk_write(
+                    bulk_writes
+                )
+
+        existing_repres = list(io.find({
+            "parent": version_id,
+            "type": "archived_representation"
+        }))
+
         instance.data['version'] = version['name']
 
         intent = context.data.get("intent")
@@ -233,6 +280,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 stagingdir = repre['stagingDir']
             if repre.get('anatomy_template'):
                 template_name = repre['anatomy_template']
+            if repre.get("outputName"):
+                template_data["output"] = repre['outputName']
 
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
@@ -279,7 +328,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 index_frame_start = None
 
                 if repre.get("frameStart"):
-                    frame_start_padding = anatomy.templates["render"]["padding"]
+                    frame_start_padding = (
+                        anatomy.templates["render"]["padding"]
+                    )
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
@@ -342,9 +393,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 template_data["representation"] = repre['ext']
 
-                if repre.get("outputName"):
-                    template_data["output"] = repre['outputName']
-
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled[template_name]["path"]
@@ -362,8 +410,21 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     continue
                 repre_context[key] = template_data[key]
 
+            # Use previous representation's id if there are any
+            repre_id = None
+            repre_name_low = repre["name"].lower()
+            for _repre in existing_repres:
+                # NOTE should we check lowered names?
+                if repre_name_low == _repre["name"]:
+                    repre_id = _repre["orig_id"]
+                    break
+
+            # Create new id if existing representations does not match
+            if repre_id is None:
+                repre_id = io.ObjectId()
+
             representation = {
-                "_id": io.ObjectId(),
+                "_id": repre_id,
                 "schema": "pype:representation-2.0",
                 "type": "representation",
                 "parent": version_id,
@@ -380,7 +441,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 representation["context"]["output"] = repre['outputName']
 
             if sequence_repre and repre.get("frameStart"):
-                representation['context']['frame'] = src_padding_exp % int(repre.get("frameStart"))
+                representation['context']['frame'] = (
+                    dst_padding_exp % int(repre.get("frameStart"))
+                )
 
             self.log.debug("__ representation: {}".format(representation))
             destination_list.append(dst)
@@ -388,6 +451,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             instance.data['destination_list'] = destination_list
             representations.append(representation)
             self.log.debug("__ representations: {}".format(representations))
+
+        # Remove old representations if there are any (before insertion of new)
+        if existing_repres:
+            repre_ids_to_remove = []
+            for repre in existing_repres:
+                repre_ids_to_remove.append(repre["_id"])
+            io.delete_many({"_id": {"$in": repre_ids_to_remove}})
 
         self.log.debug("__ representations: {}".format(representations))
         for rep in instance.data["representations"]:
@@ -454,7 +524,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         """
         src = self.unc_convert(src)
         dst = self.unc_convert(dst)
-
+        src = os.path.normpath(src)
+        dst = os.path.normpath(dst)
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
         dirname = os.path.dirname(dst)
         try:

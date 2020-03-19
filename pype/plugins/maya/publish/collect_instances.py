@@ -103,16 +103,22 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Store the exact members of the object set
             instance.data["setMembers"] = members
 
-
             # Define nice label
             name = cmds.ls(objset, long=False)[0]   # use short name
             label = "{0} ({1})".format(name,
                                        data["asset"])
 
+            if "handles" in data:
+                data["handleStart"] = data["handles"]
+                data["handleEnd"] = data["handles"]
+
             # Append start frame and end frame to label if present
             if "frameStart" and "frameEnd" in data:
-                label += "  [{0}-{1}]".format(int(data["frameStart"]),
-                                              int(data["frameEnd"]))
+                data["frameStartHandle"] = data["frameStart"] - data["handleStart"]
+                data["frameEndHandle"] = data["frameEnd"] + data["handleEnd"]
+
+                label += "  [{0}-{1}]".format(int(data["frameStartHandle"]),
+                                              int(data["frameEndHandle"]))
 
             instance.data["label"] = label
 
@@ -122,7 +128,6 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
             self.log.debug("DATA: \"%s\" " % instance.data)
-            
 
         def sort_by_family(instance):
             """Sort by family"""
