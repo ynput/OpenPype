@@ -15,6 +15,15 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
     # Must happen after IntegrateNew
     order = pyblish.api.IntegratorOrder + 0.1
 
+    optional = True
+
+    families = ["model",
+                "rig",
+                "setdress",
+                "look",
+                "pointcache",
+                "animation"]
+
     # Can specify representation names that will be ignored (lower case)
     ignored_representation_names = []
     db_representation_context_keys = [
