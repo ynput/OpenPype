@@ -94,11 +94,6 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
         step = instance.data.get("step", 1.0)
         bake_to_worldspace = instance.data("bakeToWorldSpace", True)
 
-        # TODO: Implement a bake to non-world space
-        # Currently it will always bake the resulting camera to world-space
-        # and it does not allow to include the parent hierarchy, even though
-        # with `bakeToWorldSpace` set to False it should include its
-        # hierarchy to be correct with the family implementation.
         if not bake_to_worldspace:
             self.log.warning("Camera (Maya Ascii) export only supports world"
                              "space baked camera extractions. The disabled "
@@ -113,7 +108,7 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
                               framerange[1] + handles]
 
         # validate required settings
-        assert len(cameras) == 1, "Not a single camera found in extraction"
+        assert len(cameras) == 1, "Single camera must be found in extraction"
         assert isinstance(step, float), "Step must be a float value"
         camera = cameras[0]
         transform = cmds.listRelatives(camera, parent=True, fullPath=True)
@@ -124,21 +119,24 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
         path = os.path.join(dir_path, filename)
 
         # Perform extraction
-        self.log.info("Performing camera bakes for: {0}".format(transform))
         with avalon.maya.maintained_selection():
             with lib.evaluation("off"):
                 with avalon.maya.suspended_refresh():
-                    baked = lib.bake_to_world_space(
-                        transform,
-                        frame_range=range_with_handles,
-                        step=step
-                    )
-                    baked_shapes = cmds.ls(baked,
-                                           type="camera",
-                                           dag=True,
-                                           shapes=True,
-                                           long=True)
-
+                    if bake_to_worldspace:
+                        self.log.info(
+                            "Performing camera bakes: {}".format(transform))
+                        baked = lib.bake_to_world_space(
+                            transform,
+                            frame_range=range_with_handles,
+                            step=step
+                        )
+                        baked_shapes = cmds.ls(baked,
+                                               type="camera",
+                                               dag=True,
+                                               shapes=True,
+                                               long=True)
+                    else:
+                        baked_shapes = cameras
                     # Fix PLN-178: Don't allow background color to be non-black
                     for cam in baked_shapes:
                         attrs = {"backgroundColorR": 0.0,
@@ -164,7 +162,8 @@ class ExtractCameraMayaAscii(pype.api.Extractor):
                               expressions=False)
 
                     # Delete the baked hierarchy
-                    cmds.delete(baked)
+                    if bake_to_worldspace:
+                        cmds.delete(baked)
 
                     massage_ma_file(path)
 
