@@ -9,6 +9,7 @@
     "additionalProperties": true,
 
     "required": [
+        "version_id",
         "schema",
         "type",
         "parent"
@@ -18,6 +19,10 @@
         "_id": {
             "description": "Document's id (database will create it's if not entered)",
             "example": "ObjectId(592c33475f8c1b064c4d1696)"
+        },
+        "version_id": {
+            "description": "The version ID from which it was created",
+            "example": "ObjectId(592c33475f8c1b064c4d1695)"
         },
         "schema": {
             "description": "The schema associated with this document",
