@@ -19,7 +19,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["nuke", "nukestudio"]
-    families = ["render.farm"]
+    families = ["render.farm", "prerender.farm"]
     optional = True
 
     deadline_priority = 50

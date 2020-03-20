@@ -9,7 +9,7 @@ class CollectReview(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.3
     label = "Collect Review"
     hosts = ["nuke"]
-    families = ["write", "prerender"]
+    families = ["render", "render.local", "render.farm"]
 
     def process(self, instance):
 

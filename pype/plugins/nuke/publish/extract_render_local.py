@@ -17,7 +17,7 @@ class NukeRenderLocal(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder
     label = "Render Local"
     hosts = ["nuke"]
-    families = ["render.local"]
+    families = ["render.local", "prerender.local"]
 
     def process(self, instance):
         node = None
