@@ -20,15 +20,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
-    hosts = ["nuke", "maya", "shell"]
+    hosts = ["nuke", "maya", "shell", "nukestudio"]
 
     outputs = {}
     ext_filter = []
     to_width = 1920
     to_height = 1080
 
-    def process(self, instance):
 
+    def process(self, instance):
         output_profiles = self.outputs or {}
 
         inst_data = instance.data
@@ -170,7 +170,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 frame_start_handle = frame_start - handle_start
                 frame_end_handle = frame_end + handle_end
                 if isinstance(repre["files"], list):
-                    if frame_start_handle != repre.get("detectedStart", frame_start_handle):
+                    if frame_start_handle != repre.get(
+                            "detectedStart", frame_start_handle):
                         frame_start_handle = repre.get("detectedStart")
 
                     # exclude handle if no handles defined
