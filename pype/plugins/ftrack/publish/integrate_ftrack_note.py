@@ -1,4 +1,5 @@
 import sys
+import json
 import pyblish.api
 import six
 
@@ -18,6 +19,48 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
     # - note label must exist in Ftrack
     note_labels = []
 
+    def get_intent_label(self, session, intent_value):
+        if not intent_value:
+            return
+
+        intent_configurations = session.query(
+            "CustomAttributeConfiguration where key is intent"
+        ).all()
+        if not intent_configurations:
+            return
+
+        intent_configuration = intent_configurations[0]
+        if len(intent_configuration) > 1:
+            self.log.warning((
+                "Found more than one `intent` custom attribute."
+                " Using first found."
+            ))
+
+        config = intent_configuration.get("config")
+        if not config:
+            return
+
+        configuration = json.loads(config)
+        items = configuration.get("data")
+        if not items:
+            return
+
+        if sys.version_info[0] < 3:
+            string_type = basestring
+        else:
+            string_type = str
+
+        if isinstance(items, string_type):
+            items = json.loads(items)
+
+        intent_label = None
+        for item in items:
+            if item["value"] == intent_value:
+                intent_label = item["menu"]
+                break
+
+        return intent_label
+
     def process(self, instance):
         comment = (instance.context.data.get("comment") or "").strip()
         if not comment:
@@ -26,17 +69,39 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
 
         self.log.debug("Comment is set to `{}`".format(comment))
 
+        session = instance.context.data["ftrackSession"]
+
         intent = instance.context.data.get("intent")
-        if intent:
-            msg = "Intent is set to `{}` and was added to comment.".format(
-                intent
-            )
+        if intent and isinstance(intent, dict):
+            intent_val = intent.get("value")
+            intent_label = intent.get("label")
+        else:
+            intent_val = intent_label = intent
+
+        final_label = None
+        if intent_val:
+            final_label = self.get_intent_label(session, intent_val)
+            if final_label is None:
+                final_label = intent_label
+
+        # if intent label is set then format comment
+        # - it is possible that intent_label is equal to "" (empty string)
+        if final_label:
+            msg = "Intent label is set to `{}`.".format(final_label)
             comment = self.note_with_intent_template.format(**{
-                "intent": intent,
+                "intent": final_label,
                 "comment": comment
             })
+
+        elif intent_val:
+            msg = (
+                "Intent is set to `{}` and was not added"
+                " to comment because label is set to `{}`."
+            ).format(intent_val, final_label)
+
         else:
             msg = "Intent is not set."
+
         self.log.debug(msg)
 
         asset_versions_key = "ftrackIntegratedAssetVersions"
@@ -45,7 +110,6 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
             self.log.info("There are any integrated AssetVersions")
             return
 
-        session = instance.context.data["ftrackSession"]
         user = session.query(
             "User where username is \"{}\"".format(session.api_user)
         ).first()

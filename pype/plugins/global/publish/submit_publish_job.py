@@ -238,8 +238,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 )
                 i += 1
 
-        # Avoid copied pools and remove secondary pool
-        payload["JobInfo"]["Pool"] = "none"
+        # remove secondary pool
         payload["JobInfo"].pop("SecondaryPool", None)
 
         self.log.info("Submitting Deadline job ...")

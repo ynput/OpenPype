@@ -51,9 +51,15 @@ class ExtractBurnin(pype.api.Extractor):
             "frame_end": frame_end_handle,
             "duration": duration,
             "version": int(version),
-            "comment": instance.context.data.get("comment", ""),
-            "intent": instance.context.data.get("intent", "")
+            "comment": instance.context.data.get("comment", "")
         })
+
+        intent_label = instance.context.data.get("intent")
+        if intent_label and isinstance(intent_label, dict):
+            intent_label = intent_label.get("label")
+
+        if intent_label:
+            prep_data["intent"] = intent_label
 
         # get anatomy project
         anatomy = instance.context.data['anatomy']
