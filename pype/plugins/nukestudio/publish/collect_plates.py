@@ -147,7 +147,6 @@ class CollectPlatesData(api.InstancePlugin):
                 "version": version
             })
 
-
         try:
             basename, ext = os.path.splitext(source_file)
             head, padding = os.path.splitext(basename)
@@ -192,8 +191,7 @@ class CollectPlatesData(api.InstancePlugin):
                 "frameEnd": instance.data["sourceOut"] - instance.data["sourceIn"] + 1,
                 'step': 1,
                 'fps': instance.context.data["fps"],
-                'preview': True,
-                'thumbnail': False,
+                'tags': ["preview"],
                 'name': "preview",
                 'ext': "mov",
             }
