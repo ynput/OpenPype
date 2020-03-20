@@ -12,7 +12,7 @@ import pype.blender.plugin
 logger = logging.getLogger("pype").getChild("blender").getChild("load_action")
 
 
-class BlendActionLoader(pype.blender.AssetLoader):
+class BlendActionLoader(pype.blender.plugin.AssetLoader):
     """Load action from a .blend file.
 
     Warning:
