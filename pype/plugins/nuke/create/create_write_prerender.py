@@ -87,7 +87,9 @@ class CreateWritePrerender(plugin.PypeCreator):
             self.data["subset"],
             write_data,
             input=selected_node,
-            prenodes=[])
+            prenodes=[],
+            review=False
+            )
 
         # relinking to collected connections
         for i, input in enumerate(inputs):
