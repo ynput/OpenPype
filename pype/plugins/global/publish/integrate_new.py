@@ -263,8 +263,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for idx, repre in enumerate(instance.data["representations"]):
             # create template data for Anatomy
             template_data = copy.deepcopy(anatomy_data)
-            if intent is not None:
-                template_data["intent"] = intent
+            if intent_value is not None:
+                template_data["intent"] = intent_value
 
             resolution_width = repre.get("resolutionWidth")
             resolution_height = repre.get("resolutionHeight")
