@@ -19,6 +19,7 @@ def asset_name(
         name = f"{namespace}:{name}"
     return name
 
+
 def create_blender_context(obj: Optional[bpy.types.Object] = None):
     """Create a new Blender context. If an object is passed as
     parameter, it is set as selected and active.
@@ -39,6 +40,7 @@ def create_blender_context(obj: Optional[bpy.types.Object] = None):
                         }
                         return override_context
     raise Exception("Could not create a custom Blender context.")
+
 
 class AssetLoader(api.Loader):
     """A basic AssetLoader for Blender
@@ -89,7 +91,8 @@ class AssetLoader(api.Loader):
             assert obj.library, f"'{obj.name}' is not linked."
             libraries.add(obj.library)
 
-        assert len(libraries) == 1, "'{container.name}' contains objects from more then 1 library."
+        assert len(
+            libraries) == 1, "'{container.name}' contains objects from more then 1 library."
 
         return list(libraries)[0]
 

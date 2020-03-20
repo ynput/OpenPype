@@ -175,7 +175,7 @@ class BlendActionLoader(pype.blender.plugin.AssetLoader):
         strips = []
 
         for obj in collection_metadata["objects"]:
-            
+
             # Get all the strips that use the action
             arm_objs = [
                 arm for arm in bpy.data.objects if arm.type == 'ARMATURE']

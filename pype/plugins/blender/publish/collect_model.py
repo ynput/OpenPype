@@ -23,8 +23,8 @@ class CollectModel(pyblish.api.ContextPlugin):
         """
         for collection in bpy.data.collections:
             avalon_prop = collection.get(AVALON_PROPERTY) or dict()
-            if (avalon_prop.get('family') == 'model' and
-                    not avalon_prop.get('representation')):
+            if (avalon_prop.get('family') == 'model'
+                    and not avalon_prop.get('representation')):
                 yield collection
 
     def process(self, context):
