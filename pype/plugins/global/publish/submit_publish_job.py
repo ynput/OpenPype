@@ -141,7 +141,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     hosts = ["fusion", "maya", "nuke"]
 
-    families = ["render.farm", "renderlayer", "imagesequence"]
+    families = ["render.farm", "prerender.farm", "renderlayer", "imagesequence"]
 
     aov_filter = {"maya": ["beauty"]}
 
@@ -582,6 +582,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
         }
+
+        if "prerender.farm" in instance.data["families"]:
+            instance_skeleton_data.update({
+                "family": "prerender",
+                "families": ["prerender"]
+            })
 
         # transfer specific families from original instance to new render
         for item in self.families_transfer:
