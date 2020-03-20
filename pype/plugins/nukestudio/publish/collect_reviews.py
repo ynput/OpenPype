@@ -78,8 +78,6 @@ class CollectReviews(api.InstancePlugin):
         file_dir = os.path.dirname(file_path)
         file = os.path.basename(file_path)
         ext = os.path.splitext(file)[-1][1:]
-        handleStart = rev_inst.data.get("handleStart")
-        handleEnd = rev_inst.data.get("handleEnd")
 
         # change label
         instance.data["label"] = "{0} - {1} - ({2}) - review".format(
@@ -94,27 +92,26 @@ class CollectReviews(api.InstancePlugin):
             "stagingDir": file_dir,
             "frameStart": rev_inst.data.get("sourceIn"),
             "frameEnd": rev_inst.data.get("sourceOut"),
-            "frameStartFtrack": rev_inst.data.get("sourceIn") - handleStart,
-            "frameEndFtrack": rev_inst.data.get("sourceOut") + handleEnd,
+            "frameStartFtrack": rev_inst.data.get("sourceInH"),
+            "frameEndFtrack": rev_inst.data.get("sourceOutH"),
             "step": 1,
             "fps": rev_inst.data.get("fps"),
-            "preview": True,
-            "thumbnail": False,
             "name": "preview",
+            "tags": ["preview"],
             "ext": ext
         }
 
-        # if int(rev_inst.data.get("sourceIn")) >
-        mediaDuration = instance.data.get("mediaDuration")
-        clipDuration = instance.data.get("clipDuration")
+        media_duration = instance.data.get("mediaDuration")
+        clip_duration_h = instance.data.get("clipDurationH")
 
-        if mediaDuration > clipDuration:
+        if media_duration > clip_duration_h:
             self.log.debug("Media duration higher: {}".format(
-                (mediaDuration - clipDuration)))
-            # representation.update({
-            #     "frameStart": instance.data.get("sourceInH"),
-            #     "frameEnd": instance.data.get("sourceOutH")
-            # })
+                (media_duration - clip_duration_h)))
+            representation.update({
+                "frameStart": instance.data.get("sourceInH"),
+                "frameEnd": instance.data.get("sourceOutH"),
+                "tags": ["cut-up", "delete"]
+            })
 
         instance.data["representations"].append(representation)
 
