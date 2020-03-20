@@ -1,9 +1,9 @@
 import os
-import avalon.blender.workio
 
 import pype.api
 
 import bpy
+
 
 class ExtractFBX(pype.api.Extractor):
     """Extract as FBX."""
@@ -20,29 +20,39 @@ class ExtractFBX(pype.api.Extractor):
         filename = f"{instance.name}.fbx"
         filepath = os.path.join(stagingdir, filename)
 
+        context = bpy.context
+        scene = context.scene
+        view_layer = context.view_layer
+
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        collections = [obj for obj in instance if type(obj) is bpy.types.Collection]
+        collections = [
+            obj for obj in instance if type(obj) is bpy.types.Collection]
 
-        assert len(collections) == 1, "There should be one and only one collection collected for this asset"
+        assert len(collections) == 1, "There should be one and only one " \
+            "collection collected for this asset"
 
-        old_active_layer_collection = bpy.context.view_layer.active_layer_collection
+        old_active_layer_collection = view_layer.active_layer_collection
+
+        layers = view_layer.layer_collection.children
 
         # Get the layer collection from the collection we need to export.
-        # This is needed because in Blender you can only set the active 
+        # This is needed because in Blender you can only set the active
         # collection with the layer collection, and there is no way to get
-        # the layer collection from the collection (but there is the vice versa).
-        layer_collections = [layer for layer in bpy.context.view_layer.layer_collection.children if layer.collection == collections[0]]
+        # the layer collection from the collection
+        # (but there is the vice versa).
+        layer_collections = [
+            layer for layer in layers if layer.collection == collections[0]]
 
         assert len(layer_collections) == 1
 
-        bpy.context.view_layer.active_layer_collection = layer_collections[0]
+        view_layer.active_layer_collection = layer_collections[0]
 
-        old_scale = bpy.context.scene.unit_settings.scale_length
+        old_scale = scene.unit_settings.scale_length
 
         # We set the scale of the scene for the export
-        bpy.context.scene.unit_settings.scale_length = 0.01
+        scene.unit_settings.scale_length = 0.01
 
         # We export the fbx
         bpy.ops.export_scene.fbx(
@@ -52,9 +62,9 @@ class ExtractFBX(pype.api.Extractor):
             add_leaf_bones=False
         )
 
-        bpy.context.view_layer.active_layer_collection = old_active_layer_collection
+        view_layer.active_layer_collection = old_active_layer_collection
 
-        bpy.context.scene.unit_settings.scale_length = old_scale
+        scene.unit_settings.scale_length = old_scale
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

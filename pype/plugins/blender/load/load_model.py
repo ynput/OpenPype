@@ -75,7 +75,7 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
 
             objects_list.append(obj)
 
-        model_container.pop( blender.pipeline.AVALON_PROPERTY )
+        model_container.pop(blender.pipeline.AVALON_PROPERTY)
 
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -117,7 +117,8 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
 
-        objects_list = self._process(self, libpath, lib_container, container_name)
+        objects_list = self._process(
+            self, libpath, lib_container, container_name)
 
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
@@ -190,7 +191,8 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
 
         self._remove(self, objects, lib_container)
 
-        objects_list = self._process(self, str(libpath), lib_container, collection.name)
+        objects_list = self._process(
+            self, str(libpath), lib_container, collection.name)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list

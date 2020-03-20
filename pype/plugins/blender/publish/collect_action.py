@@ -1,9 +1,7 @@
-import typing
 from typing import Generator
 
 import bpy
 
-import avalon.api
 import pyblish.api
 from avalon.blender.pipeline import AVALON_PROPERTY
 
@@ -25,8 +23,8 @@ class CollectAction(pyblish.api.ContextPlugin):
         """
         for collection in bpy.data.collections:
             avalon_prop = collection.get(AVALON_PROPERTY) or dict()
-            if (avalon_prop.get('family') == 'action'
-                    and not avalon_prop.get('representation')):
+            if (avalon_prop.get('family') == 'action' and
+                    not avalon_prop.get('representation')):
                 yield collection
 
     def process(self, context):

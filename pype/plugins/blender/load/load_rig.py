@@ -58,7 +58,8 @@ class BlendRigLoader(pype.blender.plugin.AssetLoader):
         rig_container = scene.collection.children[lib_container].make_local()
 
         meshes = [obj for obj in rig_container.objects if obj.type == 'MESH']
-        armatures = [obj for obj in rig_container.objects if obj.type == 'ARMATURE']
+        armatures = [
+            obj for obj in rig_container.objects if obj.type == 'ARMATURE']
 
         objects_list = []
 
@@ -86,7 +87,7 @@ class BlendRigLoader(pype.blender.plugin.AssetLoader):
 
             objects_list.append(obj)
 
-        rig_container.pop( blender.pipeline.AVALON_PROPERTY )
+        rig_container.pop(blender.pipeline.AVALON_PROPERTY)
 
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -128,7 +129,8 @@ class BlendRigLoader(pype.blender.plugin.AssetLoader):
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
 
-        objects_list = self._process(self, libpath, lib_container, container_name, None)
+        objects_list = self._process(
+            self, libpath, lib_container, container_name, None)
 
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
@@ -209,7 +211,8 @@ class BlendRigLoader(pype.blender.plugin.AssetLoader):
 
         self._remove(self, objects, lib_container)
 
-        objects_list = self._process(self, str(libpath), lib_container, collection.name, action)
+        objects_list = self._process(
+            self, str(libpath), lib_container, collection.name, action)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list

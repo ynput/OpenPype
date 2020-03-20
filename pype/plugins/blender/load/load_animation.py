@@ -10,7 +10,8 @@ import bpy
 import pype.blender.plugin
 
 
-logger = logging.getLogger("pype").getChild("blender").getChild("load_animation")
+logger = logging.getLogger("pype").getChild(
+    "blender").getChild("load_animation")
 
 
 class BlendAnimationLoader(pype.blender.plugin.AssetLoader):
@@ -53,10 +54,11 @@ class BlendAnimationLoader(pype.blender.plugin.AssetLoader):
 
         scene.collection.children.link(bpy.data.collections[lib_container])
 
-        animation_container = scene.collection.children[lib_container].make_local()
+        anim_container = scene.collection.children[lib_container].make_local()
 
-        meshes = [obj for obj in animation_container.objects if obj.type == 'MESH']
-        armatures = [obj for obj in animation_container.objects if obj.type == 'ARMATURE']
+        meshes = [obj for obj in anim_container.objects if obj.type == 'MESH']
+        armatures = [
+            obj for obj in anim_container.objects if obj.type == 'ARMATURE']
 
         # Should check if there is only an armature?
 
@@ -71,9 +73,11 @@ class BlendAnimationLoader(pype.blender.plugin.AssetLoader):
 
             obj.data.make_local()
 
-            if obj.animation_data is not None and obj.animation_data.action is not None:
+            anim_data = obj.animation_data
 
-                obj.animation_data.action.make_local()
+            if anim_data is not None and anim_data.action is not None:
+
+                anim_data.action.make_local()
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
 
@@ -84,7 +88,7 @@ class BlendAnimationLoader(pype.blender.plugin.AssetLoader):
 
             objects_list.append(obj)
 
-        animation_container.pop( blender.pipeline.AVALON_PROPERTY )
+        anim_container.pop(blender.pipeline.AVALON_PROPERTY)
 
         bpy.ops.object.select_all(action='DESELECT')
 
@@ -126,7 +130,8 @@ class BlendAnimationLoader(pype.blender.plugin.AssetLoader):
         container_metadata["libpath"] = libpath
         container_metadata["lib_container"] = lib_container
 
-        objects_list = self._process(self, libpath, lib_container, container_name)
+        objects_list = self._process(
+            self, libpath, lib_container, container_name)
 
         # Save the list of objects in the metadata container
         container_metadata["objects"] = objects_list
@@ -206,7 +211,8 @@ class BlendAnimationLoader(pype.blender.plugin.AssetLoader):
 
         self._remove(self, objects, lib_container)
 
-        objects_list = self._process(self, str(libpath), lib_container, collection.name)
+        objects_list = self._process(
+            self, str(libpath), lib_container, collection.name)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list

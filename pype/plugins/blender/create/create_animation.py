@@ -37,7 +37,7 @@ class CreateAnimation(Creator):
 
             for obj in lib.get_selection():
 
-                objects_to_link.add( obj )
+                objects_to_link.add(obj)
 
                 if obj.type == 'ARMATURE':
 

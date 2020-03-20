@@ -27,8 +27,8 @@ class CreateAction(Creator):
 
         if (self.options or {}).get("useSelection"):
             for obj in lib.get_selection():
-                if (obj.animation_data is not None
-                        and obj.animation_data.action is not None):
+                if (obj.animation_data is not None and
+                        obj.animation_data.action is not None):
 
                     empty_obj = bpy.data.objects.new(name=name,
                                                      object_data=None)

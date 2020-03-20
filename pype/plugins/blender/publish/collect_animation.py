@@ -1,9 +1,7 @@
-import typing
 from typing import Generator
 
 import bpy
 
-import avalon.api
 import pyblish.api
 from avalon.blender.pipeline import AVALON_PROPERTY
 
@@ -20,13 +18,13 @@ class CollectAnimation(pyblish.api.ContextPlugin):
         """Return all 'animation' collections.
 
         Check if the family is 'animation' and if it doesn't have the
-        representation set. If the representation is set, it is a loaded animation
-        and we don't want to publish it.
+        representation set. If the representation is set, it is a loaded 
+        animation and we don't want to publish it.
         """
         for collection in bpy.data.collections:
             avalon_prop = collection.get(AVALON_PROPERTY) or dict()
-            if (avalon_prop.get('family') == 'animation'
-                    and not avalon_prop.get('representation')):
+            if (avalon_prop.get('family') == 'animation' and
+                    not avalon_prop.get('representation')):
                 yield collection
 
     def process(self, context):

@@ -1,5 +1,4 @@
 import os
-import avalon.blender.workio
 
 import pype.api
 
@@ -23,31 +22,42 @@ class ExtractAnimationFBX(pype.api.Extractor):
         filename = f"{instance.name}.fbx"
         filepath = os.path.join(stagingdir, filename)
 
+        context = bpy.context
+        scene = context.scene
+        view_layer = context.view_layer
+
         # Perform extraction
         self.log.info("Performing extraction..")
 
-        collections = [obj for obj in instance if type(obj) is bpy.types.Collection]
+        collections = [
+            obj for obj in instance if type(obj) is bpy.types.Collection]
 
-        assert len(collections) == 1, "There should be one and only one collection collected for this asset"
+        assert len(collections) == 1, "There should be one and only one " \
+            "collection collected for this asset"
 
-        old_active_layer_collection = bpy.context.view_layer.active_layer_collection
+        old_active_layer_collection = view_layer.active_layer_collection
+
+        layers = view_layer.layer_collection.children
 
         # Get the layer collection from the collection we need to export.
-        # This is needed because in Blender you can only set the active 
+        # This is needed because in Blender you can only set the active
         # collection with the layer collection, and there is no way to get
-        # the layer collection from the collection (but there is the vice versa).
-        layer_collections = [layer for layer in bpy.context.view_layer.layer_collection.children if layer.collection == collections[0]]
+        # the layer collection from the collection
+        # (but there is the vice versa).
+        layer_collections = [
+            layer for layer in layers if layer.collection == collections[0]]
 
         assert len(layer_collections) == 1
 
-        bpy.context.view_layer.active_layer_collection = layer_collections[0]
+        view_layer.active_layer_collection = layer_collections[0]
 
-        old_scale = bpy.context.scene.unit_settings.scale_length
+        old_scale = scene.unit_settings.scale_length
 
         # We set the scale of the scene for the export
-        bpy.context.scene.unit_settings.scale_length = 0.01
+        scene.unit_settings.scale_length = 0.01
 
-        armatures = [obj for obj in collections[0].objects if obj.type == 'ARMATURE']
+        armatures = [
+            obj for obj in collections[0].objects if obj.type == 'ARMATURE']
 
         object_action_pairs = []
         original_actions = []
@@ -68,15 +78,15 @@ class ExtractAnimationFBX(pype.api.Extractor):
 
                 curr_frame_range = curr_action.frame_range
 
-                starting_frames.append( curr_frame_range[0] )
-                ending_frames.append( curr_frame_range[1] )
+                starting_frames.append(curr_frame_range[0])
+                ending_frames.append(curr_frame_range[1])
 
             object_action_pairs.append((obj, copy_action))
             original_actions.append(curr_action)
 
         # We compute the starting and ending frames
-        max_frame = min( starting_frames )
-        min_frame = max( ending_frames )
+        max_frame = min(starting_frames)
+        min_frame = max(ending_frames)
 
         # We bake the copy of the current action for each object
         bpy_extras.anim_utils.bake_action_objects(
@@ -95,21 +105,24 @@ class ExtractAnimationFBX(pype.api.Extractor):
             add_leaf_bones=False
         )
 
-        bpy.context.view_layer.active_layer_collection = old_active_layer_collection
+        view_layer.active_layer_collection = old_active_layer_collection
 
-        bpy.context.scene.unit_settings.scale_length = old_scale
+        scene.unit_settings.scale_length = old_scale
 
         # We delete the baked action and set the original one back
         for i in range(0, len(object_action_pairs)):
 
-            if original_actions[i]:
+            pair = object_action_pairs[i]
+            action = original_actions[i]
 
-                object_action_pairs[i][0].animation_data.action = original_actions[i]
+            if action:
 
-            if object_action_pairs[i][1]:
+                pair[0].animation_data.action = action
 
-                object_action_pairs[i][1].user_clear()
-                bpy.data.actions.remove(object_action_pairs[i][1])
+            if pair[1]:
+
+                pair[1].user_clear()
+                bpy.data.actions.remove(pair[1])
 
         if "representations" not in instance.data:
             instance.data["representations"] = []

@@ -15,23 +15,6 @@ class CreateRig(Creator):
     family = "rig"
     icon = "wheelchair"
 
-    # @staticmethod
-    # def _find_layer_collection(self, layer_collection, collection):
-
-    #     found = None
-
-    #     if (layer_collection.collection == collection):
-
-    #         return layer_collection
-
-    #     for layer in layer_collection.children:
-
-    #         found = self._find_layer_collection(layer, collection)
-
-    #         if found:
-
-    #             return found
-
     def process(self):
 
         asset = self.data["asset"]
@@ -54,37 +37,13 @@ class CreateRig(Creator):
 
             for obj in lib.get_selection():
 
-                objects_to_link.add( obj )
+                objects_to_link.add(obj)
 
                 if obj.type == 'ARMATURE':
 
                     for subobj in obj.children:
 
                         objects_to_link.add(subobj)
-
-                    # Create a new collection and link the widgets that
-                    # the rig uses.
-                    # custom_shapes = set()
-
-                    # for posebone in obj.pose.bones:
-
-                    #     if posebone.custom_shape is not None:
-
-                    #         custom_shapes.add( posebone.custom_shape )
-
-                    # if len( custom_shapes ) > 0:
-
-                    #     widgets_collection = bpy.data.collections.new(name="Widgets")
-
-                    #     collection.children.link(widgets_collection)
-
-                    #     for custom_shape in custom_shapes:
-
-                    #         widgets_collection.objects.link( custom_shape )
-
-                    #     layer_collection = self._find_layer_collection(bpy.context.view_layer.layer_collection, widgets_collection)
-
-                    #     layer_collection.exclude = True
 
         for obj in objects_to_link:
 

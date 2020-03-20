@@ -69,11 +69,11 @@ class BlendActionLoader(pype.blender.plugin.AssetLoader):
         ) as (_, data_to):
             data_to.collections = [lib_container]
 
-        scene = bpy.context.scene
+        collection = bpy.context.scene.collection
 
-        scene.collection.children.link(bpy.data.collections[lib_container])
+        collection.children.link(bpy.data.collections[lib_container])
 
-        animation_container = scene.collection.children[lib_container].make_local()
+        animation_container = collection.children[lib_container].make_local()
 
         objects_list = []
 
@@ -84,9 +84,11 @@ class BlendActionLoader(pype.blender.plugin.AssetLoader):
 
             obj = obj.make_local()
 
-            if obj.animation_data is not None and obj.animation_data.action is not None:
+            anim_data = obj.animation_data
 
-                obj.animation_data.action.make_local()
+            if anim_data is not None and anim_data.action is not None:
+
+                anim_data.action.make_local()
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
 
@@ -173,8 +175,12 @@ class BlendActionLoader(pype.blender.plugin.AssetLoader):
         strips = []
 
         for obj in collection_metadata["objects"]:
+            
+            # Get all the strips that use the action
+            arm_objs = [
+                arm for arm in bpy.data.objects if arm.type == 'ARMATURE']
 
-            for armature_obj in [ objj for objj in bpy.data.objects if objj.type == 'ARMATURE' ]:
+            for armature_obj in arm_objs:
 
                 if armature_obj.animation_data is not None:
 
@@ -203,25 +209,27 @@ class BlendActionLoader(pype.blender.plugin.AssetLoader):
 
         scene.collection.children.link(bpy.data.collections[lib_container])
 
-        animation_container = scene.collection.children[lib_container].make_local()
+        anim_container = scene.collection.children[lib_container].make_local()
 
         objects_list = []
 
         # Link meshes first, then armatures.
         # The armature is unparented for all the non-local meshes,
         # when it is made local.
-        for obj in animation_container.objects:
+        for obj in anim_container.objects:
 
             obj = obj.make_local()
 
-            if obj.animation_data is not None and obj.animation_data.action is not None:
+            anim_data = obj.animation_data
 
-                obj.animation_data.action.make_local()
+            if anim_data is not None and anim_data.action is not None:
+
+                anim_data.action.make_local()
 
                 for strip in strips:
 
-                    strip.action = obj.animation_data.action
-                    strip.action_frame_end = obj.animation_data.action.frame_range[1]
+                    strip.action = anim_data.action
+                    strip.action_frame_end = anim_data.action.frame_range[1]
 
             if not obj.get(blender.pipeline.AVALON_PROPERTY):
 
@@ -232,7 +240,7 @@ class BlendActionLoader(pype.blender.plugin.AssetLoader):
 
             objects_list.append(obj)
 
-        animation_container.pop(blender.pipeline.AVALON_PROPERTY)
+        anim_container.pop(blender.pipeline.AVALON_PROPERTY)
 
         # Save the list of objects in the metadata container
         collection_metadata["objects"] = objects_list
@@ -271,7 +279,11 @@ class BlendActionLoader(pype.blender.plugin.AssetLoader):
 
         for obj in objects:
 
-            for armature_obj in [ objj for objj in bpy.data.objects if objj.type == 'ARMATURE' ]:
+            # Get all the strips that use the action
+            arm_objs = [
+                arm for arm in bpy.data.objects if arm.type == 'ARMATURE']
+
+            for armature_obj in arm_objs:
 
                 if armature_obj.animation_data is not None:
 
