@@ -1,14 +1,14 @@
 import os
 import sys
+import copy
 import platform
 from avalon import lib as avalonlib
 import acre
-from pype import api as pype
 from pype import lib as pypelib
 from pypeapp import config
 from .ftrack_base_handler import BaseHandler
 
-from pypeapp import Anatomy
+from pypeapp import Anatomy, Roots
 
 
 class AppAction(BaseHandler):
@@ -157,88 +157,65 @@ class AppAction(BaseHandler):
         '''
 
         entity = entities[0]
-        project_name = entity['project']['full_name']
+        project_name = entity["project"]["full_name"]
 
         database = pypelib.get_avalon_database()
 
-        # Get current environments
-        env_list = [
-            'AVALON_PROJECT',
-            'AVALON_SILO',
-            'AVALON_ASSET',
-            'AVALON_TASK',
-            'AVALON_APP',
-            'AVALON_APP_NAME'
-        ]
-        env_origin = {}
-        for env in env_list:
-            env_origin[env] = os.environ.get(env, None)
-
-        # set environments for Avalon
-        os.environ["AVALON_PROJECT"] = project_name
-        os.environ["AVALON_SILO"] = entity['ancestors'][0]['name']
-        os.environ["AVALON_ASSET"] = entity['parent']['name']
-        os.environ["AVALON_TASK"] = entity['name']
-        os.environ["AVALON_APP"] = self.identifier.split("_")[0]
-        os.environ["AVALON_APP_NAME"] = self.identifier
-
-        anatomy = Anatomy()
+        asset_name = entity["parent"]["name"]
+        asset_document = database[project_name].find_one({
+            "type": "asset",
+            "name": asset_name
+        })
 
         hierarchy = ""
-        parents = database[project_name].find_one({
-            "type": 'asset',
-            "name": entity['parent']['name']
-        })['data']['parents']
+        asset_doc_parents = asset_document["data"].get("parents")
+        if len(asset_doc_parents) > 0:
+            hierarchy = os.path.join(*asset_doc_parents)
 
-        if parents:
-            hierarchy = os.path.join(*parents)
-
-        os.environ["AVALON_HIERARCHY"] = hierarchy
-
-        application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
-
+        application = avalonlib.get_application(self.identifier)
         data = {
-            "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
+            "root": Roots(project_name).roots,
             "project": {
-                "name": entity['project']['full_name'],
-                "code": entity['project']['name']
+                "name": entity["project"]["full_name"],
+                "code": entity["project"]["name"]
             },
-            "task": entity['name'],
-            "asset": entity['parent']['name'],
+            "task": entity["name"],
+            "asset": asset_name,
             "app": application["application_dir"],
-            "hierarchy": hierarchy,
+            "hierarchy": hierarchy
         }
 
-        av_project = database[project_name].find_one({"type": 'project'})
-        templates = None
-        if av_project:
-            work_template = av_project.get('config', {}).get('template', {}).get(
-                'work', None
-            )
-        work_template = None
         try:
-            work_template = work_template.format(**data)
-        except Exception:
-            try:
-                anatomy = anatomy.format(data)
-                work_template = anatomy["work"]["folder"]
+            anatomy = Anatomy(project_name)
+            anatomy_filled = anatomy.format(data)
+            workdir = os.path.normpath(anatomy_filled["work"]["folder"])
 
-            except Exception as exc:
-                msg = "{} Error in anatomy.format: {}".format(
-                    __name__, str(exc)
-                )
-                self.log.error(msg, exc_info=True)
-                return {
-                    'success': False,
-                    'message': msg
-                }
+        except Exception as exc:
+            msg = "Error in anatomy.format: {}".format(
+                str(exc)
+            )
+            self.log.error(msg, exc_info=True)
+            return {
+                "success": False,
+                "message": msg
+            }
 
-        workdir = os.path.normpath(work_template)
-        os.environ["AVALON_WORKDIR"] = workdir
         try:
             os.makedirs(workdir)
         except FileExistsError:
             pass
+
+        # set environments for Avalon
+        prep_env = copy.deepcopy(os.environ)
+        prep_env.update({
+            "AVALON_PROJECT": project_name,
+            "AVALON_ASSET": asset_name,
+            "AVALON_TASK": entity["name"],
+            "AVALON_APP": self.identifier.split("_")[0],
+            "AVALON_APP_NAME": self.identifier,
+            "AVALON_HIERARCHY": hierarchy,
+            "AVALON_WORKDIR": workdir
+        })
 
         # collect all parents from the task
         parents = []
@@ -246,120 +223,110 @@ class AppAction(BaseHandler):
             parents.append(session.get(item['type'], item['id']))
 
         # collect all the 'environment' attributes from parents
-        tools_attr = [os.environ["AVALON_APP"], os.environ["AVALON_APP_NAME"]]
-        for parent in reversed(parents):
-            # check if the attribute is empty, if not use it
-            if parent['custom_attributes']['tools_env']:
-                tools_attr.extend(parent['custom_attributes']['tools_env'])
-                break
+        tools_attr = [prep_env["AVALON_APP"], prep_env["AVALON_APP_NAME"]]
+        tools_env = asset_document["data"].get("tools_env") or []
+        tools_attr.extend(tools_env)
 
         tools_env = acre.get_tools(tools_attr)
         env = acre.compute(tools_env)
-        env = acre.merge(env, current_env=dict(os.environ))
-        env = acre.append(dict(os.environ), env)
-
-
-        #
-        # tools_env = acre.get_tools(tools)
-        # env = acre.compute(dict(tools_env))
-        # env = acre.merge(env, dict(os.environ))
-        # os.environ = acre.append(dict(os.environ), env)
-        # os.environ = acre.compute(os.environ)
+        env = acre.merge(env, current_env=dict(prep_env))
+        env = acre.append(dict(prep_env), env)
 
         # Get path to execute
-        st_temp_path = os.environ['PYPE_CONFIG']
+        st_temp_path = os.environ["PYPE_CONFIG"]
         os_plat = platform.system().lower()
 
         # Path to folder with launchers
-        path = os.path.join(st_temp_path, 'launchers', os_plat)
+        path = os.path.join(st_temp_path, "launchers", os_plat)
+
         # Full path to executable launcher
         execfile = None
-
         if sys.platform == "win32":
-
             for ext in os.environ["PATHEXT"].split(os.pathsep):
                 fpath = os.path.join(path.strip('"'), self.executable + ext)
                 if os.path.isfile(fpath) and os.access(fpath, os.X_OK):
                     execfile = fpath
                     break
-                pass
 
             # Run SW if was found executable
-            if execfile is not None:
-                popen = avalonlib.launch(
-                    executable=execfile, args=[], environment=env
-                )
-            else:
+            if execfile is None:
                 return {
-                    'success': False,
-                    'message': "We didn't found launcher for {0}"
-                    .format(self.label)
-                    }
-                pass
-
-        if sys.platform.startswith('linux'):
-            execfile = os.path.join(path.strip('"'), self.executable)
-            if os.path.isfile(execfile):
-                try:
-                    fp = open(execfile)
-                except PermissionError as p:
-                    self.log.exception('Access denied on {0} - {1}'.format(
-                        execfile, p))
-                    return {
-                        'success': False,
-                        'message': "Access denied on launcher - {}".format(
-                            execfile)
-                    }
-                fp.close()
-                # check executable permission
-                if not os.access(execfile, os.X_OK):
-                    self.log.error('No executable permission on {}'.format(
-                        execfile))
-                    return {
-                        'success': False,
-                        'message': "No executable permission - {}".format(
-                            execfile)
-                        }
-                    pass
-            else:
-                self.log.error('Launcher doesn\'t exist - {}'.format(
-                    execfile))
-                return {
-                    'success': False,
-                    'message': "Launcher doesn't exist - {}".format(execfile)
+                    "success": False,
+                    "message": "We didn't found launcher for {0}".format(
+                        self.label
+                    )
                 }
-                pass
-            # Run SW if was found executable
-            if execfile is not None:
-                avalonlib.launch(
-                    '/usr/bin/env', args=['bash', execfile], environment=env
-                )
-            else:
+
+            popen = avalonlib.launch(
+                executable=execfile, args=[], environment=env
+            )
+
+        elif sys.platform.startswith("linux"):
+            execfile = os.path.join(path.strip('"'), self.executable)
+            if not os.path.isfile(execfile):
+                msg = "Launcher doesn't exist - {}".format(execfile)
+
+                self.log.error(msg)
                 return {
-                    'success': False,
-                    'message': "We didn't found launcher for {0}"
-                    .format(self.label)
-                    }
-                pass
+                    "success": False,
+                    "message": msg
+                }
+
+            try:
+                fp = open(execfile)
+            except PermissionError as perm_exc:
+                msg = "Access denied on launcher {} - {}".format(
+                    execfile, perm_exc
+                )
+
+                self.log.exception(msg, exc_info=True)
+                return {
+                    "success": False,
+                    "message": msg
+                }
+
+            fp.close()
+            # check executable permission
+            if not os.access(execfile, os.X_OK):
+                msg = "No executable permission - {}".format(execfile)
+
+                self.log.error(msg)
+                return {
+                    "success": False,
+                    "message": msg
+                }
+
+            # Run SW if was found executable
+            if execfile is None:
+                return {
+                    "success": False,
+                    "message": "We didn't found launcher for {0}".format(
+                        self.label
+                    )
+                }
+
+            popen = avalonlib.launch(
+                "/usr/bin/env", args=["bash", execfile], environment=env
+            )
 
         # Change status of task to In progress
         presets = config.get_presets()["ftrack"]["ftrack_config"]
 
-        if 'status_update' in presets:
-            statuses = presets['status_update']
+        if "status_update" in presets:
+            statuses = presets["status_update"]
 
-            actual_status = entity['status']['name'].lower()
+            actual_status = entity["status"]["name"].lower()
             already_tested = []
             ent_path = "/".join(
-                [ent["name"] for ent in entity['link']]
+                [ent["name"] for ent in entity["link"]]
             )
             while True:
                 next_status_name = None
                 for key, value in statuses.items():
                     if key in already_tested:
                         continue
-                    if actual_status in value or '_any_' in value:
-                        if key != '_ignore_':
+                    if actual_status in value or "_any_" in value:
+                        if key != "_ignore_":
                             next_status_name = key
                             already_tested.append(key)
                         break
@@ -369,12 +336,12 @@ class AppAction(BaseHandler):
                     break
 
                 try:
-                    query = 'Status where name is "{}"'.format(
+                    query = "Status where name is \"{}\"".format(
                         next_status_name
                     )
                     status = session.query(query).one()
 
-                    entity['status'] = status
+                    entity["status"] = status
                     session.commit()
                     self.log.debug("Changing status to \"{}\" <{}>".format(
                         next_status_name, ent_path
@@ -384,18 +351,12 @@ class AppAction(BaseHandler):
                 except Exception:
                     session.rollback()
                     msg = (
-                        'Status "{}" in presets wasn\'t found'
-                        ' on Ftrack entity type "{}"'
+                        "Status \"{}\" in presets wasn't found"
+                        " on Ftrack entity type \"{}\""
                     ).format(next_status_name, entity.entity_type)
                     self.log.warning(msg)
 
-        # Set origin avalon environments
-        for key, value in env_origin.items():
-            if value == None:
-                value = ""
-            os.environ[key] = value
-
         return {
-            'success': True,
-            'message': "Launching {0}".format(self.label)
+            "success": True,
+            "message": "Launching {0}".format(self.label)
         }
