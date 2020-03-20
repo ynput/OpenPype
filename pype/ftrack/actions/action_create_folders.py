@@ -12,9 +12,6 @@ from pypeapp import config, Anatomy
 
 
 class CreateFolders(BaseAction):
-
-    '''Custom action.'''
-
     #: Action identifier.
     identifier = 'create.folders'
 
@@ -29,75 +26,69 @@ class CreateFolders(BaseAction):
     db = DbConnector()
 
     def discover(self, session, entities, event):
-        ''' Validation '''
         if len(entities) != 1:
             return False
 
-        not_allowed = ['assetversion', 'project']
+        not_allowed = ["assetversion", "project"]
         if entities[0].entity_type.lower() in not_allowed:
             return False
 
         return True
 
     def interface(self, session, entities, event):
-        if event['data'].get('values', {}):
+        if event["data"].get("values", {}):
             return
         entity = entities[0]
         without_interface = True
-        for child in entity['children']:
-            if child['object_type']['name'].lower() != 'task':
+        for child in entity["children"]:
+            if child["object_type"]["name"].lower() != "task":
                 without_interface = False
                 break
         self.without_interface = without_interface
         if without_interface:
             return
-        title = 'Create folders'
+        title = "Create folders"
 
-        entity_name = entity['name']
+        entity_name = entity["name"]
         msg = (
-            '<h2>Do you want create folders also'
-            ' for all children of "{}"?</h2>'
+            "<h2>Do you want create folders also"
+            " for all children of \"{}\"?</h2>"
         )
-        if entity.entity_type.lower() == 'project':
-            entity_name = entity['full_name']
-            msg = msg.replace(' also', '')
-            msg += '<h3>(Project root won\'t be created if not checked)</h3>'
+        if entity.entity_type.lower() == "project":
+            entity_name = entity["full_name"]
+            msg = msg.replace(" also", "")
+            msg += "<h3>(Project root won't be created if not checked)</h3>"
         items = []
         item_msg = {
-            'type': 'label',
-            'value': msg.format(entity_name)
+            "type": "label",
+            "value": msg.format(entity_name)
         }
         item_label = {
-            'type': 'label',
-            'value': 'With all chilren entities'
+            "type": "label",
+            "value": "With all chilren entities"
         }
         item = {
-            'name': 'children_included',
-            'type': 'boolean',
-            'value': False
+            "name": "children_included",
+            "type": "boolean",
+            "value": False
         }
         items.append(item_msg)
         items.append(item_label)
         items.append(item)
 
-        if len(items) == 0:
-            return {
-                'success': False,
-                'message': 'Didn\'t found any running jobs'
-            }
-        else:
-            return {
-                'items': items,
-                'title': title
-            }
+        return {
+            "items": items,
+            "title": title
+        }
 
     def launch(self, session, entities, event):
         '''Callback method for custom action.'''
         with_childrens = True
         if self.without_interface is False:
-            if 'values' not in event['data']:
+            if "values" not in event["data"]:
                 return
-            with_childrens = event['data']['values']['children_included']
+            with_childrens = event["data"]["values"]["children_included"]
+
         entity = entities[0]
         if entity.entity_type.lower() == 'project':
             proj = entity
@@ -105,6 +96,7 @@ class CreateFolders(BaseAction):
             proj = entity['project']
         project_name = proj['full_name']
         project_code = proj['name']
+
         if entity.entity_type.lower() == 'project' and with_childrens == False:
             return {
                 'success': True,
@@ -136,21 +128,20 @@ class CreateFolders(BaseAction):
             template_publish = templates["avalon"]["publish"]
 
         collected_paths = []
-        presets = config.get_presets()['tools']['sw_folders']
+        presets = config.get_presets()["tools"]["sw_folders"]
         for entity in all_entities:
-            if entity.entity_type.lower() == 'project':
+            if entity.entity_type.lower() == "project":
                 continue
             ent_data = data.copy()
 
-            asset_name = entity['name']
-            ent_data['asset'] = asset_name
+            ent_data["asset"] = entity["name"]
 
-            parents = entity['link']
-            hierarchy_names = [p['name'] for p in parents[1:-1]]
-            hierarchy = ''
+            parents = entity["link"][1:-1]
+            hierarchy_names = [p["name"] for p in parents]
+            hierarchy = ""
             if hierarchy_names:
                 hierarchy = os.path.sep.join(hierarchy_names)
-            ent_data['hierarchy'] = hierarchy
+            ent_data["hierarchy"] = hierarchy
 
             tasks_created = False
             if entity['children']:
@@ -222,8 +213,8 @@ class CreateFolders(BaseAction):
                 os.makedirs(path)
 
         return {
-            'success': True,
-            'message': 'Created Folders Successfully!'
+            "success": True,
+            "message": "Successfully created project folders."
         }
 
     def get_notask_children(self, entity):
@@ -325,45 +316,5 @@ class PartialDict(dict):
 
 
 def register(session, plugins_presets={}):
-    '''Register plugin. Called when used as an plugin.'''
-
+    """Register plugin. Called when used as an plugin."""
     CreateFolders(session, plugins_presets).register()
-
-
-def main(arguments=None):
-    '''Set up logging and register action.'''
-    if arguments is None:
-        arguments = []
-
-    parser = argparse.ArgumentParser()
-    # Allow setting of logging level from arguments.
-    loggingLevels = {}
-    for level in (
-        logging.NOTSET, logging.DEBUG, logging.INFO, logging.WARNING,
-        logging.ERROR, logging.CRITICAL
-    ):
-        loggingLevels[logging.getLevelName(level).lower()] = level
-
-    parser.add_argument(
-        '-v', '--verbosity',
-        help='Set the logging output verbosity.',
-        choices=loggingLevels.keys(),
-        default='info'
-    )
-    namespace = parser.parse_args(arguments)
-
-    # Set up basic logging
-    logging.basicConfig(level=loggingLevels[namespace.verbosity])
-
-    session = ftrack_api.Session()
-    register(session)
-
-    # Wait for events
-    logging.info(
-        'Registered actions and listening for events. Use Ctrl-C to abort.'
-    )
-    session.event_hub.wait()
-
-
-if __name__ == '__main__':
-    raise SystemExit(main(sys.argv[1:]))
