@@ -211,19 +211,23 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "attachTo": attachTo,
                 "setMembers": layer_name,
                 "publish": True,
-                "frameStart": int(context.data["assetEntity"]['data']['frameStart']),
-                "frameEnd": int(context.data["assetEntity"]['data']['frameEnd']),
-                "frameStartHandle": int(self.get_render_attribute("startFrame",
-                                                            layer=layer_name)),
-                "frameEndHandle": int(self.get_render_attribute("endFrame",
-                                                          layer=layer_name)),
+                "frameStart": int(
+                    context.data["assetEntity"]['data']['frameStart']),
+                "frameEnd": int(
+                    context.data["assetEntity"]['data']['frameEnd']),
+                "frameStartHandle": int(
+                    self.get_render_attribute("startFrame", layer=layer_name)),
+                "frameEndHandle": int(
+                    self.get_render_attribute("endFrame", layer=layer_name)),
                 "byFrameStep": int(
                     self.get_render_attribute("byFrameStep",
                                               layer=layer_name)),
                 "renderer": self.get_render_attribute("currentRenderer",
                                                       layer=layer_name),
-                "handleStart": int(context.data["assetEntity"]['data']['handleStart']),
-                "handleEnd": int(context.data["assetEntity"]['data']['handleEnd']),
+                "handleStart": int(
+                    context.data["assetEntity"]['data']['handleStart']),
+                "handleEnd": int(
+                    context.data["assetEntity"]['data']['handleEnd']),
 
                 # instance subset
                 "family": "renderlayer",
