@@ -105,8 +105,6 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
                 representation['files'] = collected_frames
                 instance.data["representations"].append(representation)
-                if "render" not in instance.data["families"]:
-                    instance.data["families"].append("render")
             except Exception:
                 instance.data["representations"].append(representation)
                 self.log.debug("couldn't collect frames: {}".format(label))
@@ -127,6 +125,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             deadlinePriority = group_node["deadlinePriority"].value()
 
         families = [f for f in instance.data["families"] if "write" not in f]
+
         instance.data.update({
             "versionData": version_data,
             "path": path,
@@ -147,18 +146,5 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "deadlinePriority": deadlinePriority
         })
         self.log.debug("families: {}".format(families))
-        if "prerender" in families:
-            _families = list()
-            for fm in families:
-                if fm in _families:
-                    continue
-                if "render" in fm:
-                    if "prerender" in fm:
-                        continue
-                    _families.append(fm)
-            instance.data.update({
-                "family": "prerender",
-                "families": _families
-                })
-            self.log.debug("_families: {}".format(_families))
+
         self.log.debug("instance.data: {}".format(instance.data))
