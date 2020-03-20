@@ -47,8 +47,7 @@ class ExtractAnimationFBX(pype.api.Extractor):
         # We set the scale of the scene for the export
         bpy.context.scene.unit_settings.scale_length = 0.01
 
-        # We export all the objects in the collection
-        objects_to_export = collections[0].objects
+        armatures = [obj for obj in collections[0].objects if obj.type == 'ARMATURE']
 
         object_action_pairs = []
         original_actions = []
@@ -56,19 +55,24 @@ class ExtractAnimationFBX(pype.api.Extractor):
         starting_frames = []
         ending_frames = []
 
-        # For each object, we make a copy of the current action
-        for obj in objects_to_export:
+        # For each armature, we make a copy of the current action
+        for obj in armatures:
 
-            curr_action = obj.animation_data.action
-            copy_action = curr_action.copy()
+            curr_action = None
+            copy_action = None
+
+            if obj.animation_data and obj.animation_data.action:
+
+                curr_action = obj.animation_data.action
+                copy_action = curr_action.copy()
+
+                curr_frame_range = curr_action.frame_range
+
+                starting_frames.append( curr_frame_range[0] )
+                ending_frames.append( curr_frame_range[1] )
 
             object_action_pairs.append((obj, copy_action))
             original_actions.append(curr_action)
-
-            curr_frame_range = curr_action.frame_range
-
-            starting_frames.append( curr_frame_range[0] )
-            ending_frames.append( curr_frame_range[1] )
 
         # We compute the starting and ending frames
         max_frame = min( starting_frames )
@@ -98,10 +102,14 @@ class ExtractAnimationFBX(pype.api.Extractor):
         # We delete the baked action and set the original one back
         for i in range(0, len(object_action_pairs)):
 
-            object_action_pairs[i][0].animation_data.action = original_actions[i]
+            if original_actions[i]:
 
-            object_action_pairs[i][1].user_clear()
-            bpy.data.actions.remove(object_action_pairs[i][1])
+                object_action_pairs[i][0].animation_data.action = original_actions[i]
+
+            if object_action_pairs[i][1]:
+
+                object_action_pairs[i][1].user_clear()
+                bpy.data.actions.remove(object_action_pairs[i][1])
 
         if "representations" not in instance.data:
             instance.data["representations"] = []
