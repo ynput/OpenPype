@@ -243,9 +243,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         instance.data['version'] = version['name']
 
-        intent = context.data.get("intent")
-        if intent is not None:
-            anatomy_data["intent"] = intent
+        intent_value = instance.context.data.get("intent")
+        if intent_value and isinstance(intent_value, dict):
+            intent_value = intent_value.get("value")
+
+        if intent_value:
+            anatomy_data["intent"] = intent_value
 
         anatomy = instance.context.data['anatomy']
 
@@ -260,8 +263,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         for idx, repre in enumerate(instance.data["representations"]):
             # create template data for Anatomy
             template_data = copy.deepcopy(anatomy_data)
-            if intent is not None:
-                template_data["intent"] = intent
+            if intent_value is not None:
+                template_data["intent"] = intent_value
 
             resolution_width = repre.get("resolutionWidth")
             resolution_height = repre.get("resolutionHeight")
@@ -653,9 +656,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "fps": context.data.get(
                             "fps", instance.data.get("fps"))}
 
-        intent = context.data.get("intent")
-        if intent is not None:
-            version_data["intent"] = intent
+        intent_value = instance.context.data.get("intent")
+        if intent_value and isinstance(intent_value, dict):
+            intent_value = intent_value.get("value")
+
+        if intent_value:
+            version_data["intent"] = intent_value
 
         # Include optional data if present in
         optionals = [
