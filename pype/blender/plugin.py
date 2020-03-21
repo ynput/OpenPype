@@ -20,10 +20,15 @@ def asset_name(
     return name
 
 
-def create_blender_context(obj: Optional[bpy.types.Object] = None):
+def create_blender_context(active: Optional[bpy.types.Object] = None,
+                           selected: Optional[bpy.types.Object] = None,):
     """Create a new Blender context. If an object is passed as
     parameter, it is set as selected and active.
     """
+
+    if not isinstance(selected, list):
+        selected = [selected]
+
     for win in bpy.context.window_manager.windows:
         for area in win.screen.areas:
             if area.type == 'VIEW_3D':
@@ -35,8 +40,8 @@ def create_blender_context(obj: Optional[bpy.types.Object] = None):
                             'area': area,
                             'region': region,
                             'scene': bpy.context.scene,
-                            'active_object': obj,
-                            'selected_objects': [obj]
+                            'active_object': selected[0],
+                            'selected_objects': selected
                         }
                         return override_context
     raise Exception("Could not create a custom Blender context.")
