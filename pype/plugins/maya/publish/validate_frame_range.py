@@ -145,8 +145,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
         """
         import avalon.maya.interactive
         avalon.maya.interactive.reset_frame_range()
-        cls.log.debug("-" * 80)
-        cls.log.debug("{}.frameStart".format(instance.data["name"]))
         cmds.setAttr(
             "{}.frameStart".format(instance.data["name"]),
             instance.context.data.get("frameStartHandle"))
@@ -154,4 +152,3 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
         cmds.setAttr(
             "{}.frameEnd".format(instance.data["name"]),
             instance.context.data.get("frameEndHandle"))
-        cls.log.debug("-" * 80)
