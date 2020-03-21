@@ -203,13 +203,13 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     full_paths.append(full_path)
                 aov_dict["beauty"] = full_paths
 
-            frame_start_render = int(self.get_render_attribute("startFrame",
-                                                        layer=layer_name))
-            frame_end_render = int(self.get_render_attribute("endFrame",
-                                                        layer=layer_name))
+            frame_start_render = int(self.get_render_attribute(
+                "startFrame", layer=layer_name))
+            frame_end_render = int(self.get_render_attribute(
+                "endFrame", layer=layer_name))
 
-            if (int(context.data['frameStartHandle']) == frame_start_render and
-                    int(context.data['frameEndHandle']) == frame_end_render):
+            if (int(context.data['frameStartHandle']) == frame_start_render
+                    and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
 
                 handle_start = context.data['handleStart']
                 handle_end = context.data['handleEnd']
@@ -506,7 +506,7 @@ class AExpectedFiles:
                 expected_files.append(
                     '{}.{}.{}'.format(file_prefix,
                                       str(frame).rjust(
-                                        layer_data["padding"], "0"),
+                                          layer_data["padding"], "0"),
                                       layer_data["defaultExt"]))
         return expected_files
 
@@ -642,7 +642,7 @@ class ExpectedFilesArnold(AExpectedFiles):
         enabled_aovs = []
         try:
             if not (cmds.getAttr('defaultArnoldRenderOptions.aovMode')
-                    and not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):
+                    and not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):  # noqa: W503, E501
                 # AOVs are merged in mutli-channel file
                 return enabled_aovs
         except ValueError:
@@ -763,10 +763,7 @@ class ExpectedFilesVray(AExpectedFiles):
             if enabled:
                 # todo: find how vray set format for AOVs
                 enabled_aovs.append(
-                    (
-                        self._get_vray_aov_name(aov),
-                        default_ext)
-                    )
+                    (self._get_vray_aov_name(aov), default_ext))
         return enabled_aovs
 
     def _get_vray_aov_name(self, node):

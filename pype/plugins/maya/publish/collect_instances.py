@@ -122,7 +122,7 @@ class CollectInstances(pyblish.api.ContextPlugin):
                 # if frame range on maya set is the same as full shot range
                 # adjust the values to match the asset data
                 if (ctx_frame_start_handle == data["frameStart"]
-                        and ctx_frame_end_handle == data["frameEnd"]):
+                        and ctx_frame_end_handle == data["frameEnd"]):  # noqa: W503, E501
                     data["frameStartHandle"] = ctx_frame_start_handle
                     data["frameEndHandle"] = ctx_frame_end_handle
                     data["frameStart"] = ctx_frame_start
@@ -141,8 +141,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
                         data["handleStart"] = 0
                         data["handleEnd"] = 0
 
-                    data["frameStartHandle"] = data["frameStart"] - data["handleStart"]
-                    data["frameEndHandle"] = data["frameEnd"] + data["handleEnd"]
+                    data["frameStartHandle"] = data["frameStart"] - data["handleStart"]  # noqa: E501
+                    data["frameEndHandle"] = data["frameEnd"] + data["handleEnd"]  # noqa: E501
 
                 if "handles" in data:
                     data.pop('handles')
@@ -157,7 +157,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
-            self.log.debug("DATA: {} ".format(json.dumps(instance.data, indent=4)))
+            self.log.debug(
+                "DATA: {} ".format(json.dumps(instance.data, indent=4)))
 
         def sort_by_family(instance):
             """Sort by family"""
