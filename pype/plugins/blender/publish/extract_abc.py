@@ -55,9 +55,13 @@ class ExtractABC(pype.api.Extractor):
         selected = list()
 
         for obj in instance:
-            selected.append(obj)
+            try:
+                obj.select_set(True)
+                selected.append(obj)
+            except:
+                continue
 
-        new_context = pype.blender.plugin.create_blender_context(active=None, selected=selected)
+        new_context = pype.blender.plugin.create_blender_context(active=selected[0], selected=selected)
 
         # We set the scale of the scene for the export
         scene.unit_settings.scale_length = 0.01

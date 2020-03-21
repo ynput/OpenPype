@@ -40,7 +40,7 @@ def create_blender_context(active: Optional[bpy.types.Object] = None,
                             'area': area,
                             'region': region,
                             'scene': bpy.context.scene,
-                            'active_object': selected[0],
+                            'active_object': active,
                             'selected_objects': selected
                         }
                         return override_context
