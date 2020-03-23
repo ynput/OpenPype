@@ -229,6 +229,8 @@ def is_latest(representation):
     """
 
     version = io.find_one({"_id": representation['parent']})
+    if version["type"] == "master_version":
+        return True
 
     # Get highest version under the parent
     highest_version = io.find_one({

@@ -162,6 +162,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         )
 
         subset = self.get_subset(asset_entity, instance)
+        instance.data["subsetEntity"] = subset
 
         version_number = instance.data["version"]
         self.log.debug("Next version: v{}".format(version_number))
@@ -236,6 +237,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     bulk_writes
                 )
 
+        version = io.find_one({"_id": version_id})
+        instance.data["versionEntity"] = version
+
         existing_repres = list(io.find({
             "parent": version_id,
             "type": "archived_representation"
@@ -260,11 +264,14 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
+        published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
+            published_files = []
+
             # create template data for Anatomy
             template_data = copy.deepcopy(anatomy_data)
-            if intent is not None:
-                template_data["intent"] = intent
+            if intent_value is not None:
+                template_data["intent"] = intent_value
 
             resolution_width = repre.get("resolutionWidth")
             resolution_height = repre.get("resolutionHeight")
@@ -368,6 +375,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
+                    published_files.append(dst)
+
                     # for adding first frame into db
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
@@ -375,7 +384,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 dst = "{0}{1}{2}".format(
                     dst_head,
                     dst_start_frame,
-                    dst_tail).replace("..", ".")
+                    dst_tail
+                ).replace("..", ".")
                 repre['published_path'] = self.unc_convert(dst)
 
             else:
@@ -403,8 +413,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
 
+                published_files.append(dst)
                 repre['published_path'] = self.unc_convert(dst)
                 self.log.debug("__ dst: {}".format(dst))
+
+            repre["publishedFiles"] = published_files
 
             for key in self.db_representation_context_keys:
                 value = template_data.get(key)
@@ -452,6 +465,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("__ destination_list: {}".format(destination_list))
             instance.data['destination_list'] = destination_list
             representations.append(representation)
+            published_representations[repre_id] = {
+                "representation": representation,
+                "anatomy_data": template_data,
+                "published_files": published_files
+            }
             self.log.debug("__ representations: {}".format(representations))
 
         # Remove old representations if there are any (before insertion of new)
@@ -466,7 +484,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("__ represNAME: {}".format(rep['name']))
             self.log.debug("__ represPATH: {}".format(rep['published_path']))
         io.insert_many(representations)
-        instance.data["published_representations"] = representations
+        instance.data["published_representations"] = (
+            published_representations
+        )
         # self.log.debug("Representation: {}".format(representations))
         self.log.info("Registered {} items".format(len(representations)))
 

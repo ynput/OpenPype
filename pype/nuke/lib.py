@@ -1573,10 +1573,9 @@ class ExporterReviewMov(ExporterReview):
             self.nodes = {}
 
         # deal with now lut defined in viewer lut
-        if hasattr(klass, "viewer_lut_raw"):
-            self.viewer_lut_raw = klass.viewer_lut_raw
-        else:
-            self.viewer_lut_raw = False
+        self.viewer_lut_raw = klass.viewer_lut_raw
+        self.bake_colorspace_fallback = klass.bake_colorspace_fallback
+        self.bake_colorspace_main = klass.bake_colorspace_main
 
         self.name = name or "baked"
         self.ext = ext or "mov"
@@ -1637,8 +1636,26 @@ class ExporterReviewMov(ExporterReview):
             self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
 
         if not self.viewer_lut_raw:
-            # OCIODisplay node
-            dag_node = nuke.createNode("OCIODisplay")
+            colorspaces = [
+                self.bake_colorspace_main, self.bake_colorspace_fallback
+                ]
+
+            if any(colorspaces):
+                # OCIOColorSpace with controled output
+                dag_node = nuke.createNode("OCIOColorSpace")
+                for c in colorspaces:
+                    test = dag_node["out_colorspace"].setValue(str(c))
+                    if test:
+                        self.log.info(
+                            "Baking in colorspace...   `{}`".format(c))
+                        break
+
+                if not test:
+                    dag_node = nuke.createNode("OCIODisplay")
+            else:
+                # OCIODisplay
+                dag_node = nuke.createNode("OCIODisplay")
+
             # connect
             dag_node.setInput(0, self.previous_node)
             self._temp_nodes.append(dag_node)
