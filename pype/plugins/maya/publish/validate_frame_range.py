@@ -7,8 +7,9 @@ from maya import cmds
 class ValidateFrameRange(pyblish.api.InstancePlugin):
     """Valides the frame ranges.
 
-    This is optional validator checking if the frame range matches the one of
-    asset.
+    This is optional validator checking if the frame range on instance
+    matches the one of asset. It also validate render frame range of render
+    layers
 
     Repair action will change everything to match asset.
 
@@ -20,7 +21,7 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     families = ["animation",
                 "pointcache",
                 "camera",
-                "render",
+                "renderlayer",
                 "review",
                 "yeticache"]
     optional = True
@@ -67,69 +68,32 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                               handle_start, frame_start, frame_end, handle_end
                           ))
 
-        minTime = int(cmds.playbackOptions(minTime=True, query=True))
-        maxTime = int(cmds.playbackOptions(maxTime=True, query=True))
-        animStartTime = int(cmds.playbackOptions(animationStartTime=True,
-                                                 query=True))
-        animEndTime = int(cmds.playbackOptions(animationEndTime=True,
-                                               query=True))
+        if "renderlayer" in self.families:
 
-        if int(minTime) != inst_start:
-            errors.append("Start of Maya timeline is set to frame [ {} ] "
-                          " and doesn't match the one set on asset [ {} ]: "
-                          "{}/{}/{}/{} (handle/start/end/handle)".format(
-                              minTime,
-                              frame_start_handle,
-                              handle_start, frame_start, frame_end, handle_end
-                          ))
+            render_start = int(cmds.getAttr("defaultRenderGlobals.startFrame"))
+            render_end = int(cmds.getAttr("defaultRenderGlobals.endFrame"))
 
-        if int(maxTime) != inst_end:
-            errors.append("End of Maya timeline is set to frame [ {} ] "
-                          " and doesn't match the one set on asset [ {} ]: "
-                          "{}/{}/{}/{} (handle/start/end/handle)".format(
-                              maxTime,
-                              frame_end_handle,
-                              handle_start, frame_start, frame_end, handle_end
-                          ))
+            if int(render_start) != inst_start:
+                errors.append("Render settings start frame is set to [ {} ] "
+                              "and doesn't match the one set on "
+                              "asset [ {} ]: "
+                              "{}/{}/{}/{} (handle/start/end/handle)".format(
+                                  int(render_start),
+                                  frame_start_handle,
+                                  handle_start, frame_start, frame_end,
+                                  handle_end
+                              ))
 
-        if int(animStartTime) != inst_start:
-            errors.append("Animation start in Maya is set to frame [ {} ] "
-                          " and doesn't match the one set on asset [ {} ]: "
-                          "{}/{}/{}/{} (handle/start/end/handle)".format(
-                              animStartTime,
-                              frame_start_handle,
-                              handle_start, frame_start, frame_end, handle_end
-                          ))
-
-        if int(animEndTime) != inst_end:
-            errors.append("Animation start in Maya is set to frame [ {} ] "
-                          " and doesn't match the one set on asset [ {} ]: "
-                          "{}/{}/{}/{} (handle/start/end/handle)".format(
-                              animEndTime,
-                              frame_end_handle,
-                              handle_start, frame_start, frame_end, handle_end
-                          ))
-
-        render_start = int(cmds.getAttr("defaultRenderGlobals.startFrame"))
-        render_end = int(cmds.getAttr("defaultRenderGlobals.endFrame"))
-
-        if int(render_start) != inst_start:
-            errors.append("Render settings start frame is set to [ {} ] "
-                          " and doesn't match the one set on asset [ {} ]: "
-                          "{}/{}/{}/{} (handle/start/end/handle)".format(
-                              int(render_start),
-                              frame_start_handle,
-                              handle_start, frame_start, frame_end, handle_end
-                          ))
-
-        if int(render_end) != inst_end:
-            errors.append("Render settings end frame is set to [ {} ] "
-                          " and doesn't match the one set on asset [ {} ]: "
-                          "{}/{}/{}/{} (handle/start/end/handle)".format(
-                              int(render_end),
-                              frame_end_handle,
-                              handle_start, frame_start, frame_end, handle_end
-                          ))
+            if int(render_end) != inst_end:
+                errors.append("Render settings end frame is set to [ {} ] "
+                              "and doesn't match the one set on "
+                              "asset [ {} ]: "
+                              "{}/{}/{}/{} (handle/start/end/handle)".format(
+                                  int(render_end),
+                                  frame_end_handle,
+                                  handle_start, frame_start, frame_end,
+                                  handle_end
+                              ))
 
         for e in errors:
             self.log.error(e)
