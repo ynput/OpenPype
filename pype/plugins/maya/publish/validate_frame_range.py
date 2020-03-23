@@ -68,33 +68,6 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                               handle_start, frame_start, frame_end, handle_end
                           ))
 
-        if "renderlayer" in self.families:
-
-            render_start = int(cmds.getAttr("defaultRenderGlobals.startFrame"))
-            render_end = int(cmds.getAttr("defaultRenderGlobals.endFrame"))
-
-            if int(render_start) != inst_start:
-                errors.append("Render settings start frame is set to [ {} ] "
-                              "and doesn't match the one set on "
-                              "asset [ {} ]: "
-                              "{}/{}/{}/{} (handle/start/end/handle)".format(
-                                  int(render_start),
-                                  frame_start_handle,
-                                  handle_start, frame_start, frame_end,
-                                  handle_end
-                              ))
-
-            if int(render_end) != inst_end:
-                errors.append("Render settings end frame is set to [ {} ] "
-                              "and doesn't match the one set on "
-                              "asset [ {} ]: "
-                              "{}/{}/{}/{} (handle/start/end/handle)".format(
-                                  int(render_end),
-                                  frame_end_handle,
-                                  handle_start, frame_start, frame_end,
-                                  handle_end
-                              ))
-
         for e in errors:
             self.log.error(e)
 
@@ -103,12 +76,8 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
     @classmethod
     def repair(cls, instance):
         """
-        Repair by calling avalon reset frame range function. This will set
-        timeline frame range, render settings range and frame information
-        on instance container to match asset data.
+        Repair instance container to match asset data.
         """
-        import avalon.maya.interactive
-        avalon.maya.interactive.reset_frame_range()
         cmds.setAttr(
             "{}.frameStart".format(instance.data["name"]),
             instance.context.data.get("frameStartHandle"))
