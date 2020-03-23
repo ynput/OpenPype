@@ -329,8 +329,17 @@ def create_write_node(name, data, input=None, prenodes=None):
 
                 # add data to knob
                 for k, v in properties:
+                    try:
+                        now_node[k].value()
+                    except NameError:
+                        log.warning(
+                            "knob `{}` does not exist on node `{}`".format(
+                                k, now_node["name"].value()
+                            ))
+                        continue
+
                     if k and v:
-                        now_node[k].serValue(str(v))
+                        now_node[k].setValue(str(v))
 
                 # connect to previous node
                 if set_output_to:
@@ -339,14 +348,14 @@ def create_write_node(name, data, input=None, prenodes=None):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
                             connections.append({
-                                "node":  nuke.toNode(node_name),
+                                "node": nuke.toNode(node_name),
                                 "inputName": node_name})
                             now_node.setInput(1, input_node)
                     elif isinstance(set_output_to, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
                         connections.append({
-                            "node":  nuke.toNode(set_output_to),
+                            "node": nuke.toNode(set_output_to),
                             "inputName": set_output_to})
                         now_node.setInput(0, input_node)
                 else:
