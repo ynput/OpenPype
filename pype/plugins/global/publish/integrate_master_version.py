@@ -17,12 +17,14 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
     optional = True
 
-    families = ["model",
-                "rig",
-                "setdress",
-                "look",
-                "pointcache",
-                "animation"]
+    families = [
+        "model",
+        "rig",
+        "setdress",
+        "look",
+        "pointcache",
+        "animation"
+    ]
 
     # Can specify representation names that will be ignored (lower case)
     ignored_representation_names = []
@@ -109,13 +111,13 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         all_copied_files = []
         transfers = instance.data.get("transfers", list())
-        for src, dst in transfers:
+        for dst in transfers.values():
             dst = os.path.normpath(dst)
             if dst not in all_copied_files:
                 all_copied_files.append(dst)
 
         hardlinks = instance.data.get("hardlinks", list())
-        for src, dst in hardlinks:
+        for dst in hardlinks.values():
             dst = os.path.normpath(dst)
             if dst not in all_copied_files:
                 all_copied_files.append(dst)
@@ -190,7 +192,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
         # Separate old representations into `to replace` and `to delete`
         old_repres_to_replace = {}
         old_repres_to_delete = {}
-        for repre_id, repre_info in published_repres.items():
+        for repre_info in published_repres.values():
             repre = repre_info["representation"]
             repre_name_low = repre["name"].lower()
             if repre_name_low in old_repres_by_name:
@@ -260,7 +262,7 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 ))
         try:
             src_to_dst_file_paths = []
-            for repre_id, repre_info in published_repres.items():
+            for repre_info in published_repres.values():
 
                 # Skip if new repre does not have published repre files
                 published_files = repre_info["published_files"]
