@@ -1,7 +1,6 @@
 [flake8]
 # ignore = D203
-ignore = BLK100
-ignore = W504
+ignore = BLK100, W504
 max-line-length = 79
 exclude =
   .git,
