@@ -36,7 +36,8 @@ TIMECODE = (
 MISSING_KEY_VALUE = "N/A"
 CURRENT_FRAME_KEY = "{current_frame}"
 CURRENT_FRAME_SPLITTER = "_-_CURRENT_FRAME_-_"
-TIME_CODE_KEY = "{timecode}"
+TIMECODE_KEY = "{timecode}"
+SOURCE_TIMECODE_KEY = "{source_timecode}"
 
 
 def _streams(source):
@@ -188,10 +189,13 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if not options.get("fps"):
             options["fps"] = self.frame_rate
 
-        options["timecode"] = ffmpeg_burnins._frames_to_timecode(
-            frame_start_tc,
-            self.frame_rate
-        )
+        if isinstance(frame_start_tc, str):
+            options["timecode"] = frame_start_tc
+        else:
+            options["timecode"] = ffmpeg_burnins._frames_to_timecode(
+                frame_start_tc,
+                self.frame_rate
+            )
 
         self._add_burnin(text, align, options, TIMECODE)
 
@@ -412,7 +416,14 @@ def burnins_from_data(
         data[CURRENT_FRAME_KEY[1:-1]] = CURRENT_FRAME_SPLITTER
 
     if frame_start_tc is not None:
-        data[TIME_CODE_KEY[1:-1]] = TIME_CODE_KEY
+        data[TIMECODE_KEY[1:-1]] = TIMECODE_KEY
+
+    source_timecode = stream.get("timecode")
+    if source_timecode is None:
+        source_timecode = stream.get("tags", {}).get("timecode")
+
+    if source_timecode is not None:
+        data[SOURCE_TIMECODE_KEY[1:-1]] = SOURCE_TIMECODE_KEY
 
     for align_text, value in presets.get('burnins', {}).items():
         if not value:
@@ -424,8 +435,6 @@ def burnins_from_data(
                 " Got: {} - \"{}\""
                 " (Make sure you have new burnin presets)."
             ).format(str(type(value)), str(value)))
-
-        has_timecode = TIME_CODE_KEY in value
 
         align = None
         align_text = align_text.strip().lower()
@@ -442,6 +451,7 @@ def burnins_from_data(
         elif align_text == "bottom_right":
             align = ModifiedBurnins.BOTTOM_RIGHT
 
+        has_timecode = TIMECODE_KEY in value
         # Replace with missing key value if frame_start_tc is not set
         if frame_start_tc is None and has_timecode:
             has_timecode = False
@@ -449,7 +459,13 @@ def burnins_from_data(
                 "`frame_start` and `frame_start_tc`"
                 " are not set in entered data."
             )
-            value = value.replace(TIME_CODE_KEY, MISSING_KEY_VALUE)
+            value = value.replace(TIMECODE_KEY, MISSING_KEY_VALUE)
+
+        has_source_timecode = SOURCE_TIMECODE_KEY in value
+        if source_timecode is None and has_source_timecode:
+            has_source_timecode = False
+            log.warning("Source does not have set timecode value.")
+            value = value.replace(SOURCE_TIMECODE_KEY, MISSING_KEY_VALUE)
 
         key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
@@ -465,10 +481,20 @@ def burnins_from_data(
             value = value.replace(key, MISSING_KEY_VALUE)
 
         # Handle timecode differently
+        if has_source_timecode:
+            args = [align, frame_start, frame_end, source_timecode]
+            if not value.startswith(SOURCE_TIMECODE_KEY):
+                value_items = value.split(SOURCE_TIMECODE_KEY)
+                text = value_items[0].format(**data)
+                args.append(text)
+
+            burnin.add_timecode(*args)
+            continue
+
         if has_timecode:
             args = [align, frame_start, frame_end, frame_start_tc]
-            if not value.startswith(TIME_CODE_KEY):
-                value_items = value.split(TIME_CODE_KEY)
+            if not value.startswith(TIMECODE_KEY):
+                value_items = value.split(TIMECODE_KEY)
                 text = value_items[0].format(**data)
                 args.append(text)
 
