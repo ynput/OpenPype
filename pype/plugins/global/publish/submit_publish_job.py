@@ -222,9 +222,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
-
         environment = job["Props"].get("Env", {})
         environment["PYPE_METADATA_FILE"] = metadata_path
+        environment["AVALON_PROJECT"] = api.Session.get("AVALON_PROJECT")
+
         i = 0
         for index, key in enumerate(environment):
             if key.upper() in self.enviro_filter:
