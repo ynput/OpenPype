@@ -82,6 +82,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "source",
                 "assembly",
                 "textures"
+                "action"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
