@@ -170,7 +170,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "review": ["lutPath"],
         "render.farm": ["bakeScriptPath", "bakeRenderPath",
                         "bakeWriteNodeName", "version"]
-        }
+    }
 
     # list of family names to transfer to new family if present
     families_transfer = ["render3d", "render2d", "ftrack", "slate"]
@@ -222,9 +222,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
-
         environment = job["Props"].get("Env", {})
         environment["PYPE_METADATA_FILE"] = metadata_path
+        environment["AVALON_PROJECT"] = api.Session.get("AVALON_PROJECT")
+
         i = 0
         for index, key in enumerate(environment):
             if key.upper() in self.enviro_filter:
@@ -276,7 +277,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # if override remove all frames we are expecting to be rendered
         # so we'll copy only those missing from current render
         if instance.data.get("overrideExistingFrame"):
-            for frame in range(start, end+1):
+            for frame in range(start, end + 1):
                 if frame not in r_col.indexes:
                     continue
                 r_col.indexes.remove(frame)
@@ -348,10 +349,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             assert len(cols) == 1, "only one image sequence type is expected"
 
             # create subset name `familyTaskSubset_AOV`
-            subset_name = 'render{}{}{}{}_{}'.format(
+            group_name = 'render{}{}{}{}'.format(
                 task[0].upper(), task[1:],
-                subset[0].upper(), subset[1:],
-                aov)
+                subset[0].upper(), subset[1:])
+
+            subset_name = '{}_{}'.format(group_name, aov)
 
             staging = os.path.dirname(list(cols[0])[0])
 
@@ -366,6 +368,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             new_instance = copy(instance_data)
             new_instance["subset"] = subset_name
+            new_instance["subsetGroup"] = group_name
 
             ext = cols[0].tail.lstrip(".")
 

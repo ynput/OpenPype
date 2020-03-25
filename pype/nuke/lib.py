@@ -330,8 +330,17 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
                 # add data to knob
                 for k, v in properties:
+                    try:
+                        now_node[k].value()
+                    except NameError:
+                        log.warning(
+                            "knob `{}` does not exist on node `{}`".format(
+                                k, now_node["name"].value()
+                            ))
+                        continue
+
                     if k and v:
-                        now_node[k].serValue(str(v))
+                        now_node[k].setValue(str(v))
 
                 # connect to previous node
                 if set_output_to:
@@ -340,14 +349,14 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
                             connections.append({
-                                "node":  nuke.toNode(node_name),
+                                "node": nuke.toNode(node_name),
                                 "inputName": node_name})
                             now_node.setInput(1, input_node)
                     elif isinstance(set_output_to, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
                         connections.append({
-                            "node":  nuke.toNode(set_output_to),
+                            "node": nuke.toNode(set_output_to),
                             "inputName": set_output_to})
                         now_node.setInput(0, input_node)
                 else:
@@ -1580,10 +1589,9 @@ class ExporterReviewMov(ExporterReview):
             self.nodes = {}
 
         # deal with now lut defined in viewer lut
-        if hasattr(klass, "viewer_lut_raw"):
-            self.viewer_lut_raw = klass.viewer_lut_raw
-        else:
-            self.viewer_lut_raw = False
+        self.viewer_lut_raw = klass.viewer_lut_raw
+        self.bake_colorspace_fallback = klass.bake_colorspace_fallback
+        self.bake_colorspace_main = klass.bake_colorspace_main
 
         self.name = name or "baked"
         self.ext = ext or "mov"
@@ -1644,8 +1652,26 @@ class ExporterReviewMov(ExporterReview):
             self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
 
         if not self.viewer_lut_raw:
-            # OCIODisplay node
-            dag_node = nuke.createNode("OCIODisplay")
+            colorspaces = [
+                self.bake_colorspace_main, self.bake_colorspace_fallback
+                ]
+
+            if any(colorspaces):
+                # OCIOColorSpace with controled output
+                dag_node = nuke.createNode("OCIOColorSpace")
+                for c in colorspaces:
+                    test = dag_node["out_colorspace"].setValue(str(c))
+                    if test:
+                        self.log.info(
+                            "Baking in colorspace...   `{}`".format(c))
+                        break
+
+                if not test:
+                    dag_node = nuke.createNode("OCIODisplay")
+            else:
+                # OCIODisplay
+                dag_node = nuke.createNode("OCIODisplay")
+
             # connect
             dag_node.setInput(0, self.previous_node)
             self._temp_nodes.append(dag_node)

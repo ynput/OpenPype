@@ -3,7 +3,7 @@ import pyblish.api
 from avalon.nuke import lib as anlib
 from pype.nuke import lib as pnlib
 import pype
-
+reload(pnlib)
 
 class ExtractReviewDataMov(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
@@ -17,6 +17,11 @@ class ExtractReviewDataMov(pype.api.Extractor):
 
     families = ["review"]
     hosts = ["nuke"]
+
+    # presets
+    viewer_lut_raw = None
+    bake_colorspace_fallback = None
+    bake_colorspace_main = None
 
     def process(self, instance):
         families = instance.data["families"]
