@@ -329,8 +329,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     test_dest_files.append(
                         os.path.normpath(template_filled)
                     )
-                # Store used frame value to template data
-                template_data["frame"] = repre_context["frame"]
 
                 self.log.debug(
                     "test_dest_files: {}".format(str(test_dest_files)))
@@ -387,6 +385,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
 
+                # Store used frame value to template data
+                template_data["frame"] = dst_start_frame
                 dst = "{0}{1}{2}".format(
                     dst_head,
                     dst_start_frame,
