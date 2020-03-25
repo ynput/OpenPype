@@ -214,11 +214,11 @@ def create_unreal_project(project_name: str,
         # sources at start
 
         data["Modules"] = [{
-                "Name": project_name,
-                "Type": "Runtime",
-                "LoadingPhase": "Default",
-                "AdditionalDependencies": ["Engine"],
-            }]
+            "Name": project_name,
+            "Type": "Runtime",
+            "LoadingPhase": "Default",
+            "AdditionalDependencies": ["Engine"],
+        }]
 
         if preset["install_unreal_python_engine"]:
             # now we need to fix python path in:

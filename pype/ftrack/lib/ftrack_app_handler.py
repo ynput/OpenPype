@@ -277,7 +277,7 @@ class AppAction(BaseHandler):
                     'success': False,
                     'message': "Hook didn't finish successfully {0}"
                     .format(self.label)
-                    }
+                }
 
         if sys.platform == "win32":
 
@@ -290,7 +290,7 @@ class AppAction(BaseHandler):
 
             # Run SW if was found executable
             if execfile is not None:
-                popen = avalonlib.launch(
+                avalonlib.launch(
                     executable=execfile, args=[], environment=env
                 )
             else:
@@ -298,8 +298,7 @@ class AppAction(BaseHandler):
                     'success': False,
                     'message': "We didn't found launcher for {0}"
                     .format(self.label)
-                    }
-                pass
+                }
 
         if sys.platform.startswith('linux'):
             execfile = os.path.join(path.strip('"'), self.executable)

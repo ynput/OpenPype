@@ -37,7 +37,7 @@ class StaticMeshFBXLoader(api.Loader):
 
         tools = unreal.AssetToolsHelpers().get_asset_tools()
         temp_dir, temp_name = tools.create_unique_asset_name(
-                "/Game/{}".format(name), "_TMP"
+            "/Game/{}".format(name), "_TMP"
         )
 
         unreal.EditorAssetLibrary.make_directory(temp_dir)
@@ -95,7 +95,7 @@ class StaticMeshFBXLoader(api.Loader):
                                         container["objectName"])
         # update metadata
         avalon_unreal.imprint(
-            container_path, {"_id":  str(representation["_id"])})
+            container_path, {"_id": str(representation["_id"])})
 
     def remove(self, container):
         unreal.EditorAssetLibrary.delete_directory(container["namespace"])
