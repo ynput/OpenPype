@@ -383,6 +383,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
 
+                template_data["frame"] = dst_start_frame
+
                 dst = "{0}{1}{2}".format(
                     dst_head,
                     dst_start_frame,
