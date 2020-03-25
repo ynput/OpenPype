@@ -325,6 +325,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     test_dest_files.append(
                         os.path.normpath(template_filled)
                     )
+                template_data["frame"] = repre_context["frame"]
 
                 self.log.debug(
                     "test_dest_files: {}".format(str(test_dest_files)))
