@@ -1,8 +1,7 @@
 from collections import OrderedDict
 from pype.nuke import (
     plugin,
-    lib as pnlib
-    )
+    lib as pnlib)
 import nuke
 
 
@@ -81,15 +80,15 @@ class CreateWritePrerender(plugin.PypeCreator):
         else:
             self.log.info("Adding template path from plugin")
             write_data.update({
-                "fpath_template": "{work}/prerenders/nuke/{subset}/{subset}.{frame}.{ext}"})
+                "fpath_template": ("{work}/prerenders/nuke/{subset}"
+                                   "/{subset}.{frame}.{ext}")})
 
         write_node = pnlib.create_write_node(
             self.data["subset"],
             write_data,
             input=selected_node,
             prenodes=[],
-            review=False
-            )
+            review=False)
 
         # relinking to collected connections
         for i, input in enumerate(inputs):
