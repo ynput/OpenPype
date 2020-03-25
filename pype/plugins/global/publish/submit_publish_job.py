@@ -170,7 +170,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "review": ["lutPath"],
         "render2d": ["bakeScriptPath", "bakeRenderPath",
                      "bakeWriteNodeName", "version"]
-        }
+    }
 
     # list of family names to transfer to new family if present
     families_transfer = ["render3d", "render2d", "ftrack", "slate"]
@@ -589,8 +589,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         if "prerender" in instance.data["families"]:
             instance_skeleton_data.update({
                 "family": "prerender",
-                "families": []
-                })
+                "families": []})
 
         # transfer specific families from original instance to new render
         for item in self.families_transfer:
