@@ -390,7 +390,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst_start_frame,
                     dst_tail
                 ).replace("..", ".")
-                repre['published_path'] = self.unc_convert(dst)
+                repre['published_path'] = dst
 
             else:
                 # Single file
@@ -418,7 +418,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 instance.data["transfers"].append([src, dst])
 
                 published_files.append(dst)
-                repre['published_path'] = self.unc_convert(dst)
+                repre['published_path'] = dst
                 self.log.debug("__ dst: {}".format(dst))
 
             repre["publishedFiles"] = published_files
@@ -522,23 +522,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
             self.hardlink_file(src, dest)
 
-    def unc_convert(self, path):
-        self.log.debug("> __ path: `{}`".format(path))
-        drive, _path = os.path.splitdrive(path)
-        self.log.debug("> __ drive, _path: `{}`, `{}`".format(drive, _path))
-
-        if not os.path.exists(drive + "/"):
-            self.log.info("Converting to unc from environments ..")
-
-            path_replace = os.getenv("PYPE_STUDIO_PROJECTS_PATH")
-            path_mount = os.getenv("PYPE_STUDIO_PROJECTS_MOUNT")
-
-            if "/" in path_mount:
-                path = path.replace(path_mount[0:-1], path_replace)
-            else:
-                path = path.replace(path_mount, path_replace)
-        return path
-
     def copy_file(self, src, dst):
         """ Copy given source to destination
 
@@ -548,8 +531,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             None
         """
-        src = self.unc_convert(src)
-        dst = self.unc_convert(dst)
         src = os.path.normpath(src)
         dst = os.path.normpath(dst)
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
@@ -571,9 +552,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
     def hardlink_file(self, src, dst):
         dirname = os.path.dirname(dst)
-
-        src = self.unc_convert(src)
-        dst = self.unc_convert(dst)
 
         try:
             os.makedirs(dirname)
