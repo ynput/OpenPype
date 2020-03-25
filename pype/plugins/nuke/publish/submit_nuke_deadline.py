@@ -28,6 +28,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     deadline_chunk_size = 1
 
     def process(self, instance):
+        families = instance.data["families"]
 
         node = instance[0]
         context = instance.context
@@ -81,6 +82,15 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             # Store output dir for unified publisher (filesequence)
             instance.data["deadlineSubmissionJob"] = resp.json()
             instance.data["publishJobState"] = "Suspended"
+
+        # redefinition of families
+        if "render.farm" in families:
+            instance.data['family'] = 'write'
+            families.insert(0, "render2d")
+        elif "prerender.farm" in families:
+            instance.data['family'] = 'write'
+            families.insert(0, "prerender")
+        instance.data["families"] = families
 
     def payload_submit(self,
                        instance,

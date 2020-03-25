@@ -12,9 +12,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     hosts = ["nuke", "nukeassist"]
     families = ["write"]
 
+    # preset attributes
+    sync_workfile_version = True
+
     def process(self, instance):
-        # adding 2d focused rendering
-        instance.data["families"].append("render2d")
+        families = instance.data["families"]
 
         node = None
         for x in instance:
@@ -52,10 +54,13 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         output_dir = os.path.dirname(path)
         self.log.debug('output dir: {}'.format(output_dir))
 
-        # get version to instance for integration
-        instance.data['version'] = instance.context.data["version"]
+        if not next((f for f in families
+                     if "prerender" in f),
+                    None) and self.sync_workfile_version:
+            # get version to instance for integration
+            instance.data['version'] = instance.context.data["version"]
 
-        self.log.debug('Write Version: %s' % instance.data('version'))
+            self.log.debug('Write Version: %s' % instance.data('version'))
 
         # create label
         name = node.name()
@@ -66,7 +71,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             int(last_frame)
         )
 
-        if [fm for fm in instance.data['families']
+        if [fm for fm in families
                 if fm in ["render", "prerender"]]:
             if "representations" not in instance.data:
                 instance.data["representations"] = list()
@@ -145,6 +150,13 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
         })
+
+        if "prerender" in families:
+            instance.data.update({
+                "family": "prerender",
+                "families": []
+            })
+
         self.log.debug("families: {}".format(families))
 
         self.log.debug("instance.data: {}".format(instance.data))
