@@ -77,7 +77,7 @@ class ExtractSlateFrame(pype.api.Extractor):
         else:
             fname = os.path.basename(instance.data.get("path", None))
             fhead = os.path.splitext(fname)[0] + "."
-            first_frame = instance.data.get("frameStart", None) - 1
+            first_frame = instance.data.get("frameStartHandle", None) - 1
             last_frame = first_frame
 
         if "#" in fhead:
@@ -157,11 +157,13 @@ class ExtractSlateFrame(pype.api.Extractor):
             return
 
         comment = instance.context.data.get("comment")
-        intent = instance.context.data.get("intent")
+        intent_value = instance.context.data.get("intent")
+        if intent_value and isinstance(intent_value, dict):
+            intent_value = intent_value.get("value")
 
         try:
             node["f_submission_note"].setValue(comment)
-            node["f_submitting_for"].setValue(intent)
+            node["f_submitting_for"].setValue(intent_value or "")
         except NameError:
             return
         instance.data.pop("slateNode")

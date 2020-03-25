@@ -41,6 +41,7 @@ import re
 import os
 import types
 import six
+import json
 from abc import ABCMeta, abstractmethod
 
 from maya import cmds
@@ -202,6 +203,28 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     full_paths.append(full_path)
                 aov_dict["beauty"] = full_paths
 
+            frame_start_render = int(self.get_render_attribute(
+                "startFrame", layer=layer_name))
+            frame_end_render = int(self.get_render_attribute(
+                "endFrame", layer=layer_name))
+
+            if (int(context.data['frameStartHandle']) == frame_start_render
+                    and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
+
+                handle_start = context.data['handleStart']
+                handle_end = context.data['handleEnd']
+                frame_start = context.data['frameStart']
+                frame_end = context.data['frameEnd']
+                frame_start_handle = context.data['frameStartHandle']
+                frame_end_handle = context.data['frameEndHandle']
+            else:
+                handle_start = 0
+                handle_end = 0
+                frame_start = frame_start_render
+                frame_end = frame_end_render
+                frame_start_handle = frame_start_render
+                frame_end_handle = frame_end_render
+
             full_exp_files.append(aov_dict)
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
@@ -211,18 +234,18 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "attachTo": attachTo,
                 "setMembers": layer_name,
                 "publish": True,
-                "frameStart": int(self.get_render_attribute("startFrame",
-                                                            layer=layer_name)),
-                "frameEnd": int(self.get_render_attribute("endFrame",
-                                                          layer=layer_name)),
+
+                "handleStart": handle_start,
+                "handleEnd": handle_end,
+                "frameStart": frame_start,
+                "frameEnd": frame_end,
+                "frameStartHandle": frame_start_handle,
+                "frameEndHandle": frame_end_handle,
                 "byFrameStep": int(
                     self.get_render_attribute("byFrameStep",
                                               layer=layer_name)),
                 "renderer": self.get_render_attribute("currentRenderer",
                                                       layer=layer_name),
-                "handleStart": context.data["assetEntity"]['data']['handleStart'],
-                "handleEnd": context.data["assetEntity"]['data']['handleEnd'],
-
                 # instance subset
                 "family": "renderlayer",
                 "families": ["renderlayer"],
@@ -236,7 +259,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "expectedFiles": full_exp_files,
                 "resolutionWidth": cmds.getAttr("defaultResolution.width"),
                 "resolutionHeight": cmds.getAttr("defaultResolution.height"),
-                "pixelAspect": cmds.getAttr("defaultResolution.height")
+                "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect")
             }
 
             # Apply each user defined attribute as data
@@ -259,13 +282,13 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             # Define nice label
             label = "{0} ({1})".format(expected_layer_name, data["asset"])
-            label += "  [{0}-{1}]".format(int(data["frameStart"]),
-                                          int(data["frameEnd"]))
+            label += "  [{0}-{1}]".format(int(data["frameStartHandle"]),
+                                          int(data["frameEndHandle"]))
 
             instance = context.create_instance(expected_layer_name)
             instance.data["label"] = label
             instance.data.update(data)
-        pass
+            self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 
     def parse_options(self, render_globals):
         """Get all overrides with a value, skip those without
@@ -483,7 +506,7 @@ class AExpectedFiles:
                 expected_files.append(
                     '{}.{}.{}'.format(file_prefix,
                                       str(frame).rjust(
-                                        layer_data["padding"], "0"),
+                                          layer_data["padding"], "0"),
                                       layer_data["defaultExt"]))
         return expected_files
 
@@ -619,7 +642,7 @@ class ExpectedFilesArnold(AExpectedFiles):
         enabled_aovs = []
         try:
             if not (cmds.getAttr('defaultArnoldRenderOptions.aovMode')
-                    and not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):
+                    and not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):  # noqa: W503, E501
                 # AOVs are merged in mutli-channel file
                 return enabled_aovs
         except ValueError:
@@ -740,10 +763,7 @@ class ExpectedFilesVray(AExpectedFiles):
             if enabled:
                 # todo: find how vray set format for AOVs
                 enabled_aovs.append(
-                    (
-                        self._get_vray_aov_name(aov),
-                        default_ext)
-                    )
+                    (self._get_vray_aov_name(aov), default_ext))
         return enabled_aovs
 
     def _get_vray_aov_name(self, node):

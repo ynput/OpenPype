@@ -25,18 +25,6 @@ log.setLevel(logging.DEBUG)
 
 error_format = "Failed {plugin.__name__}: {error} -- {error.traceback}"
 
-def _load_json(path):
-    assert os.path.isfile(path), ("path to json file doesn't exist")
-    data = None
-    with open(path, "r") as json_file:
-        try:
-            data = json.load(json_file)
-        except Exception as exc:
-            log.error(
-                "Error loading json: "
-                "{} - Exception: {}".format(path, exc)
-            )
-    return data
 
 def __main__():
     parser = argparse.ArgumentParser()
@@ -89,12 +77,6 @@ def __main__():
     print("Paths: {}".format(kwargs.paths or [os.getcwd()]))
 
     paths = kwargs.paths or [os.environ.get("PYPE_METADATA_FILE")] or [os.getcwd()]  # noqa
-
-    for path in paths:
-        data = _load_json(path)
-        log.info("Setting session using data from file")
-        os.environ["AVALON_PROJECT"] = data["session"]["AVALON_PROJECT"]
-        break
 
     args = [
         os.path.join(pype_root, pype_command),

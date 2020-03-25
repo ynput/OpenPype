@@ -33,17 +33,13 @@ class ExtractQuicktime(pype.api.Extractor):
 
         # if start and end frames cannot be determined, get them
         # from Maya timeline
-        start = instance.data.get("startFrameReview")
-        end = instance.data.get("endFrameReview")
+        start = instance.data.get("frameStartFtrack")
+        end = instance.data.get("frameEndFtrack")
         if start is None:
             start = cmds.playbackOptions(query=True, animationStartTime=True)
         if end is None:
             end = cmds.playbackOptions(query=True, animationEndTime=True)
         self.log.info("start: {}, end: {}".format(start, end))
-        handles = instance.data.get("handles", 0)
-        if handles:
-            start -= handles
-            end += handles
 
         # get cameras
         camera = instance.data['review_camera']

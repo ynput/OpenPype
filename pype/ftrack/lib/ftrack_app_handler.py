@@ -290,7 +290,9 @@ class AppAction(BaseHandler):
 
             # Run SW if was found executable
             if execfile is not None:
-                avalonlib.launch(executable=execfile, args=[], environment=env)
+                popen = avalonlib.launch(
+                    executable=execfile, args=[], environment=env
+                )
             else:
                 return {
                     'success': False,

@@ -15,7 +15,7 @@ import pyblish.api
 class CollectAvalonEntities(pyblish.api.ContextPlugin):
     """Collect Anatomy into Context"""
 
-    order = pyblish.api.CollectorOrder
+    order = pyblish.api.CollectorOrder - 0.02
     label = "Collect Avalon Entities"
 
     def process(self, context):
@@ -47,6 +47,16 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         context.data["assetEntity"] = asset_entity
 
         data = asset_entity['data']
-        context.data['handles'] = int(data.get("handles", 0))
-        context.data["handleStart"] = int(data.get("handleStart", 0))
-        context.data["handleEnd"] = int(data.get("handleEnd", 0))
+
+        context.data["frameStart"] = data.get("frameStart")
+        context.data["frameEnd"] = data.get("frameEnd")
+
+        handles = int(data.get("handles") or 0)
+        context.data["handles"] = handles
+        context.data["handleStart"] = int(data.get("handleStart", handles))
+        context.data["handleEnd"] = int(data.get("handleEnd", handles))
+
+        frame_start_h = data.get("frameStart") - context.data["handleStart"]
+        frame_end_h = data.get("frameEnd") + context.data["handleEnd"]
+        context.data["frameStartHandle"] = frame_start_h
+        context.data["frameEndHandle"] = frame_end_h

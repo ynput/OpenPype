@@ -1,18 +1,19 @@
 import pyblish.api
 import pype.api
 
+from maya import cmds
+
 
 class ValidateFrameRange(pyblish.api.InstancePlugin):
     """Valides the frame ranges.
 
-    Checks the `startFrame`, `endFrame` and `handles` data.
-    This does NOT ensure there's actual data present.
+    This is optional validator checking if the frame range on instance
+    matches the one of asset. It also validate render frame range of render
+    layers
 
-    This validates:
-        - `startFrame` is lower than or equal to the `endFrame`.
-        - must have both the `startFrame` and `endFrame` data.
-        - The `handles` value is not lower than zero.
+    Repair action will change everything to match asset.
 
+    This can be turned off by artist to allow custom ranges.
     """
 
     label = "Validate Frame Range"
@@ -21,25 +22,66 @@ class ValidateFrameRange(pyblish.api.InstancePlugin):
                 "pointcache",
                 "camera",
                 "renderlayer",
-                "colorbleed.vrayproxy"]
+                "review",
+                "yeticache"]
+    optional = True
+    actions = [pype.api.RepairAction]
 
     def process(self, instance):
+        context = instance.context
 
-        start = instance.data.get("frameStart", None)
-        end = instance.data.get("frameEnd", None)
-        handles = instance.data.get("handles", None)
+        frame_start_handle = int(context.data.get("frameStartHandle"))
+        frame_end_handle = int(context.data.get("frameEndHandle"))
+        handles = int(context.data.get("handles"))
+        handle_start = int(context.data.get("handleStart"))
+        handle_end = int(context.data.get("handleEnd"))
+        frame_start = int(context.data.get("frameStart"))
+        frame_end = int(context.data.get("frameEnd"))
 
-        # Check if any of the values are present
-        if any(value is None for value in [start, end]):
-            raise ValueError("No time values for this instance. "
-                             "(Missing `startFrame` or `endFrame`)")
+        inst_start = int(instance.data.get("frameStartHandle"))
+        inst_end = int(instance.data.get("frameEndHandle"))
 
-        self.log.info("Comparing start (%s) and end (%s)" % (start, end))
-        if start > end:
-            raise RuntimeError("The start frame is a higher value "
-                               "than the end frame: "
-                               "{0}>{1}".format(start, end))
+        # basic sanity checks
+        assert frame_start_handle <= frame_end_handle, (
+            "start frame is lower then end frame")
 
-        if handles is not None:
-            if handles < 0.0:
-                raise RuntimeError("Handles are set to a negative value")
+        assert handles >= 0, ("handles cannot have negative values")
+
+        # compare with data on instance
+        errors = []
+
+        if(inst_start != frame_start_handle):
+            errors.append("Instance start frame [ {} ] doesn't "
+                          "match the one set on instance [ {} ]: "
+                          "{}/{}/{}/{} (handle/start/end/handle)".format(
+                              inst_start,
+                              frame_start_handle,
+                              handle_start, frame_start, frame_end, handle_end
+                          ))
+
+        if(inst_end != frame_end_handle):
+            errors.append("Instance end frame [ {} ] doesn't "
+                          "match the one set on instance [ {} ]: "
+                          "{}/{}/{}/{} (handle/start/end/handle)".format(
+                              inst_end,
+                              frame_end_handle,
+                              handle_start, frame_start, frame_end, handle_end
+                          ))
+
+        for e in errors:
+            self.log.error(e)
+
+        assert len(errors) == 0, ("Frame range settings are incorrect")
+
+    @classmethod
+    def repair(cls, instance):
+        """
+        Repair instance container to match asset data.
+        """
+        cmds.setAttr(
+            "{}.frameStart".format(instance.data["name"]),
+            instance.context.data.get("frameStartHandle"))
+
+        cmds.setAttr(
+            "{}.frameEnd".format(instance.data["name"]),
+            instance.context.data.get("frameEndHandle"))

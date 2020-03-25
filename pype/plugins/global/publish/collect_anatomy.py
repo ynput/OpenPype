@@ -6,10 +6,6 @@ Requires:
     username -> collect_pype_user *(pyblish.api.CollectorOrder + 0.001)
     datetimeData -> collect_datetime_data *(pyblish.api.CollectorOrder)
 
-Optional:
-    comment -> collect_comment *(pyblish.api.CollectorOrder)
-    intent -> collected in pyblish-lite
-
 Provides:
     context -> anatomy (pypeapp.Anatomy)
     context -> anatomyData

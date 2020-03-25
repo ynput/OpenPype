@@ -1,0 +1,44 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "pype:master_version-1.0",
+    "description": "Master version of asset",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "version_id",
+        "schema",
+        "type",
+        "parent"
+    ],
+
+    "properties": {
+        "_id": {
+            "description": "Document's id (database will create it's if not entered)",
+            "example": "ObjectId(592c33475f8c1b064c4d1696)"
+        },
+        "version_id": {
+            "description": "The version ID from which it was created",
+            "example": "ObjectId(592c33475f8c1b064c4d1695)"
+        },
+        "schema": {
+            "description": "The schema associated with this document",
+            "type": "string",
+            "enum": ["avalon-core:master_version-1.0", "pype:master_version-1.0"],
+            "example": "pype:master_version-1.0"
+        },
+        "type": {
+            "description": "The type of document",
+            "type": "string",
+            "enum": ["master_version"],
+            "example": "master_version"
+        },
+        "parent": {
+            "description": "Unique identifier to parent document",
+            "example": "ObjectId(592c33475f8c1b064c4d1697)"
+        }
+    }
+}

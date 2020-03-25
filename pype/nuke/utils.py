@@ -3,6 +3,23 @@ import nuke
 from avalon.nuke import lib as anlib
 
 
+def set_context_favorites(favorites={}):
+    """ Addig favorite folders to nuke's browser
+
+    Argumets:
+        favorites (dict): couples of {name:path}
+    """
+    dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    icon_path = os.path.join(dir, 'res', 'icons', 'folder-favorite3.png')
+
+    for name, path in favorites.items():
+        nuke.addFavoriteDir(
+            name,
+            path,
+            nuke.IMAGE | nuke.SCRIPT | nuke.GEO,
+            icon=icon_path)
+
+
 def get_node_outputs(node):
     '''
     Return a dictionary of the nodes and pipes that are connected to node

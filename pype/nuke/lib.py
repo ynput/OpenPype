@@ -15,12 +15,11 @@ import nuke
 from .presets import (
     get_colorspace_preset,
     get_node_dataflow_preset,
-    get_node_colorspace_preset
-)
-
-from .presets import (
+    get_node_colorspace_preset,
     get_anatomy
 )
+
+from .utils import set_context_favorites
 
 from pypeapp import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -330,8 +329,17 @@ def create_write_node(name, data, input=None, prenodes=None):
 
                 # add data to knob
                 for k, v in properties:
+                    try:
+                        now_node[k].value()
+                    except NameError:
+                        log.warning(
+                            "knob `{}` does not exist on node `{}`".format(
+                                k, now_node["name"].value()
+                            ))
+                        continue
+
                     if k and v:
-                        now_node[k].serValue(str(v))
+                        now_node[k].setValue(str(v))
 
                 # connect to previous node
                 if set_output_to:
@@ -340,14 +348,14 @@ def create_write_node(name, data, input=None, prenodes=None):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
                             connections.append({
-                                "node":  nuke.toNode(node_name),
+                                "node": nuke.toNode(node_name),
                                 "inputName": node_name})
                             now_node.setInput(1, input_node)
                     elif isinstance(set_output_to, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
                         connections.append({
-                            "node":  nuke.toNode(set_output_to),
+                            "node": nuke.toNode(set_output_to),
                             "inputName": set_output_to})
                         now_node.setInput(0, input_node)
                 else:
@@ -620,7 +628,8 @@ class WorkfileSettings(object):
         # third set ocio custom path
         if root_dict.get("customOCIOConfigPath"):
             self._root_node["customOCIOConfigPath"].setValue(
-                str(root_dict["customOCIOConfigPath"]).format(**os.environ)
+                str(root_dict["customOCIOConfigPath"]).format(
+                    **os.environ).replace("\\", "/")
                 )
             log.debug("nuke.root()['{}'] changed to: {}".format(
                 "customOCIOConfigPath", root_dict["customOCIOConfigPath"]))
@@ -943,6 +952,26 @@ class WorkfileSettings(object):
         self.reset_frame_range_handles()
         # add colorspace menu item
         self.set_colorspace()
+
+    def set_favorites(self):
+        projects_root = os.getenv("AVALON_PROJECTS")
+        work_dir = os.getenv("AVALON_WORKDIR")
+        asset = os.getenv("AVALON_ASSET")
+        project = os.getenv("AVALON_PROJECT")
+        hierarchy = os.getenv("AVALON_HIERARCHY")
+        favorite_items = OrderedDict()
+
+        # project
+        favorite_items.update({"Project dir": os.path.join(
+            projects_root, project).replace("\\", "/")})
+        # shot
+        favorite_items.update({"Shot dir": os.path.join(
+            projects_root, project,
+            hierarchy, asset).replace("\\", "/")})
+        # workdir
+        favorite_items.update({"Work dir": work_dir})
+
+        set_context_favorites(favorite_items)
 
 
 def get_hierarchical_attr(entity, attr, default=None):
@@ -1350,8 +1379,8 @@ class ExporterReview:
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
-            self.first_frame = self.instance.data.get("frameStart", None)
-            self.last_frame = self.instance.data.get("frameEnd", None)
+            self.first_frame = self.instance.data.get("frameStartHandle", None)
+            self.last_frame = self.instance.data.get("frameEndHandle", None)
 
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
@@ -1544,10 +1573,9 @@ class ExporterReviewMov(ExporterReview):
             self.nodes = {}
 
         # deal with now lut defined in viewer lut
-        if hasattr(klass, "viewer_lut_raw"):
-            self.viewer_lut_raw = klass.viewer_lut_raw
-        else:
-            self.viewer_lut_raw = False
+        self.viewer_lut_raw = klass.viewer_lut_raw
+        self.bake_colorspace_fallback = klass.bake_colorspace_fallback
+        self.bake_colorspace_main = klass.bake_colorspace_main
 
         self.name = name or "baked"
         self.ext = ext or "mov"
@@ -1608,8 +1636,26 @@ class ExporterReviewMov(ExporterReview):
             self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
 
         if not self.viewer_lut_raw:
-            # OCIODisplay node
-            dag_node = nuke.createNode("OCIODisplay")
+            colorspaces = [
+                self.bake_colorspace_main, self.bake_colorspace_fallback
+                ]
+
+            if any(colorspaces):
+                # OCIOColorSpace with controled output
+                dag_node = nuke.createNode("OCIOColorSpace")
+                for c in colorspaces:
+                    test = dag_node["out_colorspace"].setValue(str(c))
+                    if test:
+                        self.log.info(
+                            "Baking in colorspace...   `{}`".format(c))
+                        break
+
+                if not test:
+                    dag_node = nuke.createNode("OCIODisplay")
+            else:
+                # OCIODisplay
+                dag_node = nuke.createNode("OCIODisplay")
+
             # connect
             dag_node.setInput(0, self.previous_node)
             self._temp_nodes.append(dag_node)
