@@ -64,6 +64,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "scene",
                 "vrayproxy",
                 "render",
+                "prerender",
                 "imagesequence",
                 "review",
                 "rendersetup",
@@ -381,6 +382,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     # for adding first frame into db
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
+
+                template_data["frame"] = dst_start_frame
 
                 dst = "{0}{1}{2}".format(
                     dst_head,
