@@ -111,13 +111,13 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
 
         all_copied_files = []
         transfers = instance.data.get("transfers", list())
-        for dst in transfers.values():
+        for _src, dst in transfers:
             dst = os.path.normpath(dst)
             if dst not in all_copied_files:
                 all_copied_files.append(dst)
 
         hardlinks = instance.data.get("hardlinks", list())
-        for dst in hardlinks.values():
+        for _src, dst in hardlinks:
             dst = os.path.normpath(dst)
             if dst not in all_copied_files:
                 all_copied_files.append(dst)

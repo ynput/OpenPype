@@ -90,6 +90,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"
     ]
+    default_template_name = "publish"
 
     def process(self, instance):
 
@@ -262,7 +263,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Each should be a single representation (as such, a single extension)
         representations = []
         destination_list = []
-        template_name = 'publish'
+
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
@@ -289,8 +290,10 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             files = repre['files']
             if repre.get('stagingDir'):
                 stagingdir = repre['stagingDir']
-            if repre.get('anatomy_template'):
-                template_name = repre['anatomy_template']
+
+            template_name = (
+                repre.get('anatomy_template') or self.default_template_name
+            )
             if repre.get("outputName"):
                 template_data["output"] = repre['outputName']
 
@@ -383,8 +386,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
 
+                # Store used frame value to template data
                 template_data["frame"] = dst_start_frame
-
                 dst = "{0}{1}{2}".format(
                     dst_head,
                     dst_start_frame,
