@@ -47,6 +47,16 @@ class CollectClips(api.ContextPlugin):
                 track = item.parent()
                 source = item.source().mediaSource()
                 source_path = source.firstpath()
+                file_head = source.filenameHead()
+                file_info = next((f for f in source.fileinfos()), None)
+                source_first_frame = file_info.startFrame()
+                is_sequence = False
+
+                if not source.singleFile():
+                    self.log.info("Single file")
+                    is_sequence = True
+                    source_path = file_info.filename()
+
                 effects = [f for f in item.linkedItems()
                            if f.isEnabled()
                            if isinstance(f, hiero.core.EffectTrackItem)]
@@ -78,12 +88,6 @@ class CollectClips(api.ContextPlugin):
                         )
                     )
 
-                try:
-                    head, padding, ext = os.path.basename(source_path).split(".")
-                    source_first_frame = int(padding)
-                except Exception:
-                    source_first_frame = 0
-
                 data.update({
                         "name": "{0}_{1}".format(track.name(), item.name()),
                         "item": item,
@@ -91,6 +95,8 @@ class CollectClips(api.ContextPlugin):
                         "timecodeStart": str(source.timecodeStart()),
                         "timelineTimecodeStart": str(sequence.timecodeStart()),
                         "sourcePath": source_path,
+                        "sourceFileHead": file_head,
+                        "isSequence": is_sequence,
                         "track": track.name(),
                         "trackIndex": track_index,
                         "sourceFirst": source_first_frame,
@@ -101,8 +107,9 @@ class CollectClips(api.ContextPlugin):
                             int(item.sourceIn())) + 1,
                         "clipIn": int(item.timelineIn()),
                         "clipOut": int(item.timelineOut()),
-                        "clipDuration": (int(item.timelineOut()) -
-                            int(item.timelineIn())) + 1,
+                        "clipDuration": (
+                            int(item.timelineOut()) - int(
+                                item.timelineIn())) + 1,
                         "asset": asset,
                         "family": "clip",
                         "families": [],
