@@ -64,6 +64,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "scene",
                 "vrayproxy",
                 "render",
+                "prerender",
                 "imagesequence",
                 "review",
                 "rendersetup",

@@ -141,7 +141,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     hosts = ["fusion", "maya", "nuke"]
 
-    families = ["render.farm", "renderlayer", "imagesequence"]
+    families = ["render.farm", "prerener", "renderlayer", "imagesequence"]
 
     aov_filter = {"maya": ["beauty"]}
 
@@ -168,8 +168,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     instance_transfer = {
         "slate": ["slateFrame"],
         "review": ["lutPath"],
-        "render.farm": ["bakeScriptPath", "bakeRenderPath",
-                        "bakeWriteNodeName", "version"]
+        "render2d": ["bakeScriptPath", "bakeRenderPath",
+                     "bakeWriteNodeName", "version"]
     }
 
     # list of family names to transfer to new family if present
@@ -586,10 +586,22 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "resolutionHeight": data.get("resolutionHeight", 1080),
         }
 
+        if "prerender" in instance.data["families"]:
+            instance_skeleton_data.update({
+                "family": "prerender",
+                "families": []})
+
         # transfer specific families from original instance to new render
         for item in self.families_transfer:
             if item in instance.data.get("families", []):
                 instance_skeleton_data["families"] += [item]
+
+        if "render.farm" in instance.data["families"]:
+            instance_skeleton_data.update({
+                "family": "render2d",
+                "families": ["render"] + [f for f in instance.data["families"]
+                                          if "render.farm" not in f]
+            })
 
         # transfer specific properties from original instance based on
         # mapping dictionary `instance_transfer`

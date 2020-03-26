@@ -215,14 +215,14 @@ def script_name():
 
 def add_button_write_to_read(node):
     name = "createReadNode"
-    label = "Create Read"
+    label = "[ Create Read ]"
     value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
     k = nuke.PyScript_Knob(name, label, value)
     k.setFlag(0x1000)
     node.addKnob(k)
 
 
-def create_write_node(name, data, input=None, prenodes=None):
+def create_write_node(name, data, input=None, prenodes=None, review=True):
     ''' Creating write node which is group node
 
     Arguments:
@@ -231,6 +231,7 @@ def create_write_node(name, data, input=None, prenodes=None):
         input (node): selected node to connect to
         prenodes (list, optional): list of lists, definitions for nodes
                                 to be created before write
+        review (bool): adding review knob
 
     Example:
         prenodes = [(
@@ -389,15 +390,8 @@ def create_write_node(name, data, input=None, prenodes=None):
 
     add_rendering_knobs(GN)
 
-    # adding write to read button
-    add_button_write_to_read(GN)
-
-    divider = nuke.Text_Knob('')
-    GN.addKnob(divider)
-
-    # set tile color
-    tile_color = _data.get("tile_color", "0xff0000ff")
-    GN["tile_color"].setValue(tile_color)
+    if review:
+        add_review_knob(GN)
 
     # add render button
     lnk = nuke.Link_Knob("Render")
@@ -405,8 +399,19 @@ def create_write_node(name, data, input=None, prenodes=None):
     lnk.setName("Render")
     GN.addKnob(lnk)
 
+    divider = nuke.Text_Knob('')
+    GN.addKnob(divider)
+
+    # adding write to read button
+    add_button_write_to_read(GN)
+
     # Deadline tab.
     add_deadline_tab(GN)
+
+
+    # set tile color
+    tile_color = _data.get("tile_color", "0xff0000ff")
+    GN["tile_color"].setValue(tile_color)
 
     return GN
 
@@ -429,6 +434,17 @@ def add_rendering_knobs(node):
         knob = nuke.Boolean_Knob("render_farm", "Render on Farm")
         knob.setValue(False)
         node.addKnob(knob)
+    return node
+
+def add_review_knob(node):
+    ''' Adds additional review knob to given node
+
+    Arguments:
+        node (obj): nuke node object to be fixed
+
+    Return:
+        node (obj): with added knob
+    '''
     if "review" not in node.knobs():
         knob = nuke.Boolean_Knob("review", "Review")
         knob.setValue(True)
@@ -1135,7 +1151,7 @@ class BuildWorkfile(WorkfileSettings):
                 regex_filter=None,
                 version=None,
                 representations=["exr", "dpx", "lutJson", "mov",
-                                 "preview", "png"]):
+                                 "preview", "png", "jpeg", "jpg"]):
         """
         A short description.
 
