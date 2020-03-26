@@ -1,17 +1,19 @@
 import logging
-
 try:
     from queue import Queue
 except Exception:
     from Queue import Queue
 
-from .slate_base.main_frame import MainFrame
-from .slate_base.layer import Layer
-from .slate_base.items import (
+from .main_frame import MainFrame
+from .layer import Layer
+from .items import (
     ItemTable, ItemImage, ItemRectangle, ItemPlaceHolder
 )
 
-from pypeapp import config
+try:
+    from pypeapp.config import get_presets
+except Exception:
+    get_presets = dict
 
 log = logging.getLogger(__name__)
 
@@ -19,17 +21,20 @@ log = logging.getLogger(__name__)
 RequiredSlateKeys = ["width", "height", "destination_path"]
 
 
-def create_slates(fill_data, slate_name):
-    presets = config.get_presets()
-    slate_presets = (
-        presets
-        .get("tools", {})
-        .get("slates")
-    ) or {}
+def create_slates(fill_data, slate_name, slate_presets=None):
+    if slate_presets is None:
+        presets = get_presets()
+        slate_presets = (
+            presets
+            .get("tools", {})
+            .get("slates")
+        ) or {}
     slate_data = slate_presets.get(slate_name)
 
     if not slate_data:
-        log.error("Slate data of <{}> does not exists.")
+        log.error(
+            "Name \"{}\" was not found in slate presets.".format(slate_name)
+        )
         return False
 
     missing_keys = []
@@ -111,41 +116,3 @@ def create_slates(fill_data, slate_name):
 
     main.draw()
     log.debug("Slate creation finished")
-
-
-def example():
-    # import sys
-    # sys.append(r"PATH/TO/PILLOW/PACKAGE")
-    # sys.append(r"PATH/TO/PYPE-SETUP")
-
-    fill_data = {
-        "destination_path": "PATH/TO/OUTPUT/FILE",
-        "project": {
-            "name": "Testing project"
-        },
-        "intent": "WIP",
-        "version_name": "seq01_sh0100_compositing_v01",
-        "date": "2019-08-09",
-        "shot_type": "2d comp",
-        "submission_note": (
-            "Lorem ipsum dolor sit amet, consectetuer adipiscing elit."
-            " Aenean commodo ligula eget dolor. Aenean massa."
-            " Cum sociis natoque penatibus et magnis dis parturient montes,"
-            " nascetur ridiculus mus. Donec quam felis, ultricies nec,"
-            " pellentesque eu, pretium quis, sem. Nulla consequat massa quis"
-            " enim. Donec pede justo, fringilla vel,"
-            " aliquet nec, vulputate eget, arcu."
-        ),
-        "thumbnail_path": "PATH/TO/THUMBNAIL/FILE",
-        "color_bar_path": "PATH/TO/COLOR/BAR/FILE",
-        "vendor": "Our Studio",
-        "shot_name": "sh0100",
-        "frame_start": 1001,
-        "frame_end": 1004,
-        "duration": 3
-    }
-    create_slates(fill_data, "example_HD")
-
-
-if __name__ == "__main__":
-    example()
