@@ -1,0 +1,68 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "pype:application-1.0",
+    "description": "An application definition.",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "schema",
+        "label",
+        "application_dir",
+        "executable"
+    ],
+
+    "properties": {
+        "schema": {
+            "description": "Schema identifier for payload",
+            "type": "string"
+        },
+        "label": {
+            "description": "Nice name of application.",
+            "type": "string"
+        },
+        "application_dir": {
+            "description": "Name of directory used for application resources.",
+            "type": "string"
+        },
+        "executable": {
+            "description": "Name of callable executable, this is called to launch the application",
+            "type": "string"
+        },
+        "description": {
+            "description": "Description of application.",
+            "type": "string"
+        },
+        "environment": {
+            "description": "Key/value pairs for environment variables related to this application. Supports lists for paths, such as PYTHONPATH.",
+            "type": "object",
+            "items": {
+                "oneOf": [
+                    {"type": "string"},
+                    {"type": "array", "items": {"type": "string"}}
+                ]
+            }
+        },
+        "default_dirs": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            }
+        },
+        "copy": {
+            "type": "object",
+            "patternProperties": {
+                "^.*$": {
+                    "anyOf": [
+                        {"type": "string"},
+                        {"type": "null"}
+                    ]
+                }
+            },
+            "additionalProperties": false
+        }
+    }
+}

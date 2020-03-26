@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import copy
 import tempfile
 import contextlib
 import subprocess
@@ -330,10 +331,9 @@ class ExtractLook(pype.api.Extractor):
                                                           maya_path))
 
     def resource_destination(self, instance, filepath, do_maketx):
-
         anatomy = instance.context.data["anatomy"]
 
-        self.create_destination_template(instance, anatomy)
+        resources_dir = instance.data["resourcesDir"]
 
         # Compute destination location
         basename, ext = os.path.splitext(os.path.basename(filepath))
@@ -343,7 +343,7 @@ class ExtractLook(pype.api.Extractor):
             ext = ".tx"
 
         return os.path.join(
-            instance.data["assumedDestination"], "resources", basename + ext
+            resources_dir, basename + ext
         )
 
     def _process_texture(self, filepath, do_maketx, staging, linearise, force):
@@ -407,88 +407,3 @@ class ExtractLook(pype.api.Extractor):
             return converted, COPY, texture_hash
 
         return filepath, COPY, texture_hash
-
-    def create_destination_template(self, instance, anatomy):
-        """Create a filepath based on the current data available
-
-        Example template:
-            {root}/{project}/{silo}/{asset}/publish/{subset}/v{version:0>3}/
-            {subset}.{representation}
-        Args:
-            instance: the instance to publish
-
-        Returns:
-            file path (str)
-        """
-
-        # get all the stuff from the database
-        subset_name = instance.data["subset"]
-        self.log.info(subset_name)
-        asset_name = instance.data["asset"]
-        project_name = api.Session["AVALON_PROJECT"]
-        a_template = anatomy.templates
-
-        project = io.find_one(
-            {"type": "project", "name": project_name},
-            projection={"config": True, "data": True},
-        )
-
-        template = a_template["publish"]["path"]
-        # anatomy = instance.context.data['anatomy']
-
-        asset = io.find_one(
-            {"type": "asset", "name": asset_name, "parent": project["_id"]}
-        )
-
-        assert asset, ("No asset found by the name '{}' "
-                       "in project '{}'").format(asset_name, project_name)
-        silo = asset.get("silo")
-
-        subset = io.find_one(
-            {"type": "subset", "name": subset_name, "parent": asset["_id"]}
-        )
-
-        # assume there is no version yet, we start at `1`
-        version = None
-        version_number = 1
-        if subset is not None:
-            version = io.find_one(
-                {"type": "version",
-                 "parent": subset["_id"]
-                 }, sort=[("name", -1)]
-            )
-
-        # if there is a subset there ought to be version
-        if version is not None:
-            version_number += version["name"]
-
-        if instance.data.get("version"):
-            version_number = int(instance.data.get("version"))
-
-        padding = int(a_template["render"]["padding"])
-
-        hierarchy = asset["data"]["parents"]
-        if hierarchy:
-            # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = "/".join(hierarchy)
-
-        template_data = {
-            "root": api.Session["AVALON_PROJECTS"],
-            "project": {"name": project_name, "code": project["data"]["code"]},
-            "silo": silo,
-            "family": instance.data["family"],
-            "asset": asset_name,
-            "subset": subset_name,
-            "frame": ("#" * padding),
-            "version": version_number,
-            "hierarchy": hierarchy,
-            "representation": "TEMP",
-        }
-
-        instance.data["assumedTemplateData"] = template_data
-        self.log.info(template_data)
-        instance.data["template"] = template
-        # We take the parent folder of representation 'filepath'
-        instance.data["assumedDestination"] = os.path.dirname(
-            anatomy.format(template_data)["publish"]["path"]
-        )

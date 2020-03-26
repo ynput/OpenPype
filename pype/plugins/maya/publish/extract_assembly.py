@@ -22,11 +22,11 @@ class ExtractAssembly(pype.api.Extractor):
 
     def process(self, instance):
 
-        parent_dir = self.staging_dir(instance)
+        staging_dir = self.staging_dir(instance)
         hierarchy_filename = "{}.abc".format(instance.name)
-        hierarchy_path = os.path.join(parent_dir, hierarchy_filename)
+        hierarchy_path = os.path.join(staging_dir, hierarchy_filename)
         json_filename = "{}.json".format(instance.name)
-        json_path = os.path.join(parent_dir, json_filename)
+        json_path = os.path.join(staging_dir, json_filename)
 
         self.log.info("Dumping scene data for debugging ..")
         with open(json_path, "w") as filepath:
@@ -46,8 +46,24 @@ class ExtractAssembly(pype.api.Extractor):
                            "uvWrite": True,
                            "selection": True})
 
-        instance.data["files"] = [json_filename, hierarchy_filename]
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
 
+        representation_abc = {
+            'name': 'abc',
+            'ext': 'abc',
+            'files': hierarchy_filename,
+            "stagingDir": staging_dir
+        }
+        instance.data["representations"].append(representation_abc)
+
+        representation_json = {
+            'name': 'json',
+            'ext': 'json',
+            'files': json_filename,
+            "stagingDir": staging_dir
+        }
+        instance.data["representations"].append(representation_json)
         # Remove data
         instance.data.pop("scenedata", None)
 

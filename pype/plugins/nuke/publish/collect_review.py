@@ -1,12 +1,12 @@
 import pyblish.api
 import nuke
 
+
 class CollectReview(pyblish.api.InstancePlugin):
     """Collect review instance from rendered frames
     """
 
     order = pyblish.api.CollectorOrder + 0.3
-    family = "review"
     label = "Collect Review"
     hosts = ["nuke"]
     families = ["render", "render.local", "render.farm"]
@@ -25,4 +25,6 @@ class CollectReview(pyblish.api.InstancePlugin):
 
         instance.data["families"].append("review")
         instance.data['families'].append('ftrack')
+
         self.log.info("Review collected: `{}`".format(instance))
+        self.log.debug("__ instance.data: `{}`".format(instance.data))

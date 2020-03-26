@@ -2,6 +2,7 @@ from avalon.nuke.pipeline import Creator
 from avalon.nuke import lib as anlib
 import nuke
 
+
 class CreateBackdrop(Creator):
     """Add Publishable Backdrop"""
 
@@ -35,8 +36,10 @@ class CreateBackdrop(Creator):
 
                 return instance
             else:
-                nuke.message("Please select nodes you "
-                             "wish to add to a container")
+                msg = str("Please select nodes you "
+                          "wish to add to a container")
+                self.log.error(msg)
+                nuke.message(msg)
                 return
         else:
             bckd_node = autoBackdrop()

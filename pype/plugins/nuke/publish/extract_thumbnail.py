@@ -28,19 +28,16 @@ class ExtractThumbnail(pype.api.Extractor):
             self.render_thumbnail(instance)
 
     def render_thumbnail(self, instance):
-        node = instance[0] # group node
+        node = instance[0]  # group node
         self.log.info("Creating staging dir...")
-        if "representations" in instance.data:
-            staging_dir = instance.data[
-                "representations"][0]["stagingDir"].replace("\\", "/")
-            instance.data["stagingDir"] = staging_dir
-            instance.data["representations"][0]["tags"] = ["review"]
-        else:
-            instance.data["representations"] = []
-            # get output path
-            render_path = instance.data['path']
-            staging_dir = os.path.normpath(os.path.dirname(render_path))
-            instance.data["stagingDir"] = staging_dir
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = list()
+
+        staging_dir = os.path.normpath(
+            os.path.dirname(instance.data['path']))
+
+        instance.data["stagingDir"] = staging_dir
 
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
@@ -119,7 +116,7 @@ class ExtractThumbnail(pype.api.Extractor):
         write_node["raw"].setValue(1)
         write_node.setInput(0, previous_node)
         temporary_nodes.append(write_node)
-        tags = ["thumbnail"]
+        tags = ["thumbnail", "publish_on_farm"]
 
         # retime for
         first_frame = int(last_frame) / 2
@@ -165,7 +162,7 @@ class ExtractThumbnail(pype.api.Extractor):
         if ipn_orig:
             nuke.nodeCopy('%clipboard%')
 
-            [n.setSelected(False) for n in nuke.selectedNodes()] # Deselect all
+            [n.setSelected(False) for n in nuke.selectedNodes()]  # Deselect all
 
             nuke.nodePaste('%clipboard%')
 

@@ -1,29 +1,43 @@
 import os
-import datetime
+import sys
+import re
 import subprocess
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
 from pypeapp.lib import config
-from pype import api as pype
-# FFmpeg in PATH is required
+from pypeapp import Logger
+import pype.lib
+
+log = Logger().get_logger("BurninWrapper", "burninwrap")
 
 
-log = pype.Logger().get_logger("BurninWrapper", "burninwrap")
+ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
 
-
-ffmpeg_path = os.environ.get("FFMPEG_PATH")
-if ffmpeg_path and os.path.exists(ffmpeg_path):
-    # add separator "/" or "\" to be prepared for next part
-    ffmpeg_path += os.path.sep
-else:
-    ffmpeg_path = ""
 
 FFMPEG = (
     '{} -loglevel panic -i %(input)s %(filters)s %(args)s%(output)s'
-).format(os.path.normpath(ffmpeg_path + "ffmpeg"))
+).format(ffmpeg_path)
+
 FFPROBE = (
     '{} -v quiet -print_format json -show_format -show_streams %(source)s'
-).format(os.path.normpath(ffmpeg_path + "ffprobe"))
+).format(ffprobe_path)
+
+DRAWTEXT = (
+    "drawtext=text=\\'%(text)s\\':x=%(x)s:y=%(y)s:fontcolor="
+    "%(color)s@%(opacity).1f:fontsize=%(size)d:fontfile='%(font)s'"
+)
+TIMECODE = (
+    "drawtext=timecode=\\'%(timecode)s\\':text=\\'%(text)s\\'"
+    ":timecode_rate=%(fps).2f:x=%(x)s:y=%(y)s:fontcolor="
+    "%(color)s@%(opacity).1f:fontsize=%(size)d:fontfile='%(font)s'"
+)
+
+MISSING_KEY_VALUE = "N/A"
+CURRENT_FRAME_KEY = "{current_frame}"
+CURRENT_FRAME_SPLITTER = "_-_CURRENT_FRAME_-_"
+TIMECODE_KEY = "{timecode}"
+SOURCE_TIMECODE_KEY = "{source_timecode}"
 
 
 def _streams(source):
@@ -37,6 +51,25 @@ def _streams(source):
     if proc.returncode != 0:
         raise RuntimeError("Failed to run: %s" % command)
     return json.loads(out)['streams']
+
+
+def get_fps(str_value):
+    if str_value == "0/0":
+        print("Source has \"r_frame_rate\" value set to \"0/0\".")
+        return "Unknown"
+
+    items = str_value.split("/")
+    if len(items) == 1:
+        fps = float(items[0])
+
+    elif len(items) == 2:
+        fps = float(items[0]) / float(items[1])
+
+    # Check if fps is integer or float number
+    if int(fps) == fps:
+        fps = int(fps)
+
+    return str(fps)
 
 
 class ModifiedBurnins(ffmpeg_burnins.Burnins):
@@ -95,85 +128,76 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             streams = _streams(source)
 
         super().__init__(source, streams)
+
         if options_init:
             self.options_init.update(options_init)
 
-    def add_text(self, text, align, options=None):
+    def add_text(
+        self, text, align, frame_start=None, frame_end=None, options=None
+    ):
         """
         Adding static text to a filter.
 
         :param str text: text to apply to the drawtext
         :param enum align: alignment, must use provided enum flags
+        :param int frame_start: starting frame for burnins current frame
         :param dict options: recommended to use TextOptions
         """
         if not options:
             options = ffmpeg_burnins.TextOptions(**self.options_init)
-        self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
 
-    def add_datetime(self, date_format, align, options=None):
-        """
-        Adding date text to a filter. Using pythons datetime module.
+        options = options.copy()
+        if frame_start:
+            options["frame_offset"] = frame_start
 
-        :param str date_format: format of date (e.g. `%d.%m.%Y`)
-        :param enum align: alignment, must use provided enum flags
-        :param dict options: recommended to use TextOptions
-        """
-        if not options:
-            options = ffmpeg_burnins.TextOptions(**self.options_init)
-        today = datetime.datetime.today()
-        text = today.strftime(date_format)
-        self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
+        # `frame_end` is only for meassurements of text position
+        if frame_end:
+            options["frame_end"] = frame_end
 
-    def add_frame_numbers(
-        self, align, options=None, start_frame=None, text=None
+        self._add_burnin(text, align, options, DRAWTEXT)
+
+    def add_timecode(
+        self, align, frame_start=None, frame_end=None, frame_start_tc=None,
+        text=None, options=None
     ):
         """
         Convenience method to create the frame number expression.
 
         :param enum align: alignment, must use provided enum flags
-        :param dict options: recommended to use FrameNumberOptions
-        """
-        if not options:
-            options = ffmpeg_burnins.FrameNumberOptions(**self.options_init)
-        if start_frame:
-            options['frame_offset'] = start_frame
-
-        expr = r'%%{eif\:n+%d\:d}' % options['frame_offset']
-        _text = str(int(self.end_frame + options['frame_offset']))
-        if text and isinstance(text, str):
-            text = r"{}".format(text)
-            expr = text.replace("{current_frame}", expr)
-            text = text.replace("{current_frame}", _text)
-
-        options['expression'] = expr
-        self._add_burnin(text, align, options, ffmpeg_burnins.DRAWTEXT)
-
-    def add_timecode(self, align, options=None, start_frame=None):
-        """
-        Convenience method to create the frame number expression.
-
-        :param enum align: alignment, must use provided enum flags
+        :param int frame_start:  starting frame for burnins current frame
+        :param int frame_start_tc:  starting frame for burnins timecode
+        :param str text: text that will be before timecode
         :param dict options: recommended to use TimeCodeOptions
         """
         if not options:
             options = ffmpeg_burnins.TimeCodeOptions(**self.options_init)
-        if start_frame:
-            options['frame_offset'] = start_frame
 
-        timecode = ffmpeg_burnins._frames_to_timecode(
-            options['frame_offset'],
-            self.frame_rate
-        )
         options = options.copy()
-        if not options.get('fps'):
-            options['fps'] = self.frame_rate
+        if frame_start:
+            options["frame_offset"] = frame_start
 
-        self._add_burnin(
-            timecode.replace(':', r'\:'),
-            align,
-            options,
-            ffmpeg_burnins.TIMECODE
-        )
+        # `frame_end` is only for meassurements of text position
+        if frame_end:
+            options["frame_end"] = frame_end
+
+        if not frame_start_tc:
+            frame_start_tc = options["frame_offset"]
+
+        if not text:
+            text = ""
+
+        if not options.get("fps"):
+            options["fps"] = self.frame_rate
+
+        if isinstance(frame_start_tc, str):
+            options["timecode"] = frame_start_tc
+        else:
+            options["timecode"] = ffmpeg_burnins._frames_to_timecode(
+                frame_start_tc,
+                self.frame_rate
+            )
+
+        self._add_burnin(text, align, options, TIMECODE)
 
     def _add_burnin(self, text, align, options, draw):
         """
@@ -182,14 +206,43 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         :param enum align: alignment, must use provided enum flags
         :param dict options:
         """
+
+        final_text = text
+        text_for_size = text
+        if CURRENT_FRAME_SPLITTER in text:
+            frame_start = options["frame_offset"]
+            frame_end = options.get("frame_end", frame_start)
+            if not frame_start:
+                replacement_final = replacement_size = str(MISSING_KEY_VALUE)
+            else:
+                replacement_final = "\\'{}\\'".format(
+                    r'%%{eif\:n+%d\:d}' % frame_start
+                )
+                replacement_size = str(frame_end)
+
+            final_text = final_text.replace(
+                CURRENT_FRAME_SPLITTER, replacement_final
+            )
+            text_for_size = text_for_size.replace(
+                CURRENT_FRAME_SPLITTER, replacement_size
+            )
+
         resolution = self.resolution
         data = {
-            'text': options.get('expression') or text,
+            'text': (
+                final_text
+                .replace(",", r"\,")
+                .replace(':', r'\:')
+            ),
             'color': options['font_color'],
             'size': options['font_size']
         }
+        timecode_text = options.get("timecode") or ""
+        text_for_size += timecode_text
         data.update(options)
-        data.update(ffmpeg_burnins._drawtext(align, resolution, text, options))
+        data.update(
+            ffmpeg_burnins._drawtext(align, resolution, text_for_size, options)
+        )
         if 'font' in data and ffmpeg_burnins._is_windows():
             data['font'] = data['font'].replace(os.sep, r'\\' + os.sep)
             data['font'] = data['font'].replace(':', r'\:')
@@ -228,6 +281,37 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             'filters': filters
         }).strip()
 
+    def render(self, output, args=None, overwrite=False, **kwargs):
+        """
+        Render the media to a specified destination.
+
+        :param str output: output file
+        :param str args: additional FFMPEG arguments
+        :param bool overwrite: overwrite the output if it exists
+        """
+        if not overwrite and os.path.exists(output):
+            raise RuntimeError("Destination '%s' exists, please "
+                               "use overwrite" % output)
+
+        is_sequence = "%" in output
+
+        command = self.command(
+            output=output,
+            args=args,
+            overwrite=overwrite
+        )
+        # print(command)
+
+        proc = subprocess.Popen(command, shell=True)
+        proc.communicate()
+        if proc.returncode != 0:
+            raise RuntimeError("Failed to render '%s': %s'"
+                               % (output, command))
+        if is_sequence:
+            output = output % kwargs.get("duration")
+        if not os.path.exists(output):
+            raise RuntimeError("Failed to generate this fucking file '%s'" % output)
+
 
 def example(input_path, output_path):
     options_init = {
@@ -246,15 +330,13 @@ def example(input_path, output_path):
     burnin.add_text('My Text', ModifiedBurnins.TOP_CENTERED)
     # Datetime
     burnin.add_text('%d-%m-%y', ModifiedBurnins.TOP_RIGHT)
-    # Frame number
-    burnin.add_frame_numbers(ModifiedBurnins.TOP_RIGHT, start_frame=start_frame)
-    # Timecode
-    burnin.add_timecode(ModifiedBurnins.TOP_LEFT, start_frame=start_frame)
     # Start render (overwrite output file if exist)
     burnin.render(output_path, overwrite=True)
 
 
-def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True):
+def burnins_from_data(
+    input_path, output_path, data, codec_data=None, overwrite=True
+):
     '''
     This method adds burnins to video/image file based on presets setting.
     Extension of output MUST be same as input. (mov -> mov, avi -> avi,...)
@@ -278,47 +360,35 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
         - each key of "burnins" represents Alignment, there are 6 possibilities:
             TOP_LEFT        TOP_CENTERED        TOP_RIGHT
             BOTTOM_LEFT     BOTTOM_CENTERED     BOTTOM_RIGHT
-        - value for each key is dict which should contain "function" which says
-            what kind of burnin is that:
-            "text", "timecode" or "frame_numbers"
-            - "text" key with content is also required when "text" function is used
+        - value must be string with text you want to burn-in
+        - text may contain specific formatting keys (exmplained below)
 
     Requirement of *data* keys is based on presets.
-    - "start_frame" - is required when "timecode" or "frame_numbers" function is used
-    - "start_frame_tc" - when "timecode" should start with different frame
+    - "frame_start" - is required when "timecode" or "current_frame" ins keys
+    - "frame_start_tc" - when "timecode" should start with different frame
     - *keys for static text*
 
     EXAMPLE:
     preset = {
         "options": {*OPTIONS FOR LOOK*},
         "burnins": {
-            "TOP_LEFT": {
-                "function": "text",
-                "text": "static_text"
-            },
-            "TOP_RIGHT": {
-                "function": "text",
-                "text": "{shot}"
-            },
-            "BOTTOM_LEFT": {
-                "function": "timecode"
-            },
-            "BOTTOM_RIGHT": {
-                "function": "frame_numbers"
-            }
+            "TOP_LEFT": "static_text",
+            "TOP_RIGHT": "{shot}",
+            "BOTTOM_LEFT": "TC: {timecode}",
+            "BOTTOM_RIGHT": "{frame_start}{current_frame}"
         }
     }
 
     For this preset we'll need at least this data:
     data = {
-        "start_frame": 1001,
+        "frame_start": 1001,
         "shot": "sh0010"
     }
 
     When Timecode should start from 1 then data need:
     data = {
-        "start_frame": 1001,
-        "start_frame_tc": 1,
+        "frame_start": 1001,
+        "frame_start_tc": 1,
         "shot": "sh0010"
     }
     '''
@@ -328,91 +398,124 @@ def burnins_from_data(input_path, codec_data, output_path, data, overwrite=True)
     burnin = ModifiedBurnins(input_path, options_init=options_init)
 
     frame_start = data.get("frame_start")
+    frame_end = data.get("frame_end")
     frame_start_tc = data.get('frame_start_tc', frame_start)
-    for align_text, preset in presets.get('burnins', {}).items():
+
+    stream = burnin._streams[0]
+    if "resolution_width" not in data:
+        data["resolution_width"] = stream.get("width", MISSING_KEY_VALUE)
+
+    if "resolution_height" not in data:
+        data["resolution_height"] = stream.get("height", MISSING_KEY_VALUE)
+
+    if "fps" not in data:
+        data["fps"] = get_fps(stream.get("r_frame_rate", "0/0"))
+
+    # Check frame start and add expression if is available
+    if frame_start is not None:
+        data[CURRENT_FRAME_KEY[1:-1]] = CURRENT_FRAME_SPLITTER
+
+    if frame_start_tc is not None:
+        data[TIMECODE_KEY[1:-1]] = TIMECODE_KEY
+
+    source_timecode = stream.get("timecode")
+    if source_timecode is None:
+        source_timecode = stream.get("tags", {}).get("timecode")
+
+    if source_timecode is not None:
+        data[SOURCE_TIMECODE_KEY[1:-1]] = SOURCE_TIMECODE_KEY
+
+    for align_text, value in presets.get('burnins', {}).items():
+        if not value:
+            continue
+
+        if isinstance(value, (dict, list, tuple)):
+            raise TypeError((
+                "Expected string or number type."
+                " Got: {} - \"{}\""
+                " (Make sure you have new burnin presets)."
+            ).format(str(type(value)), str(value)))
+
         align = None
-        if align_text == 'TOP_LEFT':
+        align_text = align_text.strip().lower()
+        if align_text == "top_left":
             align = ModifiedBurnins.TOP_LEFT
-        elif align_text == 'TOP_CENTERED':
+        elif align_text == "top_centered":
             align = ModifiedBurnins.TOP_CENTERED
-        elif align_text == 'TOP_RIGHT':
+        elif align_text == "top_right":
             align = ModifiedBurnins.TOP_RIGHT
-        elif align_text == 'BOTTOM_LEFT':
+        elif align_text == "bottom_left":
             align = ModifiedBurnins.BOTTOM_LEFT
-        elif align_text == 'BOTTOM_CENTERED':
+        elif align_text == "bottom_centered":
             align = ModifiedBurnins.BOTTOM_CENTERED
-        elif align_text == 'BOTTOM_RIGHT':
+        elif align_text == "bottom_right":
             align = ModifiedBurnins.BOTTOM_RIGHT
 
-        bi_func = preset.get('function')
-        if not bi_func:
-            log.error(
-                'Missing function for burnin!'
-                'Burnins are not created!'
+        has_timecode = TIMECODE_KEY in value
+        # Replace with missing key value if frame_start_tc is not set
+        if frame_start_tc is None and has_timecode:
+            has_timecode = False
+            log.warning(
+                "`frame_start` and `frame_start_tc`"
+                " are not set in entered data."
             )
-            return
+            value = value.replace(TIMECODE_KEY, MISSING_KEY_VALUE)
 
-        if (
-            bi_func in ['frame_numbers', 'timecode'] and
-            frame_start is None
-        ):
-            log.error(
-                'start_frame is not set in entered data!'
-                'Burnins are not created!'
-            )
-            return
+        has_source_timecode = SOURCE_TIMECODE_KEY in value
+        if source_timecode is None and has_source_timecode:
+            has_source_timecode = False
+            log.warning("Source does not have set timecode value.")
+            value = value.replace(SOURCE_TIMECODE_KEY, MISSING_KEY_VALUE)
 
-        if bi_func == 'frame_numbers':
-            current_frame_identifier = "{current_frame}"
-            text = preset.get('text') or current_frame_identifier
+        key_pattern = re.compile(r"(\{.*?[^{0]*\})")
 
-            if current_frame_identifier not in text:
-                log.warning((
-                    'Text for Frame numbers don\'t have '
-                    '`{current_frame}` key in text!'
-                ))
+        missing_keys = []
+        for group in key_pattern.findall(value):
+            try:
+                group.format(**data)
+            except (TypeError, KeyError):
+                missing_keys.append(group)
 
-            text_items = []
-            split_items = text.split(current_frame_identifier)
-            for item in split_items:
-                text_items.append(item.format(**data))
+        missing_keys = list(set(missing_keys))
+        for key in missing_keys:
+            value = value.replace(key, MISSING_KEY_VALUE)
 
-            text = "{current_frame}".join(text_items)
+        # Handle timecode differently
+        if has_source_timecode:
+            args = [align, frame_start, frame_end, source_timecode]
+            if not value.startswith(SOURCE_TIMECODE_KEY):
+                value_items = value.split(SOURCE_TIMECODE_KEY)
+                text = value_items[0].format(**data)
+                args.append(text)
 
-            burnin.add_frame_numbers(align, start_frame=frame_start, text=text)
+            burnin.add_timecode(*args)
+            continue
 
-        elif bi_func == 'timecode':
-            burnin.add_timecode(align, start_frame=frame_start_tc)
-        elif bi_func == 'text':
-            if not preset.get('text'):
-                log.error('Text is not set for text function burnin!')
-                return
-            text = preset['text'].format(**data)
-            burnin.add_text(text, align)
-        elif bi_func == "datetime":
-            date_format = preset["format"]
-            burnin.add_datetime(date_format, align)
+        if has_timecode:
+            args = [align, frame_start, frame_end, frame_start_tc]
+            if not value.startswith(TIMECODE_KEY):
+                value_items = value.split(TIMECODE_KEY)
+                text = value_items[0].format(**data)
+                args.append(text)
 
-        else:
-            log.error(
-                'Unknown function for burnins {}'.format(bi_func)
-            )
-            return
+            burnin.add_timecode(*args)
+            continue
 
-    codec_args = ''
-    if codec_data is not []:
+        text = value.format(**data)
+        burnin.add_text(text, align, frame_start, frame_end)
+
+    codec_args = ""
+    if codec_data:
         codec_args = " ".join(codec_data)
 
-    burnin.render(output_path, args=codec_args, overwrite=overwrite)
+    burnin.render(output_path, args=codec_args, overwrite=overwrite, **data)
 
 
 if __name__ == '__main__':
-    import sys
-    import json
-    data = json.loads(sys.argv[-1])
+    in_data = json.loads(sys.argv[-1])
     burnins_from_data(
-        data['input'],
-        data['codec'],
-        data['output'],
-        data['burnin_data']
-        )
+        in_data['input'],
+        in_data['output'],
+        in_data['burnin_data'],
+        in_data['codec']
+    )

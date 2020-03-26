@@ -16,7 +16,7 @@ class CollectReviews(api.InstancePlugin):
     order = api.CollectorOrder + 0.1022
     label = "Collect Reviews"
     hosts = ["nukestudio"]
-    families = ["clip"]
+    families = ["plate"]
 
     def process(self, instance):
         # Exclude non-tagged instances.
@@ -78,6 +78,8 @@ class CollectReviews(api.InstancePlugin):
         file_dir = os.path.dirname(file_path)
         file = os.path.basename(file_path)
         ext = os.path.splitext(file)[-1][1:]
+        handleStart = rev_inst.data.get("handleStart")
+        handleEnd = rev_inst.data.get("handleEnd")
 
         # change label
         instance.data["label"] = "{0} - {1} - ({2}) - review".format(
@@ -86,13 +88,14 @@ class CollectReviews(api.InstancePlugin):
 
         self.log.debug("Instance review: {}".format(rev_inst.data["name"]))
 
-
         # adding representation for review mov
         representation = {
             "files": file,
             "stagingDir": file_dir,
             "frameStart": rev_inst.data.get("sourceIn"),
             "frameEnd": rev_inst.data.get("sourceOut"),
+            "frameStartFtrack": rev_inst.data.get("sourceIn") - handleStart,
+            "frameEndFtrack": rev_inst.data.get("sourceOut") + handleEnd,
             "step": 1,
             "fps": rev_inst.data.get("fps"),
             "preview": True,
@@ -125,7 +128,7 @@ class CollectReviews(api.InstancePlugin):
             thumb_path,
             format='png'
         )
-        
+
         self.log.debug("__ sourceIn: `{}`".format(instance.data["sourceIn"]))
         self.log.debug("__ thumbnail: `{}`, frame: `{}`".format(thumbnail, thumb_frame))
 
@@ -145,7 +148,10 @@ class CollectReviews(api.InstancePlugin):
         item = instance.data["item"]
 
         transfer_data = [
-            "handleStart", "handleEnd", "sourceIn", "sourceOut", "frameStart", "frameEnd", "sourceInH", "sourceOutH", "clipIn", "clipOut", "clipInH", "clipOutH", "asset", "track", "version"
+            "handleStart", "handleEnd", "sourceIn", "sourceOut",
+            "frameStart", "frameEnd", "sourceInH", "sourceOutH",
+            "clipIn", "clipOut", "clipInH", "clipOutH", "asset",
+            "track", "version"
         ]
 
         version_data = dict()
@@ -154,7 +160,6 @@ class CollectReviews(api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "handles": version_data['handleStart'],
             "colorspace": item.sourceMediaColourTransform(),
             "families": instance.data["families"],
             "subset": instance.data["subset"],

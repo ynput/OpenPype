@@ -58,7 +58,11 @@ class CollectBackdrops(pyblish.api.InstancePlugin):
         last_frame = int(nuke.root()["last_frame"].getValue())
 
         # get version
-        version = pype.get_version_from_path(nuke.root().name())
+        version = instance.context.data.get('version')
+
+        if not version:
+            raise RuntimeError("Script name has no version in the name.")
+
         instance.data['version'] = version
 
         # Add version data to instance

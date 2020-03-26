@@ -14,6 +14,7 @@ import operator
 import functools
 import json
 import socket
+import warnings
 
 import requests
 import requests.exceptions
@@ -40,8 +41,19 @@ ServerDetails = collections.namedtuple('ServerDetails', [
 ])
 
 
+
+
 class EventHub(object):
     '''Manage routing of events.'''
+
+    _future_signature_warning = (
+        'When constructing your Session object you did not explicitly define '
+        'auto_connect_event_hub as True even though you appear to be publishing '
+        'and / or subscribing to asynchronous events. In version version 2.0 of '
+        'the ftrack-python-api the default behavior will change from True '
+        'to False. Please make sure to update your tools. You can read more at '
+        'http://ftrack-python-api.rtd.ftrack.com/en/stable/release/migration.html'
+    )
 
     def __init__(self, server_url, api_user, api_key):
         '''Initialise hub, connecting to ftrack *server_url*.
@@ -75,6 +87,8 @@ class EventHub(object):
         # disconnection. Equates to 5 minutes.
         self._auto_reconnect_attempts = 30
         self._auto_reconnect_delay = 10
+
+        self._deprecation_warning_auto_connect = False
 
         # Mapping of Socket.IO codes to meaning.
         self._code_name_mapping = {
@@ -134,6 +148,9 @@ class EventHub(object):
         connected or connection fails.
 
         '''
+
+        self._deprecation_warning_auto_connect = False
+
         if self.connected:
             raise ftrack_api_old.exception.EventHubConnectionError(
                 'Already connected.'
@@ -164,17 +181,26 @@ class EventHub(object):
             # https://docs.python.org/2/library/socket.html#socket.socket.setblocking
             self._connection = websocket.create_connection(url, timeout=60)
 
-        except Exception:
+        except Exception as error:
+            error_message = (
+                'Failed to connect to event server at {server_url} with '
+                'error: "{error}".'
+            )
+
+            error_details = {
+                'error': unicode(error),
+                'server_url': self.get_server_url()
+            }
+
             self.logger.debug(
                 L(
-                    'Error connecting to event server at {0}.',
-                    self.get_server_url()
+                    error_message, **error_details
                 ),
                 exc_info=1
             )
             raise ftrack_api_old.exception.EventHubConnectionError(
-                'Failed to connect to event server at {0}.'
-                .format(self.get_server_url())
+                error_message,
+                details=error_details
             )
 
         # Start background processing thread.
@@ -543,6 +569,11 @@ class EventHub(object):
         event will be caught by this method and ignored.
 
         '''
+        if self._deprecation_warning_auto_connect and not synchronous:
+            warnings.warn(
+                self._future_signature_warning, FutureWarning
+            )
+
         try:
             return self._publish(
                 event, synchronous=synchronous, on_reply=on_reply
@@ -700,18 +731,23 @@ class EventHub(object):
 
             # Automatically publish a non None response as a reply when not in
             # synchronous mode.
-            if not synchronous and response is not None:
-
-                try:
-                    self.publish_reply(
-                        event, data=response, source=subscriber.metadata
+            if not synchronous:
+                if self._deprecation_warning_auto_connect:
+                    warnings.warn(
+                        self._future_signature_warning, FutureWarning
                     )
 
-                except Exception:
-                    self.logger.exception(L(
-                        'Error publishing response {0} from subscriber {1} '
-                        'for event {2}.', response, subscriber, event
-                    ))
+                if response is not None:
+                    try:
+                        self.publish_reply(
+                            event, data=response, source=subscriber.metadata
+                        )
+
+                    except Exception:
+                        self.logger.exception(L(
+                            'Error publishing response {0} from subscriber {1} '
+                            'for event {2}.', response, subscriber, event
+                        ))
 
             # Check whether to continue processing topic event.
             if event.is_stopped():
@@ -881,6 +917,7 @@ class EventHub(object):
         if code_name == 'connect':
             self.logger.debug('Connected to event server.')
             event = ftrack_api_old.event.base.Event('ftrack.meta.connected')
+            self._prepare_event(event)
             self._event_queue.put(event)
 
         elif code_name == 'disconnect':
@@ -901,6 +938,7 @@ class EventHub(object):
 
             if not self.connected:
                 event = ftrack_api_old.event.base.Event('ftrack.meta.disconnected')
+                self._prepare_event(event)
                 self._event_queue.put(event)
 
         elif code_name == 'heartbeat':

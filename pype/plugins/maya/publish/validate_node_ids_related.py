@@ -38,9 +38,13 @@ class ValidateNodeIDsRelated(pyblish.api.InstancePlugin):
         invalid = list()
 
         asset = instance.data['asset']
-        asset_data = io.find_one({"name": asset,
-                                  "type": "asset"},
-                                 projection={"_id": True})
+        asset_data = io.find_one(
+            {
+                "name": asset,
+                "type": "asset"
+            },
+            projection={"_id": True}
+        )
         asset_id = str(asset_data['_id'])
 
         # We do want to check the referenced nodes as we it might be

@@ -49,7 +49,7 @@ class BaseHandler(object):
             ).format(
                 str(type(session)),
                 str(ftrack_api.session.Session),
-                str(session_processor.ProcessSession)
+                str(SocketSession)
             ))
 
         self._session = session

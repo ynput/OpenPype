@@ -1,4 +1,5 @@
 from avalon import api
+import nuke
 
 
 class MatchmoveLoader(api.Loader):
@@ -19,6 +20,8 @@ class MatchmoveLoader(api.Loader):
             exec(open(self.fname).read())
 
         else:
-            self.log.error("Unsupported script type")
+            msg = "Unsupported script type"
+            self.log.error(msg)
+            nuke.message(msg)
 
         return True

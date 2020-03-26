@@ -21,15 +21,17 @@ class CollectAssData(pyblish.api.InstancePlugin):
         objsets = instance.data['setMembers']
 
         for objset in objsets:
+            objset = str(objset)
             members = cmds.sets(objset, query=True)
             if members is None:
                 self.log.warning("Skipped empty instance: \"%s\" " % objset)
                 continue
-            if objset == "content_SET":
+            if "content_SET" in objset:
                 instance.data['setMembers'] = members
-            elif objset == "proxy_SET":
+                self.log.debug('content members: {}'.format(members))
+            elif objset.startswith("proxy_SET"):
                 assert len(members) == 1, "You have multiple proxy meshes, please only use one"
                 instance.data['proxy'] = members
-
+                self.log.debug('proxy members: {}'.format(members))
 
         self.log.debug("data: {}".format(instance.data))

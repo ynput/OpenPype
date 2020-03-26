@@ -14,6 +14,8 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
     families = ["write"]
 
     def process(self, instance):
+        # adding 2d focused rendering
+        instance.data["families"].append("render2d")
 
         node = None
         for x in instance:
@@ -34,14 +36,15 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             output_type = "mov"
 
         # Get frame range
-        handles = instance.context.data['handles']
         handle_start = instance.context.data["handleStart"]
         handle_end = instance.context.data["handleEnd"]
         first_frame = int(nuke.root()["first_frame"].getValue())
         last_frame = int(nuke.root()["last_frame"].getValue())
+        frame_length = int(
+            last_frame - first_frame + 1
+        )
 
         if node["use_limit"].getValue():
-            handles = 0
             first_frame = int(node["first"].getValue())
             last_frame = int(node["last"].getValue())
 
@@ -50,9 +53,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
         output_dir = os.path.dirname(path)
         self.log.debug('output dir: {}'.format(output_dir))
 
-        # get version
-        version = pype.get_version_from_path(nuke.root().name())
-        instance.data['version'] = version
+        # get version to instance for integration
+        instance.data['version'] = instance.context.data["version"]
+
         self.log.debug('Write Version: %s' % instance.data('version'))
 
         # create label
@@ -79,8 +82,26 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 collected_frames = [f for f in os.listdir(output_dir)
                                     if ext in f]
                 if collected_frames:
-                    representation['frameStart'] = "%0{}d".format(
+                    collected_frames_len = len(collected_frames)
+                    frame_start_str = "%0{}d".format(
                         len(str(last_frame))) % first_frame
+                    representation['frameStart'] = frame_start_str
+
+                    # in case slate is expected and not yet rendered
+                    self.log.debug("_ frame_length: {}".format(frame_length))
+                    self.log.debug(
+                        "_ collected_frames_len: {}".format(
+                            collected_frames_len))
+                    # this will only run if slate frame is not already
+                    # rendered from previews publishes
+                    if "slate" in instance.data["families"] \
+                            and (frame_length == collected_frames_len):
+                        frame_slate_str = "%0{}d".format(
+                            len(str(last_frame))) % (first_frame - 1)
+                        slate_frame = collected_frames[0].replace(
+                            frame_start_str, frame_slate_str)
+                        collected_frames.insert(0, slate_frame)
+
                 representation['files'] = collected_frames
                 instance.data["representations"].append(representation)
             except Exception:
@@ -89,17 +110,9 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         # Add version data to instance
         version_data = {
-            "handles": handle_start,
-            "handleStart": handle_start,
-            "handleEnd": handle_end,
-            "frameStart": first_frame + handle_start,
-            "frameEnd": last_frame - handle_end,
-            "version": int(version),
             "colorspace":  node["colorspace"].value(),
-            "families": [instance.data["family"]],
-            "subset": instance.data["subset"],
-            "fps": instance.context.data["fps"]
         }
+
         instance.data["family"] = "write"
         group_node = [x for x in instance if x.Class() == "Group"][0]
         deadlineChunkSize = 1
@@ -117,17 +130,18 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "outputDir": output_dir,
             "ext": ext,
             "label": label,
-            "handles": handles,
-            "frameStart": first_frame,
-            "frameEnd": last_frame,
+            "handleStart": handle_start,
+            "handleEnd": handle_end,
+            "frameStart": first_frame + handle_start,
+            "frameEnd": last_frame - handle_end,
+            "frameStartHandle": first_frame,
+            "frameEndHandle": last_frame,
             "outputType": output_type,
             "family": "write",
             "families": families,
             "colorspace": node["colorspace"].value(),
             "deadlineChunkSize": deadlineChunkSize,
-            "deadlinePriority": deadlinePriority,
-            "subsetGroup": "renders"
+            "deadlinePriority": deadlinePriority
         })
-
 
         self.log.debug("instance.data: {}".format(instance.data))

@@ -2,9 +2,11 @@
 import os
 import json
 import re
+import copy
 import pyblish.api
 import tempfile
 from avalon import io, api
+
 
 class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
     """Collect video tracks effects into context."""
@@ -17,9 +19,12 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
         item = instance.data["item"]
         effects = instance.data.get("effectTrackItems")
 
-        instance.data["families"] = [f for f in instance.data.get("families", []) if f not in ["lut"]]
+        instance.data["families"] = [f for f in instance.data.get(
+            "families", []) if f not in ["lut"]]
 
-        self.log.debug("___ instance.data[families]: `{}`".format(instance.data["families"]))
+        self.log.debug(
+            "__ instance.data[families]: `{}`".format(
+                instance.data["families"]))
 
         # skip any without effects
         if not effects:
@@ -71,9 +76,11 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
         )
         data["source"] = data["sourcePath"]
 
+        # WARNING instance should not be created in Extractor!
         # create new instance
         instance = instance.context.create_instance(**data)
-
+        # TODO replace line below with `instance.data["resourcesDir"]`
+        # when instance is created during collection part
         dst_dir = self.resource_destination_dir(instance)
 
         # change paths in effects to files
@@ -102,7 +109,6 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
 
         # add to data of representation
         version_data.update({
-            "handles": version_data['handleStart'],
             "colorspace": item.sourceMediaColourTransform(),
             "colorspaceScript": instance.context.data["colorspace"],
             "families": ["plate", "lut"],
@@ -132,7 +138,7 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
 
     def copy_linked_files(self, effect, dst_dir):
         for k, v in effect["node"].items():
-            if k in "file" and v is not '':
+            if k in "file" and v != '':
                 base_name = os.path.basename(v)
                 dst = os.path.join(dst_dir, base_name).replace("\\", "/")
 
@@ -141,91 +147,114 @@ class ExtractVideoTracksLuts(pyblish.api.InstancePlugin):
                 return (v, dst)
 
     def resource_destination_dir(self, instance):
-        anatomy = instance.context.data['anatomy']
-        self.create_destination_template(instance, anatomy)
+        # WARNING this is from `collect_instance_anatomy_data.py`
+        anatomy_data = copy.deepcopy(instance.context.data["anatomyData"])
+        project_entity = instance.context.data["projectEntity"]
+        context_asset_entity = instance.context.data["assetEntity"]
 
-        return os.path.join(
-            instance.data["assumedDestination"],
-            "resources"
-        )
-
-    def create_destination_template(self, instance, anatomy):
-        """Create a filepath based on the current data available
-
-        Example template:
-            {root}/{project}/{silo}/{asset}/publish/{subset}/v{version:0>3}/
-            {subset}.{representation}
-        Args:
-            instance: the instance to publish
-
-        Returns:
-            file path (str)
-        """
-
-        # get all the stuff from the database
-        subset_name = instance.data["subset"]
-        self.log.info(subset_name)
         asset_name = instance.data["asset"]
-        project_name = api.Session["AVALON_PROJECT"]
-        a_template = anatomy.templates
+        if context_asset_entity["name"] == asset_name:
+            asset_entity = context_asset_entity
 
-        project = io.find_one({"type": "project",
-                               "name": project_name},
-                              projection={"config": True, "data": True})
+        else:
+            asset_entity = io.find_one({
+                "type": "asset",
+                "name": asset_name,
+                "parent": project_entity["_id"]
+            })
 
-        template = a_template['publish']['path']
-        # anatomy = instance.context.data['anatomy']
+        subset_name = instance.data["subset"]
+        version_number = instance.data.get("version")
+        latest_version = None
 
-        asset = io.find_one({"type": "asset",
-                             "name": asset_name,
-                             "parent": project["_id"]})
+        if asset_entity:
+            subset_entity = io.find_one({
+                "type": "subset",
+                "name": subset_name,
+                "parent": asset_entity["_id"]
+            })
 
-        assert asset, ("No asset found by the name '{}' "
-                       "in project '{}'".format(asset_name, project_name))
-        silo = asset.get('silo')
+            if subset_entity is None:
+                self.log.debug("Subset entity does not exist yet.")
+            else:
+                version_entity = io.find_one(
+                    {
+                        "type": "version",
+                        "parent": subset_entity["_id"]
+                    },
+                    sort=[("name", -1)]
+                )
+                if version_entity:
+                    latest_version = version_entity["name"]
 
-        subset = io.find_one({"type": "subset",
-                              "name": subset_name,
-                              "parent": asset["_id"]})
+        if version_number is None:
+            version_number = 1
+            if latest_version is not None:
+                version_number += int(latest_version)
 
-        # assume there is no version yet, we start at `1`
-        version = None
-        version_number = 1
-        if subset is not None:
-            version = io.find_one({"type": "version",
-                                   "parent": subset["_id"]},
-                                  sort=[("name", -1)])
+        anatomy_data.update({
+            "asset": asset_name,
+            "family": instance.data["family"],
+            "subset": subset_name,
+            "version": version_number,
+            "hierarchy": instance.data["hierarchy"]
+        })
 
-        # if there is a subset there ought to be version
-        if version is not None:
-            version_number += version["name"]
+        resolution_width = instance.data.get("resolutionWidth")
+        if resolution_width:
+            anatomy_data["resolution_width"] = resolution_width
 
-        if instance.data.get('version'):
-            version_number = int(instance.data.get('version'))
+        resolution_height = instance.data.get("resolutionHeight")
+        if resolution_height:
+            anatomy_data["resolution_height"] = resolution_height
 
-        padding = int(a_template['render']['padding'])
+        pixel_aspect = instance.data.get("pixelAspect")
+        if pixel_aspect:
+            anatomy_data["pixel_aspect"] = float("{:0.2f}".format(pixel_aspect))
 
-        hierarchy = asset['data']['parents']
-        if hierarchy:
-            # hierarchy = os.path.sep.join(hierarchy)
-            hierarchy = "/".join(hierarchy)
+        fps = instance.data.get("fps")
+        if resolution_height:
+            anatomy_data["fps"] = float("{:0.2f}".format(fps))
 
-        template_data = {"root": api.Session["AVALON_PROJECTS"],
-                         "project": {"name": project_name,
-                                     "code": project['data']['code']},
-                         "silo": silo,
-                         "family": instance.data['family'],
-                         "asset": asset_name,
-                         "subset": subset_name,
-                         "frame": ('#' * padding),
-                         "version": version_number,
-                         "hierarchy": hierarchy,
-                         "representation": "TEMP"}
+        instance.data["projectEntity"] = project_entity
+        instance.data["assetEntity"] = asset_entity
+        instance.data["anatomyData"] = anatomy_data
+        instance.data["latestVersion"] = latest_version
+        instance.data["version"] = version_number
 
-        instance.data["assumedTemplateData"] = template_data
-        self.log.info(template_data)
-        instance.data["template"] = template
-        # We take the parent folder of representation 'filepath'
-        instance.data["assumedDestination"] = os.path.dirname(
-            anatomy.format(template_data)["publish"]["path"]
-        )
+        # WARNING this is from `collect_resources_path.py`
+        anatomy = instance.context.data["anatomy"]
+
+        template_data = copy.deepcopy(instance.data["anatomyData"])
+
+        # This is for cases of Deprecated anatomy without `folder`
+        # TODO remove when all clients have solved this issue
+        template_data.update({
+            "frame": "FRAME_TEMP",
+            "representation": "TEMP"
+        })
+
+        anatomy_filled = anatomy.format(template_data)
+
+        if "folder" in anatomy.templates["publish"]:
+            publish_folder = anatomy_filled["publish"]["folder"]
+        else:
+            # solve deprecated situation when `folder` key is not underneath
+            # `publish` anatomy
+            project_name = api.Session["AVALON_PROJECT"]
+            self.log.warning((
+                "Deprecation warning: Anatomy does not have set `folder`"
+                " key underneath `publish` (in global of for project `{}`)."
+            ).format(project_name))
+
+            file_path = anatomy_filled["publish"]["path"]
+            # Directory
+            publish_folder = os.path.dirname(file_path)
+
+        publish_folder = os.path.normpath(publish_folder)
+        resources_folder = os.path.join(publish_folder, "resources")
+
+        instance.data["publishDir"] = publish_folder
+        instance.data["resourcesDir"] = resources_folder
+
+        return resources_folder

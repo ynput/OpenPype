@@ -16,7 +16,7 @@ class LookLoader(pype.maya.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_reference(self, context, name, namespace, data):
+    def process_reference(self, context, name, namespace, options):
         """
         Load and try to assign Lookdev to nodes based on relationship data
         Args:
@@ -116,9 +116,11 @@ class LookLoader(pype.maya.plugin.ReferenceLoader):
                                                          shapes=True))
         nodes = set(nodes_list)
 
-        json_representation = io.find_one({"type": "representation",
-                                           "parent": representation['parent'],
-                                           "name": "json"})
+        json_representation = io.find_one({
+            "type": "representation",
+            "parent": representation['parent'],
+            "name": "json"
+        })
 
         # Load relationships
         shader_relation = api.get_representation_path(json_representation)

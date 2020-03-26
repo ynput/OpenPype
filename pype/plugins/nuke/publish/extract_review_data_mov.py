@@ -5,7 +5,6 @@ from pype.nuke import lib as pnlib
 import pype
 reload(pnlib)
 
-
 class ExtractReviewDataMov(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
 
@@ -16,23 +15,25 @@ class ExtractReviewDataMov(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder + 0.01
     label = "Extract Review Data Mov"
 
-    families = ["review"]
+    families = ["review", "render", "render.local"]
     hosts = ["nuke"]
+
+    # presets
+    viewer_lut_raw = None
+    bake_colorspace_fallback = None
+    bake_colorspace_main = None
 
     def process(self, instance):
         families = instance.data["families"]
         self.log.info("Creating staging dir...")
-        if "representations" in instance.data:
-            staging_dir = instance.data[
-                "representations"][0]["stagingDir"].replace("\\", "/")
-            instance.data["stagingDir"] = staging_dir
-            instance.data["representations"][0]["tags"] = []
-        else:
-            instance.data["representations"] = []
-            # get output path
-            render_path = instance.data['path']
-            staging_dir = os.path.normpath(os.path.dirname(render_path))
-            instance.data["stagingDir"] = staging_dir
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = list()
+
+        staging_dir = os.path.normpath(
+            os.path.dirname(instance.data['path']))
+
+        instance.data["stagingDir"] = staging_dir
 
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
@@ -46,6 +47,15 @@ class ExtractReviewDataMov(pype.api.Extractor):
                 instance.data["families"].remove("review")
                 instance.data["families"].remove("ftrack")
                 data = exporter.generate_mov(farm=True)
+
+                self.log.debug(
+                    "_ data: {}".format(data))
+
+                instance.data.update({
+                    "bakeRenderPath": data.get("bakeRenderPath"),
+                    "bakeScriptPath": data.get("bakeScriptPath"),
+                    "bakeWriteNodeName": data.get("bakeWriteNodeName")
+                })
             else:
                 data = exporter.generate_mov()
 

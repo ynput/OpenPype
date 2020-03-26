@@ -193,6 +193,8 @@ class AppAction(BaseHandler):
         if parents:
             hierarchy = os.path.join(*parents)
 
+        os.environ["AVALON_HIERARCHY"] = hierarchy
+
         application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
 
         data = {
@@ -284,7 +286,9 @@ class AppAction(BaseHandler):
 
             # Run SW if was found executable
             if execfile is not None:
-                avalonlib.launch(executable=execfile, args=[], environment=env)
+                popen = avalonlib.launch(
+                    executable=execfile, args=[], environment=env
+                )
             else:
                 return {
                     'success': False,

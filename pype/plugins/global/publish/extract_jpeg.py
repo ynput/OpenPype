@@ -1,78 +1,96 @@
 import os
 
 import pyblish.api
-import clique
 import pype.api
+import pype.lib
 
 
 class ExtractJpegEXR(pyblish.api.InstancePlugin):
-    """Resolve any dependency issies
-
-    This plug-in resolves any paths which, if not updated might break
-    the published file.
-
-    The order of families is important, when working with lookdev you want to
-    first publish the texture, update the texture paths in the nodes and then
-    publish the shading network. Same goes for file dependent assets.
-    """
+    """Create jpg thumbnail from sequence using ffmpeg"""
 
     label = "Extract Jpeg EXR"
     hosts = ["shell"]
     order = pyblish.api.ExtractorOrder
-    families = ["imagesequence", "render", "write", "source"]
+    families = ["imagesequence", "render", "render2d", "source"]
+    enabled = False
 
     def process(self, instance):
-        start = instance.data.get("frameStart")
-        stagingdir = os.path.normpath(instance.data.get("stagingDir"))
 
-        collected_frames = os.listdir(stagingdir)
-        collections, remainder = clique.assemble(collected_frames)
+        self.log.info("subset {}".format(instance.data['subset']))
+        if 'crypto' in instance.data['subset']:
+            return
 
-        input_file = (
-            collections[0].format('{head}{padding}{tail}') % start
-        )
-        full_input_path = os.path.join(stagingdir, input_file)
-        self.log.info("input {}".format(full_input_path))
+        # get representation and loop them
+        representations = instance.data["representations"]
 
-        filename = collections[0].format('{head}')
-        if not filename.endswith('.'):
-            filename += "."
-        jpegFile = filename + "jpg"
-        full_output_path = os.path.join(stagingdir, jpegFile)
+        # filter out mov and img sequences
+        representations_new = representations[:]
 
-        self.log.info("output {}".format(full_output_path))
+        for repre in representations:
+            tags = repre.get("tags", [])
+            self.log.debug(repre)
+            valid = 'review' in tags or "thumb-nuke" in tags
+            if not valid:
+                continue
 
-        config_data = instance.context.data['output_repre_config']
+            if not isinstance(repre['files'], list):
+                continue
 
-        proj_name = os.environ.get('AVALON_PROJECT', '__default__')
-        profile = config_data.get(proj_name, config_data['__default__'])
+            stagingdir = os.path.normpath(repre.get("stagingDir"))
+            input_file = repre['files'][0]
 
-        jpeg_items = []
-        jpeg_items.append(
-            os.path.join(os.environ.get("FFMPEG_PATH"), "ffmpeg"))
-        # override file if already exists
-        jpeg_items.append("-y")
-        # use same input args like with mov
-        jpeg_items.extend(profile.get('input', []))
-        # input file
-        jpeg_items.append("-i {}".format(full_input_path))
-        # output file
-        jpeg_items.append(full_output_path)
+            # input_file = (
+            #     collections[0].format('{head}{padding}{tail}') % start
+            # )
+            full_input_path = os.path.join(stagingdir, input_file)
+            self.log.info("input {}".format(full_input_path))
 
-        subprocess_jpeg = " ".join(jpeg_items)
+            filename = os.path.splitext(input_file)[0]
+            if not filename.endswith('.'):
+                filename += "."
+            jpeg_file = filename + "jpg"
+            full_output_path = os.path.join(stagingdir, jpeg_file)
 
-        # run subprocess
-        self.log.debug("{}".format(subprocess_jpeg))
-        pype.api.subprocess(subprocess_jpeg)
+            self.log.info("output {}".format(full_output_path))
 
-        if "representations" not in instance.data:
-            instance.data["representations"] = []
+            config_data = instance.context.data['output_repre_config']
 
-        representation = {
-            'name': 'jpg',
-            'ext': 'jpg',
-            'files': jpegFile,
-            "stagingDir": stagingdir,
-            "thumbnail": True
-        }
-        instance.data["representations"].append(representation)
+            proj_name = os.environ.get('AVALON_PROJECT', '__default__')
+            profile = config_data.get(proj_name, config_data['__default__'])
+
+            ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+
+            jpeg_items = []
+            jpeg_items.append(ffmpeg_path)
+            # override file if already exists
+            jpeg_items.append("-y")
+            # use same input args like with mov
+            jpeg_items.extend(profile.get('input', []))
+            # input file
+            jpeg_items.append("-i {}".format(full_input_path))
+            # output file
+            jpeg_items.append(full_output_path)
+
+            subprocess_jpeg = " ".join(jpeg_items)
+
+            # run subprocess
+            self.log.debug("{}".format(subprocess_jpeg))
+            pype.api.subprocess(subprocess_jpeg)
+
+            if "representations" not in instance.data:
+                instance.data["representations"] = []
+
+            representation = {
+                'name': 'thumbnail',
+                'ext': 'jpg',
+                'files': jpeg_file,
+                "stagingDir": stagingdir,
+                "thumbnail": True,
+                "tags": ['thumbnail']
+            }
+
+            # adding representation
+            self.log.debug("Adding: {}".format(representation))
+            representations_new.append(representation)
+
+        instance.data["representations"] = representations_new

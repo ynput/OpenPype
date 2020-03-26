@@ -2,8 +2,6 @@ import nuke
 import pyblish.api
 import os
 
-import pype.api as pype
-
 from avalon.nuke import (
     get_avalon_knob_data,
     add_publish_knob
@@ -11,7 +9,7 @@ from avalon.nuke import (
 
 
 class CollectWorkfile(pyblish.api.ContextPlugin):
-    """Publish current script version."""
+    """Collect current script for publish."""
 
     order = pyblish.api.CollectorOrder + 0.1
     label = "Collect Workfile"
@@ -25,14 +23,12 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
         add_publish_knob(root)
 
         family = "workfile"
+        task = os.getenv("AVALON_TASK", None)
         # creating instances per write node
         file_path = context.data["currentFile"]
         staging_dir = os.path.dirname(file_path)
         base_name = os.path.basename(file_path)
-        subset = "{0}_{1}".format(os.getenv("AVALON_TASK", None), family)
-
-        # get version string
-        version = pype.get_version_from_path(base_name)
+        subset = family + task.capitalize()
 
         # Get frame range
         first_frame = int(root["first_frame"].getValue())
@@ -53,7 +49,6 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
 
         script_data = {
             "asset": os.getenv("AVALON_ASSET", None),
-            "version": version,
             "frameStart": first_frame + handle_start,
             "frameEnd": last_frame - handle_end,
             "resolutionWidth": resolution_width,
@@ -78,8 +73,7 @@ class CollectWorkfile(pyblish.api.ContextPlugin):
             "publish": root.knob('publish').value(),
             "family": family,
             "families": [family],
-            "representations": list(),
-            "subsetGroup": "workfiles"
+            "representations": list()
         })
 
         # adding basic script data

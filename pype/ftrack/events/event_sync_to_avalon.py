@@ -3,6 +3,7 @@ import collections
 import copy
 import queue
 import time
+import datetime
 import atexit
 import traceback
 
@@ -25,13 +26,9 @@ class SyncToAvalonEvent(BaseEvent):
 
     dbcon = DbConnector()
 
-    ignore_entTypes = [
-        "socialfeed", "socialnotification", "note",
-        "assetversion", "job", "user", "reviewsessionobject", "timer",
-        "timelog", "auth_userrole", "appointment"
-    ]
+    interest_entTypes = ["show", "task"]
     ignore_ent_types = ["Milestone"]
-    ignore_keys = ["statusid"]
+    ignore_keys = ["statusid", "thumbid"]
 
     project_query = (
         "select full_name, name, custom_attributes"
@@ -51,8 +48,38 @@ class SyncToAvalonEvent(BaseEvent):
 
     def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
+        # Debug settings
+        # - time expiration in seconds
+        self.debug_print_time_expiration = 5 * 60
+        # - store current time
+        self.debug_print_time = datetime.datetime.now()
+        # - store synchronize entity types to be able to use
+        #   only entityTypes in interest instead of filtering by ignored
+        self.debug_sync_types = collections.defaultdict(list)
+
+        # Set processing session to not use global
         self.set_process_session(session)
         super().__init__(session, plugins_presets)
+
+    def debug_logs(self):
+        """This is debug method for printing small debugs messages. """
+        now_datetime = datetime.datetime.now()
+        delta = now_datetime - self.debug_print_time
+        if delta.total_seconds() < self.debug_print_time_expiration:
+            return
+
+        self.debug_print_time = now_datetime
+        known_types_items = []
+        for entityType, entity_type in self.debug_sync_types.items():
+            ent_types_msg = ", ".join(entity_type)
+            known_types_items.append(
+                "<{}> ({})".format(entityType, ent_types_msg)
+            )
+
+        known_entityTypes = ", ".join(known_types_items)
+        self.log.debug(
+            "DEBUG MESSAGE: Known types {}".format(known_entityTypes)
+        )
 
     @property
     def cur_project(self):
@@ -106,9 +133,10 @@ class SyncToAvalonEvent(BaseEvent):
         if self._avalon_ents_by_id is None:
             self._avalon_ents_by_id = {}
             proj, ents = self.avalon_entities
-            self._avalon_ents_by_id[proj["_id"]] = proj
-            for ent in ents:
-                self._avalon_ents_by_id[ent["_id"]] = ent
+            if proj:
+                self._avalon_ents_by_id[proj["_id"]] = proj
+                for ent in ents:
+                    self._avalon_ents_by_id[ent["_id"]] = ent
         return self._avalon_ents_by_id
 
     @property
@@ -128,11 +156,14 @@ class SyncToAvalonEvent(BaseEvent):
         if self._avalon_ents_by_ftrack_id is None:
             self._avalon_ents_by_ftrack_id = {}
             proj, ents = self.avalon_entities
-            ftrack_id = proj["data"]["ftrackId"]
-            self._avalon_ents_by_ftrack_id[ftrack_id] = proj
-            for ent in ents:
-                ftrack_id = ent["data"]["ftrackId"]
-                self._avalon_ents_by_ftrack_id[ftrack_id] = ent
+            if proj:
+                ftrack_id = proj["data"]["ftrackId"]
+                self._avalon_ents_by_ftrack_id[ftrack_id] = proj
+                for ent in ents:
+                    ftrack_id = ent["data"].get("ftrackId")
+                    if ftrack_id is None:
+                        continue
+                    self._avalon_ents_by_ftrack_id[ftrack_id] = ent
         return self._avalon_ents_by_ftrack_id
 
     @property
@@ -475,15 +506,26 @@ class SyncToAvalonEvent(BaseEvent):
         found_actions = set()
         for ent_info in entities_info:
             entityType = ent_info["entityType"]
-            if entityType in self.ignore_entTypes:
+            if entityType not in self.interest_entTypes:
                 continue
 
             entity_type = ent_info.get("entity_type")
             if not entity_type or entity_type in self.ignore_ent_types:
                 continue
 
+            if entity_type not in self.debug_sync_types[entityType]:
+                self.debug_sync_types[entityType].append(entity_type)
+
             action = ent_info["action"]
             ftrack_id = ent_info["entityId"]
+            if isinstance(ftrack_id, list):
+                self.log.warning((
+                    "BUG REPORT: Entity info has `entityId` as `list` \"{}\""
+                ).format(ent_info))
+                if len(ftrack_id) == 0:
+                    continue
+                ftrack_id = ftrack_id[0]
+
             if action == "move":
                 ent_keys = ent_info["keys"]
                 # Seprate update info from move action
@@ -563,8 +605,7 @@ class SyncToAvalonEvent(BaseEvent):
         if auto_sync is not True:
             return True
 
-        debug_msg = ""
-        debug_msg += "Updated: {}".format(len(updated))
+        debug_msg = "Updated: {}".format(len(updated))
         debug_action_map = {
             "add": "Created",
             "remove": "Removed",
@@ -623,6 +664,8 @@ class SyncToAvalonEvent(BaseEvent):
         self.ftrack_moved = entities_by_action["move"]
         self.ftrack_added = entities_by_action["add"]
         self.ftrack_updated = updated
+
+        self.debug_logs()
 
         self.log.debug("Synchronization begins")
         try:
@@ -1427,6 +1470,93 @@ class SyncToAvalonEvent(BaseEvent):
                 parent_id = ent_info["parentId"]
                 new_tasks_by_parent[parent_id].append(ent_info)
                 pop_out_ents.append(ftrack_id)
+                continue
+
+            name = (
+                ent_info
+                .get("changes", {})
+                .get("name", {})
+                .get("new")
+            )
+            avalon_ent_by_name = self.avalon_ents_by_name.get(name) or {}
+            avalon_ent_by_name_ftrack_id = (
+                avalon_ent_by_name
+                .get("data", {})
+                .get("ftrackId")
+            )
+            if avalon_ent_by_name and avalon_ent_by_name_ftrack_id is None:
+                ftrack_ent = self.ftrack_ents_by_id.get(ftrack_id)
+                if not ftrack_ent:
+                    ftrack_ent = self.process_session.query(
+                        self.entities_query_by_id.format(
+                            self.cur_project["id"], ftrack_id
+                        )
+                    ).one()
+                    self.ftrack_ents_by_id[ftrack_id] = ftrack_ent
+
+                ent_path_items = [ent["name"] for ent in ftrack_ent["link"]]
+                parents = ent_path_items[1:len(ent_path_items)-1:]
+
+                avalon_ent_parents = (
+                    avalon_ent_by_name.get("data", {}).get("parents")
+                )
+                if parents == avalon_ent_parents:
+                    self.dbcon.update_one({
+                        "_id": avalon_ent_by_name["_id"]
+                    }, {
+                        "$set": {
+                            "data.ftrackId": ftrack_id,
+                            "data.entityType": entity_type
+                        }
+                    })
+
+                    avalon_ent_by_name["data"]["ftrackId"] = ftrack_id
+                    avalon_ent_by_name["data"]["entityType"] = entity_type
+
+                    self._avalon_ents_by_ftrack_id[ftrack_id] = (
+                        avalon_ent_by_name
+                    )
+                    if self._avalon_ents_by_parent_id:
+                        found = None
+                        for _parent_id_, _entities_ in (
+                            self._avalon_ents_by_parent_id.items()
+                        ):
+                            for _idx_, entity in enumerate(_entities_):
+                                if entity["_id"] == avalon_ent_by_name["_id"]:
+                                    found = (_parent_id_, _idx_)
+                                    break
+
+                            if found:
+                                break
+
+                        if found:
+                            _parent_id_, _idx_ = found
+                            self._avalon_ents_by_parent_id[_parent_id_][
+                                _idx_] = avalon_ent_by_name
+
+                    if self._avalon_ents_by_id:
+                        self._avalon_ents_by_id[avalon_ent_by_name["_id"]] = (
+                            avalon_ent_by_name
+                        )
+
+                    if self._avalon_ents_by_name:
+                        self._avalon_ents_by_name[name] = avalon_ent_by_name
+
+                    if self._avalon_ents:
+                        found = None
+                        project, entities = self._avalon_ents
+                        for _idx_, _ent_ in enumerate(entities):
+                            if _ent_["_id"] != avalon_ent_by_name["_id"]:
+                                continue
+                            found = _idx_
+                            break
+
+                        if found is not None:
+                            entities[found] = avalon_ent_by_name
+                            self._avalon_ents = project, entities
+
+                    pop_out_ents.append(ftrack_id)
+                    continue
 
             configuration_id = entity_type_conf_ids.get(entity_type)
             if not configuration_id:
@@ -1448,6 +1578,14 @@ class SyncToAvalonEvent(BaseEvent):
                     entity_type_conf_ids[entity_type] = configuration_id
                     break
 
+            if not configuration_id:
+                self.log.warning(
+                    "BUG REPORT: Missing configuration for `{} < {} >`".format(
+                        entity_type, ent_info["entityType"]
+                    )
+                )
+                continue
+
             _entity_key = collections.OrderedDict({
                 "configuration_id": configuration_id,
                 "entity_id": ftrack_id
@@ -1466,7 +1604,7 @@ class SyncToAvalonEvent(BaseEvent):
         try:
             # Commit changes of mongo_id to empty string
             self.process_session.commit()
-            self.log.debug("Commititng unsetting")
+            self.log.debug("Committing unsetting")
         except Exception:
             self.process_session.rollback()
             # TODO logging
@@ -1546,7 +1684,7 @@ class SyncToAvalonEvent(BaseEvent):
                     new_name, "task", schema_patterns=self.regex_schemas
                 )
                 if not passed_regex:
-                    self.regex_failed.append(ent_infos["entityId"])
+                    self.regex_failed.append(ent_info["entityId"])
                     continue
 
                 if new_name not in self.task_changes_by_avalon_id[mongo_id]:
@@ -1730,6 +1868,13 @@ class SyncToAvalonEvent(BaseEvent):
             else:
                 obj_type_id = ent_info["objectTypeId"]
                 ent_cust_attrs = cust_attrs_by_obj_id.get(obj_type_id)
+
+            if ent_cust_attrs is None:
+                self.log.warning((
+                    "BUG REPORT: Entity has ent type without"
+                    " custom attributes <{}> \"{}\""
+                ).format(entType, ent_info))
+                continue
 
             for key, values in ent_info["changes"].items():
                 if key in hier_attrs_keys:

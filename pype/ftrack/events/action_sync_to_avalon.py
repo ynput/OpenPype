@@ -105,7 +105,10 @@ class SyncToAvalonServer(BaseAction):
             ft_project_name = in_entities[0]["project"]["full_name"]
 
         try:
-            self.entities_factory.launch_setup(ft_project_name)
+            output = self.entities_factory.launch_setup(ft_project_name)
+            if output is not None:
+                return output
+
             time_1 = time.time()
 
             self.entities_factory.set_cutom_attributes()

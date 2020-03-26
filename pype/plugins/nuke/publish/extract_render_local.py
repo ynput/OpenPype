@@ -27,8 +27,13 @@ class NukeRenderLocal(pype.api.Extractor):
 
         self.log.debug("instance collected: {}".format(instance.data))
 
-        first_frame = instance.data.get("frameStart", None)
-        last_frame = instance.data.get("frameEnd", None)
+        first_frame = instance.data.get("frameStartHandle", None)
+
+        # exception for slate workflow
+        if "slate" in instance.data["families"]:
+            first_frame -= 1
+
+        last_frame = instance.data.get("frameEndHandle", None)
         node_subset_name = instance.data.get("name", None)
 
         self.log.info("Starting render")
@@ -46,6 +51,10 @@ class NukeRenderLocal(pype.api.Extractor):
             int(first_frame),
             int(last_frame)
         )
+
+        # exception for slate workflow
+        if "slate" in instance.data["families"]:
+            first_frame += 1
 
         path = node['file'].value()
         out_dir = os.path.dirname(path)

@@ -1,7 +1,9 @@
 import os
+import sys
 import time
 import socket
 import threading
+import traceback
 import subprocess
 from pypeapp import Logger
 
@@ -11,13 +13,15 @@ class SocketThread(threading.Thread):
 
     MAX_TIMEOUT = 35
 
-    def __init__(self, name, port, filepath):
+    def __init__(self, name, port, filepath, additional_args=[]):
         super(SocketThread, self).__init__()
-        self.log = Logger().get_logger("SocketThread", "Event Thread")
+        self.log = Logger().get_logger(self.__class__.__name__)
         self.setName(name)
         self.name = name
         self.port = port
         self.filepath = filepath
+        self.additional_args = additional_args
+
         self.sock = None
         self.subproc = None
         self.connection = None
@@ -25,6 +29,8 @@ class SocketThread(threading.Thread):
         self.finished = False
 
         self.mongo_error = False
+
+        self._temp_data = {}
 
     def stop(self):
         self._is_running = False
@@ -50,8 +56,13 @@ class SocketThread(threading.Thread):
         )
 
         self.subproc = subprocess.Popen(
-            ["python", self.filepath, "-port", str(self.port)],
-            stdout=subprocess.PIPE
+            [
+                sys.executable,
+                self.filepath,
+                *self.additional_args,
+                str(self.port)
+            ],
+            stdin=subprocess.PIPE
         )
 
         # Listen for incoming connections
@@ -81,8 +92,9 @@ class SocketThread(threading.Thread):
                     try:
                         if not self._is_running:
                             break
+                        data = None
                         try:
-                            data = connection.recv(16)
+                            data = self.get_data_from_con(connection)
                             time_con = time.time()
 
                         except socket.timeout:
@@ -99,10 +111,7 @@ class SocketThread(threading.Thread):
                             self._is_running = False
                             break
 
-                        if data:
-                            if data == b"MongoError":
-                                self.mongo_error = True
-                            connection.sendall(data)
+                        self._handle_data(connection, data)
 
                     except Exception as exc:
                         self.log.error(
@@ -115,9 +124,64 @@ class SocketThread(threading.Thread):
                 if self.subproc.poll() is None:
                     self.subproc.terminate()
 
-                lines = self.subproc.stdout.readlines()
-                if lines:
-                    print("*** Socked Thread stdout ***")
-                    for line in lines:
-                        os.write(1, line)
                 self.finished = True
+
+    def get_data_from_con(self, connection):
+        return connection.recv(16)
+
+    def _handle_data(self, connection, data):
+        if not data:
+            return
+
+        if data == b"MongoError":
+            self.mongo_error = True
+        connection.sendall(data)
+
+
+class StatusSocketThread(SocketThread):
+    process_name_mapping = {
+        b"RestartS": "storer",
+        b"RestartP": "processor",
+        b"RestartM": "main"
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.process_threads = {}
+        self.stop_subprocess = False
+        super(StatusSocketThread, self).__init__(*args, **kwargs)
+
+    def set_process(self, process_name, thread):
+        try:
+            if not self.subproc:
+                self.process_threads[process_name] = None
+                return
+
+            if (
+                process_name in self.process_threads and
+                self.process_threads[process_name] == thread
+            ):
+                return
+
+            self.process_threads[process_name] = thread
+            self.subproc.stdin.write(
+                str.encode("reset:{}\r\n".format(process_name))
+            )
+            self.subproc.stdin.flush()
+
+        except Exception:
+            print("Could not set thread in StatusSocketThread")
+            traceback.print_exception(*sys.exc_info())
+
+    def _handle_data(self, connection, data):
+        if not data:
+            return
+
+        process_name = self.process_name_mapping.get(data)
+        if process_name:
+            if process_name == "main":
+                self.stop_subprocess = True
+            else:
+                subp = self.process_threads.get(process_name)
+                if subp:
+                    subp.stop()
+        connection.sendall(data)

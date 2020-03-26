@@ -4,9 +4,13 @@ import signal
 import datetime
 import subprocess
 import socket
+import json
+import platform
 import argparse
+import getpass
 import atexit
 import time
+import uuid
 
 import ftrack_api
 from pype.ftrack.lib import credentials
@@ -63,10 +67,19 @@ def validate_credentials(url, user, api):
         )
         session.close()
     except Exception as e:
-        print(
-            'ERROR: Can\'t log into Ftrack with used credentials:'
-            ' Ftrack server: "{}" // Username: {} // API key: {}'
-        ).format(url, user, api)
+        print("Can't log into Ftrack with used credentials:")
+        ftrack_cred = {
+            "Ftrack server": str(url),
+            "Username": str(user),
+            "API key": str(api)
+        }
+        item_lens = [len(key) + 1 for key in ftrack_cred.keys()]
+        justify_len = max(*item_lens)
+        for key, value in ftrack_cred.items():
+            print("{} {}".format(
+                (key + ":").ljust(justify_len, " "),
+                value
+            ))
         return False
 
     print('DEBUG: Credentials Username: "{}", API key: "{}" are valid.'.format(
@@ -175,6 +188,7 @@ def main_loop(ftrack_url):
     otherwise thread will be killed.
     """
 
+    os.environ["FTRACK_EVENT_SUB_ID"] = str(uuid.uuid1())
     # Get mongo hostname and port for testing mongo connection
     mongo_list = ftrack_events_mongo_settings()
     mongo_hostname = mongo_list[0]
@@ -202,6 +216,13 @@ def main_loop(ftrack_url):
     processor_last_failed = datetime.datetime.now()
     processor_failed_count = 0
 
+    statuser_name = "StorerThread"
+    statuser_port = 10021
+    statuser_path = "{}/sub_event_status.py".format(file_path)
+    statuser_thread = None
+    statuser_last_failed = datetime.datetime.now()
+    statuser_failed_count = 0
+
     ftrack_accessible = False
     mongo_accessible = False
 
@@ -210,7 +231,7 @@ def main_loop(ftrack_url):
 
     # stop threads on exit
     # TODO check if works and args have thread objects!
-    def on_exit(processor_thread, storer_thread):
+    def on_exit(processor_thread, storer_thread, statuser_thread):
         if processor_thread is not None:
             processor_thread.stop()
             processor_thread.join()
@@ -221,9 +242,27 @@ def main_loop(ftrack_url):
             storer_thread.join()
             storer_thread = None
 
+        if statuser_thread is not None:
+            statuser_thread.stop()
+            statuser_thread.join()
+            statuser_thread = None
+
     atexit.register(
-        on_exit, processor_thread=processor_thread, storer_thread=storer_thread
+        on_exit,
+        processor_thread=processor_thread,
+        storer_thread=storer_thread,
+        statuser_thread=statuser_thread
     )
+
+    system_name, pc_name = platform.uname()[:2]
+    host_name = socket.gethostname()
+    main_info = {
+        "created_at": datetime.datetime.now().strftime("%Y.%m.%d %H:%M:%S"),
+        "Username": getpass.getuser(),
+        "Host Name": host_name,
+        "Host IP": socket.gethostbyname(host_name)
+    }
+    main_info_str = json.dumps(main_info)
     # Main loop
     while True:
         # Check if accessible Ftrack and Mongo url
@@ -261,6 +300,52 @@ def main_loop(ftrack_url):
         printed_ftrack_error = False
         printed_mongo_error = False
 
+        # ====== STATUSER =======
+        if statuser_thread is None:
+            if statuser_failed_count < max_fail_count:
+                statuser_thread = socket_thread.StatusSocketThread(
+                    statuser_name, statuser_port, statuser_path,
+                    [main_info_str]
+                )
+                statuser_thread.start()
+
+            elif statuser_failed_count == max_fail_count:
+                print((
+                    "Statuser failed {}times in row"
+                    " I'll try to run again {}s later"
+                ).format(str(max_fail_count), str(wait_time_after_max_fail)))
+                statuser_failed_count += 1
+
+            elif ((
+                datetime.datetime.now() - statuser_last_failed
+            ).seconds > wait_time_after_max_fail):
+                statuser_failed_count = 0
+
+        # If thread failed test Ftrack and Mongo connection
+        elif not statuser_thread.isAlive():
+            statuser_thread.join()
+            statuser_thread = None
+            ftrack_accessible = False
+            mongo_accessible = False
+
+            _processor_last_failed = datetime.datetime.now()
+            delta_time = (
+                _processor_last_failed - statuser_last_failed
+            ).seconds
+
+            if delta_time < min_fail_seconds:
+                statuser_failed_count += 1
+            else:
+                statuser_failed_count = 0
+            statuser_last_failed = _processor_last_failed
+
+        elif statuser_thread.stop_subprocess:
+            print("Main process was stopped by action")
+            on_exit(processor_thread, storer_thread, statuser_thread)
+            os.kill(os.getpid(), signal.SIGTERM)
+            return 1
+
+        # ====== STORER =======
         # Run backup thread which does not requeire mongo to work
         if storer_thread is None:
             if storer_failed_count < max_fail_count:
@@ -268,6 +353,7 @@ def main_loop(ftrack_url):
                     storer_name, storer_port, storer_path
                 )
                 storer_thread.start()
+
             elif storer_failed_count == max_fail_count:
                 print((
                     "Storer failed {}times I'll try to run again {}s later"
@@ -295,6 +381,7 @@ def main_loop(ftrack_url):
                 storer_failed_count = 0
             storer_last_failed = _storer_last_failed
 
+        # ====== PROCESSOR =======
         if processor_thread is None:
             if processor_failed_count < max_fail_count:
                 processor_thread = socket_thread.SocketThread(
@@ -335,6 +422,10 @@ def main_loop(ftrack_url):
             else:
                 processor_failed_count = 0
             processor_last_failed = _processor_last_failed
+
+        if statuser_thread is not None:
+            statuser_thread.set_process("storer", storer_thread)
+            statuser_thread.set_process("processor", processor_thread)
 
         time.sleep(1)
 
@@ -446,9 +537,9 @@ def main(argv):
         event_paths = kwargs.ftrackeventpaths
 
     if not kwargs.noloadcred:
-        cred = credentials._get_credentials(True)
+        cred = credentials.get_credentials(ftrack_url)
         username = cred.get('username')
-        api_key = cred.get('apiKey')
+        api_key = cred.get('api_key')
 
     if kwargs.ftrackuser:
         username = kwargs.ftrackuser
@@ -482,7 +573,7 @@ def main(argv):
         return 1
 
     if kwargs.storecred:
-        credentials._save_credentials(username, api_key, True)
+        credentials.save_credentials(username, api_key, ftrack_url)
 
     # Set Ftrack environments
     os.environ["FTRACK_SERVER"] = ftrack_url

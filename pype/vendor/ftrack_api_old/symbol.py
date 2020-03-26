@@ -1,6 +1,8 @@
 # :coding: utf-8
 # :copyright: Copyright (c) 2014 ftrack
 
+import os
+
 
 class Symbol(object):
     '''A constant symbol.'''
@@ -68,8 +70,8 @@ CONNECT_LOCATION_ID = '07b82a97-8cf9-11e3-9383-20c9d081909b'
 #: Identifier of builtin server location.
 SERVER_LOCATION_ID = '3a372bde-05bc-11e4-8908-20c9d081909b'
 
-#: Chunk size used when working with data.
-CHUNK_SIZE = 8192
+#: Chunk size used when working with data, default to 1Mb.
+CHUNK_SIZE = int(os.getenv('FTRACK_API_FILE_CHUNK_SIZE', 0)) or 1024*1024
 
 #: Symbol representing syncing users with ldap
 JOB_SYNC_USERS_LDAP = Symbol('SYNC_USERS_LDAP')

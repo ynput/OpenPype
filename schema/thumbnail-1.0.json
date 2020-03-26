@@ -1,0 +1,42 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+
+    "title": "pype:thumbnail-1.0",
+    "description": "Entity with thumbnail data",
+
+    "type": "object",
+
+    "additionalProperties": true,
+
+    "required": [
+        "schema",
+        "type",
+        "data"
+    ],
+
+    "properties": {
+        "schema": {
+            "description": "The schema associated with this document",
+            "type": "string",
+            "enum": ["pype:thumbnail-1.0"],
+            "example": "pype:thumbnail-1.0"
+        },
+        "type": {
+            "description": "The type of document",
+            "type": "string",
+            "enum": ["thumbnail"],
+            "example": "thumbnail"
+        },
+        "data": {
+            "description": "Thumbnail data",
+            "type": "object",
+            "example": {
+                "binary_data": "Binary({byte data of image})",
+                "template": "{thumbnail_root}/{project[name]}/{_id}{ext}}",
+                "template_data": {
+                    "ext": ".jpg"
+                }
+            }
+        }
+    }
+}

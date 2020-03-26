@@ -119,11 +119,15 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         texture_filenames = []
         if image_search_paths:
 
+            
             # TODO: Somehow this uses OS environment path separator, `:` vs `;`
             # Later on check whether this is pipeline OS cross-compatible.
             image_search_paths = [p for p in
                                   image_search_paths.split(os.path.pathsep) if p]
 
+            # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
+            image_search_paths = self._replace_tokens(image_search_paths)
+            
             # List all related textures
             texture_filenames = cmds.pgYetiCommand(node, listTextures=True)
             self.log.info("Found %i texture(s)" % len(texture_filenames))
@@ -140,6 +144,8 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
                              "atttribute'" % node)
 
         # Collect all texture files
+        # find all ${TOKEN} tokens and replace them with $TOKEN env. variable
+        texture_filenames = self._replace_tokens(texture_filenames)
         for texture in texture_filenames:
 
             files = []
@@ -283,3 +289,20 @@ class CollectYetiRig(pyblish.api.InstancePlugin):
         collection, remainder = clique.assemble(files, patterns=pattern)
 
         return collection
+
+    def _replace_tokens(self, strings):
+        env_re = re.compile(r"\$\{(\w+)\}")
+
+        replaced = []
+        for s in strings:
+            matches = re.finditer(env_re, s)
+            for m in matches:
+                try:
+                    s = s.replace(m.group(), os.environ[m.group(1)])
+                except KeyError:
+                    msg = "Cannot find requested {} in environment".format(
+                        m.group(1))
+                    self.log.error(msg)
+                    raise RuntimeError(msg)
+            replaced.append(s)
+        return replaced

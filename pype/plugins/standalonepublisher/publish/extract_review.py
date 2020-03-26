@@ -4,6 +4,7 @@ import tempfile
 import pyblish.api
 import clique
 import pype.api
+import pype.lib
 
 
 class ExtractReviewSP(pyblish.api.InstancePlugin):
@@ -148,12 +149,7 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                 # output filename
                 output_args.append(full_output_path)
 
-                ffmpeg_path = os.getenv("FFMPEG_PATH", "")
-                if ffmpeg_path:
-                    ffmpeg_path += "/ffmpeg"
-                else:
-                    ffmpeg_path = "ffmpeg"
-
+                ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
                 mov_args = [
                     ffmpeg_path,
                     " ".join(input_args),
@@ -174,8 +170,8 @@ class ExtractReviewSP(pyblish.api.InstancePlugin):
                     "stagingDir": out_stagigng_dir,
                     "tags": new_tags,
                     "outputName": name,
-                    "startFrameReview": 1,
-                    "endFrameReview": video_len
+                    "frameStartFtrack": 1,
+                    "frameEndFtrack": video_len
                 })
                 # cleanup thumbnail from new repre
                 if repre_new.get("thumbnail"):

@@ -28,6 +28,10 @@ from pypeapp import Logger
 from pype.ftrack.lib.custom_db_connector import DbConnector
 
 
+TOPIC_STATUS_SERVER = "pype.event.server.status"
+TOPIC_STATUS_SERVER_RESULT = "pype.event.server.status.result"
+
+
 def ftrack_events_mongo_settings():
     host = None
     port = None
@@ -123,20 +127,59 @@ def check_ftrack_url(url, log_errors=True):
     return url
 
 
-class StorerEventHub(ftrack_api.event.hub.EventHub):
+class SocketBaseEventHub(ftrack_api.event.hub.EventHub):
+
+    hearbeat_msg = b"hearbeat"
+    heartbeat_callbacks = []
+
     def __init__(self, *args, **kwargs):
         self.sock = kwargs.pop("sock")
-        super(StorerEventHub, self).__init__(*args, **kwargs)
+        super(SocketBaseEventHub, self).__init__(*args, **kwargs)
 
     def _handle_packet(self, code, packet_identifier, path, data):
         """Override `_handle_packet` which extend heartbeat"""
         code_name = self._code_name_mapping[code]
         if code_name == "heartbeat":
             # Reply with heartbeat.
-            self.sock.sendall(b"storer")
-            return self._send_packet(self._code_name_mapping['heartbeat'])
+            for callback in self.heartbeat_callbacks:
+                callback()
 
-        elif code_name == "connect":
+            self.sock.sendall(self.hearbeat_msg)
+            return self._send_packet(self._code_name_mapping["heartbeat"])
+
+        return super(SocketBaseEventHub, self)._handle_packet(
+            code, packet_identifier, path, data
+        )
+
+
+class StatusEventHub(SocketBaseEventHub):
+    def _handle_packet(self, code, packet_identifier, path, data):
+        """Override `_handle_packet` which extend heartbeat"""
+        code_name = self._code_name_mapping[code]
+        if code_name == "connect":
+            event = ftrack_api.event.base.Event(
+                topic="pype.status.started",
+                data={},
+                source={
+                    "id": self.id,
+                    "user": {"username": self._api_user}
+                }
+            )
+            self._event_queue.put(event)
+
+        return super(StatusEventHub, self)._handle_packet(
+            code, packet_identifier, path, data
+        )
+
+
+class StorerEventHub(SocketBaseEventHub):
+
+    hearbeat_msg = b"storer"
+
+    def _handle_packet(self, code, packet_identifier, path, data):
+        """Override `_handle_packet` which extend heartbeat"""
+        code_name = self._code_name_mapping[code]
+        if code_name == "connect":
             event = ftrack_api.event.base.Event(
                 topic="pype.storer.started",
                 data={},
@@ -152,7 +195,9 @@ class StorerEventHub(ftrack_api.event.hub.EventHub):
         )
 
 
-class ProcessEventHub(ftrack_api.event.hub.EventHub):
+class ProcessEventHub(SocketBaseEventHub):
+
+    hearbeat_msg = b"processor"
     url, database, table_name = get_ftrack_event_mongo_info()
 
     is_table_created = False
@@ -164,7 +209,6 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
             database_name=self.database,
             table_name=self.table_name
         )
-        self.sock = kwargs.pop("sock")
         super(ProcessEventHub, self).__init__(*args, **kwargs)
 
     def prepare_dbcon(self):
@@ -260,11 +304,10 @@ class ProcessEventHub(ftrack_api.event.hub.EventHub):
         code_name = self._code_name_mapping[code]
         if code_name == "event":
             return
-        if code_name == "heartbeat":
-            self.sock.sendall(b"processor")
-            return self._send_packet(self._code_name_mapping["heartbeat"])
 
         return super()._handle_packet(code, packet_identifier, path, data)
+
+
 class SocketSession(ftrack_api.session.Session):
     '''An isolated session for interaction with an ftrack server.'''
     def __init__(

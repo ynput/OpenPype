@@ -8,14 +8,15 @@ import pymongo
 import ftrack_api
 from ftrack_server import FtrackServer
 from pype.ftrack.ftrack_server.lib import (
+    SocketSession, StorerEventHub,
     get_ftrack_event_mongo_info,
-    SocketSession,
-    StorerEventHub
+    TOPIC_STATUS_SERVER, TOPIC_STATUS_SERVER_RESULT
 )
 from pype.ftrack.lib.custom_db_connector import DbConnector
 from pypeapp import Logger
 
 log = Logger().get_logger("Event storer")
+subprocess_started = datetime.datetime.now()
 
 
 class SessionFactory:
@@ -138,11 +139,42 @@ def trigger_sync(event):
         )
 
 
+def send_status(event):
+    session = SessionFactory.session
+    if not session:
+        return
+
+    subprocess_id = event["data"].get("subprocess_id")
+    if not subprocess_id:
+        return
+
+    if subprocess_id != os.environ["FTRACK_EVENT_SUB_ID"]:
+        return
+
+    new_event_data = {
+        "subprocess_id": os.environ["FTRACK_EVENT_SUB_ID"],
+        "source": "storer",
+        "status_info": {
+            "created_at": subprocess_started.strftime("%Y.%m.%d %H:%M:%S")
+        }
+    }
+
+    new_event = ftrack_api.event.base.Event(
+        topic=TOPIC_STATUS_SERVER_RESULT,
+        data=new_event_data
+    )
+
+    session.event_hub.publish(new_event)
+
+
 def register(session):
     '''Registers the event, subscribing the discover and launch topics.'''
     install_db()
     session.event_hub.subscribe("topic=*", launch)
     session.event_hub.subscribe("topic=pype.storer.started", trigger_sync)
+    session.event_hub.subscribe(
+        "topic={}".format(TOPIC_STATUS_SERVER), send_status
+    )
 
 
 def main(args):

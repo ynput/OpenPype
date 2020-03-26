@@ -1,6 +1,23 @@
 # :coding: utf-8
 # :copyright: Copyright (c) 2016 ftrack
 
+import functools
+import warnings
+
+
+def deprecation_warning(message):
+    def decorator(function):
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            warnings.warn(
+                message,
+                PendingDeprecationWarning
+            )
+            return function(*args, **kwargs)
+        return wrapper
+
+    return decorator
+
 
 class LazyLogMessage(object):
     '''A log message that can be evaluated lazily for improved performance.

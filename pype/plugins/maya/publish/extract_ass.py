@@ -17,6 +17,7 @@ class ExtractAssStandin(pype.api.Extractor):
     label = "Ass Standin (.ass)"
     hosts = ["maya"]
     families = ["ass"]
+    asciiAss = False
 
     def process(self, instance):
 
@@ -47,7 +48,7 @@ class ExtractAssStandin(pype.api.Extractor):
 
                 exported_files = cmds.arnoldExportAss(filename=file_path,
                                                       selected=True,
-                                                      asciiAss=True,
+                                                      asciiAss=self.asciiAss,
                                                       shadowLinks=True,
                                                       lightLinks=True,
                                                       boundingBox=True,
@@ -59,13 +60,15 @@ class ExtractAssStandin(pype.api.Extractor):
                     filenames.append(os.path.split(file)[1])
                 self.log.info("Exported: {}".format(filenames))
             else:
+                self.log.info("Extracting ass")
                 cmds.arnoldExportAss(filename=file_path,
                                      selected=True,
-                                     asciiAss=True,
+                                     asciiAss=False,
                                      shadowLinks=True,
                                      lightLinks=True,
                                      boundingBox=True
                                      )
+                self.log.info("Extracted {}".format(filename))
                 filenames = filename
                 optionals = [
                     "frameStart", "frameEnd", "step", "handles",

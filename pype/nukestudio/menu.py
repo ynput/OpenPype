@@ -5,13 +5,6 @@ from pypeapp import Logger
 from avalon.api import Session
 from hiero.ui import findMenuAction
 
-# this way we secure compatibility between nuke 10 and 11
-try:
-    from PySide.QtGui import *
-except Exception:
-    from PySide2.QtGui import *
-    from PySide2.QtWidgets import *
-
 from .tags import add_tags_from_presets
 
 from .lib import (
@@ -50,14 +43,8 @@ def install():
     """
 
     # here is the best place to add menu
-    from avalon.tools import (
-        creator,
-        publish,
-        cbloader,
-        cbsceneinventory,
-        contextmanager,
-        libraryloader
-    )
+    from avalon.tools import publish, cbloader
+    from avalon.vendor.Qt import QtGui
 
     menu_name = os.environ['AVALON_LABEL']
 
@@ -67,94 +54,57 @@ def install():
 
     self._change_context_menu = context_label
 
-    # Grab Hiero's MenuBar
-    M = hiero.ui.menuBar()
-
     try:
         check_made_menu = findMenuAction(menu_name)
     except Exception:
-        pass
+        check_made_menu = None
 
     if not check_made_menu:
-        menu = M.addMenu(menu_name)
+        # Grab Hiero's MenuBar
+        menu = hiero.ui.menuBar().addMenu(menu_name)
     else:
         menu = check_made_menu.menu()
 
-    actions = [
-        {
-            'parent': context_label,
-            'action': QAction('Set Context', None),
-            'function': contextmanager.show,
-            'icon': QIcon('icons:Position.png')
-        },
-        "separator",
-        {
-            'action': QAction("Work Files...", None),
-            'function': set_workfiles,
-            'icon': QIcon('icons:Position.png')
-        },
-        {
-            'action': QAction('Create Default Tags..', None),
-            'function': add_tags_from_presets,
-            'icon': QIcon('icons:Position.png')
-        },
-        "separator",
-        # {
-        #     'action': QAction('Create...', None),
-        #     'function': creator.show,
-        #     'icon': QIcon('icons:ColorAdd.png')
-        # },
-        # {
-        #     'action': QAction('Load...', None),
-        #     'function': cbloader.show,
-        #     'icon': QIcon('icons:CopyRectangle.png')
-        # },
-        {
-            'action': QAction('Publish...', None),
-            'function': publish.show,
-            'icon': QIcon('icons:Output.png')
-        },
-        # {
-        #     'action': QAction('Manage...', None),
-        #     'function': cbsceneinventory.show,
-        #     'icon': QIcon('icons:ModifyMetaData.png')
-        # },
-        {
-            'action': QAction('Library...', None),
-            'function': libraryloader.show,
-            'icon': QIcon('icons:ColorAdd.png')
-        },
-        "separator",
-        {
-            'action': QAction('Reload pipeline...', None),
-            'function': reload_config,
-            'icon': QIcon('icons:ColorAdd.png')
-        }]
+    context_label_action = menu.addAction(context_label)
+    context_label_action.setEnabled(False)
 
-    # Create menu items
-    for a in actions:
-        add_to_menu = menu
-        if isinstance(a, dict):
-            # create action
-            for k in a.keys():
-                if 'parent' in k:
-                    submenus = [sm for sm in a[k].split('/')]
-                    submenu = None
-                    for sm in submenus:
-                        if submenu:
-                            submenu.addMenu(sm)
-                        else:
-                            submenu = menu.addMenu(sm)
-                    add_to_menu = submenu
-                if 'action' in k:
-                    action = a[k]
-                elif 'function' in k:
-                    action.triggered.connect(a[k])
-                elif 'icon' in k:
-                    action.setIcon(a[k])
+    menu.addSeparator()
 
-            # add action to menu
-            add_to_menu.addAction(action)
-            hiero.ui.registerAction(action)
-        elif isinstance(a, str):
-            add_to_menu.addSeparator()
+    workfiles_action = menu.addAction("Work Files...")
+    workfiles_action.setIcon(QtGui.QIcon("icons:Position.png"))
+    workfiles_action.triggered.connect(set_workfiles)
+
+    default_tags_action = menu.addAction("Create Default Tags...")
+    default_tags_action.setIcon(QtGui.QIcon("icons:Position.png"))
+    default_tags_action.triggered.connect(add_tags_from_presets)
+
+    menu.addSeparator()
+
+    publish_action = menu.addAction("Publish...")
+    publish_action.setIcon(QtGui.QIcon("icons:Output.png"))
+    publish_action.triggered.connect(
+        lambda *args: publish.show(hiero.ui.mainWindow())
+    )
+
+    loader_action = menu.addAction("Load...")
+    loader_action.setIcon(QtGui.QIcon("icons:CopyRectangle.png"))
+    loader_action.triggered.connect(cbloader.show)
+    menu.addSeparator()
+
+    reload_action = menu.addAction("Reload pipeline...")
+    reload_action.setIcon(QtGui.QIcon("icons:ColorAdd.png"))
+    reload_action.triggered.connect(reload_config)
+
+    # Is this required?
+    # hiero.ui.registerAction(context_label_action)
+    # hiero.ui.registerAction(workfiles_action)
+    # hiero.ui.registerAction(default_tags_action)
+    # hiero.ui.registerAction(publish_action)
+    # hiero.ui.registerAction(loader_action)
+    # hiero.ui.registerAction(reload_action)
+
+    self.context_label_action = context_label_action
+    self.workfile_actions = workfiles_action
+    self.default_tags_action = default_tags_action
+    self.publish_action = publish_action
+    self.reload_action = reload_action
