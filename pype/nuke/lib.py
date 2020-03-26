@@ -1151,7 +1151,7 @@ class BuildWorkfile(WorkfileSettings):
                 regex_filter=None,
                 version=None,
                 representations=["exr", "dpx", "lutJson", "mov",
-                                 "preview", "png"]):
+                                 "preview", "png", "jpeg", "jpg"]):
         """
         A short description.
 
