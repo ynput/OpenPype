@@ -1,5 +1,9 @@
 import logging
-from queue import Queue
+
+try:
+    from queue import Queue
+except Exception:
+    from Queue import Queue
 
 from .slate_base.main_frame import MainFrame
 from .slate_base.layer import Layer
