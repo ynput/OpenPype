@@ -13,12 +13,16 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
     """Validates the global render settings
 
     * File Name Prefix must start with: `maya/<Scene>`
-        all other token are customizable but sane values are:
+        all other token are customizable but sane values for Arnold are:
 
         `maya/<Scene>/<RenderLayer>/<RenderLayer>_<RenderPass>`
 
-        <Camera> token is supported also, usefull for multiple renderable
+        <Camera> token is supported also, useful for multiple renderable
         cameras per render layer.
+
+        For Redshift omit <RenderPass> token. Redshift will append it
+        automatically if AOVs are enabled and if you user Multipart EXR
+        it doesn't make much sense.
 
     * Frame Padding must be:
         * default: 4
@@ -127,8 +131,13 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
             # no vray checks implemented yet
             pass
         elif renderer == "redshift":
-            # no redshift check implemented yet
-            pass
+            if re.search(cls.R_AOV_TOKEN, prefix):
+                invalid = True
+                cls.log.error("Do not use AOV token [ {} ] - "
+                              "Redshift automatically append AOV name and "
+                              "it doesn't make much sense with "
+                              "Multipart EXR".format(prefix))
+
         elif renderer == "renderman":
             file_prefix = cmds.getAttr("rmanGlobals.imageFileFormat")
             dir_prefix = cmds.getAttr("rmanGlobals.imageOutputDir")
@@ -143,8 +152,8 @@ class ValidateRenderSettings(pyblish.api.InstancePlugin):
                     dir_prefix))
 
         else:
-            multichannel = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
-            if multichannel:
+            multipart = cmds.getAttr("defaultArnoldDriver.mergeAOVs")
+            if multipart:
                 if re.search(cls.R_AOV_TOKEN, prefix):
                     invalid = True
                     cls.log.error("Wrong image prefix [ {} ] - "
