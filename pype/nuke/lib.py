@@ -28,7 +28,7 @@ self = sys.modules[__name__]
 self._project = None
 
 
-def onScriptLoad():
+def on_script_load():
     ''' Callback for ffmpeg support
     '''
     if nuke.env['LINUX']:
@@ -39,7 +39,7 @@ def onScriptLoad():
         nuke.tcl('load movWriter')
 
 
-def checkInventoryVersions():
+def check_inventory_versions():
     """
     Actiual version idetifier of Loaded containers
 
@@ -180,8 +180,8 @@ def format_anatomy(data):
         padding = int(anatomy.templates['render']['padding'])
     except KeyError as e:
         msg = ("`padding` key is not in `render` "
-            "Anatomy template. Please, add it there and restart "
-            "the pipeline (padding: \"4\"): `{}`").format(e)
+               "Anatomy template. Please, add it there and restart "
+               "the pipeline (padding: \"4\"): `{}`").format(e)
 
         log.error(msg)
         nuke.message(msg)
@@ -701,7 +701,8 @@ class WorkfileSettings(object):
     def set_reads_colorspace(self, reads):
         """ Setting colorspace to Read nodes
 
-        Looping trought all read nodes and tries to set colorspace based on regex rules in presets
+        Looping trought all read nodes and tries to set colorspace based
+        on regex rules in presets
         """
         changes = dict()
         for n in nuke.allNodes():
@@ -873,10 +874,10 @@ class WorkfileSettings(object):
 
         if any(x for x in data.values() if x is None):
             msg = ("Missing set shot attributes in DB."
-                  "\nContact your supervisor!."
-                  "\n\nWidth: `{width}`"
-                  "\nHeight: `{height}`"
-                  "\nPixel Asspect: `{pixel_aspect}`").format(**data)
+                   "\nContact your supervisor!."
+                   "\n\nWidth: `{width}`"
+                   "\nHeight: `{height}`"
+                   "\nPixel Asspect: `{pixel_aspect}`").format(**data)
             log.error(msg)
             nuke.message(msg)
 
@@ -895,8 +896,9 @@ class WorkfileSettings(object):
                 )
             except Exception as e:
                 bbox = None
-                msg = ("{}:{} \nFormat:Crop need to be set with dots, example: "
-                    "0.0.1920.1080, /nSetting to default").format(__name__, e)
+                msg = ("{}:{} \nFormat:Crop need to be set with dots, "
+                       "example: 0.0.1920.1080, "
+                       "/nSetting to default").format(__name__, e)
                 log.error(msg)
                 nuke.message(msg)
 
@@ -1037,7 +1039,8 @@ class BuildWorkfile(WorkfileSettings):
     """
     Building first version of workfile.
 
-    Settings are taken from presets and db. It will add all subsets in last version for defined representaions
+    Settings are taken from presets and db. It will add all subsets
+    in last version for defined representaions
 
     Arguments:
         variable (type): description
@@ -1265,8 +1268,6 @@ class BuildWorkfile(WorkfileSettings):
             representation (dict): avalon db entity
 
         """
-        context = representation["context"]
-
         loader_name = "LoadLuts"
 
         loader_plugin = None
