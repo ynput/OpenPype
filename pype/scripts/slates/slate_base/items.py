@@ -36,8 +36,8 @@ class ItemImage(BaseItem):
     obj_type = "image"
 
     def __init__(self, image_path, *args, **kwargs):
-        super(ItemImage, self).__init__(*args, **kwargs)
         self.image_path = image_path
+        super(ItemImage, self).__init__(*args, **kwargs)
 
     def fill_data_format(self):
         if re.match(self.fill_data_regex, self.image_path):
@@ -143,8 +143,8 @@ class ItemText(BaseItem):
     obj_type = "text"
 
     def __init__(self, value, *args, **kwargs):
-        super(ItemText, self).__init__(*args, **kwargs)
         self.value = value
+        super(ItemText, self).__init__(*args, **kwargs)
 
     def draw(self, image, drawer):
         bg_color = self.style["bg-color"]
