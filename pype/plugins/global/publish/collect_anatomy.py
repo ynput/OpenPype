@@ -26,7 +26,6 @@ class CollectAnatomy(pyblish.api.ContextPlugin):
     label = "Collect Anatomy"
 
     def process(self, context):
-        root_path = api.registered_root()
         task_name = api.Session["AVALON_TASK"]
 
         project_entity = context.data["projectEntity"]
@@ -45,7 +44,6 @@ class CollectAnatomy(pyblish.api.ContextPlugin):
             hierarchy = os.path.join(*hierarchy_items)
 
         context_data = {
-            "root": root_path,
             "project": {
                 "name": project_name,
                 "code": project_entity["data"].get("code")

@@ -8,7 +8,7 @@ from pype import lib as pypelib
 from pypeapp import config
 from .ftrack_base_handler import BaseHandler
 
-from pypeapp import Anatomy, Roots
+from pypeapp import Anatomy
 
 
 class AppAction(BaseHandler):
@@ -89,8 +89,8 @@ class AppAction(BaseHandler):
         '''
 
         if (
-            len(entities) != 1 or
-            entities[0].entity_type.lower() != 'task'
+            len(entities) != 1
+            or entities[0].entity_type.lower() != 'task'
         ):
             return False
 
@@ -174,7 +174,6 @@ class AppAction(BaseHandler):
 
         application = avalonlib.get_application(self.identifier)
         data = {
-            "root": Roots(project_name).roots,
             "project": {
                 "name": entity["project"]["full_name"],
                 "code": entity["project"]["name"]

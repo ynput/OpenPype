@@ -152,9 +152,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
         "PYPE_ROOT",
-        "PYPE_METADATA_FILE",
-        "PYPE_STUDIO_PROJECTS_PATH",
-        "PYPE_STUDIO_PROJECTS_MOUNT",
+        "PYPE_METADATA_FILE"
     ]
 
     # pool used to do the publishing job
