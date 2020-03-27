@@ -443,6 +443,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "stagingDir": os.path.dirname(list(c)[0]),
                 "anatomy_template": "render",
                 "fps": instance.get("fps"),
+                "multipartExr": instance.get("multipartExr"),
                 "tags": ["review", "preview"] if preview else [],
             }
 
@@ -458,7 +459,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "ext": ext,
                 "files": os.path.basename(r),
                 "stagingDir": os.path.dirname(r),
-                "anatomy_template": "publish",
+                "anatomy_template": "publish"
             }
             if r in bake_render_path:
                 rep.update({
@@ -581,6 +582,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "pixelAspect": data.get("pixelAspect", 1),
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
+            "multipartExr": data.get("multipartExr", False)
         }
 
         # transfer specific families from original instance to new render

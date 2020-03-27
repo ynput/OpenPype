@@ -65,6 +65,10 @@ class ExtractBurnin(pype.api.Extractor):
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
 
+            if repre.get("multipartExr", False) is True:
+                # ffmpeg doesn't support multipart exrs
+                continue
+
             if "burnin" not in repre.get("tags", []):
                 continue
 

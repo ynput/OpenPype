@@ -57,6 +57,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # filter out mov and img sequences
         representations_new = representations[:]
         for repre in representations:
+            if repre.get("multipartExr", False) is True:
+                # ffmpeg doesn't support multipart exrs
+                continue
+
             if repre['ext'] not in self.ext_filter:
                 continue
 
