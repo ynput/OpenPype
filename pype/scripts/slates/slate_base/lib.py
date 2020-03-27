@@ -1,3 +1,5 @@
+import os
+import json
 import logging
 try:
     from queue import Queue
@@ -21,21 +23,36 @@ log = logging.getLogger(__name__)
 RequiredSlateKeys = ["width", "height", "destination_path"]
 
 
-def create_slates(fill_data, slate_name, slate_presets=None):
-    if slate_presets is None:
-        presets = get_presets()
+# TODO proper documentation
+def create_slates(
+    fill_data, slate_name=None, slate_data=None, data_output_json=None
+):
+    """Implmentation for command line executing.
+
+    Data for slates are by defaule taken from presets. That requires to enter,
+    `slate_name`. If `slate_data` are entered then they are used.
+
+    `data_output` should be path to json file where data will be collected.
+    """
+    if slate_data is None and slate_name is None:
+        raise TypeError(
+            "`create_slates` expects to enter data for slates or name"
+            " of slate preset."
+        )
+
+    elif slate_data is None:
         slate_presets = (
-            presets
+            get_presets()
             .get("tools", {})
             .get("slates")
         ) or {}
-    slate_data = slate_presets.get(slate_name)
-
-    if not slate_data:
-        log.error(
-            "Name \"{}\" was not found in slate presets.".format(slate_name)
-        )
-        return False
+        slate_data = slate_presets.get(slate_name)
+        if slate_data is None:
+            raise ValueError(
+                "Preset name \"{}\" was not found in slate presets.".format(
+                    slate_name
+                )
+            )
 
     missing_keys = []
     for key in RequiredSlateKeys:
@@ -116,3 +133,20 @@ def create_slates(fill_data, slate_name, slate_presets=None):
 
     main.draw()
     log.debug("Slate creation finished")
+
+    if not data_output_json:
+        return
+
+    if not data_output_json.endswith(".json"):
+        raise ValueError("Output path must be .json file.")
+
+    data_output_json_dir = os.path.dirname(data_output_json)
+    if not os.path.exists(data_output_json_dir):
+        log.info("Creating folder \"{}\"".format(data_output_json_dir))
+        os.makedirs(data_output_json_dir)
+
+    output_data = main.collect_data()
+    with open(data_output_json, "w") as json_file:
+        json_file.write(json.dumps(output_data, indent=4))
+
+    log.info("Metadata collected in \"{}\".".format(data_output_json))
