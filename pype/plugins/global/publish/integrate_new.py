@@ -639,24 +639,38 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         self.log.debug("Registered root: {}".format(api.registered_root()))
         # create relative source path for DB
-        try:
-            source = instance.data['source']
-        except KeyError:
-            source = context.data["currentFile"]
-            source = source.replace(os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"),
-                                    api.registered_root())
-            relative_path = os.path.relpath(source, api.registered_root())
-            source = os.path.join("{root}", relative_path).replace("\\", "/")
+        if "source" in instance.data:
+            source = instance.data["source"]
+        else:
+            current_file = context.data["currentFile"]
+            anatomy = instance.context.data["anatomy"]
+            root_name = anatomy.templates["work"].get("root_name")
+            success, rootless_path = (
+                anatomy.roots.find_root_template_from_path(
+                    current_file, root_name, others_on_fail=True
+                )
+            )
+            if not success:
+                self.log.warning((
+                    "Could not find root path for remapping \"{}\"."
+                    " This may cause issues on farm."
+                ).format(current_file))
+                source = current_file
+            else:
+                source = rootless_path
 
         self.log.debug("Source: {}".format(source))
-        version_data = {"families": families,
-                        "time": context.data["time"],
-                        "author": context.data["user"],
-                        "source": source,
-                        "comment": context.data.get("comment"),
-                        "machine": context.data.get("machine"),
-                        "fps": context.data.get(
-                            "fps", instance.data.get("fps"))}
+        version_data = {
+            "families": families,
+            "time": context.data["time"],
+            "author": context.data["user"],
+            "source": source,
+            "comment": context.data.get("comment"),
+            "machine": context.data.get("machine"),
+            "fps": context.data.get(
+                "fps", instance.data.get("fps")
+            )
+        }
 
         intent_value = instance.context.data.get("intent")
         if intent_value and isinstance(intent_value, dict):

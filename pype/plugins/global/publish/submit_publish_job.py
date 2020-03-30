@@ -203,7 +203,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             rootless_path = output_dir
         else:
             # If root was found then use `mount` root for `output_dir`
-            anatomy_obj.roots._root_key = "mount"
+            anatomy_obj.roots._root_type = "mount"
             output_dir = rootless_path.format(**{"root": anatomy_obj.roots})
 
         # Generate the payload for Deadline submission
