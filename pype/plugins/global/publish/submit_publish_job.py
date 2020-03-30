@@ -588,8 +588,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             # `rootless_path` is not set to `source` if none of roots match
             self.log.warning((
                 "Could not find root path for remapping \"{}\"."
-                " This may cause issues on farm."
-            ).format(output_dirt))
+                " This may cause issues."
+            ).format(source))
 
         families = ["render"]
 
