@@ -41,6 +41,7 @@ import re
 import os
 import types
 import six
+import json
 from abc import ABCMeta, abstractmethod
 
 from maya import cmds
@@ -214,6 +215,28 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     full_paths.append(full_path)
                 aov_dict["beauty"] = full_paths
 
+            frame_start_render = int(self.get_render_attribute(
+                "startFrame", layer=layer_name))
+            frame_end_render = int(self.get_render_attribute(
+                "endFrame", layer=layer_name))
+
+            if (int(context.data['frameStartHandle']) == frame_start_render
+                    and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
+
+                handle_start = context.data['handleStart']
+                handle_end = context.data['handleEnd']
+                frame_start = context.data['frameStart']
+                frame_end = context.data['frameEnd']
+                frame_start_handle = context.data['frameStartHandle']
+                frame_end_handle = context.data['frameEndHandle']
+            else:
+                handle_start = 0
+                handle_end = 0
+                frame_start = frame_start_render
+                frame_end = frame_end_render
+                frame_start_handle = frame_start_render
+                frame_end_handle = frame_end_render
+
             full_exp_files.append(aov_dict)
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
@@ -224,30 +247,18 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "setMembers": layer_name,
                 "multipartExr": exf.multipart,
                 "publish": True,
-                "frameStart": int(
-                    context.data["assetEntity"]["data"]["frameStart"]
-                ),
-                "frameEnd": int(
-                    context.data["assetEntity"]["data"]["frameEnd"]
-                ),
-                "frameStartHandle": int(
-                    self.get_render_attribute("startFrame", layer=layer_name)
-                ),
-                "frameEndHandle": int(
-                    self.get_render_attribute("endFrame", layer=layer_name)
-                ),
+
+                "handleStart": handle_start,
+                "handleEnd": handle_end,
+                "frameStart": frame_start,
+                "frameEnd": frame_end,
+                "frameStartHandle": frame_start_handle,
+                "frameEndHandle": frame_end_handle,
                 "byFrameStep": int(
-                    self.get_render_attribute("byFrameStep", layer=layer_name)
-                ),
-                "renderer": self.get_render_attribute(
-                    "currentRenderer", layer=layer_name
-                ),
-                "handleStart": int(
-                    context.data["assetEntity"]["data"]["handleStart"]
-                ),
-                "handleEnd": int(
-                    context.data["assetEntity"]["data"]["handleEnd"]
-                ),
+                    self.get_render_attribute("byFrameStep",
+                                              layer=layer_name)),
+                "renderer": self.get_render_attribute("currentRenderer",
+                                                      layer=layer_name),
                 # instance subset
                 "family": "renderlayer",
                 "families": ["renderlayer"],
@@ -290,7 +301,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             instance = context.create_instance(expected_layer_name)
             instance.data["label"] = label
             instance.data.update(data)
-        pass
+            self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 
     def parse_options(self, render_globals):
         """Get all overrides with a value, skip those without
@@ -665,7 +676,7 @@ class ExpectedFilesArnold(AExpectedFiles):
         try:
             if not (
                 cmds.getAttr("defaultArnoldRenderOptions.aovMode")
-                and not cmds.getAttr("defaultArnoldDriver.mergeAOVs")
+                and not cmds.getAttr("defaultArnoldDriver.mergeAOVs")  # noqa: W503, E501
             ):
                 # AOVs are merged in mutli-channel file
                 self.multipart = True
@@ -751,7 +762,7 @@ class ExpectedFilesVray(AExpectedFiles):
             # really? do we set it in vray just by selecting multichannel exr?
             if (
                 cmds.getAttr("vraySettings.imageFormatStr")
-                == "exr (multichannel)"
+                == "exr (multichannel)"  # noqa: W503
             ):
                 # AOVs are merged in mutli-channel file
                 self.multipart = True
@@ -786,8 +797,7 @@ class ExpectedFilesVray(AExpectedFiles):
             if enabled:
                 # todo: find how vray set format for AOVs
                 enabled_aovs.append(
-                    (self._get_vray_aov_name(aov), default_ext)
-                )
+                    (self._get_vray_aov_name(aov), default_ext))
         return enabled_aovs
 
     def _get_vray_aov_name(self, node):

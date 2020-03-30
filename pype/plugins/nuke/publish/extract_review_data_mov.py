@@ -15,8 +15,13 @@ class ExtractReviewDataMov(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder + 0.01
     label = "Extract Review Data Mov"
 
-    families = ["review", "render", "render.local"]
+    families = ["review"]
     hosts = ["nuke"]
+
+    # presets
+    viewer_lut_raw = None
+    bake_colorspace_fallback = None
+    bake_colorspace_main = None
 
     def process(self, instance):
         families = instance.data["families"]

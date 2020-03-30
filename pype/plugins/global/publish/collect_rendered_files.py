@@ -13,7 +13,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     `PYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
     """
-    order = pyblish.api.CollectorOrder - 0.0001
+    order = pyblish.api.CollectorOrder - 0.1
     targets = ["filesequence"]
     label = "Collect rendered frames"
 

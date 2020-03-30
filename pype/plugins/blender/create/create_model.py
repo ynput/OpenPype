@@ -4,6 +4,7 @@ import bpy
 
 from avalon import api
 from avalon.blender import Creator, lib
+import pype.blender.plugin
 
 
 class CreateModel(Creator):
@@ -15,11 +16,10 @@ class CreateModel(Creator):
     icon = "cube"
 
     def process(self):
-        import pype.blender
 
         asset = self.data["asset"]
         subset = self.data["subset"]
-        name = pype.blender.plugin.model_name(asset, subset)
+        name = pype.blender.plugin.asset_name(asset, subset)
         collection = bpy.data.collections.new(name=name)
         bpy.context.scene.collection.children.link(collection)
         self.data['task'] = api.Session.get('AVALON_TASK')

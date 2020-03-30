@@ -1,6 +1,7 @@
 from maya import cmds
 
 import pyblish.api
+import json
 
 
 class CollectInstances(pyblish.api.ContextPlugin):
@@ -31,6 +32,13 @@ class CollectInstances(pyblish.api.ContextPlugin):
 
         objectset = cmds.ls("*.id", long=True, type="objectSet",
                             recursive=True, objectsOnly=True)
+
+        ctx_frame_start = context.data['frameStart']
+        ctx_frame_end = context.data['frameEnd']
+        ctx_handle_start = context.data['handleStart']
+        ctx_handle_end = context.data['handleEnd']
+        ctx_frame_start_handle = context.data['frameStartHandle']
+        ctx_frame_end_handle = context.data['frameEndHandle']
 
         context.data['objectsets'] = objectset
         for objset in objectset:
@@ -108,14 +116,36 @@ class CollectInstances(pyblish.api.ContextPlugin):
             label = "{0} ({1})".format(name,
                                        data["asset"])
 
-            if "handles" in data:
-                data["handleStart"] = data["handles"]
-                data["handleEnd"] = data["handles"]
-
             # Append start frame and end frame to label if present
             if "frameStart" and "frameEnd" in data:
-                data["frameStartHandle"] = data["frameStart"] - data["handleStart"]
-                data["frameEndHandle"] = data["frameEnd"] + data["handleEnd"]
+
+                # if frame range on maya set is the same as full shot range
+                # adjust the values to match the asset data
+                if (ctx_frame_start_handle == data["frameStart"]
+                        and ctx_frame_end_handle == data["frameEnd"]):  # noqa: W503, E501
+                    data["frameStartHandle"] = ctx_frame_start_handle
+                    data["frameEndHandle"] = ctx_frame_end_handle
+                    data["frameStart"] = ctx_frame_start
+                    data["frameEnd"] = ctx_frame_end
+                    data["handleStart"] = ctx_handle_start
+                    data["handleEnd"] = ctx_handle_end
+
+                # if there are user values on start and end frame not matching
+                # the asset, use them
+
+                else:
+                    if "handles" in data:
+                        data["handleStart"] = data["handles"]
+                        data["handleEnd"] = data["handles"]
+                    else:
+                        data["handleStart"] = 0
+                        data["handleEnd"] = 0
+
+                    data["frameStartHandle"] = data["frameStart"] - data["handleStart"]  # noqa: E501
+                    data["frameEndHandle"] = data["frameEnd"] + data["handleEnd"]  # noqa: E501
+
+                if "handles" in data:
+                    data.pop('handles')
 
                 label += "  [{0}-{1}]".format(int(data["frameStartHandle"]),
                                               int(data["frameEndHandle"]))
@@ -127,7 +157,8 @@ class CollectInstances(pyblish.api.ContextPlugin):
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
             self.log.info("Found: \"%s\" " % instance.data["name"])
-            self.log.debug("DATA: \"%s\" " % instance.data)
+            self.log.debug(
+                "DATA: {} ".format(json.dumps(instance.data, indent=4)))
 
         def sort_by_family(instance):
             """Sort by family"""
