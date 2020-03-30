@@ -199,7 +199,7 @@ class UserAssigmentEvent(BaseEvent):
             work_dir = anatomy_filled["work"]["folder"]
             # we also need publish but not whole
             anatomy_filled.strict = False
-            publish = anatomy_filled["publosh"]["folder"]
+            publish = anatomy_filled["publish"]["folder"]
 
             # now find path to {asset}
             m = re.search("(^.+?{})".format(data['asset']),
