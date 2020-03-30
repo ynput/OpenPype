@@ -141,7 +141,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
     hosts = ["fusion", "maya", "nuke"]
 
-    families = ["render.farm", "renderlayer", "imagesequence"]
+    families = ["render.farm", "prerener", "renderlayer", "imagesequence"]
 
     aov_filter = {"maya": ["beauty"]}
 
@@ -168,9 +168,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     instance_transfer = {
         "slate": ["slateFrame"],
         "review": ["lutPath"],
-        "render.farm": ["bakeScriptPath", "bakeRenderPath",
-                        "bakeWriteNodeName", "version"]
-        }
+        "render2d": ["bakeScriptPath", "bakeRenderPath",
+                     "bakeWriteNodeName", "version"]
+    }
 
     # list of family names to transfer to new family if present
     families_transfer = ["render3d", "render2d", "ftrack", "slate"]
@@ -222,9 +222,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
-
         environment = job["Props"].get("Env", {})
         environment["PYPE_METADATA_FILE"] = metadata_path
+        environment["AVALON_PROJECT"] = api.Session.get("AVALON_PROJECT")
+
         i = 0
         for index, key in enumerate(environment):
             if key.upper() in self.enviro_filter:
@@ -276,7 +277,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # if override remove all frames we are expecting to be rendered
         # so we'll copy only those missing from current render
         if instance.data.get("overrideExistingFrame"):
-            for frame in range(start, end+1):
+            for frame in range(start, end + 1):
                 if frame not in r_col.indexes:
                     continue
                 r_col.indexes.remove(frame)
@@ -348,10 +349,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             assert len(cols) == 1, "only one image sequence type is expected"
 
             # create subset name `familyTaskSubset_AOV`
-            subset_name = 'render{}{}{}{}_{}'.format(
+            group_name = 'render{}{}{}{}'.format(
                 task[0].upper(), task[1:],
-                subset[0].upper(), subset[1:],
-                aov)
+                subset[0].upper(), subset[1:])
+
+            subset_name = '{}_{}'.format(group_name, aov)
 
             staging = os.path.dirname(list(cols[0])[0])
 
@@ -366,6 +368,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             new_instance = copy(instance_data)
             new_instance["subset"] = subset_name
+            new_instance["subsetGroup"] = group_name
 
             ext = cols[0].tail.lstrip(".")
 
@@ -446,6 +449,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "tags": ["review", "preview"] if preview else [],
             }
 
+            if instance.get("multipartExr", False):
+                rep["tags"].append["multipartExr"]
+
             representations.append(rep)
 
             self._solve_families(instance, preview)
@@ -458,7 +464,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "ext": ext,
                 "files": os.path.basename(r),
                 "stagingDir": os.path.dirname(r),
-                "anatomy_template": "publish",
+                "anatomy_template": "publish"
             }
             if r in bake_render_path:
                 rep.update({
@@ -581,12 +587,25 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "pixelAspect": data.get("pixelAspect", 1),
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
+            "multipartExr": data.get("multipartExr", False)
         }
+
+        if "prerender" in instance.data["families"]:
+            instance_skeleton_data.update({
+                "family": "prerender",
+                "families": []})
 
         # transfer specific families from original instance to new render
         for item in self.families_transfer:
             if item in instance.data.get("families", []):
                 instance_skeleton_data["families"] += [item]
+
+        if "render.farm" in instance.data["families"]:
+            instance_skeleton_data.update({
+                "family": "render2d",
+                "families": ["render"] + [f for f in instance.data["families"]
+                                          if "render.farm" not in f]
+            })
 
         # transfer specific properties from original instance based on
         # mapping dictionary `instance_transfer`

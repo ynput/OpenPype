@@ -22,6 +22,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'setdress': 'setdress',
                       'pointcache': 'cache',
                       'render': 'render',
+                      'render2d': 'render',
                       'nukescript': 'comp',
                       'write': 'render',
                       'review': 'mov',
@@ -127,7 +128,10 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
 
             # Add custom attributes for AssetVersion
             assetversion_cust_attrs = {}
-            intent_val = instance.context.data.get("intent", {}).get("value")
+            intent_val = instance.context.data.get("intent")
+            if intent_val and isinstance(intent_val, dict):
+                intent_val = intent_val.get("value")
+
             if intent_val:
                 assetversion_cust_attrs["intent"] = intent_val
 

@@ -54,9 +54,12 @@ class ExtractBurnin(pype.api.Extractor):
             "comment": instance.context.data.get("comment", "")
         })
 
-        intent = instance.context.data.get("intent", {}).get("label")
-        if intent:
-            prep_data["intent"] = intent
+        intent_label = instance.context.data.get("intent")
+        if intent_label and isinstance(intent_label, dict):
+            intent_label = intent_label.get("label")
+
+        if intent_label:
+            prep_data["intent"] = intent_label
 
         # get anatomy project
         anatomy = instance.context.data['anatomy']
@@ -64,6 +67,10 @@ class ExtractBurnin(pype.api.Extractor):
         self.log.debug("__ prep_data: {}".format(prep_data))
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
+
+            if "multipartExr" in repre.get("tags", []):
+                # ffmpeg doesn't support multipart exrs
+                continue
 
             if "burnin" not in repre.get("tags", []):
                 continue
