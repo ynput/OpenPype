@@ -3,24 +3,23 @@ import glob
 import contextlib
 import clique
 import capture
-#
+
 import pype.maya.lib as lib
 import pype.api
-#
-from maya import cmds, mel
+
+from maya import cmds
 import pymel.core as pm
 
 
-# TODO: move codec settings to presets
-class ExtractQuicktime(pype.api.Extractor):
-    """Extract Quicktime from viewport capture.
+class ExtractPlayblast(pype.api.Extractor):
+    """Extract viewport playblast.
 
     Takes review camera and creates review Quicktime video based on viewport
     capture.
 
     """
 
-    label = "Quicktime"
+    label = "Extract Playblast"
     hosts = ["maya"]
     families = ["review"]
     optional = True
@@ -29,7 +28,7 @@ class ExtractQuicktime(pype.api.Extractor):
         self.log.info("Extracting capture..")
 
         # get scene fps
-        fps = mel.eval('currentTimeUnitToFPS()')
+        fps = instance.data.get("fps") or instance.context.data.get("fps")
 
         # if start and end frames cannot be determined, get them
         # from Maya timeline
@@ -39,6 +38,7 @@ class ExtractQuicktime(pype.api.Extractor):
             start = cmds.playbackOptions(query=True, animationStartTime=True)
         if end is None:
             end = cmds.playbackOptions(query=True, animationEndTime=True)
+
         self.log.info("start: {}, end: {}".format(start, end))
 
         # get cameras
@@ -47,7 +47,7 @@ class ExtractQuicktime(pype.api.Extractor):
 
         try:
             preset = lib.load_capture_preset(data=capture_preset)
-        except:
+        except Exception:
             preset = {}
         self.log.info('using viewport preset: {}'.format(preset))
 
@@ -55,19 +55,10 @@ class ExtractQuicktime(pype.api.Extractor):
         preset['format'] = "image"
         # preset['compression'] = "qt"
         preset['quality'] = 95
-        preset['compression'] = "jpg"
+        preset['compression'] = "png"
         preset['start_frame'] = start
         preset['end_frame'] = end
         preset['camera_options'] = {
-            "displayGateMask": False,
-            "displayResolution": False,
-            "displayFilmGate": False,
-            "displayFieldChart": False,
-            "displaySafeAction": False,
-            "displaySafeTitle": False,
-            "displayFilmPivot": False,
-            "displayFilmOrigin": False,
-            "overscan": 1.0,
             "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),
         }
 
@@ -90,8 +81,8 @@ class ExtractQuicktime(pype.api.Extractor):
             filename = preset.get("filename", "%TEMP%")
 
             # Force viewer to False in call to capture because we have our own
-            # viewer opening call to allow a signal to trigger between playblast
-            # and viewer
+            # viewer opening call to allow a signal to trigger between
+            # playblast and viewer
             preset['viewer'] = False
 
             # Remove panel key since it's internal value to capture_gui
@@ -112,8 +103,8 @@ class ExtractQuicktime(pype.api.Extractor):
             instance.data["representations"] = []
 
         representation = {
-            'name': 'mov',
-            'ext': 'mov',
+            'name': 'png',
+            'ext': 'png',
             'files': collected_frames,
             "stagingDir": stagingdir,
             "frameStart": start,
@@ -133,7 +124,6 @@ class ExtractQuicktime(pype.api.Extractor):
 
         To workaround this we just glob.glob() for any file extensions and
          assume the latest modified file is the correct file and return it.
-
         """
         # Catch cancelled playblast
         if filepath is None:
@@ -162,7 +152,6 @@ class ExtractQuicktime(pype.api.Extractor):
             filepath = max(files, key=os.path.getmtime)
 
         return filepath
-
 
 
 @contextlib.contextmanager
