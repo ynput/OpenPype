@@ -1095,13 +1095,14 @@ class BuildWorkfile(WorkfileSettings):
         # collect data for formating
         self.data_tmp = {
             "project": {"name": self._project["name"],
-                        "code": self._project["data"].get("code", '')},
+                        "code": self._project["data"].get("code", "")},
             "asset": self._asset or os.environ["AVALON_ASSET"],
             "task": kwargs.get("task") or api.Session["AVALON_TASK"],
             "hierarchy": kwargs.get("hierarchy") or pype.get_hierarchy(),
             "version": kwargs.get("version", {}).get("name", 1),
             "user": getpass.getuser(),
-            "comment": "firstBuild"
+            "comment": "firstBuild",
+            "ext": "nk"
         }
 
         # get presets from anatomy
@@ -1111,7 +1112,7 @@ class BuildWorkfile(WorkfileSettings):
 
         # get dir and file for workfile
         self.work_dir = anatomy_filled["work"]["folder"]
-        self.work_file = anatomy_filled["work"]["path"] + ".nk"
+        self.work_file = anatomy_filled["work"]["file"]
 
     def save_script_as(self, path=None):
         # first clear anything in open window
