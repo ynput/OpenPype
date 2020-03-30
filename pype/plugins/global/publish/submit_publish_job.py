@@ -185,15 +185,26 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             batch=job["Props"]["Name"], subset=subset
         )
 
-        metadata_filename = "{}_metadata.json".format(subset)
         output_dir = instance.data["outputDir"]
-        metadata_path = os.path.join(output_dir, metadata_filename)
-
-        metadata_path = os.path.normpath(metadata_path)
-        mount_root = os.path.normpath(os.environ["PYPE_STUDIO_PROJECTS_MOUNT"])
-        network_root = os.environ["PYPE_STUDIO_PROJECTS_PATH"]
-        metadata_path = metadata_path.replace(mount_root, network_root)
-        metadata_path = os.path.normpath(metadata_path)
+        # Convert output dir to `{root}/rest/of/path/...` with Anatomy
+        anatomy_obj = instance.context.data["anatomy"]
+        root_name = anatomy_obj.templates["work"].get("root_name")
+        success, rootless_path = (
+            anatomy_obj.roots.find_root_template_from_path(
+                output_dir, root_name
+            )
+        )
+        if not success:
+            # `rootless_path` is not set to `output_dir` if none of roots match
+            self.log.warning((
+                "Could not find root path for remapping \"{}\"."
+                " This may cause issues on farm."
+            ).format(output_dirt))
+            rootless_path = output_dir
+        else:
+            # If root was found then use `mount` root for `output_dir`
+            anatomy_obj.roots._root_key = "mount"
+            output_dir = rootless_path.format(**{"root": anatomy_obj.roots})
 
         # Generate the payload for Deadline submission
         payload = {
@@ -221,8 +232,14 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
 
+        metadata_filename = "{}_metadata.json".format(subset)
+        metadata_path = os.path.join(rootless_path, metadata_filename)
+        "TODO metadata_path replace root with {root[root_name]}
+
         environment = job["Props"].get("Env", {})
         environment["PYPE_METADATA_FILE"] = metadata_path
+        environment["AVALON_PROJECT"] = pyblish.api.Session["AVALON_PROJECT"]
+
         i = 0
         for index, key in enumerate(environment):
             if key.upper() in self.enviro_filter:

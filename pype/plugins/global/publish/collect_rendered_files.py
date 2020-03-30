@@ -4,7 +4,7 @@ import json
 import pyblish.api
 from avalon import api
 
-from pypeapp import PypeLauncher
+from pypeapp import PypeLauncher, Roots
 
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
@@ -82,8 +82,23 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             "Missing `PYPE_PUBLISH_DATA`")
         paths = os.environ["PYPE_PUBLISH_DATA"].split(os.pathsep)
 
+        project_name = os.environ.get("AVALON_PROJECT")
+        if project_name is None:
+            root = None
+            self.log.warning(
+                "Environment `AVLAON_PROJECT` was not found."
+                "Could not set `root` which may cause issues."
+            )
+        else:
+            self.log.info("Getting root setting for project \"{}\"".format(
+                project_name
+            ))
+            root = {"root": Roots(project_name)}
+
         session_set = False
         for path in paths:
+            if root:
+                path = path.format(**root)
             data = self._load_json(path)
             if not session_set:
                 self.log.info("Setting session using data from file")
