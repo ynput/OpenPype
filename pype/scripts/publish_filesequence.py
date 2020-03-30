@@ -90,12 +90,6 @@ def __main__():
 
     paths = kwargs.paths or [os.environ.get("PYPE_METADATA_FILE")] or [os.getcwd()]  # noqa
 
-    for path in paths:
-        data = _load_json(path)
-        log.info("Setting session using data from file")
-        os.environ["AVALON_PROJECT"] = data["session"]["AVALON_PROJECT"]
-        break
-
     args = [
         os.path.join(pype_root, pype_command),
         "publish",

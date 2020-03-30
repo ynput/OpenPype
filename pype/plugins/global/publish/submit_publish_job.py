@@ -195,7 +195,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         mount_root = os.path.normpath(os.environ["PYPE_STUDIO_PROJECTS_MOUNT"])
         network_root = os.environ["PYPE_STUDIO_PROJECTS_PATH"]
         metadata_path = metadata_path.replace(mount_root, network_root)
-        metadata_path = os.path.normpath(metadata_path)
+        metadata_path = metadata_path.replace(network_root, "{root}")
 
         # Generate the payload for Deadline submission
         payload = {
@@ -225,6 +225,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         environment = job["Props"].get("Env", {})
         environment["PYPE_METADATA_FILE"] = metadata_path
+        environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
         i = 0
         for index, key in enumerate(environment):
             if key.upper() in self.enviro_filter:
