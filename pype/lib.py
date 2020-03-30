@@ -1,10 +1,15 @@
 import os
+import sys
+import types
 import re
 import logging
 import itertools
 import contextlib
 import subprocess
 import inspect
+from abc import ABCMeta, abstractmethod
+
+import six
 
 from avalon import io
 import avalon.api
@@ -177,7 +182,8 @@ def modified_environ(*remove, **update):
     is sure to work in all situations.
 
     :param remove: Environment variables to remove.
-    :param update: Dictionary of environment variables and values to add/update.
+    :param update: Dictionary of environment variables
+                   and values to add/update.
     """
     env = os.environ
     update = update or {}
@@ -403,8 +409,8 @@ def switch_item(container,
         "parent": version["_id"]}
     )
 
-    assert representation, ("Could not find representation in the database with"
-                            " the name '%s'" % representation_name)
+    assert representation, ("Could not find representation in the database "
+                            "with the name '%s'" % representation_name)
 
     avalon.api.switch(container, representation)
 
@@ -537,7 +543,9 @@ def get_subsets(asset_name,
     """
     Query subsets with filter on name.
 
-    The method will return all found subsets and its defined version and subsets. Version could be specified with number. Representation can be filtered.
+    The method will return all found subsets and its defined version
+    and subsets. Version could be specified with number. Representation
+    can be filtered.
 
     Arguments:
         asset_name (str): asset (shot) name
@@ -554,8 +562,8 @@ def get_subsets(asset_name,
     asset_io = io.find_one({"type": "asset", "name": asset_name})
 
     # check if anything returned
-    assert asset_io, "Asset not existing. \
-                      Check correct name: `{}`".format(asset_name)
+    assert asset_io, (
+        "Asset not existing. Check correct name: `{}`").format(asset_name)
 
     # create subsets query filter
     filter_query = {"type": "subset", "parent": asset_io["_id"]}
@@ -569,7 +577,9 @@ def get_subsets(asset_name,
     # query all assets
     subsets = [s for s in io.find(filter_query)]
 
-    assert subsets, "No subsets found. Check correct filter. Try this for start `r'.*'`: asset: `{}`".format(asset_name)
+    assert subsets, ("No subsets found. Check correct filter. "
+                     "Try this for start `r'.*'`: "
+                     "asset: `{}`").format(asset_name)
 
     output_dict = {}
     # Process subsets
@@ -643,3 +653,58 @@ class CustomNone:
     def __repr__(self):
         """Representation of custom None."""
         return "<CustomNone-{}>".format(str(self.identifier))
+
+
+def execute_hook(hook, *args, **kwargs):
+    """
+    This will load hook file, instantiate class and call `execute` method
+    on it. Hook must be in a form:
+
+    `$PYPE_ROOT/repos/pype/path/to/hook.py/HookClass`
+
+    This will load `hook.py`, instantiate HookClass and then execute_hook
+    `execute(*args, **kwargs)`
+
+    :param hook: path to hook class
+    :type hook: str
+    """
+
+    class_name = hook.split("/")[-1]
+
+    abspath = os.path.join(os.getenv('PYPE_ROOT'),
+                           'repos', 'pype', *hook.split("/")[:-1])
+
+    mod_name, mod_ext = os.path.splitext(os.path.basename(abspath))
+
+    if not mod_ext == ".py":
+        return False
+
+    module = types.ModuleType(mod_name)
+    module.__file__ = abspath
+
+    try:
+        with open(abspath) as f:
+            six.exec_(f.read(), module.__dict__)
+
+        sys.modules[abspath] = module
+
+    except Exception as exp:
+        log.exception("loading hook failed: {}".format(exp),
+                      exc_info=True)
+        return False
+
+    obj = getattr(module, class_name)
+    hook_obj = obj()
+    ret_val = hook_obj.execute(*args, **kwargs)
+    return ret_val
+
+
+@six.add_metaclass(ABCMeta)
+class PypeHook:
+
+    def __init__(self):
+        pass
+
+    @abstractmethod
+    def execute(self, *args, **kwargs):
+        pass

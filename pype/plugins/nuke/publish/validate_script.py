@@ -74,17 +74,14 @@ class ValidateScript(pyblish.api.InstancePlugin):
         if "handleEnd" in asset_attributes:
             handle_end = asset_attributes["handleEnd"]
 
-        # Set frame range with handles
-        # asset_attributes["frameStart"] -= handle_start
-        # asset_attributes["frameEnd"] += handle_end
-        if len(str(asset_attributes["fps"])) > 4:
-            asset_attributes["fps"] = float("{0:.8f}".format(asset_attributes["fps"]))
+        asset_attributes["fps"] = float("{0:.4f}".format(
+                asset_attributes["fps"]))
 
         # Get values from nukescript
         script_attributes = {
             "handleStart": ctx_data["handleStart"],
             "handleEnd": ctx_data["handleEnd"],
-            "fps": ctx_data["fps"],
+            "fps": float("{0:.4f}".format(ctx_data["fps"])),
             "frameStart": ctx_data["frameStart"],
             "frameEnd": ctx_data["frameEnd"],
             "resolutionWidth": ctx_data["resolutionWidth"],

@@ -231,14 +231,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
-
         metadata_filename = "{}_metadata.json".format(subset)
         metadata_path = os.path.join(rootless_path, metadata_filename)
-        "TODO metadata_path replace root with {root[root_name]}
 
         environment = job["Props"].get("Env", {})
         environment["PYPE_METADATA_FILE"] = metadata_path
-        environment["AVALON_PROJECT"] = pyblish.api.Session["AVALON_PROJECT"]
+        environment["AVALON_PROJECT"] = api.Session["AVALON_PROJECT"]
 
         i = 0
         for index, key in enumerate(environment):

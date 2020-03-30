@@ -9,13 +9,14 @@ from pype.maya import lib
 class CollectMayaScene(pyblish.api.ContextPlugin):
     """Inject the current working file into context"""
 
-    order = pyblish.api.CollectorOrder - 0.1
+    order = pyblish.api.CollectorOrder - 0.01
     label = "Maya Workfile"
     hosts = ['maya']
 
     def process(self, context):
         """Inject the current working file"""
-        current_file = context.data['currentFile']
+        current_file = cmds.file(query=True, sceneName=True)
+        context.data['currentFile'] = current_file
 
         folder, file = os.path.split(current_file)
         filename, ext = os.path.splitext(file)
@@ -23,9 +24,6 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
         task = avalon.api.Session["AVALON_TASK"]
 
         data = {}
-
-        for key, value in lib.collect_animation_data().items():
-            data[key] = value
 
         # create instance
         instance = context.create_instance(name=filename)
@@ -38,7 +36,11 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
             "publish": True,
             "family": 'workfile',
             "families": ['workfile'],
-            "setMembers": [current_file]
+            "setMembers": [current_file],
+            "frameStart": context.data['frameStart'],
+            "frameEnd": context.data['frameEnd'],
+            "handleStart": context.data['handleStart'],
+            "handleEnd": context.data['handleEnd']
         })
 
         data['representations'] = [{

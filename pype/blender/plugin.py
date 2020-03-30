@@ -10,12 +10,41 @@ from avalon import api
 VALID_EXTENSIONS = [".blend"]
 
 
-def model_name(asset: str, subset: str, namespace: Optional[str] = None) -> str:
-    """Return a consistent name for a model asset."""
+def asset_name(
+    asset: str, subset: str, namespace: Optional[str] = None
+) -> str:
+    """Return a consistent name for an asset."""
     name = f"{asset}_{subset}"
     if namespace:
         name = f"{namespace}:{name}"
     return name
+
+
+def create_blender_context(active: Optional[bpy.types.Object] = None,
+                           selected: Optional[bpy.types.Object] = None,):
+    """Create a new Blender context. If an object is passed as
+    parameter, it is set as selected and active.
+    """
+
+    if not isinstance(selected, list):
+        selected = [selected]
+
+    for win in bpy.context.window_manager.windows:
+        for area in win.screen.areas:
+            if area.type == 'VIEW_3D':
+                for region in area.regions:
+                    if region.type == 'WINDOW':
+                        override_context = {
+                            'window': win,
+                            'screen': win.screen,
+                            'area': area,
+                            'region': region,
+                            'scene': bpy.context.scene,
+                            'active_object': active,
+                            'selected_objects': selected
+                        }
+                        return override_context
+    raise Exception("Could not create a custom Blender context.")
 
 
 class AssetLoader(api.Loader):
@@ -67,7 +96,8 @@ class AssetLoader(api.Loader):
             assert obj.library, f"'{obj.name}' is not linked."
             libraries.add(obj.library)
 
-        assert len(libraries) == 1, "'{container.name}' contains objects from more then 1 library."
+        assert len(
+            libraries) == 1, "'{container.name}' contains objects from more then 1 library."
 
         return list(libraries)[0]
 
@@ -122,7 +152,7 @@ class AssetLoader(api.Loader):
 
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        instance_name = model_name(asset, subset, namespace)
+        instance_name = asset_name(asset, subset, namespace)
 
         return self._get_instance_collection(instance_name, nodes)
 

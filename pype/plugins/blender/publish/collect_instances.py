@@ -1,22 +1,21 @@
-import typing
 from typing import Generator
 
 import bpy
+import json
 
-import avalon.api
 import pyblish.api
 from avalon.blender.pipeline import AVALON_PROPERTY
 
 
-class CollectModel(pyblish.api.ContextPlugin):
+class CollectInstances(pyblish.api.ContextPlugin):
     """Collect the data of a model."""
 
     hosts = ["blender"]
-    label = "Collect Model"
+    label = "Collect Instances"
     order = pyblish.api.CollectorOrder
 
     @staticmethod
-    def get_model_collections() -> Generator:
+    def get_collections() -> Generator:
         """Return all 'model' collections.
 
         Check if the family is 'model' and if it doesn't have the
@@ -25,13 +24,13 @@ class CollectModel(pyblish.api.ContextPlugin):
         """
         for collection in bpy.data.collections:
             avalon_prop = collection.get(AVALON_PROPERTY) or dict()
-            if (avalon_prop.get('family') == 'model'
-                    and not avalon_prop.get('representation')):
+            if avalon_prop.get('id') == 'pyblish.avalon.instance':
                 yield collection
 
     def process(self, context):
         """Collect the models from the current Blender scene."""
-        collections = self.get_model_collections()
+        collections = self.get_collections()
+
         for collection in collections:
             avalon_prop = collection[AVALON_PROPERTY]
             asset = avalon_prop['asset']
@@ -50,4 +49,6 @@ class CollectModel(pyblish.api.ContextPlugin):
             members = list(collection.objects)
             members.append(collection)
             instance[:] = members
-            self.log.debug(instance.data)
+            self.log.debug(json.dumps(instance.data, indent=4))
+            for obj in instance:
+                self.log.debug(obj)
