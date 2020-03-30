@@ -637,27 +637,25 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             families.append(instance_family)
         families += current_families
 
-        self.log.debug("Registered root: {}".format(api.registered_root()))
         # create relative source path for DB
         if "source" in instance.data:
             source = instance.data["source"]
         else:
-            current_file = context.data["currentFile"]
+            source = context.data["currentFile"]
             anatomy = instance.context.data["anatomy"]
             root_name = anatomy.templates["work"].get("root_name")
             success, rootless_path = (
                 anatomy.roots.find_root_template_from_path(
-                    current_file, root_name, others_on_fail=True
+                    source, root_name, others_on_fail=True
                 )
             )
-            if not success:
+            if success:
+                source = rootless_path
+            else:
                 self.log.warning((
                     "Could not find root path for remapping \"{}\"."
                     " This may cause issues on farm."
-                ).format(current_file))
-                source = current_file
-            else:
-                source = rootless_path
+                ).format(source))
 
         self.log.debug("Source: {}".format(source))
         version_data = {

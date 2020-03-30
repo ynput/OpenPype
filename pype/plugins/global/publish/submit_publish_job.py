@@ -187,10 +187,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         output_dir = instance.data["outputDir"]
         # Convert output dir to `{root}/rest/of/path/...` with Anatomy
-        anatomy_obj = instance.context.data["anatomy"]
-        root_name = anatomy_obj.templates["work"].get("root_name")
+        anatomy = instance.context.data["anatomy"]
+        root_name = anatomy.templates["work"].get("root_name")
         success, rootless_path = (
-            anatomy_obj.roots.find_root_template_from_path(
+            anatomy.roots.find_root_template_from_path(
                 output_dir, root_name
             )
         )
@@ -203,8 +203,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             rootless_path = output_dir
         else:
             # If root was found then use `mount` root for `output_dir`
-            anatomy_obj.roots._root_type = "mount"
-            output_dir = rootless_path.format(**{"root": anatomy_obj.roots})
+            anatomy.roots._root_type = "mount"
+            output_dir = rootless_path.format(**{"root": anatomy.roots})
 
         # Generate the payload for Deadline submission
         payload = {
@@ -572,11 +572,25 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         except KeyError:
             source = context.data["currentFile"]
 
-        source = source.replace(
-            os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"), api.registered_root()
+        anatomy = context.data["anatomy"]
+        root_name = anatomy.templates["work"].get("root_name")
+        success, rootless_path = (
+            anatomy.roots.find_root_template_from_path(
+                source, root_name
+            )
         )
-        relative_path = os.path.relpath(source, api.registered_root())
-        source = os.path.join("{root}", relative_path).replace("\\", "/")
+        if success:
+            orig_root_type = anatomy.roots._root_type
+            anatomy.roots._root_type = "mount"
+            source = rootless_path.format(**{"root": anatomy.roots})
+            anatomy.roots._root_type = orig_root_type
+
+        else:
+            # `rootless_path` is not set to `source` if none of roots match
+            self.log.warning((
+                "Could not find root path for remapping \"{}\"."
+                " This may cause issues on farm."
+            ).format(output_dirt))
 
         families = ["render"]
 
