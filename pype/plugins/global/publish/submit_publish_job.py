@@ -443,9 +443,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "stagingDir": os.path.dirname(list(c)[0]),
                 "anatomy_template": "render",
                 "fps": instance.get("fps"),
-                "multipartExr": instance.get("multipartExr"),
                 "tags": ["review", "preview"] if preview else [],
             }
+
+            if instance.get("multipartExr", False):
+                rep["tags"].append["multipartExr"]
 
             representations.append(rep)
 
