@@ -200,7 +200,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self.log.warning((
                 "Could not find root path for remapping \"{}\"."
                 " This may cause issues on farm."
-            ).format(output_dirt))
+            ).format(output_dir))
             rootless_path = output_dir
         else:
             # If root was found then use `mount` root for `output_dir`
