@@ -449,6 +449,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "tags": ["review", "preview"] if preview else [],
             }
 
+            if instance.get("multipartExr", False):
+                rep["tags"].append["multipartExr"]
+
             representations.append(rep)
 
             self._solve_families(instance, preview)
@@ -461,7 +464,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "ext": ext,
                 "files": os.path.basename(r),
                 "stagingDir": os.path.dirname(r),
-                "anatomy_template": "publish",
+                "anatomy_template": "publish"
             }
             if r in bake_render_path:
                 rep.update({
@@ -584,6 +587,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "pixelAspect": data.get("pixelAspect", 1),
             "resolutionWidth": data.get("resolutionWidth", 1920),
             "resolutionHeight": data.get("resolutionHeight", 1080),
+            "multipartExr": data.get("multipartExr", False)
         }
 
         if "prerender" in instance.data["families"]:
