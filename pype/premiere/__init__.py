@@ -5,15 +5,24 @@ import shutil
 from pysync import walktree
 
 from avalon import api as avalon
-from avalon.lib import launch
 from pyblish import api as pyblish
 from app import api as app
-from pprint import pprint
 from .. import api
-
-
 import requests
 
+from .pipeline import (
+    install,
+    uninstall,
+    reload_pipeline,
+    ls
+)
+
+__all__ = [
+    "install",
+    "uninstall",
+    "reload_pipeline",
+    "ls"
+]
 
 log = api.Logger.getLogger(__name__, "premiere")
 
@@ -42,6 +51,8 @@ else:
 LOAD_PATH = os.path.join(PLUGINS_DIR, "premiere", "load")
 CREATE_PATH = os.path.join(PLUGINS_DIR, "premiere", "create")
 INVENTORY_PATH = os.path.join(PLUGINS_DIR, "premiere", "inventory")
+
+log.debug("_clearing_cache: {}".format(_clearing_cache))
 
 def clearing_caches_ui():
     '''Before every start of premiere it will make sure there is not
@@ -104,23 +115,19 @@ def extensions_sync():
 
 
 def install():
-    api.set_avalon_workdir()
+
     log.info("Registering Premiera plug-ins..")
     reg_paths = request_aport("/api/register_plugin_path",
                               {"publish_path": PUBLISH_PATH})
 
-    # avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
-    # avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
-    # avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
-
     # Disable all families except for the ones we explicitly want to see
-    # family_states = [
-    #     "imagesequence",
-    #     "mov"
-    #
-    # ]
-    # avalon.data["familiesStateDefault"] = False
-    # avalon.data["familiesStateToggled"] = family_states
+    family_states = [
+        "imagesequence",
+        "mov"
+
+    ]
+    avalon.data["familiesStateDefault"] = False
+    avalon.data["familiesStateToggled"] = family_states
 
     # load data from templates
     api.load_data_from_templates()

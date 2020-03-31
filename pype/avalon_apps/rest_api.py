@@ -68,6 +68,23 @@ class AvalonRestApi(RestApi):
             _asset, identificator, project_name
         ))
 
+    @RestApi.route("/publish/<asset_name>", url_prefix="/premiere", methods="GET")
+    def publish(self, request):
+        """
+        http://localhost:8021/premiere/publish/shot021?json_in=this/path/file_in.json&json_out=this/path/file_out.json
+        """
+        asset_name = request.url_data["asset_name"]
+        query = request.query
+        data = request.request_data
+
+        output = {
+            "message": "Got your data. Thanks.",
+            "your_data": data,
+            "your_query": query,
+            "your_asset_is": asset_name
+        }
+        return CallbackResult(data=self.result_to_json(output))
+
     def result_to_json(self, result):
         """ Converts result of MongoDB query to dict without $oid (ObjectId)
         keys with help of regex matching.
