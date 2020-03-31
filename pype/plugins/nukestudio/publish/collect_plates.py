@@ -147,22 +147,15 @@ class CollectPlatesData(api.InstancePlugin):
                 "version": version
             })
 
+        source_first_frame = instance.data.get("sourceFirst")
+        source_file_head = instance.data.get("sourceFileHead")
 
-        try:
-            basename, ext = os.path.splitext(source_file)
-            head, padding = os.path.splitext(basename)
-            ext = ext[1:]
-            padding = padding[1:]
-            self.log.debug("_ padding: `{}`".format(padding))
-            # head, padding, ext = source_file.split('.')
-            source_first_frame = int(padding)
-            padding = len(padding)
-            file = "{head}.%0{padding}d.{ext}".format(
-                head=head,
-                padding=padding,
-                ext=ext
-            )
-
+        if instance.data.get("isSequence", False):
+            self.log.info("Is sequence of files")
+            file = os.path.basename(source_file)
+            ext = os.path.splitext(file)[-1][1:]
+            self.log.debug("source_file_head: `{}`".format(source_file_head))
+            head = source_file_head[:-1]
             start_frame = int(source_first_frame + instance.data["sourceInH"])
             duration = int(
                 instance.data["sourceOutH"] - instance.data["sourceInH"])
@@ -170,10 +163,10 @@ class CollectPlatesData(api.InstancePlugin):
             self.log.debug("start_frame: `{}`".format(start_frame))
             self.log.debug("end_frame: `{}`".format(end_frame))
             files = [file % i for i in range(start_frame, (end_frame + 1), 1)]
-        except Exception as e:
-            self.log.warning("Exception in file: {}".format(e))
-            head, ext = os.path.splitext(source_file)
-            ext = ext[1:]
+        else:
+            self.log.info("Is single file")
+            ext = os.path.splitext(source_file)[-1][1:]
+            head = source_file_head
             files = source_file
             start_frame = instance.data["sourceInH"]
             end_frame = instance.data["sourceOutH"]
