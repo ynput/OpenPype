@@ -22,6 +22,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                       'setdress': 'setdress',
                       'pointcache': 'cache',
                       'render': 'render',
+                      'render2d': 'render',
                       'nukescript': 'comp',
                       'write': 'render',
                       'review': 'mov',

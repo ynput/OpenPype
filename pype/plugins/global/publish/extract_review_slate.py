@@ -11,7 +11,9 @@ class ExtractReviewSlate(pype.api.Extractor):
 
     label = "Review with Slate frame"
     order = pyblish.api.ExtractorOrder + 0.031
-    families = ["slate"]
+    families = ["slate", "review"]
+    match = pyblish.api.Subset
+
     hosts = ["nuke", "maya", "shell"]
     optional = True
 
@@ -34,7 +36,8 @@ class ExtractReviewSlate(pype.api.Extractor):
         fps = inst_data.get("fps")
 
         # defining image ratios
-        resolution_ratio = (float(resolution_width) * pixel_aspect) /  resolution_height
+        resolution_ratio = ((float(resolution_width) * pixel_aspect) /
+                            resolution_height)
         delivery_ratio = float(to_width) / float(to_height)
         self.log.debug("__ resolution_ratio: `{}`".format(resolution_ratio))
         self.log.debug("__ delivery_ratio: `{}`".format(delivery_ratio))
@@ -89,7 +92,7 @@ class ExtractReviewSlate(pype.api.Extractor):
             input_args.extend([
                 "-r {}".format(fps),
                 "-t 0.04"]
-                )
+            )
 
             # output args
             codec_args = repre["_profile"].get('codec', [])
@@ -111,7 +114,7 @@ class ExtractReviewSlate(pype.api.Extractor):
                     self.log.debug("lower then delivery")
                     width_scale = int(to_width * scale_factor)
                     width_half_pad = int((
-                        to_width - width_scale)/2)
+                        to_width - width_scale) / 2)
                     height_scale = to_height
                     height_half_pad = 0
                 else:
@@ -124,7 +127,7 @@ class ExtractReviewSlate(pype.api.Extractor):
                     height_scale = int(
                         resolution_height * scale_factor)
                     height_half_pad = int(
-                        (to_height - height_scale)/2)
+                        (to_height - height_scale) / 2)
 
                 self.log.debug(
                     "__ width_scale: `{}`".format(width_scale))
@@ -135,8 +138,10 @@ class ExtractReviewSlate(pype.api.Extractor):
                 self.log.debug(
                     "__ height_half_pad: `{}`".format(height_half_pad))
 
-                scaling_arg = "scale={0}x{1}:flags=lanczos,pad={2}:{3}:{4}:{5}:black,setsar=1".format(
-                    width_scale, height_scale, to_width, to_height, width_half_pad, height_half_pad
+                scaling_arg = ("scale={0}x{1}:flags=lanczos,"
+                               "pad={2}:{3}:{4}:{5}:black,setsar=1").format(
+                    width_scale, height_scale, to_width, to_height,
+                    width_half_pad, height_half_pad
                 )
 
                 vf_back = self.add_video_filter_args(
