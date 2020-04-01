@@ -58,9 +58,9 @@ class ExtractPlayblast(pype.api.Extractor):
         preset['compression'] = "png"
         preset['start_frame'] = start
         preset['end_frame'] = end
-        preset['camera_options'] = {
-            "depthOfField": cmds.getAttr("{0}.depthOfField".format(camera)),
-        }
+        camera_option = preset.get("camera_option", {})
+        camera_option["depthOfField"] = cmds.getAttr(
+            "{0}.depthOfField".format(camera))
 
         stagingdir = self.staging_dir(instance)
         filename = "{0}".format(instance.name)
