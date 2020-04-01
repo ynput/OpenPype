@@ -1,13 +1,48 @@
 import os
-import importlib
-from pyblish import api as pyblish
+import sys
+import shutil
+import json
+from pysync import walktree
+import requests
+
 from avalon import api
-import logging
+from pype.widgets.message_window import message
+from pypeapp import Logger
 
 
-log = logging.getLogger(__name__)
+log = Logger().get_logger(__name__, "premiere")
+
+self = sys.modules[__name__]
+self._has_been_setup = False
+self._registered_gui = None
 
 AVALON_CONFIG = os.environ["AVALON_CONFIG"]
+
+PARENT_DIR = os.path.dirname(__file__)
+PACKAGE_DIR = os.path.dirname(PARENT_DIR)
+PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
+
+self.EXTENSIONS_PATH_REMOTE = os.path.join(PARENT_DIR, "extensions")
+self.EXTENSIONS_PATH_LOCAL = None
+self.EXTENSIONS_CACHE_PATH = None
+
+self.LOAD_PATH = os.path.join(PLUGINS_DIR, "premiere", "load")
+self.CREATE_PATH = os.path.join(PLUGINS_DIR, "premiere", "create")
+self.INVENTORY_PATH = os.path.join(PLUGINS_DIR, "premiere", "inventory")
+
+self.PUBLISH_PATH = os.path.join(
+    PLUGINS_DIR, "premiere", "publish"
+).replace("\\", "/")
+
+if os.getenv("PUBLISH_PATH", None):
+    os.environ["PUBLISH_PATH"] = os.pathsep.join(
+        os.environ["PUBLISH_PATH"].split(os.pathsep) +
+        [self.PUBLISH_PATH]
+    )
+else:
+    os.environ["PUBLISH_PATH"] = self.PUBLISH_PATH
+
+_clearing_cache = ["com.pype.rename", "com.pype.avalon"]
 
 
 def ls():
@@ -31,107 +66,112 @@ def reload_pipeline():
                    "avalon.api",
                    "avalon.tools",
 
-                   "avalon.tools.loader.app",
-                   "avalon.tools.creator.app",
-                   "avalon.tools.manager.app",
-
-                   "avalon.premiere",
-                   "avalon.premiere.pipeline",
-                   "{}".format(AVALON_CONFIG)
+                   "{}".format(AVALON_CONFIG),
+                   "{}.premiere".format(AVALON_CONFIG),
+                   "{}.premiere.lib".format(AVALON_CONFIG)
                    ):
         log.info("Reloading module: {}...".format(module))
-        module = importlib.import_module(module)
-        reload(module)
+        try:
+            module = importlib.import_module(module)
+            reload(module)
+        except Exception as e:
+            log.warning("Cannot reload module: {}".format(e))
+            importlib.reload(module)
 
     import avalon.premiere
     api.install(avalon.premiere)
 
 
-def install(config):
-    """Install Premiere-specific functionality of avalon-core.
-
-    This is where you install menus and register families, data
-    and loaders into Premiere.
-
-    It is called automatically when installing via `api.install(premiere)`.
-
-    See the Maya equivalent for inspiration on how to implement this.
-
+def setup(env=None):
+    """ Running wrapper
     """
+    if not env:
+        env = os.environ
 
-    pyblish.register_host("premiere")
-    # Trigger install on the config's "premiere" package
-    config = find_host_config(config)
+    self.EXTENSIONS_PATH_LOCAL = env["EXTENSIONS_PATH"]
+    self.EXTENSIONS_CACHE_PATH = env["EXTENSIONS_CACHE_PATH"]
 
-    if hasattr(config, "install"):
-        config.install()
+    log.info("Registering Premiera plug-ins..")
+    if not test_rest_api_server():
+        return
 
-    log.info("config.premiere installed")
+    # remove cep_cache from user temp dir
+    clearing_caches_ui()
+
+    # synchronize extensions
+    extensions_sync()
+
+    log.info("Premiere Pype wrapper has been installed")
 
 
-def find_host_config(config):
+def extensions_sync():
+    # import time
+    process_pairs = list()
+    # get extensions dir in pype.premiere.extensions
+    # build dir path to premiere cep extensions
+
+    for name in os.listdir(self.EXTENSIONS_PATH_REMOTE):
+        log.debug("> name: {}".format(name))
+        src = os.path.join(self.EXTENSIONS_PATH_REMOTE, name)
+        dst = os.path.join(self.EXTENSIONS_PATH_LOCAL, name)
+        process_pairs.append((name, src, dst))
+
+    # synchronize all extensions
+    for name, src, dst in process_pairs:
+        if not os.path.exists(dst):
+            os.makedirs(dst, mode=0o777)
+        walktree(source=src, target=dst, options_input=["y", ">"])
+        log.info("Extension {0} from `{1}` coppied to `{2}`".format(
+            name, src, dst
+        ))
+    # time.sleep(10)
+    return
+
+
+def clearing_caches_ui():
+    '''Before every start of premiere it will make sure there is not
+    outdated stuff in cep_cache dir'''
+
+    if not os.path.isdir(self.EXTENSIONS_CACHE_PATH):
+        os.makedirs(self.EXTENSIONS_CACHE_PATH, mode=0o777)
+        log.info("Created dir: {}".format(self.EXTENSIONS_CACHE_PATH))
+
+    for d in os.listdir(self.EXTENSIONS_CACHE_PATH):
+        match = [p for p in _clearing_cache
+                 if str(p) in d]
+
+        if match:
+            try:
+                path = os.path.normpath(
+                    os.path.join(self.EXTENSIONS_CACHE_PATH, d))
+                log.info("Removing dir: {}".format(path))
+                shutil.rmtree(path, ignore_errors=True)
+            except Exception as e:
+                log.debug("problem: {}".format(e))
+
+
+def test_rest_api_server():
+    from pprint import pformat
+    rest_url = os.getenv("PYPE_REST_API_URL")
+    project_name = "{AVALON_PROJECT}".format(**dict(os.environ))
+    URL = "/".join((rest_url,
+                    "avalon/projects",
+                    project_name))
+    log.debug("__ URL: {}".format(URL))
     try:
-        config = importlib.import_module(config.__name__ + ".premiere")
-    except ImportError as exc:
-        if str(exc) != "No module name {}".format(
-                config.__name__ + ".premiere"):
-            raise
-        config = None
+        req = requests.get(URL, data={}).text
+        req_json = json.loads(req)
+        # log.debug("_ req_json: {}".format(pformat(req_json)))
+        log.debug("__ projectName: {}".format(req_json["data"]["name"]))
+        assert req_json["data"]["name"] == project_name, (
+            "Project data from Rest API server not correct")
+        return True
 
-    return config
-
-
-def uninstall(config):
-    """Uninstall all tha was installed
-
-    This is where you undo everything that was done in `install()`.
-    That means, removing menus, deregistering families and  data
-    and everything. It should be as though `install()` was never run,
-    because odds are calling this function means the user is interested
-    in re-installing shortly afterwards. If, for example, he has been
-    modifying the menu or registered families.
-
-    """
-    config = find_host_config(config)
-    if hasattr(config, "uninstall"):
-        config.uninstall()
-
-    pyblish.deregister_host("premiere")
-
-
-def get_anatomy(**kwarg):
-    return pype.Anatomy
-
-
-def get_dataflow(**kwarg):
-    log.info(kwarg)
-    host = kwarg.get("host", "premiere")
-    cls = kwarg.get("class", None)
-    preset = kwarg.get("preset", None)
-    assert any([host, cls]), log.error("premiera.lib.get_dataflow():"
-                                       "Missing mandatory kwargs `host`, `cls`")
-
-    pr_dataflow = getattr(pype.Dataflow, str(host), None)
-    pr_dataflow_node = getattr(pr_dataflow.nodes, str(cls), None)
-    if preset:
-        pr_dataflow_node = getattr(pr_dataflow_node, str(preset), None)
-
-    log.info("Dataflow: {}".format(pr_dataflow_node))
-    return pr_dataflow_node
-
-
-def get_colorspace(**kwarg):
-    log.info(kwarg)
-    host = kwarg.get("host", "premiere")
-    cls = kwarg.get("class", None)
-    preset = kwarg.get("preset", None)
-    assert any([host, cls]), log.error("premiera.templates.get_colorspace():"
-                                       "Missing mandatory kwargs `host`, `cls`")
-
-    pr_colorspace = getattr(pype.Colorspace, str(host), None)
-    pr_colorspace_node = getattr(pr_colorspace, str(cls), None)
-    if preset:
-        pr_colorspace_node = getattr(pr_colorspace_node, str(preset), None)
-
-    log.info("Colorspace: {}".format(pr_colorspace_node))
-    return pr_colorspace_node
+    except Exception as e:
+        message(title="Pype Rest API static server is not running ",
+                message=("Before you can run Premiere, make sure "
+                         "the system Tray Pype icon is running and "
+                         "submenu `service` with name `Rest API` is "
+                         "with green icon."
+                         "\n Error: {}".format(e)),
+                level="critical")

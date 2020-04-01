@@ -1,10 +1,7 @@
-import logging
 import os
-
+import traceback
 from pype.lib import PypeHook
 from pypeapp import Logger
-
-log = logging.getLogger(__name__)
 
 
 class PremierePrelaunch(PypeHook):
@@ -26,11 +23,16 @@ class PremierePrelaunch(PypeHook):
     def execute(self, *args, env: dict = None) -> bool:
         if not env:
             env = os.environ
+
+        EXTENSIONS_CACHE_PATH = env.get("EXTENSIONS_CACHE_PATH", None)
+        self.log.debug(
+            "_ EXTENSIONS_CACHE_PATH: `{}`".format(EXTENSIONS_CACHE_PATH))
         asset = env["AVALON_ASSET"]
         task = env["AVALON_TASK"]
         workdir = env["AVALON_WORKDIR"]
         project_name = f"{asset}_{task}"
 
+        import importlib
         import avalon.api
         import pype.premiere
         avalon.api.install(pype.premiere)
@@ -40,13 +42,14 @@ class PremierePrelaunch(PypeHook):
             __import__("pyblish")
 
         except ImportError as e:
-            print traceback.format_exc()
+            print(traceback.format_exc())
             print("pyblish: Could not load integration: %s " % e)
 
         else:
             # Setup integration
-            import pype.premiere.lib
-            pype.premiere.lib.setup()
+            from pype.premiere import lib as prlib
+            importlib.reload(prlib)
+            prlib.setup(env)
 
         self.log.debug("_ self.signature: `{}`".format(self.signature))
         self.log.debug("_ asset: `{}`".format(asset))
