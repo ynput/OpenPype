@@ -221,6 +221,11 @@ class _RestApiFactory:
     def has_handlers(self):
         return (self.has_routes or self.prepared_statics)
 
+    def _process_route(self, route):
+        return self.unprocessed_routes.pop(
+            self.unprocessed_routes.index(route)
+        )
+
     def register_route(
         self, path, callback, url_prefix, methods, strict_match
     ):
