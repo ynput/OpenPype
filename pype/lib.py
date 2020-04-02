@@ -843,7 +843,7 @@ def load_containers_by_asset_data(
     log.debug("Valid subsets: {}".format(valid_subsets_by_id.values()))
 
     valid_repres_by_subset_id = collections.defaultdict(list)
-    for subset_id, subset_entity in valid_subsets_by_id.items():
+    for subset_id, _subset_entity in valid_subsets_by_id.items():
         variant = variants_per_subset_id[subset_id]
         variant_repre_names = variant.get("repre_names")
         if not variant_repre_names:
@@ -889,7 +889,7 @@ def load_containers_by_asset_data(
 
         is_loaded = False
         for repre_name_idx, variant_repre_name in enumerate(
-            variant_repre_names
+                variant_repre_names
         ):
             found_repre = None
             for repre in repres:
@@ -947,7 +947,7 @@ def load_containers_by_asset_data(
     return loaded_containers
 
 
-def get_link_assets(asset_entity):
+def get_linked_assets(asset_entity):
     """Return linked assets for `asset_entity`."""
     # TODO implement
     return []
@@ -1048,7 +1048,7 @@ def collect_last_version_repres(asset_entities):
     return output
 
 
-def load_containers_for_workfile():
+def load_containers_to_workfile():
     """Load containers for (first) workfile.
 
     Loads latest versions of current and linked assets to workfile by logic
@@ -1097,7 +1097,7 @@ def load_containers_for_workfile():
 
     # Skip if there are any loaders
     if not loaders_by_name:
-        print("There are not registered loaders.")
+        print("There are no registered loaders.")
         return
 
     # Get current task name
@@ -1109,7 +1109,7 @@ def load_containers_for_workfile():
     # Skip if there are any presets for task
     if not workfile_presets:
         log.warning(
-            "For current task `{}` is not set any loading preset.".format(
+            "Current task `{}` does not have any loading preset.".format(
                 current_task_name
             )
         )
@@ -1128,12 +1128,12 @@ def load_containers_for_workfile():
 
     elif not current_context:
         log.warning((
-            "Current task `{}` don't have set loading preset for it's context."
+            "Current task `{}` doesn't have any loading preset for it's context."
         ).format(current_task_name))
 
     elif not link_context:
         log.warning((
-            "Current task `{}` don't have set "
+            "Current task `{}` doesn't have any"
             "loading preset for it's linked assets."
         ).format(current_task_name))
 
@@ -1147,7 +1147,7 @@ def load_containers_for_workfile():
 
     if link_context:
         # Find and append linked assets if preset has set linked mapping
-        link_assets = get_link_assets(current_asset_entity)
+        link_assets = get_linked_assets(current_asset_entity)
         if link_assets:
             assets.extend(link_assets)
 
@@ -1268,7 +1268,7 @@ def create_first_workfile(file_ext=None):
     # 2.) override
     # 3.) raise exception
     if file_path is not None:
-        log.warning("There already exist workfile `{}`.".format(file_path))
+        log.warning("Workfile already exists`{}`.".format(file_path))
         return file_path
 
     hierarchy = ""
@@ -1311,5 +1311,5 @@ def build_first_workfile(file_ext=None):
     # Create workfile
     workfile_path = create_first_workfile(file_ext)
     # Load containers
-    loaded_containers = load_containers_for_workfile()
+    loaded_containers = load_containers_to_workfile()
     return (workfile_path, loaded_containers)
