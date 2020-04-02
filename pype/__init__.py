@@ -9,7 +9,6 @@ from pypeapp import config
 import logging
 log = logging.getLogger(__name__)
 
-__version__ = "2.5.0"
 
 PROJECT_PLUGINS_PATH = os.environ.get("PYPE_PROJECT_PLUGINS")
 PACKAGE_DIR = os.path.dirname(__file__)

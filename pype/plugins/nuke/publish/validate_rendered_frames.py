@@ -28,7 +28,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
     """ Validates file output. """
 
     order = pyblish.api.ValidatorOrder + 0.1
-    families = ["render"]
+    families = ["render", "prerender"]
 
     label = "Validate rendered frame"
     hosts = ["nuke", "nukestudio"]
@@ -51,7 +51,7 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
             collection = collections[0]
 
             frame_length = int(
-                instance.data["frameEnd"] - instance.data["frameStart"] + 1
+                instance.data["frameEndHandle"] - instance.data["frameStartHandle"] + 1
             )
 
             if frame_length != 1:
@@ -76,7 +76,8 @@ class ValidateRenderedFrames(pyblish.api.InstancePlugin):
                 'len(collection.indexes): {}'.format(collected_frames_len)
             )
 
-            if "slate" in instance.data["families"]:
+            if ("slate" in instance.data["families"]) \
+                    and (frame_length != collected_frames_len):
                 collected_frames_len -= 1
 
             assert (collected_frames_len == frame_length), (

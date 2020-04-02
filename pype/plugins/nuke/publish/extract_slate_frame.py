@@ -33,6 +33,7 @@ class ExtractSlateFrame(pype.api.Extractor):
             self.render_slate(instance)
 
     def render_slate(self, instance):
+        node_subset_name = instance.data.get("name", None)
         node = instance[0]  # group node
         self.log.info("Creating staging dir...")
 
@@ -47,6 +48,10 @@ class ExtractSlateFrame(pype.api.Extractor):
         self.log.info(
             "StagingDir `{0}`...".format(instance.data["stagingDir"]))
 
+        frame_length = int(
+            instance.data["frameEnd"] - instance.data["frameStart"] + 1
+        )
+
         temporary_nodes = []
         collection = instance.data.get("collection", None)
 
@@ -56,17 +61,23 @@ class ExtractSlateFrame(pype.api.Extractor):
                 "{head}{padding}{tail}"))
             fhead = collection.format("{head}")
 
+            collected_frames_len = int(len(collection.indexes))
+
             # get first and last frame
             first_frame = min(collection.indexes) - 1
-
-            if "slate" in instance.data["families"]:
+            self.log.info('frame_length: {}'.format(frame_length))
+            self.log.info(
+                'len(collection.indexes): {}'.format(collected_frames_len)
+            )
+            if ("slate" in instance.data["families"]) \
+                    and (frame_length != collected_frames_len):
                 first_frame += 1
 
             last_frame = first_frame
         else:
             fname = os.path.basename(instance.data.get("path", None))
             fhead = os.path.splitext(fname)[0] + "."
-            first_frame = instance.data.get("frameStart", None) - 1
+            first_frame = instance.data.get("frameStartHandle", None) - 1
             last_frame = first_frame
 
         if "#" in fhead:
@@ -103,6 +114,8 @@ class ExtractSlateFrame(pype.api.Extractor):
 
         # Render frames
         nuke.execute(write_node.name(), int(first_frame), int(last_frame))
+        # also render slate as sequence frame
+        nuke.execute(node_subset_name, int(first_frame), int(last_frame))
 
         self.log.debug(
             "slate frame path: {}".format(instance.data["slateFrame"]))
@@ -144,11 +157,13 @@ class ExtractSlateFrame(pype.api.Extractor):
             return
 
         comment = instance.context.data.get("comment")
-        intent = instance.context.data.get("intent")
+        intent_value = instance.context.data.get("intent")
+        if intent_value and isinstance(intent_value, dict):
+            intent_value = intent_value.get("value")
 
         try:
             node["f_submission_note"].setValue(comment)
-            node["f_submitting_for"].setValue(intent)
+            node["f_submitting_for"].setValue(intent_value or "")
         except NameError:
             return
         instance.data.pop("slateNode")

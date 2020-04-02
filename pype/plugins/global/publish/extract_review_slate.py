@@ -11,7 +11,9 @@ class ExtractReviewSlate(pype.api.Extractor):
 
     label = "Review with Slate frame"
     order = pyblish.api.ExtractorOrder + 0.031
-    families = ["slate"]
+    families = ["slate", "review"]
+    match = pyblish.api.Subset
+
     hosts = ["nuke", "maya", "shell"]
     optional = True
 
@@ -24,24 +26,37 @@ class ExtractReviewSlate(pype.api.Extractor):
         slate_path = inst_data.get("slateFrame")
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        to_width = 1920
-        to_height = 1080
+        # values are set in ExtractReview
+        to_width = inst_data["reviewToWidth"]
+        to_height = inst_data["reviewToHeight"]
+
         resolution_width = inst_data.get("resolutionWidth", to_width)
         resolution_height = inst_data.get("resolutionHeight", to_height)
         pixel_aspect = inst_data.get("pixelAspect", 1)
         fps = inst_data.get("fps")
 
         # defining image ratios
-        resolution_ratio = float(resolution_width / (
-            resolution_height * pixel_aspect))
+        resolution_ratio = ((float(resolution_width) * pixel_aspect) /
+                            resolution_height)
         delivery_ratio = float(to_width) / float(to_height)
-        self.log.debug(resolution_ratio)
-        self.log.debug(delivery_ratio)
+        self.log.debug("__ resolution_ratio: `{}`".format(resolution_ratio))
+        self.log.debug("__ delivery_ratio: `{}`".format(delivery_ratio))
 
         # get scale factor
-        scale_factor = to_height / (
+        scale_factor = float(to_height) / (
             resolution_height * pixel_aspect)
-        self.log.debug(scale_factor)
+
+        # shorten two decimals long float number for testing conditions
+        resolution_ratio_test = float(
+            "{:0.2f}".format(resolution_ratio))
+        delivery_ratio_test = float(
+            "{:0.2f}".format(delivery_ratio))
+
+        if resolution_ratio_test < delivery_ratio_test:
+            scale_factor = float(to_width) / (
+                resolution_width * pixel_aspect)
+
+        self.log.debug("__ scale_factor: `{}`".format(scale_factor))
 
         for i, repre in enumerate(inst_data["representations"]):
             _remove_at_end = []
@@ -77,7 +92,7 @@ class ExtractReviewSlate(pype.api.Extractor):
             input_args.extend([
                 "-r {}".format(fps),
                 "-t 0.04"]
-                )
+            )
 
             # output args
             codec_args = repre["_profile"].get('codec', [])
@@ -95,23 +110,24 @@ class ExtractReviewSlate(pype.api.Extractor):
 
             # scaling none square pixels and 1920 width
             if "reformat" in p_tags:
-                if resolution_ratio < delivery_ratio:
+                if resolution_ratio_test < delivery_ratio_test:
                     self.log.debug("lower then delivery")
                     width_scale = int(to_width * scale_factor)
                     width_half_pad = int((
-                        to_width - width_scale)/2)
+                        to_width - width_scale) / 2)
                     height_scale = to_height
                     height_half_pad = 0
                 else:
                     self.log.debug("heigher then delivery")
                     width_scale = to_width
                     width_half_pad = 0
-                    scale_factor = float(to_width) / float(resolution_width)
+                    scale_factor = float(to_width) / (float(
+                        resolution_width) * pixel_aspect)
                     self.log.debug(scale_factor)
                     height_scale = int(
                         resolution_height * scale_factor)
                     height_half_pad = int(
-                        (to_height - height_scale)/2)
+                        (to_height - height_scale) / 2)
 
                 self.log.debug(
                     "__ width_scale: `{}`".format(width_scale))
@@ -122,8 +138,10 @@ class ExtractReviewSlate(pype.api.Extractor):
                 self.log.debug(
                     "__ height_half_pad: `{}`".format(height_half_pad))
 
-                scaling_arg = "scale={0}x{1}:flags=lanczos,pad={2}:{3}:{4}:{5}:black,setsar=1".format(
-                    width_scale, height_scale, to_width, to_height, width_half_pad, height_half_pad
+                scaling_arg = ("scale={0}x{1}:flags=lanczos,"
+                               "pad={2}:{3}:{4}:{5}:black,setsar=1").format(
+                    width_scale, height_scale, to_width, to_height,
+                    width_half_pad, height_half_pad
                 )
 
                 vf_back = self.add_video_filter_args(

@@ -64,6 +64,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "scene",
                 "vrayproxy",
                 "render",
+                "prerender",
                 "imagesequence",
                 "review",
                 "rendersetup",
@@ -80,13 +81,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "matchmove",
                 "image"
                 "source",
-                "assembly"
+                "assembly",
+                "fbx",
+                "textures",
+                "action"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
         "project", "asset", "task", "subset", "version", "representation",
         "family", "hierarchy", "task", "username"
     ]
+    default_template_name = "publish"
 
     def process(self, instance):
 
@@ -161,6 +166,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         )
 
         subset = self.get_subset(asset_entity, instance)
+        instance.data["subsetEntity"] = subset
 
         version_number = instance.data["version"]
         self.log.debug("Next version: v{}".format(version_number))
@@ -235,6 +241,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     bulk_writes
                 )
 
+        version = io.find_one({"_id": version_id})
+        instance.data["versionEntity"] = version
+
         existing_repres = list(io.find({
             "parent": version_id,
             "type": "archived_representation"
@@ -242,9 +251,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         instance.data['version'] = version['name']
 
-        intent = context.data.get("intent")
-        if intent is not None:
-            anatomy_data["intent"] = intent
+        intent_value = instance.context.data.get("intent")
+        if intent_value and isinstance(intent_value, dict):
+            intent_value = intent_value.get("value")
+
+        if intent_value:
+            anatomy_data["intent"] = intent_value
 
         anatomy = instance.context.data['anatomy']
 
@@ -252,15 +264,18 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         # Each should be a single representation (as such, a single extension)
         representations = []
         destination_list = []
-        template_name = 'publish'
+
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
+        published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
+            published_files = []
+
             # create template data for Anatomy
             template_data = copy.deepcopy(anatomy_data)
-            if intent is not None:
-                template_data["intent"] = intent
+            if intent_value is not None:
+                template_data["intent"] = intent_value
 
             resolution_width = repre.get("resolutionWidth")
             resolution_height = repre.get("resolutionHeight")
@@ -276,8 +291,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             files = repre['files']
             if repre.get('stagingDir'):
                 stagingdir = repre['stagingDir']
-            if repre.get('anatomy_template'):
-                template_name = repre['anatomy_template']
+
+            template_name = (
+                repre.get('anatomy_template') or self.default_template_name
+            )
+            if repre.get("outputName"):
+                template_data["output"] = repre['outputName']
 
             template = os.path.normpath(
                 anatomy.templates[template_name]["path"])
@@ -362,14 +381,19 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     self.log.debug("source: {}".format(src))
                     instance.data["transfers"].append([src, dst])
 
+                    published_files.append(dst)
+
                     # for adding first frame into db
                     if not dst_start_frame:
                         dst_start_frame = dst_padding
 
+                # Store used frame value to template data
+                template_data["frame"] = dst_start_frame
                 dst = "{0}{1}{2}".format(
                     dst_head,
                     dst_start_frame,
-                    dst_tail).replace("..", ".")
+                    dst_tail
+                ).replace("..", ".")
                 repre['published_path'] = self.unc_convert(dst)
 
             else:
@@ -389,9 +413,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 template_data["representation"] = repre['ext']
 
-                if repre.get("outputName"):
-                    template_data["output"] = repre['outputName']
-
                 src = os.path.join(stagingdir, fname)
                 anatomy_filled = anatomy.format(template_data)
                 template_filled = anatomy_filled[template_name]["path"]
@@ -400,8 +421,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
                 instance.data["transfers"].append([src, dst])
 
+                published_files.append(dst)
                 repre['published_path'] = self.unc_convert(dst)
                 self.log.debug("__ dst: {}".format(dst))
+
+            repre["publishedFiles"] = published_files
 
             for key in self.db_representation_context_keys:
                 value = template_data.get(key)
@@ -441,7 +465,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
             if sequence_repre and repre.get("frameStart"):
                 representation['context']['frame'] = (
-                    src_padding_exp % int(repre.get("frameStart"))
+                    dst_padding_exp % int(repre.get("frameStart"))
                 )
 
             self.log.debug("__ representation: {}".format(representation))
@@ -449,6 +473,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("__ destination_list: {}".format(destination_list))
             instance.data['destination_list'] = destination_list
             representations.append(representation)
+            published_representations[repre_id] = {
+                "representation": representation,
+                "anatomy_data": template_data,
+                "published_files": published_files
+            }
             self.log.debug("__ representations: {}".format(representations))
 
         # Remove old representations if there are any (before insertion of new)
@@ -463,7 +492,9 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("__ represNAME: {}".format(rep['name']))
             self.log.debug("__ represPATH: {}".format(rep['published_path']))
         io.insert_many(representations)
-        instance.data["published_representations"] = representations
+        instance.data["published_representations"] = (
+            published_representations
+        )
         # self.log.debug("Representation: {}".format(representations))
         self.log.info("Registered {} items".format(len(representations)))
 
@@ -653,9 +684,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                         "fps": context.data.get(
                             "fps", instance.data.get("fps"))}
 
-        intent = context.data.get("intent")
-        if intent is not None:
-            version_data["intent"] = intent
+        intent_value = instance.context.data.get("intent")
+        if intent_value and isinstance(intent_value, dict):
+            intent_value = intent_value.get("value")
+
+        if intent_value:
+            version_data["intent"] = intent_value
 
         # Include optional data if present in
         optionals = [

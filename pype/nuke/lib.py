@@ -15,12 +15,11 @@ import nuke
 from .presets import (
     get_colorspace_preset,
     get_node_dataflow_preset,
-    get_node_colorspace_preset
-)
-
-from .presets import (
+    get_node_colorspace_preset,
     get_anatomy
 )
+
+from .utils import set_context_favorites
 
 from pypeapp import Logger
 log = Logger().get_logger(__name__, "nuke")
@@ -29,7 +28,7 @@ self = sys.modules[__name__]
 self._project = None
 
 
-def onScriptLoad():
+def on_script_load():
     ''' Callback for ffmpeg support
     '''
     if nuke.env['LINUX']:
@@ -40,7 +39,7 @@ def onScriptLoad():
         nuke.tcl('load movWriter')
 
 
-def checkInventoryVersions():
+def check_inventory_versions():
     """
     Actiual version idetifier of Loaded containers
 
@@ -181,8 +180,8 @@ def format_anatomy(data):
         padding = int(anatomy.templates['render']['padding'])
     except KeyError as e:
         msg = ("`padding` key is not in `render` "
-            "Anatomy template. Please, add it there and restart "
-            "the pipeline (padding: \"4\"): `{}`").format(e)
+               "Anatomy template. Please, add it there and restart "
+               "the pipeline (padding: \"4\"): `{}`").format(e)
 
         log.error(msg)
         nuke.message(msg)
@@ -216,14 +215,14 @@ def script_name():
 
 def add_button_write_to_read(node):
     name = "createReadNode"
-    label = "Create Read"
+    label = "[ Create Read ]"
     value = "import write_to_read;write_to_read.write_to_read(nuke.thisNode())"
     k = nuke.PyScript_Knob(name, label, value)
     k.setFlag(0x1000)
     node.addKnob(k)
 
 
-def create_write_node(name, data, input=None, prenodes=None):
+def create_write_node(name, data, input=None, prenodes=None, review=True):
     ''' Creating write node which is group node
 
     Arguments:
@@ -232,6 +231,7 @@ def create_write_node(name, data, input=None, prenodes=None):
         input (node): selected node to connect to
         prenodes (list, optional): list of lists, definitions for nodes
                                 to be created before write
+        review (bool): adding review knob
 
     Example:
         prenodes = [(
@@ -330,8 +330,17 @@ def create_write_node(name, data, input=None, prenodes=None):
 
                 # add data to knob
                 for k, v in properties:
+                    try:
+                        now_node[k].value()
+                    except NameError:
+                        log.warning(
+                            "knob `{}` does not exist on node `{}`".format(
+                                k, now_node["name"].value()
+                            ))
+                        continue
+
                     if k and v:
-                        now_node[k].serValue(str(v))
+                        now_node[k].setValue(str(v))
 
                 # connect to previous node
                 if set_output_to:
@@ -340,14 +349,14 @@ def create_write_node(name, data, input=None, prenodes=None):
                             input_node = nuke.createNode(
                                 "Input", "name {}".format(node_name))
                             connections.append({
-                                "node":  nuke.toNode(node_name),
+                                "node": nuke.toNode(node_name),
                                 "inputName": node_name})
                             now_node.setInput(1, input_node)
                     elif isinstance(set_output_to, str):
                         input_node = nuke.createNode(
                             "Input", "name {}".format(node_name))
                         connections.append({
-                            "node":  nuke.toNode(set_output_to),
+                            "node": nuke.toNode(set_output_to),
                             "inputName": set_output_to})
                         now_node.setInput(0, input_node)
                 else:
@@ -381,15 +390,8 @@ def create_write_node(name, data, input=None, prenodes=None):
 
     add_rendering_knobs(GN)
 
-    # adding write to read button
-    add_button_write_to_read(GN)
-
-    divider = nuke.Text_Knob('')
-    GN.addKnob(divider)
-
-    # set tile color
-    tile_color = _data.get("tile_color", "0xff0000ff")
-    GN["tile_color"].setValue(tile_color)
+    if review:
+        add_review_knob(GN)
 
     # add render button
     lnk = nuke.Link_Knob("Render")
@@ -397,8 +399,19 @@ def create_write_node(name, data, input=None, prenodes=None):
     lnk.setName("Render")
     GN.addKnob(lnk)
 
+    divider = nuke.Text_Knob('')
+    GN.addKnob(divider)
+
+    # adding write to read button
+    add_button_write_to_read(GN)
+
     # Deadline tab.
     add_deadline_tab(GN)
+
+
+    # set tile color
+    tile_color = _data.get("tile_color", "0xff0000ff")
+    GN["tile_color"].setValue(tile_color)
 
     return GN
 
@@ -421,6 +434,17 @@ def add_rendering_knobs(node):
         knob = nuke.Boolean_Knob("render_farm", "Render on Farm")
         knob.setValue(False)
         node.addKnob(knob)
+    return node
+
+def add_review_knob(node):
+    ''' Adds additional review knob to given node
+
+    Arguments:
+        node (obj): nuke node object to be fixed
+
+    Return:
+        node (obj): with added knob
+    '''
     if "review" not in node.knobs():
         knob = nuke.Boolean_Knob("review", "Review")
         knob.setValue(True)
@@ -432,7 +456,7 @@ def add_deadline_tab(node):
     node.addKnob(nuke.Tab_Knob("Deadline"))
 
     knob = nuke.Int_Knob("deadlineChunkSize", "Chunk Size")
-    knob.setValue(1)
+    knob.setValue(0)
     node.addKnob(knob)
 
     knob = nuke.Int_Knob("deadlinePriority", "Priority")
@@ -620,7 +644,8 @@ class WorkfileSettings(object):
         # third set ocio custom path
         if root_dict.get("customOCIOConfigPath"):
             self._root_node["customOCIOConfigPath"].setValue(
-                str(root_dict["customOCIOConfigPath"]).format(**os.environ)
+                str(root_dict["customOCIOConfigPath"]).format(
+                    **os.environ).replace("\\", "/")
                 )
             log.debug("nuke.root()['{}'] changed to: {}".format(
                 "customOCIOConfigPath", root_dict["customOCIOConfigPath"]))
@@ -692,7 +717,8 @@ class WorkfileSettings(object):
     def set_reads_colorspace(self, reads):
         """ Setting colorspace to Read nodes
 
-        Looping trought all read nodes and tries to set colorspace based on regex rules in presets
+        Looping trought all read nodes and tries to set colorspace based
+        on regex rules in presets
         """
         changes = dict()
         for n in nuke.allNodes():
@@ -864,10 +890,10 @@ class WorkfileSettings(object):
 
         if any(x for x in data.values() if x is None):
             msg = ("Missing set shot attributes in DB."
-                  "\nContact your supervisor!."
-                  "\n\nWidth: `{width}`"
-                  "\nHeight: `{height}`"
-                  "\nPixel Asspect: `{pixel_aspect}`").format(**data)
+                   "\nContact your supervisor!."
+                   "\n\nWidth: `{width}`"
+                   "\nHeight: `{height}`"
+                   "\nPixel Asspect: `{pixel_aspect}`").format(**data)
             log.error(msg)
             nuke.message(msg)
 
@@ -886,8 +912,9 @@ class WorkfileSettings(object):
                 )
             except Exception as e:
                 bbox = None
-                msg = ("{}:{} \nFormat:Crop need to be set with dots, example: "
-                    "0.0.1920.1080, /nSetting to default").format(__name__, e)
+                msg = ("{}:{} \nFormat:Crop need to be set with dots, "
+                       "example: 0.0.1920.1080, "
+                       "/nSetting to default").format(__name__, e)
                 log.error(msg)
                 nuke.message(msg)
 
@@ -943,6 +970,26 @@ class WorkfileSettings(object):
         self.reset_frame_range_handles()
         # add colorspace menu item
         self.set_colorspace()
+
+    def set_favorites(self):
+        projects_root = os.getenv("AVALON_PROJECTS")
+        work_dir = os.getenv("AVALON_WORKDIR")
+        asset = os.getenv("AVALON_ASSET")
+        project = os.getenv("AVALON_PROJECT")
+        hierarchy = os.getenv("AVALON_HIERARCHY")
+        favorite_items = OrderedDict()
+
+        # project
+        favorite_items.update({"Project dir": os.path.join(
+            projects_root, project).replace("\\", "/")})
+        # shot
+        favorite_items.update({"Shot dir": os.path.join(
+            projects_root, project,
+            hierarchy, asset).replace("\\", "/")})
+        # workdir
+        favorite_items.update({"Work dir": work_dir})
+
+        set_context_favorites(favorite_items)
 
 
 def get_hierarchical_attr(entity, attr, default=None):
@@ -1008,7 +1055,8 @@ class BuildWorkfile(WorkfileSettings):
     """
     Building first version of workfile.
 
-    Settings are taken from presets and db. It will add all subsets in last version for defined representaions
+    Settings are taken from presets and db. It will add all subsets
+    in last version for defined representaions
 
     Arguments:
         variable (type): description
@@ -1106,7 +1154,7 @@ class BuildWorkfile(WorkfileSettings):
                 regex_filter=None,
                 version=None,
                 representations=["exr", "dpx", "lutJson", "mov",
-                                 "preview", "png"]):
+                                 "preview", "png", "jpeg", "jpg"]):
         """
         A short description.
 
@@ -1236,8 +1284,6 @@ class BuildWorkfile(WorkfileSettings):
             representation (dict): avalon db entity
 
         """
-        context = representation["context"]
-
         loader_name = "LoadLuts"
 
         loader_plugin = None
@@ -1350,8 +1396,8 @@ class ExporterReview:
         else:
             self.fname = os.path.basename(self.path_in)
             self.fhead = os.path.splitext(self.fname)[0] + "."
-            self.first_frame = self.instance.data.get("frameStart", None)
-            self.last_frame = self.instance.data.get("frameEnd", None)
+            self.first_frame = self.instance.data.get("frameStartHandle", None)
+            self.last_frame = self.instance.data.get("frameEndHandle", None)
 
         if "#" in self.fhead:
             self.fhead = self.fhead.replace("#", "")[:-1]
@@ -1544,10 +1590,9 @@ class ExporterReviewMov(ExporterReview):
             self.nodes = {}
 
         # deal with now lut defined in viewer lut
-        if hasattr(klass, "viewer_lut_raw"):
-            self.viewer_lut_raw = klass.viewer_lut_raw
-        else:
-            self.viewer_lut_raw = False
+        self.viewer_lut_raw = klass.viewer_lut_raw
+        self.bake_colorspace_fallback = klass.bake_colorspace_fallback
+        self.bake_colorspace_main = klass.bake_colorspace_main
 
         self.name = name or "baked"
         self.ext = ext or "mov"
@@ -1608,8 +1653,26 @@ class ExporterReviewMov(ExporterReview):
             self.log.debug("ViewProcess...   `{}`".format(self._temp_nodes))
 
         if not self.viewer_lut_raw:
-            # OCIODisplay node
-            dag_node = nuke.createNode("OCIODisplay")
+            colorspaces = [
+                self.bake_colorspace_main, self.bake_colorspace_fallback
+                ]
+
+            if any(colorspaces):
+                # OCIOColorSpace with controled output
+                dag_node = nuke.createNode("OCIOColorSpace")
+                for c in colorspaces:
+                    test = dag_node["out_colorspace"].setValue(str(c))
+                    if test:
+                        self.log.info(
+                            "Baking in colorspace...   `{}`".format(c))
+                        break
+
+                if not test:
+                    dag_node = nuke.createNode("OCIODisplay")
+            else:
+                # OCIODisplay
+                dag_node = nuke.createNode("OCIODisplay")
+
             # connect
             dag_node.setInput(0, self.previous_node)
             self._temp_nodes.append(dag_node)

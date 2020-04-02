@@ -4,7 +4,6 @@ import copy
 
 import pype.api
 import pyblish
-from pypeapp import config
 
 
 class ExtractBurnin(pype.api.Extractor):
@@ -26,37 +25,41 @@ class ExtractBurnin(pype.api.Extractor):
         if "representations" not in instance.data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
+        context_data = instance.context.data
+
         version = instance.data.get(
             'version', instance.context.data.get('version'))
         frame_start = int(instance.data.get("frameStart") or 0)
         frame_end = int(instance.data.get("frameEnd") or 1)
-        duration = frame_end - frame_start + 1
+        handle_start = instance.data.get("handleStart",
+                                         context_data.get("handleStart"))
+        handle_end = instance.data.get("handleEnd",
+                                       context_data.get("handleEnd"))
+
+        frame_start_handle = frame_start - handle_start
+        frame_end_handle = frame_end + handle_end
+        duration = frame_end_handle - frame_start_handle + 1
 
         prep_data = copy.deepcopy(instance.data["anatomyData"])
+
+        if "slate.farm" in instance.data["families"]:
+            frame_start_handle += 1
+            duration -= 1
+
         prep_data.update({
-            "frame_start": frame_start,
-            "frame_end": frame_end,
+            "frame_start": frame_start_handle,
+            "frame_end": frame_end_handle,
             "duration": duration,
             "version": int(version),
-            "comment": instance.context.data.get("comment", ""),
-            "intent": instance.context.data.get("intent", "")
+            "comment": instance.context.data.get("comment", "")
         })
 
-        slate_frame_start = frame_start
-        slate_frame_end = frame_end
-        slate_duration = duration
+        intent_label = instance.context.data.get("intent")
+        if intent_label and isinstance(intent_label, dict):
+            intent_label = intent_label.get("label")
 
-        # exception for slate workflow
-        if "slate" in instance.data["families"]:
-            slate_frame_start = frame_start - 1
-            slate_frame_end = frame_end
-            slate_duration = slate_frame_end - slate_frame_start + 1
-
-        prep_data.update({
-            "slate_frame_start": slate_frame_start,
-            "slate_frame_end": slate_frame_end,
-            "slate_duration": slate_duration
-        })
+        if intent_label:
+            prep_data["intent"] = intent_label
 
         # get anatomy project
         anatomy = instance.context.data['anatomy']
@@ -65,10 +68,17 @@ class ExtractBurnin(pype.api.Extractor):
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
 
+            if "multipartExr" in repre.get("tags", []):
+                # ffmpeg doesn't support multipart exrs
+                continue
+
             if "burnin" not in repre.get("tags", []):
                 continue
 
             is_sequence = "sequence" in repre.get("tags", [])
+
+            # no handles switch from profile tags
+            no_handles = "no-handles" in repre.get("tags", [])
 
             stagingdir = repre["stagingDir"]
             filename = "{0}".format(repre["files"])
@@ -100,6 +110,41 @@ class ExtractBurnin(pype.api.Extractor):
             _prep_data["representation"] = repre["name"]
             filled_anatomy = anatomy.format_all(_prep_data)
             _prep_data["anatomy"] = filled_anatomy.get_solved()
+
+            # copy frame range variables
+            frame_start_cp = frame_start_handle
+            frame_end_cp = frame_end_handle
+            duration_cp = duration
+
+            if no_handles:
+                frame_start_cp = frame_start
+                frame_end_cp = frame_end
+                duration_cp = frame_end_cp - frame_start_cp + 1
+                _prep_data.update({
+                    "frame_start": frame_start_cp,
+                    "frame_end": frame_end_cp,
+                    "duration": duration_cp,
+                })
+
+            # dealing with slates
+            slate_frame_start = frame_start_cp
+            slate_frame_end = frame_end_cp
+            slate_duration = duration_cp
+
+            # exception for slate workflow
+            if ("slate" in instance.data["families"]):
+                if "slate-frame" in repre.get("tags", []):
+                    slate_frame_start = frame_start_cp - 1
+                    slate_frame_end = frame_end_cp
+                    slate_duration = duration_cp + 1
+
+            self.log.debug("__1 slate_frame_start: {}".format(slate_frame_start))
+
+            _prep_data.update({
+                "slate_frame_start": slate_frame_start,
+                "slate_frame_end": slate_frame_end,
+                "slate_duration": slate_duration
+            })
 
             burnin_data = {
                 "input": full_movie_path.replace("\\", "/"),

@@ -13,7 +13,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     `PYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
     """
-    order = pyblish.api.CollectorOrder - 0.0001
+    order = pyblish.api.CollectorOrder - 0.1
     targets = ["filesequence"]
     label = "Collect rendered frames"
 
@@ -35,7 +35,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     def _process_path(self, data):
         # validate basic necessary data
         data_err = "invalid json file - missing data"
-        required = ["asset", "user", "intent", "comment",
+        required = ["asset", "user", "comment",
                     "job", "instances", "session", "version"]
         assert all(elem in data.keys() for elem in required), data_err
 
@@ -84,6 +84,9 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
         session_set = False
         for path in paths:
+            path = path.format(**{
+                "root": os.environ["PYPE_STUDIO_PROJECTS_PATH"]
+            })
             data = self._load_json(path)
             if not session_set:
                 self.log.info("Setting session using data from file")

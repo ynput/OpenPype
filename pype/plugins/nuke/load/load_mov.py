@@ -92,6 +92,7 @@ class LoadMov(api.Loader):
         "source",
         "plate",
         "render",
+        "prerender",
         "review"] + presets["families"]
 
     representations = [

@@ -19,10 +19,16 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["nuke", "nukestudio"]
-    families = ["render.farm"]
+    families = ["render.farm", "prerender.farm"]
     optional = True
 
+    deadline_priority = 50
+    deadline_pool = ""
+    deadline_pool_secondary = ""
+    deadline_chunk_size = 1
+
     def process(self, instance):
+        families = instance.data["families"]
 
         node = instance[0]
         context = instance.context
@@ -36,8 +42,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         self._ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())
-        self._frame_start = int(instance.data["frameStart"])
-        self._frame_end = int(instance.data["frameEnd"])
+        self._frame_start = int(instance.data["frameStartHandle"])
+        self._frame_end = int(instance.data["frameEndHandle"])
 
         # get output path
         render_path = instance.data['path']
@@ -77,6 +83,15 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             instance.data["deadlineSubmissionJob"] = resp.json()
             instance.data["publishJobState"] = "Suspended"
 
+        # redefinition of families
+        if "render.farm" in families:
+            instance.data['family'] = 'write'
+            families.insert(0, "render2d")
+        elif "prerender.farm" in families:
+            instance.data['family'] = 'write'
+            families.insert(0, "prerender")
+        instance.data["families"] = families
+
     def payload_submit(self,
                        instance,
                        script_path,
@@ -89,7 +104,6 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
         jobname = "%s - %s" % (script_name, instance.name)
 
         output_filename_0 = self.preview_fname(render_path)
-        output_directory_0 = render_dir.replace("\\", "/")
 
         if not responce_data:
             responce_data = {}
@@ -99,6 +113,15 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             os.makedirs(render_dir)
         except OSError:
             pass
+
+        # define chunk and priority
+        chunk_size = instance.data.get("deadlineChunkSize")
+        if chunk_size == 0:
+            chunk_size = self.deadline_chunk_size
+
+        priority = instance.data.get("deadlinePriority")
+        if priority != 50:
+            priority = self.deadline_priority
 
         payload = {
             "JobInfo": {
@@ -111,10 +134,11 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": self._deadline_user,
 
-                "Priority": instance.data["deadlinePriority"],
+                "Priority": priority,
+                "ChunkSize": chunk_size,
 
-                "Pool": "2d",
-                "SecondaryPool": "2d",
+                "Pool": self.deadline_pool,
+                "SecondaryPool": self.deadline_pool_secondary,
 
                 "Plugin": "Nuke",
                 "Frames": "{start}-{end}".format(
