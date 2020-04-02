@@ -21,12 +21,13 @@ class PremierePrelaunch(PypeHook):
         self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self, *args, env: dict = None) -> bool:
+        from pype.services.rest_api.base_class import register_statics
+
         if not env:
             env = os.environ
 
-        EXTENSIONS_CACHE_PATH = env.get("EXTENSIONS_CACHE_PATH", None)
-        self.log.debug(
-            "_ EXTENSIONS_CACHE_PATH: `{}`".format(EXTENSIONS_CACHE_PATH))
+        PYPE_MODULE_ROOT = env.get("PYPE_MODULE_ROOT", None)
+
         asset = env["AVALON_ASSET"]
         task = env["AVALON_TASK"]
         workdir = env["AVALON_WORKDIR"]
@@ -46,7 +47,17 @@ class PremierePrelaunch(PypeHook):
             print("pyblish: Could not load integration: %s " % e)
 
         else:
-            # Setup integration
+            # start rest api static server
+            static_site_dir_path = os.path.join(
+                PYPE_MODULE_ROOT,
+                "pype",
+                "premiere",
+                "static_ppro").replace("\\", "/")
+            self.log.debug(
+                "_ static_site_dir_path: `{}`".format(static_site_dir_path))
+            register_statics("/ppro", static_site_dir_path)
+
+            # Premiere Setup integration
             from pype.premiere import lib as prlib
             importlib.reload(prlib)
             prlib.setup(env)
