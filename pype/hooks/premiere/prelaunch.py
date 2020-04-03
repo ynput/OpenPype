@@ -2,13 +2,17 @@ import os
 import traceback
 from pype.lib import PypeHook
 from pypeapp import Logger
+import importlib
+import avalon.api
+import pype.premiere
+from pype.premiere import lib as prlib
 
 
 class PremierePrelaunch(PypeHook):
     """
-    This hook will check if current workfile path has Unreal
+    This hook will check if current workfile path has Adobe Premiere
     project inside. IF not, it initialize it and finally it pass
-    path to the project by environment variable to Unreal launcher
+    path to the project by environment variable to Premiere launcher
     shell script.
     """
 
@@ -21,21 +25,26 @@ class PremierePrelaunch(PypeHook):
         self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self, *args, env: dict = None) -> bool:
-        from pype.services.rest_api.base_class import register_statics
 
         if not env:
             env = os.environ
-
-        PYPE_MODULE_ROOT = env.get("PYPE_MODULE_ROOT", None)
 
         asset = env["AVALON_ASSET"]
         task = env["AVALON_TASK"]
         workdir = env["AVALON_WORKDIR"]
         project_name = f"{asset}_{task}"
+        project_path = os.path.join(workdir, project_name)
+        os.makedirs(project_path, exist_ok=True)
 
-        import importlib
-        import avalon.api
-        import pype.premiere
+        project_file = os.path.join(project_path, f"{project_name}.pproj")
+        env["PYPE_ADOBE_PREMIERE_PROJECT_FILE"] = project_file
+
+        # TODO: try to set workfile for premiere if it is possible
+        # set workdir to the current path for premiere to open in it
+        self.log.debug("_ project_path: `{}`".format(project_path))
+        self.log.debug("_ project_file: `{}`".format(project_file))
+
+        # install premiere to avalon
         avalon.api.install(pype.premiere)
 
         try:
@@ -47,25 +56,8 @@ class PremierePrelaunch(PypeHook):
             print("pyblish: Could not load integration: %s " % e)
 
         else:
-            # start rest api static server
-            static_site_dir_path = os.path.join(
-                PYPE_MODULE_ROOT,
-                "pype",
-                "premiere",
-                "static_ppro").replace("\\", "/")
-            self.log.debug(
-                "_ static_site_dir_path: `{}`".format(static_site_dir_path))
-            register_statics("/ppro", static_site_dir_path)
-
             # Premiere Setup integration
-            from pype.premiere import lib as prlib
             importlib.reload(prlib)
             prlib.setup(env)
-
-        self.log.debug("_ self.signature: `{}`".format(self.signature))
-        self.log.debug("_ asset: `{}`".format(asset))
-        self.log.debug("_ task: `{}`".format(task))
-        self.log.debug("_ workdir: `{}`".format(workdir))
-        self.log.debug("_ project_name: `{}`".format(project_name))
 
         return True
