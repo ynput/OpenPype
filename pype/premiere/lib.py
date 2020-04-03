@@ -57,6 +57,7 @@ def reload_pipeline():
     """
 
     import importlib
+    import pype.premiere
 
     api.uninstall()
 
@@ -73,13 +74,11 @@ def reload_pipeline():
         log.info("Reloading module: {}...".format(module))
         try:
             module = importlib.import_module(module)
-            reload(module)
+            importlib.reload(module)
         except Exception as e:
             log.warning("Cannot reload module: {}".format(e))
-            importlib.reload(module)
 
-    import avalon.premiere
-    api.install(avalon.premiere)
+    api.install(pype.premiere)
 
 
 def setup(env=None):
@@ -151,11 +150,11 @@ def clearing_caches_ui():
 
 
 def test_rest_api_server():
-    from pprint import pformat
+    # from pprint import pformat
     rest_url = os.getenv("PYPE_REST_API_URL")
     project_name = "{AVALON_PROJECT}".format(**dict(os.environ))
     URL = "/".join((rest_url,
-                    "avalon/projects",
+                    "adobe/projects",
                     project_name))
     log.debug("__ URL: {}".format(URL))
     try:
