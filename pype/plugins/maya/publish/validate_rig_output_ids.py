@@ -38,7 +38,8 @@ class ValidateRigOutputIds(pyblish.api.InstancePlugin):
         if compute:
             out_set = next(x for x in instance if x.endswith("out_SET"))
             instance_nodes = pc.sets(out_set, query=True)
-            instance_nodes.extend([x.getShape() for x in instance_nodes if x.getShape()])
+            instance_nodes.extend(
+                [x.getShape() for x in instance_nodes if x.getShape()])
 
             scene_nodes = pc.ls(type="transform") + pc.ls(type="mesh")
             scene_nodes = set(scene_nodes) - set(instance_nodes)
