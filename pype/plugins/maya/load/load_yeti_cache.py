@@ -6,10 +6,11 @@ from collections import defaultdict
 
 from maya import cmds
 
-from avalon import api
+from avalon import api, io
 from avalon.maya import lib as avalon_lib, pipeline
 from pype.maya import lib
 from pypeapp import config
+from pprint import pprint
 
 
 class YetiCacheLoader(api.Loader):
@@ -101,12 +102,26 @@ class YetiCacheLoader(api.Loader):
 
     def update(self, container, representation):
 
+        io.install()
         namespace = container["namespace"]
         container_node = container["objectName"]
+        # import web_pdb; web_pdb.set_trace()
+
+        fur_settings = io.find_one(
+            {"parent": representation["parent"], "name": "fursettings"}
+        )
+
+        pprint({"parent": representation["parent"], "name": "fursettings"})
+        pprint(fur_settings)
+        assert fur_settings is not None, (
+            "cannot find fursettings representation"
+        )
+
+        settings_fname = api.get_representation_path(fur_settings)
         path = api.get_representation_path(representation)
         # Get all node data
-        fname, ext = os.path.splitext(path)
-        settings_fname = "{}.fursettings".format(fname)
+        # fname, ext = os.path.splitext(path)
+        # settings_fname = "{}.fursettings".format(fname)
         with open(settings_fname, "r") as fp:
             settings = json.load(fp)
 
@@ -147,13 +162,14 @@ class YetiCacheLoader(api.Loader):
 
             cmds.delete(to_remove)
 
+        # replace frame in filename with %04d
+        RE_frame = re.compile(r"(\d+)(\.fur)$")
+        file_name = re.sub(RE_frame, r"%04d\g<2>", os.path.basename(path))
         for cb_id, data in meta_data_lookup.items():
 
             # Update cache file name
-            file_name = data["name"].replace(":", "_")
-            cache_file_path = "{}.%04d.fur".format(file_name)
             data["attrs"]["cacheFileName"] = os.path.join(
-                path, cache_file_path)
+                os.path.dirname(path), file_name)
 
             if cb_id not in scene_lookup:
 
@@ -197,6 +213,13 @@ class YetiCacheLoader(api.Loader):
                     yeti_node = yeti_nodes[0]
 
                     for attr, value in data["attrs"].items():
+                        # import web_pdb; web_pdb.set_trace()
+                        # handle empty attribute strings. Those are reported
+                        # as None, so their type is NoneType and this is not
+                        # supported on attributes in Maya. We change it to
+                        # empty string.
+                        if value is None:
+                            value = ""
                         lib.set_attribute(attr, value, yeti_node)
 
         cmds.setAttr("{}.representation".format(container_node),
