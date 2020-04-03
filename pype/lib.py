@@ -887,20 +887,15 @@ def load_containers_by_asset_data(
     }
 
     for subset_id, repres in valid_repres_by_subset_id.items():
-        subset = valid_subsets_by_id[subset_id]
-        subset_name = subset["name"]
+        subset_name = valid_subsets_by_id[subset_id]["name"]
 
         variant = variants_per_subset_id[subset_id]
-
-        variant_loader_names = variant["loaders"]
-        variant_loader_count = len(variant_loader_names)
-
-        variant_repre_names = variant["repre_names"]
-        variant_repre_count = len(variant_repre_names)
+        loaders_last_idx = len(variant["loaders"]) - 1
+        repre_names_last_idx = len(variant["repre_names"]) - 1
 
         is_loaded = False
         for repre_name_idx, variant_repre_name in enumerate(
-                variant_repre_names
+            variant["repre_names"]
         ):
             found_repre = None
             for repre in repres:
@@ -912,7 +907,7 @@ def load_containers_by_asset_data(
             if not found_repre:
                 continue
 
-            for loader_idx, loader_name in enumerate(variant_loader_names):
+            for loader_idx, loader_name in enumerate(variant["loaders"]):
                 if is_loaded:
                     break
 
@@ -942,9 +937,9 @@ def load_containers_by_asset_data(
                         )
 
                     msg = "Loading failed."
-                    if loader_idx < (variant_loader_count - 1):
+                    if loader_idx < loaders_last_idx:
                         msg += " Trying next loader."
-                    elif repre_name_idx < (variant_repre_count - 1):
+                    elif repre_name_idx < repre_names_last_idx:
                         msg += (
                             " Loading of subset `{}` was not successful."
                         ).format(subset_name)
@@ -1106,7 +1101,7 @@ def load_containers_to_workfile():
 
     # Skip if there are any loaders
     if not loaders_by_name:
-        print("There are no registered loaders.")
+        log.warning("There are no registered loaders.")
         return
 
     # Get current task name
@@ -1137,7 +1132,8 @@ def load_containers_to_workfile():
 
     elif not current_context:
         log.warning((
-            "Current task `{}` doesn't have any loading preset for it's context."
+            "Current task `{}` doesn't have any loading"
+            " preset for it's context."
         ).format(current_task_name))
 
     elif not link_context:
@@ -1160,8 +1156,8 @@ def load_containers_to_workfile():
         if link_assets:
             assets.extend(link_assets)
 
-    # Skip if there are any assets
-    # - this may happend if only linked mapping is set and there are not links
+    # Skip if there are no assets. This can happen if only linked mapping is
+    # set and there are no links for his asset.
     if not assets:
         log.warning("Asset does not have linked assets. Nothing to process.")
         return
