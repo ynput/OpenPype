@@ -711,7 +711,17 @@ class PypeHook:
         pass
 
 
-def get_workfile_build_presets(task_name):
+def get_workfile_build_preset(task_name):
+    """ Returns preset variant to build workfile for task name.
+
+    Presets are loaded for current project set in io.Session["AVALON_PROJECT"],
+    filtered by registered host and entered task name.
+
+    :param task_name: Task name used for filtering build presets.
+    :type task_name: str
+    :return: preset per eneter task
+    :rtype: dict | None
+    """
     host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
     presets = config.get_presets(io.Session["AVALON_PROJECT"])
     # Get presets for host
@@ -739,15 +749,15 @@ def get_workfile_build_presets(task_name):
 
 
 def load_containers_by_asset_data(
-    asset_entity_data, workfile_presets, loaders_by_name
+    asset_entity_data, workfile_preset, loaders_by_name
 ):
-    if not asset_entity_data or not workfile_presets or not loaders_by_name:
+    if not asset_entity_data or not workfile_preset or not loaders_by_name:
         return
 
     asset_entity = asset_entity_data["asset_entity"]
     # Filter workfile presets by available loaders
     valid_variants = []
-    for variant in workfile_presets:
+    for variant in workfile_preset:
         variant_loaders = variant.get("loaders")
         if not variant_loaders:
             log.warning((
@@ -755,14 +765,15 @@ def load_containers_by_asset_data(
             ).format(json.dumps(variant, indent=4)))
             continue
 
-        found = False
+        valid_variant = None
         for loader_name in variant_loaders:
             if loader_name in loaders_by_name:
-                valid_variants.append(variant)
-                found = True
+                valid_variant = variant
                 break
 
-        if not found:
+        if valid_variant:
+            valid_variants.append(valid_variant)
+        else:
             log.warning(
                 "Loaders in Workfile variant are not available: {0}".format(
                     json.dumps(variant, indent=4)
@@ -833,7 +844,7 @@ def load_containers_by_asset_data(
                 valid_subsets_by_id[subset_id] = subset
                 variants_per_subset_id[subset_id] = variant
 
-            # break variants loop if got here
+            # break variants loop on finding the first matching variant
             break
 
     if not valid_subsets_by_id:
@@ -1071,8 +1082,6 @@ def load_containers_to_workfile():
         ...
     }]
     """
-    io.install()
-
     # Get current asset name and entity
     current_asset_name = io.Session["AVALON_ASSET"]
     current_asset_entity = io.find_one({
@@ -1101,13 +1110,13 @@ def load_containers_to_workfile():
         return
 
     # Get current task name
-    current_task_name = os.environ["AVALON_TASK"]
+    current_task_name = io.Session["AVALON_TASK"]
     current_task_name_low = current_task_name.lower()
     # Load workfile presets for task
-    workfile_presets = get_workfile_build_presets(current_task_name_low)
+    workfile_preset = get_workfile_build_preset(current_task_name_low)
 
     # Skip if there are any presets for task
-    if not workfile_presets:
+    if not workfile_preset:
         log.warning(
             "Current task `{}` does not have any loading preset.".format(
                 current_task_name
@@ -1116,9 +1125,9 @@ def load_containers_to_workfile():
         return
 
     # Get presets for loading current asset
-    current_context = workfile_presets.get("current_context")
+    current_context = workfile_preset.get("current_context")
     # Get presets for loading linked assets
-    link_context = workfile_presets.get("linked_assets")
+    link_context = workfile_preset.get("linked_assets")
     # Skip if both are missing
     if not current_context and not link_context:
         log.warning("Current task `{}` has empty loading preset.".format(
