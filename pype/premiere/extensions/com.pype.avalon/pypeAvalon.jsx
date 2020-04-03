@@ -11,24 +11,29 @@
  * then your use, modification, or distribution of it requires the prior
  * written permission of Adobe.
  **************************************************************************/
-var json2 = '~/AppData/Roaming/Adobe/CEP/extensions/com.pype.avalon/js/json2.js';
-$.evalFile(json2);
 
-
-if (typeof ($) == 'undefined') {
-  $ = {};
+if (typeof ($) === 'undefined') {
+  var $ = {};
 }
 
-if (typeof (pype) == 'undefined') {
+if (typeof (pype) === 'undefined') {
   var pype = {};
 }
 
-if (typeof (br) == 'undefined') {
+if (typeof (br) === 'undefined') {
   var br = {};
 }
 
-function keepExtention() {
-  return app.setExtensionPersistent("com.pype.avalon", 0);
+if (typeof (app) === 'undefined') {
+  var app = {};
+}
+
+if (typeof (JSON) === 'undefined') {
+  var JSON = {};
+}
+
+function keepExtention () {
+  return app.setExtensionPersistent('com.pype.avalon', 0);
 }
 
 keepExtention()
@@ -41,14 +46,14 @@ $._ext = {
       $.writeln(path);
     } catch (e) {
       $.writeln(e);
-      alert("Exception:" + e);
+      alert('Exception:' + e);
     }
   },
   // Evaluate all the files in the given folder
   evalFiles: function (jsxFolderPath) {
     var folder = new Folder(jsxFolderPath);
     if (folder.exists) {
-      var jsxFiles = folder.getFiles("*.jsx");
+      var jsxFiles = folder.getFiles('*.jsx');
       for (var i = 0; i < jsxFiles.length; i++) {
         var jsxFile = jsxFiles[i];
         $._ext.evalFile(jsxFile);
@@ -88,5 +93,4 @@ $._ext = {
 };
 
 // var dalsiJsxFile = 'C:\\Users\\hubert\\CODE\\pype-setup\\repos\\pype-config\\pype\\premiere\\extensions\\com.pype.avalon\\jsx\\pype.jsx';
-// // $._ext.evalFile(dalsiJsxFile);
 // $.evalFile(dalsiJsxFile);

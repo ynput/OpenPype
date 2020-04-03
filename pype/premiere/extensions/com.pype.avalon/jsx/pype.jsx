@@ -1,4 +1,4 @@
-/* global app, qe, $, ProjectItemType */
+﻿/* global app, qe, $, ProjectItemType */
 /*
               .____ _ ___ .____.______
 --- - - --   /  .  \//  //  .  \  ___/ --- ---- - -
@@ -6,13 +6,17 @@
            /__/ /___/  /__/ /______/
           ._- -=[ PyPe 4 3veR ]=- -_.
 */
+if (typeof (JSON) === 'undefined') {
+  var json2 = 'C:\\Users\\jezsc\\CODE\\pype-setup\\repos\\pype\\pype\\premiere\\extensions\\com.pype.avalon\\js\\json2.js';
+  $.evalFile(json2);
+}
 
 if (ExternalObject.AdobeXMPScript === undefined) {
   ExternalObject.AdobeXMPScript = new ExternalObject('lib:AdobeXMPScript');
 }
 
 // variable pype is defined in pypeAvalon.jsx
-pype = {
+var pype = {
   addNewTrack: function (numTracks) {
     app.enableQE();
     var sequence = app.project.activeSequence;
@@ -191,8 +195,8 @@ pype = {
     activeSequence.removeEmptyAudioTracks();
   },
   setEnvs: function (env) {
-    for (key in env) {
-      // $.writeln((key + ': ' + env[key]));
+    for (var key in env) {
+      $.writeln((key + ': ' + env[key]));
       $.setenv(key, env[key])
     };
   },
@@ -933,7 +937,7 @@ pype = {
             var outFileTest = new File(fullPathToFile);
 
             if (outFileTest.exists) {
-              var destroyExisting = confirm("A file with that name already exists; overwrite?", false, "Are you sure...?");
+              var destroyExisting = confirm('A file with that name already exists; overwrite?', false, 'Are you sure...?');
               if (destroyExisting) {
                 outFileTest.remove();
                 outFileTest.close();
@@ -963,14 +967,14 @@ pype = {
             return file;
           }
         } else {
-          $._PPP_.updateEventPanel("Could not find output preset.");
+          $._PPP_.updateEventPanel('Could not find output preset.');
         }
       } else {
-        $._PPP_.updateEventPanel("Could not find/create output path.");
+        $._PPP_.updateEventPanel('Could not find/create output path.');
       }
       projPath.close();
     } else {
-      $._PPP_.updateEventPanel("No active sequence.");
+      $._PPP_.updateEventPanel('No active sequence.');
     }
   },
 
@@ -983,7 +987,7 @@ pype = {
   },
   // $.getenv('PYTHONPATH')
   alert_message: function (message) {
-    alert(message, "WARNING", true);
+    alert(message, 'WARNING', true);
     app.setSDKEventMessage(message, 'error');
   },
   getWorkFileVersion: function () {
@@ -1121,5 +1125,5 @@ function include(arr, obj) {
   return false
 }
 
-// var instances = pype.getPyblishRequest();
-// pype.encodeRepresentation(JSON.parse(instances));
+//var instances = pype.getPyblishRequest();
+//pype.encodeRepresentation(JSON.parse(instances));

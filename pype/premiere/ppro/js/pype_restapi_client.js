@@ -1,7 +1,7 @@
-// pico connection of python module name
-var api = pico.importModule('api');
+// connecting pype module
+var api = {};
 
-function querySelector(parent) {
+function querySelector (parent) {
   return function (child) {
     return document.querySelector(parent).querySelector(child)
   };
@@ -9,7 +9,7 @@ function querySelector(parent) {
 
 var defs = {}
 
-function jumpTo(name) {
+function jumpTo (name) {
   var e = defs[name];
   document.querySelectorAll('.highlight').forEach(function (el) {
     el.classList.remove('highlight');
@@ -18,7 +18,7 @@ function jumpTo(name) {
   return false;
 }
 
-function unindent(code) {
+function unindent (code) {
   var lines = code.split('\n');
   var margin = -1;
   for (var j = 0; j < lines.length; j++) {
@@ -40,7 +40,7 @@ function unindent(code) {
 }
 
 
-function ready() {
+function ready () {
   // // set the <code> element of each example to the corresponding functions source
   // document.querySelectorAll('li pre code.js').forEach(function(e){
   //   var id = e.parentElement.parentElement.id;

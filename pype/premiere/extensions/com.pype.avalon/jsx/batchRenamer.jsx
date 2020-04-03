@@ -11,7 +11,7 @@ _______________.___._____________________
 */
 
 // variable br is defined in pypeAvalon.jsx
-br = {
+var br = {
   getSelectedVideoTrackItems: function () {
     var seq = app.project.activeSequence;
     var selected = [];
@@ -28,10 +28,10 @@ br = {
           var clip = videoTrack.clips[m];
 
           selected.push({
-            'name': clip.name,
-            'clip': clip,
-            'sequence': seq,
-            'videoTrack': videoTrack
+            name: clip.name,
+            clip: clip,
+            sequence: seq,
+            videoTrack: videoTrack
           });
         }
       }
