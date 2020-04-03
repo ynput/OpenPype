@@ -1,7 +1,7 @@
 import pyblish.api
 import avalon.api
 import os
-from pype.maya import lib
+from pype.maya import cmds
 
 
 class CollectMayaScene(pyblish.api.ContextPlugin):
