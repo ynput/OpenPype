@@ -1205,8 +1205,9 @@ def get_last_workfile_path(root, template, file_ext):
 
     version = None
     last_file_name = None
+    re_template = re.compile(template)
     for file_name in sorted(filtered_file_names):
-        match = re.match(template, file_name, **kwargs)
+        match = re.match(re_template, file_name, **kwargs)
         if not match:
             continue
 
