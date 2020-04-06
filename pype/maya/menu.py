@@ -4,7 +4,7 @@ import logging
 
 from avalon.vendor.Qt import QtWidgets, QtGui
 from avalon.maya import pipeline
-from ..lib import build_workfile
+from ..lib import BuildWorkfile
 import maya.cmds as cmds
 
 self = sys.modules[__name__]
@@ -29,7 +29,7 @@ def deferred():
         cmds.menuItem(
             "Build First Workfile",
             parent=pipeline._menu,
-            command=lambda *args: build_workfile()
+            command=lambda *args: BuildWorkfile.build_workfile()
         )
 
     log.info("Attempting to install scripts menu..")

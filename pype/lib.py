@@ -710,97 +710,13 @@ class PypeHook:
         pass
 
 
-def get_workfile_build_preset(task_name):
-    """ Returns preset profile to build workfile for task name.
-
-    Presets are loaded for current project set in io.Session["AVALON_PROJECT"],
-    filtered by registered host and entered task name.
-
-    :param task_name: Task name used for filtering build presets.
-    :type task_name: str
-    :return: preset per eneter task
-    :rtype: dict | None
-    """
-    host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
-    presets = config.get_presets(io.Session["AVALON_PROJECT"])
-    # Get presets for host
-    workfile_presets = presets["plugins"].get(host_name, {}).get(
-        "workfile_build"
-    )
-    if not workfile_presets:
-        return
-
-    task_name_low = task_name.lower()
-    per_task_preset = None
-    for profile in workfile_presets:
-        profile_tasks = profile.get("tasks")
-        if not profile_tasks:
-            continue
-
-        profile_tasks_low = [task.lower() for task in profile_tasks]
-        if task_name_low not in profile_tasks_low:
-            continue
-
-        per_task_preset = profile
-        break
-
-    return per_task_preset
+def get_linked_assets(asset_entity):
+    """Return linked assets for `asset_entity`."""
+    # TODO implement
+    return []
 
 
-def load_containers_by_asset_data(
-    asset_entity_data, workfile_preset, loaders_by_name
-):
-    if not asset_entity_data or not workfile_preset or not loaders_by_name:
-        return
-
-    asset_entity = asset_entity_data["asset_entity"]
-    # Filter workfile presets by available loaders
-    valid_profiles = []
-    for profile in workfile_preset:
-        profile_loaders = profile.get("loaders")
-        if not profile_loaders:
-            log.warning((
-                "Workfile profile has missing loaders configuration: {0}"
-            ).format(json.dumps(profile, indent=4)))
-            continue
-
-        valid_profile = None
-        for loader_name in profile_loaders:
-            if loader_name in loaders_by_name:
-                valid_profile = profile
-                break
-
-        if valid_profile:
-            valid_profiles.append(valid_profile)
-        else:
-            log.warning(
-                "Loaders in Workfile profile are not available: {0}".format(
-                    json.dumps(profile, indent=4)
-                )
-            )
-
-    if not valid_profiles:
-        log.warning("There are not valid Workfile profiles. Skipping process.")
-        return
-
-    log.debug("Valid Workfile profiles: {}".format(valid_profiles))
-
-    subsets = []
-    version_by_subset_id = {}
-    repres_by_version_id = {}
-    for subset_id, in_data in asset_entity_data["subsets"].items():
-        subsets.append(in_data["subset_entity"])
-        version_data = in_data["version"]
-        version_entity = version_data["version_entity"]
-        version_by_subset_id[subset_id] = version_entity
-        repres_by_version_id[version_entity["_id"]] = version_data["repres"]
-
-    if not subsets:
-        log.warning("There are not subsets for asset {0}".format(
-            asset_entity["name"]
-        ))
-        return
-
+def map_subsets_by_family(subsets):
     subsets_by_family = collections.defaultdict(list)
     for subset in subsets:
         family = subset["data"].get("family")
@@ -811,417 +727,544 @@ def load_containers_by_asset_data(
             family = families[0]
 
         subsets_by_family[family].append(subset)
+    return subsets_by_family
 
-    valid_subsets_by_id = {}
-    profiles_per_subset_id = {}
-    for family, subsets in subsets_by_family.items():
-        family_low = family.lower()
-        for profile in valid_profiles:
-            # Family filtering
-            profile_families = profile.get("families") or []
-            if not profile_families:
+
+class BuildWorkfile:
+    """Wrapper for build workfile process.
+
+    Load representations for current context by build presets. Build presets
+    are host related, since each host has it's loaders.
+    """
+
+    @classmethod
+    def build_workfile(cls):
+        """Main method of this wrapper.
+
+        Loads latest versions of current and linked assets to workfile by logic
+        stored in Workfile profiles from presets. Profiles are set by host,
+        filtered by current task name and used by families.
+
+        Each family can specify representation names and loaders for
+        representations and first available and successful loaded
+        representation is returned as container.
+
+        At the end you'll get list of loaded containers per each asset.
+
+        loaded_containers [{
+            "asset_entity": <AssetEntity1>,
+            "containers": [<Container1>, <Container2>, ...]
+        }, {
+            "asset_entity": <AssetEntity2>,
+            "containers": [<Container3>, ...]
+        }, {
+            ...
+        }]
+        """
+        # Get current asset name and entity
+        current_asset_name = io.Session["AVALON_ASSET"]
+        current_asset_entity = io.find_one({
+            "type": "asset",
+            "name": current_asset_name
+        })
+
+        # Skip if asset was not found
+        if not current_asset_entity:
+            print("Asset entity with name `{}` was not found".format(
+                current_asset_name
+            ))
+            return
+
+        # Prepare available loaders
+        loaders_by_name = {}
+        for loader in avalon.api.discover(avalon.api.Loader):
+            loader_name = loader.__name__
+            if loader_name in loaders_by_name:
+                raise KeyError(
+                    "Duplicated loader name {0}!".format(loader_name)
+                )
+            loaders_by_name[loader_name] = loader
+
+        # Skip if there are any loaders
+        if not loaders_by_name:
+            log.warning("There are no registered loaders.")
+            return
+
+        # Get current task name
+        current_task_name = io.Session["AVALON_TASK"]
+
+        # Load workfile presets for task
+        build_presets = cls.get_build_presets(current_task_name)
+
+        # Skip if there are any presets for task
+        if not build_presets:
+            log.warning(
+                "Current task `{}` does not have any loading preset.".format(
+                    current_task_name
+                )
+            )
+            return
+
+        # Get presets for loading current asset
+        current_context_profiles = build_presets.get("current_context")
+        # Get presets for loading linked assets
+        link_context_profiles = build_presets.get("linked_assets")
+        # Skip if both are missing
+        if not current_context_profiles and not link_context_profiles:
+            log.warning("Current task `{}` has empty loading preset.".format(
+                current_task_name
+            ))
+            return
+
+        elif not current_context_profiles:
+            log.warning((
+                "Current task `{}` doesn't have any loading"
+                " preset for it's context."
+            ).format(current_task_name))
+
+        elif not link_context_profiles:
+            log.warning((
+                "Current task `{}` doesn't have any"
+                "loading preset for it's linked assets."
+            ).format(current_task_name))
+
+        # Prepare assets to process by workfile presets
+        assets = []
+        current_asset_id = None
+        if current_context_profiles:
+            # Add current asset entity if preset has current context set
+            assets.append(current_asset_entity)
+            current_asset_id = current_asset_entity["_id"]
+
+        if link_context_profiles:
+            # Find and append linked assets if preset has set linked mapping
+            link_assets = get_linked_assets(current_asset_entity)
+            if link_assets:
+                assets.extend(link_assets)
+
+        # Skip if there are no assets. This can happen if only linked mapping
+        # is set and there are no links for his asset.
+        if not assets:
+            log.warning(
+                "Asset does not have linked assets. Nothing to process."
+            )
+            return
+
+        # Prepare entities from database for assets
+        prepared_entities = cls._collect_last_version_repres(assets)
+
+        # Load containers by prepared entities and presets
+        loaded_containers = []
+        # - Current asset containers
+        if current_asset_id and current_asset_id in prepared_entities:
+            current_context_data = prepared_entities.pop(current_asset_id)
+            loaded_data = cls.load_containers_by_asset_data(
+                current_context_data, current_context_profiles, loaders_by_name
+            )
+            if loaded_data:
+                loaded_containers.append(loaded_data)
+
+        # - Linked assets container
+        for linked_asset_data in prepared_entities.values():
+            loaded_data = cls.load_containers_by_asset_data(
+                linked_asset_data, link_context_profiles, loaders_by_name
+            )
+            if loaded_data:
+                loaded_containers.append(loaded_data)
+
+        # Return list of loaded containers
+        return loaded_containers
+
+    @classmethod
+    def get_build_presets(cls, task_name):
+        """ Returns presets to build workfile for task name.
+
+        Presets are loaded for current project set in
+        io.Session["AVALON_PROJECT"], filtered by registered host
+        and entered task name.
+
+        :param task_name: Task name used for filtering build presets.
+        :type task_name: str
+        :return: preset per eneter task
+        :rtype: dict | None
+        """
+        host_name = avalon.api.registered_host().__name__.rsplit(".", 1)[-1]
+        presets = config.get_presets(io.Session["AVALON_PROJECT"])
+        # Get presets for host
+        build_presets = (
+            presets["plugins"]
+            .get(host_name, {})
+            .get("workfile_build")
+        )
+        if not build_presets:
+            return
+
+        task_name_low = task_name.lower()
+        per_task_preset = None
+        for preset in build_presets:
+            preset_tasks = preset.get("tasks") or []
+            preset_tasks_low = [task.lower() for task in preset_tasks]
+            if task_name_low in preset_tasks_low:
+                per_task_preset = preset
+                break
+
+        return per_task_preset
+
+    @classmethod
+    def _filter_workfile_profiles(cls, workfile_profiles, loaders_by_name):
+        """ Filter and prepare workfile presets by available loaders.
+
+        Valid profile must have "loaders", "families" and "repre_names" keys
+        with valid values.
+        - "loaders" expects list of strings representing possible loaders.
+        - "families" expects list of strings for filtering
+                     by main subset family.
+        - "repre_names" expects list of strings for filtering by
+                        representation name.
+
+        Lowered "families" and "repre_names" are prepared for each profile with
+        all required keys.
+        """
+        valid_profiles = []
+        for profile in workfile_profiles:
+            # Check loaders
+            profile_loaders = profile.get("loaders")
+            if not profile_loaders:
+                log.warning((
+                    "Workfile profile has missing loaders configuration: {0}"
+                ).format(json.dumps(profile, indent=4)))
                 continue
 
-            profile_families_low = [fam.lower() for fam in profile_families]
-            if family_low not in profile_families_low:
-                continue
-
-            # Regex filtering (optional)
-            profile_regexes = profile.get("subset_name_filters")
-            for subset in subsets:
-                if profile_regexes:
-                    valid = False
-                    for pattern in profile_regexes:
-                        if re.match(pattern, subset["name"]):
-                            valid = True
-                            break
-
-                    if not valid:
-                        continue
-
-                subset_id = subset["_id"]
-                valid_subsets_by_id[subset_id] = subset
-                profiles_per_subset_id[subset_id] = profile
-
-            # break profiles loop on finding the first matching profile
-            break
-
-    if not valid_subsets_by_id:
-        log.warning("There are not valid subsets.")
-        return
-
-    log.debug("Valid subsets: {}".format(valid_subsets_by_id.values()))
-
-    valid_repres_by_subset_id = collections.defaultdict(list)
-    for subset_id, _subset_entity in valid_subsets_by_id.items():
-        profile = profiles_per_subset_id[subset_id]
-        profile_repre_names = profile.get("repre_names")
-        if not profile_repre_names:
-            continue
-
-        # Lower names
-        profile_repre_names = [name.lower() for name in profile_repre_names]
-
-        version_entity = version_by_subset_id[subset_id]
-        version_id = version_entity["_id"]
-        repres = repres_by_version_id[version_id]
-        for repre in repres:
-            repre_name_low = repre["name"].lower()
-            if repre_name_low in profile_repre_names:
-                valid_repres_by_subset_id[subset_id].append(repre)
-
-    # DEBUG message
-    msg = "Valid representations for Asset: `{}`".format(asset_entity["name"])
-    for subset_id, repres in valid_repres_by_subset_id.items():
-        subset = valid_subsets_by_id[subset_id]
-        msg += "\n# Subset Name/ID: `{}`/{}".format(subset["name"], subset_id)
-        for repre in repres:
-            msg += "\n## Repre name: `{}`".format(repre["name"])
-
-    log.debug(msg)
-
-    loaded_containers = {
-        "asset_entity": asset_entity,
-        "containers": []
-    }
-
-    for subset_id, repres in valid_repres_by_subset_id.items():
-        subset_name = valid_subsets_by_id[subset_id]["name"]
-
-        profile = profiles_per_subset_id[subset_id]
-        loaders_last_idx = len(profile["loaders"]) - 1
-        repre_names_last_idx = len(profile["repre_names"]) - 1
-
-        is_loaded = False
-        for repre_name_idx, profile_repre_name in enumerate(
-            profile["repre_names"]
-        ):
-            found_repre = None
-            for repre in repres:
-                repre_name = repre["name"]
-                if repre_name == profile_repre_name:
-                    found_repre = repre
+            # Check if any loader is available
+            loaders_match = False
+            for loader_name in profile_loaders:
+                if loader_name in loaders_by_name:
+                    loaders_match = True
                     break
 
-            if not found_repre:
+            if not loaders_match:
+                log.warning((
+                    "All loaders from Workfile profile are not available: {0}"
+                ).format(json.dumps(profile, indent=4)))
                 continue
 
-            for loader_idx, loader_name in enumerate(profile["loaders"]):
+            # Check families
+            profile_families = profile.get("families")
+            if not profile_families:
+                log.warning((
+                    "Workfile profile is missing families configuration: {0}"
+                ).format(json.dumps(profile, indent=4)))
+                continue
+
+            # Check representation names
+            profile_repre_names = profile.get("repre_names")
+            if not profile_repre_names:
+                log.warning((
+                    "Workfile profile is missing"
+                    " representation names filtering: {0}"
+                ).format(json.dumps(profile, indent=4)))
+                continue
+
+            # Prepare lowered families and representation names
+            profile["families_lowered"] = [
+                fam.lower() for fam in profile_families
+            ]
+            profile["repre_names_lowered"] = [
+                name.lower() for name in profile_repre_names
+            ]
+
+            valid_profiles.append(profile)
+
+        return valid_profiles
+
+    @classmethod
+    def _prepare_profile_for_subsets(cls, subsets, profiles):
+        # Prepare subsets
+        subsets_by_family = map_subsets_by_family(subsets)
+
+        profiles_per_subset_id = {}
+        for family, subsets in subsets_by_family.items():
+            family_low = family.lower()
+            for profile in profiles:
+                # Skip profile if does not contain family
+                if family_low not in profile["families_lowered"]:
+                    continue
+
+                # Precompile name filters as regexes
+                profile_regexes = profile.get("subset_name_filters")
+                if profile_regexes:
+                    _profile_regexes = []
+                    for regex in profile_regexes:
+                        _profile_regexes.append(re.compile(regex))
+                    profile_regexes = _profile_regexes
+
+                # TODO prepare regex compilation
+                for subset in subsets:
+                    # Verify regex filtering (optional)
+                    if profile_regexes:
+                        valid = False
+                        for pattern in profile_regexes:
+                            if re.match(pattern, subset["name"]):
+                                valid = True
+                                break
+
+                        if not valid:
+                            continue
+
+                    profiles_per_subset_id[subset["_id"]] = profile
+
+                # break profiles loop on finding the first matching profile
+                break
+        return profiles_per_subset_id
+
+    @classmethod
+    def load_containers_by_asset_data(
+        cls, asset_entity_data, build_profiles, loaders_by_name
+    ):
+        # Make sure all data are not empty
+        if not asset_entity_data or not build_profiles or not loaders_by_name:
+            return
+
+        asset_entity = asset_entity_data["asset_entity"]
+
+        valid_profiles = cls._filter_workfile_profiles(
+            build_profiles, loaders_by_name
+        )
+        if not valid_profiles:
+            log.warning(
+                "There are not valid Workfile profiles. Skipping process."
+            )
+            return
+
+        log.debug("Valid Workfile profiles: {}".format(valid_profiles))
+
+        subsets_by_id = {}
+        version_by_subset_id = {}
+        repres_by_version_id = {}
+        for subset_id, in_data in asset_entity_data["subsets"].items():
+            subset_entity = in_data["subset_entity"]
+            subsets_by_id[subset_entity["_id"]] = subset_entity
+
+            version_data = in_data["version"]
+            version_entity = version_data["version_entity"]
+            version_by_subset_id[subset_id] = version_entity
+            repres_by_version_id[version_entity["_id"]] = (
+                version_data["repres"]
+            )
+
+        if not subsets_by_id:
+            log.warning("There are not subsets for asset {0}".format(
+                asset_entity["name"]
+            ))
+            return
+
+        profiles_per_subset_id = cls._prepare_profile_for_subsets(
+            subsets_by_id.values(), valid_profiles
+        )
+        if not profiles_per_subset_id:
+            log.warning("There are not valid subsets.")
+            return
+
+        valid_repres_by_subset_id = collections.defaultdict(list)
+        for subset_id, profile in profiles_per_subset_id.items():
+            profile_repre_names = profile["repre_names_lowered"]
+
+            version_entity = version_by_subset_id[subset_id]
+            version_id = version_entity["_id"]
+            repres = repres_by_version_id[version_id]
+            for repre in repres:
+                repre_name_low = repre["name"].lower()
+                if repre_name_low in profile_repre_names:
+                    valid_repres_by_subset_id[subset_id].append(repre)
+
+        # DEBUG message
+        msg = "Valid representations for Asset: `{}`".format(
+            asset_entity["name"]
+        )
+        for subset_id, repres in valid_repres_by_subset_id.items():
+            subset = subsets_by_id[subset_id]
+            msg += "\n# Subset Name/ID: `{}`/{}".format(
+                subset["name"], subset_id
+            )
+            for repre in repres:
+                msg += "\n## Repre name: `{}`".format(repre["name"])
+
+        log.debug(msg)
+
+        containers = cls._load_containers(
+            valid_repres_by_subset_id, subsets_by_id,
+            profiles_per_subset_id, loaders_by_name
+        )
+
+        return {
+            "asset_entity": asset_entity,
+            "containers": containers
+        }
+
+    @classmethod
+    def _load_containers(
+        cls, repres_by_subset_id, subsets_by_id,
+        profiles_per_subset_id, loaders_by_name
+    ):
+        loaded_containers = []
+        for subset_id, repres in repres_by_subset_id.items():
+            subset_name = subsets_by_id[subset_id]["name"]
+
+            profile = profiles_per_subset_id[subset_id]
+            loaders_last_idx = len(profile["loaders"]) - 1
+            repre_names_last_idx = len(profile["repre_names_lowered"]) - 1
+
+            is_loaded = False
+            for repre_name_idx, profile_repre_name in enumerate(
+                profile["repre_names_lowered"]
+            ):
+                # Break iteration if representation was already loaded
                 if is_loaded:
                     break
 
-                loader = loaders_by_name.get(loader_name)
-                if not loader:
+                found_repre = None
+                for repre in repres:
+                    repre_name = repre["name"].lower()
+                    if repre_name == profile_repre_name:
+                        found_repre = repre
+                        break
+
+                if not found_repre:
                     continue
-                try:
-                    container = avalon.api.load(
-                        loader,
-                        found_repre["_id"],
-                        name=subset_name
-                    )
-                    loaded_containers["containers"].append(container)
-                    is_loaded = True
 
-                except Exception as exc:
-                    if exc == pipeline.IncompatibleLoaderError:
-                        log.info((
-                            "Loader `{}` is not compatible with"
-                            " representation `{}`"
-                        ).format(loader_name, repre["name"]))
+                for loader_idx, loader_name in enumerate(profile["loaders"]):
+                    if is_loaded:
+                        break
 
-                    else:
-                        log.error(
-                            "Unexpected error happened during loading",
-                            exc_info=True
+                    loader = loaders_by_name.get(loader_name)
+                    if not loader:
+                        continue
+                    try:
+                        container = avalon.api.load(
+                            loader,
+                            found_repre["_id"],
+                            name=subset_name
                         )
+                        loaded_containers.append(container)
+                        is_loaded = True
 
-                    msg = "Loading failed."
-                    if loader_idx < loaders_last_idx:
-                        msg += " Trying next loader."
-                    elif repre_name_idx < repre_names_last_idx:
-                        msg += (
-                            " Loading of subset `{}` was not successful."
-                        ).format(subset_name)
-                    else:
-                        msg += " Trying next representation."
-                    log.info(msg)
+                    except Exception as exc:
+                        if exc == pipeline.IncompatibleLoaderError:
+                            log.info((
+                                "Loader `{}` is not compatible with"
+                                " representation `{}`"
+                            ).format(loader_name, repre["name"]))
 
-            if is_loaded:
-                break
+                        else:
+                            log.error(
+                                "Unexpected error happened during loading",
+                                exc_info=True
+                            )
 
-    return loaded_containers
+                        msg = "Loading failed."
+                        if loader_idx < loaders_last_idx:
+                            msg += " Trying next loader."
+                        elif repre_name_idx < repre_names_last_idx:
+                            msg += (
+                                " Loading of subset `{}` was not successful."
+                            ).format(subset_name)
+                        else:
+                            msg += " Trying next representation."
+                        log.info(msg)
 
+        return loaded_containers
 
-def get_linked_assets(asset_entity):
-    """Return linked assets for `asset_entity`."""
-    # TODO implement
-    return []
+    @classmethod
+    def _collect_last_version_repres(cls, asset_entities):
+        """Collect subsets, versions and representations for asset_entities.
 
+        :param asset_entities: Asset entities for which want to find data
+        :type asset_entities: list
+        :return: collected entities
+        :rtype: dict
 
-def collect_last_version_repres(asset_entities):
-    """Collect subsets, versions and representations for asset_entities.
-
-    :param asset_entities: Asset entities for which want to find data
-    :type asset_entities: list
-    :return: collected entities
-    :rtype: dict
-
-    Example output:
-    ```
-    {
-        {Asset ID}: {
-            "asset_entity": <AssetEntity>,
-            "subsets": {
-                {Subset ID}: {
-                    "subset_entity": <SubsetEntity>,
-                    "version": {
-                        "version_entity": <VersionEntity>,
-                        "repres": [
-                            <RepreEntity1>, <RepreEntity2>, ...
-                        ]
-                    }
-                },
-                ...
-            }
-        },
-        ...
-    }
-    output[asset_id]["subsets"][subset_id]["version"]["repres"]
-    ```
-    """
-
-    if not asset_entities:
-        return {}
-
-    asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
-
-    subsets = list(io.find({
-        "type": "subset",
-        "parent": {"$in": asset_entity_by_ids.keys()}
-    }))
-    subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
-
-    sorted_versions = list(io.find({
-        "type": "version",
-        "parent": {"$in": subset_entity_by_ids.keys()}
-    }).sort("name", -1))
-
-    subset_id_with_latest_version = []
-    last_versions_by_id = {}
-    for version in sorted_versions:
-        subset_id = version["parent"]
-        if subset_id in subset_id_with_latest_version:
-            continue
-        subset_id_with_latest_version.append(subset_id)
-        last_versions_by_id[version["_id"]] = version
-
-    repres = io.find({
-        "type": "representation",
-        "parent": {"$in": last_versions_by_id.keys()}
-    })
-
-    output = {}
-    for repre in repres:
-        version_id = repre["parent"]
-        version = last_versions_by_id[version_id]
-
-        subset_id = version["parent"]
-        subset = subset_entity_by_ids[subset_id]
-
-        asset_id = subset["parent"]
-        asset = asset_entity_by_ids[asset_id]
-
-        if asset_id not in output:
-            output[asset_id] = {
-                "asset_entity": asset,
-                "subsets": {}
-            }
-
-        if subset_id not in output[asset_id]["subsets"]:
-            output[asset_id]["subsets"][subset_id] = {
-                "subset_entity": subset,
-                "version": {
-                    "version_entity": version,
-                    "repres": []
+        Example output:
+        ```
+        {
+            {Asset ID}: {
+                "asset_entity": <AssetEntity>,
+                "subsets": {
+                    {Subset ID}: {
+                        "subset_entity": <SubsetEntity>,
+                        "version": {
+                            "version_entity": <VersionEntity>,
+                            "repres": [
+                                <RepreEntity1>, <RepreEntity2>, ...
+                            ]
+                        }
+                    },
+                    ...
                 }
-            }
+            },
+            ...
+        }
+        output[asset_id]["subsets"][subset_id]["version"]["repres"]
+        ```
+        """
 
-        output[asset_id]["subsets"][subset_id]["version"]["repres"].append(
-            repre
-        )
+        if not asset_entities:
+            return {}
 
-    return output
+        asset_entity_by_ids = {asset["_id"]: asset for asset in asset_entities}
 
+        subsets = list(io.find({
+            "type": "subset",
+            "parent": {"$in": asset_entity_by_ids.keys()}
+        }))
+        subset_entity_by_ids = {subset["_id"]: subset for subset in subsets}
 
-def build_workfile():
-    """Load representations for current context as containers into workfile.
+        sorted_versions = list(io.find({
+            "type": "version",
+            "parent": {"$in": subset_entity_by_ids.keys()}
+        }).sort("name", -1))
 
-    Loads latest versions of current and linked assets to workfile by logic
-    stored in Workfile profiles from presets. Variants are set by host,
-    filtered by current task name and used by families.
+        subset_id_with_latest_version = []
+        last_versions_by_id = {}
+        for version in sorted_versions:
+            subset_id = version["parent"]
+            if subset_id in subset_id_with_latest_version:
+                continue
+            subset_id_with_latest_version.append(subset_id)
+            last_versions_by_id[version["_id"]] = version
 
-    Each family can specify representation names and loaders for
-    representations and first available and successful loaded representation is
-    returned as container.
+        repres = io.find({
+            "type": "representation",
+            "parent": {"$in": last_versions_by_id.keys()}
+        })
 
-    At the end you'll get list of loaded containers per each asset.
+        output = {}
+        for repre in repres:
+            version_id = repre["parent"]
+            version = last_versions_by_id[version_id]
 
-    loaded_containers [{
-        "asset_entity": <AssetEntity1>,
-        "containers": [<Container1>, <Container2>, ...]
-    }, {
-        "asset_entity": <AssetEntity2>,
-        "containers": [<Container3>, ...]
-    }, {
-        ...
-    }]
-    """
-    # Get current asset name and entity
-    current_asset_name = io.Session["AVALON_ASSET"]
-    current_asset_entity = io.find_one({
-        "type": "asset",
-        "name": current_asset_name
-    })
+            subset_id = version["parent"]
+            subset = subset_entity_by_ids[subset_id]
 
-    # Skip if asset was not found
-    if not current_asset_entity:
-        print("Asset entity with name `{}` was not found".format(
-            current_asset_name
-        ))
-        return
+            asset_id = subset["parent"]
+            asset = asset_entity_by_ids[asset_id]
 
-    # Prepare available loaders
-    loaders_by_name = {}
-    for loader in avalon.api.discover(avalon.api.Loader):
-        loader_name = loader.__name__
-        if loader_name in loaders_by_name:
-            raise KeyError("Duplicated loader name {0}!".format(loader_name))
-        loaders_by_name[loader_name] = loader
+            if asset_id not in output:
+                output[asset_id] = {
+                    "asset_entity": asset,
+                    "subsets": {}
+                }
 
-    # Skip if there are any loaders
-    if not loaders_by_name:
-        log.warning("There are no registered loaders.")
-        return
+            if subset_id not in output[asset_id]["subsets"]:
+                output[asset_id]["subsets"][subset_id] = {
+                    "subset_entity": subset,
+                    "version": {
+                        "version_entity": version,
+                        "repres": []
+                    }
+                }
 
-    # Get current task name
-    current_task_name = io.Session["AVALON_TASK"]
-    current_task_name_low = current_task_name.lower()
-    # Load workfile presets for task
-    workfile_preset = get_workfile_build_preset(current_task_name_low)
-
-    # Skip if there are any presets for task
-    if not workfile_preset:
-        log.warning(
-            "Current task `{}` does not have any loading preset.".format(
-                current_task_name
+            output[asset_id]["subsets"][subset_id]["version"]["repres"].append(
+                repre
             )
-        )
-        return
 
-    # Get presets for loading current asset
-    current_context = workfile_preset.get("current_context")
-    # Get presets for loading linked assets
-    link_context = workfile_preset.get("linked_assets")
-    # Skip if both are missing
-    if not current_context and not link_context:
-        log.warning("Current task `{}` has empty loading preset.".format(
-            current_task_name
-        ))
-        return
-
-    elif not current_context:
-        log.warning((
-            "Current task `{}` doesn't have any loading"
-            " preset for it's context."
-        ).format(current_task_name))
-
-    elif not link_context:
-        log.warning((
-            "Current task `{}` doesn't have any"
-            "loading preset for it's linked assets."
-        ).format(current_task_name))
-
-    # Prepare assets to process by workfile presets
-    assets = []
-    current_asset_id = None
-    if current_context:
-        # Add current asset entity if preset has current context set
-        assets.append(current_asset_entity)
-        current_asset_id = current_asset_entity["_id"]
-
-    if link_context:
-        # Find and append linked assets if preset has set linked mapping
-        link_assets = get_linked_assets(current_asset_entity)
-        if link_assets:
-            assets.extend(link_assets)
-
-    # Skip if there are no assets. This can happen if only linked mapping is
-    # set and there are no links for his asset.
-    if not assets:
-        log.warning("Asset does not have linked assets. Nothing to process.")
-        return
-
-    # Prepare entities from database for assets
-    prepared_entities = collect_last_version_repres(assets)
-
-    # Load containers by prepared entities and presets
-    loaded_containers = []
-    # - Current asset containers
-    if current_asset_id and current_asset_id in prepared_entities:
-        current_context_data = prepared_entities.pop(current_asset_id)
-        loaded_data = load_containers_by_asset_data(
-            current_context_data, current_context, loaders_by_name
-        )
-        if loaded_data:
-            loaded_containers.append(loaded_data)
-
-    # - Linked assets container
-    for linked_asset_data in prepared_entities.values():
-        loaded_data = load_containers_by_asset_data(
-            linked_asset_data, link_context, loaders_by_name
-        )
-        if loaded_data:
-            loaded_containers.append(loaded_data)
-
-    # Return list of loaded containers
-    return loaded_containers
-
-
-def get_last_workfile_path(root, template, file_ext):
-    template = re.sub("<.*?>", ".*?", template)
-    template = re.sub("{version.*}", "([0-9]+)", template)
-    template = re.sub("{comment.*?}", ".+?", template)
-    # template = pipeline._format_work_template(template)
-    template = "^" + template + "$"
-
-    all_file_names = []
-    if os.path.exists(root):
-        all_file_names = os.listdir(root)
-
-    filtered_file_names = [
-        file_name for file_name in all_file_names
-        if os.path.splitext(file_name)[1] == file_ext
-    ]
-
-    kwargs = {}
-    if platform.system() == "Windows":
-        kwargs["flags"] = re.IGNORECASE
-
-    version = None
-    last_file_name = None
-    re_template = re.compile(template)
-    for file_name in sorted(filtered_file_names):
-        match = re.match(re_template, file_name, **kwargs)
-        if not match:
-            continue
-
-        file_version = int(match.group(1))
-        if file_version >= version:
-            last_file_name = file_name
-            version = file_version + 1
-
-    last_file_path = None
-    if last_file_name:
-        last_file_path = os.path.join(root, last_file_name)
-
-    return last_file_path
+        return output
