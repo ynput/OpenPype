@@ -910,8 +910,8 @@ class BuildWorkfile:
         return per_task_preset
 
     @classmethod
-    def _filter_workfile_profiles(cls, workfile_profiles, loaders_by_name):
-        """ Filter and prepare workfile presets by available loaders.
+    def _filter_build_profiles(cls, build_profiles, loaders_by_name):
+        """ Filter build profiles by loaders and prepare process data.
 
         Valid profile must have "loaders", "families" and "repre_names" keys
         with valid values.
@@ -923,14 +923,21 @@ class BuildWorkfile:
 
         Lowered "families" and "repre_names" are prepared for each profile with
         all required keys.
+
+        :param build_profiles: Profiles for building workfile.
+        :type build_profiles: dict
+        :param loaders_by_name: Available loaders per name.
+        :type loaders_by_name: dict
+        :return: Filtered and prepared profiles.
+        :rtype: list
         """
         valid_profiles = []
-        for profile in workfile_profiles:
+        for profile in build_profiles:
             # Check loaders
             profile_loaders = profile.get("loaders")
             if not profile_loaders:
                 log.warning((
-                    "Workfile profile has missing loaders configuration: {0}"
+                    "Build profile has missing loaders configuration: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
 
@@ -943,7 +950,7 @@ class BuildWorkfile:
 
             if not loaders_match:
                 log.warning((
-                    "All loaders from Workfile profile are not available: {0}"
+                    "All loaders from Build profile are not available: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
 
@@ -951,7 +958,7 @@ class BuildWorkfile:
             profile_families = profile.get("families")
             if not profile_families:
                 log.warning((
-                    "Workfile profile is missing families configuration: {0}"
+                    "Build profile is missing families configuration: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
 
@@ -959,7 +966,7 @@ class BuildWorkfile:
             profile_repre_names = profile.get("repre_names")
             if not profile_repre_names:
                 log.warning((
-                    "Workfile profile is missing"
+                    "Build profile is missing"
                     " representation names filtering: {0}"
                 ).format(json.dumps(profile, indent=4)))
                 continue
@@ -978,6 +985,22 @@ class BuildWorkfile:
 
     @classmethod
     def _prepare_profile_for_subsets(cls, subsets, profiles):
+        """Select profile for each subset byt it's data.
+
+        Profiles are filtered for each subset individually.
+        Profile is filtered by subset's family, optionally by name regex and
+        representation names set in profile.
+        It is possible to not find matching profile for subset, in that case
+        subset is skipped and it is possible that none of subsets have
+        matching profile.
+
+        :param subsets: Subset documents.
+        :type subsets: list
+        :param profiles: Build profiles.
+        :type profiles: dict
+        :return: Profile by subset's id.
+        :rtype: dict
+        """
         # Prepare subsets
         subsets_by_family = map_subsets_by_family(subsets)
 
@@ -1020,13 +1043,26 @@ class BuildWorkfile:
     def load_containers_by_asset_data(
         cls, asset_entity_data, build_profiles, loaders_by_name
     ):
+        """Load containers for entered asset entity by Build profiles.
+
+        :param asset_entity_data: Prepared data with subsets, last version
+            and representations for specific asset.
+        :type asset_entity_data: dict
+        :param build_profiles: Build profiles.
+        :type build_profiles: dict
+        :param loaders_by_name: Available loaders per name.
+        :type loaders_by_name: dict
+        :return: Output contains asset document and loaded containers.
+        :rtype: dict
+        """
+
         # Make sure all data are not empty
         if not asset_entity_data or not build_profiles or not loaders_by_name:
             return
 
         asset_entity = asset_entity_data["asset_entity"]
 
-        valid_profiles = cls._filter_workfile_profiles(
+        valid_profiles = cls._filter_build_profiles(
             build_profiles, loaders_by_name
         )
         if not valid_profiles:
@@ -1105,6 +1141,29 @@ class BuildWorkfile:
         cls, repres_by_subset_id, subsets_by_id,
         profiles_per_subset_id, loaders_by_name
     ):
+        """Real load by collected data happens here.
+
+        Loading of representations per subset happens here. Each subset can
+        loads one representation. Loading is tried in specific order.
+        Representations are tried to load by names defined in configuration.
+        If subset has representation matching representation name each loader
+        is tried to load it until any is successful. If none of them was
+        successful then next reprensentation name is tried.
+        Subset process loop ends when any representation is loaded or
+        all matching representations were already tried.
+
+        :param repres_by_subset_id: Available representations mapped
+            by their parent (subset) id.
+        :type repres_by_subset_id: dict
+        :param subsets_by_id: Subset documents mapped by their id.
+        :type subsets_by_id: dict
+        :param profiles_per_subset_id: Build profiles mapped by subset id.
+        :type profiles_per_subset_id: dict
+        :param loaders_by_name: Available loaders per name.
+        :type loaders_by_name: dict
+        :return: Objects of loaded containers.
+        :rtype: list
+        """
         loaded_containers = []
         for subset_id, repres in repres_by_subset_id.items():
             subset_name = subsets_by_id[subset_id]["name"]
@@ -1112,6 +1171,10 @@ class BuildWorkfile:
             profile = profiles_per_subset_id[subset_id]
             loaders_last_idx = len(profile["loaders"]) - 1
             repre_names_last_idx = len(profile["repre_names_lowered"]) - 1
+
+            repre_by_low_name = {
+                repre["name"].lower(): repre for repre in repres
+            }
 
             is_loaded = False
             for repre_name_idx, profile_repre_name in enumerate(
@@ -1121,14 +1184,8 @@ class BuildWorkfile:
                 if is_loaded:
                     break
 
-                found_repre = None
-                for repre in repres:
-                    repre_name = repre["name"].lower()
-                    if repre_name == profile_repre_name:
-                        found_repre = repre
-                        break
-
-                if not found_repre:
+                repre = repre_by_low_name.get(profile_repre_name)
+                if not repre:
                     continue
 
                 for loader_idx, loader_name in enumerate(profile["loaders"]):
@@ -1141,7 +1198,7 @@ class BuildWorkfile:
                     try:
                         container = avalon.api.load(
                             loader,
-                            found_repre["_id"],
+                            repre["_id"],
                             name=subset_name
                         )
                         loaded_containers.append(container)
