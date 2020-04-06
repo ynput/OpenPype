@@ -32,7 +32,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 )
         return data
 
-    def _process_path(self, data):
+    def _process_path(self, data, root):
         # validate basic necessary data
         data_err = "invalid json file - missing data"
         required = ["asset", "user", "comment",
@@ -66,14 +66,32 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             os.environ["FTRACK_SERVER"] = ftrack["FTRACK_SERVER"]
 
         # now we can just add instances from json file and we are done
-        for instance in data.get("instances"):
+        for instance_data in data.get("instances"):
             self.log.info("  - processing instance for {}".format(
-                instance.get("subset")))
-            i = self._context.create_instance(instance.get("subset"))
-            self.log.info("remapping paths ...")
-            i.data["representations"] = [PypeLauncher().path_remapper(
-                data=r) for r in instance.get("representations")]
-            i.data.update(instance)
+                instance_data.get("subset")))
+            instance = self._context.create_instance(
+                instance_data.get("subset")
+            )
+            self.log.info("Filling stagignDir...")
+            instance.data.update(instance_data)
+
+            representations = []
+            for repre_data in instance_data.get("representations") or []:
+                staging_dir = repre_data.get("stagingDir")
+                if (
+                    not root
+                    or staging_dir is None
+                    or "{root" not in staging_dir
+                ):
+                    repre_data = PypeLauncher().path_remapper(data=repre_data)
+
+                else:
+                    repre_data["stagingDir"] = staging_dir.format(
+                        **{"root": root}
+                    )
+                representations.append(repre_data)
+
+            instance.data["representations"] = representations
 
     def process(self, context):
         self._context = context
@@ -106,4 +124,4 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 os.environ.update(data.get("session"))
                 session_set = True
             assert data, "failed to load json file"
-            self._process_path(data)
+            self._process_path(data, root)
