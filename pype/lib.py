@@ -11,7 +11,6 @@ import contextlib
 import subprocess
 import inspect
 from abc import ABCMeta, abstractmethod
-import platform
 
 from avalon import io, pipeline
 import six
