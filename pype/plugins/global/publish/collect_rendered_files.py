@@ -84,9 +84,6 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
         session_set = False
         for path in paths:
-            path = path.format(**{
-                "root": os.environ["PYPE_STUDIO_PROJECTS_PATH"]
-            })
             data = self._load_json(path)
             if not session_set:
                 self.log.info("Setting session using data from file")
