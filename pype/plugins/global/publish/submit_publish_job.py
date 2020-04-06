@@ -189,10 +189,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         output_dir = instance.data["outputDir"]
         # Convert output dir to `{root}/rest/of/path/...` with Anatomy
         anatomy = instance.context.data["anatomy"]
-        root_name = anatomy.templates["work"].get("root_name")
+        work_root_name = anatomy.templates["work"].get("root_name")
         success, rootless_path = (
             anatomy.roots.find_root_template_from_path(
-                output_dir, root_name
+                output_dir, work_root_name
             )
         )
         if not success:
@@ -426,12 +426,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
 
         representations = []
-        cols, rem = clique.assemble(exp_files)
+        collections, remainders = clique.assemble(exp_files)
         bake_render_path = instance.get("bakeRenderPath")
 
         # create representation for every collected sequence
-        for c in cols:
-            ext = c.tail.lstrip(".")
+        for collection in collections:
+            ext = collection.tail.lstrip(".")
             preview = False
             # if filtered aov name is found in filename, toggle it for
             # preview video rendering
@@ -440,7 +440,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                     for aov in self.aov_filter[app]:
                         if re.match(
                             r".+(?:\.|_)({})(?:\.|_).*".format(aov),
-                            list(c)[0]
+                            list(collection)[0]
                         ):
                             preview = True
                             break
@@ -452,11 +452,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             rep = {
                 "name": ext,
                 "ext": ext,
-                "files": [os.path.basename(f) for f in list(c)],
+                "files": [os.path.basename(f) for f in list(collection)],
                 "frameStart": int(instance.get("frameStartHandle")),
                 "frameEnd": int(instance.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
-                "stagingDir": os.path.dirname(list(c)[0]),
+                "stagingDir": os.path.dirname(list(collection)[0]),
                 "anatomy_template": "render",
                 "fps": instance.get("fps"),
                 "tags": ["review", "preview"] if preview else [],
@@ -467,16 +467,16 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             self._solve_families(instance, preview)
 
         # add reminders as representations
-        for r in rem:
-            ext = r.split(".")[-1]
+        for remainder in remainders:
+            ext = remainder.split(".")[-1]
             rep = {
                 "name": ext,
                 "ext": ext,
-                "files": os.path.basename(r),
-                "stagingDir": os.path.dirname(r),
+                "files": os.path.basename(remainder),
+                "stagingDir": os.path.dirname(remainder),
                 "anatomy_template": "publish",
             }
-            if r in bake_render_path:
+            if remainder in bake_render_path:
                 rep.update({
                     "fps": instance.get("fps"),
                     "anatomy_template": "render",
@@ -571,18 +571,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         except KeyError:
             source = context.data["currentFile"]
 
-        anatomy = context.data["anatomy"]
-        root_name = anatomy.templates["work"].get("root_name")
+        anatomy = instance.context.data["anatomy"]
+        work_root_name = anatomy.templates["work"].get("root_name")
         success, rootless_path = (
             anatomy.roots.find_root_template_from_path(
-                source, root_name
+                source, work_root_name
             )
         )
         if success:
-            orig_root_type = anatomy.roots._root_type
-            anatomy.roots._root_type = "mount"
-            source = rootless_path.format(**{"root": anatomy.roots})
-            anatomy.roots._root_type = orig_root_type
+            source = rootless_path
 
         else:
             # `rootless_path` is not set to `source` if none of roots match
@@ -627,13 +624,23 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         # look into instance data if representations are not having any
         # which are having tag `publish_on_farm` and include them
-        for r in instance.data.get("representations", []):
-            if "publish_on_farm" in r.get("tags"):
+        for repre in instance.data.get("representations", []):
+            staging_dir = repre.get("stagingDir")
+            if staging_dir:
+                success, rootless_staging_dir = (
+                    anatomy.roots.find_root_template_from_path(
+                        repre, work_root_name
+                    )
+                )
+                if success:
+                    repre["stagingDir"] = rootless_staging_dir
+
+            if "publish_on_farm" in repre.get("tags"):
                 # create representations attribute of not there
                 if "representations" not in instance_skeleton_data.keys():
                     instance_skeleton_data["representations"] = []
 
-                instance_skeleton_data["representations"].append(r)
+                instance_skeleton_data["representations"].append(repre)
 
         instances = None
         assert data.get("expectedFiles"), ("Submission from old Pype version"
