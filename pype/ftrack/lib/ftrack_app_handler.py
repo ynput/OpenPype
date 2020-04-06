@@ -264,7 +264,7 @@ class AppAction(BaseHandler):
             if execfile is None:
                 return {
                     "success": False,
-                    "message": "We didn't found launcher for {0}".format(
+                    "message": "We didn't find launcher for {0}".format(
                         self.label
                     )
                 }

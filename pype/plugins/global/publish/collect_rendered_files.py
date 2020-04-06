@@ -86,7 +86,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
         if project_name is None:
             root = None
             self.log.warning(
-                "Environment `AVLAON_PROJECT` was not found."
+                "Environment `AVALON_PROJECT` was not found."
                 "Could not set `root` which may cause issues."
             )
         else:

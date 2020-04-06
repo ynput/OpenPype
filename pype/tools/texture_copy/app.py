@@ -46,7 +46,7 @@ class TextureCopy:
         return asset
 
     def _get_destination_path(self, asset, project):
-        project_name = api.Session["AVALON_PROJECT"]
+        project_name = project["name"]
         hierarchy = ""
         parents = asset['data']['parents']
         if parents and len(parents) > 0:
@@ -63,8 +63,9 @@ class TextureCopy:
             "subset": 'Main',
             "hierarchy": hierarchy
         }
-        anatomy_filled = Anatomy(project_name).format(template_data)
-        return os.path.normpath(anatomy_filled['texture']['path'])
+        anatomy = Anatomy(project_name)
+        anatomy_filled = anatomy.format(template_data)
+        return anatomy_filled['texture']['path']
 
     def _get_version(self, path):
         versions = [0]
