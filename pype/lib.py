@@ -4,7 +4,6 @@ import types
 import re
 import uuid
 import json
-import getpass
 import collections
 import logging
 import itertools
@@ -712,7 +711,7 @@ class PypeHook:
 
 
 def get_workfile_build_preset(task_name):
-    """ Returns preset variant to build workfile for task name.
+    """ Returns preset profile to build workfile for task name.
 
     Presets are loaded for current project set in io.Session["AVALON_PROJECT"],
     filtered by registered host and entered task name.
@@ -733,16 +732,16 @@ def get_workfile_build_preset(task_name):
 
     task_name_low = task_name.lower()
     per_task_preset = None
-    for variant in workfile_presets:
-        variant_tasks = variant.get("tasks")
-        if not variant_tasks:
+    for profile in workfile_presets:
+        profile_tasks = profile.get("tasks")
+        if not profile_tasks:
             continue
 
-        variant_tasks_low = [task.lower() for task in variant_tasks]
-        if task_name_low not in variant_tasks_low:
+        profile_tasks_low = [task.lower() for task in profile_tasks]
+        if task_name_low not in profile_tasks_low:
             continue
 
-        per_task_preset = variant
+        per_task_preset = profile
         break
 
     return per_task_preset
@@ -756,35 +755,35 @@ def load_containers_by_asset_data(
 
     asset_entity = asset_entity_data["asset_entity"]
     # Filter workfile presets by available loaders
-    valid_variants = []
-    for variant in workfile_preset:
-        variant_loaders = variant.get("loaders")
-        if not variant_loaders:
+    valid_profiles = []
+    for profile in workfile_preset:
+        profile_loaders = profile.get("loaders")
+        if not profile_loaders:
             log.warning((
-                "Workfile variant has missing loaders configuration: {0}"
-            ).format(json.dumps(variant, indent=4)))
+                "Workfile profile has missing loaders configuration: {0}"
+            ).format(json.dumps(profile, indent=4)))
             continue
 
-        valid_variant = None
-        for loader_name in variant_loaders:
+        valid_profile = None
+        for loader_name in profile_loaders:
             if loader_name in loaders_by_name:
-                valid_variant = variant
+                valid_profile = profile
                 break
 
-        if valid_variant:
-            valid_variants.append(valid_variant)
+        if valid_profile:
+            valid_profiles.append(valid_profile)
         else:
             log.warning(
-                "Loaders in Workfile variant are not available: {0}".format(
-                    json.dumps(variant, indent=4)
+                "Loaders in Workfile profile are not available: {0}".format(
+                    json.dumps(profile, indent=4)
                 )
             )
 
-    if not valid_variants:
-        log.warning("There are not valid Workfile variants. Skipping process.")
+    if not valid_profiles:
+        log.warning("There are not valid Workfile profiles. Skipping process.")
         return
 
-    log.debug("Valid Workfile variants: {}".format(valid_variants))
+    log.debug("Valid Workfile profiles: {}".format(valid_profiles))
 
     subsets = []
     version_by_subset_id = {}
@@ -814,25 +813,25 @@ def load_containers_by_asset_data(
         subsets_by_family[family].append(subset)
 
     valid_subsets_by_id = {}
-    variants_per_subset_id = {}
+    profiles_per_subset_id = {}
     for family, subsets in subsets_by_family.items():
         family_low = family.lower()
-        for variant in valid_variants:
+        for profile in valid_profiles:
             # Family filtering
-            variant_families = variant.get("families") or []
-            if not variant_families:
+            profile_families = profile.get("families") or []
+            if not profile_families:
                 continue
 
-            variant_families_low = [fam.lower() for fam in variant_families]
-            if family_low not in variant_families_low:
+            profile_families_low = [fam.lower() for fam in profile_families]
+            if family_low not in profile_families_low:
                 continue
 
             # Regex filtering (optional)
-            variant_regexes = variant.get("subset_name_filters")
+            profile_regexes = profile.get("subset_name_filters")
             for subset in subsets:
-                if variant_regexes:
+                if profile_regexes:
                     valid = False
-                    for pattern in variant_regexes:
+                    for pattern in profile_regexes:
                         if re.match(pattern, subset["name"]):
                             valid = True
                             break
@@ -842,9 +841,9 @@ def load_containers_by_asset_data(
 
                 subset_id = subset["_id"]
                 valid_subsets_by_id[subset_id] = subset
-                variants_per_subset_id[subset_id] = variant
+                profiles_per_subset_id[subset_id] = profile
 
-            # break variants loop on finding the first matching variant
+            # break profiles loop on finding the first matching profile
             break
 
     if not valid_subsets_by_id:
@@ -855,20 +854,20 @@ def load_containers_by_asset_data(
 
     valid_repres_by_subset_id = collections.defaultdict(list)
     for subset_id, _subset_entity in valid_subsets_by_id.items():
-        variant = variants_per_subset_id[subset_id]
-        variant_repre_names = variant.get("repre_names")
-        if not variant_repre_names:
+        profile = profiles_per_subset_id[subset_id]
+        profile_repre_names = profile.get("repre_names")
+        if not profile_repre_names:
             continue
 
         # Lower names
-        variant_repre_names = [name.lower() for name in variant_repre_names]
+        profile_repre_names = [name.lower() for name in profile_repre_names]
 
         version_entity = version_by_subset_id[subset_id]
         version_id = version_entity["_id"]
         repres = repres_by_version_id[version_id]
         for repre in repres:
             repre_name_low = repre["name"].lower()
-            if repre_name_low in variant_repre_names:
+            if repre_name_low in profile_repre_names:
                 valid_repres_by_subset_id[subset_id].append(repre)
 
     # DEBUG message
@@ -889,25 +888,25 @@ def load_containers_by_asset_data(
     for subset_id, repres in valid_repres_by_subset_id.items():
         subset_name = valid_subsets_by_id[subset_id]["name"]
 
-        variant = variants_per_subset_id[subset_id]
-        loaders_last_idx = len(variant["loaders"]) - 1
-        repre_names_last_idx = len(variant["repre_names"]) - 1
+        profile = profiles_per_subset_id[subset_id]
+        loaders_last_idx = len(profile["loaders"]) - 1
+        repre_names_last_idx = len(profile["repre_names"]) - 1
 
         is_loaded = False
-        for repre_name_idx, variant_repre_name in enumerate(
-            variant["repre_names"]
+        for repre_name_idx, profile_repre_name in enumerate(
+            profile["repre_names"]
         ):
             found_repre = None
             for repre in repres:
                 repre_name = repre["name"]
-                if repre_name == variant_repre_name:
+                if repre_name == profile_repre_name:
                     found_repre = repre
                     break
 
             if not found_repre:
                 continue
 
-            for loader_idx, loader_name in enumerate(variant["loaders"]):
+            for loader_idx, loader_name in enumerate(profile["loaders"]):
                 if is_loaded:
                     break
 
@@ -1058,7 +1057,7 @@ def build_workfile():
     """Load representations for current context as containers into workfile.
 
     Loads latest versions of current and linked assets to workfile by logic
-    stored in Workfile variants from presets. Variants are set by host,
+    stored in Workfile profiles from presets. Variants are set by host,
     filtered by current task name and used by families.
 
     Each family can specify representation names and loaders for
