@@ -176,3 +176,8 @@ Number.prototype.pad = function (size) {
   }
   return s;
 }
+
+
+var messageText = 'this module is loaded> batchRenamer.jsx';
+$._PPP_.updateEventPanel(messageText);
+$.writeln(messageText);

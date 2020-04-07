@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Pype extention</title>
+
+<link href="./css/bootstrap.min.css" type="text/css" rel="stylesheet">
+<link href="./css/avalon.min.css" type="text/css" rel="stylesheet">
+
+<script>
+if (typeof module === 'object') {
+  window.module = module;
+  module = undefined;
+}
+</script>
+
+<script src="./js/vendor/popper.min.js"></script>
+<script src="./js/vendor/bootstrap.min.js"></script>
+<script src="./js/vendor/CSInterface-8.js"></script>
+<script src="./js/vendor/jquery-3.3.1.min.js"></script>
+<script src="./js/vendor/json2.js"></script>
+
+<script>
+if (window.module)
+  module = window.module;
+var ENV;
+</script>
+</head>
+
+<body>
+
+  <div id="section">
+    <a href="javascript:history.go(0)">Refresh panel</a>
+    <ul class="list-group list-group-flush dark">
+      <li class="list-group-item" id="rename">
+        <div class="input-group input-group-sm mb-1">
+          <div class="input-group-append">
+            <button id="btn-get-env" type="button" class="btn btn-info btn-sm btn-block">get Env</button>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <hr />
+
+    <div class="col-md-6" id="source">
+      <!-- <pre> <code class="python"></code> </pre> -->
+    </div>
+    <h5>Output</h5>
+    <div class="row" id="output"></div>
+
+    <script src="./js/avalon.js"></script>
+</body>
+
+</html>

@@ -1,4 +1,4 @@
-﻿/* global app, qe, $, ProjectItemType */
+/* global app, qe, $, JSON, ProjectItemType */
 /*
               .____ _ ___ .____.______
 --- - - --   /  .  \//  //  .  \  ___/ --- ---- - -
@@ -6,17 +6,13 @@
            /__/ /___/  /__/ /______/
           ._- -=[ PyPe 4 3veR ]=- -_.
 */
-if (typeof (JSON) === 'undefined') {
-  var json2 = 'C:\\Users\\jezsc\\CODE\\pype-setup\\repos\\pype\\pype\\premiere\\extensions\\com.pype.avalon\\js\\json2.js';
-  $.evalFile(json2);
-}
 
 if (ExternalObject.AdobeXMPScript === undefined) {
   ExternalObject.AdobeXMPScript = new ExternalObject('lib:AdobeXMPScript');
 }
 
 // variable pype is defined in pypeAvalon.jsx
-var pype = {
+$.pype = {
   addNewTrack: function (numTracks) {
     app.enableQE();
     var sequence = app.project.activeSequence;
@@ -25,7 +21,7 @@ var pype = {
 
     for (var t = 0; t < sequence.videoTracks.numTracks; t++) {
       var videoTrack = sequence.videoTracks[t];
-      var trackName = videoTrack.name
+      var trackName = videoTrack.name;
       var trackTarget = videoTrack.isTargeted();
       // $.writeln(trackTarget);
       sequence.videoTracks[t].setTargeted(false, true);
@@ -62,13 +58,13 @@ var pype = {
     var parents = hierarchyString.split('/');
 
     // search for the created folder
-    var currentBin = pype.searchForBinWithName(parents[0]);
+    var currentBin = $.pype.searchForBinWithName(parents[0]);
     // create bin if doesn't exists
     if (currentBin === undefined) {
       currentBin = app.project.rootItem.createBin(parents[0])
     };
     for (var b = 1; b < parents.length; b++) {
-      var testBin = pype.searchForBinWithName(parents[b], currentBin);
+      var testBin = $.pype.searchForBinWithName(parents[b], currentBin);
       if (testBin === undefined) {
         currentBin = currentBin.createBin(parents[b]);
       } else {
@@ -113,7 +109,7 @@ var pype = {
         var namesToSetToClips = [];
         var origNumTracks = app.project.activeSequence.videoTracks.numTracks;
         // TODO: for now it always creates new track and adding it into it
-        pype.addNewTrack(data.numTracks);
+        $.pype.addNewTrack(data.numTracks);
 
         // get all paths and names list
         var key = '';
@@ -130,7 +126,7 @@ var pype = {
         }
 
         // create parent bin object
-        var parent = pype.createDeepBinStructure(data.binHierarchy);
+        var parent = $.pype.createDeepBinStructure(data.binHierarchy);
 
         // check if any imported clips are in the bin
         if (parent.children.numItems > 0) {
@@ -155,7 +151,7 @@ var pype = {
                 if (namesToGetFromBin[p] === parent.children[pi].name) {
                   parent.children[pi].name = namesToSetToClips[p];
                   var start = data.clips[namesToSetToClips[p]]['parentClip']['start']
-                  pype.insertBinClipToTimeline(parent.children[pi], start, data.clips[namesToSetToClips[p]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
+                  $.pype.insertBinClipToTimeline(parent.children[pi], start, data.clips[namesToSetToClips[p]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
                 }
               }
             } else { // if the bin item already exist just update the path
@@ -180,7 +176,7 @@ var pype = {
           for (var i = 0; i < parent.children.numItems; i++) {
             parent.children[i].name = namesToSetToClips[i];
             var start = data.clips[namesToSetToClips[i]]['parentClip']['start']
-            pype.insertBinClipToTimeline(parent.children[i], start, data.clips[namesToSetToClips[i]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
+            $.pype.insertBinClipToTimeline(parent.children[i], start, data.clips[namesToSetToClips[i]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
           }
 
           return
@@ -217,8 +213,8 @@ var pype = {
     var projPath = new File(app.project.path)
     var obj = {
       projectfile: app.project.name,
-      projectpath: pype.convertPathString(projPath.fsName),
-      projectdir: pype.convertPathString(app.project.path).split('\\').slice(0, -1).join('\\')
+      projectpath: $.pype.convertPathString(projPath.fsName),
+      projectdir: $.pype.convertPathString(app.project.path).split('\\').slice(0, -1).join('\\')
     };
     return JSON.stringify(obj);
   },
@@ -230,7 +226,7 @@ var pype = {
       var seq = project.sequences[i];
       seq.clipNames = [];
       sequences[i] = seq;
-      pype.log('sequences[i]  id: ' + project.sequences[i].sequenceID);
+      $.pype.log('sequences[i]  id: ' + project.sequences[i].sequenceID);
     }
 
     var obj = {
@@ -243,7 +239,7 @@ var pype = {
     app.enableQE();
     qe.project.init();
     var sequences = seqs;
-    // pype.log('getSequenceItems sequences obj from app: ' + sequences);
+    // $.pype.log('getSequenceItems sequences obj from app: ' + sequences);
 
     var rootFolder = app.project.rootItem;
     var binCounter = -1;
@@ -251,23 +247,23 @@ var pype = {
 
     // walk through root folder of project to differentiate between bins, sequences and clips
     for (var i = 0; i < rootFolder.children.numItems; i++) {
-      // pype.log('\nroot item at ' + i + " is " +  rootFolder.children[i].name + " of type " + rootFolder.children[i].type);
+      // $.pype.log('\nroot item at ' + i + " is " +  rootFolder.children[i].name + " of type " + rootFolder.children[i].type);
       var item = rootFolder.children[i];
-      // pype.log('item has video tracks? ' + item.videoTracks);
+      // $.pype.log('item has video tracks? ' + item.videoTracks);
       if (item.type === 2) { // bin
         binCounter++;
         walkBins(item, 'root', binCounter);
       } else if (item.type === 1 && !item.getMediaPath()) { // sequence  OR other type of object
-        // pype.log('\nObject of type 1 in root: ' +  typeof item + '   ' + item.name);
+        // $.pype.log('\nObject of type 1 in root: ' +  typeof item + '   ' + item.name);
         if (objectIsSequence(item)) { // objects of type can also be other objects such as titles, so check if it really is a sequence
-          // pype.log('\nSequence in root: ' +  item.name );
+          // $.pype.log('\nSequence in root: ' +  item.name );
           rootSeqCounter++;
           var seq = qe.project.getSequenceAt(rootSeqCounter);
-          //  pype.log('\nSequence in root, guid: ' +  seq );
+          //  $.pype.log('\nSequence in root, guid: ' +  seq );
           for (var property in seq) {
             if (seq.hasOwnProperty(property)) {
-              //  pype.log('\nSequence in root: ' + seq );
-              // pype.log('qe sequence prop: ' + property );
+              //  $.pype.log('\nSequence in root: ' + seq );
+              // $.pype.log('qe sequence prop: ' + property );
             }
           }
           getClipNames(seq, sequences);
@@ -290,7 +286,7 @@ var pype = {
     // walk through bins recursively
     function walkBins(item, source, rootBinCounter) {
       app.enableQE();
-      // pype.log('\nget clips for bin  ' + item.name  );
+      // $.pype.log('\nget clips for bin  ' + item.name  );
 
       var bin;
       if (source === 'root') { // bin in root folder
@@ -301,13 +297,13 @@ var pype = {
         for (var i = 0; i < bin.numBins; i++) { // if bin contains bin(s) walk through them
           walkBins(bin.getBinAt(i));
         }
-        // pype.log('Bin ' + bin.name + ' has ' + bin.numSequences + ' sequences ' );
+        // $.pype.log('Bin ' + bin.name + ' has ' + bin.numSequences + ' sequences ' );
         // var seqCounter = -1;
         for (var j = 0; j < bin.numSequences; j++) {
           // if(objectIsSequence(item)) {//objects of type can also be other objects such as titles, so check if it really is a sequence?
           // not needed because getSequenceAt apparently only looks at sequences already?
           var seq = bin.getSequenceAt(j);
-          // pype.log('\nSequence in bin, guid: ' +  seq.guid );
+          // $.pype.log('\nSequence in bin, guid: ' +  seq.guid );
           getClipNames(seq, sequences);
         }
       }
@@ -316,27 +312,27 @@ var pype = {
     // walk through sequences and video & audiotracks to find clip names in sequences
     function getClipNames(seq, sequences) {
       for (var k = 0; k < sequences.length; k++) {
-        //  pype.log('getClipNames seq.guid ' + seq.guid  );
-        // pype.log(' getClipNames sequences[k].id ' +  sequences[k].sequenceID  );
+        //  $.pype.log('getClipNames seq.guid ' + seq.guid  );
+        // $.pype.log(' getClipNames sequences[k].id ' +  sequences[k].sequenceID  );
         if (seq.guid === sequences[k].sequenceID) {
-          //  pype.log('Sequence ' + seq.name + ' has ' + app.project.sequences[k].videoTracks.numTracks +' video tracks'  );
-          //  pype.log('Sequence ' + seq.name + ' has ' + app.project.sequences[k].audioTracks.numTracks +' audio tracks'  );
+          //  $.pype.log('Sequence ' + seq.name + ' has ' + app.project.sequences[k].videoTracks.numTracks +' video tracks'  );
+          //  $.pype.log('Sequence ' + seq.name + ' has ' + app.project.sequences[k].audioTracks.numTracks +' audio tracks'  );
 
           // VIDEO CLIPS IN SEQUENCES
           for (var l = 0; l < sequences[k].videoTracks.numTracks; l++) {
             var videoTrack = seq.getVideoTrackAt(l);
-            //  pype.log(seq.name + ' has video track '+ videoTrack.name + ' at index ' + l);
+            //  $.pype.log(seq.name + ' has video track '+ videoTrack.name + ' at index ' + l);
             var clipCounter = 0;
             var numOfClips = app.project.sequences[k].videoTracks[l].clips.numTracks;
-            //  pype.log('\n' + bin.name + ' ' + seq.name + ' ' + videoTrack.name + ' has  ' + numOfClips + ' clips');
+            //  $.pype.log('\n' + bin.name + ' ' + seq.name + ' ' + videoTrack.name + ' has  ' + numOfClips + ' clips');
             for (var m = 0; m < numOfClips; m++) {
               // var clip = app.project.sequences[k].videoTracks[l].clips[m];
-              // pype.log('clips in video tracks:   ' + m + ' - ' + clip); //TrackItem, doesn't have name property
+              // $.pype.log('clips in video tracks:   ' + m + ' - ' + clip); //TrackItem, doesn't have name property
               // if a clip was deleted and another one added, the index of the new one is one  or more higher
               while (clipCounter < numOfClips) { // undefined because of old clips
                 if (videoTrack.getItemAt(m).name) {
                   clipCounter++;
-                  // pype.log('getClipNames ' + seq.name + ' ' + videoTrack.name + ' has  ' + videoTrack.getItemAt(m).name); //Object
+                  // $.pype.log('getClipNames ' + seq.name + ' ' + videoTrack.name + ' has  ' + videoTrack.getItemAt(m).name); //Object
 
                   for (var s = 0; s < sequences.length; s++) {
                     if (seq.guid === sequences[s].sequenceID) {
@@ -348,24 +344,24 @@ var pype = {
               }
             }
           }
-          // pype.log('jsx after video loop clipsInSequences:' + clipsInSequences);
+          // $.pype.log('jsx after video loop clipsInSequences:' + clipsInSequences);
 
           // AUDIO CLIPS IN SEQUENCES
           for (var l = 0; l < sequences[k].audioTracks.numTracks; l++) {
             var audioTrack = seq.getAudioTrackAt(l);
-            // pype.log(bin.name + ' ' + seq.name + ' has audio track '+ audioTrack.name + ' at index ' + l);
-            // pype.log('\n' + bin.name + ' ' + seq.name + ' ' + audioTrack.name + ' has  ' + app.project.sequences[k].audioTracks[l].clips.numTracks + ' clips');
+            // $.pype.log(bin.name + ' ' + seq.name + ' has audio track '+ audioTrack.name + ' at index ' + l);
+            // $.pype.log('\n' + bin.name + ' ' + seq.name + ' ' + audioTrack.name + ' has  ' + app.project.sequences[k].audioTracks[l].clips.numTracks + ' clips');
             var clipCounter = 0;
             var numOfClips = app.project.sequences[k].audioTracks[l].clips.numTracks;
 
             for (var m = 0; m < numOfClips; m++) {
               var clip = app.project.sequences[k].audioTracks[l].clips[m];
-              // pype.log('clips in audio tracks:   ' + m + ' - ' + clip);
+              // $.pype.log('clips in audio tracks:   ' + m + ' - ' + clip);
               // if a clip was deleted and another one added, the index of the new one is one  or more higher
               while (clipCounter < numOfClips) { // undefined because of old clips
                 if (audioTrack.getItemAt(m).name) {
                   clipCounter++;
-                  // pype.log(seq.name + ' ' + audioTrack.name + ' has  ' + audioTrack.getItemAt(m).name);
+                  // $.pype.log(seq.name + ' ' + audioTrack.name + ' has  ' + audioTrack.getItemAt(m).name);
 
                   for (var s = 0; s < sequences.length; s++) {
                     if (seq.guid === sequences[s].sequenceID) {
@@ -381,12 +377,12 @@ var pype = {
       } // end for
     } // end getClipNames
 
-    pype.log('sequences returned:' + sequences);
+    $.pype.log('sequences returned:' + sequences);
     // return result to ReplaceService.js
     var obj = {
       data: sequences
     };
-    // pype.log('jsx getClipNames obj:' + obj);
+    // $.pype.log('jsx getClipNames obj:' + obj);
     return JSON.stringify(obj);
   },
 
@@ -399,14 +395,14 @@ var pype = {
     var rootFolder = app.project.rootItem;
     // walk through root folder of project to differentiate between bins, sequences and clips
     for (var i = 0; i < rootFolder.children.numItems; i++) {
-      // pype.log('\nroot item at ' + i + " is of type " + rootFolder.children[i].type);
+      // $.pype.log('\nroot item at ' + i + " is of type " + rootFolder.children[i].type);
       var item = rootFolder.children[i];
 
       if (item.type === 2) { // bin
-        //  pype.log('\n' );
-        pype.getProjectItems.walkBins(item);
+        //  $.pype.log('\n' );
+        $.pype.getProjectItems.walkBins(item);
       } else if (item.type === 1 && item.getMediaPath()) { // clip in root
-        //  pype.log('Root folder has '  + item + ' ' + item.name);
+        //  $.pype.log('Root folder has '  + item + ' ' + item.name);
         projectItems.push(item);
       }
     }
@@ -418,41 +414,41 @@ var pype = {
       // $.writeln('bin.name + ' has ' + bin.children.numItems);
       for (var i = 0; i < bin.children.numItems; i++) {
         var object = bin.children[i];
-        // pype.log(bin.name + ' has ' + object + ' ' + object.name  + ' of type ' +  object.type + ' and has mediapath ' + object.getMediaPath() );
+        // $.pype.log(bin.name + ' has ' + object + ' ' + object.name  + ' of type ' +  object.type + ' and has mediapath ' + object.getMediaPath() );
         if (object.type === 2) { // bin
-          // pype.log(object.name  + ' has ' +  object.children.numItems  );
+          // $.pype.log(object.name  + ' has ' +  object.children.numItems  );
           for (var j = 0; j < object.children.numItems; j++) {
             var obj = object.children[j];
             if (obj.type === 1 && obj.getMediaPath()) { // clip  in sub bin
-              // pype.log(object.name  + ' has ' + obj + ' ' +  obj.name  );
+              // $.pype.log(object.name  + ' has ' + obj + ' ' +  obj.name  );
               projectItems.push(obj);
             } else if (obj.type === 2) { // bin
               walkBins(obj);
             }
           }
         } else if (object.type === 1 && object.getMediaPath()) { // clip in bin in root
-          // pype.log(bin.name + ' has ' + object + ' ' + object.name );
+          // $.pype.log(bin.name + ' has ' + object + ' ' + object.name );
           projectItems.push(object);
         }
       }
     }
-    pype.log('\nprojectItems:' + projectItems.length + ' ' + projectItems);
+    $.pype.log('\nprojectItems:' + projectItems.length + ' ' + projectItems);
     return projectItems;
   },
 
   replaceClips: function (obj) {
-    pype.log('num of projectItems:' + projectItems.length);
+    $.pype.log('num of projectItems:' + projectItems.length);
     var hiresVOs = obj.hiresOnFS;
     for (var i = 0; i < hiresVOs.length; i++) {
-      pype.log('hires vo name: ' + hiresVOs[i].name);
-      pype.log('hires vo id:  ' + hiresVOs[i].id);
-      pype.log('hires vo path: ' + hiresVOs[i].path);
-      pype.log('hires vo replace: ' + hiresVOs[i].replace);
+      $.pype.log('hires vo name: ' + hiresVOs[i].name);
+      $.pype.log('hires vo id:  ' + hiresVOs[i].id);
+      $.pype.log('hires vo path: ' + hiresVOs[i].path);
+      $.pype.log('hires vo replace: ' + hiresVOs[i].replace);
 
       for (var j = 0; j < projectItems.length; j++) {
-        // pype.log('projectItem id: ' + projectItems[j].name.split(' ')[0] + ' ' + hiresVOs[i].id + ' can change path  ' + projectItems[j].canChangeMediaPath() );
+        // $.pype.log('projectItem id: ' + projectItems[j].name.split(' ')[0] + ' ' + hiresVOs[i].id + ' can change path  ' + projectItems[j].canChangeMediaPath() );
         if (projectItems[j].name.split(' ')[0] === hiresVOs[i].id && hiresVOs[i].replace && projectItems[j].canChangeMediaPath()) {
-          pype.log('replace: ' + projectItems[j].name + ' with ' + hiresVOs[i].name);
+          $.pype.log('replace: ' + projectItems[j].name + ' with ' + hiresVOs[i].name);
           projectItems[j].name = hiresVOs[i].name;
           projectItems[j].changeMediaPath(hiresVOs[i].path);
         }
@@ -520,7 +516,7 @@ var pype = {
   dumpPublishedInstancesToMetadata: function (resultedPyblishJsonData) {
     $.writeln(resultedPyblishJsonData.instances);
     var instances = resultedPyblishJsonData.instances;
-    var pypeData = pype.loadSequenceMetadata(app.project.activeSequence);
+    var pypeData = $.pype.loadSequenceMetadata(app.project.activeSequence);
     for (var i = 0; i < instances.length; i++) {
       $.writeln(instances[i].label)
       // process instances
@@ -561,7 +557,7 @@ var pype = {
     };
 
     //dumping all data back to sequence metadata
-    pype.dumpSequenceMetadata(pypeData, app.project.activeSequence)
+    $.pype.dumpSequenceMetadata(pypeData, app.project.activeSequence)
   },
   dumpSequenceMetadata: function (data, sequence) {
     if (sequence === undefined) {
@@ -601,13 +597,12 @@ var pype = {
    * @param videoTrack {object VideoTrack} - VideoTrack clip is in
    * @return {Object}
    */
-  getClipAsInstance: function (clip, sequence, videoTrack, pypeData) {
+  getClipAsInstance: function (clip, sequence, videoTrack, pypeData, presets) {
     // var clip = sequence.videoTracks.clips[clipIdx]
     if ((clip.projectItem.type !== ProjectItemType.CLIP) &&
       (clip.mediaType !== 'Video')) {
       return false;
     }
-    var presets = pype.getPresets();
     var pdClips = pypeData.clips;
     var hierarchy;
     var parents;
@@ -635,12 +630,12 @@ var pype = {
     // TODO: how to get colorspace clip info
     metadata['colorspace'] = 'bt.709';
     var settings = sequence.getSettings();
-    var sequenceSize = pype.getImageSize();
+    var sequenceSize = $.pype.getImageSize();
     metadata['ppro.videoTrack.name'] = videoTrack.name;
     metadata['ppro.sequence.name'] = sequence.name;
     metadata['ppro.source.fps'] = (1 / interpretation.frameRate);
     metadata['ppro.timeline.fps'] = (1 / settings.videoFrameRate.seconds);
-    metadata['ppro.source.path'] = pype.convertPathString(clip.projectItem.getMediaPath());
+    metadata['ppro.source.path'] = $.pype.convertPathString(clip.projectItem.getMediaPath());
     metadata['ppro.format.width'] = sequenceSize.h;
     metadata['ppro.format.height'] = sequenceSize.v;
     metadata['ppro.format.pixelaspect'] = interpretation.pixelAspectRatio;
@@ -661,7 +656,7 @@ var pype = {
     var instances = {};
     var numTracks = [];
     var orders = [];
-    var selected = pype.getSelectedItems();
+    var selected = $.pype.getSelectedItems();
     for (var s = 0; s < selected.length; s++) {
       orders.push(selected[s].trackOrder);
     }
@@ -704,10 +699,10 @@ var pype = {
     return JSON.stringify([instanceSorted, numTracks.length]);
   },
   createSubsetClips: function (data) {
-    var pypeData = pype.loadSequenceMetadata(app.project.activeSequence)
+    var pypeData = $.pype.loadSequenceMetadata(app.project.activeSequence)
     // instances
     var instances = {};
-    var selected = pype.getSelectedItems();
+    var selected = $.pype.getSelectedItems();
     for (var s = 0; s < selected.length; s++) {
       var clip = {};
       clip.start = selected[s].clip.start.seconds;
@@ -720,18 +715,19 @@ var pype = {
   },
   getSelectedClipsAsInstances: function () {
     // get project script version and add it into clip instance data
-    var version = pype.getWorkFileVersion();
+    var version = $.pype.getWorkFileVersion();
 
-    var pypeData = pype.loadSequenceMetadata(app.project.activeSequence)
+    var pypeData = $.pype.loadSequenceMetadata(app.project.activeSequence);
     if (pypeData == null) {
       alert('First you need to rename clips sequencially with hierarchy!\nUse `Pype Rename` extension', 'No hierarchy data available!', 'error');
       return;
-    };
+    }
+
     // instances
     var instances = [];
-    var selected = pype.getSelectedItems();
+    var selected = $.pype.getSelectedItems();
     for (var s = 0; s < selected.length; s++) {
-      var instance = pype.getClipAsInstance(
+      var instance = $.pype.getClipAsInstance(
         selected[s].clip,
         selected[s].sequence,
         selected[s].videoTrack,
@@ -741,10 +737,10 @@ var pype = {
         instance.version = version;
         instances.push(instance);
       }
-    };
+    }
 
     // adding project file instance
-    var projectFileData = JSON.parse(pype.getProjectFileData());
+    var projectFileData = JSON.parse($.pype.getProjectFileData());
     var projectFileInstance = projectFileData;
     projectFileInstance.representations = {
       projectfile: {
@@ -759,23 +755,6 @@ var pype = {
 
     return instances;
   },
-  getPresets: function () {
-    var templ_path = pype.convertPathString($.getenv("PYPE_STUDIO_TEMPLATES"));
-    var preset_path = templ_path + "/presets/premiere";
-    var presets = {};
-    var preset_files = Folder(preset_path).getFiles();
-    for (var f = 0; f < preset_files.length; f++) {
-      var sliced_file = ('' + preset_files[f]).split('/')
-      var file_name = sliced_file.slice((sliced_file.length - 2, -1))
-      var name = ('' + file_name).split('.')[0]
-      var file = new File(preset_files[f]);
-      file.encoding = "UTF8";
-      file.open("r", "TEXT", "????");
-      presets[name] = JSON.parse(file.read());
-    }
-    return presets
-  },
-
   /**
    * Return request json data object with instances for pyblish
    * @param stagingDir {string} - path to temp directory
@@ -786,14 +765,14 @@ var pype = {
     var settings = sequence.getSettings();
     var request = {
       stagingDir: stagingDir,
-      currentFile: pype.convertPathString(app.project.path),
+      currentFile: $.pype.convertPathString(app.project.path),
       framerate: (1 / settings.videoFrameRate.seconds),
       host: $.getenv('AVALON_APP'),
       hostVersion: $.getenv('AVALON_APP_NAME').split('_')[1],
-      cwd: pype.convertPathString(app.project.path).split('\\').slice(0, -1).join('\\')
+      cwd: $.pype.convertPathString(app.project.path).split('\\').slice(0, -1).join('\\')
     };
     var sendInstances = [];
-    var instances = pype.getSelectedClipsAsInstances();
+    var instances = $.pype.getSelectedClipsAsInstances();
     if (audioOnly) {
       for (var i = 0; i < instances.length; i++) {
         var representations = instances[i].representations;
@@ -845,8 +824,8 @@ var pype = {
       $._PPP_.getSep() +
       file;
     var expJPEG = activeSequence.exportFrameJPEG(
-      pype.convertSecToTimecode(time, fps),
-      pype.convertPathString(fullPathToFile).split('/').join($._PPP_.getSep())
+      $.pype.convertSecToTimecode(time, fps),
+      $.pype.convertPathString(fullPathToFile).split('/').join($._PPP_.getSep())
     );
     return file;
   },
@@ -858,7 +837,7 @@ var pype = {
     var origInPoint = Math.ceil(sequence.getInPoint() * 100) / 100;
     var origOutPoint = Math.ceil(sequence.getOutPoint() * 100) / 100;
     if (origInPoint == defaultTimelinePointValue) {
-      var allInOut = pype.getInOutOfAll();
+      var allInOut = $.pype.getInOutOfAll();
       origInPoint = allInOut[0];
       origOutPoint = allInOut[1];
     };
@@ -875,7 +854,7 @@ var pype = {
         // send render jobs to encoder
         var exclude = ['projectfile', 'thumbnail'];
         if (!include(exclude, key)) {
-          instances[i].files.push(pype.render(
+          instances[i].files.push($.pype.render(
             request.stagingDir,
             key,
             representations[key],
@@ -888,7 +867,7 @@ var pype = {
           waitFile = request.stagingDir + '/' + instances[i].files[(instances[i].files.length - 1)];
 
         } else if (key === 'thumbnail') {
-          instances[i].files.push(pype.exportThumbnail(
+          instances[i].files.push($.pype.exportThumbnail(
             instances[i].name,
             key,
             instances[i].version,
@@ -991,7 +970,7 @@ var pype = {
     app.setSDKEventMessage(message, 'error');
   },
   getWorkFileVersion: function () {
-    var outputPath = pype.convertPathString(app.project.path);
+    var outputPath = $.pype.convertPathString(app.project.path);
     var outputName = String(app.project.name);
     var dirPath = outputPath.replace(outputName, '');
     var pattern = /_v([0-9]*)/g;
@@ -1013,7 +992,7 @@ var pype = {
     }
   },
   saveProjectCopy: function (outputPath) {
-    var originalPath = pype.convertPathString(app.project.path);
+    var originalPath = $.pype.convertPathString(app.project.path);
     var outputName = String(app.project.name);
 
     var fullOutPath = outputPath + $._PPP_.getSep() + outputName;
@@ -1034,13 +1013,13 @@ var pype = {
     var absPath = dir + newFileName;
     var absPathF = new File(absPath);
     if (absPathF.exists) {
-      return pype.nextVersionCheck(dir, file, vCurVersStr, curVersStr, padding, (nextVersNum + 1));
+      return $.pype.nextVersionCheck(dir, file, vCurVersStr, curVersStr, padding, (nextVersNum + 1));
     } else {
       return absPathF
     }
   },
   versionUpWorkFile: function () {
-    var outputPath = pype.convertPathString(app.project.path);
+    var outputPath = $.pype.convertPathString(app.project.path);
     var outputName = String(app.project.name);
     var dirPath = outputPath.replace(outputName, '');
     var pattern = /_v([0-9]*)/g;
@@ -1067,8 +1046,8 @@ var pype = {
         } else {
           // will not overwrite
           // will find next available version
-          absPathF = pype.nextVersionCheck(dirPath, outputName, search[0], search[1], padLength, (version + 1));
-          absPath = pype.convertPathString(absPathF.fsName)
+          absPathF = $.pype.nextVersionCheck(dirPath, outputName, search[0], search[1], padLength, (version + 1));
+          absPath = $.pype.convertPathString(absPathF.fsName)
           newFileName = absPath.replace(dirPath, '')
           $.writeln('newFileName: ' + newFileName)
           // will save it as new file
@@ -1125,5 +1104,27 @@ function include(arr, obj) {
   return false
 }
 
-//var instances = pype.getPyblishRequest();
-//pype.encodeRepresentation(JSON.parse(instances));
+// const url = 'http://localhost:8021/adobe/presets/J01_jakub_test';
+// const https = require('https');
+// $.writeln(url)
+// $.writeln(https)
+
+//
+// const url = 'http://localhost:8021/adobe/presets/J01_jakub_test';
+// const https = require('https');
+//
+// https.get(url, (resp) => {
+//   let data = '';
+//
+//   // A chunk of data has been recieved.
+//   resp.on('data', (chunk) => {
+//     data += chunk;
+//   });
+//
+//   // The whole response has been received. Print out the result.
+//   resp.on('end', () => {
+//     $.writeln(JSON.parse(data).explanation);
+//   });
+// }).on('error', (err) => {
+//   $.writeln('Error: ' + err.message);
+// });

@@ -2,9 +2,9 @@
 <!-- /************************************************************************* * ADOBE CONFIDENTIAL * ___________________ * * Copyright 2014 Adobe * All Rights Reserved. * * NOTICE: Adobe permits you to use, modify, and distribute this file in *
 accordance with the terms of the Adobe license agreement accompanying * it. If you have received this file from a source other than Adobe, * then your use, modification, or distribution of it requires the prior * written permission of Adobe.
 **************************************************************************/ -->
-<ExtensionManifest Version="5.0" ExtensionBundleId="com.pype.avalon" ExtensionBundleVersion="11.1" ExtensionBundleName="Pype Avalon Panel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<ExtensionManifest Version="5.0" ExtensionBundleId="com.pype" ExtensionBundleVersion="11.1" ExtensionBundleName="Pype Panel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<ExtensionList>
-		<Extension Id="com.pype.avalon" Version="10.3.0"/>
+		<Extension Id="com.pype" Version="10.3.0"/>
 	</ExtensionList>
 	<ExecutionEnvironment>
 		<HostList>
@@ -19,11 +19,11 @@ accordance with the terms of the Adobe license agreement accompanying * it. If y
 	</ExecutionEnvironment>
 
 	<DispatchInfoList>
-		<Extension Id="com.pype.avalon">
+		<Extension Id="com.pype">
 			<DispatchInfo >
 				<Resources>
 					<MainPath>./index_remote.html</MainPath>
-					<ScriptPath>./pypeAvalon.jsx</ScriptPath>
+					<ScriptPath>./pypeApp.jsx</ScriptPath>
 					<CEFCommandLine>
 						<Parameter>--enable-nodejs</Parameter>
 						<Parameter>--mixed-context</Parameter>
@@ -35,7 +35,7 @@ accordance with the terms of the Adobe license agreement accompanying * it. If y
 				</Lifecycle>
 				<UI>
 					<Type>Panel</Type>
-					<Menu>Avalon</Menu>
+					<Menu>Pype</Menu>
 					<Geometry>
 						<Size>
 							<Width>600</Width>

@@ -1,4 +1,5 @@
 /* global CSInterface, $, querySelector, api, displayResult */
+
 var csi = new CSInterface();
 var output = document.getElementById('output');
 
@@ -331,7 +332,7 @@ $('#btn-get-selected').click(function () {
 });
 
 $('#btn-get-env').click(function () {
-  displayResult(window.ENV);
+  console.log("print this")
 });
 
 $('#btn-get-projectitems').click(function () {

@@ -42,7 +42,7 @@ if os.getenv("PUBLISH_PATH", None):
 else:
     os.environ["PUBLISH_PATH"] = self.PUBLISH_PATH
 
-_clearing_cache = ["com.pype.rename", "com.pype.avalon"]
+_clearing_cache = ["com.pype", "com.pype.rename"]
 
 
 def ls():

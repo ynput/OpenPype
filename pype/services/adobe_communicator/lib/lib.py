@@ -5,6 +5,7 @@ import bson
 import bson.json_util
 from pype.services.rest_api import RestApi, abort, CallbackResult
 from .io_nonsingleton import DbConnector
+from pypeapp import config
 
 
 class AdobeRestApi(RestApi):
@@ -33,6 +34,31 @@ class AdobeRestApi(RestApi):
             return CallbackResult(data=self.result_to_json(project))
 
         abort(404, "Project \"{}\" was not found in database".format(
+            project_name
+        ))
+
+    @RestApi.route("/presets/<project_name>",
+                   url_prefix="/adobe",
+                   methods="GET")
+    def get_presets(self, request):
+        project_name = request.url_data["project_name"]
+        if not project_name:
+            output = {}
+            for project_name in self.dbcon.tables():
+                project = self.dbcon[project_name].find_one({
+                    "type": "project"
+                })
+                output[project_name] = project
+
+            return CallbackResult(data=self.result_to_json(output))
+
+        project = self.dbcon[project_name].find_one({"type": "project"})
+        presets = config.get_presets(project=project["name"])
+        
+        if presets:
+            return CallbackResult(data=self.result_to_json(presets))
+
+        abort(404, "Presets for the project \"{}\" were not found.".format(
             project_name
         ))
 

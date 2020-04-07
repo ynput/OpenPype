@@ -357,3 +357,7 @@ if (ExternalObject.AdobeXMPScript === undefined) {
 
 // var seq = app.project.activeSequence;
 // renamer.getSequencePypeMetadata(seq);
+
+var messageText = 'this module is loaded> PypeRename.jsx';
+$._PPP_.updateEventPanel(messageText);
+$.writeln(messageText);

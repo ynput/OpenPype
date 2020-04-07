@@ -1,4 +1,4 @@
-/*************************************************************************
+﻿/*************************************************************************
  * ADOBE CONFIDENTIAL
  * ___________________
  *
@@ -16,10 +16,6 @@ if (typeof ($) === 'undefined') {
   var $ = {};
 }
 
-if (typeof (pype) === 'undefined') {
-  var pype = {};
-}
-
 if (typeof (br) === 'undefined') {
   var br = {};
 }
@@ -28,12 +24,8 @@ if (typeof (app) === 'undefined') {
   var app = {};
 }
 
-if (typeof (JSON) === 'undefined') {
-  var JSON = {};
-}
-
 function keepExtention () {
-  return app.setExtensionPersistent('com.pype.avalon', 0);
+  return app.setExtensionPersistent('com.pype', 0);
 }
 
 keepExtention()
@@ -50,13 +42,23 @@ $._ext = {
     }
   },
   // Evaluate all the files in the given folder
-  evalFiles: function (jsxFolderPath) {
-    var folder = new Folder(jsxFolderPath);
-    if (folder.exists) {
-      var jsxFiles = folder.getFiles('*.jsx');
-      for (var i = 0; i < jsxFiles.length; i++) {
-        var jsxFile = jsxFiles[i];
-        $._ext.evalFile(jsxFile);
+  evalFiles: function (extensionFolder) {
+    // adding JSON module
+    var json2 = new Folder(extensionFolder + '/lib/json2.js');
+    $.evalFile(json2);
+    $.writeln(JSON.stringify({ thispath: '/taph/thsis.json' }));
+
+    // adding all jsx files
+    var folderJsx = new Folder(extensionFolder + '/jsx/')
+    var folderPpro = new Folder(folderJsx + '/PPRO');
+    var foldersToImport = [folderPpro, folderJsx];
+    for (var fi = 0; fi < foldersToImport.length; fi++) {
+      if (foldersToImport[fi].exists) {
+        var jsxFiles = foldersToImport[fi].getFiles('*.jsx');
+        for (var i = 0; i < jsxFiles.length; i++) {
+          var jsxFile = jsxFiles[i];
+          $._ext.evalFile(jsxFile);
+        }
       }
     }
   },
@@ -92,5 +94,5 @@ $._ext = {
   }
 };
 
-// var dalsiJsxFile = 'C:\\Users\\hubert\\CODE\\pype-setup\\repos\\pype-config\\pype\\premiere\\extensions\\com.pype.avalon\\jsx\\pype.jsx';
+// var dalsiJsxFile = 'C:\\Users\\jezsc\\CODE\\pype-setup\\repos\\pype\\pype\\premiere\\extensions\\com.pype\\jsx\\pype.jsx';
 // $.evalFile(dalsiJsxFile);
