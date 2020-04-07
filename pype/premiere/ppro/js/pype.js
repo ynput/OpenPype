@@ -1,4 +1,4 @@
-/* global $, querySelector, pras, SystemPath, CSInterface */
+/* global CSInterface, $, querySelector, pras, SystemPath, displayResult */
 
 var csi = new CSInterface();
 var output = document.getElementById('output');
@@ -68,14 +68,17 @@ function loadJSX() {
 // run all at loading
 loadJSX()
 
+function querySelector (elementId) {
+  return document.querySelector(elementId);
+}
 
-function loadAnimationRendersToTimeline() {
+function loadAnimationRendersToTimeline () {
   // it will get type of asset and extension from input
   // and start loading script from jsx
   var $ = querySelector('#load');
   var data = {};
-  data.subset = $('input[name=type]').value;
-  data.subsetExt = $('input[name=ext]').value;
+  data.subset = $.querySelector('input[name=type]').value;
+  data.subsetExt = $.querySelector('input[name=ext]').value;
   var requestList = [];
   // get all selected clips
   _pype.csi.evalScript('$.pype.getClipsForLoadingSubsets( "' + data.subset + '" )', function (result) {
@@ -121,7 +124,7 @@ function deregister() {
 
 function register() {
   var $ = querySelector('#register');
-  var path = $('input[name=path]').value;
+  var path = $.querySelector('input[name=path]').value;
   pras.register_plugin_path(path).then(displayResult);
 }
 
@@ -146,12 +149,12 @@ function convertPathString(path) {
 
 function publish() {
   var $ = querySelector('#publish');
-  // var gui = $('input[name=gui]').checked;
+  // var gui = $.querySelector('input[name=gui]').checked;
   var gui = true;
-  var versionUp = $('input[name=version-up]').checked;
-  var audioOnly = $('input[name=audio-only]').checked;
-  var jsonSendPath = $('input[name=send-path]').value;
-  var jsonGetPath = $('input[name=get-path]').value;
+  var versionUp = $.querySelector('input[name=version-up]').checked;
+  var audioOnly = $.querySelector('input[name=audio-only]').checked;
+  var jsonSendPath = $.querySelector('input[name=send-path]').value;
+  var jsonGetPath = $.querySelector('input[name=get-path]').value;
   var publish_path = _pype.ENV['PUBLISH_PATH'];
 
   if (jsonSendPath == '') {
@@ -185,8 +188,8 @@ function publish() {
         var jsonfile = require('jsonfile');
         var jsonSendPath = stagingDir + '_send.json'
         var jsonGetPath = stagingDir + '_get.json'
-        $('input[name=send-path]').value = jsonSendPath;
-        $('input[name=get-path]').value = jsonGetPath;
+        $.querySelector('input[name=send-path]').value = jsonSendPath;
+        $.querySelector('input[name=get-path]').value = jsonGetPath;
         var jsonContent = JSON.parse(result);
         jsonfile.writeFile(jsonSendPath, jsonContent);
         var checkingFile = function (path) {
@@ -255,16 +258,16 @@ function publish() {
 
     });
   };
-  // $('input[name=send-path]').value = '';
-  // $('input[name=get-path]').value = '';
+  // $.querySelector('input[name=send-path]').value = '';
+  // $.querySelector('input[name=get-path]').value = '';
 }
 
 function context() {
   var $ = querySelector('#context');
-  var project = $('input[name=project]').value;
-  var asset = $('input[name=asset]').value;
-  var task = $('input[name=task]').value;
-  var app = $('input[name=app]').value;
+  var project = $.querySelector('input[name=project]').value;
+  var asset = $.querySelector('input[name=asset]').value;
+  var task = $.querySelector('input[name=task]').value;
+  var app = $.querySelector('input[name=app]').value;
   pras.context(project, asset, task, app).then(displayResult);
 }
 
@@ -278,8 +281,8 @@ function tc(timecode) {
 function rename() {
   var $ = querySelector('#rename');
   var data = {};
-  data.ep = $('input[name=episode]').value;
-  data.epSuffix = $('input[name=ep_suffix]').value;
+  data.ep = $.querySelector('input[name=episode]').value;
+  data.epSuffix = $.querySelector('input[name=ep_suffix]').value;
 
   if (!data.ep) {
     _pype.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode code' + '")');
@@ -323,18 +326,18 @@ $('#btn-publish').click(function () {
 
 $('#btn-send-reset').click(function () {
   var $ = querySelector('#publish');
-  $('input[name=send-path]').value = '';
+  $.querySelector('input[name=send-path]').value = '';
 });
 $('#btn-get-reset').click(function () {
   var $ = querySelector('#publish');
-  $('input[name=get-path]').value = '';
+  $.querySelector('input[name=get-path]').value = '';
 });
 $('#btn-get-active-sequence').click(function () {
   evalScript('$.pype.getActiveSequence();');
 });
 
 $('#btn-get-selected').click(function () {
-  $('#output').html('getting selected clips info ...');
+  $.querySelector('#output').html('getting selected clips info ...');
   evalScript('$.pype.getSelectedItems();');
 });
 
@@ -348,7 +351,7 @@ $('#btn-get-projectitems').click(function () {
 
 $('#btn-metadata').click(function () {
   var $ = querySelector('#publish');
-  var path = $('input[name=get-path]').value;
+  var path = $.querySelector('input[name=get-path]').value;
   var jsonfile = require('jsonfile');
   displayResult(path);
   jsonfile.readFile(path, function (err, json) {
