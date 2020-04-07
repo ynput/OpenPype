@@ -736,9 +736,18 @@ class BuildWorkfile:
     are host related, since each host has it's loaders.
     """
 
-    @classmethod
-    def build_workfile(cls):
+    def process(self):
         """Main method of this wrapper.
+
+        Building of workfile is triggered and is possible to implement
+        post processing of loaded containers if necessary.
+        """
+        containers = self.build_workfile()
+
+        return containers
+
+    def build_workfile(self):
+        """Prepares and load containers into workfile.
 
         Loads latest versions of current and linked assets to workfile by logic
         stored in Workfile profiles from presets. Profiles are set by host,
@@ -793,7 +802,7 @@ class BuildWorkfile:
         current_task_name = io.Session["AVALON_TASK"]
 
         # Load workfile presets for task
-        build_presets = cls.get_build_presets(current_task_name)
+        build_presets = self.get_build_presets(current_task_name)
 
         # Skip if there are any presets for task
         if not build_presets:
@@ -850,14 +859,14 @@ class BuildWorkfile:
             return
 
         # Prepare entities from database for assets
-        prepared_entities = cls._collect_last_version_repres(assets)
+        prepared_entities = self._collect_last_version_repres(assets)
 
         # Load containers by prepared entities and presets
         loaded_containers = []
         # - Current asset containers
         if current_asset_id and current_asset_id in prepared_entities:
             current_context_data = prepared_entities.pop(current_asset_id)
-            loaded_data = cls.load_containers_by_asset_data(
+            loaded_data = self.load_containers_by_asset_data(
                 current_context_data, current_context_profiles, loaders_by_name
             )
             if loaded_data:
@@ -865,7 +874,7 @@ class BuildWorkfile:
 
         # - Linked assets container
         for linked_asset_data in prepared_entities.values():
-            loaded_data = cls.load_containers_by_asset_data(
+            loaded_data = self.load_containers_by_asset_data(
                 linked_asset_data, link_context_profiles, loaders_by_name
             )
             if loaded_data:
@@ -874,8 +883,7 @@ class BuildWorkfile:
         # Return list of loaded containers
         return loaded_containers
 
-    @classmethod
-    def get_build_presets(cls, task_name):
+    def get_build_presets(self, task_name):
         """ Returns presets to build workfile for task name.
 
         Presets are loaded for current project set in
@@ -909,8 +917,7 @@ class BuildWorkfile:
 
         return per_task_preset
 
-    @classmethod
-    def _filter_build_profiles(cls, build_profiles, loaders_by_name):
+    def _filter_build_profiles(self, build_profiles, loaders_by_name):
         """ Filter build profiles by loaders and prepare process data.
 
         Valid profile must have "loaders", "families" and "repre_names" keys
@@ -983,8 +990,7 @@ class BuildWorkfile:
 
         return valid_profiles
 
-    @classmethod
-    def _prepare_profile_for_subsets(cls, subsets, profiles):
+    def _prepare_profile_for_subsets(self, subsets, profiles):
         """Select profile for each subset byt it's data.
 
         Profiles are filtered for each subset individually.
@@ -1039,9 +1045,8 @@ class BuildWorkfile:
                 break
         return profiles_per_subset_id
 
-    @classmethod
     def load_containers_by_asset_data(
-        cls, asset_entity_data, build_profiles, loaders_by_name
+        self, asset_entity_data, build_profiles, loaders_by_name
     ):
         """Load containers for entered asset entity by Build profiles.
 
@@ -1062,7 +1067,7 @@ class BuildWorkfile:
 
         asset_entity = asset_entity_data["asset_entity"]
 
-        valid_profiles = cls._filter_build_profiles(
+        valid_profiles = self._filter_build_profiles(
             build_profiles, loaders_by_name
         )
         if not valid_profiles:
@@ -1093,7 +1098,7 @@ class BuildWorkfile:
             ))
             return
 
-        profiles_per_subset_id = cls._prepare_profile_for_subsets(
+        profiles_per_subset_id = self._prepare_profile_for_subsets(
             subsets_by_id.values(), valid_profiles
         )
         if not profiles_per_subset_id:
@@ -1126,7 +1131,7 @@ class BuildWorkfile:
 
         log.debug(msg)
 
-        containers = cls._load_containers(
+        containers = self._load_containers(
             valid_repres_by_subset_id, subsets_by_id,
             profiles_per_subset_id, loaders_by_name
         )
@@ -1136,9 +1141,8 @@ class BuildWorkfile:
             "containers": containers
         }
 
-    @classmethod
     def _load_containers(
-        cls, repres_by_subset_id, subsets_by_id,
+        self, repres_by_subset_id, subsets_by_id,
         profiles_per_subset_id, loaders_by_name
     ):
         """Real load by collected data happens here.
@@ -1230,8 +1234,7 @@ class BuildWorkfile:
 
         return loaded_containers
 
-    @classmethod
-    def _collect_last_version_repres(cls, asset_entities):
+    def _collect_last_version_repres(self, asset_entities):
         """Collect subsets, versions and representations for asset_entities.
 
         :param asset_entities: Asset entities for which want to find data

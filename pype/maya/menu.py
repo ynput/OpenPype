@@ -29,7 +29,7 @@ def deferred():
         cmds.menuItem(
             "Build First Workfile",
             parent=pipeline._menu,
-            command=lambda *args: BuildWorkfile.build_workfile()
+            command=lambda *args: BuildWorkfile().build_workfile()
         )
 
     log.info("Attempting to install scripts menu..")
