@@ -1,4 +1,4 @@
-/* global app, XMPMeta, ExternalObject, CSXSEvent, Folder */
+/* global $, JSON, app, XMPMeta, ExternalObject, CSXSEvent, Folder */
 /* --------------------------------------
    -. ==  [ part 0f PyPE CluB ] == .-
 _______________.___._____________________
@@ -11,7 +11,7 @@ _______________.___._____________________
 */
 
 // variable br is defined in pypeAvalon.jsx
-var br = {
+$.batchrenamer = {
   getSelectedVideoTrackItems: function () {
     var seq = app.project.activeSequence;
     var selected = [];
@@ -101,19 +101,19 @@ var br = {
         clips: {},
         tags: {}
       };
-      br.setSequencePypeMetadata(sequence, pyMeta);
+      $.batchrenamer.setSequencePypeMetadata(sequence, pyMeta);
       pypeDataValue = xmp.getProperty(kPProPrivateProjectMetadataURI, pypeData);
-      return br.getSequencePypeMetadata(sequence);
+      return $.batchrenamer.getSequencePypeMetadata(sequence);
     } else {
       return JSON.parse(pypeDataValue);
     }
   },
   renameTargetedTextLayer: function (data) {
     $.writeln(data);
-    var selected = br.getSelectedVideoTrackItems();
+    var selected = $.batchrenamer.getSelectedVideoTrackItems();
 
     var seq = app.project.activeSequence;
-    var metadata = br.getSequencePypeMetadata(seq);
+    var metadata = $.batchrenamer.getSequencePypeMetadata(seq);
 
     var startCount = 10;
     var stepCount = 10;
@@ -164,7 +164,7 @@ var br = {
     }
 
     metadata.clips = newItems;
-    br.setSequencePypeMetadata(seq, metadata);
+    $.batchrenamer.setSequencePypeMetadata(seq, metadata);
     return JSON.stringify(metadata);
   }
 };

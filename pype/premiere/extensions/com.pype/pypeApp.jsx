@@ -1,4 +1,5 @@
-﻿/*************************************************************************
+/* global $, File, Folder, alert */
+/*************************************************************************
  * ADOBE CONFIDENTIAL
  * ___________________
  *
@@ -16,10 +17,6 @@ if (typeof ($) === 'undefined') {
   var $ = {};
 }
 
-if (typeof (br) === 'undefined') {
-  var br = {};
-}
-
 if (typeof (app) === 'undefined') {
   var app = {};
 }
@@ -28,9 +25,26 @@ function keepExtention () {
   return app.setExtensionPersistent('com.pype', 0);
 }
 
-keepExtention()
+keepExtention();
+
+var jsFilesList = ['json2.js'];
 
 $._ext = {
+  evalJSFiles: function (extensionFolder) {
+    var libDir = new File(extensionFolder + '/lib');
+
+    // adding JS from lib
+    for (var jsi = 0; jsi < jsFilesList.length; jsi++) {
+      var js = libDir + '/' + jsFilesList[jsi];
+      try {
+        $.evalFile(js);
+        $.writeln(js);
+      } catch (e) {
+        $.writeln(e);
+        alert('Exception:' + e);
+      }
+    }
+  },
   // Evaluate a file and catch the exception.
   evalFile: function (path) {
     try {
@@ -42,15 +56,10 @@ $._ext = {
     }
   },
   // Evaluate all the files in the given folder
-  evalFiles: function (extensionFolder) {
-    // adding JSON module
-    var json2 = new Folder(extensionFolder + '/lib/json2.js');
-    $.evalFile(json2);
-    $.writeln(JSON.stringify({ thispath: '/taph/thsis.json' }));
-
+  evalJSXFiles: function (extensionFolder, appShortName) {
     // adding all jsx files
-    var folderJsx = new Folder(extensionFolder + '/jsx/')
-    var folderPpro = new Folder(folderJsx + '/PPRO');
+    var folderJsx = new Folder(extensionFolder + '/jsx/');
+    var folderPpro = new Folder(folderJsx + '/' + appShortName);
     var foldersToImport = [folderPpro, folderJsx];
     for (var fi = 0; fi < foldersToImport.length; fi++) {
       if (foldersToImport[fi].exists) {
@@ -94,5 +103,12 @@ $._ext = {
   }
 };
 
-// var dalsiJsxFile = 'C:\\Users\\jezsc\\CODE\\pype-setup\\repos\\pype\\pype\\premiere\\extensions\\com.pype\\jsx\\pype.jsx';
-// $.evalFile(dalsiJsxFile);
+// var extensionFolder = new Folder(
+//   'C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/premiere/extensions/com.pype');
+// $.writeln(extensionFolder);
+// var mainJsx = extensionFolder + '/pypeApp.jsx';
+// var appName = 'PPRO';
+// $.writeln(mainJsx);
+// $.evalFile(mainJsx);
+// $._ext.evalJSXFiles(extensionFolder, appName);
+// $._ext.evalJSFiles(extensionFolder);
