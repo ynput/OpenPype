@@ -105,7 +105,6 @@ class YetiCacheLoader(api.Loader):
         io.install()
         namespace = container["namespace"]
         container_node = container["objectName"]
-        # import web_pdb; web_pdb.set_trace()
 
         fur_settings = io.find_one(
             {"parent": representation["parent"], "name": "fursettings"}
@@ -120,8 +119,6 @@ class YetiCacheLoader(api.Loader):
         settings_fname = api.get_representation_path(fur_settings)
         path = api.get_representation_path(representation)
         # Get all node data
-        # fname, ext = os.path.splitext(path)
-        # settings_fname = "{}.fursettings".format(fname)
         with open(settings_fname, "r") as fp:
             settings = json.load(fp)
 
@@ -213,7 +210,6 @@ class YetiCacheLoader(api.Loader):
                     yeti_node = yeti_nodes[0]
 
                     for attr, value in data["attrs"].items():
-                        # import web_pdb; web_pdb.set_trace()
                         # handle empty attribute strings. Those are reported
                         # as None, so their type is NoneType and this is not
                         # supported on attributes in Maya. We change it to
