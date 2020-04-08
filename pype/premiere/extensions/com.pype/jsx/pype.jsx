@@ -1,4 +1,4 @@
-/* global app, qe, $, JSON, ProjectItemType */
+/* global app, qe, alert, File, $, JSON, ProjectItemType, XMPMeta */
 /*
               .____ _ ___ .____.______
 --- - - --   /  .  \//  //  .  \  ___/ --- ---- - -
@@ -51,7 +51,6 @@ $.pype = {
     } else {
       return deepSearchBin(folderObject);
     }
-
   },
 
   createDeepBinStructure: function (hierarchyString) {
@@ -61,8 +60,8 @@ $.pype = {
     var currentBin = $.pype.searchForBinWithName(parents[0]);
     // create bin if doesn't exists
     if (currentBin === undefined) {
-      currentBin = app.project.rootItem.createBin(parents[0])
-    };
+      currentBin = app.project.rootItem.createBin(parents[0]);
+    }
     for (var b = 1; b < parents.length; b++) {
       var testBin = $.pype.searchForBinWithName(parents[b], currentBin);
       if (testBin === undefined) {
@@ -71,18 +70,17 @@ $.pype = {
         currentBin = testBin;
       }
     }
-    return currentBin
+    return currentBin;
   },
 
   insertBinClipToTimeline: function (binClip, time, trackOrder, numTracks, origNumTracks) {
     var seq = app.project.activeSequence;
     var numVTracks = seq.videoTracks.numTracks;
 
-    var addInTrack = (numTracks === 1) ?
-      (origNumTracks) :
-      (numVTracks - numTracks + trackOrder);
-    $.writeln("\n___name: " + binClip.name);
-    $.writeln("numVTracks: " + numVTracks + ", trackOrder: " + trackOrder + ", numTracks: " + numTracks + ", origNumTracks: " + origNumTracks + ", addInTrack: " + addInTrack);
+    var addInTrack = (numTracks === 1) ? (origNumTracks)
+      : (numVTracks - numTracks + trackOrder);
+    $.writeln('\n___name: ' + binClip.name);
+    $.writeln('numVTracks: ' + numVTracks + ', trackOrder: ' + trackOrder + ', numTracks: ' + numTracks + ', origNumTracks: ' + origNumTracks + ', addInTrack: ' + addInTrack);
 
     var targetVTrack = seq.videoTracks[addInTrack];
 
@@ -118,11 +116,11 @@ $.pype = {
           var fileName = path.split('/');
           if (fileName.length <= 1) {
             fileName = path.split('\\');
-          };
-          fileName = fileName[fileName.length - 1]
+          }
+          fileName = fileName[fileName.length - 1];
           pathsToImport.push(path);
           namesToGetFromBin.push(fileName);
-          namesToSetToClips.push(key)
+          namesToSetToClips.push(key);
         }
 
         // create parent bin object
@@ -130,11 +128,10 @@ $.pype = {
 
         // check if any imported clips are in the bin
         if (parent.children.numItems > 0) {
-          var refinedListForImport = [];
           // loop pathsToImport
           var binItemNames = [];
           for (var c = 0; c < parent.children.numItems; c++) {
-            binItemNames.push(parent.children[c].name)
+            binItemNames.push(parent.children[c].name);
           }
 
           // loop formated clip names to be imported
@@ -147,7 +144,6 @@ $.pype = {
                 0); // import as numbered stills
 
               for (var pi = 0; pi < parent.children.numItems; pi++) {
-
                 if (namesToGetFromBin[p] === parent.children[pi].name) {
                   parent.children[pi].name = namesToSetToClips[p];
                   var start = data.clips[namesToSetToClips[p]]['parentClip']['start']
@@ -156,34 +152,32 @@ $.pype = {
               }
             } else { // if the bin item already exist just update the path
               // loop children in parent bin
-              for (var i = 0; i < parent.children.numItems; i++) {
-                if (namesToSetToClips[p] === parent.children[i].name) {
-                  $.writeln("__namesToSetToClips[p]__: " + namesToSetToClips[p])
-                  parent.children[i].changeMediaPath(pathsToImport[p]);
+              for (var pi = 0; pi < parent.children.numItems; pi++) {
+                if (namesToSetToClips[p] === parent.children[pi].name) {
+                  $.writeln('__namesToSetToClips[p]__: ' + namesToSetToClips[p]);
+                  parent.children[pi].changeMediaPath(pathsToImport[p]);
                   // clip exists and we can update path
-                  $.writeln("____clip exists and updating path");
+                  $.writeln('____clip exists and updating path');
                 }
               }
             }
           }
-
         } else {
-
           app.project.importFiles(pathsToImport,
             1, // suppress warnings
             parent,
             0); // import as numbered stills
-          for (var i = 0; i < parent.children.numItems; i++) {
-            parent.children[i].name = namesToSetToClips[i];
-            var start = data.clips[namesToSetToClips[i]]['parentClip']['start']
-            $.pype.insertBinClipToTimeline(parent.children[i], start, data.clips[namesToSetToClips[i]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
+          for (var pi = 0; pi < parent.children.numItems; pi++) {
+            parent.children[pi].name = namesToSetToClips[i];
+            start = data.clips[namesToSetToClips[i]]['parentClip']['start']
+            $.pype.insertBinClipToTimeline(parent.children[pi], start, data.clips[namesToSetToClips[i]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
           }
 
-          return
-        };
+          return;
+        }
       } else {
         alert('Missing data for clip insertion', 'error');
-        return false
+        return false;
       }
     }
     // remove all empty tracks
@@ -193,8 +187,8 @@ $.pype = {
   setEnvs: function (env) {
     for (var key in env) {
       $.writeln((key + ': ' + env[key]));
-      $.setenv(key, env[key])
-    };
+      $.setenv(key, env[key]);
+    }
   },
 
   importClips: function (obj) {
@@ -205,12 +199,12 @@ $.pype = {
   convertPathString: function (path) {
     return path.replace(
       new RegExp('\\\\', 'g'), '/').replace(new RegExp('//\\?/', 'g'), '').replace(
-      new RegExp('/', 'g'), '\\').replace('UNC', '\\');;
+      new RegExp('/', 'g'), '\\').replace('UNC', '\\');
   },
 
   getProjectFileData: function () {
     app.enableQE();
-    var projPath = new File(app.project.path)
+    var projPath = new File(app.project.path);
     var obj = {
       projectfile: app.project.name,
       projectpath: $.pype.convertPathString(projPath.fsName),
@@ -262,8 +256,8 @@ $.pype = {
           //  $.pype.log('\nSequence in root, guid: ' +  seq );
           for (var property in seq) {
             if (seq.hasOwnProperty(property)) {
-              //  $.pype.log('\nSequence in root: ' + seq );
-              // $.pype.log('qe sequence prop: ' + property );
+              $.pype.log('\nSequence in root: ' + seq);
+              $.pype.log('qe sequence prop: ' + property);
             }
           }
           getClipNames(seq, sequences);
@@ -271,7 +265,7 @@ $.pype = {
       }
     }
 
-    function objectIsSequence() {
+    function objectIsSequence () {
       var isSequence = false;
 
       for (var s = 0; s < app.project.sequences.numSequences; s++) {
@@ -284,7 +278,7 @@ $.pype = {
     }
 
     // walk through bins recursively
-    function walkBins(item, source, rootBinCounter) {
+    function walkBins (item, source, rootBinCounter) {
       app.enableQE();
       // $.pype.log('\nget clips for bin  ' + item.name  );
 
@@ -310,7 +304,7 @@ $.pype = {
     }
 
     // walk through sequences and video & audiotracks to find clip names in sequences
-    function getClipNames(seq, sequences) {
+    function getClipNames (seq, sequences) {
       for (var k = 0; k < sequences.length; k++) {
         //  $.pype.log('getClipNames seq.guid ' + seq.guid  );
         // $.pype.log(' getClipNames sequences[k].id ' +  sequences[k].sequenceID  );
@@ -351,12 +345,12 @@ $.pype = {
             var audioTrack = seq.getAudioTrackAt(l);
             // $.pype.log(bin.name + ' ' + seq.name + ' has audio track '+ audioTrack.name + ' at index ' + l);
             // $.pype.log('\n' + bin.name + ' ' + seq.name + ' ' + audioTrack.name + ' has  ' + app.project.sequences[k].audioTracks[l].clips.numTracks + ' clips');
-            var clipCounter = 0;
-            var numOfClips = app.project.sequences[k].audioTracks[l].clips.numTracks;
+            clipCounter = 0;
+            numOfClips = app.project.sequences[k].audioTracks[l].clips.numTracks;
 
             for (var m = 0; m < numOfClips; m++) {
               var clip = app.project.sequences[k].audioTracks[l].clips[m];
-              // $.pype.log('clips in audio tracks:   ' + m + ' - ' + clip);
+              $.pype.log('clips in audio tracks:   ' + m + ' - ' + clip);
               // if a clip was deleted and another one added, the index of the new one is one  or more higher
               while (clipCounter < numOfClips) { // undefined because of old clips
                 if (audioTrack.getItemAt(m).name) {
@@ -408,7 +402,7 @@ $.pype = {
     }
 
     // walk through bins recursively
-    function walkBins(bin) { // eslint-disable-line no-unused-vars
+    function walkBins (bin) { // eslint-disable-line no-unused-vars
       app.enableQE();
 
       // $.writeln('bin.name + ' has ' + bin.children.numItems);
@@ -436,7 +430,7 @@ $.pype = {
     return projectItems;
   },
 
-  replaceClips: function (obj) {
+  replaceClips: function (obj, projectItems) {
     $.pype.log('num of projectItems:' + projectItems.length);
     var hiresVOs = obj.hiresOnFS;
     for (var i = 0; i < hiresVOs.length; i++) {
@@ -480,10 +474,10 @@ $.pype = {
         points.push(Math.ceil(clip.start.seconds * 1000) / 1000);
         points.push(Math.ceil(clip.end.seconds * 1000) / 1000);
       }
-    };
+    }
 
     points.sort(function (a, b) {
-      return a - b
+      return a - b;
     });
 
     output.push(points[0]);
@@ -503,10 +497,10 @@ $.pype = {
         var clip = seq.videoTracks[l].clips[m];
         if (clip.isSelected()) {
           selected.push({
-            'clip': clip,
-            'sequence': seq,
-            'videoTrack': seq.videoTracks[l],
-            'trackOrder': l
+            clip: clip,
+            sequence: seq,
+            videoTrack: seq.videoTracks[l],
+            trackOrder: l
           });
         }
       }
@@ -518,11 +512,11 @@ $.pype = {
     var instances = resultedPyblishJsonData.instances;
     var pypeData = $.pype.loadSequenceMetadata(app.project.activeSequence);
     for (var i = 0; i < instances.length; i++) {
-      $.writeln(instances[i].label)
+      $.writeln(instances[i].label);
       // process instances
       // check if asset in metadata
       // add it to sequence metadata
-      if (instances[i].family !== "projectfile") {
+      if (instances[i].family !== 'projectfile') {
         var data = {};
         data.family = instances[i].family;
         data.ftrackShotId = instances[i].ftrackShotId;
@@ -531,7 +525,7 @@ $.pype = {
         data.ftrackTaskID = instances[i].ftrackTask.substring(6, (instances[i].ftrackTask.length - 2));
         data.representation = instances[i].jsonData.representations[
           instances[i].families.families[0]
-          ];
+        ];
         // getting published path from transfers
         var transfers = instances[i].transfers.transfers;
         for (var t = 0; t < transfers.length; t++) {
@@ -541,9 +535,9 @@ $.pype = {
             // selecting published path
             if (subsetR.test(transfers[t][tt]) && reprR.test(transfers[t][tt])) {
               data.absPath = transfers[t][tt];
-            };
-          };
-        };
+            }
+          }
+        }
         // add all created publishe data into sequence metadata object
         var subsetData = {};
         if (pypeData.clips[instances[i].asset].published === undefined) {
@@ -551,39 +545,36 @@ $.pype = {
           pypeData.clips[instances[i].asset].published = subsetData;
         } else {
           pypeData.clips[instances[i].asset].published[instances[i].subset] = data;
-        };
-
-      };
-    };
-
-    //dumping all data back to sequence metadata
-    $.pype.dumpSequenceMetadata(pypeData, app.project.activeSequence)
+        }
+      }
+    }
+    // dumping all data back to sequence metadata
+    $.pype.dumpSequenceMetadata(pypeData, app.project.activeSequence);
   },
   dumpSequenceMetadata: function (data, sequence) {
     if (sequence === undefined) {
-      var sequence = app.project.activeSequence;
-    };
-    var kPProPrivateProjectMetadataURI = "http://ns.adobe.com/premierePrivateProjectMetaData/1.0/";
+      sequence = app.project.activeSequence;
+    }
+    var kPProPrivateProjectMetadataURI = 'http://ns.adobe.com/premierePrivateProjectMetaData/1.0/';
     var metadata = sequence.projectItem.getProjectMetadata();
-    var pypeData = "pypeData"
+    var pypeData = 'pypeData';
     var xmp = new XMPMeta(metadata);
-    app.project.addPropertyToProjectMetadataSchema(pypeData, "Pype Data", 2);
-
+    app.project.addPropertyToProjectMetadataSchema(pypeData, 'Pype Data', 2);
 
     xmp.setProperty(kPProPrivateProjectMetadataURI, pypeData, JSON.stringify(data));
 
     var str = xmp.serialize();
 
     sequence.projectItem.setProjectMetadata(str, [pypeData]);
-    $.writeln('________________________')
-    $.writeln(JSON.stringify(data))
-    $.writeln('________________________')
+    $.writeln('________________________');
+    $.writeln(JSON.stringify(data));
+    $.writeln('________________________');
   },
 
   loadSequenceMetadata: function (sequence) {
-    var kPProPrivateProjectMetadataURI = "http://ns.adobe.com/premierePrivateProjectMetaData/1.0/";
+    var kPProPrivateProjectMetadataURI = 'http://ns.adobe.com/premierePrivateProjectMetaData/1.0/';
     var metadata = sequence.projectItem.getProjectMetadata();
-    var pypeData = "pypeData"
+    var pypeData = 'pypeData';
     var xmp = new XMPMeta(metadata);
     var pypeDataValue = xmp.getProperty(kPProPrivateProjectMetadataURI, pypeData);
 
@@ -615,20 +606,20 @@ $.pype = {
     if (hierarchy === null) {
       alert('First you need to rename clip sequencially with hierarchy!\nUse `Pype Rename` extension', 'No hierarchy data available at clip ' + clip.name + '!', 'error');
       return;
-    };
+    }
 
     var interpretation = clip.projectItem.getFootageInterpretation();
     var instance = {};
-    instance['publish'] = true;
-    instance['family'] = 'clip';
-    instance['name'] = clip.name;
-    instance['hierarchy'] = hierarchy;
-    instance['parents'] = parents;
-    instance['representations'] = presets.rules_tasks.representations;
+    instance.publish = true;
+    instance.family = 'clip';
+    instance.name = clip.name;
+    instance.hierarchy = hierarchy;
+    instance.parents = parents;
+    instance.representations = presets.rules_tasks.representations;
     // metadata
     var metadata = {};
     // TODO: how to get colorspace clip info
-    metadata['colorspace'] = 'bt.709';
+    metadata.colorspace = 'bt.709';
     var settings = sequence.getSettings();
     var sequenceSize = $.pype.getImageSize();
     metadata['ppro.videoTrack.name'] = videoTrack.name;

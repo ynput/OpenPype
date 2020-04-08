@@ -39,34 +39,41 @@ function renderClips() {
   });
 }
 
-function displayResult(r) {
+function displayResult (r) {
   console.log(r);
   _pype.csi.evalScript('$.writeln( ' + JSON.stringify(r) + ' )');
-  output.classList.remove("error");
+  output.classList.remove('error');
   output.innerText = r;
 }
 
-function displayError(e) {
-  output.classList.add("error");
+function displayError (e) {
+  output.classList.add('error');
   output.innerText = e.message;
 }
 
-function loadJSX() {
-  // get the appName of the currently used app. For Premiere Pro it's "PPRO"
-  var appName = _pype.csi.hostEnvironment.appName;
+function loadExtensionDependencies () {
+  // get extension path
   var extensionPath = _pype.csi.getSystemPath(SystemPath.EXTENSION);
 
-  // load general JSX script independent of appName
-  // var extensionRootGeneral = extensionPath + '/jsx/';
-  _pype.csi.evalScript('$._ext.evalFiles("' + extensionPath + '")');
+  // get the appName of the currently used app. For Premiere Pro it's "PPRO"
+  var appName = _pype.csi.hostEnvironment.appName;
+  console.log('App name: ' + appName);
 
-  _pype.csi.evalScript('$._PPP_.updateEventPanel( "' + "all plugins are loaded" + '" )');
-  _pype.csi.evalScript('$._PPP_.updateEventPanel( "' + "testing function done" + '" )');
+  // load general JS scripts from `extensionPath/lib/`
+  _pype.csi.evalScript(
+    '$._ext.evalJSFiles("' + extensionPath + '" )');
+  console.log('js load done');
 
+  // load all available JSX scripts from `extensionPath/jsx/*` with subfolders
+  _pype.csi.evalScript(
+    '$._ext.evalJSXFiles("' + extensionPath + '", "' + appName + '")');
+  console.log('jsx load done');
+
+  _pype.csi.evalScript('$._PPP_.updateEventPanel( "' + 'all plugins are loaded' + '" )');
 }
 
 // run all at loading
-loadJSX()
+loadExtensionDependencies()
 
 function querySelector (elementId) {
   return document.querySelector(elementId);
@@ -278,7 +285,7 @@ function tc(timecode) {
   displayResult(timec);
 }
 
-function rename() {
+function rename () {
   var $ = querySelector('#rename');
   var data = {};
   data.ep = $.querySelector('input[name=episode]').value;
@@ -287,16 +294,18 @@ function rename() {
   if (!data.ep) {
     _pype.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode code' + '")');
     return;
-  };
+  }
 
   if (!data.epSuffix) {
     _pype.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode longer suffix' + '")');
     return;
-  };
+  }
 
-  _pype.csi.evalScript('br.renameTargetedTextLayer( ' + JSON.stringify(data) + ' );', function (result) {
-    displayResult(result);
-  });
+  _pype.csi.evalScript(
+    '$.batchrenamer.renameTargetedTextLayer( ' + JSON.stringify(
+      data) + ' );', function (result) {
+      displayResult(result);
+    });
 }
 
 // bind buttons
