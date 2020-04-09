@@ -660,7 +660,7 @@ def execute_hook(hook, *args, **kwargs):
     This will load hook file, instantiate class and call `execute` method
     on it. Hook must be in a form:
 
-    `$PYPE_ROOT/repos/pype/path/to/hook.py/HookClass`
+    `$PYPE_SETUP_PATH/repos/pype/path/to/hook.py/HookClass`
 
     This will load `hook.py`, instantiate HookClass and then execute_hook
     `execute(*args, **kwargs)`
@@ -671,7 +671,7 @@ def execute_hook(hook, *args, **kwargs):
 
     class_name = hook.split("/")[-1]
 
-    abspath = os.path.join(os.getenv('PYPE_ROOT'),
+    abspath = os.path.join(os.getenv('PYPE_SETUP_PATH'),
                            'repos', 'pype', *hook.split("/")[:-1])
 
     mod_name, mod_ext = os.path.splitext(os.path.basename(abspath))

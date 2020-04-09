@@ -151,7 +151,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
-        "PYPE_ROOT",
+        "PYPE_SETUP_PATH",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT"
     ]

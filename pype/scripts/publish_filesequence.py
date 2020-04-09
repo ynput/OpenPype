@@ -47,10 +47,10 @@ def __main__():
     auto_pype_root = os.path.dirname(os.path.abspath(__file__))
     auto_pype_root = os.path.abspath(auto_pype_root + "../../../../..")
 
-    auto_pype_root = os.environ.get('PYPE_ROOT') or auto_pype_root
-    if os.environ.get('PYPE_ROOT'):
+    auto_pype_root = os.environ.get('PYPE_SETUP_PATH') or auto_pype_root
+    if os.environ.get('PYPE_SETUP_PATH'):
         print("Got Pype location from environment: {}".format(
-            os.environ.get('PYPE_ROOT')))
+            os.environ.get('PYPE_SETUP_PATH')))
 
     pype_command = "pype.ps1"
     if platform.system().lower() == "linux":

@@ -312,7 +312,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         # replace path for UNC / network share paths, co PYPE is found
         # over network. It assumes PYPE is located somewhere in
         # PYPE_CORE_PATH
-        pype_root = os.environ["PYPE_ROOT"].replace(
+        pype_root = os.environ["PYPE_SETUP_PATH"].replace(
             os.path.normpath(os.environ['PYPE_CORE_MOUNT']),
             os.path.normpath(os.environ['PYPE_CORE_PATH'])
         )

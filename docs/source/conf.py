@@ -22,7 +22,7 @@ from pypeapp.pypeLauncher import PypeLauncher
 from pypeapp.storage import Storage
 from pypeapp.deployment import Deployment
 
-pype_setup = os.getenv('PYPE_ROOT')
+pype_setup = os.getenv('PYPE_SETUP_PATH')
 d = Deployment(pype_setup)
 launcher = PypeLauncher()
 
