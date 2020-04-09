@@ -13,8 +13,6 @@ import json
 import pyblish.api
 from avalon import api
 
-from pypeapp import PypeLauncher, Roots
-
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
     """
