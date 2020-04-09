@@ -12,6 +12,8 @@ var pras = {
   },
   load_representations: function (projectName, requestList) {
     // preparation for getting representations from api server
+    console.log('Load Represention:projectName: ' + projectName);
+    console.log('Load Represention:requestList: ' + requestList);
   },
   register_plugin_path: function (publishPath) {
     // preparation for getting representations from api server
@@ -21,6 +23,9 @@ var pras = {
   },
   publish: function (jsonSendPath, jsonGetPath, gui) {
     // preparation for publishing with rest api server
+    console.log('__ publish:jsonSendPath: ' + jsonSendPath);
+    console.log('__ publish:jsonGetPath ' + jsonGetPath);
+    console.log('__ publish:gui ' + gui);
   },
   context: function (project, asset, task, app) {
     // getting context of project

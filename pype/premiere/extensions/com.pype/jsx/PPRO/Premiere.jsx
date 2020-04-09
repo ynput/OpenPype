@@ -141,8 +141,10 @@ $._PPP_ = {
         '___' +
         activeSequence.name;
       activeSequence.exportFramePNG(time, outputFileName);
+      return outputFileName
     } else {
       $._PPP_.updateEventPanel('No active sequence.');
+      return 'no file was saved'
     }
   },
 

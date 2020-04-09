@@ -1,9 +1,9 @@
-/* global CSInterface, $, querySelector, pras, SystemPath, displayResult */
+/* global CSInterface, $, cep_node, querySelector, pras, SystemPath, displayResult */
 
 var csi = new CSInterface();
 var output = document.getElementById('output');
-var process = cep_node.require('process');
-var timecodes = cep_node.require('node-timecodes');
+var process = require('process');
+var timecodes = require('node-timecodes');
 
 var _pype = {
   csi: csi,
@@ -33,11 +33,11 @@ var _pype = {
   }
 };
 
-function renderClips() {
-  _pype.csi.evalScript('$.pype.transcodeExternal(' + pras.rootFolderPath + ');', function (result) {
-    displayResult(result);
-  });
-}
+// function renderClips () {
+//   _pype.csi.evalScript('$.pype.transcodeExternal(' + pras.rootFolderPath + ');', function (result) {
+//     displayResult(result);
+//   });
+// }
 
 function displayResult (r) {
   console.log(r);
@@ -46,10 +46,10 @@ function displayResult (r) {
   output.innerText = r;
 }
 
-function displayError (e) {
-  output.classList.add('error');
-  output.innerText = e.message;
-}
+// function displayError (e) {
+//   output.classList.add('error');
+//   output.innerText = e.message;
+// }
 
 function loadExtensionDependencies () {
   // get extension path
@@ -73,7 +73,7 @@ function loadExtensionDependencies () {
 }
 
 // run all at loading
-loadExtensionDependencies()
+loadExtensionDependencies();
 
 function querySelector (elementId) {
   return document.querySelector(elementId);
@@ -104,8 +104,15 @@ function loadAnimationRendersToTimeline () {
       clipData.representation = data.subsetExt;
       requestList.push(clipData);
     }
+
+    if (requestList.length < 1) {
+      _pype.csi.evalScript(
+        '$.pype.alert_message("' + 'Need to select at least one clip' + '")');
+      return;
+    }
+
     // gets data from mongodb
-    pras.load_representations(_pype.ENV['AVALON_PROJECT'], requestList).then(
+    pras.load_representations(_pype.ENV.AVALON_PROJECT, requestList).then(
       function (avalonData) {
         // creates or updates data on timeline
         var makeData = {};
@@ -118,43 +125,42 @@ function loadAnimationRendersToTimeline () {
   });
 }
 
-function evalScript(script) {
+function evalScript (script) {
   var callback = function (result) {
     displayResult(result);
   };
   _pype.csi.evalScript(script, callback);
 }
 
-function deregister() {
+function deregister () {
   pras.deregister_plugin_path().then(displayResult);
 }
 
-function register() {
+function register () {
   var $ = querySelector('#register');
   var path = $.querySelector('input[name=path]').value;
   pras.register_plugin_path(path).then(displayResult);
 }
 
-function getStagingDir() {
-  // create stagingDir
-  const fs = require('fs-extra');
+function getStagingDir () {
+  const mkdirp = require('mkdirp');
   const os = require('os');
   const path = require('path');
   const UUID = require('pure-uuid');
-  const id = new UUID(4).format();
-  const stagingDir = path.join(os.tmpdir(), id);
+  // create stagingDir
+  var id = new UUID(4).format();
+  var stagingDir = path.join(os.tmpdir(), id);
 
-  fs.mkdirs(stagingDir);
+  mkdirp(stagingDir);
   return stagingDir;
-
 }
 
-function convertPathString(path) {
+function convertPathString (path) {
   return path.replace(
     new RegExp('\\\\', 'g'), '/').replace(new RegExp('//\\?/', 'g'), '');
 }
 
-function publish() {
+function publish () {
   var $ = querySelector('#publish');
   // var gui = $.querySelector('input[name=gui]').checked;
   var gui = true;
@@ -162,17 +168,16 @@ function publish() {
   var audioOnly = $.querySelector('input[name=audio-only]').checked;
   var jsonSendPath = $.querySelector('input[name=send-path]').value;
   var jsonGetPath = $.querySelector('input[name=get-path]').value;
-  var publish_path = _pype.ENV['PUBLISH_PATH'];
+  var publishPath = _pype.ENV.publishPath;
 
-  if (jsonSendPath == '') {
+  if (jsonSendPath === '') {
     // create temp staging directory on local
     var stagingDir = convertPathString(getStagingDir());
 
     // copy project file to stagingDir
-    const fs = require('fs-extra');
-    const path = require('path');
-
     _pype.csi.evalScript('$.pype.getProjectFileData();', function (result) {
+      const path = require('path');
+      const fs = require('fs');
       displayResult(result);
       var data = JSON.parse(result);
       displayResult(stagingDir);
@@ -192,9 +197,10 @@ function publish() {
 
       _pype.csi.evalScript('$.pype.encodeRepresentation(' + JSON.stringify(request) + ');', function (result) {
         // create json for pyblish
-        var jsonfile = require('jsonfile');
-        var jsonSendPath = stagingDir + '_send.json'
-        var jsonGetPath = stagingDir + '_get.json'
+        const jsonfile = require('jsonfile');
+        const fs = require('fs');
+        var jsonSendPath = stagingDir + '_send.json';
+        var jsonGetPath = stagingDir + '_get.json';
         $.querySelector('input[name=send-path]').value = jsonSendPath;
         $.querySelector('input[name=get-path]').value = jsonGetPath;
         var jsonContent = JSON.parse(result);
@@ -202,74 +208,69 @@ function publish() {
         var checkingFile = function (path) {
           var timeout = 1000;
           setTimeout(function () {
-              if (fs.existsSync(path)) {
-                // register publish path
-                pras.register_plugin_path(publish_path).then(displayResult);
-                // send json to pyblish
-                pras.publish(jsonSendPath, jsonGetPath, gui).then(function (result) {
-                  // check if resulted path exists as file
-                  if (fs.existsSync(result.get_json_path)) {
-                    // read json data from resulted path
-                    displayResult('Updating metadata of clips after publishing');
+            if (fs.existsSync(path)) {
+              // register publish path
+              pras.register_plugin_path(publishPath).then(displayResult);
+              // send json to pyblish
+              pras.publish(jsonSendPath, jsonGetPath, gui).then(function (result) {
+                // check if resulted path exists as file
+                if (fs.existsSync(result.get_json_path)) {
+                  // read json data from resulted path
+                  displayResult('Updating metadata of clips after publishing');
 
-                    jsonfile.readFile(result.get_json_path, function (err, json) {
-                      _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
-                    })
+                  jsonfile.readFile(result.get_json_path, function (json) {
+                    _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
+                  });
 
-                    // version up project
-                    if (versionUp) {
-                      displayResult('Saving new version of the project file');
-                      _pype.csi.evalScript('$.pype.versionUpWorkFile();');
-                    };
-                  } else {
-                    // if resulted path file not existing
-                    displayResult('Publish has not been finished correctly. Hit Publish again to publish from already rendered data, or Reset to render all again.');
-                  };
-
-                });
-
-              } else {
-                displayResult('waiting');
-                checkingFile(path);
-              };
-            },
-            timeout)
+                  // version up project
+                  if (versionUp) {
+                    displayResult('Saving new version of the project file');
+                    _pype.csi.evalScript('$.pype.versionUpWorkFile();');
+                  }
+                } else {
+                  // if resulted path file not existing
+                  displayResult('Publish has not been finished correctly. Hit Publish again to publish from already rendered data, or Reset to render all again.');
+                }
+              });
+            } else {
+              displayResult('waiting');
+              checkingFile(path);
+            }
+          }, timeout);
         };
-
-        checkingFile(jsonContent.waitingFor)
+        checkingFile(jsonContent.waitingFor);
       });
     });
   } else {
     // register publish path
-    pras.register_plugin_path(publish_path).then(displayResult);
+    pras.register_plugin_path(publishPath).then(displayResult);
     // send json to pyblish
     pras.publish(jsonSendPath, jsonGetPath, gui).then(function (result) {
+      const jsonfile = require('jsonfile');
+      const fs = require('fs');
       // check if resulted path exists as file
       if (fs.existsSync(result.get_json_path)) {
         // read json data from resulted path
         displayResult('Updating metadata of clips after publishing');
 
-        jsonfile.readFile(result.get_json_path, function (err, json) {
+        jsonfile.readFile(result.get_json_path, function (json) {
           _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
-        })
+        });
 
         // version up project
         if (versionUp) {
           displayResult('Saving new version of the project file');
           _pype.csi.evalScript('$.pype.versionUpWorkFile();');
-        };
+        }
       } else {
         // if resulted path file not existing
         displayResult('Publish has not been finished correctly. Hit Publish again to publish from already rendered data, or Reset to render all again.');
-      };
-
+      }
     });
-  };
-  // $.querySelector('input[name=send-path]').value = '';
-  // $.querySelector('input[name=get-path]').value = '';
+  }
 }
 
-function context() {
+function context () {
   var $ = querySelector('#context');
   var project = $.querySelector('input[name=project]').value;
   var asset = $.querySelector('input[name=asset]').value;
@@ -278,7 +279,7 @@ function context() {
   pras.context(project, asset, task, app).then(displayResult);
 }
 
-function tc(timecode) {
+function tc (timecode) {
   var seconds = timecodes.toSeconds(timecode);
   var timec = timecodes.fromSeconds(seconds);
   displayResult(seconds);
@@ -361,17 +362,19 @@ $('#btn-get-projectitems').click(function () {
 $('#btn-metadata').click(function () {
   var $ = querySelector('#publish');
   var path = $.querySelector('input[name=get-path]').value;
-  var jsonfile = require('jsonfile');
+  const jsonfile = require('jsonfile');
   displayResult(path);
-  jsonfile.readFile(path, function (err, json) {
-    _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
+  jsonfile.readFile(path, function (json) {
+    _pype.csi.evalScript(
+      '$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
     displayResult('Metadata of clips after publishing were updated');
-  })
-
-
+  });
 });
+
 $('#btn-get-frame').click(function () {
-  evalScript('$._PPP_.exportCurrentFrameAsPNG();');
+  _pype.csi.evalScript('$._PPP_.exportCurrentFrameAsPNG();', function (result) {
+    displayResult(result);
+  });
 });
 
 $('#btn-tc').click(function () {
@@ -385,6 +388,5 @@ $('#btn-generateRequest').click(function () {
 $('#btn-newWorkfileVersion').click(function () {
   evalScript('$.pype.versionUpWorkFile();');
 });
-
 
 _pype.getEnv();
