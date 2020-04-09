@@ -20,13 +20,7 @@ def _get_script():
     if module_path.endswith(".pyc"):
         module_path = module_path[: -len(".pyc")] + ".py"
 
-    module_path = os.path.normpath(module_path)
-    mount_root = os.path.normpath(os.environ["PYPE_CORE_MOUNT"])
-    network_root = os.path.normpath(os.environ["PYPE_CORE_PATH"])
-
-    module_path = module_path.replace(mount_root, network_root)
-
-    return module_path
+    return os.path.normpath(module_path)
 
 
 # Logic to retrieve latest files concerning extendFrames
