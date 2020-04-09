@@ -1,9 +1,7 @@
-from maya import cmds
-
 import pyblish.api
 import avalon.api
 import os
-from pype.maya import lib
+from pype.maya import cmds
 
 
 class CollectMayaScene(pyblish.api.ContextPlugin):
@@ -44,8 +42,8 @@ class CollectMayaScene(pyblish.api.ContextPlugin):
         })
 
         data['representations'] = [{
-            'name': 'ma',
-            'ext': 'ma',
+            'name': ext.lstrip("."),
+            'ext': ext.lstrip("."),
             'files': file,
             "stagingDir": folder,
         }]

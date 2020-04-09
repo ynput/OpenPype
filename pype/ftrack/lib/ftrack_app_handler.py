@@ -290,7 +290,10 @@ class AppAction(BaseHandler):
 
             # Run SW if was found executable
             if execfile is not None:
-                avalonlib.launch(
+                # Store subprocess to varaible. This is due to Blender launch
+                # bug. Please make sure Blender >=2.81 can be launched before
+                # remove `_popen` variable.
+                _popen = avalonlib.launch(
                     executable=execfile, args=[], environment=env
                 )
             else:
@@ -323,7 +326,7 @@ class AppAction(BaseHandler):
                         'message': "No executable permission - {}".format(
                             execfile)
                         }
-                    pass
+
             else:
                 self.log.error('Launcher doesn\'t exist - {}'.format(
                     execfile))
@@ -331,10 +334,13 @@ class AppAction(BaseHandler):
                     'success': False,
                     'message': "Launcher doesn't exist - {}".format(execfile)
                 }
-                pass
+
             # Run SW if was found executable
             if execfile is not None:
-                avalonlib.launch(
+                # Store subprocess to varaible. This is due to Blender launch
+                # bug. Please make sure Blender >=2.81 can be launched before
+                # remove `_popen` variable.
+                _popen = avalonlib.launch(
                     '/usr/bin/env', args=['bash', execfile], environment=env
                 )
             else:
@@ -343,7 +349,6 @@ class AppAction(BaseHandler):
                     'message': "We didn't found launcher for {0}"
                     .format(self.label)
                     }
-                pass
 
         # Change status of task to In progress
         presets = config.get_presets()["ftrack"]["ftrack_config"]
