@@ -1,3 +1,12 @@
+"""Loads publishing context from json and continues in publish process.
+
+Requires:
+    anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.11)
+
+Provides:
+    context, instances -> All data from previous publishing process.
+"""
+
 import os
 import json
 
@@ -32,7 +41,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 )
         return data
 
-    def _process_path(self, data, root):
+    def _process_path(self, data, anatomy):
         # validate basic necessary data
         data_err = "invalid json file - missing data"
         required = ["asset", "user", "comment",
@@ -78,17 +87,26 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             representations = []
             for repre_data in instance_data.get("representations") or []:
                 staging_dir = repre_data.get("stagingDir")
-                if (
-                    not root
-                    or staging_dir is None
-                    or "{root" not in staging_dir
-                ):
-                    repre_data = PypeLauncher().path_remapper(data=repre_data)
+                if not staging_dir:
+                    pass
+
+                elif "{root" in staging_dir:
+                    repre_data["stagingDir"] = staging_dir.format(
+                        **{"root": anatomy.roots}
+                    )
+                    self.log.debug((
+                        "stagingDir was filled with root."
+                        " To: \"{}\" From: \"{}\""
+                    ).format(repre_data["stagingDir"], staging_dir))
 
                 else:
-                    repre_data["stagingDir"] = staging_dir.format(
-                        **{"root": root}
-                    )
+                    remapped = anatomy.roots_obj.path_remapper(staging_dir)
+                    if remapped:
+                        repre_data["stagingDir"] = remapped
+                        self.log.debug((
+                            "stagingDir was remapped. To: \"{}\" From: \"{}\""
+                        ).format(remapped, staging_dir))
+
                 representations.append(repre_data)
 
             instance.data["representations"] = representations
@@ -102,21 +120,20 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
 
         project_name = os.environ.get("AVALON_PROJECT")
         if project_name is None:
-            root = None
-            self.log.warning(
+            raise AssertionError(
                 "Environment `AVALON_PROJECT` was not found."
-                "Could not set `root` which may cause issues."
+                "Could not set project `root` which may cause issues."
             )
-        else:
-            self.log.info("Getting root setting for project \"{}\"".format(
-                project_name
-            ))
-            root = {"root": Roots(project_name)}
 
+        # TODO root filling should happen after collect Anatomy
+        self.log.info("Getting root setting for project \"{}\"".format(
+            project_name
+        ))
+
+        anatomy = context.data["anatomy"]
         session_set = False
         for path in paths:
-            if root:
-                path = path.format(**root)
+            path = path.format(**{"root": anatomy.roots})
             data = self._load_json(path)
             if not session_set:
                 self.log.info("Setting session using data from file")
@@ -124,4 +141,4 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 os.environ.update(data.get("session"))
                 session_set = True
             assert data, "failed to load json file"
-            self._process_path(data, root)
+            self._process_path(data, anatomy)

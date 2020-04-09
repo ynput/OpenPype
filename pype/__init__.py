@@ -87,8 +87,7 @@ def install():
 
     if project_name:
         root_obj = Roots(project_name)
-        root = root_obj.roots
-        avalon.register_root(root)
+        avalon.register_root(root_obj.roots)
     # apply monkey patched discover to original one
     avalon.discover = patched_discover
 
