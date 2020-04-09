@@ -215,6 +215,7 @@ class AppAction(BaseHandler):
             "AVALON_HIERARCHY": hierarchy,
             "AVALON_WORKDIR": workdir
         })
+        prep_env.update(anatomy.roots_obj.root_environments())
 
         # collect all parents from the task
         parents = []
