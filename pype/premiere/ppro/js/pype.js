@@ -46,10 +46,10 @@ function displayResult (r) {
   output.innerText = r;
 }
 
-// function displayError (e) {
-//   output.classList.add('error');
-//   output.innerText = e.message;
-// }
+function displayError (e) {
+  output.classList.add('error');
+  output.innerText = e;
+}
 
 function loadExtensionDependencies () {
   // get extension path
@@ -186,12 +186,18 @@ function publish () {
       displayResult('copy project file');
       displayResult(data.projectfile);
       displayResult(destination);
-      fs.copyFile(data.projectpath, destination);
+      fs.copyFile(data.projectpath, destination, displayResult);
       displayResult('project file coppied!');
     });
 
     // publishing file
     _pype.csi.evalScript('$.pype.getPyblishRequest("' + stagingDir + '", ' + audioOnly + ');', function (r) {
+      displayResult(r);
+      // make sure the process will end if no instancess are returned
+      if (r === 'null') {
+        displayError('Publish cannot be finished. Please fix the previously pointed problems');
+        return null;
+      }
       var request = JSON.parse(r);
       displayResult(JSON.stringify(request));
 
@@ -206,7 +212,7 @@ function publish () {
         var jsonContent = JSON.parse(result);
         jsonfile.writeFile(jsonSendPath, jsonContent);
         var checkingFile = function (path) {
-          var timeout = 1000;
+          var timeout = 10;
           setTimeout(function () {
             if (fs.existsSync(path)) {
               // register publish path

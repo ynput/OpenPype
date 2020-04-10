@@ -549,38 +549,79 @@ $.pype = {
       }
     }
     // dumping all data back to sequence metadata
-    $.pype.dumpSequenceMetadata(pypeData, app.project.activeSequence);
+    $.pype.setSequencePypeMetadata(app.project.activeSequence, pypeData);
   },
-  dumpSequenceMetadata: function (data, sequence) {
-    if (sequence === undefined) {
-      sequence = app.project.activeSequence;
-    }
+  /**
+   * Set Pype metadata into sequence metadata using XMP.
+   * This is `hackish` way to get over premiere lack of addressing unique clip on timeline,
+   * so we cannot store data directly per clip.
+   *
+   * @param {Object} sequence - sequence object
+   * @param {Object} data - to be serialized and saved
+   */
+  setSequencePypeMetadata: function (sequence, data) { // eslint-disable-line no-unused-vars
     var kPProPrivateProjectMetadataURI = 'http://ns.adobe.com/premierePrivateProjectMetaData/1.0/';
     var metadata = sequence.projectItem.getProjectMetadata();
     var pypeData = 'pypeData';
     var xmp = new XMPMeta(metadata);
+
     app.project.addPropertyToProjectMetadataSchema(pypeData, 'Pype Data', 2);
 
     xmp.setProperty(kPProPrivateProjectMetadataURI, pypeData, JSON.stringify(data));
 
     var str = xmp.serialize();
-
     sequence.projectItem.setProjectMetadata(str, [pypeData]);
-    $.writeln('________________________');
-    $.writeln(JSON.stringify(data));
-    $.writeln('________________________');
-  },
 
-  loadSequenceMetadata: function (sequence) {
+    // test
+    var newMetadata = sequence.projectItem.getProjectMetadata();
+    var newXMP = new XMPMeta(newMetadata);
+    var found = newXMP.doesPropertyExist(kPProPrivateProjectMetadataURI, pypeData);
+    if (!found) {
+      app.setSDKEventMessage('metadata not set', 'error');
+    }
+  },
+  /**
+   * Get Pype metadata from sequence using XMP.
+   * @param {Object} sequence
+   * @param {Bool} firstTimeRun
+   * @return {Object}
+   */
+  getSequencePypeMetadata: function (sequence, firstTimeRun) { // eslint-disable-line no-unused-vars
     var kPProPrivateProjectMetadataURI = 'http://ns.adobe.com/premierePrivateProjectMetaData/1.0/';
     var metadata = sequence.projectItem.getProjectMetadata();
     var pypeData = 'pypeData';
+    var pypeDataN = 'Pype Data';
     var xmp = new XMPMeta(metadata);
+    var successfullyAdded = app.project.addPropertyToProjectMetadataSchema(
+      pypeData, pypeDataN, 2);
     var pypeDataValue = xmp.getProperty(kPProPrivateProjectMetadataURI, pypeData);
 
-    return JSON.parse(pypeDataValue);
+    $.writeln('__ pypeDataValue: ' + pypeDataValue);
+    $.writeln('__ firstTimeRun: ' + firstTimeRun);
+    $.writeln('__ successfullyAdded: ' + successfullyAdded);
+    if ((pypeDataValue === undefined) && (firstTimeRun !== undefined)) {
+      var pyMeta = {
+        clips: {},
+        tags: {}
+      };
+      $.writeln('__ pyMeta: ' + pyMeta);
+      $.pype.setSequencePypeMetadata(sequence, pyMeta);
+      pypeDataValue = xmp.getProperty(kPProPrivateProjectMetadataURI, pypeData);
+      return $.pype.getSequencePypeMetadata(sequence);
+    } else {
+      if (successfullyAdded === true) {
+        $.writeln('__ adding {}');
+        $.pype.setSequencePypeMetadata(sequence, {});
+      }
+      if ((pypeDataValue === undefined) || (!JSON.parse(pypeDataValue).hasOwnProperty ('clips'))) {
+        $.writeln('__ getSequencePypeMetadata: returning null');
+        return null;
+      } else {
+        $.writeln('__ getSequencePypeMetadata: returning data');
+        return JSON.parse(pypeDataValue);
+      }
+    }
   },
-
   /**
    * Return instance representation of clip
    * @param clip {object} - index of clip on videoTrack
@@ -707,17 +748,25 @@ $.pype = {
   getSelectedClipsAsInstances: function () {
     // get project script version and add it into clip instance data
     var version = $.pype.getWorkFileVersion();
+    $.writeln('__ getSelectedClipsAsInstances:version: ' + version);
 
-    var pypeData = $.pype.loadSequenceMetadata(app.project.activeSequence);
-    if (pypeData == null) {
-      alert('First you need to rename clips sequencially with hierarchy!\nUse `Pype Rename` extension', 'No hierarchy data available!', 'error');
-      return;
+    var pypeData = $.pype.getSequencePypeMetadata(app.project.activeSequence);
+    $.writeln('__ getSelectedClipsAsInstances:typeof(pypeData): ' + typeof (pypeData));
+    $.writeln('__ getSelectedClipsAsInstances:pypeData: ' + JSON.stringify(pypeData));
+
+    // check if the pype data are available and if not alert the user
+    // we need to have avalable metadata for correct hierarchy
+    if (pypeData === null) {
+      $.pype.alert_message('First you need to rename clips sequencially with hierarchy!\nUse `Pype Rename` extension, or use the above rename text layer section of `Pype` panel.\n\n>> No hierarchy data available! <<');
+      return null;
     }
 
     // instances
     var instances = [];
     var selected = $.pype.getSelectedItems();
     for (var s = 0; s < selected.length; s++) {
+      $.writeln(
+        '__ getSelectedClipsAsInstances:selected[s].clip: ' + selected[s].clip);
       var instance = $.pype.getClipAsInstance(
         selected[s].clip,
         selected[s].sequence,
@@ -754,6 +803,10 @@ $.pype = {
   getPyblishRequest: function (stagingDir, audioOnly) {
     var sequence = app.project.activeSequence;
     var settings = sequence.getSettings();
+    $.writeln('__ stagingDir: ' + stagingDir)
+    $.writeln('__ audioOnly: ' + audioOnly)
+    $.writeln('__ sequence: ' + sequence)
+    $.writeln('__ settings: ' + settings)
     var request = {
       stagingDir: stagingDir,
       currentFile: $.pype.convertPathString(app.project.path),
@@ -762,8 +815,15 @@ $.pype = {
       hostVersion: $.getenv('AVALON_APP_NAME').split('_')[1],
       cwd: $.pype.convertPathString(app.project.path).split('\\').slice(0, -1).join('\\')
     };
+    $.writeln('__ request: ' + request)
     var sendInstances = [];
     var instances = $.pype.getSelectedClipsAsInstances();
+
+    // make sure the process will end if no instancess are returned
+    if (instances === null) {
+      return null;
+    }
+
     if (audioOnly) {
       for (var i = 0; i < instances.length; i++) {
         var representations = instances[i].representations;
@@ -802,7 +862,7 @@ $.pype = {
     var min = (Number(('' + (main / 60)).split('.')[0])).pad(2);
     var hov = (Number(('' + (main / 3600)).split('.')[0])).pad(2);
 
-    return hov + ":" + min + ":" + sec + ":" + frames;
+    return hov + ':' + min + ':' + sec + ':' + frames;
   },
   exportThumbnail: function (name, family, version, outputPath, time, fps) {
     app.enableQE();
@@ -821,24 +881,30 @@ $.pype = {
     return file;
   },
   encodeRepresentation: function (request) {
+    $.writeln('__ request: ' + request);
     var waitFile = '';
     var sequence = app.project.activeSequence
     // get original timeline in out points
     var defaultTimelinePointValue = -400000
     var origInPoint = Math.ceil(sequence.getInPoint() * 100) / 100;
     var origOutPoint = Math.ceil(sequence.getOutPoint() * 100) / 100;
-    if (origInPoint == defaultTimelinePointValue) {
+    if (origInPoint === defaultTimelinePointValue) {
       var allInOut = $.pype.getInOutOfAll();
       origInPoint = allInOut[0];
       origOutPoint = allInOut[1];
     };
+    $.writeln('__ origInPoint: ' + origInPoint);
+    $.writeln('__ origOutPoint: ' + origOutPoint);
 
     // instances
-    var instances = request['instances']
+    var instances = request.instances;
+    $.writeln('__ instances: ' + instances);
+
     for (var i = 0; i < instances.length; i++) {
       // generate data for instance's representations
       // loop representations of instance and sent job to encoder
       var representations = instances[i].representations;
+      $.writeln('__ representations: ' + representations);
       instances[i].files = [];
       for (var key in representations) {
 
@@ -856,7 +922,6 @@ $.pype = {
           ));
 
           waitFile = request.stagingDir + '/' + instances[i].files[(instances[i].files.length - 1)];
-
         } else if (key === 'thumbnail') {
           instances[i].files.push($.pype.exportThumbnail(
             instances[i].name,
