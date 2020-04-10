@@ -357,7 +357,7 @@ class PrepareProject(BaseAction):
 
         root_values = {}
         root_key = "__root__"
-        for key, value in tuple(in_data.items()):
+        for key in tuple(in_data.keys()):
             if key.startswith(root_key):
                 _key = key[len(root_key):]
                 root_values[_key] = in_data.pop(key)
