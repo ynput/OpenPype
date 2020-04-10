@@ -5,9 +5,23 @@ var output = document.getElementById('output');
 var process = require('process');
 var timecodes = require('node-timecodes');
 
+function displayResult (r) {
+  console.log(r);
+  _pype.csi.evalScript('$.writeln( ' + JSON.stringify(r) + ' )');
+  output.classList.remove('error');
+  output.innerText = r;
+}
+
+function displayError (e) {
+  output.classList.add('error');
+  output.innerText = e;
+}
+
 var _pype = {
   csi: csi,
   rootFolderPath: csi.getSystemPath(SystemPath.EXTENSION),
+  displayResult: displayResult,
+  displayError: displayError,
   getPresets: function () {
     var url = pras.getApiServerUrl();
     var projectName = 'J01_jakub_test';
@@ -38,18 +52,6 @@ var _pype = {
 //     displayResult(result);
 //   });
 // }
-
-function displayResult (r) {
-  console.log(r);
-  _pype.csi.evalScript('$.writeln( ' + JSON.stringify(r) + ' )');
-  output.classList.remove('error');
-  output.innerText = r;
-}
-
-function displayError (e) {
-  output.classList.add('error');
-  output.innerText = e;
-}
 
 function loadExtensionDependencies () {
   // get extension path
@@ -392,7 +394,11 @@ $('#btn-generateRequest').click(function () {
 });
 
 $('#btn-newWorkfileVersion').click(function () {
-  evalScript('$.pype.versionUpWorkFile();');
+  ;
+});
+
+$('#btn-testing').click(function () {
+  pras.get_presets('J01_jakub_tes');
 });
 
 _pype.getEnv();

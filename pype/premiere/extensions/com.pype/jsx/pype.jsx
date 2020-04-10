@@ -638,18 +638,19 @@ $.pype = {
     var pdClips = pypeData.clips;
     var hierarchy;
     var parents;
-
+    $.writeln('>> getClipAsInstance:clip.name ' + clip.name)
     if (pdClips[clip.name]) {
       parents = pdClips[clip.name].parents;
       hierarchy = pdClips[clip.name].hierarchy;
     }
 
     if (hierarchy === null) {
-      alert('First you need to rename clip sequencially with hierarchy!\nUse `Pype Rename` extension', 'No hierarchy data available at clip ' + clip.name + '!', 'error');
+      $.pype.alert_message('First you need to rename clip sequencially with hierarchy!\nUse `Pype Rename` extension', 'No hierarchy data available at clip ' + clip.name + '!', 'error');
       return;
     }
 
     var interpretation = clip.projectItem.getFootageInterpretation();
+    $.writeln('>> getClipAsInstance:interpretation ' + interpretation)
     var instance = {};
     instance.publish = true;
     instance.family = 'clip';
@@ -771,7 +772,8 @@ $.pype = {
         selected[s].clip,
         selected[s].sequence,
         selected[s].videoTrack,
-        pypeData
+        pypeData,
+        presets
       );
       if (instance !== false) {
         instance.version = version;
