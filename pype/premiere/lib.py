@@ -35,12 +35,15 @@ self.PUBLISH_PATH = os.path.join(
 ).replace("\\", "/")
 
 if os.getenv("PUBLISH_PATH", None):
-    os.environ["PUBLISH_PATH"] = os.pathsep.join(
-        os.environ["PUBLISH_PATH"].split(os.pathsep) +
-        [self.PUBLISH_PATH]
-    )
+    if self.PUBLISH_PATH not in os.environ["PUBLISH_PATH"]:
+        os.environ["PUBLISH_PATH"] = os.pathsep.join(
+            os.environ["PUBLISH_PATH"].split(os.pathsep) +
+            [self.PUBLISH_PATH]
+        )
 else:
     os.environ["PUBLISH_PATH"] = self.PUBLISH_PATH
+log.debug("PUBLISH_PATH: `{}`".format(os.environ["PUBLISH_PATH"]))
+
 
 _clearing_cache = ["com.pype", "com.pype.rename"]
 

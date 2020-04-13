@@ -7,12 +7,14 @@ var timecodes = require('node-timecodes');
 
 function displayResult (r) {
   console.log(r);
-  _pype.csi.evalScript('$.writeln( ' + JSON.stringify(r) + ' )');
+  _pype.csi.evalScript('$.writeln( ' + JSON.stringify(r) + ' );');
   output.classList.remove('error');
   output.innerText = r;
+  _pype.csi.evalScript('$.pype.log( ' + JSON.stringify(r) + ' );');
 }
 
 function displayError (e) {
+  _pype.csi.evalScript('$.pype.alert_message( ' + JSON.stringify(e) + ' )');
   output.classList.add('error');
   output.innerText = e;
 }
@@ -22,27 +24,17 @@ var _pype = {
   rootFolderPath: csi.getSystemPath(SystemPath.EXTENSION),
   displayResult: displayResult,
   displayError: displayError,
-  getPresets: function () {
-    var url = pras.getApiServerUrl();
-    var projectName = 'J01_jakub_test';
-    var urlType = 'adobe/presets';
-    var restApiGetUrl = [url, urlType, projectName].join('/');
-    return restApiGetUrl;
-  },
   getEnv: function () {
     _pype.csi.evalScript('$.pype.getProjectFileData();', function (result) {
       process.env.EXTENSION_PATH = _pype.rootFolderPath;
       _pype.ENV = process.env;
-      var url = pras.getApiServerUrl();
-      console.log(url);
-      // _pype.csi.evalScript('$.writeln( "' + url + '" );');
       console.log(result);
       console.log(_pype.rootFolderPath);
       var resultData = JSON.parse(result);
       for (var key in resultData) {
         _pype.ENV[key] = resultData[key];
       }
-      csi.evalScript('$.pype.setEnvs(' + JSON.stringify(window.ENV) + ')');
+      csi.evalScript('$.pype.setEnvs(' + JSON.stringify(_pype.ENV) + ')');
     });
   }
 };
@@ -170,7 +162,7 @@ function publish () {
   var audioOnly = $.querySelector('input[name=audio-only]').checked;
   var jsonSendPath = $.querySelector('input[name=send-path]').value;
   var jsonGetPath = $.querySelector('input[name=get-path]').value;
-  var publishPath = _pype.ENV.publishPath;
+  var publishPath = _pype.ENV.PUBLISH_PATH;
 
   if (jsonSendPath === '') {
     // create temp staging directory on local
@@ -192,61 +184,66 @@ function publish () {
       displayResult('project file coppied!');
     });
 
-    // publishing file
-    _pype.csi.evalScript('$.pype.getPyblishRequest("' + stagingDir + '", ' + audioOnly + ');', function (r) {
-      displayResult(r);
-      // make sure the process will end if no instancess are returned
-      if (r === 'null') {
-        displayError('Publish cannot be finished. Please fix the previously pointed problems');
-        return null;
-      }
-      var request = JSON.parse(r);
-      displayResult(JSON.stringify(request));
+    // set presets to jsx
+    pras.get_presets(_pype.ENV.AVALON_PROJECT, function (presetResult) {
+      displayResult('result from get_presets: ' + presetResult);
+      // publishing file
+      _pype.csi.evalScript('$.pype.getPyblishRequest("' + stagingDir + '", ' + audioOnly + ');', function (r) {
+        displayResult(r);
+        // make sure the process will end if no instancess are returned
+        if (r === 'null') {
+          displayError('Publish cannot be finished. Please fix the previously pointed problems');
+          return null;
+        }
+        var request = JSON.parse(r);
+        displayResult(JSON.stringify(request));
 
-      _pype.csi.evalScript('$.pype.encodeRepresentation(' + JSON.stringify(request) + ');', function (result) {
-        // create json for pyblish
-        const jsonfile = require('jsonfile');
-        const fs = require('fs');
-        var jsonSendPath = stagingDir + '_send.json';
-        var jsonGetPath = stagingDir + '_get.json';
-        $.querySelector('input[name=send-path]').value = jsonSendPath;
-        $.querySelector('input[name=get-path]').value = jsonGetPath;
-        var jsonContent = JSON.parse(result);
-        jsonfile.writeFile(jsonSendPath, jsonContent);
-        var checkingFile = function (path) {
-          var timeout = 10;
-          setTimeout(function () {
-            if (fs.existsSync(path)) {
-              // register publish path
-              pras.register_plugin_path(publishPath).then(displayResult);
-              // send json to pyblish
-              pras.publish(jsonSendPath, jsonGetPath, gui).then(function (result) {
-                // check if resulted path exists as file
-                if (fs.existsSync(result.get_json_path)) {
-                  // read json data from resulted path
-                  displayResult('Updating metadata of clips after publishing');
+        _pype.csi.evalScript('$.pype.encodeRepresentation(' + JSON.stringify(request) + ');', function (result) {
+          // create json for pyblish
+          const jsonfile = require('jsonfile');
+          const fs = require('fs');
+          var jsonSendPath = stagingDir + '_send.json';
+          var jsonGetPath = stagingDir + '_get.json';
+          $.querySelector('input[name=send-path]').value = jsonSendPath;
+          $.querySelector('input[name=get-path]').value = jsonGetPath;
+          var jsonContent = JSON.parse(result);
+          jsonfile.writeFile(jsonSendPath, jsonContent);
+          var checkingFile = function (path) {
+            var timeout = 10;
+            setTimeout(function () {
+              if (fs.existsSync(path)) {
+                displayResult('path were rendered: ' + path);
+                // register publish path
+                pras.register_plugin_path(publishPath).then(displayResult);
+                // send json to pyblish
+                pras.publish(jsonSendPath, jsonGetPath, gui).then(function (result) {
+                  // check if resulted path exists as file
+                  if (fs.existsSync(result.get_json_path)) {
+                    // read json data from resulted path
+                    displayResult('Updating metadata of clips after publishing');
 
-                  jsonfile.readFile(result.get_json_path, function (json) {
-                    _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
-                  });
+                    jsonfile.readFile(result.get_json_path, function (json) {
+                      _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
+                    });
 
-                  // version up project
-                  if (versionUp) {
-                    displayResult('Saving new version of the project file');
-                    _pype.csi.evalScript('$.pype.versionUpWorkFile();');
+                    // version up project
+                    if (versionUp) {
+                      displayResult('Saving new version of the project file');
+                      _pype.csi.evalScript('$.pype.versionUpWorkFile();');
+                    }
+                  } else {
+                    // if resulted path file not existing
+                    displayResult('Publish has not been finished correctly. Hit Publish again to publish from already rendered data, or Reset to render all again.');
                   }
-                } else {
-                  // if resulted path file not existing
-                  displayResult('Publish has not been finished correctly. Hit Publish again to publish from already rendered data, or Reset to render all again.');
-                }
-              });
-            } else {
-              displayResult('waiting');
-              checkingFile(path);
-            }
-          }, timeout);
-        };
-        checkingFile(jsonContent.waitingFor);
+                });
+              } else {
+                displayResult('waiting');
+                checkingFile(path);
+              }
+            }, timeout);
+          };
+          checkingFile(jsonContent.waitingFor);
+        });
       });
     });
   } else {
@@ -394,11 +391,12 @@ $('#btn-generateRequest').click(function () {
 });
 
 $('#btn-newWorkfileVersion').click(function () {
-  ;
+  displayResult('Saving new version of the project file');
+  _pype.csi.evalScript('$.pype.versionUpWorkFile();');
 });
 
 $('#btn-testing').click(function () {
-  pras.get_presets('J01_jakub_tes');
+  pras.get_presets(_pype.ENV.AVALON_PROJECT);
 });
 
 _pype.getEnv();
