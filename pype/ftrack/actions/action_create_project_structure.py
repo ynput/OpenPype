@@ -32,11 +32,22 @@ class CreateProjectFolders(BaseAction):
     def launch(self, session, entities, event):
         entity = entities[0]
         project = self.get_project_from_entity(entity)
-        presets = config.get_presets()["tools"]["project_folder_structure"]
+        project_folder_presets = (
+            config.get_presets()
+            .get("tools", {})
+            .get("project_folder_structure")
+        )
+        if not project_folder_presets:
+            return {
+                "success": False,
+                "message": "Project structure presets are not set."
+            }
+
         try:
             # Get paths based on presets
-            basic_paths = self.get_path_items(presets)
-            self.create_folders(basic_paths, entity)
+            basic_paths = self.get_path_items(project_folder_presets)
+            anatomy = Anatomy(project["full_name"])
+            self.create_folders(basic_paths, entity, project, anatomy)
             self.create_ftrack_entities(basic_paths, project)
 
         except Exception as exc:
@@ -169,21 +180,22 @@ class CreateProjectFolders(BaseAction):
             output.append(os.path.normpath(os.path.sep.join(clean_items)))
         return output
 
-    def create_folders(self, basic_paths, entity):
-        # Set project root folder
-        if entity.entity_type.lower() == 'project':
-            project_name = entity['full_name']
+    def create_folders(self, basic_paths, entity, project, anatomy):
+        roots_paths = []
+        if isinstance(anatomy.roots, dict):
+            for root in anatomy.roots:
+                roots_paths.append(root.value)
         else:
-            project_name = entity['project']['full_name']
-        project_root_items = [os.environ['AVALON_PROJECTS'], project_name]
-        project_root = os.path.sep.join(project_root_items)
+            roots_paths.append(anatomy.roots.value)
 
-        full_paths = self.compute_paths(basic_paths, project_root)
-        # Create folders
-        for path in full_paths:
-            if os.path.exists(path):
-                continue
-            os.makedirs(path.format(project_root=project_root))
+        for root_path in roots_paths:
+            project_root = os.path.join(root_path, project["full_name"])
+            full_paths = self.compute_paths(basic_paths, project_root)
+            # Create folders
+            for path in full_paths:
+                if os.path.exists(path):
+                    continue
+                os.makedirs(path.format(project_root=project_root))
 
 
 def register(session, plugins_presets={}):
