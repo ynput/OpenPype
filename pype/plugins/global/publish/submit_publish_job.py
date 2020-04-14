@@ -185,9 +185,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         anatomy = instance.context.data["anatomy"]
         work_root_name = anatomy.templates["work"].get("root_name")
         success, rootless_path = (
-            anatomy.roots.find_root_template_from_path(
-                output_dir, work_root_name
-            )
+            anatomy.roots_obj.find_root_template_from_path(output_dir)
         )
         if not success:
             # `rootless_path` is not set to `output_dir` if none of roots match
@@ -568,9 +566,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         anatomy = instance.context.data["anatomy"]
         work_root_name = anatomy.templates["work"].get("root_name")
         success, rootless_path = (
-            anatomy.roots.find_root_template_from_path(
-                source, work_root_name
-            )
+            anatomy.roots_obj.find_root_template_from_path(source)
         )
         if success:
             source = rootless_path
@@ -622,9 +618,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             staging_dir = repre.get("stagingDir")
             if staging_dir:
                 success, rootless_staging_dir = (
-                    anatomy.roots.find_root_template_from_path(
-                        repre, work_root_name
-                    )
+                    anatomy.roots.find_root_template_from_path(staging_dir)
                 )
                 if success:
                     repre["stagingDir"] = rootless_staging_dir

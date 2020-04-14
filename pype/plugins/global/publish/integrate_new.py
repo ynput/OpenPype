@@ -645,11 +645,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         else:
             source = context.data["currentFile"]
             anatomy = instance.context.data["anatomy"]
-            root_name = anatomy.templates["work"].get("root_name")
             success, rootless_path = (
-                anatomy.roots.find_root_template_from_path(
-                    source, root_name, others_on_fail=True
-                )
+                anatomy.roots_obj.find_root_template_from_path(source)
             )
             if success:
                 source = rootless_path
