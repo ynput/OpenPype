@@ -142,7 +142,6 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                 tasks = [t["task"] for t in tags
                          if t.get("task")]
             else:
-                self.log.debug("defaultTasks: `{}`".format(rules_tasks["defaultTasks"]))
                 tasks = rules_tasks["defaultTasks"]
             self.log.debug("tasks: `{}`".format(tasks))
 

@@ -4,10 +4,9 @@ from avalon import (
     io,
     api as avalon
 )
-from pype import api as pype
 import json
 from pathlib import Path
-from pprint import pformat
+
 
 class CollectContextDataFromAport(pyblish.api.ContextPlugin):
     """
