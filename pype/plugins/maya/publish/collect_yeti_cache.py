@@ -49,6 +49,10 @@ class CollectYetiCache(pyblish.api.InstancePlugin):
             attr_data = {}
             for attr in SETTINGS:
                 current = cmds.getAttr("%s.%s" % (shape, attr))
+                # change None to empty string as Maya doesn't support
+                # NoneType in attributes
+                if current is None:
+                    current = ""
                 attr_data[attr] = current
 
             # Get transform data

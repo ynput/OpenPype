@@ -3,7 +3,7 @@ import pyblish.api
 from avalon.nuke import lib as anlib
 from pype.nuke import lib as pnlib
 import pype
-reload(pnlib)
+
 
 class ExtractReviewDataMov(pype.api.Extractor):
     """Extracts movie and thumbnail with baked in luts
@@ -15,7 +15,7 @@ class ExtractReviewDataMov(pype.api.Extractor):
     order = pyblish.api.ExtractorOrder + 0.01
     label = "Extract Review Data Mov"
 
-    families = ["review", "render", "render.local"]
+    families = ["review"]
     hosts = ["nuke"]
 
     # presets

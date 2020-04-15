@@ -52,6 +52,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
 
             # establish families
             family = avalon_knob_data["family"]
+            families_ak = avalon_knob_data.get("families")
             families = list()
 
             # except disabled nodes but exclude backdrops in test
@@ -68,16 +69,14 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             # Add all nodes in group instances.
             if node.Class() == "Group":
                 # only alter families for render family
-                if ("render" in family):
-                    # check if node is not disabled
-                    families.append(avalon_knob_data["families"])
+                if "write" in families_ak:
                     if node["render"].value():
                         self.log.info("flagged for render")
-                        add_family = "render.local"
+                        add_family = "{}.local".format(family)
                         # dealing with local/farm rendering
                         if node["render_farm"].value():
                             self.log.info("adding render farm family")
-                            add_family = "render.farm"
+                            add_family = "{}.farm".format(family)
                             instance.data["transfer"] = False
                         families.append(add_family)
                     else:
@@ -89,9 +88,7 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
                     instance.append(i)
                 node.end()
 
-            family = avalon_knob_data["family"]
-            families = list()
-            families_ak = avalon_knob_data.get("families")
+            self.log.debug("__ families: `{}`".format(families))
 
             if families_ak:
                 families.append(families_ak)
@@ -103,22 +100,6 @@ class CollectNukeInstances(pyblish.api.ContextPlugin):
             resolution_width = format.width()
             resolution_height = format.height()
             pixel_aspect = format.pixelAspect()
-
-            if node.Class() not in "Read":
-                if "render" not in node.knobs().keys():
-                    pass
-                elif node["render"].value():
-                    self.log.info("flagged for render")
-                    add_family = "render.local"
-                    # dealing with local/farm rendering
-                    if node["render_farm"].value():
-                        self.log.info("adding render farm family")
-                        add_family = "render.farm"
-                        instance.data["transfer"] = False
-                    families.append(add_family)
-                else:
-                    # add family into families
-                    families.insert(0, family)
 
             instance.data.update({
                 "subset": subset,
