@@ -183,7 +183,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         output_dir = instance.data["outputDir"]
         # Convert output dir to `{root}/rest/of/path/...` with Anatomy
         anatomy = instance.context.data["anatomy"]
-        work_root_name = anatomy.templates["work"].get("root_name")
         success, rootless_path = (
             anatomy.roots_obj.find_root_template_from_path(output_dir)
         )
@@ -194,10 +193,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 " This may cause issues on farm."
             ).format(output_dir))
             rootless_path = output_dir
-        else:
-            # If root was found then use `mount` root for `output_dir`
-            anatomy.roots._root_type = "mount"
-            output_dir = rootless_path.format(**{"root": anatomy.roots})
 
         # Generate the payload for Deadline submission
         payload = {
