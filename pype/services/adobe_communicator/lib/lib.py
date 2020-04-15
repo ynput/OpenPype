@@ -5,7 +5,12 @@ import bson
 import bson.json_util
 from pype.services.rest_api import RestApi, abort, CallbackResult
 from .io_nonsingleton import DbConnector
-from pypeapp import config
+from .publishing import run_publish, set_context
+
+from pypeapp import config, Logger
+
+
+log = Logger().get_logger("AdobeCommunicator")
 
 
 class AdobeRestApi(RestApi):
@@ -15,7 +20,9 @@ class AdobeRestApi(RestApi):
         super().__init__(*args, **kwargs)
         self.dbcon.install()
 
-    @RestApi.route("/projects/<project_name>", url_prefix="/adobe", methods="GET")
+    @RestApi.route("/projects/<project_name>",
+                   url_prefix="/adobe",
+                   methods="GET")
     def get_project(self, request):
         project_name = request.url_data["project_name"]
         if not project_name:
@@ -54,7 +61,7 @@ class AdobeRestApi(RestApi):
 
         project = self.dbcon[project_name].find_one({"type": "project"})
         presets = config.get_presets(project=project["name"])
-        
+
         if presets:
             return CallbackResult(data=self.result_to_json(presets))
 
@@ -93,22 +100,26 @@ class AdobeRestApi(RestApi):
             _asset, identificator, _project_name
         ))
 
-    @RestApi.route("/publish/<asset_name>", url_prefix="/adobe", methods="GET")
+    @RestApi.route("/publish", url_prefix="/adobe", methods="POST")
     def publish(self, request):
         """
-        http://localhost:8021/premiere/publish/shot021?json_in=this/path/file_in.json&json_out=this/path/file_out.json
+        http://localhost:8021/adobe/publish
         """
-        asset_name = request.url_data["asset_name"]
-        query = request.query
         data = request.request_data
 
-        output = {
-            "message": "Got your data. Thanks.",
-            "your_data": data,
-            "your_query": query,
-            "your_asset_is": asset_name
-        }
-        return CallbackResult(data=self.result_to_json(output))
+        log.info('Pyblish is running')
+        try:
+            set_context(
+                self.dbcon,
+                data,
+                'adobecommunicator'
+            )
+            result = run_publish(data)
+
+            if result:
+                return CallbackResult(data=self.result_to_json(result))
+        finally:
+            log.info('Pyblish have stopped')
 
     def result_to_json(self, result):
         """ Converts result of MongoDB query to dict without $oid (ObjectId)

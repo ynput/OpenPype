@@ -154,7 +154,7 @@ function convertPathString (path) {
     new RegExp('\\\\', 'g'), '/').replace(new RegExp('//\\?/', 'g'), '');
 }
 
-function publish () {
+function _publish () {
   var $ = querySelector('#publish');
   // var gui = $.querySelector('input[name=gui]').checked;
   var gui = true;
@@ -213,16 +213,26 @@ function publish () {
             setTimeout(function () {
               if (fs.existsSync(path)) {
                 displayResult('path were rendered: ' + path);
-                // register publish path
-                pras.register_plugin_path(publishPath).then(displayResult);
                 // send json to pyblish
-                pras.publish(jsonSendPath, jsonGetPath, gui).then(function (result) {
+                var dataToPublish = {
+                  "adobePublishJsonPathSend": jsonSendPath,
+                  "adobePublishJsonPathGet": jsonGetPath,
+                  "gui": gui,
+                  "publishPath": publishPath,
+                  "project": _pype.ENV.AVALON_PROJECT,
+                  "asset": _pype.ENV.AVALON_ASSET,
+                  "task": _pype.ENV.AVALON_TASK,
+                  "workdir": _pype.ENV.AVALON_WORKDIR
+                }
+                pras.publish(dataToPublish).then(function (result) {
+                  displayResult(
+                    'pype.js:publish < pras.publish: ' + JSON.stringify(result));
                   // check if resulted path exists as file
-                  if (fs.existsSync(result.get_json_path)) {
+                  if (fs.existsSync(result.return_data_path)) {
                     // read json data from resulted path
                     displayResult('Updating metadata of clips after publishing');
 
-                    jsonfile.readFile(result.get_json_path, function (json) {
+                    jsonfile.readFile(result.return_data_path, function (json) {
                       _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
                     });
 
@@ -336,7 +346,7 @@ $('#btn-deregister').click(function () {
 });
 
 $('#btn-publish').click(function () {
-  publish();
+  _publish();
 });
 
 $('#btn-send-reset').click(function () {
@@ -396,7 +406,15 @@ $('#btn-newWorkfileVersion').click(function () {
 });
 
 $('#btn-testing').click(function () {
-  pras.get_presets(_pype.ENV.AVALON_PROJECT);
+  var data = {
+    "adobePublishJsonPathSend": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_send.json",
+    "adobePublishJsonPathGet": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_get.json",
+    "gui": true,
+    "project": "J01_jakub_test",
+    "asset": "editorial",
+    "task": "conforming"
+  }
+  pras.publish(data);
 });
 
 _pype.getEnv();

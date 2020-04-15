@@ -1,12 +1,5 @@
 import os
-import json
 import pyblish.api
-from avalon import (
-    io,
-    api as avalon
-)
-
-from pype import api as pype
 
 
 class CollectInstancesFromJson(pyblish.api.ContextPlugin):
@@ -26,7 +19,11 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
 
     def process(self, context):
 
-        a_session = context.data.get("avalonSession")
+        _S = context.data["avalonSession"]
+        asset = _S["AVALON_ASSET"]
+        task = _S["AVALON_TASK"]
+        host = _S["AVALON_APP"]
+
         json_data = context.data.get("jsonData", None)
         assert json_data, "No `json_data` data in json file"
 
@@ -36,56 +33,49 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
         staging_dir = json_data.get("stagingDir", None)
         assert staging_dir, "No `stagingDir` path in json file"
 
-        presets = context.data["presets"]
+        host = context.data["host"]
+        presets = context.data["presets"][host]
+
         rules_tasks = presets["rules_tasks"]
         ftrack_types = rules_tasks["ftrackTypes"]
-        assert ftrack_types, "No `ftrack_types` data in `/templates/presets/[host]/rules_tasks.json` file"
+        assert ftrack_types, ("No `ftrack_types` data in"
+                              "`/presets/[host]/rules_tasks.json` file")
 
         context.data["ftrackTypes"] = ftrack_types
 
         asset_default = presets["asset_default"]
-        assert asset_default, "No `asset_default` data in `/templates/presets/[host]/asset_default.json` file"
-
-        asset_name = a_session["AVALON_ASSET"]
-        entity = io.find_one({"name": asset_name,
-                              "type": "asset"})
+        assert asset_default, ("No `asset_default` data in"
+                               "`/presets/[host]/asset_default.json` file")
 
         # get frame start > first try from asset data
-        frame_start = context.data["assetData"].get("fstart", None)
+        frame_start = context.data["assetData"].get("frameStart", None)
         if not frame_start:
-            self.log.debug("frame_start not on assetData")
-            # get frame start > second try from parent data
-            frame_start = pype.get_data_hierarchical_attr(entity, "fstart")
-            if not frame_start:
-                self.log.debug("frame_start not on any parent entity")
-                # get frame start > third try from parent data
-                frame_start = asset_default["fstart"]
+            self.log.debug("frame_start not on any parent entity")
+            # get frame start > third try from parent data
+            frame_start = asset_default["frameStart"]
 
         assert frame_start, "No `frame_start` data found, "
         "please set `fstart` on asset"
         self.log.debug("frame_start: `{}`".format(frame_start))
 
         # get handles > first try from asset data
-        handles = context.data["assetData"].get("handles", None)
-        if not handles:
+        handle_start = context.data["assetData"].get("handleStart", None)
+        handle_end = context.data["assetData"].get("handleEnd", None)
+        if not all([handle_start, handle_end]):
             # get frame start > second try from parent data
-            handles = pype.get_data_hierarchical_attr(entity, "handles")
-            if not handles:
-                # get frame start > third try from parent data
-                handles = asset_default["handles"]
+            handle_start = asset_default["handleStart"]
+            handle_end = asset_default["handleEnd"]
 
-        assert handles, "No `handles` data found, "
-        "please set `fstart` on asset"
-        self.log.debug("handles: `{}`".format(handles))
+        assert all([
+            handle_start,
+            handle_end]), ("No `handle_start, handle_end` data found")
 
         instances = []
 
-        task = a_session["AVALON_TASK"]
         current_file = os.path.basename(context.data.get("currentFile"))
         name, ext = os.path.splitext(current_file)
 
         # get current file host
-        host = a_session["AVALON_APP"]
         family = "projectfile"
         families = "filesave"
         subset_name = "{0}{1}".format(task, 'Default')
@@ -109,7 +99,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
             "task": task,
             "representation": ext[1:],
             "host": host,
-            "asset": asset_name,
+            "asset": asset,
             "label": label,
             "name": name,
             # "hierarchy": hierarchy,
@@ -152,6 +142,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                 tasks = [t["task"] for t in tags
                          if t.get("task")]
             else:
+                self.log.debug("defaultTasks: `{}`".format(rules_tasks["defaultTasks"]))
                 tasks = rules_tasks["defaultTasks"]
             self.log.debug("tasks: `{}`".format(tasks))
 
@@ -197,7 +188,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                     family = subset
                     subset_name = "{0}{1}".format(subset, "Main")
                 elif "reference" in subset:
-                    family ="render"
+                    family = "render"
                     subset_name = "{0}{1}".format(family, "Reference")
                 else:
                     subset_name = "{0}{1}".format(subset, 'Default')
@@ -218,7 +209,8 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                     "tasks": subset_dict[subset],
                     "taskTypes": inst['tasksTypes'],
                     "fstart": frame_start,
-                    "handles": handles,
+                    "handleStart": handle_start,
+                    "handleEnd": handle_end,
                     "host": host,
                     "asset": asset,
                     "hierarchy": hierarchy,

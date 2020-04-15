@@ -1,5 +1,7 @@
 import os
+import pype
 from pypeapp import config, Logger
+from . import PUBLISH_PATHS
 
 log = Logger().get_logger("AdobeCommunicator")
 
@@ -18,6 +20,12 @@ class AdobeCommunicator:
                 " Using defaults \"{}\""
             ).format(str(self.presets)))
 
+        # solve publish paths
+        PUBLISH_PATHS.clear()
+        PUBLISH_PATHS.append(os.path.sep.join(
+            [pype.PLUGINS_DIR, "adobecommunicator", "publish"]
+        ))
+
     def tray_start(self):
         return
 
@@ -25,6 +33,14 @@ class AdobeCommunicator:
         rest_api_module = modules.get("RestApiServer")
         if rest_api_module:
             self.rest_api_registration(rest_api_module)
+
+            # adding ftrack publish path
+            if "FtrackModule" in modules:
+                PUBLISH_PATHS.append(os.path.sep.join(
+                    [pype.PLUGINS_DIR, "ftrack", "publish"]
+                ))
+            log.info((f"Adobe Communicator Registered PUBLISH_PATHS"
+                      f"> `{PUBLISH_PATHS}`"))
 
     def rest_api_registration(self, module):
         for prefix, static_path in self.presets["statics"].items():

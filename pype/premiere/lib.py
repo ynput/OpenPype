@@ -42,8 +42,6 @@ if os.getenv("PUBLISH_PATH", None):
         )
 else:
     os.environ["PUBLISH_PATH"] = self.PUBLISH_PATH
-log.debug("PUBLISH_PATH: `{}`".format(os.environ["PUBLISH_PATH"]))
-
 
 _clearing_cache = ["com.pype", "com.pype.rename"]
 
