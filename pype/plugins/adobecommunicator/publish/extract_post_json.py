@@ -2,7 +2,7 @@
 import json
 import clique
 import pyblish.api
-
+from pypeapp import Anatomy
 
 class ExtractJSON(pyblish.api.ContextPlugin):
     """ Extract all instances to a serialized json file. """
@@ -14,28 +14,27 @@ class ExtractJSON(pyblish.api.ContextPlugin):
         json_path = context.data['post_json_data_path']
 
         data = dict(self.serialize(context.data()))
-        # self.log.info(data)
 
-        instances_data = []
-        for instance in context:
-
-            iData = {}
-            for key, value in instance.data.items():
-                if isinstance(value, clique.Collection):
-                    value = value.format()
-
-                try:
-                    json.dumps(value)
-                    iData[key] = value
-                except KeyError:
-                    msg = "\"{0}\"".format(value)
-                    msg += " in instance.data[\"{0}\"]".format(key)
-                    msg += " could not be serialized."
-                    self.log.debug(msg)
-
-            instances_data.append(iData)
-
-        data["instances"] = instances_data
+        # instances_data = []
+        # for instance in context:
+        #
+        #     iData = {}
+        #     for key, value in instance.data.items():
+        #         if isinstance(value, clique.Collection):
+        #             value = value.format()
+        #
+        #         try:
+        #             json.dumps(value)
+        #             iData[key] = value
+        #         except KeyError:
+        #             msg = "\"{0}\"".format(value)
+        #             msg += " in instance.data[\"{0}\"]".format(key)
+        #             msg += " could not be serialized."
+        #             self.log.debug(msg)
+        #
+        #     instances_data.append(iData)
+        #
+        # data["instances"] = instances_data
 
         with open(json_path, "w") as outfile:
             outfile.write(json.dumps(data, indent=4, sort_keys=True))
@@ -59,6 +58,9 @@ class ExtractJSON(pyblish.api.ContextPlugin):
             return value
 
         # self.log.info("1: {}".format(data))
+
+        if isinstance(data, Anatomy):
+            return
 
         if not isinstance(data, dict):
             # self.log.info("2: {}".format(data))
@@ -87,6 +89,9 @@ class ExtractJSON(pyblish.api.ContextPlugin):
             if isinstance(value, dict):
                 # loops if dictionary
                 data[key] = self.serialize(value)
+
+            if isinstance(value, Anatomy):
+                continue
 
             if isinstance(value, (list or tuple)):
                 # loops if list or tuple

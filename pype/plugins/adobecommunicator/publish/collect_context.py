@@ -24,6 +24,7 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.49
 
     def process(self, context):
+        self.log.info("registred_hosts: `{}`".format(pyblish.api.registered_hosts()))
         io.install()
         # get json paths from data
         input_json_path = os.environ.get("AC_PUBLISH_INPATH")
@@ -31,6 +32,8 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
 
         rqst_json_data_path = Path(input_json_path)
         post_json_data_path = Path(output_json_path)
+
+        context.data['post_json_data_path'] = str(post_json_data_path)
 
         # get avalon session data and convert \ to /
         _S = avalon.session
@@ -60,10 +63,6 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
         context.data["host"] = _S["AVALON_APP"] = host
         context.data["hostVersion"] = \
             _S["AVALON_APP_VERSION"] = host_version
-
-        # register pyblish for filtering of hosts in plugins
-        pyblish.api.deregister_all_hosts()
-        pyblish.api.register_host(host)
 
         # get current file
         current_file = json_data.get("currentFile", None)

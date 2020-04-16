@@ -13,12 +13,11 @@ var pras = {
   },
   getRequestFromRestApiServer: function (url, options, callback) {
     _pype.displayResult('url: ' + url);
-    _pype.displayResult('options: ' + JSON.stringify(options));
 
     // define options in case there is null comming
     if (options === null) {
       options = {
-        method: 'get',
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }

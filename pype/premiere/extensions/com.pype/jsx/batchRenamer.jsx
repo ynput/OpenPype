@@ -88,13 +88,13 @@ $.batchrenamer = {
       selected[c].clip.name = newName;
 
       parents.push({
-        'entityType': 'episode',
+        'entityType': 'Episode',
         'entityName': episode + '_' + episodeSuf
       });
       hierarchy.push(episode + '_' + episodeSuf);
 
       parents.push({
-        'entityType': 'sequence',
+        'entityType': 'Sequence',
         'entityName': episode + sequenceName
       });
       hierarchy.push(episode + sequenceName);

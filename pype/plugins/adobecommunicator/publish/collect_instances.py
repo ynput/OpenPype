@@ -37,11 +37,6 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
         presets = context.data["presets"][host]
 
         rules_tasks = presets["rules_tasks"]
-        ftrack_types = rules_tasks["ftrackTypes"]
-        assert ftrack_types, ("No `ftrack_types` data in"
-                              "`/presets/[host]/rules_tasks.json` file")
-
-        context.data["ftrackTypes"] = ftrack_types
 
         asset_default = presets["asset_default"]
         assert asset_default, ("No `asset_default` data in"
@@ -61,14 +56,15 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
         # get handles > first try from asset data
         handle_start = context.data["assetData"].get("handleStart", None)
         handle_end = context.data["assetData"].get("handleEnd", None)
-        if not all([handle_start, handle_end]):
+        if (handle_start is None) or (handle_end is None):
             # get frame start > second try from parent data
-            handle_start = asset_default["handleStart"]
-            handle_end = asset_default["handleEnd"]
+            handle_start = asset_default.get("handleStart", None)
+            handle_end = asset_default.get("handleEnd", None)
 
-        assert all([
-            handle_start,
-            handle_end]), ("No `handle_start, handle_end` data found")
+        assert (
+            (handle_start is not None) or (
+                handle_end is not None)), (
+                    "No `handle_start, handle_end` data found")
 
         instances = []
 
@@ -76,46 +72,52 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
         name, ext = os.path.splitext(current_file)
 
         # get current file host
-        family = "projectfile"
-        families = "filesave"
+        family = "workfile"
         subset_name = "{0}{1}".format(task, 'Default')
         instance_name = "{0}_{1}_{2}".format(name,
                                              family,
                                              subset_name)
         # Set label
-        label = "{0} - {1} > {2}".format(name, task, families)
+        label = "{0} - {1}".format(name, task)
 
         # get project file instance Data
-        pf_instance = [inst for inst in instances_data
-                       if inst.get("family", None) in 'projectfile']
-        self.log.debug('pf_instance: {}'.format(pf_instance))
-        # get working file into instance for publishing
-        instance = context.create_instance(instance_name)
-        if pf_instance:
-            instance.data.update(pf_instance[0])
-        instance.data.update({
-            "subset": subset_name,
-            "stagingDir": staging_dir,
-            "task": task,
-            "representation": ext[1:],
-            "host": host,
-            "asset": asset,
-            "label": label,
-            "name": name,
-            # "hierarchy": hierarchy,
-            # "parents": parents,
-            "family": family,
-            "families": [families, 'ftrack'],
-            "publish": True,
-            # "files": files_list
-        })
-        instances.append(instance)
+        wf_instance = next((inst for inst in instances_data
+                            if inst.get("family", None) in 'workfile'), None)
+
+        if wf_instance:
+            self.log.debug('wf_instance: {}'.format(wf_instance))
+
+            version = int(wf_instance.get("version", None))
+            # get working file into instance for publishing
+            instance = context.create_instance(instance_name)
+            instance.data.update(wf_instance)
+
+            instance.data.update({
+                "subset": subset_name,
+                "stagingDir": staging_dir,
+                "task": task,
+                "representations": [{
+                    "files": current_file,
+                    'stagingDir': staging_dir,
+                    'name': "projectfile",
+                    'ext': ext[1:]
+                }],
+                "host": host,
+                "asset": asset,
+                "label": label,
+                "name": name,
+                "family": family,
+                "families": ["ftrack"],
+                "publish": True,
+                "version": version
+            })
+            instances.append(instance)
 
         for inst in instances_data:
             # for key, value in inst.items():
             #     self.log.debug('instance[key]: {}'.format(key))
             #
-            version = inst.get("version", None)
+            version = int(inst.get("version", None))
             assert version, "No `version` string in json file"
 
             name = asset = inst.get("name", None)
@@ -125,7 +127,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
             assert family, "No `family` key in json_data.instance: {}".format(
                 inst)
 
-            if family in 'projectfile':
+            if family in 'workfile':
                 continue
 
             files_list = inst.get("files", None)
@@ -151,14 +153,10 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                 # create list of tasks for creation
                 if not inst.get('tasks', None):
                     inst['tasks'] = list()
-                if not inst.get('tasksTypes', None):
-                    inst['tasksTypes'] = {}
 
                 # append taks into list for later hierarchy cration
-                ftrack_task_type = ftrack_types[task]
                 if task not in inst['tasks']:
                     inst['tasks'].append(task)
-                    inst['tasksTypes'][task] = ftrack_task_type
 
                 host = rules_tasks["taskHost"][task]
                 subsets = rules_tasks["taskSubsets"][task]
@@ -187,7 +185,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                     family = subset
                     subset_name = "{0}{1}".format(subset, "Main")
                 elif "reference" in subset:
-                    family = "render"
+                    family = "review"
                     subset_name = "{0}{1}".format(family, "Reference")
                 else:
                     subset_name = "{0}{1}".format(subset, 'Default')
@@ -199,15 +197,13 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
 
                 instance = context.create_instance(name)
                 files = [f for f in files_list
-                         if subset in f or "thumbnail" in f
-                         ]
+                         if subset in f or "thumbnail" in f]
 
                 instance.data.update({
                     "subset": subset_name,
                     "stagingDir": staging_dir,
                     "tasks": subset_dict[subset],
-                    "taskTypes": inst['tasksTypes'],
-                    "fstart": frame_start,
+                    "frameStart": frame_start,
                     "handleStart": handle_start,
                     "handleEnd": handle_end,
                     "host": host,
@@ -221,6 +217,8 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                     "family": family,
                     "families": [subset, inst["family"], 'ftrack'],
                     "jsonData": inst,
+                    "jsonReprSubset": subset,
+                    "jsonReprExt": ext,
                     "publish": True,
                     "version": version})
                 self.log.info(
@@ -228,9 +226,6 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                 instances.append(instance)
 
         context.data["instances"] = instances
-
-        # Sort/grouped by family (preserving local index)
-        # context[:] = sorted(context, key=self.sort_by_task)
 
         self.log.debug("context: {}".format(context))
 

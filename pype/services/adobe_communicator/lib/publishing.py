@@ -9,7 +9,7 @@ import pype
 from pypeapp import execute
 import pyblish.api
 from pypeapp import Logger
-from pprint import pformat
+
 log = Logger().get_logger(__name__)
 
 PUBLISH_PATHS = []
@@ -18,7 +18,7 @@ self = sys.modules[__name__]
 self.dbcon = False
 
 
-def set_context(dbcon_in, data, app):
+def set_context(dbcon_in, data):
     ''' Sets context for pyblish (must be done before pyblish is launched)
     :param project: Name of `Project` where instance should be published
     :type project: str
@@ -52,7 +52,7 @@ def set_context(dbcon_in, data, app):
     os.environ["AVALON_WORKDIR"] = data["workdir"]
     os.environ["AVALON_HIERARCHY"] = hierarchy
     os.environ["AVALON_PROJECTCODE"] = av_project['data'].get('code', '')
-    os.environ["AVALON_APP"] = app
+    os.environ["AVALON_APP"] = data["host"]
 
     self.dbcon.install()
     S["current_dir"] = os.path.normpath(os.getcwd())
@@ -123,7 +123,7 @@ def cli_publish(data, gui=True):
         args += ["gui"]
 
     envcopy = os.environ.copy()
-    envcopy["PYBLISH_HOSTS"] = "adobecommunicator"
+    envcopy["PYBLISH_HOSTS"] = data.get("host", "adobecommunicator")
     envcopy["AC_PUBLISH_INPATH"] = json_data_path
     envcopy["AC_PUBLISH_OUTPATH"] = return_data_path
     envcopy["PYBLISH_GUI"] = "pyblish_lite"

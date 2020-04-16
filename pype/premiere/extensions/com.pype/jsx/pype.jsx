@@ -1,4 +1,4 @@
-/* global app, qe, alert, File, $, JSON, ProjectItemType, XMPMeta */
+/* global app, qe, alert, File, $, JSON, ProjectItemType, XMPMeta, parseFloat */
 /*
               .____ _ ___ .____.______
 --- - - --   /  .  \//  //  .  \  ___/ --- ---- - -
@@ -502,7 +502,7 @@ $.pype = {
       // process instances
       // check if asset in metadata
       // add it to sequence metadata
-      if (instances[i].family !== 'projectfile') {
+      if (instances[i].family !== 'workfile') {
         var data = {};
         data.family = instances[i].family;
         data.ftrackShotId = instances[i].ftrackShotId;
@@ -676,12 +676,12 @@ $.pype = {
     var sequenceSize = $.pype.getImageSize();
     metadata['ppro.videoTrack.name'] = videoTrack.name;
     metadata['ppro.sequence.name'] = sequence.name;
-    metadata['ppro.source.fps'] = (1 / interpretation.frameRate);
-    metadata['ppro.timeline.fps'] = (1 / settings.videoFrameRate.seconds);
+    metadata['ppro.source.fps'] = parseFloat(1 / interpretation.frameRate).toFixed(4);
+    metadata['ppro.timeline.fps'] = parseFloat(1 / settings.videoFrameRate.seconds).toFixed(4);
     metadata['ppro.source.path'] = $.pype.convertPathString(clip.projectItem.getMediaPath());
     metadata['ppro.format.width'] = sequenceSize.h;
     metadata['ppro.format.height'] = sequenceSize.v;
-    metadata['ppro.format.pixelaspect'] = interpretation.pixelAspectRatio;
+    metadata['ppro.format.pixelaspect'] = parseFloat(interpretation.pixelAspectRatio).toFixed(4);
     metadata['ppro.source.start'] = clip.inPoint.seconds;
     metadata['ppro.source.end'] = clip.outPoint.seconds;
     metadata['ppro.source.duration'] = clip.duration.seconds;

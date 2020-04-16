@@ -162,7 +162,6 @@ function _publish () {
   var audioOnly = $.querySelector('input[name=audio-only]').checked;
   var jsonSendPath = $.querySelector('input[name=send-path]').value;
   var jsonGetPath = $.querySelector('input[name=get-path]').value;
-  var publishPath = _pype.ENV.PUBLISH_PATH;
 
   if (jsonSendPath === '') {
     // create temp staging directory on local
@@ -218,12 +217,14 @@ function _publish () {
                   "adobePublishJsonPathSend": jsonSendPath,
                   "adobePublishJsonPathGet": jsonGetPath,
                   "gui": gui,
-                  "publishPath": publishPath,
+                  "publishPath": convertPathString(_pype.ENV.PUBLISH_PATH),
                   "project": _pype.ENV.AVALON_PROJECT,
                   "asset": _pype.ENV.AVALON_ASSET,
                   "task": _pype.ENV.AVALON_TASK,
-                  "workdir": _pype.ENV.AVALON_WORKDIR
+                  "workdir": convertPathString(_pype.ENV.AVALON_WORKDIR),
+                  "host": _pype.ENV.AVALON_APP
                 }
+                displayResult('dataToPublish: ' + JSON.stringify(dataToPublish));
                 pras.publish(dataToPublish).then(function (result) {
                   displayResult(
                     'pype.js:publish < pras.publish: ' + JSON.stringify(result));
@@ -232,9 +233,9 @@ function _publish () {
                     // read json data from resulted path
                     displayResult('Updating metadata of clips after publishing');
 
-                    jsonfile.readFile(result.return_data_path, function (json) {
-                      _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
-                    });
+                    // jsonfile.readFile(result.return_data_path, function (json) {
+                    //   _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
+                    // });
 
                     // version up project
                     if (versionUp) {
@@ -257,8 +258,6 @@ function _publish () {
       });
     });
   } else {
-    // register publish path
-    pras.register_plugin_path(publishPath).then(displayResult);
     // send json to pyblish
     pras.publish(jsonSendPath, jsonGetPath, gui).then(function (result) {
       const jsonfile = require('jsonfile');
@@ -406,14 +405,19 @@ $('#btn-newWorkfileVersion').click(function () {
 });
 
 $('#btn-testing').click(function () {
-  var data = {
-    "adobePublishJsonPathSend": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_send.json",
-    "adobePublishJsonPathGet": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_get.json",
-    "gui": true,
-    "project": "J01_jakub_test",
-    "asset": "editorial",
-    "task": "conforming"
-  }
+  // var data = {
+  //   "adobePublishJsonPathSend": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_send.json",
+  //   "adobePublishJsonPathGet": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_get.json",
+  //   "gui": true,
+  //   "project": "J01_jakub_test",
+  //   "asset": "editorial",
+  //   "task": "conforming",
+	// 	"workdir": "C:/Users/jezsc/_PYPE_testing/projects/J01_jakub_test/editorial/work/conforming",
+  //   "publishPath": "C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/plugins/premiere/publish",
+  //   "host": "premiere"
+  // }
+  var data =  {"adobePublishJsonPathSend":"C:/Users/jezsc/AppData/Local/Temp/887ed0c3-d772-4105-b285-847ef53083cd_send.json","adobePublishJsonPathGet":"C:/Users/jezsc/AppData/Local/Temp/887ed0c3-d772-4105-b285-847ef53083cd_get.json","gui":true,"publishPath":"C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/plugins/premiere/publish","project":"J01_jakub_test","asset":"editorial","task":"conforming","workdir":"C:/Users/jezsc/_PYPE_testing/projects/J01_jakub_test/editorial/work/conforming","host":"premiere"}
+
   pras.publish(data);
 });
 

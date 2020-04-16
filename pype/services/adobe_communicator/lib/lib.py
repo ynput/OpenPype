@@ -111,8 +111,7 @@ class AdobeRestApi(RestApi):
         try:
             set_context(
                 self.dbcon,
-                data,
-                'adobecommunicator'
+                data
             )
             result = run_publish(data)
 
