@@ -405,18 +405,18 @@ $('#btn-newWorkfileVersion').click(function () {
 });
 
 $('#btn-testing').click(function () {
-  // var data = {
-  //   "adobePublishJsonPathSend": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_send.json",
-  //   "adobePublishJsonPathGet": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_get.json",
-  //   "gui": true,
-  //   "project": "J01_jakub_test",
-  //   "asset": "editorial",
-  //   "task": "conforming",
-	// 	"workdir": "C:/Users/jezsc/_PYPE_testing/projects/J01_jakub_test/editorial/work/conforming",
-  //   "publishPath": "C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/plugins/premiere/publish",
-  //   "host": "premiere"
-  // }
-  var data =  {"adobePublishJsonPathSend":"C:/Users/jezsc/AppData/Local/Temp/887ed0c3-d772-4105-b285-847ef53083cd_send.json","adobePublishJsonPathGet":"C:/Users/jezsc/AppData/Local/Temp/887ed0c3-d772-4105-b285-847ef53083cd_get.json","gui":true,"publishPath":"C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/plugins/premiere/publish","project":"J01_jakub_test","asset":"editorial","task":"conforming","workdir":"C:/Users/jezsc/_PYPE_testing/projects/J01_jakub_test/editorial/work/conforming","host":"premiere"}
+  var data = {
+    "adobePublishJsonPathSend": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_send.json",
+    "adobePublishJsonPathGet": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_get.json",
+    "gui": true,
+    "project": "J01_jakub_test",
+    "asset": "editorial",
+    "task": "conforming",
+		"workdir": "C:/Users/jezsc/_PYPE_testing/projects/J01_jakub_test/editorial/work/conforming",
+    "publishPath": "C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/plugins/premiere/publish",
+    "host": "premiere"
+  }
+  // var data =  {"adobePublishJsonPathSend":"C:/Users/jezsc/AppData/Local/Temp/887ed0c3-d772-4105-b285-847ef53083cd_send.json","adobePublishJsonPathGet":"C:/Users/jezsc/AppData/Local/Temp/887ed0c3-d772-4105-b285-847ef53083cd_get.json","gui":true,"publishPath":"C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/plugins/premiere/publish","project":"J01_jakub_test","asset":"editorial","task":"conforming","workdir":"C:/Users/jezsc/_PYPE_testing/projects/J01_jakub_test/editorial/work/conforming","host":"premiere"}
 
   pras.publish(data);
 });

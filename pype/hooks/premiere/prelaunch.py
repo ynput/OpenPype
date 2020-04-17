@@ -29,24 +29,6 @@ class PremierePrelaunch(PypeHook):
         if not env:
             env = os.environ
 
-        asset = env["AVALON_ASSET"]
-        task = env["AVALON_TASK"]
-        workdir = env["AVALON_WORKDIR"]
-        project_name = f"{asset}_{task}"
-        project_path = os.path.join(workdir, project_name)
-        os.makedirs(project_path, exist_ok=True)
-
-        project_file = os.path.join(project_path, f"{project_name}.pproj")
-        env["PYPE_ADOBE_PREMIERE_PROJECT_FILE"] = project_file
-
-        # TODO: try to set workfile for premiere if it is possible
-        # set workdir to the current path for premiere to open in it
-        self.log.debug("_ project_path: `{}`".format(project_path))
-        self.log.debug("_ project_file: `{}`".format(project_file))
-
-        # install premiere to avalon
-        avalon.api.install(pype.premiere)
-
         try:
             __import__("pype.premiere")
             __import__("pyblish")
