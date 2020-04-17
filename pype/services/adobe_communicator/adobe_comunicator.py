@@ -1,7 +1,7 @@
 import os
 import pype
-from . import PUBLISH_PATHS
 from pypeapp import Logger
+from .lib import AdobeRestApi, PUBLISH_PATHS
 
 log = Logger().get_logger("AdobeCommunicator")
 
