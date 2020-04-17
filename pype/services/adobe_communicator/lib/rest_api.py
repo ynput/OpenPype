@@ -19,6 +19,10 @@ class AdobeRestApi(RestApi):
         super().__init__(*args, **kwargs)
         self.dbcon.install()
 
+    @route("/available", "/adobe")
+    def available(self):
+        return CallbackResult()
+
     @route("/presets/<project_name>", "/adobe")
     def get_presets(self, request):
         project_name = request.url_data["project_name"]
