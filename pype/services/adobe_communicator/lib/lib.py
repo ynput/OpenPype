@@ -1,16 +1,15 @@
 import os
-import re
-import json
-import bson
-import bson.json_util
+import copy
 from pype.services.rest_api import RestApi, abort, CallbackResult
 from .io_nonsingleton import DbConnector
-from .publishing import run_publish, set_context
-
-from pypeapp import config, Logger
-
+from pypeapp import config, execute, Logger
 
 log = Logger().get_logger("AdobeCommunicator")
+
+CURRENT_DIR = os.path.dirname(__file__)
+PUBLISH_SCRIPT_PATH = os.path.join(CURRENT_DIR, "publish.py")
+
+PUBLISH_PATHS = []
 
 
 class AdobeRestApi(RestApi):
@@ -29,23 +28,49 @@ class AdobeRestApi(RestApi):
 
     @RestApi.route("/publish", url_prefix="/adobe", methods="POST")
     def publish(self, request):
-        """
-        http://localhost:8021/adobe/publish
-        """
-        data = request.request_data
+        """Triggers publishing script in subprocess.
 
-        log.info('Pyblish is running')
+        The subprocess freeze process and during publishing is not possible to
+        handle other requests and is possible that freeze main application.
+
+        TODO: Freezing issue may be fixed with socket communication.
+
+        Example url:
+        http://localhost:8021/adobe/publish (POST)
+        """
         try:
-            set_context(
-                self.dbcon,
-                data
+            publish_env = self._prepare_publish_environments(
+                request.request_data
             )
-            result = run_publish(data)
+        except Exception as exc:
+            log.warning(
+                "Failed to prepare environments for publishing.",
+                exc_info=True
+            )
+            abort(400, str(exc))
 
-            if result:
-                return CallbackResult(data=self.result_to_json(result))
-        finally:
-            log.info('Pyblish have stopped')
+        output_data_path = publish_env["AC_PUBLISH_OUTPATH"]
+
+        log.info("Pyblish is running")
+        try:
+            # Trigger subprocess
+            # QUESTION should we check returncode?
+            returncode = execute(PUBLISH_SCRIPT_PATH, env=publish_env)
+
+            # Check if output file exists
+            if returncode != 0 or not os.path.exists(output_data_path):
+                abort(500, "Publishing failed")
+
+            log.info("Pyblish have stopped")
+
+            return CallbackResult(
+                {"return_data_path": output_data_path}
+            )
+
+        except Exception:
+            log.warning("Publishing failed", exc_info=True)
+            abort(500, "Publishing failed")
+
     def _prepare_publish_environments(self, data):
         """Prepares environments based on request data."""
         env = copy.deepcopy(os.environ)
