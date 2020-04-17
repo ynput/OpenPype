@@ -561,7 +561,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             source = context.data["currentFile"]
 
         anatomy = instance.context.data["anatomy"]
-        work_root_name = anatomy.templates["work"].get("root_name")
         success, rootless_path = (
             anatomy.roots_obj.find_root_template_from_path(source)
         )
