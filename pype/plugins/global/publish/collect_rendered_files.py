@@ -85,19 +85,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             representations = []
             for repre_data in instance_data.get("representations") or []:
                 staging_dir = repre_data.get("stagingDir")
-                if not staging_dir:
-                    pass
-
-                elif "{root" in staging_dir:
-                    repre_data["stagingDir"] = staging_dir.format(
-                        **{"root": anatomy.roots}
-                    )
-                    self.log.debug((
-                        "stagingDir was filled with root."
-                        " To: \"{}\" From: \"{}\""
-                    ).format(repre_data["stagingDir"], staging_dir))
-
-                else:
+                if staging_dir:
                     remapped = anatomy.roots_obj.path_remapper(staging_dir)
                     if remapped:
                         repre_data["stagingDir"] = remapped
