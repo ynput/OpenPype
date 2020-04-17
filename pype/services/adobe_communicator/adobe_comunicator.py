@@ -1,7 +1,7 @@
 import os
 import pype
-from pypeapp import config, Logger
 from . import PUBLISH_PATHS
+from pypeapp import Logger
 
 log = Logger().get_logger("AdobeCommunicator")
 
@@ -10,18 +10,9 @@ class AdobeCommunicator:
     rest_api_obj = None
 
     def __init__(self):
-        try:
-            self.presets = config.get_presets(
-            )["services"]["adobe_commuticator"]
-        except Exception:
-            self.presets = {"statics": {}, "rest_api": False}
-            log.debug((
-                "There are not set presets for AdobeCommunicator."
-                " Using defaults \"{}\""
-            ).format(str(self.presets)))
+        self.rest_api_obj = None
 
-        # solve publish paths
-        PUBLISH_PATHS.clear()
+        # Add "adobecommunicator" publish paths
         PUBLISH_PATHS.append(os.path.sep.join(
             [pype.PLUGINS_DIR, "adobecommunicator", "publish"]
         ))
@@ -30,27 +21,29 @@ class AdobeCommunicator:
         return
 
     def process_modules(self, modules):
+        # Module requires RestApiServer
         rest_api_module = modules.get("RestApiServer")
-        if rest_api_module:
-            self.rest_api_registration(rest_api_module)
+        if not rest_api_module:
+            log.warning(
+                "AdobeCommunicator won't work without RestApiServer."
+            )
+            return
 
-            # adding ftrack publish path
-            if "FtrackModule" in modules:
-                PUBLISH_PATHS.append(os.path.sep.join(
-                    [pype.PLUGINS_DIR, "ftrack", "publish"]
-                ))
-            log.info((f"Adobe Communicator Registered PUBLISH_PATHS"
-                      f"> `{PUBLISH_PATHS}`"))
+        # Register statics url
+        pype_module_root = os.environ["PYPE_MODULE_ROOT"].replace("\\", "/")
+        static_path = "{}/pype/premiere/ppro".format(pype_module_root)
+        rest_api_module.register_statics("/ppro", static_path)
 
-    def rest_api_registration(self, module):
-        for prefix, static_path in self.presets["statics"].items():
-            static_path = static_path.format(
-                **dict(os.environ)).replace("\\", "/")
-            module.register_statics(prefix, static_path)
-            log.info((f"Adobe Communicator Registering static"
-                      f"> `{prefix}` at `{static_path}`"))
+        # Register rest api object for communication
+        self.rest_api_obj = AdobeRestApi()
 
-        if all((self.presets["rest_api"],
-                not bool(self.rest_api_obj))):
-            from .lib import AdobeRestApi
-            self.rest_api_obj = AdobeRestApi()
+        # Add Ftrack publish path if registered Ftrack mdule
+        if "FtrackModule" in modules:
+            PUBLISH_PATHS.append(os.path.sep.join(
+                [pype.PLUGINS_DIR, "ftrack", "publish"]
+            ))
+
+        log.debug((
+            f"Adobe Communicator Registered PUBLISH_PATHS"
+            f"> `{PUBLISH_PATHS}`"
+        ))
