@@ -1,4 +1,4 @@
-/* global app, qe, alert, File, $, JSON, ProjectItemType, XMPMeta, parseFloat */
+/* global app, qe, alert, File, $, JSON, ProjectItemType, CSXSEvent, XMPMeta, parseFloat */
 /*
               .____ _ ___ .____.______
 --- - - --   /  .  \//  //  .  \  ___/ --- ---- - -
@@ -912,7 +912,14 @@ $.pype = {
         // send render jobs to encoder
         var exclude = ['projectfile', 'thumbnail'];
         if (!include(exclude, key)) {
-          instances[i].files.push($.pype.render(request.stagingDir, key, representations[key], instances[i].name, instances[i].version, instances[i].metadata['ppro.clip.start'], instances[i].metadata['ppro.clip.end']));
+          instances[i].files.push(
+            $.pype.render(request.stagingDir,
+                          key,
+                          representations[key],
+                          instances[i].name,
+                          instances[i].version,
+                          instances[i].metadata['ppro.clip.start'],
+                          instances[i].metadata['ppro.clip.end']));
 
           waitFile = request.stagingDir + '/' + instances[i].files[(instances[i].files.length - 1)];
         } else if (key === 'thumbnail') {
@@ -927,6 +934,14 @@ $.pype = {
     app.project.activeSequence.setInPoint(origInPoint);
     app.project.activeSequence.setOutPoint(origOutPoint);
     return JSON.stringify(request);
+  },
+
+  onEncoderJobComplete: function(jobID, outputFilePath) {
+    // this will dispatch event to js
+    var eventObj = new CSXSEvent();
+    eventObj.type = 'pype.EncoderJobComplete';
+    eventObj.data = {"jobID": jobID, "outputFilePath": outputFilePath};
+    eventObj.dispatch();
   },
 
   render: function (outputPath, family, representation, clipName, version, inPoint, outPoint) {
@@ -963,6 +978,7 @@ $.pype = {
             }
 
             app.encoder.bind('onEncoderJobComplete', $._PPP_.onEncoderJobComplete);
+            app.encoder.bind('onEncoderJobComplete', $.pype.onEncoderJobComplete);
             app.encoder.bind('onEncoderJobError', $._PPP_.onEncoderJobError);
             app.encoder.bind('onEncoderJobProgress', $._PPP_.onEncoderJobProgress);
             app.encoder.bind('onEncoderJobQueued', $._PPP_.onEncoderJobQueued);

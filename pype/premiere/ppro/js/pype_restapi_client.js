@@ -11,7 +11,7 @@ var pras = {
     var url = _pype.ENV.PYPE_REST_API_URL;
     return url
   },
-  getRequestFromRestApiServer: function (url, options, callback) {
+  getRequestFromRestApiServer: async function(url, options, callback) {
     _pype.displayResult('url: ' + url);
 
     // define options in case there is null comming
@@ -24,25 +24,20 @@ var pras = {
       }
     }
     _pype.displayResult('options: ' + JSON.stringify(options));
-
     // send post request to rest api server
-    fetch(url, options).then(res => {
-      try {
-        return res.json();
-      } catch (e) {
-        return res.text();
-      }
-    }).then(json => {
+    try {
+      const res = await fetch(url);
+      const json = await res.json();
       if (isPypeData(json)) {
-        _pype.displayResult('json: ' + JSON.stringify(json.data));
-
-        // send it to callback function
+        _pype.displayResult(json.data);
         callback(json.data);
       } else {
         _pype.displayError('Data comming from `{url}` are not correct'.format({url: url}));
-        callback(null)
+        callback(null);
       }
-    }).catch(err => _pype.displayError('Data comming from `{url}` are not correct.\n\nError: {error}'.format({url: url, error: err})));
+    } catch (error) {
+      _pype.displayError('Data comming from `{url}` are not correct.\n\nError: {error}'.format({url: url, error: error}));
+    }
   },
   load_representations: function (projectName, requestList) {
     // preparation for getting representations from api server

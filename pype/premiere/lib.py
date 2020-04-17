@@ -91,7 +91,7 @@ def setup(env=None):
     self.EXTENSIONS_PATH_LOCAL = env["EXTENSIONS_PATH"]
     self.EXTENSIONS_CACHE_PATH = env["EXTENSIONS_CACHE_PATH"]
 
-    log.info("Registering Premiera plug-ins..")
+    log.info("Registering Adobe Premiere plug-ins..")
     if not test_rest_api_server():
         return
 
@@ -105,7 +105,18 @@ def setup(env=None):
 
 
 def extensions_sync():
-    # import time
+    # TODO(antirotor): Bundle extension and install it
+    # we need to bundle extension as we are using third party node_modules
+    # to ease creation of bundle, lets create build script creating self-signed
+    # certificate and bundling extension to zxp format (using ZXPSignCmd from
+    # Adobe). If we find zxp in extension directory, we can install it via
+    # command line `ExManCmd /install` - using Adobe Extension Manager. If
+    # zxp is not found, we use old behaviour and just copy all files. Thus we
+    # maintain ability to develop and deploy at the same time.
+    #
+    # sources:
+    # https://helpx.adobe.com/extension-manager/using/command-line.html
+
     process_pairs = list()
     # get extensions dir in pype.premiere.extensions
     # build dir path to premiere cep extensions
@@ -121,7 +132,7 @@ def extensions_sync():
         if not os.path.exists(dst):
             os.makedirs(dst, mode=0o777)
         walktree(source=src, target=dst, options_input=["y", ">"])
-        log.info("Extension {0} from `{1}` coppied to `{2}`".format(
+        log.info("Extension {0} from `{1}` copied to `{2}`".format(
             name, src, dst
         ))
     # time.sleep(10)
@@ -147,7 +158,7 @@ def clearing_caches_ui():
                 log.info("Removing dir: {}".format(path))
                 shutil.rmtree(path, ignore_errors=True)
             except Exception as e:
-                log.debug("problem: {}".format(e))
+                log.error("problem: {}".format(e))
 
 
 def test_rest_api_server():
@@ -155,7 +166,7 @@ def test_rest_api_server():
     rest_url = os.getenv("PYPE_REST_API_URL")
     project_name = "{AVALON_PROJECT}".format(**dict(os.environ))
     URL = "/".join((rest_url,
-                    "adobe/projects",
+                    "avalon/projects",
                     project_name))
     log.debug("__ URL: {}".format(URL))
     try:

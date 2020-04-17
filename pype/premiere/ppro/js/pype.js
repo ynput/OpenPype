@@ -1,4 +1,4 @@
-/* global CSInterface, $, cep_node, querySelector, pras, SystemPath, displayResult */
+/* esversion:6, global CSInterface, $, cep_node, querySelector, pras, SystemPath, displayResult */
 
 var csi = new CSInterface();
 var output = document.getElementById('output');
@@ -155,13 +155,13 @@ function convertPathString (path) {
 }
 
 function _publish () {
-  var $ = querySelector('#publish');
+  var publish_id = querySelector('#publish');
   // var gui = $.querySelector('input[name=gui]').checked;
   var gui = true;
-  var versionUp = $.querySelector('input[name=version-up]').checked;
-  var audioOnly = $.querySelector('input[name=audio-only]').checked;
-  var jsonSendPath = $.querySelector('input[name=send-path]').value;
-  var jsonGetPath = $.querySelector('input[name=get-path]').value;
+  var versionUp = publish_id.querySelector('input[name=version-up]').checked;
+  var audioOnly = publish_id.querySelector('input[name=audio-only]').checked;
+  var jsonSendPath = publish_id.querySelector('input[name=send-path]').value;
+  var jsonGetPath = publish_id.querySelector('input[name=get-path]').value;
 
   if (jsonSendPath === '') {
     // create temp staging directory on local
@@ -180,7 +180,7 @@ function _publish () {
       displayResult(data.projectfile);
       displayResult(destination);
       fs.copyFile(data.projectpath, destination, displayResult);
-      displayResult('project file coppied!');
+      displayResult('project file copied!');
     });
 
     // set presets to jsx
@@ -203,8 +203,11 @@ function _publish () {
           const fs = require('fs');
           var jsonSendPath = stagingDir + '_send.json';
           var jsonGetPath = stagingDir + '_get.json';
-          $.querySelector('input[name=send-path]').value = jsonSendPath;
-          $.querySelector('input[name=get-path]').value = jsonGetPath;
+
+          var publish_id = querySelector('#publish');
+          publish_id.querySelector('input[name=send-path]').value = jsonSendPath;
+          publish_id.querySelector('input[name=get-path]').value = jsonGetPath;
+
           var jsonContent = JSON.parse(result);
           jsonfile.writeFile(jsonSendPath, jsonContent);
           var checkingFile = function (path) {

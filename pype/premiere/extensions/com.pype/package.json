@@ -2,7 +2,11 @@
   "name": "com.pype",
   "version": "1.0.0",
   "description": "pype avalon integration",
+  "license": "ISC",
   "main": "CSXS\\manifest.xml",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "dependencies": {
     "bluebird": "^3.7.2",
     "decompress-zip": "^0.2.2",
@@ -22,10 +26,5 @@
     "walk": "^2.3.14",
     "xml2js": "^0.4.23"
   },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "ISC"
+  "devDependencies": {}
 }
