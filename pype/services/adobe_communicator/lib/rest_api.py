@@ -1,6 +1,6 @@
 import os
 import copy
-from pype.services.rest_api import RestApi, abort, CallbackResult
+from pype.services.rest_api import RestApi, route, abort, CallbackResult
 from .io_nonsingleton import DbConnector
 from pypeapp import config, execute, Logger
 
@@ -19,14 +19,12 @@ class AdobeRestApi(RestApi):
         super().__init__(*args, **kwargs)
         self.dbcon.install()
 
-    @RestApi.route("/presets/<project_name>",
-                   url_prefix="/adobe",
-                   methods="GET")
+    @route("/presets/<project_name>", "/adobe")
     def get_presets(self, request):
         project_name = request.url_data["project_name"]
         return CallbackResult(data=config.get_presets(project_name))
 
-    @RestApi.route("/publish", url_prefix="/adobe", methods="POST")
+    @route("/publish", "/adobe", "POST")
     def publish(self, request):
         """Triggers publishing script in subprocess.
 
