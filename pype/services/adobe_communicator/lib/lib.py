@@ -46,3 +46,41 @@ class AdobeRestApi(RestApi):
                 return CallbackResult(data=self.result_to_json(result))
         finally:
             log.info('Pyblish have stopped')
+    def _prepare_publish_environments(self, data):
+        """Prepares environments based on request data."""
+        env = copy.deepcopy(os.environ)
+
+        project_name = data["project"]
+        asset_name = data["asset"]
+
+        project_doc = self.dbcon[project_name].find_one({
+            "type": "project"
+        })
+        av_asset = self.dbcon[project_name].find_one({
+            "type": "asset",
+            "name": asset_name
+        })
+        parents = av_asset["data"]["parents"]
+        hierarchy = ""
+        if parents:
+            hierarchy = "/".join(parents)
+
+        env["AVALON_PROJECT"] = project_name
+        env["AVALON_ASSET"] = asset_name
+        env["AVALON_TASK"] = data["task"]
+        env["AVALON_WORKDIR"] = data["workdir"]
+        env["AVALON_HIERARCHY"] = hierarchy
+        env["AVALON_PROJECTCODE"] = project_doc["data"].get("code", "")
+        env["AVALON_APP"] = data["host"]
+        env["AVALON_APP_NAME"] = data["host"]
+
+        env["PYBLISH_HOSTS"] = data["host"]
+
+        env["PUBLISH_PATHS"] = os.pathsep.join(PUBLISH_PATHS)
+
+        # Input and Output paths where source data and result data will be
+        # stored
+        env["AC_PUBLISH_INPATH"] = data["adobePublishJsonPathSend"]
+        env["AC_PUBLISH_OUTPATH"] = data["adobePublishJsonPathGet"]
+
+        return env
