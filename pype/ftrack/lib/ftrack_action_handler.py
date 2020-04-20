@@ -177,8 +177,7 @@ class BaseAction(BaseHandler):
             else:
                 for key in ('success', 'message'):
                     if key not in result:
-                        continue
-                    raise KeyError('Missing required key: {0}.'.format(key))
+                        raise KeyError('Missing required key: {0}.'.format(key))
             return result
 
         self.log.warning((
