@@ -94,6 +94,48 @@ class BaseAction(BaseHandler):
         '''
 
         return False
+
+    def _interface(self, session, entities, event):
+        interface = self.interface(session, entities, event)
+        if not interface:
+            return
+
+        if isinstance(interface, (tuple, list)):
+            return {"items": interface}
+
+        if isinstance(interface, dict):
+            if (
+                "items" in interface
+                or ("success" in interface and "message" in interface)
+            ):
+                return interface
+
+            raise ValueError((
+                "Invalid interface output expected key: \"items\" or keys:"
+                " \"success\" and \"message\". Got: \"{}\""
+            ).format(str(interface)))
+
+        raise ValueError(
+            "Invalid interface output type \"{}\"".format(
+                str(type(interface))
+            )
+        )
+
+    def interface(self, session, entities, event):
+        '''Return a interface if applicable or None
+
+        *session* is a `ftrack_api.Session` instance
+
+        *entities* is a list of tuples each containing the entity type and
+        the entity id. If the entity is a hierarchical you will always get the
+        entity type TypedContext, once retrieved through a get operation you
+        will have the "real" entity type ie. example Shot, Sequence
+        or Asset Build.
+
+        *event* the unmodified original event
+        '''
+        return None
+
     def _launch(self, event):
         entities = self._translate_event(event)
 

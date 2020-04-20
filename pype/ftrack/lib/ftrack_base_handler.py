@@ -318,34 +318,6 @@ class BaseHandler(object):
 
         return False
 
-    def _interface(self, *args):
-        interface = self.interface(*args)
-        if interface:
-            if (
-                'items' in interface or
-                ('success' in interface and 'message' in interface)
-            ):
-                return interface
-
-            return {
-                'items': interface
-            }
-
-    def interface(self, session, entities, event):
-        '''Return a interface if applicable or None
-
-        *session* is a `ftrack_api.Session` instance
-
-        *entities* is a list of tuples each containing the entity type and the entity id.
-        If the entity is a hierarchical you will always get the entity
-        type TypedContext, once retrieved through a get operation you
-        will have the "real" entity type ie. example Shot, Sequence
-        or Asset Build.
-
-        *event* the unmodified original event
-        '''
-        return None
-
     def _handle_result(self, session, result, entities, event):
         '''Validate the returned result from the action callback'''
         if isinstance(result, bool):
