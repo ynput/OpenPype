@@ -30,9 +30,6 @@ class AppAction(BaseAction):
         self, session, label, name, executable, variant=None,
         icon=None, description=None, preactions=[], plugins_presets={}
     ):
-        super().__init__(session, plugins_presets)
-        """Expects a ftrack_api.Session instance"""
-
         self.label = label
         self.identifier = name
         self.executable = executable
@@ -41,6 +38,7 @@ class AppAction(BaseAction):
         self.description = description
         self.preactions.extend(preactions)
 
+        super().__init__(session, plugins_presets)
         if label is None:
             raise ValueError("Action missing label.")
         if name is None:
