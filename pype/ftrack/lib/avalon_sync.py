@@ -806,12 +806,12 @@ class SyncEntitiesFactory:
     def set_hierarchical_attribute(self, hier_attrs, sync_ids):
         # collect all hierarchical attribute keys
         # and prepare default values to project
-        attribute_names = []
-        attribute_ids = []
+        attributes_by_key = {}
+        attribute_key_by_id = {}
         for attr in hier_attrs:
             key = attr["key"]
-            attribute_ids.append(attr["id"])
-            attribute_names.append(key)
+            attribute_key_by_id[attr["id"]] = key
+            attributes_by_key[key] = attr
 
             store_key = "hier_attrs"
             if key.startswith("avalon_"):
@@ -824,11 +824,11 @@ class SyncEntitiesFactory:
         # Prepare dict with all hier keys and None values
         prepare_dict = {}
         prepare_dict_avalon = {}
-        for attr in attribute_names:
-            if attr.startswith("avalon_"):
-                prepare_dict_avalon[attr] = None
+        for key in attributes_by_key.keys():
+            if key.startswith("avalon_"):
+                prepare_dict_avalon[key] = None
             else:
-                prepare_dict[attr] = None
+                prepare_dict[key] = None
 
         for id, entity_dict in self.entities_dict.items():
             # Skip project because has stored defaults at the moment
@@ -842,32 +842,32 @@ class SyncEntitiesFactory:
         entity_ids_joined = ", ".join([
             "\"{}\"".format(id) for id in sync_ids
         ])
-        attributes_joined = ", ".join([
-            "\"{}\"".format(name) for name in attribute_ids
-        ])
-        call_expr = [{
-            "action": "query",
-            "expression": (
-                "select value, entity_id from CustomAttributeValue "
-                "where entity_id in ({}) and configuration_id in ({})"
-            ).format(entity_ids_joined, attributes_joined)
-        }]
-        if hasattr(self.session, "call"):
-            [values] = self.session.call(call_expr)
-        else:
-            [values] = self.session._call(call_expr)
 
         avalon_hier = []
-        for value in values["data"]:
-            if value["value"] is None:
-                continue
-            entity_id = value["entity_id"]
-            key = value["configuration"]["key"]
-            store_key = "hier_attrs"
-            if key.startswith("avalon_"):
-                store_key = "avalon_attrs"
-                avalon_hier.append(key)
-            self.entities_dict[entity_id][store_key][key] = value["value"]
+        for configuration_id in attribute_key_by_id.keys():
+            call_expr = [{
+                "action": "query",
+                "expression": (
+                    "select value, entity_id from CustomAttributeValue "
+                    "where entity_id in ({}) and configuration_id is \"{}\""
+                ).format(entity_ids_joined, configuration_id)
+            }]
+            if hasattr(self.session, "call"):
+                [values] = self.session.call(call_expr)
+            else:
+                [values] = self.session._call(call_expr)
+
+            for value in values["data"]:
+                if value["value"] is None:
+                    continue
+                entity_id = value["entity_id"]
+                key = attribute_key_by_id[value["configuration_id"]]
+                if key.startswith("avalon_"):
+                    store_key = "avalon_attrs"
+                    avalon_hier.append(key)
+                else:
+                    store_key = "hier_attrs"
+                self.entities_dict[entity_id][store_key][key] = value["value"]
 
         # Get dictionary with not None hierarchical values to pull to childs
         top_id = self.ft_project_id
@@ -888,13 +888,14 @@ class SyncEntitiesFactory:
             hier_values, parent_id = hier_down_queue.get()
             for child_id in self.entities_dict[parent_id]["children"]:
                 _hier_values = hier_values.copy()
-                for name in attribute_names:
-                    store_key = "hier_attrs"
-                    if name.startswith("avalon_"):
+                for key in attributes_by_key.keys():
+                    if key.startswith("avalon_"):
                         store_key = "avalon_attrs"
-                    value = self.entities_dict[child_id][store_key][name]
+                    else:
+                        store_key = "hier_attrs"
+                    value = self.entities_dict[child_id][store_key][key]
                     if value is not None:
-                        _hier_values[name] = value
+                        _hier_values[key] = value
 
                 self.entities_dict[child_id]["hier_attrs"].update(_hier_values)
                 hier_down_queue.put((_hier_values, child_id))

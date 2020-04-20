@@ -155,6 +155,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         "PYPE_METADATA_FILE",
         "PYPE_STUDIO_PROJECTS_PATH",
         "PYPE_STUDIO_PROJECTS_MOUNT",
+        "AVALON_PROJECT"
     ]
 
     # pool used to do the publishing job
