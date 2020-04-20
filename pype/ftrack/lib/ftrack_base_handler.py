@@ -192,8 +192,10 @@ class BaseHandler(object):
 
         raise NotImplementedError()
 
-    def _translate_event(self, session, event):
+    def _translate_event(self, event, session=None):
         '''Return *event* translated structure to be used with the API.'''
+        if session is None:
+            session = self.session
 
         _entities = event['data'].get('entities_object', None)
         if (
@@ -203,11 +205,10 @@ class BaseHandler(object):
             ) == ftrack_api.symbol.NOT_SET
         ):
             _entities = self._get_entities(event)
+            event['data']['entities_object'] = _entities
 
-        return [
-            _entities,
-            event
-        ]
+        return _entities
+
 
     def _get_entities(self, event, session=None):
         if session is None:
