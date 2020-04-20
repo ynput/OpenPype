@@ -117,9 +117,7 @@ class AppAction(BaseAction):
         return True
 
     def _launch(self, event):
-        args = self._translate_event(
-            self.session, event
-        )
+        entities = self._translate_event(event)
 
         preactions_launched = self._handle_preactions(
             self.session, event
@@ -128,12 +126,10 @@ class AppAction(BaseAction):
             return
 
         response = self.launch(
-            self.session, *args
+            self.session, entities, event
         )
 
-        return self._handle_result(
-            self.session, response, *args
-        )
+        return self._handle_result(response)
 
     def launch(self, session, entities, event):
         '''Callback method for the custom action.

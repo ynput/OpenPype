@@ -43,12 +43,6 @@ class BaseEvent(BaseHandler):
             priority=self.priority
         )
 
-    def _launch(self, event):
-        self.session.rollback()
-        self.session._local_cache.clear()
-
-        self.launch(self.session, event)
-
     def _translate_event(self, event, session=None):
         '''Return *event* translated structure to be used with the API.'''
         return self._get_entities(

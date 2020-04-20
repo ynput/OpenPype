@@ -267,30 +267,12 @@ class BaseHandler(object):
         )
 
     def _launch(self, event):
-        args = self._translate_event(
-            self.session, event
-        )
+        self.session.rollback()
+        self.session._local_cache.clear()
 
-        preactions_launched = self._handle_preactions(self.session, event)
-        if preactions_launched is False:
-            return
+        self.launch(self.session, event)
 
-        interface = self._interface(
-            self.session, *args
-        )
-
-        if interface:
-            return interface
-
-        response = self.launch(
-            self.session, *args
-        )
-
-        return self._handle_result(
-            self.session, response, *args
-        )
-
-    def launch(self, session, entities, event):
+    def launch(self, session, event):
         '''Callback method for the custom action.
 
         return either a bool ( True if successful or False if the action failed )
