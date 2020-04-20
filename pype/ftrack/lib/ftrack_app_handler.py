@@ -134,17 +134,18 @@ class AppAction(BaseAction):
     def launch(self, session, entities, event):
         '''Callback method for the custom action.
 
-        return either a bool ( True if successful or False if the action failed )
-        or a dictionary with they keys `message` and `success`, the message should be a
-        string and will be displayed as feedback to the user, success should be a bool,
-        True if successful or False if the action failed.
+        return either a bool (True if successful or False if the action failed)
+        or a dictionary with they keys `message` and `success`, the message
+        should be a string and will be displayed as feedback to the user,
+        success should be a bool, True if successful or False if the action
+        failed.
 
         *session* is a `ftrack_api.Session` instance
 
-        *entities* is a list of tuples each containing the entity type and the entity id.
-        If the entity is a hierarchical you will always get the entity
-        type TypedContext, once retrieved through a get operation you
-        will have the "real" entity type ie. example Shot, Sequence
+        *entities* is a list of tuples each containing the entity type and
+        the entity id. If the entity is a hierarchical you will always get
+        the entity type TypedContext, once retrieved through a get operation
+        you will have the "real" entity type ie. example Shot, Sequence
         or Asset Build.
 
         *event* the unmodified original event
