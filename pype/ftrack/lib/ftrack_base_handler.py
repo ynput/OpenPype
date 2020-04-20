@@ -553,11 +553,20 @@ class BaseHandler(object):
         if low_entity_type == "project":
             return entity
 
-        if low_entity_type == "reviewsession":
+        if "project" in entity:
+            # reviewsession, task(Task, Shot, Sequence,...)
             return entity["project"]
 
         if low_entity_type == "filecomponent":
             entity = entity["version"]
+            low_entity_type = entity.entity_type.lower()
+
+        if low_entity_type == "assetversion":
+            asset = entity["asset"]
+            if asset:
+                parent = asset["parent"]
+                if parent:
+                    return parent["project"]
 
         project_data = entity["link"][0]
         return self.session.query(
