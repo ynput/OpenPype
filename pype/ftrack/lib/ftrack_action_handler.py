@@ -58,28 +58,24 @@ class BaseAction(BaseHandler):
         )
 
     def _launch(self, event):
-        args = self._translate_event(
-            self.session, event
-        )
+        entities = self._translate_event(event)
 
         preactions_launched = self._handle_preactions(self.session, event)
         if preactions_launched is False:
             return
 
         interface = self._interface(
-            self.session, *args
+            self.session, entities, event
         )
 
         if interface:
             return interface
 
         response = self.launch(
-            self.session, *args
+            self.session, entities, event
         )
 
-        return self._handle_result(
-            self.session, response, *args
-        )
+        return self._handle_result(response)
 
     def _handle_result(self, session, result, entities, event):
         '''Validate the returned result from the action callback'''
