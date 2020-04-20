@@ -1,17 +1,16 @@
 import os
 import sys
 import platform
-from avalon import lib as avalonlib
+import avalon.lib
 import acre
-from pype import api as pype
 from pype import lib as pypelib
 from pypeapp import config
-from .ftrack_base_handler import BaseHandler
+from .ftrack_action_handler import BaseAction
 
 from pypeapp import Anatomy
 
 
-class AppAction(BaseHandler):
+class AppAction(BaseAction):
     '''Custom Action base class
 
     <label> - a descriptive string identifing your action.
@@ -34,9 +33,9 @@ class AppAction(BaseHandler):
 
         if label is None:
             raise ValueError('Action missing label.')
-        elif name is None:
+        if name is None:
             raise ValueError('Action missing identifier.')
-        elif executable is None:
+        if executable is None:
             raise ValueError('Action missing executable.')
 
         self.label = label
@@ -195,7 +194,7 @@ class AppAction(BaseHandler):
 
         os.environ["AVALON_HIERARCHY"] = hierarchy
 
-        application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
+        application = avalon.lib.get_application(os.environ["AVALON_APP_NAME"])
 
         data = {
             "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
@@ -293,7 +292,7 @@ class AppAction(BaseHandler):
                 # Store subprocess to varaible. This is due to Blender launch
                 # bug. Please make sure Blender >=2.81 can be launched before
                 # remove `_popen` variable.
-                _popen = avalonlib.launch(
+                _popen = avalon.lib.launch(
                     executable=execfile, args=[], environment=env
                 )
             else:
@@ -340,7 +339,7 @@ class AppAction(BaseHandler):
                 # Store subprocess to varaible. This is due to Blender launch
                 # bug. Please make sure Blender >=2.81 can be launched before
                 # remove `_popen` variable.
-                _popen = avalonlib.launch(
+                _popen = avalon.lib.launch(
                     '/usr/bin/env', args=['bash', execfile], environment=env
                 )
             else:
