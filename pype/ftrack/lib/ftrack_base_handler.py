@@ -623,3 +623,19 @@ class BaseHandler(object):
         self.log.debug((
             "Publishing event: {}"
         ).format(str(event.__dict__)))
+
+    def get_project_from_entity(self, entity):
+        low_entity_type = entity.entity_type.lower()
+        if low_entity_type == "project":
+            return entity
+
+        if low_entity_type == "reviewsession":
+            return entity["project"]
+
+        if low_entity_type == "filecomponent":
+            entity = entity["version"]
+
+        project_data = entity["link"][0]
+        return self.session.query(
+            "Project where id is {}".format(project_data["id"])
+        ).one()
