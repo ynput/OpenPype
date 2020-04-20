@@ -49,10 +49,10 @@ class BaseEvent(BaseHandler):
 
         self.launch(self.session, event)
 
-    def _translate_event(self, session, event):
+    def _translate_event(self, event, session=None):
         '''Return *event* translated structure to be used with the API.'''
-        return [
-            self._get_entities(session, event),
-            event
-        ]
-
+        return self._get_entities(
+            event,
+            session,
+            ignore=['socialfeed', 'socialnotification']
+        )
