@@ -82,7 +82,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "image"
                 "source",
                 "assembly",
-                "textures"
+                "fbx",
+                "textures",
                 "action"
                 ]
     exclude_families = ["clip"]

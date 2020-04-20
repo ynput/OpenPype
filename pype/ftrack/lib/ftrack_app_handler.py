@@ -258,14 +258,6 @@ class AppAction(BaseHandler):
         env = acre.merge(env, current_env=dict(os.environ))
         env = acre.append(dict(os.environ), env)
 
-
-        #
-        # tools_env = acre.get_tools(tools)
-        # env = acre.compute(dict(tools_env))
-        # env = acre.merge(env, dict(os.environ))
-        # os.environ = acre.append(dict(os.environ), env)
-        # os.environ = acre.compute(os.environ)
-
         # Get path to execute
         st_temp_path = os.environ['PYPE_CONFIG']
         os_plat = platform.system().lower()
@@ -274,6 +266,18 @@ class AppAction(BaseHandler):
         path = os.path.join(st_temp_path, 'launchers', os_plat)
         # Full path to executable launcher
         execfile = None
+
+        if application.get("launch_hook"):
+            hook = application.get("launch_hook")
+            self.log.info("launching hook: {}".format(hook))
+            ret_val = pypelib.execute_hook(
+                application.get("launch_hook"), env=env)
+            if not ret_val:
+                return {
+                    'success': False,
+                    'message': "Hook didn't finish successfully {0}"
+                    .format(self.label)
+                }
 
         if sys.platform == "win32":
 
@@ -286,7 +290,10 @@ class AppAction(BaseHandler):
 
             # Run SW if was found executable
             if execfile is not None:
-                popen = avalonlib.launch(
+                # Store subprocess to varaible. This is due to Blender launch
+                # bug. Please make sure Blender >=2.81 can be launched before
+                # remove `_popen` variable.
+                _popen = avalonlib.launch(
                     executable=execfile, args=[], environment=env
                 )
             else:
@@ -294,8 +301,7 @@ class AppAction(BaseHandler):
                     'success': False,
                     'message': "We didn't found launcher for {0}"
                     .format(self.label)
-                    }
-                pass
+                }
 
         if sys.platform.startswith('linux'):
             execfile = os.path.join(path.strip('"'), self.executable)
@@ -320,7 +326,7 @@ class AppAction(BaseHandler):
                         'message': "No executable permission - {}".format(
                             execfile)
                         }
-                    pass
+
             else:
                 self.log.error('Launcher doesn\'t exist - {}'.format(
                     execfile))
@@ -328,10 +334,13 @@ class AppAction(BaseHandler):
                     'success': False,
                     'message': "Launcher doesn't exist - {}".format(execfile)
                 }
-                pass
+
             # Run SW if was found executable
             if execfile is not None:
-                avalonlib.launch(
+                # Store subprocess to varaible. This is due to Blender launch
+                # bug. Please make sure Blender >=2.81 can be launched before
+                # remove `_popen` variable.
+                _popen = avalonlib.launch(
                     '/usr/bin/env', args=['bash', execfile], environment=env
                 )
             else:
@@ -340,7 +349,6 @@ class AppAction(BaseHandler):
                     'message': "We didn't found launcher for {0}"
                     .format(self.label)
                     }
-                pass
 
         # Change status of task to In progress
         presets = config.get_presets()["ftrack"]["ftrack_config"]
