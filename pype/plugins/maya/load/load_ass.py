@@ -16,7 +16,7 @@ class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_reference(self, context, name, namespace, data):
+    def process_reference(self, context, name, namespace, options):
 
         import maya.cmds as cmds
         from avalon import maya
@@ -164,7 +164,7 @@ class AssStandinLoader(api.Loader):
     icon = "code-fork"
     color = "orange"
 
-    def load(self, context, name, namespace, data):
+    def load(self, context, name, namespace, options):
 
         import maya.cmds as cmds
         import avalon.maya.lib as lib
