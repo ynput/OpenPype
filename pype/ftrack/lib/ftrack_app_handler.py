@@ -87,28 +87,25 @@ class AppAction(BaseAction):
         ):
             return False
 
-        if entities[0]["parent"].entity_type.lower() == "project":
+        entity = entities[0]
+        if entity["parent"].entity_type.lower() == "project":
             return False
 
-        ft_project = entities[0]['project']
-
+        ft_project = self.get_project_from_entity(entity)
         database = pypelib.get_avalon_database()
         project_name = ft_project["full_name"]
         avalon_project = database[project_name].find_one({
             "type": "project"
         })
 
-        if avalon_project is None:
+        if not avalon_project:
             return False
-        else:
-            apps = [app['name'] for app in avalon_project['config'].get(
-                'apps', []
-            )]
 
-            if self.identifier not in apps:
-                return False
-
-        return True
+        project_apps = avalon_project["config"].get("apps", [])
+        apps = [app["name"] for app in project_apps]
+        if self.identifier in apps:
+            return True
+        return False
 
     def _launch(self, event):
         entities = self._translate_event(event)
@@ -119,9 +116,7 @@ class AppAction(BaseAction):
         if preactions_launched is False:
             return
 
-        response = self.launch(
-            self.session, entities, event
-        )
+        response = self.launch(self.session, entities, event)
 
         return self._handle_result(response)
 
@@ -146,7 +141,8 @@ class AppAction(BaseAction):
         """
 
         entity = entities[0]
-        project_name = entity['project']['full_name']
+        ft_project = self.get_project_from_entity(entity)
+        project_name = ft_project["full_name"]
 
         database = pypelib.get_avalon_database()
 
@@ -173,12 +169,13 @@ class AppAction(BaseAction):
 
         anatomy = Anatomy(project_name)
 
-        hierarchy = ""
-        parents = database[project_name].find_one({
-            "type": 'asset',
-            "name": entity['parent']['name']
-        })['data']['parents']
+        asset_doc = database[project_name].find_one({
+            "type": "asset",
+            "name": entity["parent"]["name"]
+        })
+        parents = asset_doc["data"]["parents"]
 
+        hierarchy = ""
         if parents:
             hierarchy = os.path.join(*parents)
 
@@ -189,13 +186,13 @@ class AppAction(BaseAction):
         data = {
             "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
             "project": {
-                "name": entity['project']['full_name'],
-                "code": entity['project']['name']
+                "name": ft_project["full_name"],
+                "code": ft_project["name"]
             },
-            "task": entity['name'],
-            "asset": entity['parent']['name'],
+            "task": entity["name"],
+            "asset": entity["parent"]["name"],
             "app": application["application_dir"],
-            "hierarchy": hierarchy,
+            "hierarchy": hierarchy
         }
 
         av_project = database[project_name].find_one({"type": 'project'})
