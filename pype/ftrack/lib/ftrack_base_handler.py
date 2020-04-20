@@ -335,7 +335,7 @@ class BaseHandler(object):
 
         return False
 
-    def _handle_result(self, session, result, entities, event):
+    def _handle_result(self, result):
         '''Validate the returned result from the action callback'''
         if isinstance(result, bool):
             if result is True:
@@ -363,11 +363,6 @@ class BaseHandler(object):
                     raise KeyError(
                         'Missing required key: {0}.'.format(key)
                     )
-
-        else:
-            self.log.error(
-                'Invalid result type must be bool or dictionary!'
-            )
 
         return result
 

@@ -156,41 +156,33 @@ class BaseAction(BaseHandler):
 
         return self._handle_result(response)
 
-    def _handle_result(self, session, result, entities, event):
+    def _handle_result(self, result):
         '''Validate the returned result from the action callback'''
         if isinstance(result, bool):
             if result is True:
-                result = {
-                    'success': result,
-                    'message': (
-                        '{0} launched successfully.'.format(self.label)
-                    )
-                }
+                msg = 'Action {0} finished.'
             else:
-                result = {
-                    'success': result,
-                    'message': (
-                        '{0} launch failed.'.format(self.label)
-                    )
-                }
+                msg = 'Action {0} failed.'
 
-        elif isinstance(result, dict):
+            return {
+                'success': result,
+                'message': msg.format(self.label)
+            }
+
+        if isinstance(result, dict):
             if 'items' in result:
                 if not isinstance(result['items'], list):
                     raise ValueError('Invalid items format, must be list!')
 
             else:
                 for key in ('success', 'message'):
-                    if key in result:
+                    if key not in result:
                         continue
+                    raise KeyError('Missing required key: {0}.'.format(key))
+            return result
 
-                    raise KeyError(
-                        'Missing required key: {0}.'.format(key)
-                    )
-
-        else:
-            self.log.error(
-                'Invalid result type must be bool or dictionary!'
-            )
+        self.log.warning((
+            'Invalid result type \"{}\" must be bool or dictionary!'
+        ).format(str(type(result))))
 
         return result
