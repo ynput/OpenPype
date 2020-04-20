@@ -57,6 +57,43 @@ class BaseAction(BaseHandler):
             self._launch
         )
 
+    def _discover(self, event):
+        entities = self._translate_event(event)
+        accepts = self.discover(self.session, entities, event)
+        if not accepts:
+            return
+
+        self.log.debug(u'Discovering action with selection: {0}'.format(
+            event['data'].get('selection', [])
+        ))
+
+        return {
+            'items': [{
+                'label': self.label,
+                'variant': self.variant,
+                'description': self.description,
+                'actionIdentifier': self.identifier,
+                'icon': self.icon,
+            }]
+        }
+
+    def discover(self, session, entities, event):
+        '''Return true if we can handle the selected entities.
+
+        *session* is a `ftrack_api.Session` instance
+
+
+        *entities* is a list of tuples each containing the entity type and the
+        entity id. If the entity is a hierarchical you will always get the
+        entity type TypedContext, once retrieved through a get operation you
+        will have the "real" entity type ie. example Shot, Sequence
+        or Asset Build.
+
+        *event* the unmodified original event
+
+        '''
+
+        return False
     def _launch(self, event):
         entities = self._translate_event(event)
 
