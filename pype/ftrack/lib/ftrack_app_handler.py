@@ -11,32 +11,27 @@ from pypeapp import Anatomy
 
 
 class AppAction(BaseAction):
-    '''Custom Action base class
+    """Application Action class.
 
-    <label> - a descriptive string identifing your action.
-    <varaint>   - To group actions together, give them the same
-                  label and specify a unique variant per action.
-    <identifier>  - a unique identifier for app.
-    <description>   - a verbose descriptive text for you action
-    <icon>  - icon in ftrack
-    '''
+    Args:
+        session (ftrack_api.Session): Session where action will be registered.
+        label (str): A descriptive string identifing your action.
+        varaint (str, optional): To group actions together, give them the same
+            label and specify a unique variant per action.
+        identifier (str): An unique identifier for app.
+        description (str): A verbose descriptive text for you action.
+        icon (str): Url path to icon which will be shown in Ftrack web.
+    """
 
-    type = 'Application'
-    preactions = ['start.timer']
+    type = "Application"
+    preactions = ["start.timer"]
 
     def __init__(
         self, session, label, name, executable, variant=None,
         icon=None, description=None, preactions=[], plugins_presets={}
     ):
         super().__init__(session, plugins_presets)
-        '''Expects a ftrack_api.Session instance'''
-
-        if label is None:
-            raise ValueError('Action missing label.')
-        if name is None:
-            raise ValueError('Action missing identifier.')
-        if executable is None:
-            raise ValueError('Action missing executable.')
+        """Expects a ftrack_api.Session instance"""
 
         self.label = label
         self.identifier = name
@@ -46,11 +41,18 @@ class AppAction(BaseAction):
         self.description = description
         self.preactions.extend(preactions)
 
+        if label is None:
+            raise ValueError("Action missing label.")
+        if name is None:
+            raise ValueError("Action missing identifier.")
+        if executable is None:
+            raise ValueError("Action missing executable.")
+
     def register(self):
-        '''Registers the action, subscribing the discover and launch topics.'''
+        """Registers the action, subscribing the discover and launch topics."""
 
         discovery_subscription = (
-            'topic=ftrack.action.discover and source.user.username={0}'
+            "topic=ftrack.action.discover and source.user.username={0}"
         ).format(self.session.api_user)
 
         self.session.event_hub.subscribe(
@@ -60,9 +62,9 @@ class AppAction(BaseAction):
         )
 
         launch_subscription = (
-            'topic=ftrack.action.launch'
-            ' and data.actionIdentifier={0}'
-            ' and source.user.username={1}'
+            "topic=ftrack.action.launch"
+            " and data.actionIdentifier={0}"
+            " and source.user.username={1}"
         ).format(
             self.identifier,
             self.session.api_user
@@ -73,33 +75,27 @@ class AppAction(BaseAction):
         )
 
     def discover(self, session, entities, event):
-        '''Return true if we can handle the selected entities.
+        """Return true if we can handle the selected entities.
 
-        *session* is a `ftrack_api.Session` instance
-
-        *entities* is a list of tuples each containing the entity type and
-        the entity id. If the entity is a hierarchical you will always get
-        the entity type TypedContext, once retrieved through a get operation
-        you will have the "real" entity type ie. example Shot, Sequence
-        or Asset Build.
-
-        *event* the unmodified original event
-
-        '''
+        Args:
+            session (ftrack_api.Session): Helps to query necessary data.
+            entities (list): Object of selected entities.
+            event (ftrack_api.Event): Ftrack event causing discover callback.
+        """
 
         if (
             len(entities) != 1 or
-            entities[0].entity_type.lower() != 'task'
+            entities[0].entity_type.lower() != "task"
         ):
             return False
 
-        if entities[0]['parent'].entity_type.lower() == 'project':
+        if entities[0]["parent"].entity_type.lower() == "project":
             return False
 
         ft_project = entities[0]['project']
 
         database = pypelib.get_avalon_database()
-        project_name = ft_project['full_name']
+        project_name = ft_project["full_name"]
         avalon_project = database[project_name].find_one({
             "type": "project"
         })
@@ -132,7 +128,7 @@ class AppAction(BaseAction):
         return self._handle_result(response)
 
     def launch(self, session, entities, event):
-        '''Callback method for the custom action.
+        """Callback method for the custom action.
 
         return either a bool (True if successful or False if the action failed)
         or a dictionary with they keys `message` and `success`, the message
@@ -149,8 +145,7 @@ class AppAction(BaseAction):
         or Asset Build.
 
         *event* the unmodified original event
-
-        '''
+        """
 
         entity = entities[0]
         project_name = entity['project']['full_name']
@@ -159,12 +154,12 @@ class AppAction(BaseAction):
 
         # Get current environments
         env_list = [
-            'AVALON_PROJECT',
-            'AVALON_SILO',
-            'AVALON_ASSET',
-            'AVALON_TASK',
-            'AVALON_APP',
-            'AVALON_APP_NAME'
+            "AVALON_PROJECT",
+            "AVALON_SILO",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "AVALON_APP",
+            "AVALON_APP_NAME"
         ]
         env_origin = {}
         for env in env_list:
@@ -172,13 +167,13 @@ class AppAction(BaseAction):
 
         # set environments for Avalon
         os.environ["AVALON_PROJECT"] = project_name
-        os.environ["AVALON_SILO"] = entity['ancestors'][0]['name']
-        os.environ["AVALON_ASSET"] = entity['parent']['name']
-        os.environ["AVALON_TASK"] = entity['name']
+        os.environ["AVALON_SILO"] = entity["ancestors"][0]["name"]
+        os.environ["AVALON_ASSET"] = entity["parent"]["name"]
+        os.environ["AVALON_TASK"] = entity["name"]
         os.environ["AVALON_APP"] = self.identifier.split("_")[0]
         os.environ["AVALON_APP_NAME"] = self.identifier
 
-        anatomy = Anatomy()
+        anatomy = Anatomy(project_name)
 
         hierarchy = ""
         parents = database[project_name].find_one({
