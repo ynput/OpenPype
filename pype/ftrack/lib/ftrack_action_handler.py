@@ -23,17 +23,13 @@ class BaseAction(BaseHandler):
 
     def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
-        super().__init__(session, plugins_presets)
-
         if self.label is None:
-            raise ValueError(
-                'Action missing label.'
-            )
+            raise ValueError('Action missing label.')
 
-        elif self.identifier is None:
-            raise ValueError(
-                'Action missing identifier.'
-            )
+        if self.identifier is None:
+            raise ValueError('Action missing identifier.')
+
+        super().__init__(session, plugins_presets)
 
     def register(self):
         '''
@@ -105,8 +101,7 @@ class BaseAction(BaseHandler):
 
         elif isinstance(result, dict):
             if 'items' in result:
-                items = result['items']
-                if not isinstance(items, list):
+                if not isinstance(result['items'], list):
                     raise ValueError('Invalid items format, must be list!')
 
             else:
