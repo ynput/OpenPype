@@ -209,20 +209,36 @@ class BaseHandler(object):
 
         return _entities
 
+    def _get_entities(self, event, session=None, ignore=None):
+        entities = []
+        selection = event['data'].get('selection')
+        if not selection:
+            return entities
 
-    def _get_entities(self, event, session=None):
+        if ignore is None:
+            ignore = []
+        elif isinstance(ignore, str):
+            ignore = [ignore]
+
+        filtered_selection = []
+        for entity in selection:
+            if entity['entityType'] not in ignore:
+                filtered_selection.append(entity)
+
+        if not filtered_selection:
+            return entities
+
         if session is None:
             session = self.session
             session._local_cache.clear()
-        selection = event['data'].get('selection') or []
-        _entities = []
-        for entity in selection:
-            _entities.append(session.get(
+
+        for entity in filtered_selection:
+            entities.append(session.get(
                 self._get_entity_type(entity, session),
                 entity.get('entityId')
             ))
-        event['data']['entities_object'] = _entities
-        return _entities
+
+        return entities
 
     def _get_entity_type(self, entity, session=None):
         '''Return translated entity type tht can be used with API.'''

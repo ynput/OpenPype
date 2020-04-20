@@ -56,22 +56,3 @@ class BaseEvent(BaseHandler):
             event
         ]
 
-    def _get_entities(
-        self, session, event, ignore=['socialfeed', 'socialnotification']
-    ):
-        _selection = event['data'].get('entities', [])
-        _entities = list()
-        if isinstance(ignore, str):
-            ignore = list(ignore)
-        for entity in _selection:
-            if entity['entityType'] in ignore:
-                continue
-            _entities.append(
-                (
-                    session.get(
-                        self._get_entity_type(entity),
-                        entity.get('entityId')
-                    )
-                )
-            )
-        return _entities
