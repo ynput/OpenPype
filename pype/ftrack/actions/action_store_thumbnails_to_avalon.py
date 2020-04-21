@@ -384,8 +384,8 @@ class StoreThumbnailsToAvalon(BaseAction):
 
         if not avalon_project:
             output["success"] = False
-            output["message"] = "Project not synchronized to avalon `{}`".format(
-                project_name
+            output["message"] = (
+                "Project not synchronized to avalon `{}`".format(project_name)
             )
             return output
 
@@ -411,8 +411,8 @@ class StoreThumbnailsToAvalon(BaseAction):
 
         if not asset_ent:
             output["success"] = False
-            output["message"] = "Not synchronized entity to avalon `{}`".format(
-                ent_path
+            output["message"] = (
+                "Not synchronized entity to avalon `{}`".format(ent_path)
             )
             return output
 
