@@ -1,8 +1,12 @@
 import os
+import re
 import pyblish.api
 import clique
 import pype.api
 import pype.lib
+
+
+StringType = type("")
 
 
 class ExtractReview(pyblish.api.InstancePlugin):
@@ -22,13 +26,238 @@ class ExtractReview(pyblish.api.InstancePlugin):
     families = ["review"]
     hosts = ["nuke", "maya", "shell"]
 
+    # Legacy attributes
     outputs = {}
     ext_filter = []
     to_width = 1920
     to_height = 1080
 
-    def process(self, instance):
+    # New attributes
+    profiles = None
 
+    def process(self, instance):
+        if self.profiles is None:
+            return self.legacy_process(instance)
+
+        profile_filter_data = {
+            "host": pyblish.api.registered_hosts()[-1].title(),
+            "family": self.main_family_from_instance(instance),
+            "task": os.environ["AVALON_TASK"]
+        }
+
+        profile = self.filter_profiles_by_data(
+            self.profiles, profile_filter_data
+        )
+        if not profile:
+            return
+
+        instance_families = self.families_from_instance(instance)
+        outputs = self.filter_outputs_by_families(profile, instance_families)
+        if not outputs:
+            return
+
+        # TODO repre loop
+        repre_tags_low = [tag.lower() for tag in repre.get("tags", [])]
+        # Check tag filters
+        tag_filters = output_filters.get("tags")
+        if tag_filters:
+            tag_filters_low = [tag.lower() for tag in tag_filters]
+            valid = False
+            for tag in repre_tags_low:
+                if tag in tag_filters_low:
+                    valid = True
+                    break
+
+            if not valid:
+                continue
+
+    def main_family_from_instance(self, instance):
+        family = instance.data.get("family")
+        if not family:
+            family = instance.data["families"][0]
+        return family
+
+    def families_from_instance(self, instance):
+        families = []
+        family = instance.data.get("family")
+        if family:
+            families.append(family)
+
+        for family in (instance.data.get("families") or tuple()):
+            if family not in families:
+                families.append(family)
+        return families
+
+    def compile_list_of_regexes(self, in_list):
+        regexes = []
+        if not in_list:
+            return regexes
+
+        for item in in_list:
+            if not item:
+                continue
+
+            if not isinstance(item, StringType):
+                self.log.warning((
+                    "Invalid type \"{}\" value \"{}\"."
+                    " Expected <type 'str'>. Skipping."
+                ).format(str(type(item)), str(item)))
+                continue
+
+            regexes.append(re.compile(item))
+        return regexes
+
+    def validate_value_by_regexes(self, in_list, value):
+        """Validates in any regexe from list match entered value.
+
+        Args:
+            in_list (list): List with regexes.
+            value (str): String where regexes is checked.
+
+        Returns:
+            int: Returns `0` when list is not set or is empty. Returns `1` when
+                any regex match value and returns `-1` when none of regexes
+                match value entered.
+        """
+        if not in_list:
+            return 0
+
+        output = -1
+        regexes = self.compile_list_of_regexes(in_list)
+        for regex in regexes:
+            if re.match(regex, value):
+                output = 1
+                break
+        return output
+
+    def filter_profiles_by_data(self, profiles, filter_data):
+        """ Filter profiles by Host name, Task name and main Family.
+
+        Filtering keys are "hosts" (list), "tasks" (list), "families" (list).
+        If key is not find or is empty than it's expected to match.
+
+        Args:
+            profiles (list): Profiles definition from presets.
+            filter_data (dict): Dictionary with data for filtering.
+                Required keys are "host" - Host name, "task" - Task name
+                and "family" - Main .
+        """
+        host_name = filter_data["host"]
+        task_name = filter_data["task"]
+        family = filter_data["family"]
+
+        matching_profiles = None
+        highest_profile_points = -1
+        # Each profile get 1 point for each matching filter. Profile with most
+        # points or first in row is returnd.
+        for profile in profiles:
+            profile_points = 0
+
+            # Host filtering
+            host_names = profile.get("hosts")
+            match = self.validate_value_by_regexes(host_names, host_name)
+            if match == -1:
+                continue
+            profile_points += match
+
+            # Task filtering
+            task_names = profile.get("tasks")
+            match = self.validate_value_by_regexes(task_names, task_name)
+            if match == -1:
+                continue
+            profile_points += match
+
+            # Family filtering
+            families = profile.get("families")
+            match = self.validate_value_by_regexes(families, family)
+            if match == -1:
+                continue
+            profile_points += match
+
+            if profile_points == highest_profile_points:
+                matching_profiles.append(profile)
+
+            elif profile_points > highest_profile_points:
+                highest_profile_points = profile_points
+                matching_profiles = []
+                matching_profiles.append(profile)
+
+        if not matching_profiles:
+            self.log.info((
+                "None of profiles match your setup."
+                " Host \"{host}\" | Task: \"{task}\" | Family: \"{family}\""
+            ).format(**filter_data))
+            return
+
+        if len(matching_profiles) > 1:
+            self.log.warning((
+                "More than one profile match your setup."
+                " Using first found profile."
+                " Host \"{host}\" | Task: \"{task}\" | Family: \"{family}\""
+            ).format(**filter_data))
+
+        return matching_profiles[0]
+
+    def families_filter_validation(self, families, output_families_filter):
+        if not output_families_filter:
+            return True
+
+        single_families = []
+        combination_families = []
+        for family_filter in output_families_filter:
+            if not family_filter:
+                continue
+            if isinstance(family_filter, (list, tuple)):
+                _family_filter = []
+                for family in family_filter:
+                    if family:
+                        _family_filter.append(family.lower())
+                combination_families.append(_family_filter)
+            else:
+                single_families.append(family_filter.lower())
+
+        for family in single_families:
+            if family in families:
+                return True
+
+        for family_combination in combination_families:
+            valid = True
+            for family in family_combination:
+                if family not in families:
+                    valid = False
+                    break
+
+            if valid:
+                return True
+
+        return False
+
+    def filter_outputs_by_families(self, profile, families):
+        outputs = profile.get("outputs") or []
+        if not outputs:
+            return outputs
+
+        # lower values
+        # QUESTION is this valid operation?
+        families = [family.lower() for family in families]
+
+        filtered_outputs = {}
+        for filename_suffix, output_def in outputs.items():
+            output_filters = output_def.get("output_filter")
+            # When filters not set then skip filtering process
+            if not output_filters:
+                filtered_outputs[filename_suffix] = output_def
+                continue
+
+            families_filters = output_filters.get("families")
+            if not self.families_filter_validation(families, families_filters):
+                continue
+
+            filtered_outputs[filename_suffix] = output_def
+
+        return filtered_outputs
+
+    def legacy_process(self, instance):
         output_profiles = self.outputs or {}
 
         inst_data = instance.data
