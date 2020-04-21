@@ -617,7 +617,6 @@ $.pype = {
    */
   setProjectPreset: function (inPresets) {
     // validating the incoming data are having `plugins` key
-    $.pype.log(inPresets.plugins);
     if (Object.prototype.hasOwnProperty.call(inPresets, 'plugins')) {
       $.pype.presets = inPresets;
       return true;

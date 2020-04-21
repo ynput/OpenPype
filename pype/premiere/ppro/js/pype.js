@@ -23,15 +23,18 @@ class Pype {
             this.csi.evalScript('$.pype.setEnvs(' + JSON.stringify(self.env) + ')');
             this.pras = new PypeRestApiClient(this.env);
             console.info(`Getting presets for ${this.env.AVALON_PROJECT}`);
-            this.presets = this.pras.get_presets(this.env.AVALON_PROJECT);
-            console.info("transferring presets to jsx")
-            this.csi.evalScript('$.pype.setProjectPreset(' + JSON.stringify(result) + ');', () => {
-                console.log("done");
-                // bind encoding jobs event listener
-                this.csi.addEventListener("pype.EncoderJobsComplete", this._encodingDone);
+            this.presets = this.pras.get_presets(this.env.AVALON_PROJECT)
+            .then((presets) => {
+                console.info("transferring presets to jsx")
+                this.presets = presets;
+                this.csi.evalScript('$.pype.setProjectPreset(' + JSON.stringify(presets) + ');', () => {
+                    console.log("done");
+                    // bind encoding jobs event listener
+                    this.csi.addEventListener("pype.EncoderJobsComplete", this._encodingDone);
         
-                // Bind Interface buttons
-                this._bindButtons();
+                    // Bind Interface buttons
+                    this._bindButtons();
+                });
             });
         });   
     }
