@@ -84,7 +84,7 @@ $.batchrenamer = {
       // count += 1;
 
       var newName = episode + sequenceName + shotPref + (shotNum).pad(padding);
-      $.writeln(newName);
+      $.pype.log(newName);
       selected[c].clip.name = newName;
 
       parents.push({

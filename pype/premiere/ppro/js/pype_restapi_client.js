@@ -1,124 +1,67 @@
-/* global _pype */
-// connecting pype module pype rest api server (pras)
-const fetch = require('node-fetch');
+/* eslint-env node, es2018 */
 
-var pras = {
+// connecting pype module pype rest api server (pras)
+
+
+class PypeRestApiClient {
+
+  constructor(env) {
+    this.env = env;
+  }
+
   /**
    * Return url for pype rest api server service
    * @return {url string}
    */
-  getApiServerUrl: function () {
-    var url = _pype.ENV.PYPE_REST_API_URL;
+  _getApiServerUrl() {
+    var url = this.env.PYPE_REST_API_URL;
     return url
-  },
-  getRequestFromRestApiServer: async function(url, options, callback) {
-    _pype.displayResult('url: ' + url);
+  }
 
-    // define options in case there is null comming
-    if (options === null) {
-      options = {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    }
-    _pype.displayResult('options: ' + JSON.stringify(options));
-    // send post request to rest api server
-    try {
-      const res = await fetch(url);
-      const json = await res.json();
-      if (isPypeData(json)) {
-        _pype.displayResult(json.data);
-        callback(json.data);
-      } else {
-        _pype.displayError('Data comming from `{url}` are not correct'.format({url: url}));
-        callback(null);
-      }
-    } catch (error) {
-      _pype.displayError('Data comming from `{url}` are not correct.\n\nError: {error}'.format({url: url, error: error}));
-    }
-  },
-  load_representations: function (projectName, requestList) {
-    // preparation for getting representations from api server
-    console.log('Load Represention:projectName: ' + projectName);
-    console.log('Load Represention:requestList: ' + requestList);
-  },
-  get_presets: function (projectName, callback) {
-    var template = '{serverUrl}/adobe/presets/{projectName}';
-    var url = template.format({serverUrl: pras.getApiServerUrl(), projectName: projectName});
-    _pype.displayResult(url);
-
-    // send request to server
-    pras.getRequestFromRestApiServer(url, options = null, function (result) {
-      if (result === null) {
-        _pype.displayError('No data for `{projectName}` project in database'.format({projectName: projectName}));
-        return null
-      } else {
-        // send the data into jsx and write to module's global variable
-        _pype.csi.evalScript('$.pype.setProjectPreset(' + JSON.stringify(result) + ');', function (resultBack) {
-          _pype.displayResult('$.pype.setProjectPreset(): ' + resultBack);
-          callback(resultBack);
-          // test the returning presets data from jsx if they are there
-          // _pype.csi.evalScript(
-          //   '$.pype.getProjectPreset();',
-          //   function (resultedPresets) {
-          //     _pype.displayResult(
-          //       '$.pype.getProjectPreset(): ' + resultedPresets);
-          // });
-        });
-      }
-    });
-  },
-  publish: function (data) {
-    var template = '{serverUrl}/adobe/publish';
-    var url = template.format({serverUrl: pras.getApiServerUrl()});
-    var _options = {
-      method: 'POST',
-      body: JSON.stringify(data),
+  /**
+   * Return JSON from server. This will wait for result.
+   * @todo handle status codes and non-json data
+   * @param {String} url server url
+   * @param {object} options request options
+   */
+  async getResponseFromRestApiServer(url, options = {}) {
+    const fetch = require('node-fetch');
+    let defaults = {
+      method: "GET",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json"
       }
-    };
-    _pype.displayResult('__ publish:url ' + url);
-    _pype.displayResult('__ publish:_options ' + JSON.stringify(_options));
-
-    // publish data with rest api server
-    pras.getRequestFromRestApiServer(url, _options, function (result) {
-      if (result === null) {
-        _pype.displayError('No data for `{projectName}` project in database'.format({projectName: projectName}));
-        return null
-      } else {
-        _pype.displayResult('pras.publish.getRequestFromRestApiServer: ' + JSON.stringify(result));
-        return result
-      }
-      // preparation for publishing with rest api server
-
-    });
-  },
-  context: function (project, asset, task, app) {
-    // getting context of project
-  }
-};
-
-String.prototype.format = function (arguments) {
-  var this_string = '';
-  for (var char_pos = 0; char_pos < this.length; char_pos++) {
-    this_string = this_string + this[char_pos];
+    }
+    let settings = {...defaults, ...options}
+    const res = await fetch(url, settings);
+    return await res.json();
   }
 
-  for (var key in arguments) {
-    var string_key = '{' + key + '}'
-    this_string = this_string.replace(new RegExp(string_key, 'g'), arguments[key]);
-  }
-  return this_string;
-};
 
-function isPypeData(v) {
-  try {
-    return Object.prototype.hasOwnProperty.call(v, 'success');
-  } catch (e) {
-    /* console.error("not a dict",e); */
-    return false;
+  /**
+   * Return presets for project from server
+   * @param {String} projectName
+   */
+  async get_presets(projectName) {
+    let server = this._getApiServerUrl();
+    let url = `${server}/adobe/presets/${projectName}`;
+    console.log("connecting ...");
+    let response = await this.getResponseFromRestApiServer(url)
+    console.log("got presets:");
+    console.log(response.data);
+    return response.data;
+  }
+
+  async publish(data) {
+    let server = this._getApiServerUrl();
+    let url = `${server}/adobe/publish`;
+
+    let headers = {
+      "Content-Type": "application/json"
+    }
+
+    let response = await this.getResponseFromRestApiServer(
+      url, {method: 'POST', headers: headers, body: data});
+    return response.data;
   }
 }

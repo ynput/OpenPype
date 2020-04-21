@@ -1,427 +1,233 @@
-/* esversion:6, global CSInterface, $, cep_node, querySelector, pras, SystemPath, displayResult */
+/*global CSInterface, $, PypeRestApiClient, SystemPath, document */
+/* eslint-env node, es2017 */
 
-var csi = new CSInterface();
-var output = document.getElementById('output');
-var process = require('process');
-var timecodes = require('node-timecodes');
+class Pype {
+    constructor() {
+        var self = this;
+        this.csi = new CSInterface();
+        this.rootFolderPath = this.csi.getSystemPath(SystemPath.EXTENSION);
+        var extensionRoot = this.rootFolderPath + "/jsx/";
+        console.info("Loading pype.jsx");
+        this.csi.evalScript('$.evalFile("' + extensionRoot + 'pype.jsx")');
+        console.info("Loading batchRenamer.jsx");
+        this.csi.evalScript('$.evalFile("' + extensionRoot + 'batchRenamer.jsx")');
 
-function displayResult (r) {
-  console.log(r);
-  _pype.csi.evalScript('$.writeln( ' + JSON.stringify(r) + ' );');
-  output.classList.remove('error');
-  output.innerText = r;
-  _pype.csi.evalScript('$.pype.log( ' + JSON.stringify(r) + ' );');
-}
-
-function displayError (e) {
-  _pype.csi.evalScript('$.pype.alert_message( ' + JSON.stringify(e) + ' )');
-  output.classList.add('error');
-  output.innerText = e;
-}
-
-var _pype = {
-  csi: csi,
-  rootFolderPath: csi.getSystemPath(SystemPath.EXTENSION),
-  displayResult: displayResult,
-  displayError: displayError,
-  getEnv: function () {
-    _pype.csi.evalScript('$.pype.getProjectFileData();', function (result) {
-      process.env.EXTENSION_PATH = _pype.rootFolderPath;
-      _pype.ENV = process.env;
-      console.log(result);
-      console.log(_pype.rootFolderPath);
-      var resultData = JSON.parse(result);
-      for (var key in resultData) {
-        _pype.ENV[key] = resultData[key];
-      }
-      csi.evalScript('$.pype.setEnvs(' + JSON.stringify(_pype.ENV) + ')');
-    });
-  }
-};
-
-// function renderClips () {
-//   _pype.csi.evalScript('$.pype.transcodeExternal(' + pras.rootFolderPath + ');', function (result) {
-//     displayResult(result);
-//   });
-// }
-
-function loadExtensionDependencies () {
-  // get extension path
-  var extensionPath = _pype.csi.getSystemPath(SystemPath.EXTENSION);
-
-  // get the appName of the currently used app. For Premiere Pro it's "PPRO"
-  var appName = _pype.csi.hostEnvironment.appName;
-  console.log('App name: ' + appName);
-
-  // load general JS scripts from `extensionPath/lib/`
-  _pype.csi.evalScript(
-    '$._ext.evalJSFiles("' + extensionPath + '" )');
-  console.log('js load done');
-
-  // load all available JSX scripts from `extensionPath/jsx/*` with subfolders
-  _pype.csi.evalScript(
-    '$._ext.evalJSXFiles("' + extensionPath + '", "' + appName + '")');
-  console.log('jsx load done');
-
-  _pype.csi.evalScript('$._PPP_.updateEventPanel( "' + 'all plugins are loaded' + '" )');
-}
-
-// run all at loading
-loadExtensionDependencies();
-
-function querySelector (elementId) {
-  return document.querySelector(elementId);
-}
-
-function loadAnimationRendersToTimeline () {
-  // it will get type of asset and extension from input
-  // and start loading script from jsx
-  var $ = querySelector('#load');
-  var data = {};
-  data.subset = $.querySelector('input[name=type]').value;
-  data.subsetExt = $.querySelector('input[name=ext]').value;
-  var requestList = [];
-  // get all selected clips
-  _pype.csi.evalScript('$.pype.getClipsForLoadingSubsets( "' + data.subset + '" )', function (result) {
-    // TODO: need to check if the clips are already created and this is just updating to last versions
-    var resultObj = JSON.parse(result);
-    var instances = resultObj[0];
-    var numTracks = resultObj[1];
-
-    var key = '';
-    // creating requesting list of dictionaries
-    for (key in instances) {
-      var clipData = {};
-      clipData.parentClip = instances[key];
-      clipData.asset = key;
-      clipData.subset = data.subset;
-      clipData.representation = data.subsetExt;
-      requestList.push(clipData);
+        // get environment
+        this.csi.evalScript('$.pype.getProjectFileData();', (result) => {
+            process.env.EXTENSION_PATH = this.rootFolderPath;
+            this.env = process.env;
+            var resultData = JSON.parse(result);
+            for (var key in resultData) {
+                this.env[key] = resultData[key];
+            }
+            this.csi.evalScript('$.pype.setEnvs(' + JSON.stringify(self.env) + ')');
+            this.pras = new PypeRestApiClient(this.env);
+            console.info(`Getting presets for ${this.env.AVALON_PROJECT}`);
+            this.presets = this.pras.get_presets(this.env.AVALON_PROJECT);
+            console.info("transferring presets to jsx")
+            this.csi.evalScript('$.pype.setProjectPreset(' + JSON.stringify(result) + ');', () => {
+                console.log("done");
+                // bind encoding jobs event listener
+                this.csi.addEventListener("pype.EncoderJobsComplete", this._encodingDone);
+        
+                // Bind Interface buttons
+                this._bindButtons();
+            });
+        });   
     }
 
-    if (requestList.length < 1) {
-      _pype.csi.evalScript(
-        '$.pype.alert_message("' + 'Need to select at least one clip' + '")');
-      return;
-    }
-
-    // gets data from mongodb
-    pras.load_representations(_pype.ENV.AVALON_PROJECT, requestList).then(
-      function (avalonData) {
-        // creates or updates data on timeline
-        var makeData = {};
-        makeData.binHierarchy = data.subset + '/' + data.subsetExt;
-        makeData.clips = avalonData;
-        makeData.numTracks = numTracks;
-        _pype.csi.evalScript('$.pype.importFiles( ' + JSON.stringify(makeData) + ' )');
-      }
-    );
-  });
-}
-
-function evalScript (script) {
-  var callback = function (result) {
-    displayResult(result);
-  };
-  _pype.csi.evalScript(script, callback);
-}
-
-function deregister () {
-  pras.deregister_plugin_path().then(displayResult);
-}
-
-function register () {
-  var $ = querySelector('#register');
-  var path = $.querySelector('input[name=path]').value;
-  pras.register_plugin_path(path).then(displayResult);
-}
-
-function getStagingDir () {
-  const mkdirp = require('mkdirp');
-  const os = require('os');
-  const path = require('path');
-  const UUID = require('pure-uuid');
-  // create stagingDir
-  var id = new UUID(4).format();
-  var stagingDir = path.join(os.tmpdir(), id);
-
-  mkdirp(stagingDir);
-  return stagingDir;
-}
-
-function convertPathString (path) {
-  return path.replace(
-    new RegExp('\\\\', 'g'), '/').replace(new RegExp('//\\?/', 'g'), '');
-}
-
-function _publish () {
-  var publish_id = querySelector('#publish');
-  // var gui = $.querySelector('input[name=gui]').checked;
-  var gui = true;
-  var versionUp = publish_id.querySelector('input[name=version-up]').checked;
-  var audioOnly = publish_id.querySelector('input[name=audio-only]').checked;
-  var jsonSendPath = publish_id.querySelector('input[name=send-path]').value;
-  var jsonGetPath = publish_id.querySelector('input[name=get-path]').value;
-
-  if (jsonSendPath === '') {
-    // create temp staging directory on local
-    var stagingDir = convertPathString(getStagingDir());
-
-    // copy project file to stagingDir
-    _pype.csi.evalScript('$.pype.getProjectFileData();', function (result) {
-      const path = require('path');
-      const fs = require('fs');
-      displayResult(result);
-      var data = JSON.parse(result);
-      displayResult(stagingDir);
-      displayResult(data.projectfile);
-      var destination = convertPathString(path.join(stagingDir, data.projectfile));
-      displayResult('copy project file');
-      displayResult(data.projectfile);
-      displayResult(destination);
-      fs.copyFile(data.projectpath, destination, displayResult);
-      displayResult('project file copied!');
-    });
-
-    // set presets to jsx
-    pras.get_presets(_pype.ENV.AVALON_PROJECT, function (presetResult) {
-      displayResult('result from get_presets: ' + presetResult);
-      // publishing file
-      _pype.csi.evalScript('$.pype.getPyblishRequest("' + stagingDir + '", ' + audioOnly + ');', function (r) {
-        displayResult(r);
-        // make sure the process will end if no instancess are returned
-        if (r === 'null') {
-          displayError('Publish cannot be finished. Please fix the previously pointed problems');
-          return null;
+    rename () {
+        let renameId = document.querySelector('#rename');
+        let data = {};
+        data.ep = renameId.querySelector('input[name=episode]').value;
+        data.epSuffix = renameId.querySelector('input[name=ep_suffix]').value;
+      
+        if (!data.ep) {
+          this.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode code' + '")');
+          return;
         }
-        var request = JSON.parse(r);
-        displayResult(JSON.stringify(request));
+      
+        if (!data.epSuffix) {
+          this.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode longer suffix' + '")');
+          return;
+        }
+      
+        this.csi.evalScript(
+          '$.batchrenamer.renameTargetedTextLayer( ' + JSON.stringify(
+            data) + ' );', function (result) {
+            console.info(result);
+          });
+      }
 
-        _pype.csi.evalScript('$.pype.encodeRepresentation(' + JSON.stringify(request) + ');', function (result) {
-          // create json for pyblish
-          const jsonfile = require('jsonfile');
-          const fs = require('fs');
-          var jsonSendPath = stagingDir + '_send.json';
-          var jsonGetPath = stagingDir + '_get.json';
+    _bindButtons() {
+        var self = this;
+        $('#btn-publish').click(function () {
+            self.publish();
+        });
 
-          var publish_id = querySelector('#publish');
-          publish_id.querySelector('input[name=send-path]').value = jsonSendPath;
-          publish_id.querySelector('input[name=get-path]').value = jsonGetPath;
+        $('#btn-rename').click(function () {
+            self.rename();
+        });
+    }
 
-          var jsonContent = JSON.parse(result);
-          jsonfile.writeFile(jsonSendPath, jsonContent);
-          var checkingFile = function (path) {
-            var timeout = 10;
-            setTimeout(function () {
-              if (fs.existsSync(path)) {
-                displayResult('path were rendered: ' + path);
-                // send json to pyblish
-                var dataToPublish = {
-                  "adobePublishJsonPathSend": jsonSendPath,
-                  "adobePublishJsonPathGet": jsonGetPath,
-                  "gui": gui,
-                  "publishPath": convertPathString(_pype.ENV.PUBLISH_PATH),
-                  "project": _pype.ENV.AVALON_PROJECT,
-                  "asset": _pype.ENV.AVALON_ASSET,
-                  "task": _pype.ENV.AVALON_TASK,
-                  "workdir": convertPathString(_pype.ENV.AVALON_WORKDIR),
-                  "host": _pype.ENV.AVALON_APP
+    /**
+     * Normalize slashes in path string
+     * @param {String} path
+     */
+    static convertPathString (path) {
+        return path.replace(
+            new RegExp('\\\\', 'g'), '/').replace(new RegExp('//\\?/', 'g'), '');
+     }
+    /**
+     * Gather all user UI options for publishing
+     */
+    _gatherPublishUI() {
+        var publishId = document.querySelector('#publish');
+        var publishUI = {
+            "publishId": publishId,
+            "versionUp": publishId.querySelector('input[name=version-up]').checked,
+            "audioOnly": publishId.querySelector('input[name=audio-only]').checked,
+            "jsonSendPath": publishId.querySelector('input[name=send-path]').value,
+            "jsonGetPath": publishId.querySelector('input[name=get-path]').value
+        }
+        this.publishUI = publishUI;
+        return publishUI;
+    }
+
+    _getStagingDir() {
+        const path = require('path');
+        const UUID = require('pure-uuid');
+        const os = require('os');
+
+        const id = new UUID(4).format();
+        return path.join(os.tmpdir(), id);
+    }
+
+    /**
+     * Create staging directories and copy project files
+     * @param {object} projectData Project JSON data
+     */
+    _copyProjectFiles(projectData) {
+        const path = require('path');
+        const fs = require('fs');
+        const mkdirp = require('mkdirp');
+
+        this.stagingDir = this._getStagingDir();
+
+        console.info(`Creating directory [ ${this.stagingDir} ]`);
+
+        mkdirp.sync(this.stagingDir)
+
+        let stagingDir = Pype.convertPathString(this.stagingDir);
+        const destination = Pype.convertPathString(
+            path.join(stagingDir, projectData.projectfile));
+
+        console.info(`Copying files from [ ${projectData.projectpath} ] -> [ ${destination} ]`);
+        fs.copyFileSync(projectData.projectpath, destination);
+
+        console.info("Project files copied.")
+    }
+
+    _encodeRepresentation(repre) {
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            self.csi.evalScript('$.pype.encodeRepresentation(' + JSON.stringify(repre) + ');', (result) => {
+                if (result == "EvalScript error.") {
+                    reject(result);
                 }
-                displayResult('dataToPublish: ' + JSON.stringify(dataToPublish));
-                pras.publish(dataToPublish).then(function (result) {
-                  displayResult(
-                    'pype.js:publish < pras.publish: ' + JSON.stringify(result));
-                  // check if resulted path exists as file
-                  if (fs.existsSync(result.return_data_path)) {
-                    // read json data from resulted path
-                    displayResult('Updating metadata of clips after publishing');
+                resolve(result);
+            });
+        });
+    }
 
-                    // jsonfile.readFile(result.return_data_path, function (json) {
-                    //   _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
-                    // });
+    _getPyblishRequest(stagingDir) {
+        var self = this;
+        return new Promise(function(resolve, reject) {
+            console.log(`Called with ${stagingDir} and ${self.publishUI.audioOnly}`);
+            self.csi.evalScript("$.pype.getPyblishRequest('" + stagingDir + "', '" + self.publishUI.audioOnly + "');", (result) => {
+                if (result === "null" || result === "EvalScript error.") {
+                    console.error(`cannot create publish request data ${result}`);
+                    reject("cannot create publish request data");
+                } else {
+                    console.log(`Request generated: ${result}`);
+                    resolve(result);
+                }
+            });
+        });
+    }
 
-                    // version up project
-                    if (versionUp) {
-                      displayResult('Saving new version of the project file');
-                      _pype.csi.evalScript('$.pype.versionUpWorkFile();');
-                    }
-                  } else {
-                    // if resulted path file not existing
-                    displayResult('Publish has not been finished correctly. Hit Publish again to publish from already rendered data, or Reset to render all again.');
-                  }
+    publish() {
+        this._gatherPublishUI();
+        if (this.publishUI.jsonSendPath === "") {
+            // path is empty, so we first prepare data for publishing
+            // and create json
+
+            console.log("Gathering project data ...")
+            this.csi.evalScript('$.pype.getProjectFileData();', (result) => {
+                this._copyProjectFiles(JSON.parse(result))
+                // create request and start encoding
+                // after that is done, we should recieve event and continue in
+                // _encodingDone()
+                console.log("Creating request ...")
+                this._getPyblishRequest(Pype.convertPathString(this.stagingDir))
+                .then(result => {
+                    console.log("Encoding ...");
+                    this._encodeRepresentation(JSON.parse(result))
+                }, error => {
+                    console.error(`failed to publish: ${error}`);
                 });
-              } else {
-                displayResult('waiting');
-                checkingFile(path);
-              }
-            }, timeout);
-          };
-          checkingFile(jsonContent.waitingFor);
-        });
-      });
-    });
-  } else {
-    // send json to pyblish
-    pras.publish(jsonSendPath, jsonGetPath, gui).then(function (result) {
-      const jsonfile = require('jsonfile');
-      const fs = require('fs');
-      // check if resulted path exists as file
-      if (fs.existsSync(result.get_json_path)) {
-        // read json data from resulted path
-        displayResult('Updating metadata of clips after publishing');
-
-        jsonfile.readFile(result.get_json_path, function (json) {
-          _pype.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
-        });
-
-        // version up project
-        if (versionUp) {
-          displayResult('Saving new version of the project file');
-          _pype.csi.evalScript('$.pype.versionUpWorkFile();');
+            });
+        } else {
+            // load request
+            var request = require(this.publishUI.jsonSendPath);
+            this.pras.publish(request)
+            .then((result) => {
+                const fs = require('fs');
+                if (fs.existsSync(result.return_data_path)) {
+                    this.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(result) + ');');
+                    if (this.publishUI.versionUp) {
+                        console.log('Saving new version of the project file');
+                        this.csi.evalScript('$.pype.versionUpWorkFile();');
+                    }
+                } else {
+                    console.error("Publish has not finished correctly")
+                    throw "Publish has not finished correctly";
+                }
+            });
         }
-      } else {
-        // if resulted path file not existing
-        displayResult('Publish has not been finished correctly. Hit Publish again to publish from already rendered data, or Reset to render all again.');
-      }
-    });
-  }
+    }
+
+    _encodingDone(event) {
+        var dataToPublish = {
+            "adobePublishJsonPathSend": this.publishUI.jsonSendPath,
+            "adobePublishJsonPathGet": this.publishUI.jsonGetPath,
+            "gui": true,
+            "publishPath": Pype.convertPathString(this.env.PUBLISH_PATH),
+            "project": this.env.AVALON_PROJECT,
+            "asset": this.env.AVALON_ASSET,
+            "task": this.env.AVALON_TASK,
+            "workdir": Pype.convertPathString(this.env.ENV.AVALON_WORKDIR),
+            "host": this.env.ENV.AVALON_APP
+        }
+
+        this.pras.publish(dataToPublish)
+        .then((result) => {
+            const fs = require('fs');
+            if (fs.existsSync(result.return_data_path)) {
+                if (this.publishUI.versionUp) {
+                    console.log('Saving new version of the project file');
+                    this.csi.evalScript('$.pype.versionUpWorkFile();');
+                }
+            } else {
+                console.error("Publish has not finished correctly")
+                throw "Publish has not finished correctly";
+            }
+        });
+    }
 }
 
-function context () {
-  var $ = querySelector('#context');
-  var project = $.querySelector('input[name=project]').value;
-  var asset = $.querySelector('input[name=asset]').value;
-  var task = $.querySelector('input[name=task]').value;
-  var app = $.querySelector('input[name=app]').value;
-  pras.context(project, asset, task, app).then(displayResult);
-}
-
-function tc (timecode) {
-  var seconds = timecodes.toSeconds(timecode);
-  var timec = timecodes.fromSeconds(seconds);
-  displayResult(seconds);
-  displayResult(timec);
-}
-
-function rename () {
-  var $ = querySelector('#rename');
-  var data = {};
-  data.ep = $.querySelector('input[name=episode]').value;
-  data.epSuffix = $.querySelector('input[name=ep_suffix]').value;
-
-  if (!data.ep) {
-    _pype.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode code' + '")');
-    return;
-  }
-
-  if (!data.epSuffix) {
-    _pype.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode longer suffix' + '")');
-    return;
-  }
-
-  _pype.csi.evalScript(
-    '$.batchrenamer.renameTargetedTextLayer( ' + JSON.stringify(
-      data) + ' );', function (result) {
-      displayResult(result);
-    });
-}
-
-// bind buttons
-$('#btn-getRernderAnimation').click(function () {
-  loadAnimationRendersToTimeline();
+$(document).ready(function() {
+    new Pype();
 });
+// -------------------------------------------------------
 
-$('#btn-rename').click(function () {
-  rename();
-});
-
-$('#btn-set-context').click(function () {
-  context();
-});
-
-$('#btn-register').click(function () {
-  register();
-});
-
-$('#btn-deregister').click(function () {
-  deregister();
-});
-
-$('#btn-publish').click(function () {
-  _publish();
-});
-
-$('#btn-send-reset').click(function () {
-  var $ = querySelector('#publish');
-  $.querySelector('input[name=send-path]').value = '';
-});
-$('#btn-get-reset').click(function () {
-  var $ = querySelector('#publish');
-  $.querySelector('input[name=get-path]').value = '';
-});
-$('#btn-get-active-sequence').click(function () {
-  evalScript('$.pype.getActiveSequence();');
-});
-
-$('#btn-get-selected').click(function () {
-  $.querySelector('#output').html('getting selected clips info ...');
-  evalScript('$.pype.getSelectedItems();');
-});
-
-$('#btn-get-env').click(function () {
-  displayResult(window.ENV);
-});
-
-$('#btn-get-projectitems').click(function () {
-  evalScript('$.pype.getProjectItems();');
-});
-
-$('#btn-metadata').click(function () {
-  var $ = querySelector('#publish');
-  var path = $.querySelector('input[name=get-path]').value;
-  const jsonfile = require('jsonfile');
-  displayResult(path);
-  jsonfile.readFile(path, function (json) {
-    _pype.csi.evalScript(
-      '$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(json) + ');');
-    displayResult('Metadata of clips after publishing were updated');
-  });
-});
-
-$('#btn-get-frame').click(function () {
-  _pype.csi.evalScript('$._PPP_.exportCurrentFrameAsPNG();', function (result) {
-    displayResult(result);
-  });
-});
-
-$('#btn-tc').click(function () {
-  tc('00:23:47:10');
-});
-
-$('#btn-generateRequest').click(function () {
-  evalScript('$.pype.getPyblishRequest();');
-});
-
-$('#btn-newWorkfileVersion').click(function () {
-  displayResult('Saving new version of the project file');
-  _pype.csi.evalScript('$.pype.versionUpWorkFile();');
-});
-
-$('#btn-testing').click(function () {
-  var data = {
-    "adobePublishJsonPathSend": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_send.json",
-    "adobePublishJsonPathGet": "C:/Users/jezsc/_PYPE_testing/testing_data/premiere/95478408-91ee-4522-81f6-f1689060664f_get.json",
-    "gui": true,
-    "project": "J01_jakub_test",
-    "asset": "editorial",
-    "task": "conforming",
-		"workdir": "C:/Users/jezsc/_PYPE_testing/projects/J01_jakub_test/editorial/work/conforming",
-    "publishPath": "C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/plugins/premiere/publish",
-    "host": "premiere"
-  }
-  // var data =  {"adobePublishJsonPathSend":"C:/Users/jezsc/AppData/Local/Temp/887ed0c3-d772-4105-b285-847ef53083cd_send.json","adobePublishJsonPathGet":"C:/Users/jezsc/AppData/Local/Temp/887ed0c3-d772-4105-b285-847ef53083cd_get.json","gui":true,"publishPath":"C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/plugins/premiere/publish","project":"J01_jakub_test","asset":"editorial","task":"conforming","workdir":"C:/Users/jezsc/_PYPE_testing/projects/J01_jakub_test/editorial/work/conforming","host":"premiere"}
-
-  pras.publish(data);
-});
-
-_pype.getEnv();

@@ -11,9 +11,14 @@ if (ExternalObject.AdobeXMPScript === undefined) {
   ExternalObject.AdobeXMPScript = new ExternalObject('lib:AdobeXMPScript');
 }
 
+// this is needed for CSXSEvent to work
+if (ExternalObject.PlugPlugExternalObject === undefined) {
+  ExternalObject.PlugPlugExternalObject = new ExternalObject( "lib:PlugPlugExternalObject");
+}
 // variable pype is defined in pypeAvalon.jsx
 $.pype = {
   presets: null,
+  expectedJobs: [],
   addNewTrack: function (numTracks) {
     app.enableQE();
     var sequence = app.project.activeSequence;
@@ -579,28 +584,28 @@ $.pype = {
     var successfullyAdded = app.project.addPropertyToProjectMetadataSchema(pypeData, pypeDataN, 2);
     var pypeDataValue = xmp.getProperty(kPProPrivateProjectMetadataURI, pypeData);
 
-    $.writeln('__ pypeDataValue: ' + pypeDataValue);
-    $.writeln('__ firstTimeRun: ' + firstTimeRun);
-    $.writeln('__ successfullyAdded: ' + successfullyAdded);
+    $.pype.log('__ pypeDataValue: ' + pypeDataValue);
+    $.pype.log('__ firstTimeRun: ' + firstTimeRun);
+    $.pype.log('__ successfullyAdded: ' + successfullyAdded);
     if ((pypeDataValue === undefined) && (firstTimeRun !== undefined)) {
       var pyMeta = {
         clips: {},
         tags: {}
       };
-      $.writeln('__ pyMeta: ' + pyMeta);
+      $.pype.log('__ pyMeta: ' + pyMeta);
       $.pype.setSequencePypeMetadata(sequence, pyMeta);
       pypeDataValue = xmp.getProperty(kPProPrivateProjectMetadataURI, pypeData);
       return $.pype.getSequencePypeMetadata(sequence);
     } else {
       if (successfullyAdded === true) {
-        $.writeln('__ adding {}');
+        $.pype.log('__ adding {}');
         $.pype.setSequencePypeMetadata(sequence, {});
       }
       if ((pypeDataValue === undefined) || (!Object.prototype.hasOwnProperty.call(JSON.parse(pypeDataValue), 'clips'))) {
-        $.writeln('__ getSequencePypeMetadata: returning null');
+        $.pype.log('__ getSequencePypeMetadata: returning null');
         return null;
       } else {
-        $.writeln('__ getSequencePypeMetadata: returning data');
+        $.pype.log('__ getSequencePypeMetadata: returning data');
         return JSON.parse(pypeDataValue);
       }
     }
@@ -612,6 +617,7 @@ $.pype = {
    */
   setProjectPreset: function (inPresets) {
     // validating the incoming data are having `plugins` key
+    $.pype.log(inPresets.plugins);
     if (Object.prototype.hasOwnProperty.call(inPresets, 'plugins')) {
       $.pype.presets = inPresets;
       return true;
@@ -800,53 +806,59 @@ $.pype = {
 
     return instances;
   },
+
   /**
    * Return request json data object with instances for pyblish
    * @param stagingDir {string} - path to temp directory
    * @return {json string}
    */
   getPyblishRequest: function (stagingDir, audioOnly) {
-    var sequence = app.project.activeSequence;
-    var settings = sequence.getSettings();
-    $.pype.log('__ stagingDir: ' + stagingDir)
-    $.pype.log('__ audioOnly: ' + audioOnly)
-    $.pype.log('__ sequence: ' + sequence)
-    $.pype.log('__ settings: ' + settings)
-    var request = {
-      stagingDir: stagingDir,
-      currentFile: $.pype.convertPathString(app.project.path),
-      framerate: (1 / settings.videoFrameRate.seconds),
-      host: $.getenv('AVALON_APP'),
-      hostVersion: $.getenv('AVALON_APP_NAME').split('_')[1],
-      cwd: $.pype.convertPathString(app.project.path).split('\\').slice(0, -1).join('\\')
-    };
-    $.pype.log('__ request: ' + request)
-    var sendInstances = [];
-    var instances = $.pype.getSelectedClipsAsInstances();
+    try {
+      var sequence = app.project.activeSequence;
+      var settings = sequence.getSettings();
+      $.pype.log('__ stagingDir: ' + stagingDir)
+      $.pype.log('__ audioOnly: ' + audioOnly)
+      $.pype.log('__ sequence: ' + sequence)
+      $.pype.log('__ settings: ' + settings)
+      var request = {
+        stagingDir: stagingDir,
+        currentFile: $.pype.convertPathString(app.project.path),
+        framerate: (1 / settings.videoFrameRate.seconds),
+        host: $.getenv('AVALON_APP'),
+        hostVersion: $.getenv('AVALON_APP_NAME').split('_')[1],
+        cwd: $.pype.convertPathString(app.project.path).split('\\').slice(0, -1).join('\\')
+      };
+      $.pype.log('__ request: ' + request)
+      var sendInstances = [];
+      var instances = $.pype.getSelectedClipsAsInstances();
 
-    // make sure the process will end if no instancess are returned
-    if (instances === null) {
-      return null;
-    }
-
-    if (audioOnly) {
-      for (var i = 0; i < instances.length; i++) {
-        var representations = instances[i].representations;
-        var newRepr = {};
-        for (var key in representations) {
-          var _include = ['audio', 'thumbnail', 'projectfile'];
-          if (include(_include, key)) {
-            newRepr[key] = representations[key];
-          }
-        }
-        instances[i].representations = newRepr;
-        sendInstances.push(instances[i]);
+      // make sure the process will end if no instancess are returned
+      if (instances === null) {
+        return null;
       }
-    } else {
-      sendInstances = instances;
+
+      if (audioOnly) {
+        for (var i = 0; i < instances.length; i++) {
+          var representations = instances[i].representations;
+          var newRepr = {};
+          for (var key in representations) {
+            var _include = ['audio', 'thumbnail', 'projectfile'];
+            if (include(_include, key)) {
+              newRepr[key] = representations[key];
+            }
+          }
+          instances[i].representations = newRepr;
+          sendInstances.push(instances[i]);
+        }
+      } else {
+        sendInstances = instances;
+      }
+      request['instances'] = sendInstances;
+      return JSON.stringify(request);
+    } catch (error) {
+      $.pype.log('error: ' + error);
+      return error;
     }
-    request['instances'] = sendInstances;
-    return JSON.stringify(request);
   },
 
   convertSecToTimecode: function (timeSec, fps) {
@@ -937,11 +949,19 @@ $.pype = {
   },
 
   onEncoderJobComplete: function(jobID, outputFilePath) {
-    // this will dispatch event to js
-    var eventObj = new CSXSEvent();
-    eventObj.type = 'pype.EncoderJobComplete';
-    eventObj.data = {"jobID": jobID, "outputFilePath": outputFilePath};
-    eventObj.dispatch();
+    // remove job from expected jobs list
+    const index = $.pype.expectedJobs.indexOf(jobID);
+    if (index > -1) {
+      $.pype.expectedJobs.splice(index, 1);
+    }
+
+    // test if expected job list is empty. If so, emit event for JS
+    if (len($.pype.expectedJobs) == 0) {
+      var eventObj = new CSXSEvent();
+      eventObj.type = 'pype.EncoderJobsComplete';
+      eventObj.data = {"jobID": jobID, "outputFilePath": outputFilePath};
+      eventObj.dispatch();
+    }
   },
 
   render: function (outputPath, family, representation, clipName, version, inPoint, outPoint) {
@@ -989,7 +1009,7 @@ $.pype = {
             app.encoder.setEmbeddedXMPEnabled(0);
 
             var jobID = app.encoder.encodeSequence(app.project.activeSequence, fullPathToFile, outPreset.fsName, app.encoder.ENCODE_IN_TO_OUT, 1); // Remove from queue upon successful completion?
-
+            $.pype.expectedJobs.push(jobID);
             $._PPP_.updateEventPanel('jobID = ' + jobID);
             outPreset.close();
             return file;

@@ -39,7 +39,7 @@ class PremierePrelaunch(PypeHook):
 
         else:
             # Premiere Setup integration
-            importlib.reload(prlib)
+            # importlib.reload(prlib)
             prlib.setup(env)
 
         return True
