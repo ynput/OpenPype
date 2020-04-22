@@ -134,7 +134,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
             assert files_list, "`files` are empty in json file"
 
             hierarchy = inst.get("hierarchy", None)
-            assert hierarchy, "No `hierarchy` data in json file"
+            assert hierarchy, f"No `hierarchy` data in json file for {name}"
 
             parents = inst.get("parents", None)
             assert parents, "No `parents` data in json file"
@@ -158,8 +158,7 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                 if task not in inst['tasks']:
                     inst['tasks'].append(task)
 
-                host = rules_tasks["taskHost"][task]
-                subsets = rules_tasks["taskSubsets"][task]
+                subsets = rules_tasks["taskToSubsets"][task]
                 for sub in subsets:
                     self.log.debug(sub)
                     try:
@@ -172,8 +171,8 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                 subset_lst.extend([s for s in subsets if s not in subset_lst])
 
             for subset in subset_lst:
-                if inst["representations"].get(subset, None):
-                    repr = inst["representations"][subset]
+                if inst["subsetToRepresentations"].get(subset, None):
+                    repr = inst["subsetToRepresentations"][subset]
                     ext = repr['representation']
                 else:
                     continue
@@ -206,7 +205,6 @@ class CollectInstancesFromJson(pyblish.api.ContextPlugin):
                     "frameStart": frame_start,
                     "handleStart": handle_start,
                     "handleEnd": handle_end,
-                    "host": host,
                     "asset": asset,
                     "hierarchy": hierarchy,
                     "parents": parents,
