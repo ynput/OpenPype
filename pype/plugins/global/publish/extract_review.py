@@ -27,6 +27,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
     hosts = ["nuke", "maya", "shell"]
     image_exts = ["exr", "jpg", "jpeg", "png", "dpx"]
     video_exts = ["mov", "mp4"]
+    # image_exts = [".exr", ".jpg", ".jpeg", ".jpe", ".jif", ".jfif", ".jfi", ".png", ".dpx"]
+    # video_exts = [
+    #     ".webm", ".mkv", ".flv", ".flv", ".vob", ".ogv", ".ogg", ".drc",
+    #     ".gif", ".gifv", ".mng", ".avi", ".MTS", ".M2TS",
+    #     ".TS", ".mov", ".qt", ".wmv", ".yuv", ".rm", ".rmvb",
+    #     ".asf", ".amv", ".mp4", ".m4p", ".mpg", ".mp2", ".mpeg",
+    #     ".mpe", ".mpv", ".mpg", ".mpeg", ".m2v", ".m4v", ".svi", ".3gp",
+    #     ".3g2", ".mxf", ".roq", ".nsv", ".flv", ".f4v", ".f4p", ".f4a", ".f4b"
+    # ]
     supported_exts = image_exts + video_exts
 
     # Preset attributes
@@ -56,33 +65,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
             return
 
         instance_families = self.families_from_instance(instance)
-        profile_outputs = self.filter_outputs_by_families(profile, instance_families)
+        profile_outputs = self.filter_outputs_by_families(
+            profile, instance_families
+        )
         if not profile_outputs:
             return
 
-        context = instance.context
-
-        fps = float(instance.data["fps"])
-        frame_start = instance.data.get("frameStart")
-        frame_end = instance.data.get("frameEnd")
-        handle_start = instance.data.get(
-            "handleStart",
-            context.data.get("handleStart")
-        )
-        handle_end = instance.data.get(
-            "handleEnd",
-            context.data.get("handleEnd")
-        )
-        pixel_aspect = instance.data.get("pixelAspect", 1)
-        resolution_width = instance.data.get("resolutionWidth")
-        resolution_height = instance.data.get("resolutionHeight")
+        instance_data = None
 
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        # get representation and loop them
-        representations = instance.data["representations"]
-
-        for repre in tuple(representations):
+        # Loop through representations
+        for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags", [])
             if (
                 "review" not in tags
@@ -91,9 +85,171 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ):
                 continue
 
+            source_ext = repre["ext"]
+            if source_ext.startswith("."):
+                source_ext = source_ext[1:]
+
+            if source_ext not in self.supported_exts:
+                continue
+
+            # Filter output definition by representation tags (optional)
             outputs = self.filter_outputs_by_tags(profile_outputs, tags)
             if not outputs:
                 continue
+
+            staging_dir = repre["stagingDir"]
+
+            # Prepare instance data.
+            # NOTE Till this point it is not required to have set most
+            # of keys in instance data. So publishing won't crash if plugin
+            # won't get here and instance miss required keys.
+            if instance_data is None:
+                instance_data = self.prepare_instance_data(instance)
+
+            for filename_suffix, output_def in outputs.items():
+
+                # Create copy of representation
+                new_repre = copy.deepcopy(repre)
+
+                ext = output_def.get("ext") or "mov"
+                if ext.startswith("."):
+                    ext = ext[1:]
+
+                additional_tags = output_def.get("tags") or []
+                # TODO new method?
+                # `self.new_repre_tags(new_repre, additional_tags)`
+                # Remove "delete" tag from new repre if there is
+                if "delete" in new_repre["tags"]:
+                    new_repre["tags"].remove("delete")
+
+                # Add additional tags from output definition to representation
+                for tag in additional_tags:
+                    if tag not in new_repre["tags"]:
+                        new_repre["tags"].append(tag)
+
+                self.log.debug(
+                    "New representation ext: \"{}\" | tags: `{}`".format(
+                        ext, new_repre["tags"]
+                    )
+                )
+
+                # Output is image file sequence witht frames
+                # TODO change variable to `output_is_sequence`
+                # QUESTION Should we check for "sequence" only in additional
+                # tags or in all tags of new representation
+                is_sequence = (
+                    "sequence" in additional_tags
+                    and (ext in self.image_exts)
+                )
+
+                # no handles switch from profile tags
+                no_handles = "no-handles" in additional_tags
+
+                # TODO Find better way how to find out if input is sequence
+                # Theoretically issues:
+                # - there may be multiple files ant not be sequence
+                # - remainders are not checked at all
+                # - there can be more than one collection
+                if isinstance(repre["files"], (tuple, list)):
+                    collections, remainder = clique.assemble(repre["files"])
+
+                    full_input_path = os.path.join(
+                        staging_dir,
+                        collections[0].format("{head}{padding}{tail}")
+                    )
+
+                    filename = collections[0].format("{head}")
+                    if filename.endswith("."):
+                        filename = filename[:-1]
+                else:
+                    full_input_path = os.path.join(
+                        staging_dir, repre["files"]
+                    )
+                    filename = os.path.splitext(repre["files"])[0]
+
+                # QUESTION This breaks Anatomy template system is it ok?
+                # How do we care about multiple outputs with same extension?
+                if is_sequence:
+                    filename_base = filename + "_{0}".format(filename_suffix)
+                    repr_file = filename_base + ".%08d.{0}".format(
+                        ext
+                    )
+                    new_repre["sequence_file"] = repr_file
+                    full_output_path = os.path.join(
+                        staging_dir, filename_base, repr_file
+                    )
+
+                else:
+                    repr_file = filename + "_{0}.{1}".format(
+                        filename_suffix, ext
+                    )
+                    full_output_path = os.path.join(staging_dir, repr_file)
+
+                self.log.info("Input path {}".format(full_input_path))
+                self.log.info("Output path {}".format(full_output_path))
+
+                # QUESTION Why the hell we do this?
+                # add families
+                for tag in additional_tags:
+                    if tag not in instance.data["families"]:
+                        instance.data["families"].append(tag)
+
+                # Get FFmpeg arguments from profile presets
+                output_ffmpeg_args = output_def.get("ffmpeg_args") or {}
+                output_ffmpeg_input = output_ffmpeg_args.get("input") or []
+                output_ffmpeg_filters = output_ffmpeg_args.get("filters") or []
+                output_ffmpeg_output = output_ffmpeg_args.get("output") or []
+
+                ffmpeg_input_args = []
+                ffmpeg_output_args = []
+
+                # Override output file
+                ffmpeg_input_args.append("-y")
+                # Add input args from presets
+                ffmpeg_input_args.extend(output_ffmpeg_input)
+
+
+                if isinstance(repre["files"], list):
+                    # QUESTION What is sence of this?
+                    if frame_start_handle != repre.get(
+                        "detectedStart", frame_start_handle
+                    ):
+                        frame_start_handle = repre.get("detectedStart")
+
+                    # exclude handle if no handles defined
+                    if no_handles:
+                        frame_start_handle = frame_start
+                        frame_end_handle = frame_end
+
+                    ffmpeg_input_args.append(
+                        "-start_number {0} -framerate {1}".format(
+                            frame_start_handle, fps))
+                else:
+                    if no_handles:
+                        start_sec = float(handle_start) / fps
+                        ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
+                        frame_start_handle = frame_start
+                        frame_end_handle = frame_end
+
+
+    def prepare_instance_data(self, instance):
+        return {
+            "fps": float(instance.data["fps"]),
+            "frame_start": instance.data["frameStart"],
+            "frame_end": instance.data["frameEnd"],
+            "handle_start": instance.data.get(
+                "handleStart",
+                instance.context.data["handleStart"]
+            ),
+            "handle_end": instance.data.get(
+                "handleEnd",
+                instance.context.data["handleEnd"]
+            ),
+            "pixel_aspect": instance.data.get("pixelAspect", 1),
+            "resolution_width": instance.data.get("resolutionWidth"),
+            "resolution_height": instance.data.get("resolutionHeight")
+        }
+
     def main_family_from_instance(self, instance):
         family = instance.data.get("family")
         if not family:
@@ -339,7 +495,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     def filter_outputs_by_tags(self, outputs, tags):
         filtered_outputs = {}
         repre_tags_low = [tag.lower() for tag in tags]
-        for filename_suffix, output_def in outputs.values():
+        for filename_suffix, output_def in outputs.items():
             valid = True
             output_filters = output_def.get("output_filter")
             if output_filters:
