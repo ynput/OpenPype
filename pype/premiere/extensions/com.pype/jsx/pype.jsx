@@ -630,7 +630,7 @@ $.pype = {
     instance.name = clip.name;
     instance.hierarchy = hierarchy;
     instance.parents = parents;
-    instance.representations = presets.premiere.rules_tasks.representations;
+    instance.subsetToRepresentations = presets.premiere.rules_tasks.subsetToRepresentations;
     // metadata
     var metadata = {};
     // TODO: how to get colorspace clip info
@@ -750,14 +750,14 @@ $.pype = {
     // adding project file instance
     var projectFileData = JSON.parse($.pype.getProjectFileData());
     var projectFileInstance = projectFileData;
-    projectFileInstance.representations = {
-      projectfile: {
+    projectFileInstance.subsetToRepresentations = {
+      workfile: {
         representation: 'prproj'
       }
     };
     projectFileInstance.name = projectFileData.projectfile.split('.')[0];
     projectFileInstance.publish = true;
-    projectFileInstance.family = 'projectfile';
+    projectFileInstance.family = 'workfile';
     projectFileInstance.version = version;
     instances.push(projectFileInstance);
 
@@ -796,15 +796,15 @@ $.pype = {
 
       if (audioOnly) {
         for (var i = 0; i < instances.length; i++) {
-          var representations = instances[i].representations;
+          var subsetToRepresentations = instances[i].subsetToRepresentations;
           var newRepr = {};
-          for (var key in representations) {
-            var _include = ['audio', 'thumbnail', 'projectfile'];
+          for (var key in subsetToRepresentations) {
+            var _include = ['audio', 'thumbnail', 'workfile'];
             if (include(_include, key)) {
-              newRepr[key] = representations[key];
+              newRepr[key] = subsetToRepresentations[key];
             }
           }
-          instances[i].representations = newRepr;
+          instances[i].subsetToRepresentations = newRepr;
           sendInstances.push(instances[i]);
         }
       } else {
@@ -871,20 +871,20 @@ $.pype = {
     $.pype.log('__ instances: ' + instances);
 
     for (var i = 0; i < instances.length; i++) {
-      // generate data for instance's representations
-      // loop representations of instance and sent job to encoder
-      var representations = instances[i].representations;
-      $.pype.log('__ representations: ' + representations);
+      // generate data for instance.subset representations
+      // loop representations of instance.subset and sent job to encoder
+      var subsetToRepresentations = instances[i].subsetToRepresentations;
+      $.pype.log('__ subsetToRepresentations: ' + subsetToRepresentations);
       instances[i].files = [];
-      for (var key in representations) {
+      for (var key in subsetToRepresentations) {
         $.pype.log('representation: ' + key);
         // send render jobs to encoder
-        var exclude = ['projectfile', 'thumbnail'];
+        var exclude = ['workfile', 'thumbnail'];
         if (!include(exclude, key)) {
           instances[i].files.push(
             $.pype.render(request.stagingDir,
                           key,
-                          representations[key],
+                          subsetToRepresentations[key],
                           instances[i].name,
                           instances[i].version,
                           instances[i].metadata['ppro.clip.start'],
@@ -892,8 +892,8 @@ $.pype = {
 
           waitFile = request.stagingDir + '/' + instances[i].files[(instances[i].files.length - 1)];
         } else if (key === 'thumbnail') {
-          instances[i].files.push($.pype.exportThumbnail(instances[i].name, key, instances[i].version, request.stagingDir, (instances[i].metadata['ppro.clip.start'] + ((instances[i].metadata["ppro.clip.end"] - instances[i].metadata['ppro.clip.start']) / 2)), instances[i].metadata['ppro.timeline.fps']));
-        } else if (key === 'projectfile') {
+          instances[i].files.push($.pype.exportThumbnail(instances[i].name, key, instances[i].version, request.stagingDir, (instances[i].metadata['ppro.clip.start'] + ((instances[i].metadata['ppro.clip.end'] - instances[i].metadata['ppro.clip.start']) / 2)), instances[i].metadata['ppro.timeline.fps']));
+        } else if (key === 'workfile') {
           instances[i].files.push(instances[i].projectfile);
         };
       }
