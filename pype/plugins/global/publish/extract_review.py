@@ -309,6 +309,31 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return filtered_outputs
 
+    def filter_outputs_by_tags(self, outputs, tags):
+        filtered_outputs = {}
+        repre_tags_low = [tag.lower() for tag in tags]
+        for filename_suffix, output_def in outputs.values():
+            valid = True
+            output_filters = output_def.get("output_filter")
+            if output_filters:
+                # Check tag filters
+                tag_filters = output_filters.get("tags")
+                if tag_filters:
+                    tag_filters_low = [tag.lower() for tag in tag_filters]
+                    valid = False
+                    for tag in repre_tags_low:
+                        if tag in tag_filters_low:
+                            valid = True
+                            break
+
+                    if not valid:
+                        continue
+
+            if valid:
+                filtered_outputs[filename_suffix] = output_def
+
+        return filtered_outputs
+
     def legacy_process(self, instance):
         output_profiles = self.outputs or {}
 
