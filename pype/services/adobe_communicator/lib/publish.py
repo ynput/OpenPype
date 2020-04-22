@@ -1,9 +1,11 @@
 import os
 import sys
 import pype
+import importlib
 import pyblish.api
 import pyblish.util
 import avalon.api
+from avalon.tools import publish
 from pypeapp import Logger
 
 log = Logger().get_logger(__name__)
@@ -16,9 +18,10 @@ def main(env):
     # Register Host (and it's pyblish plugins)
     host_name = env["AVALON_APP"]
     # TODO not sure if use "pype." or "avalon." for host import
-    host_import_str = f"pype.{host_name}"
+    host_import_str = f"avalon.{host_name}"
+
     try:
-        host_module = __import__(host_import_str)
+        host_module = importlib.import_module(host_import_str)
     except ModuleNotFoundError:
         log.error((
             f"Host \"{host_name}\" can't be imported."
@@ -46,7 +49,7 @@ def main(env):
         if os.path.exists(plugin_path):
             pyblish.api.register_plugin_path(plugin_path)
 
-    return pyblish.util.publish()
+    return publish.show()
 
 
 if __name__ == "__main__":
