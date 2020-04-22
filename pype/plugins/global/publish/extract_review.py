@@ -5,7 +5,6 @@ import clique
 import pype.api
 import pype.lib
 
-
 StringType = type("")
 
 
@@ -26,16 +25,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
     families = ["review"]
     hosts = ["nuke", "maya", "shell"]
 
+    # Preset attributes
+    profiles = None
+
     # Legacy attributes
     outputs = {}
     ext_filter = []
     to_width = 1920
     to_height = 1080
 
-    # New attributes
-    profiles = None
-
     def process(self, instance):
+        # Use legacy processing when `profiles` is not set.
         if self.profiles is None:
             return self.legacy_process(instance)
 
@@ -45,7 +45,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             "task": os.environ["AVALON_TASK"]
         }
 
-        profile = self.filter_profiles_by_data(
+        profile = self.find_matching_profile(
             self.profiles, profile_filter_data
         )
         if not profile:
@@ -107,7 +107,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             regexes.append(re.compile(item))
         return regexes
 
-    def validate_value_by_regexes(self, in_list, value):
+    def validate_value_by_regexes(self, value, in_list):
         """Validates in any regexe from list match entered value.
 
         Args:
@@ -130,7 +130,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 break
         return output
 
-    def filter_profiles_by_data(self, profiles, filter_data):
+    def find_matching_profile(self, profiles, filter_data):
         """ Filter profiles by Host name, Task name and main Family.
 
         Filtering keys are "hosts" (list), "tasks" (list), "families" (list).
@@ -155,21 +155,21 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             # Host filtering
             host_names = profile.get("hosts")
-            match = self.validate_value_by_regexes(host_names, host_name)
+            match = self.validate_value_by_regexes(host_name, host_names)
             if match == -1:
                 continue
             profile_points += match
 
             # Task filtering
             task_names = profile.get("tasks")
-            match = self.validate_value_by_regexes(task_names, task_name)
+            match = self.validate_value_by_regexes(task_name, task_names)
             if match == -1:
                 continue
             profile_points += match
 
             # Family filtering
             families = profile.get("families")
-            match = self.validate_value_by_regexes(families, family)
+            match = self.validate_value_by_regexes(family, families)
             if match == -1:
                 continue
             profile_points += match
