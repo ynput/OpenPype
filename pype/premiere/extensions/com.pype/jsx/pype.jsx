@@ -955,12 +955,14 @@ $.pype = {
     }
 
     // test if expected job list is empty. If so, emit event for JS
+    /*
     if (len($.pype.expectedJobs) == 0) {
       var eventObj = new CSXSEvent();
       eventObj.type = 'pype.EncoderJobsComplete';
       eventObj.data = {"jobID": jobID, "outputFilePath": outputFilePath};
       eventObj.dispatch();
     }
+    */
   },
 
   render: function (outputPath, family, representation, clipName, version, inPoint, outPoint) {
@@ -971,6 +973,7 @@ $.pype = {
 
     app.enableQE();
     var activeSequence = qe.project.getActiveSequence(); // we use a QE DOM function, to determine the output extension.
+    $.pype.log("launching encoder ...");
     if (activeSequence) {
       app.encoder.launchEncoder(); // This can take a while; let's get the ball rolling.
 
@@ -997,7 +1000,7 @@ $.pype = {
             }
 
             app.encoder.bind('onEncoderJobComplete', $._PPP_.onEncoderJobComplete);
-            app.encoder.bind('onEncoderJobComplete', $.pype.onEncoderJobComplete);
+            // app.encoder.bind('onEncoderJobComplete', $.pype.onEncoderJobComplete);
             app.encoder.bind('onEncoderJobError', $._PPP_.onEncoderJobError);
             app.encoder.bind('onEncoderJobProgress', $._PPP_.onEncoderJobProgress);
             app.encoder.bind('onEncoderJobQueued', $._PPP_.onEncoderJobQueued);

@@ -7,10 +7,12 @@ class Pype {
         this.csi = new CSInterface();
         this.rootFolderPath = this.csi.getSystemPath(SystemPath.EXTENSION);
         var extensionRoot = this.rootFolderPath + "/jsx/";
+        console.info("Loading premiere.jsx");
+        this.csi.evalScript('$.evalFile("' + extensionRoot + '/PPRO/Premiere.jsx");');
         console.info("Loading pype.jsx");
-        this.csi.evalScript('$.evalFile("' + extensionRoot + 'pype.jsx")');
+        this.csi.evalScript('$.evalFile("' + extensionRoot + 'pype.jsx");');
         console.info("Loading batchRenamer.jsx");
-        this.csi.evalScript('$.evalFile("' + extensionRoot + 'batchRenamer.jsx")');
+        this.csi.evalScript('$.evalFile("' + extensionRoot + 'batchRenamer.jsx");');
 
         // get environment
         this.csi.evalScript('$.pype.getProjectFileData();', (result) => {
@@ -55,10 +57,10 @@ class Pype {
           return;
         }
       
+        console.log(`Doing rename ${data.ep} | ${data.epSuffix}`);
         this.csi.evalScript(
-          '$.batchrenamer.renameTargetedTextLayer( ' + JSON.stringify(
-            data) + ' );', function (result) {
-            console.info(result);
+          'BatchRenamer.renameTargetedTextLayer(' + JSON.stringify(data) + ' );', (result) => {
+            console.info(`Renaming result: ${result}`);
           });
       }
 
@@ -175,7 +177,9 @@ class Pype {
                 this._getPyblishRequest(Pype.convertPathString(this.stagingDir))
                 .then(result => {
                     console.log("Encoding ...");
-                    this._encodeRepresentation(JSON.parse(result))
+                    this._encodeRepresentation(JSON.parse(result)).catch(error => {
+                        console.error(`failed to encode: ${error}`);
+                    });
                 }, error => {
                     console.error(`failed to publish: ${error}`);
                 });

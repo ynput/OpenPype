@@ -10,9 +10,10 @@ _______________.___._____________________
         .. __/ CliP R3N4M3R \__ ..
 */
 
-// variable br is defined in pypeAvalon.jsx
-$.batchrenamer = {
-  getSelectedVideoTrackItems: function () {
+
+var BatchRenamer = {
+
+  getSelectedVideoTrackItems: function() {
     var seq = app.project.activeSequence;
     var selected = [];
     var videoTracks = seq.videoTracks;
@@ -23,7 +24,8 @@ $.batchrenamer = {
       var videoTrack = seq.videoTracks[l];
       if (videoTrack.isTargeted()) {
         $.writeln(videoTrack.name);
-        var numOfClips = videoTrack.clips.numTracks;
+        // var numOfClips = videoTrack.clips.numTracks;
+        var numOfClips = videoTrack.clips.numItems;
         for (var m = 0; m < numOfClips; m++) {
           var clip = videoTrack.clips[m];
 
@@ -50,9 +52,11 @@ $.batchrenamer = {
     }
     return sorted;
   },
+
   renameTargetedTextLayer: function (data) {
+    $.bp(true);
     $.writeln(data);
-    var selected = $.batchrenamer.getSelectedVideoTrackItems();
+    var selected = BatchRenamer.getSelectedVideoTrackItems();
 
     var seq = app.project.activeSequence;
     var metadata = $.pype.getSequencePypeMetadata(seq, true);
@@ -109,17 +113,4 @@ $.batchrenamer = {
     $.pype.setSequencePypeMetadata(seq, metadata);
     return JSON.stringify(metadata);
   }
-};
-
-Number.prototype.pad = function (size) {
-  var s = String(this);
-  while (s.length < (size || 2)) {
-    s = "0" + s;
-  }
-  return s;
 }
-
-
-var messageText = 'this module is loaded> batchRenamer.jsx';
-$._PPP_.updateEventPanel(messageText);
-$.writeln(messageText);
