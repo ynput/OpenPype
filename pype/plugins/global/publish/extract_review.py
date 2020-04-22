@@ -1,5 +1,6 @@
 import os
 import re
+import copy
 import pyblish.api
 import clique
 import pype.api
@@ -24,6 +25,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
     hosts = ["nuke", "maya", "shell"]
+    image_exts = ["exr", "jpg", "jpeg", "png", "dpx"]
+    video_exts = ["mov", "mp4"]
+    supported_exts = image_exts + video_exts
 
     # Preset attributes
     profiles = None
