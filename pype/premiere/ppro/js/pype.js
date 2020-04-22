@@ -33,12 +33,12 @@ class Pype {
                     console.log("done");
                     // bind encoding jobs event listener
                     this.csi.addEventListener("pype.EncoderJobsComplete", this._encodingDone);
-        
+
                     // Bind Interface buttons
                     this._bindButtons();
                 });
             });
-        });   
+        });
     }
 
     rename () {
@@ -46,17 +46,17 @@ class Pype {
         let data = {};
         data.ep = renameId.querySelector('input[name=episode]').value;
         data.epSuffix = renameId.querySelector('input[name=ep_suffix]').value;
-      
+
         if (!data.ep) {
           this.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode code' + '")');
           return;
         }
-      
+
         if (!data.epSuffix) {
           this.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode longer suffix' + '")');
           return;
         }
-      
+
         console.log(`Doing rename ${data.ep} | ${data.epSuffix}`);
         this.csi.evalScript(
           'BatchRenamer.renameTargetedTextLayer(' + JSON.stringify(data) + ' );', (result) => {
@@ -224,7 +224,8 @@ class Pype {
             "asset": this.pype.env.AVALON_ASSET,
             "task": this.pype.env.AVALON_TASK,
             "workdir": Pype.convertPathString(this.pype.env.AVALON_WORKDIR),
-            "host": this.pype.env.AVALON_APP
+            "AVALON_APP": this.pype.env.AVALON_APP,
+            "AVALON_APP_NAME": this.pype.env.AVALON_APP_NAME
         }
 
         console.log("Preparing publish ...");
@@ -252,4 +253,3 @@ $(function() {
 });
 
 // -------------------------------------------------------
-
