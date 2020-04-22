@@ -148,10 +148,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         matching_profiles = None
         highest_profile_points = -1
+        profile_values = {}
         # Each profile get 1 point for each matching filter. Profile with most
-        # points or first in row is returnd.
+        # points is returnd. For cases when more than one profile will match
+        # are also stored ordered lists of matching values.
         for profile in profiles:
             profile_points = 0
+            profile_value = []
 
             # Host filtering
             host_names = profile.get("hosts")
@@ -159,6 +162,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if match == -1:
                 continue
             profile_points += match
+            profile_value.append(bool(match))
 
             # Task filtering
             task_names = profile.get("tasks")
@@ -166,6 +170,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if match == -1:
                 continue
             profile_points += match
+            profile_value.append(bool(match))
 
             # Family filtering
             families = profile.get("families")
@@ -173,7 +178,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if match == -1:
                 continue
             profile_points += match
+            profile_value.append(bool(match))
 
+            if profile_points < highest_profile_points:
+                continue
+
+            profile["__value__"] = profile_value
             if profile_points == highest_profile_points:
                 matching_profiles.append(profile)
 
@@ -189,14 +199,56 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ).format(**filter_data))
             return
 
-        if len(matching_profiles) > 1:
-            self.log.warning((
-                "More than one profile match your setup."
-                " Using first found profile."
-                " Host \"{host}\" | Task: \"{task}\" | Family: \"{family}\""
-            ).format(**filter_data))
+        if len(matching_profiles) == 1:
+            # Pop temporary key `__value__`
+            matching_profiles[0].pop("__value__")
+            return matching_profiles[0]
 
-        return matching_profiles[0]
+        self.log.warning((
+            "More than one profile match your setup."
+            " Host \"{host}\" | Task: \"{task}\" | Family: \"{family}\""
+        ).format(**filter_data))
+
+        # Filter all profiles with highest points value. First filter profiles
+        # with matching host if there are any then filter profiles by task
+        # name if there are any and lastly filter by family. Else use first in
+        # list.
+        idx = 0
+        final_profile = None
+        while True:
+            profiles_true = []
+            profiles_false = []
+            for profile in matching_profiles:
+                value = profile["__value__"]
+                # Just use first profile when idx is greater than values.
+                if not idx < len(value):
+                    final_profile = profile
+                    break
+
+                if value[idx]:
+                    profiles_true.append(profile)
+                else:
+                    profiles_false.append(profile)
+
+            if final_profile is not None:
+                break
+
+            if profiles_true:
+                matching_profiles = profiles_true
+            else:
+                matching_profiles = profiles_false
+
+            if len(matching_profiles) == 1:
+                final_profile = matching_profiles[0]
+                break
+            idx += 1
+
+        final_profile.pop("__value__")
+        self.log.info(
+            "Using first most matching profile in match order:"
+            " Host name -> Task name -> Family."
+        )
+        return final_profile
 
     def families_filter_validation(self, families, output_families_filter):
         if not output_families_filter:
