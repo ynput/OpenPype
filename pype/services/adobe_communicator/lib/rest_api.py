@@ -102,10 +102,10 @@ class AdobeRestApi(RestApi):
         env["AVALON_WORKDIR"] = data["workdir"]
         env["AVALON_HIERARCHY"] = hierarchy
         env["AVALON_PROJECTCODE"] = project_doc["data"].get("code", "")
-        env["AVALON_APP"] = data["host"]
-        env["AVALON_APP_NAME"] = data["host"]
+        env["AVALON_APP"] = data["AVALON_APP"]
+        env["AVALON_APP_NAME"] = data["AVALON_APP_NAME"]
 
-        env["PYBLISH_HOSTS"] = data["host"]
+        env["PYBLISH_HOSTS"] = data["AVALON_APP"]
 
         env["PUBLISH_PATHS"] = os.pathsep.join(PUBLISH_PATHS)
 
