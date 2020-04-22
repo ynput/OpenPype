@@ -498,48 +498,6 @@ $.pype = {
     }
     return selected;
   },
-  dumpPublishedInstancesToMetadata: function (resultedPyblishJsonData) {
-    $.writeln(resultedPyblishJsonData.instances);
-    var instances = resultedPyblishJsonData.instances;
-    var pypeData = $.pype.loadSequenceMetadata(app.project.activeSequence);
-    for (var i = 0; i < instances.length; i++) {
-      $.writeln(instances[i].label);
-      // process instances
-      // check if asset in metadata
-      // add it to sequence metadata
-      if (instances[i].family !== 'workfile') {
-        var data = {};
-        data.family = instances[i].family;
-        data.ftrackShotId = instances[i].ftrackShotId;
-        data.template = instances[i].template;
-        data.version = instances[i].version;
-        data.ftrackTaskID = instances[i].ftrackTask.substring(6, (instances[i].ftrackTask.length - 2));
-        data.representation = instances[i].jsonData.representations[instances[i].families.families[0]];
-        // getting published path from transfers
-        var transfers = instances[i].transfers.transfers;
-        for (var t = 0; t < transfers.length; t++) {
-          for (var tt = 0; tt < transfers[t].length; tt++) {
-            var subsetR = new RegExp(data.subset);
-            var reprR = new RegExp(data.representation.representation);
-            // selecting published path
-            if (subsetR.test(transfers[t][tt]) && reprR.test(transfers[t][tt])) {
-              data.absPath = transfers[t][tt];
-            }
-          }
-        }
-        // add all created publishe data into sequence metadata object
-        var subsetData = {};
-        if (pypeData.clips[instances[i].asset].published === undefined) {
-          subsetData[instances[i].subset] = data;
-          pypeData.clips[instances[i].asset].published = subsetData;
-        } else {
-          pypeData.clips[instances[i].asset].published[instances[i].subset] = data;
-        }
-      }
-    }
-    // dumping all data back to sequence metadata
-    $.pype.setSequencePypeMetadata(app.project.activeSequence, pypeData);
-  },
   /**
    * Set Pype metadata into sequence metadata using XMP.
    * This is `hackish` way to get over premiere lack of addressing unique clip on timeline,
