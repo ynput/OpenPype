@@ -59,9 +59,11 @@ class PypeRestApiClient {
     let headers = {
       "Content-Type": "application/json"
     }
-
+    console.log("connecting ...");
     let response = await this.getResponseFromRestApiServer(
       url, {method: 'POST', headers: headers, body: data});
+    console.log("got response:");
+    console.log(response.data);
     return response.data;
   }
 }

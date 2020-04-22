@@ -1,4 +1,5 @@
 import os
+import sys
 import copy
 from pype.services.rest_api import RestApi, route, abort, CallbackResult
 from .io_nonsingleton import DbConnector
@@ -57,7 +58,8 @@ class AdobeRestApi(RestApi):
         try:
             # Trigger subprocess
             # QUESTION should we check returncode?
-            returncode = execute(PUBLISH_SCRIPT_PATH, env=publish_env)
+            returncode = execute(
+                [sys.executable, PUBLISH_SCRIPT_PATH], env=publish_env)
 
             # Check if output file exists
             if returncode != 0 or not os.path.exists(output_data_path):

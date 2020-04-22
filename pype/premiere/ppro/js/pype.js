@@ -140,6 +140,13 @@ class Pype {
                 if (result == "EvalScript error.") {
                     reject(result);
                 }
+                console.log("encoding submitted ...");
+                const jsonfile = require('jsonfile');
+                let jsonContent = JSON.parse(result);
+                if (self.publishUI.jsonSendPath == "") {
+                    self.publishUI.jsonSendPath = self.stagingDir + "\\publish.json";
+                }
+                jsonfile.writeFile(self.publishUI.jsonSendPath, jsonContent);
                 resolve(result);
             });
         });
@@ -183,6 +190,7 @@ class Pype {
                 }, error => {
                     console.error(`failed to publish: ${error}`);
                 });
+                console.log("waiting for result");
             });
         } else {
             // load request
@@ -205,36 +213,43 @@ class Pype {
     }
 
     _encodingDone(event) {
+        // this will be global in this context
+        console.log("Event recieved ...");
         var dataToPublish = {
-            "adobePublishJsonPathSend": this.publishUI.jsonSendPath,
-            "adobePublishJsonPathGet": this.publishUI.jsonGetPath,
+            "adobePublishJsonPathSend": this.pype.publishUI.jsonSendPath,
+            "adobePublishJsonPathGet": this.pype.publishUI.jsonGetPath,
             "gui": true,
-            "publishPath": Pype.convertPathString(this.env.PUBLISH_PATH),
-            "project": this.env.AVALON_PROJECT,
-            "asset": this.env.AVALON_ASSET,
-            "task": this.env.AVALON_TASK,
-            "workdir": Pype.convertPathString(this.env.ENV.AVALON_WORKDIR),
-            "host": this.env.ENV.AVALON_APP
+            // "publishPath": Pype.convertPathString(this.pype.env.PUBLISH_PATH),
+            "project": this.pype.env.AVALON_PROJECT,
+            "asset": this.pype.env.AVALON_ASSET,
+            "task": this.pype.env.AVALON_TASK,
+            "workdir": Pype.convertPathString(this.pype.env.AVALON_WORKDIR),
+            "host": this.pype.env.AVALON_APP
         }
 
-        this.pras.publish(dataToPublish)
+        console.log("Preparing publish ...");
+        this.pype.pras.publish(JSON.stringify(dataToPublish))
         .then((result) => {
             const fs = require('fs');
             if (fs.existsSync(result.return_data_path)) {
-                if (this.publishUI.versionUp) {
+                if (this.pype.publishUI.versionUp) {
                     console.log('Saving new version of the project file');
-                    this.csi.evalScript('$.pype.versionUpWorkFile();');
+                    this.pype.csi.evalScript('$.pype.versionUpWorkFile();');
                 }
+                console.log("Publishing done.");
             } else {
                 console.error("Publish has not finished correctly")
                 throw "Publish has not finished correctly";
             }
+        }, (error) => {
+            console.error("Invalid response from server");
+            console.error(error);
         });
     }
 }
-
-$(document).ready(function() {
-    new Pype();
+$(function() {
+    global.pype = new Pype();
 });
+
 // -------------------------------------------------------
 

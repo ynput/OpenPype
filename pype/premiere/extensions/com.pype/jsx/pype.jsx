@@ -919,7 +919,7 @@ $.pype = {
       $.pype.log('__ representations: ' + representations);
       instances[i].files = [];
       for (var key in representations) {
-
+        $.pype.log('representation: ' + key);
         // send render jobs to encoder
         var exclude = ['projectfile', 'thumbnail'];
         if (!include(exclude, key)) {
@@ -955,14 +955,13 @@ $.pype = {
     }
 
     // test if expected job list is empty. If so, emit event for JS
-    /*
-    if (len($.pype.expectedJobs) == 0) {
+    if ($.pype.expectedJobs.length == 0) {
+      $.pype.log("encoding jobs finished.");
       var eventObj = new CSXSEvent();
       eventObj.type = 'pype.EncoderJobsComplete';
       eventObj.data = {"jobID": jobID, "outputFilePath": outputFilePath};
       eventObj.dispatch();
     }
-    */
   },
 
   render: function (outputPath, family, representation, clipName, version, inPoint, outPoint) {
@@ -972,8 +971,8 @@ $.pype = {
     ]).join($._PPP_.getSep());
 
     app.enableQE();
-    var activeSequence = qe.project.getActiveSequence(); // we use a QE DOM function, to determine the output extension.
-    $.pype.log("launching encoder ...");
+    var activeSequence = $.pype.getActiveSequence();
+    $.pype.log("launching encoder ... " + family + " " + clipName);
     if (activeSequence) {
       app.encoder.launchEncoder(); // This can take a while; let's get the ball rolling.
 
@@ -999,19 +998,22 @@ $.pype = {
               }
             }
 
-            app.encoder.bind('onEncoderJobComplete', $._PPP_.onEncoderJobComplete);
-            // app.encoder.bind('onEncoderJobComplete', $.pype.onEncoderJobComplete);
-            app.encoder.bind('onEncoderJobError', $._PPP_.onEncoderJobError);
-            app.encoder.bind('onEncoderJobProgress', $._PPP_.onEncoderJobProgress);
-            app.encoder.bind('onEncoderJobQueued', $._PPP_.onEncoderJobQueued);
-            app.encoder.bind('onEncoderJobCanceled', $._PPP_.onEncoderJobCanceled);
+            $.pype.log("binding events ...");
+            // app.encoder.bind('onEncoderJobComplete', $._PPP_.onEncoderJobComplete);
+            app.encoder.bind('onEncoderJobComplete', $.pype.onEncoderJobComplete);
+            // app.encoder.bind('onEncoderJobError', $._PPP_.onEncoderJobError);
+            // app.encoder.bind('onEncoderJobProgress', $._PPP_.onEncoderJobProgress);
+            // app.encoder.bind('onEncoderJobQueued', $._PPP_.onEncoderJobQueued);
+            // app.encoder.bind('onEncoderJobCanceled', $._PPP_.onEncoderJobCanceled);
 
             // use these 0 or 1 settings to disable some/all metadata creation.
             app.encoder.setSidecarXMPEnabled(0);
             app.encoder.setEmbeddedXMPEnabled(0);
 
+            $.pype.log("adding job to encoder");
             var jobID = app.encoder.encodeSequence(app.project.activeSequence, fullPathToFile, outPreset.fsName, app.encoder.ENCODE_IN_TO_OUT, 1); // Remove from queue upon successful completion?
             $.pype.expectedJobs.push(jobID);
+            $.pype.log("job queue length: " + $.pype.expectedJobs.length);
             $._PPP_.updateEventPanel('jobID = ' + jobID);
             outPreset.close();
             return file;
