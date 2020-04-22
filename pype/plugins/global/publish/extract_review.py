@@ -52,25 +52,44 @@ class ExtractReview(pyblish.api.InstancePlugin):
             return
 
         instance_families = self.families_from_instance(instance)
-        outputs = self.filter_outputs_by_families(profile, instance_families)
-        if not outputs:
+        profile_outputs = self.filter_outputs_by_families(profile, instance_families)
+        if not profile_outputs:
             return
 
-        # TODO repre loop
-        repre_tags_low = [tag.lower() for tag in repre.get("tags", [])]
-        # Check tag filters
-        tag_filters = output_filters.get("tags")
-        if tag_filters:
-            tag_filters_low = [tag.lower() for tag in tag_filters]
-            valid = False
-            for tag in repre_tags_low:
-                if tag in tag_filters_low:
-                    valid = True
-                    break
+        context = instance.context
 
-            if not valid:
+        fps = float(instance.data["fps"])
+        frame_start = instance.data.get("frameStart")
+        frame_end = instance.data.get("frameEnd")
+        handle_start = instance.data.get(
+            "handleStart",
+            context.data.get("handleStart")
+        )
+        handle_end = instance.data.get(
+            "handleEnd",
+            context.data.get("handleEnd")
+        )
+        pixel_aspect = instance.data.get("pixelAspect", 1)
+        resolution_width = instance.data.get("resolutionWidth")
+        resolution_height = instance.data.get("resolutionHeight")
+
+        ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+
+        # get representation and loop them
+        representations = instance.data["representations"]
+
+        for repre in tuple(representations):
+            tags = repre.get("tags", [])
+            if (
+                "review" not in tags
+                or "multipartExr" in tags
+                or "thumbnail" in tags
+            ):
                 continue
 
+            outputs = self.filter_outputs_by_tags(profile_outputs, tags)
+            if not outputs:
+                continue
     def main_family_from_instance(self, instance):
         family = instance.data.get("family")
         if not family:
@@ -140,7 +159,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
             profiles (list): Profiles definition from presets.
             filter_data (dict): Dictionary with data for filtering.
                 Required keys are "host" - Host name, "task" - Task name
-                and "family" - Main .
+                and "family" - Main instance family.
+
+        Returns:
+            dict/None: Return most matching profile or None if none of profiles
+                match at least one criteria.
         """
         host_name = filter_data["host"]
         task_name = filter_data["task"]
