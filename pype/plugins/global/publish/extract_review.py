@@ -111,13 +111,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 # Create copy of representation
                 new_repre = copy.deepcopy(repre)
 
-                ext = output_def.get("ext") or "mov"
-                if ext.startswith("."):
-                    ext = ext[1:]
+                output_ext = output_def.get("ext") or "mov"
+                if output_ext.startswith("."):
+                    output_ext = output_ext[1:]
 
                 additional_tags = output_def.get("tags") or []
                 # TODO new method?
-                # `self.new_repre_tags(new_repre, additional_tags)`
+                # `self.prepare_new_repre_tags(new_repre, additional_tags)`
                 # Remove "delete" tag from new repre if there is
                 if "delete" in new_repre["tags"]:
                     new_repre["tags"].remove("delete")
@@ -129,24 +129,28 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 self.log.debug(
                     "New representation ext: \"{}\" | tags: `{}`".format(
-                        ext, new_repre["tags"]
+                        output_ext, new_repre["tags"]
                     )
                 )
 
                 # Output is image file sequence witht frames
                 # TODO change variable to `output_is_sequence`
+                # QUESTION Shall we do it in opposite? Expect that if output
+                # extension is image format and input is sequence or video
+                # format then do sequence and single frame only if tag is
+                # "single-frame" (or similar)
                 # QUESTION Should we check for "sequence" only in additional
                 # tags or in all tags of new representation
                 is_sequence = (
                     "sequence" in additional_tags
-                    and (ext in self.image_exts)
+                    and (output_ext in self.image_exts)
                 )
 
                 # no handles switch from profile tags
                 no_handles = "no-handles" in additional_tags
 
-                # TODO Find better way how to find out if input is sequence
-                # Theoretically issues:
+                # TODO GLOBAL ISSUE - Find better way how to find out if input
+                # is sequence. Issues( in theory):
                 # - there may be multiple files ant not be sequence
                 # - remainders are not checked at all
                 # - there can be more than one collection
@@ -168,11 +172,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     filename = os.path.splitext(repre["files"])[0]
 
                 # QUESTION This breaks Anatomy template system is it ok?
-                # How do we care about multiple outputs with same extension?
+                # QUESTION How do we care about multiple outputs with same
+                # extension? (Expect we don't...)
+                # - possible solution add "<{review_suffix}>" into templates
+                # but that may cause issues when clients remove that.
                 if is_sequence:
                     filename_base = filename + "_{0}".format(filename_suffix)
                     repr_file = filename_base + ".%08d.{0}".format(
-                        ext
+                        output_ext
                     )
                     new_repre["sequence_file"] = repr_file
                     full_output_path = os.path.join(
@@ -181,7 +188,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
                 else:
                     repr_file = filename + "_{0}.{1}".format(
-                        filename_suffix, ext
+                        filename_suffix, output_ext
                     )
                     full_output_path = os.path.join(staging_dir, repr_file)
 
@@ -194,42 +201,59 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     if tag not in instance.data["families"]:
                         instance.data["families"].append(tag)
 
-                # Get FFmpeg arguments from profile presets
-                output_ffmpeg_args = output_def.get("ffmpeg_args") or {}
-                output_ffmpeg_input = output_ffmpeg_args.get("input") or []
-                output_ffmpeg_filters = output_ffmpeg_args.get("filters") or []
-                output_ffmpeg_output = output_ffmpeg_args.get("output") or []
+                ffmpeg_args = self._ffmpeg_arguments(
+                    output_def, instance, instance_data
+                )
 
-                ffmpeg_input_args = []
-                ffmpeg_output_args = []
+    def _ffmpeg_arguments(output_def, instance, repre, instance_data):
+        # TODO split into smaller methods and use these variable only there
+        fps = instance_data["fps"]
+        frame_start = instance_data["frame_start"]
+        frame_end = instance_data["frame_end"]
+        handle_start = instance_data["handle_start"]
+        handle_end = instance_data["handle_end"]
+        frame_start_handle = frame_start - handle_start,
+        frame_end_handle = frame_end + handle_end,
+        pixel_aspect = instance_data["pixel_aspect"]
+        resolution_width = instance_data["resolution_width"]
+        resolution_height = instance_data["resolution_height"]
 
-                # Override output file
-                ffmpeg_input_args.append("-y")
-                # Add input args from presets
-                ffmpeg_input_args.extend(output_ffmpeg_input)
+        # Get FFmpeg arguments from profile presets
+        output_ffmpeg_args = output_def.get("ffmpeg_args") or {}
+        output_ffmpeg_input = output_ffmpeg_args.get("input") or []
+        output_ffmpeg_filters = output_ffmpeg_args.get("filters") or []
+        output_ffmpeg_output = output_ffmpeg_args.get("output") or []
 
+        ffmpeg_input_args = []
+        ffmpeg_output_args = []
 
-                if isinstance(repre["files"], list):
-                    # QUESTION What is sence of this?
-                    if frame_start_handle != repre.get(
-                        "detectedStart", frame_start_handle
-                    ):
-                        frame_start_handle = repre.get("detectedStart")
+        # Override output file
+        ffmpeg_input_args.append("-y")
+        # Add input args from presets
+        ffmpeg_input_args.extend(output_ffmpeg_input)
 
-                    # exclude handle if no handles defined
-                    if no_handles:
-                        frame_start_handle = frame_start
-                        frame_end_handle = frame_end
+        if isinstance(repre["files"], list):
+            # QUESTION What is sence of this?
+            if frame_start_handle != repre.get(
+                "detectedStart", frame_start_handle
+            ):
+                frame_start_handle = repre.get("detectedStart")
 
-                    ffmpeg_input_args.append(
-                        "-start_number {0} -framerate {1}".format(
-                            frame_start_handle, fps))
-                else:
-                    if no_handles:
-                        start_sec = float(handle_start) / fps
-                        ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
-                        frame_start_handle = frame_start
-                        frame_end_handle = frame_end
+            # exclude handle if no handles defined
+            if no_handles:
+                frame_start_handle = frame_start
+                frame_end_handle = frame_end
+
+            ffmpeg_input_args.append(
+                "-start_number {0} -framerate {1}".format(
+                    frame_start_handle, fps))
+        else:
+            if no_handles:
+                # QUESTION why we are using seconds instead of frames?
+                start_sec = float(handle_start) / fps
+                ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
+                frame_start_handle = frame_start
+                frame_end_handle = frame_end
 
 
     def prepare_instance_data(self, instance):
@@ -247,7 +271,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ),
             "pixel_aspect": instance.data.get("pixelAspect", 1),
             "resolution_width": instance.data.get("resolutionWidth"),
-            "resolution_height": instance.data.get("resolutionHeight")
+            "resolution_height": instance.data.get("resolutionHeight"),
         }
 
     def main_family_from_instance(self, instance):
