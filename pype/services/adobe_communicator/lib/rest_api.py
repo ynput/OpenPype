@@ -59,7 +59,9 @@ class AdobeRestApi(RestApi):
             # Trigger subprocess
             # QUESTION should we check returncode?
             returncode = execute(
-                [sys.executable, PUBLISH_SCRIPT_PATH], env=publish_env)
+                [sys.executable, PUBLISH_SCRIPT_PATH],
+                env=publish_env
+            )
 
             # Check if output file exists
             if returncode != 0 or not os.path.exists(output_data_path):
