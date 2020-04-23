@@ -1,5 +1,5 @@
 /*global CSInterface, $, PypeRestApiClient, SystemPath */
-/* eslint-env node, es2017 */
+/* eslint-env node, es2017, esversion:6 */
 
 class Pype {
 
@@ -23,7 +23,7 @@ class Pype {
             });
         });
     }
-        
+
     _initialize() {
         var self = this;
         // get environment
@@ -191,7 +191,7 @@ class Pype {
             });
         });
     }
-
+    
     publish() {
         this._gatherPublishUI();
         if (this.publishUI.jsonSendPath === "") {
@@ -231,7 +231,7 @@ class Pype {
             .then((result) => {
                 const fs = require('fs');
                 if (fs.existsSync(result.return_data_path)) {
-                    this.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(result) + ');');
+                    // this.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(result) + ');');
                     if (this.publishUI.versionUp) {
                         this.progress('Saving new version of the project file');
                         this.csi.evalScript('$.pype.versionUpWorkFile();');
@@ -246,6 +246,7 @@ class Pype {
 
     _encodingDone(event) {
         // this will be global in this context
+        console.debug(event);
         this.pype.progress("Event recieved ...", true);
         var dataToPublish = {
             "adobePublishJsonPathSend": this.pype.publishUI.jsonSendPath,
@@ -267,7 +268,7 @@ class Pype {
             const fs = require('fs');
             if (fs.existsSync(result.return_data_path)) {
                 if (this.pype.publishUI.versionUp) {
-                    this.pyp.progress('Saving new version of the project file', true);
+                    this.pype.progress('Saving new version of the project file', true);
                     this.pype.csi.evalScript('$.pype.versionUpWorkFile();');
                 }
                 this.pype.progress("Publishing done.", true);
@@ -283,7 +284,7 @@ class Pype {
 
     /**
      * Display error message in div
-     * @param {String} message 
+     * @param {String} message
      */
     error(message) {
         this.outputId.html(message);
@@ -293,8 +294,8 @@ class Pype {
 
     /**
      * Display message in output div. If append is set, new message is appended to rest with <br>
-     * @param {String} message 
-     * @param {Boolean} append 
+     * @param {String} message
+     * @param {Boolean} append
      */
     progress(message, append=false) {
         this.outputId.removeClass("error");

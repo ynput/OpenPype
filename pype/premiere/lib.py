@@ -129,6 +129,8 @@ def extensions_sync():
 
     # synchronize all extensions
     for name, src, dst in process_pairs:
+        if not os.path.isdir(src):
+            continue
         if not os.path.exists(dst):
             os.makedirs(dst, mode=0o777)
         walktree(source=src, target=dst, options_input=["y", ">"])
