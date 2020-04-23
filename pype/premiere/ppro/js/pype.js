@@ -171,7 +171,6 @@ class Pype {
             });
         });
     }
-
     publish() {
         this._gatherPublishUI();
         if (this.publishUI.jsonSendPath === "") {
@@ -201,9 +200,6 @@ class Pype {
                 }, error => {
                     console.error(`failed to publish: ${error}`);
                 });
-                // here jsonSetPath and jsonGetPath are set to gui
-                this.uiJsonSendPath.value = "";
-                this.uiJsonGetPath.value = "";
                 console.log("waiting for result");
             });
         } else {
@@ -213,11 +209,10 @@ class Pype {
             .then((result) => {
                 const fs = require('fs');
                 if (fs.existsSync(result.return_data_path)) {
-                    this.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(result) + ');');
-                    if (this.publishUI.versionUp) {
-                        console.log('Saving new version of the project file');
-                        this.csi.evalScript('$.pype.versionUpWorkFile();');
-                    }
+                  if (this.publishUI.versionUp) {
+                      console.log('Saving new version of the project file');
+                      this.csi.evalScript('$.pype.versionUpWorkFile();');
+                  }
                 } else {
                     console.error("Publish has not finished correctly")
                     throw "Publish has not finished correctly";
@@ -227,6 +222,9 @@ class Pype {
     }
 
     _encodingDone(event) {
+      var publishId = document.querySelector('#publish');
+      var uiJsonSendPath = publishId.querySelector('input[name=send-path]');
+      var uiJsonGetPath = publishId.querySelector('input[name=get-path]');
         // this will be global in this context
         console.log("Event recieved ...");
         var dataToPublish = {
@@ -251,7 +249,10 @@ class Pype {
                 if (this.pype.publishUI.versionUp) {
                     console.log('Saving new version of the project file');
                     this.pype.csi.evalScript('$.pype.versionUpWorkFile();');
-                }
+                };
+                // here jsonSetPath and jsonGetPath are set to gui
+                uiJsonSendPath.value = "";
+                uiJsonGetPath.value = "";
                 console.log("Publishing done.");
             } else {
                 console.error("Publish has not finished correctly")
