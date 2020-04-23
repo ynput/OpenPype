@@ -3,10 +3,9 @@ import pyblish.api
 import clique
 import pype.api
 import pype.lib
-import pype.plugin
 
 
-class ExtractReview(pype.plugin.InstancePlugin):
+class ExtractReview(pyblish.api.InstancePlugin):
     """Extracting Review mov file for Ftrack
 
     Compulsory attribute of representation is tags list with "review",
@@ -21,7 +20,7 @@ class ExtractReview(pype.plugin.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
-    hosts = ["nuke", "maya", "shell", "premiere"]
+    hosts = ["nuke", "maya", "shell"]
 
     outputs = {}
     ext_filter = []
@@ -55,21 +54,14 @@ class ExtractReview(pype.plugin.InstancePlugin):
 
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        config = instance.context.data["presets"]
-        ext_filters = config["plugins"]["global"]["publish"]["ExtractReview"]["ext_filter"]
-        self.log.info("ext_filters: {}".format(ext_filters))
-
         # filter out mov and img sequences
         representations_new = representations[:]
         for repre in representations:
-            self.log.info("Repre ext: {}".format(repre['ext']))
-            self.log.info("self.ext_filter: {}".format(self.ext_filter))
 
-            if repre['ext'] not in ext_filters:
+            if repre['ext'] not in self.ext_filter:
                 continue
 
             tags = repre.get("tags", [])
-            self.log.info("Repre tags: {}".format(tags))
 
             if "multipartExr" in tags:
                 # ffmpeg doesn't support multipart exrs
