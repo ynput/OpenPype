@@ -604,14 +604,13 @@ $.pype = {
    */
   getClipAsInstance: function (clip, sequence, videoTrack, pypeData) {
     var presets = JSON.parse($.pype.getProjectPreset());
-    // var clip = sequence.videoTracks.clips[clipIdx]
     if ((clip.projectItem.type !== ProjectItemType.CLIP) && (clip.mediaType !== 'Video')) {
       return false;
     }
     var pdClips = pypeData.clips;
     var hierarchy;
     var parents;
-    $.pype.log('>> getClipAsInstance:clip.name ' + clip.name)
+    $.pype.log('>> getClipAsInstance:clip.name ' + clip.name);
     if (pdClips[clip.name]) {
       parents = pdClips[clip.name].parents;
       hierarchy = pdClips[clip.name].hierarchy;
@@ -623,7 +622,7 @@ $.pype = {
     }
 
     var interpretation = clip.projectItem.getFootageInterpretation();
-    $.pype.log('>> getClipAsInstance:interpretation ' + interpretation)
+    $.pype.log('>> getClipAsInstance:interpretation ' + interpretation);
     var instance = {};
     instance.publish = true;
     instance.family = 'clip';
@@ -651,8 +650,10 @@ $.pype = {
     metadata['ppro.clip.start'] = clip.start.seconds;
     metadata['ppro.clip.end'] = clip.end.seconds;
 
+    $.pype.log('>> getClipAsInstance:reprs ' + JSON.stringify(instance.subsetToRepresentations));
+
     // set metadata to instance
-    instance['metadata'] = metadata;
+    instance.metadata = metadata;
     return instance;
   },
   getClipsForLoadingSubsets: function (subsetName) {
@@ -722,10 +723,11 @@ $.pype = {
   getSelectedClipsAsInstances: function () {
     // get project script version and add it into clip instance data
     var version = $.pype.getWorkFileVersion();
-    $.writeln('__ getSelectedClipsAsInstances:version: ' + version);
+    $.pype.log('__ getSelectedClipsAsInstances:version: ' + version);
 
     var pypeData = $.pype.getSequencePypeMetadata(app.project.activeSequence);
-    $.pype.log('__ getSelectedClipsAsInstances:typeof(pypeData): ' + typeof(pypeData));
+    $.pype.log(
+      '__ getSelectedClipsAsInstances:typeof(pypeData): ' + typeof (pypeData));
     $.pype.log('__ getSelectedClipsAsInstances:pypeData: ' + JSON.stringify(pypeData));
 
     // check if the pype data are available and if not alert the user
@@ -773,10 +775,10 @@ $.pype = {
     try {
       var sequence = app.project.activeSequence;
       var settings = sequence.getSettings();
-      $.pype.log('__ stagingDir: ' + stagingDir)
-      $.pype.log('__ audioOnly: ' + audioOnly)
-      $.pype.log('__ sequence: ' + sequence)
-      $.pype.log('__ settings: ' + settings)
+      $.pype.log('__ stagingDir: ' + stagingDir);
+      $.pype.log('__ audioOnly: ' + audioOnly);
+      $.pype.log('__ sequence: ' + sequence);
+      $.pype.log('__ settings: ' + settings);
       var request = {
         stagingDir: stagingDir,
         currentFile: $.pype.convertPathString(app.project.path),
@@ -785,7 +787,6 @@ $.pype = {
         hostVersion: $.getenv('AVALON_APP_NAME').split('_')[1],
         cwd: $.pype.convertPathString(app.project.path).split('\\').slice(0, -1).join('\\')
       };
-      $.pype.log('__ request: ' + request)
       var sendInstances = [];
       var instances = $.pype.getSelectedClipsAsInstances();
 
@@ -793,8 +794,8 @@ $.pype = {
       if (instances === null) {
         return null;
       }
-
-      if (audioOnly) {
+      if (audioOnly === true) {
+        $.pype.log('? looping if audio True');
         for (var i = 0; i < instances.length; i++) {
           var subsetToRepresentations = instances[i].subsetToRepresentations;
           var newRepr = {};
@@ -810,7 +811,7 @@ $.pype = {
       } else {
         sendInstances = instances;
       }
-      request['instances'] = sendInstances;
+      request.instances = sendInstances;
       return JSON.stringify(request);
     } catch (error) {
       $.pype.log('error: ' + error);
@@ -851,7 +852,7 @@ $.pype = {
     return file;
   },
   encodeRepresentation: function (request) {
-    $.pype.log('__ request: ' + request);
+    $.pype.log('__ request: ' + JSON.stringify(request));
     var waitFile = '';
     var sequence = app.project.activeSequence
     // get original timeline in out points
@@ -868,7 +869,7 @@ $.pype = {
 
     // instances
     var instances = request.instances;
-    $.pype.log('__ instances: ' + instances);
+    $.pype.log('__ instances: ' + JSON.stringify(instances));
 
     for (var i = 0; i < instances.length; i++) {
       // generate data for instance.subset representations
@@ -882,13 +883,14 @@ $.pype = {
         var exclude = ['workfile', 'thumbnail'];
         if (!include(exclude, key)) {
           instances[i].files.push(
-            $.pype.render(request.stagingDir,
-                          key,
-                          subsetToRepresentations[key],
-                          instances[i].name,
-                          instances[i].version,
-                          instances[i].metadata['ppro.clip.start'],
-                          instances[i].metadata['ppro.clip.end']));
+            $.pype.render(
+              request.stagingDir,
+              key,
+              subsetToRepresentations[key],
+              instances[i].name,
+              instances[i].version,
+              instances[i].metadata['ppro.clip.start'],
+              instances[i].metadata['ppro.clip.end']));
 
           waitFile = request.stagingDir + '/' + instances[i].files[(instances[i].files.length - 1)];
         } else if (key === 'thumbnail') {
