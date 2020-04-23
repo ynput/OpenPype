@@ -3,21 +3,32 @@
 
 class Pype {
     constructor() {
-        var self = this;
+        
         this.csi = new CSInterface();
         this.outputId = $("#output");
 
         this.rootFolderPath = this.csi.getSystemPath(SystemPath.EXTENSION);
         var extensionRoot = this.rootFolderPath + "/jsx/";
         this.progress("Loading premiere.jsx", true);
-        this.csi.evalScript('$.evalFile("' + extensionRoot + '/PPRO/Premiere.jsx");');
-        this.progress("Loading pype.jsx", true);
-        this.csi.evalScript('$.evalFile("' + extensionRoot + 'pype.jsx");');
-        this.progress("Loading batchRenamer.jsx", true);
-        this.csi.evalScript('$.evalFile("' + extensionRoot + 'batchRenamer.jsx");');
-
+        this.csi.evalScript('$.evalFile("' + extensionRoot + '/PPRO/Premiere.jsx");', () => {
+            this.progress("Loading pype.jsx", true);
+            this.csi.evalScript('$.evalFile("' + extensionRoot + 'pype.jsx");', () => {
+                this.progress("Loading batchRenamer.jsx", true);
+                this.csi.evalScript('$.evalFile("' + extensionRoot + 'batchRenamer.jsx");', () => {
+                    this._initialize();
+                });
+            });
+        });
+    }
+        
+    _initialize() {
+        var self = this;
         // get environment
         this.csi.evalScript('$.pype.getProjectFileData();', (result) => {
+            if (result == "EvalScript error.") {
+                this.error("Cannot get project data.");
+                throw "Cannot get project data";
+            }
             process.env.EXTENSION_PATH = this.rootFolderPath;
             this.env = process.env;
             var resultData = JSON.parse(result);
@@ -46,8 +57,8 @@ class Pype {
     rename () {
         let $renameId = $('#rename');
         let data = {};
-        data.ep = $renameId('input[name=episode]').val();
-        data.epSuffix = $renameId('input[name=ep_suffix]').val();
+        data.ep = $('input[name=episode]', $renameId).val();
+        data.epSuffix = $('input[name=ep_suffix]', $renameId).val();
 
         if (!data.ep) {
           this.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode code' + '")');
@@ -90,10 +101,10 @@ class Pype {
      */
     _gatherPublishUI() {
         let publishId = $('#publish');
-        let uiVersionUp = publishId.querySelector('input[name=version-up]');
-        let uiAudioOnly = publishId.querySelector('input[name=audio-only]');
-        let uiJsonSendPath = publishId.querySelector('input[name=send-path]');
-        let uiJsonGetPath = publishId.querySelector('input[name=get-path]');
+        let uiVersionUp = $('input[name=version-up]', publishId);
+        let uiAudioOnly = $('input[name=audio-only]', publishId);
+        let uiJsonSendPath = $('input[name=send-path]', publishId);
+        let uiJsonGetPath = $('input[name=get-path]', publishId);
         this.publishUI = {
             "versionUp": uiVersionUp.prop('checked'),
             "audioOnly": uiAudioOnly.prop('checked'),
@@ -148,9 +159,11 @@ class Pype {
                 let jsonContent = JSON.parse(result);
                 if (self.publishUI.jsonSendPath == "") {
                     self.publishUI.jsonSendPath = self.stagingDir + "\\publishSend.json";
+                    $('#publish input[name=send-path]').val(self.publishUI.jsonSendPath);
                 }
                 if (self.publishUI.jsonGetPath == "") {
-                    self.publishUI.jsonGetPath = self.stagingDir + "\\publishGet.json";
+                    self.publishUI.jsonGetPath = self.stagingDir + "_publishGet.json";
+                    $('#publish input[name=get-path]').val(self.publishUI.jsonGetPath);
                 }
                 jsonfile.writeFile(self.publishUI.jsonSendPath, jsonContent);
                 resolve(result);
@@ -192,9 +205,6 @@ class Pype {
                     this._encodeRepresentation(JSON.parse(result))
                     .then(result => {
                       console.log('printing result from enconding.. ' + result);
-                      // here jsonSetPath and jsonGetPath are set to gui
-                      this.uiJsonSendPath.value = this.publishUI.jsonSendPath;
-                      this.uiJsonGetPath.value = this.publishUI.jsonGetPath;
                     })
                     .catch(error => {
                         this.error(`failed to encode: ${error}`);
@@ -203,6 +213,10 @@ class Pype {
                     this.error(`failed to publish: ${error}`);
                 });
                 this.progress("waiting for result", true);
+                // here jsonSetPath and jsonGetPath are set to gui
+                $('#publish input[name=send-path]').val("");
+                $('#publish input[name=get-path]').val("");
+
             });
         } else {
             // load request

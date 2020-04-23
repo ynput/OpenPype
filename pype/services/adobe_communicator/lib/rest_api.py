@@ -70,7 +70,7 @@ class AdobeRestApi(RestApi):
             log.info("Pyblish have stopped")
 
             return CallbackResult(
-                {"return_data_path": output_data_path}
+                data={"return_data_path": output_data_path}
             )
 
         except Exception:
