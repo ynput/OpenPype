@@ -148,7 +148,7 @@ class Pype {
                     self.publishUI.jsonSendPath = self.stagingDir + "\\publishSend.json";
                 };
                 if (self.publishUI.jsonGetPath == "") {
-                    self.publishUI.jsonGetPath = self.stagingDir + "\\publishGet.json";
+                    self.publishUI.jsonGetPath = self.stagingDir + "_publishGet.json";
                 }
                 jsonfile.writeFile(self.publishUI.jsonSendPath, jsonContent);
                 resolve(result);
@@ -201,6 +201,9 @@ class Pype {
                 }, error => {
                     console.error(`failed to publish: ${error}`);
                 });
+                // here jsonSetPath and jsonGetPath are set to gui
+                this.uiJsonSendPath.value = "";
+                this.uiJsonGetPath.value = "";
                 console.log("waiting for result");
             });
         } else {
