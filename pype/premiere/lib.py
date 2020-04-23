@@ -95,11 +95,14 @@ def setup(env=None):
     if not test_rest_api_server():
         return
 
-    # remove cep_cache from user temp dir
-    clearing_caches_ui()
+    if not env.get("installed_zxp"):
+        # remove cep_cache from user temp dir
+        clearing_caches_ui()
 
-    # synchronize extensions
-    extensions_sync()
+        # synchronize extensions
+        extensions_sync()
+    else:
+        log.info("Extensions installed as `.zxp`...")
 
     log.info("Premiere Pype wrapper has been installed")
 
@@ -130,6 +133,8 @@ def extensions_sync():
     # synchronize all extensions
     for name, src, dst in process_pairs:
         if not os.path.isdir(src):
+            continue
+        if name not in _clearing_cache:
             continue
         if not os.path.exists(dst):
             os.makedirs(dst, mode=0o777)
