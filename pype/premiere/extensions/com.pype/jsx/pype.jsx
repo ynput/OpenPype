@@ -900,6 +900,7 @@ $.pype = {
         };
       }
     }
+    app.encoder.startBatch();
     request.waitingFor = waitFile;
     // set back original in/out point on timeline
     app.project.activeSequence.setInPoint(origInPoint);

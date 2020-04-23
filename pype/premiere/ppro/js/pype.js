@@ -1,17 +1,19 @@
-/*global CSInterface, $, PypeRestApiClient, SystemPath, document */
+/*global CSInterface, $, PypeRestApiClient, SystemPath */
 /* eslint-env node, es2017 */
 
 class Pype {
     constructor() {
         var self = this;
         this.csi = new CSInterface();
+        this.outputId = $("#output");
+
         this.rootFolderPath = this.csi.getSystemPath(SystemPath.EXTENSION);
         var extensionRoot = this.rootFolderPath + "/jsx/";
-        console.info("Loading premiere.jsx");
+        this.progress("Loading premiere.jsx", true);
         this.csi.evalScript('$.evalFile("' + extensionRoot + '/PPRO/Premiere.jsx");');
-        console.info("Loading pype.jsx");
+        this.progress("Loading pype.jsx", true);
         this.csi.evalScript('$.evalFile("' + extensionRoot + 'pype.jsx");');
-        console.info("Loading batchRenamer.jsx");
+        this.progress("Loading batchRenamer.jsx", true);
         this.csi.evalScript('$.evalFile("' + extensionRoot + 'batchRenamer.jsx");');
 
         // get environment
@@ -24,13 +26,13 @@ class Pype {
             }
             this.csi.evalScript('$.pype.setEnvs(' + JSON.stringify(self.env) + ')');
             this.pras = new PypeRestApiClient(this.env);
-            console.info(`Getting presets for ${this.env.AVALON_PROJECT}`);
+            this.progress(`Getting presets for ${this.env.AVALON_PROJECT}`, true);
             this.presets = this.pras.get_presets(this.env.AVALON_PROJECT)
             .then((presets) => {
-                console.info("transferring presets to jsx")
+                this.progress("transferring presets to jsx", true)
                 this.presets = presets;
                 this.csi.evalScript('$.pype.setProjectPreset(' + JSON.stringify(presets) + ');', () => {
-                    console.log("done");
+                    this.progress("done", true);
                     // bind encoding jobs event listener
                     this.csi.addEventListener("pype.EncoderJobsComplete", this._encodingDone);
 
@@ -42,10 +44,10 @@ class Pype {
     }
 
     rename () {
-        let renameId = document.querySelector('#rename');
+        let $renameId = $('#rename');
         let data = {};
-        data.ep = renameId.querySelector('input[name=episode]').value;
-        data.epSuffix = renameId.querySelector('input[name=ep_suffix]').value;
+        data.ep = $renameId('input[name=episode]').val();
+        data.epSuffix = $renameId('input[name=ep_suffix]').val();
 
         if (!data.ep) {
           this.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode code' + '")');
@@ -57,10 +59,10 @@ class Pype {
           return;
         }
 
-        console.log(`Doing rename ${data.ep} | ${data.epSuffix}`);
+        this.progress(`Doing rename [ ${data.ep} ] | [ ${data.epSuffix} ]`);
         this.csi.evalScript(
           'BatchRenamer.renameTargetedTextLayer(' + JSON.stringify(data) + ' );', (result) => {
-            console.info(`Renaming result: ${result}`);
+            this.progress(`Renaming result: ${result}`, true);
           });
       }
 
@@ -87,16 +89,16 @@ class Pype {
      * Gather all user UI options for publishing
      */
     _gatherPublishUI() {
-        this.publishId = document.querySelector('#publish');
-        this.uiVersionUp = this.publishId.querySelector('input[name=version-up]');
-        this.uiAudioOnly = this.publishId.querySelector('input[name=audio-only]');
-        this.uiJsonSendPath = this.publishId.querySelector('input[name=send-path]');
-        this.uiJsonGetPath = this.publishId.querySelector('input[name=get-path]');
+        let publishId = $('#publish');
+        let uiVersionUp = publishId.querySelector('input[name=version-up]');
+        let uiAudioOnly = publishId.querySelector('input[name=audio-only]');
+        let uiJsonSendPath = publishId.querySelector('input[name=send-path]');
+        let uiJsonGetPath = publishId.querySelector('input[name=get-path]');
         this.publishUI = {
-            "versionUp": this.uiVersionUp.checked,
-            "audioOnly": this.uiAudioOnly.checked,
-            "jsonSendPath": this.uiJsonSendPath.value,
-            "jsonGetPath": this.uiJsonGetPath.value
+            "versionUp": uiVersionUp.prop('checked'),
+            "audioOnly": uiAudioOnly.prop('checked'),
+            "jsonSendPath": uiJsonSendPath.val(),
+            "jsonGetPath": uiJsonGetPath.val()
         }
     }
 
@@ -120,18 +122,18 @@ class Pype {
 
         this.stagingDir = this._getStagingDir();
 
-        console.info(`Creating directory [ ${this.stagingDir} ]`);
+        this.progress(`Creating directory [ ${this.stagingDir} ]`, true);
 
-        mkdirp.sync(this.stagingDir)
+        mkdirp.sync(this.stagingDir);
 
         let stagingDir = Pype.convertPathString(this.stagingDir);
         const destination = Pype.convertPathString(
             path.join(stagingDir, projectData.projectfile));
 
-        console.info(`Copying files from [ ${projectData.projectpath} ] -> [ ${destination} ]`);
+        this.progress(`Copying files from [ ${projectData.projectpath} ] -> [ ${destination} ]`, true);
         fs.copyFileSync(projectData.projectpath, destination);
 
-        console.info("Project files copied.")
+        this.progress("Project files copied.", true);
     }
 
     _encodeRepresentation(repre) {
@@ -141,12 +143,12 @@ class Pype {
                 if (result == "EvalScript error.") {
                     reject(result);
                 }
-                console.log("encoding submitted ...");
+                self.progress("encoding submitted ...", true);
                 const jsonfile = require('jsonfile');
                 let jsonContent = JSON.parse(result);
                 if (self.publishUI.jsonSendPath == "") {
                     self.publishUI.jsonSendPath = self.stagingDir + "\\publishSend.json";
-                };
+                }
                 if (self.publishUI.jsonGetPath == "") {
                     self.publishUI.jsonGetPath = self.stagingDir + "\\publishGet.json";
                 }
@@ -159,10 +161,9 @@ class Pype {
     _getPyblishRequest(stagingDir) {
         var self = this;
         return new Promise(function(resolve, reject) {
-            console.log(`Called with ${stagingDir} and ${self.publishUI.audioOnly}`);
             self.csi.evalScript("$.pype.getPyblishRequest('" + stagingDir + "', '" + self.publishUI.audioOnly + "');", (result) => {
                 if (result === "null" || result === "EvalScript error.") {
-                    console.error(`cannot create publish request data ${result}`);
+                    self.error(`cannot create publish request data ${result}`);
                     reject("cannot create publish request data");
                 } else {
                     console.log(`Request generated: ${result}`);
@@ -178,16 +179,16 @@ class Pype {
             // path is empty, so we first prepare data for publishing
             // and create json
 
-            console.log("Gathering project data ...")
+            this.progress("Gathering project data ...", true)
             this.csi.evalScript('$.pype.getProjectFileData();', (result) => {
                 this._copyProjectFiles(JSON.parse(result))
                 // create request and start encoding
                 // after that is done, we should recieve event and continue in
                 // _encodingDone()
-                console.log("Creating request ...")
+                this.progress("Creating request ...", true)
                 this._getPyblishRequest(Pype.convertPathString(this.stagingDir))
                 .then(result => {
-                    console.log("Encoding ...");
+                    this.progress("Encoding ...", true);
                     this._encodeRepresentation(JSON.parse(result))
                     .then(result => {
                       console.log('printing result from enconding.. ' + result);
@@ -196,12 +197,12 @@ class Pype {
                       this.uiJsonGetPath.value = this.publishUI.jsonGetPath;
                     })
                     .catch(error => {
-                        console.error(`failed to encode: ${error}`);
+                        this.error(`failed to encode: ${error}`);
                     });
                 }, error => {
-                    console.error(`failed to publish: ${error}`);
+                    this.error(`failed to publish: ${error}`);
                 });
-                console.log("waiting for result");
+                this.progress("waiting for result", true);
             });
         } else {
             // load request
@@ -212,11 +213,11 @@ class Pype {
                 if (fs.existsSync(result.return_data_path)) {
                     this.csi.evalScript('$.pype.dumpPublishedInstancesToMetadata(' + JSON.stringify(result) + ');');
                     if (this.publishUI.versionUp) {
-                        console.log('Saving new version of the project file');
+                        this.progress('Saving new version of the project file');
                         this.csi.evalScript('$.pype.versionUpWorkFile();');
                     }
                 } else {
-                    console.error("Publish has not finished correctly")
+                    this.error("Publish has not finished correctly")
                     throw "Publish has not finished correctly";
                 }
             });
@@ -225,7 +226,7 @@ class Pype {
 
     _encodingDone(event) {
         // this will be global in this context
-        console.log("Event recieved ...");
+        this.pype.progress("Event recieved ...", true);
         var dataToPublish = {
             "adobePublishJsonPathSend": this.pype.publishUI.jsonSendPath,
             "adobePublishJsonPathGet": this.pype.publishUI.jsonGetPath,
@@ -239,25 +240,39 @@ class Pype {
             "AVALON_APP_NAME": this.pype.env.AVALON_APP_NAME
         }
 
-        console.log("Preparing publish ...");
+        this.pype.progress("Preparing publish ...", true);
         console.log(JSON.stringify(dataToPublish));
         this.pype.pras.publish(JSON.stringify(dataToPublish))
         .then((result) => {
             const fs = require('fs');
             if (fs.existsSync(result.return_data_path)) {
                 if (this.pype.publishUI.versionUp) {
-                    console.log('Saving new version of the project file');
+                    this.pyp.progress('Saving new version of the project file', true);
                     this.pype.csi.evalScript('$.pype.versionUpWorkFile();');
                 }
-                console.log("Publishing done.");
+                this.pype.progress("Publishing done.", true);
             } else {
-                console.error("Publish has not finished correctly")
+                this.pype.error("Publish has not finished correctly")
                 throw "Publish has not finished correctly";
             }
         }, (error) => {
-            console.error("Invalid response from server");
+            this.pype.error("Invalid response from server");
             console.error(error);
         });
+    }
+
+    error(message) {
+        this.outputId.html(message);
+        this.outputId.addClass("error");
+        console.error(message);
+    }
+
+    progress(message, append=false) {
+        this.outputId.removeClass("error");
+        if (append) {
+            this.outputId.append(message + "<br/>");
+        }
+        console.info(message);
     }
 }
 $(function() {
