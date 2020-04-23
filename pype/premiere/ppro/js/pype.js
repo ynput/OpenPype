@@ -2,8 +2,11 @@
 /* eslint-env node, es2017 */
 
 class Pype {
+
+    /**
+     * Initialize important properties and load necessary JSX files.
+     */
     constructor() {
-        
         this.csi = new CSInterface();
         this.outputId = $("#output");
 
@@ -54,6 +57,9 @@ class Pype {
         });
     }
 
+    /**
+     * Wrapper function over clip renamer
+     */
     rename () {
         let $renameId = $('#rename');
         let data = {};
@@ -275,12 +281,21 @@ class Pype {
         });
     }
 
+    /**
+     * Display error message in div
+     * @param {String} message 
+     */
     error(message) {
         this.outputId.html(message);
         this.outputId.addClass("error");
         console.error(message);
     }
 
+    /**
+     * Display message in output div. If append is set, new message is appended to rest with <br>
+     * @param {String} message 
+     * @param {Boolean} append 
+     */
     progress(message, append=false) {
         this.outputId.removeClass("error");
         if (append) {
