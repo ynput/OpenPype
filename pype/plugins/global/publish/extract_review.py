@@ -65,13 +65,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
             return
 
         instance_families = self.families_from_instance(instance)
-        profile_outputs = self.filter_outputs_by_families(
+        _profile_outputs = self.filter_outputs_by_families(
             profile, instance_families
         )
-        if not profile_outputs:
+        if not _profile_outputs:
             return
 
-        instance_data = None
+        # Store `filename_suffix` to save to save arguments
+        profile_outputs = []
+        for filename_suffix, definition in _profile_outputs.items():
+            definition["filename_suffix"] = filename_suffix
+            profile_outputs.append(definition)
 
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
@@ -97,23 +101,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if not outputs:
                 continue
 
-            staging_dir = repre["stagingDir"]
-
             # Prepare instance data.
             # NOTE Till this point it is not required to have set most
             # of keys in instance data. So publishing won't crash if plugin
             # won't get here and instance miss required keys.
-            if instance_data is None:
-                instance_data = self.prepare_instance_data(instance)
-
-            for filename_suffix, output_def in outputs.items():
-
+            for output_def in outputs:
                 # Create copy of representation
                 new_repre = copy.deepcopy(repre)
-
-                output_ext = output_def.get("ext") or "mov"
-                if output_ext.startswith("."):
-                    output_ext = output_ext[1:]
 
                 additional_tags = output_def.get("tags") or []
                 # TODO new method?
@@ -128,151 +122,358 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         new_repre["tags"].append(tag)
 
                 self.log.debug(
-                    "New representation ext: \"{}\" | tags: `{}`".format(
-                        output_ext, new_repre["tags"]
-                    )
+                    "New representation tags: `{}`".format(new_repre["tags"])
                 )
 
-                # Output is image file sequence witht frames
-                # TODO change variable to `output_is_sequence`
-                # QUESTION Shall we do it in opposite? Expect that if output
-                # extension is image format and input is sequence or video
-                # format then do sequence and single frame only if tag is
-                # "single-frame" (or similar)
-                # QUESTION Should we check for "sequence" only in additional
-                # tags or in all tags of new representation
-                is_sequence = (
-                    "sequence" in additional_tags
-                    and (output_ext in self.image_exts)
-                )
-
-                # no handles switch from profile tags
-                no_handles = "no-handles" in additional_tags
-
-                # TODO GLOBAL ISSUE - Find better way how to find out if input
-                # is sequence. Issues( in theory):
-                # - there may be multiple files ant not be sequence
-                # - remainders are not checked at all
-                # - there can be more than one collection
-                if isinstance(repre["files"], (tuple, list)):
-                    collections, remainder = clique.assemble(repre["files"])
-
-                    full_input_path = os.path.join(
-                        staging_dir,
-                        collections[0].format("{head}{padding}{tail}")
-                    )
-
-                    filename = collections[0].format("{head}")
-                    if filename.endswith("."):
-                        filename = filename[:-1]
-                else:
-                    full_input_path = os.path.join(
-                        staging_dir, repre["files"]
-                    )
-                    filename = os.path.splitext(repre["files"])[0]
-
-                # QUESTION This breaks Anatomy template system is it ok?
-                # QUESTION How do we care about multiple outputs with same
-                # extension? (Expect we don't...)
-                # - possible solution add "<{review_suffix}>" into templates
-                # but that may cause issues when clients remove that.
-                if is_sequence:
-                    filename_base = filename + "_{0}".format(filename_suffix)
-                    repr_file = filename_base + ".%08d.{0}".format(
-                        output_ext
-                    )
-                    new_repre["sequence_file"] = repr_file
-                    full_output_path = os.path.join(
-                        staging_dir, filename_base, repr_file
-                    )
-
-                else:
-                    repr_file = filename + "_{0}.{1}".format(
-                        filename_suffix, output_ext
-                    )
-                    full_output_path = os.path.join(staging_dir, repr_file)
-
-                self.log.info("Input path {}".format(full_input_path))
-                self.log.info("Output path {}".format(full_output_path))
-
-                # QUESTION Why the hell we do this?
+                # QUESTION Why the hell we do this, adding tags to families?
                 # add families
                 for tag in additional_tags:
                     if tag not in instance.data["families"]:
                         instance.data["families"].append(tag)
 
-                ffmpeg_args = self._ffmpeg_arguments(
-                    output_def, instance, instance_data
-                )
+                ffmpeg_args = self._ffmpeg_arguments(output_def, instance)
 
-    def _ffmpeg_arguments(output_def, instance, repre, instance_data):
-        # TODO split into smaller methods and use these variable only there
-        fps = instance_data["fps"]
-        frame_start = instance_data["frame_start"]
-        frame_end = instance_data["frame_end"]
-        handle_start = instance_data["handle_start"]
-        handle_end = instance_data["handle_end"]
-        frame_start_handle = frame_start - handle_start,
-        frame_end_handle = frame_end + handle_end,
-        pixel_aspect = instance_data["pixel_aspect"]
-        resolution_width = instance_data["resolution_width"]
-        resolution_height = instance_data["resolution_height"]
+    def repre_has_sequence(self, repre):
+        # TODO GLOBAL ISSUE - Find better way how to find out if input
+        # is sequence. Issues( in theory):
+        # - there may be multiple files ant not be sequence
+        # - remainders are not checked at all
+        # - there can be more than one collection
+        return isinstance(repre["files"], (list, tuple))
 
+    def _ffmpeg_arguments(self, output_def, instance, repre):
+        temp_data = self.prepare_temp_data(instance)
+
+        # NOTE used different key for final frame start/end to not confuse
+        # those who don't know what
+        # - e.g. "frame_start_output"
+        # QUESTION should we use tags ONLY from output definition?
+        # - In that case `output_def.get("tags") or []` should replace
+        #   `repre["tags"]`.
+        # Change output frames when output should be without handles
+        no_handles = "no-handles" in repre["tags"]
+        if no_handles:
+            temp_data["output_frame_start"] = temp_data["frame_start"]
+            temp_data["output_frame_end"] = temp_data["frame_end"]
+
+        # TODO this may hold class which may be easier to work with
         # Get FFmpeg arguments from profile presets
-        output_ffmpeg_args = output_def.get("ffmpeg_args") or {}
-        output_ffmpeg_input = output_ffmpeg_args.get("input") or []
-        output_ffmpeg_filters = output_ffmpeg_args.get("filters") or []
-        output_ffmpeg_output = output_ffmpeg_args.get("output") or []
+        out_def_ffmpeg_args = output_def.get("ffmpeg_args") or {}
 
-        ffmpeg_input_args = []
-        ffmpeg_output_args = []
+        ffmpeg_input_args = out_def_ffmpeg_args.get("input") or []
+        ffmpeg_output_args = out_def_ffmpeg_args.get("output") or []
+        ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
+        ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
 
-        # Override output file
+        # Add argument to override output file
         ffmpeg_input_args.append("-y")
-        # Add input args from presets
-        ffmpeg_input_args.extend(output_ffmpeg_input)
 
-        if isinstance(repre["files"], list):
-            # QUESTION What is sence of this?
-            if frame_start_handle != repre.get(
-                "detectedStart", frame_start_handle
-            ):
-                frame_start_handle = repre.get("detectedStart")
+        if no_handles:
+            # NOTE used `-frames:v` instead of `-t`
+            duration_frames = (
+                temp_data["output_frame_end"]
+                - temp_data["output_frame_start"]
+                + 1
+            )
+            ffmpeg_output_args.append("-frames:v {}".format(duration_frames))
 
-            # exclude handle if no handles defined
-            if no_handles:
-                frame_start_handle = frame_start
-                frame_end_handle = frame_end
+        if self.repre_has_sequence(repre):
+            # NOTE removed "detectedStart" key handling (NOT SET)
 
+            # Set start frame
             ffmpeg_input_args.append(
-                "-start_number {0} -framerate {1}".format(
-                    frame_start_handle, fps))
-        else:
-            if no_handles:
-                # QUESTION why we are using seconds instead of frames?
-                start_sec = float(handle_start) / fps
-                ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
-                frame_start_handle = frame_start
-                frame_end_handle = frame_end
+                "-start_number {}".format(temp_data["output_frame_start"])
+            )
 
+            # TODO add fps mapping `{fps: fraction}`
+            # - e.g.: {
+            #     "25": "25/1",
+            #     "24": "24/1",
+            #     "23.976": "24000/1001"
+            # }
+            # Add framerate to input when input is sequence
+            ffmpeg_input_args.append(
+                "-framerate {}".format(temp_data["fps"])
+            )
 
-    def prepare_instance_data(self, instance):
+        elif no_handles:
+            # QUESTION Shall we change this to use filter:
+            # `select="gte(n\,handle_start),setpts=PTS-STARTPTS`
+            # Pros:
+            #   1.) Python is not good at float operation
+            #   2.) FPS on instance may not be same as input's
+            start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
+            ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
+
+        full_input_path, full_output_path = self.input_output_paths(
+            repre, output_def
+        )
+        ffmpeg_input_args.append("-i \"{}\"".format(full_input_path))
+
+        # Add audio arguments if there are any
+        audio_in_args, audio_filters, audio_out_args = self.audio_args(
+            instance, temp_data
+        )
+        ffmpeg_input_args.extend(audio_in_args)
+        ffmpeg_audio_filters.extend(audio_filters)
+        ffmpeg_output_args.extend(audio_out_args)
+
+        # In case audio is longer than video.
+        # QUESTION what if audio is shoter than video?
+        if "-shortest" not in ffmpeg_output_args:
+            ffmpeg_output_args.append("-shortest")
+
+        ffmpeg_output_args.append("\"{}\"".format(full_output_path))
+
+    def prepare_temp_data(self, instance):
+        frame_start = instance.data["frameStart"]
+        handle_start = instance.data.get(
+            "handleStart",
+            instance.context.data["handleStart"]
+        )
+        frame_end = instance.data["frameEnd"]
+        handle_end = instance.data.get(
+            "handleEnd",
+            instance.context.data["handleEnd"]
+        )
+
+        frame_start_handle = frame_start - handle_start
+        frame_end_handle = frame_end + handle_end
+
         return {
             "fps": float(instance.data["fps"]),
-            "frame_start": instance.data["frameStart"],
-            "frame_end": instance.data["frameEnd"],
-            "handle_start": instance.data.get(
-                "handleStart",
-                instance.context.data["handleStart"]
-            ),
-            "handle_end": instance.data.get(
-                "handleEnd",
-                instance.context.data["handleEnd"]
-            ),
+            "frame_start": frame_start,
+            "frame_end": frame_end,
+            "handle_start": handle_start,
+            "handle_end": handle_end,
+            "frame_start_handle": frame_start_handle,
+            "frame_end_handle": frame_end_handle,
+            "output_frame_start": frame_start_handle,
+            "output_frame_end": frame_end_handle,
             "pixel_aspect": instance.data.get("pixelAspect", 1),
             "resolution_width": instance.data.get("resolutionWidth"),
             "resolution_height": instance.data.get("resolutionHeight"),
         }
+
+    def input_output_paths(self, repre, output_def):
+        staging_dir = repre["stagingDir"]
+
+        # TODO Define if extension should have dot or not
+        output_ext = output_def.get("ext") or "mov"
+        if output_ext.startswith("."):
+            output_ext = output_ext[1:]
+
+        self.log.debug(
+            "New representation ext: `{}`".format(output_ext)
+        )
+
+        # Output is image file sequence witht frames
+        # QUESTION Shall we do it in opposite? Expect that if output
+        # extension is image format and input is sequence or video
+        # format then do sequence and single frame only if tag is
+        # "single-frame" (or similar)
+        # QUESTION should we use tags ONLY from output definition?
+        # - In that case `output_def.get("tags") or []` should replace
+        #   `repre["tags"]`.
+        output_is_sequence = (
+            "sequence" in repre["tags"]
+            and (output_ext in self.image_exts)
+        )
+
+        if self.repre_has_sequence(repre):
+            collections, remainder = clique.assemble(repre["files"])
+
+            full_input_path = os.path.join(
+                staging_dir,
+                collections[0].format("{head}{padding}{tail}")
+            )
+
+            filename = collections[0].format("{head}")
+            if filename.endswith("."):
+                filename = filename[:-1]
+        else:
+            full_input_path = os.path.join(
+                staging_dir, repre["files"]
+            )
+            filename = os.path.splitext(repre["files"])[0]
+
+        filename_suffix = output_def["filename_suffix"]
+        # QUESTION This breaks Anatomy template system is it ok?
+        # QUESTION How do we care about multiple outputs with same
+        # extension? (Expect we don't...)
+        # - possible solution add "<{review_suffix}>" into templates
+        # but that may cause issues when clients remove that (and it's
+        # ugly).
+        if output_is_sequence:
+            filename_base = "{}_{}".format(
+                filename, filename_suffix
+            )
+            repr_file = "{}.%08d.{}".format(
+                filename_base, output_ext
+            )
+
+            repre["sequence_file"] = repr_file
+            full_output_path = os.path.join(
+                staging_dir, filename_base, repr_file
+            )
+
+        else:
+            repr_file = "{}_{}.{}".format(
+                filename, filename_suffix, output_ext
+            )
+            full_output_path = os.path.join(staging_dir, repr_file)
+
+        self.log.debug("Input path {}".format(full_input_path))
+        self.log.debug("Output path {}".format(full_output_path))
+
+        return full_input_path, full_output_path
+
+    def audio_args(self, instance, temp_data):
+        audio_in_args = []
+        audio_filters = []
+        audio_out_args = []
+        audio_inputs = instance.data.get("audio")
+        if not audio_inputs:
+            return audio_in_args, audio_filters, audio_out_args
+
+        for audio in audio_inputs:
+            # NOTE modified, always was expected "frameStartFtrack" which is
+            # STANGE?!!!
+            # TODO use different frame start!
+            offset_seconds = 0
+            frame_start_ftrack = instance.data.get("frameStartFtrack")
+            if frame_start_ftrack is not None:
+                offset_frames = frame_start_ftrack - audio["offset"]
+                offset_seconds = offset_frames / temp_data["fps"]
+
+            if offset_seconds > 0:
+                audio_in_args.append(
+                    "-ss {}".format(offset_seconds)
+                )
+            elif offset_seconds < 0:
+                audio_in_args.append(
+                    "-itsoffset {}".format(abs(offset_seconds))
+                )
+
+            audio_in_args.append("-i \"{}\"".format(audio["filename"]))
+
+        # NOTE: These were changed from input to output arguments.
+        # NOTE: value in "-ac" was hardcoded to 2, changed to audio inputs len.
+        # Need to merge audio if there are more than 1 input.
+        if len(audio_inputs) > 1:
+            audio_out_args.append("-filter_complex amerge")
+            audio_out_args.append("-ac {}".format(len(audio_inputs)))
+
+        return audio_in_args, audio_filters, audio_out_args
+
+    def resolution_ratios(self, temp_data, output_def, repre):
+        output_width = output_def.get("width")
+        output_height = output_def.get("height")
+        output_pixel_aspect = output_def.get("aspect_ratio")
+        output_letterbox = output_def.get("letter_box")
+
+        # defining image ratios
+        resolution_ratio = (
+            (float(resolution_width) * pixel_aspect) / resolution_height
+        )
+        delivery_ratio = float(self.to_width) / float(self.to_height)
+        self.log.debug("resolution_ratio: `{}`".format(resolution_ratio))
+        self.log.debug("delivery_ratio: `{}`".format(delivery_ratio))
+
+        # shorten two decimals long float number for testing conditions
+        resolution_ratio_test = float("{:0.2f}".format(resolution_ratio))
+        delivery_ratio_test = float("{:0.2f}".format(delivery_ratio))
+
+        # get scale factor
+        if resolution_ratio_test < delivery_ratio_test:
+            scale_factor = (
+                float(self.to_width) / (resolution_width * pixel_aspect)
+            )
+        else:
+            scale_factor = (
+                float(self.to_height) / (resolution_height * pixel_aspect)
+            )
+
+        self.log.debug("__ scale_factor: `{}`".format(scale_factor))
+
+        filters = []
+        # letter_box
+        if output_letterbox:
+            ffmpeg_width = self.to_width
+            ffmpeg_height = self.to_height
+            if "reformat" not in repre["tags"]:
+                output_letterbox /= pixel_aspect
+                if resolution_ratio_test != delivery_ratio_test:
+                    ffmpeg_width = resolution_width
+                    ffmpeg_height = int(
+                        resolution_height * pixel_aspect)
+            else:
+                if resolution_ratio_test != delivery_ratio_test:
+                    output_letterbox /= scale_factor
+                else:
+                    output_letterbox /= pixel_aspect
+
+            filters.append(
+                "scale={}x{}:flags=lanczos".format(ffmpeg_width, ffmpeg_height)
+            )
+            # QUESTION shouldn't this contain aspect ration value instead of 1?
+            filters.append(
+                "setsar=1"
+            )
+            filters.append((
+                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c=black"
+            ).format(output_letterbox))
+
+            filters.append((
+                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
+                ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black"
+            ).format(output_letterbox))
+
+        self.log.debug("pixel_aspect: `{}`".format(pixel_aspect))
+        self.log.debug("resolution_width: `{}`".format(resolution_width))
+        self.log.debug("resolution_height: `{}`".format(resolution_height))
+
+        # scaling none square pixels and 1920 width
+        # QUESTION: again check only output tags or repre tags
+        # WARNING: Duplication of filters when letter_box is set (or not?)
+        if "reformat" in repre["tags"]:
+            if resolution_ratio_test < delivery_ratio_test:
+                self.log.debug("lower then delivery")
+                width_scale = int(self.to_width * scale_factor)
+                width_half_pad = int((self.to_width - width_scale) / 2)
+                height_scale = self.to_height
+                height_half_pad = 0
+            else:
+                self.log.debug("heigher then delivery")
+                width_scale = self.to_width
+                width_half_pad = 0
+                scale_factor = (
+                    float(self.to_width)
+                    / (float(resolution_width) * pixel_aspect)
+                )
+                self.log.debug(
+                    "__ scale_factor: `{}`".format(scale_factor)
+                )
+                height_scale = int(resolution_height * scale_factor)
+                height_half_pad = int((self.to_height - height_scale) / 2)
+
+            self.log.debug("width_scale: `{}`".format(width_scale))
+            self.log.debug("width_half_pad: `{}`".format(width_half_pad))
+            self.log.debug("height_scale: `{}`".format(height_scale))
+            self.log.debug("height_half_pad: `{}`".format(height_half_pad))
+
+            filters.append(
+                "scale={}x{}:flags=lanczos".format(width_scale, height_scale)
+            )
+            filters.append(
+                "pad={}:{}:{}:{}:black".format(
+                    self.to_width, self.to_height,
+                    width_half_pad,
+                    height_half_pad
+            )
+            filters.append("setsar=1")
+
+        return filters
 
     def main_family_from_instance(self, instance):
         family = instance.data.get("family")
@@ -517,9 +718,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return filtered_outputs
 
     def filter_outputs_by_tags(self, outputs, tags):
-        filtered_outputs = {}
+        filtered_outputs = []
         repre_tags_low = [tag.lower() for tag in tags]
-        for filename_suffix, output_def in outputs.items():
+        for output_def in outputs:
             valid = True
             output_filters = output_def.get("output_filter")
             if output_filters:
@@ -537,7 +738,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                         continue
 
             if valid:
-                filtered_outputs[filename_suffix] = output_def
+                filtered_outputs.append(output_def)
 
         return filtered_outputs
 
