@@ -853,7 +853,6 @@ $.pype = {
   },
   encodeRepresentation: function (request) {
     $.pype.log('__ request: ' + JSON.stringify(request));
-    var waitFile = '';
     var sequence = app.project.activeSequence
     // get original timeline in out points
     var defaultTimelinePointValue = -400000
@@ -891,8 +890,6 @@ $.pype = {
               instances[i].version,
               instances[i].metadata['ppro.clip.start'],
               instances[i].metadata['ppro.clip.end']));
-
-          waitFile = request.stagingDir + '/' + instances[i].files[(instances[i].files.length - 1)];
         } else if (key === 'thumbnail') {
           instances[i].files.push($.pype.exportThumbnail(instances[i].name, key, instances[i].version, request.stagingDir, (instances[i].metadata['ppro.clip.start'] + ((instances[i].metadata['ppro.clip.end'] - instances[i].metadata['ppro.clip.start']) / 2)), instances[i].metadata['ppro.timeline.fps']));
         } else if (key === 'workfile') {
@@ -958,22 +955,17 @@ $.pype = {
               }
             }
 
-            $.pype.log("binding events ...");
-            // app.encoder.bind('onEncoderJobComplete', $._PPP_.onEncoderJobComplete);
+            $.pype.log('binding events ...');
             app.encoder.bind('onEncoderJobComplete', $.pype.onEncoderJobComplete);
-            // app.encoder.bind('onEncoderJobError', $._PPP_.onEncoderJobError);
-            // app.encoder.bind('onEncoderJobProgress', $._PPP_.onEncoderJobProgress);
-            // app.encoder.bind('onEncoderJobQueued', $._PPP_.onEncoderJobQueued);
-            // app.encoder.bind('onEncoderJobCanceled', $._PPP_.onEncoderJobCanceled);
 
             // use these 0 or 1 settings to disable some/all metadata creation.
             app.encoder.setSidecarXMPEnabled(0);
             app.encoder.setEmbeddedXMPEnabled(0);
 
-            $.pype.log("adding job to encoder");
+            $.pype.log('adding job to encoder');
             var jobID = app.encoder.encodeSequence(app.project.activeSequence, fullPathToFile, outPreset.fsName, app.encoder.ENCODE_IN_TO_OUT, 1); // Remove from queue upon successful completion?
             $.pype.expectedJobs.push(jobID);
-            $.pype.log("job queue length: " + $.pype.expectedJobs.length);
+            $.pype.log('job queue length: ' + $.pype.expectedJobs.length);
             $._PPP_.updateEventPanel('jobID = ' + jobID);
             outPreset.close();
             return file;
