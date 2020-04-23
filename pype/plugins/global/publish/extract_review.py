@@ -54,7 +54,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Make sure cleanup happens and pop representations with "delete" tag.
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
-            if "delete" if tags:
+            if "delete" in tags:
                 instance.data["representations"].remove(repre)
 
     def main_process(self, instance):
