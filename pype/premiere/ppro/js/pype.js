@@ -1,5 +1,5 @@
-/*global CSInterface, $, PypeRestApiClient, SystemPath */
-/* eslint-env node, es2017 */
+/* global CSInterface, $, PypeRestApiClient, SystemPath */
+/* eslint-env node, es2017, esversion:6 */
 
 class Pype {
 
@@ -191,13 +191,14 @@ class Pype {
             });
         });
     }
+
     publish() {
         this._gatherPublishUI();
         if (this.publishUI.jsonSendPath === "") {
             // path is empty, so we first prepare data for publishing
             // and create json
 
-            this.progress("Gathering project data ...", true)
+            this.progress("Gathering project data ...", true);
             this.csi.evalScript('$.pype.getProjectFileData();', (result) => {
                 this._copyProjectFiles(JSON.parse(result))
                 // create request and start encoding
@@ -245,7 +246,7 @@ class Pype {
                     $('#publish input[name=get-path]').val("");
                     this.progress("Publishing done.", true);
                 } else {
-                    this.error("Publish has not finished correctly")
+                    this.error("Publish has not finished correctly");
                     throw "Publish has not finished correctly";
                 }
             }, (error) => {
@@ -257,6 +258,7 @@ class Pype {
 
     _encodingDone(event) {
         // this will be global in this context
+        console.debug(event);
         this.pype.progress("Event recieved ...", true);
         var dataToPublish = {
             "adobePublishJsonPathSend": this.pype.publishUI.jsonSendPath,
@@ -321,5 +323,3 @@ class Pype {
 $(function() {
     global.pype = new Pype();
 });
-
-// -------------------------------------------------------

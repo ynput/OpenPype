@@ -1,4 +1,4 @@
-/* eslint-env node, es2018 */
+/* eslint-env node, es2017, esversion:6 */
 
 // connecting pype module pype rest api server (pras)
 
