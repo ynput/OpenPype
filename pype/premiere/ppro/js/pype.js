@@ -43,10 +43,10 @@ class Pype {
             this.progress(`Getting presets for ${this.env.AVALON_PROJECT}`, true);
             this.presets = this.pras.get_presets(this.env.AVALON_PROJECT)
             .then((presets) => {
-                this.progress("transferring presets to jsx", true)
+                this.progress("transferring presets to jsx")
                 this.presets = presets;
                 this.csi.evalScript('$.pype.setProjectPreset(' + JSON.stringify(presets) + ');', () => {
-                    this.progress("done", true);
+                    this.progress("Panel's backend loaded...", true);
                     // bind encoding jobs event listener
                     this.csi.addEventListener("pype.EncoderJobsComplete", this._encodingDone);
 
@@ -92,6 +92,25 @@ class Pype {
         $('#btn-rename').click(function () {
             self.rename();
         });
+
+        $('#btn-send-reset').click(function () {
+          $('#publish input[name=send-path]').val("");
+        });
+
+        $('#btn-get-reset').click(function () {
+          $('#publish input[name=get-path]').val("");
+        });
+
+        $('#btn-newWorkfileVersion').click(function () {
+          self.csi.evalScript('$.pype.versionUpWorkFile();');
+          self.progress('New version of the project file saved...', true);
+        });
+
+        $('#btn-get-frame').click(function () {
+          self.csi.evalScript('$._PPP_.exportCurrentFrameAsPNG();', (result) => {
+            self.progress(`Screen grabing image path in: [${result}]`, true);
+          });
+});
     }
 
     /**
@@ -147,7 +166,7 @@ class Pype {
         const destination = Pype.convertPathString(
             path.join(stagingDir, projectData.projectfile));
 
-        this.progress(`Copying files from [ ${projectData.projectpath} ] -> [ ${destination} ]`, true);
+        this.progress(`Copying files from [ ${projectData.projectpath} ] -> [ ${destination} ]`);
         fs.copyFileSync(projectData.projectpath, destination);
 
         this.progress("Project files copied.", true);
@@ -160,7 +179,7 @@ class Pype {
                 if (result == "EvalScript error.") {
                     reject(result);
                 }
-                self.progress("encoding submitted ...", true);
+                self.progress("Encoding files to Encoder queue submitted ...", true);
                 const jsonfile = require('jsonfile');
                 let jsonContent = JSON.parse(result);
                 if (self.publishUI.jsonSendPath == "") {
@@ -204,10 +223,10 @@ class Pype {
                 // create request and start encoding
                 // after that is done, we should recieve event and continue in
                 // _encodingDone()
-                this.progress("Creating request ...", true)
+                this.progress("Creating publishing request ...", true)
                 this._getPyblishRequest(Pype.convertPathString(this.stagingDir))
                 .then(result => {
-                    this.progress("Encoding ...", true);
+                    this.progress('Encoding ...');
                     this._encodeRepresentation(JSON.parse(result))
                     .then(result => {
                       console.log('printing result from enconding.. ' + result);
@@ -218,7 +237,7 @@ class Pype {
                 }, error => {
                     this.error(`failed to publish: ${error}`);
                 });
-                this.progress("waiting for result ...", true);
+                this.progress("Waiting for result ...");
             });
         } else {
             // load request
@@ -259,7 +278,7 @@ class Pype {
     _encodingDone(event) {
         // this will be global in this context
         console.debug(event);
-        this.pype.progress("Event recieved ...", true);
+        this.pype.progress("Publishing event after encoding finished recieved ...", true);
         var dataToPublish = {
             "adobePublishJsonPathSend": this.pype.publishUI.jsonSendPath,
             "adobePublishJsonPathGet": this.pype.publishUI.jsonGetPath,
