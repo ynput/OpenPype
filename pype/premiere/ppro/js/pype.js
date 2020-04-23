@@ -87,16 +87,17 @@ class Pype {
      * Gather all user UI options for publishing
      */
     _gatherPublishUI() {
-        var publishId = document.querySelector('#publish');
-        var publishUI = {
-            "publishId": publishId,
-            "versionUp": publishId.querySelector('input[name=version-up]').checked,
-            "audioOnly": publishId.querySelector('input[name=audio-only]').checked,
-            "jsonSendPath": publishId.querySelector('input[name=send-path]').value,
-            "jsonGetPath": publishId.querySelector('input[name=get-path]').value
+        this.publishId = document.querySelector('#publish');
+        this.uiVersionUp = this.publishId.querySelector('input[name=version-up]');
+        this.uiAudioOnly = this.publishId.querySelector('input[name=audio-only]');
+        this.uiJsonSendPath = this.publishId.querySelector('input[name=send-path]');
+        this.uiJsonGetPath = this.publishId.querySelector('input[name=get-path]');
+        this.publishUI = {
+            "versionUp": this.uiVersionUp.checked,
+            "audioOnly": this.uiAudioOnly.checked,
+            "jsonSendPath": this.uiJsonSendPath.value,
+            "jsonGetPath": this.uiJsonGetPath.value
         }
-        this.publishUI = publishUI;
-        return publishUI;
     }
 
     _getStagingDir() {
@@ -144,7 +145,10 @@ class Pype {
                 const jsonfile = require('jsonfile');
                 let jsonContent = JSON.parse(result);
                 if (self.publishUI.jsonSendPath == "") {
-                    self.publishUI.jsonSendPath = self.stagingDir + "\\publish.json";
+                    self.publishUI.jsonSendPath = self.stagingDir + "\\publishSend.json";
+                };
+                if (self.publishUI.jsonGetPath == "") {
+                    self.publishUI.jsonGetPath = self.stagingDir + "\\publishGet.json";
                 }
                 jsonfile.writeFile(self.publishUI.jsonSendPath, jsonContent);
                 resolve(result);
@@ -184,7 +188,14 @@ class Pype {
                 this._getPyblishRequest(Pype.convertPathString(this.stagingDir))
                 .then(result => {
                     console.log("Encoding ...");
-                    this._encodeRepresentation(JSON.parse(result)).catch(error => {
+                    this._encodeRepresentation(JSON.parse(result))
+                    .then(result => {
+                      console.log('printing result from enconding.. ' + result);
+                      // here jsonSetPath and jsonGetPath are set to gui
+                      this.uiJsonSendPath.value = this.publishUI.jsonSendPath;
+                      this.uiJsonGetPath.value = this.publishUI.jsonGetPath;
+                    })
+                    .catch(error => {
                         console.error(`failed to encode: ${error}`);
                     });
                 }, error => {
@@ -229,6 +240,7 @@ class Pype {
         }
 
         console.log("Preparing publish ...");
+        console.log(JSON.stringify(dataToPublish));
         this.pype.pras.publish(JSON.stringify(dataToPublish))
         .then((result) => {
             const fs = require('fs');
