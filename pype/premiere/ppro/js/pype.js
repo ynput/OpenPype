@@ -1,21 +1,37 @@
-/*global CSInterface, $, PypeRestApiClient, SystemPath, document */
+/*global CSInterface, $, PypeRestApiClient, SystemPath */
 /* eslint-env node, es2017 */
 
 class Pype {
+
+    /**
+     * Initialize important properties and load necessary JSX files.
+     */
     constructor() {
-        var self = this;
         this.csi = new CSInterface();
+        this.outputId = $("#output");
+
         this.rootFolderPath = this.csi.getSystemPath(SystemPath.EXTENSION);
         var extensionRoot = this.rootFolderPath + "/jsx/";
-        console.info("Loading premiere.jsx");
-        this.csi.evalScript('$.evalFile("' + extensionRoot + '/PPRO/Premiere.jsx");');
-        console.info("Loading pype.jsx");
-        this.csi.evalScript('$.evalFile("' + extensionRoot + 'pype.jsx");');
-        console.info("Loading batchRenamer.jsx");
-        this.csi.evalScript('$.evalFile("' + extensionRoot + 'batchRenamer.jsx");');
+        this.progress("Loading premiere.jsx", true);
+        this.csi.evalScript('$.evalFile("' + extensionRoot + '/PPRO/Premiere.jsx");', () => {
+            this.progress("Loading pype.jsx", true);
+            this.csi.evalScript('$.evalFile("' + extensionRoot + 'pype.jsx");', () => {
+                this.progress("Loading batchRenamer.jsx", true);
+                this.csi.evalScript('$.evalFile("' + extensionRoot + 'batchRenamer.jsx");', () => {
+                    this._initialize();
+                });
+            });
+        });
+    }
 
+    _initialize() {
+        var self = this;
         // get environment
         this.csi.evalScript('$.pype.getProjectFileData();', (result) => {
+            if (result == "EvalScript error.") {
+                this.error("Cannot get project data.");
+                throw "Cannot get project data";
+            }
             process.env.EXTENSION_PATH = this.rootFolderPath;
             this.env = process.env;
             var resultData = JSON.parse(result);
@@ -24,13 +40,13 @@ class Pype {
             }
             this.csi.evalScript('$.pype.setEnvs(' + JSON.stringify(self.env) + ')');
             this.pras = new PypeRestApiClient(this.env);
-            console.info(`Getting presets for ${this.env.AVALON_PROJECT}`);
+            this.progress(`Getting presets for ${this.env.AVALON_PROJECT}`, true);
             this.presets = this.pras.get_presets(this.env.AVALON_PROJECT)
             .then((presets) => {
-                console.info("transferring presets to jsx")
+                this.progress("transferring presets to jsx", true)
                 this.presets = presets;
                 this.csi.evalScript('$.pype.setProjectPreset(' + JSON.stringify(presets) + ');', () => {
-                    console.log("done");
+                    this.progress("done", true);
                     // bind encoding jobs event listener
                     this.csi.addEventListener("pype.EncoderJobsComplete", this._encodingDone);
 
@@ -41,11 +57,14 @@ class Pype {
         });
     }
 
+    /**
+     * Wrapper function over clip renamer
+     */
     rename () {
-        let renameId = document.querySelector('#rename');
+        let $renameId = $('#rename');
         let data = {};
-        data.ep = renameId.querySelector('input[name=episode]').value;
-        data.epSuffix = renameId.querySelector('input[name=ep_suffix]').value;
+        data.ep = $('input[name=episode]', $renameId).val();
+        data.epSuffix = $('input[name=ep_suffix]', $renameId).val();
 
         if (!data.ep) {
           this.csi.evalScript('$.pype.alert_message("' + 'Need to fill episode code' + '")');
@@ -57,10 +76,10 @@ class Pype {
           return;
         }
 
-        console.log(`Doing rename ${data.ep} | ${data.epSuffix}`);
+        this.progress(`Doing rename [ ${data.ep} ] | [ ${data.epSuffix} ]`);
         this.csi.evalScript(
           'BatchRenamer.renameTargetedTextLayer(' + JSON.stringify(data) + ' );', (result) => {
-            console.info(`Renaming result: ${result}`);
+            this.progress(`Renaming result: ${result}`, true);
           });
       }
 
@@ -87,16 +106,16 @@ class Pype {
      * Gather all user UI options for publishing
      */
     _gatherPublishUI() {
-        this.publishId = document.querySelector('#publish');
-        this.uiVersionUp = this.publishId.querySelector('input[name=version-up]');
-        this.uiAudioOnly = this.publishId.querySelector('input[name=audio-only]');
-        this.uiJsonSendPath = this.publishId.querySelector('input[name=send-path]');
-        this.uiJsonGetPath = this.publishId.querySelector('input[name=get-path]');
+        let publishId = $('#publish');
+        let uiVersionUp = $('input[name=version-up]', publishId);
+        let uiAudioOnly = $('input[name=audio-only]', publishId);
+        let uiJsonSendPath = $('input[name=send-path]', publishId);
+        let uiJsonGetPath = $('input[name=get-path]', publishId);
         this.publishUI = {
-            "versionUp": this.uiVersionUp.checked,
-            "audioOnly": this.uiAudioOnly.checked,
-            "jsonSendPath": this.uiJsonSendPath.value,
-            "jsonGetPath": this.uiJsonGetPath.value
+            "versionUp": uiVersionUp.prop('checked'),
+            "audioOnly": uiAudioOnly.prop('checked'),
+            "jsonSendPath": uiJsonSendPath.val(),
+            "jsonGetPath": uiJsonGetPath.val()
         }
     }
 
@@ -120,18 +139,18 @@ class Pype {
 
         this.stagingDir = this._getStagingDir();
 
-        console.info(`Creating directory [ ${this.stagingDir} ]`);
+        this.progress(`Creating directory [ ${this.stagingDir} ]`, true);
 
-        mkdirp.sync(this.stagingDir)
+        mkdirp.sync(this.stagingDir);
 
         let stagingDir = Pype.convertPathString(this.stagingDir);
         const destination = Pype.convertPathString(
             path.join(stagingDir, projectData.projectfile));
 
-        console.info(`Copying files from [ ${projectData.projectpath} ] -> [ ${destination} ]`);
+        this.progress(`Copying files from [ ${projectData.projectpath} ] -> [ ${destination} ]`, true);
         fs.copyFileSync(projectData.projectpath, destination);
 
-        console.info("Project files copied.")
+        this.progress("Project files copied.", true);
     }
 
     _encodeRepresentation(repre) {
@@ -141,14 +160,16 @@ class Pype {
                 if (result == "EvalScript error.") {
                     reject(result);
                 }
-                console.log("encoding submitted ...");
+                self.progress("encoding submitted ...", true);
                 const jsonfile = require('jsonfile');
                 let jsonContent = JSON.parse(result);
                 if (self.publishUI.jsonSendPath == "") {
                     self.publishUI.jsonSendPath = self.stagingDir + "\\publishSend.json";
-                };
+                    $('#publish input[name=send-path]').val(self.publishUI.jsonSendPath);
+                }
                 if (self.publishUI.jsonGetPath == "") {
                     self.publishUI.jsonGetPath = self.stagingDir + "_publishGet.json";
+                    $('#publish input[name=get-path]').val(self.publishUI.jsonGetPath);
                 }
                 jsonfile.writeFile(self.publishUI.jsonSendPath, jsonContent);
                 resolve(result);
@@ -159,10 +180,9 @@ class Pype {
     _getPyblishRequest(stagingDir) {
         var self = this;
         return new Promise(function(resolve, reject) {
-            console.log(`Called with ${stagingDir} and ${self.publishUI.audioOnly}`);
             self.csi.evalScript("$.pype.getPyblishRequest('" + stagingDir + "', '" + self.publishUI.audioOnly + "');", (result) => {
                 if (result === "null" || result === "EvalScript error.") {
-                    console.error(`cannot create publish request data ${result}`);
+                    self.error(`cannot create publish request data ${result}`);
                     reject("cannot create publish request data");
                 } else {
                     console.log(`Request generated: ${result}`);
@@ -177,56 +197,67 @@ class Pype {
             // path is empty, so we first prepare data for publishing
             // and create json
 
-            console.log("Gathering project data ...")
+            this.progress("Gathering project data ...", true)
             this.csi.evalScript('$.pype.getProjectFileData();', (result) => {
                 this._copyProjectFiles(JSON.parse(result))
                 // create request and start encoding
                 // after that is done, we should recieve event and continue in
                 // _encodingDone()
-                console.log("Creating request ...")
+                this.progress("Creating request ...", true)
                 this._getPyblishRequest(Pype.convertPathString(this.stagingDir))
                 .then(result => {
-                    console.log("Encoding ...");
+                    this.progress("Encoding ...", true);
                     this._encodeRepresentation(JSON.parse(result))
                     .then(result => {
                       console.log('printing result from enconding.. ' + result);
-                      // here jsonSetPath and jsonGetPath are set to gui
-                      this.uiJsonSendPath.value = this.publishUI.jsonSendPath;
-                      this.uiJsonGetPath.value = this.publishUI.jsonGetPath;
                     })
                     .catch(error => {
-                        console.error(`failed to encode: ${error}`);
+                        this.error(`failed to encode: ${error}`);
                     });
                 }, error => {
-                    console.error(`failed to publish: ${error}`);
+                    this.error(`failed to publish: ${error}`);
                 });
-                console.log("waiting for result");
+                this.progress("waiting for result ...", true);
             });
         } else {
             // load request
-            var request = require(this.publishUI.jsonSendPath);
-            this.pras.publish(request)
+            var dataToPublish = {
+                "adobePublishJsonPathSend": this.publishUI.jsonSendPath,
+                "adobePublishJsonPathGet": this.publishUI.jsonGetPath,
+                "project": this.env.AVALON_PROJECT,
+                "asset": this.env.AVALON_ASSET,
+                "task": this.env.AVALON_TASK,
+                "workdir": Pype.convertPathString(this.env.AVALON_WORKDIR),
+                "AVALON_APP": this.env.AVALON_APP,
+                "AVALON_APP_NAME": this.env.AVALON_APP_NAME
+            }
+            // C:\Users\jezsc\AppData\Local\Temp\4c56ba52-8839-44de-b327-0187c79d0814\publishSend.json
+            this.pras.publish(JSON.stringify(dataToPublish))
             .then((result) => {
                 const fs = require('fs');
                 if (fs.existsSync(result.return_data_path)) {
-                  if (this.publishUI.versionUp) {
-                      console.log('Saving new version of the project file');
-                      this.csi.evalScript('$.pype.versionUpWorkFile();');
-                  }
+                    if (this.publishUI.versionUp) {
+                        this.progress('Saving new version of the project file', true);
+                        this.csi.evalScript('$.pype.versionUpWorkFile();');
+                    }
+                    // here jsonSetPath and jsonGetPath are set to gui
+                    $('#publish input[name=send-path]').val("");
+                    $('#publish input[name=get-path]').val("");
+                    this.progress("Publishing done.", true);
                 } else {
-                    console.error("Publish has not finished correctly")
+                    this.error("Publish has not finished correctly")
                     throw "Publish has not finished correctly";
                 }
+            }, (error) => {
+                this.error("Invalid response from server");
+                console.error(error);
             });
         }
     }
 
     _encodingDone(event) {
-      var publishId = document.querySelector('#publish');
-      var uiJsonSendPath = publishId.querySelector('input[name=send-path]');
-      var uiJsonGetPath = publishId.querySelector('input[name=get-path]');
         // this will be global in this context
-        console.log("Event recieved ...");
+        this.pype.progress("Event recieved ...", true);
         var dataToPublish = {
             "adobePublishJsonPathSend": this.pype.publishUI.jsonSendPath,
             "adobePublishJsonPathGet": this.pype.publishUI.jsonGetPath,
@@ -240,28 +271,51 @@ class Pype {
             "AVALON_APP_NAME": this.pype.env.AVALON_APP_NAME
         }
 
-        console.log("Preparing publish ...");
+        this.pype.progress("Preparing publish ...", true);
         console.log(JSON.stringify(dataToPublish));
         this.pype.pras.publish(JSON.stringify(dataToPublish))
         .then((result) => {
             const fs = require('fs');
             if (fs.existsSync(result.return_data_path)) {
                 if (this.pype.publishUI.versionUp) {
-                    console.log('Saving new version of the project file');
+                    this.pype.progress('Saving new version of the project file', true);
                     this.pype.csi.evalScript('$.pype.versionUpWorkFile();');
-                };
+                }
                 // here jsonSetPath and jsonGetPath are set to gui
-                uiJsonSendPath.value = "";
-                uiJsonGetPath.value = "";
-                console.log("Publishing done.");
+                $('#publish input[name=send-path]').val("");
+                $('#publish input[name=get-path]').val("");
+                this.pype.progress("Publishing done.", true);
             } else {
-                console.error("Publish has not finished correctly")
+                this.pype.error("Publish has not finished correctly")
                 throw "Publish has not finished correctly";
             }
         }, (error) => {
-            console.error("Invalid response from server");
+            this.pype.error("Invalid response from server");
             console.error(error);
         });
+    }
+
+    /**
+     * Display error message in div
+     * @param {String} message
+     */
+    error(message) {
+        this.outputId.html(message);
+        this.outputId.addClass("error");
+        console.error(message);
+    }
+
+    /**
+     * Display message in output div. If append is set, new message is appended to rest with <br>
+     * @param {String} message
+     * @param {Boolean} append
+     */
+    progress(message, append=false) {
+        this.outputId.removeClass("error");
+        if (append) {
+            this.outputId.prepend(message + "<br/>");
+        }
+        console.info(message);
     }
 }
 $(function() {
