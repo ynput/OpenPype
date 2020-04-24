@@ -19,8 +19,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     All new represetnations are created and encoded by ffmpeg following
     presets found in `pype-config/presets/plugins/global/
-    publish.json:ExtractReview:outputs`. To change the file extension
-    filter values use preset's attributes `ext_filter`
+    publish.json:ExtractReview:outputs`.
     """
 
     label = "Extract Review"
@@ -33,7 +32,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     video_exts = ["mov", "mp4"]
     supported_exts = image_exts + video_exts
 
-    # Path to ffmpeg
+    # FFmpeg tools paths
     ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
     ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
 
@@ -71,13 +70,23 @@ class ExtractReview(pyblish.api.InstancePlugin):
             self.profiles, profile_filter_data
         )
         if not profile:
+            self.log.info((
+                "Skipped instance. None of profiles in presets are for"
+                " Host: \"{host}\" | Family: \"{family}\" | Task \"{task}\""
+            ).format(**profile_filter_data))
             return
+
+        self.log.debug("Matching profile: \"{}\"".format(json.dumps(profile)))
 
         instance_families = self.families_from_instance(instance)
         _profile_outputs = self.filter_outputs_by_families(
             profile, instance_families
         )
         if not _profile_outputs:
+            self.log.info((
+                "Skipped instance. All output definitions from selected"
+                " profile does not match to instance families. \"{}\""
+            ).format(str(instance_families)))
             return
 
         # Store `filename_suffix` to save arguments
@@ -88,7 +97,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Loop through representations
         for repre in tuple(instance.data["representations"]):
-            tags = repre.get("tags", [])
+            tags = repre.get("tags") or []
             if (
                 "review" not in tags
                 or "multipartExr" in tags
@@ -96,35 +105,42 @@ class ExtractReview(pyblish.api.InstancePlugin):
             ):
                 continue
 
-            source_ext = repre["ext"]
-            if source_ext.startswith("."):
-                source_ext = source_ext[1:]
+            input_ext = repre["ext"]
+            if input_ext.startswith("."):
+                input_ext = input_ext[1:]
 
-            if source_ext not in self.supported_exts:
+            if input_ext not in self.supported_exts:
+                self.log.info(
+                    "Representation has unsupported extension \"{}\"".format(
+                        input_ext
+                    )
+                )
                 continue
 
             # Filter output definition by representation tags (optional)
             outputs = self.filter_outputs_by_tags(profile_outputs, tags)
             if not outputs:
+                self.log.info((
+                    "Skipped representation. All output definitions from"
+                    " selected profile does not match to representation's"
+                    " tags. \"{}\""
+                ).format(str(tags)))
                 continue
 
-            # Prepare instance data.
-            # NOTE Till this point it is not required to have set most
-            # of keys in instance data. So publishing won't crash if plugin
-            # won't get here and instance miss required keys.
             for output_def in outputs:
+                # Make sure output definition has "tags" key
+                if "tags" not in output_def:
+                    output_def["tags"] = []
+
                 # Create copy of representation
                 new_repre = copy.deepcopy(repre)
 
-                additional_tags = output_def.get("tags") or []
-                # TODO new method?
-                # `self.prepare_new_repre_tags(new_repre, additional_tags)`
                 # Remove "delete" tag from new repre if there is
                 if "delete" in new_repre["tags"]:
                     new_repre["tags"].remove("delete")
 
                 # Add additional tags from output definition to representation
-                for tag in additional_tags:
+                for tag in output_def["tags"]:
                     if tag not in new_repre["tags"]:
                         new_repre["tags"].append(tag)
 
@@ -132,13 +148,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "New representation tags: `{}`".format(new_repre["tags"])
                 )
 
-                # QUESTION Why the hell we do this, adding tags to families?
-                # add families
-                for tag in additional_tags:
-                    if tag not in instance.data["families"]:
-                        instance.data["families"].append(tag)
+                # # QUESTION Why the hell we were adding tags to families?
+                # # add families
+                # for tag in output_def["tags"]:
+                #     if tag not in instance.data["families"]:
+                #         instance.data["families"].append(tag)
 
-                temp_data = self.prepare_temp_data(instance, repre, new_repre)
+                temp_data = self.prepare_temp_data(instance, repre, output_def)
 
                 ffmpeg_args = self._ffmpeg_arguments(
                     output_def, instance, temp_data
@@ -170,7 +186,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 self.log.debug("Adding: {}".format(new_repre))
                 instance.data["representations"].append(new_repre)
 
-    def source_is_sequence(self, repre):
+    def input_is_sequence(self, repre):
+        """Deduce from representation data if input is sequence."""
         # TODO GLOBAL ISSUE - Find better way how to find out if input
         # is sequence. Issues( in theory):
         # - there may be multiple files ant not be sequence
@@ -178,8 +195,82 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # - there can be more than one collection
         return isinstance(repre["files"], (list, tuple))
 
+    def prepare_temp_data(self, instance, repre, output_def):
+        """Prepare dictionary with values used across extractor's process.
+
+        All data are collected from instance, context, origin representation
+        and output definition.
+
+        There are few required keys in Instance data: "frameStart", "frameEnd"
+        and "fps".
+
+        Args:
+            instance (Instance): Currently processed instance.
+            repre (dict): Representation from which new representation was
+                copied.
+            output_def (dict): Definition of output of this plugin.
+
+        Returns:
+            dict: All data which are used across methods during process.
+                Their values should not change during process but new keys
+                with values may be added.
+        """
+
+        frame_start = instance.data["frameStart"]
+        handle_start = instance.data.get(
+            "handleStart",
+            instance.context.data["handleStart"]
+        )
+        frame_end = instance.data["frameEnd"]
+        handle_end = instance.data.get(
+            "handleEnd",
+            instance.context.data["handleEnd"]
+        )
+
+        frame_start_handle = frame_start - handle_start
+        frame_end_handle = frame_end + handle_end
+
+        # Change output frames when output should be without handles
+        without_handles = "no-handles" in output_def["tags"]
+        if without_handles:
+            output_frame_start = frame_start
+            output_frame_end = frame_end
+        else:
+            output_frame_start = frame_start_handle
+            output_frame_end = frame_end_handle
+
+        return {
+            "fps": float(instance.data["fps"]),
+            "frame_start": frame_start,
+            "frame_end": frame_end,
+            "handle_start": handle_start,
+            "handle_end": handle_end,
+            "frame_start_handle": frame_start_handle,
+            "frame_end_handle": frame_end_handle,
+            "output_frame_start": output_frame_start,
+            "output_frame_end": output_frame_end,
+            "pixel_aspect": instance.data.get("pixelAspect", 1),
+            "resolution_width": instance.data.get("resolutionWidth"),
+            "resolution_height": instance.data.get("resolutionHeight"),
+            "origin_repre": repre,
+            "input_is_sequence": self.input_is_sequence(repre),
+            "without_handles": without_handles
+        }
+
     def _ffmpeg_arguments(self, output_def, instance, new_repre, temp_data):
-        # TODO this may hold class which may be easier to work with
+        """Prepares ffmpeg arguments for expected extraction.
+
+        Prepares input and output arguments based on output definition and
+        input files.
+
+        Args:
+            output_def (dict): Currently processed output definition.
+            instance (Instance): Currently processed instance.
+            new_repre (dict): Reprensetation representing output of this
+                process.
+            temp_data (dict): Base data for successfull process.
+        """
+
         # Get FFmpeg arguments from profile presets
         out_def_ffmpeg_args = output_def.get("ffmpeg_args") or {}
 
@@ -200,15 +291,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
             )
             ffmpeg_output_args.append("-frames:v {}".format(duration_frames))
 
-        if temp_data["source_is_sequence"]:
-            # NOTE removed "detectedStart" key handling (NOT SET)
-
+        if temp_data["input_is_sequence"]:
             # Set start frame
             ffmpeg_input_args.append(
                 "-start_number {}".format(temp_data["output_frame_start"])
             )
 
-            # TODO add fps mapping `{fps: fraction}`
+            # TODO add fps mapping `{fps: fraction}` ?
             # - e.g.: {
             #     "25": "25/1",
             #     "24": "24/1",
@@ -221,7 +310,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         elif temp_data["without_handles"]:
             # QUESTION Shall we change this to use filter:
-            # `select="gte(n\,handle_start),setpts=PTS-STARTPTS`
+            # `select="gte(n\,{handle_start}),setpts=PTS-STARTPTS`
             # Pros:
             #   1.) Python is not good at float operation
             #   2.) FPS on instance may not be same as input's
@@ -241,12 +330,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_audio_filters.extend(audio_filters)
         ffmpeg_output_args.extend(audio_out_args)
 
-        # In case audio is longer than video`.
         # QUESTION what if audio is shoter than video?
+        # In case audio is longer than video`.
         if "-shortest" not in ffmpeg_output_args:
             ffmpeg_output_args.append("-shortest")
 
-        res_filters = self.resolution_ratios(temp_data, output_def, new_repre)
+        res_filters = self.rescaling_filters(temp_data, output_def, new_repre)
         ffmpeg_video_filters.extend(res_filters)
 
         ffmpeg_input_args = self.split_ffmpeg_args(ffmpeg_input_args)
@@ -254,7 +343,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         lut_filters = self.lut_filters(new_repre, instance, ffmpeg_input_args)
         ffmpeg_video_filters.extend(lut_filters)
 
-        # WARNING This must be latest added item to output arguments.
+        # NOTE This must be latest added item to output arguments.
         ffmpeg_output_args.append("\"{}\"".format(full_output_path))
 
         return self.ffmpeg_full_args(
@@ -265,6 +354,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         )
 
     def split_ffmpeg_args(self, in_args):
+        """Makes sure all entered arguments are separated in individual items.
+
+        Split each argument string with " -" to identify if string contains
+        one or more arguments.
+        """
         splitted_args = []
         for arg in in_args:
             sub_args = arg.split(" -")
@@ -284,6 +378,22 @@ class ExtractReview(pyblish.api.InstancePlugin):
     def ffmpeg_full_args(
         self, input_args, video_filters, audio_filters, output_args
     ):
+        """Post processing of collected FFmpeg arguments.
+
+        Just verify that output arguments does not contain video or audio
+        filters which may cause issues because of duplicated argument entry.
+        Filters found in output arguments are moved to list they belong to.
+
+        Args:
+            input_args (list): All collected ffmpeg arguments with inputs.
+            video_filters (list): All collected video filters.
+            audio_filters (list): All collected audio filters.
+            output_args (list): All collected ffmpeg output arguments with
+                output filepath.
+
+        Returns:
+            list: Containing all arguments ready to run in subprocess.
+        """
         output_args = self.split_ffmpeg_args(output_args)
 
         video_args_dentifiers = ["-vf", "-filter:v"]
@@ -314,59 +424,23 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return all_args
 
-    def prepare_temp_data(self, instance, repre, new_repre):
-        frame_start = instance.data["frameStart"]
-        handle_start = instance.data.get(
-            "handleStart",
-            instance.context.data["handleStart"]
-        )
-        frame_end = instance.data["frameEnd"]
-        handle_end = instance.data.get(
-            "handleEnd",
-            instance.context.data["handleEnd"]
-        )
-
-        frame_start_handle = frame_start - handle_start
-        frame_end_handle = frame_end + handle_end
-
-        # NOTE used different key for final frame start/end to not confuse
-        # those who don't know what
-        # - e.g. "frame_start_output"
-        # QUESTION should we use tags ONLY from output definition?
-        # - In that case `output_def.get("tags") or []` should replace
-        #   `repre["tags"]`.
-        # Change output frames when output should be without handles
-        without_handles = "no-handles" in new_repre["tags"]
-        if without_handles:
-            output_frame_start = frame_start
-            output_frame_end = frame_end
-        else:
-            output_frame_start = frame_start_handle
-            output_frame_end = frame_end_handle
-
-        return {
-            "fps": float(instance.data["fps"]),
-            "frame_start": frame_start,
-            "frame_end": frame_end,
-            "handle_start": handle_start,
-            "handle_end": handle_end,
-            "frame_start_handle": frame_start_handle,
-            "frame_end_handle": frame_end_handle,
-            "output_frame_start": output_frame_start,
-            "output_frame_end": output_frame_end,
-            "pixel_aspect": instance.data.get("pixelAspect", 1),
-            "resolution_width": instance.data.get("resolutionWidth"),
-            "resolution_height": instance.data.get("resolutionHeight"),
-            "origin_repre": repre,
-            "source_is_sequence": self.source_is_sequence(repre),
-            "without_handles": without_handles
-        }
-
     def input_output_paths(self, new_repre, output_def, temp_data):
+        """Deduce input nad output file paths based on entered data.
+
+        Input may be sequence of images, video file or single image file and
+        same can be said about output, this method helps to find out what
+        their paths are.
+
+        It is validated that output directory exist and creates if not.
+
+        During process are set "files", "stagingDir", "ext" and
+        "sequence_file" (if output is sequence) keys to new representation.
+        """
+
         staging_dir = new_repre["stagingDir"]
         repre = temp_data["origin_repre"]
 
-        if temp_data["source_is_sequence"]:
+        if temp_data["input_is_sequence"]:
             collections, remainder = clique.assemble(repre["files"])
 
             full_input_path = os.path.join(
@@ -386,7 +460,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         filename_suffix = output_def["filename_suffix"]
 
         output_ext = output_def.get("ext")
-        # Use source extension if definition do not specify it
+        # Use input extension if output definition do not specify it
         if output_ext is None:
             output_ext = os.path.splitext(full_input_path)[1]
 
@@ -394,38 +468,29 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if output_ext.startswith("."):
             output_ext = output_ext[1:]
 
+        # Store extension to representation
         new_repre["ext"] = output_ext
 
-        self.log.debug(
-            "New representation ext: `{}`".format(output_ext)
-        )
+        self.log.debug("New representation ext: `{}`".format(output_ext))
 
         # Output is image file sequence witht frames
-        # QUESTION Shall we do it in opposite? Expect that if output
-        # extension is image format and input is sequence or video
-        # format then do sequence and single frame only if tag is
-        # "single-frame" (or similar)
-        # QUESTION should we use tags ONLY from output definition?
-        # - In that case `output_def.get("tags") or []` should replace
-        #   `repre["tags"]`.
         output_is_sequence = (
-            "sequence" in new_repre["tags"]
-            and (output_ext in self.image_exts)
+            (output_ext in self.image_exts)
+            and "sequence" in output_def["tags"]
         )
 
-        # QUESTION This breaks Anatomy template system is it ok?
-        # QUESTION How do we care about multiple outputs with same
-        # extension? (Expectings are: We don't...)
-        # - possible solution add "<{review_suffix}>" into templates
-        # but that may cause issues when clients remove that (and it's
-        # ugly).
         if output_is_sequence:
-            filename_base = "{}_{}".format(filename, filename_suffix)
-            repr_file = "{}.%08d.{}".format(filename_base, output_ext)
-
             new_repre_files = []
             frame_start = temp_data["output_frame_start"]
             frame_end = temp_data["output_frame_end"]
+
+            filename_base = "{}_{}".format(filename, filename_suffix)
+            # Temporary tempalte for frame filling. Example output:
+            # "basename.%04d.mov" when `frame_end` == 1001
+            repr_file = "{}.%{:0>2}d.{}".format(
+                filename_base, len(str(frame_end)), output_ext
+            )
+
             for frame in range(frame_start, frame_end + 1):
                 new_repre_files.append(repr_file % frame)
 
@@ -441,14 +506,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
             full_output_path = os.path.join(staging_dir, repr_file)
             new_repre_files = repr_file
 
+        # Store files to representation
         new_repre["files"] = new_repre_files
 
+        # Make sure stagingDire exists
         staging_dir = os.path.normpath(os.path.dirname(full_output_path))
         if not os.path.exists(staging_dir):
             self.log.debug("Creating dir: {}".format(staging_dir))
             os.makedirs(staging_dir)
 
-        # Set stagingDir
+        # Store stagingDir to representaion
         new_repre["stagingDir"] = staging_dir
 
         # Store paths to temp data
@@ -461,6 +528,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return full_input_path, full_output_path
 
     def audio_args(self, instance, temp_data):
+        """Prepares FFMpeg arguments for audio inputs."""
         audio_in_args = []
         audio_filters = []
         audio_out_args = []
@@ -498,13 +566,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         return audio_in_args, audio_filters, audio_out_args
 
-    def resolution_ratios(self, temp_data, output_def, new_repre):
+    def rescaling_filters(self, temp_data, output_def, new_repre):
+        """Prepare vieo filters based on tags in new representation.
+
+        It is possible to add letterboxes to output video or rescale to
+        different resolution.
+
+        During this preparation "resolutionWidth" and "resolutionHeight" are
+        set to new representation.
+        """
         filters = []
 
         letter_box = output_def.get("letter_box")
-        # Skip processing if both conditions are not met
-        if "reformat" not in new_repre["tags"] and not letter_box:
-            return filters
 
         # Get instance data
         pixel_aspect = temp_data["pixel_aspect"]
@@ -513,9 +586,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # If instance miss resolution settings.
         if input_width is None or input_height is None:
-            # Use input resolution
-            # QUESTION Should we skip instance data and use these values
+            # QUESTION Shall we skip instance data and use these values
             # by default?
+            # Use input resolution
             input_data = self.ffprobe_streams(temp_data["full_input_path"])
             input_width = input_data["width"]
             input_height = input_data["height"]
@@ -523,6 +596,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("pixel_aspect: `{}`".format(pixel_aspect))
         self.log.debug("input_width: `{}`".format(input_width))
         self.log.debug("resolution_height: `{}`".format(input_height))
+
+        # Skip processing if both conditions are not met
+        if "reformat" not in new_repre["tags"] and not letter_box:
+            new_repre["resolutionWidth"] = input_width
+            new_repre["resolutionHeight"] = input_height
+            return filters
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         output_width = output_def.get("width")
@@ -579,12 +658,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             # QUESTION Is scale required when ffmpeg_width is same as
             # output_width and ffmpeg_height as output_height
-            scale_filter = "scale={0}x{1}:flags=lanczos".format(
+            scale_filter = "scale={}x{}:flags=lanczos".format(
                 ffmpeg_width, ffmpeg_height
             )
 
             top_box = (
-                "drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black"
+                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c=black"
             ).format(letter_box)
 
             bottom_box = (
@@ -616,10 +695,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
             self.log.debug("height_half_pad: `{}`".format(height_half_pad))
 
             filters.extend([
-                "scale={0}x{1}:flags=lanczos".format(
+                "scale={}x{}:flags=lanczos".format(
                     width_scale, height_scale
                 ),
-                "pad={0}:{1}:{2}:{3}:black".format(
+                "pad={}:{}:{}:{}:black".format(
                     output_width, output_height,
                     width_half_pad, height_half_pad
                 ),
@@ -632,6 +711,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return filters
 
     def lut_filters(self, new_repre, instance, input_args):
+        """Add lut file to output ffmpeg filters."""
         filters = []
         # baking lut file application
         lut_path = instance.data.get("lutPath")
@@ -650,11 +730,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # QUESTION hardcoded colormatrix?
         filters.append("colormatrix=bt601:bt709")
 
-        self.log.info("Added Lut to ffmpeg command")
+        self.log.info("Added Lut to ffmpeg command.")
 
         return filters
 
     def ffprobe_streams(self, path_to_file):
+        """Load streams from entered filepath."""
         args = [
             self.ffprobe_path,
             "-v quiet",
@@ -669,12 +750,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return json.loads(popen.communicate()[0])["streams"][0]
 
     def main_family_from_instance(self, instance):
+        """Returns main family of entered instance."""
         family = instance.data.get("family")
         if not family:
             family = instance.data["families"][0]
         return family
 
     def families_from_instance(self, instance):
+        """Returns all families of entered instance."""
         families = []
         family = instance.data.get("family")
         if family:
@@ -686,6 +769,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return families
 
     def compile_list_of_regexes(self, in_list):
+        """Convert strings in entered list to compiled regex objects."""
         regexes = []
         if not in_list:
             return regexes
@@ -851,6 +935,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return final_profile
 
     def families_filter_validation(self, families, output_families_filter):
+        """Determines if entered families intersect with families filters.
+
+        All family values are lowered to avoid unexpected results.
+        """
         if not output_families_filter:
             return True
 
@@ -885,6 +973,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return False
 
     def filter_outputs_by_families(self, profile, families):
+        """Filter outputs that are not supported for instance families.
+
+        Output definitions without families filter are marked as valid.
+
+        Args:
+            profile (dict): Profile from presets matching current context.
+            families (list): All families of current instance.
+
+        Returns:
+            list: Containg all output definitions matching entered families.
+        """
         outputs = profile.get("outputs") or []
         if not outputs:
             return outputs
@@ -910,6 +1009,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return filtered_outputs
 
     def filter_outputs_by_tags(self, outputs, tags):
+        """Filter output definitions by entered representation tags.
+
+        Output definitions without tags filter are marked as valid.
+
+        Args:
+            outputs (list): Contain list of output definitions from presets.
+            tags (list): Tags of processed representation.
+
+        Returns:
+            list: Containg all output definitions matching entered tags.
+        """
         filtered_outputs = []
         repre_tags_low = [tag.lower() for tag in tags]
         for output_def in outputs:
