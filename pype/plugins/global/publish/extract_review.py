@@ -613,6 +613,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         output_height = output_def.get("height")
         # Use instance resolution if output definition has not set it.
         if output_width is None or output_height is None:
+            output_width = temp_data["resolution_width"]
+            output_height = temp_data["resolution_height"]
+
+        # Use source's input resolution instance does not have set it.
+        if output_width is None or output_height is None:
             output_width = input_width
             output_height = input_height
 
