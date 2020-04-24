@@ -26,46 +26,54 @@ class ExtractReviewSlate(pype.api.Extractor):
         slate_path = inst_data.get("slateFrame")
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        # values are set in ExtractReview
-        to_width = inst_data["reviewToWidth"]
-        to_height = inst_data["reviewToHeight"]
-
-        resolution_width = inst_data.get("resolutionWidth", to_width)
-        resolution_height = inst_data.get("resolutionHeight", to_height)
         pixel_aspect = inst_data.get("pixelAspect", 1)
         fps = inst_data.get("fps")
 
-        # defining image ratios
-        resolution_ratio = ((float(resolution_width) * pixel_aspect) /
-                            resolution_height)
-        delivery_ratio = float(to_width) / float(to_height)
-        self.log.debug("__ resolution_ratio: `{}`".format(resolution_ratio))
-        self.log.debug("__ delivery_ratio: `{}`".format(delivery_ratio))
-
-        # get scale factor
-        scale_factor = float(to_height) / (
-            resolution_height * pixel_aspect)
-
-        # shorten two decimals long float number for testing conditions
-        resolution_ratio_test = float(
-            "{:0.2f}".format(resolution_ratio))
-        delivery_ratio_test = float(
-            "{:0.2f}".format(delivery_ratio))
-
-        if resolution_ratio_test < delivery_ratio_test:
-            scale_factor = float(to_width) / (
-                resolution_width * pixel_aspect)
-
-        self.log.debug("__ scale_factor: `{}`".format(scale_factor))
-
-        for i, repre in enumerate(inst_data["representations"]):
-            _remove_at_end = []
-            self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
+        for idx, repre in enumerate(inst_data["representations"]):
+            self.log.debug("__ i: `{}`, repre: `{}`".format(idx, repre))
 
             p_tags = repre.get("tags", [])
-
             if "slate-frame" not in p_tags:
                 continue
+
+            # values are set in ExtractReview
+            to_width = repre["resolutionWidth"]
+            to_height = repre["resolutionHeight"]
+
+            # QUESTION Should we use resolution from instance and not source's?
+            resolution_width = inst_data.get("resolutionWidth")
+            if resolution_width is None:
+                resolution_width = to_width
+
+            resolution_height = inst_data.get("resolutionHeight")
+            if resolution_height is None:
+                resolution_height = to_height
+
+            # defining image ratios
+            resolution_ratio = (
+                (float(resolution_width) * pixel_aspect) / resolution_height
+            )
+            delivery_ratio = float(to_width) / float(to_height)
+            self.log.debug("resolution_ratio: `{}`".format(resolution_ratio))
+            self.log.debug("delivery_ratio: `{}`".format(delivery_ratio))
+
+            # get scale factor
+            scale_factor = float(to_height) / (
+                resolution_height * pixel_aspect)
+
+            # shorten two decimals long float number for testing conditions
+            resolution_ratio_test = float(
+                "{:0.2f}".format(resolution_ratio))
+            delivery_ratio_test = float(
+                "{:0.2f}".format(delivery_ratio))
+
+            if resolution_ratio_test < delivery_ratio_test:
+                scale_factor = float(to_width) / (
+                    resolution_width * pixel_aspect)
+
+            self.log.debug("__ scale_factor: `{}`".format(scale_factor))
+
+            _remove_at_end = []
 
             stagingdir = repre["stagingDir"]
             input_file = "{0}".format(repre["files"])
@@ -87,7 +95,7 @@ class ExtractReviewSlate(pype.api.Extractor):
             # overrides output file
             input_args.append("-y")
             # preset's input data
-            input_args.extend(repre["_profile"].get('input', []))
+            input_args.extend(repre["outputDef"].get('input', []))
             input_args.append("-loop 1 -i {}".format(slate_path))
             input_args.extend([
                 "-r {}".format(fps),
@@ -95,10 +103,11 @@ class ExtractReviewSlate(pype.api.Extractor):
             )
 
             # output args
-            codec_args = repre["_profile"].get('codec', [])
-            output_args.extend(codec_args)
             # preset's output data
-            output_args.extend(repre["_profile"].get('output', []))
+            output_args.extend(repre["outputDef"].get('output', []))
+
+            # Codecs are copied from source for whole input
+            output_args.append("-codec copy")
 
             # make sure colors are correct
             output_args.extend([
@@ -206,10 +215,10 @@ class ExtractReviewSlate(pype.api.Extractor):
                 "name": repre["name"],
                 "tags": [x for x in repre["tags"] if x != "delete"]
             }
-            inst_data["representations"][i].update(repre_update)
+            inst_data["representations"][idx].update(repre_update)
             self.log.debug(
                 "_ representation {}: `{}`".format(
-                    i, inst_data["representations"][i]))
+                    idx, inst_data["representations"][idx]))
 
             # removing temp files
             for f in _remove_at_end:
