@@ -18,174 +18,9 @@ if (ExternalObject.PlugPlugExternalObject === undefined) {
 // variable pype is defined in pypeAvalon.jsx
 $.pype = {
   presets: null,
+
   expectedJobs: [],
-  addNewTrack: function (numTracks) {
-    app.enableQE();
-    var sequence = app.project.activeSequence;
-    var activeSequence = qe.project.getActiveSequence();
-    activeSequence.addTracks(numTracks, sequence.videoTracks.numTracks, 0);
 
-    for (var t = 0; t < sequence.videoTracks.numTracks; t++) {
-      var videoTrack = sequence.videoTracks[t];
-      var trackName = videoTrack.name;
-      var trackTarget = videoTrack.isTargeted();
-      // $.writeln(trackTarget);
-      sequence.videoTracks[t].setTargeted(false, true);
-      trackTarget = videoTrack.isTargeted();
-      // $.writeln(trackTarget);
-      // $.writeln(videoTrack);
-    }
-  },
-  searchForBinWithName: function (nameToFind, folderObject) {
-    // deep-search a folder by name in project
-    var deepSearchBin = function (inFolder) {
-      if (inFolder && inFolder.name === nameToFind && inFolder.type === 2) {
-        return inFolder;
-      } else {
-        for (var i = 0; i < inFolder.children.numItems; i++) {
-          if (inFolder.children[i] && inFolder.children[i].type === 2) {
-            var foundBin = deepSearchBin(inFolder.children[i]);
-            if (foundBin)
-              return foundBin;
-            }
-          }
-      }
-      return undefined;
-    };
-    if (folderObject === undefined) {
-      return deepSearchBin(app.project.rootItem);
-    } else {
-      return deepSearchBin(folderObject);
-    }
-  },
-  createDeepBinStructure: function (hierarchyString) {
-    var parents = hierarchyString.split('/');
-
-    // search for the created folder
-    var currentBin = $.pype.searchForBinWithName(parents[0]);
-    // create bin if doesn't exists
-    if (currentBin === undefined) {
-      currentBin = app.project.rootItem.createBin(parents[0]);
-    }
-    for (var b = 1; b < parents.length; b++) {
-      var testBin = $.pype.searchForBinWithName(parents[b], currentBin);
-      if (testBin === undefined) {
-        currentBin = currentBin.createBin(parents[b]);
-      } else {
-        currentBin = testBin;
-      }
-    }
-    return currentBin;
-  },
-
-  insertBinClipToTimeline: function (binClip, time, trackOrder, numTracks, origNumTracks) {
-    var seq = app.project.activeSequence;
-    var numVTracks = seq.videoTracks.numTracks;
-
-    var addInTrack = (numTracks === 1)
-      ? (origNumTracks)
-      : (numVTracks - numTracks + trackOrder);
-    $.writeln('\n___name: ' + binClip.name);
-    $.writeln('numVTracks: ' + numVTracks + ', trackOrder: ' + trackOrder + ', numTracks: ' + numTracks + ', origNumTracks: ' + origNumTracks + ', addInTrack: ' + addInTrack);
-
-    var targetVTrack = seq.videoTracks[addInTrack];
-
-    if (targetVTrack) {
-      targetVTrack.insertClip(binClip, time);
-    }
-  },
-  /**
-   * Return instance representation of clip imported into bin
-   * @param data {object} - has to have at least two attributes `clips` and `binHierarchy`
-   * @return {Object}
-   */
-  importFiles: function (data) {
-    // remove all empty tracks
-    app.enableQE();
-    var activeSequence = qe.project.getActiveSequence();
-    activeSequence.removeEmptyVideoTracks();
-    activeSequence.removeEmptyAudioTracks();
-
-    if (app.project) {
-      if (data !== undefined) {
-        var pathsToImport = [];
-        var namesToGetFromBin = [];
-        var namesToSetToClips = [];
-        var origNumTracks = app.project.activeSequence.videoTracks.numTracks;
-        // TODO: for now it always creates new track and adding it into it
-        $.pype.addNewTrack(data.numTracks);
-
-        // get all paths and names list
-        var key = '';
-        for (key in data.clips) {
-          var path = data.clips[key]['data']['path'];
-          var fileName = path.split('/');
-          if (fileName.length <= 1) {
-            fileName = path.split('\\');
-          }
-          fileName = fileName[fileName.length - 1];
-          pathsToImport.push(path);
-          namesToGetFromBin.push(fileName);
-          namesToSetToClips.push(key);
-        }
-
-        // create parent bin object
-        var parent = $.pype.createDeepBinStructure(data.binHierarchy);
-
-        // check if any imported clips are in the bin
-        if (parent.children.numItems > 0) {
-          // loop pathsToImport
-          var binItemNames = [];
-          for (var c = 0; c < parent.children.numItems; c++) {
-            binItemNames.push(parent.children[c].name);
-          }
-
-          // loop formated clip names to be imported
-          for (var p = 0; p < namesToSetToClips.length; p++) {
-            // check if the clip is not in bin items alrady
-            if (!include(binItemNames, namesToSetToClips[p])) {
-              app.project.importFiles([pathsToImport[p]], 1, // suppress warnings
-                  parent, 0); // import as numbered stills
-
-              for (var pi = 0; pi < parent.children.numItems; pi++) {
-                if (namesToGetFromBin[p] === parent.children[pi].name) {
-                  parent.children[pi].name = namesToSetToClips[p];
-                  var start = data.clips[namesToSetToClips[p]]['parentClip']['start']
-                  $.pype.insertBinClipToTimeline(parent.children[pi], start, data.clips[namesToSetToClips[p]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
-                }
-              }
-            } else { // if the bin item already exist just update the path
-              // loop children in parent bin
-              for (var pi = 0; pi < parent.children.numItems; pi++) {
-                if (namesToSetToClips[p] === parent.children[pi].name) {
-                  $.writeln('__namesToSetToClips[p]__: ' + namesToSetToClips[p]);
-                  parent.children[pi].changeMediaPath(pathsToImport[p]);
-                  // clip exists and we can update path
-                  $.writeln('____clip exists and updating path');
-                }
-              }
-            }
-          }
-        } else {
-          app.project.importFiles(pathsToImport, 1, // suppress warnings
-              parent, 0); // import as numbered stills
-          for (var pi = 0; pi < parent.children.numItems; pi++) {
-            parent.children[pi].name = namesToSetToClips[i];
-            start = data.clips[namesToSetToClips[i]]['parentClip']['start']
-            $.pype.insertBinClipToTimeline(parent.children[pi], start, data.clips[namesToSetToClips[i]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
-          }
-
-          return;
-        }
-      } else {
-        alert('Missing data for clip insertion', 'error');
-        return false;
-      }
-    }
-    // remove all empty tracks
-    activeSequence.removeEmptyVideoTracks();
-    activeSequence.removeEmptyAudioTracks();
-  },
   setEnvs: function (env) {
     for (var key in env) {
       $.setenv(key, env[key]);
@@ -229,8 +64,6 @@ $.pype = {
   },
 
   getSequenceItems: function (seqs) {
-    app.enableQE();
-    qe.project.init();
     var sequences = seqs;
     // $.pype.log('getSequenceItems sequences obj from app: ' + sequences);
 
@@ -251,7 +84,7 @@ $.pype = {
         if (objectIsSequence(item)) { // objects of type can also be other objects such as titles, so check if it really is a sequence
           // $.pype.log('\nSequence in root: ' +  item.name );
           rootSeqCounter++;
-          var seq = qe.project.getSequenceAt(rootSeqCounter);
+          var seq = app.project.sequences[rootSeqCounter];
           //  $.pype.log('\nSequence in root, guid: ' +  seq );
           for (var property in seq) {
             if (Object.prototype.hasOwnProperty.call(seq, property)) {
@@ -277,18 +110,15 @@ $.pype = {
     }
 
     // walk through bins recursively
-    function walkBins(item, source, rootBinCounter) {
-      app.enableQE();
-      // $.pype.log('\nget clips for bin  ' + item.name  );
-
+    function walkBins (item, source, rootBinCounter) {
       var bin;
       if (source === 'root') { // bin in root folder
-        bin = qe.project.getBinAt(rootBinCounter);
+        bin = source.children[rootBinCounter];
       } else { // bin in other bin
         bin = item;
 
-        for (var i = 0; i < bin.numBins; i++) { // if bin contains bin(s) walk through them
-          walkBins(bin.getBinAt(i));
+        for (var i = 0; i < bin.children.numItems; i++) { // if bin contains bin(s) walk through them
+          walkBins(bin.children[i]);
         }
         // $.pype.log('Bin ' + bin.name + ' has ' + bin.numSequences + ' sequences ' );
         // var seqCounter = -1;
@@ -303,7 +133,7 @@ $.pype = {
     }
 
     // walk through sequences and video & audiotracks to find clip names in sequences
-    function getClipNames(seq, sequences) {
+    function getClipNames (seq, sequences) {
       for (var k = 0; k < sequences.length; k++) {
         //  $.pype.log('getClipNames seq.guid ' + seq.guid  );
         // $.pype.log(' getClipNames sequences[k].id ' +  sequences[k].sequenceID  );
@@ -379,11 +209,8 @@ $.pype = {
     return JSON.stringify(obj);
   },
 
-  // getSequenceItems();
   getProjectItems: function () {
     var projectItems = [];
-    app.enableQE();
-    qe.project.init();
 
     var rootFolder = app.project.rootItem;
     // walk through root folder of project to differentiate between bins, sequences and clips
@@ -401,8 +228,7 @@ $.pype = {
     }
 
     // walk through bins recursively
-    function walkBins(bin) { // eslint-disable-line no-unused-vars
-      app.enableQE();
+    function walkBins (bin) { // eslint-disable-line no-unused-vars
 
       // $.writeln('bin.name + ' has ' + bin.children.numItems);
       for (var i = 0; i < bin.children.numItems; i++) {
@@ -429,33 +255,10 @@ $.pype = {
     return projectItems;
   },
 
-  replaceClips: function (obj, projectItems) {
-    $.pype.log('num of projectItems:' + projectItems.length);
-    var hiresVOs = obj.hiresOnFS;
-    for (var i = 0; i < hiresVOs.length; i++) {
-      $.pype.log('hires vo name: ' + hiresVOs[i].name);
-      $.pype.log('hires vo id:  ' + hiresVOs[i].id);
-      $.pype.log('hires vo path: ' + hiresVOs[i].path);
-      $.pype.log('hires vo replace: ' + hiresVOs[i].replace);
-
-      for (var j = 0; j < projectItems.length; j++) {
-        // $.pype.log('projectItem id: ' + projectItems[j].name.split(' ')[0] + ' ' + hiresVOs[i].id + ' can change path  ' + projectItems[j].canChangeMediaPath() );
-        if (projectItems[j].name.split(' ')[0] === hiresVOs[i].id && hiresVOs[i].replace && projectItems[j].canChangeMediaPath()) {
-          $.pype.log('replace: ' + projectItems[j].name + ' with ' + hiresVOs[i].name);
-          projectItems[j].name = hiresVOs[i].name;
-          projectItems[j].changeMediaPath(hiresVOs[i].path);
-        }
-      }
-    }
-  },
-
-  getActiveSequence: function () {
-    return app.project.activeSequence;
-  },
-
   getImageSize: function () {
     return {h: app.project.activeSequence.frameSizeHorizontal, v: app.project.activeSequence.frameSizeVertical};
   },
+
   getInOutOfAll: function () {
     var seq = app.project.activeSequence;
     var points = [];
@@ -481,6 +284,7 @@ $.pype = {
 
     return output;
   },
+
   getSelectedItems: function () {
     var seq = app.project.activeSequence;
     var selected = [];
@@ -656,70 +460,7 @@ $.pype = {
     instance.metadata = metadata;
     return instance;
   },
-  getClipsForLoadingSubsets: function (subsetName) {
-    // instances
-    var sequence = app.project.activeSequence;
-    var settings = sequence.getSettings();
-    var instances = {};
-    var numTracks = [];
-    var orders = [];
-    var selected = $.pype.getSelectedItems();
-    for (var s = 0; s < selected.length; s++) {
-      orders.push(selected[s].trackOrder);
-    }
-    var orderStart = Math.min.apply(null, orders);
-    $.writeln('__orderStart__: ' + orderStart);
 
-    for (var s = 0; s < selected.length; s++) {
-      var selClipName = selected[s].clip.name;
-      $.writeln(selClipName);
-      var nameSplit = selClipName.split('_');
-
-      if (nameSplit.length > 0) {
-        $.writeln(nameSplit);
-        $.writeln(subsetName);
-        if (include(nameSplit, subsetName)) {
-          selClipName = nameSplit[0];
-        }
-      }
-      var clip = {};
-      clip.start = selected[s].clip.start.seconds;
-      clip.end = selected[s].clip.end.seconds;
-      clip.fps = (1 / settings.videoFrameRate.seconds);
-      clip.trackOrder = selected[s].trackOrder - orderStart;
-      if (clip !== false) {
-        instances[selClipName] = clip;
-        if (!include(numTracks, selected[s].trackOrder)) {
-          numTracks.push(selected[s].trackOrder)
-        }
-      }
-    }
-    var instanceSorted = {};
-    var sorting = [];
-    for (var key in instances) {
-      sorting.push(key);
-    }
-    sorting.sort();
-    for (var k = 0; k < sorting.length; k++) {
-      instanceSorted[sorting[k]] = instances[sorting[k]];
-    }
-    return JSON.stringify([instanceSorted, numTracks.length]);
-  },
-  createSubsetClips: function (data) {
-    var pypeData = $.pype.loadSequenceMetadata(app.project.activeSequence)
-    // instances
-    var instances = {};
-    var selected = $.pype.getSelectedItems();
-    for (var s = 0; s < selected.length; s++) {
-      var clip = {};
-      clip.start = selected[s].clip.start.seconds;
-      clip.end = selected[s].clip.end.seconds;
-      if (clip !== false) {
-        instances[clip.name] = clip;
-      }
-    }
-    return JSON.stringify(instances);
-  },
   getSelectedClipsAsInstances: function () {
     // get project script version and add it into clip instance data
     var version = $.pype.getWorkFileVersion();
@@ -765,7 +506,6 @@ $.pype = {
 
     return instances;
   },
-
   /**
    * Return request json data object with instances for pyblish
    * @param stagingDir {string} - path to temp directory
@@ -819,38 +559,40 @@ $.pype = {
     }
   },
 
-  convertSecToTimecode: function (timeSec, fps) {
-    var ceiled = Math.round(timeSec * 100) / 100;
-    var parts = ('' + ceiled).split('.');
-    var dec = Number(parts[1]);
-    var main = Number(parts[0]);
-    var sec;
-    var frames = (Number(('' + (
-    (dec * fps) / 100)).split('.')[0])).pad(2);
-    if (main > 59) {
-      sec = (Math.round(((Number(('' + (
-      Math.round((main / 60) * 100) / 100).toFixed(2)).split('.')[1]) / 100) * 60))).pad(2);
-      if (sec === 'NaN') {
-        sec = '00';
-      };
-    } else {
-      sec = main;
-    };
-    var min = (Number(('' + (
-    main / 60)).split('.')[0])).pad(2);
-    var hov = (Number(('' + (
-    main / 3600)).split('.')[0])).pad(2);
+  // convertSecToTimecode: function (timeSec, fps) {
+  //   var ceiled = Math.round(timeSec * 100) / 100;
+  //   var parts = ('' + ceiled).split('.');
+  //   var dec = Number(parts[1]);
+  //   var main = Number(parts[0]);
+  //   var sec;
+  //   var frames = (Number(('' + (
+  //   (dec * fps) / 100)).split('.')[0])).pad(2);
+  //   if (main > 59) {
+  //     sec = (Math.round(((Number(('' + (
+  //     Math.round((main / 60) * 100) / 100).toFixed(2)).split('.')[1]) / 100) * 60))).pad(2);
+  //     if (sec === 'NaN') {
+  //       sec = '00';
+  //     };
+  //   } else {
+  //     sec = main;
+  //   };
+  //   var min = (Number(('' + (
+  //   main / 60)).split('.')[0])).pad(2);
+  //   var hov = (Number(('' + (
+  //   main / 3600)).split('.')[0])).pad(2);
+  //
+  //   return hov + ':' + min + ':' + sec + ':' + frames;
+  // },
 
-    return hov + ':' + min + ':' + sec + ':' + frames;
-  },
-  exportThumbnail: function (name, family, version, outputPath, time, fps) {
-    app.enableQE();
-    var activeSequence = qe.project.getActiveSequence(); // note: make sure a sequence is active in PPro UI
-    var file = name + '_' + family + '_v' + version + '.jpg';
-    var fullPathToFile = outputPath + $._PPP_.getSep() + file;
-    var expJPEG = activeSequence.exportFrameJPEG($.pype.convertSecToTimecode(time, fps), $.pype.convertPathString(fullPathToFile).split('/').join($._PPP_.getSep()));
-    return file;
-  },
+  // exportThumbnail: function (name, family, version, outputPath, time, fps) {
+  //   app.enableQE();
+  //   var activeSequence = qe.project.getActiveSequence(); // note: make sure a sequence is active in PPro UI
+  //   var file = name + '_' + family + '_v' + version + '.jpg';
+  //   var fullPathToFile = outputPath + $._PPP_.getSep() + file;
+  //   var expJPEG = activeSequence.exportFrameJPEG($.pype.convertSecToTimecode(time, fps), $.pype.convertPathString(fullPathToFile).split('/').join($._PPP_.getSep()));
+  //   return file;
+  // },
+
   encodeRepresentation: function (request) {
     $.pype.log('__ request: ' + JSON.stringify(request));
     var sequence = app.project.activeSequence
@@ -891,7 +633,22 @@ $.pype = {
               instances[i].metadata['ppro.clip.start'],
               instances[i].metadata['ppro.clip.end']));
         } else if (key === 'thumbnail') {
-          instances[i].files.push($.pype.exportThumbnail(instances[i].name, key, instances[i].version, request.stagingDir, (instances[i].metadata['ppro.clip.start'] + ((instances[i].metadata['ppro.clip.end'] - instances[i].metadata['ppro.clip.start']) / 2)), instances[i].metadata['ppro.timeline.fps']));
+          // create time to be in middle of clip
+          var thumbStartTime = (instances[i].metadata['ppro.clip.start'] + ((instances[i].metadata['ppro.clip.end'] - instances[i].metadata['ppro.clip.start']) / 2))
+          // add instance of thimbnail
+          instances[i].files.push(
+            $.pype.render(
+              request.stagingDir,
+              key,
+              subsetToRepresentations[key],
+              instances[i].name,
+              instances[i].version,
+              thumbStartTime,
+              thumbStartTime
+            )
+          );
+        // } else if (key === 'thumbnail') {
+        //   instances[i].files.push($.pype.exportThumbnail(instances[i].name, key, instances[i].version, request.stagingDir, (instances[i].metadata['ppro.clip.start'] + ((instances[i].metadata['ppro.clip.end'] - instances[i].metadata['ppro.clip.start']) / 2)), instances[i].metadata['ppro.timeline.fps']));
         } else if (key === 'workfile') {
           instances[i].files.push(instances[i].projectfile);
         };
@@ -904,7 +661,7 @@ $.pype = {
     return JSON.stringify(request);
   },
 
-  onEncoderJobComplete: function(jobID, outputFilePath) {
+  onEncoderJobComplete: function (jobID, outputFilePath) {
     // remove job from expected jobs list
     const index = $.pype.expectedJobs.indexOf(jobID);
     if (index > -1) {
@@ -927,9 +684,9 @@ $.pype = {
       (representation.preset + '.epr')
     ]).join($._PPP_.getSep());
 
-    app.enableQE();
-    var activeSequence = $.pype.getActiveSequence();
-    $.pype.log("launching encoder ... " + family + " " + clipName);
+
+    var activeSequence = app.project.activeSequence;
+    $.pype.log('launching encoder ... ' + family + ' ' + clipName);
     if (activeSequence) {
       app.encoder.launchEncoder(); // This can take a while; let's get the ball rolling.
 
@@ -994,11 +751,12 @@ $.pype = {
   message: function (msg) {
     $.writeln(msg); // Using '$' object will invoke ExtendScript Toolkit, if installed.
   },
-  // $.getenv('PYTHONPATH')
+
   alert_message: function (message) {
     alert(message, 'WARNING', true);
     app.setSDKEventMessage(message, 'error');
   },
+
   getWorkFileVersion: function () {
     var outputPath = $.pype.convertPathString(app.project.path);
     var outputName = String(app.project.name);
@@ -1022,22 +780,7 @@ $.pype = {
       }
     }
   },
-  saveProjectCopy: function (outputPath) {
-    var originalPath = $.pype.convertPathString(app.project.path);
-    var outputName = String(app.project.name);
 
-    var fullOutPath = outputPath + $._PPP_.getSep() + outputName;
-
-    app.project.saveAs(fullOutPath.split('/').join($._PPP_.getSep()));
-
-    for (var a = 0; a < app.projects.numProjects; a++) {
-      var currentProject = app.projects[a];
-      if (currentProject.path === fullOutPath) {
-        app.openDocument(originalPath); // Why first? So we don't frighten the user by making PPro's window disappear. :)
-        currentProject.closeDocument();
-      }
-    }
-  },
   nextVersionCheck: function (dir, file, vCurVersStr, curVersStr, padding, nextVersNum) {
     var replVers = vCurVersStr.replace(curVersStr, (nextVersNum).pad(padding));
     var newFileName = file.replace(vCurVersStr, replVers);
@@ -1049,6 +792,7 @@ $.pype = {
       return absPathF
     }
   },
+
   versionUpWorkFile: function () {
     var outputPath = $.pype.convertPathString(app.project.path);
     var outputName = String(app.project.name);
@@ -1101,22 +845,203 @@ $.pype = {
       }
     }
   },
-  transcodeExternal: function (fileToTranscode, fileOutputPath) {
-    fileToTranscode = typeof fileToTranscode !== 'undefined'
-      ? fileToTranscode
-      : 'C:\\Users\\hubert\\_PYPE_testing\\projects\\jakub_projectx\\resources\\footage\\raw\\day01\\bbt_test_001_raw.mov';
-    fileOutputPath = typeof fileOutputPath !== 'undefined'
-      ? fileOutputPath
-      : 'C:\\Users\\hubert\\_PYPE_testing\\projects\\jakub_projectx\\editorial\\e01\\work\\edit\\transcode';
+  // ,
+  /**
+   * #######################################################################
+   * bellow section is dedicated mostly to loading clips
+   * #######################################################################
+   */
 
-    app.encoder.launchEncoder();
-    var outputPresetPath = $.getenv('EXTENSION_PATH').split('/').concat(['encoding', 'prores422.epr']).join($._PPP_.getSep());
-    var srcInPoint = 1.0; // encode start time at 1s (optional--if omitted, encode entire file)
-    var srcOutPoint = 3.0; // encode stop time at 3s (optional--if omitted, encode entire file)
-    var removeFromQueue = false;
+  // replaceClips: function (obj, projectItems) {
+  //    $.pype.log('num of projectItems:' + projectItems.length);
+  //    var hiresVOs = obj.hiresOnFS;
+  //    for (var i = 0; i < hiresVOs.length; i++) {
+  //      $.pype.log('hires vo name: ' + hiresVOs[i].name);
+  //      $.pype.log('hires vo id:  ' + hiresVOs[i].id);
+  //      $.pype.log('hires vo path: ' + hiresVOs[i].path);
+  //      $.pype.log('hires vo replace: ' + hiresVOs[i].replace);
+  //
+  //      for (var j = 0; j < projectItems.length; j++) {
+  //        // $.pype.log('projectItem id: ' + projectItems[j].name.split(' ')[0] + ' ' + hiresVOs[i].id + ' can change path  ' + projectItems[j].canChangeMediaPath() );
+  //        if (projectItems[j].name.split(' ')[0] === hiresVOs[i].id && hiresVOs[i].replace && projectItems[j].canChangeMediaPath()) {
+  //          $.pype.log('replace: ' + projectItems[j].name + ' with ' + hiresVOs[i].name);
+  //          projectItems[j].name = hiresVOs[i].name;
+  //          projectItems[j].changeMediaPath(hiresVOs[i].path);
+  //        }
+  //      }
+  //    }
+  //  },
 
-    app.encoder.encodeFile(fileToTranscode, fileOutputPath, outputPresetPath, removeFromQueue, srcInPoint, srcOutPoint);
-  }
+  // addNewTrack: function (numTracks) {
+  //   app.enableQE();
+  //   var sequence = app.project.activeSequence;
+  //   var activeSequence = qe.project.getActiveSequence();
+  //   activeSequence.addTracks(numTracks, sequence.videoTracks.numTracks, 0);
+  //
+  //   for (var t = 0; t < sequence.videoTracks.numTracks; t++) {
+  //     var videoTrack = sequence.videoTracks[t];
+  //     var trackName = videoTrack.name;
+  //     var trackTarget = videoTrack.isTargeted();
+  //     // $.writeln(trackTarget);
+  //     sequence.videoTracks[t].setTargeted(false, true);
+  //     trackTarget = videoTrack.isTargeted();
+  //     // $.writeln(trackTarget);
+  //     // $.writeln(videoTrack);
+  //   }
+  // },
+
+  // searchForBinWithName: function (nameToFind, folderObject) {
+  //   // deep-search a folder by name in project
+  //   var deepSearchBin = function (inFolder) {
+  //     if (inFolder && inFolder.name === nameToFind && inFolder.type === 2) {
+  //       return inFolder;
+  //     } else {
+  //       for (var i = 0; i < inFolder.children.numItems; i++) {
+  //         if (inFolder.children[i] && inFolder.children[i].type === 2) {
+  //           var foundBin = deepSearchBin(inFolder.children[i]);
+  //           if (foundBin)
+  //             return foundBin;
+  //           }
+  //         }
+  //     }
+  //     return undefined;
+  //   };
+  //   if (folderObject === undefined) {
+  //     return deepSearchBin(app.project.rootItem);
+  //   } else {
+  //     return deepSearchBin(folderObject);
+  //   }
+  // },
+
+  // createDeepBinStructure: function (hierarchyString) {
+  //   var parents = hierarchyString.split('/');
+  //
+  //   // search for the created folder
+  //   var currentBin = $.pype.searchForBinWithName(parents[0]);
+  //   // create bin if doesn't exists
+  //   if (currentBin === undefined) {
+  //     currentBin = app.project.rootItem.createBin(parents[0]);
+  //   }
+  //   for (var b = 1; b < parents.length; b++) {
+  //     var testBin = $.pype.searchForBinWithName(parents[b], currentBin);
+  //     if (testBin === undefined) {
+  //       currentBin = currentBin.createBin(parents[b]);
+  //     } else {
+  //       currentBin = testBin;
+  //     }
+  //   }
+  //   return currentBin;
+  // },
+
+  // insertBinClipToTimeline: function (binClip, time, trackOrder, numTracks, origNumTracks) {
+  //   var seq = app.project.activeSequence;
+  //   var numVTracks = seq.videoTracks.numTracks;
+  //
+  //   var addInTrack = (numTracks === 1)
+  //     ? (origNumTracks)
+  //     : (numVTracks - numTracks + trackOrder);
+  //   $.writeln('\n___name: ' + binClip.name);
+  //   $.writeln('numVTracks: ' + numVTracks + ', trackOrder: ' + trackOrder + ', numTracks: ' + numTracks + ', origNumTracks: ' + origNumTracks + ', addInTrack: ' + addInTrack);
+  //
+  //   var targetVTrack = seq.videoTracks[addInTrack];
+  //
+  //   if (targetVTrack) {
+  //     targetVTrack.insertClip(binClip, time);
+  //   }
+  // },
+  // /**
+  //  * Return instance representation of clip imported into bin
+  //  * @param data {object} - has to have at least two attributes `clips` and `binHierarchy`
+  //  * @return {Object}
+  //  */
+
+  // importFiles: function (data) {
+  //   // remove all empty tracks
+  //   app.enableQE();
+  //   var activeSequence = qe.project.getActiveSequence();
+  //   activeSequence.removeEmptyVideoTracks();
+  //   activeSequence.removeEmptyAudioTracks();
+  //
+  //   if (app.project) {
+  //     if (data !== undefined) {
+  //       var pathsToImport = [];
+  //       var namesToGetFromBin = [];
+  //       var namesToSetToClips = [];
+  //       var origNumTracks = app.project.activeSequence.videoTracks.numTracks;
+  //       // TODO: for now it always creates new track and adding it into it
+  //       $.pype.addNewTrack(data.numTracks);
+  //
+  //       // get all paths and names list
+  //       var key = '';
+  //       for (key in data.clips) {
+  //         var path = data.clips[key]['data']['path'];
+  //         var fileName = path.split('/');
+  //         if (fileName.length <= 1) {
+  //           fileName = path.split('\\');
+  //         }
+  //         fileName = fileName[fileName.length - 1];
+  //         pathsToImport.push(path);
+  //         namesToGetFromBin.push(fileName);
+  //         namesToSetToClips.push(key);
+  //       }
+  //
+  //       // create parent bin object
+  //       var parent = $.pype.createDeepBinStructure(data.binHierarchy);
+  //
+  //       // check if any imported clips are in the bin
+  //       if (parent.children.numItems > 0) {
+  //         // loop pathsToImport
+  //         var binItemNames = [];
+  //         for (var c = 0; c < parent.children.numItems; c++) {
+  //           binItemNames.push(parent.children[c].name);
+  //         }
+  //
+  //         // loop formated clip names to be imported
+  //         for (var p = 0; p < namesToSetToClips.length; p++) {
+  //           // check if the clip is not in bin items alrady
+  //           if (!include(binItemNames, namesToSetToClips[p])) {
+  //             app.project.importFiles([pathsToImport[p]], 1, // suppress warnings
+  //                 parent, 0); // import as numbered stills
+  //
+  //             for (var pi = 0; pi < parent.children.numItems; pi++) {
+  //               if (namesToGetFromBin[p] === parent.children[pi].name) {
+  //                 parent.children[pi].name = namesToSetToClips[p];
+  //                 var start = data.clips[namesToSetToClips[p]]['parentClip']['start']
+  //                 $.pype.insertBinClipToTimeline(parent.children[pi], start, data.clips[namesToSetToClips[p]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
+  //               }
+  //             }
+  //           } else { // if the bin item already exist just update the path
+  //             // loop children in parent bin
+  //             for (var pi = 0; pi < parent.children.numItems; pi++) {
+  //               if (namesToSetToClips[p] === parent.children[pi].name) {
+  //                 $.writeln('__namesToSetToClips[p]__: ' + namesToSetToClips[p]);
+  //                 parent.children[pi].changeMediaPath(pathsToImport[p]);
+  //                 // clip exists and we can update path
+  //                 $.writeln('____clip exists and updating path');
+  //               }
+  //             }
+  //           }
+  //         }
+  //       } else {
+  //         app.project.importFiles(pathsToImport, 1, // suppress warnings
+  //             parent, 0); // import as numbered stills
+  //         for (var pi = 0; pi < parent.children.numItems; pi++) {
+  //           parent.children[pi].name = namesToSetToClips[i];
+  //           start = data.clips[namesToSetToClips[i]]['parentClip']['start']
+  //           $.pype.insertBinClipToTimeline(parent.children[pi], start, data.clips[namesToSetToClips[i]]['parentClip']['trackOrder'], data.numTracks, origNumTracks);
+  //         }
+  //
+  //         return;
+  //       }
+  //     } else {
+  //       alert('Missing data for clip insertion', 'error');
+  //       return false;
+  //     }
+  //   }
+  //   // remove all empty tracks
+  //   activeSequence.removeEmptyVideoTracks();
+  //   activeSequence.removeEmptyAudioTracks();
+  // }
 };
 
 Number.prototype.pad = function (size) {
@@ -1127,7 +1052,7 @@ Number.prototype.pad = function (size) {
   return s;
 };
 
-function include(arr, obj) {
+function include (arr, obj) {
   for (var i = 0; i < arr.length; i++) {
     if (arr[i] === obj)
       return true;

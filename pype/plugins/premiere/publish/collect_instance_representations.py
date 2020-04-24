@@ -1,3 +1,4 @@
+import os
 import pyblish.api
 
 
@@ -75,7 +76,7 @@ class CollectClipRepresentations(pyblish.api.InstancePlugin):
                 'stagingDir': staging_dir,
                 'name': "thumbnail",
                 'thumbnail': True,
-                'ext': "png"
+                'ext': os.path.splitext(thumb)[-1].replace(".", "")
             }
             self.log.debug("representation: {}".format(thumb_representation))
             instance.data["representations"].append(
