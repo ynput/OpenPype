@@ -811,6 +811,67 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 break
         return output
 
+    def profile_exclusion(self, matching_profiles):
+        """Find out most matching profile byt host, task and family match.
+
+        Profiles are selectivelly filtered. Each profile should have
+        "__value__" key with list of booleans. Each boolean represents
+        existence of filter for specific key (host, taks, family).
+        Profiles are looped in sequence. In each sequence are split into
+        true_list and false_list. For next sequence loop are used profiles in
+        true_list if there are any profiles else false_list is used.
+
+        Filtering ends when only one profile left in true_list. Or when all
+        existence booleans loops passed, in that case first profile from left
+        profiles is returned.
+
+        Args:
+            matching_profiles (list): Profiles with same values.
+
+        Returns:
+            dict: Most matching profile.
+        """
+        self.log.info(
+            "Search for first most matching profile in match order:"
+            " Host name -> Task name -> Family."
+        )
+        # Filter all profiles with highest points value. First filter profiles
+        # with matching host if there are any then filter profiles by task
+        # name if there are any and lastly filter by family. Else use first in
+        # list.
+        idx = 0
+        final_profile = None
+        while True:
+            profiles_true = []
+            profiles_false = []
+            for profile in matching_profiles:
+                value = profile["__value__"]
+                # Just use first profile when idx is greater than values.
+                if not idx < len(value):
+                    final_profile = profile
+                    break
+
+                if value[idx]:
+                    profiles_true.append(profile)
+                else:
+                    profiles_false.append(profile)
+
+            if final_profile is not None:
+                break
+
+            if profiles_true:
+                matching_profiles = profiles_true
+            else:
+                matching_profiles = profiles_false
+
+            if len(matching_profiles) == 1:
+                final_profile = matching_profiles[0]
+                break
+            idx += 1
+
+        final_profile.pop("__value__")
+        return final_profile
+
     def find_matching_profile(self, profiles, filter_data):
         """ Filter profiles by Host name, Task name and main Family.
 
@@ -893,46 +954,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             " Host \"{host}\" | Task: \"{task}\" | Family: \"{family}\""
         ).format(**filter_data))
 
-        # Filter all profiles with highest points value. First filter profiles
-        # with matching host if there are any then filter profiles by task
-        # name if there are any and lastly filter by family. Else use first in
-        # list.
-        idx = 0
-        final_profile = None
-        while True:
-            profiles_true = []
-            profiles_false = []
-            for profile in matching_profiles:
-                value = profile["__value__"]
-                # Just use first profile when idx is greater than values.
-                if not idx < len(value):
-                    final_profile = profile
-                    break
-
-                if value[idx]:
-                    profiles_true.append(profile)
-                else:
-                    profiles_false.append(profile)
-
-            if final_profile is not None:
-                break
-
-            if profiles_true:
-                matching_profiles = profiles_true
-            else:
-                matching_profiles = profiles_false
-
-            if len(matching_profiles) == 1:
-                final_profile = matching_profiles[0]
-                break
-            idx += 1
-
-        final_profile.pop("__value__")
-        self.log.info(
-            "Using first most matching profile in match order:"
-            " Host name -> Task name -> Family."
-        )
-        return final_profile
+        return self.profile_exclusion(matching_profiles)
 
     def families_filter_validation(self, families, output_families_filter):
         """Determines if entered families intersect with families filters.
