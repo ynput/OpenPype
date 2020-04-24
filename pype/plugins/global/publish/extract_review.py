@@ -441,7 +441,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         repre = temp_data["origin_repre"]
 
         if temp_data["input_is_sequence"]:
-            collections, remainder = clique.assemble(repre["files"])
+            collections = clique.assemble(repre["files"])[0]
 
             full_input_path = os.path.join(
                 staging_dir,
@@ -451,11 +451,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
             filename = collections[0].format("{head}")
             if filename.endswith("."):
                 filename = filename[:-1]
+
+            # Make sure to have full path to one input file
+            full_input_path_single_file = os.path.join(
+                staging_dir, repre["files"][0]
+            )
+
         else:
             full_input_path = os.path.join(
                 staging_dir, repre["files"]
             )
             filename = os.path.splitext(repre["files"])[0]
+
+            # Make sure to have full path to one input file
+            full_input_path_single_file = full_input_path
 
         filename_suffix = output_def["filename_suffix"]
 
@@ -520,6 +529,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Store paths to temp data
         temp_data["full_input_path"] = full_input_path
+        temp_data["full_input_path_single_file"] = full_input_path_single_file
         temp_data["full_output_path"] = full_output_path
 
         self.log.debug("Input path {}".format(full_input_path))
