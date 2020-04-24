@@ -1,6 +1,8 @@
 import os
 import re
 import copy
+import json
+import subprocess
 import pyblish.api
 import clique
 import pype.api
@@ -32,7 +34,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
     supported_exts = image_exts + video_exts
 
     # Path to ffmpeg
-    path_to_ffmpeg = None
+    ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
+    ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
 
     # Preset attributes
     profiles = None
@@ -82,9 +85,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         for filename_suffix, definition in _profile_outputs.items():
             definition["filename_suffix"] = filename_suffix
             profile_outputs.append(definition)
-
-        if self.path_to_ffmpeg is None:
-            self.path_to_ffmpeg = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
         # Loop through representations
         for repre in tuple(instance.data["representations"]):
@@ -302,7 +302,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     audio_filters.append(arg)
 
         all_args = []
-        all_args.append(self.path_to_ffmpeg)
+        all_args.append(self.ffmpeg_path)
         all_args.extend(input_args)
         if video_filters:
             all_args.append("-filter:v {}".format(",".join(video_filters)))
@@ -633,6 +633,20 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.info("Added Lut to ffmpeg command")
 
         return filters
+
+    def ffprobe_streams(self, path_to_file):
+        args = [
+            self.ffprobe_path,
+            "-v quiet",
+            "-print_format json",
+            "-show_format",
+            "-show_streams"
+            "\"{}\"".format(path_to_file)
+        ]
+        command = " ".join(args)
+        popen = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+
+        return json.loads(popen.communicate()[0])["streams"][0]
 
     def main_family_from_instance(self, instance):
         family = instance.data.get("family")
