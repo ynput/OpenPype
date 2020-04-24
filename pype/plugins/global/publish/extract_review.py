@@ -591,17 +591,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Get instance data
         pixel_aspect = temp_data["pixel_aspect"]
-        input_width = temp_data["resolution_width"]
-        input_height = temp_data["resolution_height"]
 
-        # If instance miss resolution settings.
-        if input_width is None or input_height is None:
-            # QUESTION Shall we skip instance data and use these values
-            # by default?
-            # Use input resolution
-            input_data = self.ffprobe_streams(temp_data["full_input_path"])
-            input_width = input_data["width"]
-            input_height = input_data["height"]
+        # NOTE Skipped using instance's resolution
+        full_input_path_single_file = temp_data["full_input_path_single_file"]
+        input_data = self.ffprobe_streams(full_input_path_single_file)
+        input_width = input_data["width"]
+        input_height = input_data["height"]
 
         self.log.debug("pixel_aspect: `{}`".format(pixel_aspect))
         self.log.debug("input_width: `{}`".format(input_width))
