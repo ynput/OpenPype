@@ -451,6 +451,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Set stagingDir
         new_repre["stagingDir"] = staging_dir
 
+        # Store paths to temp data
+        temp_data["full_input_path"] = full_input_path
+        temp_data["full_output_path"] = full_output_path
+
         self.log.debug("Input path {}".format(full_input_path))
         self.log.debug("Output path {}".format(full_output_path))
 
@@ -495,119 +499,135 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return audio_in_args, audio_filters, audio_out_args
 
     def resolution_ratios(self, temp_data, output_def, new_repre):
-        # TODO This is not implemented and requires reimplementation since
-        # self.to_width and self.to_height are not set.
-
-        # TODO get width, height from source
-        output_width = output_def.get("width")
-        output_height = output_def.get("height")
-        output_pixel_aspect = output_def.get("aspect_ratio")
-        output_letterbox = output_def.get("letter_box")
-
-        # defining image ratios
-        resolution_ratio = (
-            (float(resolution_width) * pixel_aspect) / resolution_height
-        )
-        delivery_ratio = float(self.to_width) / float(self.to_height)
-        self.log.debug("resolution_ratio: `{}`".format(resolution_ratio))
-        self.log.debug("delivery_ratio: `{}`".format(delivery_ratio))
-
-        # shorten two decimals long float number for testing conditions
-        resolution_ratio_test = float("{:0.2f}".format(resolution_ratio))
-        delivery_ratio_test = float("{:0.2f}".format(delivery_ratio))
-
-        # get scale factor
-        if resolution_ratio_test < delivery_ratio_test:
-            scale_factor = (
-                float(self.to_width) / (resolution_width * pixel_aspect)
-            )
-        else:
-            scale_factor = (
-                float(self.to_height) / (resolution_height * pixel_aspect)
-            )
-
-        self.log.debug("scale_factor: `{}`".format(scale_factor))
-
         filters = []
-        # letter_box
-        if output_letterbox:
-            ffmpeg_width = self.to_width
-            ffmpeg_height = self.to_height
-            if "reformat" not in new_repre["tags"]:
-                output_letterbox /= pixel_aspect
-                if resolution_ratio_test != delivery_ratio_test:
-                    ffmpeg_width = resolution_width
-                    ffmpeg_height = int(resolution_height * pixel_aspect)
-            else:
-                if resolution_ratio_test != delivery_ratio_test:
-                    output_letterbox /= scale_factor
-                else:
-                    output_letterbox /= pixel_aspect
 
-            filters.append(
-                "scale={}x{}:flags=lanczos".format(ffmpeg_width, ffmpeg_height)
-            )
-            # QUESTION shouldn't this contain aspect ration value instead of 1?
-            filters.append(
-                "setsar=1"
-            )
-            filters.append((
-                "drawbox=0:0:iw:round((ih-(iw*(1/{})))/2):t=fill:c=black"
-            ).format(output_letterbox))
+        letter_box = output_def.get("letter_box")
+        # Skip processing if both conditions are not met
+        if "reformat" not in new_repre["tags"] and not letter_box:
+            return filters
 
-            filters.append((
-                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
-                ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black"
-            ).format(output_letterbox))
+        # Get instance data
+        pixel_aspect = temp_data["pixel_aspect"]
+        input_width = temp_data["resolution_width"]
+        input_height = temp_data["resolution_height"]
+
+        # If instance miss resolution settings.
+        if input_width is None or input_height is None:
+            # Use input resolution
+            # QUESTION Should we skip instance data and use these values
+            # by default?
+            input_data = self.ffprobe_streams(temp_data["full_input_path"])
+            input_width = input_data["width"]
+            input_height = input_data["height"]
 
         self.log.debug("pixel_aspect: `{}`".format(pixel_aspect))
-        self.log.debug("resolution_width: `{}`".format(resolution_width))
-        self.log.debug("resolution_height: `{}`".format(resolution_height))
+        self.log.debug("input_width: `{}`".format(input_width))
+        self.log.debug("resolution_height: `{}`".format(input_height))
+
+        # NOTE Setting only one of `width` or `heigth` is not allowed
+        output_width = output_def.get("width")
+        output_height = output_def.get("height")
+        # Use instance resolution if output definition has not set it.
+        if output_width is None or output_height is None:
+            output_width = input_width
+            output_height = input_height
+
+        # defining image ratios
+        input_res_ratio = (
+            (float(input_width) * pixel_aspect) / input_height
+        )
+        output_res_ratio = float(output_width) / float(output_height)
+        self.log.debug("resolution_ratio: `{}`".format(input_res_ratio))
+        self.log.debug("output_res_ratio: `{}`".format(output_res_ratio))
+
+        # Round ratios to 2 decimal places for comparing
+        input_res_ratio = round(input_res_ratio, 2)
+        output_res_ratio = round(output_res_ratio, 2)
+
+        # get scale factor
+        scale_factor_by_width = (
+            float(output_width) / (input_width * pixel_aspect)
+        )
+        scale_factor_by_height = (
+            float(output_height) / (input_height * pixel_aspect)
+        )
+
+        self.log.debug(
+            "scale_factor_by_with: `{}`".format(scale_factor_by_width)
+        )
+        self.log.debug(
+            "scale_factor_by_height: `{}`".format(scale_factor_by_height)
+        )
+
+        # letter_box
+        letter_box = output_def.get("letter_box")
+        if letter_box:
+            ffmpeg_width = output_width
+            ffmpeg_height = output_height
+            if "reformat" in new_repre["tags"]:
+                if input_res_ratio == output_res_ratio:
+                    letter_box /= pixel_aspect
+                elif input_res_ratio < output_res_ratio:
+                    letter_box /= scale_factor_by_width
+                else:
+                    letter_box /= scale_factor_by_height
+            else:
+                letter_box /= pixel_aspect
+                if input_res_ratio != output_res_ratio:
+                    ffmpeg_width = input_width
+                    ffmpeg_height = int(input_height * pixel_aspect)
+
+            # QUESTION Is scale required when ffmpeg_width is same as
+            # output_width and ffmpeg_height as output_height
+            scale_filter = "scale={0}x{1}:flags=lanczos".format(
+                ffmpeg_width, ffmpeg_height
+            )
+
+            top_box = (
+                "drawbox=0:0:iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black"
+            ).format(letter_box)
+
+            bottom_box = (
+                "drawbox=0:ih-round((ih-(iw*(1/{0})))/2)"
+                ":iw:round((ih-(iw*(1/{0})))/2):t=fill:c=black"
+            ).format(letter_box)
+
+            # Add letter box filters
+            filters.extend([scale_filter, "setsar=1", top_box, bottom_box])
 
         # scaling none square pixels and 1920 width
-        # QUESTION: again check only output tags or repre tags
-        # WARNING: Duplication of filters when letter_box is set (or not?)
-        if "reformat" in repre["tags"]:
-            if resolution_ratio_test < delivery_ratio_test:
-                self.log.debug("lower then delivery")
-                width_scale = int(self.to_width * scale_factor)
-                width_half_pad = int((self.to_width - width_scale) / 2)
-                height_scale = self.to_height
+        if "reformat" in new_repre["tags"]:
+            if input_res_ratio < output_res_ratio:
+                self.log.debug("lower then output")
+                width_scale = int(output_width * scale_factor_by_width)
+                width_half_pad = int((output_width - width_scale) / 2)
+                height_scale = output_height
                 height_half_pad = 0
             else:
-                self.log.debug("heigher then delivery")
-                width_scale = self.to_width
+                self.log.debug("heigher then output")
+                width_scale = output_width
                 width_half_pad = 0
-                scale_factor = (
-                    float(self.to_width)
-                    / (float(resolution_width) * pixel_aspect)
-                )
-                self.log.debug(
-                    "scale_factor: `{}`".format(scale_factor)
-                )
-                height_scale = int(resolution_height * scale_factor)
-                height_half_pad = int((self.to_height - height_scale) / 2)
+                height_scale = int(input_height * scale_factor_by_width)
+                height_half_pad = int((output_height - height_scale) / 2)
 
             self.log.debug("width_scale: `{}`".format(width_scale))
             self.log.debug("width_half_pad: `{}`".format(width_half_pad))
             self.log.debug("height_scale: `{}`".format(height_scale))
             self.log.debug("height_half_pad: `{}`".format(height_half_pad))
 
-            filters.append(
-                "scale={}x{}:flags=lanczos".format(width_scale, height_scale)
-            )
-            filters.append(
-                "pad={}:{}:{}:{}:black".format(
-                    self.to_width,
-                    self.to_height,
-                    width_half_pad,
-                    height_half_pad
-                )
-            )
-            filters.append("setsar=1")
+            filters.extend([
+                "scale={0}x{1}:flags=lanczos".format(
+                    width_scale, height_scale
+                ),
+                "pad={0}:{1}:{2}:{3}:black".format(
+                    output_width, output_height,
+                    width_half_pad, height_half_pad
+                ),
+                "setsar=1"
+            ])
 
-        new_repre["resolutionHeight"] = resolution_height
-        new_repre["resolutionWidth"] = resolution_width
+        new_repre["resolutionWidth"] = output_width
+        new_repre["resolutionHeight"] = output_height
 
         return filters
 
