@@ -21,7 +21,7 @@ class YetiRigLoader(pype.maya.plugin.ReferenceLoader):
     icon = "code-fork"
     color = "orange"
 
-    def process_reference(self, context, name=None, namespace=None, data=None):
+    def process_reference(self, context, name=None, namespace=None, options=None):
 
         import maya.cmds as cmds
         from avalon import maya
