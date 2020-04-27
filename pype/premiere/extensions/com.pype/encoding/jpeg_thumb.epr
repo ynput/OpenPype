@@ -32,17 +32,17 @@
 	<DoEmulation>false</DoEmulation>
 	<DoVideo>true</DoVideo>
 	<DoAudio>false</DoAudio>
-	<PresetID>1d32334a-0261-48f7-8518-09010df922c8</PresetID>
+	<PresetID>2a690bef-07f2-46ff-8f4d-0110b28a7ab5</PresetID>
 	<CaptionParamContainer ObjectRef="252"/>
 	<ExportParamContainer ObjectRef="1"/>
 	<ExporterFileType>1246774599</ExporterFileType>
 	<ExporterClassID>1061109567</ExporterClassID>
 	<ExporterName></ExporterName>
 	<PresetCreatorPostProc></PresetCreatorPostProc>
-	<PresetCreatorApp>Adobe Media Encoder</PresetCreatorApp>
+	<PresetCreatorApp></PresetCreatorApp>
 	<PresetUserComments></PresetUserComments>
 	<PresetComments>Custom</PresetComments>
-	<PresetName>JPEG Sequence (Match Source)</PresetName>
+	<PresetName>jpeg_thumb</PresetName>
 	<ExporterParamContainer ObjectID="1" ClassID="5c20a4a5-5e7c-4032-85b8-26ad4531fe7b" Version="1">
 		<ContainedParamsVersion>1</ContainedParamsVersion>
 		<ParamContainerItems Version="1">
@@ -258,7 +258,7 @@
 		<ParamDontSerializeValue>false</ParamDontSerializeValue>
 		<ParamOrdinalValue>4</ParamOrdinalValue>
 		<ParamType>1</ParamType>
-		<ParamValue>false</ParamValue>
+		<ParamValue>true</ParamValue>
 	</ExporterParam>
 	<ExporterParam ObjectID="13" ClassID="8def7863-204e-4206-8791-54a78f15c66b" Version="1">
 		<ParamAuxType></ParamAuxType>
@@ -272,7 +272,7 @@
 		<ParamIsPassword>false</ParamIsPassword>
 		<ParamIsMultiLine>false</ParamIsMultiLine>
 		<ParamIsVerticallyAligned>false</ParamIsVerticallyAligned>
-		<ParamIsHidden>true</ParamIsHidden>
+		<ParamIsHidden>false</ParamIsHidden>
 		<ParamIsDisabled>false</ParamIsDisabled>
 		<ParamIsIndependant>false</ParamIsIndependant>
 		<ParamIsSlider>false</ParamIsSlider>
@@ -4638,7 +4638,7 @@
 		<AlphaAdjust_IgnoreAlpha>false</AlphaAdjust_IgnoreAlpha>
 		<AlphaAdjust_Opacity>100.</AlphaAdjust_Opacity>
 		<BaseStorageVersion>1</BaseStorageVersion>
-		<Enabled>true</Enabled>
+		<Enabled>false</Enabled>
 	</StandardFilterWrapperAlphaAdjust>
 	<StandardFilterWrapperClipName ObjectID="247" ClassID="2cf9288f-faea-4461-ad17-89705ab2b63a" Version="1">
 		<AbsoluteSizing>false</AbsoluteSizing>

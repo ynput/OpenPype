@@ -631,11 +631,20 @@ $.pype = {
               instances[i].name,
               instances[i].version,
               instances[i].metadata['ppro.clip.start'],
-              instances[i].metadata['ppro.clip.end']));
+              instances[i].metadata['ppro.clip.end']
+            ));
         } else if (key === 'thumbnail') {
-          // create time to be in middle of clip
-          var thumbStartTime = (instances[i].metadata['ppro.clip.start'] + ((instances[i].metadata['ppro.clip.end'] - instances[i].metadata['ppro.clip.start']) / 2))
-          // add instance of thimbnail
+          // // create time to be in middle of clip
+          // var thumbStartTime = (instances[i].metadata['ppro.clip.start'] + ((instances[i].metadata['ppro.clip.end'] - instances[i].metadata['ppro.clip.start']) / 2));
+          var thumbStartTime = instances[i].metadata['ppro.clip.start'] * 100;
+
+          var thumbEndTime = Number(
+            thumbStartTime + ((1 / instances[i].metadata['ppro.timeline.fps']) * 100));
+
+          $.pype.log('_ thumbStartTime: ' + thumbStartTime);
+          $.pype.log('_ thumbEndTime: ' + thumbEndTime);
+
+          // add instance of thumbnail
           instances[i].files.push(
             $.pype.render(
               request.stagingDir,
@@ -643,12 +652,10 @@ $.pype = {
               subsetToRepresentations[key],
               instances[i].name,
               instances[i].version,
-              thumbStartTime,
-              thumbStartTime
+              Number(parseFloat(thumbStartTime / 100).toFixed(2)),
+              Number(parseFloat(thumbEndTime / 100).toFixed(2))
             )
           );
-        // } else if (key === 'thumbnail') {
-        //   instances[i].files.push($.pype.exportThumbnail(instances[i].name, key, instances[i].version, request.stagingDir, (instances[i].metadata['ppro.clip.start'] + ((instances[i].metadata['ppro.clip.end'] - instances[i].metadata['ppro.clip.start']) / 2)), instances[i].metadata['ppro.timeline.fps']));
         } else if (key === 'workfile') {
           instances[i].files.push(instances[i].projectfile);
         };
@@ -679,6 +686,8 @@ $.pype = {
   },
 
   render: function (outputPath, family, representation, clipName, version, inPoint, outPoint) {
+    $.pype.log("_ inPoint: " + inPoint)
+    $.pype.log("_ outPoint: " + outPoint)
     var outputPresetPath = $.getenv('EXTENSION_PATH').split('/').concat([
       'encoding',
       (representation.preset + '.epr')
@@ -725,7 +734,11 @@ $.pype = {
             $.pype.log('job queue length: ' + $.pype.expectedJobs.length);
             $._PPP_.updateEventPanel('jobID = ' + jobID);
             outPreset.close();
-            return file;
+            if (family === 'thumbnail') {
+              return clipName + '_' + family + '_v' + version + '0.' + outputFormatExtension;
+            } else {
+              return file;
+            }
           }
         } else {
           $._PPP_.updateEventPanel('Could not find output preset.');
