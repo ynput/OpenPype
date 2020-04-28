@@ -394,7 +394,7 @@ class ExtractBurnin(pype.api.Extractor):
             frame_part = basename_parts.pop(-1)
 
             basename_start = ".".join(basename_parts) + filename_suffix
-            new_basename = ".".join(basename_start, frame_part)
+            new_basename = ".".join((basename_start, frame_part))
             output_filename = new_basename + ext
 
         else:
