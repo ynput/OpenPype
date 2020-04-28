@@ -335,22 +335,23 @@ def example(input_path, output_path):
 
 
 def burnins_from_data(
-    input_path, output_path, data, codec_data=None, overwrite=True
+    input_path, output_path, data,
+    codec_data=None, options=None, burnin_values=None, overwrite=True
 ):
-    '''
-    This method adds burnins to video/image file based on presets setting.
+    """This method adds burnins to video/image file based on presets setting.
+
     Extension of output MUST be same as input. (mov -> mov, avi -> avi,...)
 
-    :param input_path: full path to input file where burnins should be add
-    :type input_path: str
-    :param codec_data: all codec related arguments in list
-    :param codec_data: list
-    :param output_path: full path to output file where output will be rendered
-    :type output_path: str
-    :param data: data required for burnin settings (more info below)
-    :type data: dict
-    :param overwrite: output will be overriden if already exists, defaults to True
-    :type overwrite: bool
+    Args:
+        input_path (str): Full path to input file where burnins should be add.
+        output_path (str): Full path to output file where output will be
+            rendered.
+        data (dict): Data required for burnin settings (more info below).
+        codec_data (list): All codec related arguments in list.
+        options (dict): Options for burnins.
+        burnin_values (dict): Contain positioned values.
+        overwrite (bool): Output will be overriden if already exists,
+            True by default.
 
     Presets must be set separately. Should be dict with 2 keys:
     - "options" - sets look of burnins - colors, opacity,...(more info: ModifiedBurnins doc)
@@ -391,11 +392,18 @@ def burnins_from_data(
         "frame_start_tc": 1,
         "shot": "sh0010"
     }
-    '''
-    presets = config.get_presets().get('tools', {}).get('burnins', {})
-    options_init = presets.get('options')
+    """
+    # Make sure `codec_data` is list
+    if not codec_data:
+        codec_data = []
 
-    burnin = ModifiedBurnins(input_path, options_init=options_init)
+    # Use legacy processing when options are not set
+    if options is None or burnin_values is None:
+        presets = config.get_presets().get("tools", {}).get("burnins", {})
+        options = presets.get("options")
+        burnin_values = presets.get("burnins") or {}
+
+    burnin = ModifiedBurnins(input_path, options_init=options)
 
     frame_start = data.get("frame_start")
     frame_end = data.get("frame_end")
@@ -425,7 +433,7 @@ def burnins_from_data(
     if source_timecode is not None:
         data[SOURCE_TIMECODE_KEY[1:-1]] = SOURCE_TIMECODE_KEY
 
-    for align_text, value in presets.get('burnins', {}).items():
+    for align_text, value in burnin_values.items():
         if not value:
             continue
 
@@ -511,11 +519,13 @@ def burnins_from_data(
     burnin.render(output_path, args=codec_args, overwrite=overwrite, **data)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     in_data = json.loads(sys.argv[-1])
     burnins_from_data(
-        in_data['input'],
-        in_data['output'],
-        in_data['burnin_data'],
-        in_data['codec']
+        in_data["input"],
+        in_data["output"],
+        in_data["burnin_data"],
+        codec_data=in_data.get("codec"),
+        options=in_data.get("optios"),
+        values=in_data.get("values")
     )
