@@ -6,8 +6,6 @@ import copy
 import pype.api
 import pyblish
 
-StringType = type("")
-
 
 class ExtractBurnin(pype.api.Extractor):
     """
@@ -670,14 +668,14 @@ class ExtractBurnin(pype.api.Extractor):
             if not item:
                 continue
 
-            if not isinstance(item, StringType):
+            try:
+                regexes.append(re.compile(item))
+            except TypeError:
                 self.log.warning((
                     "Invalid type \"{}\" value \"{}\"."
-                    " Expected <type 'str'>. Skipping."
+                    " Expected string based object. Skipping."
                 ).format(str(type(item)), str(item)))
-                continue
 
-            regexes.append(re.compile(item))
         return regexes
 
     def validate_value_by_regexes(self, value, in_list):

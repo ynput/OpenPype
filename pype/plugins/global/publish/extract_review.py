@@ -8,8 +8,6 @@ import clique
 import pype.api
 import pype.lib
 
-StringType = type("")
-
 
 class ExtractReview(pyblish.api.InstancePlugin):
     """Extracting Review mov file for Ftrack
