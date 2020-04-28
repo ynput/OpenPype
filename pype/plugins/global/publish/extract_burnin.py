@@ -375,7 +375,11 @@ class ExtractBurnin(pype.api.Extractor):
         Returns:
             None: This is processing method.
         """
-        is_sequence = "sequence" in new_repre["tags"]
+        # TODO we should find better way to know if input is sequence
+        is_sequence = (
+            "sequence" in new_repre["tags"]
+            and isinstance(new_repre["files"], (tuple, list))
+        )
         if is_sequence:
             input_filename = new_repre["sequence_file"]
         else:
