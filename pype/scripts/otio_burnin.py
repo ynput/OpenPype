@@ -526,6 +526,6 @@ if __name__ == "__main__":
         in_data["output"],
         in_data["burnin_data"],
         codec_data=in_data.get("codec"),
-        options=in_data.get("optios"),
-        values=in_data.get("values")
+        options=in_data.get("options"),
+        burnin_values=in_data.get("values")
     )
