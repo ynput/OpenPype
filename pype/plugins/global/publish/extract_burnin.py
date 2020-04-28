@@ -179,7 +179,9 @@ class ExtractBurnin(pype.api.Extractor):
                     "values": burnin_values
                 }
 
-                self.log.debug("script_data: {}".format(script_data))
+                self.log.debug(
+                    "script_data: {}".format(json.dumps(script_data, indent=4))
+                )
 
                 # Dump data to string
                 dumped_script_data = json.dumps(script_data)
