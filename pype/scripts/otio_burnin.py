@@ -300,7 +300,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             args=args,
             overwrite=overwrite
         )
-        # print(command)
+        # log.info(command)
 
         proc = subprocess.Popen(command, shell=True)
         proc.communicate()
@@ -516,7 +516,6 @@ def burnins_from_data(
 
     else:
         codec_name = burnin._streams[0].get("codec_name")
-        log.info("codec_name: {}".format(codec_name))
         if codec_name:
             ffmpeg_args.append("-codec:v {}".format(codec_name))
 
