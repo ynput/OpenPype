@@ -393,9 +393,6 @@ def burnins_from_data(
         "shot": "sh0010"
     }
     """
-    # Make sure `codec_data` is list
-    if not codec_data:
-        codec_data = []
 
     # Use legacy processing when options are not set
     if options is None or burnin_values is None:
@@ -512,11 +509,14 @@ def burnins_from_data(
         text = value.format(**data)
         burnin.add_text(text, align, frame_start, frame_end)
 
-    codec_args = ""
     if codec_data:
-        codec_args = " ".join(codec_data)
+        # Use codec definition from method arguments
+        burnin_args = " ".join(codec_data)
+    else:
+        # Else use copy of source codecs for both audio and video
+        burnin_args = "-codec copy"
 
-    burnin.render(output_path, args=codec_args, overwrite=overwrite, **data)
+    burnin.render(output_path, args=burnin_args, overwrite=overwrite, **data)
 
 
 if __name__ == "__main__":
