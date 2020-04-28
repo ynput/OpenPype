@@ -60,20 +60,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 instance.data["representations"].remove(repre)
 
     def main_process(self, instance):
-        profile_filter_data = {
-            "host": pyblish.api.registered_hosts()[-1].title(),
-            "family": self.main_family_from_instance(instance),
-            "task": os.environ["AVALON_TASK"]
-        }
+        host_name = pyblish.api.registered_hosts()[-1].title()
+        task_name = os.environ["AVALON_TASK"]
+        family = self.main_family_from_instance(instance)
 
         profile = self.find_matching_profile(
-            self.profiles, profile_filter_data
+            host_name, task_name, family
         )
         if not profile:
             self.log.info((
                 "Skipped instance. None of profiles in presets are for"
                 " Host: \"{host}\" | Family: \"{family}\" | Task \"{task}\""
-            ).format(**profile_filter_data))
+            ).format(host_name, family, task_name))
             return
 
         self.log.debug("Matching profile: \"{}\"".format(json.dumps(profile)))
@@ -882,7 +880,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         final_profile.pop("__value__")
         return final_profile
 
-    def find_matching_profile(self, profiles, filter_data):
+    def find_matching_profile(self, host_name, task_name, family):
         """ Filter profiles by Host name, Task name and main Family.
 
         Filtering keys are "hosts" (list), "tasks" (list), "families" (list).
@@ -890,24 +888,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         Args:
             profiles (list): Profiles definition from presets.
-            filter_data (dict): Dictionary with data for filtering.
-                Required keys are "host" - Host name, "task" - Task name
-                and "family" - Main instance family.
+            host_name (str): Current running host name.
+            task_name (str): Current context task name.
+            family (str): Main family of current Instance.
 
         Returns:
             dict/None: Return most matching profile or None if none of profiles
                 match at least one criteria.
         """
-        host_name = filter_data["host"]
-        task_name = filter_data["task"]
-        family = filter_data["family"]
 
         matching_profiles = None
+        if not self.profiles:
+            return matching_profiles
+
         highest_profile_points = -1
         # Each profile get 1 point for each matching filter. Profile with most
         # points is returnd. For cases when more than one profile will match
         # are also stored ordered lists of matching values.
-        for profile in profiles:
+        for profile in self.profiles:
             profile_points = 0
             profile_value = []
 
@@ -950,8 +948,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if not matching_profiles:
             self.log.info((
                 "None of profiles match your setup."
-                " Host \"{host}\" | Task: \"{task}\" | Family: \"{family}\""
-            ).format(**filter_data))
+                " Host \"{}\" | Task: \"{}\" | Family: \"{}\""
+            ).format(host_name, task_name, family))
             return
 
         if len(matching_profiles) == 1:
@@ -961,8 +959,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         self.log.warning((
             "More than one profile match your setup."
-            " Host \"{host}\" | Task: \"{task}\" | Family: \"{family}\""
-        ).format(**filter_data))
+            " Host \"{}\" | Task: \"{}\" | Family: \"{}\""
+        ).format(host_name, task_name, family))
 
         return self.profile_exclusion(matching_profiles)
 
