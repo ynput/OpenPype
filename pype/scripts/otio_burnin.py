@@ -509,14 +509,25 @@ def burnins_from_data(
         text = value.format(**data)
         burnin.add_text(text, align, frame_start, frame_end)
 
+    ffmpeg_args = []
     if codec_data:
         # Use codec definition from method arguments
-        burnin_args = " ".join(codec_data)
-    else:
-        # Else use copy of source codecs for both audio and video
-        burnin_args = "-codec copy"
+        ffmpeg_args = codec_data
 
-    burnin.render(output_path, args=burnin_args, overwrite=overwrite, **data)
+    else:
+        codec_name = burnin._streams[0].get("codec_name")
+        log.info("codec_name: {}".format(codec_name))
+        if codec_name:
+            ffmpeg_args.append("-codec:v {}".format(codec_name))
+
+        pix_fmt = burnin._streams[0].get("pix_fmt")
+        if pix_fmt:
+            ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
+
+    ffmpeg_args_str = " ".join(ffmpeg_args)
+    burnin.render(
+        output_path, args=ffmpeg_args_str, overwrite=overwrite, **data
+    )
 
 
 if __name__ == "__main__":
