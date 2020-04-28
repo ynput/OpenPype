@@ -999,7 +999,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             if valid:
                 return True
-
         return False
 
     def filter_outputs_by_families(self, profile, families):
@@ -1024,7 +1023,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         filtered_outputs = {}
         for filename_suffix, output_def in outputs.items():
-            output_filters = output_def.get("output_filter")
+            output_filters = output_def.get("filter")
             # When filters not set then skip filtering process
             if not output_filters:
                 filtered_outputs[filename_suffix] = output_def
@@ -1054,7 +1053,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         repre_tags_low = [tag.lower() for tag in tags]
         for output_def in outputs:
             valid = True
-            output_filters = output_def.get("output_filter")
+            output_filters = output_def.get("filter")
             if output_filters:
                 # Check tag filters
                 tag_filters = output_filters.get("tags")
