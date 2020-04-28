@@ -92,7 +92,7 @@ def setup(env=None):
     self.EXTENSIONS_CACHE_PATH = env["EXTENSIONS_CACHE_PATH"]
 
     log.info("Registering Adobe Premiere plug-ins..")
-    if not test_rest_api_server():
+    if not test_rest_api_server(env):
         return
 
     if not env.get("installed_zxp"):
@@ -168,10 +168,10 @@ def clearing_caches_ui():
                 log.error("problem: {}".format(e))
 
 
-def test_rest_api_server():
+def test_rest_api_server(env):
     # from pprint import pformat
-    rest_url = os.getenv("PYPE_REST_API_URL")
-    project_name = "{AVALON_PROJECT}".format(**dict(os.environ))
+    rest_url = env.get("PYPE_REST_API_URL")
+    project_name = "{AVALON_PROJECT}".format(**env)
     URL = "/".join((rest_url,
                     "avalon/projects",
                     project_name))
