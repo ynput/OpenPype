@@ -67,7 +67,7 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
         # get current file
         current_file = json_data.get("currentFile", None)
         assert current_file, "No `currentFile` data in json file"
-        context.data["currentFile"] = Path(current_file).resolve()
+        context.data["currentFile"] = str(Path(current_file).resolve())
 
         # get project data from avalon
         project_data = io.find_one({'type': 'project'})
