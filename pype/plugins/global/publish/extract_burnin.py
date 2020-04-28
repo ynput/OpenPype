@@ -60,7 +60,8 @@ class ExtractBurnin(pype.api.Extractor):
         self.log.debug(instance.data["representations"])
 
     def main_process(self, instance):
-        host_name = pyblish.api.registered_hosts()[-1].title()
+        # TODO get these data from context
+        host_name = pyblish.api.registered_hosts()[-1]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
 
@@ -160,11 +161,11 @@ class ExtractBurnin(pype.api.Extractor):
                 if "delete" in new_repre["tags"]:
                     new_repre["tags"].remove("delete")
 
-                # Update outputName to be able have multiple outputs
+                # Update name and outputName to be able have multiple outputs
                 # Join previous "outputName" with filename suffix
-                new_repre["outputName"] = "_".join(
-                    [new_repre["outputName"], filename_suffix]
-                )
+                new_name = "_".join([new_repre["outputName"], filename_suffix])
+                new_repre["name"] = new_name
+                new_repre["outputName"] = new_name
 
                 # Prepare paths and files for process.
                 self.input_output_paths(new_repre, temp_data, filename_suffix)
@@ -288,7 +289,9 @@ class ExtractBurnin(pype.api.Extractor):
             "frame_end_handle": frame_end_handle
         }
 
-        self.log.debug("Basic burnin_data: {}".format(burnin_data))
+        self.log.debug(
+            "Basic burnin_data: {}".format(json.dumps(burnin_data, indent=4))
+        )
 
         return burnin_data, temp_data
 
@@ -303,12 +306,16 @@ class ExtractBurnin(pype.api.Extractor):
         """
 
         if "burnin" not in (repre.get("tags") or []):
-            self.log.info("Representation don't have \"burnin\" tag.")
+            self.log.info((
+                "Representation \"{}\" don't have \"burnin\" tag. Skipped."
+            ).format(repre["name"]))
             return False
 
         # ffmpeg doesn't support multipart exrs
         if "multipartExr" in repre["tags"]:
-            self.log.info("Representation contain \"multipartExr\" tag.")
+            self.log.info((
+                "Representation \"{}\" contain \"multipartExr\" tag. Skipped."
+            ).format(repre["name"]))
             return False
         return True
 
@@ -417,7 +424,7 @@ class ExtractBurnin(pype.api.Extractor):
             repre_files = output_filename
 
         temp_data["full_input_paths"] = full_input_paths
-        new_repre["repre_files"] = repre_files
+        new_repre["files"] = repre_files
 
     def prepare_repre_data(self, instance, repre, burnin_data, temp_data):
         """Prepare data for representation.
@@ -755,7 +762,7 @@ class ExtractBurnin(pype.api.Extractor):
         if os.pathsep in executable:
             executable = executable.split(os.pathsep)[0]
 
-        self.log.debug("EXE: {}".format(executable))
+        self.log.debug("executable: {}".format(executable))
         return executable
 
     def legacy_process(self, instance):
