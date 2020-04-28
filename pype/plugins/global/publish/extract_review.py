@@ -1074,6 +1074,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return filtered_outputs
 
     def legacy_process(self, instance):
+        self.log.warning("Legacy review presets are used.")
+
         output_profiles = self.outputs or {}
 
         inst_data = instance.data

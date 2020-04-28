@@ -761,6 +761,8 @@ class ExtractBurnin(pype.api.Extractor):
         return executable
 
     def legacy_process(self, instance):
+        self.log.warning("Legacy burnin presets are used.")
+
         context_data = instance.context.data
 
         version = instance.data.get(
