@@ -103,7 +103,7 @@ class ExtractBurnin(pype.api.Extractor):
         scriptpath = self.burnin_script_path()
         executable = self.python_executable_path()
 
-        for idx, repre in tuple(instance.data["representations"].items()):
+        for idx, repre in enumerate(tuple(instance.data["representations"])):
             self.log.debug("repre ({}): `{}`".format(idx + 1, repre["name"]))
             if not self.repres_is_valid(repre):
                 continue
@@ -324,9 +324,9 @@ class ExtractBurnin(pype.api.Extractor):
         Returns:
             list: Containg all burnin definitions matching entered tags.
         """
-        filtered_outputs = []
+        filtered_burnins = {}
         repre_tags_low = [tag.lower() for tag in tags]
-        for burnin_def in burnin_defs:
+        for filename_suffix, burnin_def in burnin_defs.items():
             valid = True
             output_filters = burnin_def.get("filter")
             if output_filters:
@@ -344,9 +344,9 @@ class ExtractBurnin(pype.api.Extractor):
                         continue
 
             if valid:
-                filtered_outputs.append(burnin_def)
+                filtered_burnins[filename_suffix] = burnin_def
 
-        return filtered_outputs
+        return filtered_burnins
 
     def input_output_paths(self, new_repre, temp_data, filename_suffix):
         """Prepare input and output paths for representation.
