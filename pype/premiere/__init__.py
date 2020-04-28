@@ -9,10 +9,8 @@ from .lib import (
     reload_pipeline,
     ls,
     LOAD_PATH,
-    INVENTORY_PATH,
     CREATE_PATH,
-    PUBLISH_PATH,
-    PLUGINS_DIR
+    PUBLISH_PATH
 )
 
 __all__ = [

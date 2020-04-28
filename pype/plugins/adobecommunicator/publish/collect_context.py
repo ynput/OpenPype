@@ -24,7 +24,8 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
     order = pyblish.api.CollectorOrder - 0.49
 
     def process(self, context):
-        self.log.info("registred_hosts: `{}`".format(pyblish.api.registered_hosts()))
+        self.log.info(
+            "registred_hosts: `{}`".format(pyblish.api.registered_hosts()))
         io.install()
         # get json paths from data
         input_json_path = os.environ.get("AC_PUBLISH_INPATH")

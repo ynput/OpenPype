@@ -2,9 +2,6 @@ import os
 import traceback
 from pype.lib import PypeHook
 from pypeapp import Logger
-import importlib
-import avalon.api
-import pype.premiere
 from pype.premiere import lib as prlib
 
 

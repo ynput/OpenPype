@@ -610,7 +610,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "name": subset_name,
                 "data": {
                     "families": instance.data.get('families')
-                    },
+                },
                 "parent": asset["_id"]
             }).inserted_id
 
@@ -664,15 +664,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         families += current_families
 
         self.log.debug("Registered root: {}".format(api.registered_root()))
-        self.log.debug("PYPE_STUDIO_PROJECTS_MOUNT: {}".format(os.getenv("PYPE_STUDIO_PROJECTS_MOUNT")))
+
         # create relative source path for DB
         try:
             source = instance.data['source']
         except KeyError:
             source = context.data["currentFile"]
             self.log.debug("source: {}".format(source))
-            source = str(source).replace(os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"),
-                                    api.registered_root())
+            source = str(source).replace(
+                os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"),
+                api.registered_root()
+            )
             relative_path = os.path.relpath(source, api.registered_root())
             source = os.path.join("{root}", relative_path).replace("\\", "/")
 

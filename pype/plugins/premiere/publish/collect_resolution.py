@@ -22,7 +22,7 @@ class CollectResolution(pyblish.api.InstancePlugin):
         pixel_aspect = float(metadata['ppro.format.pixelaspect'])
         res_width = metadata['ppro.format.width']
         res_height = metadata['ppro.format.height']
-        
+
         instance.data['pixelAspect'] = pixel_aspect
         instance.data['resolutionWidth'] = res_width
         instance.data['resolutionHeight'] = res_height

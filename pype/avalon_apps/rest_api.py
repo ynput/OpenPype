@@ -70,7 +70,8 @@ class AvalonRestApi(RestApi):
             _asset, identificator, _project_name
         ))
 
-    @RestApi.route("/publish/<asset_name>", url_prefix="/premiere", methods="GET")
+    @RestApi.route("/publish/<asset_name>",
+                   url_prefix="/premiere", methods="GET")
     def publish(self, request):
         """
         http://localhost:8021/premiere/publish/shot021?json_in=this/path/file_in.json&json_out=this/path/file_out.json
