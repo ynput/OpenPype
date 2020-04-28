@@ -284,14 +284,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Add argument to override output file
         ffmpeg_input_args.append("-y")
 
-        if temp_data["without_handles"]:
-            # NOTE used `-frames:v` instead of `-t` - should work the same way
-            duration_frames = (
-                temp_data["output_frame_end"]
-                - temp_data["output_frame_start"]
-                + 1
-            )
-            ffmpeg_output_args.append("-frames:v {}".format(duration_frames))
+        # Prepare input and output filepaths
+        self.input_output_paths(new_repre, output_def, temp_data)
 
         if temp_data["input_is_sequence"]:
             # Set start frame
@@ -319,23 +313,37 @@ class ExtractReview(pyblish.api.InstancePlugin):
             start_sec = float(temp_data["handle_start"]) / temp_data["fps"]
             ffmpeg_input_args.append("-ss {:0.2f}".format(start_sec))
 
-        full_input_path, full_output_path = self.input_output_paths(
-            new_repre, output_def, temp_data
-        )
-        ffmpeg_input_args.append("-i \"{}\"".format(full_input_path))
+        # Set output frames len to 1 when ouput is single image
+        if (
+            temp_data["output_ext_is_image"]
+            and not temp_data["output_is_sequence"]
+        ):
+            output_frames_len = 1
 
-        # Add audio arguments if there are any
-        audio_in_args, audio_filters, audio_out_args = self.audio_args(
-            instance, temp_data
-        )
-        ffmpeg_input_args.extend(audio_in_args)
-        ffmpeg_audio_filters.extend(audio_filters)
-        ffmpeg_output_args.extend(audio_out_args)
+        else:
+            output_frames_len = (
+                temp_data["output_frame_end"]
+                - temp_data["output_frame_start"]
+                + 1
+            )
 
-        # QUESTION what if audio is shoter than video?
-        # In case audio is longer than video`.
-        if "-shortest" not in ffmpeg_output_args:
-            ffmpeg_output_args.append("-shortest")
+        # NOTE used `-frames` instead of `-t` - should work the same way
+        # NOTE this also replaced `-shortest` argument
+        ffmpeg_output_args.append("-frames {}".format(output_frames_len))
+
+        # Add video/image input path
+        ffmpeg_input_args.append(
+            "-i \"{}\"".format(temp_data["full_input_path"])
+        )
+
+        # Add audio arguments if there are any. Skipped when output are images.
+        if not temp_data["output_ext_is_image"]:
+            audio_in_args, audio_filters, audio_out_args = self.audio_args(
+                instance, temp_data
+            )
+            ffmpeg_input_args.extend(audio_in_args)
+            ffmpeg_audio_filters.extend(audio_filters)
+            ffmpeg_output_args.extend(audio_out_args)
 
         res_filters = self.rescaling_filters(temp_data, output_def, new_repre)
         ffmpeg_video_filters.extend(res_filters)
@@ -346,7 +354,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_video_filters.extend(lut_filters)
 
         # NOTE This must be latest added item to output arguments.
-        ffmpeg_output_args.append("\"{}\"".format(full_output_path))
+        ffmpeg_output_args.append(
+            "\"{}\"".format(temp_data["full_output_path"])
+        )
 
         return self.ffmpeg_full_args(
             ffmpeg_input_args,
@@ -485,11 +495,11 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("New representation ext: `{}`".format(output_ext))
 
         # Output is image file sequence witht frames
+        output_ext_is_image = output_ext in self.image_exts
         output_is_sequence = (
-            (output_ext in self.image_exts)
+            output_ext_is_image
             and "sequence" in output_def["tags"]
         )
-
         if output_is_sequence:
             new_repre_files = []
             frame_start = temp_data["output_frame_start"]
@@ -534,10 +544,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
         temp_data["full_input_path_single_file"] = full_input_path_single_file
         temp_data["full_output_path"] = full_output_path
 
+        # Store information about output
+        temp_data["output_ext_is_image"] = output_ext_is_image
+        temp_data["output_is_sequence"] = output_is_sequence
+
         self.log.debug("Input path {}".format(full_input_path))
         self.log.debug("Output path {}".format(full_output_path))
-
-        return full_input_path, full_output_path
 
     def audio_args(self, instance, temp_data):
         """Prepares FFMpeg arguments for audio inputs."""
