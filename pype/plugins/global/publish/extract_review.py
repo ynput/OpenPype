@@ -60,9 +60,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 instance.data["representations"].remove(repre)
 
     def main_process(self, instance):
-        host_name = pyblish.api.registered_hosts()[-1].title()
+        host_name = pyblish.api.registered_hosts()[-1]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
+
+        self.log.info("Host: \"{}\"".format(host_name))
+        self.log.info("Task: \"{}\"".format(task_name))
+        self.log.info("Family: \"{}\"".format(family))
 
         profile = self.find_matching_profile(
             host_name, task_name, family
@@ -70,7 +74,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if not profile:
             self.log.info((
                 "Skipped instance. None of profiles in presets are for"
-                " Host: \"{host}\" | Family: \"{family}\" | Task \"{task}\""
+                " Host: \"{}\" | Family: \"{}\" | Task \"{}\""
             ).format(host_name, family, task_name))
             return
 
@@ -155,7 +159,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 temp_data = self.prepare_temp_data(instance, repre, output_def)
 
                 ffmpeg_args = self._ffmpeg_arguments(
-                    output_def, instance, temp_data
+                    output_def, instance, new_repre, temp_data
                 )
                 subprcs_cmd = " ".join(ffmpeg_args)
 
@@ -181,7 +185,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 new_repre.pop("thumbnail", None)
 
                 # adding representation
-                self.log.debug("Adding: {}".format(new_repre))
+                self.log.debug(
+                    "Adding new representation: {}".format(new_repre)
+                )
                 instance.data["representations"].append(new_repre)
 
     def input_is_sequence(self, repre):
@@ -602,6 +608,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Skip processing if both conditions are not met
         if "reformat" not in new_repre["tags"] and not letter_box:
+            self.log.debug('Tag "reformat" and "letter_box" key are not set.')
             new_repre["resolutionWidth"] = input_width
             new_repre["resolutionHeight"] = input_height
             return filters
@@ -616,8 +623,13 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # Use source's input resolution instance does not have set it.
         if output_width is None or output_height is None:
+            self.log.debug("Using resolution from input.")
             output_width = input_width
             output_height = input_height
+
+        self.log.debug(
+            "Output resolution is {}x{}".format(output_width, output_height)
+        )
 
         # defining image ratios
         input_res_ratio = (
@@ -744,18 +756,24 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     def ffprobe_streams(self, path_to_file):
         """Load streams from entered filepath."""
+        self.log.info(
+            "Getting information about input \"{}\".".format(path_to_file)
+        )
         args = [
             self.ffprobe_path,
             "-v quiet",
             "-print_format json",
             "-show_format",
-            "-show_streams"
+            "-show_streams",
             "\"{}\"".format(path_to_file)
         ]
         command = " ".join(args)
+        self.log.debug("FFprobe command: \"{}\"".format(command))
         popen = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
 
-        return json.loads(popen.communicate()[0])["streams"][0]
+        output = popen.communicate()[0]
+        self.log.debug("FFprobe output: {}".format(output))
+        return json.loads(output)["streams"][0]
 
     def main_family_from_instance(self, instance):
         """Returns main family of entered instance."""
@@ -786,14 +804,14 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if not item:
                 continue
 
-            if not isinstance(item, StringType):
+            try:
+                regexes.append(re.compile(item))
+            except TypeError:
                 self.log.warning((
                     "Invalid type \"{}\" value \"{}\"."
-                    " Expected <type 'str'>. Skipping."
+                    " Expected string based object. Skipping."
                 ).format(str(type(item)), str(item)))
-                continue
 
-            regexes.append(re.compile(item))
         return regexes
 
     def validate_value_by_regexes(self, value, in_list):
@@ -913,6 +931,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             host_names = profile.get("hosts")
             match = self.validate_value_by_regexes(host_name, host_names)
             if match == -1:
+                self.log.debug(
+                    "\"{}\" not found in {}".format(host_name, host_names)
+                )
                 continue
             profile_points += match
             profile_value.append(bool(match))
@@ -921,6 +942,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             task_names = profile.get("tasks")
             match = self.validate_value_by_regexes(task_name, task_names)
             if match == -1:
+                self.log.debug(
+                    "\"{}\" not found in {}".format(task_name, task_names)
+                )
                 continue
             profile_points += match
             profile_value.append(bool(match))
@@ -929,6 +953,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
             families = profile.get("families")
             match = self.validate_value_by_regexes(family, families)
             if match == -1:
+                self.log.debug(
+                    "\"{}\" not found in {}".format(family, families)
+                )
                 continue
             profile_points += match
             profile_value.append(bool(match))
@@ -936,13 +963,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
             if profile_points < highest_profile_points:
                 continue
 
-            profile["__value__"] = profile_value
-            if profile_points == highest_profile_points:
-                matching_profiles.append(profile)
-
-            elif profile_points > highest_profile_points:
-                highest_profile_points = profile_points
+            if profile_points > highest_profile_points:
                 matching_profiles = []
+                highest_profile_points = profile_points
+
+            if profile_points == highest_profile_points:
+                profile["__value__"] = profile_value
                 matching_profiles.append(profile)
 
         if not matching_profiles:
