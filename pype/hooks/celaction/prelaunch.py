@@ -7,7 +7,7 @@ from pypeapp import Logger
 log = logging.getLogger(__name__)
 
 
-class CelactionPrelounchHook(PypeHook):
+class CelactionPrelaunchHook(PypeHook):
     """
     This hook will check if current workfile path has Unreal
     project inside. IF not, it initialize it and finally it pass
@@ -29,18 +29,14 @@ class CelactionPrelounchHook(PypeHook):
         asset = env["AVALON_ASSET"]
         task = env["AVALON_TASK"]
         workdir = env["AVALON_WORKDIR"]
-        engine_version = env["AVALON_APP_NAME"].split("_")[-1]
         project_name = f"{asset}_{task}"
 
-        project_path = os.path.join(workdir, project_name)
+        self.log.info(f"{self.signature}")
 
-        self.log.info((f"{self.signature} requested UE4 version: "
-                       f"[ {engine_version} ]"))
+        os.makedirs(workdir, exist_ok=True)
 
-        os.makedirs(project_path, exist_ok=True)
-
-        project_file = os.path.join(project_path, f"{project_name}.uproject")
-        env["PYPE_UNREAL_PROJECT_FILE"] = project_file
+        project_file = os.path.join(workdir, f"{project_name}.scn")
+        env["PYPE_CELACTION_PROJECT_FILE"] = project_file
 
         ##########################
         # setting output parameters
@@ -88,4 +84,5 @@ class CelactionPrelounchHook(PypeHook):
                                _winreg.KEY_ALL_ACCESS)
         _winreg.SetValueEx(hKey, "Result", 0, _winreg.REG_DWORD, 1)
         _winreg.SetValueEx(hKey, "Valid", 0, _winreg.REG_DWORD, 1)
+
         return True
