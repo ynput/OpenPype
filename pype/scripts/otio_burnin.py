@@ -20,7 +20,7 @@ FFMPEG = (
 ).format(ffmpeg_path)
 
 FFPROBE = (
-    '{} -v quiet -print_format json -show_format -show_streams %(source)s'
+    '{} -v quiet -print_format json -show_format -show_streams "%(source)s"'
 ).format(ffprobe_path)
 
 DRAWTEXT = (
@@ -55,7 +55,7 @@ def _streams(source):
 
 def get_fps(str_value):
     if str_value == "0/0":
-        print("Source has \"r_frame_rate\" value set to \"0/0\".")
+        log.warning("Source has \"r_frame_rate\" value set to \"0/0\".")
         return "Unknown"
 
     items = str_value.split("/")
@@ -266,7 +266,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         :returns: completed command
         :rtype: str
         """
-        output = output or ''
+        output = '"{}"'.format(output or '')
         if overwrite:
             output = '-y {}'.format(output)
 
