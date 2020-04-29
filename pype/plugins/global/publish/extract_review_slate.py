@@ -107,7 +107,9 @@ class ExtractReviewSlate(pype.api.Extractor):
             output_args.extend(repre["outputDef"].get('output', []))
 
             # Codecs are copied from source for whole input
-            output_args.append("-codec copy")
+            codec_args = self.codec_args(repre)
+            self.log.debug("Codec arguments: {}".format(codec_args))
+            output_args.extend(codec_args)
 
             # make sure colors are correct
             output_args.extend([
@@ -269,3 +271,34 @@ class ExtractReviewSlate(pype.api.Extractor):
         vf_back = "-vf " + ",".join(vf_fixed)
 
         return vf_back
+
+    def codec_args(self, repre):
+        """Detect possible codec arguments from representation."""
+        codec_args = []
+
+        # Get one filename of representation files
+        filename = repre["files"]
+        # If files is list then pick first filename in list
+        if isinstance(filename, (tuple, list)):
+            filename = filename[0]
+        # Get full path to the file
+        full_input_path = os.path.join(repre["stagingDir"], filename)
+
+        try:
+            # Get information about input file via ffprobe tool
+            streams = pype.lib.ffprobe_streams(full_input_path)
+        except Exception:
+            self.log.warning(
+                "Could not get codec data from input.",
+                exc_info=True
+            )
+            return codec_args
+
+        codec_name = streams[0].get("codec_name")
+        if codec_name:
+            codec_args.append("-codec:v {}".format(codec_name))
+
+        pix_fmt = streams[0].get("pix_fmt")
+        if pix_fmt:
+            codec_args.append("-pix_fmt {}".format(pix_fmt))
+        return codec_args
