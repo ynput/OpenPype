@@ -30,7 +30,7 @@ class ExtractReviewSlate(pype.api.Extractor):
         fps = inst_data.get("fps")
 
         for idx, repre in enumerate(inst_data["representations"]):
-            self.log.debug("__ i: `{}`, repre: `{}`".format(idx, repre))
+            self.log.debug("repre ({}): `{}`".format(idx + 1, repre))
 
             p_tags = repre.get("tags", [])
             if "slate-frame" not in p_tags:
