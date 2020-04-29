@@ -85,7 +85,7 @@ def _prepare_publish_environments():
     env["AVALON_HIERARCHY"] = hierarchy
     env["AVALON_PROJECTCODE"] = project_doc["data"].get("code", "")
     env["AVALON_APP"] = publish_host
-    env["AVALON_APP_NAME"] = publish_host
+    env["AVALON_APP_NAME"] = "celaction_local"
 
     env["PYBLISH_HOSTS"] = publish_host
 
@@ -110,13 +110,15 @@ def main():
         ))
         return False
 
-    avalon.api.install(host_module)
+    # avalon.api.install(host_module)
 
-    for path in PUBLISH_PATH:
+    for path in PUBLISH_PATHS:
         path = os.path.normpath(path)
+
         if not os.path.exists(path):
             continue
 
+        log.info(f"Registering path: {path}")
         pyblish.api.register_plugin_path(path)
 
     # Register project specific plugins
