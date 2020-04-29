@@ -11,10 +11,9 @@ from avalon.tools import publish
 import pyblish.api
 import pyblish.util
 
-from pypeapp import execute, Logger
+from pypeapp import Logger
 import pype
 import pype.celaction
-
 
 
 log = Logger().get_logger("Celaction_cli_publisher")
@@ -56,8 +55,6 @@ def cli():
     parser.add_argument("--programDir",
                         help=("Directory with celaction program installation"))
 
-
-
     pype.celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
 
 
@@ -94,7 +91,11 @@ def _prepare_publish_environments():
 
     os.environ.update(env)
 
-def _main():
+
+def main():
+    # prepare all environments
+    _prepare_publish_environments()
+
     # Registers pype's Global pyblish plugins
     pype.install()
 
@@ -120,7 +121,7 @@ def _main():
 
     # Register project specific plugins
     project_name = os.environ["AVALON_PROJECT"]
-    project_plugins_paths =  os.getenv("PYPE_PROJECT_PLUGINS", "")
+    project_plugins_paths = os.getenv("PYPE_PROJECT_PLUGINS", "")
     for path in project_plugins_paths.split(os.pathsep):
         plugin_path = os.path.join(path, project_name, "plugins")
         if os.path.exists(plugin_path):
@@ -131,6 +132,5 @@ def _main():
 
 if __name__ == "__main__":
     cli()
-    _prepare_publish_environments()
-    result = _main()
+    result = main()
     sys.exit(not bool(result))
