@@ -29,7 +29,7 @@ class CelactionPrelaunchHook(PypeHook):
         project = env["AVALON_PROJECT"]
         asset = env["AVALON_ASSET"]
         task = env["AVALON_TASK"]
-        app = "pype_publish_standalone"
+        app = "celaction_publish"
         workdir = env["AVALON_WORKDIR"]
         project_name = f"{asset}_{task}"
         version = "v001"
@@ -74,8 +74,7 @@ class CelactionPrelaunchHook(PypeHook):
             "--resolutionWide *X*",
             "--resolutionHeight *Y*",
             "--registerHost celaction",
-            "-8",
-            "--programPath \"\'*PROGPATH*\'\""
+            "--programPath \"'*PROGPATH*'\""
             ]
         winreg.SetValueEx(hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
                           " ".join(parameters))
