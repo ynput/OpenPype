@@ -300,10 +300,10 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             args=args,
             overwrite=overwrite
         )
-        # log.info(command)
+        log.info("Launching command: {}".format(command))
 
         proc = subprocess.Popen(command, shell=True)
-        proc.communicate()
+        log.info(proc.communicate()[0])
         if proc.returncode != 0:
             raise RuntimeError("Failed to render '%s': %s'"
                                % (output, command))
