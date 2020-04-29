@@ -132,13 +132,14 @@ class ExtractBurnin(pype.api.Extractor):
             slate_duration = duration_cp
 
             # exception for slate workflow
-            if ("slate" in instance.data["families"]):
+            if "slate" in instance.data["families"]:
                 if "slate-frame" in repre.get("tags", []):
                     slate_frame_start = frame_start_cp - 1
                     slate_frame_end = frame_end_cp
                     slate_duration = duration_cp + 1
 
-            self.log.debug("__1 slate_frame_start: {}".format(slate_frame_start))
+            self.log.debug("__1 slate_frame_start: {}".format(
+                slate_frame_start))
 
             _prep_data.update({
                 "slate_frame_start": slate_frame_start,
@@ -192,7 +193,6 @@ class ExtractBurnin(pype.api.Extractor):
             self.log.debug("Output: {}".format(output))
 
             repre_update = {
-                "anatomy_template": "render",
                 "files": movieFileBurnin,
                 "name": repre["name"],
                 "tags": [x for x in repre["tags"] if x != "delete"]
