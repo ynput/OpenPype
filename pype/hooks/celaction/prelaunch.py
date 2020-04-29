@@ -26,8 +26,10 @@ class CelactionPrelaunchHook(PypeHook):
     def execute(self, *args, env: dict = None) -> bool:
         if not env:
             env = os.environ
+        project = env["AVALON_PROJECT"]
         asset = env["AVALON_ASSET"]
         task = env["AVALON_TASK"]
+        app = "pype_publish_standalone"
         workdir = env["AVALON_WORKDIR"]
         project_name = f"{asset}_{task}"
         version = "v001"
@@ -52,16 +54,31 @@ class CelactionPrelaunchHook(PypeHook):
             winreg.KEY_ALL_ACCESS)
 
         # TODO: change to root path and pyblish standalone to premiere way
-        root_path = os.getenv("PIPELINE_ROOT", os.path.dirname(__file__))
-        path = os.path.join(root_path, "launchers", "pyblish_standalone.bat")
+        pype_root_path = os.getenv("PYPE_ROOT")
+        path = os.path.join(pype_root_path,
+            "pype.bat")
+
 
         winreg.SetValueEx(hKey, "SubmitAppTitle", 0, winreg.REG_SZ, path)
 
-        parameters = " --path \"*SCENE*\" -d chunk *CHUNK* -d start *START*"
-        parameters += " -d end *END* -d x *X* -d y *Y* -rh celaction"
-        parameters += " -8 -d progpath \"*PROGPATH*\""
+        parameters = [
+            "launch",
+            f"--app {app}",
+            f"--project {project}",
+            f"--asset {asset}",
+            f"--task {task}",
+            "--currentFile \"*SCENE*\"",
+            "--chunk *CHUNK*",
+            "--frameStart *START*",
+            "--frameEnd *END*",
+            "--resolutionWide *X*",
+            "--resolutionHeight *Y*",
+            "--registerHost celaction",
+            "-8",
+            "--programPath \"\'*PROGPATH*\'\""
+            ]
         winreg.SetValueEx(hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
-                          parameters)
+                          " ".join(parameters))
 
         # setting resolution parameters
         path = r"Software\CelAction\CelAction2D\User Settings\Dialogs"
