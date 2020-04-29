@@ -2,7 +2,6 @@ import os
 import re
 import copy
 import json
-import subprocess
 import pyblish.api
 import clique
 import pype.api
@@ -32,7 +31,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
     # FFmpeg tools paths
     ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
-    ffprobe_path = pype.lib.get_ffmpeg_tool_path("ffprobe")
 
     # Preset attributes
     profiles = None
@@ -83,7 +81,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             profile, instance_families
         )
         if not _profile_outputs:
-            self.log.info((
+            self.log.warning((
                 "Skipped instance. All output definitions from selected"
                 " profile does not match to instance families. \"{}\""
             ).format(str(instance_families)))
@@ -608,7 +606,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         # NOTE Skipped using instance's resolution
         full_input_path_single_file = temp_data["full_input_path_single_file"]
-        input_data = self.ffprobe_streams(full_input_path_single_file)
+        input_data = pype.lib.ffprobe_streams(full_input_path_single_file)[0]
         input_width = input_data["width"]
         input_height = input_data["height"]
 
@@ -763,27 +761,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.info("Added Lut to ffmpeg command.")
 
         return filters
-
-    def ffprobe_streams(self, path_to_file):
-        """Load streams from entered filepath."""
-        self.log.info(
-            "Getting information about input \"{}\".".format(path_to_file)
-        )
-        args = [
-            self.ffprobe_path,
-            "-v quiet",
-            "-print_format json",
-            "-show_format",
-            "-show_streams",
-            "\"{}\"".format(path_to_file)
-        ]
-        command = " ".join(args)
-        self.log.debug("FFprobe command: \"{}\"".format(command))
-        popen = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-
-        output = popen.communicate()[0]
-        self.log.debug("FFprobe output: {}".format(output))
-        return json.loads(output)["streams"][0]
 
     def main_family_from_instance(self, instance):
         """Returns main family of entered instance."""
@@ -982,7 +959,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 matching_profiles.append(profile)
 
         if not matching_profiles:
-            self.log.info((
+            self.log.warning((
                 "None of profiles match your setup."
                 " Host \"{}\" | Task: \"{}\" | Family: \"{}\""
             ).format(host_name, task_name, family))

@@ -1327,3 +1327,25 @@ class BuildWorkfile:
             )
 
         return output
+
+
+def ffprobe_streams(path_to_file):
+    """Load streams from entered filepath via ffprobe."""
+    log.info(
+        "Getting information about input \"{}\".".format(path_to_file)
+    )
+    args = [
+        get_ffmpeg_tool_path("ffprobe"),
+        "-v quiet",
+        "-print_format json",
+        "-show_format",
+        "-show_streams",
+        "\"{}\"".format(path_to_file)
+    ]
+    command = " ".join(args)
+    log.debug("FFprobe command: \"{}\"".format(command))
+    popen = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+
+    popen_output = popen.communicate()[0]
+    log.debug("FFprobe output: {}".format(popen_output))
+    return json.loads(popen_output)["streams"]
