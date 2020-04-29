@@ -56,8 +56,7 @@ class CelactionPrelaunchHook(PypeHook):
         # TODO: change to root path and pyblish standalone to premiere way
         pype_root_path = os.getenv("PYPE_ROOT")
         path = os.path.join(pype_root_path,
-            "pype.bat")
-
+                            "pype.bat")
 
         winreg.SetValueEx(hKey, "SubmitAppTitle", 0, winreg.REG_SZ, path)
 
@@ -71,9 +70,8 @@ class CelactionPrelaunchHook(PypeHook):
             "--chunk *CHUNK*",
             "--frameStart *START*",
             "--frameEnd *END*",
-            "--resolutionWide *X*",
+            "--resolutionWidth *X*",
             "--resolutionHeight *Y*",
-            "--registerHost celaction",
             "--programPath \"'*PROGPATH*'\""
             ]
         winreg.SetValueEx(hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
