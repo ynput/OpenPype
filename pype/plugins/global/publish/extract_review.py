@@ -146,12 +146,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                     "New representation tags: `{}`".format(new_repre["tags"])
                 )
 
-                # # QUESTION Why the hell we were adding tags to families?
-                # # add families
-                # for tag in output_def["tags"]:
-                #     if tag not in instance.data["families"]:
-                #         instance.data["families"].append(tag)
-
                 temp_data = self.prepare_temp_data(instance, repre, output_def)
 
                 ffmpeg_args = self._ffmpeg_arguments(
