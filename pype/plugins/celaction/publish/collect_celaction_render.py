@@ -18,12 +18,10 @@ class CollectCelactionRender(pyblish.api.ContextPlugin):
         instance = context.create_instance(name=component_name)
         instance.data["family"] = "render"
         instance.data["label"] = "{} - remote".format(component_name)
-        # instance.data["families"] = ["deadline", "remote", "img"]
         instance.data["families"] = ["render", "img"]
-        instance.data["managed_location"] = False
 
         # getting instance state
-        instance.data["publish"] = False
+        instance.data["publish"] = True
 
         data = context.data("kwargs")["data"]
 

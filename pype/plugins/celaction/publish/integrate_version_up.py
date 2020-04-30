@@ -1,5 +1,4 @@
 import shutil
-import os
 import re
 import pyblish.api
 
@@ -30,12 +29,12 @@ def version_get(string, prefix, suffix=None):
     if string is None:
         raise ValueError("Empty version string - no match")
 
-    regex = "[/_.]" + prefix + "\d+"
+    regex = r"[/_.]{}\d+".format(prefix)
     matches = re.findall(regex, string, re.IGNORECASE)
     if not len(matches):
-        msg = "No \"_" + prefix + "#\" found in \"" + string + "\""
+        msg = f"No `_{prefix}#` found in `{string}`"
         raise ValueError(msg)
-    return (matches[-1:][0][1], re.search("\d+", matches[-1:][0]).group())
+    return (matches[-1:][0][1], re.search(r"\d+", matches[-1:][0]).group())
 
 
 def version_set(string, prefix, oldintval, newintval):
@@ -44,7 +43,7 @@ def version_set(string, prefix, oldintval, newintval):
     we use "v" for render version and "c" for camera track version.
     See the version.py and camera.py plugins for usage."""
 
-    regex = "[/_.]" + prefix + "\d+"
+    regex = r"[/_.]{}\d+".format(prefix)
     matches = re.findall(regex, string, re.IGNORECASE)
     if not len(matches):
         return ""
