@@ -193,6 +193,7 @@ class ExtractBurnin(pype.api.Extractor):
             self.log.debug("Output: {}".format(output))
 
             repre_update = {
+                "anatomy_template": "render",
                 "files": movieFileBurnin,
                 "name": repre["name"],
                 "tags": [x for x in repre["tags"] if x != "delete"]

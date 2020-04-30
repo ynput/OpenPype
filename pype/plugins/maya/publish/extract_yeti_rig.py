@@ -147,7 +147,7 @@ class ExtractYetiRig(pype.api.Extractor):
         nodes = instance.data["setMembers"]
         resources = instance.data.get("resources", {})
         with disconnect_plugs(settings, members):
-            with yetigraph_attribute_values(destination_folder, resources):
+            with yetigraph_attribute_values(resources_dir, resources):
                 with maya.attribute_values(attr_value):
                     cmds.select(nodes, noExpand=True)
                     cmds.file(maya_path,
