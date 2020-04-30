@@ -35,7 +35,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         if celaction_kwargs:
             shared_instance_data.update(celaction_kwargs)
 
-        ##################################################3
+        # ___________________________________________
         # workfile instance
         family = "workfile"
         subset = family + task.capitalize()
@@ -67,7 +67,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         self.log.info('Publishing Celaction workfile')
         context.data["instances"].append(instance)
 
-        ####################################################3
+        # ___________________________________________
         # render instance
         subset = f"render{task}Main"
         instance = context.create_instance(name=subset)
@@ -79,7 +79,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
             "label": "{} - farm".format(subset),
             "family": "render.farm",
             "families": [],
-            "subset":
+            "subset": subset
         })
 
         self.log.debug(f"Instance data: `{instance.data}`")
