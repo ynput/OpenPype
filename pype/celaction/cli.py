@@ -108,6 +108,8 @@ def main():
         log.info(f"Registering path: {path}")
         pyblish.api.register_plugin_path(path)
 
+    pyblish.api.register_host(publish_host)
+
     # Register project specific plugins
     project_name = os.environ["AVALON_PROJECT"]
     project_plugins_paths = os.getenv("PYPE_PROJECT_PLUGINS", "")

@@ -139,7 +139,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     order = pyblish.api.IntegratorOrder + 0.2
     icon = "tractor"
 
-    hosts = ["fusion", "maya", "nuke"]
+    hosts = ["fusion", "maya", "nuke", "celaction"]
 
     families = ["render.farm", "prerener", "renderlayer", "imagesequence"]
 

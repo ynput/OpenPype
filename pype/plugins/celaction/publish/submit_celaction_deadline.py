@@ -19,7 +19,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     label = "Submit CelAction to Deadline"
     order = pyblish.api.IntegratorOrder + 0.1
     hosts = ["celaction"]
-    families = ["render"]
+    families = ["render.farm"]
 
     deadline_department = ""
     deadline_priority = 50
@@ -86,7 +86,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
             pass
 
         # define chunk and priority
-        chunk_size = instance.data.get("deadlineChunkSize")
+        chunk_size = instance.context.data.get("chunk")
         if chunk_size == 0:
             chunk_size = self.deadline_chunk_size
 
