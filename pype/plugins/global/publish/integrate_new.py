@@ -40,10 +40,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         'name': representation name (usually the same as extension)
         'ext': file extension
     optional data
-        'anatomy_template': 'publish' or 'render', etc.
-                            template from anatomy that should be used for
-                            integrating this file. Only the first level can
-                            be specified right now.
         "frameStart"
         "frameEnd"
         'fps'
@@ -92,6 +88,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         "family", "hierarchy", "task", "username"
     ]
     default_template_name = "publish"
+    template_name_profiles = None
 
     def process(self, instance):
 
@@ -268,6 +265,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         if 'transfers' not in instance.data:
             instance.data['transfers'] = []
 
+        template_name = self.template_name_from_instance(instance)
+
         published_representations = {}
         for idx, repre in enumerate(instance.data["representations"]):
             published_files = []
@@ -292,9 +291,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             if repre.get('stagingDir'):
                 stagingdir = repre['stagingDir']
 
-            template_name = (
-                repre.get('anatomy_template') or self.default_template_name
-            )
             if repre.get("outputName"):
                 template_data["output"] = repre['outputName']
 
@@ -701,3 +697,69 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 version_data[key] = instance.data[key]
 
         return version_data
+
+    def main_family_from_instance(self, instance):
+        """Returns main family of entered instance."""
+        family = instance.data.get("family")
+        if not family:
+            family = instance.data["families"][0]
+        return family
+
+    def template_name_from_instance(self, instance):
+        template_name = self.default_template_name
+        if not self.template_name_profiles:
+            self.log.debug((
+                "Template name profiles are not set."
+                " Using default \"{}\""
+            ).format(template_name))
+            return template_name
+
+        # Task name from session?
+        task_name = io.Session.get("AVALON_TASK")
+        family = self.main_family_from_instance(instance)
+
+        matching_profiles = None
+        highest_value = -1
+        for name, filters in self.template_name_profiles:
+            value = 0
+            families = filters.get("families")
+            if families:
+                if family not in families:
+                    continue
+                value += 1
+
+            tasks = filters.get("tasks")
+            if tasks:
+                if task_name not in tasks:
+                    continue
+                value += 1
+
+            if value > highest_value:
+                matching_profiles = {}
+                highest_value = value
+
+            if value == highest_value:
+                matching_profiles[name] = filters
+
+        if len(matching_profiles) == 1:
+            template_name = matching_profiles.keys()[0]
+            self.log.debug(
+                "Using template name \"{}\".".format(template_name)
+            )
+
+        elif len(matching_profiles) > 1:
+            template_name = matching_profiles.keys()[0]
+            self.log.warning((
+                "More than one template profiles matched"
+                " Family \"{}\" and Task: \"{}\"."
+                " Using first template name in row \"{}\"."
+            ).format(family, task_name, template_name))
+
+        else:
+            self.log.debug((
+                "None of template profiles matched"
+                " Family \"{}\" and Task: \"{}\"."
+                " Using default template name \"{}\""
+            ).format(family, task_name, template_name))
+
+        return template_name
