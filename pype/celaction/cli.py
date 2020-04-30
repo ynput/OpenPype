@@ -99,19 +99,6 @@ def main():
     # Registers pype's Global pyblish plugins
     pype.install()
 
-    host_import_str = f"pype.{publish_host}"
-
-    try:
-        host_module = importlib.import_module(host_import_str)
-    except ModuleNotFoundError:
-        log.error((
-            f"Host \"{publish_host}\" can't be imported."
-            f" Import string \"{host_import_str}\" failed."
-        ))
-        return False
-
-    # avalon.api.install(host_module)
-
     for path in PUBLISH_PATHS:
         path = os.path.normpath(path)
 

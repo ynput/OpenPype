@@ -25,6 +25,7 @@ from .lib import (
     get_hierarchy,
     get_subsets,
     get_version_from_path,
+    get_last_version_from_path,
     modified_environ,
     add_tool_to_environment
 )
@@ -56,6 +57,7 @@ __all__ = [
     "get_asset",
     "get_subsets",
     "get_version_from_path",
+    "get_last_version_from_path",
     "modified_environ",
     "add_tool_to_environment",
 

@@ -2,7 +2,10 @@ import logging
 import os
 import winreg
 from pype.lib import PypeHook
-from pypeapp import Logger
+from pype.api import get_last_version_from_path
+from pypeapp import Anatomy, Logger
+
+from avalon import io, api, lib
 
 log = logging.getLogger(__name__)
 
@@ -14,6 +17,7 @@ class CelactionPrelaunchHook(PypeHook):
     path to the project by environment variable to Unreal launcher
     shell script.
     """
+    workfile_ext = "scn"
 
     def __init__(self, logger=None):
         if not logger:
@@ -25,21 +29,33 @@ class CelactionPrelaunchHook(PypeHook):
 
     def execute(self, *args, env: dict = None) -> bool:
         if not env:
-            env = os.environ
-        project = env["AVALON_PROJECT"]
-        asset = env["AVALON_ASSET"]
-        task = env["AVALON_TASK"]
-        app = "celaction_publish"
-        workdir = env["AVALON_WORKDIR"]
-        project_name = f"{asset}_{task}"
-        version = "v001"
+            self.env = os.environ
+        else:
+            self.env = env
 
-        self.log.info(f"{self.signature}")
+        self._S = api.Session
+        project = self._S["AVALON_PROJECT"] = self.env["AVALON_PROJECT"]
+        asset = self._S["AVALON_ASSET"] = self.env["AVALON_ASSET"]
+        task = self._S["AVALON_TASK"] = self.env["AVALON_TASK"]
+        workdir = self._S["AVALON_WORKDIR"] = self.env["AVALON_WORKDIR"]
+
+        anatomy_filled = self.get_anatomy_filled()
+
+        app = "celaction_publish"
+        workfile = anatomy_filled["work"]["file"]
+        version = anatomy_filled["version"]
 
         os.makedirs(workdir, exist_ok=True)
         self.log.info(f"Work dir is: `{workdir}`")
 
-        project_file = os.path.join(workdir, f"{project_name}_{version}.scn")
+        # get last version if any
+        workfile_last = get_last_version_from_path(
+            workdir, workfile.split(version))
+
+        if workfile_last:
+            workfile = workfile_last
+
+        project_file = os.path.join(workdir, workfile)
         env["PYPE_CELACTION_PROJECT_FILE"] = project_file
 
         self.log.info(f"Workfile is: `{project_file}`")
@@ -73,7 +89,7 @@ class CelactionPrelaunchHook(PypeHook):
             "--resolutionWidth *X*",
             "--resolutionHeight *Y*",
             "--programDir \"'*PROGPATH*'\""
-            ]
+        ]
         winreg.SetValueEx(hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
                           " ".join(parameters))
 
@@ -105,3 +121,64 @@ class CelactionPrelaunchHook(PypeHook):
         winreg.SetValueEx(hKey, "Valid", 0, winreg.REG_DWORD, 1)
 
         return True
+
+    def get_anatomy_filled(self):
+        root_path = api.registered_root()
+        project_name = self._S["AVALON_PROJECT"]
+        asset_name = self._S["AVALON_ASSET"]
+
+        io.install()
+        project_entity = io.find_one({
+            "type": "project",
+            "name": project_name
+        })
+        assert project_entity, (
+            "Project '{0}' was not found."
+        ).format(project_name)
+        log.debug("Collected Project \"{}\"".format(project_entity))
+
+        asset_entity = io.find_one({
+            "type": "asset",
+            "name": asset_name,
+            "parent": project_entity["_id"]
+        })
+        assert asset_entity, (
+            "No asset found by the name '{0}' in project '{1}'"
+        ).format(asset_name, project_name)
+
+        project_name = project_entity["name"]
+
+        log.info(
+            "Anatomy object collected for project \"{}\".".format(project_name)
+        )
+
+        hierarchy_items = asset_entity["data"]["parents"]
+        hierarchy = ""
+        if hierarchy_items:
+            hierarchy = os.path.join(*hierarchy_items)
+
+        template_data = {
+            "root": root_path,
+            "project": {
+                "name": project_name,
+                "code": project_entity["data"].get("code")
+            },
+            "asset": asset_entity["name"],
+            "hierarchy": hierarchy.replace("\\", "/"),
+            "task": self._S["AVALON_TASK"],
+            "ext": self.workfile_ext,
+            "version": 1,
+            "username": os.getenv("PYPE_USERNAME", "").strip()
+        }
+
+        avalon_app_name = os.environ.get("AVALON_APP_NAME")
+        if avalon_app_name:
+            application_def = lib.get_application(avalon_app_name)
+            app_dir = application_def.get("application_dir")
+            if app_dir:
+                template_data["app"] = app_dir
+
+        anatomy = Anatomy(project_name)
+        anatomy_filled = anatomy.format_all(template_data).get_solved()
+
+        return anatomy_filled

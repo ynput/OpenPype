@@ -469,6 +469,40 @@ def get_version_from_path(file):
         )
 
 
+def get_last_version_from_path(path_dir, filter=None):
+    """
+    Finds last version of given directory content
+
+    Args:
+        path_dir (string): directory path
+        filter (list): list of strings used as file name filter
+
+    Returns:
+        string: file name with last version
+
+    """
+    assert os.path.isdir(path_dir), "`path_dir` argument needs to be directory"
+
+    filtred_files = list()
+
+    # form regex for filtering
+    patern = r".*"
+
+    if filter:
+        patern = patern.join(filter)
+
+    for f in os.listdir(path_dir):
+        if not re.findall(patern, f):
+            continue
+        filtred_files.append(f)
+
+    if filtred_files:
+        sorted(filtred_files)
+        return filtred_files[-1]
+    else:
+        return None
+
+
 def get_avalon_database():
     if io._database is None:
         set_io_database()
