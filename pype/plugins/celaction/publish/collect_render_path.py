@@ -1,18 +1,6 @@
-"""
-Requires:
-    context     -> anatomy
-    context     -> anatomyData
-
-Provides:
-    instance    -> publishDir
-    instance    -> resourcesDir
-"""
-
 import os
-import copy
-
 import pyblish.api
-from avalon import api
+
 
 
 class CollectRenderPath(pyblish.api.InstancePlugin):
@@ -22,39 +10,20 @@ class CollectRenderPath(pyblish.api.InstancePlugin):
     order = pyblish.api.CollectorOrder + 0.495
 
     def process(self, instance):
-        anatomy = instance.context.data["anatomy"]
+        current_file = instance.context.data["currentFile"]
+        work_dir = os.path.dirname(current_file)
+        work_file = os.path.basename(current_file)
 
-        template_data = copy.deepcopy(instance.data["anatomyData"])
+        render_dir = os.path.join(
+            work_dir, "render", "celaction"
+        )
+        render_path = os.path.join(
+            render_dir, ".".join([instance.data["subset"], "%05d", "png"])
+        )
 
-        # This is for cases of Deprecated anatomy without `folder`
-        # TODO remove when all clients have solved this issue
-        template_data.update({
-            "frame": "FRAME_TEMP",
-            "representation": "png"
-        })
+        # create dir if it doesnt exists
+        os.makedirs(render_dir, exist_ok=True)
 
-        anatomy_filled = anatomy.format(template_data)
+        instance.data["path"] = render_path
 
-        if "folder" in anatomy.templates["render"]:
-            render_folder = anatomy_filled["render"]["folder"]
-            render_file = anatomy_filled["render"]["file"]
-        else:
-            # solve deprecated situation when `folder` key is not underneath
-            # `publish` anatomy
-            project_name = api.Session["AVALON_PROJECT"]
-            self.log.warning((
-                "Deprecation warning: Anatomy does not have set `folder`"
-                " key underneath `publish` (in global of for project `{}`)."
-            ).format(project_name))
-
-            file_path = anatomy_filled["render"]["path"]
-            # Directory
-            render_folder = os.path.dirname(file_path)
-            render_file = os.path.basename(file_path)
-
-        render_folder = os.path.normpath(render_folder)
-        render_path = os.path.join(render_folder, render_file)
-
-        instance.data["outputRenderPath"] = render_path
-
-        self.log.debug("outputRenderPath: \"{}\"".format(render_path))
+        self.log.info(f"Render output path set to: `{render_path}`")
