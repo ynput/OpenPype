@@ -33,17 +33,15 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
 
         context = instance.context
 
-        DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL",
-                                           "http://localhost:8082")
+        DEADLINE_REST_URL = os.environ.get("DEADLINE_REST_URL")
         assert DEADLINE_REST_URL, "Requires DEADLINE_REST_URL"
 
         self.deadline_url = "{}/api/jobs".format(DEADLINE_REST_URL)
         self._comment = context.data.get("comment", "")
-        self._ver = re.search(r"\d+\.\d+", context.data.get("hostVersion"))
         self._deadline_user = context.data.get(
             "deadlineUser", getpass.getuser())
-        self._frame_start = int(instance.data["frameStartHandle"])
-        self._frame_end = int(instance.data["frameEndHandle"])
+        self._frame_start = int(instance.data["frameStart"])
+        self._frame_end = int(instance.data["frameEnd"])
 
         # get output path
         render_path = instance.data['path']
@@ -60,9 +58,10 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
             render_path).replace("\\", "/")
 
         instance.data["publishJobState"] = "Suspended"
+        instance.context.data['ftrackStatus'] = "Render"
 
         # adding 2d render specific family for version identification in Loader
-        instance.data["families"] = families.insert(0, "render2d")
+        instance.data["families"] = ["render2d"]
 
     def payload_submit(self,
                        instance,
@@ -70,6 +69,8 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
                        render_path,
                        responce_data=None
                        ):
+        resolution_width = instance.data["resolutionWidth"]
+        resolution_height = instance.data["resolutionHeight"]
         render_dir = os.path.normpath(os.path.dirname(render_path))
         script_name = os.path.basename(script_path)
         jobname = "%s - %s" % (script_name, instance.name)
@@ -90,13 +91,34 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         if chunk_size == 0:
             chunk_size = self.deadline_chunk_size
 
+        # search for %02d pattern in name, and padding number
+        search_results = re.search(r"(.%0)(\d)(d)[._]", render_path).groups()
+        split_patern = "".join(search_results)
+        padding_number = int(search_results[1])
+
+        args = [
+            f"<QUOTE>{script_path}<QUOTE>",
+            "-a",
+            "-s <STARTFRAME>",
+            "-e <ENDFRAME>",
+            f"-d <QUOTE>{render_dir}<QUOTE>",
+            f"-x {resolution_width}",
+            f"-y {resolution_height}",
+            f"-r <QUOTE>{render_path.replace(split_patern, '')}<QUOTE>",
+            f"-= AbsoluteFrameNumber=on -= PadDigits={padding_number}",
+            "-= ClearAttachment=on",
+        ]
+
         payload = {
             "JobInfo": {
-                # Top-level group name
-                "BatchName": script_name,
-
                 # Job name, as seen in Monitor
                 "Name": jobname,
+
+                # plugin definition
+                "Plugin": "CelAction",
+
+                # Top-level group name
+                "BatchName": script_name,
 
                 # Arbitrary username, for visualisation in Monitor
                 "UserName": self._deadline_user,
@@ -109,11 +131,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
                 "Pool": self.deadline_pool,
                 "SecondaryPool": self.deadline_pool_secondary,
 
-                "Plugin": "CelAction",
-                "Frames": "{start}-{end}".format(
-                    start=self._frame_start,
-                    end=self._frame_end
-                ),
+                "Frames": f"{self._frame_start}-{self._frame_end}",
                 "Comment": self._comment,
 
                 # Optional, enable double-click to preview rendered
@@ -125,11 +143,12 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
                 # Input
                 "SceneFile": script_path,
 
-                # Output directory and filename
+                # Output directory
                 "OutputFilePath": render_dir.replace("\\", "/"),
 
-                # Mandatory for Deadline
-                "Version": self._ver.group(),
+                # Plugin attributes
+                "StartupDirectory": "",
+                "Arguments": " ".join(args),
 
                 # Resolve relative references
                 "ProjectPath": script_path,
@@ -176,14 +195,14 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
             elif os.pathsep not in to_process:
                 try:
                     path = environment[key]
-                    path.decode('UTF-8', 'strict')
+                    path.encode().decode('UTF-8', 'strict')
                     clean_path = os.path.normpath(path)
                 except UnicodeDecodeError:
                     print('path contains non UTF characters')
             else:
                 for path in environment[key].split(os.pathsep):
                     try:
-                        path.decode('UTF-8', 'strict')
+                        path.encode().decode('UTF-8', 'strict')
                         clean_path += os.path.normpath(path) + os.pathsep
                     except UnicodeDecodeError:
                         print('path contains non UTF characters')
@@ -253,9 +272,11 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         """
         self.log.debug("_ path: `{}`".format(path))
         if "%" in path:
-            search_results = re.search(r"(%0)(\d)(d.)", path).groups()
-            self.log.debug("_ search_results: `{}`".format(search_results))
-            return int(search_results[1])
+            search_results = re.search(r"[._](%0)(\d)(d)[._]", path).groups()
+            split_patern = "".join(search_results)
+            split_path = path.split(split_patern)
+            hashes = "#" * int(search_results[1])
+            return "".join([split_path[0], hashes, split_path[-1]])
         if "#" in path:
             self.log.debug("_ path: `{}`".format(path))
             return path

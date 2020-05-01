@@ -1,7 +1,7 @@
 import os
 from avalon import api
 import pyblish.api
-
+from pype import api as pype
 
 class CollectCelactionInstances(pyblish.api.ContextPlugin):
     """ Adds the celaction render instances """
@@ -14,7 +14,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         current_file = context.data["currentFile"]
         staging_dir = os.path.dirname(current_file)
         scene_file = os.path.basename(current_file)
-
+        version = context.data["version"]
         asset_entity = context.data["assetEntity"]
 
         shared_instance_data = {
@@ -27,7 +27,8 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
             "resolutionWidth": asset_entity["data"]["resolutionWidth"],
             "resolutionHeight": asset_entity["data"]["resolutionHeight"],
             "pixelAspect": 1,
-            "step": 1
+            "step": 1,
+            "version": version
         }
 
         celaction_kwargs = context.data.get("kwargs", {})
@@ -47,7 +48,7 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
             "subset": subset,
             "label": scene_file,
             "family": family,
-            "families": [],
+            "families": [family],
             "representations": list()
         })
 
@@ -65,10 +66,10 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         instance.data["representations"].append(representation)
 
         self.log.info('Publishing Celaction workfile')
-        context.data["instances"].append(instance)
 
         # ___________________________________________
         # render instance
+        family = "render.farm"
         subset = f"render{task}Main"
         instance = context.create_instance(name=subset)
         # getting instance state
@@ -77,9 +78,17 @@ class CollectCelactionInstances(pyblish.api.ContextPlugin):
         # add assetEntity data into instance
         instance.data.update({
             "label": "{} - farm".format(subset),
-            "family": "render.farm",
-            "families": [],
+            "family": family,
+            "families": [family],
             "subset": subset
         })
 
+        # adding basic script data
+        instance.data.update(shared_instance_data)
+
+        self.log.info('Publishing Celaction render instance')
         self.log.debug(f"Instance data: `{instance.data}`")
+
+
+        for i in context:
+            self.log.debug(f"{i.data['families']}")

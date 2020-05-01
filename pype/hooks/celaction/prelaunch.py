@@ -88,7 +88,7 @@ class CelactionPrelaunchHook(PypeHook):
             "--frameEnd *END*",
             "--resolutionWidth *X*",
             "--resolutionHeight *Y*",
-            "--programDir \"'*PROGPATH*'\""
+            # "--programDir \"'*PROGPATH*'\""
         ]
         winreg.SetValueEx(hKey, "SubmitParametersTitle", 0, winreg.REG_SZ,
                           " ".join(parameters))

@@ -52,8 +52,8 @@ def cli():
     parser.add_argument("--resolutionHeight",
                         help=("Height of resolution"))
 
-    parser.add_argument("--programDir",
-                        help=("Directory with celaction program installation"))
+    # parser.add_argument("--programDir",
+    #                     help=("Directory with celaction program installation"))
 
     pype.celaction.kwargs = parser.parse_args(sys.argv[1:]).__dict__
 
