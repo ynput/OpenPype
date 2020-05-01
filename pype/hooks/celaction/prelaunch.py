@@ -58,7 +58,7 @@ class CelactionPrelaunchHook(PypeHook):
         project_file = os.path.join(workdir, workfile)
         env["PYPE_CELACTION_PROJECT_FILE"] = project_file
 
-        self.log.info(f"Workfile is: `{project_file}`")
+        self.log.info(f"Workfile to open: `{project_file}`")
 
         ##########################
         # setting output parameters
