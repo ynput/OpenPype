@@ -291,6 +291,8 @@ class SyncEntitiesFactory:
         self.filtered_ids = []
         self.not_selected_ids = []
 
+        self.hier_cust_attr_ids_by_key = {}
+
         self._ent_paths_by_ftrack_id = {}
 
         self.ftrack_avalon_mapper = None
@@ -812,6 +814,7 @@ class SyncEntitiesFactory:
             key = attr["key"]
             attribute_key_by_id[attr["id"]] = key
             attributes_by_key[key] = attr
+            self.hier_cust_attr_ids_by_key[key] = attr["id"]
 
             store_key = "hier_attrs"
             if key.startswith("avalon_"):
@@ -1595,9 +1598,16 @@ class SyncEntitiesFactory:
 
         if current_id != new_id_str:
             # store mongo id to ftrack entity
-            configuration_id = self.entities_dict[ftrack_id][
-                "avalon_attrs_id"
-            ][CustAttrIdKey]
+            configuration_id = self.hier_cust_attr_ids_by_key.get(
+                CustAttrIdKey
+            )
+            if not configuration_id:
+                # NOTE this is for cases when CustAttrIdKey key is not
+                # hierarchical custom attribute but per entity type
+                configuration_id = self.entities_dict[ftrack_id][
+                    "avalon_attrs_id"
+                ][CustAttrIdKey]
+
             _entity_key = collections.OrderedDict({
                 "configuration_id": configuration_id,
                 "entity_id": ftrack_id
