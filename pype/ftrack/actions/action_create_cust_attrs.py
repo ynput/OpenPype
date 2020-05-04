@@ -138,7 +138,7 @@ class CustomAttributes(BaseAction):
         self.types = {}
         self.object_type_ids = {}
         self.groups = {}
-        self.security_roles = {}
+        self.security_roles = None
 
         # JOB SETTINGS
         userId = event['source']['user']['id']
@@ -199,8 +199,8 @@ class CustomAttributes(BaseAction):
                 filtered_types_id.add(obj_type['id'])
 
         # Set security roles for attribute
-        role_list = ['API', 'Administrator']
-        roles = self.get_security_role(role_list)
+        role_list = ("API", "Administrator", "Pypeclub")
+        roles = self.get_security_roles(role_list)
         # Set Text type of Attribute
         custom_attribute_type = self.get_type('text')
         # Set group to 'avalon'
@@ -416,48 +416,40 @@ class CustomAttributes(BaseAction):
                 'Found more than one group "{}"'.format(group_name)
             )
 
-    def get_role_ALL(self):
-        role_name = 'ALL'
-        if role_name in self.security_roles:
-            all_roles = self.security_roles[role_name]
-        else:
-            all_roles = self.session.query('SecurityRole').all()
-            self.security_roles[role_name] = all_roles
-            for role in all_roles:
-                if role['name'] not in self.security_roles:
-                    self.security_roles[role['name']] = role
-        return all_roles
+    def query_roles(self):
+        if self.security_roles is None:
+            self.security_roles = {}
+            for role in self.session.query("SecurityRole").all():
+                key = role["name"].lower()
+                self.security_roles[key] = role
+        return self.security_roles
 
-    def get_security_role(self, security_roles):
-        roles = []
-        security_roles_lowered = [role.lower() for role in security_roles]
-        if len(security_roles) == 0 or 'all' in security_roles_lowered:
-            roles = self.get_role_ALL()
-        elif security_roles_lowered[0] == 'except':
-            excepts = security_roles[1:]
-            all = self.get_role_ALL()
-            for role in all:
-                if role['name'] not in excepts:
-                    roles.append(role)
-                if role['name'] not in self.security_roles:
-                    self.security_roles[role['name']] = role
-        else:
-            for role_name in security_roles:
-                if role_name in self.security_roles:
-                    roles.append(self.security_roles[role_name])
-                    continue
+    def get_security_roles(self, security_roles):
+        security_roles = self.query_roles()
 
-                try:
-                    query = 'SecurityRole where name is "{}"'.format(role_name)
-                    role = self.session.query(query).one()
-                    self.security_roles[role_name] = role
-                    roles.append(role)
-                except NoResultFoundError:
+        security_roles_lowered = tuple(name.lower() for name in security_roles)
+        if (
+            len(security_roles_lowered) == 0
+            or "all" in security_roles_lowered
+        ):
+            return tuple(security_roles.values())
+
+        output = []
+        if security_roles_lowered[0] == "except":
+            excepts = security_roles_lowered[1:]
+            for role_name, role in security_roles.items():
+                if role_name not in excepts:
+                    output.append(role)
+
+        else:
+            for role_name in security_roles_lowered:
+                if role_name in security_roles:
+                    output.append(security_roles[role_name])
+                else:
                     raise CustAttrException((
-                        'Securit role "{}" does not exist'
+                        "Securit role \"{}\" was not found in Ftrack."
                     ).format(role_name))
-
-        return roles
+        return output
 
     def get_default(self, attr):
         type = attr['type']
@@ -512,8 +504,8 @@ class CustomAttributes(BaseAction):
             roles_read = attr['read_security_roles']
         if 'read_security_roles' in output:
             roles_write = attr['write_security_roles']
-        output['read_security_roles'] = self.get_security_role(roles_read)
-        output['write_security_roles'] = self.get_security_role(roles_write)
+        output['read_security_roles'] = self.get_security_roles(roles_read)
+        output['write_security_roles'] = self.get_security_roles(roles_write)
 
         return output
 
