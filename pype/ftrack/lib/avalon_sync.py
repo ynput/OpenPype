@@ -877,6 +877,8 @@ class SyncEntitiesFactory:
                 project_values[key] = value
 
         for key in avalon_hier:
+            if key == CustAttrIdKey:
+                continue
             value = self.entities_dict[top_id]["avalon_attrs"][key]
             if value is not None:
                 project_values[key] = value

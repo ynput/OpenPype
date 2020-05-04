@@ -1244,6 +1244,8 @@ class SyncToAvalonEvent(BaseEvent):
             self.process_session, entity, hier_keys, defaults
         )
         for key, val in hier_values.items():
+            if key == CustAttrIdKey:
+                continue
             output[key] = val
 
         return output
