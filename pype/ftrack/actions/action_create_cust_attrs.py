@@ -224,6 +224,94 @@ class CustomAttributes(BaseAction):
             data['object_type_id'] = str(object_type_id)
             self.process_attribute(data)
 
+    def convert_mongo_id_to_hierarchical(
+        self, hierarchical_attr, object_type_attrs, session, event
+    ):
+        user_msg = "Converting old custom attributes. This may take some time."
+        self.show_message(event, user_msg, True)
+        self.log.info(user_msg)
+
+        object_types_per_id = {
+            object_type["id"]: object_type
+            for object_type in session.query("ObjectType").all()
+        }
+
+        cust_attr_query = (
+            "select value, entity_id from ContextCustomAttributeValue "
+            "where configuration_id is {}"
+        )
+        for attr_def in object_type_attrs:
+            attr_ent_type = attr_def["entity_type"]
+            if attr_ent_type == "show":
+                entity_type_label = "Project"
+            elif attr_ent_type == "task":
+                entity_type_label = (
+                    object_types_per_id[attr_def["object_type_id"]]
+                )
+            else:
+                self.log.warning(
+                    "Unsupported entity type: \"{}\". Skipping.".format(
+                        attr_ent_type
+                    )
+                )
+                continue
+
+            self.log.debug((
+                "Converting Avalon MongoID attr for Entity type \"{}\"."
+            ).format(entity_type_label))
+
+            call_expr = [{
+                "action": "query",
+                "expression": cust_attr_query.format(attr_def["id"])
+            }]
+            if hasattr(session, "call"):
+                [values] = session.call(call_expr)
+            else:
+                [values] = session._call(call_expr)
+
+            for value in values["data"]:
+                table_values = collections.OrderedDict({
+                    "configuration_id": hierarchical_attr["id"],
+                    "entity_id": value["entity_id"]
+                })
+
+                session.recorded_operations.push(
+                    ftrack_api.operation.UpdateEntityOperation(
+                        "ContextCustomAttributeValue",
+                        table_values,
+                        "value",
+                        ftrack_api.symbol.NOT_SET,
+                        value["value"]
+                    )
+                )
+
+            try:
+                session.commit()
+
+            except Exception:
+                session.rollback()
+                self.log.warning(
+                    (
+                        "Couldn't transfer Avalon Mongo ID"
+                        " attribute for entity type \"{}\"."
+                    ).format(entity_type_label),
+                    exc_info=True
+                )
+
+            try:
+                session.delete(attr_def)
+                session.commit()
+
+            except Exception:
+                session.rollback()
+                self.log.warning(
+                    (
+                        "Couldn't delete Avalon Mongo ID"
+                        " attribute for entity type \"{}\"."
+                    ).format(entity_type_label),
+                    exc_info=True
+                )
+
     def custom_attributes_from_file(self, session, event):
         presets = config.get_presets()['ftrack']['ftrack_custom_attributes']
 
