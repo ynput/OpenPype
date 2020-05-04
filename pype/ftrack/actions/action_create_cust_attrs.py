@@ -8,7 +8,6 @@ import ftrack_api
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.avalon_sync import CustAttrIdKey
 from pypeapp import config
-from ftrack_api.exception import NoResultFoundError
 
 """
 This action creates/updates custom attributes.
@@ -382,15 +381,15 @@ class CustomAttributes(BaseAction):
         config = json.dumps({
             'multiSelect': multiSelect,
             'data': json.dumps(data)
-            })
+        })
 
         return config
 
     def get_group(self, attr):
-        if isinstance(attr, str):
-            group_name = attr
-        else:
+        if isinstance(attr, dict):
             group_name = attr['group'].lower()
+        else:
+            group_name = attr
         if group_name in self.groups:
             return self.groups[group_name]
 
