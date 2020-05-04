@@ -147,7 +147,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             options = ffmpeg_burnins.TextOptions(**self.options_init)
 
         options = options.copy()
-        if frame_start:
+        if frame_start is not None:
             options["frame_offset"] = frame_start
 
         # `frame_end` is only for meassurements of text position
