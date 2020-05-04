@@ -23,7 +23,9 @@ class AvalonRestApi(RestApi):
         if not project_name:
             output = {}
             for project_name in self.dbcon.tables():
-                project = self.dbcon[project_name].find_one({"type": "project"})
+                project = self.dbcon[project_name].find_one({
+                    "type": "project"
+                })
                 output[project_name] = project
 
             return CallbackResult(data=self.result_to_json(output))
@@ -44,7 +46,7 @@ class AvalonRestApi(RestApi):
 
         if not self.dbcon.exist_table(_project_name):
             abort(404, "Project \"{}\" was not found in database".format(
-                project_name
+                _project_name
             ))
 
         if not _asset:
@@ -65,8 +67,26 @@ class AvalonRestApi(RestApi):
             return asset
 
         abort(404, "Asset \"{}\" with {} was not found in project {}".format(
-            _asset, identificator, project_name
+            _asset, identificator, _project_name
         ))
+
+    @RestApi.route("/publish/<asset_name>",
+                   url_prefix="/premiere", methods="GET")
+    def publish(self, request):
+        """
+        http://localhost:8021/premiere/publish/shot021?json_in=this/path/file_in.json&json_out=this/path/file_out.json
+        """
+        asset_name = request.url_data["asset_name"]
+        query = request.query
+        data = request.request_data
+
+        output = {
+            "message": "Got your data. Thanks.",
+            "your_data": data,
+            "your_query": query,
+            "your_asset_is": asset_name
+        }
+        return CallbackResult(data=self.result_to_json(output))
 
     def result_to_json(self, result):
         """ Converts result of MongoDB query to dict without $oid (ObjectId)
