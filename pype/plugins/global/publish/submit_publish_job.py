@@ -146,20 +146,23 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     aov_filter = {"maya": ["beauty"]}
 
     enviro_filter = [
-        "PATH",
-        "PYTHONPATH",
+        # "PYTHONPATH",
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
-        "PYPE_ROOT",
+        "PYPE_LOG_NO_COLORS",
         "PYPE_METADATA_FILE",
-        "PYPE_STUDIO_PROJECTS_PATH",
-        "PYPE_STUDIO_PROJECTS_MOUNT",
-        "AVALON_PROJECT"
+        "AVALON_PROJECT",
+        "PYPE_PYTHON_EXE",
+        "PYTHONPATH"
     ]
 
-    # pool used to do the publishing job
+    # custom deadline atributes
+    deadline_department = ""
     deadline_pool = ""
+    deadline_pool_secondary = ""
+    deadline_group = ""
+    deadline_chunk_size = 1
 
     # regex for finding frame number in string
     R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
@@ -206,8 +209,15 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "JobDependency0": job["_id"],
                 "UserName": job["Props"]["User"],
                 "Comment": instance.context.data.get("comment", ""),
+
+                "Department": self.deadline_department,
+                "ChunkSize": self.deadline_chunk_size,
                 "Priority": job["Props"]["Pri"],
+
+                "Group": self.deadline_group,
                 "Pool": self.deadline_pool,
+                "SecondaryPool": self.deadline_pool_secondary,
+
                 "OutputDirectory0": output_dir
             },
             "PluginInfo": {
@@ -223,6 +233,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # Transfer the environment from the original job to this dependent
         # job so they use the same environment
         environment = job["Props"].get("Env", {})
+        environment["PYPE_PYTHON_EXE"] = "//pype/Core/software/python36/python.exe"
+        environment["PYPE_LOG_NO_COLORS"] = "1"
         environment["PYPE_METADATA_FILE"] = metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
         i = 0

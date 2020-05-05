@@ -169,55 +169,13 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
 
         # Include critical environment variables with submission
         keys = [
-            "PYTHONPATH",
-            "PATH",
-            "AVALON_SCHEMA",
-            "PYBLISHPLUGINPATH",
-            "TOOL_ENV"
+            "FTRACK_API_USER",
+            "FTRACK_API_KEY",
+            "FTRACK_SERVER",
+            "AVALON_PROJECT"
         ]
         environment = dict({key: os.environ[key] for key in keys
-                            if key in os.environ}, **api.Session)
-
-        for path in os.environ:
-            if path.lower().startswith('pype_'):
-                environment[path] = os.environ[path]
-
-        environment["PATH"] = os.environ["PATH"]
-        clean_environment = {}
-        for key in environment:
-            clean_path = ""
-            self.log.debug("key: {}".format(key))
-            to_process = environment[key]
-            if key == "PYPE_STUDIO_CORE_MOUNT":
-                clean_path = environment[key]
-            elif "://" in environment[key]:
-                clean_path = environment[key]
-            elif os.pathsep not in to_process:
-                try:
-                    path = environment[key]
-                    path.encode().decode('UTF-8', 'strict')
-                    clean_path = os.path.normpath(path)
-                except UnicodeDecodeError:
-                    print('path contains non UTF characters')
-            else:
-                for path in environment[key].split(os.pathsep):
-                    try:
-                        path.encode().decode('UTF-8', 'strict')
-                        clean_path += os.path.normpath(path) + os.pathsep
-                    except UnicodeDecodeError:
-                        print('path contains non UTF characters')
-
-            if key == "PYTHONPATH":
-                clean_path = clean_path.replace('python2', 'python3')
-
-            clean_path = clean_path.replace(
-                                    os.path.normpath(
-                                        environment['PYPE_STUDIO_CORE_MOUNT']),  # noqa
-                                    os.path.normpath(
-                                        environment['PYPE_STUDIO_CORE_PATH']))   # noqa
-            clean_environment[key] = clean_path
-
-        environment = clean_environment
+                            if key in os.environ})
 
         payload["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
