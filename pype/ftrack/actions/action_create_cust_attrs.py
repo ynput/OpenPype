@@ -272,7 +272,7 @@ class CustomAttributes(BaseAction):
                 entity_type_label = "Project"
             elif attr_ent_type == "task":
                 entity_type_label = (
-                    object_types_per_id[attr_def["object_type_id"]]
+                    object_types_per_id[attr_def["object_type_id"]]["name"]
                 )
             else:
                 self.log.warning(
