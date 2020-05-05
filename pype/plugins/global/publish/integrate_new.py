@@ -5,6 +5,7 @@ import sys
 import copy
 import clique
 import errno
+import six
 
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
@@ -569,7 +570,12 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
-            copyfile(src, dst)
+            try:
+                copyfile(src, dst)
+            except OSError as e:
+                self.log.critical("Cannot copy {} to {}".format(src, dst))
+                self.log.critical(e)
+                six.reraise(*sys.exc_info())
             if str(getsize(src)) in str(getsize(dst)):
                 break
 
