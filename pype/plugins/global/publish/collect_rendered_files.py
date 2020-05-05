@@ -75,6 +75,16 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 data=r) for r in instance.get("representations")]
             i.data.update(instance)
 
+            # add audio if in metadata data
+            if data.get("audio"):
+                i.data.update({
+                    "audio": [{
+                        "filename": data.get("audio"),
+                        "offset": 0
+                    }]
+                })
+                self.log.info(f"Adding audio to instance: {i.data['audio']}")
+
     def process(self, context):
         self._context = context
 
