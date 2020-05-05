@@ -146,15 +146,13 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     aov_filter = {"maya": ["beauty"]}
 
     enviro_filter = [
-        # "PYTHONPATH",
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
         "PYPE_LOG_NO_COLORS",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
-        "PYPE_PYTHON_EXE",
-        "PYTHONPATH"
+        "PYPE_PYTHON_EXE"
     ]
 
     # custom deadline atributes
@@ -748,6 +746,11 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             "session": api.Session.copy(),
             "instances": instances
         }
+
+        # add audio to metadata file if available
+        audio_file = context.data.get("audioFile")
+        if os.path.isfile(audio_file):
+            publish_job.update({ "audio": audio_file})
 
         # pass Ftrack credentials in case of Muster
         if submission_type == "muster":
