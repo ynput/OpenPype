@@ -644,7 +644,7 @@ def get_subsets(asset_name,
 
         if len(repres_out) > 0:
             output_dict[subset["name"]] = {"version": version_sel,
-                                           "representaions": repres_out}
+                                           "representations": repres_out}
 
     return output_dict
 
