@@ -66,8 +66,7 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
     def payload_submit(self,
                        instance,
                        script_path,
-                       render_path,
-                       responce_data=None
+                       render_path
                        ):
         resolution_width = instance.data["resolutionWidth"]
         resolution_height = instance.data["resolutionHeight"]
@@ -76,9 +75,6 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
         jobname = "%s - %s" % (script_name, instance.name)
 
         output_filename_0 = self.preview_fname(render_path)
-
-        if not responce_data:
-            responce_data = {}
 
         try:
             # Ensure render folder exists
@@ -125,11 +121,11 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
 
                 "Department": self.deadline_department,
                 "Priority": self.deadline_priority,
-                "ChunkSize": chunk_size,
 
                 "Group": self.deadline_group,
                 "Pool": self.deadline_pool,
                 "SecondaryPool": self.deadline_pool_secondary,
+                "ChunkSize": chunk_size,
 
                 "Frames": f"{self._frame_start}-{self._frame_end}",
                 "Comment": self._comment,
@@ -158,14 +154,6 @@ class ExtractCelactionDeadline(pyblish.api.InstancePlugin):
             # Mandatory for Deadline, may be empty
             "AuxFiles": []
         }
-
-        if responce_data.get("_id"):
-            payload["JobInfo"].update({
-                "JobType": "Normal",
-                "BatchName": responce_data["Props"]["Batch"],
-                "JobDependency0": responce_data["_id"],
-                "ChunkSize": 99999999
-            })
 
         # Include critical environment variables with submission
         keys = [
