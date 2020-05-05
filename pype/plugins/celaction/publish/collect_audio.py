@@ -1,38 +1,41 @@
 import pyblish.api
-from bait.paths import get_output_path
 import os
 
+import pype.api as pype
+from avalon import io
+from pprint import pformat
 
 class AppendCelactionAudio(pyblish.api.ContextPlugin):
 
-    label = "Pype Audio"
+    label = "Colect Audio for publishing"
     order = pyblish.api.CollectorOrder + 0.1
 
     def process(self, context):
         self.log.info('Collecting Audio Data')
-        version = context.data('version') if context.has_data('version') else 1
+        asset_entity = context.data["assetEntity"]
+        asset_id = asset_entity["_id"]
 
-        task_id = context.data["ftrackData"]["Task"]["id"]
+        # get all available representations
+        subsets = pype.get_subsets(asset_entity["name"],
+                                   representations=["audio"]
+                                   )
+        self.log.info(f"subsets is: {pformat(subsets)}")
 
-        component_name = context.data["ftrackData"]['Shot']['name']
-        version = context.data["version"]
+        if not subsets.get("audioMain"):
+            raise AttributeError("`audioMain` subset does not exist")
 
-        publish_path = get_output_path(
-            task_id, component_name, version, "mov").split('/')[0:-4]
+        reprs = subsets.get("audioMain", {}).get("representations", [])
+        self.log.info(f"reprs is: {pformat(reprs)}")
 
-        self.log.info('publish_path: {}'.format(publish_path))
+        repr = next((r for r in reprs), None)
+        if not repr:
+            raise "Missing `audioMain` representation"
+        self.log.info(f"represetation is: {repr}")
 
-        audio_file = '/'.join(publish_path + [
-            'audio',
-            'audioMain',
-            component_name + '_audioMain_v001.wav'
-        ])
+        audio_file = repr.get('data', {}).get('path', "")
 
         if os.path.exists(audio_file):
-            context.data["audio"] = {
-                'filename': audio_file,
-                'enabled': True
-            }
+            context.data["audioFile"] = audio_file
             self.log.info(
                 'audio_file: {}, has been added to context'.format(audio_file))
         else:
