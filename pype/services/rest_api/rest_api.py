@@ -1,13 +1,18 @@
 import os
 import socket
-import socketserver
 from Qt import QtCore
 
+from socketserver import ThreadingMixIn
+from http.server import HTTPServer
 from .lib import RestApiFactory, Handler
 from .base_class import route, register_statics
 from pypeapp import config, Logger
 
 log = Logger().get_logger("RestApiServer")
+
+
+class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
+    pass
 
 
 class RestApiServer:
@@ -180,7 +185,8 @@ class RestApiThread(QtCore.QThread):
                 "Running Rest Api server on URL:"
                 " \"http://localhost:{}\"".format(self.port)
             )
-            with socketserver.TCPServer(("", self.port), Handler) as httpd:
+
+            with ThreadingSimpleServer(("", self.port), Handler) as httpd:
                 while self.is_running:
                     httpd.handle_request()
         except Exception:

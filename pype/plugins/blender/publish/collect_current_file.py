@@ -14,3 +14,6 @@ class CollectBlenderCurrentFile(pyblish.api.ContextPlugin):
         """Inject the current working file"""
         current_file = bpy.data.filepath
         context.data['currentFile'] = current_file
+
+        assert current_file != '', "Current file is empty. " \
+            "Save the file before continuing."

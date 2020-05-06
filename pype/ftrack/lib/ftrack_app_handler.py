@@ -1,44 +1,35 @@
 import os
 import sys
 import platform
-from avalon import lib as avalonlib
+import avalon.lib
 import acre
-from pype import api as pype
 from pype import lib as pypelib
 from pypeapp import config
-from .ftrack_base_handler import BaseHandler
+from .ftrack_action_handler import BaseAction
 
 from pypeapp import Anatomy
 
 
-class AppAction(BaseHandler):
-    '''Custom Action base class
+class AppAction(BaseAction):
+    """Application Action class.
 
-    <label> - a descriptive string identifing your action.
-    <varaint>   - To group actions together, give them the same
-                  label and specify a unique variant per action.
-    <identifier>  - a unique identifier for app.
-    <description>   - a verbose descriptive text for you action
-    <icon>  - icon in ftrack
-    '''
+    Args:
+        session (ftrack_api.Session): Session where action will be registered.
+        label (str): A descriptive string identifing your action.
+        varaint (str, optional): To group actions together, give them the same
+            label and specify a unique variant per action.
+        identifier (str): An unique identifier for app.
+        description (str): A verbose descriptive text for you action.
+        icon (str): Url path to icon which will be shown in Ftrack web.
+    """
 
-    type = 'Application'
-    preactions = ['start.timer']
+    type = "Application"
+    preactions = ["start.timer"]
 
     def __init__(
         self, session, label, name, executable, variant=None,
         icon=None, description=None, preactions=[], plugins_presets={}
     ):
-        super().__init__(session, plugins_presets)
-        '''Expects a ftrack_api.Session instance'''
-
-        if label is None:
-            raise ValueError('Action missing label.')
-        elif name is None:
-            raise ValueError('Action missing identifier.')
-        elif executable is None:
-            raise ValueError('Action missing executable.')
-
         self.label = label
         self.identifier = name
         self.executable = executable
@@ -47,11 +38,19 @@ class AppAction(BaseHandler):
         self.description = description
         self.preactions.extend(preactions)
 
+        super().__init__(session, plugins_presets)
+        if label is None:
+            raise ValueError("Action missing label.")
+        if name is None:
+            raise ValueError("Action missing identifier.")
+        if executable is None:
+            raise ValueError("Action missing executable.")
+
     def register(self):
-        '''Registers the action, subscribing the discover and launch topics.'''
+        """Registers the action, subscribing the discover and launch topics."""
 
         discovery_subscription = (
-            'topic=ftrack.action.discover and source.user.username={0}'
+            "topic=ftrack.action.discover and source.user.username={0}"
         ).format(self.session.api_user)
 
         self.session.event_hub.subscribe(
@@ -61,9 +60,9 @@ class AppAction(BaseHandler):
         )
 
         launch_subscription = (
-            'topic=ftrack.action.launch'
-            ' and data.actionIdentifier={0}'
-            ' and source.user.username={1}'
+            "topic=ftrack.action.launch"
+            " and data.actionIdentifier={0}"
+            " and source.user.username={1}"
         ).format(
             self.identifier,
             self.session.api_user
@@ -74,7 +73,61 @@ class AppAction(BaseHandler):
         )
 
     def discover(self, session, entities, event):
-        '''Return true if we can handle the selected entities.
+        """Return true if we can handle the selected entities.
+
+        Args:
+            session (ftrack_api.Session): Helps to query necessary data.
+            entities (list): Object of selected entities.
+            event (ftrack_api.Event): Ftrack event causing discover callback.
+        """
+
+        if (
+            len(entities) != 1 or
+            entities[0].entity_type.lower() != "task"
+        ):
+            return False
+
+        entity = entities[0]
+        if entity["parent"].entity_type.lower() == "project":
+            return False
+
+        ft_project = self.get_project_from_entity(entity)
+        database = pypelib.get_avalon_database()
+        project_name = ft_project["full_name"]
+        avalon_project = database[project_name].find_one({
+            "type": "project"
+        })
+
+        if not avalon_project:
+            return False
+
+        project_apps = avalon_project["config"].get("apps", [])
+        apps = [app["name"] for app in project_apps]
+        if self.identifier in apps:
+            return True
+        return False
+
+    def _launch(self, event):
+        entities = self._translate_event(event)
+
+        preactions_launched = self._handle_preactions(
+            self.session, event
+        )
+        if preactions_launched is False:
+            return
+
+        response = self.launch(self.session, entities, event)
+
+        return self._handle_result(response)
+
+    def launch(self, session, entities, event):
+        """Callback method for the custom action.
+
+        return either a bool (True if successful or False if the action failed)
+        or a dictionary with they keys `message` and `success`, the message
+        should be a string and will be displayed as feedback to the user,
+        success should be a bool, True if successful or False if the action
+        failed.
 
         *session* is a `ftrack_api.Session` instance
 
@@ -85,90 +138,22 @@ class AppAction(BaseHandler):
         or Asset Build.
 
         *event* the unmodified original event
-
-        '''
-
-        if (
-            len(entities) != 1 or
-            entities[0].entity_type.lower() != 'task'
-        ):
-            return False
-
-        if entities[0]['parent'].entity_type.lower() == 'project':
-            return False
-
-        ft_project = entities[0]['project']
-
-        database = pypelib.get_avalon_database()
-        project_name = ft_project['full_name']
-        avalon_project = database[project_name].find_one({
-            "type": "project"
-        })
-
-        if avalon_project is None:
-            return False
-        else:
-            apps = [app['name'] for app in avalon_project['config'].get(
-                'apps', []
-            )]
-
-            if self.identifier not in apps:
-                return False
-
-        return True
-
-    def _launch(self, event):
-        args = self._translate_event(
-            self.session, event
-        )
-
-        preactions_launched = self._handle_preactions(
-            self.session, event
-        )
-        if preactions_launched is False:
-            return
-
-        response = self.launch(
-            self.session, *args
-        )
-
-        return self._handle_result(
-            self.session, response, *args
-        )
-
-    def launch(self, session, entities, event):
-        '''Callback method for the custom action.
-
-        return either a bool ( True if successful or False if the action failed )
-        or a dictionary with they keys `message` and `success`, the message should be a
-        string and will be displayed as feedback to the user, success should be a bool,
-        True if successful or False if the action failed.
-
-        *session* is a `ftrack_api.Session` instance
-
-        *entities* is a list of tuples each containing the entity type and the entity id.
-        If the entity is a hierarchical you will always get the entity
-        type TypedContext, once retrieved through a get operation you
-        will have the "real" entity type ie. example Shot, Sequence
-        or Asset Build.
-
-        *event* the unmodified original event
-
-        '''
+        """
 
         entity = entities[0]
-        project_name = entity['project']['full_name']
+        ft_project = self.get_project_from_entity(entity)
+        project_name = ft_project["full_name"]
 
         database = pypelib.get_avalon_database()
 
         # Get current environments
         env_list = [
-            'AVALON_PROJECT',
-            'AVALON_SILO',
-            'AVALON_ASSET',
-            'AVALON_TASK',
-            'AVALON_APP',
-            'AVALON_APP_NAME'
+            "AVALON_PROJECT",
+            "AVALON_SILO",
+            "AVALON_ASSET",
+            "AVALON_TASK",
+            "AVALON_APP",
+            "AVALON_APP_NAME"
         ]
         env_origin = {}
         for env in env_list:
@@ -176,37 +161,38 @@ class AppAction(BaseHandler):
 
         # set environments for Avalon
         os.environ["AVALON_PROJECT"] = project_name
-        os.environ["AVALON_SILO"] = entity['ancestors'][0]['name']
-        os.environ["AVALON_ASSET"] = entity['parent']['name']
-        os.environ["AVALON_TASK"] = entity['name']
+        os.environ["AVALON_SILO"] = entity["ancestors"][0]["name"]
+        os.environ["AVALON_ASSET"] = entity["parent"]["name"]
+        os.environ["AVALON_TASK"] = entity["name"]
         os.environ["AVALON_APP"] = self.identifier.split("_")[0]
         os.environ["AVALON_APP_NAME"] = self.identifier
 
-        anatomy = Anatomy()
+        anatomy = Anatomy(project_name)
+
+        asset_doc = database[project_name].find_one({
+            "type": "asset",
+            "name": entity["parent"]["name"]
+        })
+        parents = asset_doc["data"]["parents"]
 
         hierarchy = ""
-        parents = database[project_name].find_one({
-            "type": 'asset',
-            "name": entity['parent']['name']
-        })['data']['parents']
-
         if parents:
             hierarchy = os.path.join(*parents)
 
         os.environ["AVALON_HIERARCHY"] = hierarchy
 
-        application = avalonlib.get_application(os.environ["AVALON_APP_NAME"])
+        application = avalon.lib.get_application(os.environ["AVALON_APP_NAME"])
 
         data = {
             "root": os.environ.get("PYPE_STUDIO_PROJECTS_MOUNT"),
             "project": {
-                "name": entity['project']['full_name'],
-                "code": entity['project']['name']
+                "name": ft_project["full_name"],
+                "code": ft_project["name"]
             },
-            "task": entity['name'],
-            "asset": entity['parent']['name'],
+            "task": entity["name"],
+            "asset": entity["parent"]["name"],
             "app": application["application_dir"],
-            "hierarchy": hierarchy,
+            "hierarchy": hierarchy
         }
 
         av_project = database[project_name].find_one({"type": 'project'})
@@ -258,14 +244,6 @@ class AppAction(BaseHandler):
         env = acre.merge(env, current_env=dict(os.environ))
         env = acre.append(dict(os.environ), env)
 
-
-        #
-        # tools_env = acre.get_tools(tools)
-        # env = acre.compute(dict(tools_env))
-        # env = acre.merge(env, dict(os.environ))
-        # os.environ = acre.append(dict(os.environ), env)
-        # os.environ = acre.compute(os.environ)
-
         # Get path to execute
         st_temp_path = os.environ['PYPE_CONFIG']
         os_plat = platform.system().lower()
@@ -274,6 +252,18 @@ class AppAction(BaseHandler):
         path = os.path.join(st_temp_path, 'launchers', os_plat)
         # Full path to executable launcher
         execfile = None
+
+        if application.get("launch_hook"):
+            hook = application.get("launch_hook")
+            self.log.info("launching hook: {}".format(hook))
+            ret_val = pypelib.execute_hook(
+                application.get("launch_hook"), env=env)
+            if not ret_val:
+                return {
+                    'success': False,
+                    'message': "Hook didn't finish successfully {0}"
+                    .format(self.label)
+                }
 
         if sys.platform == "win32":
 
@@ -286,14 +276,18 @@ class AppAction(BaseHandler):
 
             # Run SW if was found executable
             if execfile is not None:
-                avalonlib.launch(executable=execfile, args=[], environment=env)
+                # Store subprocess to varaible. This is due to Blender launch
+                # bug. Please make sure Blender >=2.81 can be launched before
+                # remove `_popen` variable.
+                _popen = avalon.lib.launch(
+                    executable=execfile, args=[], environment=env
+                )
             else:
                 return {
                     'success': False,
                     'message': "We didn't found launcher for {0}"
                     .format(self.label)
-                    }
-                pass
+                }
 
         if sys.platform.startswith('linux'):
             execfile = os.path.join(path.strip('"'), self.executable)
@@ -318,7 +312,7 @@ class AppAction(BaseHandler):
                         'message': "No executable permission - {}".format(
                             execfile)
                         }
-                    pass
+
             else:
                 self.log.error('Launcher doesn\'t exist - {}'.format(
                     execfile))
@@ -326,10 +320,13 @@ class AppAction(BaseHandler):
                     'success': False,
                     'message': "Launcher doesn't exist - {}".format(execfile)
                 }
-                pass
+
             # Run SW if was found executable
             if execfile is not None:
-                avalonlib.launch(
+                # Store subprocess to varaible. This is due to Blender launch
+                # bug. Please make sure Blender >=2.81 can be launched before
+                # remove `_popen` variable.
+                _popen = avalon.lib.launch(
                     '/usr/bin/env', args=['bash', execfile], environment=env
                 )
             else:
@@ -338,7 +335,6 @@ class AppAction(BaseHandler):
                     'message': "We didn't found launcher for {0}"
                     .format(self.label)
                     }
-                pass
 
         # Change status of task to In progress
         presets = config.get_presets()["ftrack"]["ftrack_config"]

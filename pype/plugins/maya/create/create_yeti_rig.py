@@ -10,6 +10,7 @@ class CreateYetiRig(avalon.maya.Creator):
     label = "Yeti Rig"
     family = "yetiRig"
     icon = "usb"
+    defaults = ["Main"]
 
     def process(self):
 

@@ -71,8 +71,13 @@ class IntegrateFtrackNote(pyblish.api.InstancePlugin):
 
         session = instance.context.data["ftrackSession"]
 
-        intent_val = instance.context.data.get("intent", {}).get("value")
-        intent_label = instance.context.data.get("intent", {}).get("label")
+        intent = instance.context.data.get("intent")
+        if intent and isinstance(intent, dict):
+            intent_val = intent.get("value")
+            intent_label = intent.get("label")
+        else:
+            intent_val = intent_label = intent
+
         final_label = None
         if intent_val:
             final_label = self.get_intent_label(session, intent_val)

@@ -250,7 +250,8 @@ class CollectLook(pyblish.api.InstancePlugin):
 
             # Remove sets that didn't have any members assigned in the end
             # Thus the data will be limited to only what we need.
-            if not sets[objset]["members"]:
+            self.log.info("objset {}".format(sets[objset]))
+            if not sets[objset]["members"] or (not objset.endswith("SG")):
                 self.log.info("Removing redundant set information: "
                               "%s" % objset)
                 sets.pop(objset, None)

@@ -20,7 +20,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
-    hosts = ["nuke", "maya", "shell", "nukestudio"]
+    hosts = ["nuke", "maya", "shell", "nukestudio", "premiere"]
 
     outputs = {}
     ext_filter = []
@@ -57,10 +57,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # filter out mov and img sequences
         representations_new = representations[:]
         for repre in representations:
+
             if repre['ext'] not in self.ext_filter:
                 continue
 
             tags = repre.get("tags", [])
+
+            if "multipartExr" in tags:
+                # ffmpeg doesn't support multipart exrs
+                continue
 
             if "thumbnail" in tags:
                 continue

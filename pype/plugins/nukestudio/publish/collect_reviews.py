@@ -161,12 +161,15 @@ class CollectReviews(api.InstancePlugin):
             "handleStart", "handleEnd", "sourceIn", "sourceOut",
             "frameStart", "frameEnd", "sourceInH", "sourceOutH",
             "clipIn", "clipOut", "clipInH", "clipOutH", "asset",
-            "track", "version"
+            "track"
         ]
 
         version_data = dict()
         # pass data to version
         version_data.update({k: instance.data[k] for k in transfer_data})
+
+        if 'version' in instance.data:
+            version_data["version"] = instance.data[version]
 
         # add to data of representation
         version_data.update({

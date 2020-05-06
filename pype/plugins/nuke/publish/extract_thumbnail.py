@@ -125,6 +125,7 @@ class ExtractThumbnail(pype.api.Extractor):
         repre = {
             'name': name,
             'ext': "jpeg",
+            "outputName": "thumb",
             'files': file,
             "stagingDir": staging_dir,
             "frameStart": first_frame,

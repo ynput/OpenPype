@@ -70,7 +70,7 @@ def loader_shift(node, frame, relative=True):
 class LoadSequence(api.Loader):
     """Load image sequence into Nuke"""
 
-    families = ["render2d", "source", "plate", "render"]
+    families = ["render2d", "source", "plate", "render", "prerender"]
     representations = ["exr", "dpx", "jpg", "jpeg", "png"]
 
     label = "Load sequence"
@@ -87,7 +87,7 @@ class LoadSequence(api.Loader):
         version = context['version']
         version_data = version.get("data", {})
         repr_id = context["representation"]["_id"]
-        
+
         self.log.info("version_data: {}\n".format(version_data))
         self.log.debug(
             "Representation id `{}` ".format(repr_id))

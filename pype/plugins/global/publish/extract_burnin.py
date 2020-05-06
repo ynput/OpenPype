@@ -18,7 +18,7 @@ class ExtractBurnin(pype.api.Extractor):
     label = "Extract burnins"
     order = pyblish.api.ExtractorOrder + 0.03
     families = ["review", "burnin"]
-    hosts = ["nuke", "maya", "shell", "nukestudio"]
+    hosts = ["nuke", "maya", "shell", "nukestudio", "premiere"]
     optional = True
 
     def process(self, instance):
@@ -54,9 +54,12 @@ class ExtractBurnin(pype.api.Extractor):
             "comment": instance.context.data.get("comment", "")
         })
 
-        intent = instance.context.data.get("intent", {}).get("label")
-        if intent:
-            prep_data["intent"] = intent
+        intent_label = instance.context.data.get("intent")
+        if intent_label and isinstance(intent_label, dict):
+            intent_label = intent_label.get("label")
+
+        if intent_label:
+            prep_data["intent"] = intent_label
 
         # get anatomy project
         anatomy = instance.context.data['anatomy']
@@ -64,6 +67,10 @@ class ExtractBurnin(pype.api.Extractor):
         self.log.debug("__ prep_data: {}".format(prep_data))
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
+
+            if "multipartExr" in repre.get("tags", []):
+                # ffmpeg doesn't support multipart exrs
+                continue
 
             if "burnin" not in repre.get("tags", []):
                 continue
@@ -125,13 +132,14 @@ class ExtractBurnin(pype.api.Extractor):
             slate_duration = duration_cp
 
             # exception for slate workflow
-            if ("slate" in instance.data["families"]):
+            if "slate" in instance.data["families"]:
                 if "slate-frame" in repre.get("tags", []):
                     slate_frame_start = frame_start_cp - 1
                     slate_frame_end = frame_end_cp
                     slate_duration = duration_cp + 1
 
-            self.log.debug("__1 slate_frame_start: {}".format(slate_frame_start))
+            self.log.debug("__1 slate_frame_start: {}".format(
+                slate_frame_start))
 
             _prep_data.update({
                 "slate_frame_start": slate_frame_start,

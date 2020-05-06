@@ -41,6 +41,7 @@ import re
 import os
 import types
 import six
+import json
 from abc import ABCMeta, abstractmethod
 
 from maya import cmds
@@ -52,38 +53,40 @@ from avalon import maya, api
 import pype.maya.lib as lib
 
 
-R_SINGLE_FRAME = re.compile(r'^(-?)\d+$')
-R_FRAME_RANGE = re.compile(r'^(?P<sf>(-?)\d+)-(?P<ef>(-?)\d+)$')
-R_FRAME_NUMBER = re.compile(r'.+\.(?P<frame>[0-9]+)\..+')
+R_SINGLE_FRAME = re.compile(r"^(-?)\d+$")
+R_FRAME_RANGE = re.compile(r"^(?P<sf>(-?)\d+)-(?P<ef>(-?)\d+)$")
+R_FRAME_NUMBER = re.compile(r".+\.(?P<frame>[0-9]+)\..+")
 R_LAYER_TOKEN = re.compile(
-    r'.*%l.*|.*<layer>.*|.*<renderlayer>.*', re.IGNORECASE)
-R_AOV_TOKEN = re.compile(r'.*%a.*|.*<aov>.*|.*<renderpass>.*', re.IGNORECASE)
-R_SUBSTITUTE_AOV_TOKEN = re.compile(r'%a|<aov>|<renderpass>', re.IGNORECASE)
-R_REMOVE_AOV_TOKEN = re.compile(r'_%a|_<aov>|_<renderpass>', re.IGNORECASE)
+    r".*%l.*|.*<layer>.*|.*<renderlayer>.*", re.IGNORECASE
+)
+R_AOV_TOKEN = re.compile(r".*%a.*|.*<aov>.*|.*<renderpass>.*", re.IGNORECASE)
+R_SUBSTITUTE_AOV_TOKEN = re.compile(r"%a|<aov>|<renderpass>", re.IGNORECASE)
+R_REMOVE_AOV_TOKEN = re.compile(r"_%a|_<aov>|_<renderpass>", re.IGNORECASE)
 # to remove unused renderman tokens
-R_CLEAN_FRAME_TOKEN = re.compile(r'\.?<f\d>\.?', re.IGNORECASE)
-R_CLEAN_EXT_TOKEN = re.compile(r'\.?<ext>\.?', re.IGNORECASE)
+R_CLEAN_FRAME_TOKEN = re.compile(r"\.?<f\d>\.?", re.IGNORECASE)
+R_CLEAN_EXT_TOKEN = re.compile(r"\.?<ext>\.?", re.IGNORECASE)
 
 R_SUBSTITUTE_LAYER_TOKEN = re.compile(
-    r'%l|<layer>|<renderlayer>', re.IGNORECASE)
-R_SUBSTITUTE_CAMERA_TOKEN = re.compile(r'%c|<camera>', re.IGNORECASE)
-R_SUBSTITUTE_SCENE_TOKEN = re.compile(r'%s|<scene>', re.IGNORECASE)
+    r"%l|<layer>|<renderlayer>", re.IGNORECASE
+)
+R_SUBSTITUTE_CAMERA_TOKEN = re.compile(r"%c|<camera>", re.IGNORECASE)
+R_SUBSTITUTE_SCENE_TOKEN = re.compile(r"%s|<scene>", re.IGNORECASE)
 
 RENDERER_NAMES = {
-    'mentalray': 'MentalRay',
-    'vray': 'V-Ray',
-    'arnold': 'Arnold',
-    'renderman': 'Renderman',
-    'redshift': 'Redshift'
+    "mentalray": "MentalRay",
+    "vray": "V-Ray",
+    "arnold": "Arnold",
+    "renderman": "Renderman",
+    "redshift": "Redshift",
 }
 
 # not sure about the renderman image prefix
 ImagePrefixes = {
-    'mentalray': 'defaultRenderGlobals.imageFilePrefix',
-    'vray': 'vraySettings.fileNamePrefix',
-    'arnold': 'defaultRenderGlobals.imageFilePrefix',
-    'renderman': 'rmanGlobals.imageFileFormat',
-    'redshift': 'defaultRenderGlobals.imageFilePrefix'
+    "mentalray": "defaultRenderGlobals.imageFilePrefix",
+    "vray": "vraySettings.fileNamePrefix",
+    "arnold": "defaultRenderGlobals.imageFilePrefix",
+    "renderman": "rmanGlobals.imageFileFormat",
+    "redshift": "defaultRenderGlobals.imageFilePrefix",
 }
 
 
@@ -97,21 +100,23 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
     def process(self, context):
         render_instance = None
         for instance in context:
-            if 'rendering' in instance.data['families']:
+            if "rendering" in instance.data["families"]:
                 render_instance = instance
                 render_instance.data["remove"] = True
 
             # make sure workfile instance publishing is enabled
-            if 'workfile' in instance.data['families']:
+            if "workfile" in instance.data["families"]:
                 instance.data["publish"] = True
 
         if not render_instance:
-            self.log.info("No render instance found, skipping render "
-                          "layer collection.")
+            self.log.info(
+                "No render instance found, skipping render "
+                "layer collection."
+            )
             return
 
         render_globals = render_instance
-        collected_render_layers = render_instance.data['setMembers']
+        collected_render_layers = render_instance.data["setMembers"]
         filepath = context.data["currentFile"].replace("\\", "/")
         asset = api.Session["AVALON_ASSET"]
         workspace = context.data["workspaceDir"]
@@ -126,22 +131,24 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             try:
                 expected_layer_name = re.search(r"^LAYER_(.*)", layer).group(1)
             except IndexError:
-                msg = ("Invalid layer name in set [ {} ]".format(layer))
+                msg = "Invalid layer name in set [ {} ]".format(layer)
                 self.log.warnig(msg)
                 continue
 
             self.log.info("processing %s" % layer)
             # check if layer is part of renderSetup
             if expected_layer_name not in maya_render_layers:
-                msg = ("Render layer [ {} ] is not in "
-                       "Render Setup".format(expected_layer_name))
+                msg = "Render layer [ {} ] is not in " "Render Setup".format(
+                    expected_layer_name
+                )
                 self.log.warning(msg)
                 continue
 
             # check if layer is renderable
             if not maya_render_layers[expected_layer_name].isRenderable():
-                msg = ("Render layer [ {} ] is not "
-                       "renderable".format(expected_layer_name))
+                msg = "Render layer [ {} ] is not " "renderable".format(
+                    expected_layer_name
+                )
                 self.log.warning(msg)
                 continue
 
@@ -150,26 +157,34 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             attachTo = []
             if sets:
                 for s in sets:
-                    attachTo.append({
-                        "version": None,  # we need integrator to get version
-                        "subset": s,
-                        "family": cmds.getAttr("{}.family".format(s))
-                    })
+                    if "family" not in cmds.listAttr(s):
+                        continue
+
+                    attachTo.append(
+                        {
+                            "version": None,  # we need integrator for that
+                            "subset": s,
+                            "family": cmds.getAttr("{}.family".format(s)),
+                        }
+                    )
                     self.log.info(" -> attach render to: {}".format(s))
 
             layer_name = "rs_{}".format(expected_layer_name)
 
             # collect all frames we are expecting to be rendered
             renderer = cmds.getAttr(
-                'defaultRenderGlobals.currentRenderer').lower()
+                "defaultRenderGlobals.currentRenderer"
+            ).lower()
             # handle various renderman names
-            if renderer.startswith('renderman'):
-                renderer = 'renderman'
+            if renderer.startswith("renderman"):
+                renderer = "renderman"
 
             # return all expected files for all cameras and aovs in given
             # frame range
-            exp_files = ExpectedFiles().get(renderer, layer_name)
-            assert exp_files, ("no file names were generated, this is bug")
+            exf = ExpectedFiles()
+            exp_files = exf.get(renderer, layer_name)
+            self.log.info("multipart: {}".format(exf.multipart))
+            assert exp_files, "no file names were generated, this is bug"
 
             # if we want to attach render to subset, check if we have AOV's
             # in expectedFiles. If so, raise error as we cannot attach AOV
@@ -177,7 +192,8 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             if attachTo:
                 assert len(exp_files[0].keys()) == 1, (
                     "attaching multiple AOVs or renderable cameras to "
-                    "subset is not supported")
+                    "subset is not supported"
+                )
 
             # append full path
             full_exp_files = []
@@ -202,6 +218,28 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     full_paths.append(full_path)
                 aov_dict["beauty"] = full_paths
 
+            frame_start_render = int(self.get_render_attribute(
+                "startFrame", layer=layer_name))
+            frame_end_render = int(self.get_render_attribute(
+                "endFrame", layer=layer_name))
+
+            if (int(context.data['frameStartHandle']) == frame_start_render
+                    and int(context.data['frameEndHandle']) == frame_end_render):  # noqa: W503, E501
+
+                handle_start = context.data['handleStart']
+                handle_end = context.data['handleEnd']
+                frame_start = context.data['frameStart']
+                frame_end = context.data['frameEnd']
+                frame_start_handle = context.data['frameStartHandle']
+                frame_end_handle = context.data['frameEndHandle']
+            else:
+                handle_start = 0
+                handle_end = 0
+                frame_start = frame_start_render
+                frame_end = frame_end_render
+                frame_start_handle = frame_start_render
+                frame_end_handle = frame_end_render
+
             full_exp_files.append(aov_dict)
             self.log.info(full_exp_files)
             self.log.info("collecting layer: {}".format(layer_name))
@@ -210,35 +248,33 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                 "subset": expected_layer_name,
                 "attachTo": attachTo,
                 "setMembers": layer_name,
+                "multipartExr": exf.multipart,
                 "publish": True,
-                "frameStart": int(context.data["assetEntity"]['data']['frameStart']),
-                "frameEnd": int(context.data["assetEntity"]['data']['frameEnd']),
-                "frameStartHandle": int(self.get_render_attribute("startFrame",
-                                                            layer=layer_name)),
-                "frameEndHandle": int(self.get_render_attribute("endFrame",
-                                                          layer=layer_name)),
+
+                "handleStart": handle_start,
+                "handleEnd": handle_end,
+                "frameStart": frame_start,
+                "frameEnd": frame_end,
+                "frameStartHandle": frame_start_handle,
+                "frameEndHandle": frame_end_handle,
                 "byFrameStep": int(
                     self.get_render_attribute("byFrameStep",
                                               layer=layer_name)),
                 "renderer": self.get_render_attribute("currentRenderer",
                                                       layer=layer_name),
-                "handleStart": int(context.data["assetEntity"]['data']['handleStart']),
-                "handleEnd": int(context.data["assetEntity"]['data']['handleEnd']),
-
                 # instance subset
                 "family": "renderlayer",
                 "families": ["renderlayer"],
                 "asset": asset,
                 "time": api.time(),
                 "author": context.data["user"],
-
                 # Add source to allow tracing back to the scene from
                 # which was submitted originally
                 "source": filepath,
                 "expectedFiles": full_exp_files,
                 "resolutionWidth": cmds.getAttr("defaultResolution.width"),
                 "resolutionHeight": cmds.getAttr("defaultResolution.height"),
-                "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect")
+                "pixelAspect": cmds.getAttr("defaultResolution.pixelAspect"),
             }
 
             # Apply each user defined attribute as data
@@ -261,13 +297,14 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
             # Define nice label
             label = "{0} ({1})".format(expected_layer_name, data["asset"])
-            label += "  [{0}-{1}]".format(int(data["frameStartHandle"]),
-                                          int(data["frameEndHandle"]))
+            label += "  [{0}-{1}]".format(
+                int(data["frameStartHandle"]), int(data["frameEndHandle"])
+            )
 
             instance = context.create_instance(expected_layer_name)
             instance.data["label"] = label
             instance.data.update(data)
-        pass
+            self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 
     def parse_options(self, render_globals):
         """Get all overrides with a value, skip those without
@@ -298,7 +335,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         machine_list = attributes["machineList"]
         if machine_list:
             key = "Whitelist" if attributes["whitelist"] else "Blacklist"
-            options['renderGlobals'][key] = machine_list
+            options["renderGlobals"][key] = machine_list
 
         # Suspend publish job
         state = "Suspended" if attributes["suspendPublishJob"] else "Active"
@@ -354,32 +391,41 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         return rset.getOverrides()
 
     def get_render_attribute(self, attr, layer):
-        return lib.get_attr_in_layer("defaultRenderGlobals.{}".format(attr),
-                                     layer=layer)
+        return lib.get_attr_in_layer(
+            "defaultRenderGlobals.{}".format(attr), layer=layer
+        )
 
 
 class ExpectedFiles:
+    multipart = False
 
     def get(self, renderer, layer):
-        if renderer.lower() == 'arnold':
-            return ExpectedFilesArnold(layer).get_files()
-        elif renderer.lower() == 'vray':
-            return ExpectedFilesVray(layer).get_files()
-        elif renderer.lower() == 'redshift':
-            return ExpectedFilesRedshift(layer).get_files()
-        elif renderer.lower() == 'mentalray':
-            return ExpectedFilesMentalray(layer).get_files()
-        elif renderer.lower() == 'renderman':
-            return ExpectedFilesRenderman(layer).get_files()
+        if renderer.lower() == "arnold":
+            return self._get_files(ExpectedFilesArnold(layer))
+        elif renderer.lower() == "vray":
+            return self._get_files(ExpectedFilesVray(layer))
+        elif renderer.lower() == "redshift":
+            return self._get_files(ExpectedFilesRedshift(layer))
+        elif renderer.lower() == "mentalray":
+            return self._get_files(ExpectedFilesMentalray(layer))
+        elif renderer.lower() == "renderman":
+            return self._get_files(ExpectedFilesRenderman(layer))
         else:
             raise UnsupportedRendererException(
-                "unsupported {}".format(renderer))
+                "unsupported {}".format(renderer)
+            )
+
+    def _get_files(self, renderer):
+        files = renderer.get_files()
+        self.multipart = renderer.multipart
+        return files
 
 
 @six.add_metaclass(ABCMeta)
 class AExpectedFiles:
     renderer = None
     layer = None
+    multipart = False
 
     def __init__(self, layer):
         self.layer = layer
@@ -393,7 +439,8 @@ class AExpectedFiles:
             file_prefix = cmds.getAttr(ImagePrefixes[self.renderer])
         except KeyError:
             raise UnsupportedRendererException(
-                "Unsupported renderer {}".format(self.renderer))
+                "Unsupported renderer {}".format(self.renderer)
+            )
         return file_prefix
 
     def _get_layer_data(self):
@@ -419,7 +466,7 @@ class AExpectedFiles:
         if not file_prefix:
             raise RuntimeError("Image prefix not set")
 
-        default_ext = cmds.getAttr('defaultRenderGlobals.imfPluginKey')
+        default_ext = cmds.getAttr("defaultRenderGlobals.imfPluginKey")
 
         #                    ________________________________________________
         # __________________/ ______________________________________________/
@@ -440,10 +487,10 @@ class AExpectedFiles:
         layer_name = self.layer
         if self.layer.startswith("rs_"):
             layer_name = self.layer[3:]
-        start_frame = int(self.get_render_attribute('startFrame'))
-        end_frame = int(self.get_render_attribute('endFrame'))
-        frame_step = int(self.get_render_attribute('byFrameStep'))
-        padding = int(self.get_render_attribute('extensionPadding'))
+        start_frame = int(self.get_render_attribute("startFrame"))
+        end_frame = int(self.get_render_attribute("endFrame"))
+        frame_step = int(self.get_render_attribute("byFrameStep"))
+        padding = int(self.get_render_attribute("extensionPadding"))
 
         scene_data = {
             "frameStart": start_frame,
@@ -456,7 +503,7 @@ class AExpectedFiles:
             "renderer": renderer,
             "defaultExt": default_ext,
             "filePrefix": file_prefix,
-            "enabledAOVs": enabled_aovs
+            "enabledAOVs": enabled_aovs,
         }
         return scene_data
 
@@ -472,21 +519,24 @@ class AExpectedFiles:
                 # in Redshift
                 (R_REMOVE_AOV_TOKEN, ""),
                 (R_CLEAN_FRAME_TOKEN, ""),
-                (R_CLEAN_EXT_TOKEN, "")
+                (R_CLEAN_EXT_TOKEN, ""),
             )
 
             for regex, value in mappings:
                 file_prefix = re.sub(regex, value, file_prefix)
 
             for frame in range(
-                    int(layer_data["frameStart"]),
-                    int(layer_data["frameEnd"]) + 1,
-                    int(layer_data["frameStep"])):
+                int(layer_data["frameStart"]),
+                int(layer_data["frameEnd"]) + 1,
+                int(layer_data["frameStep"]),
+            ):
                 expected_files.append(
-                    '{}.{}.{}'.format(file_prefix,
-                                      str(frame).rjust(
-                                        layer_data["padding"], "0"),
-                                      layer_data["defaultExt"]))
+                    "{}.{}.{}".format(
+                        file_prefix,
+                        str(frame).rjust(layer_data["padding"], "0"),
+                        layer_data["defaultExt"],
+                    )
+                )
         return expected_files
 
     def _generate_aov_file_sequences(self, layer_data):
@@ -502,7 +552,7 @@ class AExpectedFiles:
                     (R_SUBSTITUTE_CAMERA_TOKEN, cam),
                     (R_SUBSTITUTE_AOV_TOKEN, aov[0]),
                     (R_CLEAN_FRAME_TOKEN, ""),
-                    (R_CLEAN_EXT_TOKEN, "")
+                    (R_CLEAN_EXT_TOKEN, ""),
                 )
 
                 for regex, value in mappings:
@@ -510,14 +560,17 @@ class AExpectedFiles:
 
                 aov_files = []
                 for frame in range(
-                        int(layer_data["frameStart"]),
-                        int(layer_data["frameEnd"]) + 1,
-                        int(layer_data["frameStep"])):
+                    int(layer_data["frameStart"]),
+                    int(layer_data["frameEnd"]) + 1,
+                    int(layer_data["frameStep"]),
+                ):
                     aov_files.append(
-                        '{}.{}.{}'.format(
+                        "{}.{}.{}".format(
                             file_prefix,
                             str(frame).rjust(layer_data["padding"], "0"),
-                            aov[1]))
+                            aov[1],
+                        )
+                    )
 
                 # if we have more then one renderable camera, append
                 # camera name to AOV to allow per camera AOVs.
@@ -551,17 +604,19 @@ class AExpectedFiles:
         return expected_files
 
     def get_renderable_cameras(self):
-        cam_parents = [cmds.listRelatives(x, ap=True)[-1]
-                       for x in cmds.ls(cameras=True)]
+        cam_parents = [
+            cmds.listRelatives(x, ap=True)[-1] for x in cmds.ls(cameras=True)
+        ]
 
         renderable_cameras = []
         for cam in cam_parents:
             renderable = False
-            if self.maya_is_true(cmds.getAttr('{}.renderable'.format(cam))):
+            if self.maya_is_true(cmds.getAttr("{}.renderable".format(cam))):
                 renderable = True
 
             for override in self.get_layer_overrides(
-                    '{}.renderable'.format(cam), self.layer):
+                "{}.renderable".format(cam), self.layer
+            ):
                 renderable = self.maya_is_true(override)
 
             if renderable:
@@ -587,16 +642,18 @@ class AExpectedFiles:
         if connections:
             for connection in connections:
                 if connection:
-                    node_name = connection.split('.')[0]
-                    if cmds.nodeType(node_name) == 'renderLayer':
-                        attr_name = '%s.value' % '.'.join(
-                            connection.split('.')[:-1])
+                    node_name = connection.split(".")[0]
+                    if cmds.nodeType(node_name) == "renderLayer":
+                        attr_name = "%s.value" % ".".join(
+                            connection.split(".")[:-1]
+                        )
                         if node_name == layer:
                             yield cmds.getAttr(attr_name)
 
     def get_render_attribute(self, attr):
-        return lib.get_attr_in_layer("defaultRenderGlobals.{}".format(attr),
-                                     layer=self.layer)
+        return lib.get_attr_in_layer(
+            "defaultRenderGlobals.{}".format(attr), layer=self.layer
+        )
 
 
 class ExpectedFilesArnold(AExpectedFiles):
@@ -604,25 +661,28 @@ class ExpectedFilesArnold(AExpectedFiles):
     # Arnold AOV driver extension mapping
     # Is there a better way?
     aiDriverExtension = {
-        'jpeg': 'jpg',
-        'exr': 'exr',
-        'deepexr': 'exr',
-        'png': 'png',
-        'tiff': 'tif',
-        'mtoa_shaders': 'ass',  # TODO: research what those last two should be
-        'maya': ''
+        "jpeg": "jpg",
+        "exr": "exr",
+        "deepexr": "exr",
+        "png": "png",
+        "tiff": "tif",
+        "mtoa_shaders": "ass",  # TODO: research what those last two should be
+        "maya": "",
     }
 
     def __init__(self, layer):
         super(ExpectedFilesArnold, self).__init__(layer)
-        self.renderer = 'arnold'
+        self.renderer = "arnold"
 
     def get_aovs(self):
         enabled_aovs = []
         try:
-            if not (cmds.getAttr('defaultArnoldRenderOptions.aovMode')
-                    and not cmds.getAttr('defaultArnoldDriver.mergeAOVs')):
+            if not (
+                cmds.getAttr("defaultArnoldRenderOptions.aovMode")
+                and not cmds.getAttr("defaultArnoldDriver.mergeAOVs")  # noqa: W503, E501
+            ):
                 # AOVs are merged in mutli-channel file
+                self.multipart = True
                 return enabled_aovs
         except ValueError:
             # this occurs when Render Setting windows was not opened yet. In
@@ -635,46 +695,35 @@ class ExpectedFilesArnold(AExpectedFiles):
         # AOVs are set to be rendered separately. We should expect
         # <RenderPass> token in path.
 
-        ai_aovs = [n for n in cmds.ls(type='aiAOV')]
+        ai_aovs = [n for n in cmds.ls(type="aiAOV")]
 
         for aov in ai_aovs:
-            enabled = self.maya_is_true(
-                cmds.getAttr('{}.enabled'.format(aov)))
-            ai_driver = cmds.listConnections(
-                '{}.outputs'.format(aov))[0]
-            ai_translator = cmds.getAttr(
-                '{}.aiTranslator'.format(ai_driver))
+            enabled = self.maya_is_true(cmds.getAttr("{}.enabled".format(aov)))
+            ai_driver = cmds.listConnections("{}.outputs".format(aov))[0]
+            ai_translator = cmds.getAttr("{}.aiTranslator".format(ai_driver))
             try:
                 aov_ext = self.aiDriverExtension[ai_translator]
             except KeyError:
-                msg = ('Unrecognized arnold '
-                       'driver format for AOV - {}').format(
-                    cmds.getAttr('{}.name'.format(aov))
-                )
+                msg = (
+                    "Unrecognized arnold " "driver format for AOV - {}"
+                ).format(cmds.getAttr("{}.name".format(aov)))
                 raise AOVError(msg)
 
             for override in self.get_layer_overrides(
-                    '{}.enabled'.format(aov), self.layer):
+                "{}.enabled".format(aov), self.layer
+            ):
                 enabled = self.maya_is_true(override)
             if enabled:
                 # If aov RGBA is selected, arnold will translate it to `beauty`
-                aov_name = cmds.getAttr('%s.name' % aov)
-                if aov_name == 'RGBA':
-                    aov_name = 'beauty'
-                enabled_aovs.append(
-                    (
-                        aov_name,
-                        aov_ext
-                    )
-                )
+                aov_name = cmds.getAttr("%s.name" % aov)
+                if aov_name == "RGBA":
+                    aov_name = "beauty"
+                enabled_aovs.append((aov_name, aov_ext))
         # Append 'beauty' as this is arnolds
         # default. If <RenderPass> token is specified and no AOVs are
         # defined, this will be used.
         enabled_aovs.append(
-            (
-                u'beauty',
-                cmds.getAttr('defaultRenderGlobals.imfPluginKey')
-            )
+            (u"beauty", cmds.getAttr("defaultRenderGlobals.imfPluginKey"))
         )
         return enabled_aovs
 
@@ -688,7 +737,7 @@ class ExpectedFilesVray(AExpectedFiles):
 
     def __init__(self, layer):
         super(ExpectedFilesVray, self).__init__(layer)
-        self.renderer = 'vray'
+        self.renderer = "vray"
 
     def get_renderer_prefix(self):
         prefix = super(ExpectedFilesVray, self).get_renderer_prefix()
@@ -703,7 +752,9 @@ class ExpectedFilesVray(AExpectedFiles):
 
         layer_data = self._get_layer_data()
         if layer_data.get("enabledAOVs"):
-            expected_files[0][u"beauty"] = self._generate_single_file_sequence(layer_data)  # noqa: E501
+            expected_files[0][u"beauty"] = self._generate_single_file_sequence(
+                layer_data
+            )  # noqa: E501
 
         return expected_files
 
@@ -712,9 +763,12 @@ class ExpectedFilesVray(AExpectedFiles):
 
         try:
             # really? do we set it in vray just by selecting multichannel exr?
-            if cmds.getAttr(
-                    "vraySettings.imageFormatStr") == "exr (multichannel)":
+            if (
+                cmds.getAttr("vraySettings.imageFormatStr")
+                == "exr (multichannel)"  # noqa: W503
+            ):
                 # AOVs are merged in mutli-channel file
+                self.multipart = True
                 return enabled_aovs
         except ValueError:
             # this occurs when Render Setting windows was not opened yet. In
@@ -724,35 +778,39 @@ class ExpectedFilesVray(AExpectedFiles):
             # anyway.
             return enabled_aovs
 
-        default_ext = cmds.getAttr('vraySettings.imageFormatStr')
+        default_ext = cmds.getAttr("vraySettings.imageFormatStr")
         if default_ext == "exr (multichannel)" or default_ext == "exr (deep)":
             default_ext = "exr"
 
-        vr_aovs = [n for n in cmds.ls(
-            type=["VRayRenderElement", "VRayRenderElementSet"])]
+        vr_aovs = [
+            n
+            for n in cmds.ls(
+                type=["VRayRenderElement", "VRayRenderElementSet"]
+            )
+        ]
 
         # todo: find out how to detect multichannel exr for vray
         for aov in vr_aovs:
-            enabled = self.maya_is_true(
-                cmds.getAttr('{}.enabled'.format(aov)))
+            enabled = self.maya_is_true(cmds.getAttr("{}.enabled".format(aov)))
             for override in self.get_layer_overrides(
-                    '{}.enabled'.format(aov), 'rs_{}'.format(self.layer)):
+                "{}.enabled".format(aov), "rs_{}".format(self.layer)
+            ):
                 enabled = self.maya_is_true(override)
 
             if enabled:
                 # todo: find how vray set format for AOVs
                 enabled_aovs.append(
-                    (
-                        self._get_vray_aov_name(aov),
-                        default_ext)
-                    )
+                    (self._get_vray_aov_name(aov), default_ext))
         return enabled_aovs
 
     def _get_vray_aov_name(self, node):
 
         # Get render element pass type
-        vray_node_attr = next(attr for attr in cmds.listAttr(node)
-                              if attr.startswith("vray_name"))
+        vray_node_attr = next(
+            attr
+            for attr in cmds.listAttr(node)
+            if attr.startswith("vray_name")
+        )
         pass_type = vray_node_attr.rsplit("_", 1)[-1]
 
         # Support V-Ray extratex explicit name (if set by user)
@@ -770,11 +828,11 @@ class ExpectedFilesVray(AExpectedFiles):
 class ExpectedFilesRedshift(AExpectedFiles):
 
     # mapping redshift extension dropdown values to strings
-    ext_mapping = ['iff', 'exr', 'tif', 'png', 'tga', 'jpg']
+    ext_mapping = ["iff", "exr", "tif", "png", "tga", "jpg"]
 
     def __init__(self, layer):
         super(ExpectedFilesRedshift, self).__init__(layer)
-        self.renderer = 'redshift'
+        self.renderer = "redshift"
 
     def get_renderer_prefix(self):
         prefix = super(ExpectedFilesRedshift, self).get_renderer_prefix()
@@ -789,7 +847,9 @@ class ExpectedFilesRedshift(AExpectedFiles):
 
         layer_data = self._get_layer_data()
         if layer_data.get("enabledAOVs"):
-            expected_files[0][u"beauty"] = self._generate_single_file_sequence(layer_data)  # noqa: E501
+            expected_files[0][u"beauty"] = self._generate_single_file_sequence(
+                layer_data
+            )  # noqa: E501
 
         return expected_files
 
@@ -798,8 +858,10 @@ class ExpectedFilesRedshift(AExpectedFiles):
 
         try:
             if self.maya_is_true(
-                    cmds.getAttr("redshiftOptions.exrForceMultilayer")):
+                cmds.getAttr("redshiftOptions.exrForceMultilayer")
+            ):
                 # AOVs are merged in mutli-channel file
+                self.multipart = True
                 return enabled_aovs
         except ValueError:
             # this occurs when Render Setting windows was not opened yet. In
@@ -810,34 +872,30 @@ class ExpectedFilesRedshift(AExpectedFiles):
             return enabled_aovs
 
         default_ext = self.ext_mapping[
-            cmds.getAttr('redshiftOptions.imageFormat')
+            cmds.getAttr("redshiftOptions.imageFormat")
         ]
-        rs_aovs = [n for n in cmds.ls(type='RedshiftAOV')]
+        rs_aovs = [n for n in cmds.ls(type="RedshiftAOV")]
 
         # todo: find out how to detect multichannel exr for redshift
         for aov in rs_aovs:
-            enabled = self.maya_is_true(
-                cmds.getAttr('{}.enabled'.format(aov)))
+            enabled = self.maya_is_true(cmds.getAttr("{}.enabled".format(aov)))
             for override in self.get_layer_overrides(
-                    '{}.enabled'.format(aov), self.layer):
+                "{}.enabled".format(aov), self.layer
+            ):
                 enabled = self.maya_is_true(override)
 
             if enabled:
                 enabled_aovs.append(
-                    (
-                        cmds.getAttr('%s.name' % aov),
-                        default_ext
-                    )
+                    (cmds.getAttr("%s.name" % aov), default_ext)
                 )
 
         return enabled_aovs
 
 
 class ExpectedFilesRenderman(AExpectedFiles):
-
     def __init__(self, layer):
         super(ExpectedFilesRenderman, self).__init__(layer)
-        self.renderer = 'renderman'
+        self.renderer = "renderman"
 
     def get_aovs(self):
         enabled_aovs = []
@@ -849,19 +907,14 @@ class ExpectedFilesRenderman(AExpectedFiles):
             if aov_name == "rmanDefaultDisplay":
                 aov_name = "beauty"
 
-            enabled = self.maya_is_true(
-                cmds.getAttr("{}.enable".format(aov)))
+            enabled = self.maya_is_true(cmds.getAttr("{}.enable".format(aov)))
             for override in self.get_layer_overrides(
-                    '{}.enable'.format(aov), self.layer):
+                "{}.enable".format(aov), self.layer
+            ):
                 enabled = self.maya_is_true(override)
 
             if enabled:
-                enabled_aovs.append(
-                    (
-                        aov_name,
-                        default_ext
-                    )
-                )
+                enabled_aovs.append((aov_name, default_ext))
 
         return enabled_aovs
 
@@ -881,9 +934,9 @@ class ExpectedFilesRenderman(AExpectedFiles):
         for aov, files in expected_files[0].items():
             new_files = []
             for file in files:
-                new_file = "{}/{}/{}".format(layer_data["sceneName"],
-                                             layer_data["layerName"],
-                                             file)
+                new_file = "{}/{}/{}".format(
+                    layer_data["sceneName"], layer_data["layerName"], file
+                )
                 new_files.append(new_file)
             new_aovs[aov] = new_files
 
@@ -891,9 +944,8 @@ class ExpectedFilesRenderman(AExpectedFiles):
 
 
 class ExpectedFilesMentalray(AExpectedFiles):
-
     def __init__(self, layer):
-        raise UnimplementedRendererException('Mentalray not implemented')
+        raise UnimplementedRendererException("Mentalray not implemented")
 
     def get_aovs(self):
         return []

@@ -60,7 +60,7 @@ class CollectReview(pyblish.api.InstancePlugin):
                     data['frameEndHandle'] = instance.data["frameEndHandle"]
                     data["frameStart"] = instance.data["frameStart"]
                     data["frameEnd"] = instance.data["frameEnd"]
-                    data['handles'] = instance.data['handles']
+                    data['handles'] = instance.data.get('handles', None)
                     data['step'] = instance.data['step']
                     data['fps'] = instance.data['fps']
                     cmds.setAttr(str(instance) + '.active', 1)
