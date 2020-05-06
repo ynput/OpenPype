@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- /************************************************************************* * ADOBE CONFIDENTIAL * ___________________ * * Copyright 2014 Adobe * All Rights Reserved. * * NOTICE: Adobe permits you to use, modify, and distribute this file in *
+accordance with the terms of the Adobe license agreement accompanying * it. If you have received this file from a source other than Adobe, * then your use, modification, or distribution of it requires the prior * written permission of Adobe.
+**************************************************************************/ -->
+<ExtensionManifest Version="5.0" ExtensionBundleId="com.pype" ExtensionBundleVersion="11.1" ExtensionBundleName="Pype Panel" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<ExtensionList>
+		<Extension Id="com.pype" Version="10.3.0"/>
+	</ExtensionList>
+	<ExecutionEnvironment>
+		<HostList>
+			<Host Name="PPRO" Version="9.0"/>
+		</HostList>
+		<LocaleList>
+			<Locale Code="All"/>
+		</LocaleList>
+		<RequiredRuntimeList>
+			<RequiredRuntime Name="CSXS" Version="6.0"/>
+		</RequiredRuntimeList>
+	</ExecutionEnvironment>
+
+	<DispatchInfoList>
+		<Extension Id="com.pype">
+			<DispatchInfo >
+				<Resources>
+					<MainPath>./index_remote.html</MainPath>
+					<ScriptPath>./pypeApp.jsx</ScriptPath>
+					<CEFCommandLine>
+						<Parameter>--enable-nodejs</Parameter>
+						<Parameter>--mixed-context</Parameter>
+						<Parameter>--disable-application-cache</Parameter>
+					</CEFCommandLine>
+				</Resources>
+				<Lifecycle>
+					<AutoVisible>true</AutoVisible>
+				</Lifecycle>
+				<UI>
+					<Type>Panel</Type>
+					<Menu>Pype</Menu>
+					<Geometry>
+						<Size>
+							<Width>600</Width>
+							<Height>850</Height>
+						</Size>
+					</Geometry>
+					<Icons>
+						<Icon Type="Normal">./icons/iconNormal.png</Icon>
+						<Icon Type="RollOver">./icons/iconRollover.png</Icon>
+						<Icon Type="Disabled">./icons/iconDisabled.png</Icon>
+						<Icon Type="DarkNormal">./icons/iconDarkNormal.png</Icon>
+						<Icon Type="DarkRollOver">./icons/iconDarkRollover.png</Icon>
+					</Icons>
+				</UI>
+			</DispatchInfo>
+		</Extension>
+	</DispatchInfoList>
+</ExtensionManifest>

@@ -26,7 +26,7 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
         json_data = context.data.get("jsonData", None)
         temp_context = {}
         for instance in json_data['instances']:
-            if instance['family'] in 'projectfile':
+            if instance['family'] in 'workfile':
                 continue
 
             in_info = {}
@@ -35,10 +35,13 @@ class CollectHierarchyContext(pyblish.api.ContextPlugin):
             in_info['entity_type'] = 'Shot'
 
             instance_pyblish = [
-                i for i in context.data["instances"] if i.data['asset'] in name][0]
+                i for i in context.data["instances"]
+                if i.data['asset'] in name][0]
             in_info['custom_attributes'] = {
-                'fend': instance_pyblish.data['endFrame'],
-                'fstart': instance_pyblish.data['startFrame'],
+                'frameStart': instance_pyblish.data['frameStart'],
+                'frameEnd': instance_pyblish.data['frameEnd'],
+                'handleStart': instance_pyblish.data['handleStart'],
+                'handleEnd': instance_pyblish.data['handleEnd'],
                 'fps': instance_pyblish.data['fps']
             }
 

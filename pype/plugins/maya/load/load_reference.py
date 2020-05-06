@@ -65,8 +65,10 @@ class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
                     roots.add(pm.PyNode(node).getAllParents()[-2])
                 except:  # noqa: E722
                     pass
-            for root in roots:
-                root.setParent(world=True)
+
+            if family not in ["layout", "setdress", "mayaAscii"]:
+                for root in roots:
+                    root.setParent(world=True)
 
             groupNode.zeroTransformPivots()
             for root in roots:

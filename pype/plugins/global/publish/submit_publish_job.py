@@ -235,6 +235,12 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         environment["PYPE_LOG_NO_COLORS"] = "1"
         environment["PYPE_METADATA_FILE"] = metadata_path
         environment["AVALON_PROJECT"] = io.Session["AVALON_PROJECT"]
+        environment["PYPE_LOG_NO_COLORS"] = "1"
+        try:
+            environment["PYPE_PYTHON_EXE"] = os.environ["PYPE_PYTHON_EXE"]
+        except KeyError:
+            # PYPE_PYTHON_EXE not set
+            pass
         i = 0
         for index, key in enumerate(environment):
             if key.upper() in self.enviro_filter:
