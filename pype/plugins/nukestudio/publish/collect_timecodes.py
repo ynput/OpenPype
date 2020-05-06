@@ -3,7 +3,10 @@ import opentimelineio.opentime as otio_ot
 
 
 class CollectClipTimecodes(pyblish.api.InstancePlugin):
-    """Collect time with OpenTimelineIO: source_h(In,Out)[timecode, sec], timeline(In,Out)[timecode, sec]"""
+    """Collect time with OpenTimelineIO:
+        source_h(In,Out)[timecode, sec]
+        timeline(In,Out)[timecode, sec]
+    """
 
     order = pyblish.api.CollectorOrder + 0.101
     label = "Collect Timecodes"
@@ -79,10 +82,9 @@ class CollectClipTimecodes(pyblish.api.InstancePlugin):
         })
 
         data.update({
-                "otioData": otio_data,
-                "sourceTimecodeIn": otio_ot.to_timecode(otio_in_h_ratio),
-                "sourceTimecodeOut": otio_ot.to_timecode(otio_out_h_ratio),
-            }
-        )
+            "otioData": otio_data,
+            "sourceTimecodeIn": otio_ot.to_timecode(otio_in_h_ratio),
+            "sourceTimecodeOut": otio_ot.to_timecode(otio_out_h_ratio)
+        })
         instance.data.update(data)
         self.log.debug("data: {}".format(instance.data))
