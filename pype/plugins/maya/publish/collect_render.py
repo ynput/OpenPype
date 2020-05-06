@@ -157,6 +157,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             attachTo = []
             if sets:
                 for s in sets:
+                    if "family" not in cmds.listAttr(s):
+                        continue
+
                     attachTo.append(
                         {
                             "version": None,  # we need integrator for that
