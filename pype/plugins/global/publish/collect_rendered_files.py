@@ -125,7 +125,7 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
         anatomy = context.data["anatomy"]
         session_is_set = False
         for path in paths:
-            path = path.format(**{"root": anatomy.roots})
+            path = anatomy.fill_root(path)
             data = self._load_json(path)
             assert data, "failed to load json file"
             if not session_is_set:
