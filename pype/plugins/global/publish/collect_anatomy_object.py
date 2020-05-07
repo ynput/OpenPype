@@ -7,7 +7,6 @@ Provides:
     context -> anatomy (pypeapp.Anatomy)
 """
 import os
-from avalon import io
 from pypeapp import Anatomy
 import pyblish.api
 
@@ -19,7 +18,6 @@ class CollectAnatomyObject(pyblish.api.ContextPlugin):
     label = "Collect Anatomy Object"
 
     def process(self, context):
-        # io.install()
         project_name = os.environ.get("AVALON_PROJECT")
         if project_name is None:
             raise AssertionError(
