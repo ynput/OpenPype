@@ -80,7 +80,7 @@ def __main__():
     args = [
         os.path.join(pype_root, pype_command),
         "publish",
-        " ".join(paths)
+        " ".join(['"{}"'.format(p) for p in paths])
     ]
 
     print("Pype command: {}".format(" ".join(args)))
