@@ -27,7 +27,9 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     _context = None
 
     def _load_json(self, path):
-        assert os.path.isfile(path), ("path to json file doesn't exist")
+        assert os.path.isfile(path), (
+            "Path to json file doesn't exist. \"{}\"".format(path)
+        )
         data = None
         with open(path, "r") as json_file:
             try:
@@ -38,6 +40,16 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                     "{} - Exception: {}".format(path, exc)
                 )
         return data
+
+    def _remap_staging_dir(self, data_object, anatomy):
+        staging_dir = data_object.get("stagingDir")
+        if staging_dir:
+            remapped = anatomy.roots_obj.path_remapper(staging_dir)
+            if remapped:
+                data_object["stagingDir"] = remapped
+                self.log.debug((
+                    "stagingDir was remapped. To: \"{}\" From: \"{}\""
+                ).format(remapped, staging_dir))
 
     def _process_path(self, data, anatomy):
         # validate basic necessary data
@@ -80,19 +92,13 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 instance_data.get("subset")
             )
             self.log.info("Filling stagignDir...")
+
+            self._remap_staging_dir(instance_data, anatomy)
             instance.data.update(instance_data)
 
             representations = []
             for repre_data in instance_data.get("representations") or []:
-                staging_dir = repre_data.get("stagingDir")
-                if staging_dir:
-                    remapped = anatomy.roots_obj.path_remapper(staging_dir)
-                    if remapped:
-                        repre_data["stagingDir"] = remapped
-                        self.log.debug((
-                            "stagingDir was remapped. To: \"{}\" From: \"{}\""
-                        ).format(remapped, staging_dir))
-
+                self._remap_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
 
             instance.data["representations"] = representations
@@ -117,14 +123,21 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
         ))
 
         anatomy = context.data["anatomy"]
-        session_set = False
+        session_is_set = False
         for path in paths:
             path = path.format(**{"root": anatomy.roots})
             data = self._load_json(path)
-            if not session_set:
-                self.log.info("Setting session using data from file")
-                api.Session.update(data.get("session"))
-                os.environ.update(data.get("session"))
-                session_set = True
             assert data, "failed to load json file"
+            if not session_is_set:
+                session_data = data["session"]
+                remapped = anatomy.roots_obj.path_remapper(
+                    session_data["AVALON_WORKDIR"]
+                )
+                if remapped:
+                    session_data["AVALON_WORKDIR"] = remapped
+
+                self.log.info("Setting session using data from file")
+                api.Session.update(session_data)
+                os.environ.update(session_data)
+                session_is_set = True
             self._process_path(data, anatomy)
