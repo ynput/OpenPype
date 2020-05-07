@@ -15,7 +15,7 @@ import pyblish.api
 class CollectAvalonEntities(pyblish.api.ContextPlugin):
     """Collect Anatomy into Context"""
 
-    order = pyblish.api.CollectorOrder - 0.02
+    order = pyblish.api.CollectorOrder - 0.1
     label = "Collect Avalon Entities"
 
     def process(self, context):

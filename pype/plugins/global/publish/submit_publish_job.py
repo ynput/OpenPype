@@ -197,9 +197,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
         output_dir = instance.data["outputDir"]
         # Convert output dir to `{root}/rest/of/path/...` with Anatomy
-        anatomy = instance.context.data["anatomy"]
         success, rootless_path = (
-            anatomy.roots_obj.find_root_template_from_path(output_dir)
+            self.anatomy.roots_obj.find_root_template_from_path(output_dir)
         )
         if not success:
             # `rootless_path` is not set to `output_dir` if none of roots match
@@ -279,7 +278,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         """
         import speedcopy
 
-        anatomy = instance.context.data["anatomy"]
         self.log.info("Preparing to copy ...")
         start = instance.data.get("startFrame")
         end = instance.data.get("endFrame")
@@ -318,7 +316,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             assert fn is not None, "padding string wasn't found"
             # list of tuples (source, destination)
             staging = representation.get("stagingDir")
-            staging = anatomy.fill_roots(staging)
+            staging = self.anatomy.fill_roots(staging)
             resource_files.append(
                 (frame,
                  os.path.join(staging,
@@ -377,11 +375,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             subset_name = '{}_{}'.format(group_name, aov)
 
-            anatomy = instance_data.context.data["anatomy"]
-
             staging = os.path.dirname(list(cols[0])[0])
             success, rootless_staging_dir = (
-                anatomy.roots_obj.find_root_template_from_path(staging)
+                self.anatomy.roots_obj.find_root_template_from_path(staging)
             )
             if success:
                 staging = rootless_staging_dir
@@ -451,7 +447,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         representations = []
         collections, remainders = clique.assemble(exp_files)
         bake_render_path = instance.get("bakeRenderPath")
-        anatomy = instance.context.data["anatomy"]
 
         # create representation for every collected sequence
         for collection in collections:
@@ -475,7 +470,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
-                anatomy.roots_obj.find_root_template_from_path(staging)
+                self.anatomy.roots_obj.find_root_template_from_path(staging)
             )
             if success:
                 staging = rootless_staging_dir
@@ -511,7 +506,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             staging = os.path.dirname(remainder)
             success, rootless_staging_dir = (
-                anatomy.roots_obj.find_root_template_from_path(staging)
+                self.anatomy.roots_obj.find_root_template_from_path(staging)
             )
             if success:
                 staging = rootless_staging_dir
@@ -565,6 +560,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         data = instance.data.copy()
         context = instance.context
         self.context = context
+        self.anatomy = instance.context.data["anatomy"]
 
         if hasattr(instance, "_log"):
             data['_log'] = instance._log
@@ -624,9 +620,8 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         except KeyError:
             source = context.data["currentFile"]
 
-        anatomy = instance.context.data["anatomy"]
         success, rootless_path = (
-            anatomy.roots_obj.find_root_template_from_path(source)
+            self.anatomy.roots_obj.find_root_template_from_path(source)
         )
         if success:
             source = rootless_path
@@ -691,7 +686,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             staging_dir = repre.get("stagingDir")
             if staging_dir:
                 success, rootless_staging_dir = (
-                    anatomy.roots_obj.find_root_template_from_path(staging_dir)
+                    self.anatomy.roots_obj.find_root_template_from_path(staging_dir)
                 )
                 if success:
                     repre["stagingDir"] = rootless_staging_dir

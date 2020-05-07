@@ -44,7 +44,12 @@ def get_renderer_variables(renderlayer=None):
     padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
                                           render_attrs["padding"]))
 
-    filename_0 = cmds.renderSettings(fullPath=True, firstImageName=True)[0]
+    filename_0 = cmds.renderSettings(
+        fullPath=True,
+        gin="#" * int(padding),
+        lut=True,
+        layer=renderlayer or lib.get_current_renderlayer())[0]
+    filename_0 = filename_0.replace('_<RenderPass>', '_beauty')
     prefix_attr = "defaultRenderGlobals.imageFilePrefix"
     if renderer == "vray":
         # Maya's renderSettings function does not return V-Ray file extension
@@ -183,10 +188,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         # Get the variables depending on the renderer
         render_variables = get_renderer_variables(renderlayer)
-        output_filename_0 = re.sub(
-            "(/d+{{{}}})".format(render_variables["padding"]),
-            "#" * render_variables["padding"],
-            render_variables["filename_0"])
+        output_filename_0 = render_variables["filename_0"]
 
         try:
             # Ensure render folder exists

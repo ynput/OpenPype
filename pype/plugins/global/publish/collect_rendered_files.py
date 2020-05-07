@@ -20,13 +20,14 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     `PYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
     """
-    order = pyblish.api.CollectorOrder - 0.1
+    order = pyblish.api.CollectorOrder - 0.2
     targets = ["filesequence"]
     label = "Collect rendered frames"
 
     _context = None
 
     def _load_json(self, path):
+        path = path.strip('\"')
         assert os.path.isfile(path), (
             "Path to json file doesn't exist. \"{}\"".format(path)
         )
