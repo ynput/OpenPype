@@ -152,12 +152,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
     aov_filter = {"maya": ["beauty"]}
 
     enviro_filter = [
-        "PATH",
-        "PYTHONPATH",
         "FTRACK_API_USER",
         "FTRACK_API_KEY",
         "FTRACK_SERVER",
-        "PYPE_SETUP_PATH",
         "PYPE_METADATA_FILE",
         "AVALON_PROJECT",
         "PYPE_LOG_NO_COLORS"

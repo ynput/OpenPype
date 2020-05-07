@@ -119,21 +119,26 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
         ))
 
         anatomy = context.data["anatomy"]
-        session_is_set = False
-        for path in paths:
-            path = anatomy.fill_root(path)
-            data = self._load_json(path)
-            assert data, "failed to load json file"
-            if not session_is_set:
-                session_data = data["session"]
-                remapped = anatomy.roots_obj.path_remapper(
-                    session_data["AVALON_WORKDIR"]
-                )
-                if remapped:
-                    session_data["AVALON_WORKDIR"] = remapped
+        self.log.info("anatomy: {}".format(anatomy.roots))
+        try:
+            session_is_set = False
+            for path in paths:
+                path = anatomy.fill_root(path)
+                data = self._load_json(path)
+                assert data, "failed to load json file"
+                if not session_is_set:
+                    session_data = data["session"]
+                    remapped = anatomy.roots_obj.path_remapper(
+                        session_data["AVALON_WORKDIR"]
+                    )
+                    if remapped:
+                        session_data["AVALON_WORKDIR"] = remapped
 
-                self.log.info("Setting session using data from file")
-                api.Session.update(session_data)
-                os.environ.update(session_data)
-                session_is_set = True
-            self._process_path(data, anatomy)
+                    self.log.info("Setting session using data from file")
+                    api.Session.update(session_data)
+                    os.environ.update(session_data)
+                    session_is_set = True
+                self._process_path(data, anatomy)
+        except Exception as e:
+            self.log.error(e, exc_info=True)
+            raise Exception("Error") from e

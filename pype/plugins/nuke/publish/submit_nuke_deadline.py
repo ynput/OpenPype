@@ -201,7 +201,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             if path.lower().startswith('pype_'):
                 environment[path] = os.environ[path]
 
-        environment["PATH"] = os.environ["PATH"]
+        # environment["PATH"] = os.environ["PATH"]
         # self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
         clean_environment = {}
         for key, value in environment.items():
