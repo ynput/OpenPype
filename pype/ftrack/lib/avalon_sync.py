@@ -830,7 +830,7 @@ class SyncEntitiesFactory:
             for attr_id, attr_key in attribute_key_by_id.items()
             if attr_key.startswith("avalon_")
         }
-        for entity_id, entity_dict in self.entities_dict.items():
+        for entity_id in self.entities_dict.keys():
             if "avalon_attrs_id" not in self.entities_dict[entity_id]:
                 self.entities_dict[entity_id]["avalon_attrs_id"] = {}
 
