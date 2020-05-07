@@ -47,10 +47,31 @@ class CollectClips(api.ContextPlugin):
                 track = item.parent()
                 source = item.source().mediaSource()
                 source_path = source.firstpath()
+                clip_in = int(item.timelineIn())
+                clip_out = int(item.timelineOut())
                 file_head = source.filenameHead()
                 file_info = next((f for f in source.fileinfos()), None)
                 source_first_frame = file_info.startFrame()
                 is_sequence = False
+
+                self.log.debug(
+                    "__ assets_shared: {}".format(context.data["assetsShared"]))
+                match_range = next(
+                    (k for k, v in context.data["assetsShared"].items()
+                     if (v.get("_clipIn", 0) == clip_in)
+                     and (v.get("_clipOut", 0) == clip_out)
+                     ), False)
+
+                if asset in str(match_range):
+                    match_range = False
+
+                assert (not match_range), (
+                    "matching clip: {asset}"
+                    " timeline range ({clip_in}:{clip_out})"
+                    " conflicting with {match_range}"
+                    " >> rename any of clips to be the same as the other <<"
+                ).format(
+                    **locals())
 
                 if not source.singleFile():
                     self.log.info("Single file")
@@ -89,31 +110,31 @@ class CollectClips(api.ContextPlugin):
                     )
 
                 data.update({
-                        "name": "{0}_{1}".format(track.name(), item.name()),
-                        "item": item,
-                        "source": source,
-                        "timecodeStart": str(source.timecodeStart()),
-                        "timelineTimecodeStart": str(sequence.timecodeStart()),
-                        "sourcePath": source_path,
-                        "sourceFileHead": file_head,
-                        "isSequence": is_sequence,
-                        "track": track.name(),
-                        "trackIndex": track_index,
-                        "sourceFirst": source_first_frame,
-                        "effects": effects,
-                        "sourceIn": int(item.sourceIn()),
-                        "sourceOut": int(item.sourceOut()),
-                        "mediaDuration": source.duration(),
-                        "clipIn": int(item.timelineIn()),
-                        "clipOut": int(item.timelineOut()),
-                        "clipDuration": (
-                            int(item.timelineOut()) - int(
-                                item.timelineIn())) + 1,
-                        "asset": asset,
-                        "family": "clip",
-                        "families": [],
-                        "handleStart": projectdata.get("handleStart", 0),
-                        "handleEnd": projectdata.get("handleEnd", 0)})
+                    "name": "{0}_{1}".format(track.name(), item.name()),
+                    "item": item,
+                    "source": source,
+                    "timecodeStart": str(source.timecodeStart()),
+                    "timelineTimecodeStart": str(sequence.timecodeStart()),
+                    "sourcePath": source_path,
+                    "sourceFileHead": file_head,
+                    "isSequence": is_sequence,
+                    "track": track.name(),
+                    "trackIndex": track_index,
+                    "sourceFirst": source_first_frame,
+                    "effects": effects,
+                    "sourceIn": int(item.sourceIn()),
+                    "sourceOut": int(item.sourceOut()),
+                    "mediaDuration": source.duration(),
+                    "clipIn": clip_in,
+                    "clipOut": clip_out,
+                    "clipDuration": (
+                        int(item.timelineOut()) - int(
+                            item.timelineIn())) + 1,
+                    "asset": asset,
+                    "family": "clip",
+                    "families": [],
+                    "handleStart": projectdata.get("handleStart", 0),
+                    "handleEnd": projectdata.get("handleEnd", 0)})
 
                 instance = context.create_instance(**data)
 
@@ -121,7 +142,10 @@ class CollectClips(api.ContextPlugin):
                 self.log.info("Created instance.data: {}".format(instance.data))
                 self.log.debug(">> effects: {}".format(instance.data["effects"]))
 
-                context.data["assetsShared"][asset] = dict()
+                context.data["assetsShared"][asset] = {
+                    "_clipIn": clip_in,
+                    "_clipOut": clip_out
+                }
 
             # from now we are collecting only subtrackitems on
             # track with no video items
