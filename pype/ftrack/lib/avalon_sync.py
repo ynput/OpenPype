@@ -692,7 +692,6 @@ class SyncEntitiesFactory:
             ent_type["name"]: ent_type["id"] for ent_type in ent_types
         }
 
-        attrs = set()
         # store default values per entity type
         attrs_per_entity_type = collections.defaultdict(dict)
         avalon_attrs = collections.defaultdict(dict)
@@ -700,9 +699,10 @@ class SyncEntitiesFactory:
         attrs_per_entity_type_ca_id = collections.defaultdict(dict)
         avalon_attrs_ca_id = collections.defaultdict(dict)
 
+        attribute_key_by_id = {}
         for cust_attr in custom_attrs:
             key = cust_attr["key"]
-            attrs.add(cust_attr["id"])
+            attribute_key_by_id[cust_attr["id"]] = key
             ca_ent_type = cust_attr["entity_type"]
             if key.startswith("avalon_"):
                 if ca_ent_type == "show":
@@ -776,7 +776,7 @@ class SyncEntitiesFactory:
             "\"{}\"".format(id) for id in sync_ids
         ])
         attributes_joined = ", ".join([
-            "\"{}\"".format(name) for name in attrs
+            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
         ])
 
         cust_attr_query = (
@@ -794,13 +794,13 @@ class SyncEntitiesFactory:
         else:
             [values] = self.session._call(call_expr)
 
-        for value in values["data"]:
-            entity_id = value["entity_id"]
-            key = value["configuration"]["key"]
+        for item in values["data"]:
+            entity_id = item["entity_id"]
+            key = attribute_key_by_id[item["configuration_id"]]
             store_key = "custom_attributes"
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
-            self.entities_dict[entity_id][store_key][key] = value["value"]
+            self.entities_dict[entity_id][store_key][key] = item["value"]
 
         # process hierarchical attributes
         self.set_hierarchical_attribute(hier_attrs, sync_ids)
@@ -824,6 +824,21 @@ class SyncEntitiesFactory:
                 attr["default"]
             )
 
+        # Add attribute ids to entities dictionary
+        avalon_attribute_id_by_key = {
+            attr_key: attr_id
+            for attr_id, attr_key in attribute_key_by_id.items()
+            if attr_key.startswith("avalon_")
+        }
+        for entity_id, entity_dict in self.entities_dict.items():
+            if "avalon_attrs_id" not in self.entities_dict[entity_id]:
+                self.entities_dict[entity_id]["avalon_attrs_id"] = {}
+
+            for attr_key, attr_id in avalon_attribute_id_by_key.items():
+                self.entities_dict[entity_id]["avalon_attrs_id"][attr_key] = (
+                    attr_id
+                )
+
         # Prepare dict with all hier keys and None values
         prepare_dict = {}
         prepare_dict_avalon = {}
@@ -845,32 +860,34 @@ class SyncEntitiesFactory:
         entity_ids_joined = ", ".join([
             "\"{}\"".format(id) for id in sync_ids
         ])
-
+        attributes_joined = ", ".join([
+            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
+        ])
         avalon_hier = []
-        for configuration_id in attribute_key_by_id.keys():
-            call_expr = [{
-                "action": "query",
-                "expression": (
-                    "select value, entity_id from CustomAttributeValue "
-                    "where entity_id in ({}) and configuration_id is \"{}\""
-                ).format(entity_ids_joined, configuration_id)
-            }]
-            if hasattr(self.session, "call"):
-                [values] = self.session.call(call_expr)
-            else:
-                [values] = self.session._call(call_expr)
+        call_expr = [{
+            "action": "query",
+            "expression": (
+                "select value, entity_id from ContextCustomAttributeValue "
+                "where entity_id in ({}) and configuration_id in ({})"
+            ).format(entity_ids_joined, attributes_joined)
+        }]
+        if hasattr(self.session, "call"):
+            [values] = self.session.call(call_expr)
+        else:
+            [values] = self.session._call(call_expr)
 
-            for value in values["data"]:
-                if value["value"] is None:
-                    continue
-                entity_id = value["entity_id"]
-                key = attribute_key_by_id[value["configuration_id"]]
-                if key.startswith("avalon_"):
-                    store_key = "avalon_attrs"
-                    avalon_hier.append(key)
-                else:
-                    store_key = "hier_attrs"
-                self.entities_dict[entity_id][store_key][key] = value["value"]
+        for item in values["data"]:
+            value = item["value"]
+            if value is None:
+                continue
+            entity_id = item["entity_id"]
+            key = attribute_key_by_id[item["configuration_id"]]
+            if key.startswith("avalon_"):
+                store_key = "avalon_attrs"
+                avalon_hier.append(key)
+            else:
+                store_key = "hier_attrs"
+            self.entities_dict[entity_id][store_key][key] = value
 
         # Get dictionary with not None hierarchical values to pull to childs
         top_id = self.ft_project_id
