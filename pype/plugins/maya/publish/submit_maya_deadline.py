@@ -188,7 +188,15 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         # Get the variables depending on the renderer
         render_variables = get_renderer_variables(renderlayer)
-        output_filename_0 = render_variables["filename_0"]
+        filename_0 = render_variables["filename_0"]
+        if self.use_published:
+            new_scene = os.path.splitext(filename)[0]
+            orig_scene = os.path.splitext(
+                os.path.basename(context.data["currentFile"]))[0]
+            filename_0 = render_variables["filename_0"].replace(
+                orig_scene, new_scene)
+
+        output_filename_0 = filename_0
 
         try:
             # Ensure render folder exists
@@ -312,8 +320,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             raise Exception(response.text)
 
         # Store output dir for unified publisher (filesequence)
-        instance.data["outputDir"] = os.path.dirname(
-            render_variables["filename_0"])
+        instance.data["outputDir"] = os.path.dirname(filename_0)
         instance.data["deadlineSubmissionJob"] = response.json()
 
     def preflight_check(self, instance):
