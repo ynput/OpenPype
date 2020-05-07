@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<ExtensionList>
-    <Extension Id="com.pype.avalon">
-        <HostList>
-            <Host Name="PPRO" Port="7778"/>
-        </HostList>
-    </Extension>
-</ExtensionList>

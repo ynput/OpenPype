@@ -151,7 +151,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             options["frame_offset"] = frame_start
 
         # `frame_end` is only for meassurements of text position
-        if frame_end:
+        if frame_end is not None:
             options["frame_end"] = frame_end
 
         self._add_burnin(text, align, options, DRAWTEXT)
@@ -173,11 +173,11 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             options = ffmpeg_burnins.TimeCodeOptions(**self.options_init)
 
         options = options.copy()
-        if frame_start:
+        if frame_start is not None:
             options["frame_offset"] = frame_start
 
         # `frame_end` is only for meassurements of text position
-        if frame_end:
+        if frame_end is not None:
             options["frame_end"] = frame_end
 
         if not frame_start_tc:
@@ -212,7 +212,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if CURRENT_FRAME_SPLITTER in text:
             frame_start = options["frame_offset"]
             frame_end = options.get("frame_end", frame_start)
-            if not frame_start:
+            if frame_start is None:
                 replacement_final = replacement_size = str(MISSING_KEY_VALUE)
             else:
                 replacement_final = "\\'{}\\'".format(

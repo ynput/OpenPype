@@ -20,7 +20,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
-    hosts = ["nuke", "maya", "shell"]
+    hosts = ["nuke", "maya", "shell", "premiere"]
 
     outputs = {}
     ext_filter = []
