@@ -42,15 +42,10 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 )
         return data
 
-    def _remap_staging_dir(self, data_object, anatomy):
+    def _fill_staging_dir(self, data_object, anatomy):
         staging_dir = data_object.get("stagingDir")
         if staging_dir:
-            remapped = anatomy.roots_obj.path_remapper(staging_dir)
-            if remapped:
-                data_object["stagingDir"] = remapped
-                self.log.debug((
-                    "stagingDir was remapped. To: \"{}\" From: \"{}\""
-                ).format(remapped, staging_dir))
+            data_object["stagingDir"] = anatomy.fill_root(staging_dir)
 
     def _process_path(self, data, anatomy):
         # validate basic necessary data
@@ -94,12 +89,12 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             )
             self.log.info("Filling stagignDir...")
 
-            self._remap_staging_dir(instance_data, anatomy)
+            self._fill_staging_dir(instance_data, anatomy)
             instance.data.update(instance_data)
 
             representations = []
             for repre_data in instance_data.get("representations") or []:
-                self._remap_staging_dir(repre_data, anatomy)
+                self._fill_staging_dir(repre_data, anatomy)
                 representations.append(repre_data)
 
             instance.data["representations"] = representations
