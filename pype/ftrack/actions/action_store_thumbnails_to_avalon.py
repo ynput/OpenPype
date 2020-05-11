@@ -52,7 +52,7 @@ class StoreThumbnailsToAvalon(BaseAction):
         })
         session.commit()
 
-        project = get_project_from_entity(entities[0])
+        project = self.get_project_from_entity(entities[0])
         project_name = project["full_name"]
         anatomy = Anatomy(project_name)
 
