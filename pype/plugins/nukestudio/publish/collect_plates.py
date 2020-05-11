@@ -64,15 +64,15 @@ class CollectPlates(api.InstancePlugin):
         # adding SourceResolution if Tag was present
         if instance.data.get("sourceResolution") and instance.data.get("main"):
             item = instance.data["item"]
-            width = int(item.source().mediaSource().width())
-            height = int(item.source().mediaSource().height())
+            resolution_width = int(item.source().mediaSource().width())
+            resolution_height = int(item.source().mediaSource().height())
             pixel_aspect = int(item.source().mediaSource().pixelAspect())
 
             self.log.info("Source Width and Height are: `{0} x {1} : {2}`".format(
-                width, height, pixel_aspect))
+                resolution_width, resolution_height, pixel_aspect))
             data.update({
-                "width": width,
-                "height": height,
+                "resolutionWidth": resolution_width,
+                "resolutionHeight": resolution_height,
                 "pixelAspect": pixel_aspect
             })
 

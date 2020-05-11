@@ -39,9 +39,9 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             clip = instance.data["item"]
             asset = instance.data["asset"]
             sequence = context.data['activeSequence']
-            width = int(sequence.format().width())
-            height = int(sequence.format().height())
-            pixel_aspect = sequence.format().pixelAspect()
+            resolution_width = instance.data["resolutionWidth"]
+            resolution_height = instance.data["resolutionHeight"]
+            pixel_aspect = instance.data["pixelAspect"]
             clip_in = instance.data["clipIn"]
             clip_out = instance.data["clipOut"]
             fps = context.data["fps"]
@@ -187,8 +187,8 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                         "asset": asset,
                         "hierarchy": hierarchy,
                         "parents": parents,
-                        "resolutionWidth": width,
-                        "resolutionHeight": height,
+                        "resolutionWidth": resolution_width,
+                        "resolutionHeight": resolution_height,
                         "pixelAspect": pixel_aspect,
                         "fps": fps,
                         "tasks": instance.data["tasks"]

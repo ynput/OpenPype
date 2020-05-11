@@ -110,7 +110,15 @@ class CollectReviews(api.InstancePlugin):
             representation.update({
                 "frameStart": instance.data.get("sourceInH"),
                 "frameEnd": instance.data.get("sourceOutH"),
-                "tags": ["cut-up", "delete"]
+                "tags": ["_cut-bigger", "delete"]
+            })
+        elif media_duration < clip_duration_h:
+            self.log.debug("Media duration higher: {}".format(
+                (media_duration - clip_duration_h)))
+            representation.update({
+                "frameStart": instance.data.get("sourceInH"),
+                "frameEnd": instance.data.get("sourceOutH"),
+                "tags": ["_cut-smaller", "delete"]
             })
 
         instance.data["representations"].append(representation)
@@ -133,7 +141,7 @@ class CollectReviews(api.InstancePlugin):
         self.log.debug("__ thumb_path: {}".format(thumb_path))
 
         thumb_frame = instance.data["sourceIn"] + ((instance.data["sourceOut"] - instance.data["sourceIn"])/2)
-
+        self.log.debug("__ thumb_frame: {}".format(thumb_frame))
         thumbnail = item.thumbnail(thumb_frame).save(
             thumb_path,
             format='png'

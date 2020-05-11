@@ -124,7 +124,7 @@ class CollectClips(api.ContextPlugin):
                     "effects": effects,
                     "sourceIn": int(item.sourceIn()),
                     "sourceOut": int(item.sourceOut()),
-                    "mediaDuration": source.duration(),
+                    "mediaDuration": int(source.duration()),
                     "clipIn": clip_in,
                     "clipOut": clip_out,
                     "clipDuration": (
