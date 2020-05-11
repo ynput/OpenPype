@@ -6,6 +6,47 @@ from pypeapp import config, Anatomy
 
 
 class CreateProjectFolders(BaseAction):
+    """Action create folder structure and may create hierarchy in Ftrack.
+
+    Creation of folder structure and hierarchy in Ftrack is based on presets.
+    These presets are located in:
+    `~/pype-config/presets/tools/project_folder_structure.json`
+
+    Example of content:
+    ```json
+    {
+        "__project_root__": {
+            "prod" : {},
+            "resources" : {
+              "footage": {
+                "plates": {},
+                "offline": {}
+              },
+              "audio": {},
+              "art_dept": {}
+            },
+            "editorial" : {},
+            "assets[ftrack.Library]": {
+              "characters[ftrack]": {},
+              "locations[ftrack]": {}
+            },
+            "shots[ftrack.Sequence]": {
+              "scripts": {},
+              "editorial[ftrack.Folder]": {}
+            }
+        }
+    }
+    ```
+    Key "__project_root__" indicates root folder (or entity). Each key in
+    dictionary represents folder name. Value may contain another dictionary
+    with subfolders.
+
+    Identifier `[ftrack]` in name says that this should be also created in
+    Ftrack hierarchy. It is possible to specify entity type of item with "." .
+    If key is `assets[ftrack.Library]` then in ftrack will be created entity
+    with name "assets" and entity type "Library". It is expected Library entity
+    type exist in Ftrack.
+    """
 
     identifier = "create.project.structure"
     label = "Create Project Structure"
