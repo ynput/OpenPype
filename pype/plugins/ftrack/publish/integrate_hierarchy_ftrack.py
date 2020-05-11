@@ -89,7 +89,7 @@ class IntegrateHierarchyToFtrack(pyblish.api.ContextPlugin):
             # CUSTOM ATTRIBUTES
             custom_attributes = entity_data.get('custom_attributes', [])
             instances = [
-                i for i in self.context[:] if i.data['asset'] in entity['name']
+                i for i in self.context if i.data['asset'] in entity['name']
             ]
             for key in custom_attributes:
                 assert (key in entity['custom_attributes']), (

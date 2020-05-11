@@ -192,50 +192,10 @@ class BaseHandler(object):
 
         raise NotImplementedError()
 
-    def _discover(self, event):
-        items = {
-            'items': [{
-                'label': self.label,
-                'variant': self.variant,
-                'description': self.description,
-                'actionIdentifier': self.identifier,
-                'icon': self.icon,
-            }]
-        }
-
-        args = self._translate_event(
-            self.session, event
-        )
-
-        accepts = self.discover(
-            self.session, *args
-        )
-
-        if accepts is True:
-            self.log.debug(u'Discovering action with selection: {0}'.format(
-                event['data'].get('selection', [])))
-            return items
-
-    def discover(self, session, entities, event):
-        '''Return true if we can handle the selected entities.
-
-        *session* is a `ftrack_api.Session` instance
-
-
-        *entities* is a list of tuples each containing the entity type and the entity id.
-        If the entity is a hierarchical you will always get the entity
-        type TypedContext, once retrieved through a get operation you
-        will have the "real" entity type ie. example Shot, Sequence
-        or Asset Build.
-
-        *event* the unmodified original event
-
-        '''
-
-        return False
-
-    def _translate_event(self, session, event):
+    def _translate_event(self, event, session=None):
         '''Return *event* translated structure to be used with the API.'''
+        if session is None:
+            session = self.session
 
         _entities = event['data'].get('entities_object', None)
         if (
@@ -245,25 +205,40 @@ class BaseHandler(object):
             ) == ftrack_api.symbol.NOT_SET
         ):
             _entities = self._get_entities(event)
+            event['data']['entities_object'] = _entities
 
-        return [
-            _entities,
-            event
-        ]
+        return _entities
 
-    def _get_entities(self, event, session=None):
+    def _get_entities(self, event, session=None, ignore=None):
+        entities = []
+        selection = event['data'].get('selection')
+        if not selection:
+            return entities
+
+        if ignore is None:
+            ignore = []
+        elif isinstance(ignore, str):
+            ignore = [ignore]
+
+        filtered_selection = []
+        for entity in selection:
+            if entity['entityType'] not in ignore:
+                filtered_selection.append(entity)
+
+        if not filtered_selection:
+            return entities
+
         if session is None:
             session = self.session
             session._local_cache.clear()
-        selection = event['data'].get('selection') or []
-        _entities = []
-        for entity in selection:
-            _entities.append(session.get(
+
+        for entity in filtered_selection:
+            entities.append(session.get(
                 self._get_entity_type(entity, session),
                 entity.get('entityId')
             ))
-        event['data']['entities_object'] = _entities
-        return _entities
+
+        return entities
 
     def _get_entity_type(self, entity, session=None):
         '''Return translated entity type tht can be used with API.'''
@@ -292,30 +267,12 @@ class BaseHandler(object):
         )
 
     def _launch(self, event):
-        args = self._translate_event(
-            self.session, event
-        )
+        self.session.rollback()
+        self.session._local_cache.clear()
 
-        preactions_launched = self._handle_preactions(self.session, event)
-        if preactions_launched is False:
-            return
+        self.launch(self.session, event)
 
-        interface = self._interface(
-            self.session, *args
-        )
-
-        if interface:
-            return interface
-
-        response = self.launch(
-            self.session, *args
-        )
-
-        return self._handle_result(
-            self.session, response, *args
-        )
-
-    def launch(self, session, entities, event):
+    def launch(self, session, event):
         '''Callback method for the custom action.
 
         return either a bool ( True if successful or False if the action failed )
@@ -360,35 +317,7 @@ class BaseHandler(object):
 
         return False
 
-    def _interface(self, *args):
-        interface = self.interface(*args)
-        if interface:
-            if (
-                'items' in interface or
-                ('success' in interface and 'message' in interface)
-            ):
-                return interface
-
-            return {
-                'items': interface
-            }
-
-    def interface(self, session, entities, event):
-        '''Return a interface if applicable or None
-
-        *session* is a `ftrack_api.Session` instance
-
-        *entities* is a list of tuples each containing the entity type and the entity id.
-        If the entity is a hierarchical you will always get the entity
-        type TypedContext, once retrieved through a get operation you
-        will have the "real" entity type ie. example Shot, Sequence
-        or Asset Build.
-
-        *event* the unmodified original event
-        '''
-        return None
-
-    def _handle_result(self, session, result, entities, event):
+    def _handle_result(self, result):
         '''Validate the returned result from the action callback'''
         if isinstance(result, bool):
             if result is True:
@@ -416,11 +345,6 @@ class BaseHandler(object):
                     raise KeyError(
                         'Missing required key: {0}.'.format(key)
                     )
-
-        else:
-            self.log.error(
-                'Invalid result type must be bool or dictionary!'
-            )
 
         return result
 
@@ -629,11 +553,20 @@ class BaseHandler(object):
         if low_entity_type == "project":
             return entity
 
-        if low_entity_type == "reviewsession":
+        if "project" in entity:
+            # reviewsession, task(Task, Shot, Sequence,...)
             return entity["project"]
 
         if low_entity_type == "filecomponent":
             entity = entity["version"]
+            low_entity_type = entity.entity_type.lower()
+
+        if low_entity_type == "assetversion":
+            asset = entity["asset"]
+            if asset:
+                parent = asset["parent"]
+                if parent:
+                    return parent["project"]
 
         project_data = entity["link"][0]
         return self.session.query(

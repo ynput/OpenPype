@@ -5,12 +5,10 @@ import json
 
 from bson.objectid import ObjectId
 from pype.ftrack import BaseAction
-from pype.ftrack.lib import (
-    get_project_from_entity,
-    get_avalon_entities_for_assetversion
-)
 from pypeapp import Anatomy
 from pype.ftrack.lib.io_nonsingleton import DbConnector
+
+from pype.ftrack.lib.avalon_sync import CustAttrIdKey
 
 
 class StoreThumbnailsToAvalon(BaseAction):
@@ -189,7 +187,7 @@ class StoreThumbnailsToAvalon(BaseAction):
                 ).format(entity["id"]))
                 continue
 
-            avalon_ents_result = get_avalon_entities_for_assetversion(
+            avalon_ents_result = self.get_avalon_entities_for_assetversion(
                 entity, self.db_con
             )
             version_full_path = (
@@ -347,6 +345,119 @@ class StoreThumbnailsToAvalon(BaseAction):
         finally:
             file_open.close()
         return True
+
+    def get_avalon_entities_for_assetversion(self, asset_version, db_con):
+        output = {
+            "success": True,
+            "message": None,
+            "project": None,
+            "project_name": None,
+            "asset": None,
+            "asset_name": None,
+            "asset_path": None,
+            "subset": None,
+            "subset_name": None,
+            "version": None,
+            "version_name": None,
+            "representations": None
+        }
+
+        db_con.install()
+
+        ft_asset = asset_version["asset"]
+        subset_name = ft_asset["name"]
+        version = asset_version["version"]
+        parent = ft_asset["parent"]
+        ent_path = "/".join(
+            [ent["name"] for ent in parent["link"]]
+        )
+        project = self.get_project_from_entity(asset_version)
+        project_name = project["full_name"]
+
+        output["project_name"] = project_name
+        output["asset_name"] = parent["name"]
+        output["asset_path"] = ent_path
+        output["subset_name"] = subset_name
+        output["version_name"] = version
+
+        db_con.Session["AVALON_PROJECT"] = project_name
+
+        avalon_project = db_con.find_one({"type": "project"})
+        output["project"] = avalon_project
+
+        if not avalon_project:
+            output["success"] = False
+            output["message"] = (
+                "Project not synchronized to avalon `{}`".format(project_name)
+            )
+            return output
+
+        asset_ent = None
+        asset_mongo_id = parent["custom_attributes"].get(CustAttrIdKey)
+        if asset_mongo_id:
+            try:
+                asset_mongo_id = ObjectId(asset_mongo_id)
+                asset_ent = db_con.find_one({
+                    "type": "asset",
+                    "_id": asset_mongo_id
+                })
+            except Exception:
+                pass
+
+        if not asset_ent:
+            asset_ent = db_con.find_one({
+                "type": "asset",
+                "data.ftrackId": parent["id"]
+            })
+
+        output["asset"] = asset_ent
+
+        if not asset_ent:
+            output["success"] = False
+            output["message"] = (
+                "Not synchronized entity to avalon `{}`".format(ent_path)
+            )
+            return output
+
+        asset_mongo_id = asset_ent["_id"]
+
+        subset_ent = db_con.find_one({
+            "type": "subset",
+            "parent": asset_mongo_id,
+            "name": subset_name
+        })
+
+        output["subset"] = subset_ent
+
+        if not subset_ent:
+            output["success"] = False
+            output["message"] = (
+                "Subset `{}` does not exist under Asset `{}`"
+            ).format(subset_name, ent_path)
+            return output
+
+        version_ent = db_con.find_one({
+            "type": "version",
+            "name": version,
+            "parent": subset_ent["_id"]
+        })
+
+        output["version"] = version_ent
+
+        if not version_ent:
+            output["success"] = False
+            output["message"] = (
+                "Version `{}` does not exist under Subset `{}` | Asset `{}`"
+            ).format(version, subset_name, ent_path)
+            return output
+
+        repre_ents = list(db_con.find({
+            "type": "representation",
+            "parent": version_ent["_id"]
+        }))
+
+        output["representations"] = repre_ents
+        return output
 
 
 def register(session, plugins_presets={}):

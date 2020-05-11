@@ -18,7 +18,7 @@ class ExtractBurnin(pype.api.Extractor):
     label = "Extract burnins"
     order = pyblish.api.ExtractorOrder + 0.03
     families = ["review", "burnin"]
-    hosts = ["nuke", "maya", "shell"]
+    hosts = ["nuke", "maya", "shell", "premiere"]
     optional = True
 
     def process(self, instance):
@@ -193,6 +193,7 @@ class ExtractBurnin(pype.api.Extractor):
             self.log.debug("Output: {}".format(output))
 
             repre_update = {
+                "anatomy_template": "render",
                 "files": movieFileBurnin,
                 "name": repre["name"],
                 "tags": [x for x in repre["tags"] if x != "delete"]
