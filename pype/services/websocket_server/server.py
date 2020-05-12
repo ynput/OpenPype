@@ -14,28 +14,6 @@ class PypeWebSocketHandler(WebSocketHandler):
     client = None
     endpoint = None
 
-    def handshake(self):
-        """Pip version of websocket server has invalid version of handshake."""
-        headers = self.read_http_headers()
-
-        try:
-            assert headers['upgrade'].lower() == 'websocket'
-        except AssertionError:
-            self.keep_alive = False
-            return
-
-        try:
-            key = headers['sec-websocket-key']
-        except KeyError:
-            log.warning("Client tried to connect but was missing a key")
-            self.keep_alive = False
-            return
-
-        response = self.make_handshake_response(key)
-        self.handshake_done = self.request.send(response.encode())
-        self.valid_client = True
-        self.server._new_client_(self)
-
     def read_http_headers(self):
         """Get information about client from headers.
 
