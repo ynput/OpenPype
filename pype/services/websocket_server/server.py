@@ -2,6 +2,7 @@ import uuid
 import copy
 import json
 import logging
+import threading
 from socketserver import TCPServer
 from websocket_server import WebSocketHandler, WebsocketServer
 from pypeapp import Logger
@@ -65,8 +66,9 @@ class PypeWebSocketHandler(WebSocketHandler):
     def cancel(self):
         """To stop handler's loop."""
         self.keep_alive = False
-        self.server._client_left_(self)
-        self.client = None
+        if self.client is not None:
+            self.server._client_left_(self)
+            self.client = None
 
 
 class Client:
@@ -151,7 +153,7 @@ class Client:
         return self.data
 
     def cancel(self):
-        """Stops client communication. This is not API method!"""
+        """Stop client's session. This is not API method."""
         self._handler.cancel()
         self._handler = None
 
@@ -160,30 +162,40 @@ class Client:
 
 
 class Namespace:
+    """Namespace is for implementing custom callbacks for specific url path.
+
+    Args:
+        endpoint (str): Url path related to namespace. Determine url path
+            required for creating specific session. E.g.: "/my_namespace" means
+            that client should connect to the namespace callbacks via url path
+            "ws://localhost:{port}/my_namespace".
+        server (WebsocketServer): Source server where namespace is registered.
+    """
     def __init__(self, endpoint, server=None):
         endpoint_parts = [part for part in endpoint.split("/") if part]
         self.endpoint = "/{}".format("/".join(endpoint_parts))
         self.server = server
         self.clients = {}
 
-    def on_message(self, message, client):
-        pass
-
     def _new_client(self, client):
         self.clients[client.id] = client
         self.new_client(client)
-
-    def new_client(self, client):
-        """Possible callback when new client is added."""
-        pass
 
     def _client_left(self, client):
         if client.id in self.clients:
             self.client_left(client)
             self.clients.pop(client.id, None)
 
+    def new_client(self, client):
+        """Possible callback when new client is added."""
+        pass
+
     def client_left(self, client):
-        """Possible callback when client left the server"""
+        """Possible callback when client left the server."""
+        pass
+
+    def on_message(self, message, client):
+        """Process of message received from a client."""
         pass
 
     def send_message(self, client, message):
@@ -191,7 +203,7 @@ class Namespace:
         client.send_message(message)
 
     def send_message_to_all(self, message, except_ids=[]):
-        """Sends message to all clients."""
+        """Send message to all clients."""
         for client in self.clients.values():
             if except_ids and client.id in except_ids:
                 continue
@@ -218,25 +230,49 @@ class ExampleNamespace(Namespace):
 
 
 class PypeWebsocketServer(WebsocketServer):
-    def __init__(
-        self, port, host="127.0.0.1", handler=None, loglevel=logging.WARNING
-    ):
-        if handler is None:
-            handler = PypeWebSocketHandler
-        TCPServer.__init__(self, (host, port), handler)
+    """This is simple version of websocket server.
+
+    Server stores all clients connected to server by id using `Client` object.
+
+    It is possible to register namespaces but it is not allowed to have
+    multiple namespaces for one url path.
+
+    Note: Websocket server does not work the same way as HTTP servers. It is
+    expected opossible access with less registered urls and possiblity
+    of storing clients context.
+
+    Args:
+        port (int): Port where server should listen.
+        host (str): Ip adress of server. "127.0.0.1" means server should be
+            accessible only on the same computer. To create accessible server
+            for other users in network enter "0.0.0.0".
+        handler_klass (WebSocketHandler): Give possitibility to enter another
+            handler than PypeWebSocketHandler.
+
+    """
+    def __init__(self, port, host="127.0.0.1", handler_klass=None):
+        if handler_klass is None:
+            handler_klass = PypeWebSocketHandler
+        TCPServer.__init__(self, (host, port), handler_klass)
         self.port = self.socket.getsockname()[1]
 
         self.clients = {}
         self.namespaces = {
-            "/example": ExampleNamespace("/", self)
+            # "/example": ExampleNamespace("/", self)
         }
 
     def _message_received_(self, handler, msg):
+        """Give information to namespace about incomming message."""
         namespace = self.namespaces.get(handler.endpoint)
         if namespace:
             namespace.on_message(msg, handler.client)
 
     def _new_client_(self, handler):
+        """Register new client and give information to namespace if any match.
+
+        If there is not namespace matching client's server then error message
+        is sent to client and session is closed.
+        """
         client = Client(handler)
         self.clients[client.id] = client
         namespace = self.namespaces.get(handler.endpoint)
@@ -252,34 +288,50 @@ class PypeWebsocketServer(WebsocketServer):
         client.cancel()
 
     def _client_left_(self, handler):
+        """Remove client from clients and acknowledge namespace."""
         client = handler.client
-        if client is not None:
-            namespace = self.namespaces.get(handler.endpoint)
-            if namespace:
-                namespace._client_left(client)
+        if client is None:
+            return
+        namespace = self.namespaces.get(handler.endpoint)
+        if namespace:
+            namespace._client_left(client)
 
-            self.clients.pop(client.id, None)
+        self.clients.pop(client.id, None)
 
     def _unicast_(self, to_client, msg):
+        """Send message to specific client."""
         to_client.handler.send_message(msg)
 
     def _multicast_(self, msg):
+        """Send message to each client connected to server."""
         for client in self.clients.values():
             self._unicast_(client, msg)
 
-    def handler_to_client(self, handler):
-        for client in self.clients.values():
-            if client.handler == handler:
-                return client
-
     def send_message(self, client, msg):
+        """Send message to specific client."""
         self._unicast_(client, msg)
 
     def send_message_to_all(self, msg):
+        """Send message to each client."""
         self._multicast_(msg)
 
     def start(self):
+        """Trigger server to start listen on port."""
         self.run_forever()
 
     def stop(self):
+        """Stop server."""
         self.server_close()
+
+
+class WebSocketThread(threading.Thread):
+    """Wrapper for running websocket server in thread."""
+    def __init__(self, port):
+        self.server = PypeWebsocketServer(port)
+        super(self.__class__, self).__init__()
+
+    def run(self):
+        self.server.start()
+
+    def stop(self):
+        self.server.stop()
