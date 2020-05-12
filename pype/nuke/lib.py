@@ -192,7 +192,6 @@ def format_anatomy(data):
         data["version"] = pype.get_version_from_path(file)
     project_document = pype.get_project()
     data.update({
-        "root": api.Session["AVALON_PROJECTS"],
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
         "task": api.Session["AVALON_TASK"],
@@ -313,7 +312,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         if input:
             # if connected input node was defined
             connections.append({
-                "node":  input,
+                "node": input,
                 "inputName": input.name()})
             prev_node = nuke.createNode(
                 "Input", "name {}".format(input.name()))
@@ -369,7 +368,7 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
         write_node = now_node = avalon.nuke.lib.add_write_node(
             "inside_{}".format(name),
             **_data
-            )
+        )
 
         # connect to previous node
         now_node.setInput(0, prev_node)
@@ -393,11 +392,13 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
     if review:
         add_review_knob(GN)
 
-    # add render button
-    lnk = nuke.Link_Knob("Render")
-    lnk.makeLink(write_node.name(), "Render")
-    lnk.setName("Render")
-    GN.addKnob(lnk)
+    # Add linked knobs.
+    linked_knob_names = ["Render", "use_limit", "first", "last"]
+    for name in linked_knob_names:
+        link = nuke.Link_Knob(name)
+        link.makeLink(write_node.name(), name)
+        link.setName(name)
+        GN.addKnob(link)
 
     divider = nuke.Text_Knob('')
     GN.addKnob(divider)
@@ -407,7 +408,6 @@ def create_write_node(name, data, input=None, prenodes=None, review=True):
 
     # Deadline tab.
     add_deadline_tab(GN)
-
 
     # set tile color
     tile_color = _data.get("tile_color", "0xff0000ff")
@@ -435,6 +435,7 @@ def add_rendering_knobs(node):
         knob.setValue(False)
         node.addKnob(knob)
     return node
+
 
 def add_review_knob(node):
     ''' Adds additional review knob to given node
@@ -645,8 +646,9 @@ class WorkfileSettings(object):
         if root_dict.get("customOCIOConfigPath"):
             self._root_node["customOCIOConfigPath"].setValue(
                 str(root_dict["customOCIOConfigPath"]).format(
-                    **os.environ).replace("\\", "/")
-                )
+                    **os.environ
+                ).replace("\\", "/")
+            )
             log.debug("nuke.root()['{}'] changed to: {}".format(
                 "customOCIOConfigPath", root_dict["customOCIOConfigPath"]))
             root_dict.pop("customOCIOConfigPath")
@@ -750,10 +752,9 @@ class WorkfileSettings(object):
         if changes:
             msg = "Read nodes are not set to correct colospace:\n\n"
             for nname, knobs in changes.items():
-                msg += str(" - node: '{0}' is now '{1}' "
-                           "but should be '{2}'\n").format(
-                               nname, knobs["from"], knobs["to"]
-                               )
+                msg += str(
+                    " - node: '{0}' is now '{1}' but should be '{2}'\n"
+                ).format(nname, knobs["from"], knobs["to"])
 
             msg += "\nWould you like to change it?"
 
@@ -1111,15 +1112,15 @@ class BuildWorkfile(WorkfileSettings):
         self.to_script = to_script
         # collect data for formating
         self.data_tmp = {
-            "root": root_path or api.Session["AVALON_PROJECTS"],
             "project": {"name": self._project["name"],
-                        "code": self._project["data"].get("code", '')},
+                        "code": self._project["data"].get("code", "")},
             "asset": self._asset or os.environ["AVALON_ASSET"],
             "task": kwargs.get("task") or api.Session["AVALON_TASK"],
             "hierarchy": kwargs.get("hierarchy") or pype.get_hierarchy(),
             "version": kwargs.get("version", {}).get("name", 1),
             "user": getpass.getuser(),
-            "comment": "firstBuild"
+            "comment": "firstBuild",
+            "ext": "nk"
         }
 
         # get presets from anatomy
@@ -1128,8 +1129,8 @@ class BuildWorkfile(WorkfileSettings):
         anatomy_filled = anatomy.format(self.data_tmp)
 
         # get dir and file for workfile
-        self.work_dir = anatomy_filled["avalon"]["work"]
-        self.work_file = anatomy_filled["avalon"]["workfile"] + ".nk"
+        self.work_dir = anatomy_filled["work"]["folder"]
+        self.work_file = anatomy_filled["work"]["file"]
 
     def save_script_as(self, path=None):
         # first clear anything in open window
@@ -1419,7 +1420,7 @@ class ExporterReview:
             repre.update({
                 "frameStart": self.first_frame,
                 "frameEnd": self.last_frame,
-                })
+            })
 
         self.data["representations"].append(repre)
 
@@ -1654,7 +1655,7 @@ class ExporterReviewMov(ExporterReview):
         if not self.viewer_lut_raw:
             colorspaces = [
                 self.bake_colorspace_main, self.bake_colorspace_fallback
-                ]
+            ]
 
             if any(colorspaces):
                 # OCIOColorSpace with controled output
@@ -1708,7 +1709,7 @@ class ExporterReviewMov(ExporterReview):
             self.get_representation_data(
                 tags=["review", "delete"],
                 range=True
-                )
+            )
 
         self.log.debug("Representation...   `{}`".format(self.data))
 
@@ -1743,14 +1744,14 @@ def get_dependent_nodes(nodes):
         if test_in:
             connections_in.update({
                 node: test_in
-                })
+            })
         # collect all outputs outside
         test_out = [i for i in outputs if i.name() not in node_names]
         if test_out:
             # only one dependent node is allowed
             connections_out.update({
                 node: test_out[-1]
-                })
+            })
 
     return connections_in, connections_out
 

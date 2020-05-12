@@ -5,6 +5,7 @@ import sys
 import copy
 import clique
 import errno
+import six
 
 from pymongo import DeleteOne, InsertOne
 import pyblish.api
@@ -327,6 +328,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     test_dest_files.append(
                         os.path.normpath(template_filled)
                     )
+                template_data["frame"] = repre_context["frame"]
 
                 self.log.debug(
                     "test_dest_files: {}".format(str(test_dest_files)))
@@ -390,7 +392,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                     dst_start_frame,
                     dst_tail
                 ).replace("..", ".")
-                repre['published_path'] = self.unc_convert(dst)
+                repre['published_path'] = dst
 
             else:
                 # Single file
@@ -418,7 +420,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 instance.data["transfers"].append([src, dst])
 
                 published_files.append(dst)
-                repre['published_path'] = self.unc_convert(dst)
+                repre['published_path'] = dst
                 self.log.debug("__ dst: {}".format(dst))
 
             repre["publishedFiles"] = published_files
@@ -522,23 +524,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             self.log.debug("Hardlinking file .. {} -> {}".format(src, dest))
             self.hardlink_file(src, dest)
 
-    def unc_convert(self, path):
-        self.log.debug("> __ path: `{}`".format(path))
-        drive, _path = os.path.splitdrive(path)
-        self.log.debug("> __ drive, _path: `{}`, `{}`".format(drive, _path))
-
-        if not os.path.exists(drive + "/"):
-            self.log.info("Converting to unc from environments ..")
-
-            path_replace = os.getenv("PYPE_STUDIO_PROJECTS_PATH")
-            path_mount = os.getenv("PYPE_STUDIO_PROJECTS_MOUNT")
-
-            if "/" in path_mount:
-                path = path.replace(path_mount[0:-1], path_replace)
-            else:
-                path = path.replace(path_mount, path_replace)
-        return path
-
     def copy_file(self, src, dst):
         """ Copy given source to destination
 
@@ -548,8 +533,6 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
         Returns:
             None
         """
-        src = self.unc_convert(src)
-        dst = self.unc_convert(dst)
         src = os.path.normpath(src)
         dst = os.path.normpath(dst)
         self.log.debug("Copying file .. {} -> {}".format(src, dst))
@@ -565,15 +548,17 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         # copy file with speedcopy and check if size of files are simetrical
         while True:
-            copyfile(src, dst)
+            try:
+                copyfile(src, dst)
+            except OSError as e:
+                self.log.critical("Cannot copy {} to {}".format(src, dst))
+                self.log.critical(e)
+                six.reraise(*sys.exc_info())
             if str(getsize(src)) in str(getsize(dst)):
                 break
 
     def hardlink_file(self, src, dst):
         dirname = os.path.dirname(dst)
-
-        src = self.unc_convert(src)
-        dst = self.unc_convert(dst)
 
         try:
             os.makedirs(dirname)
@@ -606,7 +591,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "name": subset_name,
                 "data": {
                     "families": instance.data.get('families')
-                    },
+                },
                 "parent": asset["_id"]
             }).inserted_id
 
@@ -659,26 +644,35 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             families.append(instance_family)
         families += current_families
 
-        self.log.debug("Registered root: {}".format(api.registered_root()))
         # create relative source path for DB
-        try:
-            source = instance.data['source']
-        except KeyError:
+        if "source" in instance.data:
+            source = instance.data["source"]
+        else:
             source = context.data["currentFile"]
-            source = source.replace(os.getenv("PYPE_STUDIO_PROJECTS_MOUNT"),
-                                    api.registered_root())
-            relative_path = os.path.relpath(source, api.registered_root())
-            source = os.path.join("{root}", relative_path).replace("\\", "/")
+            anatomy = instance.context.data["anatomy"]
+            success, rootless_path = (
+                anatomy.roots_obj.find_root_template_from_path(source)
+            )
+            if success:
+                source = rootless_path
+            else:
+                self.log.warning((
+                    "Could not find root path for remapping \"{}\"."
+                    " This may cause issues on farm."
+                ).format(source))
 
         self.log.debug("Source: {}".format(source))
-        version_data = {"families": families,
-                        "time": context.data["time"],
-                        "author": context.data["user"],
-                        "source": source,
-                        "comment": context.data.get("comment"),
-                        "machine": context.data.get("machine"),
-                        "fps": context.data.get(
-                            "fps", instance.data.get("fps"))}
+        version_data = {
+            "families": families,
+            "time": context.data["time"],
+            "author": context.data["user"],
+            "source": source,
+            "comment": context.data.get("comment"),
+            "machine": context.data.get("machine"),
+            "fps": context.data.get(
+                "fps", instance.data.get("fps")
+            )
+        }
 
         intent_value = instance.context.data.get("intent")
         if intent_value and isinstance(intent_value, dict):
@@ -720,7 +714,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
 
         matching_profiles = None
         highest_value = -1
-        for name, filters in self.template_name_profiles:
+        self.log.info(self.template_name_profiles)
+        for name, filters in self.template_name_profiles.items():
             value = 0
             families = filters.get("families")
             if families:

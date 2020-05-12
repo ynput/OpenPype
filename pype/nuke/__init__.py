@@ -61,7 +61,6 @@ def reload_config():
             reload(module)
 
 
-
 def install():
     ''' Installing all requarements for Nuke host
     '''
@@ -71,6 +70,9 @@ def install():
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
+
+    # Register Avalon event for workfiles loading.
+    avalon.on("workio.open_file", lib.check_inventory_versions)
 
     pyblish.register_callback("instanceToggled", on_pyblish_instance_toggled)
     workfile_settings = lib.WorkfileSettings()

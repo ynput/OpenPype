@@ -122,6 +122,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
         workspace = context.data["workspaceDir"]
 
         self._rs = renderSetup.instance()
+        current_layer = self._rs.getVisibleRenderLayer()
         maya_render_layers = {l.name(): l for l in self._rs.getRenderLayers()}
 
         self.maya_layers = maya_render_layers
@@ -157,6 +158,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             attachTo = []
             if sets:
                 for s in sets:
+                    if "family" not in cmds.listAttr(s):
+                        continue
+
                     attachTo.append(
                         {
                             "version": None,  # we need integrator for that
@@ -303,6 +307,10 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             instance.data.update(data)
             self.log.debug("data: {}".format(json.dumps(data, indent=4)))
 
+        # Restore current layer.
+        self.log.info("Restoring to {}".format(current_layer.name()))
+        self._rs.switchToLayer(current_layer)
+
     def parse_options(self, render_globals):
         """Get all overrides with a value, skip those without
 
@@ -397,6 +405,8 @@ class ExpectedFiles:
     multipart = False
 
     def get(self, renderer, layer):
+        renderSetup.instance().switchToLayerUsingLegacyName(layer)
+
         if renderer.lower() == "arnold":
             return self._get_files(ExpectedFilesArnold(layer))
         elif renderer.lower() == "vray":

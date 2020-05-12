@@ -1,10 +1,17 @@
+"""Loads publishing context from json and continues in publish process.
+
+Requires:
+    anatomy -> context["anatomy"] *(pyblish.api.CollectorOrder - 0.11)
+
+Provides:
+    context, instances -> All data from previous publishing process.
+"""
+
 import os
 import json
 
 import pyblish.api
 from avalon import api
-
-from pypeapp import PypeLauncher
 
 
 class CollectRenderedFiles(pyblish.api.ContextPlugin):
@@ -13,14 +20,17 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
     `PYPE_PUBLISH_DATA`. Those files _MUST_ share same context.
 
     """
-    order = pyblish.api.CollectorOrder - 0.1
+    order = pyblish.api.CollectorOrder - 0.2
     targets = ["filesequence"]
     label = "Collect rendered frames"
 
     _context = None
 
     def _load_json(self, path):
-        assert os.path.isfile(path), ("path to json file doesn't exist")
+        path = path.strip('\"')
+        assert os.path.isfile(path), (
+            "Path to json file doesn't exist. \"{}\"".format(path)
+        )
         data = None
         with open(path, "r") as json_file:
             try:
@@ -32,7 +42,12 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
                 )
         return data
 
-    def _process_path(self, data):
+    def _fill_staging_dir(self, data_object, anatomy):
+        staging_dir = data_object.get("stagingDir")
+        if staging_dir:
+            data_object["stagingDir"] = anatomy.fill_root(staging_dir)
+
+    def _process_path(self, data, anatomy):
         # validate basic necessary data
         data_err = "invalid json file - missing data"
         required = ["asset", "user", "comment",
@@ -66,14 +81,23 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             os.environ["FTRACK_SERVER"] = ftrack["FTRACK_SERVER"]
 
         # now we can just add instances from json file and we are done
-        for instance in data.get("instances"):
+        for instance_data in data.get("instances"):
             self.log.info("  - processing instance for {}".format(
-                instance.get("subset")))
-            i = self._context.create_instance(instance.get("subset"))
-            self.log.info("remapping paths ...")
-            i.data["representations"] = [PypeLauncher().path_remapper(
-                data=r) for r in instance.get("representations")]
-            i.data.update(instance)
+                instance_data.get("subset")))
+            instance = self._context.create_instance(
+                instance_data.get("subset")
+            )
+            self.log.info("Filling stagignDir...")
+
+            self._fill_staging_dir(instance_data, anatomy)
+            instance.data.update(instance_data)
+
+            representations = []
+            for repre_data in instance_data.get("representations") or []:
+                self._fill_staging_dir(repre_data, anatomy)
+                representations.append(repre_data)
+
+            instance.data["representations"] = representations
 
     def process(self, context):
         self._context = context
@@ -82,13 +106,39 @@ class CollectRenderedFiles(pyblish.api.ContextPlugin):
             "Missing `PYPE_PUBLISH_DATA`")
         paths = os.environ["PYPE_PUBLISH_DATA"].split(os.pathsep)
 
-        session_set = False
-        for path in paths:
-            data = self._load_json(path)
-            if not session_set:
-                self.log.info("Setting session using data from file")
-                api.Session.update(data.get("session"))
-                os.environ.update(data.get("session"))
-                session_set = True
-            assert data, "failed to load json file"
-            self._process_path(data)
+        project_name = os.environ.get("AVALON_PROJECT")
+        if project_name is None:
+            raise AssertionError(
+                "Environment `AVALON_PROJECT` was not found."
+                "Could not set project `root` which may cause issues."
+            )
+
+        # TODO root filling should happen after collect Anatomy
+        self.log.info("Getting root setting for project \"{}\"".format(
+            project_name
+        ))
+
+        anatomy = context.data["anatomy"]
+        self.log.info("anatomy: {}".format(anatomy.roots))
+        try:
+            session_is_set = False
+            for path in paths:
+                path = anatomy.fill_root(path)
+                data = self._load_json(path)
+                assert data, "failed to load json file"
+                if not session_is_set:
+                    session_data = data["session"]
+                    remapped = anatomy.roots_obj.path_remapper(
+                        session_data["AVALON_WORKDIR"]
+                    )
+                    if remapped:
+                        session_data["AVALON_WORKDIR"] = remapped
+
+                    self.log.info("Setting session using data from file")
+                    api.Session.update(session_data)
+                    os.environ.update(session_data)
+                    session_is_set = True
+                self._process_path(data, anatomy)
+        except Exception as e:
+            self.log.error(e, exc_info=True)
+            raise Exception("Error") from e

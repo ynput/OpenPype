@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionList>
+  <Extension Id="com.pype">
+    <HostList>
+      <Host Name="PPRO" Port="7766"/>
+    </HostList>
+  </Extension>
+</ExtensionList>
