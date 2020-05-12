@@ -8,7 +8,7 @@ class WebSocketModule:
     default_port = 8111
 
     def __init__(self):
-        self.log = Logger().get_logger("RestApiServer")
+        self.log = Logger().get_logger("WebSocketServer")
 
         presets = (
             config.get_presets()
@@ -26,6 +26,14 @@ class WebSocketModule:
 
         port = self.find_port(start_port, exclude_ports)
         self.server_thread = WebSocketThread(port)
+
+        websocket_url = "ws://localhost:{}".format(
+            self.server_thread.server.port
+        )
+        os.environ["PYPE_WEBSOCKET_URL"] = websocket_url
+        self.log.debug(
+            "WebSocket server is accesible at {}".format(websocket_url)
+        )
 
     @property
     def server(self):
@@ -48,13 +56,6 @@ class WebSocketModule:
                     found_port = port
             if found_port is not None:
                 break
-        if found_port is None:
-            return None
-        # TODO maybe would bebetter to store url when server starts to get
-        # 100% sure right port
-        os.environ["PYPE_WEBSOCKET_URL"] = "ws://localhost:{}".format(
-            found_port
-        )
         return found_port
 
     def register_namespace(self, namespace):
