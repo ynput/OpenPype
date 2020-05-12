@@ -52,41 +52,6 @@ class StoreThumbnailsToAvalon(BaseAction):
         })
         session.commit()
 
-        thumbnail_roots = os.environ.get(self.thumbnail_key)
-        if not thumbnail_roots:
-            msg = "`{}` environment is not set".format(self.thumbnail_key)
-
-            action_job["status"] = "failed"
-            session.commit()
-
-            self.log.warning(msg)
-
-            return {
-                "success": False,
-                "message": msg
-            }
-
-        existing_thumbnail_root = None
-        for path in thumbnail_roots.split(os.pathsep):
-            if os.path.exists(path):
-                existing_thumbnail_root = path
-                break
-
-        if existing_thumbnail_root is None:
-            msg = (
-                "Can't access paths, set in `{}` ({})"
-            ).format(self.thumbnail_key, thumbnail_roots)
-
-            action_job["status"] = "failed"
-            session.commit()
-
-            self.log.warning(msg)
-
-            return {
-                "success": False,
-                "message": msg
-            }
-
         project = self.get_project_from_entity(entities[0])
         project_name = project["full_name"]
         anatomy = Anatomy(project_name)
@@ -109,6 +74,44 @@ class StoreThumbnailsToAvalon(BaseAction):
                 "There is not set \"thumbnail\""
                 " template in Antomy for project \"{}\""
             ).format(project_name)
+
+            action_job["status"] = "failed"
+            session.commit()
+
+            self.log.warning(msg)
+
+            return {
+                "success": False,
+                "message": msg
+            }
+
+        thumbnail_roots = os.environ.get(self.thumbnail_key)
+        if (
+            "{thumbnail_root}" in anatomy.templates["publish"]["thumbnail"]
+            and not thumbnail_roots
+        ):
+            msg = "`{}` environment is not set".format(self.thumbnail_key)
+
+            action_job["status"] = "failed"
+            session.commit()
+
+            self.log.warning(msg)
+
+            return {
+                "success": False,
+                "message": msg
+            }
+
+        existing_thumbnail_root = None
+        for path in thumbnail_roots.split(os.pathsep):
+            if os.path.exists(path):
+                existing_thumbnail_root = path
+                break
+
+        if existing_thumbnail_root is None:
+            msg = (
+                "Can't access paths, set in `{}` ({})"
+            ).format(self.thumbnail_key, thumbnail_roots)
 
             action_job["status"] = "failed"
             session.commit()

@@ -192,7 +192,6 @@ def format_anatomy(data):
         data["version"] = pype.get_version_from_path(file)
     project_document = pype.get_project()
     data.update({
-        "root": api.Session["AVALON_PROJECTS"],
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
         "task": api.Session["AVALON_TASK"],
@@ -1111,15 +1110,15 @@ class BuildWorkfile(WorkfileSettings):
         self.to_script = to_script
         # collect data for formating
         self.data_tmp = {
-            "root": root_path or api.Session["AVALON_PROJECTS"],
             "project": {"name": self._project["name"],
-                        "code": self._project["data"].get("code", '')},
+                        "code": self._project["data"].get("code", "")},
             "asset": self._asset or os.environ["AVALON_ASSET"],
             "task": kwargs.get("task") or api.Session["AVALON_TASK"],
             "hierarchy": kwargs.get("hierarchy") or pype.get_hierarchy(),
             "version": kwargs.get("version", {}).get("name", 1),
             "user": getpass.getuser(),
-            "comment": "firstBuild"
+            "comment": "firstBuild",
+            "ext": "nk"
         }
 
         # get presets from anatomy
@@ -1128,8 +1127,8 @@ class BuildWorkfile(WorkfileSettings):
         anatomy_filled = anatomy.format(self.data_tmp)
 
         # get dir and file for workfile
-        self.work_dir = anatomy_filled["avalon"]["work"]
-        self.work_file = anatomy_filled["avalon"]["workfile"] + ".nk"
+        self.work_dir = anatomy_filled["work"]["folder"]
+        self.work_file = anatomy_filled["work"]["file"]
 
     def save_script_as(self, path=None):
         # first clear anything in open window

@@ -1,6 +1,17 @@
+# -*- coding: utf-8 -*-
+"""Submitting render job to Deadline.
+
+This module is taking care of submitting job from Maya to Deadline. It
+creates job and set correct environments. Its behavior is controlled by
+`DEADLINE_REST_URL` environment variable - pointing to Deadline Web Service
+and `MayaSubmitDeadline.use_published (bool)` property telling Deadline to
+use published scene workfile or not.
+"""
+
 import os
 import json
 import getpass
+import re
 import clique
 
 from maya import cmds
@@ -14,7 +25,7 @@ import pype.maya.lib as lib
 
 
 def get_renderer_variables(renderlayer=None):
-    """Retrieve the extension which has been set in the VRay settings
+    """Retrieve the extension which has been set in the VRay settings.
 
     Will return None if the current renderer is not VRay
     For Maya 2016.5 and up the renderSetup creates renderSetupLayer node which
@@ -25,16 +36,21 @@ def get_renderer_variables(renderlayer=None):
 
     Returns:
         dict
-    """
 
+    """
     renderer = lib.get_renderer(renderlayer or lib.get_current_renderlayer())
     render_attrs = lib.RENDER_ATTRS.get(renderer, lib.RENDER_ATTRS["default"])
 
     padding = cmds.getAttr("{}.{}".format(render_attrs["node"],
                                           render_attrs["padding"]))
 
-    filename_0 = cmds.renderSettings(fullPath=True, firstImageName=True)[0]
-
+    filename_0 = cmds.renderSettings(
+        fullPath=True,
+        gin="#" * int(padding),
+        lut=True,
+        layer=renderlayer or lib.get_current_renderlayer())[0]
+    filename_0 = filename_0.replace('_<RenderPass>', '_beauty')
+    prefix_attr = "defaultRenderGlobals.imageFilePrefix"
     if renderer == "vray":
         # Maya's renderSettings function does not return V-Ray file extension
         # so we get the extension from vraySettings
@@ -46,62 +62,33 @@ def get_renderer_variables(renderlayer=None):
         if extension is None:
             extension = "png"
 
-        filename_prefix = "<Scene>/<Scene>_<Layer>/<Layer>"
+        if extension == "exr (multichannel)" or extension == "exr (deep)":
+            extension = "exr"
+
+        prefix_attr = "vraySettings.fileNamePrefix"
+    elif renderer == "renderman":
+        prefix_attr = "rmanGlobals.imageFileFormat"
+    elif renderer == "redshift":
+        # mapping redshift extension dropdown values to strings
+        ext_mapping = ["iff", "exr", "tif", "png", "tga", "jpg"]
+        extension = ext_mapping[
+            cmds.getAttr("redshiftOptions.imageFormat")
+        ]
     else:
         # Get the extension, getAttr defaultRenderGlobals.imageFormat
         # returns an index number.
         filename_base = os.path.basename(filename_0)
         extension = os.path.splitext(filename_base)[-1].strip(".")
-        filename_prefix = cmds.getAttr("defaultRenderGlobals.imageFilePrefix")
 
+    filename_prefix = cmds.getAttr(prefix_attr)
     return {"ext": extension,
             "filename_prefix": filename_prefix,
             "padding": padding,
             "filename_0": filename_0}
 
 
-def preview_fname(folder, scene, layer, padding, ext):
-    """Return output file path with #### for padding.
-
-    Deadline requires the path to be formatted with # in place of numbers.
-    For example `/path/to/render.####.png`
-
-    Args:
-        folder (str): The root output folder (image path)
-        scene (str): The scene name
-        layer (str): The layer name to be rendered
-        padding (int): The padding length
-        ext(str): The output file extension
-
-    Returns:
-        str
-
-    """
-
-    fileprefix = cmds.getAttr("defaultRenderGlobals.imageFilePrefix")
-    output = fileprefix + ".{number}.{ext}"
-    # RenderPass is currently hardcoded to "beauty" because its not important
-    # for the deadline submission, but we will need something to replace
-    # "<RenderPass>".
-    mapping = {
-        "<Scene>": "{scene}",
-        "<RenderLayer>": "{layer}",
-        "RenderPass": "beauty"
-    }
-    for key, value in mapping.items():
-        output = output.replace(key, value)
-    output = output.format(
-        scene=scene,
-        layer=layer,
-        number="#" * padding,
-        ext=ext
-    )
-
-    return os.path.join(folder, output)
-
-
 class MayaSubmitDeadline(pyblish.api.InstancePlugin):
-    """Submit available render layers to Deadline
+    """Submit available render layers to Deadline.
 
     Renders are submitted to a Deadline Web Service as
     supplied via the environment variable DEADLINE_REST_URL
@@ -194,22 +181,22 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         filename = os.path.basename(filepath)
         comment = context.data.get("comment", "")
-        scene = os.path.splitext(filename)[0]
         dirname = os.path.join(workspace, "renders")
         renderlayer = instance.data['setMembers']       # rs_beauty
-        renderlayer_name = instance.data['subset']      # beauty
-        # renderlayer_globals = instance.data["renderGlobals"]
-        # legacy_layers = renderlayer_globals["UseLegacyRenderLayers"]
         deadline_user = context.data.get("deadlineUser", getpass.getuser())
         jobname = "%s - %s" % (filename, instance.name)
 
         # Get the variables depending on the renderer
         render_variables = get_renderer_variables(renderlayer)
-        output_filename_0 = preview_fname(folder=dirname,
-                                          scene=scene,
-                                          layer=renderlayer_name,
-                                          padding=render_variables["padding"],
-                                          ext=render_variables["ext"])
+        filename_0 = render_variables["filename_0"]
+        if self.use_published:
+            new_scene = os.path.splitext(filename)[0]
+            orig_scene = os.path.splitext(
+                os.path.basename(context.data["currentFile"]))[0]
+            filename_0 = render_variables["filename_0"].replace(
+                orig_scene, new_scene)
+
+        output_filename_0 = filename_0
 
         try:
             # Ensure render folder exists
@@ -284,7 +271,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             for aov, files in exp[0].items():
                 col = clique.assemble(files)[0][0]
                 outputFile = col.format('{head}{padding}{tail}')
-                payload['JobInfo']['OutputFilename' + str(expIndex)] = outputFile
+                payload['JobInfo']['OutputFilename' + str(expIndex)] = outputFile  # noqa: E501
                 OutputFilenames[expIndex] = outputFile
                 expIndex += 1
         else:
@@ -292,7 +279,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             outputFile = col.format('{head}{padding}{tail}')
             payload['JobInfo']['OutputFilename' + str(expIndex)] = outputFile
             # OutputFilenames[expIndex] = outputFile
-
 
         # We need those to pass them to pype for it to set correct context
         keys = [
@@ -334,7 +320,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             raise Exception(response.text)
 
         # Store output dir for unified publisher (filesequence)
-        instance.data["outputDir"] = os.path.dirname(output_filename_0)
+        instance.data["outputDir"] = os.path.dirname(filename_0)
         instance.data["deadlineSubmissionJob"] = response.json()
 
     def preflight_check(self, instance):

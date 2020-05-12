@@ -201,40 +201,32 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             if path.lower().startswith('pype_'):
                 environment[path] = os.environ[path]
 
-        environment["PATH"] = os.environ["PATH"]
+        # environment["PATH"] = os.environ["PATH"]
         # self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
         clean_environment = {}
-        for key in environment:
+        for key, value in environment.items():
             clean_path = ""
             self.log.debug("key: {}".format(key))
-            to_process = environment[key]
-            if key == "PYPE_STUDIO_CORE_MOUNT":
-                clean_path = environment[key]
-            elif "://" in environment[key]:
-                clean_path = environment[key]
-            elif os.pathsep not in to_process:
-                try:
-                    path = environment[key]
-                    path.decode('UTF-8', 'strict')
-                    clean_path = os.path.normpath(path)
-                except UnicodeDecodeError:
-                    print('path contains non UTF characters')
+            if "://" in value:
+                clean_path = value
             else:
-                for path in environment[key].split(os.pathsep):
+                valid_paths = []
+                for path in value.split(os.pathsep):
+                    if not path:
+                        continue
                     try:
                         path.decode('UTF-8', 'strict')
-                        clean_path += os.path.normpath(path) + os.pathsep
+                        valid_paths.append(os.path.normpath(path))
                     except UnicodeDecodeError:
                         print('path contains non UTF characters')
+
+                if valid_paths:
+                    clean_path = os.pathsep.join(valid_paths)
 
             if key == "PYTHONPATH":
                 clean_path = clean_path.replace('python2', 'python3')
 
-            clean_path = clean_path.replace(
-                                    os.path.normpath(
-                                        environment['PYPE_STUDIO_CORE_MOUNT']),  # noqa
-                                    os.path.normpath(
-                                        environment['PYPE_STUDIO_CORE_PATH']))   # noqa
+            self.log.debug("clean path: {}".format(clean_path))
             clean_environment[key] = clean_path
 
         environment = clean_environment

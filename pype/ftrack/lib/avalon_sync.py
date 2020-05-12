@@ -1712,14 +1712,10 @@ class SyncEntitiesFactory:
         except InvalidId:
             new_id = ObjectId()
 
-        project_name = self.entities_dict[self.ft_project_id]["name"]
         project_item["_id"] = new_id
         project_item["parent"] = None
         project_item["schema"] = EntitySchemas["project"]
         project_item["config"]["schema"] = EntitySchemas["config"]
-        project_item["config"]["template"] = (
-            get_avalon_project_template(project_name)
-        )
 
         self.ftrack_avalon_mapper[self.ft_project_id] = new_id
         self.avalon_ftrack_mapper[new_id] = self.ft_project_id

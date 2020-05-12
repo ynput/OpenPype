@@ -28,11 +28,11 @@ from avalon import io
 import pyblish.api
 
 
-class CollectInstanceAnatomyData(pyblish.api.InstancePlugin):
-    """Fill templates with data needed for publish"""
+class CollectAnatomyInstanceData(pyblish.api.InstancePlugin):
+    """Collect Instance specific Anatomy data."""
 
     order = pyblish.api.CollectorOrder + 0.49
-    label = "Collect instance anatomy data"
+    label = "Collect Anatomy Instance data"
 
     def process(self, instance):
         # get all the stuff from the database
