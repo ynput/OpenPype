@@ -49,27 +49,23 @@ class DeleteAssetSubset(BaseAction):
 
     def _launch(self, event):
         try:
-            args = self._translate_event(
-                self.session, event
-            )
+            entities = self._translate_event(event)
             if "values" not in event["data"]:
                 self.dbcon.install()
-                return self._interface(self.session, *args)
+                return self._interface(self.session, entities, event)
 
-            confirmation = self.confirm_delete(*args)
+            confirmation = self.confirm_delete(entities, event)
             if confirmation:
                 return confirmation
 
             self.dbcon.install()
             response = self.launch(
-                self.session, *args
+                self.session, entities, event
             )
         finally:
             self.dbcon.uninstall()
 
-        return self._handle_result(
-            self.session, response, *args
-        )
+        return self._handle_result(response)
 
     def interface(self, session, entities, event):
         self.show_message(event, "Preparing data...", True)

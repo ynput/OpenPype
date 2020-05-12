@@ -15,14 +15,11 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-import sys
 import os
-from pprint import pprint
 from pypeapp.pypeLauncher import PypeLauncher
-from pypeapp.storage import Storage
 from pypeapp.deployment import Deployment
 
-pype_setup = os.getenv('PYPE_ROOT')
+pype_setup = os.getenv('PYPE_SETUP_PATH')
 d = Deployment(pype_setup)
 launcher = PypeLauncher()
 
@@ -32,7 +29,6 @@ os.environ['PYPE_CONFIG'] = config_path
 os.environ['TOOL_ENV'] = os.path.normpath(os.path.join(config_path,
                                           'environments'))
 launcher._add_modules()
-Storage().update_environment()
 launcher._load_default_environments(tools=tools)
 
 # -- Project information -----------------------------------------------------

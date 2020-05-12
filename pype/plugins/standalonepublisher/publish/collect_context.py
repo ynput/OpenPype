@@ -46,7 +46,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             in_data = json.load(f)
 
         asset_name = in_data["asset"]
-        family_preset_key = in_data.get("family_preset_key", "")
         family = in_data["family"]
         subset = in_data["subset"]
 
@@ -56,15 +55,6 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
             from pypeapp import config
 
             presets = config.get_presets()
-
-        # Get from presets anatomy key that will be used for getting template
-        # - default integrate new is used if not set
-        anatomy_key = (
-            presets.get("standalone_publish", {})
-            .get("families", {})
-            .get(family_preset_key, {})
-            .get("anatomy_template")
-        )
 
         project = io.find_one({"type": "project"})
         asset = io.find_one({"type": "asset", "name": asset_name})
@@ -98,12 +88,9 @@ class CollectContextDataSAPublish(pyblish.api.ContextPlugin):
         instance.data["source"] = "standalone publisher"
 
         for component in in_data["representations"]:
-
             component["destination"] = component["files"]
             component["stagingDir"] = component["stagingDir"]
-            # Do not set anatomy_template if not specified
-            if anatomy_key:
-                component["anatomy_template"] = anatomy_key
+
             if isinstance(component["files"], list):
                 collections, remainder = clique.assemble(component["files"])
                 self.log.debug("collecting sequence: {}".format(collections))

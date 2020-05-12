@@ -71,8 +71,7 @@ class NukeRenderLocal(pype.api.Extractor):
             'ext': ext,
             'frameStart': "%0{}d".format(len(str(last_frame))) % first_frame,
             'files': collected_frames,
-            "stagingDir": out_dir,
-            "anatomy_template": "render"
+            "stagingDir": out_dir
         }
         instance.data["representations"].append(repre)
 

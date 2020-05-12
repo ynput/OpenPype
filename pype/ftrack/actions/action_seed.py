@@ -55,6 +55,8 @@ class SeedDebugProject(BaseAction):
     # Define how much shots will be created for each sequence
     default_shots_count = 10
 
+    max_entities_created_at_one_commit = 50
+
     existing_projects = None
     new_project_item = "< New Project >"
     current_project_item = "< Current Project >"
@@ -284,20 +286,27 @@ class SeedDebugProject(BaseAction):
             int(asset_count / available_assets) +
             (asset_count % available_assets > 0)
         )
-        created_assets = 0
+
+        index = 0
+        created_entities = 0
+        to_create_length = asset_count + (asset_count * len(self.asset_tasks))
         for _asset_name in self.assets:
-            if created_assets >= asset_count:
+            if created_entities >= to_create_length:
                 break
             for asset_num in range(1, repetitive_times + 1):
-                if created_assets >= asset_count:
+                if created_entities >= asset_count:
                     break
                 asset_name = "%s_%02d" % (_asset_name, asset_num)
                 asset = self.session.create("AssetBuild", {
                     "name": asset_name,
                     "parent": main_entity
                 })
-                created_assets += 1
                 self.log.debug("- Assets/{}".format(asset_name))
+
+                created_entities += 1
+                index += 1
+                if self.temp_commit(index, created_entities, to_create_length):
+                    index = 0
 
                 for task_name in self.asset_tasks:
                     self.session.create("Task", {
@@ -309,7 +318,17 @@ class SeedDebugProject(BaseAction):
                         asset_name, task_name
                     ))
 
+                    created_entities += 1
+                    index += 1
+                    if self.temp_commit(
+                        index, created_entities, to_create_length
+                    ):
+                        index = 0
+
         self.log.debug("*** Commiting Assets")
+        self.log.debug("Commiting entities. {}/{}".format(
+            created_entities, to_create_length
+        ))
         self.session.commit()
 
     def create_shots(self, project, seq_count, shots_count):
@@ -345,7 +364,14 @@ class SeedDebugProject(BaseAction):
         })
         self.log.debug("- Shots")
 
-        for seq_num in range(1, seq_count+1):
+        index = 0
+        created_entities = 0
+        to_create_length = (
+            seq_count
+            + (seq_count * shots_count)
+            + (seq_count * shots_count * len(self.shot_tasks))
+        )
+        for seq_num in range(1, seq_count + 1):
             seq_name = "sq%03d" % seq_num
             seq = self.session.create("Sequence", {
                 "name": seq_name,
@@ -353,13 +379,23 @@ class SeedDebugProject(BaseAction):
             })
             self.log.debug("- Shots/{}".format(seq_name))
 
-            for shot_num in range(1, shots_count+1):
-                shot_name = "%ssh%04d" % (seq_name, (shot_num*10))
+            created_entities += 1
+            index += 1
+            if self.temp_commit(index, created_entities, to_create_length):
+                index = 0
+
+            for shot_num in range(1, shots_count + 1):
+                shot_name = "%ssh%04d" % (seq_name, (shot_num * 10))
                 shot = self.session.create("Shot", {
                     "name": shot_name,
                     "parent": seq
                 })
                 self.log.debug("- Shots/{}/{}".format(seq_name, shot_name))
+
+                created_entities += 1
+                index += 1
+                if self.temp_commit(index, created_entities, to_create_length):
+                    index = 0
 
                 for task_name in self.shot_tasks:
                     self.session.create("Task", {
@@ -371,9 +407,27 @@ class SeedDebugProject(BaseAction):
                         seq_name, shot_name, task_name
                     ))
 
+                    created_entities += 1
+                    index += 1
+                    if self.temp_commit(
+                        index, created_entities, to_create_length
+                    ):
+                        index = 0
+
         self.log.debug("*** Commiting Shots")
+        self.log.debug("Commiting entities. {}/{}".format(
+            created_entities, to_create_length
+        ))
         self.session.commit()
 
+    def temp_commit(self, index, created_entities, to_create_length):
+        if index < self.max_entities_created_at_one_commit:
+            return False
+        self.log.debug("Commiting {} entities. {}/{}".format(
+            index, created_entities, to_create_length
+        ))
+        self.session.commit()
+        return True
 
 def register(session, plugins_presets={}):
     '''Register plugin. Called when used as an plugin.'''

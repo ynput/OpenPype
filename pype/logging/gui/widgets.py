@@ -397,7 +397,7 @@ class LogDetailWidget(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout(self)
 
         label = QtWidgets.QLabel("Detail")
-        detail_widget = LogDetailTextEdit()
+        detail_widget = QtWidgets.QTextEdit()
         detail_widget.setReadOnly(True)
         layout.addWidget(label)
         layout.addWidget(detail_widget)
@@ -420,66 +420,3 @@ class LogDetailWidget(QtWidgets.QWidget):
 
 
         self.detail_widget.setHtml(self.html_text.format(**data))
-
-
-class LogDetailTextEdit(QtWidgets.QTextEdit):
-    """QTextEdit that displays version specific information.
-
-    This also overrides the context menu to add actions like copying
-    source path to clipboard or copying the raw data of the version
-    to clipboard.
-
-    """
-    def __init__(self, parent=None):
-        super(LogDetailTextEdit, self).__init__(parent=parent)
-
-    #     self.data = {
-    #         "source": None,
-    #         "raw": None
-    #     }
-    #
-    # def contextMenuEvent(self, event):
-    #     """Context menu with additional actions"""
-    #     menu = self.createStandardContextMenu()
-    #
-    #     # Add additional actions when any text so we can assume
-    #     # the version is set.
-    #     if self.toPlainText().strip():
-    #
-    #         menu.addSeparator()
-    #         action = QtWidgets.QAction("Copy source path to clipboard",
-    #                                    menu)
-    #         action.triggered.connect(self.on_copy_source)
-    #         menu.addAction(action)
-    #
-    #         action = QtWidgets.QAction("Copy raw data to clipboard",
-    #                                    menu)
-    #         action.triggered.connect(self.on_copy_raw)
-    #         menu.addAction(action)
-    #
-    #     menu.exec_(event.globalPos())
-    #     del menu
-    #
-    # def on_copy_source(self):
-    #     """Copy formatted source path to clipboard"""
-    #     source = self.data.get("source", None)
-    #     if not source:
-    #         return
-    #
-    #     # path = source.format(root=api.registered_root())
-    #     # clipboard = QtWidgets.QApplication.clipboard()
-    #     # clipboard.setText(path)
-    #
-    # def on_copy_raw(self):
-    #     """Copy raw version data to clipboard
-    #
-    #     The data is string formatted with `pprint.pformat`.
-    #
-    #     """
-    #     raw = self.data.get("raw", None)
-    #     if not raw:
-    #         return
-    #
-    #     raw_text = pprint.pformat(raw)
-    #     clipboard = QtWidgets.QApplication.clipboard()
-    #     clipboard.setText(raw_text)

@@ -309,14 +309,7 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         output_dir = instance.data["outputDir"]
         metadata_path = os.path.join(output_dir, metadata_filename)
 
-        # replace path for UNC / network share paths, co PYPE is found
-        # over network. It assumes PYPE is located somewhere in
-        # PYPE_STUDIO_CORE_PATH
-        pype_root = os.environ["PYPE_ROOT"].replace(
-            os.path.normpath(
-                os.environ['PYPE_STUDIO_CORE_MOUNT']),  # noqa
-            os.path.normpath(
-                os.environ['PYPE_STUDIO_CORE_PATH']))   # noqa
+        pype_root = os.environ["PYPE_SETUP_PATH"]
 
         # we must provide either full path to executable or use musters own
         # python named MPython.exe, residing directly in muster bin
@@ -517,33 +510,25 @@ class MayaSubmitMuster(pyblish.api.InstancePlugin):
         environment["PATH"] = os.environ["PATH"]
         # self.log.debug("enviro: {}".format(environment['PYPE_SCRIPTS']))
         clean_environment = {}
-        for key in environment:
+        for key, value in environment.items():
             clean_path = ""
             self.log.debug("key: {}".format(key))
-            to_process = environment[key]
-            if key == "PYPE_STUDIO_CORE_MOUNT":
-                clean_path = environment[key]
-            elif "://" in environment[key]:
-                clean_path = environment[key]
-            elif os.pathsep not in to_process:
-                try:
-                    path = environment[key]
-                    path.decode('UTF-8', 'strict')
-                    clean_path = os.path.normpath(path)
-                except UnicodeDecodeError:
-                    print('path contains non UTF characters')
+            if "://" in value:
+                clean_path = value
             else:
-                for path in environment[key].split(os.pathsep):
+                valid_paths = []
+                for path in value.split(os.pathsep):
+                    if not path:
+                        continue
                     try:
                         path.decode('UTF-8', 'strict')
-                        clean_path += os.path.normpath(path) + os.pathsep
+                        valid_paths.append(os.path.normpath(path))
                     except UnicodeDecodeError:
                         print('path contains non UTF characters')
 
-            # this should replace paths so they are pointing to network share
-            clean_path = clean_path.replace(
-                os.path.normpath(environment['PYPE_STUDIO_CORE_MOUNT']),
-                os.path.normpath(environment['PYPE_STUDIO_CORE_PATH']))
+                if valid_paths:
+                    clean_path = os.pathsep.join(valid_paths)
+
             clean_environment[key] = clean_path
 
         return clean_environment

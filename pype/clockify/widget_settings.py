@@ -26,7 +26,7 @@ class ClockifySettings(QtWidgets.QWidget):
         elif hasattr(parent, 'parent') and hasattr(parent.parent, 'icon'):
             self.setWindowIcon(self.parent.parent.icon)
         else:
-            pype_setup = os.getenv('PYPE_ROOT')
+            pype_setup = os.getenv('PYPE_SETUP_PATH')
             items = [pype_setup, "app", "resources", "icon.png"]
             fname = os.path.sep.join(items)
             icon = QtGui.QIcon(fname)
