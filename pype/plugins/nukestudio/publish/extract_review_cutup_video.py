@@ -40,9 +40,13 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
 
             tags = repre.get("tags", [])
 
-            if not next(
-                (t for t in tags
-                 if t in ["_cut-bigger", "_cut-smaller"]), None):
+            # check if supported tags are in representation for activation
+            filter_tag = False
+            for tag in ["_cut-bigger", "_cut-smaller"]:
+                if tag in tags:
+                    filter_tag = True
+                    break
+            if not filter_tag:
                 continue
 
             self.log.debug("__ repre: {}".format(repre))

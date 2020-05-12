@@ -55,7 +55,8 @@ class CollectClips(api.ContextPlugin):
                 is_sequence = False
 
                 self.log.debug(
-                    "__ assets_shared: {}".format(context.data["assetsShared"]))
+                    "__ assets_shared: {}".format(
+                        context.data["assetsShared"]))
                 match_range = next(
                     (k for k, v in context.data["assetsShared"].items()
                      if (v.get("_clipIn", 0) == clip_in)
