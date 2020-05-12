@@ -1,7 +1,6 @@
 import uuid
 import copy
 import json
-import logging
 import threading
 from socketserver import TCPServer
 from websocket_server import WebSocketHandler, WebsocketServer
