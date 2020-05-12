@@ -299,6 +299,7 @@ class PypeWebsocketServer(WebsocketServer):
 
     def stop(self):
         """Stop server."""
+        self.shutdown()
         self.server_close()
 
 
