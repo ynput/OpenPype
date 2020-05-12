@@ -413,7 +413,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "frameEnd": int(instance_data.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
-                "anatomy_template": "render",
                 "fps": new_instance.get("fps"),
                 "tags": ["review"] if preview else []
             }
@@ -490,7 +489,6 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "frameEnd": int(instance.get("frameEndHandle")),
                 # If expectedFile are absolute, we need only filenames
                 "stagingDir": staging,
-                "anatomy_template": "render",
                 "fps": instance.get("fps"),
                 "tags": ["review", "preview"] if preview else [],
             }
@@ -523,12 +521,10 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
                 "ext": ext,
                 "files": os.path.basename(remainder),
                 "stagingDir": os.path.dirname(remainder),
-                "anatomy_template": "publish",
             }
             if remainder in bake_render_path:
                 rep.update({
                     "fps": instance.get("fps"),
-                    "anatomy_template": "render",
                     "tags": ["review", "delete"]
                 })
                 # solve families with `preview` attributes

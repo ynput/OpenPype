@@ -1413,7 +1413,6 @@ class ExporterReview:
             'ext': self.ext,
             'files': self.file,
             "stagingDir": self.staging_dir,
-            "anatomy_template": "render",
             "tags": [self.name.replace("_", "-")] + add_tags
         }
 
