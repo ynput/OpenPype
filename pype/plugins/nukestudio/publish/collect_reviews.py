@@ -159,7 +159,7 @@ class CollectReviews(api.InstancePlugin):
         version_data.update({k: instance.data[k] for k in transfer_data})
 
         if 'version' in instance.data:
-            version_data["version"] = instance.data[version]
+            version_data["version"] = instance.data["version"]
 
         # add to data of representation
         version_data.update({
