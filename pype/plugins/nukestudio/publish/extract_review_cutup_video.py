@@ -87,8 +87,6 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
             start_sec = float(frame_start) / fps
             duration_sec = float(frame_end - frame_start + 1) / fps
 
-            input_args.append("-y")
-
             # check if not missing frames at start
             if (start_sec < 0) or (media_duration < frame_end):
                 # init empty variables
@@ -196,6 +194,7 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
             output_args.append("-intra")
 
             # output filename
+            output_args.append("-y")
             output_args.append(full_output_path)
 
             mov_args = [
