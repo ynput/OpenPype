@@ -259,7 +259,8 @@ class AppAction(BaseAction):
                 executable=execfile, args=[], environment=env
             )
 
-        elif sys.platform.startswith("linux") or sys.platform.startswith("darwin"):
+        elif (sys.platform.startswith("linux")
+                or sys.platform.startswith("darwin")):
             execfile = os.path.join(path.strip('"'), self.executable)
             if not os.path.isfile(execfile):
                 msg = "Launcher doesn't exist - {}".format(execfile)
