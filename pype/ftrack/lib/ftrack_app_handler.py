@@ -259,7 +259,8 @@ class AppAction(BaseAction):
                 executable=execfile, args=[], environment=env
             )
 
-        elif sys.platform.startswith("linux"):
+        elif (sys.platform.startswith("linux")
+                or sys.platform.startswith("darwin")):
             execfile = os.path.join(path.strip('"'), self.executable)
             if not os.path.isfile(execfile):
                 msg = "Launcher doesn't exist - {}".format(execfile)
@@ -303,7 +304,7 @@ class AppAction(BaseAction):
                     )
                 }
 
-            popen = avalonlib.launch(
+            popen = avalon.lib.launch(  # noqa: F841
                 "/usr/bin/env", args=["bash", execfile], environment=env
             )
 
