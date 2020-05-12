@@ -22,10 +22,9 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
         # get representation and loop them
         representations = inst_data["representations"]
 
-        # resolution data
+        # get resolution default
         resolution_width = inst_data["resolutionWidth"]
         resolution_height = inst_data["resolutionHeight"]
-        pixel_aspect = inst_data["pixelAspect"]
 
         # frame range data
         media_duration = inst_data["mediaDuration"]
@@ -86,24 +85,39 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
 
             input_args.append("-y")
 
-            if start_sec < 0:
-                audio_empty = ""
-                audio_output = ""
-                audio_layer = ""
+            # check if not missing frames at start
+            if (start_sec < 0) or (media_duration < frame_end):
+                # init empty variables
+                video_empty_start = video_layer_start = ""
+                audio_empty_start = audio_layer_start = ""
+                video_empty_end = video_layer_end = ""
+                audio_empty_end = audio_layer_end = ""
+                audio_input = audio_output = ""
                 v_inp_idx = 0
-                black_duration = abs(start_sec)
-                start_sec = 0
-                duration_sec = float(frame_end - (
-                    frame_start + (black_duration * fps)) + 1) / fps
+                concat_n = 1
+
+                # try to get video native resolution data
+                try:
+                    resolution_output = pype.api.subprocess((
+                        "{ffprobe_path} -i {full_input_path} -v error "
+                        "-select_streams v:0 -show_entries "
+                        "stream=width,height -of csv=s=x:p=0"
+                    ).format(**locals()))
+
+                    x, y = resolution_output.split("x")
+                    resolution_width = int(x)
+                    resolution_height = int(y)
+                except Exception as E:
+                    self.log.warning(
+                        "Video native resolution is untracable: {}".format(E))
 
                 if audio_check_output:
                     # adding input for empty audio
                     input_args.append("-f lavfi -i anullsrc")
-                    audio_empty = (
-                        "[0]atrim=duration={black_duration}[ga0];"
-                    ).format(**locals())
+
+                    # define audio empty concat variables
+                    audio_input = "[1:a]"
                     audio_output = ":a=1"
-                    audio_layer = "[ga0]"
                     v_inp_idx = 1
 
                 # adding input for video black frame
@@ -112,22 +126,67 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
                     "s={resolution_width}x{resolution_height}:r={fps}\""
                 ).format(**locals()))
 
-                # concutting black frame togather
+                if (start_sec < 0):
+                    # recalculate input video timing
+                    empty_start_dur = abs(start_sec)
+                    start_sec = 0
+                    duration_sec = float(frame_end - (
+                        frame_start + (empty_start_dur * fps)) + 1) / fps
+
+                    # define starting empty video concat variables
+                    video_empty_start = (
+                        "[{v_inp_idx}]trim=duration={empty_start_dur}[gv0];"
+                    ).format(**locals())
+                    video_layer_start = "[gv0]"
+
+                    if audio_check_output:
+                        # define starting empty audio concat variables
+                        audio_empty_start = (
+                            "[0]atrim=duration={empty_start_dur}[ga0];"
+                        ).format(**locals())
+                        audio_layer_start = "[ga0]"
+
+                    # alter concat number of clips
+                    concat_n += 1
+
+                # check if not missing frames at the end
+                if (media_duration < frame_end):
+                    # recalculate timing
+                    empty_end_dur = float(frame_end - media_duration + 1) / fps
+                    duration_sec = float(media_duration - frame_start) / fps
+
+                    # define ending empty video concat variables
+                    video_empty_end = (
+                        "[{v_inp_idx}]trim=duration={empty_end_dur}[gv1];"
+                    ).format(**locals())
+                    video_layer_end = "[gv1]"
+
+                    if audio_check_output:
+                        # define ending empty audio concat variables
+                        audio_empty_end = (
+                            "[0]atrim=duration={empty_end_dur}[ga1];"
+                        ).format(**locals())
+                        audio_layer_end = "[ga0]"
+
+                    # alter concat number of clips
+                    concat_n += 1
+
+                # concatting black frame togather
                 output_args.append((
                     "-filter_complex \""
-                    "{audio_empty}"
-                    "[{v_inp_idx}]trim=duration={black_duration}[gv0];"
-                    "[gv0]{audio_layer}[1:v]"
-                    "concat=n=2:v=1{audio_output}\""
+                    "{audio_empty_start}"
+                    "{video_empty_start}"
+                    "{audio_empty_end}"
+                    "{video_empty_end}"
+                    "{video_layer_start}{audio_layer_start}[1:v]{audio_input}"
+                    "{video_layer_end}{audio_layer_end}"
+                    "concat=n={concat_n}:v=1{audio_output}\""
                 ).format(**locals()))
 
+            # append ffmpeg input video clip
             input_args.append("-ss {:0.2f}".format(start_sec))
             input_args.append("-t {:0.2f}".format(duration_sec))
             input_args.append("-i {}".format(full_input_path))
-
-            # check if not missing frames at the end
-            self.log.debug("media_duration: {}".format(media_duration))
-            self.log.debug("frame_end: {}".format(frame_end))
 
             # make sure it is having no frame to frame comprassion
             output_args.append("-intra")
@@ -170,5 +229,5 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
                 representations_new.remove(repre)
 
         self.log.debug(
-            "new representations: {}".format(representations_new))
+            "Representations: {}".format(representations_new))
         instance.data["representations"] = representations_new
