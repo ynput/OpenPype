@@ -11,6 +11,7 @@ class CreateYetiCache(avalon.maya.Creator):
     label = "Yeti Cache"
     family = "yeticache"
     icon = "pagelines"
+    defaults = ["Main"]
 
     def __init__(self, *args, **kwargs):
         super(CreateYetiCache, self).__init__(*args, **kwargs)

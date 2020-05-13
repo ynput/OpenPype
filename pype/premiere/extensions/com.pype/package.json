@@ -1,0 +1,30 @@
+{
+  "name": "com.pype",
+  "version": "1.0.0",
+  "description": "pype avalon integration",
+  "license": "ISC",
+  "main": "CSXS\\manifest.xml",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "bluebird": "^3.7.2",
+    "decompress-zip": "^0.2.2",
+    "fs": "^0.0.1-security",
+    "jsonfile": "^6.0.1",
+    "junk": "^3.1.0",
+    "mkdirp": "^1.0.4",
+    "node-fetch": "^2.6.0",
+    "node-timecodes": "^2.5.0",
+    "opn": "^6.0.0",
+    "os": "^0.1.1",
+    "path": "^0.12.7",
+    "process": "^0.11.10",
+    "pure-uuid": "^1.6.0",
+    "rimraf": "^3.0.2",
+    "url": "^0.11.0",
+    "walk": "^2.3.14",
+    "xml2js": "^0.4.23"
+  },
+  "devDependencies": {}
+}

@@ -147,7 +147,7 @@ class ExtractYetiRig(pype.api.Extractor):
         nodes = instance.data["setMembers"]
         resources = instance.data.get("resources", {})
         with disconnect_plugs(settings, members):
-            with yetigraph_attribute_values(destination_folder, resources):
+            with yetigraph_attribute_values(resources_dir, resources):
                 with maya.attribute_values(attr_value):
                     cmds.select(nodes, noExpand=True)
                     cmds.file(maya_path,
@@ -169,8 +169,7 @@ class ExtractYetiRig(pype.api.Extractor):
                 'name': "ma",
                 'ext': 'ma',
                 'files': "yeti_rig.ma",
-                'stagingDir': dirname,
-                'anatomy_template': 'publish'
+                'stagingDir': dirname
             }
         )
         self.log.info("settings file: {}".format("yeti.rigsettings"))
@@ -179,8 +178,7 @@ class ExtractYetiRig(pype.api.Extractor):
                 'name': 'rigsettings',
                 'ext': 'rigsettings',
                 'files': 'yeti.rigsettings',
-                'stagingDir': dirname,
-                'anatomy_template': 'publish'
+                'stagingDir': dirname
             }
         )
 
