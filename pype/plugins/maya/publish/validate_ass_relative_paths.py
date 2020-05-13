@@ -37,50 +37,86 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
 
         scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
-        project_root = "{}{}{}".format(
-            os.environ.get("AVALON_PROJECTS"),
-            os.path.sep,
-            os.environ.get("AVALON_PROJECT")
-        )
         assert self.maya_is_true(relative_texture) is not True, \
             ("Texture path is set to be absolute")
         assert self.maya_is_true(relative_procedural) is not True, \
             ("Procedural path is set to be absolute")
 
+        anatomy = instance.context.data["anatomy"]
+
         texture_search_path = texture_search_path.replace("\\", "/")
         procedural_search_path = procedural_search_path.replace("\\", "/")
-        project_root = project_root.replace("\\", "/")
 
-        assert project_root in texture_search_path, \
+        texture_success, texture_search_rootless_path = (
+            anatomy.find_root_template_from_path(
+                texture_search_path
+            )
+        )
+        procedural_success, procedural_search_rootless_path = (
+            anatomy.find_root_template_from_path(
+                texture_search_path
+            )
+        )
+
+        assert not texture_success, \
             ("Project root is not in texture_search_path")
-        assert project_root in procedural_search_path, \
+        assert not procedural_success, \
             ("Project root is not in procedural_search_path")
 
     @classmethod
     def repair(cls, instance):
-        texture_search_path = cmds.getAttr(
-            "defaultArnoldRenderOptions.tspath"
+        texture_path = cmds.getAttr("defaultArnoldRenderOptions.tspath")
+        procedural_path = cmds.getAttr("defaultArnoldRenderOptions.pspath")
+
+        anatomy = instance.context.data["anatomy"]
+        texture_success, texture_rootless_path = (
+            anatomy.find_root_template_from_path(texture_path)
         )
-        procedural_search_path = cmds.getAttr(
-            "defaultArnoldRenderOptions.pspath"
+        procedural_success, procedural_rootless_path = (
+            anatomy.find_root_template_from_path(procedural_path)
         )
 
-        project_root = "{}{}{}".format(
-            os.environ.get("AVALON_PROJECTS"),
-            os.path.sep,
-            os.environ.get("AVALON_PROJECT"),
-        ).replace("\\", "/")
+        all_root_paths = anatomy.all_root_paths()
 
-        cmds.setAttr("defaultArnoldRenderOptions.tspath",
-                     project_root + os.pathsep + texture_search_path,
-                     type="string")
-        cmds.setAttr("defaultArnoldRenderOptions.pspath",
-                     project_root + os.pathsep + procedural_search_path,
-                     type="string")
-        cmds.setAttr("defaultArnoldRenderOptions.absolute_procedural_paths",
-                     False)
-        cmds.setAttr("defaultArnoldRenderOptions.absolute_texture_paths",
-                     False)
+        if not texture_success:
+            final_path = cls.find_absolute_path(
+                texture_rootless_path, all_root_paths
+            )
+            if final_path is None:
+                raise AssertionError("Ass is loaded out of defined roots.")
+
+            cmds.setAttr(
+                "defaultArnoldRenderOptions.tspath",
+                final_path,
+                type="string"
+            )
+            cmds.setAttr(
+                "defaultArnoldRenderOptions.absolute_texture_paths",
+                False
+            )
+
+        if not procedural_success:
+            final_path = cls.find_absolute_path(
+                texture_rootless_path, all_root_paths
+            )
+            if final_path is None:
+                raise AssertionError("Ass is loaded out of defined roots.")
+            cmds.setAttr(
+                "defaultArnoldRenderOptions.pspath",
+                final_path,
+                type="string"
+            )
+            cmds.setAttr(
+                "defaultArnoldRenderOptions.absolute_procedural_paths",
+                False
+            )
+
+    @staticmethod
+    def find_absolute_path(relative_path, all_root_paths):
+        for root_path in all_root_paths:
+            possible_path = os.path.join(root_path, relative_path)
+            if os.path.exists(possible_path):
+                return possible_path
 
     def maya_is_true(self, attr_val):
         """
