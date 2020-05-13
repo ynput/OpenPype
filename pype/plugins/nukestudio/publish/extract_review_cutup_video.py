@@ -6,8 +6,8 @@ import pype
 class ExtractReviewCutUpVideo(pype.api.Extractor):
     """Cut up clips from long video file"""
 
-    # order = api.ExtractorOrder
-    order = api.CollectorOrder + 0.1023
+    order = api.ExtractorOrder
+    # order = api.CollectorOrder + 0.1023
     label = "Extract Review CutUp Video"
     hosts = ["nukestudio"]
     families = ["review"]
