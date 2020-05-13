@@ -546,7 +546,7 @@ class ExtractBurnin(pype.api.Extractor):
         if len(matching_profiles) == 1:
             return matching_profiles[0]
 
-        return self.profile_exclusion(profile)
+        return self.profile_exclusion(matching_profiles)
 
     def profile_exclusion(self, matching_profiles):
         """Find out most matching profile by host, task and family match.
