@@ -6,7 +6,7 @@ import pyblish.api
 import avalon.api as avalon
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 import pype.api as pype
-from pypeapp import Logger
+from pypeapp import Logger, Anatomy
 
 log = Logger().get_logger(__name__, "nukestudio")
 
@@ -31,11 +31,17 @@ def set_workfiles():
     workfiles.show(workdir)
 
 def sync_avalon_data_to_workfile():
-    # import session to get project dir
     S = avalon.Session
+    # import session to get project dir
+    anatomy = Anatomy(S['AVALON_PROJECT'])
+
+    # generate multi root environment variables
+    anatomy.roots_obj.set_root_environments()
+
+    # set active project root work directory
     active_project_root = os.path.normpath(
-        os.path.join(S['AVALON_PROJECTS'], S['AVALON_PROJECT'])
-    )
+        os.path.join(os.getenv("PYPE_ROOT_WORK"), S['AVALON_PROJECT']))
+
     # getting project
     project = hiero.core.projects()[-1]
 
