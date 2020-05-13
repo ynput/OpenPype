@@ -33,23 +33,23 @@ class AvalonApps:
                 return
 
         icon = QtGui.QIcon(launcher_lib.resource("icon", "main.png"))
-        aShowLauncher = QtWidgets.QAction(icon, "&Launcher", parent_menu)
+        # aShowLauncher = QtWidgets.QAction(icon, "&Launcher", parent_menu)
         aLibraryLoader = QtWidgets.QAction("Library", parent_menu)
 
-        aShowLauncher.triggered.connect(self.show_launcher)
+        # aShowLauncher.triggered.connect(self.show_launcher)
         aLibraryLoader.triggered.connect(self.show_library_loader)
 
-        parent_menu.addAction(aShowLauncher)
+        # parent_menu.addAction(aShowLauncher)
         parent_menu.addAction(aLibraryLoader)
 
-    def show_launcher(self):
-        # if app_launcher don't exist create it/otherwise only show main window
-        if self.app_launcher is None:
-            root = os.path.realpath(os.environ["AVALON_PROJECTS"])
-            io.install()
-            APP_PATH = launcher_lib.resource("qml", "main.qml")
-            self.app_launcher = launcher_widget.Launcher(root, APP_PATH)
-        self.app_launcher.window.show()
+    # def show_launcher(self):
+    #     # if app_launcher don't exist create it/otherwise only show main window
+    #     if self.app_launcher is None:
+    #         root = os.path.realpath(os.environ["AVALON_PROJECTS"])
+    #         io.install()
+    #         APP_PATH = launcher_lib.resource("qml", "main.qml")
+    #         self.app_launcher = launcher_widget.Launcher(root, APP_PATH)
+    #     self.app_launcher.window.show()
 
     def show_library_loader(self):
         libraryloader.show(
