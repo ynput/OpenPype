@@ -215,7 +215,7 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
 
             repre_new = {
                 "files": new_file_name,
-                "stagingDir": staging_dir,
+                "stagingDir": full_output_dir,
                 "frameStart": frame_start,
                 "frameEnd": frame_end,
                 "frameStartFtrack": frame_start,
