@@ -51,7 +51,7 @@ class CollectClips(api.ContextPlugin):
                 clip_out = int(item.timelineOut())
                 file_head = source.filenameHead()
                 file_info = next((f for f in source.fileinfos()), None)
-                source_first_frame = file_info.startFrame()
+                source_first_frame = int(file_info.startFrame())
                 is_sequence = False
 
                 self.log.debug(

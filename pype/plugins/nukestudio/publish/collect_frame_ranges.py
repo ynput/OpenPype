@@ -36,7 +36,6 @@ class CollectClipFrameRanges(pyblish.api.InstancePlugin):
         frame_end = frame_start + (timeline_out - timeline_in)
 
         data.update({
-            "sourceFirst": source_in_h,
             "sourceInH": source_in_h,
             "sourceOutH": source_out_h,
             "frameStart": frame_start,

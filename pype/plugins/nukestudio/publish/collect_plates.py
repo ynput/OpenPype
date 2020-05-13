@@ -102,9 +102,6 @@ class CollectPlatesData(api.InstancePlugin):
             instance.data["representations"] = list()
 
         version_data = dict()
-        context = instance.context
-        anatomy = context.data.get("anatomy", None)
-        padding = int(anatomy.templates['render']['padding'])
 
         name = instance.data["subset"]
         source_path = instance.data["sourcePath"]
@@ -149,6 +146,7 @@ class CollectPlatesData(api.InstancePlugin):
 
         source_first_frame = instance.data.get("sourceFirst")
         source_file_head = instance.data.get("sourceFileHead")
+        self.log.debug("source_first_frame: `{}`".format(source_first_frame))
 
         if instance.data.get("isSequence", False):
             self.log.info("Is sequence of files")
