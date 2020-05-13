@@ -30,24 +30,11 @@ def set_workfiles():
     # show workfile gui
     workfiles.show(workdir)
 
-def set_multiroot_env():
-    """ Will fill multi root related pype environment variables
-    """
-    S = avalon.Session
-    # import session to get project dir
-    anatomy = Anatomy(S['AVALON_PROJECT'])
-
-    # generate multi root environment variables
-    anatomy.roots_obj.set_root_environments()
-
 
 def sync_avalon_data_to_workfile():
     """ Setting up all avalon data into hiero project
     """
     S = avalon.Session
-
-    if not os.getenv("PYPE_ROOT_WORK"):
-        set_multiroot_env()
 
     # set active project root work directory
     active_project_root = os.path.normpath(

@@ -177,9 +177,14 @@ def format_anatomy(data):
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
     try:
-        padding = int(anatomy.templates['render']['padding'])
+        # TODO: bck compatibility with old anatomy template
+        padding = int(anatomy.templates.get(
+            "frame_padding",
+            anatomy.templates["render"].get("padding"))
+        )
     except KeyError as e:
         msg = ("`padding` key is not in `render` "
+               "or `frame_padding` on is not available in "
                "Anatomy template. Please, add it there and restart "
                "the pipeline (padding: \"4\"): `{}`").format(e)
 
@@ -192,7 +197,7 @@ def format_anatomy(data):
         data["version"] = pype.get_version_from_path(file)
     project_document = pype.get_project()
     data.update({
-        "root": api.Session["AVALON_PROJECTS"],
+        "root": os.getenv("PYPE_ROOT_WORK"),
         "subset": data["avalon"]["subset"],
         "asset": data["avalon"]["asset"],
         "task": api.Session["AVALON_TASK"],
@@ -972,7 +977,7 @@ class WorkfileSettings(object):
         self.set_colorspace()
 
     def set_favorites(self):
-        projects_root = os.getenv("AVALON_PROJECTS")
+        projects_root = os.getenv("PYPE_ROOT_WORK")
         work_dir = os.getenv("AVALON_WORKDIR")
         asset = os.getenv("AVALON_ASSET")
         project = os.getenv("AVALON_PROJECT")
@@ -1109,9 +1114,10 @@ class BuildWorkfile(WorkfileSettings):
                                   nodes=nodes,
                                   **kwargs)
         self.to_script = to_script
+        
         # collect data for formating
         self.data_tmp = {
-            "root": root_path or api.Session["AVALON_PROJECTS"],
+            "root": root_path or os.getenv("PYPE_ROOT_WORK"),
             "project": {"name": self._project["name"],
                         "code": self._project["data"].get("code", '')},
             "asset": self._asset or os.environ["AVALON_ASSET"],
