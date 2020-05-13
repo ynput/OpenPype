@@ -973,7 +973,9 @@ class WorkfileSettings(object):
         self.set_colorspace()
 
     def set_favorites(self):
-        projects_root = os.getenv("AVALON_PROJECTS")
+        anatomy = get_anatomy()
+        work_template = anatomy.templates["work"]["path"]
+        projects_root = anatomy.root_value_for_template(work_template)
         work_dir = os.getenv("AVALON_WORKDIR")
         asset = os.getenv("AVALON_ASSET")
         project = os.getenv("AVALON_PROJECT")
