@@ -3,6 +3,7 @@ import re
 import inspect
 import collections
 from .lib import RestMethods
+from queue import Queue
 
 from pypeapp import Logger
 
@@ -208,7 +209,7 @@ class _RestApiFactory:
     """
     registered_objs = []
     unprocessed_routes = []
-    unprocessed_statics = []
+    unprocessed_statics = Queue()
 
     prepared_routes = {
         method: collections.defaultdict(list) for method in RestMethods
@@ -223,11 +224,6 @@ class _RestApiFactory:
     def _process_route(self, route):
         return self.unprocessed_routes.pop(
             self.unprocessed_routes.index(route)
-        )
-
-    def _process_statics(self, item):
-        return self.unprocessed_statics.pop(
-            self.unprocessed_statics.index(item)
         )
 
     def register_route(
@@ -251,7 +247,7 @@ class _RestApiFactory:
 
     def register_statics(self, item):
         log.debug("Registering statics path \"{}\"".format(item))
-        self.unprocessed_statics.append(item)
+        self.unprocessed_statics.put(item)
 
     def _prepare_route(self, route):
         """Prepare data of registered callbacks for routes.
@@ -290,8 +286,9 @@ class _RestApiFactory:
         methods has `__self__` or are defined in <locals> (it is expeted they
         do not requise access to object)
         """
-        for url_prefix, dir_path in self.unprocessed_statics:
-            self._process_statics((url_prefix, dir_path))
+
+        while not self.unprocessed_statics.empty():
+            url_prefix, dir_path = self.unprocessed_statics.get()
             dir_path = os.path.normpath(dir_path)
             if not os.path.exists(dir_path):
                 log.warning(
@@ -314,7 +311,7 @@ class _RestApiFactory:
                 if not method.restapi:
                     continue
 
-                for route in self.unprocessed_routes:
+                for route in list(self.unprocessed_routes):
                     callback = route["callback"]
                     if not (
                         callback.__qualname__ == method.__qualname__ and
@@ -330,7 +327,7 @@ class _RestApiFactory:
                     self._prepare_route(route)
                     break
 
-        for route in self.unprocessed_routes:
+        for route in list(self.unprocessed_routes):
             callback = route["callback"]
             is_class_method = len(callback.__qualname__.split(".")) != 1
             if is_class_method:

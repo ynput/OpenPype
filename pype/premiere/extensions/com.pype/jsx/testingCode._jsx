@@ -1,0 +1,11 @@
+﻿var extensionFolder = new Folder(
+  'C:/Users/jezsc/CODE/pype-setup/repos/pype/pype/premiere/extensions/com.pype');
+$.writeln(extensionFolder);
+var mainJsx = extensionFolder + '/pypeApp.jsx';
+$.evalFile(mainJsx);
+var appName = 'PPRO';
+$._ext.evalJSXFiles(extensionFolder, appName);
+$._ext.evalJSFiles(extensionFolder);
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+$.pype.getSequencePypeMetadata(app.project.activeSequence);

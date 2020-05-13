@@ -49,6 +49,14 @@ class CreateWriteRender(plugin.PypeCreator):
                 self.log.error(msg)
                 nuke.message(msg)
 
+            if len(nodes) == 0:
+                msg = (
+                    "No nodes selected. Please select a single node to connect"
+                    " to or tick off `Use selection`"
+                )
+                self.log.error(msg)
+                nuke.message(msg)
+
             selected_node = nodes[0]
             inputs = [selected_node]
             outputs = selected_node.dependent()

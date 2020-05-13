@@ -15,7 +15,7 @@ import pyblish.api
 class CollectAvalonEntities(pyblish.api.ContextPlugin):
     """Collect Anatomy into Context"""
 
-    order = pyblish.api.CollectorOrder - 0.02
+    order = pyblish.api.CollectorOrder - 0.1
     label = "Collect Avalon Entities"
 
     def process(self, context):
@@ -51,10 +51,26 @@ class CollectAvalonEntities(pyblish.api.ContextPlugin):
         context.data["frameStart"] = data.get("frameStart")
         context.data["frameEnd"] = data.get("frameEnd")
 
-        handles = int(data.get("handles") or 0)
-        context.data["handles"] = handles
-        context.data["handleStart"] = int(data.get("handleStart", handles))
-        context.data["handleEnd"] = int(data.get("handleEnd", handles))
+        handles = data.get("handles") or 0
+        handle_start = data.get("handleStart")
+        if handle_start is None:
+            handle_start = handles
+            self.log.info((
+                "Key \"handleStart\" is not set."
+                " Using value from \"handles\" key {}."
+            ).format(handle_start))
+
+        handle_end = data.get("handleEnd")
+        if handle_end is None:
+            handle_end = handles
+            self.log.info((
+                "Key \"handleEnd\" is not set."
+                " Using value from \"handles\" key {}."
+            ).format(handle_end))
+
+        context.data["handles"] = int(handles)
+        context.data["handleStart"] = int(handle_start)
+        context.data["handleEnd"] = int(handle_end)
 
         frame_start_h = data.get("frameStart") - context.data["handleStart"]
         frame_end_h = data.get("frameEnd") + context.data["handleEnd"]
