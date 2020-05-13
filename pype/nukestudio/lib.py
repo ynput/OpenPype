@@ -30,13 +30,24 @@ def set_workfiles():
     # show workfile gui
     workfiles.show(workdir)
 
-def sync_avalon_data_to_workfile():
+def set_multiroot_env():
+    """ Will fill multi root related pype environment variables
+    """
     S = avalon.Session
     # import session to get project dir
     anatomy = Anatomy(S['AVALON_PROJECT'])
 
     # generate multi root environment variables
     anatomy.roots_obj.set_root_environments()
+
+
+def sync_avalon_data_to_workfile():
+    """ Setting up all avalon data into hiero project
+    """
+    S = avalon.Session
+
+    if not os.getenv("PYPE_ROOT_WORK"):
+        set_multiroot_env()
 
     # set active project root work directory
     active_project_root = os.path.normpath(
@@ -356,17 +367,20 @@ def CreateNukeWorkfile(nodes=None,
     # create root node and save all metadata
     root_node = hiero.core.nuke.RootNode()
 
-    root_path = os.environ["AVALON_PROJECTS"]
+    if not os.getenv("PYPE_ROOT_WORK"):
+        set_multiroot_env()
+
+    root_path = os.environ["PYPE_ROOT_WORK"]
 
     nuke_script.addNode(root_node)
 
     # here to call pype.nuke.lib.BuildWorkfile
     script_builder = nklib.BuildWorkfile(
-                                root_node=root_node,
-                                root_path=root_path,
-                                nodes=nuke_script.getNodes(),
-                                **kwargs
-                                )
+        root_node=root_node,
+        root_path=root_path,
+        nodes=nuke_script.getNodes(),
+        **kwargs
+    )
 
 
 class ClipLoader:
