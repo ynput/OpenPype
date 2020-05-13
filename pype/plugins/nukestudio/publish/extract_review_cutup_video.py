@@ -190,6 +190,10 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
             input_args.append("-t {:0.2f}".format(duration_sec))
             input_args.append("-i {}".format(full_input_path))
 
+            # add copy audio video codec if only shortening clip
+            if "_cut-bigger" in tags:
+                output_args.append("-c:v copy")
+
             # make sure it is having no frame to frame comprassion
             output_args.append("-intra")
 
