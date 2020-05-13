@@ -6,7 +6,7 @@ import pyblish.api
 import avalon.api as avalon
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 import pype.api as pype
-from pypeapp import Logger, Anatomy
+from pypeapp import Logger
 
 log = Logger().get_logger(__name__, "nukestudio")
 
