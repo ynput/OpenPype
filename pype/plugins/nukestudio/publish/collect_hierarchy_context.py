@@ -74,21 +74,25 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
 
                 # and finding only hierarchical tag
                 if "hierarchy" in t_type.lower():
-                    # check if any clip with the same clip range
-                    # is alerady in asset shared so
+                    # Check for clips with the same range
+                    # this is for testing if any vertically neighbouring
+                    # clips has been already processed
                     match = next((
                         k for k, v in assets_shared.items()
                         if (v["_clipIn"] == clip_in)
                         and (v["_clipOut"] == clip_out)
                     ), False)
 
-                    self.log.warning("Clip matching name: {}".format(match))
                     self.log.debug(
                         "__ assets_shared[match]: {}".format(
                             assets_shared[match]))
-                    # check if hierarchy key is in match
+
+                    # check if hierarchy key is present in matched
+                    # vertically neighbouring clip
                     if not assets_shared[match].get("hierarchy"):
                         match = False
+
+                    # rise exception if multiple hierarchy tag found
                     assert not match, (
                         "Two clips above each other with"
                         " hierarchy tag are not allowed"
