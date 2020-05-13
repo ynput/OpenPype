@@ -79,8 +79,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
                 representation = {
                     'name': ext,
                     'ext': ext,
-                    "stagingDir": output_dir,
-                    "anatomy_template": "render"
+                    "stagingDir": output_dir
                 }
 
             try:

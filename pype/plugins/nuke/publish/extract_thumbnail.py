@@ -130,7 +130,6 @@ class ExtractThumbnail(pype.api.Extractor):
             "stagingDir": staging_dir,
             "frameStart": first_frame,
             "frameEnd": last_frame,
-            "anatomy_template": "render",
             "tags": tags
         }
         instance.data["representations"].append(repre)

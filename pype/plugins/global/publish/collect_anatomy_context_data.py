@@ -1,13 +1,14 @@
-"""Collect Anatomy and global anatomy data.
+"""Collect global context Anatomy data.
 
 Requires:
+    context -> anatomy
+    context -> projectEntity
+    context -> assetEntity
+    context -> username
+    context -> datetimeData
     session -> AVALON_TASK
-    projectEntity, assetEntity -> collect_avalon_entities *(pyblish.api.CollectorOrder)
-    username -> collect_pype_user *(pyblish.api.CollectorOrder + 0.001)
-    datetimeData -> collect_datetime_data *(pyblish.api.CollectorOrder)
 
 Provides:
-    context -> anatomy (pypeapp.Anatomy)
     context -> anatomyData
 """
 
@@ -15,29 +16,37 @@ import os
 import json
 
 from avalon import api, lib
-from pypeapp import Anatomy
 import pyblish.api
 
 
-class CollectAnatomy(pyblish.api.ContextPlugin):
-    """Collect Anatomy into Context"""
+class CollectAnatomyContextData(pyblish.api.ContextPlugin):
+    """Collect Anatomy Context data.
+
+    Example:
+    context.data["anatomyData"] = {
+        "project": {
+            "name": "MyProject",
+            "code": "myproj"
+        },
+        "asset": "AssetName",
+        "hierarchy": "path/to/asset",
+        "task": "Working",
+        "username": "MeDespicable",
+
+        *** OPTIONAL ***
+        "app": "maya"       # Current application base name
+        + mutliple keys from `datetimeData`         # see it's collector
+    }
+    """
 
     order = pyblish.api.CollectorOrder + 0.002
-    label = "Collect Anatomy"
+    label = "Collect Anatomy Context Data"
 
     def process(self, context):
-        root_path = api.registered_root()
         task_name = api.Session["AVALON_TASK"]
 
         project_entity = context.data["projectEntity"]
         asset_entity = context.data["assetEntity"]
-
-        project_name = project_entity["name"]
-
-        context.data["anatomy"] = Anatomy(project_name)
-        self.log.info(
-            "Anatomy object collected for project \"{}\".".format(project_name)
-        )
 
         hierarchy_items = asset_entity["data"]["parents"]
         hierarchy = ""
@@ -45,15 +54,13 @@ class CollectAnatomy(pyblish.api.ContextPlugin):
             hierarchy = os.path.join(*hierarchy_items)
 
         context_data = {
-            "root": root_path,
             "project": {
-                "name": project_name,
+                "name": project_entity["name"],
                 "code": project_entity["data"].get("code")
             },
             "asset": asset_entity["name"],
             "hierarchy": hierarchy.replace("\\", "/"),
             "task": task_name,
-
             "username": context.data["user"]
         }
 
