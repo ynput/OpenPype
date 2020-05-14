@@ -15,29 +15,6 @@ from pype.plugin import contextplugin_should_run
 CREATE_NO_WINDOW = 0x08000000
 
 
-def deadline_command(cmd):
-    # Find Deadline
-    path = os.environ.get("DEADLINE_PATH", None)
-    assert path is not None, "Variable 'DEADLINE_PATH' must be set"
-
-    executable = os.path.join(path, "deadlinecommand")
-    if os.name == "nt":
-        executable += ".exe"
-    assert os.path.exists(
-        executable), "Deadline executable not found at %s" % executable
-    assert cmd, "Must have a command"
-
-    query = (executable, cmd)
-
-    process = subprocess.Popen(query, stdout=subprocess.PIPE,
-                               stderr=subprocess.PIPE,
-                               universal_newlines=True,
-                               creationflags=CREATE_NO_WINDOW)
-    out, err = process.communicate()
-
-    return out
-
-
 class CollectDeadlineUser(pyblish.api.ContextPlugin):
     """Retrieve the local active Deadline user"""
 
@@ -53,12 +30,42 @@ class CollectDeadlineUser(pyblish.api.ContextPlugin):
         if not contextplugin_should_run(self, context):
             return
 
-        user = deadline_command("GetCurrentUserName").strip()
+        user = self.deadline_command("GetCurrentUserName")
 
-        if not user:
-            self.log.warning("No Deadline user found. "
-                             "Do you have Deadline installed?")
+        if user:
+            user = user.strip()
+        else:
+            self.log.warning(
+                "No Deadline user found. Do you have Deadline installed?"
+            )
             return
 
         self.log.info("Found Deadline user: {}".format(user))
         context.data['deadlineUser'] = user
+
+    def deadline_command(self, cmd):
+        # Find Deadline
+        path = os.environ.get("DEADLINE_PATH", None)
+        if path is None:
+            self.log.error("Variable 'DEADLINE_PATH' must be set")
+            return
+
+        executable = os.path.join(path, "deadlinecommand")
+        if os.name == "nt":
+            executable += ".exe"
+        if not os.path.exists(executable):
+            self.log.error("Deadline executable not found at %s" % executable)
+            return
+        if not cmd:
+            self.log.error("Must have a command")
+            return
+
+        query = (executable, cmd)
+
+        process = subprocess.Popen(query, stdout=subprocess.PIPE,
+                                   stderr=subprocess.PIPE,
+                                   universal_newlines=True,
+                                   creationflags=CREATE_NO_WINDOW)
+        out, err = process.communicate()
+
+        return out
