@@ -177,9 +177,16 @@ def format_anatomy(data):
     log.debug("__ anatomy.templates: {}".format(anatomy.templates))
 
     try:
-        padding = int(anatomy.templates['render']['padding'])
+        # TODO: bck compatibility with old anatomy template
+        padding = int(
+            anatomy.templates["render"].get(
+                "frame_padding",
+                anatomy.templates["render"].get("padding")
+            )
+        )
     except KeyError as e:
         msg = ("`padding` key is not in `render` "
+               "or `frame_padding` on is not available in "
                "Anatomy template. Please, add it there and restart "
                "the pipeline (padding: \"4\"): `{}`").format(e)
 

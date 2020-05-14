@@ -341,8 +341,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 index_frame_start = None
 
                 if repre.get("frameStart"):
-                    frame_start_padding = (
-                        anatomy.templates["render"]["padding"]
+                    frame_start_padding = int(
+                        anatomy.templates["render"].get(
+                            "frame_padding",
+                            anatomy.templates["render"].get("padding")
+                        )
                     )
                     index_frame_start = int(repre.get("frameStart"))
 
