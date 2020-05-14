@@ -3,7 +3,7 @@ import os
 from pyblish import api as pyblish
 from avalon import api as avalon
 from .lib import filter_pyblish_plugins
-from pypeapp import config, Roots, Anatomy
+from pypeapp import config, Anatomy
 
 
 import logging
