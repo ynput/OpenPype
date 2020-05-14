@@ -38,9 +38,9 @@ def sync_avalon_data_to_workfile():
     anatomy = Anatomy(project_name)
     work_template = anatomy.templates["work"]["path"]
     work_root = anatomy.root_value_for_template(work_template)
-    active_project_root = os.path.normpath(
+    active_project_root = (
         os.path.join(work_root, project_name)
-    )
+    ).replace("\\", "/")
     # getting project
     project = hiero.core.projects()[-1]
 
