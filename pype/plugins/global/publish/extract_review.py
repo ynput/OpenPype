@@ -125,7 +125,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 ).format(str(tags)))
                 continue
 
-            for output_def in outputs:
+            for _output_def in outputs:
+                output_def = copy.deepcopy(_output_def)
                 # Make sure output definition has "tags" key
                 if "tags" not in output_def:
                     output_def["tags"] = []
