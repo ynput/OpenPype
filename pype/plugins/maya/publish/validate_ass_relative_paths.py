@@ -44,72 +44,57 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
 
         anatomy = instance.context.data["anatomy"]
 
-        texture_search_path = texture_search_path.replace("\\", "/")
-        procedural_search_path = procedural_search_path.replace("\\", "/")
+        # Use project root variables for multiplatform support, see:
+        # https://docs.arnoldrenderer.com/display/A5AFMUG/Search+Path
+        # ':' as path separator is supported by Arnold for all platforms.
+        keys = anatomy.root_environments().keys()
+        paths = []
+        for k in keys:
+            paths.append("[{}]".format(k))
 
-        texture_success, texture_search_rootless_path = (
-            anatomy.find_root_template_from_path(
-                texture_search_path
-            )
-        )
-        procedural_success, procedural_search_rootless_path = (
-            anatomy.find_root_template_from_path(
-                texture_search_path
-            )
+        self.log.info("discovered roots: {}".format(":".join(paths)))
+
+        assert ":".join(paths) in texture_search_path, (
+            "Project roots are not in texture_search_path"
         )
 
-        assert not texture_success, \
-            ("Project root is not in texture_search_path")
-        assert not procedural_success, \
-            ("Project root is not in procedural_search_path")
+        assert ":".join(paths) in procedural_search_path, (
+            "Project roots are not in procedural_search_path"
+        )
 
     @classmethod
     def repair(cls, instance):
         texture_path = cmds.getAttr("defaultArnoldRenderOptions.tspath")
         procedural_path = cmds.getAttr("defaultArnoldRenderOptions.pspath")
 
+        # Use project root variables for multiplatform support, see:
+        # https://docs.arnoldrenderer.com/display/A5AFMUG/Search+Path
+        # ':' as path separator is supported by Arnold for all platforms.
         anatomy = instance.context.data["anatomy"]
-        texture_success, texture_rootless_path = (
-            anatomy.find_root_template_from_path(texture_path)
+        keys = anatomy.root_environments().keys()
+        paths = []
+        for k in keys:
+            paths.append("[{}]".format(k))
+
+        cmds.setAttr(
+            "defaultArnoldRenderOptions.tspath",
+            ":".join([p for p in paths + [texture_path] if p]),
+            type="string"
         )
-        procedural_success, procedural_rootless_path = (
-            anatomy.find_root_template_from_path(procedural_path)
+        cmds.setAttr(
+            "defaultArnoldRenderOptions.absolute_texture_paths",
+            False
         )
 
-        all_root_paths = anatomy.all_root_paths()
-
-        if not texture_success:
-            final_path = cls.find_absolute_path(
-                texture_rootless_path, all_root_paths
-            )
-            if final_path is None:
-                raise AssertionError("Ass is loaded out of defined roots.")
-
-            cmds.setAttr(
-                "defaultArnoldRenderOptions.tspath",
-                final_path,
-                type="string"
-            )
-            cmds.setAttr(
-                "defaultArnoldRenderOptions.absolute_texture_paths",
-                False
-            )
-
-        if not procedural_success:
-            final_path = cls.find_absolute_path(
-                texture_rootless_path, all_root_paths
-            )
-            if final_path is None:
-                raise AssertionError("Ass is loaded out of defined roots.")
-            cmds.setAttr(
-                "defaultArnoldRenderOptions.pspath",
-                final_path,
-                type="string"
-            )
-            cmds.setAttr(
-                "defaultArnoldRenderOptions.absolute_procedural_paths",
-                False
-            )
+        cmds.setAttr(
+            "defaultArnoldRenderOptions.pspath",
+            ":".join([p for p in paths + [procedural_path] if p]),
+            type="string"
+        )
+        cmds.setAttr(
+            "defaultArnoldRenderOptions.absolute_procedural_paths",
+            False
+        )
 
     @staticmethod
     def find_absolute_path(relative_path, all_root_paths):
