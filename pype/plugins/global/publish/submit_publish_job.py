@@ -262,7 +262,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         # self.log.info(json.dumps(payload, indent=4, sort_keys=True))
 
         url = "{}/api/jobs".format(self.DEADLINE_REST_URL)
-        response = requests.post(url, json=payload)
+        response = requests.post(url, json=payload, timeout=10)
         if not response.ok:
             raise Exception(response.text)
 
