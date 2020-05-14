@@ -356,8 +356,11 @@ class IntegrateMasterVersion(pyblish.api.InstancePlugin):
                 _anatomy_filled = anatomy.format(anatomy_data)
                 _template_filled = _anatomy_filled["master"]["path"]
                 head, tail = _template_filled.split(frame_splitter)
-                padding = (
-                    anatomy.templates["render"]["padding"]
+                padding = int(
+                    anatomy.templates["render"].get(
+                        "frame_padding",
+                        anatomy.templates["render"].get("padding")
+                    )
                 )
 
                 dst_col = clique.Collection(

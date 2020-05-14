@@ -6,7 +6,7 @@ import pyblish.api
 import avalon.api as avalon
 from avalon.vendor.Qt import (QtWidgets, QtGui)
 import pype.api as pype
-from pypeapp import Logger
+from pypeapp import Logger, Anatomy
 
 log = Logger().get_logger(__name__, "nukestudio")
 
@@ -30,12 +30,17 @@ def set_workfiles():
     # show workfile gui
     workfiles.show(workdir)
 
+
 def sync_avalon_data_to_workfile():
     # import session to get project dir
-    S = avalon.Session
-    active_project_root = os.path.normpath(
-        os.path.join(S['AVALON_PROJECTS'], S['AVALON_PROJECT'])
-    )
+    project_name = avalon.Session["AVALON_PROJECT"]
+
+    anatomy = Anatomy(project_name)
+    work_template = anatomy.templates["work"]["path"]
+    work_root = anatomy.root_value_for_template(work_template)
+    active_project_root = (
+        os.path.join(work_root, project_name)
+    ).replace("\\", "/")
     # getting project
     project = hiero.core.projects()[-1]
 
@@ -350,17 +355,19 @@ def CreateNukeWorkfile(nodes=None,
     # create root node and save all metadata
     root_node = hiero.core.nuke.RootNode()
 
-    root_path = os.environ["AVALON_PROJECTS"]
+    anatomy = Anatomy(os.environ["AVALON_PROJECT"])
+    work_template = anatomy.templates["work"]["path"]
+    root_path = anatomy.root_value_for_template(work_template)
 
     nuke_script.addNode(root_node)
 
     # here to call pype.nuke.lib.BuildWorkfile
     script_builder = nklib.BuildWorkfile(
-                                root_node=root_node,
-                                root_path=root_path,
-                                nodes=nuke_script.getNodes(),
-                                **kwargs
-                                )
+        root_node=root_node,
+        root_path=root_path,
+        nodes=nuke_script.getNodes(),
+        **kwargs
+    )
 
 
 class ClipLoader:
