@@ -341,8 +341,11 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 index_frame_start = None
 
                 if repre.get("frameStart"):
-                    frame_start_padding = (
-                        anatomy.templates["render"]["padding"]
+                    frame_start_padding = int(
+                        anatomy.templates["render"].get(
+                            "frame_padding",
+                            anatomy.templates["render"].get("padding")
+                        )
                     )
                     index_frame_start = int(repre.get("frameStart"))
 
@@ -651,7 +654,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             source = context.data["currentFile"]
             anatomy = instance.context.data["anatomy"]
             success, rootless_path = (
-                anatomy.roots_obj.find_root_template_from_path(source)
+                anatomy.find_root_template_from_path(source)
             )
             if success:
                 source = rootless_path

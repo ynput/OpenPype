@@ -9,7 +9,6 @@
     "additionalProperties": true,
 
     "required": [
-        "AVALON_PROJECTS",
         "AVALON_PROJECT",
         "AVALON_ASSET",
         "AVALON_CONFIG"

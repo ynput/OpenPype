@@ -195,7 +195,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
         output_dir = instance.data["outputDir"]
         # Convert output dir to `{root}/rest/of/path/...` with Anatomy
         success, rootless_path = (
-            self.anatomy.roots_obj.find_root_template_from_path(output_dir)
+            self.anatomy.find_root_template_from_path(output_dir)
         )
         if not success:
             # `rootless_path` is not set to `output_dir` if none of roots match
@@ -379,7 +379,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             staging = os.path.dirname(list(cols[0])[0])
             success, rootless_staging_dir = (
-                self.anatomy.roots_obj.find_root_template_from_path(staging)
+                self.anatomy.find_root_template_from_path(staging)
             )
             if success:
                 staging = rootless_staging_dir
@@ -471,7 +471,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
-                self.anatomy.roots_obj.find_root_template_from_path(staging)
+                self.anatomy.find_root_template_from_path(staging)
             )
             if success:
                 staging = rootless_staging_dir
@@ -506,7 +506,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
 
             staging = os.path.dirname(remainder)
             success, rootless_staging_dir = (
-                self.anatomy.roots_obj.find_root_template_from_path(staging)
+                self.anatomy.find_root_template_from_path(staging)
             )
             if success:
                 staging = rootless_staging_dir
@@ -619,7 +619,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             source = context.data["currentFile"]
 
         success, rootless_path = (
-            self.anatomy.roots_obj.find_root_template_from_path(source)
+            self.anatomy.find_root_template_from_path(source)
         )
         if success:
             source = rootless_path
@@ -684,7 +684,7 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             staging_dir = repre.get("stagingDir")
             if staging_dir:
                 success, rootless_staging_dir = (
-                    self.anatomy.roots_obj.find_root_template_from_path(
+                    self.anatomy.find_root_template_from_path(
                         staging_dir
                     )
                 )

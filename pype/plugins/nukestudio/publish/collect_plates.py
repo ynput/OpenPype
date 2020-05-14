@@ -104,7 +104,12 @@ class CollectPlatesData(api.InstancePlugin):
         version_data = dict()
         context = instance.context
         anatomy = context.data.get("anatomy", None)
-        padding = int(anatomy.templates['render']['padding'])
+        padding = int(
+            anatomy.templates["render"].get(
+                "frame_padding",
+                anatomy.templates["render"].get("padding")
+            )
+        )
 
         name = instance.data["subset"]
         source_path = instance.data["sourcePath"]

@@ -39,10 +39,8 @@ class CollectContextDataFromAport(pyblish.api.ContextPlugin):
         # get avalon session data and convert \ to /
         _S = avalon.session
 
-        projects = Path(_S["AVALON_PROJECTS"]).resolve()
         asset = _S["AVALON_ASSET"]
         workdir = Path(_S["AVALON_WORKDIR"]).resolve()
-        _S["AVALON_PROJECTS"] = str(projects)
         _S["AVALON_WORKDIR"] = str(workdir)
 
         context.data["avalonSession"] = _S

@@ -42,36 +42,8 @@ class DeleteOldVersions(BaseAction):
         return False
 
     def interface(self, session, entities, event):
+        # TODO Add roots existence validation
         items = []
-        root = os.environ.get("AVALON_PROJECTS")
-        if not root:
-            msg = "Root path to projects is not set."
-            items.append({
-                "type": "label",
-                "value": "<i><b>ERROR:</b> {}</i>".format(msg)
-            })
-            self.show_interface(
-                items=items, title=self.inteface_title, event=event
-            )
-            return {
-                "success": False,
-                "message": msg
-            }
-
-        if not os.path.exists(root):
-            msg = "Root path does not exists \"{}\".".format(str(root))
-            items.append({
-                "type": "label",
-                "value": "<i><b>ERROR:</b> {}</i>".format(msg)
-            })
-            self.show_interface(
-                items=items, title=self.inteface_title, event=event
-            )
-            return {
-                "success": False,
-                "message": msg
-            }
-
         values = event["data"].get("values")
         if values:
             versions_count = int(values["last_versions_count"])
