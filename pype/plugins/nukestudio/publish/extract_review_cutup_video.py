@@ -87,8 +87,13 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
             start_sec = float(frame_start) / fps
             duration_sec = float(frame_end - frame_start + 1) / fps
 
+            empty_add = None
+
             # check if not missing frames at start
             if (start_sec < 0) or (media_duration < frame_end):
+                # for later swithing off `-c:v copy` output arg
+                empty_add = True
+
                 # init empty variables
                 video_empty_start = video_layer_start = ""
                 audio_empty_start = audio_layer_start = ""
@@ -191,7 +196,7 @@ class ExtractReviewCutUpVideo(pype.api.Extractor):
             input_args.append("-i {}".format(full_input_path))
 
             # add copy audio video codec if only shortening clip
-            if "_cut-bigger" in tags:
+            if ("_cut-bigger" in tags) and (not empty_add):
                 output_args.append("-c:v copy")
 
             # make sure it is having no frame to frame comprassion
