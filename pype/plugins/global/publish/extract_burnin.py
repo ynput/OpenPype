@@ -132,9 +132,17 @@ class ExtractBurnin(pype.api.Extractor):
             filled_anatomy = anatomy.format_all(burnin_data)
             burnin_data["anatomy"] = filled_anatomy.get_solved()
 
+            first_output = True
+
             files_to_delete = []
             for filename_suffix, burnin_def in repre_burnin_defs.items():
                 new_repre = copy.deepcopy(repre)
+
+                # Keep "ftrackreview" tag only on first output
+                if first_output:
+                    first_output = False
+                elif "ftrackreview" in new_repre["tags"]:
+                    new_repre["tags"].remove("ftrackreview")
 
                 burnin_options = copy.deepcopy(profile_options)
                 burnin_values = copy.deepcopy(profile_burnins)
