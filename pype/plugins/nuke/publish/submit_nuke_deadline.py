@@ -183,7 +183,7 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
                 "BatchName": responce_data["Props"]["Batch"],
                 "JobDependency0": responce_data["_id"],
                 "ChunkSize": 99999999
-                })
+            })
 
         # Include critical environment variables with submission
         keys = [
@@ -195,7 +195,8 @@ class NukeSubmitDeadline(pyblish.api.InstancePlugin):
             "FTRACK_SERVER",
             "PYBLISHPLUGINPATH",
             "NUKE_PATH",
-            "TOOL_ENV"
+            "TOOL_ENV",
+            "PYPE_DEV"
         ]
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)

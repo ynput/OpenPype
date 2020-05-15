@@ -291,7 +291,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AVALON_PROJECT",
             "AVALON_ASSET",
             "AVALON_TASK",
-            "PYPE_USERNAME"
+            "PYPE_USERNAME",
+            "PYPE_DEV"
         ]
 
         environment = dict({key: os.environ[key] for key in keys
