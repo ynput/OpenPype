@@ -609,13 +609,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("input_width: `{}`".format(input_width))
         self.log.debug("resolution_height: `{}`".format(input_height))
 
-        # Skip processing if both conditions are not met
-        if "reformat" not in new_repre["tags"] and not letter_box:
-            self.log.debug('Tag "reformat" and "letter_box" key are not set.')
-            new_repre["resolutionWidth"] = input_width
-            new_repre["resolutionHeight"] = input_height
-            return filters
-
         # NOTE Setting only one of `width` or `heigth` is not allowed
         output_width = output_def.get("width")
         output_height = output_def.get("height")
@@ -633,6 +626,21 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug(
             "Output resolution is {}x{}".format(output_width, output_height)
         )
+
+        # Skip processing if resolution is same as input's and letterbox is
+        # not set
+        if (
+            output_width == input_width
+            and output_height == input_height
+            and not letter_box
+        ):
+            self.log.debug(
+                "Output resolution is same as input's"
+                " and \"letter_box\" key is not set. Skipping reformat part."
+            )
+            new_repre["resolutionWidth"] = input_width
+            new_repre["resolutionHeight"] = input_height
+            return filters
 
         # defining image ratios
         input_res_ratio = (
@@ -666,18 +674,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
         if letter_box:
             ffmpeg_width = output_width
             ffmpeg_height = output_height
-            if "reformat" in new_repre["tags"]:
-                if input_res_ratio == output_res_ratio:
-                    letter_box /= pixel_aspect
-                elif input_res_ratio < output_res_ratio:
-                    letter_box /= scale_factor_by_width
-                else:
-                    letter_box /= scale_factor_by_height
-            else:
+            if input_res_ratio == output_res_ratio:
                 letter_box /= pixel_aspect
-                if input_res_ratio != output_res_ratio:
-                    ffmpeg_width = input_width
-                    ffmpeg_height = int(input_height * pixel_aspect)
+            elif input_res_ratio < output_res_ratio:
+                letter_box /= scale_factor_by_width
+            else:
+                letter_box /= scale_factor_by_height
 
             # QUESTION Is scale required when ffmpeg_width is same as
             # output_width and ffmpeg_height as output_height
@@ -698,7 +700,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             filters.extend([scale_filter, "setsar=1", top_box, bottom_box])
 
         # scaling none square pixels and 1920 width
-        if "reformat" in new_repre["tags"]:
+        if input_height != output_height or input_width != output_width:
             if input_res_ratio < output_res_ratio:
                 self.log.debug(
                     "Input's resolution ratio is lower then output's"
