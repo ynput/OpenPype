@@ -639,7 +639,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             (float(input_width) * pixel_aspect) / input_height
         )
         output_res_ratio = float(output_width) / float(output_height)
-        self.log.debug("resolution_ratio: `{}`".format(input_res_ratio))
+        self.log.debug("input_res_ratio: `{}`".format(input_res_ratio))
         self.log.debug("output_res_ratio: `{}`".format(output_res_ratio))
 
         # Round ratios to 2 decimal places for comparing
@@ -700,13 +700,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # scaling none square pixels and 1920 width
         if "reformat" in new_repre["tags"]:
             if input_res_ratio < output_res_ratio:
-                self.log.debug("lower then output")
+                self.log.debug(
+                    "Input's resolution ratio is lower then output's"
+                )
                 width_scale = int(output_width * scale_factor_by_width)
                 width_half_pad = int((output_width - width_scale) / 2)
                 height_scale = output_height
                 height_half_pad = 0
             else:
-                self.log.debug("heigher then output")
+                self.log.debug("Input is heigher then output")
                 width_scale = output_width
                 width_half_pad = 0
                 height_scale = int(input_height * scale_factor_by_width)
