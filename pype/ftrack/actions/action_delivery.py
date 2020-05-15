@@ -340,7 +340,7 @@ class Delivery(BaseAction):
 
             repre_path = self.path_from_represenation(repre, anatomy)
             # TODO add backup solution where root of path from component
-            # is repalced with AVALON_PROJECTS root
+            # is repalced with root
             if not frame:
                 self.process_single_file(
                     repre_path, anatomy, anatomy_name, anatomy_data
