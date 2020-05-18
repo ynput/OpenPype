@@ -42,6 +42,18 @@ class ExtractReview(pyblish.api.InstancePlugin):
     to_height = 1080
 
     def process(self, instance):
+        # ffmpeg doesn't support multipart exrs
+        if instance.data.get("multipartExr") is True:
+            instance_label = (
+                getattr(instance, "label", None)
+                or instance.data.get("label")
+                or instance.data.get("name")
+            )
+            self.log.info((
+                "Instance \"{}\" contain \"multipartExr\". Skipped."
+            ).format(instance_label))
+            return
+
         # Use legacy processing when `profiles` is not set.
         if self.profiles is None:
             return self.legacy_process(instance)
@@ -56,17 +68,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 instance.data["representations"].remove(repre)
 
     def main_process(self, instance):
-        if instance.data.get("multipartExr") is True:
-            instance_label = (
-                getattr(instance, "label", None)
-                or instance.data.get("label")
-                or instance.data.get("name")
-            )
-            self.log.info((
-                "Instance \"{}\" contain \"multipartExr\". Skipped."
-            ).format(instance_label))
-            return    
-
         host_name = pyblish.api.registered_hosts()[-1]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
