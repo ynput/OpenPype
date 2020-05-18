@@ -56,6 +56,17 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 instance.data["representations"].remove(repre)
 
     def main_process(self, instance):
+        if instance.data.get("multipartExr") is True:
+            instance_label = (
+                getattr(instance, "label", None)
+                or instance.data.get("label")
+                or instance.data.get("name")
+            )
+            self.log.info((
+                "Instance \"{}\" contain \"multipartExr\". Skipped."
+            ).format(instance_label))
+            return    
+
         host_name = pyblish.api.registered_hosts()[-1]
         task_name = os.environ["AVALON_TASK"]
         family = self.main_family_from_instance(instance)
@@ -96,11 +107,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         # Loop through representations
         for repre in tuple(instance.data["representations"]):
             tags = repre.get("tags") or []
-            if (
-                "review" not in tags
-                or "multipartExr" in tags
-                or "thumbnail" in tags
-            ):
+            if "review" not in tags or "thumbnail" in tags:
                 continue
 
             input_ext = repre["ext"]
@@ -1122,7 +1129,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             tags = repre.get("tags", [])
 
-            if "multipartExr" in tags:
+            if instance.data.get("multipartExr") is True:
                 # ffmpeg doesn't support multipart exrs
                 continue
 

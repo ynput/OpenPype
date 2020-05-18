@@ -60,6 +60,18 @@ class ExtractBurnin(pype.api.Extractor):
         self.log.debug(instance.data["representations"])
 
     def main_process(self, instance):
+        # ffmpeg doesn't support multipart exrs
+        if instance.data.get("multipartExr") is True:
+            instance_label = (
+                getattr(instance, "label", None)
+                or instance.data.get("label")
+                or instance.data.get("name")
+            )
+            self.log.info((
+                "Instance \"{}\" contain \"multipartExr\". Skipped."
+            ).format(instance_label))
+            return
+
         # TODO get these data from context
         host_name = pyblish.api.registered_hosts()[-1]
         task_name = os.environ["AVALON_TASK"]
@@ -318,13 +330,6 @@ class ExtractBurnin(pype.api.Extractor):
         if "burnin" not in (repre.get("tags") or []):
             self.log.info((
                 "Representation \"{}\" don't have \"burnin\" tag. Skipped."
-            ).format(repre["name"]))
-            return False
-
-        # ffmpeg doesn't support multipart exrs
-        if "multipartExr" in repre["tags"]:
-            self.log.info((
-                "Representation \"{}\" contain \"multipartExr\" tag. Skipped."
             ).format(repre["name"]))
             return False
         return True
