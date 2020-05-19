@@ -282,9 +282,6 @@ class ExtractReview(pyblish.api.InstancePlugin):
         ffmpeg_video_filters = out_def_ffmpeg_args.get("video_filters") or []
         ffmpeg_audio_filters = out_def_ffmpeg_args.get("audio_filters") or []
 
-        # Add argument to override output file
-        ffmpeg_input_args.append("-y")
-
         # Prepare input and output filepaths
         self.input_output_paths(new_repre, output_def, temp_data)
 
@@ -353,6 +350,9 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         lut_filters = self.lut_filters(new_repre, instance, ffmpeg_input_args)
         ffmpeg_video_filters.extend(lut_filters)
+
+        # Add argument to override output file
+        ffmpeg_output_args.append("-y")
 
         # NOTE This must be latest added item to output arguments.
         ffmpeg_output_args.append(
