@@ -93,7 +93,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             profile, instance_families
         )
         if not _profile_outputs:
-            self.log.warning((
+            self.log.info((
                 "Skipped instance. All output definitions from selected"
                 " profile does not match to instance families. \"{}\""
             ).format(str(instance_families)))
@@ -508,7 +508,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             filename_base = "{}_{}".format(filename, filename_suffix)
             # Temporary tempalte for frame filling. Example output:
-            # "basename.%04d.mov" when `frame_end` == 1001
+            # "basename.%04d.exr" when `frame_end` == 1001
             repr_file = "{}.%{:0>2}d.{}".format(
                 filename_base, len(str(frame_end)), output_ext
             )
@@ -678,10 +678,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         )
 
         # letter_box
-        letter_box = output_def.get("letter_box")
         if letter_box:
-            ffmpeg_width = output_width
-            ffmpeg_height = output_height
             if input_res_ratio == output_res_ratio:
                 letter_box /= pixel_aspect
             elif input_res_ratio < output_res_ratio:
@@ -689,10 +686,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
             else:
                 letter_box /= scale_factor_by_height
 
-            # QUESTION Is scale required when ffmpeg_width is same as
-            # output_width and ffmpeg_height as output_height
             scale_filter = "scale={}x{}:flags=lanczos".format(
-                ffmpeg_width, ffmpeg_height
+                output_width, output_height
             )
 
             top_box = (
