@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+"""Collect .vrayscene instance."""
 import os
 
 import pyblish.api
@@ -5,18 +7,18 @@ import pyblish.api
 from maya import cmds
 
 from avalon import api
+from pype.maya.expected_files import ExpectedFiles
 
 
 class CollectVRayScene(pyblish.api.ContextPlugin):
-    """Collect all information prior for exporting vrscenes
-    """
+    """Collect all information prior for exporting vrscenes."""
 
     order = pyblish.api.CollectorOrder
     label = "Collect VRay Scene"
     hosts = ["maya"]
 
     def process(self, context):
-
+        """Collector entry point."""
         # Sort by displayOrder
         def sort_by_display_order(layer):
             return cmds.getAttr("%s.displayOrder" % layer)
