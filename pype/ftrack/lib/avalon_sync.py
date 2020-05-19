@@ -879,7 +879,13 @@ class SyncEntitiesFactory:
 
         for item in values["data"]:
             value = item["value"]
-            if value is None:
+            # WARNING It is not possible to propage enumerate hierachical
+            # attributes with multiselection 100% right. Unseting all values
+            # will cause inheritance from parent.
+            if (
+                value is None
+                or (isinstance(value, (tuple, list)) and not value)
+            ):
                 continue
             entity_id = item["entity_id"]
             key = attribute_key_by_id[item["configuration_id"]]
