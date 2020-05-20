@@ -301,6 +301,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             sequence_repre = isinstance(files, list)
             repre_context = None
             if sequence_repre:
+                self.log.debug(
+                    "files: {}".format(files))
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
                     "src_tail_collections: {}".format(str(src_collections)))
@@ -347,6 +349,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                             anatomy.templates["render"].get("padding")
                         )
                     )
+
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
