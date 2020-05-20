@@ -1148,6 +1148,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 repre_new = repre.copy()
                 ext = profile.get("ext", None)
                 p_tags = profile.get('tags', [])
+
+                # append repre tags into profile tags
+                for t in tags:
+                    if t not in p_tags:
+                        p_tags.append(t)
+
                 self.log.info("p_tags: `{}`".format(p_tags))
 
                 # adding control for presets to be sequence
