@@ -115,7 +115,7 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
 
         # Add version data to instance
         version_data = {
-            "colorspace":  node["colorspace"].value(),
+            "colorspace": node["colorspace"].value(),
         }
 
         instance.data["family"] = "write"
@@ -149,6 +149,11 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
         })
+
+        if "render" in families:
+            instance.data["family"] = "render2d"
+            if "render" not in families:
+                instance.data["families"].insert(0, "render")
 
         if "prerender" in families:
             instance.data.update({
