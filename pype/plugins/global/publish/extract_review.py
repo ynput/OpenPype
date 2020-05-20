@@ -303,7 +303,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             )
 
         elif temp_data["without_handles"]:
-            # QUESTION Shall we change this to use filter:
+            # TODO use frames ubstead if `-ss`:
             # `select="gte(n\,{handle_start}),setpts=PTS-STARTPTS`
             # Pros:
             #   1.) Python is not good at float operation
@@ -667,7 +667,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             float(output_width) / (input_width * pixel_aspect)
         )
         scale_factor_by_height = (
-            float(output_height) / (input_height * pixel_aspect)
+            float(output_height) / input_height
         )
 
         self.log.debug(
@@ -716,7 +716,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 self.log.debug("Input is heigher then output")
                 width_scale = output_width
                 width_half_pad = 0
-                height_scale = int(input_height * scale_factor_by_width)
+                height_scale = int(input_height * scale_factor_by_height)
                 height_half_pad = int((output_height - height_scale) / 2)
 
             self.log.debug("width_scale: `{}`".format(width_scale))
