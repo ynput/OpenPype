@@ -1317,6 +1317,10 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 if resolution_ratio_test < delivery_ratio_test:
                     scale_factor = float(self.to_width) / (
                         resolution_width * pixel_aspect)
+                    if int(scale_factor * 100) == 100:
+                        scale_factor = (
+                            float(self.to_height) / resolution_height
+                        )
 
                 self.log.debug("__ scale_factor: `{}`".format(scale_factor))
 
