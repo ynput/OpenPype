@@ -641,6 +641,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
             output_width == input_width
             and output_height == input_height
             and not letter_box
+            and pixel_aspect == 1
         ):
             self.log.debug(
                 "Output resolution is same as input's"
