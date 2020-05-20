@@ -615,7 +615,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
         self.log.debug("pixel_aspect: `{}`".format(pixel_aspect))
         self.log.debug("input_width: `{}`".format(input_width))
-        self.log.debug("resolution_height: `{}`".format(input_height))
+        self.log.debug("input_height: `{}`".format(input_height))
 
         # NOTE Setting only one of `width` or `heigth` is not allowed
         output_width = output_def.get("width")
@@ -703,12 +703,16 @@ class ExtractReview(pyblish.api.InstancePlugin):
             filters.extend([scale_filter, "setsar=1", top_box, bottom_box])
 
         # scaling none square pixels and 1920 width
-        if input_height != output_height or input_width != output_width:
+        if (
+            input_height != output_height
+            or input_width != output_width
+            or pixel_aspect != 1
+        ):
             if input_res_ratio < output_res_ratio:
                 self.log.debug(
                     "Input's resolution ratio is lower then output's"
                 )
-                width_scale = int(output_width * scale_factor_by_width)
+                width_scale = int(output_width * scale_factor_by_height)
                 width_half_pad = int((output_width - width_scale) / 2)
                 height_scale = output_height
                 height_half_pad = 0
@@ -716,7 +720,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 self.log.debug("Input is heigher then output")
                 width_scale = output_width
                 width_half_pad = 0
-                height_scale = int(input_height * scale_factor_by_height)
+                height_scale = int(input_height * scale_factor_by_width)
                 height_half_pad = int((output_height - height_scale) / 2)
 
             self.log.debug("width_scale: `{}`".format(width_scale))
