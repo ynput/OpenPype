@@ -125,7 +125,7 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     if "family" not in cmds.listAttr(s):
                         continue
 
-                    attachTo.append(
+                    attach_to.append(
                         {
                             "version": None,  # we need integrator for that
                             "subset": s,
@@ -170,15 +170,15 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
             if isinstance(exp_files[0], dict):
                 for aov, files in exp_files[0].items():
                     full_paths = []
-                    for ef in files:
-                        full_path = os.path.join(workspace, "renders", ef)
+                    for e in files:
+                        full_path = os.path.join(workspace, "renders", e)
                         full_path = full_path.replace("\\", "/")
                         full_paths.append(full_path)
                     aov_dict[aov] = full_paths
             else:
                 full_paths = []
-                for ef in exp_files:
-                    full_path = os.path.join(workspace, "renders", ef)
+                for e in exp_files:
+                    full_path = os.path.join(workspace, "renders", e)
                     full_path = full_path.replace("\\", "/")
                     full_paths.append(full_path)
                 aov_dict["beauty"] = full_paths
@@ -254,6 +254,13 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
                     value = None
 
                 data[attr] = value
+
+            # handle standalone renderers
+            if render_instance.data.get("vrayScene") is True:
+                data["families"].append("vrayscene")
+
+            if render_instance.data.get("ass") is True:
+                data["families"].append("assScene")
 
             # Include (optional) global settings
             # Get global overrides and translate to Deadline values

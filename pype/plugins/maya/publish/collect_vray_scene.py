@@ -15,7 +15,7 @@ class CollectVRayScene(pyblish.api.ContextPlugin):
 
     order = pyblish.api.CollectorOrder
     label = "Collect VRay Scene"
-    hosts = ["maya"]
+    hosts = ["foo"]
 
     def process(self, context):
         """Collector entry point."""

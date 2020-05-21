@@ -24,7 +24,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
     label = "Submit to Deadline ( vrscene )"
     order = pyblish.api.IntegratorOrder
     hosts = ["maya"]
-    families = ["vrayscene"]
+    families = ["vrayscene_foo"]
     if not os.environ.get("DEADLINE_REST_URL"):
         optional = False
         active = False
@@ -130,7 +130,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
 
         start_frame = int(instance.data["frameStart"])
         end_frame = int(instance.data["frameEnd"])
-        ext = instance.data.get("ext",  "exr")
+        ext = instance.data.get("ext") or "exr"
 
         # Create output directory for renders
         render_ouput = self.format_output_filename(instance,
@@ -238,7 +238,7 @@ class VraySubmitDeadline(pyblish.api.InstancePlugin):
                 for index, k in enumerate(env)}
 
     def format_output_filename(self, instance, filename, template, dir=False):
-        """Format the expected output file of the Export job
+        """Format the expected output file of the Export job.
 
         Example:
             <Scene>/<Scene>_<Layer>/<Layer>
