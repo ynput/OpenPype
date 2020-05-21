@@ -30,6 +30,11 @@ class ExtractReviewSlate(pype.api.Extractor):
         slate_width = slate_stream["width"]
         slate_height = slate_stream["height"]
 
+        if "reviewToWidth" in inst_data:
+            use_legacy_code = True
+        else:
+            use_legacy_code = False
+
         pixel_aspect = inst_data.get("pixelAspect", 1)
         fps = inst_data.get("fps")
 
@@ -41,8 +46,12 @@ class ExtractReviewSlate(pype.api.Extractor):
                 continue
 
             # values are set in ExtractReview
-            to_width = repre["resolutionWidth"]
-            to_height = repre["resolutionHeight"]
+            if use_legacy_code:
+                to_width = inst_data["reviewToWidth"]
+                to_height = inst_data["reviewToHeight"]
+            else:
+                to_width = repre["resolutionWidth"]
+                to_height = repre["resolutionHeight"]
 
             # defining image ratios
             resolution_ratio = (
@@ -90,17 +99,25 @@ class ExtractReviewSlate(pype.api.Extractor):
             output_args = []
 
             # preset's input data
-            input_args.extend(repre["outputDef"].get('input', []))
+            if use_legacy_code:
+                input_args.extend(repre["_profile"].get('input', []))
+            else:
+                input_args.extend(repre["outputDef"].get('input', []))
             input_args.append("-loop 1 -i {}".format(slate_path))
             input_args.extend([
                 "-r {}".format(fps),
                 "-t 0.04"]
             )
 
-            # Codecs are copied from source for whole input
-            codec_args = self.codec_args(repre)
-            self.log.debug("Codec arguments: {}".format(codec_args))
-            output_args.extend(codec_args)
+            if use_legacy_code:
+                codec_args = repre["_profile"].get('codec', [])
+                output_args.extend(codec_args)
+                # preset's output data
+                output_args.extend(repre["_profile"].get('output', []))
+            else:
+                # Codecs are copied from source for whole input
+                codec_args = self.codec_args(repre)
+                output_args.extend(codec_args)
 
             # make sure colors are correct
             output_args.extend([
@@ -111,29 +128,43 @@ class ExtractReviewSlate(pype.api.Extractor):
             ])
 
             # scaling none square pixels and 1920 width
-            if resolution_ratio_test < delivery_ratio_test:
-                self.log.debug("lower then delivery")
-                width_scale = int(slate_width * scale_factor_by_height)
-                width_half_pad = int((to_width - width_scale) / 2)
-                height_scale = to_height
-                height_half_pad = 0
-            else:
-                self.log.debug("heigher then delivery")
-                width_scale = to_width
-                width_half_pad = 0
-                height_scale = int(slate_height * scale_factor_by_width)
-                height_half_pad = int((to_height - height_scale) / 2)
+            if (
+                # Always scale slate if not legacy
+                not use_legacy_code or
+                # Legacy code required reformat tag
+                (use_legacy_code and "reformat" in p_tags)
+            ):
+                if resolution_ratio_test < delivery_ratio_test:
+                    self.log.debug("lower then delivery")
+                    width_scale = int(slate_width * scale_factor_by_height)
+                    width_half_pad = int((to_width - width_scale) / 2)
+                    height_scale = to_height
+                    height_half_pad = 0
+                else:
+                    self.log.debug("heigher then delivery")
+                    width_scale = to_width
+                    width_half_pad = 0
+                    height_scale = int(slate_height * scale_factor_by_width)
+                    height_half_pad = int((to_height - height_scale) / 2)
 
-            self.log.debug("__ width_scale: `{}`".format(width_scale))
-            self.log.debug("__ width_half_pad: `{}`".format(width_half_pad))
-            self.log.debug("__ height_scale: `{}`".format(height_scale))
-            self.log.debug("__ height_half_pad: `{}`".format(height_half_pad))
+                self.log.debug(
+                    "__ width_scale: `{}`".format(width_scale)
+                )
+                self.log.debug(
+                    "__ width_half_pad: `{}`".format(width_half_pad)
+                )
+                self.log.debug(
+                    "__ height_scale: `{}`".format(height_scale)
+                )
+                self.log.debug(
+                    "__ height_half_pad: `{}`".format(height_half_pad)
+                )
 
-            scaling_arg = ("scale={0}x{1}:flags=lanczos,"
-                           "pad={2}:{3}:{4}:{5}:black,setsar=1").format(
-                width_scale, height_scale, to_width, to_height,
-                width_half_pad, height_half_pad
-            )
+                scaling_arg = ("scale={0}x{1}:flags=lanczos,"
+                               "pad={2}:{3}:{4}:{5}:black,setsar=1").format(
+                    width_scale, height_scale, to_width, to_height,
+                    width_half_pad, height_half_pad
+                )
 
             vf_back = self.add_video_filter_args(output_args, scaling_arg)
             # add it to output_args
