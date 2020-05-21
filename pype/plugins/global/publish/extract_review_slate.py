@@ -26,6 +26,10 @@ class ExtractReviewSlate(pype.api.Extractor):
         slate_path = inst_data.get("slateFrame")
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
+        slate_stream = pype.lib.ffprobe_streams(slate_path)[0]
+        resolution_width = slate_stream["width"]
+        resolution_height = slate_stream["height"]
+
         pixel_aspect = inst_data.get("pixelAspect", 1)
         fps = inst_data.get("fps")
 
@@ -39,15 +43,6 @@ class ExtractReviewSlate(pype.api.Extractor):
             # values are set in ExtractReview
             to_width = repre["resolutionWidth"]
             to_height = repre["resolutionHeight"]
-
-            # QUESTION Should we use resolution from instance and not source's?
-            resolution_width = inst_data.get("resolutionWidth")
-            if resolution_width is None:
-                resolution_width = to_width
-
-            resolution_height = inst_data.get("resolutionHeight")
-            if resolution_height is None:
-                resolution_height = to_height
 
             # defining image ratios
             resolution_ratio = (
