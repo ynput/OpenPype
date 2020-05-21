@@ -93,8 +93,7 @@ class ExtractReviewSlate(pype.api.Extractor):
 
             input_args = []
             output_args = []
-            # overrides output file
-            input_args.append("-y")
+
             # preset's input data
             input_args.extend(repre["outputDef"].get('input', []))
             input_args.append("-loop 1 -i {}".format(slate_path))
@@ -102,7 +101,6 @@ class ExtractReviewSlate(pype.api.Extractor):
                 "-r {}".format(fps),
                 "-t 0.04"]
             )
-
 
             # Codecs are copied from source for whole input
             codec_args = self.codec_args(repre)
@@ -157,6 +155,8 @@ class ExtractReviewSlate(pype.api.Extractor):
                     output_args, scaling_arg)
                 # add it to output_args
                 output_args.insert(0, vf_back)
+            # overrides output file
+            output_args.append("-y")
 
             slate_v_path = slate_path.replace(".png", ext)
             output_args.append(slate_v_path)
