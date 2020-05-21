@@ -1022,7 +1022,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         return False
 
     def filter_outputs_by_families(self, profile, families):
-        """Filter outputs that are not supported for instance families.
+        """Return outputs matching input instance families.
 
         Output definitions without families filter are marked as valid.
 
@@ -1044,7 +1044,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         filtered_outputs = {}
         for filename_suffix, output_def in outputs.items():
             output_filters = output_def.get("filter")
-            # When filters not set then skip filtering process
+            # If no filter on output preset, skip filtering and add output
+            # profile for farther processing
             if not output_filters:
                 filtered_outputs[filename_suffix] = output_def
                 continue
