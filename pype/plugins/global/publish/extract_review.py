@@ -234,7 +234,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
         frame_end_handle = frame_end + handle_end
 
         # Change output frames when output should be without handles
-        without_handles = "no-handles" in output_def["tags"]
+        without_handles = bool("no-handles" in output_def["tags"])
         if without_handles:
             output_frame_start = frame_start
             output_frame_end = frame_end
@@ -496,8 +496,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
         self.log.debug("New representation ext: `{}`".format(output_ext))
 
         # Output is image file sequence witht frames
-        output_ext_is_image = output_ext in self.image_exts
-        output_is_sequence = (
+        output_ext_is_image = bool(output_ext in self.image_exts)
+        output_is_sequence = bool(
             output_ext_is_image
             and "sequence" in output_def["tags"]
         )
