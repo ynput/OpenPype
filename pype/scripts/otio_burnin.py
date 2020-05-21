@@ -519,6 +519,12 @@ def burnins_from_data(
         if codec_name:
             ffmpeg_args.append("-codec:v {}".format(codec_name))
 
+        profile_name = burnin._streams[0].get("profile")
+        if profile_name:
+            # lower profile name and repalce spaces with underscore
+            profile_name = profile_name.replace(" ", "_").lower()
+            ffmpeg_args.append("-profile:v {}".format(profile_name))
+
         pix_fmt = burnin._streams[0].get("pix_fmt")
         if pix_fmt:
             ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
