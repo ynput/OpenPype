@@ -1276,9 +1276,9 @@ class SyncToAvalonEvent(BaseEvent):
             if not avalon_ent:
                 # TODO logging
                 self.log.debug((
-                    "Can't change the name (Entity is not is avalon) <{}>"
+                    "Entity is not is avalon. Moving to \"add\" process. <{}>"
                 ).format(ent_path))
-                not_found[ftrack_id] = ent_info
+                self.ftrack_added[ftrack_id] = ent_info
                 continue
 
             if new_name == avalon_ent["name"]:
