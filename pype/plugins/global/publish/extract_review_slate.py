@@ -103,9 +103,6 @@ class ExtractReviewSlate(pype.api.Extractor):
                 "-t 0.04"]
             )
 
-            # output args
-            # preset's output data
-            output_args.extend(repre["outputDef"].get('output', []))
 
             # Codecs are copied from source for whole input
             codec_args = self.codec_args(repre)
@@ -298,6 +295,11 @@ class ExtractReviewSlate(pype.api.Extractor):
         codec_name = streams[0].get("codec_name")
         if codec_name:
             codec_args.append("-codec:v {}".format(codec_name))
+
+        profile_name = streams[0].get("profile")
+        if profile_name:
+            profile_name = profile_name.replace(" ", "_").lower()
+            codec_args.append("-profile:v {}".format(profile_name))
 
         pix_fmt = streams[0].get("pix_fmt")
         if pix_fmt:
