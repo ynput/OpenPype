@@ -713,7 +713,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 self.log.debug(
                     "Input's resolution ratio is lower then output's"
                 )
-                width_scale = int(output_width * scale_factor_by_height)
+                width_scale = int(input_width * scale_factor_by_height)
                 width_half_pad = int((output_width - width_scale) / 2)
                 height_scale = output_height
                 height_half_pad = 0
