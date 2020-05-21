@@ -67,9 +67,15 @@ class ExtractReviewSlate(pype.api.Extractor):
             delivery_ratio_test = float(
                 "{:0.2f}".format(delivery_ratio))
 
-            if resolution_ratio_test < delivery_ratio_test:
-                scale_factor = float(to_width) / (
-                    resolution_width * pixel_aspect)
+            if resolution_ratio_test != delivery_ratio_test:
+                scale_factor = (
+                    float(to_width) / (
+                        resolution_width * pixel_aspect)
+                )
+                if int(scale_factor * 100) == 100:
+                    scale_factor = (
+                        float(to_height) / resolution_height
+                    )
 
             self.log.debug("__ scale_factor: `{}`".format(scale_factor))
 
