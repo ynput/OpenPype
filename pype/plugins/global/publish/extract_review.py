@@ -20,15 +20,15 @@ class ExtractReview(pyblish.api.InstancePlugin):
     label = "Extract Review"
     order = pyblish.api.ExtractorOrder + 0.02
     families = ["review"]
-    hosts = ["nuke", "maya", "shell", "premiere"]
+    hosts = ["nuke", "maya", "shell", "nukestudio", "premiere"]
 
     outputs = {}
     ext_filter = []
     to_width = 1920
     to_height = 1080
 
-    def process(self, instance):
 
+    def process(self, instance):
         output_profiles = self.outputs or {}
 
         inst_data = instance.data
@@ -82,6 +82,12 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 repre_new = repre.copy()
                 ext = profile.get("ext", None)
                 p_tags = profile.get('tags', [])
+
+                # append repre tags into profile tags
+                for t in tags:
+                    if t not in p_tags:
+                        p_tags.append(t)
+
                 self.log.info("p_tags: `{}`".format(p_tags))
 
                 # adding control for presets to be sequence
@@ -175,7 +181,8 @@ class ExtractReview(pyblish.api.InstancePlugin):
                 frame_start_handle = frame_start - handle_start
                 frame_end_handle = frame_end + handle_end
                 if isinstance(repre["files"], list):
-                    if frame_start_handle != repre.get("detectedStart", frame_start_handle):
+                    if frame_start_handle != repre.get(
+                            "detectedStart", frame_start_handle):
                         frame_start_handle = repre.get("detectedStart")
 
                     # exclude handle if no handles defined
