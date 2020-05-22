@@ -81,7 +81,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "assembly",
                 "fbx",
                 "textures",
-                "action"
+                "action",
+                "template"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -743,7 +744,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 matching_profiles[name] = filters
 
         if len(matching_profiles) == 1:
-            template_name = matching_profiles.keys()[0]
+            template_name = tuple(matching_profiles.keys())[0]
             self.log.debug(
                 "Using template name \"{}\".".format(template_name)
             )
