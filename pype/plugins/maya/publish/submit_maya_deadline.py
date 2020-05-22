@@ -284,6 +284,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             output_filename_0.replace("\\", "/")
 
         payload_skeleton["JobInfo"]["Comment"] = comment
+        payload_skeleton["PluginInfo"]["RenderLayer"] = renderlayer
 
         # Handle environments -----------------------------------------------
         # We need those to pass them to pype for it to set correct context
@@ -295,12 +296,13 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AVALON_ASSET",
             "AVALON_TASK",
             "PYPE_USERNAME",
-            "PYPE_DEV"
+            "PYPE_DEV",
+            "PYPE_LOG_NO_COLORS"
         ]
 
         environment = dict({key: os.environ[key] for key in keys
                             if key in os.environ}, **api.Session)
-
+        environment["PYPE_LOG_NO_COLORS"] = "1"
         payload_skeleton["JobInfo"].update({
             "EnvironmentKeyValue%d" % index: "{key}={value}".format(
                 key=key,
@@ -374,8 +376,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload = copy.deepcopy(payload_skeleton)
 
         job_info_ext = {
-                # Asset dependency to wait for at least the scene file to sync.
-                "AssetDependency0": data["filepath"],
+            # Asset dependency to wait for at least the scene file to sync.
+            "AssetDependency0": data["filepath"],
         }
 
         plugin_info = {
@@ -402,7 +404,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
     def _get_vray_export_payload(self, data):
         payload = copy.deepcopy(payload_skeleton)
-
         job_info_ext = {
             # Job name, as seen in Monitor
             "Name": "Export {} [{}-{}]".format(
@@ -421,7 +422,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "SceneFile": data["filepath"],
             "SkipExistingFrames": True,
             "UsingRenderLayers": True,
-            "UseLegacyRenderLayers": True
+            "UseLegacyRenderLayers": True,
+            "RenderLayer": data["renderlayer"],
+            "ProjectPath": data["workspace"]
         }
 
         payload["JobInfo"].update(job_info_ext)
@@ -430,13 +433,14 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
     def _get_vray_render_payload(self, data):
         payload = copy.deepcopy(payload_skeleton)
+        vray_settings = cmds.ls(type="VRaySettingsNode")
+        node = vray_settings[0]
+        template = cmds.getAttr("{}.vrscene_filename".format(node))
+        # "vrayscene/<Scene>/<Scene>_<Layer>/<Layer>"
 
-        first_file = data["output_filename_0"]
-        ext, _ = os.path.splitext(first_file)
-        first_file = first_file.replace(ext, "vrscene")
-        first_file = first_file.replace(
-            "#" * data["render_variables"]["padding"],
-            "{:04d}".format(int(self._instance.data["frameStartHandle"])))
+        scene, _ = os.path.splitext(data["filename"])
+        first_file = self.format_output_filename(scene, template)
+        first_file = "{}/{}".format(data["workspace"], first_file)
         job_info_ext = {
             "Name": "Render {} [{}-{}]".format(
                 data["jobname"],
@@ -530,3 +534,44 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # add 10sec timeout before bailing out
         kwargs['timeout'] = 10
         return requests.get(*args, **kwargs)
+
+    def format_output_filename(self, filename, template, dir=False):
+        """Format the expected output file of the Export job.
+
+        Example:
+            <Scene>/<Scene>_<Layer>/<Layer>
+            "shot010_v006/shot010_v006_CHARS/CHARS"
+
+        Args:
+            instance:
+            filename(str):
+            dir(bool):
+
+        Returns:
+            str
+
+        """
+        def smart_replace(string, key_values):
+            new_string = string
+            for key, value in key_values.items():
+                new_string = new_string.replace(key, value)
+            return new_string
+
+        # Ensure filename has no extension
+        file_name, _ = os.path.splitext(filename)
+
+        # Reformat without tokens
+        output_path = smart_replace(
+            template,
+            {"<Scene>": file_name,
+             "<Layer>": self._instance.data['setMembers']})
+
+        if dir:
+            return output_path.replace("\\", "/")
+
+        start_frame = int(self._instance.data["frameStartHandle"])
+        filename_zero = "{}_{:04d}.vrscene".format(output_path, start_frame)
+
+        result = filename_zero.replace("\\", "/")
+
+        return result
