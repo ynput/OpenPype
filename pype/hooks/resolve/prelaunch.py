@@ -26,6 +26,9 @@ class ResolvePrelaunch(PypeHook):
         if not env:
             env = os.environ
 
+        env["PRE_PYTHON_SCRIPT"] = os.path.normpath(env["PRE_PYTHON_SCRIPT"])
+        self.log.info(env["PRE_PYTHON_SCRIPT"])
+
         try:
             __import__("pype.resolve")
             __import__("pyblish")
