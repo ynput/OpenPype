@@ -1669,6 +1669,7 @@ class ExporterReviewMov(ExporterReview):
             if any(colorspaces):
                 # OCIOColorSpace with controled output
                 dag_node = nuke.createNode("OCIOColorSpace")
+                self._temp_nodes.append(dag_node)
                 for c in colorspaces:
                     test = dag_node["out_colorspace"].setValue(str(c))
                     if test:
