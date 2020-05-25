@@ -2,7 +2,7 @@ import pyblish.api
 
 from maya import cmds
 
-from pype.maya import lib
+from pype.hosts.maya import lib
 
 
 class CollectRenderableCamera(pyblish.api.InstancePlugin):

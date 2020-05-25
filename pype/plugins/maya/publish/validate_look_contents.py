@@ -1,6 +1,6 @@
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateLookContents(pyblish.api.InstancePlugin):
@@ -21,7 +21,7 @@ class ValidateLookContents(pyblish.api.InstancePlugin):
     families = ['look']
     hosts = ['maya']
     label = 'Look Data Contents'
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""

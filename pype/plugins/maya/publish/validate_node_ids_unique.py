@@ -2,8 +2,8 @@ from collections import defaultdict
 
 import pyblish.api
 import pype.api
-import pype.maya.action
-import pype.maya.lib as lib
+import pype.hosts.maya.action
+from pype.hosts.maya import lib
 
 
 class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
@@ -20,8 +20,8 @@ class ValidateNodeIdsUnique(pyblish.api.InstancePlugin):
                 "rig",
                 "yetiRig"]
 
-    actions = [pype.maya.action.SelectInvalidAction,
-               pype.maya.action.GenerateUUIDsOnInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction,
+               pype.hosts.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

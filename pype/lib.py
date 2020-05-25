@@ -15,7 +15,7 @@ from abc import ABCMeta, abstractmethod
 from avalon import io, pipeline
 import six
 import avalon.api
-from pypeapp import config
+from .api import config
 
 log = logging.getLogger(__name__)
 

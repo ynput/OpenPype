@@ -4,7 +4,7 @@ from maya import cmds
 
 import avalon.maya
 import pype.api
-from pype.maya.lib import extract_alembic
+from pype.hosts.maya.lib import extract_alembic
 
 
 class ExtractAlembic(pype.api.Extractor):

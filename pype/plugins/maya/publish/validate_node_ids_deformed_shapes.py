@@ -2,8 +2,8 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
-import pype.maya.lib as lib
+import pype.hosts.maya.action
+from pype.hosts.maya import lib
 
 
 class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
@@ -20,7 +20,7 @@ class ValidateNodeIdsDeformedShape(pyblish.api.InstancePlugin):
     families = ['look']
     hosts = ['maya']
     label = 'Deformed shape ids'
-    actions = [pype.maya.action.SelectInvalidAction, pype.api.RepairAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction, pype.api.RepairAction]
 
     def process(self, instance):
         """Process all the nodes in the instance"""

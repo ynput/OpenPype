@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateMeshNonManifold(pyblish.api.Validator):
@@ -17,7 +17,7 @@ class ValidateMeshNonManifold(pyblish.api.Validator):
     hosts = ['maya']
     families = ['model']
     label = 'Mesh Non-Manifold Vertices/Edges'
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
 
     @staticmethod
     def get_invalid(instance):

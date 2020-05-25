@@ -1,5 +1,5 @@
 import avalon.maya
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 from maya import cmds
 
 
@@ -26,7 +26,7 @@ class CreateRenderSetup(avalon.maya.Creator):
         #    \__|     |
         #       \_____/
 
-        # from pypeapp import config
+        # from pype.api import config
         # import maya.app.renderSetup.model.renderSetup as renderSetup
         # presets = config.get_presets(project=os.environ['AVALON_PROJECT'])
         # layer = presets['plugins']['maya']['create']['renderSetup']["layer"]

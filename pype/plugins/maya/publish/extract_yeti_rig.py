@@ -6,7 +6,7 @@ from maya import cmds
 
 import avalon.maya.lib as lib
 import pype.api
-import pype.maya.lib as maya
+import pype.hosts.maya.lib as maya
 
 
 @contextlib.contextmanager

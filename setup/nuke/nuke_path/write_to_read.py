@@ -2,8 +2,8 @@ import re
 import os
 import glob
 import nuke
-from pype import api as pype
-log = pype.Logger().get_logger(__name__, "nuke")
+from pype.api import Logger
+log = Logger().get_logger(__name__, "nuke")
 
 SINGLE_FILE_FORMATS = ['avi', 'mp4', 'mxf', 'mov', 'mpg', 'mpeg', 'wmv', 'm4v',
                        'm2v']
@@ -122,7 +122,7 @@ def write_to_read(gn):
                 )
                 if not file_path_new:
                     return
-                    
+
                 myfiletranslated, firstFrame, lastFrame = file_path_new
                 # get node data
                 ndata = {

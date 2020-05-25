@@ -25,7 +25,7 @@ class SetFrameRangeLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from pype.nuke import lib
+        from pype.hosts.nuke import lib
 
         version = context['version']
         version_data = version.get("data", {})
@@ -59,7 +59,7 @@ class SetFrameRangeWithHandlesLoader(api.Loader):
 
     def load(self, context, name, namespace, data):
 
-        from pype.nuke import lib
+        from pype.hosts.nuke import lib
 
         version = context['version']
         version_data = version.get("data", {})

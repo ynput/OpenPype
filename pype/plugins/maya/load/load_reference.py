@@ -1,11 +1,11 @@
-import pype.maya.plugin
+import pype.hosts.maya.plugin
 from avalon import api, maya
 from maya import cmds
 import os
-from pypeapp import config
+from pype.api import config
 
 
-class ReferenceLoader(pype.maya.plugin.ReferenceLoader):
+class ReferenceLoader(pype.hosts.maya.plugin.ReferenceLoader):
     """Load the model"""
 
     families = ["model",

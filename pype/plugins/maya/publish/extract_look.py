@@ -14,7 +14,7 @@ import avalon.maya
 from avalon import io, api
 
 import pype.api
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 
 # Modes for transfer
 COPY = 1

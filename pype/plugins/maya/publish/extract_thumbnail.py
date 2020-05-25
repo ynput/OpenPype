@@ -4,7 +4,7 @@ import glob
 
 import capture
 
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 import pype.api
 
 from maya import cmds

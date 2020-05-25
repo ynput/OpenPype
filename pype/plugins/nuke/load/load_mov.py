@@ -3,8 +3,8 @@ import nuke
 import contextlib
 
 from avalon import api, io
-from pype.nuke import presets
-from pypeapp import config
+from pype.hosts.nuke import presets
+from pype.api import config
 
 
 @contextlib.contextmanager
