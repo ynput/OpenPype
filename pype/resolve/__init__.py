@@ -8,8 +8,8 @@ from .lib import (
     setup,
     reload_pipeline,
     ls,
-    LOAD_PATH,
-    CREATE_PATH,
+    # LOAD_PATH,
+    # CREATE_PATH,
     PUBLISH_PATH
 )
 
@@ -48,8 +48,8 @@ def install():
     pyblish.register_plugin_path(PUBLISH_PATH)
     log.info("Registering Premiera plug-ins..")
 
-    avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
+    # avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
+    # avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
 
 
 def uninstall():
@@ -67,5 +67,5 @@ def uninstall():
     pyblish.deregister_plugin_path(PUBLISH_PATH)
     log.info("Deregistering Premiera plug-ins..")
 
-    avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
-    avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)
+    # avalon.deregister_plugin_path(avalon.Loader, LOAD_PATH)
+    # avalon.deregister_plugin_path(avalon.Creator, CREATE_PATH)

@@ -26,8 +26,28 @@ class ResolvePrelaunch(PypeHook):
         if not env:
             env = os.environ
 
-        env["PRE_PYTHON_SCRIPT"] = os.path.normpath(env["PRE_PYTHON_SCRIPT"])
-        self.log.info(env["PRE_PYTHON_SCRIPT"])
+        # making sure pyton 3.6 is installed at provided path
+        py36_dir = os.path.normpath(env.get("PYTHON36_RES", ""))
+        assert os.path.isdir(py36_dir), (
+            "Python 3.6 is not installed at the provided folder path. Either "
+            "make sure the `environments\resolve.json` is having correctly set "
+            "`PYTHON36_RES` or make sure Python 3.6 is installed in given path."
+            f"\nPYTHON36_RES: `{py36_dir}`"
+        )
+        env["PYTHON36_RES"] = py36_dir
+
+        # setting utility scripts dir for scripts syncing
+        us_dir = os.path.normpath(env.get("RESOLVE_UTILITY_SCRIPTS_DIR", ""))
+        assert os.path.isdir(us_dir), (
+            "Resolve utility script dir does not exists. Either make sure "
+            "the `environments\resolve.json` is having correctly set "
+            "`RESOLVE_UTILITY_SCRIPTS_DIR` or reinstall DaVinci Resolve. \n"
+            f"RESOLVE_UTILITY_SCRIPTS_DIR: `{us_dir}`"
+        )
+
+        # correctly format path for pre python script
+        pre_py_sc = os.path.normpath(env.get("PRE_PYTHON_SCRIPT", ""))
+        env["PRE_PYTHON_SCRIPT"] = pre_py_sc
 
         try:
             __import__("pype.resolve")
@@ -39,7 +59,6 @@ class ResolvePrelaunch(PypeHook):
 
         else:
             # Resolve Setup integration
-            # importlib.reload(prlib)
             rlib.setup(env)
 
         return True

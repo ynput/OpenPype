@@ -1,34 +1,21 @@
 import os
 import sys
 import shutil
-import json
-from pysync import walktree
-import requests
 
 from avalon import api
 from pype.widgets.message_window import message
 from pypeapp import Logger
 
-
 log = Logger().get_logger(__name__, "resolve")
 
 self = sys.modules[__name__]
-self._has_been_setup = False
-self._registered_gui = None
 
 AVALON_CONFIG = os.environ["AVALON_CONFIG"]
-
 PARENT_DIR = os.path.dirname(__file__)
 PACKAGE_DIR = os.path.dirname(PARENT_DIR)
 PLUGINS_DIR = os.path.join(PACKAGE_DIR, "plugins")
 
-self.EXTENSIONS_PATH_REMOTE = os.path.join(PARENT_DIR, "extensions")
-self.EXTENSIONS_PATH_LOCAL = None
-self.EXTENSIONS_CACHE_PATH = None
-
-self.LOAD_PATH = os.path.join(PLUGINS_DIR, "resolve", "load")
-self.CREATE_PATH = os.path.join(PLUGINS_DIR, "resolve", "create")
-self.INVENTORY_PATH = os.path.join(PLUGINS_DIR, "resolve", "inventory")
+self.UTILITY_SCRIPTS = os.path.join(PARENT_DIR, "resolve_utility_scripts")
 
 self.PUBLISH_PATH = os.path.join(
     PLUGINS_DIR, "resolve", "publish"
@@ -46,6 +33,36 @@ else:
 
 def ls():
     pass
+
+
+def sync_utility_scripts(env=None):
+    """ Synchronizing basic utlility scripts for resolve.
+
+    To be able to run scripts from inside `Resolve/Workspace/Scripts` menu
+    all scripts has to be accessible from defined folder.
+    """
+    if not env:
+        env = os.environ
+
+    us_dir = env.get("RESOLVE_UTILITY_SCRIPTS_DIR", "")
+    scripts = os.listdir(self.UTILITY_SCRIPTS)
+
+    log.info(f"Utility Scripts Dir: `{self.UTILITY_SCRIPTS}`")
+    log.info(f"Utility Scripts: `{scripts}`")
+
+    # make sure no script file is in folder
+    if next((s for s in os.listdir(us_dir)), None):
+        for s in os.listdir(us_dir):
+            path = os.path.join(us_dir, s)
+            log.info(f"Removing `{path}`...")
+            os.remove(path)
+
+    # copy scripts into Resolve's utility scripts dir
+    for s in scripts:
+        src = os.path.join(self.UTILITY_SCRIPTS, s)
+        dst = os.path.join(us_dir, s)
+        log.info(f"Copying `{src}` to `{dst}`...")
+        shutil.copy2(src, dst)
 
 
 def reload_pipeline():
@@ -85,5 +102,8 @@ def setup(env=None):
     """
     if not env:
         env = os.environ
+
+    # synchronize resolve utility scripts
+    sync_utility_scripts(env)
 
     log.info("Resolve Pype wrapper has been installed")
