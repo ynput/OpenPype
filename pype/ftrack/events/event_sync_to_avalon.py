@@ -1251,10 +1251,10 @@ class SyncToAvalonEvent(BaseEvent):
         return output
 
     def process_renamed(self):
-        if not self.ftrack_renamed:
+        ent_infos = self.ftrack_renamed
+        if not ent_infos:
             return
 
-        ent_infos = self.ftrack_renamed
         renamed_tasks = {}
         not_found = {}
         changeable_queue = queue.Queue()
@@ -1276,9 +1276,9 @@ class SyncToAvalonEvent(BaseEvent):
             if not avalon_ent:
                 # TODO logging
                 self.log.debug((
-                    "Can't change the name (Entity is not is avalon) <{}>"
+                    "Entity is not is avalon. Moving to \"add\" process. <{}>"
                 ).format(ent_path))
-                not_found[ftrack_id] = ent_info
+                self.ftrack_added[ftrack_id] = ent_info
                 continue
 
             if new_name == avalon_ent["name"]:
@@ -1456,7 +1456,6 @@ class SyncToAvalonEvent(BaseEvent):
         # - happen when was created by any sync event/action
         pop_out_ents = []
         new_tasks_by_parent = collections.defaultdict(list)
-        _new_ent_infos = {}
         for ftrack_id, ent_info in ent_infos.items():
             if self.avalon_ents_by_ftrack_id.get(ftrack_id):
                 pop_out_ents.append(ftrack_id)
@@ -1560,36 +1559,20 @@ class SyncToAvalonEvent(BaseEvent):
                     pop_out_ents.append(ftrack_id)
                     continue
 
-            configuration_id = entity_type_conf_ids.get(entity_type)
-            if not configuration_id:
-                for attr in cust_attrs:
-                    key = attr["key"]
-                    if key != CustAttrIdKey:
-                        continue
-
-                    if attr["entity_type"] != ent_info["entityType"]:
-                        continue
-
-                    if (
-                        ent_info["entityType"] == "task" and
-                        attr["object_type_id"] != ent_info["objectTypeId"]
-                    ):
-                        continue
-
-                    configuration_id = attr["id"]
-                    entity_type_conf_ids[entity_type] = configuration_id
-                    break
-
-            if not configuration_id:
-                self.log.warning(
-                    "BUG REPORT: Missing configuration for `{} < {} >`".format(
-                        entity_type, ent_info["entityType"]
-                    )
-                )
+            mongo_id_configuration_id = self._mongo_id_configuration(
+                ent_info,
+                cust_attrs,
+                hier_attrs,
+                entity_type_conf_ids
+            )
+            if not mongo_id_configuration_id:
+                self.log.warning((
+                    "BUG REPORT: Missing MongoID configuration for `{} < {} >`"
+                ).format(entity_type, ent_info["entityType"]))
                 continue
 
             _entity_key = collections.OrderedDict({
-                "configuration_id": configuration_id,
+                "configuration_id": mongo_id_configuration_id,
                 "entity_id": ftrack_id
             })
 
@@ -1691,6 +1674,53 @@ class SyncToAvalonEvent(BaseEvent):
 
                 if new_name not in self.task_changes_by_avalon_id[mongo_id]:
                     self.task_changes_by_avalon_id[mongo_id].append(new_name)
+
+    def _mongo_id_configuration(
+        self,
+        ent_info,
+        cust_attrs,
+        hier_attrs,
+        temp_dict
+    ):
+        # Use hierarchical mongo id attribute if possible.
+        if "_hierarchical" not in temp_dict:
+            hier_mongo_id_configuration_id = None
+            for attr in hier_attrs:
+                if attr["key"] == CustAttrIdKey:
+                    hier_mongo_id_configuration_id = attr["id"]
+                    break
+            temp_dict["_hierarchical"] = hier_mongo_id_configuration_id
+
+        hier_mongo_id_configuration_id = temp_dict.get("_hierarchical")
+        if hier_mongo_id_configuration_id is not None:
+            return hier_mongo_id_configuration_id
+
+        # Legacy part for cases that MongoID attribute is per entity type.
+        entity_type = ent_info["entity_type"]
+        mongo_id_configuration_id = temp_dict.get(entity_type)
+        if mongo_id_configuration_id is not None:
+            return mongo_id_configuration_id
+
+        for attr in cust_attrs:
+            key = attr["key"]
+            if key != CustAttrIdKey:
+                continue
+
+            if attr["entity_type"] != ent_info["entityType"]:
+                continue
+
+            if (
+                ent_info["entityType"] == "task" and
+                attr["object_type_id"] != ent_info["objectTypeId"]
+            ):
+                continue
+
+            mongo_id_configuration_id = attr["id"]
+            break
+
+        temp_dict[entity_type] = mongo_id_configuration_id
+
+        return mongo_id_configuration_id
 
     def process_moved(self):
         if not self.ftrack_moved:
@@ -1871,11 +1901,8 @@ class SyncToAvalonEvent(BaseEvent):
                 obj_type_id = ent_info["objectTypeId"]
                 ent_cust_attrs = cust_attrs_by_obj_id.get(obj_type_id)
 
+            # Ftrack's entity_type does not have defined custom attributes
             if ent_cust_attrs is None:
-                self.log.warning((
-                    "BUG REPORT: Entity has ent type without"
-                    " custom attributes <{}> \"{}\""
-                ).format(entType, ent_info))
                 continue
 
             for key, values in ent_info["changes"].items():

@@ -750,7 +750,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             )
 
         elif len(matching_profiles) > 1:
-            template_name = matching_profiles.keys()[0]
+            template_name = tuple(matching_profiles.keys())[0]
             self.log.warning((
                 "More than one template profiles matched"
                 " Family \"{}\" and Task: \"{}\"."
