@@ -9,7 +9,7 @@ class ExtractTemplate(pype.api.Extractor):
     """Extract the connected nodes to the composite instance."""
     label = "Extract Template"
     hosts = ["harmony"]
-    families = ["template"]
+    families = ["harmony.template"]
 
     def process(self, instance):
         staging_dir = self.staging_dir(instance)

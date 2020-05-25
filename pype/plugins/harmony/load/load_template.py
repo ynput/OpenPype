@@ -9,7 +9,7 @@ from avalon import api, harmony
 class ImportTemplateLoader(api.Loader):
     """Import templates."""
 
-    families = ["template"]
+    families = ["harmony.template"]
     representations = ["*"]
     label = "Import Template"
 
