@@ -63,7 +63,7 @@ class IntegrateFtrackInstance(pyblish.api.InstancePlugin):
                     "name": "thumbnail"  # Default component name is "main".
                 }
                 comp['thumbnail'] = True
-            elif comp.get('preview') or ("preview" in comp.get('tags', [])):
+            elif comp.get('ftrackreview') or ("ftrackreview" in comp.get('tags', [])):
                 '''
                 Ftrack bug requirement:
                     - Start frame must be 0
