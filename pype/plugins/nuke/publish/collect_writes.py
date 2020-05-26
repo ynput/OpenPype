@@ -143,17 +143,12 @@ class CollectNukeWrites(pyblish.api.InstancePlugin):
             "frameStartHandle": first_frame,
             "frameEndHandle": last_frame,
             "outputType": output_type,
-            "family": "write",
+            "family": "render2d",
             "families": families,
             "colorspace": node["colorspace"].value(),
             "deadlineChunkSize": deadlineChunkSize,
             "deadlinePriority": deadlinePriority
         })
-
-        if "render" in families:
-            instance.data["family"] = "render2d"
-            if "render" not in families:
-                instance.data["families"].insert(0, "render")
 
         if "prerender" in families:
             instance.data.update({
