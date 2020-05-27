@@ -42,7 +42,6 @@ class ExtractRender(pyblish.api.InstancePlugin):
         func = """function func(args)
         {
             node.setTextAttr(args[0], "DRAWING_NAME", 1, args[1]);
-            scene.saveAll();
         }
         func
         """
@@ -52,6 +51,7 @@ class ExtractRender(pyblish.api.InstancePlugin):
                 "args": [instance[0], path + "/" + instance.data["name"]]
             }
         )
+        harmony.save_scene()
 
         # Execute rendering.
         output = pype.lib._subprocess([application_path, "-batch", scene_path])
