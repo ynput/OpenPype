@@ -2,7 +2,7 @@ import os
 import traceback
 from pype.lib import PypeHook
 from pypeapp import Logger
-from pype.resolve import lib as rlib
+from pype.resolve import utils
 
 
 class ResolvePrelaunch(PypeHook):
@@ -27,14 +27,15 @@ class ResolvePrelaunch(PypeHook):
             env = os.environ
 
         # making sure pyton 3.6 is installed at provided path
-        py36_dir = os.path.normpath(env.get("PYTHON36_RES", ""))
+        py36_dir = os.path.normpath(env.get("PYTHON36_RESOLVE", ""))
         assert os.path.isdir(py36_dir), (
             "Python 3.6 is not installed at the provided folder path. Either "
             "make sure the `environments\resolve.json` is having correctly set "
-            "`PYTHON36_RES` or make sure Python 3.6 is installed in given path."
-            f"\nPYTHON36_RES: `{py36_dir}`"
+            "`PYTHON36_RESOLVE` or make sure Python 3.6 is installed in given path."
+            f"\nPYTHON36_RESOLVE: `{py36_dir}`"
         )
-        env["PYTHON36_RES"] = py36_dir
+        self.log.info(f"Path to Resolve Python folder: `{py36_dir}`...")
+        env["PYTHON36_RESOLVE"] = py36_dir
 
         # setting utility scripts dir for scripts syncing
         us_dir = os.path.normpath(env.get("RESOLVE_UTILITY_SCRIPTS_DIR", ""))
@@ -59,6 +60,6 @@ class ResolvePrelaunch(PypeHook):
 
         else:
             # Resolve Setup integration
-            rlib.setup(env)
+            utils.setup(env)
 
         return True
