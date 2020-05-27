@@ -2,6 +2,7 @@ import os
 import re
 import queue
 import collections
+import copy
 
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 
@@ -756,19 +757,19 @@ class SyncEntitiesFactory:
             prepared_avalon_attr_ca_id = avalon_attrs_ca_id.get(attr_key)
             if prepared_attrs:
                 self.entities_dict[entity_id]["custom_attributes"] = (
-                    prepared_attrs.copy()
+                    copy.deepcopy(prepared_attrs)
                 )
             if prepared_attrs_ca_id:
                 self.entities_dict[entity_id]["custom_attributes_id"] = (
-                    prepared_attrs_ca_id.copy()
+                    copy.deepcopy(prepared_attrs_ca_id)
                 )
             if prepared_avalon_attr:
                 self.entities_dict[entity_id]["avalon_attrs"] = (
-                    prepared_avalon_attr.copy()
+                    copy.deepcopy(prepared_avalon_attr)
                 )
             if prepared_avalon_attr_ca_id:
                 self.entities_dict[entity_id]["avalon_attrs_id"] = (
-                    prepared_avalon_attr_ca_id.copy()
+                    copy.deepcopy(prepared_avalon_attr_ca_id)
                 )
 
         # TODO query custom attributes by entity_id
@@ -852,7 +853,7 @@ class SyncEntitiesFactory:
             # Skip project because has stored defaults at the moment
             if entity_dict["entity_type"] == "project":
                 continue
-            entity_dict["hier_attrs"] = prepare_dict.copy()
+            entity_dict["hier_attrs"] = copy.deepcopy(prepare_dict)
             for key, val in prepare_dict_avalon.items():
                 entity_dict["avalon_attrs"][key] = val
 
@@ -878,7 +879,13 @@ class SyncEntitiesFactory:
 
         for item in values["data"]:
             value = item["value"]
-            if value is None:
+            # WARNING It is not possible to propage enumerate hierachical
+            # attributes with multiselection 100% right. Unseting all values
+            # will cause inheritance from parent.
+            if (
+                value is None
+                or (isinstance(value, (tuple, list)) and not value)
+            ):
                 continue
             entity_id = item["entity_id"]
             key = attribute_key_by_id[item["configuration_id"]]
@@ -909,7 +916,7 @@ class SyncEntitiesFactory:
         while not hier_down_queue.empty():
             hier_values, parent_id = hier_down_queue.get()
             for child_id in self.entities_dict[parent_id]["children"]:
-                _hier_values = hier_values.copy()
+                _hier_values = copy.deepcopy(hier_values)
                 for key in attributes_by_key.keys():
                     if key.startswith("avalon_"):
                         store_key = "avalon_attrs"
@@ -1891,7 +1898,7 @@ class SyncEntitiesFactory:
         parents_queue.put((self.ft_project_id, [], False))
         while not parents_queue.empty():
             ftrack_id, parent_parents, changed = parents_queue.get()
-            _parents = parent_parents.copy()
+            _parents = copy.deepcopy(parent_parents)
             if ftrack_id not in hierarchy_changing_ids and not changed:
                 if ftrack_id != self.ft_project_id:
                     _parents.append(self.entities_dict[ftrack_id]["name"])

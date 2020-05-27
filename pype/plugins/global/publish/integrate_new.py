@@ -81,7 +81,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 "assembly",
                 "fbx",
                 "textures",
-                "action"
+                "action",
+                "harmony.template"
                 ]
     exclude_families = ["clip"]
     db_representation_context_keys = [
@@ -301,6 +302,8 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
             sequence_repre = isinstance(files, list)
             repre_context = None
             if sequence_repre:
+                self.log.debug(
+                    "files: {}".format(files))
                 src_collections, remainder = clique.assemble(files)
                 self.log.debug(
                     "src_tail_collections: {}".format(str(src_collections)))
@@ -347,6 +350,7 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                             anatomy.templates["render"].get("padding")
                         )
                     )
+
                     index_frame_start = int(repre.get("frameStart"))
 
                 # exception for slate workflow
@@ -740,13 +744,13 @@ class IntegrateAssetNew(pyblish.api.InstancePlugin):
                 matching_profiles[name] = filters
 
         if len(matching_profiles) == 1:
-            template_name = matching_profiles.keys()[0]
+            template_name = tuple(matching_profiles.keys())[0]
             self.log.debug(
                 "Using template name \"{}\".".format(template_name)
             )
 
         elif len(matching_profiles) > 1:
-            template_name = matching_profiles.keys()[0]
+            template_name = tuple(matching_profiles.keys())[0]
             self.log.warning((
                 "More than one template profiles matched"
                 " Family \"{}\" and Task: \"{}\"."
