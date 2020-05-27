@@ -60,10 +60,8 @@ class ExtractRender(pyblish.api.InstancePlugin):
         harmony.save_scene()
 
         # Execute rendering.
-        import subprocess
-        subprocess.call([application_path, "-batch", scene_path])
-        #output = pype.lib._subprocess([application_path, "-batch", scene_path])
-        #self.log.info(output)
+        output = pype.lib._subprocess([application_path, "-batch", scene_path])
+        self.log.info(output)
 
         # Collect rendered files.
         files = os.listdir(path)
