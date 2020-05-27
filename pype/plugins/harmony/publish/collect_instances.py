@@ -1,3 +1,5 @@
+import json
+
 import pyblish.api
 from avalon import harmony
 
@@ -15,6 +17,10 @@ class CollectInstances(pyblish.api.ContextPlugin):
     label = "Instances"
     order = pyblish.api.CollectorOrder
     hosts = ["harmony"]
+    families_mapping = {
+        "render": ["imagesequence", "review"],
+        "harmony.template": []
+    }
 
     def process(self, context):
         nodes = harmony.send(
@@ -32,16 +38,19 @@ class CollectInstances(pyblish.api.ContextPlugin):
             if "container" in data["id"]:
                 continue
 
-            # Adding families if missing.
-            data["families"] = data.get("families", [])
-
             instance = context.create_instance(node.split("/")[-1])
             instance.append(node)
             instance.data.update(data)
             instance.data["publish"] = harmony.send(
                 {"function": "node.getEnable", "args": [node]}
             )["result"]
+            instance.data["families"] = self.families_mapping[data["family"]]
+            instance.data["families"].append("ftrack")
 
             # Produce diagnostic message for any graphical
             # user interface interested in visualising it.
-            self.log.info("Found: \"%s\" " % instance.data["name"])
+            self.log.info(
+                "Found: \"{0}\": \n{1}".format(
+                    instance.data["name"], json.dumps(instance.data, indent=4)
+                )
+            )

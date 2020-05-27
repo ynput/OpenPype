@@ -7,7 +7,6 @@ class CreateRender(harmony.Creator):
     name = "renderDefault"
     label = "Render"
     family = "render"
-    families = "imagesequence"
     node_type = "WRITE"
 
     def __init__(self, *args, **kwargs):
