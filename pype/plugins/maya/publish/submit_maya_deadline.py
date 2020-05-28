@@ -179,6 +179,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                     self.log.info("Using published scene for render {}".format(
                         filepath))
 
+                    if not os.path.exists(filepath):
+                        self.log.error("published scene does not exist!")
+                        raise
                     # now we need to switch scene in expected files
                     # because <scene> token will now point to published
                     # scene file and that might differ from current one
@@ -261,6 +264,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload_data["render_variables"] = render_variables
         payload_data["renderlayer"] = renderlayer
         payload_data["workspace"] = workspace
+        payload_data["dirname"] = dirname
 
         frame_pattern = payload_skeleton["JobInfo"]["Frames"]
         payload_skeleton["JobInfo"]["Frames"] = frame_pattern.format(
@@ -315,6 +319,9 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         # Submit preceeding export jobs -------------------------------------
         export_job = None
+        assert not all(x in instance.data["families"]
+                       for x in ['vrayscene', 'assscene']), (
+            "Vray Scene and Ass Scene options are mutually exclusive")
         if "vrayscene" in instance.data["families"]:
             export_job = self._submit_export(payload_data, "vray")
 
@@ -325,7 +332,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         if "vrayscene" in instance.data["families"]:
             payload = self._get_vray_render_payload(payload_data)
         elif "assscene" in instance.data["families"]:
-            pass
+            payload = self._get_arnold_render_payload(payload_data)
         else:
             payload = self._get_maya_payload(payload_data)
 
@@ -381,22 +388,22 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         }
 
         plugin_info = {
-                "SceneFile": data["filepath"],
-                # Output directory and filename
-                "OutputFilePath": data["dirname"].replace("\\", "/"),
-                "OutputFilePrefix": data["render_variables"]["filename_prefix"],  # noqa: E501
+            "SceneFile": data["filepath"],
+            # Output directory and filename
+            "OutputFilePath": data["dirname"].replace("\\", "/"),
+            "OutputFilePrefix": data["render_variables"]["filename_prefix"],  # noqa: E501
 
-                # Only render layers are considered renderable in this pipeline
-                "UsingRenderLayers": True,
+            # Only render layers are considered renderable in this pipeline
+            "UsingRenderLayers": True,
 
-                # Render only this layer
-                "RenderLayer": data["renderlayer"],
+            # Render only this layer
+            "RenderLayer": data["renderlayer"],
 
-                # Determine which renderer to use from the file itself
-                "Renderer": self._instance.data["renderer"],
+            # Determine which renderer to use from the file itself
+            "Renderer": self._instance.data["renderer"],
 
-                # Resolve relative references
-                "ProjectPath": data["workspace"],
+            # Resolve relative references
+            "ProjectPath": data["workspace"],
         }
         payload["JobInfo"].update(job_info_ext)
         payload["PluginInfo"].update(plugin_info)
@@ -415,7 +422,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "FramesPerTask": self._instance.data.get("framesPerTask", 1)
         }
 
-        plugin_info = {
+        plugin_info_ext = {
             # Renderer
             "Renderer": "vray",
             # Input
@@ -428,7 +435,73 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         }
 
         payload["JobInfo"].update(job_info_ext)
-        payload["PluginInfo"].update(plugin_info)
+        payload["PluginInfo"].update(plugin_info_ext)
+        return payload
+
+    def _get_arnold_export_payload(self, data):
+
+        try:
+            from pype.scripts import export_maya_ass_job
+        except Exception:
+            assert False, (
+                "Expected module 'export_maya_ass_job' to be available")
+
+        module_path = export_maya_ass_job.__file__
+        if module_path.endswith(".pyc"):
+            module_path = module_path[: -len(".pyc")] + ".py"
+
+        script = os.path.normpath(module_path)
+
+        payload = copy.deepcopy(payload_skeleton)
+        job_info_ext = {
+            # Job name, as seen in Monitor
+            "Name": "Export {} [{}-{}]".format(
+                data["jobname"],
+                int(self._instance.data["frameStartHandle"]),
+                int(self._instance.data["frameEndHandle"])),
+
+            "Plugin": "Python",
+            "FramesPerTask": self._instance.data.get("framesPerTask", 1)
+        }
+
+        plugin_info_ext = {
+            "Version": "3.6",
+            "ScriptFile": script,
+            "Arguments": "",
+            "SingleFrameOnly": "True",
+        }
+        payload["JobInfo"].update(job_info_ext)
+        payload["PluginInfo"].update(plugin_info_ext)
+
+        envs = []
+        for k, v in payload["JobInfo"].items():
+            if k.startswith("EnvironmentKeyValue"):
+                envs.append(v)
+
+        # add app name to environment
+        envs.append(
+            "AVALON_APP_NAME={}".format(os.environ.get("AVALON_APP_NAME")))
+        envs.append(
+            "PYPE_ASS_EXPORT_RENDER_LAYER={}".format(data["renderlayer"]))
+        envs.append(
+            "PYPE_ASS_EXPORT_SCENE_FILE={}".format(data["filepath"]))
+        envs.append(
+            "PYPE_ASS_EXPORT_OUTPUT={}".format(
+                payload['JobInfo']['OutputFilename0']))
+        envs.append(
+            "PYPE_ASS_EXPORT_START={}".format(
+                int(self._instance.data["frameStartHandle"])))
+        envs.append(
+            "PYPE_ASS_EXPORT_END={}".format(
+                int(self._instance.data["frameEndHandle"])))
+        envs.append(
+            "PYPE_ASS_EXPORT_STEP={}".format(1))
+
+        i = 0
+        for e in envs:
+            payload["JobInfo"]["EnvironmentKeyValue{}".format(i)] = e
+            i += 1
+
         return payload
 
     def _get_vray_render_payload(self, data):
@@ -439,7 +512,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         # "vrayscene/<Scene>/<Scene>_<Layer>/<Layer>"
 
         scene, _ = os.path.splitext(data["filename"])
-        first_file = self.format_output_filename(scene, template)
+        first_file = self.format_vray_output_filename(scene, template)
         first_file = "{}/{}".format(data["workspace"], first_file)
         job_info_ext = {
             "Name": "Render {} [{}-{}]".format(
@@ -464,11 +537,33 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         payload["PluginInfo"].update(plugin_info)
         return payload
 
+    def _get_arnold_render_payload(self, data):
+        payload = copy.deepcopy(payload_skeleton)
+        ass_file, _ = os.path.splitext(data["output_filename_0"])
+        first_file = ass_file + ".ass"
+        job_info_ext = {
+            "Name": "Render {} [{}-{}]".format(
+                data["jobname"],
+                int(self._instance.data["frameStartHandle"]),
+                int(self._instance.data["frameEndHandle"])),
+
+            "Plugin": "Arnold",
+            "OverrideTaskExtraInfoNames": False,
+        }
+
+        plugin_info = {
+            "ArnoldFile": first_file,
+        }
+
+        payload["JobInfo"].update(job_info_ext)
+        payload["PluginInfo"].update(plugin_info)
+        return payload
+
     def _submit_export(self, data, format):
         if format == "vray":
             payload = self._get_vray_export_payload(data)
             self.log.info("Submitting vrscene export job.")
-        elif format == "ass":
+        elif format == "arnold":
             payload = self._get_arnold_export_payload(data)
             self.log.info("Submitting ass export job.")
 
@@ -535,7 +630,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         kwargs['timeout'] = 10
         return requests.get(*args, **kwargs)
 
-    def format_output_filename(self, filename, template, dir=False):
+    def format_vray_output_filename(self, filename, template, dir=False):
         """Format the expected output file of the Export job.
 
         Example:
