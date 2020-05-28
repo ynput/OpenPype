@@ -1,5 +1,5 @@
 import pyblish.api
-from python_get_resolve import GetResolve
+from pype.resolve.utils import get_resolve_module
 
 
 class CollectProject(pyblish.api.ContextPlugin):
@@ -10,7 +10,7 @@ class CollectProject(pyblish.api.ContextPlugin):
     hosts = ["resolve"]
 
     def process(self, context):
-        resolve = GetResolve()
+        resolve = get_resolve_module()
         PM = resolve.GetProjectManager()
         P = PM.GetCurrentProject()
 

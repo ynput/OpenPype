@@ -1,23 +1,13 @@
 """Host API required Work Files tool"""
 
 import os
-import sys
 from pypeapp import Logger
-from .utils import get_resolve_module
+from .lib import get_project_manager
+
 
 log = Logger().get_logger(__name__, "nukestudio")
 
 exported_projet_ext = ".drp"
-
-self = sys.modules[__name__]
-self.pm = None
-
-
-def get_project_manager():
-    if not self.pm:
-        resolve = get_resolve_module()
-        self.pm = resolve.GetProjectManager()
-    return self.pm
 
 
 def file_extensions():

@@ -27,6 +27,7 @@ def main(env):
         return False
 
     avalon.api.install(host_module)
+    avalon.api.register_host("resolve")
 
 
 if __name__ == "__main__":

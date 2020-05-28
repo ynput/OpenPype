@@ -150,8 +150,6 @@ def reload_pipeline():
     import importlib
     import pype.resolve
 
-    avalon.uninstall()
-
     # get avalon config name
     config = os.getenv("AVALON_CONFIG", "pype")
 
@@ -164,7 +162,6 @@ def reload_pipeline():
                    "{}".format(config),
                    "{}.resolve".format(config),
                    "{}.resolve.lib".format(config),
-                   "{}.resolve.menu".format(config),
                    "{}.resolve.plugin".format(config),
                    "{}.resolve.pipeline".format(config)
                    ):
@@ -174,8 +171,6 @@ def reload_pipeline():
             importlib.reload(module)
         except Exception as e:
             log.warning("Cannot reload module: {}".format(e))
-
-    avalon.install(pype.resolve)
 
 
 def publish(parent):

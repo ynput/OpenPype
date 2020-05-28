@@ -3,6 +3,18 @@ import sys
 
 from Qt import QtWidgets, QtCore
 
+from .pipeline import (
+    publish,
+    launch_workfiles_app,
+    reload_pipeline
+    )
+
+from avalon.tools import (
+    creator,
+    loader,
+    sceneinventory,
+    libraryloader
+)
 
 def load_stylesheet():
     path = os.path.join(os.path.dirname(__file__), "menu_style.qss")
@@ -23,10 +35,10 @@ class Spacer(QtWidgets.QWidget):
 
         real_spacer = QtWidgets.QWidget(self)
         real_spacer.setObjectName("Spacer")
-        real_spacer.setFixedHeight(int(height / 3))
+        real_spacer.setFixedHeight(height)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(0, 11, 0, 0)
         layout.addWidget(real_spacer)
 
         self.setLayout(layout)
@@ -62,7 +74,7 @@ class PypeMenu(QtWidgets.QWidget):
         reload_pipeline_btn = QtWidgets.QPushButton("Reload pipeline", self)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(10, 10, 10, 10)
+        layout.setContentsMargins(10, 20, 10, 20)
 
         layout.addWidget(workfiles_btn)
         layout.addWidget(create_btn)
@@ -70,19 +82,19 @@ class PypeMenu(QtWidgets.QWidget):
         layout.addWidget(load_btn)
         layout.addWidget(inventory_btn)
 
-        layout.addWidget(Spacer(20, self))
+        layout.addWidget(Spacer(11, self))
 
         layout.addWidget(rename_btn)
         layout.addWidget(set_colorspace_btn)
         layout.addWidget(reset_resolution_btn)
 
-        layout.addWidget(Spacer(20, self))
+        layout.addWidget(Spacer(11, self))
 
         layout.addWidget(reload_pipeline_btn)
 
         self.setLayout(layout)
 
-        workfiles_btn.clicked.connect(self.on_reload_pipeline_clicked)
+        workfiles_btn.clicked.connect(self.on_workfile_clicked)
         create_btn.clicked.connect(self.on_create_clicked)
         publish_btn.clicked.connect(self.on_publish_clicked)
         load_btn.clicked.connect(self.on_load_clicked)
@@ -94,18 +106,23 @@ class PypeMenu(QtWidgets.QWidget):
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
+        launch_workfiles_app()
 
     def on_create_clicked(self):
         print("Clicked Create")
+        creator.show()
 
     def on_publish_clicked(self):
         print("Clicked Publish")
+        publish(None)
 
     def on_load_clicked(self):
         print("Clicked Load")
+        loader.show(use_context=True)
 
     def on_inventory_clicked(self):
         print("Clicked Inventory")
+        sceneinventory.show()
 
     def on_rename_clicked(self):
         print("Clicked Rename")
@@ -118,6 +135,7 @@ class PypeMenu(QtWidgets.QWidget):
 
     def on_reload_pipeline_clicked(self):
         print("Clicked Reload Pipeline")
+        reload_pipeline()
 
 
 def launch_pype_menu():

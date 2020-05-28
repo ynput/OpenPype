@@ -26,4 +26,7 @@ while True:
         log.info(f"Waiting {wait}s for Resolve to be open in project")
         wait += wait_delay
     else:
+        print(f"Preloaded variables: \n\n\tResolve module: "
+              f"`resolve` > {type(resolve)} \n\tProject manager: "
+              f"`pm` > {type(pm)} \n\tCurrent project: `p` > {type(p)}")
         break
