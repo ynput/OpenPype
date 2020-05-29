@@ -2,7 +2,10 @@
 
 import os
 from pypeapp import Logger
-from .lib import get_project_manager
+from .lib import (
+    get_project_manager,
+    set_project_manager_to_folder_name
+)
 
 
 log = Logger().get_logger(__name__, "resolve")
@@ -42,6 +45,7 @@ def open_file(filepath):
     pm = get_project_manager()
     file = os.path.basename(filepath)
     fname, _ = os.path.splitext(file)
+    dname, _ = fname.split("_v")
 
     # deal with current project
     project = pm.GetCurrentProject()
@@ -49,6 +53,9 @@ def open_file(filepath):
     pm.SaveProject()
 
     try:
+        log.info(f"Test `dname`: {dname}")
+        if not set_project_manager_to_folder_name(dname):
+            raise
         # load project from input path
         project = pm.LoadProject(fname)
         log.info(f"Project {project.GetName()} opened...")

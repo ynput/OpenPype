@@ -22,7 +22,8 @@ from .workio import (
 )
 
 from .lib import (
-    get_project_manager
+    get_project_manager,
+    set_project_manager_to_folder_name
 )
 
 from .menu import launch_pype_menu
@@ -43,6 +44,7 @@ __all__ = [
 
     # lib
     "get_project_manager",
+    "set_project_manager_to_folder_name",
 
     # menu
     "launch_pype_menu",
