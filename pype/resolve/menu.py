@@ -5,9 +5,8 @@ from Qt import QtWidgets, QtCore
 
 from .pipeline import (
     publish,
-    launch_workfiles_app,
-    reload_pipeline
-    )
+    launch_workfiles_app
+)
 
 from avalon.tools import (
     creator,
@@ -15,6 +14,7 @@ from avalon.tools import (
     sceneinventory,
     libraryloader
 )
+
 
 def load_stylesheet():
     path = os.path.join(os.path.dirname(__file__), "menu_style.qss")
@@ -38,7 +38,7 @@ class Spacer(QtWidgets.QWidget):
         real_spacer.setFixedHeight(height)
 
         layout = QtWidgets.QVBoxLayout(self)
-        layout.setContentsMargins(0, 11, 0, 0)
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(real_spacer)
 
         self.setLayout(layout)
@@ -64,6 +64,7 @@ class PypeMenu(QtWidgets.QWidget):
         publish_btn = QtWidgets.QPushButton("Publish", self)
         load_btn = QtWidgets.QPushButton("Load", self)
         inventory_btn = QtWidgets.QPushButton("Inventory", self)
+        libload_btn = QtWidgets.QPushButton("Library", self)
         rename_btn = QtWidgets.QPushButton("Rename", self)
         set_colorspace_btn = QtWidgets.QPushButton(
             "Set colorspace from presets", self
@@ -71,7 +72,6 @@ class PypeMenu(QtWidgets.QWidget):
         reset_resolution_btn = QtWidgets.QPushButton(
             "Reset Resolution from peresets", self
         )
-        reload_pipeline_btn = QtWidgets.QPushButton("Reload pipeline", self)
 
         layout = QtWidgets.QVBoxLayout(self)
         layout.setContentsMargins(10, 20, 10, 20)
@@ -82,15 +82,18 @@ class PypeMenu(QtWidgets.QWidget):
         layout.addWidget(load_btn)
         layout.addWidget(inventory_btn)
 
-        layout.addWidget(Spacer(11, self))
+        layout.addWidget(Spacer(15, self))
+
+        layout.addWidget(libload_btn)
+
+        layout.addWidget(Spacer(15, self))
 
         layout.addWidget(rename_btn)
+
+        layout.addWidget(Spacer(15, self))
+
         layout.addWidget(set_colorspace_btn)
         layout.addWidget(reset_resolution_btn)
-
-        layout.addWidget(Spacer(11, self))
-
-        layout.addWidget(reload_pipeline_btn)
 
         self.setLayout(layout)
 
@@ -99,10 +102,10 @@ class PypeMenu(QtWidgets.QWidget):
         publish_btn.clicked.connect(self.on_publish_clicked)
         load_btn.clicked.connect(self.on_load_clicked)
         inventory_btn.clicked.connect(self.on_inventory_clicked)
+        libload_btn.clicked.connect(self.on_libload_clicked)
         rename_btn.clicked.connect(self.on_rename_clicked)
         set_colorspace_btn.clicked.connect(self.on_set_colorspace_clicked)
         reset_resolution_btn.clicked.connect(self.on_reset_resolution_clicked)
-        reload_pipeline_btn.clicked.connect(self.on_reload_pipeline_clicked)
 
     def on_workfile_clicked(self):
         print("Clicked Workfile")
@@ -124,6 +127,10 @@ class PypeMenu(QtWidgets.QWidget):
         print("Clicked Inventory")
         sceneinventory.show()
 
+    def on_libload_clicked(self):
+        print("Clicked Library")
+        libraryloader.show()
+
     def on_rename_clicked(self):
         print("Clicked Rename")
 
@@ -132,10 +139,6 @@ class PypeMenu(QtWidgets.QWidget):
 
     def on_reset_resolution_clicked(self):
         print("Clicked Reset Resolution")
-
-    def on_reload_pipeline_clicked(self):
-        print("Clicked Reload Pipeline")
-        reload_pipeline()
 
 
 def launch_pype_menu():

@@ -25,5 +25,5 @@ QPushButton:hover {
 }
 
 #Spacer {
-    background-color: #121212;
+    background-color: #282828;
 }

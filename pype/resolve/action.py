@@ -23,6 +23,7 @@ class SelectInvalidAction(pyblish.api.Action):
         try:
             from pype.resolve.utils import get_resolve_module
             resolve = get_resolve_module()
+            self.log.debug(resolve)
         except ImportError:
             raise ImportError("Current host is not Resolve")
 

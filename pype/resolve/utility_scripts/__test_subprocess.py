@@ -1,7 +1,6 @@
 #! python3
 # -*- coding: utf-8 -*-
 import os
-import sys
 from pypeapp import execute, Logger
 from pype.resolve.utils import get_resolve_module
 

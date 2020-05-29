@@ -15,6 +15,7 @@ log = Logger().get_logger(__name__, "resolve")
 self = sys.modules[__name__]
 self.bmd = None
 
+
 def get_resolve_module():
     # dont run if already loaded
     if self.bmd:

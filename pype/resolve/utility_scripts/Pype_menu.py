@@ -1,7 +1,6 @@
 import os
 import sys
-import importlib
-import avalon
+import avalon.api as avalon
 import pype
 
 from pypeapp import Logger
@@ -10,25 +9,16 @@ log = Logger().get_logger(__name__)
 
 
 def main(env):
+    import pype.resolve as bmdvr
     # Registers pype's Global pyblish plugins
     pype.install()
 
-    # Register Host (and it's pyblish plugins)
-    host_name = env["AVALON_APP"]
-    host_import_str = "pype.resolve"
+    # activate resolve from pype
+    avalon.install(bmdvr)
 
-    try:
-        host_module = importlib.import_module(host_import_str)
-    except ModuleNotFoundError:
-        log.error((
-            f"Host \"{host_name}\" can't be imported."
-            f" Import string \"{host_import_str}\" failed."
-        ))
-        return False
+    log.info(f"Avalon registred hosts: {avalon.registered_host()}")
 
-    avalon.api.install(host_module)
-    avalon.api.register_host("resolve")
-
+    bmdvr.launch_pype_menu()
 
 if __name__ == "__main__":
     result = main(os.environ)

@@ -2,7 +2,7 @@
 Basic avalon integration
 """
 import os
-import sys
+# import sys
 from avalon.tools import workfiles
 from avalon import api as avalon
 from pyblish import api as pyblish
@@ -40,7 +40,6 @@ def install():
     See the Maya equivalent for inspiration on how to implement this.
 
     """
-    from .menu import launch_pype_menu
 
     # Disable all families except for the ones we explicitly want to see
     family_states = [
@@ -59,9 +58,6 @@ def install():
     avalon.register_plugin_path(avalon.Loader, LOAD_PATH)
     avalon.register_plugin_path(avalon.Creator, CREATE_PATH)
     avalon.register_plugin_path(avalon.InventoryAction, INVENTORY_PATH)
-
-    # opening menu
-    launch_pype_menu()
 
 
 def uninstall():
@@ -138,39 +134,6 @@ def parse_container(container):
 def launch_workfiles_app(*args):
     workdir = os.environ["AVALON_WORKDIR"]
     workfiles.show(workdir)
-
-
-def reload_pipeline():
-    """Attempt to reload pipeline at run-time.
-
-    CAUTION: This is primarily for development and debugging purposes.
-
-    """
-
-    import importlib
-    import pype.resolve
-
-    # get avalon config name
-    config = os.getenv("AVALON_CONFIG", "pype")
-
-    for module in ("avalon.io",
-                   "avalon.lib",
-                   "avalon.pipeline",
-                   "avalon.api",
-                   "avalon.tools",
-
-                   "{}".format(config),
-                   "{}.resolve".format(config),
-                   "{}.resolve.lib".format(config),
-                   "{}.resolve.plugin".format(config),
-                   "{}.resolve.pipeline".format(config)
-                   ):
-        log.info("Reloading module: {}...".format(module))
-        try:
-            module = importlib.import_module(module)
-            importlib.reload(module)
-        except Exception as e:
-            log.warning("Cannot reload module: {}".format(e))
 
 
 def publish(parent):
