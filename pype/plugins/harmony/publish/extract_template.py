@@ -42,31 +42,51 @@ class ExtractTemplate(pype.api.Extractor):
         if instance[0] in dependencies:
             dependencies.remove(instance[0])
 
+        # Export template.
         func = """function func(args)
         {
-            var nodes = args[0];
-            selection.clearSelection();
-            for (var i = 0 ; i < nodes.length; i++)
-            {
-                selection.addNodeToSelection(nodes[i]);
-            }
-        }
-        func
-        """
-        harmony.send({"function": func, "args": [dependencies]})
-        func = """function func(args)
-        {
-            copyPaste.createTemplateFromSelection(args[0], args[1]);
-        }
-        func
-        """
-        harmony.send(
-            {
-                "function": func,
-                "args": ["{}.tpl".format(instance.name), staging_dir]
-            }
-        )
+            // Add an extra node just so a new group can be created.
+            var temp_node = node.add("Top", "temp_note", "NOTE", 0, 0, 0);
+            var template_group = node.createGroup(temp_node, "temp_group");
+            node.deleteNode( template_group + "/temp_note" );
 
+            // This will make Node View to focus on the new group.
+            selection.clearSelection();
+            selection.addNodeToSelection(template_group);
+            Action.perform("onActionEnterGroup()", "Node View");
+
+            // Recreate backdrops in group.
+            for (var i = 0 ; i < args[0].length; i++)
+            {
+                Backdrop.addBackdrop(template_group, args[0][i]);
+            };
+
+            // Copy-paste the selected nodes into the new group.
+            var drag_object = copyPaste.copy(args[1], 1, frame.numberOf, "");
+            copyPaste.pasteNewNodes(drag_object, template_group, "");
+
+            // Select all nodes within group and export as template.
+            Action.perform( "selectAll()", "Node View" );
+            copyPaste.createTemplateFromSelection(args[2], args[3]);
+
+            // Unfocus the group in Node view, delete all nodes and backdrops
+            // created during the process.
+            Action.perform("onActionUpToParent()", "Node View");
+            node.deleteNode(template_group, true, true);
+        }
+        func
+        """
+        harmony.send({
+            "function": func,
+            "args": [
+                unique_backdrops,
+                dependencies,
+                "{}.tpl".format(instance.name),
+                staging_dir
+            ]
+        })
+
+        # Prep representation.
         os.chdir(staging_dir)
         shutil.make_archive(
             "{}".format(instance.name),
@@ -78,8 +98,7 @@ class ExtractTemplate(pype.api.Extractor):
             "name": "tpl",
             "ext": "zip",
             "files": "{}.zip".format(instance.name),
-            "stagingDir": staging_dir,
-            "data": {"backdrops": unique_backdrops}
+            "stagingDir": staging_dir
         }
         instance.data["representations"] = [representation]
 
