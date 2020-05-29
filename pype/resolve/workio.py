@@ -5,7 +5,7 @@ from pypeapp import Logger
 from .lib import get_project_manager
 
 
-log = Logger().get_logger(__name__, "nukestudio")
+log = Logger().get_logger(__name__, "resolve")
 
 exported_projet_ext = ".drp"
 
@@ -45,17 +45,24 @@ def open_file(filepath):
 
     # deal with current project
     project = pm.GetCurrentProject()
+    log.info(f"Test `pm`: {pm}")
     pm.SaveProject()
-    pm.CloseProject(project)
 
     try:
         # load project from input path
         project = pm.LoadProject(fname)
         log.info(f"Project {project.GetName()} opened...")
         return True
-    except NameError as E:
-        log.error(f"Project with name `{fname}` does not exist!\n\nError: {E}")
-        return False
+    except AttributeError:
+        log.warning((f"Project with name `{fname}` does not exist! It will "
+                     f"be imported from {filepath} and then loaded..."))
+        if pm.ImportProject(filepath):
+            # load project from input path
+            project = pm.LoadProject(fname)
+            log.info(f"Project imported/loaded {project.GetName()}...")
+            return True
+        else:
+            return False
 
 
 def current_file():
