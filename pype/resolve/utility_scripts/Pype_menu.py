@@ -20,6 +20,7 @@ def main(env):
 
     bmdvr.launch_pype_menu()
 
+
 if __name__ == "__main__":
     result = main(os.environ)
     sys.exit(not bool(result))

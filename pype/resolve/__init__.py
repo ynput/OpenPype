@@ -28,6 +28,7 @@ from .lib import (
 from .menu import launch_pype_menu
 
 __all__ = [
+    # pipeline
     "install",
     "uninstall",
     "ls",
@@ -36,13 +37,17 @@ __all__ = [
     "publish",
     "launch_workfiles_app",
 
+    # utils
     "setup",
     "get_resolve_module",
 
-    "get_project_manager"
+    # lib
+    "get_project_manager",
 
+    # menu
     "launch_pype_menu",
 
+    # workio
     "open_file",
     "save_file",
     "current_file",
