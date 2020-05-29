@@ -461,7 +461,8 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 int(self._instance.data["frameEndHandle"])),
 
             "Plugin": "Python",
-            "FramesPerTask": self._instance.data.get("framesPerTask", 1)
+            "FramesPerTask": self._instance.data.get("framesPerTask", 1),
+            "Frames": 1
         }
 
         plugin_info_ext = {
