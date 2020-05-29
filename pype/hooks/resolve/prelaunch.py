@@ -31,9 +31,9 @@ class ResolvePrelaunch(PypeHook):
         py36_dir = os.path.normpath(env.get("PYTHON36_RESOLVE", ""))
         assert os.path.isdir(py36_dir), (
             "Python 3.6 is not installed at the provided folder path. Either "
-            "make sure the `environments\resolve.json` is having correctly set "
-            "`PYTHON36_RESOLVE` or make sure Python 3.6 is installed in given path."
-            f"\nPYTHON36_RESOLVE: `{py36_dir}`"
+            "make sure the `environments\resolve.json` is having correctly "
+            "set `PYTHON36_RESOLVE` or make sure Python 3.6 is installed "
+            f"in given path. \nPYTHON36_RESOLVE: `{py36_dir}`"
         )
         self.log.info(f"Path to Resolve Python folder: `{py36_dir}`...")
         env["PYTHON36_RESOLVE"] = py36_dir
