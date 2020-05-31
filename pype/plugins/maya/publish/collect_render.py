@@ -869,12 +869,7 @@ class ExpectedFilesRedshift(AExpectedFiles):
         # Redshift doesn't merge Cryptomatte AOV to final exr. We need to check
         # for such condition and add it to list of expected files.
 
-        print("*" * 80)
-        print(layer_data.get("enabledAOVs"))
         for aov in layer_data.get("enabledAOVs"):
-            print("-" * 80)
-            print(aov)
-            print("-" * 80)
             if aov[0].lower() == "cryptomatte":
                 aov_name = aov[0]
                 expected_files.append(
