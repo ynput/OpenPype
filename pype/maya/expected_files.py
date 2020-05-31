@@ -51,7 +51,7 @@ R_SINGLE_FRAME = re.compile(r"^(-?)\d+$")
 R_FRAME_RANGE = re.compile(r"^(?P<sf>(-?)\d+)-(?P<ef>(-?)\d+)$")
 R_FRAME_NUMBER = re.compile(r".+\.(?P<frame>[0-9]+)\..+")
 R_LAYER_TOKEN = re.compile(
-    r".*%l.*|.*<layer>.*|.*<renderlayer>.*", re.IGNORECASE
+    r".*((?:%l)|(?:<layer>)|(?:<renderlayer>)).*", re.IGNORECASE
 )
 R_AOV_TOKEN = re.compile(r".*%a.*|.*<aov>.*|.*<renderpass>.*", re.IGNORECASE)
 R_SUBSTITUTE_AOV_TOKEN = re.compile(r"%a|<aov>|<renderpass>", re.IGNORECASE)
@@ -633,7 +633,12 @@ class ExpectedFilesRedshift(AExpectedFiles):
         ext_mapping (list): Mapping redshift extension dropdown values
             to strings.
 
+        unmerged_aovs (list): Name of aovs that are not merged into resulting
+            exr and we need them specified in expectedFiles output.
+
     """
+
+    unmerged_aovs = ["Cryptomatte"]
 
     ext_mapping = ["iff", "exr", "tif", "png", "tga", "jpg"]
 
@@ -673,7 +678,17 @@ class ExpectedFilesRedshift(AExpectedFiles):
         if layer_data.get("enabledAOVs"):
             expected_files[0][u"beauty"] = self._generate_single_file_sequence(
                 layer_data
-            )  # noqa: E501
+            )
+
+        # Redshift doesn't merge Cryptomatte AOV to final exr. We need to check
+        # for such condition and add it to list of expected files.
+
+        for aov in layer_data.get("enabledAOVs"):
+            if aov[0].lower() == "cryptomatte":
+                aov_name = aov[0]
+                expected_files.append(
+                    {aov_name: self._generate_single_file_sequence(
+                        layer_data, aov_name=aov_name)})
 
         return expected_files
 
@@ -715,9 +730,26 @@ class ExpectedFilesRedshift(AExpectedFiles):
                 enabled = self.maya_is_true(override)
 
             if enabled:
-                enabled_aovs.append(
-                    (cmds.getAttr("%s.name" % aov), default_ext)
-                )
+                # If AOVs are merged into multipart exr, append AOV only if it
+                # is in the list of AOVs that renderer cannot (or will not)
+                # merge into final exr.
+                if self.maya_is_true(
+                    cmds.getAttr("redshiftOptions.exrForceMultilayer")
+                ):
+                    if cmds.getAttr("%s.name" % aov) in self.unmerged_aovs:
+                        enabled_aovs.append(
+                            (cmds.getAttr("%s.name" % aov), default_ext)
+                        )
+                else:
+                    enabled_aovs.append(
+                        (cmds.getAttr("%s.name" % aov), default_ext)
+                    )
+
+        if self.maya_is_true(
+            cmds.getAttr("redshiftOptions.exrForceMultilayer")
+        ):
+            # AOVs are merged in mutli-channel file
+            self.multipart = True
 
         return enabled_aovs
 
