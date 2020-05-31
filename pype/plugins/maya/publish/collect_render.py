@@ -57,11 +57,12 @@ R_SINGLE_FRAME = re.compile(r"^(-?)\d+$")
 R_FRAME_RANGE = re.compile(r"^(?P<sf>(-?)\d+)-(?P<ef>(-?)\d+)$")
 R_FRAME_NUMBER = re.compile(r".+\.(?P<frame>[0-9]+)\..+")
 R_LAYER_TOKEN = re.compile(
-    r".*%l.*|.*<layer>.*|.*<renderlayer>.*", re.IGNORECASE
+    r".*((?:%l)|(?:<layer>)|(?:<renderlayer>)).*", re.IGNORECASE
 )
 R_AOV_TOKEN = re.compile(r".*%a.*|.*<aov>.*|.*<renderpass>.*", re.IGNORECASE)
 R_SUBSTITUTE_AOV_TOKEN = re.compile(r"%a|<aov>|<renderpass>", re.IGNORECASE)
-R_REMOVE_AOV_TOKEN = re.compile(r"_%a|_<aov>|_<renderpass>", re.IGNORECASE)
+R_REMOVE_AOV_TOKEN = re.compile(r"(?:_|\.)((?:%a)|(?:<aov>)|(?:<renderpass>))",
+                                re.IGNORECASE)
 # to remove unused renderman tokens
 R_CLEAN_FRAME_TOKEN = re.compile(r"\.?<f\d>\.?", re.IGNORECASE)
 R_CLEAN_EXT_TOKEN = re.compile(r"\.?<ext>\.?", re.IGNORECASE)
@@ -514,20 +515,23 @@ class AExpectedFiles:
         }
         return scene_data
 
-    def _generate_single_file_sequence(self, layer_data):
+    def _generate_single_file_sequence(self, layer_data, aov_name=None):
         expected_files = []
         file_prefix = layer_data["filePrefix"]
         for cam in layer_data["cameras"]:
-            mappings = (
+            mappings = [
                 (R_SUBSTITUTE_SCENE_TOKEN, layer_data["sceneName"]),
                 (R_SUBSTITUTE_LAYER_TOKEN, layer_data["layerName"]),
                 (R_SUBSTITUTE_CAMERA_TOKEN, cam),
-                # this is required to remove unfilled aov token, for example
-                # in Redshift
-                (R_REMOVE_AOV_TOKEN, ""),
                 (R_CLEAN_FRAME_TOKEN, ""),
                 (R_CLEAN_EXT_TOKEN, ""),
-            )
+            ]
+            # this is required to remove unfilled aov token, for example
+            # in Redshift
+            if aov_name:
+                mappings.append((R_SUBSTITUTE_AOV_TOKEN, aov_name))
+            else:
+                mappings.append((R_REMOVE_AOV_TOKEN, ""))
 
             for regex, value in mappings:
                 file_prefix = re.sub(regex, value, file_prefix)
@@ -837,13 +841,17 @@ class ExpectedFilesRedshift(AExpectedFiles):
     # mapping redshift extension dropdown values to strings
     ext_mapping = ["iff", "exr", "tif", "png", "tga", "jpg"]
 
+    # name of aovs that are not merged into resulting exr and we need
+    # them specified in expectedFiles output.
+    unmerged_aovs = ["Cryptomatte"]
+
     def __init__(self, layer):
         super(ExpectedFilesRedshift, self).__init__(layer)
         self.renderer = "redshift"
 
     def get_renderer_prefix(self):
         prefix = super(ExpectedFilesRedshift, self).get_renderer_prefix()
-        prefix = "{}_<aov>".format(prefix)
+        prefix = "{}.<aov>".format(prefix)
         return prefix
 
     def get_files(self):
@@ -856,7 +864,22 @@ class ExpectedFilesRedshift(AExpectedFiles):
         if layer_data.get("enabledAOVs"):
             expected_files[0][u"beauty"] = self._generate_single_file_sequence(
                 layer_data
-            )  # noqa: E501
+            )
+
+        # Redshift doesn't merge Cryptomatte AOV to final exr. We need to check
+        # for such condition and add it to list of expected files.
+
+        print("*" * 80)
+        print(layer_data.get("enabledAOVs"))
+        for aov in layer_data.get("enabledAOVs"):
+            print("-" * 80)
+            print(aov)
+            print("-" * 80)
+            if aov[0].lower() == "cryptomatte":
+                aov_name = aov[0]
+                expected_files.append(
+                    {aov_name: self._generate_single_file_sequence(
+                        layer_data, aov_name=aov_name)})
 
         return expected_files
 
@@ -864,23 +887,15 @@ class ExpectedFilesRedshift(AExpectedFiles):
         enabled_aovs = []
 
         try:
-            if self.maya_is_true(
-                cmds.getAttr("redshiftOptions.exrForceMultilayer")
-            ):
-                # AOVs are merged in mutli-channel file
-                self.multipart = True
-                return enabled_aovs
+            default_ext = self.ext_mapping[
+                cmds.getAttr("redshiftOptions.imageFormat")
+            ]
         except ValueError:
             # this occurs when Render Setting windows was not opened yet. In
-            # such case there are no Arnold options created so query for AOVs
-            # will fail. We terminate here as there are no AOVs specified then.
-            # This state will most probably fail later on some Validator
-            # anyway.
-            return enabled_aovs
+            # such case there are no Redshift options created so query
+            # will fail.
+            raise ValueError("Render settings are not initialized")
 
-        default_ext = self.ext_mapping[
-            cmds.getAttr("redshiftOptions.imageFormat")
-        ]
         rs_aovs = [n for n in cmds.ls(type="RedshiftAOV")]
 
         # todo: find out how to detect multichannel exr for redshift
@@ -892,9 +907,26 @@ class ExpectedFilesRedshift(AExpectedFiles):
                 enabled = self.maya_is_true(override)
 
             if enabled:
-                enabled_aovs.append(
-                    (cmds.getAttr("%s.name" % aov), default_ext)
-                )
+                # If AOVs are merged into multipart exr, append AOV only if it
+                # is in the list of AOVs that renderer cannot (or will not)
+                # merge into final exr.
+                if self.maya_is_true(
+                    cmds.getAttr("redshiftOptions.exrForceMultilayer")
+                ):
+                    if cmds.getAttr("%s.name" % aov) in self.unmerged_aovs:
+                        enabled_aovs.append(
+                            (cmds.getAttr("%s.name" % aov), default_ext)
+                        )
+                else:
+                    enabled_aovs.append(
+                        (cmds.getAttr("%s.name" % aov), default_ext)
+                    )
+
+        if self.maya_is_true(
+            cmds.getAttr("redshiftOptions.exrForceMultilayer")
+        ):
+            # AOVs are merged in mutli-channel file
+            self.multipart = True
 
         return enabled_aovs
 
