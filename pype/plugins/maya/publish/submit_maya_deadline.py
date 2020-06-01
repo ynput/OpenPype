@@ -213,9 +213,6 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
                 # Top-level group name
                 "BatchName": filename,
 
-                # Asset dependency to wait for at least the scene file to sync.
-                "AssetDependency0": filepath,
-
                 # Job name, as seen in Monitor
                 "Name": jobname,
 
@@ -264,6 +261,16 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
             "AuxFiles": []
         }
 
+        # Adding file dependencies.
+        dependencies = instance.context.data["fileDependencies"]
+        dependencies.append(filepath)
+        for dependency in dependencies:
+            self.log.info(dependency)
+            key = "AssetDependency" + str(dependencies.index(dependency))
+            self.log.info(key)
+            payload["JobInfo"][key] = dependency
+
+        # Expected files.
         exp = instance.data.get("expectedFiles")
 
         OutputFilenames = {}
