@@ -21,7 +21,7 @@ from avalon.vendor import requests
 
 import pyblish.api
 
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 
 
 def get_renderer_variables(renderlayer=None):

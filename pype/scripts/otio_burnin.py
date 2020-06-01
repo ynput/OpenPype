@@ -4,8 +4,7 @@ import re
 import subprocess
 import json
 import opentimelineio_contrib.adapters.ffmpeg_burnins as ffmpeg_burnins
-from pypeapp.lib import config
-from pypeapp import Logger
+from pype.api import Logger, config
 import pype.lib
 
 log = Logger().get_logger("BurninWrapper", "burninwrap")

@@ -1,6 +1,6 @@
 import pyblish.api
 from avalon.nuke import lib as anlib
-from pype.nuke import lib as pnlib
+from pype.hosts.nuke import lib as pnlib
 import nuke
 import os
 import pype

@@ -4,7 +4,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 def len_flattened(components):
@@ -50,7 +50,7 @@ class ValidateMeshHasUVs(pyblish.api.InstancePlugin):
     families = ['model']
     category = 'geometry'
     label = 'Mesh Has UVs'
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
     optional = True
 
     @classmethod

@@ -1,6 +1,6 @@
 from avalon import api
 import hiero
-from pype.nukestudio import lib
+from pype.hosts.nukestudio import lib
 reload(lib)
 
 
