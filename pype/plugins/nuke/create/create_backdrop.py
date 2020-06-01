@@ -1,9 +1,9 @@
-from avalon.nuke.pipeline import Creator
+import avalon.nuke
 from avalon.nuke import lib as anlib
 import nuke
 
 
-class CreateBackdrop(Creator):
+class CreateBackdrop(avalon.nuke.Creator):
     """Add Publishable Backdrop"""
 
     name = "nukenodes"
