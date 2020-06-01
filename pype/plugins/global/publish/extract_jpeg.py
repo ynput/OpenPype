@@ -36,7 +36,7 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
             if not isinstance(repre['files'], list):
                 continue
 
-            if "multipartExr" in tags:
+            if instance.data.get("multipartExr") is True:
                 # ffmpeg doesn't support multipart exrs
                 continue
 

@@ -1131,7 +1131,7 @@ class ExtractReview(pyblish.api.InstancePlugin):
 
             tags = repre.get("tags", [])
 
-            if instance.data.get("multipartExr") is True:
+            if inst_data.get("multipartExr") is True:
                 # ffmpeg doesn't support multipart exrs
                 continue
 
