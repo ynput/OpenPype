@@ -1,3 +1,3 @@
-from pype import blender
+from pype.hosts import blender
 
 blender.install()

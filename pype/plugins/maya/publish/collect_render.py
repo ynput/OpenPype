@@ -50,7 +50,7 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 import pyblish.api
 
 from avalon import maya, api
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 
 
 R_SINGLE_FRAME = re.compile(r"^(-?)\d+$")

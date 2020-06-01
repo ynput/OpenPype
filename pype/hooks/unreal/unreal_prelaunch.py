@@ -2,8 +2,8 @@ import logging
 import os
 
 from pype.lib import PypeHook
-from pype.unreal import lib as unreal_lib
-from pypeapp import Logger
+from pype.hosts.unreal import lib as unreal_lib
+from pype.api import Logger
 
 log = logging.getLogger(__name__)
 

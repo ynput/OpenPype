@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
@@ -25,8 +25,8 @@ class ValidateUniqueRelationshipMembers(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ['look']
 
-    actions = [pype.maya.action.SelectInvalidAction,
-               pype.maya.action.GenerateUUIDsOnInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction,
+               pype.hosts.maya.action.GenerateUUIDsOnInvalidAction]
 
     def process(self, instance):
         """Process all meshes"""

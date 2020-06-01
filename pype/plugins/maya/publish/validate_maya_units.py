@@ -3,7 +3,7 @@ import maya.cmds as cmds
 import pyblish.api
 import pype.api
 from pype import lib
-import pype.maya.lib as mayalib
+import pype.hosts.maya.lib as mayalib
 from math import ceil
 
 

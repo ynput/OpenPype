@@ -5,7 +5,7 @@ from maya import cmds
 import avalon.maya
 import pype.api
 from pype.lib import grouper
-from pype.maya import lib
+from pype.hosts.maya import lib
 
 
 def massage_ma_file(path):

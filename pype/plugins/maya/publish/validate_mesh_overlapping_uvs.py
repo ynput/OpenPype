@@ -1,6 +1,6 @@
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 import math
 import maya.api.OpenMaya as om
 import pymel.core as pm
@@ -235,7 +235,7 @@ class ValidateMeshHasOverlappingUVs(pyblish.api.InstancePlugin):
     families = ['model']
     category = 'geometry'
     label = 'Mesh Has Overlapping UVs'
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
     optional = True
 
     @classmethod

@@ -2,11 +2,11 @@ import traceback
 
 # activate nukestudio from pype
 import avalon.api
-import pype.nukestudio
-avalon.api.install(pype.nukestudio)
+import pype.hosts.nukestudio
+avalon.api.install(pype.hosts.nukestudio)
 
 try:
-    __import__("pype.nukestudio")
+    __import__("pype.hosts.nukestudio")
     __import__("pyblish")
 
 except ImportError as e:
@@ -15,5 +15,5 @@ except ImportError as e:
 
 else:
     # Setup integration
-    import pype.nukestudio.lib
-    pype.nukestudio.lib.setup()
+    import pype.hosts.nukestudio.lib
+    pype.hosts.nukestudio.lib.setup()

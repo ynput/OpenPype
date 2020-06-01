@@ -3,7 +3,7 @@ import pype.api
 
 from maya import cmds
 
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateShapeRenderStats(pyblish.api.Validator):
@@ -13,7 +13,7 @@ class ValidateShapeRenderStats(pyblish.api.Validator):
     hosts = ['maya']
     families = ['model']
     label = 'Shape Default Render Stats'
-    actions = [pype.maya.action.SelectInvalidAction,
+    actions = [pype.hosts.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     defaults = {'castsShadows': 1,

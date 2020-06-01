@@ -1,6 +1,6 @@
 import pyblish.api
 import pype.api as pype
-from pype.nuke import lib as pnlib
+from pype.hosts.nuke import lib as pnlib
 import nuke
 
 @pyblish.api.log

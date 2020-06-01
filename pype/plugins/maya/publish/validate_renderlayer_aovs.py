@@ -1,6 +1,6 @@
 import pyblish.api
 
-import pype.maya.action
+import pype.hosts.maya.action
 from avalon import io
 import pype.api
 
@@ -25,7 +25,7 @@ class ValidateRenderLayerAOVs(pyblish.api.InstancePlugin):
     label = "Render Passes / AOVs Are Registered"
     hosts = ["maya"]
     families = ["renderlayer"]
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
 
     def process(self, instance):
         invalid = self.get_invalid(instance)

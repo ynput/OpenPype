@@ -14,6 +14,19 @@ class ImportTemplateLoader(api.Loader):
     label = "Import Template"
 
     def load(self, context, name=None, namespace=None, data=None):
+        # Make backdrops from metadata.
+        backdrops = context["representation"]["data"].get("backdrops", [])
+
+        func = """function func(args)
+        {
+            Backdrop.addBackdrop("Top", args[0]);
+        }
+        func
+        """
+        for backdrop in backdrops:
+            harmony.send({"function": func, "args": [backdrop]})
+
+        # Import template.
         temp_dir = tempfile.mkdtemp()
         zip_file = api.get_representation_path(context["representation"])
         template_path = os.path.join(temp_dir, "temp.tpl")

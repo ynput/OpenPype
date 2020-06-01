@@ -58,7 +58,7 @@ class ExtractBurnin(pype.api.Extractor):
         if "representations" not in instance.data:
             raise RuntimeError("Burnin needs already created mov to work on.")
 
-        if self.profiles is None:
+        if self.use_legacy_code(instance):
             return self.legacy_process(instance)
         self.main_process(instance)
 
@@ -70,6 +70,12 @@ class ExtractBurnin(pype.api.Extractor):
                 instance.data["representations"].remove(repre)
 
         self.log.debug(instance.data["representations"])
+
+    def use_legacy_code(self, instance):
+        presets = instance.context.data.get("presets")
+        if presets is None and self.profiles is None:
+            return True
+        return "burnins" in (presets.get("tools") or {})
 
     def main_process(self, instance):
         # TODO get these data from context
@@ -830,7 +836,7 @@ class ExtractBurnin(pype.api.Extractor):
         for i, repre in enumerate(instance.data["representations"]):
             self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
 
-            if "multipartExr" in repre.get("tags", []):
+            if instance.data.get("multipartExr") is True:
                 # ffmpeg doesn't support multipart exrs
                 continue
 

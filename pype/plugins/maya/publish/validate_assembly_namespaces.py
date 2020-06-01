@@ -1,6 +1,6 @@
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin):
@@ -18,7 +18,7 @@ class ValidateAssemblyNamespaces(pyblish.api.InstancePlugin):
     label = "Validate Assembly Namespaces"
     order = pyblish.api.ValidatorOrder
     families = ["assembly"]
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
 
     def process(self, instance):
 

@@ -15,7 +15,7 @@ from abc import ABCMeta, abstractmethod
 from avalon import io, pipeline
 import six
 import avalon.api
-from pypeapp import config
+from .api import config
 
 log = logging.getLogger(__name__)
 
@@ -458,7 +458,7 @@ def get_version_from_path(file):
         v: version number in string ('001')
 
     """
-    pattern = re.compile(r"[\._]v([0-9]+)")
+    pattern = re.compile(r"[\._]v([0-9]+)", re.IGNORECASE)
     try:
         return pattern.findall(file)[0]
     except IndexError:
