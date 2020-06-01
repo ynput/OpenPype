@@ -19,7 +19,7 @@ class ValidateVersion(pyblish.api.InstancePlugin):
         if latest_version is not None:
             msg = (
                 "Version `{0}` that you are trying to publish, already exists"
-                " in the database. Version in databse: `{1}`. Please version "
+                " in the database. Version in database: `{1}`. Please version "
                 "up your workfile to a higher version number than: `{1}`."
             ).format(version, latest_version)
             assert (int(version) > int(latest_version)), msg
