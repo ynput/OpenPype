@@ -20,7 +20,7 @@ FFMPEG = (
 ).format(ffmpeg_path)
 
 FFPROBE = (
-    '{} -v quiet -print_format json -show_format -show_streams %(source)s'
+    '{} -v quiet -print_format json -show_format -show_streams "%(source)s"'
 ).format(ffprobe_path)
 
 DRAWTEXT = (
@@ -55,7 +55,7 @@ def _streams(source):
 
 def get_fps(str_value):
     if str_value == "0/0":
-        print("Source has \"r_frame_rate\" value set to \"0/0\".")
+        log.warning("Source has \"r_frame_rate\" value set to \"0/0\".")
         return "Unknown"
 
     items = str_value.split("/")
@@ -147,11 +147,11 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             options = ffmpeg_burnins.TextOptions(**self.options_init)
 
         options = options.copy()
-        if frame_start:
+        if frame_start is not None:
             options["frame_offset"] = frame_start
 
         # `frame_end` is only for meassurements of text position
-        if frame_end:
+        if frame_end is not None:
             options["frame_end"] = frame_end
 
         self._add_burnin(text, align, options, DRAWTEXT)
@@ -173,11 +173,11 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             options = ffmpeg_burnins.TimeCodeOptions(**self.options_init)
 
         options = options.copy()
-        if frame_start:
+        if frame_start is not None:
             options["frame_offset"] = frame_start
 
         # `frame_end` is only for meassurements of text position
-        if frame_end:
+        if frame_end is not None:
             options["frame_end"] = frame_end
 
         if not frame_start_tc:
@@ -212,7 +212,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         if CURRENT_FRAME_SPLITTER in text:
             frame_start = options["frame_offset"]
             frame_end = options.get("frame_end", frame_start)
-            if not frame_start:
+            if frame_start is None:
                 replacement_final = replacement_size = str(MISSING_KEY_VALUE)
             else:
                 replacement_final = "\\'{}\\'".format(
@@ -266,7 +266,7 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
         :returns: completed command
         :rtype: str
         """
-        output = output or ''
+        output = '"{}"'.format(output or '')
         if overwrite:
             output = '-y {}'.format(output)
 
@@ -300,10 +300,10 @@ class ModifiedBurnins(ffmpeg_burnins.Burnins):
             args=args,
             overwrite=overwrite
         )
-        # print(command)
+        log.info("Launching command: {}".format(command))
 
         proc = subprocess.Popen(command, shell=True)
-        proc.communicate()
+        log.info(proc.communicate()[0])
         if proc.returncode != 0:
             raise RuntimeError("Failed to render '%s': %s'"
                                % (output, command))
@@ -335,22 +335,23 @@ def example(input_path, output_path):
 
 
 def burnins_from_data(
-    input_path, output_path, data, codec_data=None, overwrite=True
+    input_path, output_path, data,
+    codec_data=None, options=None, burnin_values=None, overwrite=True
 ):
-    '''
-    This method adds burnins to video/image file based on presets setting.
+    """This method adds burnins to video/image file based on presets setting.
+
     Extension of output MUST be same as input. (mov -> mov, avi -> avi,...)
 
-    :param input_path: full path to input file where burnins should be add
-    :type input_path: str
-    :param codec_data: all codec related arguments in list
-    :param codec_data: list
-    :param output_path: full path to output file where output will be rendered
-    :type output_path: str
-    :param data: data required for burnin settings (more info below)
-    :type data: dict
-    :param overwrite: output will be overriden if already exists, defaults to True
-    :type overwrite: bool
+    Args:
+        input_path (str): Full path to input file where burnins should be add.
+        output_path (str): Full path to output file where output will be
+            rendered.
+        data (dict): Data required for burnin settings (more info below).
+        codec_data (list): All codec related arguments in list.
+        options (dict): Options for burnins.
+        burnin_values (dict): Contain positioned values.
+        overwrite (bool): Output will be overriden if already exists,
+            True by default.
 
     Presets must be set separately. Should be dict with 2 keys:
     - "options" - sets look of burnins - colors, opacity,...(more info: ModifiedBurnins doc)
@@ -391,11 +392,15 @@ def burnins_from_data(
         "frame_start_tc": 1,
         "shot": "sh0010"
     }
-    '''
-    presets = config.get_presets().get('tools', {}).get('burnins', {})
-    options_init = presets.get('options')
+    """
 
-    burnin = ModifiedBurnins(input_path, options_init=options_init)
+    # Use legacy processing when options are not set
+    if options is None or burnin_values is None:
+        presets = config.get_presets().get("tools", {}).get("burnins", {})
+        options = presets.get("options")
+        burnin_values = presets.get("burnins") or {}
+
+    burnin = ModifiedBurnins(input_path, options_init=options)
 
     frame_start = data.get("frame_start")
     frame_end = data.get("frame_end")
@@ -425,7 +430,7 @@ def burnins_from_data(
     if source_timecode is not None:
         data[SOURCE_TIMECODE_KEY[1:-1]] = SOURCE_TIMECODE_KEY
 
-    for align_text, value in presets.get('burnins', {}).items():
+    for align_text, value in burnin_values.items():
         if not value:
             continue
 
@@ -504,18 +509,39 @@ def burnins_from_data(
         text = value.format(**data)
         burnin.add_text(text, align, frame_start, frame_end)
 
-    codec_args = ""
+    ffmpeg_args = []
     if codec_data:
-        codec_args = " ".join(codec_data)
+        # Use codec definition from method arguments
+        ffmpeg_args = codec_data
 
-    burnin.render(output_path, args=codec_args, overwrite=overwrite, **data)
+    else:
+        codec_name = burnin._streams[0].get("codec_name")
+        if codec_name:
+            ffmpeg_args.append("-codec:v {}".format(codec_name))
+
+        profile_name = burnin._streams[0].get("profile")
+        if profile_name:
+            # lower profile name and repalce spaces with underscore
+            profile_name = profile_name.replace(" ", "_").lower()
+            ffmpeg_args.append("-profile:v {}".format(profile_name))
+
+        pix_fmt = burnin._streams[0].get("pix_fmt")
+        if pix_fmt:
+            ffmpeg_args.append("-pix_fmt {}".format(pix_fmt))
+
+    ffmpeg_args_str = " ".join(ffmpeg_args)
+    burnin.render(
+        output_path, args=ffmpeg_args_str, overwrite=overwrite, **data
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     in_data = json.loads(sys.argv[-1])
     burnins_from_data(
-        in_data['input'],
-        in_data['output'],
-        in_data['burnin_data'],
-        in_data['codec']
+        in_data["input"],
+        in_data["output"],
+        in_data["burnin_data"],
+        codec_data=in_data.get("codec"),
+        options=in_data.get("options"),
+        burnin_values=in_data.get("values")
     )

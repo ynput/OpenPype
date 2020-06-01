@@ -68,6 +68,9 @@ class FusionSubmitDeadline(pyblish.api.InstancePlugin):
                 # Top-level group name
                 "BatchName": filename,
 
+                # Asset dependency to wait for at least the scene file to sync.
+                "AssetDependency0": filepath,
+
                 # Job name, as seen in Monitor
                 "Name": filename,
 

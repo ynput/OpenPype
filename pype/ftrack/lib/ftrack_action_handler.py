@@ -23,17 +23,13 @@ class BaseAction(BaseHandler):
 
     def __init__(self, session, plugins_presets={}):
         '''Expects a ftrack_api.Session instance'''
-        super().__init__(session, plugins_presets)
-
         if self.label is None:
-            raise ValueError(
-                'Action missing label.'
-            )
+            raise ValueError('Action missing label.')
 
-        elif self.identifier is None:
-            raise ValueError(
-                'Action missing identifier.'
-            )
+        if self.identifier is None:
+            raise ValueError('Action missing identifier.')
+
+        super().__init__(session, plugins_presets)
 
     def register(self):
         '''
@@ -61,66 +57,131 @@ class BaseAction(BaseHandler):
             self._launch
         )
 
-    def _launch(self, event):
-        args = self._translate_event(
-            self.session, event
+    def _discover(self, event):
+        entities = self._translate_event(event)
+        accepts = self.discover(self.session, entities, event)
+        if not accepts:
+            return
+
+        self.log.debug(u'Discovering action with selection: {0}'.format(
+            event['data'].get('selection', [])
+        ))
+
+        return {
+            'items': [{
+                'label': self.label,
+                'variant': self.variant,
+                'description': self.description,
+                'actionIdentifier': self.identifier,
+                'icon': self.icon,
+            }]
+        }
+
+    def discover(self, session, entities, event):
+        '''Return true if we can handle the selected entities.
+
+        *session* is a `ftrack_api.Session` instance
+
+
+        *entities* is a list of tuples each containing the entity type and the
+        entity id. If the entity is a hierarchical you will always get the
+        entity type TypedContext, once retrieved through a get operation you
+        will have the "real" entity type ie. example Shot, Sequence
+        or Asset Build.
+
+        *event* the unmodified original event
+
+        '''
+
+        return False
+
+    def _interface(self, session, entities, event):
+        interface = self.interface(session, entities, event)
+        if not interface:
+            return
+
+        if isinstance(interface, (tuple, list)):
+            return {"items": interface}
+
+        if isinstance(interface, dict):
+            if (
+                "items" in interface
+                or ("success" in interface and "message" in interface)
+            ):
+                return interface
+
+            raise ValueError((
+                "Invalid interface output expected key: \"items\" or keys:"
+                " \"success\" and \"message\". Got: \"{}\""
+            ).format(str(interface)))
+
+        raise ValueError(
+            "Invalid interface output type \"{}\"".format(
+                str(type(interface))
+            )
         )
+
+    def interface(self, session, entities, event):
+        '''Return a interface if applicable or None
+
+        *session* is a `ftrack_api.Session` instance
+
+        *entities* is a list of tuples each containing the entity type and
+        the entity id. If the entity is a hierarchical you will always get the
+        entity type TypedContext, once retrieved through a get operation you
+        will have the "real" entity type ie. example Shot, Sequence
+        or Asset Build.
+
+        *event* the unmodified original event
+        '''
+        return None
+
+    def _launch(self, event):
+        entities = self._translate_event(event)
 
         preactions_launched = self._handle_preactions(self.session, event)
         if preactions_launched is False:
             return
 
         interface = self._interface(
-            self.session, *args
+            self.session, entities, event
         )
 
         if interface:
             return interface
 
         response = self.launch(
-            self.session, *args
+            self.session, entities, event
         )
 
-        return self._handle_result(
-            self.session, response, *args
-        )
+        return self._handle_result(response)
 
-    def _handle_result(self, session, result, entities, event):
+    def _handle_result(self, result):
         '''Validate the returned result from the action callback'''
         if isinstance(result, bool):
             if result is True:
-                result = {
-                    'success': result,
-                    'message': (
-                        '{0} launched successfully.'.format(self.label)
-                    )
-                }
+                msg = 'Action {0} finished.'
             else:
-                result = {
-                    'success': result,
-                    'message': (
-                        '{0} launch failed.'.format(self.label)
-                    )
-                }
+                msg = 'Action {0} failed.'
 
-        elif isinstance(result, dict):
+            return {
+                'success': result,
+                'message': msg.format(self.label)
+            }
+
+        if isinstance(result, dict):
             if 'items' in result:
-                items = result['items']
-                if not isinstance(items, list):
+                if not isinstance(result['items'], list):
                     raise ValueError('Invalid items format, must be list!')
 
             else:
                 for key in ('success', 'message'):
-                    if key in result:
-                        continue
+                    if key not in result:
+                        raise KeyError('Missing required key: {0}.'.format(key))
+            return result
 
-                    raise KeyError(
-                        'Missing required key: {0}.'.format(key)
-                    )
-
-        else:
-            self.log.error(
-                'Invalid result type must be bool or dictionary!'
-            )
+        self.log.warning((
+            'Invalid result type \"{}\" must be bool or dictionary!'
+        ).format(str(type(result))))
 
         return result

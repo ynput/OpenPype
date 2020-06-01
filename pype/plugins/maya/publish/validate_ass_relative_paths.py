@@ -37,50 +37,71 @@ class ValidateAssRelativePaths(pyblish.api.InstancePlugin):
 
         scene_dir, scene_basename = os.path.split(cmds.file(q=True, loc=True))
         scene_name, _ = os.path.splitext(scene_basename)
-        project_root = "{}{}{}".format(
-            os.environ.get("AVALON_PROJECTS"),
-            os.path.sep,
-            os.environ.get("AVALON_PROJECT")
-        )
         assert self.maya_is_true(relative_texture) is not True, \
             ("Texture path is set to be absolute")
         assert self.maya_is_true(relative_procedural) is not True, \
             ("Procedural path is set to be absolute")
 
-        texture_search_path = texture_search_path.replace("\\", "/")
-        procedural_search_path = procedural_search_path.replace("\\", "/")
-        project_root = project_root.replace("\\", "/")
+        anatomy = instance.context.data["anatomy"]
 
-        assert project_root in texture_search_path, \
-            ("Project root is not in texture_search_path")
-        assert project_root in procedural_search_path, \
-            ("Project root is not in procedural_search_path")
+        # Use project root variables for multiplatform support, see:
+        # https://docs.arnoldrenderer.com/display/A5AFMUG/Search+Path
+        # ':' as path separator is supported by Arnold for all platforms.
+        keys = anatomy.root_environments().keys()
+        paths = []
+        for k in keys:
+            paths.append("[{}]".format(k))
+
+        self.log.info("discovered roots: {}".format(":".join(paths)))
+
+        assert ":".join(paths) in texture_search_path, (
+            "Project roots are not in texture_search_path"
+        )
+
+        assert ":".join(paths) in procedural_search_path, (
+            "Project roots are not in procedural_search_path"
+        )
 
     @classmethod
     def repair(cls, instance):
-        texture_search_path = cmds.getAttr(
-            "defaultArnoldRenderOptions.tspath"
+        texture_path = cmds.getAttr("defaultArnoldRenderOptions.tspath")
+        procedural_path = cmds.getAttr("defaultArnoldRenderOptions.pspath")
+
+        # Use project root variables for multiplatform support, see:
+        # https://docs.arnoldrenderer.com/display/A5AFMUG/Search+Path
+        # ':' as path separator is supported by Arnold for all platforms.
+        anatomy = instance.context.data["anatomy"]
+        keys = anatomy.root_environments().keys()
+        paths = []
+        for k in keys:
+            paths.append("[{}]".format(k))
+
+        cmds.setAttr(
+            "defaultArnoldRenderOptions.tspath",
+            ":".join([p for p in paths + [texture_path] if p]),
+            type="string"
         )
-        procedural_search_path = cmds.getAttr(
-            "defaultArnoldRenderOptions.pspath"
+        cmds.setAttr(
+            "defaultArnoldRenderOptions.absolute_texture_paths",
+            False
         )
 
-        project_root = "{}{}{}".format(
-            os.environ.get("AVALON_PROJECTS"),
-            os.path.sep,
-            os.environ.get("AVALON_PROJECT"),
-        ).replace("\\", "/")
+        cmds.setAttr(
+            "defaultArnoldRenderOptions.pspath",
+            ":".join([p for p in paths + [procedural_path] if p]),
+            type="string"
+        )
+        cmds.setAttr(
+            "defaultArnoldRenderOptions.absolute_procedural_paths",
+            False
+        )
 
-        cmds.setAttr("defaultArnoldRenderOptions.tspath",
-                     project_root + os.pathsep + texture_search_path,
-                     type="string")
-        cmds.setAttr("defaultArnoldRenderOptions.pspath",
-                     project_root + os.pathsep + procedural_search_path,
-                     type="string")
-        cmds.setAttr("defaultArnoldRenderOptions.absolute_procedural_paths",
-                     False)
-        cmds.setAttr("defaultArnoldRenderOptions.absolute_texture_paths",
-                     False)
+    @staticmethod
+    def find_absolute_path(relative_path, all_root_paths):
+        for root_path in all_root_paths:
+            possible_path = os.path.join(root_path, relative_path)
+            if os.path.exists(possible_path):
+                return possible_path
 
     def maya_is_true(self, attr_val):
         """

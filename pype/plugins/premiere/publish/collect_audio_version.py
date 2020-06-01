@@ -13,5 +13,5 @@ class CollectAudioVersion(pyblish.api.InstancePlugin):
 
     def process(self, instance):
         self.log.info('Audio: {}'.format(instance.data['name']))
-        instance.data['version'] = '001'
+        instance.data['version'] = 1
         self.log.info('Audio version to: {}'.format(instance.data['version']))

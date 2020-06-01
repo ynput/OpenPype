@@ -2,6 +2,7 @@ import os
 import re
 import queue
 import collections
+import copy
 
 from pype.ftrack.lib.io_nonsingleton import DbConnector
 
@@ -290,6 +291,8 @@ class SyncEntitiesFactory:
         self.all_filtered_entities = {}
         self.filtered_ids = []
         self.not_selected_ids = []
+
+        self.hier_cust_attr_ids_by_key = {}
 
         self._ent_paths_by_ftrack_id = {}
 
@@ -690,7 +693,6 @@ class SyncEntitiesFactory:
             ent_type["name"]: ent_type["id"] for ent_type in ent_types
         }
 
-        attrs = set()
         # store default values per entity type
         attrs_per_entity_type = collections.defaultdict(dict)
         avalon_attrs = collections.defaultdict(dict)
@@ -698,9 +700,10 @@ class SyncEntitiesFactory:
         attrs_per_entity_type_ca_id = collections.defaultdict(dict)
         avalon_attrs_ca_id = collections.defaultdict(dict)
 
+        attribute_key_by_id = {}
         for cust_attr in custom_attrs:
             key = cust_attr["key"]
-            attrs.add(cust_attr["id"])
+            attribute_key_by_id[cust_attr["id"]] = key
             ca_ent_type = cust_attr["entity_type"]
             if key.startswith("avalon_"):
                 if ca_ent_type == "show":
@@ -754,19 +757,19 @@ class SyncEntitiesFactory:
             prepared_avalon_attr_ca_id = avalon_attrs_ca_id.get(attr_key)
             if prepared_attrs:
                 self.entities_dict[entity_id]["custom_attributes"] = (
-                    prepared_attrs.copy()
+                    copy.deepcopy(prepared_attrs)
                 )
             if prepared_attrs_ca_id:
                 self.entities_dict[entity_id]["custom_attributes_id"] = (
-                    prepared_attrs_ca_id.copy()
+                    copy.deepcopy(prepared_attrs_ca_id)
                 )
             if prepared_avalon_attr:
                 self.entities_dict[entity_id]["avalon_attrs"] = (
-                    prepared_avalon_attr.copy()
+                    copy.deepcopy(prepared_avalon_attr)
                 )
             if prepared_avalon_attr_ca_id:
                 self.entities_dict[entity_id]["avalon_attrs_id"] = (
-                    prepared_avalon_attr_ca_id.copy()
+                    copy.deepcopy(prepared_avalon_attr_ca_id)
                 )
 
         # TODO query custom attributes by entity_id
@@ -774,7 +777,7 @@ class SyncEntitiesFactory:
             "\"{}\"".format(id) for id in sync_ids
         ])
         attributes_joined = ", ".join([
-            "\"{}\"".format(name) for name in attrs
+            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
         ])
 
         cust_attr_query = (
@@ -792,13 +795,13 @@ class SyncEntitiesFactory:
         else:
             [values] = self.session._call(call_expr)
 
-        for value in values["data"]:
-            entity_id = value["entity_id"]
-            key = value["configuration"]["key"]
+        for item in values["data"]:
+            entity_id = item["entity_id"]
+            key = attribute_key_by_id[item["configuration_id"]]
             store_key = "custom_attributes"
             if key.startswith("avalon_"):
                 store_key = "avalon_attrs"
-            self.entities_dict[entity_id][store_key][key] = value["value"]
+            self.entities_dict[entity_id][store_key][key] = item["value"]
 
         # process hierarchical attributes
         self.set_hierarchical_attribute(hier_attrs, sync_ids)
@@ -812,6 +815,7 @@ class SyncEntitiesFactory:
             key = attr["key"]
             attribute_key_by_id[attr["id"]] = key
             attributes_by_key[key] = attr
+            self.hier_cust_attr_ids_by_key[key] = attr["id"]
 
             store_key = "hier_attrs"
             if key.startswith("avalon_"):
@@ -820,6 +824,21 @@ class SyncEntitiesFactory:
             self.entities_dict[self.ft_project_id][store_key][key] = (
                 attr["default"]
             )
+
+        # Add attribute ids to entities dictionary
+        avalon_attribute_id_by_key = {
+            attr_key: attr_id
+            for attr_id, attr_key in attribute_key_by_id.items()
+            if attr_key.startswith("avalon_")
+        }
+        for entity_id in self.entities_dict.keys():
+            if "avalon_attrs_id" not in self.entities_dict[entity_id]:
+                self.entities_dict[entity_id]["avalon_attrs_id"] = {}
+
+            for attr_key, attr_id in avalon_attribute_id_by_key.items():
+                self.entities_dict[entity_id]["avalon_attrs_id"][attr_key] = (
+                    attr_id
+                )
 
         # Prepare dict with all hier keys and None values
         prepare_dict = {}
@@ -834,7 +853,7 @@ class SyncEntitiesFactory:
             # Skip project because has stored defaults at the moment
             if entity_dict["entity_type"] == "project":
                 continue
-            entity_dict["hier_attrs"] = prepare_dict.copy()
+            entity_dict["hier_attrs"] = copy.deepcopy(prepare_dict)
             for key, val in prepare_dict_avalon.items():
                 entity_dict["avalon_attrs"][key] = val
 
@@ -842,32 +861,40 @@ class SyncEntitiesFactory:
         entity_ids_joined = ", ".join([
             "\"{}\"".format(id) for id in sync_ids
         ])
-
+        attributes_joined = ", ".join([
+            "\"{}\"".format(attr_id) for attr_id in attribute_key_by_id.keys()
+        ])
         avalon_hier = []
-        for configuration_id in attribute_key_by_id.keys():
-            call_expr = [{
-                "action": "query",
-                "expression": (
-                    "select value, entity_id from CustomAttributeValue "
-                    "where entity_id in ({}) and configuration_id is \"{}\""
-                ).format(entity_ids_joined, configuration_id)
-            }]
-            if hasattr(self.session, "call"):
-                [values] = self.session.call(call_expr)
-            else:
-                [values] = self.session._call(call_expr)
+        call_expr = [{
+            "action": "query",
+            "expression": (
+                "select value, entity_id from ContextCustomAttributeValue "
+                "where entity_id in ({}) and configuration_id in ({})"
+            ).format(entity_ids_joined, attributes_joined)
+        }]
+        if hasattr(self.session, "call"):
+            [values] = self.session.call(call_expr)
+        else:
+            [values] = self.session._call(call_expr)
 
-            for value in values["data"]:
-                if value["value"] is None:
-                    continue
-                entity_id = value["entity_id"]
-                key = attribute_key_by_id[value["configuration_id"]]
-                if key.startswith("avalon_"):
-                    store_key = "avalon_attrs"
-                    avalon_hier.append(key)
-                else:
-                    store_key = "hier_attrs"
-                self.entities_dict[entity_id][store_key][key] = value["value"]
+        for item in values["data"]:
+            value = item["value"]
+            # WARNING It is not possible to propage enumerate hierachical
+            # attributes with multiselection 100% right. Unseting all values
+            # will cause inheritance from parent.
+            if (
+                value is None
+                or (isinstance(value, (tuple, list)) and not value)
+            ):
+                continue
+            entity_id = item["entity_id"]
+            key = attribute_key_by_id[item["configuration_id"]]
+            if key.startswith("avalon_"):
+                store_key = "avalon_attrs"
+                avalon_hier.append(key)
+            else:
+                store_key = "hier_attrs"
+            self.entities_dict[entity_id][store_key][key] = value
 
         # Get dictionary with not None hierarchical values to pull to childs
         top_id = self.ft_project_id
@@ -877,6 +904,8 @@ class SyncEntitiesFactory:
                 project_values[key] = value
 
         for key in avalon_hier:
+            if key == CustAttrIdKey:
+                continue
             value = self.entities_dict[top_id]["avalon_attrs"][key]
             if value is not None:
                 project_values[key] = value
@@ -887,7 +916,7 @@ class SyncEntitiesFactory:
         while not hier_down_queue.empty():
             hier_values, parent_id = hier_down_queue.get()
             for child_id in self.entities_dict[parent_id]["children"]:
-                _hier_values = hier_values.copy()
+                _hier_values = copy.deepcopy(hier_values)
                 for key in attributes_by_key.keys():
                     if key.startswith("avalon_"):
                         store_key = "avalon_attrs"
@@ -1593,9 +1622,16 @@ class SyncEntitiesFactory:
 
         if current_id != new_id_str:
             # store mongo id to ftrack entity
-            configuration_id = self.entities_dict[ftrack_id][
-                "avalon_attrs_id"
-            ][CustAttrIdKey]
+            configuration_id = self.hier_cust_attr_ids_by_key.get(
+                CustAttrIdKey
+            )
+            if not configuration_id:
+                # NOTE this is for cases when CustAttrIdKey key is not
+                # hierarchical custom attribute but per entity type
+                configuration_id = self.entities_dict[ftrack_id][
+                    "avalon_attrs_id"
+                ][CustAttrIdKey]
+
             _entity_key = collections.OrderedDict({
                 "configuration_id": configuration_id,
                 "entity_id": ftrack_id
@@ -1712,14 +1748,10 @@ class SyncEntitiesFactory:
         except InvalidId:
             new_id = ObjectId()
 
-        project_name = self.entities_dict[self.ft_project_id]["name"]
         project_item["_id"] = new_id
         project_item["parent"] = None
         project_item["schema"] = EntitySchemas["project"]
         project_item["config"]["schema"] = EntitySchemas["config"]
-        project_item["config"]["template"] = (
-            get_avalon_project_template(project_name)
-        )
 
         self.ftrack_avalon_mapper[self.ft_project_id] = new_id
         self.avalon_ftrack_mapper[new_id] = self.ft_project_id
@@ -1866,7 +1898,7 @@ class SyncEntitiesFactory:
         parents_queue.put((self.ft_project_id, [], False))
         while not parents_queue.empty():
             ftrack_id, parent_parents, changed = parents_queue.get()
-            _parents = parent_parents.copy()
+            _parents = copy.deepcopy(parent_parents)
             if ftrack_id not in hierarchy_changing_ids and not changed:
                 if ftrack_id != self.ft_project_id:
                     _parents.append(self.entities_dict[ftrack_id]["name"])

@@ -56,7 +56,8 @@ class ExtractAnimation(pype.api.Extractor):
             "writeCreases": True,
             "uvWrite": True,
             "selection": True,
-            "worldSpace": instance.data.get("worldSpace", True)
+            "worldSpace": instance.data.get("worldSpace", True),
+            "writeColorSets": instance.data.get("writeColorSets", False)
         }
 
         if not instance.data.get("includeParentHierarchy", True):

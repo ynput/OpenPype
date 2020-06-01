@@ -169,8 +169,7 @@ class ExtractYetiRig(pype.api.Extractor):
                 'name': "ma",
                 'ext': 'ma',
                 'files': "yeti_rig.ma",
-                'stagingDir': dirname,
-                'anatomy_template': 'publish'
+                'stagingDir': dirname
             }
         )
         self.log.info("settings file: {}".format("yeti.rigsettings"))
@@ -179,8 +178,7 @@ class ExtractYetiRig(pype.api.Extractor):
                 'name': 'rigsettings',
                 'ext': 'rigsettings',
                 'files': 'yeti.rigsettings',
-                'stagingDir': dirname,
-                'anatomy_template': 'publish'
+                'stagingDir': dirname
             }
         )
 

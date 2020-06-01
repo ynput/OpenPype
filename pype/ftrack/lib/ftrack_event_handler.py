@@ -43,35 +43,10 @@ class BaseEvent(BaseHandler):
             priority=self.priority
         )
 
-    def _launch(self, event):
-        self.session.rollback()
-        self.session._local_cache.clear()
-
-        self.launch(self.session, event)
-
-    def _translate_event(self, session, event):
+    def _translate_event(self, event, session=None):
         '''Return *event* translated structure to be used with the API.'''
-        return [
-            self._get_entities(session, event),
-            event
-        ]
-
-    def _get_entities(
-        self, session, event, ignore=['socialfeed', 'socialnotification']
-    ):
-        _selection = event['data'].get('entities', [])
-        _entities = list()
-        if isinstance(ignore, str):
-            ignore = list(ignore)
-        for entity in _selection:
-            if entity['entityType'] in ignore:
-                continue
-            _entities.append(
-                (
-                    session.get(
-                        self._get_entity_type(entity),
-                        entity.get('entityId')
-                    )
-                )
-            )
-        return _entities
+        return self._get_entities(
+            event,
+            session,
+            ignore=['socialfeed', 'socialnotification']
+        )
