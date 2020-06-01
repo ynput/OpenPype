@@ -46,8 +46,14 @@ class CleanUp(pyblish.api.InstancePlugin):
             if (result["error"] is not None and result["instance"] is not None
                and result["instance"] not in failed):
                 failed.append(result["instance"])
-        assert instance not in failed, ("Result of '{}' instance "
-            "were not success".format(instance.data["name"]))
+        assert instance not in failed, (
+            "Result of '{}' instance were not success".format(
+                instance.data["name"]
+            )
+        )
+
+        self.log.info("Cleaning renders ...")
+        clean_renders(instance)
 
         if [ef for ef in self.exclude_families
                 if instance.data["family"] in ef]:
@@ -65,7 +71,5 @@ class CleanUp(pyblish.api.InstancePlugin):
                           "temp folder: %s" % staging_dir)
             return
 
-        self.log.info("Removing temporary folder ...")
+        self.log.info("Removing staging directory ...")
         shutil.rmtree(staging_dir)
-        self.log.info("Cleaning renders ...")
-        clean_renders(instance)
