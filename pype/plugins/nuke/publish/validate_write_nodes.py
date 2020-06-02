@@ -1,7 +1,7 @@
 import os
 import pyblish.api
 import pype.utils
-import pype.nuke.lib as nukelib
+import pype.hosts.nuke.lib as nukelib
 import avalon.nuke
 
 @pyblish.api.log

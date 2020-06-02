@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from pype.nuke import (
+from pype.hosts.nuke import (
     plugin,
     lib as pnlib)
 import nuke

@@ -5,7 +5,7 @@ import contextlib
 
 import avalon.maya
 import pype.api
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 
 
 class ExtractAssProxy(pype.api.Extractor):

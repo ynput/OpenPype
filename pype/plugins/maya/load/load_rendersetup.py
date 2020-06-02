@@ -21,7 +21,7 @@ class RenderSetupLoader(api.Loader):
     def load(self, context, name, namespace, data):
 
         from avalon.maya.pipeline import containerise
-        # from pype.maya.lib import namespaced
+        # from pype.hosts.maya.lib import namespaced
 
         asset = context['asset']['name']
         namespace = namespace or lib.unique_namespace(

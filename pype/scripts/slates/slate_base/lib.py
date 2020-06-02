@@ -13,7 +13,7 @@ from .items import (
 )
 
 try:
-    from pypeapp.config import get_presets
+    from pype.api.config import get_presets
 except Exception:
     get_presets = dict
 

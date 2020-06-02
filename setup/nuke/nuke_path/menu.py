@@ -2,14 +2,14 @@ import os
 import sys
 import KnobScripter
 
-from pype.nuke.lib import (
+from pype.hosts.nuke.lib import (
     writes_version_sync,
     on_script_load,
     check_inventory_versions
 )
 
 import nuke
-from pypeapp import Logger
+from pype.api import Logger
 
 log = Logger().get_logger(__name__, "nuke")
 

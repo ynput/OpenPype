@@ -2,7 +2,7 @@ import tempfile
 import os
 import pyblish.api
 
-from pypeapp import config
+from pype.api import config
 import inspect
 
 ValidatePipelineOrder = pyblish.api.ValidatorOrder + 0.05

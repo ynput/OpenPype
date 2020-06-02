@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
@@ -12,7 +12,7 @@ class ValidateYetiRigInputShapesInInstance(pyblish.api.Validator):
     hosts = ["maya"]
     families = ["yetiRig"]
     label = "Yeti Rig Input Shapes In Instance"
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
 
     def process(self, instance):
 

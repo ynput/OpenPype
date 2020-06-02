@@ -8,7 +8,7 @@ Provides:
 """
 
 from pyblish import api
-from pypeapp import config
+from pype.api import config
 
 
 class CollectPresets(api.ContextPlugin):

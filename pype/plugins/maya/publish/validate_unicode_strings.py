@@ -3,7 +3,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateUnicodeStrings(pyblish.api.Validator):

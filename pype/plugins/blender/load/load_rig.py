@@ -7,12 +7,12 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender
 import bpy
-import pype.blender.plugin
+import pype.hosts.blender.plugin
 
 logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
 
 
-class BlendRigLoader(pype.blender.plugin.AssetLoader):
+class BlendRigLoader(pype.hosts.blender.plugin.AssetLoader):
     """Load rigs from a .blend file.
 
     Because they come from a .blend file we can simply link the collection that
@@ -108,8 +108,8 @@ class BlendRigLoader(pype.blender.plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = pype.blender.plugin.asset_name(asset, subset)
-        container_name = pype.blender.plugin.asset_name(
+        lib_container = pype.hosts.blender.plugin.asset_name(asset, subset)
+        container_name = pype.hosts.blender.plugin.asset_name(
             asset, subset, namespace
         )
 
@@ -178,7 +178,7 @@ class BlendRigLoader(pype.blender.plugin.AssetLoader):
         assert libpath.is_file(), (
             f"The file doesn't exist: {libpath}"
         )
-        assert extension in pype.blender.plugin.VALID_EXTENSIONS, (
+        assert extension in pype.hosts.blender.plugin.VALID_EXTENSIONS, (
             f"Unsupported file: {libpath}"
         )
 

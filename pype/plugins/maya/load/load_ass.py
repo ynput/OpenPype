@@ -1,11 +1,11 @@
 from avalon import api
-import pype.maya.plugin
+import pype.hosts.maya.plugin
 import os
-from pypeapp import config
+from pype.api import config
 import clique
 
 
-class AssProxyLoader(pype.maya.plugin.ReferenceLoader):
+class AssProxyLoader(pype.hosts.maya.plugin.ReferenceLoader):
     """Load the Proxy"""
 
     families = ["ass"]

@@ -9,7 +9,7 @@ from maya import cmds
 
 from avalon import api, io
 from avalon.maya.lib import unique_namespace
-from pype.maya.lib import matrix_equals
+from pype.hosts.maya.lib import matrix_equals
 
 log = logging.getLogger("PackageLoader")
 
@@ -161,7 +161,7 @@ def _add(instance, representation_id, loaders, namespace, root="|"):
 
     """
 
-    from pype.maya.lib import get_container_transforms
+    from pype.hosts.maya.lib import get_container_transforms
 
     # Process within the namespace
     with namespaced(namespace, new=False) as namespace:
@@ -358,7 +358,7 @@ def update_scene(set_container, containers, current_data, new_data, new_file):
 
     """
 
-    from pype.maya.lib import DEFAULT_MATRIX, get_container_transforms
+    from pype.hosts.maya.lib import DEFAULT_MATRIX, get_container_transforms
 
     set_namespace = set_container['namespace']
 
