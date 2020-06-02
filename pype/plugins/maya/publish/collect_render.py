@@ -49,8 +49,8 @@ import maya.app.renderSetup.model.renderSetup as renderSetup
 import pyblish.api
 
 from avalon import maya, api
-import pype.maya.lib as lib
-from pype.maya.expected_files import ExpectedFiles
+from pype.hosts.maya.expected_files import ExpectedFiles
+from pype.hosts.maya import lib
 
 
 class CollectMayaRender(pyblish.api.ContextPlugin):
@@ -87,7 +87,9 @@ class CollectMayaRender(pyblish.api.ContextPlugin):
 
         self._rs = renderSetup.instance()
         current_layer = self._rs.getVisibleRenderLayer()
-        maya_render_layers = {l.name(): l for l in self._rs.getRenderLayers()}
+        maya_render_layers = {
+            layer.name(): layer for layer in self._rs.getRenderLayers()
+        }
 
         self.maya_layers = maya_render_layers
 

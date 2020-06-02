@@ -8,7 +8,7 @@ import requests
 from maya import cmds
 import maya.app.renderSetup.model.renderSetup as renderSetup
 
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 import avalon.maya
 
 

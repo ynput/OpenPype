@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 
-from pype.maya import lib
+from pype.hosts.maya import lib
 
 SETTINGS = {"renderDensity",
             "renderWidth",

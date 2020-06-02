@@ -28,7 +28,8 @@ from maya import cmds
 
 from avalon import api
 import pyblish.api
-import pype.maya.lib as lib
+
+from pype.hosts.maya import lib
 
 # Documentation for keys available at:
 # https://docs.thinkboxsoftware.com
@@ -289,6 +290,15 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         payload_skeleton["JobInfo"]["Comment"] = comment
         payload_skeleton["PluginInfo"]["RenderLayer"] = renderlayer
+
+        # Adding file dependencies.
+        dependencies = instance.context.data["fileDependencies"]
+        dependencies.append(filepath)
+        for dependency in dependencies:
+            self.log.info(dependency)
+            key = "AssetDependency" + str(dependencies.index(dependency))
+            self.log.info(key)
+            payload_skeleton["JobInfo"][key] = dependency
 
         # Handle environments -----------------------------------------------
         # We need those to pass them to pype for it to set correct context

@@ -1,8 +1,8 @@
 import os
 import traceback
 from pype.lib import PypeHook
-from pypeapp import Logger
-from pype.premiere import lib as prlib
+from pype.api import Logger
+from pype.hosts.premiere import lib as prlib
 
 
 class PremierePrelaunch(PypeHook):
@@ -27,7 +27,7 @@ class PremierePrelaunch(PypeHook):
             env = os.environ
 
         try:
-            __import__("pype.premiere")
+            __import__("pype.hosts.premiere")
             __import__("pyblish")
 
         except ImportError as e:

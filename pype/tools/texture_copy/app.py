@@ -5,7 +5,7 @@ from avalon import io, api
 from pprint import pprint
 
 from pypeapp.lib.Terminal import Terminal
-from pypeapp import Anatomy
+from pype.api import Anatomy
 
 import shutil
 import speedcopy

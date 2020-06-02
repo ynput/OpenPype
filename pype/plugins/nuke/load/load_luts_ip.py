@@ -2,7 +2,7 @@ from avalon import api, style, io
 import nuke
 import json
 from collections import OrderedDict
-from pype.nuke import lib
+from pype.hosts.nuke import lib
 
 
 class LoadLutsInputProcess(api.Loader):

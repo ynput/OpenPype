@@ -3,7 +3,7 @@ from typing import List
 import bpy
 
 import pyblish.api
-import pype.blender.action
+import pype.hosts.blender.action
 
 
 class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
@@ -14,7 +14,7 @@ class ValidateMeshHasUvs(pyblish.api.InstancePlugin):
     families = ["model"]
     category = "geometry"
     label = "Mesh Has UV's"
-    actions = [pype.blender.action.SelectInvalidAction]
+    actions = [pype.hosts.blender.action.SelectInvalidAction]
     optional = True
 
     @staticmethod

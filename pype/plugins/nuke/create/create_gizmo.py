@@ -1,9 +1,9 @@
-from avalon.nuke.pipeline import Creator
+import avalon.nuke
 from avalon.nuke import lib as anlib
 import nuke
-import nukescripts
 
-class CreateGizmo(Creator):
+
+class CreateGizmo(avalon.nuke.Creator):
     """Add Publishable "gizmo" group
 
     The name is symbolically gizmo as presumably

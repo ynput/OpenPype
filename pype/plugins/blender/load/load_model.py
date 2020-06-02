@@ -7,12 +7,12 @@ from typing import Dict, List, Optional
 
 from avalon import api, blender
 import bpy
-import pype.blender.plugin
+import pype.hosts.blender.plugin
 
 logger = logging.getLogger("pype").getChild("blender").getChild("load_model")
 
 
-class BlendModelLoader(pype.blender.plugin.AssetLoader):
+class BlendModelLoader(pype.hosts.blender.plugin.AssetLoader):
     """Load models from a .blend file.
 
     Because they come from a .blend file we can simply link the collection that
@@ -96,8 +96,8 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
         libpath = self.fname
         asset = context["asset"]["name"]
         subset = context["subset"]["name"]
-        lib_container = pype.blender.plugin.asset_name(asset, subset)
-        container_name = pype.blender.plugin.asset_name(
+        lib_container = pype.hosts.blender.plugin.asset_name(asset, subset)
+        container_name = pype.hosts.blender.plugin.asset_name(
             asset, subset, namespace
         )
 
@@ -164,7 +164,7 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
         assert libpath.is_file(), (
             f"The file doesn't exist: {libpath}"
         )
-        assert extension in pype.blender.plugin.VALID_EXTENSIONS, (
+        assert extension in pype.hosts.blender.plugin.VALID_EXTENSIONS, (
             f"Unsupported file: {libpath}"
         )
 
@@ -233,7 +233,7 @@ class BlendModelLoader(pype.blender.plugin.AssetLoader):
         return True
 
 
-class CacheModelLoader(pype.blender.plugin.AssetLoader):
+class CacheModelLoader(pype.hosts.blender.plugin.AssetLoader):
     """Load cache models.
 
     Stores the imported asset in a collection named after the asset.
@@ -269,7 +269,7 @@ class CacheModelLoader(pype.blender.plugin.AssetLoader):
         subset = context["subset"]["name"]
         # TODO (jasper): evaluate use of namespace which is 'alien' to Blender.
         lib_container = container_name = (
-            pype.blender.plugin.asset_name(asset, subset, namespace)
+            pype.hosts.blender.plugin.asset_name(asset, subset, namespace)
         )
         relative = bpy.context.preferences.filepaths.use_relative_paths
 
