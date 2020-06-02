@@ -1,7 +1,7 @@
 import maya.cmds as cmds
 
 import pyblish.api
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 
 
 class ValidateInstancerContent(pyblish.api.InstancePlugin):

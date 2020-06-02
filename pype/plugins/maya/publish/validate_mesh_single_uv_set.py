@@ -2,8 +2,8 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
-import pype.maya.lib as lib
+import pype.hosts.maya.action
+from pype.hosts.maya import lib
 
 
 class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
@@ -22,7 +22,7 @@ class ValidateMeshSingleUVSet(pyblish.api.InstancePlugin):
     optional = True
     version = (0, 1, 0)
     label = "Mesh Single UV Set"
-    actions = [pype.maya.action.SelectInvalidAction,
+    actions = [pype.hosts.maya.action.SelectInvalidAction,
                pype.api.RepairAction]
 
     @staticmethod

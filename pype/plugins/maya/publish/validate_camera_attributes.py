@@ -2,7 +2,7 @@ from maya import cmds
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 
 class ValidateCameraAttributes(pyblish.api.InstancePlugin):
@@ -18,7 +18,7 @@ class ValidateCameraAttributes(pyblish.api.InstancePlugin):
     families = ['camera']
     hosts = ['maya']
     label = 'Camera Attributes'
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
 
     DEFAULTS = [
         ("filmFitOffset", 0.0),

@@ -2,7 +2,7 @@ import re
 
 import pyblish.api
 import pype.api
-import pype.maya.action
+import pype.hosts.maya.action
 
 from maya import cmds
 
@@ -28,7 +28,7 @@ class ValidateRenderSingleCamera(pyblish.api.InstancePlugin):
     hosts = ['maya']
     families = ["renderlayer",
                 "vrayscene"]
-    actions = [pype.maya.action.SelectInvalidAction]
+    actions = [pype.hosts.maya.action.SelectInvalidAction]
 
     R_CAMERA_TOKEN = re.compile(r'%c|<camera>', re.IGNORECASE)
 

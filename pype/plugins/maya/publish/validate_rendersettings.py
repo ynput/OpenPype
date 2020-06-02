@@ -6,7 +6,7 @@ import pymel.core as pm
 
 import pyblish.api
 import pype.api
-import pype.maya.lib as lib
+from pype.hosts.maya import lib
 
 
 class ValidateRenderSettings(pyblish.api.InstancePlugin):

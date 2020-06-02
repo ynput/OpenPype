@@ -1,11 +1,11 @@
-import pype.maya.plugin
+import pype.hosts.maya.plugin
 from avalon import api, io
 import json
-import pype.maya.lib
+import pype.hosts.maya.lib
 from collections import defaultdict
 
 
-class LookLoader(pype.maya.plugin.ReferenceLoader):
+class LookLoader(pype.hosts.maya.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
 
     families = ["look"]
@@ -132,9 +132,9 @@ class LookLoader(pype.maya.plugin.ReferenceLoader):
         # region compute lookup
         nodes_by_id = defaultdict(list)
         for n in nodes:
-            nodes_by_id[pype.maya.lib.get_id(n)].append(n)
+            nodes_by_id[pype.hosts.maya.lib.get_id(n)].append(n)
 
-        pype.maya.lib.apply_attributes(attributes, nodes_by_id)
+        pype.hosts.maya.lib.apply_attributes(attributes, nodes_by_id)
 
         # Update metadata
         cmds.setAttr("{}.representation".format(node),

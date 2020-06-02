@@ -10,8 +10,8 @@ from avalon import api
 from avalon.vendor import requests
 
 import pyblish.api
-import pype.maya.lib as lib
-from pypeapp import config
+from pype.hosts.maya import lib
+from pype.api import config
 
 
 # mapping between Maya renderer names and Muster template ids
