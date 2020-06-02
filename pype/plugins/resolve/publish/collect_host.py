@@ -1,5 +1,5 @@
 import pyblish.api
-from pype.resolve.utils import get_resolve_module
+from pype.hosts.resolve.utils import get_resolve_module
 
 
 class CollectProject(pyblish.api.ContextPlugin):

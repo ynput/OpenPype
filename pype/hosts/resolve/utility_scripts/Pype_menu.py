@@ -9,7 +9,7 @@ log = Logger().get_logger(__name__)
 
 
 def main(env):
-    import pype.resolve as bmdvr
+    import pype.hosts.resolve as bmdvr
     # Registers pype's Global pyblish plugins
     pype.install()
 

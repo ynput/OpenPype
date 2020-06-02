@@ -1,5 +1,5 @@
 from avalon import api
-# from pype.resolve import lib as drlib
+# from pype.hosts.resolve import lib as drlib
 from avalon.vendor import qargparse
 
 

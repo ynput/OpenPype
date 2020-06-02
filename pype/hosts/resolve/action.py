@@ -4,7 +4,7 @@ from __future__ import absolute_import
 import pyblish.api
 
 
-from ..action import get_errored_instances_from_context
+from ...action import get_errored_instances_from_context
 
 
 class SelectInvalidAction(pyblish.api.Action):
@@ -21,7 +21,7 @@ class SelectInvalidAction(pyblish.api.Action):
     def process(self, context, plugin):
 
         try:
-            from pype.resolve.utils import get_resolve_module
+            from pype.hosts.resolve.utils import get_resolve_module
             resolve = get_resolve_module()
             self.log.debug(resolve)
         except ImportError:

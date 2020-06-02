@@ -49,7 +49,7 @@ def install():
     avalon.data["familiesStateDefault"] = False
     avalon.data["familiesStateToggled"] = family_states
 
-    log.info("pype.resolve installed")
+    log.info("pype.hosts.resolve installed")
 
     pyblish.register_host("resolve")
     pyblish.register_plugin_path(PUBLISH_PATH)

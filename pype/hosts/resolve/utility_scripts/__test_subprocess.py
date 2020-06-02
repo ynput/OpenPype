@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import os
 from pypeapp import execute, Logger
-from pype.resolve.utils import get_resolve_module
+from pype.hosts.resolve.utils import get_resolve_module
 
 log = Logger().get_logger("Resolve")
 
