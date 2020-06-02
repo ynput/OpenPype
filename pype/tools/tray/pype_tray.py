@@ -478,8 +478,7 @@ class DragAndDropHelper:
 
 
 class PypeTrayApplication(QtWidgets.QApplication):
-    """Qt application manages application's control flow.
-    """
+    """Qt application manages application's control flow."""
     def __init__(self):
         super(self.__class__, self).__init__(sys.argv)
         # Allows to close widgets without exiting app
