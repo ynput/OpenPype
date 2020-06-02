@@ -1,7 +1,7 @@
 import os
 import threading
 from pype.api import Logger
-from pypeapp import style
+from avalon import style
 from Qt import QtWidgets
 from . import ClockifySettings, ClockifyAPI, MessageWidget
 

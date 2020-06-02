@@ -1,7 +1,7 @@
 import os
 from . import QtCore, QtGui, QtWidgets
 from . import get_resource
-from pypeapp import style
+from avalon import style
 
 
 class ComponentItem(QtWidgets.QFrame):
