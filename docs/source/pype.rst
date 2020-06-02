@@ -11,18 +11,11 @@ Subpackages
 
 .. toctree::
 
-    pype.aport
-    pype.avalon_apps
-    pype.clockify
-    pype.ftrack
-    pype.fusion
-    pype.houdini
-    pype.maya
-    pype.nuke
-    pype.premiere
+    pype.hosts
+    pype.modules
+    pype.plugins
     pype.scripts
-    pype.services
-    pype.standalonepublish
+    pype.tests
     pype.tools
     pype.widgets
 
@@ -77,10 +70,10 @@ pype.setdress\_api module
     :undoc-members:
     :show-inheritance:
 
-pype.templates module
----------------------
+pype.version module
+-------------------
 
-.. automodule:: pype.templates
+.. automodule:: pype.version
     :members:
     :undoc-members:
     :show-inheritance:

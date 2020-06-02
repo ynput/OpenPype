@@ -35,16 +35,28 @@ def save_file(filepath):
 
 
 def open_file(filepath):
-    """Manually fire the kBeforeProjectLoad event in order to work around a bug in Hiero.
-    The Foundry has logged this bug as:
-      Bug 40413 - Python API - kBeforeProjectLoad event type is not triggered
-      when calling hiero.core.openProject() (only triggered through UI)
+    """Open file from path.
+
+    Manually fire the `kBeforeProjectLoad` event in order to work around a bug
+    in Hiero. The Foundry has logged this bug as::
+
+        Bug 40413 - Python API - kBeforeProjectLoad event type is not triggered
+        when calling hiero.core.openProject() (only triggered through UI)
+
     It exists in all versions of Hiero through (at least) v1.9v1b12.
 
-    Once this bug is fixed, a version check will need to be added here in order to
-    prevent accidentally firing this event twice. The following commented-out code
-    is just an example, and will need to be updated when the bug is fixed to catch the
-    correct versions."""
+    Once this bug is fixed, a version check will need to be added here in
+    order to prevent accidentally firing this event twice. The following
+    commented-out code is just an example, and will need to be updated when
+    the bug is fixed to catch the correct versions.
+
+    Args:
+        filepath (str): Path to file
+
+    Returns:
+        bool: True if success
+
+    """
     # if (hiero.core.env['VersionMajor'] < 1 or
     #     hiero.core.env['VersionMajor'] == 1 and hiero.core.env['VersionMinor'] < 10:
     hiero.core.events.sendEvent("kBeforeProjectLoad", None)
@@ -56,8 +68,6 @@ def open_file(filepath):
 
     # close previous project
     project.close()
-
-
 
     return True
 

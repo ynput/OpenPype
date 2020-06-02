@@ -618,8 +618,11 @@ def get_subsets(asset_name,
 class CustomNone:
     """Created object can be used as custom None (not equal to None).
 
-    WARNING: Multiple created objects are not equal either.
-    Exmple:
+    Note:
+        Multiple created objects are not equal either.
+
+    Example::
+
         >>> a = CustomNone()
         >>> a == None
         False
@@ -628,6 +631,7 @@ class CustomNone:
         False
         >>> a == a
         True
+
     """
 
     def __init__(self):
@@ -757,17 +761,21 @@ class BuildWorkfile:
         representations and first available and successful loaded
         representation is returned as container.
 
-        At the end you'll get list of loaded containers per each asset.
 
-        loaded_containers [{
-            "asset_entity": <AssetEntity1>,
-            "containers": [<Container1>, <Container2>, ...]
-        }, {
-            "asset_entity": <AssetEntity2>,
-            "containers": [<Container3>, ...]
-        }, {
-            ...
-        }]
+        Returns:
+            list: At the end you'll get list of loaded containers per
+                  each asset::
+
+                    [{
+                        "asset_entity": <AssetEntity1>,
+                        "containers": [<Container1>, <Container2>, ...]
+                    }, {
+                        "asset_entity": <AssetEntity2>,
+                        "containers": [<Container3>, ...]
+                    }, {
+                        ...
+                    }]
+
         """
         # Get current asset name and entity
         current_asset_name = io.Session["AVALON_ASSET"]

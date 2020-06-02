@@ -18,7 +18,10 @@
 import os
 from pypeapp.pypeLauncher import PypeLauncher
 from pypeapp.deployment import Deployment
+from Qt.QtWidgets import QApplication
 
+
+app = QApplication([])
 pype_setup = os.getenv('PYPE_SETUP_PATH')
 d = Deployment(pype_setup)
 launcher = PypeLauncher()
@@ -216,3 +219,7 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = True
+
+autodoc_mock_imports = ["maya", "nuke", "nukestudio", "nukescripts",
+                        "hiero", "bpy", "fusion", "houdini", "hou", "unreal"
+                        "__builtin__"]

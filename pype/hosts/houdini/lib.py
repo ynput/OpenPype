@@ -98,12 +98,12 @@ def get_additional_data(container):
 
 
 def set_parameter_callback(node, parameter, language, callback):
-    """Link a callback to a parameter of a node
+    """Link a callback to a parameter of a node.
 
     Args:
         node(hou.Node): instance of the nodee
         parameter(str): name of the parameter
-        language(str): name of the language, e.g.: python
+        language(str): name of the language, e.g. python
         callback(str): command which needs to be triggered
 
     Returns:

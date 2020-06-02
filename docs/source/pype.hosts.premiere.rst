@@ -1,7 +1,7 @@
-pype.premiere package
-=====================
+pype.hosts.premiere package
+===========================
 
-.. automodule:: pype.premiere
+.. automodule:: pype.hosts.premiere
     :members:
     :undoc-members:
     :show-inheritance:
@@ -9,10 +9,10 @@ pype.premiere package
 Submodules
 ----------
 
-pype.premiere.templates module
+pype.hosts.premiere.lib module
 ------------------------------
 
-.. automodule:: pype.premiere.templates
+.. automodule:: pype.hosts.premiere.lib
     :members:
     :undoc-members:
     :show-inheritance:
