@@ -4,9 +4,9 @@ import os
 def get_resource(*args):
     """ Serves to simple resources access
 
-    :param \*args: should contain *subfolder* names and *filename* of
+    :param *args: should contain *subfolder* names and *filename* of
                   resource from resources folder
-    :type \*args: list
+    :type *args: list
     """
     return os.path.normpath(
         os.path.join(
