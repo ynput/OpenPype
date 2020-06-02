@@ -358,7 +358,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
 
         if isinstance(exp[0], dict):
             # we have aovs and we need to iterate over them
-            for aov, files in exp[0].items():
+            for _aov, files in exp[0].items():
                 col = clique.assemble(files)[0][0]
                 output_file = col.format('{head}{padding}{tail}')
                 payload['JobInfo']['OutputFilename' + str(exp_index)] = output_file  # noqa: E501
@@ -453,7 +453,7 @@ class MayaSubmitDeadline(pyblish.api.InstancePlugin):
         try:
             from pype.scripts import export_maya_ass_job
         except Exception:
-            assert False, (
+            raise AssertionError(
                 "Expected module 'export_maya_ass_job' to be available")
 
         module_path = export_maya_ass_job.__file__
