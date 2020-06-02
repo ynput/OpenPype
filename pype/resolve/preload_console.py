@@ -13,8 +13,7 @@ while True:
         # Create project and set parameters:
         resolve = get_resolve_module()
         pm = resolve.GetProjectManager()
-        p = pm.GetCurrentProject()
-        if p.GetName() == "Untitled Project":
+        if pm:
             ready = None
         else:
             ready = True
@@ -23,10 +22,10 @@ while True:
 
     if ready is None:
         time.sleep(wait_delay)
-        log.info(f"Waiting {wait}s for Resolve to be open in project")
+        log.info(f"Waiting {wait}s for Resolve to have opened Project Manager")
         wait += wait_delay
     else:
         print(f"Preloaded variables: \n\n\tResolve module: "
               f"`resolve` > {type(resolve)} \n\tProject manager: "
-              f"`pm` > {type(pm)} \n\tCurrent project: `p` > {type(p)}")
+              f"`pm` > {type(pm)}")
         break
