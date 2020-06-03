@@ -78,13 +78,13 @@ class ExtractThumbnailSP(pyblish.api.InstancePlugin):
             # override file if already exists
             jpeg_items.append("-y")
             # add input filters from peresets
-            jpeg_items.extend(self.ffmpeg_args.get("input") or [])
+            jpeg_items.extend(ffmpeg_args.get("input") or [])
             # input file
             jpeg_items.append("-i {}".format(full_input_path))
             # extract only single file
             jpeg_items.append("-vframes 1")
 
-            jpeg_items.extend(self.ffmpeg_args.get("output") or [])
+            jpeg_items.extend(ffmpeg_args.get("output") or [])
 
             # output file
             jpeg_items.append(full_thumbnail_path)
