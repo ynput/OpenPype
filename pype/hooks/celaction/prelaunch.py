@@ -1,6 +1,7 @@
 import logging
 import os
 import winreg
+import shutil
 from pype.lib import PypeHook
 from pype.api import get_last_version_from_path
 from pypeapp import Anatomy, Logger
@@ -28,39 +29,58 @@ class CelactionPrelaunchHook(PypeHook):
         self.signature = "( {} )".format(self.__class__.__name__)
 
     def execute(self, *args, env: dict = None) -> bool:
+
+        from pprint import pformat
+        self.log.info(f"`{pformat(env)}`")
         if not env:
-            self.env = os.environ
-        else:
-            self.env = env
+            env = os.environ
 
+        # initialize
         self._S = api.Session
-        project = self._S["AVALON_PROJECT"] = self.env["AVALON_PROJECT"]
-        asset = self._S["AVALON_ASSET"] = self.env["AVALON_ASSET"]
-        task = self._S["AVALON_TASK"] = self.env["AVALON_TASK"]
-        workdir = self._S["AVALON_WORKDIR"] = self.env["AVALON_WORKDIR"]
 
-        anatomy_filled = self.get_anatomy_filled()
-
+        # get publish version of celaction
         app = "celaction_publish"
+
+        # get context variables
+        project = self._S["AVALON_PROJECT"] = env["AVALON_PROJECT"]
+        asset = self._S["AVALON_ASSET"] = env["AVALON_ASSET"]
+        task = self._S["AVALON_TASK"] = env["AVALON_TASK"]
+        workdir = self._S["AVALON_WORKDIR"] = env["AVALON_WORKDIR"]
+
+        # get workfile path
+        anatomy_filled = self.get_anatomy_filled()
         workfile = anatomy_filled["work"]["file"]
         version = anatomy_filled["version"]
 
+        # create workdir if doesn't exist
         os.makedirs(workdir, exist_ok=True)
         self.log.info(f"Work dir is: `{workdir}`")
 
-        # get last version if any
+        # get last version of workfile
         workfile_last = get_last_version_from_path(
             workdir, workfile.split(version))
 
         if workfile_last:
             workfile = workfile_last
 
-        project_file = os.path.join(workdir, workfile)
-        env["PYPE_CELACTION_PROJECT_FILE"] = project_file
+        workfile_path = os.path.join(workdir, workfile)
 
-        self.log.info(f"Workfile to open: `{project_file}`")
+        # create workfile from template if doesnt exist any on path
+        if not os.path.isfile(workfile_path):
+            # try to get path from environment or use default
+            # from `pype.celation` dir
+            template_path = env.get("CELACTION_TEMPLATE") or os.path.join(
+                env.get("PYPE_MODULE_ROOT"),
+                "pype/celaction/celaction_template_scene_.scn"
+            )
+            self.log.info(f"Creating workfile from template: `{template_path}`")
+            shutil.copy2(
+                os.path.normpath(template_path),
+                os.path.normpath(workfile_path)
+            )
 
-        ##########################
+        self.log.info(f"Workfile to open: `{workfile_path}`")
+
         # setting output parameters
         path = r"Software\CelAction\CelAction2D\User Settings"
         winreg.CreateKey(winreg.HKEY_CURRENT_USER, path)
@@ -70,7 +90,7 @@ class CelactionPrelaunchHook(PypeHook):
             winreg.KEY_ALL_ACCESS)
 
         # TODO: change to root path and pyblish standalone to premiere way
-        pype_root_path = os.getenv("PYPE_ROOT")
+        pype_root_path = os.getenv("PYPE_SETUP_PATH")
         path = os.path.join(pype_root_path,
                             "pype.bat")
 
