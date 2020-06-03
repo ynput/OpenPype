@@ -3,7 +3,7 @@ import traceback
 import importlib
 from pype.lib import PypeHook
 from pypeapp import Logger
-from pype.resolve import utils
+from pype.hosts.resolve import utils
 
 
 class ResolvePrelaunch(PypeHook):
