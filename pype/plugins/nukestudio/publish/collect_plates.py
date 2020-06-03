@@ -64,15 +64,15 @@ class CollectPlates(api.InstancePlugin):
         # adding SourceResolution if Tag was present
         if instance.data.get("sourceResolution") and instance.data.get("main"):
             item = instance.data["item"]
-            width = int(item.source().mediaSource().width())
-            height = int(item.source().mediaSource().height())
+            resolution_width = int(item.source().mediaSource().width())
+            resolution_height = int(item.source().mediaSource().height())
             pixel_aspect = int(item.source().mediaSource().pixelAspect())
 
             self.log.info("Source Width and Height are: `{0} x {1} : {2}`".format(
-                width, height, pixel_aspect))
+                resolution_width, resolution_height, pixel_aspect))
             data.update({
-                "width": width,
-                "height": height,
+                "resolutionWidth": resolution_width,
+                "resolutionHeight": resolution_height,
                 "pixelAspect": pixel_aspect
             })
 
@@ -102,9 +102,6 @@ class CollectPlatesData(api.InstancePlugin):
             instance.data["representations"] = list()
 
         version_data = dict()
-        context = instance.context
-        anatomy = context.data.get("anatomy", None)
-        padding = int(anatomy.templates['render']['padding'])
 
         name = instance.data["subset"]
         source_path = instance.data["sourcePath"]
@@ -149,6 +146,7 @@ class CollectPlatesData(api.InstancePlugin):
 
         source_first_frame = instance.data.get("sourceFirst")
         source_file_head = instance.data.get("sourceFileHead")
+        self.log.debug("source_first_frame: `{}`".format(source_first_frame))
 
         if instance.data.get("isSequence", False):
             self.log.info("Is sequence of files")
@@ -185,8 +183,7 @@ class CollectPlatesData(api.InstancePlugin):
                 "frameEnd": instance.data["sourceOut"] - instance.data["sourceIn"] + 1,
                 'step': 1,
                 'fps': instance.context.data["fps"],
-                'preview': True,
-                'thumbnail': False,
+                'tags': ["preview"],
                 'name': "preview",
                 'ext': "mov",
             }

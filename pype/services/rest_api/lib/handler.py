@@ -255,10 +255,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 try:
                     in_data = json.loads(in_data_str)
                 except Exception as e:
-                    log.error("Invalid JSON recieved:")
-                    log.error("-" * 80)
-                    log.error(in_data_str)
-                    log.error("-" * 80)
+                    log.error("Invalid JSON recieved: \"{}\"".format(
+                        str(in_data_str)
+                    ))
                     raise Exception("Invalid JSON recieved") from e
 
         request_info = RequestInfo(

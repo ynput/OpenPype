@@ -158,20 +158,10 @@ class UserAssigmentEvent(BaseEvent):
         """
         project_name = task['project']['full_name']
         project_code = task['project']['name']
-        try:
-            root = os.environ['PYPE_STUDIO_PROJECTS_PATH']
-        except KeyError:
-            msg = 'Project ({}) root not set'.format(project_name)
-            self.log.error(msg)
-            return {
-                'success': False,
-                'message': msg
-            }
 
         # fill in template data
         asset = self._get_asset(task)
         t_data = {
-            'root': root,
             'project': {
                 'name': project_name,
                 'code': project_code
@@ -204,11 +194,12 @@ class UserAssigmentEvent(BaseEvent):
             data = self._get_template_data(task)
             # format directories to pass to shell script
             anatomy = Anatomy(data["project"]["name"])
+            anatomy_filled = anatomy.format(data)
             # formatting work dir is easiest part as we can use whole path
-            work_dir = anatomy.format(data)['avalon']['work']
+            work_dir = anatomy_filled["work"]["folder"]
             # we also need publish but not whole
-            filled_all = anatomy.format_all(data)
-            publish = filled_all['avalon']['publish']
+            anatomy_filled.strict = False
+            publish = anatomy_filled["publish"]["folder"]
 
             # now find path to {asset}
             m = re.search("(^.+?{})".format(data['asset']),

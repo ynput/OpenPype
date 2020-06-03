@@ -37,11 +37,13 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
             assets_shared = context.data.get("assetsShared")
             tags = instance.data.get("tags", None)
             clip = instance.data["item"]
-            asset = instance.data.get("asset")
+            asset = instance.data["asset"]
             sequence = context.data['activeSequence']
-            width = int(sequence.format().width())
-            height = int(sequence.format().height())
-            pixel_aspect = sequence.format().pixelAspect()
+            resolution_width = instance.data["resolutionWidth"]
+            resolution_height = instance.data["resolutionHeight"]
+            pixel_aspect = instance.data["pixelAspect"]
+            clip_in = instance.data["clipIn"]
+            clip_out = instance.data["clipOut"]
             fps = context.data["fps"]
 
             # build data for inner nukestudio project property
@@ -72,6 +74,31 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
 
                 # and finding only hierarchical tag
                 if "hierarchy" in t_type.lower():
+                    # Check for clips with the same range
+                    # this is for testing if any vertically neighbouring
+                    # clips has been already processed
+                    match = next((
+                        k for k, v in assets_shared.items()
+                        if (v["_clipIn"] == clip_in)
+                        and (v["_clipOut"] == clip_out)
+                    ), False)
+
+                    self.log.debug(
+                        "__ assets_shared[match]: {}".format(
+                            assets_shared[match]))
+
+                    # check if hierarchy key is present in matched
+                    # vertically neighbouring clip
+                    if not assets_shared[match].get("hierarchy"):
+                        match = False
+
+                    # rise exception if multiple hierarchy tag found
+                    assert not match, (
+                        "Two clips above each other with"
+                        " hierarchy tag are not allowed"
+                        " >> keep hierarchy tag only in one of them <<"
+                    )
+
                     d_metadata = dict()
                     parents = list()
 
@@ -82,7 +109,8 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                     if "shot" in template.lower():
                         instance.data["asset"] = [
                             t for t in template.split('/')][-1]
-                        template = "/".join([t for t in template.split('/')][0:-1])
+                        template = "/".join(
+                            [t for t in template.split('/')][0:-1])
 
                     # take template from Tag.note and break it into parts
                     template_split = template.split("/")
@@ -149,8 +177,12 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                     instance.data["hierarchy"] = hierarchy
                     instance.data["parents"] = parents
 
+                    self.log.info(
+                        "clip: {asset}[{clip_in}:{clip_out}]".format(
+                            **locals()))
                     # adding to asset shared dict
-                    self.log.debug("__ assets_shared: {}".format(assets_shared))
+                    self.log.debug(
+                        "__ assets_shared: {}".format(assets_shared))
                     if assets_shared.get(asset):
                         self.log.debug("Adding to shared assets: `{}`".format(
                             asset))
@@ -162,11 +194,11 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                         "asset": asset,
                         "hierarchy": hierarchy,
                         "parents": parents,
-                        "resolutionWidth": width,
-                        "resolutionHeight": height,
+                        "resolutionWidth": resolution_width,
+                        "resolutionHeight": resolution_height,
                         "pixelAspect": pixel_aspect,
                         "fps": fps,
-                        "tasks":  instance.data["tasks"]
+                        "tasks": instance.data["tasks"]
                     })
 
                     # adding frame start if any on instance
@@ -175,8 +207,8 @@ class CollectHierarchyInstance(pyblish.api.ContextPlugin):
                         asset_shared.update({
                             "startingFrame": start_frame
                         })
-
-
+                    self.log.debug(
+                        "assets_shared: {assets_shared}".format(**locals()))
 
 class CollectHierarchyContext(pyblish.api.ContextPlugin):
     '''Collecting Hierarchy from instaces and building

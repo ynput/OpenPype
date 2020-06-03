@@ -14,9 +14,9 @@ def __main__():
                              "configuration.")
 
     kwargs, args = parser.parse_known_args()
-    pype_root = os.environ.get("PYPE_ROOT")
+    pype_root = os.environ.get("PYPE_SETUP_PATH")
     if not pype_root:
-        raise Exception("PYPE_ROOT is not set")
+        raise Exception("PYPE_SETUP_PATH is not set")
 
     # TODO: set correct path
     pype_command = "pype.ps1"

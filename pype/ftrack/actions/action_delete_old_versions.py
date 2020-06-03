@@ -7,6 +7,7 @@ from pymongo import UpdateOne
 
 from pype.ftrack import BaseAction
 from pype.ftrack.lib.io_nonsingleton import DbConnector
+from pypeapp import Anatomy
 
 import avalon.pipeline
 
@@ -21,8 +22,8 @@ class DeleteOldVersions(BaseAction):
         " archived with only lates versions."
     )
     role_list = ["Pypeclub", "Project Manager", "Administrator"]
-    icon = '{}/ftrack/action_icons/PypeAdmin.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
+    icon = "{}/ftrack/action_icons/PypeAdmin.svg".format(
+        os.environ.get("PYPE_STATICS_SERVER", "")
     )
 
     dbcon = DbConnector()
@@ -41,36 +42,8 @@ class DeleteOldVersions(BaseAction):
         return False
 
     def interface(self, session, entities, event):
+        # TODO Add roots existence validation
         items = []
-        root = os.environ.get("AVALON_PROJECTS")
-        if not root:
-            msg = "Root path to projects is not set."
-            items.append({
-                "type": "label",
-                "value": "<i><b>ERROR:</b> {}</i>".format(msg)
-            })
-            self.show_interface(
-                items=items, title=self.inteface_title, event=event
-            )
-            return {
-                "success": False,
-                "message": msg
-            }
-
-        if not os.path.exists(root):
-            msg = "Root path does not exists \"{}\".".format(str(root))
-            items.append({
-                "type": "label",
-                "value": "<i><b>ERROR:</b> {}</i>".format(msg)
-            })
-            self.show_interface(
-                items=items, title=self.inteface_title, event=event
-            )
-            return {
-                "success": False,
-                "message": msg
-            }
-
         values = event["data"].get("values")
         if values:
             versions_count = int(values["last_versions_count"])
@@ -194,6 +167,7 @@ class DeleteOldVersions(BaseAction):
 
         # Set Mongo collection
         project_name = project["full_name"]
+        anatomy = Anatomy(project_name)
         self.dbcon.Session["AVALON_PROJECT"] = project_name
         self.log.debug("Project is set to {}".format(project_name))
 
@@ -307,7 +281,7 @@ class DeleteOldVersions(BaseAction):
         dir_paths = {}
         file_paths_by_dir = collections.defaultdict(list)
         for repre in repres:
-            file_path, seq_path = self.path_from_represenation(repre)
+            file_path, seq_path = self.path_from_represenation(repre, anatomy)
             if file_path is None:
                 self.log.warning((
                     "Could not format path for represenation \"{}\""
@@ -495,21 +469,17 @@ class DeleteOldVersions(BaseAction):
                 self.log.debug("Removed folder: {}".format(dir_path))
                 os.rmdir(dir_path)
 
-    def path_from_represenation(self, representation):
+    def path_from_represenation(self, representation, anatomy):
         try:
             template = representation["data"]["template"]
 
         except KeyError:
             return (None, None)
 
-        root = os.environ["AVALON_PROJECTS"]
-        if not root:
-            return (None, None)
-
         sequence_path = None
         try:
             context = representation["context"]
-            context["root"] = root
+            context["root"] = anatomy.roots
             path = avalon.pipeline.format_template_with_optional_keys(
                 context, template
             )

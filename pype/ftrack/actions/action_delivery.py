@@ -2,7 +2,6 @@ import os
 import copy
 import shutil
 import collections
-import string
 
 import clique
 from bson.objectid import ObjectId
@@ -17,24 +16,18 @@ from pype.ftrack.lib.avalon_sync import CustAttrIdKey
 
 
 class Delivery(BaseAction):
-    '''Edit meta data action.'''
 
-    #: Action identifier.
     identifier = "delivery.action"
-    #: Action label.
     label = "Delivery"
-    #: Action description.
     description = "Deliver data to client"
-    #: roles that are allowed to register this action
     role_list = ["Pypeclub", "Administrator", "Project manager"]
-    icon = '{}/ftrack/action_icons/Delivery.svg'.format(
-        os.environ.get('PYPE_STATICS_SERVER', '')
+    icon = "{}/ftrack/action_icons/Delivery.svg".format(
+        os.environ.get("PYPE_STATICS_SERVER", "")
     )
 
     db_con = DbConnector()
 
     def discover(self, session, entities, event):
-        ''' Validation '''
         for entity in entities:
             if entity.entity_type.lower() == "assetversion":
                 return True
@@ -301,17 +294,10 @@ class Delivery(BaseAction):
                 repre = repres_by_name.get(comp_name)
                 repres_to_deliver.append(repre)
 
-        if not location_path:
-            location_path = os.environ.get("AVALON_PROJECTS") or ""
-
-        print(location_path)
-
         anatomy = Anatomy(project_name)
         for repre in repres_to_deliver:
             # Get destination repre path
             anatomy_data = copy.deepcopy(repre["context"])
-            anatomy_data["root"] = location_path
-
             anatomy_filled = anatomy.format_all(anatomy_data)
             test_path = anatomy_filled["delivery"][anatomy_name]
 
@@ -341,7 +327,7 @@ class Delivery(BaseAction):
                 self.report_items[msg].append(sub_msg)
                 self.log.warning(
                     "{} Representation: \"{}\" Filled: <{}>".format(
-                        msg, str(repre["_id"]), str(result)
+                        msg, str(repre["_id"]), str(test_path)
                     )
                 )
                 continue
@@ -352,9 +338,9 @@ class Delivery(BaseAction):
             if frame:
                 repre["context"]["frame"] = len(str(frame)) * "#"
 
-            repre_path = self.path_from_represenation(repre)
+            repre_path = self.path_from_represenation(repre, anatomy)
             # TODO add backup solution where root of path from component
-            # is repalced with AVALON_PROJECTS root
+            # is repalced with root
             if not frame:
                 self.process_single_file(
                     repre_path, anatomy, anatomy_name, anatomy_data
@@ -452,7 +438,7 @@ class Delivery(BaseAction):
 
             self.copy_file(src, dst)
 
-    def path_from_represenation(self, representation):
+    def path_from_represenation(self, representation, anatomy):
         try:
             template = representation["data"]["template"]
 
@@ -461,7 +447,7 @@ class Delivery(BaseAction):
 
         try:
             context = representation["context"]
-            context["root"] = os.environ.get("AVALON_PROJECTS") or ""
+            context["root"] = anatomy.roots
             path = pipeline.format_template_with_optional_keys(
                 context, template
             )

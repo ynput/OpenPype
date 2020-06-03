@@ -693,7 +693,7 @@ def execute_hook(hook, *args, **kwargs):
     This will load hook file, instantiate class and call `execute` method
     on it. Hook must be in a form:
 
-    `$PYPE_ROOT/repos/pype/path/to/hook.py/HookClass`
+    `$PYPE_SETUP_PATH/repos/pype/path/to/hook.py/HookClass`
 
     This will load `hook.py`, instantiate HookClass and then execute_hook
     `execute(*args, **kwargs)`
@@ -704,7 +704,7 @@ def execute_hook(hook, *args, **kwargs):
 
     class_name = hook.split("/")[-1]
 
-    abspath = os.path.join(os.getenv('PYPE_ROOT'),
+    abspath = os.path.join(os.getenv('PYPE_SETUP_PATH'),
                            'repos', 'pype', *hook.split("/")[:-1])
 
     mod_name, mod_ext = os.path.splitext(os.path.basename(abspath))
@@ -1361,3 +1361,25 @@ class BuildWorkfile:
             )
 
         return output
+
+
+def ffprobe_streams(path_to_file):
+    """Load streams from entered filepath via ffprobe."""
+    log.info(
+        "Getting information about input \"{}\".".format(path_to_file)
+    )
+    args = [
+        get_ffmpeg_tool_path("ffprobe"),
+        "-v quiet",
+        "-print_format json",
+        "-show_format",
+        "-show_streams",
+        "\"{}\"".format(path_to_file)
+    ]
+    command = " ".join(args)
+    log.debug("FFprobe command: \"{}\"".format(command))
+    popen = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
+
+    popen_output = popen.communicate()[0]
+    log.debug("FFprobe output: {}".format(popen_output))
+    return json.loads(popen_output)["streams"]

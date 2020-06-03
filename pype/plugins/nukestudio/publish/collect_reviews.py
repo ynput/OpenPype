@@ -36,9 +36,10 @@ class CollectReviews(api.InstancePlugin):
             return
 
         if not track:
-            self.log.debug(
-                "Skipping \"{}\" because tag is not having `track` in metadata".format(instance)
-            )
+            self.log.debug((
+                "Skipping \"{}\" because tag is not having"
+                "`track` in metadata"
+            ).format(instance))
             return
 
         # add to representations
@@ -68,18 +69,17 @@ class CollectReviews(api.InstancePlugin):
                         rev_inst.data["name"]))
 
             if rev_inst is None:
-                raise RuntimeError(
-                    "TrackItem from track name `{}` has to be also selected".format(
-                        track)
-                )
+                raise RuntimeError((
+                    "TrackItem from track name `{}` has to"
+                    "be also selected"
+                ).format(track))
+
             instance.data["families"].append("review")
 
         file_path = rev_inst.data.get("sourcePath")
         file_dir = os.path.dirname(file_path)
         file = os.path.basename(file_path)
         ext = os.path.splitext(file)[-1][1:]
-        handleStart = rev_inst.data.get("handleStart")
-        handleEnd = rev_inst.data.get("handleEnd")
 
         # change label
         instance.data["label"] = "{0} - {1} - ({2}) - review".format(
@@ -94,15 +94,35 @@ class CollectReviews(api.InstancePlugin):
             "stagingDir": file_dir,
             "frameStart": rev_inst.data.get("sourceIn"),
             "frameEnd": rev_inst.data.get("sourceOut"),
-            "frameStartFtrack": rev_inst.data.get("sourceIn") - handleStart,
-            "frameEndFtrack": rev_inst.data.get("sourceOut") + handleEnd,
+            "frameStartFtrack": rev_inst.data.get("sourceInH"),
+            "frameEndFtrack": rev_inst.data.get("sourceOutH"),
             "step": 1,
             "fps": rev_inst.data.get("fps"),
-            "preview": True,
-            "thumbnail": False,
             "name": "preview",
+            "tags": ["preview"],
             "ext": ext
         }
+
+        media_duration = instance.data.get("mediaDuration")
+        clip_duration_h = instance.data.get("clipDurationH")
+
+        if media_duration > clip_duration_h:
+            self.log.debug("Media duration higher: {}".format(
+                (media_duration - clip_duration_h)))
+            representation.update({
+                "frameStart": instance.data.get("sourceInH"),
+                "frameEnd": instance.data.get("sourceOutH"),
+                "tags": ["_cut-bigger", "delete"]
+            })
+        elif media_duration < clip_duration_h:
+            self.log.debug("Media duration higher: {}".format(
+                (media_duration - clip_duration_h)))
+            representation.update({
+                "frameStart": instance.data.get("sourceInH"),
+                "frameEnd": instance.data.get("sourceOutH"),
+                "tags": ["_cut-smaller", "delete"]
+            })
+
         instance.data["representations"].append(representation)
 
         self.log.debug("Added representation: {}".format(representation))
@@ -122,15 +142,18 @@ class CollectReviews(api.InstancePlugin):
         thumb_path = os.path.join(staging_dir, thumb_file)
         self.log.debug("__ thumb_path: {}".format(thumb_path))
 
-        thumb_frame = instance.data["sourceIn"] + ((instance.data["sourceOut"] - instance.data["sourceIn"])/2)
-
+        thumb_frame = instance.data["sourceIn"] + (
+            (instance.data["sourceOut"] - instance.data["sourceIn"]) / 2)
+        self.log.debug("__ thumb_frame: {}".format(thumb_frame))
         thumbnail = item.thumbnail(thumb_frame).save(
             thumb_path,
             format='png'
         )
 
-        self.log.debug("__ sourceIn: `{}`".format(instance.data["sourceIn"]))
-        self.log.debug("__ thumbnail: `{}`, frame: `{}`".format(thumbnail, thumb_frame))
+        self.log.debug(
+            "__ sourceIn: `{}`".format(instance.data["sourceIn"]))
+        self.log.debug(
+            "__ thumbnail: `{}`, frame: `{}`".format(thumbnail, thumb_frame))
 
         self.log.debug("__ thumbnail: {}".format(thumbnail))
 
@@ -159,7 +182,7 @@ class CollectReviews(api.InstancePlugin):
         version_data.update({k: instance.data[k] for k in transfer_data})
 
         if 'version' in instance.data:
-            version_data["version"] = instance.data[version]
+            version_data["version"] = instance.data["version"]
 
         # add to data of representation
         version_data.update({

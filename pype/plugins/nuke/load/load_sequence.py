@@ -237,7 +237,7 @@ class LoadSequence(api.Loader):
 
         repr_cont = representation["context"]
 
-        file = self.fname
+        file = api.get_representation_path(representation)
 
         if not file:
             repr_id = representation["_id"]

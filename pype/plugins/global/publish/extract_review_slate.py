@@ -26,46 +26,59 @@ class ExtractReviewSlate(pype.api.Extractor):
         slate_path = inst_data.get("slateFrame")
         ffmpeg_path = pype.lib.get_ffmpeg_tool_path("ffmpeg")
 
-        # values are set in ExtractReview
-        to_width = inst_data["reviewToWidth"]
-        to_height = inst_data["reviewToHeight"]
+        slate_stream = pype.lib.ffprobe_streams(slate_path)[0]
+        slate_width = slate_stream["width"]
+        slate_height = slate_stream["height"]
 
-        resolution_width = inst_data.get("resolutionWidth", to_width)
-        resolution_height = inst_data.get("resolutionHeight", to_height)
+        if "reviewToWidth" in inst_data:
+            use_legacy_code = True
+        else:
+            use_legacy_code = False
+
         pixel_aspect = inst_data.get("pixelAspect", 1)
         fps = inst_data.get("fps")
 
-        # defining image ratios
-        resolution_ratio = ((float(resolution_width) * pixel_aspect) /
-                            resolution_height)
-        delivery_ratio = float(to_width) / float(to_height)
-        self.log.debug("__ resolution_ratio: `{}`".format(resolution_ratio))
-        self.log.debug("__ delivery_ratio: `{}`".format(delivery_ratio))
-
-        # get scale factor
-        scale_factor = float(to_height) / (
-            resolution_height * pixel_aspect)
-
-        # shorten two decimals long float number for testing conditions
-        resolution_ratio_test = float(
-            "{:0.2f}".format(resolution_ratio))
-        delivery_ratio_test = float(
-            "{:0.2f}".format(delivery_ratio))
-
-        if resolution_ratio_test < delivery_ratio_test:
-            scale_factor = float(to_width) / (
-                resolution_width * pixel_aspect)
-
-        self.log.debug("__ scale_factor: `{}`".format(scale_factor))
-
-        for i, repre in enumerate(inst_data["representations"]):
-            _remove_at_end = []
-            self.log.debug("__ i: `{}`, repre: `{}`".format(i, repre))
+        for idx, repre in enumerate(inst_data["representations"]):
+            self.log.debug("repre ({}): `{}`".format(idx + 1, repre))
 
             p_tags = repre.get("tags", [])
-
             if "slate-frame" not in p_tags:
                 continue
+
+            # values are set in ExtractReview
+            if use_legacy_code:
+                to_width = inst_data["reviewToWidth"]
+                to_height = inst_data["reviewToHeight"]
+            else:
+                to_width = repre["resolutionWidth"]
+                to_height = repre["resolutionHeight"]
+
+            # defining image ratios
+            resolution_ratio = (
+                (float(slate_width) * pixel_aspect) / slate_height
+            )
+            delivery_ratio = float(to_width) / float(to_height)
+            self.log.debug("resolution_ratio: `{}`".format(resolution_ratio))
+            self.log.debug("delivery_ratio: `{}`".format(delivery_ratio))
+
+            # get scale factor
+            scale_factor_by_height = float(to_height) / slate_height
+            scale_factor_by_width = float(to_width) / (
+                slate_width * pixel_aspect
+            )
+
+            # shorten two decimals long float number for testing conditions
+            resolution_ratio_test = float("{:0.2f}".format(resolution_ratio))
+            delivery_ratio_test = float("{:0.2f}".format(delivery_ratio))
+
+            self.log.debug("__ scale_factor_by_width: `{}`".format(
+                scale_factor_by_width
+            ))
+            self.log.debug("__ scale_factor_by_height: `{}`".format(
+                scale_factor_by_height
+            ))
+
+            _remove_at_end = []
 
             stagingdir = repre["stagingDir"]
             input_file = "{0}".format(repre["files"])
@@ -84,21 +97,27 @@ class ExtractReviewSlate(pype.api.Extractor):
 
             input_args = []
             output_args = []
-            # overrides output file
-            input_args.append("-y")
+
             # preset's input data
-            input_args.extend(repre["_profile"].get('input', []))
+            if use_legacy_code:
+                input_args.extend(repre["_profile"].get('input', []))
+            else:
+                input_args.extend(repre["outputDef"].get('input', []))
             input_args.append("-loop 1 -i {}".format(slate_path))
             input_args.extend([
                 "-r {}".format(fps),
                 "-t 0.04"]
             )
 
-            # output args
-            codec_args = repre["_profile"].get('codec', [])
-            output_args.extend(codec_args)
-            # preset's output data
-            output_args.extend(repre["_profile"].get('output', []))
+            if use_legacy_code:
+                codec_args = repre["_profile"].get('codec', [])
+                output_args.extend(codec_args)
+                # preset's output data
+                output_args.extend(repre["_profile"].get('output', []))
+            else:
+                # Codecs are copied from source for whole input
+                codec_args = self.codec_args(repre)
+                output_args.extend(codec_args)
 
             # make sure colors are correct
             output_args.extend([
@@ -109,34 +128,37 @@ class ExtractReviewSlate(pype.api.Extractor):
             ])
 
             # scaling none square pixels and 1920 width
-            if "reformat" in p_tags:
+            if (
+                # Always scale slate if not legacy
+                not use_legacy_code or
+                # Legacy code required reformat tag
+                (use_legacy_code and "reformat" in p_tags)
+            ):
                 if resolution_ratio_test < delivery_ratio_test:
                     self.log.debug("lower then delivery")
-                    width_scale = int(to_width * scale_factor)
-                    width_half_pad = int((
-                        to_width - width_scale) / 2)
+                    width_scale = int(slate_width * scale_factor_by_height)
+                    width_half_pad = int((to_width - width_scale) / 2)
                     height_scale = to_height
                     height_half_pad = 0
                 else:
                     self.log.debug("heigher then delivery")
                     width_scale = to_width
                     width_half_pad = 0
-                    scale_factor = float(to_width) / (float(
-                        resolution_width) * pixel_aspect)
-                    self.log.debug(scale_factor)
-                    height_scale = int(
-                        resolution_height * scale_factor)
-                    height_half_pad = int(
-                        (to_height - height_scale) / 2)
+                    height_scale = int(slate_height * scale_factor_by_width)
+                    height_half_pad = int((to_height - height_scale) / 2)
 
                 self.log.debug(
-                    "__ width_scale: `{}`".format(width_scale))
+                    "__ width_scale: `{}`".format(width_scale)
+                )
                 self.log.debug(
-                    "__ width_half_pad: `{}`".format(width_half_pad))
+                    "__ width_half_pad: `{}`".format(width_half_pad)
+                )
                 self.log.debug(
-                    "__ height_scale: `{}`".format(height_scale))
+                    "__ height_scale: `{}`".format(height_scale)
+                )
                 self.log.debug(
-                    "__ height_half_pad: `{}`".format(height_half_pad))
+                    "__ height_half_pad: `{}`".format(height_half_pad)
+                )
 
                 scaling_arg = ("scale={0}x{1}:flags=lanczos,"
                                "pad={2}:{3}:{4}:{5}:black,setsar=1").format(
@@ -144,10 +166,12 @@ class ExtractReviewSlate(pype.api.Extractor):
                     width_half_pad, height_half_pad
                 )
 
-                vf_back = self.add_video_filter_args(
-                    output_args, scaling_arg)
-                # add it to output_args
-                output_args.insert(0, vf_back)
+            vf_back = self.add_video_filter_args(output_args, scaling_arg)
+            # add it to output_args
+            output_args.insert(0, vf_back)
+
+            # overrides output file
+            output_args.append("-y")
 
             slate_v_path = slate_path.replace(".png", ext)
             output_args.append(slate_v_path)
@@ -206,10 +230,10 @@ class ExtractReviewSlate(pype.api.Extractor):
                 "name": repre["name"],
                 "tags": [x for x in repre["tags"] if x != "delete"]
             }
-            inst_data["representations"][i].update(repre_update)
+            inst_data["representations"][idx].update(repre_update)
             self.log.debug(
                 "_ representation {}: `{}`".format(
-                    i, inst_data["representations"][i]))
+                    idx, inst_data["representations"][idx]))
 
             # removing temp files
             for f in _remove_at_end:
@@ -260,3 +284,39 @@ class ExtractReviewSlate(pype.api.Extractor):
         vf_back = "-vf " + ",".join(vf_fixed)
 
         return vf_back
+
+    def codec_args(self, repre):
+        """Detect possible codec arguments from representation."""
+        codec_args = []
+
+        # Get one filename of representation files
+        filename = repre["files"]
+        # If files is list then pick first filename in list
+        if isinstance(filename, (tuple, list)):
+            filename = filename[0]
+        # Get full path to the file
+        full_input_path = os.path.join(repre["stagingDir"], filename)
+
+        try:
+            # Get information about input file via ffprobe tool
+            streams = pype.lib.ffprobe_streams(full_input_path)
+        except Exception:
+            self.log.warning(
+                "Could not get codec data from input.",
+                exc_info=True
+            )
+            return codec_args
+
+        codec_name = streams[0].get("codec_name")
+        if codec_name:
+            codec_args.append("-codec:v {}".format(codec_name))
+
+        profile_name = streams[0].get("profile")
+        if profile_name:
+            profile_name = profile_name.replace(" ", "_").lower()
+            codec_args.append("-profile:v {}".format(profile_name))
+
+        pix_fmt = streams[0].get("pix_fmt")
+        if pix_fmt:
+            codec_args.append("-pix_fmt {}".format(pix_fmt))
+        return codec_args

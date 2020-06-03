@@ -25,15 +25,15 @@ set PYTHONPATH=%%d;!PYTHONPATH!
 echo [92m^>^>^>[0m Setting PYPE_CONFIG
 call :ResolvePath pypeconfig "..\pype-config"
 set PYPE_CONFIG=%pypeconfig%
-echo [92m^>^>^>[0m Setting PYPE_ROOT
+echo [92m^>^>^>[0m Setting PYPE_SETUP_PATH
 call :ResolvePath pyperoot "..\..\"
-set PYPE_ROOT=%pyperoot%
-set PYTHONPATH=%PYPE_ROOT%;%PYTHONPATH%
+set PYPE_SETUP_PATH=%pyperoot%
+set PYTHONPATH=%PYPE_SETUP_PATH%;%PYTHONPATH%
 echo [92m^>^>^>[0m Setting PYPE_ENV
 set PYPE_ENV="C:\Users\Public\pype_env2"
 
 call "docs\make.bat" clean
-sphinx-apidoc -M -f -d 6 --ext-autodoc --ext-intersphinx --ext-viewcode -o docs\source pype %PYPE_ROOT%\repos\pype\pype\vendor\*
+sphinx-apidoc -M -f -d 6 --ext-autodoc --ext-intersphinx --ext-viewcode -o docs\source pype %PYPE_SETUP_PATH%\repos\pype\pype\vendor\*
 call "docs\make.bat" html
 echo [92m^>^>^>[0m Doing cleanup ...
 set PYTHONPATH=%_OLD_PYTHONPATH%
