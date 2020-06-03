@@ -65,7 +65,7 @@ class CelactionPrelaunchHook(PypeHook):
 
         workfile_path = os.path.join(workdir, workfile)
 
-        # create workfile from template if doesnt exist any on path
+        # copy workfile from template if doesnt exist any on path
         if not os.path.isfile(workfile_path):
             # try to get path from environment or use default
             # from `pype.celation` dir
@@ -80,6 +80,9 @@ class CelactionPrelaunchHook(PypeHook):
             )
 
         self.log.info(f"Workfile to open: `{workfile_path}`")
+
+        # adding compulsory environment var for openting file
+        env["PYPE_CELACTION_PROJECT_FILE"] = workfile_path
 
         # setting output parameters
         path = r"Software\CelAction\CelAction2D\User Settings"
