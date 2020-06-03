@@ -20,6 +20,10 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
         if 'crypto' in instance.data['subset']:
             return
 
+        # ffmpeg doesn't support multipart exrs
+        if instance.data.get("multipartExr") is True:
+            return
+
         # get representation and loop them
         representations = instance.data["representations"]
 
@@ -34,10 +38,6 @@ class ExtractJpegEXR(pyblish.api.InstancePlugin):
                 continue
 
             if not isinstance(repre['files'], list):
-                continue
-
-            if instance.data.get("multipartExr") is True:
-                # ffmpeg doesn't support multipart exrs
                 continue
 
             stagingdir = os.path.normpath(repre.get("stagingDir"))
