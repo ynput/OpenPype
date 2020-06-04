@@ -490,6 +490,9 @@ class ProcessSubmittedJobOnFarm(pyblish.api.InstancePlugin):
             if bake_render_path:
                 preview = False
 
+            if "celaction" in self.hosts:
+                preview = True
+
             staging = os.path.dirname(list(collection)[0])
             success, rootless_staging_dir = (
                 self.anatomy.find_root_template_from_path(staging)
